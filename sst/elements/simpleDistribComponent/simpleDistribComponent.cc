@@ -22,6 +22,17 @@ using namespace SST;
 using namespace SST::RNG;
 using namespace SST::SimpleRandomDistribComponent;
 
+void SimpleDistribComponent::finish() {
+	if(bin_results) {
+		std::map<int64_t, uint64_t>::iterator map_itr;
+
+		std::cout << "Bin:" << std::endl;
+		for(map_itr = bins->begin(); map_itr != bins->end(); map_itr++) {
+			std::cout << map_itr->first << " " << map_itr->second << std::endl;
+		}
+	}
+}
+
 SimpleDistribComponent::SimpleDistribComponent(ComponentId_t id, Params& params) :
   Component(id) {
 
@@ -32,12 +43,20 @@ SimpleDistribComponent::SimpleDistribComponent(ComponentId_t id, Params& params)
   rng_max_count = params.find_integer("count", 1000);
   rng_count = 0;
 
+  bins = new std::map<int64_t, uint64_t>();
+
+  if("1" == params.find_string("binresults", "1")) {
+	bin_results = true;
+  } else {
+	bin_results = false;
+  }
+
   std::string distrib_type = params.find_string("distrib", "gaussian");
   if("gaussian" == distrib_type || "normal" == distrib_type) {
 	double mean = params.find_floating("mean", 1.0);
 	double stddev = params.find_floating("stddev", 0.2);
 
-	comp_distrib = new SSTGaussianDistribution(mean, stddev);
+	comp_distrib = new SSTGaussianDistribution(mean, stddev, new MersenneRNG(10111));
   } else if("exponential" == distrib_type) {
 	double lambda = params.find_floating("lambda", 1.0);
 	comp_distrib = new SSTExponentialDistribution(lambda);
@@ -59,7 +78,14 @@ SimpleDistribComponent::SimpleDistribComponent() :
 
 bool SimpleDistribComponent::tick( Cycle_t cyc ) {
 
-	std::cout << "Tick " << cyc << " " << comp_distrib->getNextDouble() << std::endl;
+	double next_result = comp_distrib->getNextDouble();
+	int64_t int_next_result = (int64_t) next_result;
+
+	if(bins->find(int_next_result) == bins->end()) {
+		bins->insert( std::pair<int64_t, uint64_t>(int_next_result, 1) );
+	} else {
+		bins->at(int_next_result)++;
+	}
 
 	rng_count++;
 

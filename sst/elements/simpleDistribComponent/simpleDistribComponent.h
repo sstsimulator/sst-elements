@@ -28,6 +28,7 @@
 
 //#include <cstring>
 #include <string>
+#include <map>
 
 using namespace SST;
 using namespace SST::RNG;
@@ -39,8 +40,8 @@ class SimpleDistribComponent : public SST::Component {
 public:
 
   SimpleDistribComponent(SST::ComponentId_t id, SST::Params& params);
+  void finish();
   void setup()  { }
-  void finish() { }
 
 private:
   SimpleDistribComponent();  // for serialization only
@@ -53,6 +54,9 @@ private:
 
   int rng_max_count;
   int rng_count;
+  bool bin_results;
+
+  std::map<int64_t, uint64_t>* bins;
 
   friend class boost::serialization::access;
   template<class Archive>
