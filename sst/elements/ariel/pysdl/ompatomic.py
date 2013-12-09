@@ -1,56 +1,83 @@
 import sst
 
-def sstcreatemodel():
+sst.setProgramOption("timebase", "1ns")
 
-    sst.creategraph()
+corecount = 8
 
-    if sst.verbose():
-        print "Verbose Model"
+ariel = sst.Component("ariel0", "ariel.ariel")
+ariel.addParams( {
+	"verbose" : "1",
+	"maxcorequeue" : "32",
+ 	"maxissuepercycle" : "2",
+ 	"pipetimeout" : "0",
+	"corecount" : str(corecount),
+ 	"executable" : "/home/sdhammo/subversion/sst-simulator/test/testSuites/testopenMP/ompatomic/ompatomic.x",
+ 	"arielmode" : "1",
+ 	"arieltool" : "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so",
+ 	"memorylevels" : "2",
+	"arielinterceptcalls" : "0", 
+	"defaultlevel" : "0"
+	} )
 
-    id = sst.createcomponent("a0", "ariel.ariel")
-    sst.addcompparam(id, "verbose", "1")
-    sst.addcompparam(id, "maxcorequeue", "256")
-    sst.addcompparam(id, "maxissuepercycle", "2")
-    sst.addcompparam(id, "pipetimeout", "0")
-    sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/test/testSuites/testopenMP/ompatomic/ompatomic.x")
-#    sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/test/testSuites/testM5/ompatomic/ompatomic.x")
-    sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
+membus = sst.Component("membus", "memHierarchy.Bus")
+membus.addParams( {
+	"numPorts" : str(corecount + corecount + 2),
+	"busDelay" : "1ns"
+	} )
 
-    corecount = 8;
+for x in range(0, corecount):
+	l1d = sst.Component("l1cache_" + str(x), "memHierarchy.Cache")
+	l1d.addParams( {
+		"maxL1ResponseTime" : "100000000",
+		"num_ways" : "2",
+		"num_rows" : "256",
+		"blocksize" : "64",
+		"access_time" : "1ns",
+		"num_upstream" : "1",
+		"next_level" : "l2cache_" + str(x),
+		"printStats" : "1"
+		} )
+	ariel_l1d_link = sst.Link("cpu_cache_link_" + str(x))
+	ariel_l1d_link.connect( (ariel, "cache_link_" + str(x), "50ps"), (l1d, "upstream0", "50ps") )
+	ariel_l1d_mem_link = sst.Link("l1d_membus_link_" + str(x))
+	ariel_l1d_mem_link.connect( (l1d, "snoop_link", "50ps"), (membus, "port" + str(x), "50ps") )
 
-    sst.addcompparam(id, "corecount", str(corecount))
+for x in range(0, corecount):
+	l2 = sst.Component("l2cache_" + str(x), "memHierarchy.Cache")
+	l2.addParams( {
+		"num_ways" : "2",
+                "num_rows" : "256",
+                "blocksize" : "64",
+                "access_time" :	"1ns",
+#                "num_upstream" : "1",
+                "next_level" : "l3cache",
+		"printStats" : "1",
+		} )
+	ariel_l2_link = sst.Link("l2cache_link_" + str(x) )
+	ariel_l2_link.connect( (l2, "snoop_link", "50ps"), (membus, "port" + str(corecount + x), "50ps") )
 
-    membus = sst.createcomponent("membus", "memHierarchy.Bus")
-    sst.addcompparam(membus, "numPorts", str(corecount + 1))
-    sst.addcompparam(membus, "busDelay", "1ns")
+l3 = sst.Component("l3cache", "memHierarchy.Cache")
+l3.addParams( {
+		"num_ways" : "2",
+                "num_rows" : "256",
+               	"blocksize" : "64",
+               	"access_time" : "1ns",
+               	"printStats" : "1",
+	} )
 
-    # Create a series of caches all linked to the Ariel "core"
-    max_core = corecount - 1;
+l3_membus_link = sst.Link("l3cache_link")
+l3_membus_link.connect( (l3, "snoop_link", "50ps"), (membus, "port" + str(corecount + corecount), "50ps") )
 
-    for x in range(0, corecount):
-       sst.addcomplink(id, "cpu_cache_link_" + str(x), "cache_link_" + str(x), "1ns")
-       l1id = sst.createcomponent("l1cache_" + str(x), "memHierarchy.Cache")
-       sst.addcompparam(l1id, "num_ways", "8")
-       sst.addcompparam(l1id, "num_rows", "128")
-       sst.addcompparam(l1id, "blocksize", "64")
-       sst.addcompparam(l1id, "access_time", "1ns")
-       sst.addcompparam(l1id, "num_upstream", "1")
-       sst.addcomplink(l1id, "cpu_cache_link_" + str(x), "upstream0", "1ns")
-       sst.addcomplink(l1id, "cache_bus_link_" + str(x), "snoop_link", "50ps")
-       sst.addcompparam(l1id, "printStats", "1")
-       sst.addcomplink(membus, "cache_bus_link_" + str(x), "port" + str(x), "50ps")
-       print "added cache_bus_link_%d at port %d\n"%(x,x)
+memory = sst.Component("fastmemory", "memHierarchy.MemController")
+memory.addParams( {
+		"access_time" : "70ns",
+		"rangeStart" : "0x00000000",
+		"mem_size" : "512",
+		"clock" : "1GHz",
+		"printStats" : "1"
+	} )
 
-    # Put a link to memory from the memory bus
-    sst.addcomplink(membus, "mem_bus_link", "port%d"%(corecount), "50ps")
+memory_membus_link = sst.Link("memory_membus_link")
+memory_membus_link.connect( (memory, "snoop_link", "50ps"), (membus, "port" + str(corecount + corecount + 1), "50ps") )
 
-    memory = sst.createcomponent("memory", "memHierarchy.MemController")
-    sst.addcompparam(memory, "access_time", "10ns")
-    sst.addcompparam(memory, "mem_size", "512")
-    sst.addcompparam(memory, "clock", "1GHz")
-    sst.addcompparam(memory, "use_dramsim", "0")
-    sst.addcompparam(memory, "device_ini", "DDR3_micron_32M_8B_x4_sg125.ini")
-    sst.addcompparam(memory, "system_ini", "system.ini")
-    sst.addcomplink(memory, "mem_bus_link", "snoop_link", "50ps")
-
-    return 0
+print "Done configuring SST model"

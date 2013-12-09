@@ -7,10 +7,13 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/element.h>
+
+#include <sst/core/simulation.h>
+#include <sst/core/timeConverter.h>
+#include <sst/core/timeLord.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -51,28 +54,35 @@ namespace ArielComponent {
 class ArielCore {
 
 	public:
-		ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans, 
-			Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen, int pipeTimeO, 
+		ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans,
+			Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen, int pipeTimeO,
 			uint64_t cacheLineSz, SST::Component* owner,
-			ArielMemoryManager* memMgr, const uint32_t perform_address_checks);
+			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string tracePrefix);
 		~ArielCore();
 		bool isCoreHalted();
 		void tick();
 		void closeInput();
 		void halt();
+		void finishCore();
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
 		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level);
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
+
 		void setCacheLink(SST::Link* newCacheLink);
 		void handleEvent(SST::Event* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
+
+		void commitReadEvent(const uint64_t address, const uint32_t length);
+		void commitWriteEvent(const uint64_t address, const uint32_t length);
+
 		void printCoreStatistics();
+		void printTraceEntry(const bool isRead, const uint64_t address, const uint32_t length);
 
 	private:
 		bool processNextEvent();
@@ -93,6 +103,9 @@ class ArielCore {
 		ArielMemoryManager* memmgr;
 		uint32_t verbosity;
 		const uint32_t perform_checks;
+		const bool enableTracing;
+		FILE* traceFile;
+		TimeConverter* picoTimeConv;
 
 		uint64_t pending_transaction_count;
 		uint64_t read_requests;

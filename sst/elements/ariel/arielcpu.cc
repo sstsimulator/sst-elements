@@ -168,22 +168,28 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	free(pipe_buffer);
 	
 	/////////////////////////////////////////////////////////////////////////////////////
-	
-	
+
+	const std::string tracePrefix = params.find_string("tracePrefix", "");
+	if("" == tracePrefix) {
+		output->verbose(CALL_INFO, 1, 0, "Core address tracing is not enabled.\n");
+	} else {
+		output->verbose(CALL_INFO, 1, 0, "Core address tracing is enabled, prefix is set to %s\n", tracePrefix.c_str());
+	}
+
 	output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
 	cpu_to_cache_links = (SST::Link**) malloc( sizeof(SST::Link*) * core_count );
 
 	output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
 	cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
-	
+
 	output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
 	for(uint32_t i = 0; i < core_count; ++i) {
 		sprintf(link_buffer, "cache_link_%" PRIu32, i);
-	
+
 		cpu_cores[i] = new ArielCore(pipe_fds[i], NULL, i, maxPendingTransCore, output, 
 			maxIssuesPerCycle, maxCoreQueueLen, pipeReadTimeOut, cacheLineSize, this,
-			memmgr, perform_checks);
+			memmgr, perform_checks, tracePrefix);
 		cpu_to_cache_links[i] = configureLink( link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent) );
 		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 	}
@@ -206,6 +212,10 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 }
 
 void ArielCPU::finish() {
+	for(uint32_t i = 0; i < core_count; ++i) {
+		cpu_cores[i]->finishCore();
+	}
+
 	output->verbose(CALL_INFO, 1, 0, "Ariel Processor Information:\n");
 	output->verbose(CALL_INFO, 1, 0, "Completed at: %" PRIu64 " nanoseconds.\n", (uint64_t) getCurrentSimTimeNano() );
 	output->verbose(CALL_INFO, 1, 0, "Ariel Component Statistics (By Core)\n");

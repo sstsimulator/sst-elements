@@ -4,8 +4,9 @@
 ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, 
 	uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc, 
 	uint32_t maxQLen, int pipeTO, uint64_t cacheLineSz, SST::Component* own,
-			ArielMemoryManager* memMgr, const uint32_t perform_address_checks) :
-		perform_checks(perform_address_checks) {
+			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string traceFilePrefix) :
+		perform_checks(perform_address_checks),
+		enableTracing((traceFilePrefix != "")) {
 
 	verbosity = (uint32_t) output->getVerboseLevel();
 	output = out;
@@ -46,6 +47,17 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
                         output->fatal(CALL_INFO, -2, "Attempt to poll failed.\n");
                 }
 	}
+
+	// If we enabled tracing then open up the correct file.
+	if(enableTracing) {
+		char* traceFilePath = (char*) malloc( sizeof(char) * (traceFilePrefix.size() + 20) );
+		sprintf(traceFilePath, "%s-%d.trace", traceFilePrefix.c_str(), (int) thisCoreID);
+		traceFile = fopen(traceFilePath, "wt");
+		free(traceFilePath);
+	}
+
+	// Get a time converter from the core, we want nano seconds.
+	picoTimeConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ps");
 }
 
 ArielCore::~ArielCore() {
@@ -54,6 +66,51 @@ ArielCore::~ArielCore() {
 
 void ArielCore::setCacheLink(SST::Link* newLink) {
 	cacheLink = newLink;
+}
+
+void ArielCore::printTraceEntry(const bool isRead,
+                       	const uint64_t address, const uint32_t length) {
+
+	if(enableTracing) {
+		uint64_t picoSeconds = (uint64_t) picoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
+
+		fprintf(traceFile, "%" PRIu64 " %c %" PRIu64 " %" PRIu32 "\n",
+			(uint64_t) picoSeconds, (isRead ? 'R' : 'W'), address, length);
+	}
+}
+
+void ArielCore::commitReadEvent(const uint64_t address, const uint32_t length) {
+	if(length > 0) {
+		MemEvent* memEvent = new MemEvent(owner, address, ReadReq);
+		memEvent->setSize((uint32_t) length);
+
+		pending_transaction_count++;
+	        pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
+
+	        if(enableTracing) {
+	        	printTraceEntry(true, (const uint64_t) memEvent->getAddr(), (const uint32_t) length);
+	        }
+
+	        // Actually send the event to the cache
+	        cacheLink->send(memEvent);
+	}
+}
+
+void ArielCore::commitWriteEvent(const uint64_t address, const uint32_t length) {
+	if(length > 0) {
+		MemEvent* memEvent = new MemEvent(owner, address, WriteReq);
+		memEvent->setSize((uint32_t) length);
+
+		pending_transaction_count++;
+	        pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
+
+	        if(enableTracing) {
+	        	printTraceEntry(true, (const uint64_t) memEvent->getAddr(), (const uint32_t) length);
+	        }
+
+	        // Actually send the event to the cache
+        	cacheLink->send(memEvent);
+	}
 }
 
 void ArielCore::handleEvent(SST::Event* event) {
@@ -84,6 +141,13 @@ void ArielCore::handleEvent(SST::Event* event) {
 		}
 	} else {
 		delete event;
+	}
+}
+
+void ArielCore::finishCore() {
+	// Close the trace file if we did in fact open it.
+	if(traceFile != NULL) {
+		fclose(traceFile);
 	}
 }
 
@@ -262,7 +326,7 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 	
 	const uint64_t addr_offset  = readAddress % ((uint64_t) cacheLineSize);
 	
-	if((addr_offset + readLength) < cacheLineSize) {
+	if((addr_offset + readLength) <= cacheLineSize) {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
 	
@@ -271,15 +335,8 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, readAddress, readLength, physAddr);
-			
-		MemEvent* memEvent = new MemEvent(owner, physAddr, ReadReq);
-		memEvent->setSize((uint32_t) readLength);
 
-		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
-				
-		// Actually send the event to the cache
-		cacheLink->send(memEvent);
-		pending_transaction_count++;
+		commitReadEvent(physAddr, (uint32_t) readLength);
 	} else {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
@@ -314,19 +371,8 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 			}
 		}
 
-		MemEvent* leftEvent  = new MemEvent(owner, physLeftAddr, ReadReq);
-		MemEvent* rightEvent = new MemEvent(owner, physRightAddr, ReadReq);
-		
-		leftEvent->setSize((uint32_t) leftSize);
-		rightEvent->setSize((uint32_t) rightSize);
-		
-		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(leftEvent->getID(), leftEvent) );
-		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(rightEvent->getID(), rightEvent) );
-		
-		pending_transaction_count += 2;
-		cacheLink->send(leftEvent);
-		cacheLink->send(rightEvent);
-		
+		commitReadEvent(physLeftAddr, (uint32_t) leftSize);
+		commitReadEvent(physRightAddr, (uint32_t) rightSize);
 		split_read_requests++;
 	}
 	
@@ -347,7 +393,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 	
 	const uint64_t addr_offset  = writeAddress % ((uint64_t) cacheLineSize);
 	
-	if((addr_offset + writeLength) < cacheLineSize) {
+	if((addr_offset + writeLength) <= cacheLineSize) {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, writeAddress, writeLength);
 	
@@ -356,15 +402,8 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 		
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, writeAddress, writeLength, physAddr);
-			
-		MemEvent* memEvent = new MemEvent(owner, physAddr, WriteReq);
-		memEvent->setSize((uint32_t) writeLength);
 
-		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
-				
-		// Actually send the event to the cache
-		pending_transaction_count++;
-		cacheLink->send(memEvent);
+		commitWriteEvent(physAddr, (uint32_t) writeLength);
 	} else {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, writeAddress, writeLength);
@@ -399,20 +438,9 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 			}
 		}
 
-		MemEvent* leftEvent  = new MemEvent(owner, physLeftAddr, WriteReq);
-		MemEvent* rightEvent = new MemEvent(owner, physRightAddr, WriteReq);
-		
-		leftEvent->setSize( (uint32_t) leftSize);
-		rightEvent->setSize( (uint32_t) rightSize);
-		
-		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(leftEvent->getID(), leftEvent) );
-		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(rightEvent->getID(), rightEvent) );
-		
-		pending_transaction_count += 2;
-		cacheLink->send(leftEvent);
-		cacheLink->send(rightEvent);	
-		
-		split_write_requests++;		
+		commitWriteEvent(physLeftAddr, (uint32_t) leftSize);
+		commitWriteEvent(physRightAddr, (uint32_t) rightSize);
+		split_write_requests++;	
 	}
 	
 	write_requests++;
