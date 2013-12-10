@@ -105,7 +105,7 @@ void ArielCore::commitWriteEvent(const uint64_t address, const uint32_t length) 
 	        pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
 
 	        if(enableTracing) {
-	        	printTraceEntry(true, (const uint64_t) memEvent->getAddr(), (const uint32_t) length);
+	        	printTraceEntry(false, (const uint64_t) memEvent->getAddr(), (const uint32_t) length);
 	        }
 
 	        // Actually send the event to the cache
