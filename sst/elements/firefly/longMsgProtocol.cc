@@ -14,6 +14,7 @@
 #include <sst/core/params.h>
 
 #include <sstream>
+#include <string.h>
 #include "longMsgProtocol.h"
 #include "entry.h"
 #include "info.h"
