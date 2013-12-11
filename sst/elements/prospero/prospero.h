@@ -152,6 +152,9 @@ private:
   map<MemEvent::id_type, memory_request*> pending_requests;
   bool keep_generating;
   uint64_t phys_limit;
+  double timeMultiplier;
+  bool performVirtualTranslation;
+  uint64_t lineCount;
 
   SST::Link* cache_link;
 
