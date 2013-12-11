@@ -12,7 +12,6 @@
 #ifndef _physicalPlus_h
 #define _physicalPlus_h
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 #include <mem/physical.hh>
 

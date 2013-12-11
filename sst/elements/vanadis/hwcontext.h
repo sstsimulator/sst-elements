@@ -2,7 +2,6 @@
 #ifndef _H_SST_VANADIS_HWCONTEXT
 #define _H_SST_VANADIS_HWCONTEXT
 
-#include <sst_config.>
 
 #include "regset.h"
 #include "dispatch.h"

@@ -12,7 +12,6 @@
 #ifndef __rawEvent_h
 #define __rawEvent_h
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 
 #include <debug.h>

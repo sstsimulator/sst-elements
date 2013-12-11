@@ -2,7 +2,6 @@
 #ifndef _SST_OBERON_ENGINE
 #define _SST_OBERON_ENGINE
 
-#include <sst/sst_config.h>
 #include <sst/core/output.h>
 
 #include <string>

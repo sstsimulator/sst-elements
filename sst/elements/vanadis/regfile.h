@@ -2,7 +2,6 @@
 #ifndef _H_SST_VANADIS_REG_FILE
 #define _H_SST_VANADIS_REG_FILE
 
-#include <sst_config.h>
 #include <stdint.h>
 
 #include "regset.h"

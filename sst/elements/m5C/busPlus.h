@@ -12,7 +12,6 @@
 #ifndef _busPlus_h
 #define _busPlus_h
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <mem/bus.hh>

@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "arielcpu.h"
 
 #include <sys/types.h>

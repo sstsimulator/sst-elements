@@ -9,6 +9,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst_config.h>
 #include <loadMemory.h>
 #include <debug.h>
 #include <process.h>

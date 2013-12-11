@@ -13,7 +13,6 @@
 #define QSIM_COMPONENT_H
 
 #include <sst/core/sst_types.h>
-//#include <sst_config.h>
 //#include <sst/core/serialization/element.h>
 #include <assert.h>
 

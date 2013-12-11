@@ -1,7 +1,6 @@
 #ifndef _H_ARIEL_CPU
 #define _H_ARIEL_CPU
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 

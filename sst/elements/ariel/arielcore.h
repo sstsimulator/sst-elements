@@ -2,7 +2,6 @@
 #ifndef _H_SST_ARIEL_CORE
 #define _H_SST_ARIEL_CORE
 
-#include <sst_config.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

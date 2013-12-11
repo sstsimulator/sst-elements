@@ -12,7 +12,6 @@
 #ifndef _DRAMSimWrap_h
 #define _DRAMSimWrap_h
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 
 #include <base/statistics.hh>

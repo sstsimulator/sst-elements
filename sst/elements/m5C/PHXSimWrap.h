@@ -12,7 +12,6 @@
 #ifndef _PHXSimWrap_h
 #define _PHXSimWrap_h
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 
 #include <base/statistics.hh>

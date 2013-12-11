@@ -12,7 +12,6 @@
 #ifndef _memLink_h
 #define _memLink_h
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 
 #include <mem/mem_object.hh>

@@ -2,7 +2,6 @@
 #ifndef _H_SST_VANADIS_PROCESSOR
 #define _H_SST_VANADIS_PROCESSOR
 
-#include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 

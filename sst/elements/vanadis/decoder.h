@@ -3,7 +3,6 @@
 #ifndef _H_SST_VANADIS_DECODER
 #define _H_SST_VANADIS_DECODER
 
-#include <sst_config.h>
 #include <queue>
 
 #include "microop.h"

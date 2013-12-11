@@ -2,7 +2,6 @@
 #ifndef _SST_OBERON_MODEL
 #define _SST_OBERON_MODEL
 
-#include <sst/sst_config.h>
 #include <sst/core/output.h>
 
 #include <iostream>

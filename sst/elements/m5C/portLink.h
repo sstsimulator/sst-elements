@@ -12,7 +12,6 @@
 #ifndef __portLink_h
 #define __portLink_h
 
-#include <sst_config.h>
 
 #include <debug.h>
 #include <m5.h>

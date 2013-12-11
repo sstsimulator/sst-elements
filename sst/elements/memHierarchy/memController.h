@@ -12,7 +12,6 @@
 #ifndef _MEMORYCONTROLLER_H
 #define _MEMORYCONTROLLER_H
 
-#include "sst_config.h"
 
 #include <sst/core/event.h>
 #include <sst/core/module.h>

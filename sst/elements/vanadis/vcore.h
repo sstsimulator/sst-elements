@@ -2,7 +2,6 @@
 #ifndef _H_SST_VANADIS_CORE
 #define _H_SST_VANADIS_CORE
 
-#include <sst_config.h>
 #include <sst/core/output.h>
 
 using namespace SST;
