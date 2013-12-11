@@ -36,6 +36,8 @@ libmerlin_la_SOURCES = \
 
 libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 
+BUILT_SOURCES = pymerlin.inc
+
 %.inc: %.py
 	$(XXD_PATH) -i < $< > $@
 
