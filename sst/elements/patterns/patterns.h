@@ -13,7 +13,7 @@
 #define TIME_BASE_FACTOR	1000000000.0
 
 // Everybody needs those
-#include <sst_config.h>
+//#include <sst_config.h>
 #include <sst/core/serialization.h>
 
 
