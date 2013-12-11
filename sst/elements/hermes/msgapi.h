@@ -12,7 +12,6 @@
 #ifndef _H_HERMES_MESSAGE_INTERFACE
 #define _H_HERMES_MESSAGE_INTERFACE
 
-#include <sst_config.h>
 #include <sst/core/serialization.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
