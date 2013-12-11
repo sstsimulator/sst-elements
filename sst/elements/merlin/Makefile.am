@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(PYTHON_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmerlin.la
@@ -29,10 +29,17 @@ libmerlin_la_SOURCES = \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_rr.h \
 	trafficgen/trafficgen.h \
-	trafficgen/trafficgen.cc
+	trafficgen/trafficgen.cc \
+	pymodule.c \
+	pymerlin.py
 
 
-libmerlin_la_LDFLAGS = -module -avoid-version
+libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 
-#bin_PROGRAMS = portals4_sm_sdlgen
-#portals4_sm_sdlgen_SOURCES = portals4_sm_sdlgen.c portals_args.h
+%.inc: %.py
+	$(XXD_PATH) -i < $< > $@
+
+clean-local: clean-local-check
+.PHONY: clean-local-check
+clean-local-check:
+	-rm -rf pymerlin.inc

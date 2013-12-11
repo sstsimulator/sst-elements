@@ -28,6 +28,8 @@
 
 #include "trafficgen/trafficgen.h"
 
+#include "pymodule.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -174,38 +176,18 @@ static const ElementInfoModule modules[] = {
     { NULL, NULL, NULL, NULL, NULL }
 };
 
-// static const ElementInfoPartitioner partitioners[] = {
-//     { "partitioner",
-//       "Partitioner for portals4_sm simulations",
-//       NULL,
-//       partition,
-//     },
-//     { NULL, NULL, NULL, NULL }
-// };
-
-// static const ElementInfoGenerator generators[] = {
-//     { "generator",
-//       "Generator for portals4_sm simulations",
-//       NULL,
-//       generate,
-//     },
-//     { NULL, NULL, NULL, NULL }
-// };
-
-
 
 extern "C" {
     ElementLibraryInfo merlin_eli = {
         "merlin",
         "Flexible network components",
         components,
-	NULL,
-	NULL,
-	modules,
-	// partitioners,
-	// generators,
-	NULL,
-	NULL,
+        NULL,   // Events
+        NULL,   // Introspectors
+        modules,
+        NULL, // partitioners,
+        NULL, // generators,
+        genMerlinPyModule  // Python Module Generator
     };
 }
 
