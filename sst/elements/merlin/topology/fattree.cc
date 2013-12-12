@@ -22,7 +22,7 @@ using namespace SST::Merlin;
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_fattree, fmt, ## args )
 
 
-topo_fattree::topo_fattree(Params& params) :
+topo_fattree::topo_fattree(Component* comp, Params& params) :
     Topology()
 {
     num_ports = params.find_integer("num_ports");

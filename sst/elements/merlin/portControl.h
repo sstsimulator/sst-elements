@@ -35,6 +35,7 @@ namespace Merlin {
 
 
 typedef std::queue<internal_router_event*> port_queue_t;
+typedef std::queue<TopologyEvent*> topo_queue_t;
 
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
@@ -61,6 +62,16 @@ private:
     port_queue_t* input_buf;
     port_queue_t* output_buf;
 
+    // Need an output queue for topology events.  Incoming topology
+    // events will be directed right to the topolgy object.
+    topo_queue_t topo_queue;
+    
+    // We need to avoid checking all the queues every time we clock
+    // the arbitration logic, so we'll have each PortControl put the
+    // head of each of its VC queues into a single array to speed
+    // things up.  This is an array passed into the constructor.
+    internal_router_event** vc_heads;
+    
     int* input_buf_count;
     int* output_buf_count;
 
@@ -85,6 +96,21 @@ private:
     Router* parent;
 
 public:
+
+    void sendTopologyEvent(TopologyEvent* ev) {
+	// If the topology event is zero length (meaning they take no
+	// bandwidth), just send immediately
+	if ( ev->getSizeInFlits() == 0 ) {
+	    port_link->send(1,ev);
+	    return;
+	}
+
+	// Put event into buffer that will take priority over the VCs
+	// for sending.  The event will be sent next time the port is
+	// free and it will consume the port for the appropriate time
+	// based on number of flits.
+	topo_queue.push(ev);
+    }
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
@@ -114,11 +140,21 @@ public:
     // Returns NULL if no event in input_buf[vc]. Otherwise, returns
     // the next event.
     internal_router_event* recv(int vc) {
-	if ( input_buf[vc].size() == 0 ) return NULL;
+	// if ( input_buf[vc].size() == 0 ) return NULL;
+	if ( input_buf[vc].empty() ) return NULL;
 
 	internal_router_event* event = input_buf[vc].front();
 	input_buf[vc].pop();
 
+	// Need to update vc_heads
+	if ( input_buf[vc].empty() ) {
+	    vc_heads[vc] = NULL;
+	    parent->dec_vcs_with_data();
+	}
+	else {
+	    vc_heads[vc] = input_buf[vc].front();
+	}
+	
 	// Figure out how many credits to return
 	port_ret_credits[vc] += event->getFlitCount();
 
@@ -132,28 +168,22 @@ public:
 	return event;
     }
 
-    // Return true if it finds events and false otherwise
-    bool getVCHeads(internal_router_event** heads) {
-	bool found_event = false;
-	for ( int i = 0; i < num_vcs; i++ ) {
-	    if ( input_buf[i].size() == 0 ) heads[i] = NULL;
-	    else {
-		heads[i] = input_buf[i].front();
-		found_event = true;
-	    }
-	}
-	return found_event;
+    internal_router_event** getVCHeads() {
+    	return vc_heads;
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     PortControl(Router* rif, int rtr_id, std::string link_port_name, int port_number, TimeConverter* time_base,
-		Topology *topo, int vcs, int* in_buf_size, int* out_buf_size,
+		Topology *topo, int vcs, internal_router_event** vc_heads, int* xbar_in_credits,
+		int* in_buf_size, int* out_buf_size,
 		SimTime_t input_latency_cycles, std::string input_latency_timebase,
 		SimTime_t output_latency_cycles, std::string output_latency_timebase) :
 	rtr_id(rtr_id),
 	num_vcs(vcs),
+	vc_heads(vc_heads),
 	topo(topo),
 	port_number(port_number),
+	xbar_in_credits(xbar_in_credits),
 	waiting(true),
 	parent(rif)
     {
@@ -167,10 +197,11 @@ public:
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    input_buf_count[i] = 0;
 	    output_buf_count[i] = 0;
+	    vc_heads[i] = NULL;
 	}
 	
 	// Initialize credit arrays
-	xbar_in_credits = new int[vcs];
+	// xbar_in_credits = new int[vcs];
 	port_ret_credits = new int[vcs];
 	port_out_credits = new int[vcs];
 
@@ -219,7 +250,7 @@ public:
         delete [] output_buf;
         delete [] input_buf_count;
         delete [] output_buf_count;
-        delete [] xbar_in_credits;
+        // delete [] xbar_in_credits;
         delete [] port_ret_credits;
         delete [] port_out_credits;
     }
@@ -307,8 +338,14 @@ private:
     
     void handle_input_n2r(Event* ev) {
 	// Check to see if this is a credit or data packet
-	credit_event* ce = dynamic_cast<credit_event*>(ev);
-	if ( ce != NULL ) {
+	// credit_event* ce = dynamic_cast<credit_event*>(ev);
+	// if ( ce != NULL ) {
+	BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
+
+	switch (base_event->getType()) {
+	case BaseRtrEvent::CREDIT:
+	{
+	    credit_event* ce = static_cast<credit_event*>(ev);
 	    port_out_credits[ce->vc] += ce->credits;
 	    delete ce;
 
@@ -320,8 +357,9 @@ private:
 		waiting = false;
 	    }
 	}
-	else {
-
+	    break;
+	case BaseRtrEvent::PACKET:
+	{
 	    RtrEvent* event = static_cast<RtrEvent*>(ev);
 	    // Simply put the event into the right virtual network queue
 
@@ -332,6 +370,12 @@ private:
 	    input_buf[curr_vc].push(rtr_event);
 	    input_buf_count[curr_vc]++;
 
+	    // If this becomes vc_head we need to put it into the vc_heads array
+	    if ( vc_heads[curr_vc] == NULL ) {
+		vc_heads[curr_vc] = rtr_event;
+		parent->inc_vcs_with_data();
+	    }
+	    
 	    if ( event->getTraceType() != RtrEvent::NONE ) {
 		std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
 			  << " ns: Received an event on port " << port_number
@@ -341,14 +385,30 @@ private:
 	    }
 
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
-
 	}
+	    break;
+	case BaseRtrEvent::INTERNAL:
+	    // Should never get here
+	    break;
+	case BaseRtrEvent::TOPOLOGY:
+	    // This should never happen (for now)
+	    break;
+	default:
+	    break;
+	}
+	
     }
     
     void handle_input_r2r(Event* ev) {
 	// Check to see if this is a credit or data packet
-	credit_event* ce = dynamic_cast<credit_event*>(ev);
-	if ( ce != NULL ) {
+	// credit_event* ce = dynamic_cast<credit_event*>(ev);
+	// if ( ce != NULL ) {
+	BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
+
+	switch (base_event->getType()) {
+	case BaseRtrEvent::CREDIT:
+	{
+	    credit_event* ce = static_cast<credit_event*>(ev);
 	    port_out_credits[ce->vc] += ce->credits;
 	    delete ce;
 
@@ -357,9 +417,14 @@ private:
 	    if ( waiting ) {
 		output_timing->send(1,NULL); 
 		waiting = false;
-	    }	    
+	    }
 	}
-	else {
+	    break;
+	case BaseRtrEvent::PACKET:
+	    // This shouldn't happen
+	    break;
+	case BaseRtrEvent::INTERNAL:
+	{
 	    internal_router_event* event = static_cast<internal_router_event*>(ev);
 	    // Simply put the event into the right virtual network queue
 
@@ -369,6 +434,13 @@ private:
 	    input_buf[curr_vc].push(event);
 	    input_buf_count[curr_vc]++;
 
+	    // If this becomes vc_head (there isn't an event already
+	    // in the array) we need to put it into the vc_heads array
+	    if ( vc_heads[curr_vc] == NULL ) {
+		vc_heads[curr_vc] = event;
+		parent->inc_vcs_with_data();
+	    }
+	    
 	    if ( event->getTraceType() != RtrEvent::NONE ) {
 		std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
 			  << " ns: Received an event on port " << port_number
@@ -379,6 +451,14 @@ private:
 
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
 	}
+	    break;
+	case BaseRtrEvent::TOPOLOGY:
+	    parent->recvTopologyEvent(port_number,static_cast<TopologyEvent*>(ev));
+	    break;
+	default:
+	    break;
+	}
+	
     }
     
     void handle_output(Event* ev) {
@@ -388,6 +468,17 @@ private:
 	// For now just done automatically when events are pulled out
 	// of the block
 
+	// If there is data in the topo_queue, it takes priority
+	if ( !topo_queue.empty() ) {
+	    TopologyEvent* event = topo_queue.front();
+	    // Send an event to wake up again after packet is done
+	    output_timing->send(event->getSizeInFlits(),NULL);
+
+	    // Send event
+	    port_link->send(1,event);
+	    return;
+	}
+	
 	// We do a round robin scheduling.  If the current vc has no
 	// data, find one that does.
 	int vc_to_send = -1;

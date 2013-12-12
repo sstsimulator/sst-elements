@@ -60,7 +60,7 @@ public:
         uint32_t host;
     };
 
-    topo_dragonfly(Params& p);
+    topo_dragonfly(Component* comp, Params& p);
     ~topo_dragonfly();
 
     virtual void route(int port, int vc, internal_router_event* ev);

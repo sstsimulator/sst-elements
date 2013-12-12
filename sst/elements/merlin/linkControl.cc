@@ -189,8 +189,11 @@ Event* LinkControl::recvInitData()
 void LinkControl::handle_input(Event* ev)
 {
     // Check to see if this is a credit or data packet
-    credit_event* ce = dynamic_cast<credit_event*>(ev);
-    if ( ce != NULL ) {
+    // credit_event* ce = dynamic_cast<credit_event*>(ev);
+    // if ( ce != NULL ) {
+    BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
+    if ( base_event->getType() == BaseRtrEvent::CREDIT ) {
+    	credit_event* ce = static_cast<credit_event*>(ev);
         rtr_credits[ce->vc] += ce->credits;
         // std::cout << "Got " << ce->credits << " credits.  Current credits: " << rtr_credits[ce->vc] << std::endl;
         delete ev;

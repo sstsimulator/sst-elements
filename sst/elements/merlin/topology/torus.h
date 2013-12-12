@@ -91,7 +91,7 @@ class topo_torus: public Topology {
     int local_port_start;
 
 public:
-    topo_torus(Params& params);
+    topo_torus(Component* comp, Params& params);
     ~topo_torus();
 
     virtual void route(int port, int vc, internal_router_event* ev);

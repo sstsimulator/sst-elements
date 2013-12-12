@@ -30,7 +30,7 @@ class topo_singlerouter: public Topology {
     int num_ports;
 
 public:
-    topo_singlerouter(Params& params);
+    topo_singlerouter(Component* comp, Params& params);
     ~topo_singlerouter();
 
     virtual void route(int port, int vc, internal_router_event* ev);

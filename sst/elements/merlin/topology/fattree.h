@@ -51,7 +51,7 @@ class topo_fattree: public Topology {
     void printRouteTable(FILE *fp) const;
 
 public:
-    topo_fattree(Params& params);
+    topo_fattree(Component* comp, Params& params);
     ~topo_fattree();
 
     virtual void route(int port, int vc, internal_router_event* ev);

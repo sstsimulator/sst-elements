@@ -75,7 +75,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         _abort(hr_router, "ERROR: hr_router requires topology to be specified");
     }
 
-    topo = dynamic_cast<Topology*>(loadModule(topology,params));
+    topo = dynamic_cast<Topology*>(loadModuleWithComponent(topology,this,params));
     if ( !topo )
         _abort(hr_router, "ERROR:  Unable to find topology '%s'\n", topology.c_str());
 
@@ -126,6 +126,11 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 
     progress_vcs = new int[num_ports];
 
+    vc_heads = new internal_router_event*[num_ports*num_vcs];
+    xbar_in_credits = new int[num_ports*num_vcs];
+
+    topo->setOutputBufferCreditArray(xbar_in_credits);
+    
     for ( int i = 0; i < num_ports; i++ ) {
 	in_port_busy[i] = 0;
 	out_port_busy[i] = 0;
@@ -136,7 +141,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 	port_name << i;
 	// std::cout << port_name.str() << std::endl;
 
-	ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo, num_vcs, in_buf_sizes, out_buf_sizes, 1, input_latency, 1, output_latency);
+	ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo, num_vcs,
+				   &vc_heads[i*num_vcs], &xbar_in_credits[i*num_vcs],
+				   in_buf_sizes, out_buf_sizes, 1, input_latency, 1, output_latency);
 
     }
 
@@ -156,6 +163,10 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     xbar_tc = registerClock( xbar_bw, my_clock_handler);
     num_routers++;
 
+#if VERIFY_DECLOCKING
+    clocking = true;
+#endif
+    
     // Check to make sure that the xbar BW is equal to or greater than
     // the link BW, otherwise the model runs into problems
     if ( xbar_tc->getFactor() > link_tc->getFactor() ) {
@@ -170,12 +181,17 @@ void
 hr_router::notifyEvent()
 {
     setRequestNotifyOnEvent(false);
-    // std::cout << "Inserting self into clock queue: " << xbar_bw << std::endl;
+
+#if VERIFY_DECLOCKING
+    clocking = true;
+    Cycle_t next_cycle = getNextClockCycle( xbar_tc );
+#else
     Cycle_t next_cycle = reregisterClock( xbar_tc, my_clock_handler); 
-    // registerClock( xbar_bw, my_clock_handler); 
+#endif
 
     int elapsed_cycles = next_cycle - unclocked_cycle;
 
+#if !VERIFY_DECLOCKING
     // Fix up the busy variables
     for ( int i = 0; i < num_ports; i++ ) {
     	// Should stop at zero, need to find a clean way to do this
@@ -185,11 +201,9 @@ hr_router::notifyEvent()
     	if ( in_port_busy[i] < 0 ) in_port_busy[i] = 0;
     	if ( out_port_busy[i] < 0 ) out_port_busy[i] = 0;
     }
-    // Report skipped cycles to arbitration unit.  This is one less
-    // than for busy because the arbitration unit executes before we
-    // declock, whereas busy variables are decremented after (and
-    // therefore not decremented on the last cycle before declocking.
-    arb->reportSkippedCycles(elapsed_cycles - 1);
+#endif
+    // Report skipped cycles to arbitration unit.
+    arb->reportSkippedCycles(elapsed_cycles);
 }
 
 void
@@ -228,17 +242,38 @@ hr_router::debug_clock_handler(Cycle_t cycle)
 bool
 hr_router::clock_handler(Cycle_t cycle)
 {
-    // All we need to do is arbitrate the crossbar
-    bool found_event = arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
-    // bool found_event = arb->arbitrate();
-
     // If there are no events in the input queues, then we can remove
     // ourselves from the clock queue.
-    if ( !found_event ) {
+    if ( get_vcs_with_data() == 0 ) {
+#if VERIFY_DECLOCKING
+	if ( clocking ) {
+	    setRequestNotifyOnEvent(true);
+	    unclocked_cycle = cycle;
+	    clocking = false;
+	}
+#else
 	setRequestNotifyOnEvent(true);
 	unclocked_cycle = cycle;
 	return true;
+#endif
     }
+
+    // Loop through all the events at the heads of the queues and call
+    // route
+    int index = 0;
+    for ( int i = 0; i < num_ports; i++ ) {
+	for ( int j = 0; j < num_vcs; j++ ) {
+	    if ( vc_heads[index] != NULL ) topo->reroute(i,j,vc_heads[index]);
+	    index++;
+	}
+    }
+    
+    // All we need to do is arbitrate the crossbar
+#if VERIFY_DECLOCKING
+    arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs,clocking);
+#else
+    arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
+#endif
     
     // Move the events and decrement the busy values
     for ( int i = 0; i < num_ports; i++ ) {
@@ -312,3 +347,14 @@ hr_router::init(unsigned int phase)
     }
 }
 
+void
+hr_router::sendTopologyEvent(int port, TopologyEvent* ev) {
+    // Event just gets forwarded to appropriate PortControl object
+    ports[port]->sendTopologyEvent(ev);
+}
+
+void
+hr_router::recvTopologyEvent(int port, TopologyEvent* ev) {
+    // Event just get's sent on to topolgy object
+    topo->recvTopologyEvent(port,ev);
+}

@@ -36,7 +36,11 @@ private:
 
     int *rr_vcs;
     int rr_port;
-
+    
+#if VERIFY_DECLOCKING    
+    int rr_port_shadow;
+#endif
+    
     internal_router_event** vc_heads;
 
     // PortControl** ports;
@@ -48,7 +52,6 @@ public:
     }
 
     ~xbar_arb_rr() {
-	delete [] vc_heads;
         delete [] rr_vcs;
     }
 
@@ -62,20 +65,28 @@ public:
 	}
 	
 	rr_port = 0;
-	vc_heads = new internal_router_event*[num_vcs];
+#if VERIFY_DECLOCKING
+	rr_port_shadow = 0;
+#endif
+    vc_heads = new internal_router_event*[num_vcs];
     }
     
     // Naming convention is from point of view of the xbar.  So,
     // in_port_busy is >0 if someone is writing to that xbar port and
     // out_port_busy is >0 if that xbar port being read.
-    bool arbitrate(PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc) {
-	// Run through each of the ports, giving first pick in a round robin fashion
-	bool found_event = false;
+    void arbitrate(
+#if VERIFY_DECLOCKING
+    PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
+#else
+    PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
+#endif
+    )
+    {
+        // Run through each of the ports, giving first pick in a round robin fashion
 	// for ( int port = rr_port, pcount = 0; pcount < num_ports; port = (port+1) % num_ports, pcount++ ) {
 	for ( int port = rr_port, pcount = 0; pcount < num_ports; port = ((port != num_ports-1) ? port+1 : 0), pcount++ ) {
 
-	    bool found = ports[port]->getVCHeads(vc_heads);
-	    found_event = found_event || found;
+	    vc_heads = ports[port]->getVCHeads();
 	    
 	    // Overwrite old data
 	    progress_vc[port] = -1;
@@ -118,11 +129,24 @@ public:
 	}
 	rr_port = (rr_port + 1) % num_ports;
 
-	return found_event;
+#if VERIFY_DECLOCKING
+        if ( clocking ) {
+            rr_port_shadow = rr_port;
+        }
+#endif
+    
+	return;
     }
 
     void reportSkippedCycles(Cycle_t cycles) {
+#if VERIFY_DECLOCKING
+	rr_port_shadow = (rr_port_shadow + cycles) % num_ports;
+	if ( rr_port_shadow != rr_port ) std::cout << "  PROBLEM:  rr_port = "
+		 << rr_port << ", rr_port_shadow = " << rr_port_shadow <<
+		 ", cycles = " << cycles << std::endl;
+#else
 	rr_port = (rr_port + cycles) % num_ports;
+#endif
     }
 
     void dumpState(std::ostream& stream) {

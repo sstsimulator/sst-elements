@@ -21,7 +21,7 @@ using namespace SST::Merlin;
 
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_singlerouter, fmt, ## args )
 
-topo_singlerouter::topo_singlerouter(Params& params) :
+topo_singlerouter::topo_singlerouter(Component* comp, Params& params) :
     Topology()
 {
     num_ports = params.find_integer("num_ports");

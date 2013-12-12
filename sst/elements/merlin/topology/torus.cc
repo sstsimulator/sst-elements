@@ -22,7 +22,7 @@ using namespace SST::Merlin;
 
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_torus, fmt, ## args )
 
-topo_torus::topo_torus(Params& params) :
+topo_torus::topo_torus(Component* comp, Params& params) :
     Topology()
 {
 

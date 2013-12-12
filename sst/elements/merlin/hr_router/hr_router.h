@@ -43,7 +43,13 @@ private:
     XbarArbitration* arb;
     
     PortControl** ports;
+    internal_router_event** vc_heads;
+    int* xbar_in_credits;
 
+#if VERIFY_DECLOCKING
+    bool clocking;
+#endif
+    
     int* in_port_busy;
     int* out_port_busy;
     int* progress_vcs;
@@ -66,8 +72,13 @@ public:
     void finish() {}
 
     void notifyEvent();
-    void dumpState(std::ostream& stream);
+    int const* getOutputBufferCredits() {return xbar_in_credits;}
 
+    void sendTopologyEvent(int port, TopologyEvent* ev);
+    void recvTopologyEvent(int port, TopologyEvent* ev);
+    
+    
+    void dumpState(std::ostream& stream);
 };
 
 }

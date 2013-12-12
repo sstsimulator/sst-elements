@@ -84,27 +84,27 @@ create_traffic_generator(SST::ComponentId_t id,
 // }
 
 static Module*
-load_torus_topology(Params& params)
+load_torus_topology(Component* comp, Params& params)
 {
-    return new topo_torus(params);
+    return new topo_torus(comp,params);
 }
 
 static Module*
-load_singlerouter_topology(Params& params)
+load_singlerouter_topology(Component* comp, Params& params)
 {
-    return new topo_singlerouter(params);
+    return new topo_singlerouter(comp,params);
 }
 
 static Module*
-load_fattree_topology(Params& params)
+load_fattree_topology(Component* comp, Params& params)
 {
-    return new topo_fattree(params);
+    return new topo_fattree(comp,params);
 }
 
 static Module*
-load_dragonfly_topology(Params& params)
+load_dragonfly_topology(Component* comp, Params& params)
 {
-    return new topo_dragonfly(params);
+    return new topo_dragonfly(comp,params);
 }
 
 static Module*
@@ -146,11 +146,13 @@ static const ElementInfoModule modules[] = {
     { "torus",
       "Torus topology object",
       NULL,
+      NULL,
       load_torus_topology,
       NULL,
     },
     { "singlerouter",
       "Simple, single-router topology object",
+      NULL,
       NULL,
       load_singlerouter_topology,
       NULL,
@@ -158,11 +160,13 @@ static const ElementInfoModule modules[] = {
     { "fattree",
       "Fattree topology object",
       NULL,
+      NULL,
       load_fattree_topology,
       NULL,
     },
     { "dragonfly",
       "Dragonfly topology object",
+      NULL,
       NULL,
       load_dragonfly_topology,
       NULL,

@@ -29,7 +29,7 @@ using namespace SST::Merlin;
  * [params.p+params.a-1, params.k)  // Other groups
  */
 
-topo_dragonfly::topo_dragonfly(Params &p) :
+topo_dragonfly::topo_dragonfly(Component* comp, Params &p) :
     Topology()
 {
     params.p = (uint32_t)p.find_integer("dragonfly:hosts_per_router");
