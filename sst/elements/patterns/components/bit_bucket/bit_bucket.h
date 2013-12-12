@@ -23,7 +23,6 @@
 #endif
 #include <inttypes.h>		// For PRIu64
 
-#include <sst_config.h>
 
 #include <sst/core/component.h>
 #include <sst/core/element.h>
