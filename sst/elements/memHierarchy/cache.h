@@ -153,6 +153,7 @@ private:
 		std::vector<CacheBlock> blocks;
         typedef std::deque<std::pair<MemEvent*, SourceInfo_t> > eventQueue_t;
         std::map<Addr, eventQueue_t> waitingEvents;
+        std::deque<Addr> waitQueue;
 		Cache *cache;
 
 		CacheRow() {}

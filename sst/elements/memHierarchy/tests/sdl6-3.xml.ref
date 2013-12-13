@@ -19088,8 +19088,8 @@ cpu: Received MemEvent with command 1 (response to 101451, addr 0x3577c) [Time: 
 cpu: Received MemEvent with command 1 (response to 101477, addr 0x53608) [Time: 1147] [7 outstanding requests]
 cpu: 1476 Issued Write (101580) for address 0xfe674
 cpu: 1475 Issued Read (101585) for address 0x6b138
-cpu: Received MemEvent with command 1 (response to 101474, addr 0x10f4c) [Time: 1546] [8 outstanding requests]
-cpu: Received MemEvent with command 1 (response to 101466, addr 0xaf768) [Time: 1736] [7 outstanding requests]
+cpu: Received MemEvent with command 1 (response to 101466, addr 0xaf768) [Time: 1725] [8 outstanding requests]
+cpu: Received MemEvent with command 1 (response to 101474, addr 0x10f4c) [Time: 1557] [7 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 101495, addr 0xdedc4) [Time: 1149] [6 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 101510, addr 0x7ec94) [Time: 1157] [5 outstanding requests]
 cpu: 1474 Issued Write (101612) for address 0xf08f8
@@ -22381,8 +22381,8 @@ Cache l1cache stats:
 	# Invalidations:     0
 	Avg Response Time:  1084.24 ns
 	Min Response Time:      2 ns
-	Max Response Time:      1734 ns
-	Response Time StdDev:   766.706
+	Max Response Time:      1723 ns
+	Response Time StdDev:   766.704
 Cache l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

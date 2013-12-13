@@ -2021,16 +2021,28 @@ void Cache::handleWriteResp(MemEvent *ev, SourceInfo_t src)
 
 void Cache::handlePendingEvents(CacheRow *row, CacheBlock *block)
 {
-    if ( row->waitingEvents.size() > 0 ) {
+    if ( !row->waitingEvents.empty() ) {
 
         std::map<Addr, CacheRow::eventQueue_t>::iterator q = row->waitingEvents.end();
         if ( block ) {
             q = row->waitingEvents.find(block->baseAddr);
+            // There's no std::deque<T>::find
+            for ( std::deque<Addr>::iterator qi = row->waitQueue.begin() ; qi != row->waitQueue.end() ; ++qi ) {
+                if ( *qi == block->baseAddr ) {
+                    row->waitQueue.erase(qi);
+                    break;
+                }
+            }
         }
 
         /* Pick one, if we don't have a specific queue. */
         if ( row->waitingEvents.end() == q ) {
-            q = row->waitingEvents.begin();
+            // Repeat popping things off the queue if they've been removed from the list.
+            while ( row->waitingEvents.end() == q && !row->waitQueue.empty() ) {
+                Addr addr = row->waitQueue.front();
+                row->waitQueue.pop_front();
+                q = row->waitingEvents.find(addr);
+            }
         }
 
         if ( row->waitingEvents.end() != q ) {
@@ -2314,9 +2326,13 @@ Cache::CacheBlock* Cache::CacheRow::getLRU(void)
 void Cache::CacheRow::addWaitingEvent(MemEvent *ev, SourceInfo_t src)
 {
     Addr blockaddr = cache->addrToBlockAddr(ev->getAddr());
+    if ( waitingEvents[blockaddr].empty() ) {
+        // If we're not already waiting for this block, add it to the ordering queue.
+        waitQueue.push_back(blockaddr);
+    }
     waitingEvents[blockaddr].push_back(std::make_pair(ev, src));
     cache->dbg.output(CALL_INFO, "Event is number %zu in queue for this row.\n",
-            waitingEvents[blockaddr].size());
+            waitQueue.size());
     printRow();
 }
 

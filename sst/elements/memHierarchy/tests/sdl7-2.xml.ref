@@ -20330,12 +20330,12 @@ cpu: 866 Issued Read (39371) for address 0x5e4710
 cpu: Received MemEvent with command 1 (response to 39337, addr 0xc79988) [Time: 1047] [9 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 39339, addr 0x9df234) [Time: 1057] [8 outstanding requests]
 cpu: 865 Issued Read (39376) for address 0x340800
-cpu: Received MemEvent with command 1 (response to 39344, addr 0x4b2928) [Time: 1071] [8 outstanding requests]
+cpu: Received MemEvent with command 1 (response to 39336, addr 0x65cb3c) [Time: 1276] [8 outstanding requests]
 cpu: 864 Issued Read (39380) for address 0x285590
 cpu: Received MemEvent with command 1 (response to 39349, addr 0x4d7b7c) [Time: 1047] [8 outstanding requests]
 cpu: 863 Issued Read (39384) for address 0xa54864
 cpu: Received MemEvent with command 1 (response to 39352, addr 0x4a8e30) [Time: 1047] [8 outstanding requests]
-cpu: Received MemEvent with command 1 (response to 39336, addr 0x65cb3c) [Time: 1798] [7 outstanding requests]
+cpu: Received MemEvent with command 1 (response to 39344, addr 0x4b2928) [Time: 1593] [7 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 39358, addr 0x9f29cc) [Time: 1047] [6 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 39364, addr 0x3fff5c) [Time: 1054] [5 outstanding requests]
 cpu: 862 Issued Read (39393) for address 0xf2610
@@ -22228,5 +22228,5 @@ Cache l1cache stats:
 	# Invalidations:     0
 	Avg Response Time:  1059.68 ns
 	Min Response Time:      2 ns
-	Max Response Time:      1796 ns
-	Response Time StdDev:   81.8814
+	Max Response Time:      1591 ns
+	Response Time StdDev:   80.6375
