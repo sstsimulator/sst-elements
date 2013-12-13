@@ -146,7 +146,7 @@ void ArielCore::handleEvent(SST::Event* event) {
 
 void ArielCore::finishCore() {
 	// Close the trace file if we did in fact open it.
-	if(traceFile != NULL) {
+	if(enableTracing) {
 		fclose(traceFile);
 	}
 }
