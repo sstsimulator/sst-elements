@@ -24,19 +24,11 @@ namespace Firefly {
 
 class Info;
 
-// Callback Functor
-class CBF {
-  public:
-    typedef VoidArg_FunctorBase< CBF* > Functor;
-    CBF() : callback(NULL) {}
-    virtual ~CBF() { if ( callback ) delete callback; }
-
-    Functor* callback;
-};
-
 class CtrlMsg : public ProtocolAPI {
 
   public:
+
+    typedef VoidArg_FunctorBase< bool > Functor;
 
     typedef uint32_t tag_t;
     typedef uint32_t rank_t;
@@ -66,7 +58,8 @@ class CtrlMsg : public ProtocolAPI {
         BaseInfo( std::vector<IoVec> _ioVec, rank_t rank,
             tag_t tag, group_t group, Response* resp ) : 
             ioVec( _ioVec ),
-            response( resp )
+            response( resp ),
+            pending( false )
         {
             hdr.rank  = rank,
             hdr.tag   = tag;
@@ -82,6 +75,7 @@ class CtrlMsg : public ProtocolAPI {
         std::vector<IoVec>  ioVec;
         MsgHdr              hdr; 
         Response*           response;
+        bool                pending;
     };
 
     typedef struct BaseInfo RecvInfo;
@@ -117,21 +111,23 @@ class CtrlMsg : public ProtocolAPI {
 
         bool isSend() { return m_type == Send; }
         bool isDone() { return m_info == NULL; }
+        bool pending() { assert( m_info); return m_info->pending; }
+
         BaseInfo* info() { assert( m_info); return m_info; }
+
         void setResponse( rank_t rank, tag_t tag, size_t length ) {
             if ( m_info->response ) {
                 m_info->response->rank = rank;
                 m_info->response->tag = tag;
                 m_info->response->length = length;
             }
+            m_info->pending = true;
         }
-        void setDoneFunc( CBF::Functor* doneFunc ) { m_doneFunc = doneFunc; }
-        CBF::Functor* doneFunc() { return m_doneFunc; }
+        void*               userInfo;
 
       private:
         enum { Send, Recv } m_type;
         BaseInfo*           m_info;
-        CBF::Functor*       m_doneFunc;
     };
 
   private:
@@ -165,16 +161,16 @@ class CtrlMsg : public ProtocolAPI {
             blocked( _blocked )
         {}
     
-        DelayEvent( CBF::Functor* _functor ) :
+        DelayEvent( Functor* _functor ) :
             Event(), 
             functor( _functor ),
-            type( Functor )
+            type( DoFunctor )
         { }
 
         IORequest* ioRequest;
         CommReq*   commReq;
-        CBF::Functor* functor;
-        enum { FromFunc, FromOther, Functor } type;
+        Functor* functor;
+        enum { FromFunc, FromOther, DoFunctor } type;
         bool    blocked;
     };
 
@@ -195,31 +191,31 @@ class CtrlMsg : public ProtocolAPI {
 
     // this group of functions is used by the function state machine
     void send( void* buf, size_t len, int dest, int tag, int group,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
 
     void sendv( std::vector<IoVec>&, int dest, int tag, int group,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
 
     void sendv( std::vector<IoVec>&, int dest, int tag,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
 
     void isendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq*,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
     void isendv( std::vector<IoVec>&, int dest, int tag, CommReq*,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
 
     void recv( void* buf, size_t len, int src, int tag, int group,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
     void recvv( std::vector<IoVec>&, int src, int tag, Response*,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
     void irecv( void* buf, size_t len, int src, int tag, int group, CommReq*,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
     void irecvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq*,
-                                        CBF::Functor* = NULL );
+                                        Functor* = NULL );
     void irecvv( std::vector<IoVec>&, int src,  int tag, CommReq*, 
-                 CBF::Functor*, Response*, CBF::Functor* = NULL );
-    void wait( CommReq*, CBF::Functor* = NULL );
-    void waitAny( std::set<CommReq*>&, CBF::Functor* = NULL );
+                                        Response*, Functor* = NULL );
+    void wait( CommReq*, Functor* = NULL );
+    void waitAny( std::set<CommReq*>&, Functor* = NULL );
 
   protected:
 
@@ -242,14 +238,13 @@ class CtrlMsg : public ProtocolAPI {
     int getCopyDelay( int nbytes ) { return m_copyTime * nbytes; }
 
     void _recv( bool blocking, void* buf, size_t len, int src,
-                            int tag, int group, CommReq*, CBF::Functor* );
+                            int tag, int group, CommReq*, Functor* );
     void _recvv( bool blocking, std::vector<IoVec>&, int src,
-                int tag, int group, CommReq*, 
-                CBF::Functor*, Response*, CBF::Functor* );
+                int tag, int group, CommReq*, Response*, Functor* );
     void _send( bool blocking, void* buf, size_t len, int dest,
-                            int tag, int group, CommReq*, CBF::Functor* );
+                            int tag, int group, CommReq*, Functor* );
     void _sendv( bool blocking,  std::vector<IoVec>&, int dest,
-                            int tag, int group, CommReq*, CBF::Functor* );
+                            int tag, int group, CommReq*, Functor* );
 
     void passCtrlToFunction(int delay );
     void passCtrlToHades( int delay );
@@ -272,7 +267,7 @@ class CtrlMsg : public ProtocolAPI {
     Link* m_outLink;
     Link* m_retLink;
     Link* m_delayLink;
-    CBF::Functor* m_returnFunctor;
+    Functor* m_returnFunctor;
 };
 
 }

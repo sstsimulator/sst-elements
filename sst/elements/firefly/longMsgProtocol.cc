@@ -124,7 +124,7 @@ void LongMsgProtocol::block( int count, Hermes::MessageRequest req[],
     postRecvAny( );
 }
 
-void LongMsgProtocol::unblock( Hermes::MessageRequest req )
+bool LongMsgProtocol::unblock( Hermes::MessageRequest req )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"req=%p numBlocked=%lu\n",req,
                                 m_blockedList.size());
@@ -153,36 +153,38 @@ void LongMsgProtocol::unblock( Hermes::MessageRequest req )
         }
     }
 
-    if ( m_blockedList.empty() ) {
-        m_my_dbg.verbose(CALL_INFO,1,0,"unblocking\n");
-        returnToFunction();
-    } else {
-        postRecvAny();
+    return m_blockedList.empty();
+}
+
+void LongMsgProtocol::finishRecvCBE( RecvEntry& recvEntry, MsgHdr& hdr )
+{
+    m_my_dbg.verbose(CALL_INFO,1,0,"finalize recvEntry data\n");
+    recvEntry.setDone();
+    recvEntry.resp->status = true;
+    recvEntry.resp->src    = hdr.srcRank; 
+    recvEntry.resp->tag    = hdr.tag; 
+    recvEntry.resp->count  = hdr.count; 
+    recvEntry.resp->dtype  = hdr.dtype;; 
+}
+
+void LongMsgProtocol::finishSendCBE( SendEntry& sendEntry )
+{
+    m_my_dbg.verbose(CALL_INFO,1,0,"finalize sendEntry data\n");
+    sendEntry.setDone();
+
+    if ( sendEntry.resp ) {
+        sendEntry.resp->status = true;
     }
 }
 
-void LongMsgProtocol::finished( CBF* x )
+void LongMsgProtocol::processBlocked( Hermes::MessageRequest req )
 {
-    if ( NULL == x || m_blockedList.empty() ) {
-        m_my_dbg.verbose(CALL_INFO,1,0,"Not blocked\n");
-        postRecvAny();
+    if ( unblock( req ) ) {
+        m_my_dbg.verbose(CALL_INFO,1,0,"unblocking\n");
+        returnToFunction();
     } else {
-        RecvCallbackEntry* cbe = dynamic_cast<RecvCallbackEntry*>(x);
-        if ( cbe ) {
-            cbe->recvEntry->setDone();
-            cbe->recvEntry->resp->src = cbe->hdr.srcRank; 
-            cbe->recvEntry->resp->tag = cbe->hdr.tag; 
-            cbe->recvEntry->resp->count = cbe->hdr.count; 
-            cbe->recvEntry->resp->dtype = cbe->hdr.dtype;; 
-            cbe->recvEntry->resp->status = true;
-            unblock( cbe->recvEntry );
-        } else {
-            SendCallbackEntry* cbe = dynamic_cast<SendCallbackEntry*>(x);
-            cbe->sendEntry->resp->status = true;
-            assert( cbe );
-            unblock( cbe->sendEntry );
-            cbe->sendEntry->setDone();
-        }
+        m_my_dbg.verbose(CALL_INFO,1,0,"nothing unblocked\n");
+        postRecvAny();
     }
 }
 
@@ -265,6 +267,7 @@ void LongMsgProtocol::finishRequest( Hermes::MessageRequest req,
     if ( recvEntry ) {
         *resp = *recvEntry->resp;
         if ( recvEntry->req ) {
+printf("recv %p\n",recvEntry->resp);
             delete recvEntry->resp;
             delete recvEntry;
         }
@@ -272,6 +275,7 @@ void LongMsgProtocol::finishRequest( Hermes::MessageRequest req,
         SendEntry* sendEntry = dynamic_cast<SendEntry*>(req);
         *resp = *sendEntry->resp;
         if ( sendEntry->req ) {
+printf("delete send %p\n",sendEntry->resp);
             delete sendEntry->resp;
             delete sendEntry;
         }
@@ -281,7 +285,6 @@ void LongMsgProtocol::finishRequest( Hermes::MessageRequest req,
 //
 // postSendEntry
 //
-
 void LongMsgProtocol::postSendEntry( SendEntry* entry )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"%s\n", entry->req ? "Isend":"Send");
@@ -290,8 +293,8 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 
     cbe->sendEntry = entry;
 
-    cbe->callback =
-        new CBF_Functor( this, &LongMsgProtocol::postSendEntry_CB, cbe ); 
+    SCBE_Functor* callback =
+        new SCBE_Functor( this, &LongMsgProtocol::postSendEntry_CB, cbe ); 
 
     cbe->hdr.count = entry->count;
     cbe->hdr.dtype = entry->dtype;
@@ -316,20 +319,18 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
     cbe->vec[0].ptr = &cbe->hdr;
     cbe->vec[0].len = sizeof(cbe->hdr);
 
-    cbe->destNode = 
+    IO::NodeId destNode =
             info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
 
-    sendv( cbe->vec, cbe->destNode, tag, cbe->callback );
+    sendv( cbe->vec, destNode, tag, callback );
 }
 
 //
 // postSendEntry_CB
 //
 
-CBF* LongMsgProtocol::postSendEntry_CB( CBF* x )
+bool LongMsgProtocol::postSendEntry_CB( SendCallbackEntry* scbe )
 {
-    SendCallbackEntry* scbe = static_cast<SendCallbackEntry*>(x); 
-    
     // long message
     if ( scbe->hdr.count && scbe->vec.size() == 1 ) {
 
@@ -346,18 +347,19 @@ CBF* LongMsgProtocol::postSendEntry_CB( CBF* x )
             returnToFunction();
         }
 
-        x = NULL;
-
     } else {
-        m_my_dbg.verbose(CALL_INFO,1,0,"short sendEntry setDone()\n");
-        scbe->sendEntry->resp->status = true;
-        scbe->sendEntry->setDone();
+        m_my_dbg.verbose(CALL_INFO,1,0,"short Msg end\n");
+
+        finishSendCBE( *scbe->sendEntry );
 
         m_my_dbg.verbose(CALL_INFO,1,0,"pass control to function\n");
         returnToFunction();
+
+        delete scbe;
     }
 
-    return x; 
+    // delete callback functor
+    return true; 
 }
 
 void LongMsgProtocol::postRecvAny(  )
@@ -368,8 +370,8 @@ void LongMsgProtocol::postRecvAny(  )
 
     rcbe->recvEntry = NULL;
 
-    rcbe->callback =
-                new CBF_Functor( this, &LongMsgProtocol::postRecvAny_CB, rcbe );
+    RCBE_Functor* callback =
+        new RCBE_Functor( this, &LongMsgProtocol::postRecvAny_irecv_CB, rcbe );
 
     rcbe->vec.resize(2);
 
@@ -379,24 +381,67 @@ void LongMsgProtocol::postRecvAny(  )
     rcbe->vec[0].len = sizeof(rcbe->hdr);
     rcbe->vec[1].len = rcbe->buf.size();
     rcbe->vec[1].ptr = &rcbe->buf[0];
+    rcbe->commReq.userInfo = rcbe;
 
-    recvv( rcbe->vec, AnyRank, AnyTag, &rcbe->ctrlResponse, rcbe->callback );
+    irecvv( rcbe->vec, AnyRank, AnyTag, &rcbe->commReq,
+                            &rcbe->ctrlResponse, callback );
+}
+
+bool LongMsgProtocol::postRecvAny_irecv_CB( RecvCallbackEntry* rcbe  )
+{
+    m_commReqs.insert( &rcbe->commReq );  
+
+    XXX_Functor* callback =
+        new XXX_Functor( this, &LongMsgProtocol::waitAny_CB, NULL );
+
+    m_my_dbg.verbose(CALL_INFO,1,0,"m_commReq.size()=%lu\n",m_commReqs.size());
+    CtrlMsg::waitAny( m_commReqs, callback );
+
+    // delete callback functor
+    return true;
+}
+
+bool LongMsgProtocol::waitAny_CB( void* )
+{
+    RecvCallbackEntry *cbe = NULL;
+    std::set<CommReq*>::iterator iter = m_commReqs.begin();
+    for ( ; iter != m_commReqs.end(); ++iter ) {
+        if ( (*iter)->isDone() ) {
+            cbe = static_cast<RecvCallbackEntry*>( (*iter)->userInfo );
+            m_commReqs.erase( iter );
+            break;
+        }
+    }
+    assert( cbe );
+    
+    // if there's a RecvEntry, a long message body has been received
+    if ( cbe->recvEntry ) {
+        finishRecvCBE( *cbe->recvEntry, cbe->hdr );
+
+        // state has changed, something may have become unblocked
+        processBlocked( cbe->recvEntry );
+    } else {
+        processRecvAny( cbe );
+    }
+
+    // delete callback functor
+    return true;
 }
 
 //
-// postRecvAny_CB
+// processRecvAny()
 //
-
-CBF* LongMsgProtocol::postRecvAny_CB( CBF* x )
+void LongMsgProtocol::processRecvAny( RecvCallbackEntry* cbe )
 {
-    RecvCallbackEntry* cbe = static_cast<RecvCallbackEntry*>(x);
-
     m_my_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x\n",
                             cbe->ctrlResponse.rank, cbe->ctrlResponse.tag);
 
     if ( ( cbe->ctrlResponse.tag & TagMask ) == LongMsgRdyTag ) {
 
-        processLongMsgRdyMsg( cbe );
+
+        processLongMsgRdyMsg( cbe->ctrlResponse.tag & ~TagMask,
+                         cbe->ctrlResponse.rank );
+        delete cbe;
 
     } else {
 
@@ -407,19 +452,24 @@ CBF* LongMsgProtocol::postRecvAny_CB( CBF* x )
             if ( checkMatch( cbe->hdr, *(*iter) ) ) {
                 m_my_dbg.verbose(CALL_INFO,1,0,"found match\n");
                 cbe->recvEntry = *iter;
+                m_postedQ.erase( iter );
                 break;
             } 
         }
 
-        assert(cbe->recvEntry);
+        if ( cbe->recvEntry ) {
 
-        if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
-            processShortMsg( cbe );
+            if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
+                processShortMsg( cbe );
+            } else {
+                processLongMsg( cbe );
+            }
         } else {
-            processLongMsg( cbe );
+            m_my_dbg.verbose(CALL_INFO,1,0,"save unexpected\n");
+            m_unexpectedQ.push_back( cbe );
+            postRecvAny();
         }
     }
-    return x;
 }
 
 void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
@@ -431,100 +481,88 @@ void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
 
     memcpy( cbe->recvEntry->buf, &cbe->buf[0], len );
 
-    finished( cbe );
+    finishRecvCBE( *cbe->recvEntry, cbe->hdr );
+
+    // got here from blocking postRecvEntry
+    if ( m_blockedList.empty() ) {
+        returnToFunction();
+    } else {
+        // state has changed, something may have become unblocked
+        processBlocked( cbe->recvEntry );
+    }
+    delete cbe;
 }
 
 void LongMsgProtocol::processLongMsg( RecvCallbackEntry* cbe )
 {
-    RecvCallbackEntry *newcbe = new RecvCallbackEntry; 
+    // reuse the RecvcCallbackEntry for receiving the body
+    cbe->key       = cbe->ctrlResponse.tag & ~TagMask;
+    cbe->srcNode   = cbe->ctrlResponse.rank; 
 
-    newcbe->recvEntry = cbe->recvEntry;
-    newcbe->key       = cbe->ctrlResponse.tag & ~TagMask;
-    newcbe->srcNode   = cbe->ctrlResponse.rank; 
-    newcbe->hdr       = cbe->hdr;
+    m_my_dbg.verbose(CALL_INFO,1,0,"src=%d key=%d\n", cbe->srcNode, cbe->key );
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"src=%d key=%d\n",
-                                        newcbe->srcNode, newcbe->key );
+    RCBE_Functor* callback = new RCBE_Functor( 
+              this, &LongMsgProtocol::processLongMsg_irecv_CB, cbe ); 
 
-    newcbe->callback = new CBF_Functor( 
-              this, &LongMsgProtocol::processLongMsg_irecv_ret_CB, newcbe ); 
+    cbe->vec.resize(1);
+    cbe->vec[0].ptr = cbe->recvEntry->buf;
+    cbe->vec[0].len = cbe->recvEntry->count * 
+                    info()->sizeofDataType( cbe->recvEntry->dtype );
 
-    newcbe->doneCallback = new CBF_Functor( 
-              this, &LongMsgProtocol::processLongMsg_irecv_done_CB, newcbe ); 
+    cbe->commReq.userInfo = cbe;
 
-    newcbe->vec.resize(1);
-    newcbe->vec[0].ptr = newcbe->recvEntry->buf;
-    newcbe->vec[0].len = newcbe->recvEntry->count * 
-                    info()->sizeofDataType( newcbe->recvEntry->dtype );
-
-    irecvv( newcbe->vec, newcbe->srcNode, newcbe->key | LongMsgBdyTag, 
-                &newcbe->commReq, newcbe->doneCallback, 
-                &newcbe->ctrlResponse, newcbe->callback  );
+    irecvv( cbe->vec, cbe->srcNode, cbe->key | LongMsgBdyTag, 
+                &cbe->commReq, &cbe->ctrlResponse, callback  );
 }
 
-CBF* LongMsgProtocol::processLongMsg_irecv_ret_CB( CBF* x )
+bool LongMsgProtocol::processLongMsg_irecv_CB( RecvCallbackEntry* rcbe )
 {
-    RecvCallbackEntry* rcbe = static_cast<RecvCallbackEntry*>(x);
-
     m_my_dbg.verbose(CALL_INFO,1,0,"recv for Long Msg body posted\n");
+
+    m_commReqs.insert( &rcbe->commReq );
 
     SendCallbackEntry* scbe = new SendCallbackEntry;
      
-    scbe->callback = new CBF_Functor( 
+    SCBE_Functor* callback = new SCBE_Functor( 
                     this, &LongMsgProtocol::longMsgSendRdy_CB, scbe ); 
 
     scbe->vec.resize(0);
 
-    sendv( scbe->vec, rcbe->srcNode, rcbe->key | LongMsgRdyTag, 
-                                scbe->callback );
+    sendv( scbe->vec, rcbe->srcNode, rcbe->key | LongMsgRdyTag, callback );
     
-    return NULL;
+    // delete callback functor
+    return true;
 }
 
-CBF* LongMsgProtocol::processLongMsg_irecv_done_CB( CBF* x )
-{
-    RecvCallbackEntry* cbe = static_cast<RecvCallbackEntry*>(x);
-
-    m_my_dbg.verbose(CALL_INFO,1,0,"Long Msg body received\n");
-
-    // Hack Warning!!!!
-    // When CBF is deleted by the calling function, the destructor deletes 
-    // callback if not null. The callback cannot be delete when active.
-    // The callback for irecvv SHOULD have returned and it is safe to delete it.
-    // doneCallback is not a member of CBF and will not get deleted.
-    // setting callback to doneCallback will cause doneCallback to be deleted
-    delete cbe->callback;
-    cbe->callback = cbe->doneCallback;
-
-    finished( cbe );
-
-    return x;
-}
-
-
-CBF* LongMsgProtocol::longMsgSendRdy_CB( CBF* x )
+bool LongMsgProtocol::longMsgSendRdy_CB( SendCallbackEntry* cbe )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"Rdy Msg sent\n");
 
-    finished( NULL );
+    delete cbe; 
 
-    return x;
+    // got here from blocking postRecvEntry
+    if ( m_blockedList.empty() ) {
+        returnToFunction();
+    } else {
+        // state has changed, something may have become unblocked
+        processBlocked( cbe->sendEntry );  
+    }
+
+    // delete callback functor
+    return true;
 }
 
-void LongMsgProtocol::processLongMsgRdyMsg( RecvCallbackEntry* cbe ) 
+void LongMsgProtocol::processLongMsgRdyMsg( int key, int dest ) 
 {
-    int key = cbe->ctrlResponse.tag & ~TagMask;
-
     m_my_dbg.verbose(CALL_INFO,1,0,"got LongMsgRdy message key=%#x\n", key);
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"Non-Blocked Long Msg Send\n");
     assert( m_longSendM.find( key ) != m_longSendM.end() );
+
     SendCallbackEntry* scbe = m_longSendM[ key ];
+
     m_longSendM.erase( key );
 
-    delete scbe->callback;
-
-    scbe->callback = new CBF_Functor(
+    SCBE_Functor* callback = new SCBE_Functor(
               this, &LongMsgProtocol::processLongMsgRdyMsg_CB, scbe );
 
     scbe->vec.resize(1);
@@ -534,18 +572,22 @@ void LongMsgProtocol::processLongMsgRdyMsg( RecvCallbackEntry* cbe )
     scbe->vec[0].ptr = scbe->sendEntry->buf;
 
     // Send the body of a Long Message
-    sendv( scbe->vec, cbe->ctrlResponse.rank, scbe->key | LongMsgBdyTag, 
-                                            scbe->callback );
+    sendv( scbe->vec, dest , scbe->key | LongMsgBdyTag, callback );
 }
 
-CBF* LongMsgProtocol::processLongMsgRdyMsg_CB( CBF* x ) 
+bool LongMsgProtocol::processLongMsgRdyMsg_CB( SendCallbackEntry* cbe ) 
 {
-    SendCallbackEntry* cbe = static_cast<SendCallbackEntry*>(x);
     m_my_dbg.verbose(CALL_INFO,1,0,"Long Msg body sent\n");
 
-    finished( cbe );
+    // the user send is now complete
+    finishSendCBE( *cbe->sendEntry );
 
-    return x;
+    delete cbe;
+
+    // state has changed, something may have become unblocked
+    processBlocked( cbe->sendEntry ) ;
+
+    return true;
 }
 
 //
@@ -554,20 +596,47 @@ CBF* LongMsgProtocol::processLongMsgRdyMsg_CB( CBF* x )
 
 void LongMsgProtocol::postRecvEntry( RecvEntry* entry )
 {
+    RecvCallbackEntry* cbe = NULL;
     m_my_dbg.verbose(CALL_INFO,1,0,"%s\n", entry->req ? "Irecv":"Recv");
 
     // We should block until there is room but for now punt 
     assert( m_postedQ.size() < MaxNumPostedRecvs );
 
-    m_postedQ.push_back( entry );
+    std::deque<RecvCallbackEntry*>::iterator iter = m_unexpectedQ.begin();
 
-    // Non-blocking
-    if ( entry->req ) {
-        m_my_dbg.verbose(CALL_INFO,1,0,"pass control to function\n");
-        returnToFunction();
+    m_my_dbg.verbose(CALL_INFO,1,0,"%lu\n",m_unexpectedQ.size());
+    // check for posted receives
+    for ( ; iter != m_unexpectedQ.end(); ++iter ) {
+        cbe = *iter;
+        if ( checkMatch( cbe->hdr, *entry) ) {
+            m_my_dbg.verbose(CALL_INFO,1,0,"found unexpected match\n");
+            m_unexpectedQ.erase( iter );
+            break;
+        } 
+        cbe = NULL; 
+    }
+
+    if ( cbe ) { 
+        cbe->recvEntry = entry;
+
+        if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
+            processShortMsg( cbe );
+        } else {
+            processLongMsg( cbe );
+        }
+
     } else {
-        Hermes::MessageRequest req = entry;
-        block( &req, &entry->resp );
+
+        m_postedQ.push_back( entry );
+        
+        // Non-blocking
+        if ( entry->req ) {
+            m_my_dbg.verbose(CALL_INFO,1,0,"pass control to function\n");
+            returnToFunction();
+        } else {
+            Hermes::MessageRequest req = entry;
+            block( &req, &entry->resp );
+        }
     }
 }
 

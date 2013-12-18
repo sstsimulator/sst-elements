@@ -90,6 +90,7 @@ void CtrlMsg::startSendStream( IO::NodeId dest )
 
     IORequest* req = new IORequest;
 
+    req->state = IORequest::Hdr;
     req->callback = new IO_Functor( this, &CtrlMsg::sendIODone, req );
     req->commReq = m_activeSendM[dest];
     req->node = dest;
@@ -142,6 +143,7 @@ void CtrlMsg::startRecvStream( IO::NodeId src )
 
     req->callback = new IO_Functor( this, &CtrlMsg::recvIODone, req );
     req->node = src;
+    req->state = IORequest::Hdr;
 
     req->ioVec.resize(1);
     req->ioVec[0].ptr = &req->hdr;
@@ -154,24 +156,24 @@ IO::Entry* CtrlMsg::recvIODone( IO::Entry* r )
 {
     IORequest* req = static_cast<IORequest*>(r);
 
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n", 
-                    req->state == IORequest::Hdr ? "Hdr" : "Body" );
+    m_dbg.verbose(CALL_INFO,1,0,"got %s from node %d\n", 
+             req->state == IORequest::Hdr ? "Hdr" : "Body", req->node );
 
     if ( IORequest::Hdr == req->state ) {
     
         int delay;
 
-        m_dbg.verbose(CALL_INFO,1,0,"got data from %d\n", req->node );
-
         req->commReq = findPostedRecv( req->hdr, delay );    
 
         if ( req->commReq ) {
-            m_dbg.verbose(CALL_INFO,1,0,"found a posted receive\n");
+            m_dbg.verbose(CALL_INFO,1,0,"found a posted receive rank=%d "
+                    "tag=%#x len=%lu\n",req->hdr.rank, req->hdr.tag,
+                        req->hdr.len );
             req->commReq->setResponse( req->hdr.rank, req->hdr.tag, 
                                                     req->hdr.len  );
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"delay %d\n",delay);
+        m_dbg.verbose(CALL_INFO,2,0,"delay %d\n",delay);
         m_delayLink->send( delay, new DelayEvent( req ) );
 
     } else {
@@ -207,9 +209,8 @@ void CtrlMsg::delayHandler( SST::Event* e )
         }
     } else {
         m_dbg.verbose(CALL_INFO,1,0,"Functor %p\n", event->functor);
-        CBF* tmp = (*event->functor)();
-        if ( tmp ) {
-            delete tmp;
+        if ( (*event->functor)() ) {
+            delete event->functor;
         }
     }
     
@@ -229,7 +230,7 @@ void CtrlMsg::recvBody( IORequest* req )
 
             size_t left = req->hdr.len;
             for ( unsigned int i = 0; i < req->ioVec.size() && left; i++ ) {
-                m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
+                m_dbg.verbose(CALL_INFO,2,0,"vec=%d len=%lu ptr=%p\n",i,
                                     req->commReq->info()->ioVec[i].len, 
                                     req->commReq->info()->ioVec[i].ptr);
 
@@ -238,7 +239,8 @@ void CtrlMsg::recvBody( IORequest* req )
 
                 req->ioVec[i].ptr = req->commReq->info()->ioVec[i].ptr;
 
-                m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
+
+                m_dbg.verbose(CALL_INFO,2,0,"vec=%d len=%lu ptr=%p\n",i,
                                     req->ioVec[i].len, 
                                     req->ioVec[i].ptr);
 
@@ -276,9 +278,6 @@ void CtrlMsg::endStream( IORequest* req )
         if ( m_blockedReqs.find( req->commReq ) != m_blockedReqs.end() ) {
             m_blockedReqs.erase( req->commReq );
             passCtrlToFunction(0);
-        } else if ( req->commReq->doneFunc() ) {
-            m_delayLink->send( 0, 
-                    new DelayEvent( req->commReq->doneFunc() ) );
         } else {
             passCtrlToHades(0);
         }
@@ -293,7 +292,7 @@ void CtrlMsg::endStream( IORequest* req )
         std::set<CommReq*>::iterator iter = m_blockedReqs.begin();
         for ( ; iter != m_blockedReqs.end(); ++iter ) 
         {
-            if ( ! (*iter)->isSend() &&
+            if ( ! (*iter)->isSend() && ! (*iter)->pending() && 
                 ( ioReq = processUnexpectedMatch( (*iter), delay ) ) )
             {
                 m_dbg.verbose(CALL_INFO,1,0,"found unexpected msg, delay=%d\n",
@@ -411,7 +410,7 @@ CtrlMsg::IORequest* CtrlMsg::findUnexpectedRecv( RecvInfo& info, int& delay )
 }
 
 void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group,
-                                        CBF::Functor* functor ) 
+                                        Functor* functor ) 
 {
     CommReq* req = &m_xxxReq;
 
@@ -419,7 +418,7 @@ void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group,
 }
 
 void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag, int group,
-                                        CBF::Functor* functor )
+                                        Functor* functor )
 {
     CommReq* req = &m_xxxReq;
 
@@ -427,7 +426,7 @@ void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag, int group,
 }
 
 void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag,
-                                        CBF::Functor* functor )
+                                        Functor* functor )
 {
     CommReq* req = &m_xxxReq;
 
@@ -435,49 +434,46 @@ void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag,
 }
 
 void CtrlMsg::isendv(std::vector<IoVec>& ioVec, int dest, int tag,
-                            CommReq* req, CBF::Functor* functor )
+                            CommReq* req, Functor* functor )
 {
     _sendv( false, ioVec, dest, tag, Hermes::GroupWorld, req, functor );
 }
 
 void CtrlMsg::recv( void* buf, size_t len, int src, int tag, int group,
-                                            CBF::Functor* functor )
+                                            Functor* functor )
 {
     CommReq* req = &m_xxxReq;
     _recv( true, buf, len, src, tag, group, req, functor );
 }
 
 void CtrlMsg::recvv( std::vector<IoVec>& ioVec, int src, int tag, 
-                                Response* response, CBF::Functor* functor )
+                                Response* response, Functor* functor )
 {
     CommReq* req = &m_xxxReq;
-    _recvv( true, ioVec, src, tag, Hermes::GroupWorld, req,
-                                                NULL, response, functor );
+    _recvv( true, ioVec, src, tag, Hermes::GroupWorld, req, response, functor );
 }
 
 
 void CtrlMsg::irecv( void* buf, size_t len, int src, int tag, int group, 
-                                    CommReq* req, CBF::Functor* functor )
+                                    CommReq* req, Functor* functor )
 {
     _recv( false, buf, len, src, tag, group, req, functor );
 }
 
 void CtrlMsg::irecvv(std::vector<IoVec>& ioVec, int src, int tag, int group,
-                            CommReq* req, CBF::Functor* functor )
+                            CommReq* req, Functor* functor )
 {
-    _recvv( false, ioVec, src, tag, group, req, NULL,  NULL, functor );
+    _recvv( false, ioVec, src, tag, group, req, NULL, functor );
 }
 
 void CtrlMsg::irecvv(std::vector<IoVec>& ioVec, int src, int tag,
-                    CommReq* req, CBF::Functor* doneFunc, 
-                        Response* resp, CBF::Functor* retFunc )
+                    CommReq* req, Response* resp, Functor* retFunc )
 {
-    _recvv( false, ioVec, src, tag, Hermes::GroupWorld, req, doneFunc,
-                    resp, retFunc );
+    _recvv( false, ioVec, src, tag, Hermes::GroupWorld, req, resp, retFunc );
 }
 
 void CtrlMsg::_send( bool blocked, void* buf, size_t len, int dest, int tag,
-                                int group, CommReq* req, CBF::Functor* functor )
+                                int group, CommReq* req, Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu dest=%d tag=%#x group=%d\n",
                                         buf,len,dest,tag,group);
@@ -490,7 +486,7 @@ void CtrlMsg::_send( bool blocked, void* buf, size_t len, int dest, int tag,
 }
 
 void CtrlMsg::_recv( bool blocked, void* buf, size_t len, int src, int tag,
-                                int group, CommReq* req, CBF::Functor* functor )
+                                int group, CommReq* req, Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu src=%d\n",buf,len,src);
     
@@ -498,18 +494,17 @@ void CtrlMsg::_recv( bool blocked, void* buf, size_t len, int src, int tag,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    _recvv( blocked, ioVec, src, tag, group, req, NULL, NULL, functor );
+    _recvv( blocked, ioVec, src, tag, group, req, NULL, functor );
 }
 
 void CtrlMsg::_sendv( bool blocked, std::vector<IoVec>& ioVec, int dest,
-                    int tag, int group, CommReq* req, CBF::Functor* functor )
+                    int tag, int group, CommReq* req, Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%#x group=%d\n", dest,tag,group);
 
     m_returnFunctor = functor;
 
     req->initSend( blocked, ioVec, dest, tag, group  );
-    req->setDoneFunc( NULL );
 
     m_sendQ.push_back( req );
 
@@ -538,15 +533,13 @@ void CtrlMsg::passCtrlToHades( int delay )
 }
 
 void CtrlMsg::_recvv( bool blocked, std::vector<IoVec>& ioVec, int src,
-    int tag, int group, CommReq* req, CBF::Functor* doneFunc, 
-                    Response* resp, CBF::Functor* retFunc )
+    int tag, int group, CommReq* req, Response* resp, Functor* retFunc )
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x group=%d\n", src,tag,group);
 
     m_returnFunctor = retFunc;
 
     req->initRecv( blocked, ioVec, src, tag, group, resp );
-    req->setDoneFunc( doneFunc );
 
     int delay;
     IORequest* ioReq = processUnexpectedMatch( req, delay );
@@ -568,7 +561,7 @@ void CtrlMsg::_recvv( bool blocked, std::vector<IoVec>& ioVec, int src,
     }
 }
 
-void CtrlMsg::wait( CommReq* req, CBF::Functor* functor )
+void CtrlMsg::wait( CommReq* req, Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
@@ -577,9 +570,11 @@ void CtrlMsg::wait( CommReq* req, CBF::Functor* functor )
     waitAny( reqs, functor );
 }
 
-void CtrlMsg::waitAny( std::set<CommReq*>& reqs, CBF::Functor* functor )
+void CtrlMsg::waitAny( std::set<CommReq*>& reqs, Functor* functor )
 {
     int delay = 0;
+
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
 
     m_returnFunctor = functor;
 
