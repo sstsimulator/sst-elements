@@ -26,6 +26,12 @@ class RecvEntry;
 
 class LongMsgProtocol : public CtrlMsg  {
 
+    class SelfEvent : public SST::Event {
+      public:
+        SelfEvent( VoidArg_FunctorBase<bool>* arg) : Event(), callback(arg) {}
+        VoidArg_FunctorBase<bool>* callback; 
+    };
+
     struct MsgHdr {
         uint32_t                count;
         Hermes::PayloadDataType dtype;
@@ -58,6 +64,8 @@ class LongMsgProtocol : public CtrlMsg  {
                                                             SCBE_Functor;
     typedef StaticArg_Functor<LongMsgProtocol, RecvCallbackEntry*, bool> 
                                                             RCBE_Functor;
+    typedef StaticArg_Functor<LongMsgProtocol, RecvEntry*, bool> 
+                                                            RE_Functor;
 
     typedef StaticArg_Functor<LongMsgProtocol, void*, bool > XXX_Functor;
 
@@ -89,6 +97,7 @@ class LongMsgProtocol : public CtrlMsg  {
 
   private:
     void retHandler(Event*);
+    void selfHandler(Event*);
     void returnToFunction();
     void finishRecvCBE( RecvEntry&, MsgHdr& );
     void finishSendCBE( SendEntry& );
@@ -105,7 +114,11 @@ class LongMsgProtocol : public CtrlMsg  {
     bool waitAny_CB( void * );
     bool postRecvAny_irecv_CB( RecvCallbackEntry* );
     void processRecvAny( RecvCallbackEntry* );
+    bool processRecvAny_CB( RecvCallbackEntry* );
     bool postSendEntry_CB( SendCallbackEntry* );
+
+    bool postRecvEntry_CB( RecvCallbackEntry* );
+    bool postRecvEntry_CB( RecvEntry* );
     bool processLongMsg_irecv_CB( RecvCallbackEntry* );
     bool longMsgSendRdy_CB( SendCallbackEntry* );
     bool processLongMsgRdyMsg_CB( SendCallbackEntry* );
@@ -114,14 +127,19 @@ class LongMsgProtocol : public CtrlMsg  {
     void processLongMsgRdyMsg( int key, int dest );
     void processLongMsg( RecvCallbackEntry* );
     void processShortMsg( RecvCallbackEntry* );
+    bool processShortMsg_CB( RecvCallbackEntry* );
+    void schedDelay( int, VoidArg_FunctorBase<bool>* );
 
     bool checkMatch( MsgHdr&, RecvEntry& );
+    int calcMatchDelay( int ) { return 0; }
+    int calcCopyDelay( int ) { return 0; }
 
     std::map<int,SendCallbackEntry*>  m_longSendM;
 
     Component*  m_owner;
     Output      m_my_dbg;
     Link*       m_my_retLink;
+    Link*       m_my_selfLink;
     int         m_longMsgKey;
     int         genLongMsgKey() { return m_longMsgKey++ & 0xffff; }
 

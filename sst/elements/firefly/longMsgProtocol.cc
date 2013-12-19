@@ -50,6 +50,14 @@ LongMsgProtocol::LongMsgProtocol( Component* owner, Params& params ) :
             (Output::output_location_t) params.find_integer("debug", 0);
 
     m_my_dbg.init("@t:LongMsgProtocol::@p():@l ", verboseLevel, 0, loc );
+
+    std::stringstream ss;
+    ss << this;
+
+    m_my_selfLink = m_owner->configureSelfLink( 
+                "LongMsgSelfLink." + ss.str(), "1 ps",
+      new Event::Handler<LongMsgProtocol>(this,&LongMsgProtocol::selfHandler));
+
 }
 
 void LongMsgProtocol::setup()
@@ -75,6 +83,16 @@ void LongMsgProtocol::setRetLink(SST::Link* link)
     CtrlMsg::setRetLink(link);
 }
 
+void LongMsgProtocol::selfHandler( SST::Event* e )
+{
+    SelfEvent* event = static_cast<SelfEvent*>(e);
+    if ( (*event->callback)() ) {
+        delete event->callback;
+    }
+    delete e;
+}
+
+
 void LongMsgProtocol::retHandler( SST::Event* e )
 {
     m_my_retLink->send( 0, e );
@@ -83,6 +101,12 @@ void LongMsgProtocol::retHandler( SST::Event* e )
 void LongMsgProtocol::returnToFunction()
 {
     m_my_retLink->send(0,NULL);
+}
+
+void LongMsgProtocol::schedDelay( int delay, 
+                            VoidArg_FunctorBase<bool>* callback )
+{
+    m_my_selfLink->send( delay, new SelfEvent( callback ) );
 }
 
 void LongMsgProtocol::block( Hermes::MessageRequest req[], 
@@ -447,8 +471,10 @@ void LongMsgProtocol::processRecvAny( RecvCallbackEntry* cbe )
 
         std::deque<RecvEntry*>::iterator iter = m_postedQ.begin();
 
+        int numMatch = 0;
         // check for posted receives
         for ( ; iter != m_postedQ.end(); ++iter ) {
+            ++numMatch;
             if ( checkMatch( cbe->hdr, *(*iter) ) ) {
                 m_my_dbg.verbose(CALL_INFO,1,0,"found match\n");
                 cbe->recvEntry = *iter;
@@ -457,19 +483,27 @@ void LongMsgProtocol::processRecvAny( RecvCallbackEntry* cbe )
             } 
         }
 
-        if ( cbe->recvEntry ) {
-
-            if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
-                processShortMsg( cbe );
-            } else {
-                processLongMsg( cbe );
-            }
-        } else {
-            m_my_dbg.verbose(CALL_INFO,1,0,"save unexpected\n");
-            m_unexpectedQ.push_back( cbe );
-            postRecvAny();
-        }
+        schedDelay( calcMatchDelay( numMatch), new RCBE_Functor( 
+              this, &LongMsgProtocol::processRecvAny_CB, cbe ) ); 
     }
+}
+    
+
+bool LongMsgProtocol::processRecvAny_CB( RecvCallbackEntry* cbe )
+{
+    if ( cbe->recvEntry ) {
+
+        if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
+            processShortMsg( cbe );
+        } else {
+            processLongMsg( cbe );
+        }
+    } else {
+        m_my_dbg.verbose(CALL_INFO,1,0,"save unexpected\n");
+        m_unexpectedQ.push_back( cbe );
+        postRecvAny();
+    }
+    return true;
 }
 
 void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
@@ -481,6 +515,12 @@ void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
 
     memcpy( cbe->recvEntry->buf, &cbe->buf[0], len );
 
+    schedDelay( calcCopyDelay(len), new RCBE_Functor( 
+              this, &LongMsgProtocol::processShortMsg_CB, cbe ) ); 
+}
+
+bool LongMsgProtocol::processShortMsg_CB( RecvCallbackEntry* cbe )
+{
     finishRecvCBE( *cbe->recvEntry, cbe->hdr );
 
     // got here from blocking postRecvEntry
@@ -491,6 +531,7 @@ void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
         processBlocked( cbe->recvEntry );
     }
     delete cbe;
+    return true;
 }
 
 void LongMsgProtocol::processLongMsg( RecvCallbackEntry* cbe )
@@ -596,6 +637,7 @@ bool LongMsgProtocol::processLongMsgRdyMsg_CB( SendCallbackEntry* cbe )
 
 void LongMsgProtocol::postRecvEntry( RecvEntry* entry )
 {
+    int numMatch = 0;
     RecvCallbackEntry* cbe = NULL;
     m_my_dbg.verbose(CALL_INFO,1,0,"%s\n", entry->req ? "Irecv":"Recv");
 
@@ -606,9 +648,12 @@ void LongMsgProtocol::postRecvEntry( RecvEntry* entry )
 
     m_my_dbg.verbose(CALL_INFO,1,0,"%lu\n",m_unexpectedQ.size());
     // check for posted receives
+    
     for ( ; iter != m_unexpectedQ.end(); ++iter ) {
         cbe = *iter;
+        ++numMatch;
         if ( checkMatch( cbe->hdr, *entry) ) {
+            cbe->recvEntry = entry;
             m_my_dbg.verbose(CALL_INFO,1,0,"found unexpected match\n");
             m_unexpectedQ.erase( iter );
             break;
@@ -616,28 +661,38 @@ void LongMsgProtocol::postRecvEntry( RecvEntry* entry )
         cbe = NULL; 
     }
 
-    if ( cbe ) { 
-        cbe->recvEntry = entry;
-
-        if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
-            processShortMsg( cbe );
-        } else {
-            processLongMsg( cbe );
-        }
-
+    if ( cbe ) {
+        schedDelay( calcMatchDelay( numMatch), new RCBE_Functor( 
+              this, &LongMsgProtocol::postRecvEntry_CB, cbe ) ); 
     } else {
-
-        m_postedQ.push_back( entry );
-        
-        // Non-blocking
-        if ( entry->req ) {
-            m_my_dbg.verbose(CALL_INFO,1,0,"pass control to function\n");
-            returnToFunction();
-        } else {
-            Hermes::MessageRequest req = entry;
-            block( &req, &entry->resp );
-        }
+        schedDelay( calcMatchDelay( numMatch), new RE_Functor( 
+              this, &LongMsgProtocol::postRecvEntry_CB, entry ) ); 
     }
+}
+
+bool LongMsgProtocol::postRecvEntry_CB( RecvCallbackEntry* cbe )
+{
+    if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
+        processShortMsg( cbe );
+    } else {
+        processLongMsg( cbe );
+    }
+    return true;
+}
+
+bool LongMsgProtocol::postRecvEntry_CB( RecvEntry* entry )
+{
+    m_postedQ.push_back( entry );
+        
+    // Non-blocking
+    if ( entry->req ) {
+        m_my_dbg.verbose(CALL_INFO,1,0,"pass control to function\n");
+        returnToFunction();
+    } else {
+        Hermes::MessageRequest req = entry;
+        block( &req, &entry->resp );
+    }
+    return true;
 }
 
 //
