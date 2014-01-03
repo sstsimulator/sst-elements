@@ -282,7 +282,7 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 #ifdef ARIEL_DEBUG
-	printf("Perform a tlvl_memcpy from Ariel from %p to %p length %llu\n",
+	fprintf(stderr, "Perform a tlvl_memcpy from Ariel from %p to %p length %llu\n",
 		source, dest, size);
 #endif
 
@@ -298,7 +298,7 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 	UINT32 thr = (UINT32) currentThread;
 
 	if(thr >= core_count) {
-		printf("Thread ID: %lu is greater than core count.\n", thr);
+		fprintf(stderr, "Thread ID: %lu is greater than core count.\n", thr);
 		exit(-4);
 	}
 
@@ -323,7 +323,7 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 	free(buffer);
 
 #ifdef ARIEL_DEBUG
-	printf("Done with ariel memcpy.\n");
+	fprintf(stderr, "Done with ariel memcpy.\n");
 #endif
 
 	return 0;
@@ -331,10 +331,10 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 
 void* ariel_tlvl_malloc(size_t size, int level) {
 #ifdef ARIEL_DEBUG
-	printf("Perform a tlvl_malloc from Ariel %llu\n", size);
+	fprintf(stderr, "Perform a tlvl_malloc from Ariel %zu, level %d\n", size, level);
 #endif
 	if(0 == size) {
-		printf("YOU REQUESTED ZERO BYTES\n");
+		fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
 		void *bt_entries[64];
 		int entry_returned = backtrace(bt_entries, 64);
 		backtrace_symbols_fd(bt_entries, entry_returned, 1);
@@ -352,7 +352,7 @@ void* ariel_tlvl_malloc(size_t size, int level) {
 	UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-	printf("Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
+	fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
 		thr);
 #endif
 
@@ -369,8 +369,6 @@ void* ariel_tlvl_malloc(size_t size, int level) {
 
 	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
 
-	printf("TLVL_MALLOC_LEVEL=%llu \n", allocationLevel);
-
 	copy(&buffer[0], &issueTLMMarker, sizeof(issueTLMMarker));
 	copy(&buffer[sizeof(issueTLMMarker)], &virtualAddress, sizeof(virtualAddress));
 	copy(&buffer[sizeof(issueTLMMarker) + sizeof(virtualAddress)], &allocationLength,
@@ -380,12 +378,12 @@ void* ariel_tlvl_malloc(size_t size, int level) {
 
         write(pipe_id[thr], buffer, BUFFER_LENGTH);
 
+	free(buffer);
+
 #ifdef ARIEL_DEBUG
-	printf("Ariel tlvl_malloc call allocates data at address: %llu\n",
+	fprintf(stderr, "Ariel tlvl_malloc call allocates data at address: 0x%llx\n",
 		(uint64_t) real_ptr);
 #endif
-
-	free(buffer);
 
 	return real_ptr;
 }
@@ -395,7 +393,7 @@ void ariel_tlvl_free(void* ptr) {
 	UINT32 thr = (UINT32) currentThread;
 
 #ifdef ARIEL_DEBUG
-	printf("Perform a tlvl_free from Ariel (pointer = %p) on thread %lu\n", ptr, thr);
+	fprintf(stderr, "Perform a tlvl_free from Ariel (pointer = %p) on thread %lu\n", ptr, thr);
 #endif
 	free(ptr);
 	
@@ -411,13 +409,13 @@ void ariel_tlvl_free(void* ptr) {
 }
 
 void mapped_ariel_enable() {
-	printf("ARIEL: Enabling memory and instruction tracing from program control.\n");
+	fprintf(stderr, "ARIEL: Enabling memory and instruction tracing from program control.\n");
  	enable_output = true;
 }
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
 //	if(SSTVerbosity.Value() > 0) {
-//		printf("ARIEL: Examining routine [%s] for instrumentation\n", RTN_Name(rtn).c_str());
+//		fprintf(stderr, "ARIEL: Examining routine [%s] for instrumentation\n", RTN_Name(rtn).c_str());
 //	}
 
 /*	if(RTN_Name(rtn) == "malloc") {
@@ -425,35 +423,35 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		std::cout << "Identified a malloc replacement function." << std::endl;
 	} else if (RTN_Name(rtn) == "tlvl_malloc") {
 		// This means malloc far away.
-		printf("Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
+		fprintf(stderr, "Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_malloc);
-		printf("Replacement complete.\n");
+		fprintf(stderr, "Replacement complete.\n");
 	} else if (RTN_Name(rtn) == "tlvl_free") {
-		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
+		fprintf(stderr, "Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
-		printf("Replacement complete.\n");
+		fprintf(stderr, "Replacement complete.\n");
 	} else*/ 
 
 	if (RTN_Name(rtn) == "ariel_enable") {
-		printf("Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
+		fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
-		printf("Replacement complete.\n");
+		fprintf(stderr,"Replacement complete.\n");
 		return;
- 	} else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_malloc") {
-		// This means we want a special malloc to be used (needs a TLB map inside the virtual core)
-               	printf("Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
-               	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_malloc);
-               	printf("Replacement complete.\n");
-	} else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_free") {
-		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
-               	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
-               	printf("Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_malloc") {
+        // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
+        fprintf(stderr,"Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
+        AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_malloc);
+        fprintf(stderr,"Replacement complete. (%p)\n", ret);
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_free") {
+        fprintf(stderr,"Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
+        fprintf(stderr, "Replacement complete.\n");
 	}
 
  /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
-	//	printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
+	//	fprintf(stderr, "Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
 	//	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
-	//	printf("Replacement complete.\n");
+	//	fprintf(stderr, "Replacement complete.\n");
 	}*/
 }
 
@@ -502,20 +500,20 @@ int main(int argc, char *argv[])
 			named_pipe_path_core);
 		exit(-1);
     	    } else {
-		printf("Successfully created write pipe for: %s\n", named_pipe_path_core);
+		fprintf(stderr, "Successfully created write pipe for: %s\n", named_pipe_path_core);
             }
     }
 
-	printf("ARIEL-SST PIN tool activating with %lu threads\n", core_count);
+	fprintf(stderr, "ARIEL-SST PIN tool activating with %lu threads\n", core_count);
 	fflush(stdout);
 
     sleep(1);
 
     if(StartupMode.Value() == 1) {
-	printf("ARIEL: Tool is configured to begin with profiling immediately.\n");
+	fprintf(stderr, "ARIEL: Tool is configured to begin with profiling immediately.\n");
 	enable_output = true;
     } else if (StartupMode.Value() == 0) {
-	printf("ARIEL: Tool is configured to suspend profiling until program control\n");
+	fprintf(stderr, "ARIEL: Tool is configured to suspend profiling until program control\n");
 	enable_output = false;
     }
 
@@ -523,6 +521,8 @@ int main(int argc, char *argv[])
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     RTN_AddInstrumentFunction(InstrumentRoutine, 0);
 
+    fprintf(stderr, "ARIEL: Starting program.\n");
+    fflush(stdout);
     PIN_StartProgram();
 
     return 0;
