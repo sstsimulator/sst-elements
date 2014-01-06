@@ -14,6 +14,7 @@
 
 #include <sst/core/event.h>
 
+#include <string.h>
 #include "cmdQueueEntry.h"
 
 namespace SST {

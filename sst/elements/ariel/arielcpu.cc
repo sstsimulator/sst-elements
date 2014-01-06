@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <string.h>
+
 using namespace SST::ArielComponent;
 
 ArielCPU::ArielCPU(ComponentId_t id, Params& params) :

@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sst/elements/hermes/msgapi.h>
 
 #include "siriusreader.h"

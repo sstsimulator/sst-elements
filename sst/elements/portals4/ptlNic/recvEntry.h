@@ -13,6 +13,7 @@
 #define _recvEntry_h
 
 #include <vector>
+#include <string.h>
 #include "ptlNicTypes.h"
 #include "callback.h"
 #include "./debug.h"

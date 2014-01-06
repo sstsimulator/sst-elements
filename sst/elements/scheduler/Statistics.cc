@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string>
 #include <time.h>
+#include <string.h>
 
 #include "AllocInfo.h"
 #include "Allocator.h"
