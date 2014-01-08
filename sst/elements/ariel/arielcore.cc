@@ -8,8 +8,8 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
 		perform_checks(perform_address_checks),
 		enableTracing((traceFilePrefix != "")) {
 
-	verbosity = (uint32_t) output->getVerboseLevel();
 	output = out;
+	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	fd_input = fd_in;
 	cacheLink = coreToCacheLink;
