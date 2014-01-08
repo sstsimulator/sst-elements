@@ -1631,7 +1631,14 @@ bool Cache::cancelInvalidate(CacheBlock *block)
             MemEvent *origEV = waitingEvents.front().first;
             SourceInfo_t origSRC = waitingEvents.front().second;
             waitingEvents.pop_front();
-            self_link->send(1, new SelfEvent(this, &Cache::retryEvent, origEV, NULL, origSRC));
+            dbg.output(CALL_INFO, "Reissuing event (%"PRIu64", %d) (%s to %s) %s 0x%"PRIx64"\n",
+                    origEV->getID().first, origEV->getID().second,
+                    origEV->getSrc().c_str(), origEV->getDst().c_str(),
+                    CommandString[origEV->getCmd()], origEV->getAddr());
+            // Don't re-issue an invalidate.  We would have passed the the NACK on upstream.
+            if ( !(Invalidate == origEV->getCmd() && origEV->getAddr() == block->baseAddr) ) {
+                self_link->send(1, new SelfEvent(this, &Cache::retryEvent, origEV, NULL, origSRC));
+            }
         }
         return true;
     } else {
