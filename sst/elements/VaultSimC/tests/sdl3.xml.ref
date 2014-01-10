@@ -15,8 +15,8 @@ Each kernel will be executed 2 times.
  will be used to compute the reported bandwidth.
 -------------------------------------------------------------
 Your clock granularity/precision appears to be 1 microseconds.
-Each test below will take on the order of 120 microseconds.
-   (= 120 clock ticks)
+Each test below will take on the order of 151 microseconds.
+   (= 151 clock ticks)
 Increase the size of the arrays if this shows that
 you are not getting at least 20 clock ticks per test.
 -------------------------------------------------------------
@@ -27,31 +27,31 @@ precision of your system timer.
 Starting loop 0
 Starting loop 1
 Function    Best Rate MB/s  Avg time     Min time     Max time
-Copy:            1441.7     0.000111     0.000111     0.000111
-Scale:           1441.7     0.000111     0.000111     0.000111
-Add:             1831.9     0.000131     0.000131     0.000131
-Triad:           1860.7     0.000129     0.000129     0.000129
+Copy:            1427.8     0.000112     0.000112     0.000112
+Scale:           1060.2     0.000151     0.000151     0.000151
+Add:             1622.3     0.000148     0.000148     0.000148
+Triad:           1395.2     0.000172     0.000172     0.000172
 -------------------------------------------------------------
 Solution Validates: avg error less than 1.000000e-13 on all three arrays
 -------------------------------------------------------------
-M5:exiting: curTick()=1705204216 cause=`target called exit()` code=0
+M5:exiting: curTick()=1921078320 cause=`target called exit()` code=0
 Memory memory0 stats:
-	 # Reads:             17225
+	 # Reads:             17219
 	 # Writes:            8448
 	 # Canceled Reads:    0
-	 # Avg. Requests out: 1.220
+	 # Avg. Requests out: 1.073
 Memory memory1 stats:
-	 # Reads:             17689
-	 # Writes:            8701
+	 # Reads:             17682
+	 # Writes:            8698
 	 # Canceled Reads:    0
-	 # Avg. Requests out: 1.261
+	 # Avg. Requests out: 1.115
 --------------------------------------------------------------------
 Next Block Prefetch Engine:
-Cache Miss Events:         31641
-Cache Hit Events:          4929
-Cache Miss Rate (%):       86.5217
-Cache Hit Rate (%):        13.4783
-Prefetches Issued:         31641
+Cache Miss Events:         27385
+Cache Hit Events:          9126
+Cache Miss Rate (%):       75.0048
+Cache Hit Rate (%):        24.9952
+Prefetches Issued:         27385
 --------------------------------------------------------------------
 --------------------------------------------------------------------
 Next Block Prefetch Engine:
