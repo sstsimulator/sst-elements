@@ -88,7 +88,7 @@ void ZodiacSiriusTraceReader::setup() {
     }
 
     char logPrefix[512];
-    sprintf(logPrefix, "ZSirius::SimulatedRank[%d]: ", rank);
+    sprintf(logPrefix, "ZSirius::SimulatedRank[%8d][@p:@l][@t]: ", rank);
     string logPrefixStr = logPrefix;
     zOut.setPrefix(logPrefixStr);
 
@@ -273,6 +273,7 @@ void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {
 
 	// Just initialize the library nothing fancy to do here
 	msgapi->init(&retFunctor);
+	accumulateTimeInto = &nanoInit;
 }
 
 void ZodiacSiriusTraceReader::handleFinalizeEvent(ZodiacEvent* zEv) {
@@ -282,7 +283,7 @@ void ZodiacSiriusTraceReader::handleFinalizeEvent(ZodiacEvent* zEv) {
 
 	// Just finalize the library nothing fancy to do here
 	msgapi->fini(&retFunctor);
-	accumulateTimeInto = &nanoInit;
+	accumulateTimeInto = &nanoFinalize;
 }
 
 void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
