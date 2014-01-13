@@ -81,6 +81,18 @@ private:
   uint64_t zRecvBytes;
   uint64_t zIRecvBytes;
 
+  uint64_t nanoCompute;
+  uint64_t nanoSend;
+  uint64_t nanoRecv;
+  uint64_t nanoAllreduce;
+  uint64_t nanoBarrier;
+  uint64_t nanoInit;
+  uint64_t nanoFinalize;
+  uint64_t nanoWait;
+  uint64_t nanoIRecv;
+
+  uint64_t nextEventStartTimeNano;
+  uint64_t* accumulateTimeInto;
   double scaleCompute;
 
   ////////////////////////////////////////////////////////

@@ -100,6 +100,15 @@ void ZodiacSiriusTraceReader::setup() {
     zSendBytes = 0;
     zRecvBytes = 0;
     zIRecvBytes = 0;
+
+    nanoCompute = 0;
+    nanoSend = 0;
+    nanoRecv = 0;
+    nanoAllreduce = 0;
+    nanoBarrier = 0;
+
+    accumulateTimeInto = &nanoCompute;
+    nextEventStartTimeNano = 0;
 }
 
 void ZodiacSiriusTraceReader::init(unsigned int phase) {
@@ -107,18 +116,23 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "Completed simulation at: %"PRIu64"ns\n",
+	zOut.verbose(CALL_INFO, 1, 1, "Completed simulation at: %"PRIu64"ns\n",
 		getCurrentSimTimeNano());
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "Statistics for run are:\n");
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Send Count:         %"PRIu64"\n", zSendCount);
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Recv Count:         %"PRIu64"\n", zRecvCount);
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total IRecv Count:        %"PRIu64"\n", zIRecvCount);
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Wait Count:         %"PRIu64"\n", zWaitCount);
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Send Bytes:         %"PRIu64"\n", zSendBytes);
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Recv Bytes:         %"PRIu64"\n", zRecvBytes);
-	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Posted-IRecv Bytes: %"PRIu64"\n", zIRecvBytes);
+	zOut.verbose(CALL_INFO, 1, 1, "Statistics for run are:\n");
+	zOut.verbose(CALL_INFO, 1, 1, "- Total Send Count:           %" PRIu64 "\n", zSendCount);
+	zOut.verbose(CALL_INFO, 1, 1, "- Total Recv Count:           %" PRIu64 "\n", zRecvCount);
+	zOut.verbose(CALL_INFO, 1, 1, "- Total IRecv Count:          %" PRIu64 "\n", zIRecvCount);
+	zOut.verbose(CALL_INFO, 1, 1, "- Total Wait Count:           %" PRIu64 "\n", zWaitCount);
+	zOut.verbose(CALL_INFO, 1, 1, "- Total Send Bytes:           %" PRIu64 "\n", zSendBytes);
+	zOut.verbose(CALL_INFO, 1, 1, "- Total Recv Bytes:           %" PRIu64 "\n", zRecvBytes);
+	zOut.verbose(CALL_INFO, 1, 1, "- Total Posted-IRecv Bytes:   %" PRIu64 "\n", zIRecvBytes);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in compute:      %" PRIu64 " ns\n", nanoCompute);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in send:         %" PRIu64 " ns\n", nanoSend);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in recv:         %" PRIu64 " ns\n", nanoRecv);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in all-reduce:   %" PRIu64 " ns\n", nanoAllreduce);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in barrier:      %" PRIu64 " ns\n", nanoBarrier);
 
-	zOut.output("Completed at %"PRIu64"ns\n", getCurrentSimTimeNano());
+	zOut.output("Completed at %" PRIu64 " ns\n", getCurrentSimTimeNano());
 }
 
 ZodiacSiriusTraceReader::~ZodiacSiriusTraceReader() {
@@ -142,6 +156,13 @@ void ZodiacSiriusTraceReader::handleEvent(Event* ev)
 
 void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 {
+	// Accumulate the event time into the correct counter, then reset
+	// the last event time so we can keep track
+	const uint64_t sim_time_now = (uint64_t) getCurrentSimTimeNano();
+        *accumulateTimeInto += ( sim_time_now - nextEventStartTimeNano );
+	nextEventStartTimeNano = sim_time_now;
+
+	// Continune onwards to process the next event
 	ZodiacEvent* zEv = static_cast<ZodiacEvent*>(ev);
 
 	zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
@@ -218,6 +239,7 @@ void ZodiacSiriusTraceReader::handleBarrierEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing an Barrier event.\n");
 
 	msgapi->barrier(zBEv->getCommunicatorGroup(), &retFunctor);
+	accumulateTimeInto = &nanoBarrier;
 }
 
 void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
@@ -234,6 +256,7 @@ void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
 		zAEv->getDataType(),
 		zAEv->getOp(),
 		zAEv->getCommunicatorGroup(), &retFunctor);
+	accumulateTimeInto = &nanoAllreduce;
 }
 
 void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {
@@ -251,6 +274,7 @@ void ZodiacSiriusTraceReader::handleFinalizeEvent(ZodiacEvent* zEv) {
 
 	// Just finalize the library nothing fancy to do here
 	msgapi->fini(&retFunctor);
+	accumulateTimeInto = &nanoInit;
 }
 
 void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
@@ -268,6 +292,7 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 
 	zSendBytes += (msgapi->sizeofDataType(zSEv->getDataType()) * zSEv->getLength());
 	zSendCount++;
+	accumulateTimeInto = &nanoSend;
 }
 
 void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
@@ -289,6 +314,7 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 
 	zRecvBytes += (msgapi->sizeofDataType(zREv->getDataType()) * zREv->getLength());
 	zRecvCount++;
+	accumulateTimeInto = &nanoRecv;
 }
 
 void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
@@ -304,6 +330,7 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 
 	msgapi->wait( *msgReq, currentRecv, &retFunctor);
 	zWaitCount++;
+	accumulateTimeInto = &nanoWait;
 }
 
 void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
@@ -328,6 +355,7 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 
 	zIRecvBytes += (msgapi->sizeofDataType(zREv->getDataType()) * zREv->getLength());
 	zIRecvCount++;
+	accumulateTimeInto = &nanoIRecv;
 }
 
 void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
@@ -356,6 +384,8 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 		// We have run out of events
 		primaryComponentOKToEndSim();
 	}
+
+	accumulateTimeInto = &nanoCompute;
 }
 
 bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
