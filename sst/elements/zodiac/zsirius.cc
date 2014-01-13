@@ -106,6 +106,10 @@ void ZodiacSiriusTraceReader::setup() {
     nanoRecv = 0;
     nanoAllreduce = 0;
     nanoBarrier = 0;
+    nanoInit = 0;
+    nanoFinalize = 0;
+    nanoWait = 0;
+    nanoIRecv = 0;
 
     accumulateTimeInto = &nanoCompute;
     nextEventStartTimeNano = 0;
@@ -116,21 +120,25 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
-	zOut.verbose(CALL_INFO, 1, 1, "Completed simulation at: %"PRIu64"ns\n",
+	zOut.verbose(CALL_INFO, 1, 0, "Completed simulation at: %"PRIu64"ns\n",
 		getCurrentSimTimeNano());
-	zOut.verbose(CALL_INFO, 1, 1, "Statistics for run are:\n");
-	zOut.verbose(CALL_INFO, 1, 1, "- Total Send Count:           %" PRIu64 "\n", zSendCount);
-	zOut.verbose(CALL_INFO, 1, 1, "- Total Recv Count:           %" PRIu64 "\n", zRecvCount);
-	zOut.verbose(CALL_INFO, 1, 1, "- Total IRecv Count:          %" PRIu64 "\n", zIRecvCount);
-	zOut.verbose(CALL_INFO, 1, 1, "- Total Wait Count:           %" PRIu64 "\n", zWaitCount);
-	zOut.verbose(CALL_INFO, 1, 1, "- Total Send Bytes:           %" PRIu64 "\n", zSendBytes);
-	zOut.verbose(CALL_INFO, 1, 1, "- Total Recv Bytes:           %" PRIu64 "\n", zRecvBytes);
-	zOut.verbose(CALL_INFO, 1, 1, "- Total Posted-IRecv Bytes:   %" PRIu64 "\n", zIRecvBytes);
+	zOut.verbose(CALL_INFO, 1, 0, "Statistics for run are:\n");
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Send Count:           %" PRIu64 "\n", zSendCount);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Recv Count:           %" PRIu64 "\n", zRecvCount);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total IRecv Count:          %" PRIu64 "\n", zIRecvCount);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Wait Count:           %" PRIu64 "\n", zWaitCount);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Send Bytes:           %" PRIu64 "\n", zSendBytes);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Recv Bytes:           %" PRIu64 "\n", zRecvBytes);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Posted-IRecv Bytes:   %" PRIu64 "\n", zIRecvBytes);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in compute:      %" PRIu64 " ns\n", nanoCompute);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in send:         %" PRIu64 " ns\n", nanoSend);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in recv:         %" PRIu64 " ns\n", nanoRecv);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in irecv issue:  %" PRIu64 " ns\n", nanoIRecv);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in wait:         %" PRIu64 " ns\n", nanoWait);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in all-reduce:   %" PRIu64 " ns\n", nanoAllreduce);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in barrier:      %" PRIu64 " ns\n", nanoBarrier);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in init:         %" PRIu64 " ns\n", nanoInit);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in finalize:     %" PRIu64 " ns\n", nanoFinalize);
 
 	zOut.output("Completed at %" PRIu64 " ns\n", getCurrentSimTimeNano());
 }
