@@ -76,10 +76,12 @@ private:
   uint64_t zRecvCount;
   uint64_t zIRecvCount;
   uint64_t zWaitCount;
+  uint64_t zAllreduceCount;
 
   uint64_t zSendBytes;
   uint64_t zRecvBytes;
   uint64_t zIRecvBytes;
+  uint64_t zAllreduceBytes;
 
   uint64_t nanoCompute;
   uint64_t nanoSend;

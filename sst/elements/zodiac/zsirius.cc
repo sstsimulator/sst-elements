@@ -96,10 +96,12 @@ void ZodiacSiriusTraceReader::setup() {
     zSendCount = 0;
     zRecvCount = 0;
     zIRecvCount = 0;
+    zAllreduceCount = 0;
     zWaitCount = 0;
     zSendBytes = 0;
     zRecvBytes = 0;
     zIRecvBytes = 0;
+    zAllreduceBytes = 0;
 
     nanoCompute = 0;
     nanoSend = 0;
@@ -127,12 +129,14 @@ void ZodiacSiriusTraceReader::finish() {
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Recv Count:           %" PRIu64 "\n", zRecvCount);
 	zOut.verbose(CALL_INFO, 1, 0, "- Total IRecv Count:          %" PRIu64 "\n", zIRecvCount);
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Wait Count:           %" PRIu64 "\n", zWaitCount);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Allreduce Count:      %" PRIu64 "\n", zAllreduceCount);
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Send Bytes:           %" PRIu64 "\n", zSendBytes);
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Recv Bytes:           %" PRIu64 "\n", zRecvBytes);
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Posted-IRecv Bytes:   %" PRIu64 "\n", zIRecvBytes);
+	zOut.verbose(CALL_INFO, 1, 0, "- Total Allreduce Bytes       %" PRIu64 "\n", zAllreduceBytes);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in compute:      %" PRIu64 " ns\n", nanoCompute);
-        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in send:         %" PRIu64 " ns\n", nanoSend);
-        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in recv:         %" PRIu64 " ns\n", nanoRecv);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in send:         %" PRIu64 " ns (mean: %f)\n", nanoSend, ((double) nanoSend) / ((double) zSendCount));
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in recv:         %" PRIu64 " ns (mean: %f)\n", nanoRecv, ((double) nanoRecv) / ((double) zRecvCount));
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in irecv issue:  %" PRIu64 " ns\n", nanoIRecv);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in wait:         %" PRIu64 " ns\n", nanoWait);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in all-reduce:   %" PRIu64 " ns\n", nanoAllreduce);
@@ -265,6 +269,9 @@ void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
 		zAEv->getOp(),
 		zAEv->getCommunicatorGroup(), &retFunctor);
 	accumulateTimeInto = &nanoAllreduce;
+
+	zAllreduceCount++;
+	zAllreduceBytes += zAEv->getLength();
 }
 
 void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {
