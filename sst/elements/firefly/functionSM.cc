@@ -95,7 +95,10 @@ void FunctionSM::setup()
 
     Params defaultParams;
     defaultParams[ "module" ] = m_params.find_string("defaultModule","firefly");
-    defaultParams[ "latency" ] = m_params.find_string("defaultLatency","0");
+    defaultParams[ "enterLatency" ] = 
+                        m_params.find_string("defaultEnterLatency","0");
+    defaultParams[ "returnLatency" ] = 
+                        m_params.find_string("defaultReturnLatency","0");
     defaultParams[ "debug" ]   = m_params.find_string("defaultDebug","0");
     defaultParams[ "verbose" ] = m_params.find_string("defaultVerbose","0"); 
     std::ostringstream tmp;
@@ -135,6 +138,14 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 
     if ( params.find_string("debug").empty() ) {
         params["debug"] = defaultParams[ "debug" ];
+    }
+
+    if ( params.find_string("enterLatency").empty() ) {
+        params["enterLatency"] = defaultParams[ "enterLatency" ];
+    }
+
+    if ( params.find_string("returnLatency").empty() ) {
+        params["returnLatency"] = defaultParams[ "returnLatency" ];
     }
 
     params["nodeId"] = defaultParams[ "nodeId" ];
@@ -194,7 +205,7 @@ void FunctionSM::processRetval(  Retval& retval )
     if ( retval.isExit() ) {
         m_dbg.verbose(CALL_INFO,3,0,"Exit %d\n", retval.value() );
         DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
-        m_toDriverLink->send( 0, x ); 
+        m_toDriverLink->send( m_sm->returnLatency(), x ); 
     } else if ( retval.isDelay() ) {
         m_dbg.verbose(CALL_INFO,3,0,"Delay %d\n", retval.value() );
         m_toMeLink->send( retval.value(), NULL ); 

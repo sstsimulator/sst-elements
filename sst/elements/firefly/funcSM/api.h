@@ -51,7 +51,8 @@ class FunctionSMInterface : public Module {
         m_info( NULL ),
         m_proto( NULL ),
         m_name( params.find_string("name","???") ),
-        m_enterLatency( params.find_integer("latency",0) )
+        m_enterLatency( params.find_integer("enterLatency",0) ),
+        m_returnLatency( params.find_integer("returnLatency",0) )
     {
         char buffer[100];
 
@@ -75,6 +76,7 @@ class FunctionSMInterface : public Module {
     virtual void  handleEnterEvent( Retval& ) { assert(0); }
     virtual std::string  name() { return m_name; }
     virtual int enterLatency() { return m_enterLatency; }
+    virtual int returnLatency() { return m_returnLatency; }
     virtual std::string protocolName() { return ""; }
 
   protected:
@@ -83,6 +85,7 @@ class FunctionSMInterface : public Module {
     Output          m_dbg;
     std::string     m_name;
     int             m_enterLatency;
+    int             m_returnLatency;
 };
 
 }

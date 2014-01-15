@@ -173,7 +173,7 @@ IO::Entry* CtrlMsg::recvIODone( IO::Entry* r )
                                                     req->hdr.len  );
         }
 
-        m_dbg.verbose(CALL_INFO,2,0,"delay %d\n",delay);
+        m_dbg.verbose(CALL_INFO,1,0,"delay %d\n",delay);
         m_delayLink->send( delay, new DelayEvent( req ) );
 
     } else {
