@@ -51,6 +51,12 @@ private:
   void handleBarrierEvent(ZodiacEvent* zEv);
   void completedFunction(int val);
   void completedRecvFunction(int val);
+  void completedWaitFunction(int val);
+  void completedAllreduceFunction(int val);
+  void completedInitFunction(int val);
+  void completedSendFunction(int val);
+
+  void enqueueNextEvent();
 
   ////////////////////////////////////////////////////////
 
@@ -64,8 +70,14 @@ private:
   SST::TimeConverter* tConv;
   char* emptyBuffer;
   uint32_t emptyBufferSize;
+
   DerivedFunctor retFunctor;
   DerivedFunctor recvFunctor;
+  DerivedFunctor waitFunctor;
+  DerivedFunctor sendFunctor;
+  DerivedFunctor allreduceFunctor;
+  DerivedFunctor initFunctor;
+
   std::map<uint64_t, MessageRequest*> reqMap;
   MessageResponse* currentRecv;
   int rank;
@@ -93,6 +105,7 @@ private:
   uint64_t nanoWait;
   uint64_t nanoIRecv;
 
+  uint64_t currentlyProcessingWaitEvent;
   uint64_t nextEventStartTimeNano;
   uint64_t* accumulateTimeInto;
   double scaleCompute;

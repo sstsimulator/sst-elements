@@ -16,9 +16,12 @@ using namespace SST::Zodiac;
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& params) :
   Component(id),
   retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction)),
-  recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction))
+  recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction)),
+  waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction)),
+  sendFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedSendFunction)),
+  allreduceFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedAllreduceFunction)),
+  initFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedInitFunction))
 {
-
     string msgiface = params.find_string("msgapi");
     scaleCompute = params.find_floating("scalecompute", 1.0);
 
@@ -135,8 +138,10 @@ void ZodiacSiriusTraceReader::finish() {
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Posted-IRecv Bytes:   %" PRIu64 "\n", zIRecvBytes);
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Allreduce Bytes       %" PRIu64 "\n", zAllreduceBytes);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in compute:      %" PRIu64 " ns\n", nanoCompute);
-        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in send:         %" PRIu64 " ns (mean: %f)\n", nanoSend, ((double) nanoSend) / ((double) zSendCount));
-        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in recv:         %" PRIu64 " ns (mean: %f)\n", nanoRecv, ((double) nanoRecv) / ((double) zRecvCount));
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in send:         %" PRIu64 " ns (mean: %f)\n", nanoSend,
+		zSendCount > 0 ? ((double) nanoSend) / ((double) zSendCount) : 0.0);
+        zOut.verbose(CALL_INFO, 1, 0, "- Time spend in recv:         %" PRIu64 " ns (mean: %f)\n", nanoRecv,
+		zRecvCount > 0 ? ((double) nanoRecv) / ((double) zRecvCount) : 0.0);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in irecv issue:  %" PRIu64 " ns\n", nanoIRecv);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in wait:         %" PRIu64 " ns\n", nanoWait);
         zOut.verbose(CALL_INFO, 1, 0, "- Time spend in all-reduce:   %" PRIu64 " ns\n", nanoAllreduce);
@@ -267,7 +272,7 @@ void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
 		zAEv->getLength(),
 		zAEv->getDataType(),
 		zAEv->getOp(),
-		zAEv->getCommunicatorGroup(), &retFunctor);
+		zAEv->getCommunicatorGroup(), &allreduceFunctor);
 	accumulateTimeInto = &nanoAllreduce;
 
 	zAllreduceCount++;
@@ -279,7 +284,7 @@ void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Init event.\n");
 
 	// Just initialize the library nothing fancy to do here
-	msgapi->init(&retFunctor);
+	msgapi->init(&initFunctor);
 	accumulateTimeInto = &nanoInit;
 }
 
@@ -304,7 +309,7 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 
 	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
 		zSEv->getDataType(), (RankID) zSEv->getDestination(),
-		zSEv->getMessageTag(), zSEv->getCommunicatorGroup(), &retFunctor);
+		zSEv->getMessageTag(), zSEv->getCommunicatorGroup(), &sendFunctor);
 
 	zSendBytes += (msgapi->sizeofDataType(zSEv->getDataType()) * zSEv->getLength());
 	zSendCount++;
@@ -337,6 +342,10 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 	ZodiacWaitEvent* zWEv = static_cast<ZodiacWaitEvent*>(zEv);
 	assert(zWEv);
 
+	// Set the current processing event so when we return we know
+	// what to remove from our map.
+	currentlyProcessingWaitEvent = zWEv->getRequestID();
+
 	MessageRequest* msgReq = reqMap[zWEv->getRequestID()];
 	currentRecv = (MessageResponse*) malloc(sizeof(MessageResponse));
 	memset(currentRecv, 1, sizeof(MessageResponse));
@@ -344,7 +353,7 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 	zOut.verbose(__LINE__, __FILE__, "handleWaitEvent",
 		2, 1, "Processing a Wait event.\n");
 
-	msgapi->wait( *msgReq, currentRecv, &retFunctor);
+	msgapi->wait( *msgReq, currentRecv, &waitFunctor);
 	zWaitCount++;
 	accumulateTimeInto = &nanoWait;
 }
@@ -410,41 +419,65 @@ bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
 }
 
 void ZodiacSiriusTraceReader::completedFunction(int retVal) {
-	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
-		trace->generateNextEvents();
-	}
-
-	if(eventQ->size() > 0) {
-		zOut.verbose(__LINE__, __FILE__, "completedFunction",
-			2, 1, "Returned from a call to the message API, posting the next event...\n");
-
-		ZodiacEvent* nextEv = eventQ->front();
-		eventQ->pop();
-		selfLink->send(nextEv);
-	} else {
-		zOut.output("No more events to process.\n");
-
-		// We have run out of events
-		primaryComponentOKToEndSim();
-	}
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from a call to the message API.\n");
+	enqueueNextEvent();
 }
 
 void ZodiacSiriusTraceReader::completedRecvFunction(int retVal) {
 	free(currentRecv);
 
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the recv API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedInitFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the init API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedAllreduceFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the allreduce API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedSendFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the send API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedWaitFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the wait API.\n");
+
+	std::map<uint64_t, MessageRequest*>::iterator req_map_itr = reqMap.find(currentlyProcessingWaitEvent);
+	if(req_map_itr == reqMap.end()) {
+		zOut.fatal(CALL_INFO, -1, "Error: unable to find a wait request in the ID to MessageRequest map.\n");
+	} else {
+		MessageRequest* done_req = req_map_itr->second;
+		free(done_req);
+
+		// Remove the request from the map and clean up
+		reqMap.erase(req_map_itr);
+	}
+
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::enqueueNextEvent() {
 	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
+		zOut.verbose(CALL_INFO, 8, 0, "Generating next set of events from trace...\n");
 		trace->generateNextEvents();
+		zOut.verbose(CALL_INFO, 8, 0, "Completed generating next set of events from trace.\n");
 	}
 
 	if(eventQ->size() > 0) {
-		zOut.verbose(__LINE__, __FILE__, "completedRecvFunction",
-			2, 1, "Returned from a call to the message API, posting the next event...\n");
+		zOut.verbose(CALL_INFO,
+			8, 0, "Enqueuing next event into a self link...\n");
 
 		ZodiacEvent* nextEv = eventQ->front();
 		eventQ->pop();
 		selfLink->send(nextEv);
 	} else {
-		zOut.output("No more events to process.\n");
+		zOut.verbose(CALL_INFO, 2, 0, "No more events to process, Zodiac will mark component as complete.\n");
 
 		// We have run out of events
 		primaryComponentOKToEndSim();
