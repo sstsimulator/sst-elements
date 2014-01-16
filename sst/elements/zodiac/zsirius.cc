@@ -91,7 +91,7 @@ void ZodiacSiriusTraceReader::setup() {
     }
 
     char logPrefix[512];
-    sprintf(logPrefix, "ZSirius::SimulatedRank[%8d][@p:@l][@t]: ", rank);
+    sprintf(logPrefix, "@t:%d:ZSirius::@p:@l: ", rank);
     string logPrefixStr = logPrefix;
     zOut.setPrefix(logPrefixStr);
 
