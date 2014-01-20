@@ -1,7 +1,7 @@
-Inserting stop event at cycle 50us
 making cpu
  Connected 8 Vaults
  Connected 8 Vaults
+Inserting stop event at cycle 50us
 1024: out:2048 ops/cycle:1.05
 2048: out:2048 ops/cycle:1.05
 3072: out:2048 ops/cycle:1.06
