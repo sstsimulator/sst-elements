@@ -136,6 +136,10 @@ class DirectoryController : public Component {
     uint64_t numReqsProcessed;
     uint64_t totalReqProcessTime;
     uint64_t numCacheHits;
+    uint64_t dataReads;
+    uint64_t dataWrites;
+    uint64_t dirEntryReads;
+    uint64_t dirEntryWrites;
     Output::output_location_t printStatsLoc;
 
 

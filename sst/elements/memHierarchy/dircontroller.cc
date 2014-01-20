@@ -82,6 +82,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     numReqsProcessed = 0;
     totalReqProcessTime = 0;
     numCacheHits = 0;
+    dataReads = 0;
+    dataWrites = 0;
+    dirEntryReads = 0;
+    dirEntryWrites = 0;
 }
 
 
@@ -312,11 +316,16 @@ void DirectoryController::finish(void)
 
     Output out("", 0, 0, printStatsLoc);
     out.output("Directory %s stats:\n"
-            "\t# Requests:        %"PRIu64"\n"
-            "\tAvg Req Time:      %"PRIu64" ns\n"
-            "\tEntry Cache Hits:  %"PRIu64"\n",
+            "\t# Requests:            %"PRIu64"\n"
+            "\t#  Memory Data Reads:  %"PRIu64"\n"
+            "\t#  Memory Data Writes: %"PRIu64"\n"
+            "\t#  Entry Data Reads:   %"PRIu64"\n"
+            "\t#  Entry Data Writes:  %"PRIu64"\n"
+            "\tAvg Req Time:          %"PRIu64" ns\n"
+            "\tEntry Cache Hits:      %"PRIu64"\n",
             getName().c_str(),
             numReqsProcessed,
+            dataReads, dataWrites, dirEntryReads, dirEntryWrites,
             (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0,
             numCacheHits);
 }
@@ -635,6 +644,7 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry)
     entry->lastRequest = me->getID();
     dbg.output(CALL_INFO, "Requesting Entry from memory for 0x%"PRIx64" (%"PRIu64", %d)\n", entry->baseAddr, me->getID().first, me->getID().second);
 	memLink->send(me);
+    ++dirEntryReads;
 }
 
 
@@ -648,6 +658,7 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry)
     entry->lastRequest = ev->getID();
     dbg.output(CALL_INFO, "Requesting data from memory at 0x%"PRIx64" (%"PRIu64", %d)\n", entry->baseAddr, ev->getID().first, ev->getID().second);
     memLink->send(ev);
+    ++dataReads;
 }
 
 void DirectoryController::updateCacheEntry(DirEntry *entry)
@@ -702,6 +713,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry)
 	me->setSize((numTargets+1)/8 +1);
     memReqs[me->getID()] = entry->baseAddr;
 	memLink->send(me);
+    ++dirEntryWrites;
 }
 
 
@@ -714,6 +726,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
     dbg.output(CALL_INFO, "Writing back data to 0x%"PRIx64" (%"PRIu64", %d)\n", data_event->getAddr(), ev->getID().first, ev->getID().second);
 
 	memLink->send(ev);
+    ++dataWrites;
 
     return ev->getID();
 }
