@@ -5,6 +5,10 @@
 
 #define PAGE_SIZE 4096
 
+void tlvl_set_pool(int level) {
+
+}
+
 void* tlvl_malloc(size_t size, int level) {
 	if(size == 0) {
 		printf("ZERO BYTE MALLOC\n");
