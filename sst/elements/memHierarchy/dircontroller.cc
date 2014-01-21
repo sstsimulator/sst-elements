@@ -43,7 +43,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 	assert(memLink);
 
 
-    entryCacheSize = (size_t)params.find_integer("entryCacheSize", 0);
+    entryCacheMaxSize = (size_t)params.find_integer("entryCacheSize", 0);
     int addr = params.find_integer("network_addr");
     std::string net_bw = params.find_string("network_bw");
 
@@ -358,7 +358,7 @@ void DirectoryController::setup(void)
 void DirectoryController::printStatus(Output &out)
 {
     out.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
-    out.output("\t# Entries in cache:  %zu\n", entryCache.size());
+    out.output("\t# Entries in cache:  %zu\n", entryCacheSize);
     out.output("\t# Requests in queue:  %zu\n", workQueue.size());
     for ( std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i ) {
         out.output("\t\t(%"PRIu64", %d)\n", (*i)->getID().first, (*i)->getID().second);
@@ -664,12 +664,13 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry)
 
 void DirectoryController::updateCacheEntry(DirEntry *entry)
 {
-    if ( 0 == entryCacheSize ) {
+    if ( 0 == entryCacheMaxSize ) {
         sendEntryToMemory(entry);
     } else {
         /* Find if we're in the cache */
         if ( entry->cacheIter != entryCache.end() ) {
             entryCache.erase(entry->cacheIter);
+            --entryCacheSize;
             entry->cacheIter = entryCache.end();
         }
 
@@ -683,14 +684,16 @@ void DirectoryController::updateCacheEntry(DirEntry *entry)
 
             entryCache.push_front(entry);
             entry->cacheIter = entryCache.begin();
+            ++entryCacheSize;
 
-            while ( entryCache.size() > entryCacheSize ) {
+            while ( entryCacheSize > entryCacheMaxSize ) {
                 DirEntry *oldEntry = entryCache.back();
                 // If the oldest entry is still in progress, everything is in progress
                 if ( oldEntry->inProgress() ) break;
 
                 dbg.output(CALL_INFO, "entryCache too large.  Evicting entry for 0x%"PRIx64"\n", oldEntry->baseAddr);
                 entryCache.pop_back();
+                --entryCacheSize;
                 oldEntry->cacheIter = entryCache.end();
                 sendEntryToMemory(oldEntry);
             }

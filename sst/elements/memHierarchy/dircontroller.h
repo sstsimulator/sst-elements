@@ -133,6 +133,7 @@ class DirectoryController : public Component {
 	SST::Link *memLink;
     MemNIC *network;
 
+    size_t entryCacheMaxSize;
     size_t entryCacheSize;
     std::list<DirEntry*> entryCache;
 
