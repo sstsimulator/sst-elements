@@ -308,7 +308,6 @@ bool ArielCore::refillQueue() {
 				uint32_t new_pool;
 
 				read(fd_input, &new_pool, sizeof(new_pool));
-				printf("ARIEL-CORE: Got a new pool request: %" PRIu32 "\n", new_pool);
 				createSwitchPoolEvent(new_pool);
 
 				break;
