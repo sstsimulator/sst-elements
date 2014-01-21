@@ -1,8 +1,8 @@
 
 #include "arielcore.h"
 
-ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, 
-	uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc, 
+ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
+	uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc,
 	uint32_t maxQLen, int pipeTO, uint64_t cacheLineSz, SST::Component* own,
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string traceFilePrefix) :
 		perform_checks(perform_address_checks),
@@ -159,6 +159,18 @@ void ArielCore::closeInput() {
 	close(fd_input);
 }
 
+void ArielCore::handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE) {
+	output->verbose(CALL_INFO, 2, 0, "Core: %" PRIu32 " set default memory pool to: %" PRIu32 "\n", aSPE->getPool());
+	memmgr->setDefaultPool(aSPE->getPool());
+}
+
+void ArielCore::createSwitchPoolEvent(uint32_t newPool) {
+	ArielSwitchPoolEvent* ev = new ArielSwitchPoolEvent(newPool);
+	coreQ->push(ev);
+
+	output->verbose(CALL_INFO, 4, 0, "Generated a switch pool event on core %" PRIu32 ", new level is: %" PRIu32 "\n", coreID, newPool);
+}
+
 void ArielCore::createNoOpEvent() {
 	ArielNoOpEvent* ev = new ArielNoOpEvent();
 	coreQ->push(ev);
@@ -289,6 +301,13 @@ bool ArielCore::refillQueue() {
 				read(fd_input, &tlm_free_vaddr, sizeof(tlm_free_vaddr));
 
 				createFreeEvent(tlm_free_vaddr);
+
+				break;
+
+			case ARIEL_SWITCH_POOL:
+				uint32_t new_pool;
+				read(fd_input, &new_pool, sizeof(new_pool));
+				createSwitchPoolEvent(new_pool);
 
 				break;
 
@@ -525,6 +544,13 @@ bool ArielCore::processNextEvent() {
 	case WAIT_ON_DMA_TRANSFER:
 		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WAIT_ON_DMA_TRANSFER\n", coreID);
 		removeEvent = true;
+		break;
+
+	case SWITCH_POOL:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a SWITCH_POOL\n",
+			coreID);
+		removeEvent = true;
+		handleSwitchPoolEvent(dynamic_cast<ArielSwitchPoolEvent*>(nextEvent));
 		break;
 
 	case FREE:

@@ -22,7 +22,6 @@
 #include <queue>
 #include <map>
 
-
 #include "arielmemmgr.h"
 #include "arielevent.h"
 #include "arielreadev.h"
@@ -31,6 +30,7 @@
 #include "arielallocev.h"
 #include "arielfreeev.h"
 #include "arielnoop.h"
+#include "arielswitchpool.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -49,6 +49,7 @@ namespace ArielComponent {
 #define ARIEL_START_INSTRUCTION 32
 #define ARIEL_END_INSTRUCTION 64
 #define ARIEL_NOOP 128
+#define ARIEL_SWITCH_POOL 110
 
 class ArielCore {
 
@@ -69,6 +70,7 @@ class ArielCore {
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
+		void createSwitchPoolEvent(uint32_t pool);
 
 		void setCacheLink(SST::Link* newCacheLink);
 		void handleEvent(SST::Event* event);
@@ -76,6 +78,7 @@ class ArielCore {
 		void handleWriteRequest(ArielWriteEvent* wEv);
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
 		void handleFreeEvent(ArielFreeEvent* aFE);
+		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
 
 		void commitReadEvent(const uint64_t address, const uint32_t length);
 		void commitWriteEvent(const uint64_t address, const uint32_t length);

@@ -23,6 +23,7 @@ class ArielMemoryManager {
 
 		uint32_t countMemoryLevels();
 		uint64_t translateAddress(uint64_t virtAddr);
+		void setDefaultPool(uint32_t pool);
 
 	private:
 		Output* output;

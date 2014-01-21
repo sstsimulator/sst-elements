@@ -16,7 +16,8 @@ enum ArielEventType {
 	CORE_EXIT,
 	NOOP,
 	MALLOC,
-	FREE
+	FREE,
+	SWITCH_POOL
 };
 
 class ArielEvent {

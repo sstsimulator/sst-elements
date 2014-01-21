@@ -26,7 +26,9 @@ libariel_la_SOURCES = \
 	arielallocev.h \
 	arielallocev.cc \
 	arielfreeev.h \
-	arielfreeev.cc
+	arielfreeev.cc \
+	arielswitchpool.cc \
+	arielswitchpool.h
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_CPPFLAGS = -DARIEL_TRACE_LIB=$(libdir)/sst \

@@ -42,6 +42,7 @@ bool enable_output;
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 #define ISSUE_NOOP 128
+#define SWITCH_POOL 110
 
 VOID Fini(INT32 code, VOID *v)
 {
@@ -327,6 +328,31 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 #endif
 
 	return 0;
+}
+
+void ariel_tlvl_switch_pool(int new_pool) {
+#ifdef ARIEL_DEBUG
+	fprintf(stderr, "Ariel perform a tlvl_switch_pool to level %d\n", new_pool);
+#endif
+
+	THREADID currentThread = PIN_ThreadId();
+        UINT32 thr = (UINT32) currentThread;
+
+#ifdef ARIEL_DEBUG
+        fprintf(stderr, "Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
+                thr);
+#endif
+
+        const uint8_t  issueSwitch    = (uint8_t) SWITCH_POOL;
+        const uint32_t newDefaultPool = (uint32_t) new_pool;
+
+	const size_t BUFFER_LENGTH = sizeof(issueSwitch) + sizeof(newDefaultPool);
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+	copy(&buffer[0], &issueSwitch, sizeof(issueSwitch));
+	copy(&buffer[sizeof(issueSwitch)], &newDefaultPool, sizeof(newDefaultPool));
+
+	write(pipe_id[thr], buffer, BUFFER_LENGTH);
+        free(buffer);
 }
 
 void* ariel_tlvl_malloc(size_t size, int level) {

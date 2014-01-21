@@ -41,6 +41,11 @@ ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint6
 	}
 }
 
+// Set the new default level for continuing allocations.
+void ArielMemoryManager::setDefaultPool(const uint32_t newLevel) {
+	defaultLevel = newLevel;
+}
+
 ArielMemoryManager::~ArielMemoryManager() {
 
 }
