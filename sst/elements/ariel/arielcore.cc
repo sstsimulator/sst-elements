@@ -114,25 +114,25 @@ void ArielCore::commitWriteEvent(const uint64_t address, const uint32_t length) 
 }
 
 void ArielCore::handleEvent(SST::Event* event) {
-	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling an event...\n", coreID);
+	//output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling an event...\n", coreID);
 	MemEvent* memEv = dynamic_cast<MemEvent*>(event);
-	
+
 	if(memEv) {
-		output->verbose(CALL_INFO, 4, 0, "Mapped successfully to a memory event.\n");
-		
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID);
+
 		// Ignore invalidation requests at the core
 		if( memEv->getCmd() == Invalidate ) {
 			delete event;
 			return;
 		}
-		
+
 		MemEvent::id_type mev_id = memEv->getResponseToID();
 		std::map<MemEvent::id_type, MemEvent*>::iterator find_entry = pendingTransactions->find(mev_id);
-		
+
 		if(find_entry != pendingTransactions->end()) {
 			output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list leaving: %" PRIu32 " transactions\n",
 				(uint32_t) pendingTransactions->size());
-				
+
 			pendingTransactions->erase(find_entry);
 			pending_transaction_count--;
 			delete memEv;
@@ -334,25 +334,25 @@ void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
 
 void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a read event...\n", coreID);
-	
+
 	const uint64_t readAddress = rEv->getAddress();
 	const uint64_t readLength  = (uint64_t) rEv->getLength();
-	
+
 	if(readLength > cacheLineSize) {
 		output->verbose(CALL_INFO, 4, 0, "Potential error? request for a read of length=%" PRIu64 " is larger than cache line which is not allowed (coreID=%" PRIu32 ", cache line: %" PRIu64 "\n",
 			readLength, coreID, cacheLineSize);
 		return;
 	}
-	
+
 	const uint64_t addr_offset  = readAddress % ((uint64_t) cacheLineSize);
-	
+
 	if((addr_offset + readLength) <= cacheLineSize) {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
-	
+
 		// We do not need to perform a split operation
 		const uint64_t physAddr = memmgr->translateAddress(readAddress);
-		
+
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, readAddress, readLength, physAddr);
 
@@ -360,17 +360,17 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 	} else {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
-	
+
 		// We need to perform a split operation
 		const uint64_t leftAddr = readAddress;
 		const uint64_t leftSize = cacheLineSize - addr_offset;
-		
+
 		const uint64_t rightAddr = (readAddress - addr_offset) + ((uint64_t) cacheLineSize);
 		const uint64_t rightSize = (readAddress + ((uint64_t) readLength)) % ((uint64_t) cacheLineSize);
-		
+
 		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
-		
+
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address read, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
 			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
 
@@ -395,7 +395,7 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		commitReadEvent(physRightAddr, (uint32_t) rightSize);
 		split_read_requests++;
 	}
-	
+
 	read_requests++;
 }
 
