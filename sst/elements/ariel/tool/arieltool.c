@@ -330,7 +330,7 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 	return 0;
 }
 
-void ariel_tlvl_switch_pool(int new_pool) {
+void ariel_tlvl_set_pool(int new_pool) {
 #ifdef ARIEL_DEBUG
 	fprintf(stderr, "Ariel perform a tlvl_switch_pool to level %d\n", new_pool);
 #endif
@@ -472,7 +472,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr,"Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
         fprintf(stderr, "Replacement complete.\n");
-	}
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_set_pool") {
+	fprintf(stderr, "Identifier routine: tlvl_set_pool, replacing with Ariel equivalent...\n");
+	RTN_Replace(rtn, (AFUNPRT) ariel_tlvl_set_pool);
+	fprintf(stderr, "Replacement complete.\n");
+    }
 
  /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
 	//	fprintf(stderr, "Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
