@@ -56,6 +56,9 @@ class DirectoryController : public Component {
 		bool dirty;
 		std::vector<bool> sharers;
 
+        std::list<DirEntry*>::iterator cacheIter;
+
+
 		DirEntry(Addr address, uint32_t bitlength)
         {
 			activeReq = NULL;

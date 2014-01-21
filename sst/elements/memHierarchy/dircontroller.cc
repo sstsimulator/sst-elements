@@ -406,6 +406,7 @@ DirectoryController::DirEntry* DirectoryController::createDirEntry(Addr addr)
 {
     dbg.output(CALL_INFO, "Creating Directory Entry for 0x%"PRIx64"\n", addr);
 	DirEntry *entry = new DirEntry(addr, numTargets);
+    entry->cacheIter = entryCache.end();
 	directory[addr] = entry;
 	return entry;
 }
@@ -667,11 +668,9 @@ void DirectoryController::updateCacheEntry(DirEntry *entry)
         sendEntryToMemory(entry);
     } else {
         /* Find if we're in the cache */
-        for ( std::list<DirEntry*>::iterator i = entryCache.begin() ; i != entryCache.end() ; ++i ) {
-            if ( *i == entry ) {
-                entryCache.erase(i);
-                break;
-            }
+        if ( entry->cacheIter != entryCache.end() ) {
+            entryCache.erase(entry->cacheIter);
+            entry->cacheIter = entryCache.end();
         }
 
         /* Find out if we're no longer cached, and just remove */
@@ -683,6 +682,7 @@ void DirectoryController::updateCacheEntry(DirEntry *entry)
         } else {
 
             entryCache.push_front(entry);
+            entry->cacheIter = entryCache.begin();
 
             while ( entryCache.size() > entryCacheSize ) {
                 DirEntry *oldEntry = entryCache.back();
@@ -691,6 +691,7 @@ void DirectoryController::updateCacheEntry(DirEntry *entry)
 
                 dbg.output(CALL_INFO, "entryCache too large.  Evicting entry for 0x%"PRIx64"\n", oldEntry->baseAddr);
                 entryCache.pop_back();
+                oldEntry->cacheIter = entryCache.end();
                 sendEntryToMemory(oldEntry);
             }
         }
