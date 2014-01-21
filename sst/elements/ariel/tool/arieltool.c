@@ -334,6 +334,7 @@ void ariel_tlvl_set_pool(int new_pool) {
 #ifdef ARIEL_DEBUG
 	fprintf(stderr, "Ariel perform a tlvl_switch_pool to level %d\n", new_pool);
 #endif
+	fprintf(stderr, "Ariel: Application has changed default memory pool to: %d\n", new_pool);
 
 	THREADID currentThread = PIN_ThreadId();
         UINT32 thr = (UINT32) currentThread;
@@ -348,6 +349,7 @@ void ariel_tlvl_set_pool(int new_pool) {
 
 	const size_t BUFFER_LENGTH = sizeof(issueSwitch) + sizeof(newDefaultPool);
 	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+
 	copy(&buffer[0], &issueSwitch, sizeof(issueSwitch));
 	copy(&buffer[sizeof(issueSwitch)], &newDefaultPool, sizeof(newDefaultPool));
 

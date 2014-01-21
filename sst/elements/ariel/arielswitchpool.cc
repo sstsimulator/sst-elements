@@ -3,8 +3,8 @@
 
 using namespace SST::ArielComponent;
 
-ArielSwitchPoolEvent::ArielSwitchPoolEvent(uint32_t newPool) :
-	pool(newPool) {
+ArielSwitchPoolEvent::ArielSwitchPoolEvent(uint32_t newPool) {
+	pool = newPool;
 }
 
 ArielSwitchPoolEvent::~ArielSwitchPoolEvent() {

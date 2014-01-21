@@ -160,7 +160,7 @@ void ArielCore::closeInput() {
 }
 
 void ArielCore::handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE) {
-	output->verbose(CALL_INFO, 2, 0, "Core: %" PRIu32 " set default memory pool to: %" PRIu32 "\n", aSPE->getPool());
+	output->verbose(CALL_INFO, 2, 0, "Core: %" PRIu32 " set default memory pool to: %" PRIu32 "\n", coreID, aSPE->getPool());
 	memmgr->setDefaultPool(aSPE->getPool());
 }
 
@@ -306,7 +306,9 @@ bool ArielCore::refillQueue() {
 
 			case ARIEL_SWITCH_POOL:
 				uint32_t new_pool;
+
 				read(fd_input, &new_pool, sizeof(new_pool));
+				printf("ARIEL-CORE: Got a new pool request: %" PRIu32 "\n", new_pool);
 				createSwitchPoolEvent(new_pool);
 
 				break;

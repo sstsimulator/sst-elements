@@ -11,6 +11,8 @@ int main(int argc, char* argv[]) {
 	double* b = (double*) tlvl_malloc(sizeof(double) * LENGTH, 0);
 	double* fast_c = (double*) tlvl_malloc(sizeof(double) * LENGTH, 0);
 
+	tlvl_set_pool(1);
+
 	printf("Allocation for fast_c is %llu\n", (unsigned long long int) fast_c);
 	double* c = (double*) malloc(sizeof(double) * LENGTH);
 	printf("Done allocating arrays.\n");

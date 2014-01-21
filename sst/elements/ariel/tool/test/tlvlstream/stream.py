@@ -6,7 +6,7 @@ sst.setProgramOption("timebase", "1ns")
 sst_root = os.getenv( "SST_ROOT" )
 ariel = sst.Component("a0", "ariel.ariel")
 ariel.addParams({
-        "verbose" : "1",
+        "verbose" : "2",
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",

@@ -18,7 +18,7 @@ class ArielSwitchPoolEvent : public ArielEvent {
 		uint32_t getPool();
 
 	private:
-		const uint32_t pool;
+		uint32_t pool;
 
 };
 
