@@ -36,7 +36,7 @@ namespace Zodiac {
 
 class SiriusReader {
     public:
-	SiriusReader(char* file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue);
+	SiriusReader(char* file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue, int verbose);
         void close();
 	void setOutput(Output* oput);
 	uint32_t generateNextEvents();

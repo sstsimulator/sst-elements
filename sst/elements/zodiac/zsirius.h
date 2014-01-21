@@ -55,6 +55,9 @@ private:
   void completedAllreduceFunction(int val);
   void completedInitFunction(int val);
   void completedSendFunction(int val);
+  void completedFinalizeFunction(int val);
+  void completedIrecvFunction(int val);
+  void completedBarrierFunction(int val);
 
   void enqueueNextEvent();
 
@@ -71,12 +74,15 @@ private:
   char* emptyBuffer;
   uint32_t emptyBufferSize;
 
-  DerivedFunctor retFunctor;
-  DerivedFunctor recvFunctor;
-  DerivedFunctor waitFunctor;
-  DerivedFunctor sendFunctor;
   DerivedFunctor allreduceFunctor;
+  DerivedFunctor barrierFunctor;
+  DerivedFunctor finalizeFunctor;
   DerivedFunctor initFunctor;
+  DerivedFunctor irecvFunctor;
+  DerivedFunctor recvFunctor;
+  DerivedFunctor retFunctor;
+  DerivedFunctor sendFunctor;
+  DerivedFunctor waitFunctor;
 
   std::map<uint64_t, MessageRequest*> reqMap;
   MessageResponse* currentRecv;

@@ -15,12 +15,15 @@ using namespace SST::Zodiac;
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& params) :
   Component(id),
-  retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction)),
-  recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction)),
-  waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction)),
-  sendFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedSendFunction)),
   allreduceFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedAllreduceFunction)),
-  initFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedInitFunction))
+  barrierFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedBarrierFunction)),
+  finalizeFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFinalizeFunction)),
+  initFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedInitFunction)),
+  irecvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedIrecvFunction)),
+  recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction)),
+  retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction)),
+  sendFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedSendFunction)),
+  waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction))
 {
     string msgiface = params.find_string("msgapi");
     scaleCompute = params.find_floating("scalecompute", 1.0);
@@ -65,7 +68,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     primaryComponentDoNotEndSim();
 
     // Allow the user to control verbosity from the log file.
-    uint32_t verbosityLevel = params.find_integer("verbose", 2);
+    verbosityLevel = params.find_integer("verbose", 2);
     zOut.init("ZSirius", (uint32_t) verbosityLevel, (uint32_t) 1, Output::STDOUT);
 }
 
@@ -79,7 +82,7 @@ void ZodiacSiriusTraceReader::setup() {
     sprintf(trace_name, "%s.%d", trace_file.c_str(), rank);
 
     printf("Opening trace file: %s\n", trace_name);
-    trace = new SiriusReader(trace_name, rank, 64, eventQ);
+    trace = new SiriusReader(trace_name, rank, 64, eventQ, verbosityLevel);
     trace->setOutput(&zOut);
 
     int count = trace->generateNextEvents();
@@ -255,7 +258,7 @@ void ZodiacSiriusTraceReader::handleBarrierEvent(ZodiacEvent* zEv) {
 	zOut.verbose(__LINE__, __FILE__, "handleBarrierEvent",
 		2, 1, "Processing an Barrier event.\n");
 
-	msgapi->barrier(zBEv->getCommunicatorGroup(), &retFunctor);
+	msgapi->barrier(zBEv->getCommunicatorGroup(), &barrierFunctor);
 	accumulateTimeInto = &nanoBarrier;
 }
 
@@ -294,7 +297,7 @@ void ZodiacSiriusTraceReader::handleFinalizeEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Finalize event.\n");
 
 	// Just finalize the library nothing fancy to do here
-	msgapi->fini(&retFunctor);
+	msgapi->fini(&finalizeFunctor);
 	accumulateTimeInto = &nanoFinalize;
 }
 
@@ -373,7 +376,7 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 	msgapi->irecv((Addr) emptyBuffer, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
-		msgReq, &retFunctor);
+		msgReq, &irecvFunctor);
 
 	zOut.verbose(__LINE__, __FILE__, "handleIrecvEvent",
 		2, 1, "IRecv handover to Msg-API completed.\n");
@@ -442,6 +445,21 @@ void ZodiacSiriusTraceReader::completedAllreduceFunction(int retVal) {
 
 void ZodiacSiriusTraceReader::completedSendFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the send API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedFinalizeFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the finalize API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedBarrierFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the barrier API.\n");
+	enqueueNextEvent();
+}
+
+void ZodiacSiriusTraceReader::completedIrecvFunction(int retVal) {
+	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the irecv API.\n");
 	enqueueNextEvent();
 }
 

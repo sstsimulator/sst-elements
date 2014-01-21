@@ -5,7 +5,7 @@
 using namespace std;
 using namespace SST::Zodiac;
 
-SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ)
+SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ, int verbose)
 {
 
 	rank = focusOnRank;
@@ -20,15 +20,16 @@ SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, s
 	}
 
 	prevEventTime = 0;
-	output = new Output("SiriusReader", 0, 0, Output::STDOUT);
+	output = new Output("SiriusReader", verbose, 0, Output::STDOUT);
 }
 
 void SiriusReader::close() {
 	if(NULL == trace) {
-		std::cerr << "Error: trace file is NULL" << std::endl;
+		output->fatal(CALL_INFO, -1, "Error: trace file is NULL when being closed, has an error occured in SIRIUS?\n");
 	} else {
-		std::cout << "Closing trace file" << std::endl;
+		output->verbose(CALL_INFO, 4, 0, "Closing trace file.\n");
 	}
+
 	fclose(trace);
 }
 
