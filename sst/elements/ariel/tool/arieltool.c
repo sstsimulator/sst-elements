@@ -474,7 +474,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete.\n");
     } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_set_pool") {
 	fprintf(stderr, "Identifier routine: tlvl_set_pool, replacing with Ariel equivalent...\n");
-	RTN_Replace(rtn, (AFUNPRT) ariel_tlvl_set_pool);
+	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_set_pool);
 	fprintf(stderr, "Replacement complete.\n");
     }
 
