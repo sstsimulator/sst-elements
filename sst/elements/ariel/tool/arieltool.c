@@ -334,7 +334,6 @@ void ariel_tlvl_set_pool(int new_pool) {
 #ifdef ARIEL_DEBUG
 	fprintf(stderr, "Ariel perform a tlvl_switch_pool to level %d\n", new_pool);
 #endif
-	fprintf(stderr, "Ariel: Application has changed default memory pool to: %d\n", new_pool);
 
 	THREADID currentThread = PIN_ThreadId();
         UINT32 thr = (UINT32) currentThread;
