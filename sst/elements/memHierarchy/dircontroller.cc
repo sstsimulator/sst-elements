@@ -155,7 +155,7 @@ void DirectoryController::handlePacket(SST::Event *event)
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
     workQueue.push_back(ev);
-    dbg.output(CALL_INFO, "Received (%"PRIu64", %d) %s%s 0x%"PRIx64" from %s.  Position %zu in queue.\n", ev->getID().first, ev->getID().second,  ev->queryFlag(MemEvent::F_UNCACHED) ? "Uncached " : "", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), workQueue.size());
+    dbg.output(CALL_INFO, "Received (%"PRIu64", %d) %s%s 0x%"PRIx64" from %s.\n", ev->getID().first, ev->getID().second,  ev->queryFlag(MemEvent::F_UNCACHED) ? "Uncached " : "", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
 }
 
 
