@@ -27,9 +27,12 @@ KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
     "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled");
 KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
     "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
+KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
+    "d", "0", "Default SST Memory Pool");
 
 //PIN_LOCK pipe_lock;
 UINT32 core_count;
+UINT32 default_pool;
 int* pipe_id;
 bool enable_output;
 
@@ -354,6 +357,9 @@ void ariel_tlvl_set_pool(int new_pool) {
 
 	write(pipe_id[thr], buffer, BUFFER_LENGTH);
         free(buffer);
+
+	// Keep track of the default pool
+	default_pool = (UINT32) new_pool;
 }
 
 void* ariel_tlvl_malloc(size_t size, int level) {
@@ -440,6 +446,14 @@ void mapped_ariel_enable() {
  	enable_output = true;
 }
 
+void* ariel_malloc_intercept(size_t size) {
+	return ariel_tlvl_malloc(size, default_pool);
+}
+
+void ariel_free_intercept(void* ptr) {
+	ariel_tlvl_free(ptr);
+}
+
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
 //	if(SSTVerbosity.Value() > 0) {
 //		fprintf(stderr, "ARIEL: Examining routine [%s] for instrumentation\n", RTN_Name(rtn).c_str());
@@ -476,6 +490,14 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
     } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_set_pool") {
 	fprintf(stderr, "Identifier routine: tlvl_set_pool, replacing with Ariel equivalent...\n");
 	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_set_pool);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "malloc") {
+	fprintf(stderr, "Identifier routine: malloc, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_malloc_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "free") {
+	fprintf(stderr, "Identifier routine: free, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_free_intercept);
 	fprintf(stderr, "Replacement complete.\n");
     }
 
@@ -539,6 +561,9 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 
     sleep(1);
+
+    default_pool = DefaultMemoryPool.Value();
+    fprintf(stderr, "ARIEL: Default memory pool set to %lu\n", default_pool);
 
     if(StartupMode.Value() == 1) {
 	fprintf(stderr, "ARIEL: Tool is configured to begin with profiling immediately.\n");
