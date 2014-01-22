@@ -44,6 +44,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
 
     entryCacheMaxSize = (size_t)params.find_integer("entryCacheSize", 0);
+    entryCacheSize = 0;
     int addr = params.find_integer("network_addr");
     std::string net_bw = params.find_string("network_bw");
 
