@@ -1,4 +1,5 @@
 
+#include <malloc.h>
 #include <execinfo.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -35,6 +36,7 @@ UINT32 core_count;
 UINT32 default_pool;
 int* pipe_id;
 bool enable_output;
+std::vector<void*> allocated_list;
 
 #define PERFORM_EXIT 1
 #define PERFORM_READ 2
@@ -418,6 +420,7 @@ void* ariel_tlvl_malloc(size_t size, int level) {
 		(uint64_t) real_ptr);
 #endif
 
+	allocated_list.push_back(real_ptr);
 	return real_ptr;
 }
 
@@ -428,17 +431,35 @@ void ariel_tlvl_free(void* ptr) {
 #ifdef ARIEL_DEBUG
 	fprintf(stderr, "Perform a tlvl_free from Ariel (pointer = %p) on thread %lu\n", ptr, thr);
 #endif
-	free(ptr);
-	
-	const uint8_t issueFree = (uint8_t) ISSUE_TLM_FREE;
-	const uint64_t virtAddr = (uint64_t) ptr;
-	const int BUFFER_LENGTH = sizeof(issueFree) + sizeof(virtAddr);
-	
-	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
-	copy(&buffer[0], &issueFree, sizeof(issueFree));
-	copy(&buffer[sizeof(issueFree)], &virtAddr, sizeof(virtAddr));
-	
-	write(pipe_id[thr], buffer, BUFFER_LENGTH);	
+
+	bool found = false;
+	std::vector<void*>::iterator ptr_list_itr;
+	for(ptr_list_itr = allocated_list.begin(); ptr_list_itr != allocated_list.end(); ptr_list_itr++) {
+		if(*ptr_list_itr == ptr) {
+			found = true;
+			allocated_list.erase(ptr_list_itr);
+			break;
+		}
+	}
+
+	if(found) {
+		fprintf(stderr, "ARIEL: Matched call to free, passing to Ariel free routine.\n");
+		free(ptr);
+
+		const uint8_t issueFree = (uint8_t) ISSUE_TLM_FREE;
+		const uint64_t virtAddr = (uint64_t) ptr;
+		const int BUFFER_LENGTH = sizeof(issueFree) + sizeof(virtAddr);
+
+		char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+		copy(&buffer[0], &issueFree, sizeof(issueFree));
+		copy(&buffer[sizeof(issueFree)], &virtAddr, sizeof(virtAddr));
+
+		write(pipe_id[thr], buffer, BUFFER_LENGTH);
+		free(buffer);
+	} else {
+		fprintf(stderr, "ARIEL: Call to free in Ariel did not find a matching local allocation, this memory will be leaked.\n");
+	}
+
 }
 
 void mapped_ariel_enable() {
@@ -450,8 +471,56 @@ void* ariel_malloc_intercept(size_t size) {
 	return ariel_tlvl_malloc(size, default_pool);
 }
 
+void* ariel_calloc_intercept(size_t nmembers, size_t member_size) {
+	const size_t total_bytes = nmembers * member_size;
+	void* result = ariel_tlvl_malloc(total_bytes, default_pool);
+	char* result_char = (char*) result;
+
+	// Zero out the memory, as required by the C spec.
+	for(size_t i = 0; i < total_bytes; ++i) {
+		result_char[i] = (char) 0;
+	}
+
+	return result;
+}
+
+int ariel_posix_memalign_intercept(void** ptr, size_t alignment, size_t size) {
+	*ptr = ariel_tlvl_malloc(size, default_pool);
+}
+
+void* ariel_memalign_intercept(size_t alignment, size_t size) {
+	return ariel_tlvl_malloc(size, default_pool);
+}
+
 void ariel_free_intercept(void* ptr) {
 	ariel_tlvl_free(ptr);
+}
+
+void* ariel_valloc_intercept(size_t size) {
+	return ariel_tlvl_malloc(size, default_pool);
+}
+
+void* ariel_pvalloc_intercept(size_t size) {
+	return ariel_tlvl_malloc(size, default_pool);
+}
+
+void* ariel_aligned_alloc_intercept(size_t alignment, size_t size) {
+	return ariel_tlvl_malloc(size, default_pool);
+}
+
+void* ariel_realloc_intercept(void* ptr, size_t size) {
+	void* realloc_result = realloc(ptr, size);
+
+	// A reallocation event occured, means memory was moved
+	if(realloc_result != ptr) {
+		std::vector<void*>::iterator ptr_list_itr;
+
+		for(ptr_list_itr = allocated_list.begin(); ptr_list_itr != allocated_list.end(); ptr_list_itr++) {
+			if(*ptr_list_itr == ptr) {
+				allocated_list.erase(ptr_list_itr);
+			}
+		}
+	}
 }
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
@@ -491,6 +560,8 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 	fprintf(stderr, "Identifier routine: tlvl_set_pool, replacing with Ariel equivalent...\n");
 	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_set_pool);
 	fprintf(stderr, "Replacement complete.\n");
+    }
+/*
     } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "malloc") {
 	fprintf(stderr, "Identifier routine: malloc, replacing with an Ariel management function...\n");
 	RTN_Replace(rtn, (AFUNPTR) ariel_malloc_intercept);
@@ -499,8 +570,36 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 	fprintf(stderr, "Identifier routine: free, replacing with an Ariel management function...\n");
 	RTN_Replace(rtn, (AFUNPTR) ariel_free_intercept);
 	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "calloc") {
+	fprintf(stderr, "Identifed routine: calloc, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_calloc_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "posix_memalign") {
+	fprintf(stderr, "Identifed routine: posix_memalign, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_posix_memalign_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "memalign") {
+	fprintf(stderr, "Identifed routine: memalign, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_memalign_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "realloc") {
+	fprintf(stderr, "Identifed routine: realloc, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_realloc_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "valloc") {
+	fprintf(stderr, "Identifed routine: valloc, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_valloc_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "pvalloc") {
+	fprintf(stderr, "Identifed routine: pvalloc, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_pvalloc_intercept);
+	fprintf(stderr, "Replacement complete.\n");
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "aligned_alloc") {
+	fprintf(stderr, "Identifed routine: aligned_alloc, replacing with an Ariel management function...\n");
+	RTN_Replace(rtn, (AFUNPTR) ariel_aligned_alloc_intercept);
+	fprintf(stderr, "Replacement complete.\n");
     }
-
+*/
  /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
 	//	fprintf(stderr, "Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
 	//	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
@@ -536,6 +635,10 @@ int main(int argc, char *argv[])
 		SSTNamedPipe.Value() << " max instruction count: " <<
 		MaxInstructions.Value() <<
 		" max core count: " << MaxCoreCount.Value() << std::endl;
+    }
+
+    if(InterceptMultiLevelMemory.Value() > 0) {
+	mallopt(M_CHECK_ACTION, (int) 1);
     }
 
     core_count = MaxCoreCount.Value();
