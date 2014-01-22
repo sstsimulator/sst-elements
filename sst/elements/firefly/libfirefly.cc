@@ -17,6 +17,7 @@
 #include <ioSwitch.h>
 #include <nic.h>
 #include <testDriver.h>
+#include <nicTester.h>
 #include <hades.h>
 #include <simpleIO.h>
 #include <merlinIO.h>
@@ -36,8 +37,12 @@
 #include <funcSM/waitAll.h>
 #include <ctrlMsg.h>
 #include <longMsgProtocol.h>
+#include <merlinEvent.h>
 
 using namespace Firefly;
+
+
+BOOST_CLASS_EXPORT(MerlinFireflyEvent)
 
 static SST::Component*
 create_ioSwitch(SST::ComponentId_t id, SST::Params& params)
@@ -46,9 +51,15 @@ create_ioSwitch(SST::ComponentId_t id, SST::Params& params)
 }
 
 static SST::Component*
-create_nic(SST::ComponentId_t id, SST::Params& params)
+create_nicTester(SST::ComponentId_t id, SST::Params& params)
 {
-    return new Nic( id, params );
+    return new NicTester( id, params );
+}
+
+static Module* 
+load_nic(Component* comp, Params& params)
+{
+    return new Nic( comp, params );
 }
 
 static SST::Component*
@@ -176,11 +187,6 @@ static void init_MerlinFireflyEvent()
 }
 
 static const ElementInfoComponent components[] = {
-    { "nic",
-      "Firefly NIC",
-      NULL,
-      create_nic,
-    },
     { "ioSwitch",
       "Firefly IO Switch",
       NULL,
@@ -190,6 +196,11 @@ static const ElementInfoComponent components[] = {
       "Firefly test driver ",
       NULL,
       create_testDriver,
+    },
+    { "nicTester",
+      "nic tester",
+      NULL,
+      create_nicTester,
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -206,6 +217,13 @@ static const ElementInfoModule modules[] = {
       "Firefly IO module",
       NULL,
       load_simpleIO,
+      NULL,
+    },
+    { "nic",
+      "Nic module",
+      NULL,
+      NULL,
+      load_nic,
       NULL,
     },
     { "merlinIO",
@@ -363,8 +381,8 @@ static const ElementInfoEvent events[] = {
 
 extern "C" {
     ElementLibraryInfo firefly_eli = {
-        "nic",
-        "Firefly NIC",
+        NULL,
+        NULL, 
         components,
         events,
         NULL,

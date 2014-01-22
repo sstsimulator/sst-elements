@@ -50,6 +50,8 @@ libfirefly_la_SOURCES = \
 	testDriver.cc \
 	ioSwitch.h \
 	ioSwitch.cc \
+	nicTester.h \
+	nicTester.cc \
 	nic.h \
 	nic.cc
 
