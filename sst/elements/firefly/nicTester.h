@@ -50,7 +50,8 @@ class NicTester : public SST::Component {
 
     SST::Link*  m_selfLink;
     SST::Link*  m_hostLink;
-    Nic*        m_nic;
+    Nic*            m_nic;
+    Nic::VirtNic*   m_vNic;
     Output      m_dbg;
 };
 

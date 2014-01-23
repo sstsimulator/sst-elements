@@ -88,6 +88,12 @@ void Nic::init( unsigned int phase )
     m_linkControl->init(phase);
 }
 
+Nic::VirtNic* Nic::virtNicInit()
+{
+    m_vNicV.push_back( new Nic::VirtNic( *this, m_vNicV.size() ) );
+    return m_vNicV.back();
+}
+
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
@@ -105,7 +111,8 @@ void Nic::handleSelfEvent( Event *e )
     }
 }
 
-void Nic::dmaSend( int dest, int tag, std::vector<IoVec>& iovec, XXX* key )
+void Nic::dmaSend( Nic::VirtNic *vNic,int dest, int tag, 
+                                std::vector<IoVec>& iovec, XXX* key )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     SelfEvent* event = new SelfEvent; 
@@ -114,11 +121,13 @@ void Nic::dmaSend( int dest, int tag, std::vector<IoVec>& iovec, XXX* key )
     event->tag = tag;
     event->iovec = iovec;
     event->key = key;
+    event->vNic = vNic;
 
     m_selfLink->send( m_txBusDelay, event );
 }
 
-void Nic::dmaRecv( int src, int tag, std::vector<IoVec>& iovec, XXX* key )
+void Nic::dmaRecv( Nic::VirtNic* vNic, int src, int tag,
+                                std::vector<IoVec>& iovec, XXX* key )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     SelfEvent* event = new SelfEvent; 
@@ -127,11 +136,13 @@ void Nic::dmaRecv( int src, int tag, std::vector<IoVec>& iovec, XXX* key )
     event->tag = tag;
     event->iovec = iovec;
     event->key = key;
+    event->vNic = vNic;
 
     m_selfLink->send( m_txBusDelay, event );
 }
 
-void Nic::pioSend( int dest, int tag, std::vector<IoVec>& iovec, XXX* key )
+void Nic::pioSend( Nic::VirtNic* vNic, int dest, int tag,
+                                std::vector<IoVec>& iovec, XXX* key )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     SelfEvent* event = new SelfEvent; 
@@ -140,6 +151,7 @@ void Nic::pioSend( int dest, int tag, std::vector<IoVec>& iovec, XXX* key )
     event->tag = tag;
     event->iovec = iovec;
     event->key = key;
+    event->vNic = vNic;
 
     m_selfLink->send( m_txBusDelay, event );
 }
@@ -160,6 +172,7 @@ bool Nic::processSend( )
             MsgHdr hdr;
             hdr.tag = event->tag;
             hdr.len = m_sendQ.front()->totalBytes();
+            hdr.vNicId = m_sendQ.front()->event()->vNic->id(); 
 
             ev->buf.insert( ev->buf.size(), (const char*) &hdr, 
                                        sizeof(hdr) );
@@ -187,9 +200,9 @@ bool Nic::processSend( )
             m_sendQ.pop_front();
 
             if ( SelfEvent::DmaSend == event->type )  {
-                (*m_notifySendDmaDone)(event->key );
+                event->vNic->notifySendDmaDone( event->key );
             } else if ( SelfEvent::PioSend == event->type )  {
-                (*m_notifySendPioDone)(event->key );
+                event->vNic->notifySendPioDone(event->key );
             }
             delete event;
         }
@@ -271,7 +284,7 @@ bool Nic::processRecvEvent( MerlinFireflyEvent* event )
                                     "len=%lu\n", src, hdr.tag, hdr.len);
 
         if ( m_recvM.find( hdr.tag ) == m_recvM.end() ) {
-            (*m_notifyNeedRecv)( NULL );
+            m_vNicV[ hdr.vNicId ]->notifyNeedRecv( NULL );
             m_pendingMerlinEvent = event;
             // unregister notifier
             return false;
@@ -279,7 +292,7 @@ bool Nic::processRecvEvent( MerlinFireflyEvent* event )
 
         Entry* entry = m_recvM[ hdr.tag ].front();
         if ( entry->event()->node != -1 && entry->event()->node != src ) {
-            (*m_notifyNeedRecv)( NULL );
+            m_vNicV[ hdr.vNicId ]->notifyNeedRecv( NULL );
             m_pendingMerlinEvent = event;
             // unregister notifier
         } 
@@ -305,7 +318,8 @@ bool Nic::processRecvEvent( MerlinFireflyEvent* event )
         m_activeRecvM[src]->event()->key->len == 
                         m_activeRecvM[src]->currentLen ) {
         m_dbg.verbose(CALL_INFO,1,0,"recv entry done, src=%d\n",src );
-        (*m_notifyRecvDmaDone)( m_activeRecvM[src]->event()->key );
+        m_activeRecvM[src]->event()->vNic->notifyRecvDmaDone( 
+                            m_activeRecvM[src]->event()->key );
         
         delete m_activeRecvM[src]->event();
         delete m_activeRecvM[src];

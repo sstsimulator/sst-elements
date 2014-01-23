@@ -62,21 +62,24 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
                 loadModuleWithComponent( name, this, nicParams ));
     assert( m_nic );
 
+
     char buffer[100];
     snprintf(buffer,100,"@t:%d:NicTester::@p():@l ", m_nic->getNodeId() );
     m_dbg.setPrefix(buffer);
 
+    m_vNic = m_nic->virtNicInit();
+    assert( m_vNic );
 
-    m_nic->setNotifyOnSendDmaDone( 
+    m_vNic->setNotifyOnSendDmaDone( 
         new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifySendDmaDone )
     );
-    m_nic->setNotifyOnRecvDmaDone( 
+    m_vNic->setNotifyOnRecvDmaDone( 
         new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifyRecvDmaDone )
     );
-    m_nic->setNotifyOnSendPioDone( 
+    m_vNic->setNotifyOnSendPioDone( 
         new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifySendPioDone )
     );
-    m_nic->setNotifyNeedRecv( 
+    m_vNic->setNotifyNeedRecv( 
         new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifyNeedRecv)
     );
 
@@ -159,7 +162,7 @@ void NicTester::postRecv()
     iovec[0].len = sizeof(entry->hdr);
     iovec[1].ptr = &entry->body; 
     iovec[1].len = sizeof(entry->body);
-    m_nic->dmaRecv( -1, SHORT_MSG, iovec, xxx );
+    m_vNic->dmaRecv( -1, SHORT_MSG, iovec, xxx );
 
     m_state = PostSend; 
 
@@ -185,7 +188,7 @@ void NicTester::postSend()
         entry->body[i] = i;
     }
 
-    m_nic->pioSend( (m_nic->getNodeId() + 1 ) % 2, SHORT_MSG, iovec, xxx );
+    m_vNic->pioSend( (m_vNic->getNodeId() + 1 ) % 2, SHORT_MSG, iovec, xxx );
 
     m_state = WaitSend; 
 
