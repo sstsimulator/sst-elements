@@ -30,7 +30,9 @@ libiris_la_SOURCES = \
 	ninterface.cc \
 	macsim_terminal.h \
 	macsim_terminal.cc \
-	trig_nic/trig_nic.cc
+	trig_nic/trig_nic.cc \
+	trig_nic/trig_nic.h \
+	ex_macsim_component.h
 
 sstdir = $(includedir)/sst/elements/iris
 nobase_sst_HEADERS = \

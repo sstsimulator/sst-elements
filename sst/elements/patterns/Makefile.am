@@ -34,6 +34,7 @@ libpatterns_la_SOURCES = \
 	components/bit_bucket/bit_bucket.cc \
 	components/routermodel/routermodel.h \
 	components/routermodel/routermodel.cc \
+	benchmarks/src_ghost_bench/ghost.h \
 	benchmarks/src_ghost_bench/memory.h \
 	benchmarks/src_ghost_bench/memory.c \
 	benchmarks/src_ghost_bench/ranks.h \
@@ -57,12 +58,19 @@ libpatterns_la_SOURCES = \
 	collective_patterns/collective_topology.h \
 	collective_patterns/collective_topology.cc \
 	support/NIC_model.cc \
+	support/NIC_model.h \
 	support/comm_pattern.cc \
+	support/comm_pattern.h \
 	support/machine_info.cc \
+	support/machine_info.h \
 	support/NIC_stats.cc \
+	support/NIC_stats.h \
 	support/pattern_common.cc \
+	support/pattern_common.h \
 	support/routing.cc \
+	support/routing.h \
 	support/state_machine.cc \
+	support/state_machine.h \
 	patterns.cc \
 	patterns.h
 

@@ -2,8 +2,6 @@
 #
 #
 
-EXTRA_DIST = m5.xml
-
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libm5C.la
 
@@ -12,17 +10,14 @@ libm5C_la_SOURCES = \
     baseCache.cpp \
     bounce.h \
     bridge.cpp \
-    bridge.h \
     bus.cpp \
     busPlus.cpp \
     busPlus.h \
     debug.cpp \
     trace.cpp\
     trace.h\
-    dummyPhysicalMemory.h \
     dummySystem.h \
     dummyThreadContext.h \
-    exeBackingMem.h \
     factory.h \
     factory.cpp \
     loadMemory.cpp \

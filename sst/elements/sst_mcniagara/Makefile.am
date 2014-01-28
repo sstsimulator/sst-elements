@@ -13,11 +13,20 @@ libsst_mcniagara_la_SOURCES = \
 	sst_mcniagara.h \
 	sst_mcniagara.cpp \
 	mcniagara/CycleTracker.cc \
+	mcniagara/CycleTracker.h \
 	mcniagara/MemoryModel.cc \
+	mcniagara/MemoryModel.h \
 	mcniagara/Dependency.cc \
+	mcniagara/Dependency.h \
 	mcniagara/McNiagara.cc \
+	mcniagara/McNiagara.h \
 	mcniagara/stringutil.cc \
-	mcniagara/McNiagara-sim.cc  
+	mcniagara/stringutil.h \
+	mcniagara/McNiagara-sim.cc \
+	mcniagara/McNiagara.h \
+	mcniagara/mersenne.h \
+	mcniagara/McSimDefs.h \
+	mcniagara/OffCpuIF.h
 #	mcniagara/McNiagara-mem.cc \
 #	mcniagara/readdefs.cc 
 

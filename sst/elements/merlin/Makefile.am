@@ -30,6 +30,7 @@ libmerlin_la_SOURCES = \
 	hr_router/xbar_arb_rr.h \
 	trafficgen/trafficgen.h \
 	trafficgen/trafficgen.cc \
+	pymodule.h \
 	pymodule.c \
 	pymerlin.py
 

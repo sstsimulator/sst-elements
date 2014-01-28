@@ -6,8 +6,6 @@ AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) 
 
-EXTRA_DIST = makeSDL.pl
-
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcpu_data.la
 libcpu_data_la_SOURCES = \

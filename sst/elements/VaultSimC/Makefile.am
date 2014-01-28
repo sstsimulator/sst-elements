@@ -32,6 +32,6 @@ libVaultSimC_la_SOURCES = \
 	libphx/VaultController.h
 
 libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
-            -I$(top_srcdir)/sst/elements/include -Ilibphx
+            -I$(top_srcdir)/sst/elements/include -I$(srcdir)/libphx
 libVaultSimC_la_LDFLAGS = -module -avoid-version 
 #libVaultSimC_la_LIBADD = $(PHXSIM_LIB)

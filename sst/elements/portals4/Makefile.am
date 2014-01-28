@@ -17,7 +17,17 @@ libportals4_la_SOURCES = \
     ptlNic/ptlNic.cpp \
     ptlNic/ptlNicVCInfo.cpp \
     ptlNic/ptlNic.h \
-    ptlNic/ptlNicEvent.h
+    ptlNic/ptlNicEvent.h \
+    ptlNic/cmdQueueEntry.h \
+    ptlNic/portals4.h \
+    ptlNic/callback.h \
+    ptlNic/ptlNicTypes.h \
+    ptlNic/dmaEvent.h \
+    ptlNic/ptlEvent.h \
+    ptlNic/ptlHdr.h \
+    ptlNic/cmdQueue.h \
+    ptlNic/debug.h \
+    ptlNic/nicMmu.h
 
 libportals4_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
             -I$(top_srcdir)/sst/elements/include \

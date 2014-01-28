@@ -16,6 +16,7 @@ libportals4_sm_la_SOURCES = \
 	trig_cpu/portals_types.h \
 	trig_cpu/trig_cpu.cc \
 	trig_cpu/trig_cpu.h \
+	trig_cpu/trig_cpu_event.h \
 	trig_cpu/apps/allreduce_recdbl.h \
 	trig_cpu/apps/allreduce_recdbl_trig.h \
 	trig_cpu/apps/allreduce_tree.h \
@@ -35,6 +36,7 @@ libportals4_sm_la_SOURCES = \
 	trig_cpu/barrier_action.h \
 	trig_cpu/apps/ping_pong.h \
 	trig_cpu/apps/bandwidth.h \
+	trig_cpu/apps/eq_test.h \
 	trig_nic/trig_nic.cc \
 	trig_nic/trig_nic.h \
 	trig_nic/trig_nic_event.h

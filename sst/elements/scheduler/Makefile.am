@@ -25,8 +25,13 @@ GranularMBSAllocator.cc		GranularMBSAllocator.h		OctetMBSAllocator.h		OctetMBSAl
 RoundUpMBSAllocator.cc		Factory.h		Factory.cc \
 LinearAllocator.cc		LinearAllocator.h		FirstFitAllocator.cc		FirstFitAllocator.h		BestFitAllocator.cc \
 BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc ConstraintAllocator.cc 	MeshAllocInfo.cc \
-	MeshAllocInfo.h		FST.cc		FST.h
-
-EXTRA_DIST = makeSDL.pl test.xml test30.xml
+	MeshAllocInfo.h		FST.cc		FST.h \
+	output.h \
+	FaultEvent.h \
+	JobKillEvent.h \
+	CommunicationEvent.h \
+	ObjectRetrievalEvent.h \
+	MBSAllocClasses.h \
+	FinalTimeEvent.h
 
 libscheduler_la_LDFLAGS = -module -avoid-version -L/usr/local/lib64 $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)

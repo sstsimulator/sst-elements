@@ -53,6 +53,19 @@ libfirefly_la_SOURCES = \
 	nicTester.h \
 	nicTester.cc \
 	nic.h \
-	nic.cc
+	nic.cc \
+	protocolAPI.h \
+	ioapi.h \
+	ioVec.h \
+	info.h \
+	group.h \
+	ioEvent.h \
+	funcSM/init.h \
+	funcSM/api.h \
+	funcSM/event.h \
+	funcSM/rank.h \
+	funcSM/size.h \
+	merlinEvent.h \
+	nodeInfo.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version

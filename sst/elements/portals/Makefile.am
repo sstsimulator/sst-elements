@@ -9,4 +9,5 @@ comp_LTLIBRARIES = libportals.la
 
 libportals_la_SOURCES = \
 	portals.cc \
+	driver/driver.h \
 	driver/driver.cc
