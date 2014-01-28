@@ -63,6 +63,7 @@ OberonComponent::OberonComponent(SST::ComponentId_t id,
 	registerAsPrimaryComponent();
   	primaryComponentDoNotEndSim();
 
+	output->verbose(CALL_INFO, 2, 0, "Registering Oberon clock...\n");
 	registerClock( "1GHz", new Clock::Handler<OberonComponent>(this,
                      &OberonComponent::clockTic ) );
 }
