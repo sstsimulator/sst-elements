@@ -291,21 +291,24 @@ static const ElementInfoComponent components[] = {
 		NULL,
         create_Cache,
         cache_params,
-        cache_ports
+        cache_ports,
+        COMPONENT_CATEGORY_MEMORY
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",
 		NULL,
 		create_Bus,
         bus_params,
-        bus_ports
+        bus_ports,
+        COMPONENT_CATEGORY_MEMORY
 	},
 	{"MemController",
 		"Memory Controller Component",
 		NULL,
 		create_MemController,
         memctrl_params,
-        memctrl_ports
+        memctrl_ports,
+        COMPONENT_CATEGORY_MEMORY
 	},
 	{"DirectoryController",
 		"Coherencey Directory Controller Component",
@@ -313,6 +316,7 @@ static const ElementInfoComponent components[] = {
 		create_DirectoryController,
         dirctrl_params,
         dirctrl_ports,
+        COMPONENT_CATEGORY_MEMORY
 	},
 	{"DMAEngine",
 		"DMA Engine Component",
@@ -320,20 +324,25 @@ static const ElementInfoComponent components[] = {
 		create_DMAEngine,
         dmaengine_params,
         dmaengine_ports,
+        COMPONENT_CATEGORY_MEMORY
 	},
 	{"trivialCPU",
 		"Simple Demo CPU for testing",
 		NULL,
 		create_trivialCPU,
-        cpu_params
+        cpu_params,
+        NULL,
+        COMPONENT_CATEGORY_PROCESSOR
 	},
 	{"streamCPU",
 		"Simple Demo STREAM CPU for testing",
 		NULL,
 		create_streamCPU,
-        cpu_params
+        cpu_params,
+        NULL,
+        COMPONENT_CATEGORY_PROCESSOR
 	},
-	{ NULL, NULL, NULL, NULL }
+	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
 
 
