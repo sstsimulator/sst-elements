@@ -90,7 +90,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	}
 
 	const char* execute_binary = PINTOOL_EXECUTABLE;
-	const uint32_t pin_arg_count = 18;
+	const uint32_t pin_arg_count = 20;
   	char** execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
 	output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
@@ -117,9 +117,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	execute_args[13] = "-m";
 	execute_args[14] = (char*) malloc(sizeof(char) * 8);
 	sprintf(execute_args[14], "%" PRIu32, intercept_multilev_mem);
-  	execute_args[15] = "--";
-  	execute_args[16] = (char*) malloc(sizeof(char) * (executable.size() + 1));
-  	strcpy(execute_args[16], executable.c_str());
+	execute_args[15] = "-d";
+	execute_args[16] = (char*) malloc(sizeof(char) * 8);
+	sprintf(execute_args[16], "%" PRIu32, default_level);
+  	execute_args[17] = "--";
+  	execute_args[18] = (char*) malloc(sizeof(char) * (executable.size() + 1));
+  	strcpy(execute_args[18], executable.c_str());
 	
 	char* argv_buffer = (char*) malloc(sizeof(char) * 256);
 	for(uint32_t i = (pin_arg_count - 1); i < (pin_arg_count - 1) + app_argc; ++i) {
