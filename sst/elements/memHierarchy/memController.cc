@@ -327,7 +327,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
     use_bus = (NULL != upstream_link );
 
     if ( !upstream_link ) {
-        std::string link_lat = params.find_string("direct_link_latency", "100 ns");
+        std::string link_lat = params.find_string("direct_link_latency", "10 ns");
         upstream_link = configureLink( "direct_link", link_lat,
                 new Event::Handler<MemController>(this, &MemController::handleEvent));
     }

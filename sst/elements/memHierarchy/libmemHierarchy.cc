@@ -39,19 +39,19 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam cache_params[] = {
-    {"prefetcher",      "Prefetcher to use with cache (loaded as a module)"},
+    {"prefetcher",      "Prefetcher to use with cache (loaded as a module)", ""},
     {"num_ways",        "Associativity of the cache."},
     {"num_rows",        "How many cache rows. (Must be a power of 2)"},
     {"blocksize",       "Size of a cache block in bytes."},
-    {"num_upstream",    "How many upstream ports there are. Typically 1 or 0."},
-    {"next_level",      "Name of the next level cache"},
-    {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
-    {"access_time",     "Time taken to lookup data in the cache."},
-    {"net_addr",        "When using a directory controller, the network address of this cache."},
-    {"maxL1ResponseTime","Maximum allowed response to CPU from L1.  (Useful only on L1 caches, and useful only for debugging.)"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {NULL, NULL}
+    {"num_upstream",    "How many upstream ports there are. Typically 1 or 0.", "0"},
+    {"next_level",      "Name of the next level cache", "NONE"},
+    {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)", "STANDARD"},
+    {"access_time",     "Time taken to lookup data in the cache.", ""},
+    {"net_addr",        "When using a directory controller, the network address of this cache.", ""},
+    {"maxL1ResponseTime","Maximum allowed response to CPU from L1.  (Useful only on L1 caches, and useful only for debugging.) (0 = off)", "0"},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort cache_ports[] = {
@@ -72,9 +72,9 @@ static Component* create_Bus(ComponentId_t id, Params& params)
 
 static const ElementInfoParam bus_params[] = {
     {"numPorts",        "Number of Ports on the bus."},
-    {"busDelay",        "Delay time for the bus."},
-    {"atomicDelivery",  "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy."},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"busDelay",        "Delay time for the bus.", "100ns"},
+    {"atomicDelivery",  "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy.", "0"},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL}
 };
 
@@ -92,15 +92,15 @@ static Component* create_trivialCPU(ComponentId_t id, Params& params)
 
 
 static const ElementInfoParam cpu_params[] = {
-    {"verbose", 	    "Determine how verbose the output from the CPU is"},
+    {"verbose",             "Determine how verbose the output from the CPU is", "1"},
     {"workPerCycle",        "How much work to do per cycle."},
     {"commFreq",            "How often to do a memory operation."},
     {"memSize",             "Size of physical memory."},
-    {"do_write",            "Enable writes to memory (versus just reads)."},
-    {"num_loadstore",       "Stop after this many reads and writes."},
-    {"uncachedRangeStart",  "Beginning of range of addresses that are uncacheable."},
-    {"uncachedRangeEnd",    "End of range of addresses that are uncacheable."},
-    {NULL, NULL}
+    {"do_write",            "Enable writes to memory (versus just reads).", "1"},
+    {"num_loadstore",       "Stop after this many reads and writes.", "-1"},
+    {"uncachedRangeStart",  "Beginning of range of addresses that are uncacheable.", "0x0"},
+    {"uncachedRangeEnd",    "End of range of addresses that are uncacheable.", "0x0"},
+    {NULL, NULL, NULL}
 };
 
 
@@ -117,20 +117,20 @@ static Component* create_MemController(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam memctrl_params[] = {
-    {"mem_size",        "Size of physical memory in MB"},
-    {"rangeStart",      "Address Range where physical memory begins"},
-    {"interleaveSize",  "Size of interleaved pages in KB."},
-    {"interleaveStep",  "Distance between sucessive interleaved pages on this controller in KB."},
-    {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state"},
-    {"clock",           "Clock frequency of controller"},
-    {"divert_DC_lookups",  "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0"},
-    {"backend",         "Timing backend to use:  Default to simpleMem"},
-    {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"},
-    {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {"traceFile",       "File name (optional) of a trace-file to generate."},
-    {NULL, NULL}
+    {"mem_size",        "Size of physical memory in MB", "0"},
+    {"rangeStart",      "Address Range where physical memory begins", "0"},
+    {"interleaveSize",  "Size of interleaved pages in KB.", "0"},
+    {"interleaveStep",  "Distance between sucessive interleaved pages on this controller in KB.", "0"},
+    {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    {"clock",           "Clock frequency of controller", ""},
+    {"divert_DC_lookups",  "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
+    {"backend",         "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
+    {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
+    {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"traceFile",       "File name (optional) of a trace-file to generate.", ""},
+    {NULL, NULL, NULL}
 };
 
 
@@ -148,7 +148,7 @@ static Module* create_Mem_SimpleSim(Component* comp, Params& params)
 }
 
 static const ElementInfoParam simpleMem_params[] = {
-    {"access_time",     "When not using DRAMSim, latency of memory operation."},
+    {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
     {NULL, NULL}
 };
 
@@ -161,9 +161,9 @@ static Module* create_Mem_DRAMSim(Component* comp, Params& params)
 
 
 static const ElementInfoParam dramsimMem_params[] = {
-    {"device_ini",      "Name of DRAMSim Device config file"},
-    {"system_ini",      "Name of DRAMSim Device system file"},
-    {NULL, NULL}
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim Device system file", NULL},
+    {NULL, NULL, NULL}
 };
 
 #endif
@@ -176,9 +176,9 @@ static Module* create_Mem_HybridSim(Component* comp, Params& params)
 
 
 static const ElementInfoParam hybridsimMem_params[] = {
-    {"device_ini",      "Name of HybridSim Device config file"},
-    {"system_ini",      "Name of HybridSim Device system file"},
-    {NULL, NULL}
+    {"device_ini",      "Name of HybridSim Device config file", NULL},
+    {"system_ini",      "Name of HybridSim Device system file", NULL},
+    {NULL, NULL, NULL}
 };
 
 #endif
@@ -189,8 +189,8 @@ static Module* create_Mem_VaultSim(Component* comp, Params& params)
 }
 
 static const ElementInfoParam vaultsimMem_params[] = {
-    {"access_time",     "When not using DRAMSim, latency of memory operation."},
-    {NULL, NULL}
+    {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
+    {NULL, NULL, NULL}
 };
 
 
@@ -202,18 +202,18 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam dirctrl_params[] = {
-    {"network_addr",        "Network address of component."},
-    {"network_bw",          "Network link bandwidth."},
-    {"backingStoreSize",    "Space reserved in backing store for controller information (default = 0x1000000 (16MB))."},
-    {"addrRangeStart",      "Start of Address Range, for this controller."},
-    {"addrRangeEnd",        "End of Address Range, for this controller."},
-    {"interleaveSize",      "(optional) Size of interleaved pages in KB."},
-    {"interleaveStep",      "(optional) Distance between sucessive interleaved pages on this controller in KB."},
-    {"clock",               "Clock rate of controller."},
-    {"entryCacheSize",      "Size (in # of entries) the controller will cache."},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {NULL, NULL}
+    {"network_addr",        "Network address of component.", NULL},
+    {"network_bw",          "Network link bandwidth.", NULL},
+    {"backingStoreSize",    "Space reserved in backing store for controller information (default = 0x1000000 (16MB)).", "0x1000000"},
+    {"addrRangeStart",      "Start of Address Range, for this controller.", "0"},
+    {"addrRangeEnd",        "End of Address Range, for this controller.", NULL},
+    {"interleaveSize",      "(optional) Size of interleaved pages in KB.", "0"},
+    {"interleaveStep",      "(optional) Distance between sucessive interleaved pages on this controller in KB.", "0"},
+    {"clock",               "Clock rate of controller.", "1GHz"},
+    {"entryCacheSize",      "Size (in # of entries) the controller will cache.", "0"},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort dirctrl_ports[] = {
@@ -230,11 +230,11 @@ static Component* create_DMAEngine(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam dmaengine_params[] = {
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {"clockRate",       "Clock Rate for processing DMAs."},
-    {"netAddr",         "Network address of component."},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {NULL, NULL}
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
+    {"netAddr",         "Network address of component.", NULL},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {NULL, NULL, NULL}
 };
 
 
