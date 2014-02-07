@@ -308,6 +308,10 @@ of the specified fault type.  Without any configuration concerning the fault
 type, default values will be used for error correction, logging, etc.  These
 configuration options may be specified if desired.
 
+An example of this component in action can be found in:
+  yumyum/examples/4.fileDrivenFaults.xml
+  yumyum/examples/testFail.csv
+
 ---
 yumyum functionality tests
 ---
