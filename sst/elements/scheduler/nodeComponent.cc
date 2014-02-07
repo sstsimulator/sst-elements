@@ -102,7 +102,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
     Scheduler = configureLink("Scheduler", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent));
     Builder = configureLink("Builder", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
-    failureInjector = configureLink("failureInjector", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
+    failureInjector = configureLink("faultInjector", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
     SelfLink = configureSelfLink("linkToSelf", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleSelfEvent));
     FaultLink = configureSelfLink("SelfFaultLink", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleFaultEvent));
 

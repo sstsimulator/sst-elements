@@ -247,16 +247,16 @@ fault injection
 ---
 
 Fault activation events may be injected into a running simulation via the use
-of a fileDrivenFaultsComponent.  This is a special component which periodically
+of a faultInjectionComponent.  This is a special component which periodically
 examines a CSV file for pairs of node IDs and fault types, and injects the
 specified fault activation event into the given node.  The node treats the new
 fault like any other generated fault after it is injected.
 
-Sample fileDrivenFaultsComponent:
+Sample faultInjectionComponent:
 
-  <component name="fileDrivenFaultsComponent" type="scheduler.fileDrivenFaultsComponent">
+  <component name="faultInjectionComponent" type="scheduler.faultInjectionComponent">
     <params>
-      <failureFilename>failureEvents.csv</failureFilename>
+      <faultInjectionFilename>failureEvents.csv</faultInjectionFilename>
       <injectionFrequency>2000000</injectionFrequency>
     </params>
     <link name="fail-1.1" latency="0 ns" port="nodeLink0" />
@@ -268,7 +268,11 @@ Sample fileDrivenFaultsComponent:
     <link name="fail-4.1" latency="0 ns" port="nodeLink6" />
   </component>
 
-sample failure CSV:
+Sample link from a nodeComponent:
+
+<link name="fail-1.1" latency="0 ns" port="faultInjector" />
+
+Sample failure CSV:
 
 4.1, testFailType
 2.2, testCoolFailType
@@ -278,26 +282,27 @@ YYRESUME
 The following parameters are available for this component:
 
 REQUIRED: Path and filename containing the node and fialure type pairs:
-    <failureFilename>[filename]</failureFilename>
+    <faultInjectionFilename>[filename]</faultInjectionFilename>
 OPTIONAL: Token which appears in the file to resume the simulation after all
 pairs have been read: <resumeSimToken>[token]</resumeSimToken>  Default value
 is YYRESUME
-REQUIRED: number of timesteps which should pass between readings of the
-failure file: <injectionFrequency>[timesteps]</injectionFrequency>
+REQUIRED: number of simulatedseconds which should pass between readings of the
+failure file: <injectionFrequency>[simulated seconds]</injectionFrequency>
 OPTIONAL: number of real wallclock milliseconds which should pass between
 examinations of the failure file: <filePollFreq>[ms]</filePollFreq>  Default
 value is 1000
 
-After a simulation begins, every injectionFrequency timesteps, failureFilename
-is read, by examining the file every filePollFreq milliseconds to determine if
-the file's write time has changed.  Once the time has changed, the file's
-contents are examined to determine if resumeSimToken appears in it.  If the
-token does not appear, the file examination process will be restarted.
+After a simulation begins, every injectionFrequency simulated seconds,
+faultInjectionFilename is read, by examining the file every filePollFreq
+milliseconds to determine if the file's write time has changed.  Once the time
+has changed, the file's contents are examined to determine if resumeSimToken
+appears in it.  If the token does not appear, the file examination process will
+be restarted.
 
 Once the token is found, all lines before the token are parsed as node ID and
 fault type pairs, and fault activation events of the specified type will be
-injected into the specified nodes, and the fileDrivenFaultsComponent will wait
-injectionFrequency timesteps before restarting this process again.
+injected into the specified nodes, and the faultInjectionComponent will wait
+injectionFrequency simulated seconds before restarting this process again.
 
 WARNING:
 The file will be emptied of all it's contents once it has been read.

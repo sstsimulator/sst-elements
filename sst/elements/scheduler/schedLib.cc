@@ -14,7 +14,7 @@
 #include "linkBuilder.h"
 #include "nodeComponent.h"
 #include "schedComponent.h"
-#include "fileDrivenFaultsComponent.h"
+#include "faultInjectionComponent.h"
 
 using namespace SST::Scheduler;
 
@@ -36,8 +36,8 @@ static SST::Component * create_linkBuilder( SST::ComponentId_t id, SST::Params &
     return new linkBuilder(id, params);
 }
 
-static SST::Component * create_fileDrivenFaultsComponent( SST::ComponentId_t id, SST::Params & params ){
-    return new fileDrivenFaultsComponent(id, params);
+static SST::Component * create_faultInjectionComponent( SST::ComponentId_t id, SST::Params & params ){
+    return new faultInjectionComponent(id, params);
 }
 
 
@@ -57,10 +57,10 @@ static const SST::ElementInfoComponent components[] = {
         NULL,
         create_linkBuilder
     },
-    { "fileDrivenFaultsComponent",
+    { "faultInjectionComponent",
         "Generates and injects failures from a flatfile",
         NULL,
-        create_fileDrivenFaultsComponent
+        create_faultInjectionComponent
     },
     { NULL, NULL, NULL, NULL }
 };
