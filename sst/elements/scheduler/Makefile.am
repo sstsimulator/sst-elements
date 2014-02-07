@@ -32,6 +32,7 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc Constr
 	CommunicationEvent.h \
 	ObjectRetrievalEvent.h \
 	MBSAllocClasses.h \
-	FinalTimeEvent.h
+	FinalTimeEvent.h \
+fileDrivenFaultsComponent.cc	fileDrivenFaultsComponent.h
 
 libscheduler_la_LDFLAGS = -module -avoid-version -L/usr/local/lib64 $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)

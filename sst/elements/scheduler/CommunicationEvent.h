@@ -19,7 +19,7 @@
 namespace SST {
     namespace Scheduler {
 
-        enum CommunicationTypes { RETRIEVE_ID, START_FAULTING, LOG_JOB_START, UNREGISTER_YOURSELF, START_FILE_WATCH, START_NEXT_JOB, SEED_FAULT, SEED_ERROR_LOG, SEED_ERROR_LATENCY, SEED_ERROR_CORRECTION, SEED_JOB_KILL };
+        enum CommunicationTypes { RETRIEVE_ID, START_FAULTING, LOG_JOB_START, UNREGISTER_YOURSELF, START_FILE_WATCH, START_NEXT_JOB, SEED_FAULT, SEED_ERROR_LOG, SEED_ERROR_LATENCY, SEED_ERROR_CORRECTION, SEED_JOB_KILL, FAIL_JOBS };
 
         class CommunicationEvent : public SST::Event{
             public:
@@ -27,6 +27,7 @@ namespace SST {
                 CommunicationEvent( enum CommunicationTypes type ) : SST::Event() {
                     CommType = type;
                     reply = false;
+                    this->payload = NULL;
                 }
 
                 CommunicationEvent(enum CommunicationTypes type, void* payload) : SST::Event() {

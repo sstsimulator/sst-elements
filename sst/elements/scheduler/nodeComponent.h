@@ -76,6 +76,7 @@ namespace SST {
             int nodeNum;
 
             SST::Link * Scheduler;
+            SST::Link * failureInjector;
             SST::Link * SelfLink;
             SST::Link * FaultLink;
 

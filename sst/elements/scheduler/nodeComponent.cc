@@ -102,6 +102,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
     Scheduler = configureLink("Scheduler", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent));
     Builder = configureLink("Builder", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
+    failureInjector = configureLink("failureInjector", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
     SelfLink = configureSelfLink("linkToSelf", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleSelfEvent));
     FaultLink = configureSelfLink("SelfFaultLink", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleFaultEvent));
 
@@ -293,7 +294,6 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
         logError(faultEvent);
 
         if (!canCorrectError(faultEvent)) {
-
             if (Scheduler && jobNum != -1) {
                 /* Kill the job if:
                  * 
@@ -327,6 +327,7 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
                 }
             }
         }
+
         delete ev;
     }
 }
@@ -336,12 +337,25 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
 void nodeComponent::handleEvent(Event *ev) {
     if (dynamic_cast<CommunicationEvent *>( ev )){
         CommunicationEvent * event = dynamic_cast<CommunicationEvent*>(ev);
-	if (event -> CommType == RETRIEVE_ID) {
-            event -> payload = &this -> ID;
-            event -> reply = true;
+	if( event->CommType == FAIL_JOBS ){
+		FaultEvent * specialFault = new FaultEvent( std::string( *(string *)event->payload ) );
+		specialFault->shouldKillJob = FAULT_EVENT_SHOULDKILL;
+        	logFault( specialFault );
+		handleFaultEvent( specialFault );
+	}else if (event -> CommType == RETRIEVE_ID) {
+		if( event->payload == NULL ){
+			event -> payload = &this -> ID;
+			event -> reply = true;
 
-            Scheduler -> send(event); 
-            return;
+			Scheduler -> send(event); 
+			return;
+		}else{
+			event->payload = &this->ID;
+			event->reply = true;
+
+			failureInjector->send( event );
+			return;
+		}
         }else{
 		std::cerr << "Error: unhandled event" << std::endl;
 	}
