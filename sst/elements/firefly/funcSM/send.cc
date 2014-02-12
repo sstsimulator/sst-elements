@@ -44,8 +44,6 @@ void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         sendEntry = new SendEntry;
         *sendEntry = *m_event->entry;
 
-        sendEntry->resp = new Hermes::MessageResponse;
-
         *sendEntry->req = sendEntry;
     }
 

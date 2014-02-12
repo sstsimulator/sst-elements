@@ -13,11 +13,8 @@
 #define COMPONENTS_FIREFLY_PROTOCOLAPI_H
 
 #include <sst/core/module.h>
-#include <sst/core/output.h>
 
-#include <vector>
-#include "ioapi.h"
-#include "ioVec.h"
+#include "nic.h"
 
 namespace SST {
 namespace Firefly {
@@ -28,26 +25,12 @@ class ProtocolAPI : public SST::Module
 {
   public:
 
-    class OutBase {
-      public:
-        virtual ~OutBase() {}
-        virtual bool sendv(int dest, std::vector<IoVec>&, IO::Entry::Functor*) = 0;
-        virtual bool recvv(int src, std::vector<IoVec>&, IO::Entry::Functor*) = 0;
-    };
-
     virtual ~ProtocolAPI() {}
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
-    virtual void init( OutBase*, Info*, Link* ) = 0;  
-
-    virtual IO::NodeId canSend() = 0;
-    virtual void startSendStream( IO::NodeId ) = 0;
-    virtual void startRecvStream( IO::NodeId ) = 0;
-
+    virtual void init( Info*, Nic::VirtNic* ) = 0;  
     virtual std::string name() = 0;
     virtual void setRetLink(SST::Link* link) { assert(0); } 
-
-    Output m_dbg;
 };
 
 }

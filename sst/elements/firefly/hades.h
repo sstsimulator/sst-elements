@@ -16,48 +16,19 @@
 #include <sst/core/output.h>
 
 #include "sst/elements/hermes/msgapi.h"
-#include "ioapi.h"
 #include "group.h"
 #include "info.h"
 #include "protocolAPI.h"
+#include "nic.h"
 
 namespace SST {
 namespace Firefly {
 
 class FunctionSM;
 class NodeInfo;
-class XXX;
 
 class Hades : public Hermes::MessageInterface
 {
-    typedef StaticArg_Functor<Hades, IO::Entry*, IO::Entry*>   IO_Functor;
-    typedef Arg_Functor<Hades, IO::NodeId>                     IO_Functor2;
-
-    class IORequest : public IO::Entry {
-      public:
-        int                     protoType;
-        IO::NodeId              nodeId;
-    };
-
-    class SelfEvent : public SST::Event {
-      public:
-        SelfEvent() : Event() {}
-        IORequest* aaa;
-    };
-
-    class Out : public ProtocolAPI::OutBase {
-      public:
-        Out( IO::Interface* obj ) : m_obj(obj) { }
-
-        bool sendv(int dest, std::vector<IoVec>&vec, IO::Entry::Functor* func) {
-            return m_obj->sendv(dest,vec,func);
-        }
-        bool recvv(int src, std::vector<IoVec>& vec, IO::Entry::Functor* func) {
-            return m_obj->recvv(src,vec,func);
-        }
-        IO::Interface* m_obj;
-    };
-
   public:
     Hades(Component*, Params&);
     virtual void printStatus( Output& );
@@ -160,8 +131,8 @@ class Hades : public Hermes::MessageInterface
     enum { WaitFunc, WaitIO } m_state;
 
     int myNodeId() { 
-        if ( m_io ) {
-            return m_io->getNodeId();
+        if ( m_nic ) {
+            return m_nic->getNodeId();
         } else {
             return -1;
         }
@@ -175,42 +146,18 @@ class Hades : public Hermes::MessageInterface
         return m_info.sizeofDataType(type); 
     }
 
-    bool runSend();
-    bool runRecv();
-
-    void enterEventHandler(SST::Event*);
-
-    IO::Entry* recvWireHdrDone(IO::Entry*);
-    IO::Entry* sendWireHdrDone(IO::Entry*);
-
     Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
 
-    bool sendv(int dest, std::vector<IoVec>&, IO::Entry::Functor*);
-    bool recvv(int src, std::vector<IoVec>&, IO::Entry::Functor*);
-
     SST::Link*          m_enterLink;  
-    IO::Interface*      m_io;
+    Nic*                m_nic;
     NodeInfo*           m_nodeInfo;
     Info                m_info;
     FunctionSM*         m_functionSM;
     Output              m_dbg;
-    Out*                m_out;
 
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
-
-    std::map<int,ProtocolAPI*>::iterator m_sendIter;
-
-    std::map<int,ProtocolAPI*>::iterator currentSendIterator( ) {
-        return m_sendIter;
-    } 
-
-    void advanceSendIterator() {
-        ++m_sendIter;
-        if ( m_sendIter == m_protocolM.end() ) 
-            m_sendIter = m_protocolM.begin();
-    }
 };
 
 } // namesapce Firefly 

@@ -82,7 +82,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 m_dbg.verbose(CALL_INFO,1,0,"post irecv for child %d\n", child );
                 proto()->irecv( m_bufV[ child + 1 ], m_bufLen,
                         m_yyy->calcChild( child ), 
-                        genTag(), m_event->group, &m_recvReqV[ child + 1 ] );
+                        genTag(), &m_recvReqV[ child + 1 ] );
                 return;
 
               case WaitUpState::Waiting:
@@ -115,8 +115,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_dbg.verbose(CALL_INFO,1,0,"send message to parent %d\n",
                                                             m_yyy->parent());
-            proto()->send( ptr, m_bufLen, m_yyy->parent(),
-                            genTag(), m_event->group );
+            proto()->send( ptr, m_bufLen, m_yyy->parent(), genTag() );
             return;
         }
 
@@ -127,7 +126,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
             m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
                                                             m_yyy->parent());
             proto()->recv( m_event->result, m_bufLen, m_yyy->parent(),
-                genTag(), m_event->group );
+                                                         genTag() );
             return;
         }
 
@@ -143,7 +142,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_dbg.verbose(CALL_INFO,1,0,"send to child %d\n", child );
             proto()->send( m_event->result, m_bufLen, 
-                    m_yyy->calcChild( child ), genTag(), m_event->group );
+                    m_yyy->calcChild( child ), genTag() );
             return;
         }
 

@@ -230,7 +230,7 @@ void TestDriver::handle_event( Event* ev )
         my_respPtr[1] = &my_resp[1];
         m_hermes->waitall( 2, &my_req[0], &my_respPtr[0], &m_functor );
     } else if ( m_funcName.compare( "waitanySend" ) == 0 ) {
-        m_hermes->waitany( 2, &my_req[0], &my_index, &my_resp[0], &m_functor );
+        m_hermes->waitany( 1, &my_req[0], &my_index, &my_resp[0], &m_functor );
     } else if ( m_funcName.compare( "waitanyRecv" ) == 0 ) {
         m_hermes->waitany( 1, &my_req[1], &my_index, &my_resp[0], &m_functor );
     } else if ( m_funcName.compare( "fini" ) == 0 ) {

@@ -91,7 +91,6 @@ bool GathervFuncSM::waitUp(Retval& retval)
                     sizeof(m_waitUpSize[m_waitUpState.count]),
                     m_qqq->calcChild(m_waitUpState.count),
                     genTag(1), 
-                    m_event->group, 
                     &m_recvReqV[m_waitUpState.count] );
 
         ++m_waitUpState.count;
@@ -140,7 +139,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
         proto()->irecv( &m_recvBuf[m_waitUpState.len],
                     m_waitUpSize[m_waitUpState.count],
                     m_qqq->calcChild(m_waitUpState.count),
-                    genTag(2), m_event->group, 
+                    genTag(2), 
                     &m_recvReqV[m_waitUpState.count] );
         m_waitUpState.len += m_waitUpSize[m_waitUpState.count];
 
@@ -157,7 +156,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
                 " child %d[%d]\n", m_waitUpState.count, 
                 m_qqq->calcChild( m_waitUpState.count ) );
         proto()->send( NULL, 0, m_qqq->calcChild( m_waitUpState.count ),
-                            genTag(3), m_event->group );
+                            genTag(3) );
 
         ++m_waitUpState.count;
         if ( m_waitUpState.count == m_qqq->numChildren() ) {
@@ -256,7 +255,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
         m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
                                                 m_intBuf, m_qqq->parent());
         proto()->send( &m_intBuf, sizeof(m_intBuf), m_qqq->parent(),
-                            genTag(1), m_event->group );
+                            genTag(1) );
 
         m_sendUpState.state = SendUpState::RecvGo;
         return true;
@@ -264,8 +263,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
     case SendUpState::RecvGo:
         m_dbg.verbose(CALL_INFO,1,0,"post receive for Go msg, parrent=%d\n",
                                         m_qqq->parent());
-        proto()->recv( NULL, 0, m_qqq->parent(),
-                        genTag(3), m_event->group );
+        proto()->recv( NULL, 0, m_qqq->parent(), genTag(3) );
 
         m_sendUpState.state = SendUpState::SendBody;
         return true;
@@ -275,7 +273,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
         m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
         proto()->send( &m_recvBuf[0], m_recvBuf.size(), m_qqq->parent(),
-                            genTag(2), m_event->group );
+                            genTag(2) );
 #if 0 // print debug 
         for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
             printf("%#03x\n", m_recvBuf[i]);

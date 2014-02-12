@@ -22,7 +22,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "ioapi.h"
+//#include "ioapi.h"
 #include "functionSM.h"
 #include "entry.h"
 #include "nodeInfo.h"
@@ -34,8 +34,7 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     MessageInterface(),
-    m_state( WaitFunc ),
-    m_io( NULL )
+    m_state( WaitFunc )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc = 
@@ -43,20 +42,15 @@ Hades::Hades( Component* owner, Params& params ) :
 
     m_dbg.init("@t:Hades::@p():@l ", verboseLevel, 0, loc );
 
-    m_enterLink = owner->configureSelfLink("HadesEnterLink", "1 ps",
-        new Event::Handler<Hades>(this,&Hades::enterEventHandler));
+    Params nicParams = params.find_prefix_params("nicParams." );
 
-    Params ioParams = params.find_prefix_params("ioParams." );
-
-    std::string moduleName = params.find_string("ioModule"); 
-    m_io = dynamic_cast<IO::Interface*>(owner->loadModuleWithComponent( 
-                        moduleName, owner, ioParams ) );
-    if ( !m_io ) {
-        m_dbg.fatal(CALL_INFO,0," Unable to find Hermes '%s'\n",
+    std::string moduleName = params.find_string("nicModule"); 
+    m_nic = dynamic_cast<Nic*>(owner->loadModuleWithComponent( 
+                        moduleName, owner, nicParams ) );
+    if ( !m_nic ) {
+        m_dbg.fatal(CALL_INFO,0," Unable to find nic module'%s'\n",
                                         moduleName.c_str());
     }
-
-    m_io->setReturnLink( m_enterLink );
 
     Params nodeParams = params.find_prefix_params("nodeParams.");
     
@@ -101,19 +95,20 @@ Hades::Hades( Component* owner, Params& params ) :
 
     nidListFile.close();
 
-    m_out = new Out( m_io );
-
     //****************************
     Params tmpParams;
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
     int protoNum = 0;
     tmpParams = params.find_prefix_params("longMsgProtocol.");
     m_protocolM[ protoNum ] = 
         dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
                             "firefly.LongMsgProto", owner, tmpParams ) );
 
-    m_protocolM[ protoNum ]->init( m_out, &m_info, m_enterLink );
+    m_protocolM[ protoNum ]->init( &m_info, m_nic->virtNicInit() );
+
     m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] =
                                                 m_protocolM[ protoNum ];
+    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_protocolM[ protoNum ]->name().c_str());
 
     //****************************
     ++protoNum;
@@ -122,17 +117,17 @@ Hades::Hades( Component* owner, Params& params ) :
         dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
                             "firefly.CtrlMsg", owner, tmpParams ) );
 
-    m_protocolM[ protoNum ]->init( m_out, &m_info, m_enterLink );
+    m_protocolM[ protoNum ]->init( &m_info, m_nic->virtNicInit() );
     m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] = 
                                                 m_protocolM[ protoNum ];
+    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_protocolM[ protoNum ]->name().c_str());
 
-    m_sendIter = m_protocolM.begin();
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
                                     m_protocolMapByName );
-    
+
 }
 
 void Hades::printStatus( Output& out )
@@ -219,7 +214,7 @@ Group* Hades::initRoundRobinMap( int numRanks,
 void Hades::_componentInit(unsigned int phase )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    m_io->_componentInit(phase);
+    m_nic->init(phase);
 }
 
 Hermes::RankID Hades::myWorldRank() 
@@ -232,114 +227,4 @@ Hermes::RankID Hades::myWorldRank()
     } else {
         return rank;
     }
-}
-
-
-void Hades::enterEventHandler( SST::Event* )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_state==WaitFunc?"WaitFunc":"WaitIO");
-    m_state = WaitFunc;
-
-    if ( runRecv() ) {
-       return;
-    }
-
-    if ( runSend() ) {
-        return;
-    }
-
-    m_dbg.verbose(CALL_INFO,1,0,"call m_io->wait()\n");
-    m_io->wait( );
-    m_state = WaitIO;
-}
-
-bool Hades::runSend( )
-{
-    std::map<int,ProtocolAPI*>::iterator start = currentSendIterator();
-
-do { 
-
-    m_dbg.verbose(CALL_INFO,1,0,"check protocol[%d] %s\n", 
-                currentSendIterator()->first,
-                currentSendIterator()->second->name().c_str() );
-
-    IO::NodeId dest = currentSendIterator()->second->canSend();
-    int protocol = currentSendIterator()->first;
-
-    advanceSendIterator();
-
-    if ( IO::AnyId != dest ) {
-
-        IORequest* req = new IORequest;
-
-        m_dbg.verbose(CALL_INFO,1,0,"SendStream started\n");
-
-        req->protoType = protocol;
-        req->nodeId = dest;
-
-        std::vector<IoVec> ioVec; 
-        ioVec.resize(1);
-        ioVec[0].ptr = &req->protoType;
-        ioVec[0].len = sizeof(req->protoType); 
-
-        // we will get req back as the argument to sendWireHdrDone 
-        req->callback = new IO_Functor( this, &Hades::sendWireHdrDone, req );
-
-        m_io->sendv( req->nodeId, ioVec, req->callback );
-        return true;
-    }
-} while ( start != currentSendIterator() ) ;
-
-    return false;
-}
-
-IO::Entry* Hades::sendWireHdrDone( IO::Entry* e )
-{
-    IORequest* req = static_cast<IORequest*>(e);
-
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",
-                m_protocolM[req->protoType]->name().c_str());
-
-    m_protocolM[ req->protoType ]->startSendStream( req->nodeId ); 
-
-    delete e;
-    return NULL;
-}
-
-bool Hades::runRecv()
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n" );
-    IO::NodeId src = m_io->peek( ); 
-    if ( src == IO::AnyId ) {
-        return false;
-    }
-
-    m_dbg.verbose(CALL_INFO,1,0,"data coming from src %d\n", src );
-    
-    IORequest* req = new IORequest; 
-    req->nodeId = src;
-    req->protoType = -1;
-    req->callback  = new IO_Functor(this, &Hades::recvWireHdrDone, req);
-
-    std::vector<IoVec> vec; 
-
-    vec.resize(1);
-    vec[0].ptr = &req->protoType;
-    vec[0].len = sizeof(req->protoType);
-
-    m_io->recvv( req->nodeId, vec, req->callback );
-    return true;
-}
-
-IO::Entry* Hades::recvWireHdrDone( IO::Entry* e )
-{
-    IORequest* req = static_cast<IORequest*>(e);
-
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",
-                m_protocolM[req->protoType]->name().c_str());
-
-    m_protocolM[ req->protoType ]->startRecvStream( req->nodeId );
-    
-    delete e;
-    return NULL;
 }

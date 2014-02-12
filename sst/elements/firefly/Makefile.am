@@ -12,6 +12,12 @@ libfirefly_la_SOURCES = \
 	longMsgProtocol.h \
 	ctrlMsg.cc \
 	ctrlMsg.h \
+	ctrlMsgXXX.cc \
+	ctrlMsgXXX.h \
+	ctrlMsgState.h \
+	ctrlMsgSendState.h \
+	ctrlMsgRecvState.h \
+	ctrlMsgWaitAnyState.h \
 	entry.h \
 	libfirefly.cc \
 	functionSM.cc \
@@ -42,30 +48,11 @@ libfirefly_la_SOURCES = \
 	hades.h \
 	hades.cc \
 	hadesAPI.cc \
-	merlinIO.h \
-	merlinIO.cc \
-	simpleIO.h \
-	simpleIO.cc \
 	testDriver.h \
 	testDriver.cc \
-	ioSwitch.h \
-	ioSwitch.cc \
 	nicTester.h \
 	nicTester.cc \
 	nic.h \
-	nic.cc \
-	protocolAPI.h \
-	ioapi.h \
-	ioVec.h \
-	info.h \
-	group.h \
-	ioEvent.h \
-	funcSM/init.h \
-	funcSM/api.h \
-	funcSM/event.h \
-	funcSM/rank.h \
-	funcSM/size.h \
-	merlinEvent.h \
-	nodeInfo.h
+	nic.cc
 
 libfirefly_la_LDFLAGS = -module -avoid-version

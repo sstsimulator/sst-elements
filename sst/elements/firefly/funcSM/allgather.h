@@ -105,7 +105,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
     CtrlMsg::CommReq    m_recvReq; 

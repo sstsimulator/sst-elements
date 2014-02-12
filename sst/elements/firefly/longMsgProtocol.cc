@@ -41,9 +41,9 @@ class X : public SST::Event {
 };
 
 LongMsgProtocol::LongMsgProtocol( Component* owner, Params& params ) :
-    CtrlMsg( owner, params ),
+    API( owner, params ),
     m_owner( owner ),
-    m_longMsgKey( 10 )
+    m_longMsgRegion( 2 )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc =
@@ -57,7 +57,6 @@ LongMsgProtocol::LongMsgProtocol( Component* owner, Params& params ) :
     m_my_selfLink = m_owner->configureSelfLink( 
                 "LongMsgSelfLink." + ss.str(), "1 ps",
       new Event::Handler<LongMsgProtocol>(this,&LongMsgProtocol::selfHandler));
-
 }
 
 void LongMsgProtocol::setup()
@@ -67,7 +66,8 @@ void LongMsgProtocol::setup()
                                                 info()->worldRank());
     m_my_dbg.setPrefix(buffer);
 
-    CtrlMsg::setup();
+    API::setup();
+    m_regionEventQ = createEventQueue();
 }
 
 void LongMsgProtocol::setRetLink(SST::Link* link)
@@ -80,7 +80,7 @@ void LongMsgProtocol::setRetLink(SST::Link* link)
     link = m_owner->configureSelfLink( "LongMsgOutLink." + ss.str(), "1 ps",
         new Event::Handler<LongMsgProtocol>(this,&LongMsgProtocol::retHandler));
 
-    CtrlMsg::setRetLink(link);
+    API::setRetLink(link);
 }
 
 void LongMsgProtocol::selfHandler( SST::Event* e )
@@ -104,7 +104,7 @@ void LongMsgProtocol::returnToFunction()
 }
 
 void LongMsgProtocol::schedDelay( int delay, 
-                            VoidArg_FunctorBase<bool>* callback )
+                            CtrlMsg::FunctorBase_0<bool>* callback )
 {
     m_my_selfLink->send( delay, new SelfEvent( callback ) );
 }
@@ -112,12 +112,16 @@ void LongMsgProtocol::schedDelay( int delay,
 void LongMsgProtocol::block( Hermes::MessageRequest req[], 
             Hermes::MessageResponse* resp[] )
 {
-    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_my_dbg.verbose(CALL_INFO,1,0,"req=[0]%p\n", req[0] );
 
     assert( m_blockedList.empty() );
     m_blockedList.resize(1);
     m_blockedList[0].req   = req[0]; 
-    m_blockedList[0].resp  = resp[0]; 
+    if ( resp ) {
+        m_blockedList[0].resp  = resp[0]; 
+    } else {
+        m_blockedList[0].resp  = NULL;
+    }
     m_blockedList[0].index = NULL; 
 
     postRecvAny( );
@@ -156,14 +160,10 @@ bool LongMsgProtocol::unblock( Hermes::MessageRequest req )
 
         if ( m_blockedList[i].req == req ) {
 
-            m_my_dbg.verbose(CALL_INFO,1,0,"unblock %d\n",i);
-
             RecvEntry* recvEntry = dynamic_cast<RecvEntry*>( req );
             if ( recvEntry ) {
+                m_my_dbg.verbose(CALL_INFO,1,0,"unblock RecvEntry\n");
                 *m_blockedList[i].resp = *recvEntry->resp;
-            } else {
-                SendEntry* sendEntry = dynamic_cast<SendEntry*>( req );
-                *m_blockedList[i].resp = *sendEntry->resp;
             }
 
             // waitany uses index 
@@ -195,10 +195,6 @@ void LongMsgProtocol::finishSendCBE( SendEntry& sendEntry )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"finalize sendEntry data\n");
     sendEntry.setDone();
-
-    if ( sendEntry.resp ) {
-        sendEntry.resp->status = true;
-    }
 }
 
 void LongMsgProtocol::processBlocked( Hermes::MessageRequest req )
@@ -219,14 +215,12 @@ void LongMsgProtocol::waitAny( int count, Hermes::MessageRequest req[],
     for ( int i = 0; i < count; i++ ) {
         if ( req[i]->isDone() ) {
             m_my_dbg.verbose(CALL_INFO,1,0,"wait() done\n");
+            *index = i;
 
             if ( resp ) {
                 finishRequest( req[i], resp );
             }
-
             returnToFunction();
-        
-            //RETURN
             return;
         }   
     }
@@ -291,16 +285,12 @@ void LongMsgProtocol::finishRequest( Hermes::MessageRequest req,
     if ( recvEntry ) {
         *resp = *recvEntry->resp;
         if ( recvEntry->req ) {
-printf("recv %p\n",recvEntry->resp);
             delete recvEntry->resp;
             delete recvEntry;
         }
     } else {
         SendEntry* sendEntry = dynamic_cast<SendEntry*>(req);
-        *resp = *sendEntry->resp;
         if ( sendEntry->req ) {
-printf("delete send %p\n",sendEntry->resp);
-            delete sendEntry->resp;
             delete sendEntry;
         }
     }
@@ -309,9 +299,13 @@ printf("delete send %p\n",sendEntry->resp);
 //
 // postSendEntry
 //
+// checked
 void LongMsgProtocol::postSendEntry( SendEntry* entry )
 {
-    m_my_dbg.verbose(CALL_INFO,1,0,"%s\n", entry->req ? "Isend":"Send");
+    m_my_dbg.verbose(CALL_INFO,1,0,"%s src=%d tag=%#x nbytes=%d\n", 
+            entry->req ? "Isend":"Send", entry->dest, entry->tag,
+            entry->count * info()->sizeofDataType( entry->dtype )
+         );
 
     SendCallbackEntry* cbe = new SendCallbackEntry;
 
@@ -328,7 +322,9 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 
     size_t len = entry->count * info()->sizeofDataType( entry->dtype );
 
-    tag_t   tag;
+    Nic::NodeId destNode =
+            info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
+    int   tag;
     if ( len <= ShortMsgLength ) {
         cbe->vec.resize(2);
         cbe->vec[1].len = len; 
@@ -336,15 +332,17 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
         tag = ShortMsgTag;
     } else {
         cbe->vec.resize(1);
-        cbe->key = genLongMsgKey();
-        tag = LongMsgTag | cbe->key;
+        cbe->region = genLongRegion();
+        tag = LongMsgTag | cbe->region;
+        registerRegion( cbe->region, destNode, entry->buf, len, 
+                                                        m_regionEventQ );
+        m_regionM[cbe->region] = cbe;
     }
+
+    m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
 
     cbe->vec[0].ptr = &cbe->hdr;
     cbe->vec[0].len = sizeof(cbe->hdr);
-
-    IO::NodeId destNode =
-            info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
 
     sendv( cbe->vec, destNode, tag, callback );
 }
@@ -353,16 +351,13 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 // postSendEntry_CB
 //
 
+// checked
 bool LongMsgProtocol::postSendEntry_CB( SendCallbackEntry* scbe )
 {
     // long message
     if ( scbe->hdr.count && scbe->vec.size() == 1 ) {
 
         m_my_dbg.verbose(CALL_INFO,1,0,"long\n");
-
-        assert( m_longSendM.find( scbe->key ) == m_longSendM.end() );
-        // save the Send info for LongMsgRdy msg
-        m_longSendM[ scbe->key ] = scbe;
 
         if ( NULL == scbe->sendEntry->req ) {
             Hermes::MessageRequest req = scbe->sendEntry;
@@ -386,11 +381,48 @@ bool LongMsgProtocol::postSendEntry_CB( SendCallbackEntry* scbe )
     return true; 
 }
 
+// checked
+bool LongMsgProtocol::processRegionEvents()
+{
+    if( ! m_regionEventQ->empty() ) {
+        CtrlMsg::region_t region = m_regionEventQ->front();
+        m_regionEventQ->pop_front();
+
+        m_my_dbg.verbose(CALL_INFO,1,0,"region %#x \n", region );
+        SendCallbackEntry* scbe = m_regionM[region];
+        finishSendCBE( *scbe->sendEntry );
+
+        unregisterRegion( region );
+        m_regionM.erase( region );
+
+        schedDelay( 0, new SCBE_Functor( 
+              this, &LongMsgProtocol::processSendEntryFini_CB, scbe ) ); 
+
+        return true;
+    }
+    return false;
+}
+
+//checked
+bool LongMsgProtocol::processSendEntryFini_CB( SendCallbackEntry* cbe )
+{
+    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+    // state has changed, something may have become unblocked
+    processBlocked( cbe->sendEntry ) ;
+    delete cbe;
+    return true;
+}
+
+// checked
 void LongMsgProtocol::postRecvAny(  )
 {
     RecvCallbackEntry* rcbe = new RecvCallbackEntry;
 
     m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    if ( processRegionEvents() ) {
+        return;
+    }
 
     rcbe->recvEntry = NULL;
 
@@ -405,95 +437,73 @@ void LongMsgProtocol::postRecvAny(  )
     rcbe->vec[0].len = sizeof(rcbe->hdr);
     rcbe->vec[1].len = rcbe->buf.size();
     rcbe->vec[1].ptr = &rcbe->buf[0];
-    rcbe->commReq.userInfo = rcbe;
 
-    irecvv( rcbe->vec, AnyRank, AnyTag, &rcbe->commReq,
-                            &rcbe->ctrlResponse, callback );
+    irecvv( rcbe->vec, CtrlMsg::AnyNid, CtrlMsg::AnyTag, &rcbe->commReq,
+                            callback );
+
+    setUsrPtr( &rcbe->commReq, rcbe );
 }
 
+// checked  
 bool LongMsgProtocol::postRecvAny_irecv_CB( RecvCallbackEntry* rcbe  )
 {
-    m_commReqs.insert( &rcbe->commReq );  
-
     XXX_Functor* callback =
-        new XXX_Functor( this, &LongMsgProtocol::waitAny_CB, NULL );
+        new XXX_Functor( this, &LongMsgProtocol::waitAny_CB );
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"m_commReq.size()=%lu\n",m_commReqs.size());
-    CtrlMsg::waitAny( m_commReqs, callback );
+    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+    API::wait( &rcbe->commReq, callback );
 
     // delete callback functor
     return true;
 }
 
-bool LongMsgProtocol::waitAny_CB( void* )
+// checked
+bool LongMsgProtocol::waitAny_CB( CtrlMsg::CommReq* req )
 {
-    RecvCallbackEntry *cbe = NULL;
-    std::set<CommReq*>::iterator iter = m_commReqs.begin();
-    for ( ; iter != m_commReqs.end(); ++iter ) {
-        if ( (*iter)->isDone() ) {
-            cbe = static_cast<RecvCallbackEntry*>( (*iter)->userInfo );
-            m_commReqs.erase( iter );
-            break;
+    int numMatch = 0;
+
+    if ( ! req ) {
+        if ( processRegionEvents() ) {
+            processRegionEvents();
+            return true;
+        } else {
+            assert(0);
         }
     }
+
+    RecvCallbackEntry *cbe = static_cast<RecvCallbackEntry*>( getUsrPtr(req) );
     assert( cbe );
-    
-    // if there's a RecvEntry, a long message body has been received
-    if ( cbe->recvEntry ) {
-        finishRecvCBE( *cbe->recvEntry, cbe->hdr );
 
-        // state has changed, something may have become unblocked
-        processBlocked( cbe->recvEntry );
-    } else {
-        processRecvAny( cbe );
+    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    // check for posted receives
+    std::deque<RecvEntry*>::iterator iter = m_postedQ.begin();
+    for ( ; iter != m_postedQ.end(); ++iter ) {
+        ++numMatch;
+        if ( checkMatch( cbe->hdr, *(*iter) ) ) {
+            m_my_dbg.verbose(CALL_INFO,1,0,"found match\n");
+            cbe->recvEntry = *iter;
+            m_postedQ.erase( iter );
+            break;
+        } 
     }
 
-    // delete callback functor
+    schedDelay( calcMatchDelay( numMatch), new RCBE_Functor( 
+              this, &LongMsgProtocol::waitAnyDelay_CB, cbe ) ); 
     return true;
 }
 
-//
-// processRecvAny()
-//
-void LongMsgProtocol::processRecvAny( RecvCallbackEntry* cbe )
+// checked
+bool LongMsgProtocol::waitAnyDelay_CB( RecvCallbackEntry* cbe )
 {
+    CtrlMsg::Status status;
+    getStatus( &cbe->commReq, &status );
+
     m_my_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x\n",
-                            cbe->ctrlResponse.rank, cbe->ctrlResponse.tag);
+                            status.nid, status.tag);
 
-    if ( ( cbe->ctrlResponse.tag & TagMask ) == LongMsgRdyTag ) {
-
-
-        processLongMsgRdyMsg( cbe->ctrlResponse.tag & ~TagMask,
-                         cbe->ctrlResponse.rank );
-        delete cbe;
-
-    } else {
-
-        std::deque<RecvEntry*>::iterator iter = m_postedQ.begin();
-
-        int numMatch = 0;
-        // check for posted receives
-        for ( ; iter != m_postedQ.end(); ++iter ) {
-            ++numMatch;
-            if ( checkMatch( cbe->hdr, *(*iter) ) ) {
-                m_my_dbg.verbose(CALL_INFO,1,0,"found match\n");
-                cbe->recvEntry = *iter;
-                m_postedQ.erase( iter );
-                break;
-            } 
-        }
-
-        schedDelay( calcMatchDelay( numMatch), new RCBE_Functor( 
-              this, &LongMsgProtocol::processRecvAny_CB, cbe ) ); 
-    }
-}
-    
-
-bool LongMsgProtocol::processRecvAny_CB( RecvCallbackEntry* cbe )
-{
     if ( cbe->recvEntry ) {
-
-        if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
+        if ( ( status.tag & TagMask ) == ShortMsgTag)  {
             processShortMsg( cbe );
         } else {
             processLongMsg( cbe );
@@ -506,6 +516,7 @@ bool LongMsgProtocol::processRecvAny_CB( RecvCallbackEntry* cbe )
     return true;
 }
 
+// checked
 void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"received a short message\n");
@@ -519,6 +530,7 @@ void LongMsgProtocol::processShortMsg( RecvCallbackEntry* cbe )
               this, &LongMsgProtocol::processShortMsg_CB, cbe ) ); 
 }
 
+// checked
 bool LongMsgProtocol::processShortMsg_CB( RecvCallbackEntry* cbe )
 {
     finishRecvCBE( *cbe->recvEntry, cbe->hdr );
@@ -534,100 +546,35 @@ bool LongMsgProtocol::processShortMsg_CB( RecvCallbackEntry* cbe )
     return true;
 }
 
+// checked
 void LongMsgProtocol::processLongMsg( RecvCallbackEntry* cbe )
 {
     // reuse the RecvcCallbackEntry for receiving the body
-    cbe->key       = cbe->ctrlResponse.tag & ~TagMask;
-    cbe->srcNode   = cbe->ctrlResponse.rank; 
+    CtrlMsg::Status status;
+    getStatus( &cbe->commReq, &status );
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"src=%d key=%d\n", cbe->srcNode, cbe->key );
+    CtrlMsg::region_t region = status.tag & ~TagMask;
+    CtrlMsg::nid_t nid = status.nid; 
+    size_t length = cbe->recvEntry->count *
+                info()->sizeofDataType( cbe->recvEntry->dtype );
 
     RCBE_Functor* callback = new RCBE_Functor( 
-              this, &LongMsgProtocol::processLongMsg_irecv_CB, cbe ); 
+              this, &LongMsgProtocol::processLongMsg_CB, cbe ); 
 
-    cbe->vec.resize(1);
-    cbe->vec[0].ptr = cbe->recvEntry->buf;
-    cbe->vec[0].len = cbe->recvEntry->count * 
-                    info()->sizeofDataType( cbe->recvEntry->dtype );
+    m_my_dbg.verbose(CALL_INFO,1,0,"src=%d region=%#x\n", nid, region );
 
-    cbe->commReq.userInfo = cbe;
-
-    irecvv( cbe->vec, cbe->srcNode, cbe->key | LongMsgBdyTag, 
-                &cbe->commReq, &cbe->ctrlResponse, callback  );
+    read( nid, region, cbe->recvEntry->buf, length, callback );
 }
 
-bool LongMsgProtocol::processLongMsg_irecv_CB( RecvCallbackEntry* rcbe )
+// checked
+bool LongMsgProtocol::processLongMsg_CB( RecvCallbackEntry* cbe )
 {
-    m_my_dbg.verbose(CALL_INFO,1,0,"recv for Long Msg body posted\n");
-
-    m_commReqs.insert( &rcbe->commReq );
-
-    SendCallbackEntry* scbe = new SendCallbackEntry;
-     
-    SCBE_Functor* callback = new SCBE_Functor( 
-                    this, &LongMsgProtocol::longMsgSendRdy_CB, scbe ); 
-
-    scbe->vec.resize(0);
-
-    sendv( scbe->vec, rcbe->srcNode, rcbe->key | LongMsgRdyTag, callback );
-    
-    // delete callback functor
-    return true;
-}
-
-bool LongMsgProtocol::longMsgSendRdy_CB( SendCallbackEntry* cbe )
-{
-    m_my_dbg.verbose(CALL_INFO,1,0,"Rdy Msg sent\n");
-
-    delete cbe; 
-
-    // got here from blocking postRecvEntry
-    if ( m_blockedList.empty() ) {
-        returnToFunction();
-    } else {
-        // state has changed, something may have become unblocked
-        processBlocked( cbe->sendEntry );  
-    }
-
-    // delete callback functor
-    return true;
-}
-
-void LongMsgProtocol::processLongMsgRdyMsg( int key, int dest ) 
-{
-    m_my_dbg.verbose(CALL_INFO,1,0,"got LongMsgRdy message key=%#x\n", key);
-
-    assert( m_longSendM.find( key ) != m_longSendM.end() );
-
-    SendCallbackEntry* scbe = m_longSendM[ key ];
-
-    m_longSendM.erase( key );
-
-    SCBE_Functor* callback = new SCBE_Functor(
-              this, &LongMsgProtocol::processLongMsgRdyMsg_CB, scbe );
-
-    scbe->vec.resize(1);
-    scbe->vec[0].len = scbe->sendEntry->count *
-                    info()->sizeofDataType( scbe->sendEntry->dtype );
-
-    scbe->vec[0].ptr = scbe->sendEntry->buf;
-
-    // Send the body of a Long Message
-    sendv( scbe->vec, dest , scbe->key | LongMsgBdyTag, callback );
-}
-
-bool LongMsgProtocol::processLongMsgRdyMsg_CB( SendCallbackEntry* cbe ) 
-{
-    m_my_dbg.verbose(CALL_INFO,1,0,"Long Msg body sent\n");
-
-    // the user send is now complete
-    finishSendCBE( *cbe->sendEntry );
-
-    delete cbe;
+    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+    finishRecvCBE( *cbe->recvEntry, cbe->hdr );
 
     // state has changed, something may have become unblocked
-    processBlocked( cbe->sendEntry ) ;
-
+    processBlocked( cbe->recvEntry );
+    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
     return true;
 }
 
@@ -635,18 +582,23 @@ bool LongMsgProtocol::processLongMsgRdyMsg_CB( SendCallbackEntry* cbe )
 // postRecvEntry()
 //
 
+// checked
 void LongMsgProtocol::postRecvEntry( RecvEntry* entry )
 {
+    m_my_dbg.verbose(CALL_INFO,1,0,"%s src=%d tag=%#x nbytes=%d\n", 
+            entry->req ? "Irecv":"Recv", entry->src, entry->tag,
+            entry->count * info()->sizeofDataType( entry->dtype )
+         );
+
     int numMatch = 0;
     RecvCallbackEntry* cbe = NULL;
-    m_my_dbg.verbose(CALL_INFO,1,0,"%s\n", entry->req ? "Irecv":"Recv");
-
     // We should block until there is room but for now punt 
     assert( m_postedQ.size() < MaxNumPostedRecvs );
 
     std::deque<RecvCallbackEntry*>::iterator iter = m_unexpectedQ.begin();
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"%lu\n",m_unexpectedQ.size());
+    m_my_dbg.verbose(CALL_INFO,1,0,"unexpected.size() %lu\n",
+                                            m_unexpectedQ.size());
     // check for posted receives
     
     for ( ; iter != m_unexpectedQ.end(); ++iter ) {
@@ -670,9 +622,13 @@ void LongMsgProtocol::postRecvEntry( RecvEntry* entry )
     }
 }
 
+// checked
 bool LongMsgProtocol::postRecvEntry_CB( RecvCallbackEntry* cbe )
 {
-    if ( ( cbe->ctrlResponse.tag & TagMask ) == ShortMsgTag)  {
+    assert(0);
+    CtrlMsg::Status status;
+    getStatus( &cbe->commReq, &status );
+    if ( ( status.tag & TagMask ) == ShortMsgTag)  {
         processShortMsg( cbe );
     } else {
         processLongMsg( cbe );
@@ -680,6 +636,7 @@ bool LongMsgProtocol::postRecvEntry_CB( RecvCallbackEntry* cbe )
     return true;
 }
 
+//checked
 bool LongMsgProtocol::postRecvEntry_CB( RecvEntry* entry )
 {
     m_postedQ.push_back( entry );
@@ -699,6 +656,7 @@ bool LongMsgProtocol::postRecvEntry_CB( RecvEntry* entry )
 // checkMatch()
 //
 
+// checked
 bool LongMsgProtocol::checkMatch( MsgHdr& hdr, RecvEntry& entry )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"dtype %d %d\n", entry.dtype, hdr.dtype);
@@ -711,7 +669,7 @@ bool LongMsgProtocol::checkMatch( MsgHdr& hdr, RecvEntry& entry )
         return false;
     }
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"tag want %d, incoming %d\n",
+    m_my_dbg.verbose(CALL_INFO,1,0,"tag want %#x, incoming %#x\n",
                                     entry.tag, hdr.tag);
     if ( entry.tag != Hermes::AnyTag &&
                 entry.tag != hdr.tag ) {

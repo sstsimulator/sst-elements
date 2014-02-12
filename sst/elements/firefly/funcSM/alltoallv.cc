@@ -65,7 +65,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", m_count, node );
 
         proto()->irecv( recvChunkPtr(node), recvChunkSize(node), 
-                        node, genTag(), m_event->group, &m_recvReq ); 
+                        node, genTag(), &m_recvReq ); 
         m_state = Send;
         break;
 
@@ -75,7 +75,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", m_count, node );
 
         proto()->send( sendChunkPtr(node), sendChunkSize(node), 
-                                        node, genTag(), m_event->group ); 
+                                            node, genTag() ); 
         m_state = WaitRecv;
         break;
 

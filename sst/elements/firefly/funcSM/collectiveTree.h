@@ -141,7 +141,7 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
         return CollectiveTag | (m_seq & 0xffff);
     }
 
-    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     WaitUpState         m_waitUpState;
     SendDownState       m_sendDownState;

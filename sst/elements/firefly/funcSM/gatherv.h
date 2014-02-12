@@ -172,7 +172,7 @@ class GathervFuncSM :  public FunctionSMInterface
         return GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
-    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     GatherStartEvent*   m_event;
     QQQ*                m_qqq;

@@ -67,7 +67,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
         src = calcSrc( m_setupState.offset );
         m_dbg.verbose(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
-        proto()->irecv( NULL, 0, src, genTag(), m_event->group, &m_recvReq );
+        proto()->irecv( NULL, 0, src, genTag(), &m_recvReq );
         m_setupState.state = SetupState::PostStageRecv;
         return false;
 
@@ -99,7 +99,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
         initIoVec( ioVec, recvStartChunk, m_numChunks[m_setupState.stage] );
 
         proto()->irecvv( ioVec, src, genTag() + m_setupState.stage + 1, 
-                            m_event->group, &m_recvReqV[m_setupState.stage] );
+                            &m_recvReqV[m_setupState.stage] );
 
         m_setupState.offset *= 2;
         ++m_setupState.stage;
@@ -114,7 +114,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
         memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
 
         m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",m_dest[0]);
-        proto()->send( NULL, 0, m_dest[0], genTag(), m_event->group );
+        proto()->send( NULL, 0, m_dest[0], genTag() );
     }
     return true;
 }
@@ -144,7 +144,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"send stage %d, dest %d\n",
                         m_currentStage,m_dest[m_currentStage] );
         proto()->sendv( ioVec, m_dest[m_currentStage], 
-               genTag() + m_currentStage + 1, m_event->group );
+               genTag() + m_currentStage + 1 );
         m_state = WaitRecvData;
         return;
 

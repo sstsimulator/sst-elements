@@ -17,6 +17,7 @@
 #include "ctrlMsg.h"
 #include "sst/elements/hermes/msgapi.h"
 #include "entry.h"
+#include "ctrlMsgFunctors.h"
 
 namespace SST {
 namespace Firefly {
@@ -24,12 +25,12 @@ namespace Firefly {
 class SendEntry;
 class RecvEntry;
 
-class LongMsgProtocol : public CtrlMsg  {
+class LongMsgProtocol : public CtrlMsg::API  {
 
     class SelfEvent : public SST::Event {
       public:
-        SelfEvent( VoidArg_FunctorBase<bool>* arg) : Event(), callback(arg) {}
-        VoidArg_FunctorBase<bool>* callback; 
+        SelfEvent( CtrlMsg::FunctorBase_0<bool>* arg) : Event(), callback(arg) {}
+        CtrlMsg::FunctorBase_0<bool>* callback; 
     };
 
     struct MsgHdr {
@@ -45,7 +46,7 @@ class LongMsgProtocol : public CtrlMsg  {
         MsgHdr              hdr;
         std::vector<IoVec>  vec;
         SendEntry*          sendEntry;
-        int                 key;
+        CtrlMsg::region_t   region;
     };
 
     class RecvCallbackEntry {
@@ -53,30 +54,25 @@ class LongMsgProtocol : public CtrlMsg  {
         MsgHdr              hdr;
         std::vector<IoVec>  vec;
         RecvEntry*          recvEntry;
-        CommReq             commReq;
+        CtrlMsg::CommReq    commReq;
         std::vector<unsigned char> buf;
-        CtrlMsg::Response   ctrlResponse;
-        int                 key;
-        IO::NodeId          srcNode;
     };
 
-    typedef StaticArg_Functor<LongMsgProtocol, SendCallbackEntry*, bool> 
+    typedef CtrlMsg::FunctorStatic_0<LongMsgProtocol, SendCallbackEntry*, bool> 
                                                             SCBE_Functor;
-    typedef StaticArg_Functor<LongMsgProtocol, RecvCallbackEntry*, bool> 
+    typedef CtrlMsg::FunctorStatic_0<LongMsgProtocol, RecvCallbackEntry*, bool> 
                                                             RCBE_Functor;
-    typedef StaticArg_Functor<LongMsgProtocol, RecvEntry*, bool> 
+    typedef CtrlMsg::FunctorStatic_0<LongMsgProtocol, RecvEntry*, bool> 
                                                             RE_Functor;
 
-    typedef StaticArg_Functor<LongMsgProtocol, void*, bool > XXX_Functor;
+    typedef CtrlMsg::Functor_1<LongMsgProtocol, 
+                                CtrlMsg::CommReq*, bool > XXX_Functor;
 
     static const uint32_t MaxNumPostedRecvs = 512;
-    static const uint32_t MaxNumSends = 512;
-    static const uint32_t ShortMsgLength = 4096;
+    static const uint32_t ShortMsgLength = 1000; 
 
     static const uint32_t ShortMsgTag =   0x80000000;
     static const uint32_t LongMsgTag =    0x40000000;
-    static const uint32_t LongMsgRdyTag = 0x20000000;
-    static const uint32_t LongMsgBdyTag = 0x10000000;
     static const uint32_t TagMask = 0xf0000000;
 
   public:
@@ -95,6 +91,7 @@ class LongMsgProtocol : public CtrlMsg  {
     void postSendEntry(SendEntry*);
     void postRecvEntry(RecvEntry*);
 
+
   private:
     void retHandler(Event*);
     void selfHandler(Event*);
@@ -102,7 +99,6 @@ class LongMsgProtocol : public CtrlMsg  {
     void finishRecvCBE( RecvEntry&, MsgHdr& );
     void finishSendCBE( SendEntry& );
     void finishRequest( Hermes::MessageRequest, Hermes::MessageResponse *);
-
     void block( int count, Hermes::MessageRequest req[], 
                   Hermes::MessageResponse* resp[], int* index = NULL ); 
 
@@ -111,51 +107,50 @@ class LongMsgProtocol : public CtrlMsg  {
     bool unblock( Hermes::MessageRequest ); 
 
     void processBlocked( Hermes::MessageRequest );
-    bool waitAny_CB( void * );
+    bool waitAny_CB( CtrlMsg::CommReq* );
+    bool waitAnyDelay_CB( RecvCallbackEntry* );
     bool postRecvAny_irecv_CB( RecvCallbackEntry* );
-    void processRecvAny( RecvCallbackEntry* );
-    bool processRecvAny_CB( RecvCallbackEntry* );
     bool postSendEntry_CB( SendCallbackEntry* );
+    bool processSendEntryFini_CB( SendCallbackEntry* );
 
     bool postRecvEntry_CB( RecvCallbackEntry* );
     bool postRecvEntry_CB( RecvEntry* );
-    bool processLongMsg_irecv_CB( RecvCallbackEntry* );
-    bool longMsgSendRdy_CB( SendCallbackEntry* );
-    bool processLongMsgRdyMsg_CB( SendCallbackEntry* );
 
     void postRecvAny( );
-    void processLongMsgRdyMsg( int key, int dest );
     void processLongMsg( RecvCallbackEntry* );
+    bool processLongMsg_CB( RecvCallbackEntry* );
     void processShortMsg( RecvCallbackEntry* );
     bool processShortMsg_CB( RecvCallbackEntry* );
-    void schedDelay( int, VoidArg_FunctorBase<bool>* );
+    void schedDelay( int, CtrlMsg::FunctorBase_0<bool>* );
+    
+    bool processRegionEvents();
 
     bool checkMatch( MsgHdr&, RecvEntry& );
     int calcMatchDelay( int ) { return 0; }
     int calcCopyDelay( int ) { return 0; }
 
-    std::map<int,SendCallbackEntry*>  m_longSendM;
-
     Component*  m_owner;
     Output      m_my_dbg;
+
     Link*       m_my_retLink;
     Link*       m_my_selfLink;
-    int         m_longMsgKey;
-    int         genLongMsgKey() { return m_longMsgKey++ & 0xffff; }
+    int         m_longMsgRegion;
+    int         genLongRegion() { return m_longMsgRegion++ & 0x3f; }
 
     std::deque<RecvEntry*>  m_postedQ;
 
     std::deque< RecvCallbackEntry* >      m_unexpectedQ;
-    std::deque< RecvCallbackEntry* >      m_longRecvDoneQ;
 
     struct Blocked {
         Hermes::MessageRequest     req;     
         Hermes::MessageResponse*   resp;
         int*                       index;
     };
+
     std::vector<Blocked>    m_blockedList;
 
-    std::set<CommReq*>      m_commReqs;
+    CtrlMsg::RegionEventQ*         m_regionEventQ;
+    std::map< CtrlMsg::region_t, SendCallbackEntry* > m_regionM;
 };
 
 }

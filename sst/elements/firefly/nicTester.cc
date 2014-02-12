@@ -70,17 +70,20 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
     m_vNic = m_nic->virtNicInit();
     assert( m_vNic );
 
-    m_vNic->setNotifyOnSendDmaDone( 
-        new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifySendDmaDone )
-    );
-    m_vNic->setNotifyOnRecvDmaDone( 
-        new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifyRecvDmaDone )
-    );
     m_vNic->setNotifyOnSendPioDone( 
-        new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifySendPioDone )
+        new Nic::Handler<NicTester,void*>(this, &NicTester::notifySendPioDone )
+    );
+    m_vNic->setNotifyOnSendDmaDone( 
+        new Nic::Handler<NicTester,void*>(this, &NicTester::notifySendDmaDone )
+    );
+
+    m_vNic->setNotifyOnRecvDmaDone( 
+        new Nic::Handler4Args<NicTester,int,int,size_t,void*>(
+                                this, &NicTester::notifyRecvDmaDone )
     );
     m_vNic->setNotifyNeedRecv( 
-        new Nic::Handler<NicTester,Nic::XXX*>(this, &NicTester::notifyNeedRecv)
+        new Nic::Handler3Args<NicTester,int,int,size_t>(
+                    this, &NicTester::notifyNeedRecv)
     );
 
     m_selfLink = configureSelfLink("NicTester::selfLink", "1 ps",
@@ -102,30 +105,38 @@ void NicTester::setup()
     m_selfLink->send(0,NULL);
 }
 
-bool NicTester::notifySendDmaDone( Nic::XXX* key )
+bool NicTester::notifySendDmaDone( void* key )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     handleSelfEvent(NULL);
     return true;
 }
 
-bool NicTester::notifyRecvDmaDone( Nic::XXX* key )
+bool NicTester::notifyRecvDmaDone( int src, int tag, size_t len, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    waitRecv(key);
+    DmaEntry* entry = static_cast<DmaEntry*>(key);
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu pid=%d\n",src, 
+            tag, len, entry->hdr.pid);
+
+    for ( unsigned int i = 0; i < len - sizeof(entry->hdr); i++ ) {
+        if ( entry->body[i] != (i&0xff) ) {
+            printf("ERROR %d != %d\n",i,entry->body[i]);
+        }
+    }
+    primaryComponentOKToEndSim();
     return true;
 }
 
-bool NicTester::notifySendPioDone( Nic::XXX* key)
+bool NicTester::notifySendPioDone( void* key)
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     handleSelfEvent(NULL);
     return true;
 }
 
-bool NicTester::notifyNeedRecv( Nic::XXX* key)
+bool NicTester::notifyNeedRecv( int nid, int tag, size_t len )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,1,0,"nid=%d tag=%d len=%lu\n",nid,tag,len);
     postRecv();
     return true;
 }
@@ -153,16 +164,14 @@ void NicTester::postRecv()
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-    Nic::XXX* xxx = new Nic::XXX; 
     DmaEntry* entry = new DmaEntry;
-    xxx->usrData = entry; 
     std::vector<IoVec> iovec(2);
 
     iovec[0].ptr = &entry->hdr; 
     iovec[0].len = sizeof(entry->hdr);
     iovec[1].ptr = &entry->body; 
     iovec[1].len = sizeof(entry->body);
-    m_vNic->dmaRecv( -1, SHORT_MSG, iovec, xxx );
+    m_vNic->dmaRecv( -1, SHORT_MSG, iovec, entry );
 
     m_state = PostSend; 
 
@@ -173,9 +182,7 @@ void NicTester::postSend()
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-    Nic::XXX* xxx = new Nic::XXX; 
     PioEntry* entry = new PioEntry;
-    xxx->usrData = entry;
     std::vector<IoVec> iovec(2);
 
     iovec[0].ptr = &entry->hdr; 
@@ -188,7 +195,7 @@ void NicTester::postSend()
         entry->body[i] = i;
     }
 
-    m_vNic->pioSend( (m_vNic->getNodeId() + 1 ) % 2, SHORT_MSG, iovec, xxx );
+    m_vNic->pioSend( (m_vNic->getNodeId() + 1 ) % 2, SHORT_MSG, iovec, entry );
 
     m_state = WaitSend; 
 
@@ -199,18 +206,4 @@ void NicTester::waitSend()
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     m_state = WaitRecv;
-}
-
-void NicTester::waitRecv( Nic::XXX* xxx )
-{
-    DmaEntry* entry = static_cast<DmaEntry*>(xxx->usrData);
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d len=%lu pid=%d\n",xxx->src, 
-            xxx->len, entry->hdr.pid);
-
-    for ( unsigned int i = 0; i < xxx->len - sizeof(entry->hdr); i++ ) {
-        if ( entry->body[i] != (i&0xff) ) {
-            printf("ERROR %d != %d\n",i,entry->body[i]);
-        }
-    }
-    primaryComponentOKToEndSim();
 }

@@ -114,7 +114,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     AlltoallStartEvent* m_event;
     CtrlMsg::CommReq    m_recvReq; 

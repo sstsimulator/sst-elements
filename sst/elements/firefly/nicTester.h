@@ -38,15 +38,14 @@ class NicTester : public SST::Component {
     } m_state;
 
     static const char* m_stateName[];
-    bool notifySendDmaDone( Nic::XXX* );
-    bool notifyRecvDmaDone( Nic::XXX* );
-    bool notifySendPioDone( Nic::XXX* );
-    bool notifyNeedRecv( Nic::XXX* );
+    bool notifySendPioDone( void* );
+    bool notifySendDmaDone( void* );
+    bool notifyRecvDmaDone( int, int, size_t, void* );
+    bool notifyNeedRecv( int, int, size_t );
 
     void postRecv();
     void postSend();
     void waitSend();
-    void waitRecv( Nic::XXX* );
 
     SST::Link*  m_selfLink;
     SST::Link*  m_hostLink;
