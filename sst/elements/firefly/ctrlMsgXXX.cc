@@ -13,6 +13,7 @@
 
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sstream>
 
 #include "ctrlMsgXXX.h"
 #include "ctrlMsgSendState.h"
