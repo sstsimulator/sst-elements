@@ -31,7 +31,8 @@ class ProcessQueuesState : StateBase< T1 >
         m_ackKey( 0 ),
         m_rspKey( 0 ),
         m_isRead( false ),
-        m_pendingEvents( false )
+        m_pendingEvents( false ),
+        m_needRecv( 0 )
     {
         char buffer[100];
         snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
@@ -233,6 +234,7 @@ class ProcessQueuesState : StateBase< T1 >
 
     bool m_isRead;
     bool m_pendingEvents;
+    int  m_needRecv;
 };
 
 
@@ -475,6 +477,11 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     dbg().verbose(CALL_INFO,1,0,"shortMsgV.size=%lu\n", m_shortMsgV.size() );
     int delay = 0;
     dbg().verbose(CALL_INFO,1,0,"stack.size()=%lu\n", stack.size()); 
+
+    while ( m_needRecv ) {
+        postShortRecvBuffer();
+        --m_needRecv;
+    } 
 
     while ( ! m_longRspQ.empty() ) {
         m_longRspQ.front()->setDone();
@@ -876,7 +883,9 @@ template< class T1 >
 void ProcessQueuesState<T1>::needRecv( int nid, int tag, size_t length  )
 {
     dbg().verbose(CALL_INFO,1,0,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
-    assert(0);
+    assert( tag == (tag_t) ShortMsgQ );
+    ++m_needRecv;
+    foo();
 }
 
 template< class T1 >
