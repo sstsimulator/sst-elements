@@ -21,7 +21,7 @@ class Params(dict):
         self[key] = val
         return val
     def subset(self, keys):
-        return {k: self[k] for k in keys}
+        return dict((k, self[k]) for k in keys)
 
 _params = Params()
 debug = 0
