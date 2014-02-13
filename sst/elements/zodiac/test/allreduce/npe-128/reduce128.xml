@@ -18,14 +18,14 @@
     <torus:local_ports> 1 </torus:local_ports>
   </rtr_params>
 
-  <ioParams>
-    <hermesParams.ioParams.debug> 0 </hermesParams.ioParams.debug>
-    <hermesParams.ioParams.verboseLevel> 2 </hermesParams.ioParams.verboseLevel>
-    <hermesParams.ioParams.module> merlin.linkcontrol </hermesParams.ioParams.module>
-    <hermesParams.ioParams.topology> merlin.torus </hermesParams.ioParams.topology>
-    <hermesParams.ioParams.num_vcs> 2 </hermesParams.ioParams.num_vcs>
-    <hermesParams.ioParams.link_bw> 1GHz </hermesParams.ioParams.link_bw>
-  </ioParams>
+  <nicParams>
+    <hermesParams.nicParams.debug> 0 </hermesParams.nicParams.debug>
+    <hermesParams.nicParams.verboseLevel> 2 </hermesParams.nicParams.verboseLevel>
+    <hermesParams.nicParams.module> merlin.linkcontrol </hermesParams.nicParams.module>
+    <hermesParams.nicParams.topology> merlin.torus </hermesParams.nicParams.topology>
+    <hermesParams.nicParams.num_vcs> 2 </hermesParams.nicParams.num_vcs>
+    <hermesParams.nicParams.link_bw> 1GHz </hermesParams.nicParams.link_bw>
+  </nicParams>
 
   <driverParams>
     <scalecompute> 0.000001 </scalecompute> 
@@ -39,7 +39,7 @@
     <hermesParams.verboseLevel> 1 </hermesParams.verboseLevel>
     <hermesParams.numRanks> 128 </hermesParams.numRanks>
     <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
-    <hermesParams.ioModule> firefly.merlinIO </hermesParams.ioModule>
+    <hermesParams.nicModule> firefly.nic </hermesParams.nicModule>
     <hermesParams.policy> adjacent </hermesParams.policy>
     <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
     <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
@@ -62,8 +62,8 @@
   </component>
 
   <component name=nic.0x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 0 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 0 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.0:0 port=rtr latency=10ns />
   </component>
@@ -82,8 +82,8 @@
   </component>
 
   <component name=nic.1x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 1 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 1 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.1:0 port=rtr latency=10ns />
   </component>
@@ -102,8 +102,8 @@
   </component>
 
   <component name=nic.2x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 2 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 2 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.2:0 port=rtr latency=10ns />
   </component>
@@ -122,8 +122,8 @@
   </component>
 
   <component name=nic.3x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 3 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 3 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.3:0 port=rtr latency=10ns />
   </component>
@@ -142,8 +142,8 @@
   </component>
 
   <component name=nic.4x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 4 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 4 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.4:0 port=rtr latency=10ns />
   </component>
@@ -162,8 +162,8 @@
   </component>
 
   <component name=nic.5x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 5 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 5 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.5:0 port=rtr latency=10ns />
   </component>
@@ -182,8 +182,8 @@
   </component>
 
   <component name=nic.6x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 6 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 6 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.6:0 port=rtr latency=10ns />
   </component>
@@ -202,8 +202,8 @@
   </component>
 
   <component name=nic.7x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 7 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 7 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.7:0 port=rtr latency=10ns />
   </component>
@@ -222,8 +222,8 @@
   </component>
 
   <component name=nic.0x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 8 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 8 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.8:0 port=rtr latency=10ns />
   </component>
@@ -242,8 +242,8 @@
   </component>
 
   <component name=nic.1x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 9 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 9 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.9:0 port=rtr latency=10ns />
   </component>
@@ -262,8 +262,8 @@
   </component>
 
   <component name=nic.2x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 10 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 10 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.10:0 port=rtr latency=10ns />
   </component>
@@ -282,8 +282,8 @@
   </component>
 
   <component name=nic.3x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 11 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 11 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.11:0 port=rtr latency=10ns />
   </component>
@@ -302,8 +302,8 @@
   </component>
 
   <component name=nic.4x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 12 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 12 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.12:0 port=rtr latency=10ns />
   </component>
@@ -322,8 +322,8 @@
   </component>
 
   <component name=nic.5x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 13 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 13 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.13:0 port=rtr latency=10ns />
   </component>
@@ -342,8 +342,8 @@
   </component>
 
   <component name=nic.6x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 14 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 14 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.14:0 port=rtr latency=10ns />
   </component>
@@ -362,8 +362,8 @@
   </component>
 
   <component name=nic.7x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 15 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 15 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.15:0 port=rtr latency=10ns />
   </component>
@@ -382,8 +382,8 @@
   </component>
 
   <component name=nic.0x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 16 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 16 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.16:0 port=rtr latency=10ns />
   </component>
@@ -402,8 +402,8 @@
   </component>
 
   <component name=nic.1x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 17 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 17 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.17:0 port=rtr latency=10ns />
   </component>
@@ -422,8 +422,8 @@
   </component>
 
   <component name=nic.2x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 18 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 18 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.18:0 port=rtr latency=10ns />
   </component>
@@ -442,8 +442,8 @@
   </component>
 
   <component name=nic.3x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 19 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 19 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.19:0 port=rtr latency=10ns />
   </component>
@@ -462,8 +462,8 @@
   </component>
 
   <component name=nic.4x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 20 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 20 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.20:0 port=rtr latency=10ns />
   </component>
@@ -482,8 +482,8 @@
   </component>
 
   <component name=nic.5x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 21 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 21 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.21:0 port=rtr latency=10ns />
   </component>
@@ -502,8 +502,8 @@
   </component>
 
   <component name=nic.6x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 22 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 22 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.22:0 port=rtr latency=10ns />
   </component>
@@ -522,8 +522,8 @@
   </component>
 
   <component name=nic.7x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 23 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 23 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.23:0 port=rtr latency=10ns />
   </component>
@@ -542,8 +542,8 @@
   </component>
 
   <component name=nic.0x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 24 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 24 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.24:0 port=rtr latency=10ns />
   </component>
@@ -562,8 +562,8 @@
   </component>
 
   <component name=nic.1x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 25 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 25 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.25:0 port=rtr latency=10ns />
   </component>
@@ -582,8 +582,8 @@
   </component>
 
   <component name=nic.2x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 26 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 26 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.26:0 port=rtr latency=10ns />
   </component>
@@ -602,8 +602,8 @@
   </component>
 
   <component name=nic.3x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 27 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 27 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.27:0 port=rtr latency=10ns />
   </component>
@@ -622,8 +622,8 @@
   </component>
 
   <component name=nic.4x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 28 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 28 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.28:0 port=rtr latency=10ns />
   </component>
@@ -642,8 +642,8 @@
   </component>
 
   <component name=nic.5x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 29 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 29 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.29:0 port=rtr latency=10ns />
   </component>
@@ -662,8 +662,8 @@
   </component>
 
   <component name=nic.6x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 30 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 30 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.30:0 port=rtr latency=10ns />
   </component>
@@ -682,8 +682,8 @@
   </component>
 
   <component name=nic.7x3x0-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 31 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 31 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.31:0 port=rtr latency=10ns />
   </component>
@@ -702,8 +702,8 @@
   </component>
 
   <component name=nic.0x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 32 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 32 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.32:0 port=rtr latency=10ns />
   </component>
@@ -722,8 +722,8 @@
   </component>
 
   <component name=nic.1x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 33 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 33 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.33:0 port=rtr latency=10ns />
   </component>
@@ -742,8 +742,8 @@
   </component>
 
   <component name=nic.2x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 34 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 34 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.34:0 port=rtr latency=10ns />
   </component>
@@ -762,8 +762,8 @@
   </component>
 
   <component name=nic.3x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 35 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 35 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.35:0 port=rtr latency=10ns />
   </component>
@@ -782,8 +782,8 @@
   </component>
 
   <component name=nic.4x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 36 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 36 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.36:0 port=rtr latency=10ns />
   </component>
@@ -802,8 +802,8 @@
   </component>
 
   <component name=nic.5x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 37 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 37 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.37:0 port=rtr latency=10ns />
   </component>
@@ -822,8 +822,8 @@
   </component>
 
   <component name=nic.6x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 38 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 38 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.38:0 port=rtr latency=10ns />
   </component>
@@ -842,8 +842,8 @@
   </component>
 
   <component name=nic.7x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 39 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 39 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.39:0 port=rtr latency=10ns />
   </component>
@@ -862,8 +862,8 @@
   </component>
 
   <component name=nic.0x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 40 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 40 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.40:0 port=rtr latency=10ns />
   </component>
@@ -882,8 +882,8 @@
   </component>
 
   <component name=nic.1x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 41 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 41 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.41:0 port=rtr latency=10ns />
   </component>
@@ -902,8 +902,8 @@
   </component>
 
   <component name=nic.2x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 42 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 42 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.42:0 port=rtr latency=10ns />
   </component>
@@ -922,8 +922,8 @@
   </component>
 
   <component name=nic.3x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 43 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 43 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.43:0 port=rtr latency=10ns />
   </component>
@@ -942,8 +942,8 @@
   </component>
 
   <component name=nic.4x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 44 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 44 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.44:0 port=rtr latency=10ns />
   </component>
@@ -962,8 +962,8 @@
   </component>
 
   <component name=nic.5x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 45 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 45 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.45:0 port=rtr latency=10ns />
   </component>
@@ -982,8 +982,8 @@
   </component>
 
   <component name=nic.6x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 46 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 46 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.46:0 port=rtr latency=10ns />
   </component>
@@ -1002,8 +1002,8 @@
   </component>
 
   <component name=nic.7x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 47 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 47 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.47:0 port=rtr latency=10ns />
   </component>
@@ -1022,8 +1022,8 @@
   </component>
 
   <component name=nic.0x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 48 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 48 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.48:0 port=rtr latency=10ns />
   </component>
@@ -1042,8 +1042,8 @@
   </component>
 
   <component name=nic.1x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 49 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 49 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.49:0 port=rtr latency=10ns />
   </component>
@@ -1062,8 +1062,8 @@
   </component>
 
   <component name=nic.2x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 50 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 50 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.50:0 port=rtr latency=10ns />
   </component>
@@ -1082,8 +1082,8 @@
   </component>
 
   <component name=nic.3x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 51 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 51 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.51:0 port=rtr latency=10ns />
   </component>
@@ -1102,8 +1102,8 @@
   </component>
 
   <component name=nic.4x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 52 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 52 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.52:0 port=rtr latency=10ns />
   </component>
@@ -1122,8 +1122,8 @@
   </component>
 
   <component name=nic.5x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 53 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 53 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.53:0 port=rtr latency=10ns />
   </component>
@@ -1142,8 +1142,8 @@
   </component>
 
   <component name=nic.6x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 54 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 54 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.54:0 port=rtr latency=10ns />
   </component>
@@ -1162,8 +1162,8 @@
   </component>
 
   <component name=nic.7x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 55 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 55 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.55:0 port=rtr latency=10ns />
   </component>
@@ -1182,8 +1182,8 @@
   </component>
 
   <component name=nic.0x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 56 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 56 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.56:0 port=rtr latency=10ns />
   </component>
@@ -1202,8 +1202,8 @@
   </component>
 
   <component name=nic.1x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 57 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 57 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.57:0 port=rtr latency=10ns />
   </component>
@@ -1222,8 +1222,8 @@
   </component>
 
   <component name=nic.2x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 58 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 58 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.58:0 port=rtr latency=10ns />
   </component>
@@ -1242,8 +1242,8 @@
   </component>
 
   <component name=nic.3x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 59 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 59 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.59:0 port=rtr latency=10ns />
   </component>
@@ -1262,8 +1262,8 @@
   </component>
 
   <component name=nic.4x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 60 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 60 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.60:0 port=rtr latency=10ns />
   </component>
@@ -1282,8 +1282,8 @@
   </component>
 
   <component name=nic.5x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 61 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 61 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.61:0 port=rtr latency=10ns />
   </component>
@@ -1302,8 +1302,8 @@
   </component>
 
   <component name=nic.6x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 62 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 62 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.62:0 port=rtr latency=10ns />
   </component>
@@ -1322,8 +1322,8 @@
   </component>
 
   <component name=nic.7x3x1-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 63 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 63 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.63:0 port=rtr latency=10ns />
   </component>
@@ -1342,8 +1342,8 @@
   </component>
 
   <component name=nic.0x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 64 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 64 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.64:0 port=rtr latency=10ns />
   </component>
@@ -1362,8 +1362,8 @@
   </component>
 
   <component name=nic.1x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 65 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 65 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.65:0 port=rtr latency=10ns />
   </component>
@@ -1382,8 +1382,8 @@
   </component>
 
   <component name=nic.2x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 66 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 66 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.66:0 port=rtr latency=10ns />
   </component>
@@ -1402,8 +1402,8 @@
   </component>
 
   <component name=nic.3x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 67 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 67 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.67:0 port=rtr latency=10ns />
   </component>
@@ -1422,8 +1422,8 @@
   </component>
 
   <component name=nic.4x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 68 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 68 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.68:0 port=rtr latency=10ns />
   </component>
@@ -1442,8 +1442,8 @@
   </component>
 
   <component name=nic.5x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 69 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 69 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.69:0 port=rtr latency=10ns />
   </component>
@@ -1462,8 +1462,8 @@
   </component>
 
   <component name=nic.6x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 70 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 70 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.70:0 port=rtr latency=10ns />
   </component>
@@ -1482,8 +1482,8 @@
   </component>
 
   <component name=nic.7x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 71 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 71 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.71:0 port=rtr latency=10ns />
   </component>
@@ -1502,8 +1502,8 @@
   </component>
 
   <component name=nic.0x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 72 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 72 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.72:0 port=rtr latency=10ns />
   </component>
@@ -1522,8 +1522,8 @@
   </component>
 
   <component name=nic.1x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 73 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 73 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.73:0 port=rtr latency=10ns />
   </component>
@@ -1542,8 +1542,8 @@
   </component>
 
   <component name=nic.2x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 74 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 74 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.74:0 port=rtr latency=10ns />
   </component>
@@ -1562,8 +1562,8 @@
   </component>
 
   <component name=nic.3x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 75 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 75 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.75:0 port=rtr latency=10ns />
   </component>
@@ -1582,8 +1582,8 @@
   </component>
 
   <component name=nic.4x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 76 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 76 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.76:0 port=rtr latency=10ns />
   </component>
@@ -1602,8 +1602,8 @@
   </component>
 
   <component name=nic.5x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 77 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 77 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.77:0 port=rtr latency=10ns />
   </component>
@@ -1622,8 +1622,8 @@
   </component>
 
   <component name=nic.6x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 78 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 78 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.78:0 port=rtr latency=10ns />
   </component>
@@ -1642,8 +1642,8 @@
   </component>
 
   <component name=nic.7x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 79 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 79 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.79:0 port=rtr latency=10ns />
   </component>
@@ -1662,8 +1662,8 @@
   </component>
 
   <component name=nic.0x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 80 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 80 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.80:0 port=rtr latency=10ns />
   </component>
@@ -1682,8 +1682,8 @@
   </component>
 
   <component name=nic.1x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 81 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 81 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.81:0 port=rtr latency=10ns />
   </component>
@@ -1702,8 +1702,8 @@
   </component>
 
   <component name=nic.2x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 82 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 82 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.82:0 port=rtr latency=10ns />
   </component>
@@ -1722,8 +1722,8 @@
   </component>
 
   <component name=nic.3x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 83 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 83 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.83:0 port=rtr latency=10ns />
   </component>
@@ -1742,8 +1742,8 @@
   </component>
 
   <component name=nic.4x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 84 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 84 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.84:0 port=rtr latency=10ns />
   </component>
@@ -1762,8 +1762,8 @@
   </component>
 
   <component name=nic.5x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 85 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 85 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.85:0 port=rtr latency=10ns />
   </component>
@@ -1782,8 +1782,8 @@
   </component>
 
   <component name=nic.6x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 86 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 86 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.86:0 port=rtr latency=10ns />
   </component>
@@ -1802,8 +1802,8 @@
   </component>
 
   <component name=nic.7x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 87 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 87 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.87:0 port=rtr latency=10ns />
   </component>
@@ -1822,8 +1822,8 @@
   </component>
 
   <component name=nic.0x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 88 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 88 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.88:0 port=rtr latency=10ns />
   </component>
@@ -1842,8 +1842,8 @@
   </component>
 
   <component name=nic.1x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 89 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 89 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.89:0 port=rtr latency=10ns />
   </component>
@@ -1862,8 +1862,8 @@
   </component>
 
   <component name=nic.2x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 90 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 90 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.90:0 port=rtr latency=10ns />
   </component>
@@ -1882,8 +1882,8 @@
   </component>
 
   <component name=nic.3x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 91 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 91 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.91:0 port=rtr latency=10ns />
   </component>
@@ -1902,8 +1902,8 @@
   </component>
 
   <component name=nic.4x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 92 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 92 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.92:0 port=rtr latency=10ns />
   </component>
@@ -1922,8 +1922,8 @@
   </component>
 
   <component name=nic.5x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 93 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 93 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.93:0 port=rtr latency=10ns />
   </component>
@@ -1942,8 +1942,8 @@
   </component>
 
   <component name=nic.6x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 94 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 94 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.94:0 port=rtr latency=10ns />
   </component>
@@ -1962,8 +1962,8 @@
   </component>
 
   <component name=nic.7x3x2-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 95 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 95 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.95:0 port=rtr latency=10ns />
   </component>
@@ -1982,8 +1982,8 @@
   </component>
 
   <component name=nic.0x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 96 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 96 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.96:0 port=rtr latency=10ns />
   </component>
@@ -2002,8 +2002,8 @@
   </component>
 
   <component name=nic.1x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 97 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 97 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.97:0 port=rtr latency=10ns />
   </component>
@@ -2022,8 +2022,8 @@
   </component>
 
   <component name=nic.2x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 98 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 98 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.98:0 port=rtr latency=10ns />
   </component>
@@ -2042,8 +2042,8 @@
   </component>
 
   <component name=nic.3x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 99 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 99 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.99:0 port=rtr latency=10ns />
   </component>
@@ -2062,8 +2062,8 @@
   </component>
 
   <component name=nic.4x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 100 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 100 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.100:0 port=rtr latency=10ns />
   </component>
@@ -2082,8 +2082,8 @@
   </component>
 
   <component name=nic.5x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 101 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 101 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.101:0 port=rtr latency=10ns />
   </component>
@@ -2102,8 +2102,8 @@
   </component>
 
   <component name=nic.6x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 102 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 102 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.102:0 port=rtr latency=10ns />
   </component>
@@ -2122,8 +2122,8 @@
   </component>
 
   <component name=nic.7x0x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 103 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 103 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.103:0 port=rtr latency=10ns />
   </component>
@@ -2142,8 +2142,8 @@
   </component>
 
   <component name=nic.0x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 104 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 104 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.104:0 port=rtr latency=10ns />
   </component>
@@ -2162,8 +2162,8 @@
   </component>
 
   <component name=nic.1x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 105 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 105 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.105:0 port=rtr latency=10ns />
   </component>
@@ -2182,8 +2182,8 @@
   </component>
 
   <component name=nic.2x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 106 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 106 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.106:0 port=rtr latency=10ns />
   </component>
@@ -2202,8 +2202,8 @@
   </component>
 
   <component name=nic.3x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 107 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 107 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.107:0 port=rtr latency=10ns />
   </component>
@@ -2222,8 +2222,8 @@
   </component>
 
   <component name=nic.4x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 108 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 108 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.108:0 port=rtr latency=10ns />
   </component>
@@ -2242,8 +2242,8 @@
   </component>
 
   <component name=nic.5x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 109 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 109 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.109:0 port=rtr latency=10ns />
   </component>
@@ -2262,8 +2262,8 @@
   </component>
 
   <component name=nic.6x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 110 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 110 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.110:0 port=rtr latency=10ns />
   </component>
@@ -2282,8 +2282,8 @@
   </component>
 
   <component name=nic.7x1x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 111 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 111 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.111:0 port=rtr latency=10ns />
   </component>
@@ -2302,8 +2302,8 @@
   </component>
 
   <component name=nic.0x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 112 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 112 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.112:0 port=rtr latency=10ns />
   </component>
@@ -2322,8 +2322,8 @@
   </component>
 
   <component name=nic.1x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 113 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 113 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.113:0 port=rtr latency=10ns />
   </component>
@@ -2342,8 +2342,8 @@
   </component>
 
   <component name=nic.2x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 114 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 114 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.114:0 port=rtr latency=10ns />
   </component>
@@ -2362,8 +2362,8 @@
   </component>
 
   <component name=nic.3x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 115 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 115 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.115:0 port=rtr latency=10ns />
   </component>
@@ -2382,8 +2382,8 @@
   </component>
 
   <component name=nic.4x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 116 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 116 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.116:0 port=rtr latency=10ns />
   </component>
@@ -2402,8 +2402,8 @@
   </component>
 
   <component name=nic.5x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 117 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 117 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.117:0 port=rtr latency=10ns />
   </component>
@@ -2422,8 +2422,8 @@
   </component>
 
   <component name=nic.6x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 118 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 118 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.118:0 port=rtr latency=10ns />
   </component>
@@ -2442,8 +2442,8 @@
   </component>
 
   <component name=nic.7x2x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 119 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 119 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.119:0 port=rtr latency=10ns />
   </component>
@@ -2462,8 +2462,8 @@
   </component>
 
   <component name=nic.0x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 120 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 120 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.120:0 port=rtr latency=10ns />
   </component>
@@ -2482,8 +2482,8 @@
   </component>
 
   <component name=nic.1x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 121 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 121 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.121:0 port=rtr latency=10ns />
   </component>
@@ -2502,8 +2502,8 @@
   </component>
 
   <component name=nic.2x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 122 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 122 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.122:0 port=rtr latency=10ns />
   </component>
@@ -2522,8 +2522,8 @@
   </component>
 
   <component name=nic.3x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 123 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 123 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.123:0 port=rtr latency=10ns />
   </component>
@@ -2542,8 +2542,8 @@
   </component>
 
   <component name=nic.4x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 124 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 124 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.124:0 port=rtr latency=10ns />
   </component>
@@ -2562,8 +2562,8 @@
   </component>
 
   <component name=nic.5x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 125 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 125 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.125:0 port=rtr latency=10ns />
   </component>
@@ -2582,8 +2582,8 @@
   </component>
 
   <component name=nic.6x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 126 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 126 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.126:0 port=rtr latency=10ns />
   </component>
@@ -2602,8 +2602,8 @@
   </component>
 
   <component name=nic.7x3x3-0 type=zodiac.ZodiacSiriusTraceReader >
-    <params include=driverParams,ioParams>
-      <hermesParams.ioParams.nid> 127 </hermesParams.ioParams.nid>
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 127 </hermesParams.nicParams.nid>
     </params>
     <link name=nic.127:0 port=rtr latency=10ns />
   </component>
