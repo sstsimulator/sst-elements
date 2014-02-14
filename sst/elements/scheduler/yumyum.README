@@ -293,19 +293,17 @@ examinations of the failure file: <filePollFreq>[ms]</filePollFreq>  Default
 value is 1000
 
 After a simulation begins, every injectionFrequency simulated seconds,
-faultInjectionFilename is read, by examining the file every filePollFreq
-milliseconds to determine if the file's write time has changed.  Once the time
-has changed, the file's contents are examined to determine if resumeSimToken
-appears in it.  If the token does not appear, the file examination process will
-be restarted.
+failtInjectionFilename is cleared of its contents, signifying that the
+simulator is now ready for input, then faultInjectionFilename is read, by
+examining the file every filePollFreq milliseconds to determine if the file's
+write time has changed.  Once the time has changed, the file's contents are
+examined to determine if resumeSimToken appears in it.  If the token does not
+appear, the file examination process will be restarted.
 
 Once the token is found, all lines before the token are parsed as node ID and
 fault type pairs, and fault activation events of the specified type will be
 injected into the specified nodes, and the faultInjectionComponent will wait
 injectionFrequency simulated seconds before restarting this process again.
-
-WARNING:
-The file will be emptied of all it's contents once it has been read.
 
 Injected faultActivationEvents are treated like any other fault events once
 given to the nodeComponents.  nodeComponents do no need to have any knowledge

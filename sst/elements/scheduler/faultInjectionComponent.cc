@@ -1,3 +1,15 @@
+// Copyright 2009-2013 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2013, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+
 #include "sst/core/serialization.h"
 
 #include "faultInjectionComponent.h"
@@ -102,6 +114,12 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 	bool fileContainsToken = false;
 	std::map<std::string, std::string> * nodes = new std::map<std::string, std::string>();
 
+	// empty the file to say we're ready for input
+	std::fstream failFileOut( failFilename.c_str(), std::fstream::out | std::fstream::trunc);
+	failFileOut.close();
+
+
+	// block until the token exists in the file.  It should be the last line.
 	while( !fileContainsToken ){
 		if( boost::filesystem::exists( failFilename ) && fileLastWritten < boost::filesystem::last_write_time( failFilename ) ){
 			fileContainsToken = false;
@@ -149,11 +167,6 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 	}
 
 	failFile.close();
-	
-
-
-	std::fstream failFileOut( failFilename.c_str(), std::fstream::out | std::fstream::trunc);
-	failFileOut.close();
 
 	return nodes;
 }
