@@ -14,9 +14,10 @@
 import sys
 import sst
 
+
 class Params(dict):
     def __missing__(self, key):
-        print "Please enter %s:"% key
+        print "Please enter %s: "%key
         val = raw_input()
         self[key] = val
         return val
@@ -73,17 +74,30 @@ class topoTorus(Topo):
         radix = 0
         self.dims = []
         self.dimwidths = []
-        for x in xrange(self.nd):
-            print "Dim %d size:"%x
-            ds = int(raw_input())
-            self.dims.append(ds);
-            print "Dim %d width (# of links in this dimension):" % x
-            dw = int(raw_input())
-            self.dimwidths.append(dw)
-            peers = peers * ds
-            radix = radix + (2 * dw)
+        if not "torus:shape" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d size:"%x
+                ds = int(raw_input())
+                self.dims.append(ds);
+                peers = peers * ds
+            _params["torus:shape"] = self.formatShape(self.dims)
+        else:
+            self.dims = [int(x) for x in _params["torus:shape"].split('x')]
+        if not "torus:width" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d width (# of links in this dimension):" % x
+                dw = int(raw_input())
+                self.dimwidths.append(dw)
+            _params["torus:width"] = self.formatShape(self.dimwidths)
+        else:
+            self.dimwidths = [int(x) for x in _params["torus:width"].split('x')]
+
+
         local_ports = int(_params["torus:local_ports"])
-        radix = radix + local_ports
+        radix = local_ports + 2 * sum(self.dimwidths)
+
+        for x in self.dims:
+            peers = peers * x
         peers = peers * local_ports
 
         _params["num_peers"] = peers
@@ -92,8 +106,6 @@ class topoTorus(Topo):
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
         _params["num_vcs"] = 2
-        _params["torus:shape"] = self.formatShape(self.dims)
-        _params["torus:width"] = self.formatShape(self.dimwidths)
         _params["torus:local_ports"] = local_ports
 
     def formatShape(self, arr):
@@ -352,7 +364,7 @@ class EndPoint:
     def getName(self):
         print "Not implemented"
         sys.exit(1)
-    def formatParams(self):
+    def prepParams(self):
         pass
     def build(self, nID, link, extraKeys):
         pass
@@ -381,7 +393,11 @@ class TestEndPoint:
 
 class TrafficGenEndPoint:
     def __init__(self):
-        self.nicKeys = ["topology", "num_peers", "num_vcs", "link_bw", "packets_to_send", "packet_size", "message_rage", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
+        self.optionalKeys = ["delay_between_packets"]
+        for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
+            for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
+                self.optionalKeys.append("%s:%s"%(genType, tag))
+        self.nicKeys = ["topology", "num_peers", "num_vcs", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
     def getName(self):
         return "Pattern-based traffic generator"
     def prepParams(self):
@@ -390,10 +406,11 @@ class TrafficGenEndPoint:
 
         if _params["PacketDest:pattern"] == "NearestNeighbor":
             self.nicKeys.append("PacketDest:NearestNeighbor:3DSize")
-            _params["PacketDest:NearestNeighbor:3DSize"] = "%s %s %s"%(_params["PacketDest:3D shape X"], _params["PacketDest:3D shape Y"], _params["PacketDest:3D shape Z"])
+            if not "PacketDest:NearestNeighbor:3DSize" in _params:
+                _params["PacketDest:NearestNeighbor:3DSize"] = "%s %s %s"%(_params["PacketDest:3D shape X"], _params["PacketDest:3D shape Y"], _params["PacketDest:3D shape Z"])
         elif _params["PacketDest:pattern"] == "HotSpot":
-            self.nicKeys.append("PacketDest:HostPost:target")
-            self.nicKeys.append("PacketDest:HostPost:targetProbability")
+            self.nicKeys.append("PacketDest:HotSpot:target")
+            self.nicKeys.append("PacketDest:HotSpot:targetProbability")
         elif _params["PacketDest:pattern"] == "Normal":
             self.nicKeys.append("PacketDest:Normal:Mean")
             self.nicKeys.append("PacketDest:Normal:Sigma")
@@ -405,6 +422,9 @@ class TrafficGenEndPoint:
         nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
         nic.addParams(_params.subset(self.nicKeys))
         nic.addParams(_params.subset(extraKeys))
+        for k in self.optionalKeys:
+            if k in _params:
+                nic.addParam(k, _params[k])
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
 

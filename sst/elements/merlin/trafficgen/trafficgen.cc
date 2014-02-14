@@ -215,6 +215,7 @@ TrafficGen::clock_handler(Cycle_t cycle)
                 ++packets_sent;
             }
         }
+        packet_delay = getDelayNextPacket();
     }
 
     for ( int vc = 0 ; vc < num_vcs ; vc++ ) {
