@@ -56,6 +56,12 @@
      <hermesParams.nicParams.topology> merlin.torus </hermesParams.nicParams.topology>
      <hermesParams.nicParams.num_vcs> 2 </hermesParams.nicParams.num_vcs>
      <hermesParams.nicParams.link_bw> 2Ghz </hermesParams.nicParams.link_bw>
+
+     <hermesParams.nicParams.txBusDelay_ns> 150  </hermesParams.nicParams.txBusDelay_ns>
+     <hermesParams.nicParams.rxBusDelay_ns> 150  </hermesParams.nicParams.rxBusDelay_ns>
+     <hermesParams.nicParams.rxMatchDelay_ns> 100  </hermesParams.nicParams.rxMatchDelay_ns>
+     <hermesParams.nicParams.txDelay_ns> 50 </hermesParams.nicParams.txDelay_ns>
+
   </nicParams>
 
 

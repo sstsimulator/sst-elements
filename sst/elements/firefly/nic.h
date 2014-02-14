@@ -38,7 +38,10 @@ class Nic : public SST::Module  {
 
     class SelfEvent : public SST::Event {
       public:
-        enum { DmaSend, DmaRecv, PioSend } type;
+        enum { DmaSend, DmaRecv, PioSend, DmaSendFini,
+                DmaRecvFini, PioSendFini, NeedRecvFini,
+                MatchDelay, ProcessMerlinEvent,
+                ProcessSend } type;
         ~SelfEvent() {}
 
         VirtNic*            vNic;
@@ -46,6 +49,9 @@ class Nic : public SST::Module  {
         int                 tag;
         std::vector<IoVec>  iovec;
         void*               key;
+        size_t              len;
+        MerlinFireflyEvent* mEvent;
+        bool                retval;
     };
 
     struct MsgHdr {
@@ -243,7 +249,11 @@ class Nic : public SST::Module  {
     };
 
     Nic(Component*, Params& );
-    void init( unsigned int phase );
+
+    void init( unsigned int phase ) {
+        m_linkControl->init(phase);
+    }
+
     VirtNic* virtNicInit( );
 
     int getNodeId( ) { return m_myNodeId; }
@@ -261,14 +271,63 @@ class Nic : public SST::Module  {
     void dmaSend( SelfEvent* );
     void pioSend( SelfEvent* );
     void dmaRecv( SelfEvent* );
-    bool processSend();
-    bool processRecvEvent( MerlinFireflyEvent* );
+    void processSend();
+    Entry* processSend( Entry* );
 
-    std::deque<Entry*>          m_sendQ;
+    void schedEvent( SelfEvent* event, int delay = 0 ) {
+        m_selfLink->send( delay, event );
+    }
+    
+    bool processRecvEvent( MerlinFireflyEvent* );
+    bool findRecv( MerlinFireflyEvent* );
+    void moveEvent( MerlinFireflyEvent* );
+
+    void notifySendPioDone( VirtNic* nic, void* key ) {
+        SelfEvent* event = new SelfEvent;
+        event->type = SelfEvent::PioSendFini;
+        event->vNic = nic;
+        event->key = key;
+        m_selfLink->send( m_rxBusDelay, event );
+    }
+
+    void notifySendDmaDone( VirtNic* nic, void* key ) {
+        SelfEvent* event = new SelfEvent;
+        event->type = SelfEvent::DmaSendFini;
+        event->vNic = nic;
+        event->key = key;
+        m_selfLink->send( m_rxBusDelay, event );
+    }
+
+    void notifyRecvDmaDone( VirtNic* nic, int src, int tag, size_t len, void* key ) {
+        SelfEvent* event = new SelfEvent;
+        event->type = SelfEvent::DmaRecvFini;
+        event->vNic = nic;
+        event->key = key;
+        event->node = src;
+        event->tag = tag;
+        event->len = len;
+        m_selfLink->send( m_rxBusDelay, event );
+    }
+
+    void notifyNeedRecv( VirtNic*nic, int src, int tag, size_t length ) {
+        SelfEvent* event = new SelfEvent;
+        event->type = SelfEvent::NeedRecvFini;
+        event->vNic = nic;
+        event->node = src;
+        event->tag = tag;
+        event->len = length;
+        m_selfLink->send( m_rxBusDelay, event );
+    }
+
+    std::deque<Entry*>      m_sendQ;
+    Entry*                  m_currentSend;
     std::vector< std::map< int, std::deque<Entry*> > > m_recvM;
     std::map< int, Entry* > m_activeRecvM;;
  
     int                     m_txBusDelay;
+    int                     m_rxBusDelay;
+    int                     m_rxMatchDelay;
+    int                     m_txDelay;
     MerlinFireflyEvent*     m_pendingMerlinEvent;
     int                     m_myNodeId;
     SST::Link*              m_selfLink;
@@ -283,6 +342,8 @@ class Nic : public SST::Module  {
 
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
+
+    bool m_recvNotifyEnabled;
 };
 
 } // namesapce Firefly 
