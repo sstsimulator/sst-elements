@@ -26,8 +26,6 @@ class ProcessQueuesState : StateBase< T1 >
   public:
     ProcessQueuesState( int verbose, Output::output_location_t loc, T1& obj ) : 
         StateBase<T1>( verbose, loc, obj ),
-        m_matchTime( 0 ),
-        m_copyTime( 0 ),
         m_ackKey( 0 ),
         m_rspKey( 0 ),
         m_isRead( false ),
@@ -108,6 +106,7 @@ class ProcessQueuesState : StateBase< T1 >
 
     void processLongAck( AckInfo* );
 
+    bool enterSend( _CommReq* );
     bool enterRead0( std::deque< FuncCtxBase* >& );
     bool enterWait0( std::deque< FuncCtxBase* >& );
     void processQueues( std::deque< FuncCtxBase* >& );
@@ -128,8 +127,6 @@ class ProcessQueuesState : StateBase< T1 >
   private:
     Output& dbg()   { return StateBase<T1>::m_dbg; }
     T1& obj()       { return StateBase<T1>::obj; }
-
-    int getCopyDelay( int nbytes ) { return m_copyTime * nbytes; }
 
     void postShortRecvBuffer( ShortRecvBuffer* buf = NULL );
 
@@ -215,8 +212,6 @@ class ProcessQueuesState : StateBase< T1 >
         return region | ReadRspKey;
     }  
 
-    int                 m_matchTime;
-    int                 m_copyTime;
     key_t               m_ackKey;
     key_t               m_rspKey;
 
@@ -355,7 +350,20 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 {
     dbg().verbose(CALL_INFO,1,0,"new send CommReq\n");
 
+    FunctorStatic_0< ProcessQueuesState, _CommReq*, bool >*  functor;
+    functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
+          ( this, &ProcessQueuesState::enterSend, req );  
+
+
     enter( exitFunctor );
+
+    obj().schedFunctor( functor, obj().txDelay() );
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
+{
+    dbg().verbose(CALL_INFO,1,0,"new send CommReq\n");
 
     SendFunctor<_CommReq*>* functor = 
             newPioSendFini<_CommReq*>( req, &ProcessQueuesState::pioSendFini );
@@ -395,6 +403,8 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 
     dbg().verbose(CALL_INFO,1,0,"req=%p %d\n",req,req->nid());
     obj().nic().pioSend( req->nid(), ShortMsgQ, vec, functor );
+
+    return true;
 }
 
 template< class T1 >
@@ -568,6 +578,10 @@ bool ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
     
     int delay;
     locals->req = searchPostedRecv( locals->buf->hdr, delay );
+
+    if ( locals->req ) {
+        delay += obj().rxDelay();
+    }
 
     FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
                                             std::deque< FuncCtxBase* >&,
@@ -892,13 +906,13 @@ template< class T1 >
 _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MsgHdr& hdr, int& delay )
 {
     _CommReq* req = NULL;
-    delay = 0;
+    int count = 0;
     dbg().verbose(CALL_INFO,1,0,"posted size %lu\n",m_pstdRcvQ.size());
 
     std::deque< _CommReq* >:: iterator iter = m_pstdRcvQ.begin();
     for ( ; iter != m_pstdRcvQ.end(); ++iter ) {
 
-        delay += m_matchTime;
+        ++count;
         if ( ! checkMsgHdr( hdr, (*iter)->hdr() ) ) {
             continue;
         }
@@ -908,6 +922,7 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MsgHdr& hdr, int& delay )
         break;
     }
     dbg().verbose(CALL_INFO,1,0,"req=%p\n",req);
+    delay = obj().matchDelay(count);
     return req;
 }
 
@@ -935,7 +950,6 @@ bool ProcessQueuesState<T1>::checkMsgHdr( MsgHdr& hdr, MsgHdr& wantHdr )
 template< class T1 >
 int ProcessQueuesState<T1>::copyBuf2Req( _CommReq* req, ShortRecvBuffer* buf )
 {
-    int delay = 0;
     size_t offset = 0;
 
     dbg().verbose(CALL_INFO,1,0,"ioVec().size() %lu, length %lu\n",
@@ -953,12 +967,10 @@ int ProcessQueuesState<T1>::copyBuf2Req( _CommReq* req, ShortRecvBuffer* buf )
 
         memcpy( ioVec[i].ptr, &buf->buf[offset], len );
         print( (char*)ioVec[i].ptr, len );
-
         offset += len;
 
-        delay += getCopyDelay( len );
     }
-    return delay;
+    return obj().memcpyDelay( offset );
 }
 
 template< class T1 >

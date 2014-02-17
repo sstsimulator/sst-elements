@@ -44,8 +44,15 @@ XXX::XXX( Component* owner, Params& params ) :
     ss << this;
 
     m_delayLink = owner->configureSelfLink( 
-        "CtrlMsgSelfLink." + ss.str(), "1 ps",
+        "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
+
+    params.print_all_params(std::cout);
+    m_matchDelay = params.find_integer( "matchDelay_ns", 1 );
+    m_memcpyDelay = params.find_integer( "memcpyDelay_ns", 1 );
+    m_txDelay = params.find_integer( "txDelay_ns", 100 );
+    m_rxDelay = params.find_integer( "rxDelay_ns", 100 );
+    
 }
 
 void XXX::init( Info* info, Nic::VirtNic* nic )
@@ -79,6 +86,9 @@ void XXX::setup()
     m_readState = new ReadState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_processQueuesState = new ProcessQueuesState<XXX>( m_dbg_level, m_dbg_loc, *this );
+
+    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ns\n", m_matchDelay, m_memcpyDelay );
+    m_dbg.verbose(CALL_INFO,1,0,"txDelay %d ns. rxDelay %d ns\n", m_txDelay, m_rxDelay );
 }
 
 void XXX::setRetLink( Link* link ) 

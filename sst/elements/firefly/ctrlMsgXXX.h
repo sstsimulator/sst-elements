@@ -22,7 +22,7 @@ namespace Firefly {
 namespace CtrlMsg {
 
 static const int    ShortMsgQ       = 0xf00d;
-static const size_t ShortMsgLength  = 1024;
+static const size_t ShortMsgLength  = 1024*16;
 
 template< class T >
 class SendState;
@@ -93,6 +93,25 @@ class XXX  {
     void passCtrlToFunction(int delay, FunctorBase_0<bool>* );
     void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq* );
     void schedFunctor( FunctorBase_0<bool>*, int delay = 0 );
+    int memcpyDelay(int bytes ) {
+        return bytes * m_memcpyDelay; 
+    } 
+
+    int matchDelay( int i ) {
+        return i * m_matchDelay;
+    }
+
+    int txDelay() {
+        return m_txDelay;
+    }
+
+    int rxDelay() {
+        return m_rxDelay;
+    }
+    int m_matchDelay;
+    int m_memcpyDelay;
+    int m_txDelay;
+    int m_rxDelay;
 
   private:
     class DelayEvent : public SST::Event {
