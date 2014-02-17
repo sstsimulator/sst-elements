@@ -79,7 +79,6 @@ class topoTorus(Topo):
                 print "Dim %d size:"%x
                 ds = int(raw_input())
                 self.dims.append(ds);
-                peers = peers * ds
             _params["torus:shape"] = self.formatShape(self.dims)
         else:
             self.dims = [int(x) for x in _params["torus:shape"].split('x')]
@@ -91,7 +90,6 @@ class topoTorus(Topo):
             _params["torus:width"] = self.formatShape(self.dimwidths)
         else:
             self.dimwidths = [int(x) for x in _params["torus:width"].split('x')]
-
 
         local_ports = int(_params["torus:local_ports"])
         radix = local_ports + 2 * sum(self.dimwidths)
