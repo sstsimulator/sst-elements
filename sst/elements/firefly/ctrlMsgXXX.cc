@@ -47,7 +47,6 @@ XXX::XXX( Component* owner, Params& params ) :
         "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
-    params.print_all_params(std::cout);
     m_matchDelay = params.find_integer( "matchDelay_ns", 1 );
     m_memcpyDelay = params.find_integer( "memcpyDelay_ns", 1 );
     m_txDelay = params.find_integer( "txDelay_ns", 100 );
