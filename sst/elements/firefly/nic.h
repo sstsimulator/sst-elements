@@ -181,7 +181,6 @@ class Nic : public SST::Module  {
             m_notifyRecvDmaDone(NULL),
             m_notifyNeedRecv(NULL)
         {
-            printf("%p %d\n",this, id);
         }
  
         int getNodeId() { 
@@ -344,6 +343,7 @@ class Nic : public SST::Module  {
     std::vector<VirtNic*>   m_vNicV;
 
     bool m_recvNotifyEnabled;
+    int  m_packetId;
 };
 
 } // namesapce Firefly 

@@ -35,7 +35,8 @@ Nic::Nic(Component* comp, Params &params) :
     m_rxMatchDelay( 100 ),
     m_txDelay( 50 ),
     m_pendingMerlinEvent( NULL ),
-    m_recvNotifyEnabled( false )
+    m_recvNotifyEnabled( false ),
+    m_packetId(0)
 {
     //params.print_all_params( std::cout );
 
@@ -206,7 +207,8 @@ void Nic::processSend( )
     if ( m_currentSend ) {
         if ( m_linkControl->spaceToSend(0,8) ) { 
             m_currentSend = processSend( m_currentSend );
-        } else {
+        }
+        if ( m_currentSend && ! m_linkControl->spaceToSend(0,8) ) { 
             m_dbg.verbose(CALL_INFO,1,0,"set send notify\n");
             m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
         }
@@ -217,6 +219,7 @@ void Nic::processSend( )
         event->type = SelfEvent::ProcessSend;
         schedEvent( event, m_txDelay );
     } else {
+        m_dbg.verbose(CALL_INFO,1,0,"remove send notify\n");
         m_linkControl->setNotifyOnSend( NULL );
     }
 }
@@ -249,6 +252,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
 
         #if 0 
             ev->setTraceType( Merlin::RtrEvent::ROUTE );
+            ev->setTraceID( m_packetId++ );
         #endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes %p\n",
                                                         ev->buf.size(), ev);
@@ -336,7 +340,11 @@ bool Nic::recvNotify(int vc)
         assert( ! m_linkControl->eventToReceive( i ) );
     }
      
-    return m_recvNotifyEnabled = processRecvEvent( event );
+    m_recvNotifyEnabled = processRecvEvent( event );
+    if ( ! m_recvNotifyEnabled ) {
+        m_dbg.verbose(CALL_INFO,1,0,"remove recv notify\n");
+    }
+    return m_recvNotifyEnabled;
 }
 
 bool Nic::processRecvEvent( MerlinFireflyEvent* event )
