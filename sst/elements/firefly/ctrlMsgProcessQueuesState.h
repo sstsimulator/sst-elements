@@ -806,6 +806,8 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 {
     dbg().verbose(CALL_INFO,1,0,"m_intStack.size()=%lu\n", stack.size() );
 
+    assert( ! stack.empty() );
+
     if ( m_isRead ) {
         enterRead0(m_funcStack);
     } else {
