@@ -278,7 +278,7 @@ class Nic : public SST::Module  {
     }
     
     bool processRecvEvent( MerlinFireflyEvent* );
-    bool findRecv( MerlinFireflyEvent* );
+    bool findRecv( MerlinFireflyEvent*, MsgHdr& );
     void moveEvent( MerlinFireflyEvent* );
 
     void notifySendPioDone( VirtNic* nic, void* key ) {

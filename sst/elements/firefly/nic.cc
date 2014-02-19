@@ -62,7 +62,7 @@ Nic::Nic(Component* comp, Params &params) :
                             getTimeLord()->getTimeConverter(link_bw);
     assert( tc );
 
-    int buffer_size = params.find_integer("buffer_size",2048);
+    int buffer_size = params.find_integer("buffer_size",100);
 
     m_dbg.verbose(CALL_INFO,1,0,"id=%d num_vcs=%d buffer_size=%d link_bw=%s\n",
                 m_myNodeId, m_num_vcs, buffer_size, link_bw.c_str());
@@ -235,7 +235,8 @@ Nic::Entry* Nic::processSend( Entry* entry )
         if ( 0 == entry->currentVec && 
                 0 == entry->currentPos  ) {
             
-            m_dbg.verbose(CALL_INFO,1,0,"start new send %lu bytes\n", entry->totalBytes());
+            m_dbg.verbose(CALL_INFO,1,0,"start new send %lu bytes\n",
+                                         entry->totalBytes());
             MsgHdr hdr;
             hdr.tag = event->tag;
             hdr.len = entry->totalBytes();
@@ -350,14 +351,15 @@ bool Nic::recvNotify(int vc)
 
 bool Nic::processRecvEvent( MerlinFireflyEvent* event )
 {
+        m_dbg.verbose(CALL_INFO,1,0,"\n");
     if ( m_activeRecvM.find( event->src ) == m_activeRecvM.end() ) {
         SelfEvent* selfEvent = new SelfEvent;
         selfEvent->type = SelfEvent::MatchDelay;
         selfEvent->mEvent = event;
-        selfEvent->retval =findRecv( event ); 
 
         MsgHdr hdr;
-        memcpy( &hdr, &event->buf[0], sizeof(hdr) );
+        selfEvent->retval =findRecv( event, hdr ); 
+
         selfEvent->node = event->src;
         selfEvent->tag = hdr.tag;
         selfEvent->len = hdr.len;
@@ -373,9 +375,8 @@ bool Nic::processRecvEvent( MerlinFireflyEvent* event )
     }
 }
 
-bool Nic::findRecv( MerlinFireflyEvent* event )
+bool Nic::findRecv( MerlinFireflyEvent* event, MsgHdr& hdr )
 {
-    MsgHdr hdr;
     int src = event->src;
     memcpy( &hdr, &event->buf[0], sizeof(hdr) );
 
