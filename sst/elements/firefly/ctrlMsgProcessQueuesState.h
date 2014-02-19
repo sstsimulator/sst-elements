@@ -30,7 +30,9 @@ class ProcessQueuesState : StateBase< T1 >
         m_rspKey( 0 ),
         m_isRead( false ),
         m_pendingEvents( false ),
-        m_needRecv( 0 )
+        m_needRecv( 0 ),
+        m_enableInt( false ),
+        m_missedInt( false )
     {
         char buffer[100];
         snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
@@ -230,6 +232,8 @@ class ProcessQueuesState : StateBase< T1 >
     bool m_isRead;
     bool m_pendingEvents;
     int  m_needRecv;
+    bool m_enableInt;
+    bool m_missedInt;
 };
 
 
@@ -297,8 +301,10 @@ bool ProcessQueuesState<T1>::enterRead0( std::deque<FuncCtxBase*>& stack )
         stack.pop_back();
         m_isRead = false;
         exit();
+        m_enableInt = false;
         return true;
     }
+    m_enableInt = true;
     dbg().verbose(CALL_INFO,1,0,"waiting for interrupt handler\n" ); 
     return false;
 }
@@ -460,6 +466,7 @@ bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
             stack.pop_back();
             dbg().verbose(CALL_INFO,1,0,"exit found CommReq, stack.size()=%lu\n",
                                         stack.size()); 
+            m_enableInt = false;
             return true;
         }
     }
@@ -472,9 +479,11 @@ bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
         stack.pop_back();
         dbg().verbose(CALL_INFO,1,0,"exit region evet, stack.size()=%lu\n",
                                         stack.size()); 
+        m_enableInt = false;
         return true;
     }
 
+    m_enableInt = true; 
     dbg().verbose(CALL_INFO,1,0,"waiting for interrupt handler\n" ); 
     return false;
 }
@@ -781,11 +790,13 @@ bool ProcessQueuesState<T1>::dmaRecvFini( ShortRecvBuffer* buf, nid_t nid,
 template< class T1 >
 void ProcessQueuesState<T1>::foo( )
 {
-    dbg().verbose(CALL_INFO,1,0,"m_funcStack.size()=%lu\n",
-                                            m_funcStack.size() );
-    if ( m_funcStack.empty() ) {
+    dbg().verbose(CALL_INFO,1,0,"m_funcStack.size()=%lu m_enableInt=%s\n",
+                                            m_funcStack.size(), m_enableInt ? "true":"false" );
+    if ( ! m_enableInt ) {
+        m_missedInt = true;
         return;
     }
+    m_enableInt = false;
 
     FuncCtxBase* ctx = new FuncCtxBase;
 
@@ -811,11 +822,15 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
     } else {
         enterWait0(m_funcStack);
     }
-
-    delete stack.back(); 
-    stack.pop_back();
-
-    return true; 
+    if ( ! m_funcStack.empty() && m_missedInt ) {
+        m_missedInt = false;
+        processQueues( stack );
+        return false; 
+    } else {
+        delete stack.back(); 
+        stack.pop_back();
+        return true; 
+    }
 }
 
 template< class T1 >
