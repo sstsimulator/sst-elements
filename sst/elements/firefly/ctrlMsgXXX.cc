@@ -52,6 +52,7 @@ XXX::XXX( Component* owner, Params& params ) :
     m_txDelay = params.find_integer( "txDelay_ns", 100 );
     m_rxDelay = params.find_integer( "rxDelay_ns", 100 );
     
+    m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 }
 
 void XXX::init( Info* info, Nic::VirtNic* nic )

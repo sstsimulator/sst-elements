@@ -132,9 +132,13 @@ void* API::getUsrPtr( CommReq* req )
 {
     return req->usrPtr;
 }
+
 void API::getStatus( CommReq* req, Status* status )
 {
     *status = req->status;
 }
 
-
+size_t API::shortMsgLength()
+{
+    return m_xxx->shortMsgLength();
+}

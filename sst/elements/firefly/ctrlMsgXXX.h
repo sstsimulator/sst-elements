@@ -21,8 +21,6 @@ namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
 
-static const int    ShortMsgQ       = 0xf00d;
-static const size_t ShortMsgLength  = 1024*16;
 
 template< class T >
 class SendState;
@@ -61,6 +59,11 @@ struct MsgHdr {
     key_t     rspKey;
 };
 
+static const int    ShortMsgQ       = 0xf00d;
+#if 0
+static const size_t ShortMsgLength  = 1024*32 + 128;
+#endif
+
 class ShortRecvBuffer;
 
 class XXX  {
@@ -89,6 +92,8 @@ class XXX  {
     void setReturnState( FunctorBase_0<bool>* state ) {
         m_returnState = state; 
     }
+
+    size_t shortMsgLength() { return m_shortMsgLength; }
 
     void passCtrlToFunction(int delay, FunctorBase_0<bool>* );
     void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq* );
@@ -161,19 +166,20 @@ class XXX  {
     WaitAnyState<XXX>*      m_waitAnyState;
     Output::output_location_t   m_dbg_loc;
     int                         m_dbg_level;
+    size_t                  m_shortMsgLength;
   public:
     ProcessQueuesState<XXX>*     m_processQueuesState;
 };
 
 class ShortRecvBuffer {
   public:
-    ShortRecvBuffer() { 
+    ShortRecvBuffer(size_t length ) { 
         ioVec.resize(2);    
 
         ioVec[0].ptr = &hdr;
         ioVec[0].len = sizeof(hdr);
 
-        buf.resize( ShortMsgLength );
+        buf.resize( length );
         ioVec[1].ptr = &buf[0];
             ioVec[1].len = buf.size();
         }
@@ -238,6 +244,7 @@ class _CommReq {
     bool                m_done;
     nid_t               m_nid;
 };
+
 
 }
 }

@@ -69,7 +69,6 @@ class LongMsgProtocol : public CtrlMsg::API  {
                                 CtrlMsg::CommReq*, bool > XXX_Functor;
 
     static const uint32_t MaxNumPostedRecvs = 512;
-    static const uint32_t ShortMsgLength = 1024*16; 
 
     static const uint32_t ShortMsgTag =   0x80000000;
     static const uint32_t LongMsgTag =    0x40000000;

@@ -324,7 +324,7 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
     Nic::NodeId destNode =
             info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
     int   tag;
-    if ( len <= ShortMsgLength ) {
+    if ( len <= shortMsgLength() - sizeof(MsgHdr)) {
         cbe->vec.resize(2);
         cbe->vec[1].len = len; 
         cbe->vec[1].ptr = entry->buf;
@@ -427,10 +427,12 @@ void LongMsgProtocol::postRecvAny(  )
 
     rcbe->vec.resize(2);
 
-    rcbe->buf.resize( ShortMsgLength );
 
     rcbe->vec[0].ptr = &rcbe->hdr;
     rcbe->vec[0].len = sizeof(rcbe->hdr);
+
+    rcbe->buf.resize( shortMsgLength() - rcbe->vec[0].len );
+
     rcbe->vec[1].len = rcbe->buf.size();
     rcbe->vec[1].ptr = &rcbe->buf[0];
 

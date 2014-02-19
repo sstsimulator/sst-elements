@@ -82,6 +82,8 @@ class API : public ProtocolAPI {
 
     void read( nid_t, region_t, void* buf, size_t len, 
                                     FunctorBase_0<bool>* = NULL );
+    size_t shortMsgLength();
+
     RegionEventQ* createEventQueue( );
     void registerRegion( region_t, nid_t, void* buf, size_t len, RegionEventQ* );
     void unregisterRegion( region_t );

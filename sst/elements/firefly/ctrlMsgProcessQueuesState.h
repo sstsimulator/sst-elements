@@ -375,7 +375,7 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
 
     dbg().verbose(CALL_INFO,1,0,"message length %lu\n", req->hdr().length );
 
-    if ( req->hdr().length <= ShortMsgLength ) {
+    if ( req->hdr().length <= obj().shortMsgLength() ) {
         dbg().verbose(CALL_INFO,1,0,"sending short message\n"); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
@@ -605,7 +605,7 @@ bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
 
         req->setStatus( buf->hdr.nid, buf->hdr.tag, 
                             buf->hdr.length );
-        if ( buf->hdr.length <= ShortMsgLength  ) {
+        if ( buf->hdr.length <= obj().shortMsgLength() ) {
 
             dbg().verbose(CALL_INFO,1,0,"receive short message\n"); 
             delay = copyBuf2Req( req, buf );
@@ -636,7 +636,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         locals->iter = m_shortMsgV.erase( locals->iter );
 
-        if ( buf->hdr.length <= ShortMsgLength  ) {
+        if ( buf->hdr.length <= obj().shortMsgLength()  ) {
             req->setDone();
         } else {
 
@@ -884,7 +884,7 @@ bool ProcessQueuesState<T1>::pioSendFini( _CommReq* req )
 {
     dbg().verbose(CALL_INFO,1,0,"_CommReq\n");
 
-    if ( req->hdr().length <= ShortMsgLength ) {
+    if ( req->hdr().length <= obj().shortMsgLength() ) {
         req->setDone();
     }
 
@@ -987,7 +987,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::postShortRecvBuffer( ShortRecvBuffer* buf )
 {
     if ( NULL == buf ) {
-        buf = new ShortRecvBuffer;
+        buf = new ShortRecvBuffer( obj().shortMsgLength() + sizeof(MsgHdr));
     }
 
     RecvFunctor<ShortRecvBuffer*>* functor =
