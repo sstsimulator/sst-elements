@@ -336,9 +336,10 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
         registerRegion( cbe->region, destNode, entry->buf, len, 
                                                         m_regionEventQ );
         m_regionM[cbe->region] = cbe;
+
+        m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
     }
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
 
     cbe->vec[0].ptr = &cbe->hdr;
     cbe->vec[0].len = sizeof(cbe->hdr);

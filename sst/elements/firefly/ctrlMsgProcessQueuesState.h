@@ -363,8 +363,6 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 template< class T1 >
 bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
 {
-    dbg().verbose(CALL_INFO,1,0,"new send CommReq\n");
-
     SendFunctor<_CommReq*>* functor = 
             newPioSendFini<_CommReq*>( req, &ProcessQueuesState::pioSendFini );
 
