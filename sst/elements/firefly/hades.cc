@@ -217,6 +217,11 @@ void Hades::_componentInit(unsigned int phase )
     m_nic->init(phase);
 }
 
+int Hades::myWorldSize()
+{
+    return m_info.getGroup(Hermes::GroupWorld)->size();
+}
+
 Hermes::RankID Hades::myWorldRank() 
 {
     int rank = _myWorldRank();

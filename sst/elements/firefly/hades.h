@@ -125,6 +125,7 @@ class Hades : public Hermes::MessageInterface
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
     Hermes::RankID myWorldRank();
+    int myWorldSize();
 
   private:
 
