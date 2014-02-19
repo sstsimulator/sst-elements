@@ -104,8 +104,8 @@ namespace SST {
                     public:
                         static JobComparator* Make(std::string typeName);  //return NULL if name is invalid
                         static void printComparatorList(std::ostream& out);  //print list of possible comparators
-                        bool operator()(Job*& j1, Job*& j2);
-                        bool operator()(Job* const& j1, Job* const& j2);
+                        bool operator()(Job*& j1, Job*& j2) const;
+                        bool operator()(Job* const& j1, Job* const& j2) const;
                         std::string toString();
                     private:
                         JobComparator(ComparatorType type);

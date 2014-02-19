@@ -1320,7 +1320,7 @@ void StatefulScheduler::EvenLessManager::start(Job* j, unsigned long time)
 }
 
 //JobComparator operator
-bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
+bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) const
 { 
     //true means j1 comes before j2
     //for this to work correctly, it returns the reverse of what it would

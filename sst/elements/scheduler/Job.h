@@ -39,16 +39,16 @@ namespace SST {
                 ~Job(){}
 
                 unsigned long getStartTime();
-                unsigned long getArrivalTime() 
+                unsigned long getArrivalTime() const
                 { 
                     return arrivalTime; 
                 }
-                unsigned long getActualTime() 
+                unsigned long getActualTime() const
                 { 
                     return actualRunningTime; 
                 }
-                int getProcsNeeded() { return procsNeeded; }
-                long getJobNum() { return jobNum; }
+                int getProcsNeeded() const { return procsNeeded; }
+                long getJobNum() const { return jobNum; }
                 void reset();
 
                 std::string * getID() {
