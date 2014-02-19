@@ -32,7 +32,7 @@ void EmberHalo1DGenerator::generate(const SST::Output* output, const uint32_t ph
 			evQ->push(sendRight);
 		} else if( (size - 1) == rank ) {
 			EmberSendEvent* sendLeft = new EmberSendEvent(rank - 1, messageSize, 0, (Communicator) 0);
-			EmberRecvEvent* recvLeft = new EmberSendEvent(rank - 1, messageSize, 0, (Communicator) 0);
+			EmberRecvEvent* recvLeft = new EmberRecvEvent(rank - 1, messageSize, 0, (Communicator) 0);
 
 			evQ->push(sendLeft);
 			evQ->push(recvLeft);

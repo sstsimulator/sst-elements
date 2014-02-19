@@ -88,7 +88,7 @@ void EmberEngine::setup() {
 	thisRank = (uint32_t) msgapi->myWorldRank();
 	uint32_t worldSize = (uint32_t) msgapi->myWorldSize();
 
-	generator>configureEnvironment(thisRank, worldSize);
+	generator->configureEnvironment(thisRank, worldSize);
 
 	char outputPrefix[256];
 	sprintf(outputPrefix, "@t:%d:ZSirius::@p:@l: ", (int) thisRank);
@@ -148,7 +148,7 @@ void EmberEngine::completedRecv(int val) {
 }
 
 void EmberEngine::refillQueue() {
-	generator->generate(&output, generationPhase++, thisRank, &evQueue);
+	generator->generate(&output, generationPhase++, &evQueue);
 	eventCount = evQueue.size();
 }
 
