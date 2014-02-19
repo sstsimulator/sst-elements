@@ -8,8 +8,12 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, Params& pa
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 }
 
+void EmberPingPongGenerator::configureEnvironment(uint32_t pRank, uint32_t worldSize) {
+	rank = pRank;
+}
+
 void EmberPingPongGenerator::generate(const SST::Output* output, const uint32_t phase,
-	const uint32_t rank, std::queue<EmberEvent*>* evQ) {
+	std::queue<EmberEvent*>* evQ) {
 
 	if(phase < iterations) {
 		if(0 == rank) {

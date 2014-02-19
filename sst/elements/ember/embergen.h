@@ -22,7 +22,9 @@ class EmberGenerator : public Module {
 
 public:
 	EmberGenerator();
-	virtual void generate(const SST::Output* output, const uint32_t phase, const uint32_t rank, std::queue<EmberEvent*>* evQ) = 0;
+	virtual void configureEnvironment(uint32_t rank, uint32_t worldSize);
+	virtual void generate(const SST::Output* output, const uint32_t phase,
+		std::queue<EmberEvent*>* evQ) = 0;
 
 protected:
 	~EmberGenerator();

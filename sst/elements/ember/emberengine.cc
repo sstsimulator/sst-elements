@@ -85,10 +85,13 @@ void EmberEngine::setup() {
 
 	// Get my rank from the communication layer, we will
 	// need to pass this to the generator
-	thisRank = (int) msgapi->myWorldRank();
+	thisRank = (uint32_t) msgapi->myWorldRank();
+	uint32_t worldSize = (uint32_t) msgapi->myWorldSize();
+
+	generator>configureEnvironment(thisRank, worldSize);
 
 	char outputPrefix[256];
-	sprintf(outputPrefix, "@t:%d:ZSirius::@p:@l: ", thisRank);
+	sprintf(outputPrefix, "@t:%d:ZSirius::@p:@l: ", (int) thisRank);
 	string outputPrefixStr = outputPrefix;
 	output.setPrefix(outputPrefixStr);
 
