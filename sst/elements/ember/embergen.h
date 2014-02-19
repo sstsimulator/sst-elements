@@ -4,6 +4,7 @@
 
 #include <sst_config.h>
 #include <sst/core/output.h>
+#include <sst/core/module.h>
 
 #include <queue>
 
@@ -17,7 +18,7 @@
 namespace SST {
 namespace Ember {
 
-class EmberGenerator {
+class EmberGenerator : public Module {
 
 public:
 	EmberGenerator();

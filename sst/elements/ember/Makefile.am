@@ -24,7 +24,9 @@ libember_la_SOURCES = \
 	emberstartev.h \
 	emberstartev.cc \
 	embercomputeev.h \
-	embercomputeev.cc
+	embercomputeev.cc \
+	emberpingpong.cc \
+	emberpingpong.h
 
 
 libember_la_LDFLAGS = -module -avoid-version
