@@ -107,7 +107,7 @@ Nic::VirtNic* Nic::virtNicInit()
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
-    m_dbg.verbose(CALL_INFO,1,0,"type %d\n", event->type);
+    m_dbg.verbose(CALL_INFO,2,0,"type %d\n", event->type);
     switch ( event->type ) {
     case SelfEvent::DmaSend:
         e = NULL;
@@ -135,7 +135,7 @@ void Nic::handleSelfEvent( Event *e )
         break;
     case SelfEvent::MatchDelay:
 
-        m_dbg.verbose(CALL_INFO,1,0,"\n");
+        m_dbg.verbose(CALL_INFO,2,0,"\n");
         if ( event->retval ) {
             moveEvent( event->mEvent );
         } else {
@@ -158,7 +158,7 @@ void Nic::handleSelfEvent( Event *e )
 void Nic::dmaSend( Nic::VirtNic *vNic,int dest, int tag, 
                                 std::vector<IoVec>& iovec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     SelfEvent* event = new SelfEvent; 
     event->type = SelfEvent::DmaSend;
     event->node = dest;
@@ -173,7 +173,7 @@ void Nic::dmaSend( Nic::VirtNic *vNic,int dest, int tag,
 void Nic::dmaRecv( Nic::VirtNic* vNic, int src, int tag,
                                 std::vector<IoVec>& iovec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     SelfEvent* event = new SelfEvent; 
     event->type = SelfEvent::DmaRecv;
     event->node = src;
@@ -188,7 +188,7 @@ void Nic::dmaRecv( Nic::VirtNic* vNic, int src, int tag,
 void Nic::pioSend( Nic::VirtNic* vNic, int dest, int tag,
                                 std::vector<IoVec>& iovec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     SelfEvent* event = new SelfEvent; 
     event->type = SelfEvent::PioSend;
     event->node = dest;
@@ -202,14 +202,14 @@ void Nic::pioSend( Nic::VirtNic* vNic, int dest, int tag,
 
 void Nic::processSend( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"number pending %lu\n", m_sendQ.size() );
+    m_dbg.verbose(CALL_INFO,2,0,"number pending %lu\n", m_sendQ.size() );
 
     if ( m_currentSend ) {
         if ( m_linkControl->spaceToSend(0,8) ) { 
             m_currentSend = processSend( m_currentSend );
         }
         if ( m_currentSend && ! m_linkControl->spaceToSend(0,8) ) { 
-            m_dbg.verbose(CALL_INFO,1,0,"set send notify\n");
+            m_dbg.verbose(CALL_INFO,2,0,"set send notify\n");
             m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
         }
     } else if ( ! m_sendQ.empty() ) {
@@ -219,7 +219,7 @@ void Nic::processSend( )
         event->type = SelfEvent::ProcessSend;
         schedEvent( event, m_txDelay );
     } else {
-        m_dbg.verbose(CALL_INFO,1,0,"remove send notify\n");
+        m_dbg.verbose(CALL_INFO,2,0,"remove send notify\n");
         m_linkControl->setNotifyOnSend( NULL );
     }
 }
@@ -235,6 +235,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
         if ( 0 == entry->currentVec && 
                 0 == entry->currentPos  ) {
             
+            m_dbg.verbose(CALL_INFO,1,0,"start new send %lu bytes\n", entry->totalBytes());
             MsgHdr hdr;
             hdr.tag = event->tag;
             hdr.len = entry->totalBytes();
@@ -281,7 +282,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
 void Nic::dmaSend( SelfEvent *e )
 {
     Entry* entry = new Entry(e);
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%d vecLen=%lu length=%lu\n",
+    m_dbg.verbose(CALL_INFO,2,0,"dest=%d tag=%d vecLen=%lu length=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
     
     m_sendQ.push_back( entry );
@@ -291,7 +292,7 @@ void Nic::dmaSend( SelfEvent *e )
 void Nic::pioSend( SelfEvent *e )
 {
     Entry* entry = new Entry(e);
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%d vecLen=%lu length=%lu\n",
+    m_dbg.verbose(CALL_INFO,2,0,"dest=%d tag=%d vecLen=%lu length=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
     m_sendQ.push_back( entry );
     processSend();
@@ -304,7 +305,7 @@ void Nic::dmaRecv( SelfEvent *e )
 
     m_recvM[ e->vNic->id() ][ e->tag ].push_back( entry );
 
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x length=%lu\n",
+    m_dbg.verbose(CALL_INFO,2,0,"src=%d tag=%#x length=%lu\n",
                             e->node, e->tag, entry->totalBytes());
 
     if ( m_pendingMerlinEvent ) {
@@ -319,7 +320,7 @@ void Nic::dmaRecv( SelfEvent *e )
 // Merlin stuff
 bool Nic::sendNotify(int)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     
     SelfEvent* event = new SelfEvent;
     event->type = SelfEvent::ProcessSend;
@@ -331,7 +332,7 @@ bool Nic::sendNotify(int)
 
 bool Nic::recvNotify(int vc)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
 
     MerlinFireflyEvent* event = 
             static_cast<MerlinFireflyEvent*>( m_linkControl->recv(vc) );
@@ -342,7 +343,7 @@ bool Nic::recvNotify(int vc)
      
     m_recvNotifyEnabled = processRecvEvent( event );
     if ( ! m_recvNotifyEnabled ) {
-        m_dbg.verbose(CALL_INFO,1,0,"remove recv notify\n");
+        m_dbg.verbose(CALL_INFO,2,0,"remove recv notify\n");
     }
     return m_recvNotifyEnabled;
 }
@@ -378,7 +379,7 @@ bool Nic::findRecv( MerlinFireflyEvent* event )
     int src = event->src;
     memcpy( &hdr, &event->buf[0], sizeof(hdr) );
 
-    m_dbg.verbose(CALL_INFO,1,0,"need a recv entry, src=%d tag=%#x "
+    m_dbg.verbose(CALL_INFO,2,0,"need a recv entry, src=%d tag=%#x "
                                 "len=%lu\n", src, hdr.tag, hdr.len);
 
     if ( m_recvM[hdr.vNicId].find( hdr.tag ) == m_recvM[hdr.vNicId].end() ) {
@@ -389,13 +390,13 @@ bool Nic::findRecv( MerlinFireflyEvent* event )
     if ( entry->event()->node != -1 && entry->event()->node != src ) {
         return false;
     } 
-    m_dbg.verbose(CALL_INFO,1,0,"entry nbytes %lu\n",entry->totalBytes());
+    m_dbg.verbose(CALL_INFO,2,0,"entry nbytes %lu\n",entry->totalBytes());
 
     if ( entry->totalBytes() < hdr.len ) {
         assert(0);
     }
 
-    m_dbg.verbose(CALL_INFO,1,0,"found a receive entry\n");
+    m_dbg.verbose(CALL_INFO,2,0,"found a receive entry\n");
 
     event->buf.erase(0, sizeof(hdr) );
 
@@ -413,8 +414,13 @@ bool Nic::findRecv( MerlinFireflyEvent* event )
 
 void Nic::moveEvent( MerlinFireflyEvent* event )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n" );
+    m_dbg.verbose(CALL_INFO,2,0,"\n" );
     int src = event->src;
+
+    if ( 0 == m_activeRecvM[ src ]->currentVec && 
+             0 == m_activeRecvM[ src ]->currentPos  ) {
+        m_dbg.verbose(CALL_INFO,1,0,"new recv %lu\n", m_activeRecvM[ src ]->totalBytes() );
+    }
     if ( copyIn( m_dbg, *m_activeRecvM[ src ], *event ) || 
         m_activeRecvM[src]->len == 
                         m_activeRecvM[src]->currentLen ) {
@@ -447,7 +453,7 @@ void Nic::moveEvent( MerlinFireflyEvent* event )
                 tmp->mEvent = event;
                 schedEvent( tmp );
             } else {
-                m_dbg.verbose(CALL_INFO,1,0,"\n");
+                m_dbg.verbose(CALL_INFO,2,0,"\n");
                 m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
             }
         }
