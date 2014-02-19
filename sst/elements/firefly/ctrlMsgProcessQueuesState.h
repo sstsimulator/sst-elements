@@ -271,20 +271,6 @@ void ProcessQueuesState<T1>::enterRead( nid_t nid, region_t region, void* buf, s
     obj().nic().dmaRecv( nid, info->hdr.key, dataVec, rfunctor ); 
 
     obj().nic().pioSend( nid, genReadReqKey( region), vec, sfunctor );
-
-    FuncCtxBase* ctx = new FuncCtxBase;
-
-    ctx->retFunctor = new FunctorStatic_0< ProcessQueuesState,
-                                            std::deque< FuncCtxBase* >&,
-                                            bool > 
-          ( this, &ProcessQueuesState::enterRead0, m_funcStack );  
-
-    ReadLocals* locals = new ReadLocals;
-    locals->info = info;
-    ctx->locals = locals;
-
-    m_funcStack.push_back( ctx );
-    m_isRead = true;
 }
 
 template< class T1 >
@@ -300,8 +286,9 @@ bool ProcessQueuesState<T1>::enterRead0( std::deque<FuncCtxBase*>& stack )
         delete ctx;
         stack.pop_back();
         m_isRead = false;
-        exit();
+        m_missedInt = false;
         m_enableInt = false;
+        exit();
         return true;
     }
     m_enableInt = true;
@@ -424,6 +411,8 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
     m_pstdRcvQ.push_front( req );
 
     exit();
+    m_missedInt = false;
+    m_enableInt = false;
 }
 
 template< class T1 >
@@ -466,6 +455,7 @@ bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
             stack.pop_back();
             dbg().verbose(CALL_INFO,1,0,"exit found CommReq, stack.size()=%lu\n",
                                         stack.size()); 
+            m_missedInt = false;
             m_enableInt = false;
             return true;
         }
@@ -479,6 +469,7 @@ bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
         stack.pop_back();
         dbg().verbose(CALL_INFO,1,0,"exit region evet, stack.size()=%lu\n",
                                         stack.size()); 
+        m_missedInt = false;
         m_enableInt = false;
         return true;
     }
@@ -791,8 +782,9 @@ template< class T1 >
 void ProcessQueuesState<T1>::foo( )
 {
     dbg().verbose(CALL_INFO,1,0,"m_funcStack.size()=%lu m_enableInt=%s\n",
-                                            m_funcStack.size(), m_enableInt ? "true":"false" );
+                           m_funcStack.size(), m_enableInt ? "true":"false" );
     if ( ! m_enableInt ) {
+        dbg().verbose(CALL_INFO,1,0,"missed interrupt\n");
         m_missedInt = true;
         return;
     }
@@ -823,6 +815,7 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
         enterWait0(m_funcStack);
     }
     if ( ! m_funcStack.empty() && m_missedInt ) {
+        dbg().verbose(CALL_INFO,1,0,"clearing missed interrupt\n");
         m_missedInt = false;
         processQueues( stack );
         return false; 
@@ -850,7 +843,20 @@ bool ProcessQueuesState<T1>::pioSendFini( ReadInfo* info )
     dbg().verbose(CALL_INFO,1,0,"ReadInfo, key=%#x\n", 
                     genReadReqKey( info->region ) );
 
-    foo();
+    FuncCtxBase* ctx = new FuncCtxBase;
+
+    ctx->retFunctor = new FunctorStatic_0< ProcessQueuesState,
+                                            std::deque< FuncCtxBase* >&,
+                                            bool > 
+          ( this, &ProcessQueuesState::enterRead0, m_funcStack );  
+
+    ReadLocals* locals = new ReadLocals;
+    locals->info = info;
+    ctx->locals = locals;
+    m_funcStack.push_back( ctx );
+    m_isRead = true;
+
+    processQueues( m_funcStack );
 
     return true;
 }
@@ -904,6 +910,8 @@ bool ProcessQueuesState<T1>::pioSendFini( _CommReq* req )
     }
 
     exit();
+    m_missedInt = false;
+    m_enableInt = false;
 
     return true;
 }
