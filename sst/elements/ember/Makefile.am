@@ -17,8 +17,14 @@ libember_la_SOURCES = \
 	emberevent.h \
 	emberfinalizeev.h \
 	emberhalo1d.h  \
+	emberhalo1d.cc  \
 	emberinitev.h  \
 	emberrecvev.h \
-	embersendev.h
+	embersendev.h \
+	emberstartev.h \
+	emberstartev.cc \
+	embercomputeev.h \
+	embercomputeev.cc
+
 
 libember_la_LDFLAGS = -module -avoid-version

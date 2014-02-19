@@ -1,14 +1,21 @@
 
 #include "emberrecvev.h"
 
-EmberRecvEvent::EmberRecvEvent(uint32_t pRank, uint32_t pRecvSizeBytes, int pTag) {
+using namespace SST::Ember;
+
+EmberRecvEvent::EmberRecvEvent(uint32_t pRank, uint32_t pRecvSizeBytes, int pTag, Communicator pComm) {
 	recvSizeBytes = pRecvSizeBytes;
 	rank = pRank;
 	recvTag = pTag;
+	comm = pComm;
 }
 
 EmberRecvEvent::~EmberRecvEvent() {
 
+}
+
+Communicator EmberRecvEvent::getCommunicator() {
+	return comm;
 }
 
 EmberEventType EmberRecvEvent::getEventType() {
@@ -24,5 +31,13 @@ uint32_t EmberRecvEvent::getMessageSize() {
 }
 
 int EmberRecvEvent::getTag() {
-	return pTag;
+	return recvTag;
+}
+
+std::string EmberRecvEvent::getPrintableString() {
+	char buffer[128];
+	sprintf(buffer, "Recv Event (Recv from rank=%" PRIu32 ", Size=%" PRIu32 " bytes, tag=%d\n",
+		rank, recvSizeBytes, recvTag);
+	std::string bufferStr = buffer;
+	return bufferStr;
 }

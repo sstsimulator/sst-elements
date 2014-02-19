@@ -4,6 +4,8 @@
 
 #include <assert.h>
 
+#include "emberengine.h"
+
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
@@ -14,7 +16,7 @@ static Component*
 create_EmberComponent(SST::ComponentId_t id,
                   SST::Params& params)
 {
-    return new EmberComponent( id, params );
+    return new EmberEngine( id, params );
 }
 
 static const ElementInfoParam component_params[] = {

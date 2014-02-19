@@ -1,17 +1,17 @@
 
-#ifndef _H_EMBER_INIT_EVENT
-#define _H_EMBER_INIT_EVENT
+#ifndef _H_EMBER_START_EVENT
+#define _H_EMBER_START_EVENT
 
 #include "emberevent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberInitEvent : public EmberEvent {
+class EmberStartEvent : public EmberEvent {
 
 public:
-	EmberInitEvent();
-	~EmberInitEvent();
+	EmberStartEvent();
+	~EmberStartEvent();
 	EmberEventType getEventType();
 	std::string getPrintableString();
 

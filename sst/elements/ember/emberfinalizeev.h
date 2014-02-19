@@ -7,12 +7,13 @@
 namespace SST {
 namespace Ember {
 
-class EmberFinalizeEvent : EmberEvent {
+class EmberFinalizeEvent : public EmberEvent {
 
 public:
 	EmberFinalizeEvent();
 	~EmberFinalizeEvent();
 	EmberEventType getEventType();
+	std::string getPrintableString();
 
 };
 
