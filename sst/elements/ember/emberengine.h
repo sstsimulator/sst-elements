@@ -93,11 +93,11 @@ private:
 	//uint64_t nanoRecv;
 	//uint64_t nanoCompute;
 
-	Histogram<uint64_t> histoInit;
-	Histogram<uint64_t> histoFinalize;
-	Histogram<uint64_t> histoRecv;
-	Histogram<uint64_t> histoSend;
-	Histogram<uint64_t> histoCompute;
+	Histogram<uint64_t>* histoInit;
+	Histogram<uint64_t>* histoFinalize;
+	Histogram<uint64_t>* histoRecv;
+	Histogram<uint64_t>* histoSend;
+	Histogram<uint64_t>* histoCompute;
 
 	EmberEngine();			    // For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

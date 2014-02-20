@@ -71,6 +71,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	// Create a time converter for our compute events
 	nanoTimeConverter = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+
+	histoCompute = new Histogram<uint64_t>(20);
+	histoSend = new Histogram<uint64_t>(5);
+	histoRecv = new Histogram<uint64_t>(5);
+	histoInit = new Histogram<uint64_t>(5);
+	histoFinalize = new Histogram<uint64_t>(5);
 }
 
 EmberEngine::~EmberEngine() {
@@ -92,18 +98,19 @@ void EmberEngine::finish() {
 		output.output("- Time spent in send:            %" PRIu64 " ns\n", nanoSend);
 		output.output("- Time spent in recv:            %" PRIu64 " ns\n", nanoRecv);
 */
-		std::map<uint64_t, HistoBin<uint64_t> >* histo_map = nanoCompute.getMap();
-		std::map<uint64_t, HistoBin<uint64_t> >::iterator binItr = histo_map->begin();
-		output.output("- Histogram of compute times:\n");
 
-		for(binItr = histo_map->begin(); binItr != histo_map->end(); binItr++) {
-			printHistoBin(binItr->first, nanoCompute->getBinWidth(), binItr->second);
+		output.output("- Histogram of compute times:\n");
+		for(uint32_t i = 0; i < histoCompute->getBinCount(); ++i) {
+			printHistoBin(histoCompute->getBinByIndex(i)->getBaseValue(),
+				histoCompute->getBinWidth(),
+				histoCompute->getBinByIndex(i));
 		}
+
 	}
 }
 
 void EmberEngine::printHistoBin(uint64_t binStart, uint64_t width, HistoBin<uint64_t>* bin) {
-	output->output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
+	output.output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
 		binStart, binStart + width, bin->getCount());
 }
 
@@ -132,7 +139,7 @@ void EmberEngine::processInitEvent(EmberInitEvent* ev) {
 	output.verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
 	msgapi->init(&initFunctor);
 
-	accumulateTime = &nanoInit;
+	accumulateTime = histoInit;
 }
 
 void EmberEngine::processSendEvent(EmberSendEvent* ev) {
@@ -142,7 +149,7 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 		ev->getTag(), ev->getCommunicator(),
 		&sendFunctor);
 
-	accumulateTime = &nanoSend;
+	accumulateTime = histoSend;
 }
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
@@ -154,14 +161,14 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 		ev->getTag(), ev->getCommunicator(),
 		&currentRecv, &recvFunctor);
 
-	accumulateTime = &nanoRecv;
+	accumulateTime = histoRecv;
 }
 
 void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 	output.verbose(CALL_INFO, 2, 0, "Processing a Finalize Event\n");
 	msgapi->fini(&finalizeFunctor);
 
-	accumulateTime = &nanoFinalize;
+	accumulateTime = histoFinalize;
 
 	// Tell the simulator core we are finished and do not need any further
 	// processing to continue
@@ -173,7 +180,7 @@ void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
 
 	// Issue the next event with a delay (essentially the time we computed something)
 	issueNextEvent(ev->getNanoSecondDelay());
-	accumulateTime = &nanoCompute;
+	accumulateTime = histoCompute;
 }
 
 void EmberEngine::completedInit(int val) {
