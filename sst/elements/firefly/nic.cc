@@ -351,7 +351,6 @@ bool Nic::recvNotify(int vc)
 
 bool Nic::processRecvEvent( MerlinFireflyEvent* event )
 {
-        m_dbg.verbose(CALL_INFO,1,0,"\n");
     if ( m_activeRecvM.find( event->src ) == m_activeRecvM.end() ) {
         SelfEvent* selfEvent = new SelfEvent;
         selfEvent->type = SelfEvent::MatchDelay;
