@@ -10,8 +10,13 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend))
 {
+	// Get the level of verbosity the user is asking to print out, default is 1
+	// which means don't print much.
 	uint32_t verbosity = (uint32_t) params.find_integer("verbose", 1);
 	output.init("EmberEngine", verbosity, (uint32_t) 0, Output::STDOUT);
+
+	// See if the user requested that we print statistics for this run
+	printStats = ((uint32_t) (params.find_integer("printStats", 0))) != ((uint32_t) 0);
 
 	// Configure the empty buffer ready for use by MPI routines.
 	emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
@@ -78,6 +83,17 @@ void EmberEngine::init(unsigned int phase) {
 	msgapi->_componentInit(phase);
 }
 
+void EmberEngine::finish() {
+	if(printStats) {
+		output.output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
+		output.output("- Time spent in compute:         %" PRIu64 " ns\n", nanoCompute);
+		output.output("- Time spent in init:            %" PRIu64 " ns\n", nanoInit);
+		output.output("- Time spent in finalize:        %" PRIu64 " ns\n", nanoFinalize);
+		output.output("- Time spent in send:            %" PRIu64 " ns\n", nanoSend);
+		output.output("- Time spent in recv:            %" PRIu64 " ns\n", nanoRecv);
+	}
+}
+
 void EmberEngine::setup() {
 	// Notify communication layer we are done with init phase
 	// and are now in final bring up state
@@ -102,6 +118,8 @@ void EmberEngine::setup() {
 void EmberEngine::processInitEvent(EmberInitEvent* ev) {
 	output.verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
 	msgapi->init(&initFunctor);
+
+	accumulateTime = &nanoInit;
 }
 
 void EmberEngine::processSendEvent(EmberSendEvent* ev) {
@@ -110,6 +128,8 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 		CHAR, (RankID) ev->getSendToRank(),
 		ev->getTag(), ev->getCommunicator(),
 		&sendFunctor);
+
+	accumulateTime = &nanoSend;
 }
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
@@ -120,11 +140,27 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 		CHAR, (RankID) ev->getRecvFromRank(),
 		ev->getTag(), ev->getCommunicator(),
 		&currentRecv, &recvFunctor);
+
+	accumulateTime = &nanoRecv;
 }
 
 void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 	output.verbose(CALL_INFO, 2, 0, "Processing a Finalize Event\n");
 	msgapi->fini(&finalizeFunctor);
+
+	accumulateTime = &nanoFinalize;
+
+	// Tell the simulator core we are finished and do not need any further
+	// processing to continue
+	primaryComponentOKToEndSim();
+}
+
+void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
+	output.verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
+
+	// Issue the next event with a delay (essentially the time we computed something)
+	issueNextEvent(ev->getNanoSecondDelay());
+	accumulateTime = &nanoCompute;
 }
 
 void EmberEngine::completedInit(int val) {
@@ -177,6 +213,14 @@ void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
 }
 
 void EmberEngine::handleEvent(Event* ev) {
+	// Accumulate the time processing the last event into a counter
+	// we track these by event type
+	const uint64_t sim_time_now = (uint64_t) getCurrentSimTimeNano();
+	*accumulateTime += ( sim_time_now - nextEventStartTimeNanoSec );
+	nextEventStartTimeNanoSec = sim_time_now;
+
+	// Cast out the event we are processing and then hand off to whatever
+	// handlers we have created
 	EmberEvent* eEv = static_cast<EmberEvent*>(ev);
 
 	// Process the next event
@@ -192,6 +236,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case INIT:
 		processInitEvent(dynamic_cast<EmberInitEvent*>(eEv));
+		break;
+	case COMPUTE:
+		processComputeEvent(dynamic_cast<EmberComputeEvent*>(eEv));
 		break;
 	default:
 

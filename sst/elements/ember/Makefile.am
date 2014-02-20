@@ -10,11 +10,13 @@ libember_la_SOURCES = \
 	emberengine.h  \
 	emberfinalizeev.cc  \
 	embergen.h     \
+	embergen.cc	\
 	emberinitev.cc  \
 	emberrecvev.cc  \
 	embersendev.cc \
 	emberengine.cc  \
 	emberevent.h \
+	emberevent.cc \
 	emberfinalizeev.h \
 	emberinitev.h  \
 	emberrecvev.h \

@@ -9,6 +9,8 @@
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
+#include "motifs/emberpingpong.h"
+
 using namespace SST;
 using namespace SST::Ember;
 
@@ -17,6 +19,11 @@ create_EmberComponent(SST::ComponentId_t id,
                   SST::Params& params)
 {
     return new EmberEngine( id, params );
+}
+
+static Module*
+load_PingPong( Component* comp, Params& params ) {
+	return new EmberPingPongGenerator(comp, params);
 }
 
 static const ElementInfoParam component_params[] = {
@@ -28,9 +35,20 @@ static const ElementInfoParam component_params[] = {
     { NULL, NULL}
 };
 
+static const ElementInfoModule modules[] = {
+    { 	"EmberPingPongGenerator",
+	"Performs a Ping-Pong Motif",
+	NULL,
+	NULL,
+	load_PingPong,
+	NULL
+    },
+    {   NULL, NULL, NULL, NULL, NULL, NULL  }
+};
+
 static const ElementInfoComponent components[] = {
-    { "EmberComponent",
-      "Random number generation component",
+    { "EmberEngine",
+      "Base communicator motif engine.",
       NULL,
       create_EmberComponent,
       component_params
@@ -39,9 +57,14 @@ static const ElementInfoComponent components[] = {
 };
 
 extern "C" {
-    ElementLibraryInfo EmberComponent_eli = {
+    ElementLibraryInfo ember_eli = {
         "Ember",
         "Message Pattern Generation Library",
         components,
+	NULL, 		// Events
+	NULL,		// Introspector
+	modules,
+	NULL,
+	NULL
     };
 }

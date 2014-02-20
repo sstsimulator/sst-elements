@@ -65,6 +65,7 @@ private:
 	char* emptyBuffer;
 	uint32_t emptyBufferSize;
 	uint32_t generationPhase;
+	bool printStats;
 
 	std::queue<EmberEvent*> evQueue;
 	EmberGenerator* generator;
@@ -80,6 +81,14 @@ private:
 	HermesAPIFunctor initFunctor;
 	HermesAPIFunctor recvFunctor;
 	HermesAPIFunctor sendFunctor;
+
+	uint64_t* accumulateTime;
+	uint64_t nextEventStartTimeNanoSec;
+	uint64_t nanoInit;
+	uint64_t nanoFinalize;
+	uint64_t nanoSend;
+	uint64_t nanoRecv;
+	uint64_t nanoCompute;
 
 	EmberEngine();			    // For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

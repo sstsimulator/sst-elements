@@ -21,8 +21,8 @@ namespace Ember {
 class EmberGenerator : public Module {
 
 public:
-	EmberGenerator();
-	virtual void configureEnvironment(uint32_t rank, uint32_t worldSize);
+	EmberGenerator( Component* owner, Params& params );
+	virtual void configureEnvironment(uint32_t rank, uint32_t worldSize) = 0;
 	virtual void generate(const SST::Output* output, const uint32_t phase,
 		std::queue<EmberEvent*>* evQ) = 0;
 

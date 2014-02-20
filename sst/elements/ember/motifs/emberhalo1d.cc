@@ -8,7 +8,9 @@
 
 using namespace SST::Ember;
 
-EmberHalo1DGenerator::EmberHalo1DGenerator(SST::Component* owner, Params& params) {
+EmberHalo1DGenerator::EmberHalo1DGenerator(SST::Component* owner, Params& params) :
+	EmberGenerator(owner, params) {
+
 	iterations = (uint32_t) params.find_integer("generator.iterations", 10);
 	nsCompute = (uint32_t) params.find_integer("generator.computenano", 1000);
 	messageSize = (uint32_t) params.find_integer("generator.messagesize", 128);
