@@ -11,6 +11,7 @@
 #include <sst/core/output.h>
 #include <sst/core/element.h>
 #include <sst/core/params.h>
+#include <sst/core/stats/histo/histo.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +59,7 @@ public:
 	void completedRecv(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
+	void printHistoBin(uint64_t binStart, uint64_t width, HistoBin<uint64_t>* bin);
 
 private:
 	int thisRank;
@@ -82,13 +84,20 @@ private:
 	HermesAPIFunctor recvFunctor;
 	HermesAPIFunctor sendFunctor;
 
-	uint64_t* accumulateTime;
+	Histogram<uint64_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
-	uint64_t nanoInit;
-	uint64_t nanoFinalize;
-	uint64_t nanoSend;
-	uint64_t nanoRecv;
-	uint64_t nanoCompute;
+
+	//uint64_t nanoInit;
+	//uint64_t nanoFinalize;
+	//uint64_t nanoSend;
+	//uint64_t nanoRecv;
+	//uint64_t nanoCompute;
+
+	Histogram<uint64_t> histoInit;
+	Histogram<uint64_t> histoFinalize;
+	Histogram<uint64_t> histoRecv;
+	Histogram<uint64_t> histoSend;
+	Histogram<uint64_t> histoCompute;
 
 	EmberEngine();			    // For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

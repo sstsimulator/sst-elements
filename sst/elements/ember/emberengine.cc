@@ -86,12 +86,25 @@ void EmberEngine::init(unsigned int phase) {
 void EmberEngine::finish() {
 	if(printStats) {
 		output.output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
-		output.output("- Time spent in compute:         %" PRIu64 " ns\n", nanoCompute);
+/*		output.output("- Time spent in compute:         %" PRIu64 " ns\n", nanoCompute);
 		output.output("- Time spent in init:            %" PRIu64 " ns\n", nanoInit);
 		output.output("- Time spent in finalize:        %" PRIu64 " ns\n", nanoFinalize);
 		output.output("- Time spent in send:            %" PRIu64 " ns\n", nanoSend);
 		output.output("- Time spent in recv:            %" PRIu64 " ns\n", nanoRecv);
+*/
+		std::map<uint64_t, HistoBin<uint64_t> >* histo_map = nanoCompute.getMap();
+		std::map<uint64_t, HistoBin<uint64_t> >::iterator binItr = histo_map->begin();
+		output.output("- Histogram of compute times:\n");
+
+		for(binItr = histo_map->begin(); binItr != histo_map->end(); binItr++) {
+			printHistoBin(binItr->first, nanoCompute->getBinWidth(), binItr->second);
+		}
 	}
+}
+
+void EmberEngine::printHistoBin(uint64_t binStart, uint64_t width, HistoBin<uint64_t>* bin) {
+	output->output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
+		binStart, binStart + width, bin->getCount());
 }
 
 void EmberEngine::setup() {
@@ -216,7 +229,7 @@ void EmberEngine::handleEvent(Event* ev) {
 	// Accumulate the time processing the last event into a counter
 	// we track these by event type
 	const uint64_t sim_time_now = (uint64_t) getCurrentSimTimeNano();
-	*accumulateTime += ( sim_time_now - nextEventStartTimeNanoSec );
+	accumulateTime->add( sim_time_now - nextEventStartTimeNanoSec );
 	nextEventStartTimeNanoSec = sim_time_now;
 
 	// Cast out the event we are processing and then hand off to whatever
