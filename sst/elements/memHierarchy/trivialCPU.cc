@@ -105,10 +105,10 @@ void trivialCPU::handleEvent(Event *ev)
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-//			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
-//					getName().c_str(),
-//					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
-//                    requests.size());
+			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
+					getName().c_str(),
+					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
+                    requests.size());
 			num_reads_returned++;
 		}
 
@@ -137,8 +137,8 @@ bool trivialCPU::clockTic( Cycle_t )
 	// communicate?
 	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
 		if ( requests.size() > 10 ) {
-//			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
-//					getName().c_str());
+			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
+					getName().c_str());
 		} else {
 
 			// yes, communicate
@@ -163,8 +163,8 @@ bool trivialCPU::clockTic( Cycle_t )
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-//			out.output("%s: %d Issued %s%s (%"PRIu64") for address 0x%"PRIx64"\n",
-//					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
+			out.output("%s: %d Issued %s%s (%"PRIu64") for address 0x%"PRIx64"\n",
+					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
 			num_reads_issued++;
 
             numLS--;
