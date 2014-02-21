@@ -23,6 +23,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
+#include <sst/core/stats/histo/histo.h>
 
 #include <sst/core/rng/marsaglia.h>
 #include <sst/core/interfaces/memEvent.h>
@@ -39,8 +40,15 @@ public:
 	void finish() {
 		out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
 				getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
-        if ( uncachedReads || uncachedWrites )
-            out.output("\t%zu Uncached Reads\n\t%zu Uncached Writes\n", uncachedReads, uncachedWrites);
+        	if ( uncachedReads || uncachedWrites )
+            		out.output("\t%zu Uncached Reads\n\t%zu Uncached Writes\n", uncachedReads, uncachedWrites);
+
+		out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
+		for(uint32_t i = 0; i < requestsPendingCycle->getBinCount(); ++i) {
+			out.output("- %" PRIu64 " Cycles: %" PRIu64 "\n", requestsPendingCycle->getBinStart() +
+				i * requestsPendingCycle->getBinWidth(),
+				requestsPendingCycle->getBinByIndex(i));
+		}
 	}
 
 private:
@@ -59,9 +67,10 @@ private:
 	bool do_write;
 	uint32_t maxAddr;
 	uint64_t num_reads_issued, num_reads_returned;
-    uint64_t uncachedRangeStart, uncachedRangeEnd;
-    uint64_t clock_ticks;
-    size_t uncachedReads, uncachedWrites;
+        uint64_t uncachedRangeStart, uncachedRangeEnd;
+        uint64_t clock_ticks;
+        size_t uncachedReads, uncachedWrites;
+        Histogram<uint64_t>* requestsPendingCycle;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
 

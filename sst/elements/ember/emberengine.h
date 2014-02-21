@@ -59,7 +59,7 @@ public:
 	void completedRecv(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
-	void printHistoBin(uint64_t binStart, uint64_t width, HistoBin<uint64_t>* bin);
+	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
 
 private:
 	int thisRank;

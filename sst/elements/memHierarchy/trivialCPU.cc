@@ -29,6 +29,8 @@ using namespace SST::Interfaces;
 trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
+    requestsPendingCycle = new Histogram<uint64_t>(2);
+
     out.init("", 0, 0, Output::STDOUT);
 
 	// get parameters
@@ -103,10 +105,10 @@ void trivialCPU::handleEvent(Event *ev)
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
-					getName().c_str(),
-					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
-                    requests.size());
+//			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
+//					getName().c_str(),
+//					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
+//                    requests.size());
 			num_reads_returned++;
 		}
 
@@ -129,11 +131,14 @@ bool trivialCPU::clockTic( Cycle_t )
 		v++;
 	}
 
+	// Histogram bin the requests pending per cycle
+        requestsPendingCycle->add((uint64_t) requests.size());
+
 	// communicate?
 	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
 		if ( requests.size() > 10 ) {
-			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
-					getName().c_str());
+//			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
+//					getName().c_str());
 		} else {
 
 			// yes, communicate
@@ -158,8 +163,8 @@ bool trivialCPU::clockTic( Cycle_t )
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			out.output("%s: %d Issued %s%s (%"PRIu64") for address 0x%"PRIx64"\n",
-					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
+//			out.output("%s: %d Issued %s%s (%"PRIu64") for address 0x%"PRIx64"\n",
+//					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
 			num_reads_issued++;
 
             numLS--;

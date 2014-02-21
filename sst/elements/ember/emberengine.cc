@@ -101,7 +101,7 @@ void EmberEngine::finish() {
 
 		output.output("- Histogram of compute times:\n");
 		for(uint32_t i = 0; i < histoCompute->getBinCount(); ++i) {
-			printHistoBin(histoCompute->getBinByIndex(i)->getBaseValue(),
+			printHistoBin(histoCompute->getBinStart() + i * histoCompute->getBinWidth(),
 				histoCompute->getBinWidth(),
 				histoCompute->getBinByIndex(i));
 		}
@@ -109,9 +109,9 @@ void EmberEngine::finish() {
 	}
 }
 
-void EmberEngine::printHistoBin(uint64_t binStart, uint64_t width, HistoBin<uint64_t>* bin) {
+void EmberEngine::printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin) {
 	output.output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
-		binStart, binStart + width, bin->getCount());
+		binStart, binStart + width, *bin);
 }
 
 void EmberEngine::setup() {
