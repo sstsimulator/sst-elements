@@ -47,7 +47,7 @@ public:
 		for(uint32_t i = 0; i < requestsPendingCycle->getBinCount(); ++i) {
 			out.output("- %" PRIu64 " Cycles: %" PRIu64 "\n", requestsPendingCycle->getBinStart() +
 				i * requestsPendingCycle->getBinWidth(),
-				requestsPendingCycle->getBinByIndex(i));
+				*(requestsPendingCycle->getBinByIndex(i)));
 		}
 	}
 
