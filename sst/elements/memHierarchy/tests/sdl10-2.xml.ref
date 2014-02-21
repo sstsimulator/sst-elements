@@ -58967,10 +58967,66 @@ Cache c7.l1cache stats:
 	Max Response Time:      119840 ns
 	Response Time StdDev:   4293.67
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (609108 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 2295
+- 2 Cycles: 12780
+- 4 Cycles: 1560
+- 6 Cycles: 10020
+- 8 Cycles: 35335
+- 10 Cycles: 546687
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (651068 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 6560
+- 2 Cycles: 5060
+- 4 Cycles: 2371
+- 6 Cycles: 4298
+- 8 Cycles: 34463
+- 10 Cycles: 597640
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (660388 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 309
+- 2 Cycles: 13160
+- 4 Cycles: 4140
+- 6 Cycles: 2696
+- 8 Cycles: 31671
+- 10 Cycles: 607920
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (640848 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 660
+- 2 Cycles: 7220
+- 4 Cycles: 7000
+- 6 Cycles: 3072
+- 8 Cycles: 33611
+- 10 Cycles: 588228
 TrivialCPU cpu4 Finished after 1000 issued reads, 1000 returned (667788 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 123
+- 2 Cycles: 5440
+- 4 Cycles: 660
+- 6 Cycles: 2779
+- 8 Cycles: 30773
+- 10 Cycles: 627338
 TrivialCPU cpu5 Finished after 1000 issued reads, 1000 returned (654288 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 186
+- 2 Cycles: 1880
+- 4 Cycles: 800
+- 6 Cycles: 2604
+- 8 Cycles: 31582
+- 10 Cycles: 616503
 TrivialCPU cpu6 Finished after 1000 issued reads, 1000 returned (669108 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 239
+- 2 Cycles: 180
+- 4 Cycles: 100
+- 6 Cycles: 1811
+- 8 Cycles: 33772
+- 10 Cycles: 632542
 TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (677691 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 5364
+- 2 Cycles: 2321
+- 4 Cycles: 443
+- 6 Cycles: 2516
+- 8 Cycles: 29206
+- 10 Cycles: 637030

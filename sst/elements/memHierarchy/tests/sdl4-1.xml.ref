@@ -4049,7 +4049,21 @@ Cache c1.l1cache stats:
 	Max Response Time:      2615 ns
 	Response Time StdDev:   1135.4
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (105977 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 88857
+- 2 Cycles: 4970
+- 4 Cycles: 3698
+- 6 Cycles: 2333
+- 8 Cycles: 3534
+- 10 Cycles: 2154
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (98529 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 82220
+- 2 Cycles: 5146
+- 4 Cycles: 1904
+- 6 Cycles: 2324
+- 8 Cycles: 3346
+- 10 Cycles: 3097
 Cache l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

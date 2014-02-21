@@ -39232,6 +39232,13 @@ n0c1: Received MemEvent with command 3 (response to 75277, addr 0xe69c) [Time: 5
 TrivialCPU n0c0 Finished after 1000 issued reads, 1000 returned (401243 clocks)
 	1 Uncached Reads
 	0 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 955
+- 2 Cycles: 1520
+- 4 Cycles: 1690
+- 6 Cycles: 1936
+- 8 Cycles: 25900
+- 10 Cycles: 368811
 Cache n0c0.l1 stats:
 	# Read    Hits:      43
 	# Read    Misses:    854
@@ -39257,6 +39264,13 @@ Cache n0c01l2 stats:
 TrivialCPU n0c1 Finished after 1000 issued reads, 1000 returned (401559 clocks)
 	3 Uncached Reads
 	0 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 650
+- 2 Cycles: 1075
+- 4 Cycles: 1020
+- 6 Cycles: 1832
+- 8 Cycles: 18556
+- 10 Cycles: 377934
 Cache n0c1.l1 stats:
 	# Read    Hits:      42
 	# Read    Misses:    846
@@ -39273,6 +39287,13 @@ Cache n0c1.l1 stats:
 TrivialCPU n0c2 Finished after 1000 issued reads, 1000 returned (392533 clocks)
 	6 Uncached Reads
 	0 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 4836
+- 2 Cycles: 3675
+- 4 Cycles: 420
+- 6 Cycles: 2298
+- 8 Cycles: 25039
+- 10 Cycles: 355532
 Cache n0c2.l1 stats:
 	# Read    Hits:      44
 	# Read    Misses:    855
@@ -39298,6 +39319,13 @@ Cache n0c23l2 stats:
 TrivialCPU n0c3 Finished after 1000 issued reads, 1000 returned (401409 clocks)
 	4 Uncached Reads
 	0 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 1309
+- 2 Cycles: 100
+- 4 Cycles: 170
+- 6 Cycles: 1063
+- 8 Cycles: 20909
+- 10 Cycles: 377047
 Cache n0c3.l1 stats:
 	# Read    Hits:      55
 	# Read    Misses:    842
@@ -39323,6 +39351,13 @@ Cache n0l3 stats:
 TrivialCPU n1c0 Finished after 1000 issued reads, 1000 returned (395971 clocks)
 	5 Uncached Reads
 	0 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 291
+- 2 Cycles: 2775
+- 4 Cycles: 1235
+- 6 Cycles: 1066
+- 8 Cycles: 19824
+- 10 Cycles: 370131
 Cache n1c0.l1 stats:
 	# Read    Hits:      61
 	# Read    Misses:    822
@@ -39348,6 +39383,13 @@ Cache n1c01l2 stats:
 TrivialCPU n1c1 Finished after 1000 issued reads, 1000 returned (400903 clocks)
 	3 Uncached Reads
 	1 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 143
+- 2 Cycles: 1274
+- 4 Cycles: 725
+- 6 Cycles: 762
+- 8 Cycles: 22104
+- 10 Cycles: 374420
 Cache n1c1.l1 stats:
 	# Read    Hits:      52
 	# Read    Misses:    832
@@ -39364,6 +39406,13 @@ Cache n1c1.l1 stats:
 TrivialCPU n1c2 Finished after 1000 issued reads, 1000 returned (401524 clocks)
 	2 Uncached Reads
 	1 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 3251
+- 2 Cycles: 1415
+- 4 Cycles: 120
+- 6 Cycles: 625
+- 8 Cycles: 26440
+- 10 Cycles: 369465
 Cache n1c2.l1 stats:
 	# Read    Hits:      45
 	# Read    Misses:    842
@@ -39389,6 +39438,13 @@ Cache n1c23l2 stats:
 TrivialCPU n1c3 Finished after 1000 issued reads, 1000 returned (392906 clocks)
 	5 Uncached Reads
 	1 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 530
+- 2 Cycles: 815
+- 4 Cycles: 570
+- 6 Cycles: 1733
+- 8 Cycles: 25304
+- 10 Cycles: 363269
 Cache n1c3.l1 stats:
 	# Read    Hits:      58
 	# Read    Misses:    845

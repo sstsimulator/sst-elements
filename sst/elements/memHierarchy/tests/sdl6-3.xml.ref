@@ -22370,6 +22370,13 @@ cpu: Received MemEvent with command 1 (response to 119758, addr 0x7e7b8) [Time: 
 cpu: Received MemEvent with command 1 (response to 119775, addr 0xcd830) [Time: 1147] [1 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 119781, addr 0xbb558) [Time: 1149] [0 outstanding requests]
 TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1263734 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 734
+- 2 Cycles: 11037
+- 4 Cycles: 82954
+- 6 Cycles: 248882
+- 8 Cycles: 436107
+- 10 Cycles: 483589
 Cache l1cache stats:
 	# Read    Hits:      22
 	# Read    Misses:    8958

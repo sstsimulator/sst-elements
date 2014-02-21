@@ -2007,6 +2007,13 @@ cpu: Received MemEvent with command 1 (response to 3285, addr 0x95c) [Time: 1051
 TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (107028 clocks)
 	57 Uncached Reads
 	6 Uncached Writes
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 4670
+- 2 Cycles: 20420
+- 4 Cycles: 34382
+- 6 Cycles: 24585
+- 8 Cycles: 17068
+- 10 Cycles: 5472
 Cache l1cache stats:
 	# Read    Hits:      396
 	# Read    Misses:    432

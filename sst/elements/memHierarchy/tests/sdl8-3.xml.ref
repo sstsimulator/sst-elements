@@ -39395,6 +39395,13 @@ n0c3: Received MemEvent with command 1 (response to 75899, addr 0x3230) [Time: 1
 n0c3: Received MemEvent with command 1 (response to 75946, addr 0x62f4) [Time: 1998] [1 outstanding requests]
 n0c3: Received MemEvent with command 1 (response to 75977, addr 0x3510) [Time: 1778] [0 outstanding requests]
 TrivialCPU n0c0 Finished after 1000 issued reads, 1000 returned (404743 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 2175
+- 2 Cycles: 690
+- 4 Cycles: 320
+- 6 Cycles: 1301
+- 8 Cycles: 23534
+- 10 Cycles: 376292
 Cache n0c0.l1 stats:
 	# Read    Hits:      53
 	# Read    Misses:    827
@@ -39418,6 +39425,13 @@ Cache n0c01l2 stats:
 	# Upgrade Misses:    0
 	# Invalidations:     339
 TrivialCPU n0c1 Finished after 1000 issued reads, 1000 returned (404448 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 2729
+- 2 Cycles: 665
+- 4 Cycles: 650
+- 6 Cycles: 1569
+- 8 Cycles: 23999
+- 10 Cycles: 374344
 Cache n0c1.l1 stats:
 	# Read    Hits:      45
 	# Read    Misses:    848
@@ -39432,6 +39446,13 @@ Cache n0c1.l1 stats:
 	Max Response Time:      16633 ns
 	Response Time StdDev:   1290.64
 TrivialCPU n0c2 Finished after 1000 issued reads, 1000 returned (394458 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 8606
+- 2 Cycles: 555
+- 4 Cycles: 640
+- 6 Cycles: 774
+- 8 Cycles: 19727
+- 10 Cycles: 363423
 Cache n0c2.l1 stats:
 	# Read    Hits:      49
 	# Read    Misses:    857
@@ -39455,6 +39476,13 @@ Cache n0c23l2 stats:
 	# Upgrade Misses:    0
 	# Invalidations:     329
 TrivialCPU n0c3 Finished after 1000 issued reads, 1000 returned (406351 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 268
+- 2 Cycles: 395
+- 4 Cycles: 371
+- 6 Cycles: 333
+- 8 Cycles: 19856
+- 10 Cycles: 384317
 Cache n0c3.l1 stats:
 	# Read    Hits:      42
 	# Read    Misses:    847
@@ -39478,6 +39506,13 @@ Cache n0l3 stats:
 	# Upgrade Misses:    0
 	# Invalidations:     289
 TrivialCPU n1c0 Finished after 1000 issued reads, 1000 returned (391916 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 3046
+- 2 Cycles: 1835
+- 4 Cycles: 350
+- 6 Cycles: 1267
+- 8 Cycles: 20622
+- 10 Cycles: 364147
 Cache n1c0.l1 stats:
 	# Read    Hits:      59
 	# Read    Misses:    841
@@ -39501,6 +39536,13 @@ Cache n1c01l2 stats:
 	# Upgrade Misses:    0
 	# Invalidations:     318
 TrivialCPU n1c1 Finished after 1000 issued reads, 1000 returned (399026 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 93
+- 2 Cycles: 2080
+- 4 Cycles: 4145
+- 6 Cycles: 413
+- 8 Cycles: 24340
+- 10 Cycles: 366480
 Cache n1c1.l1 stats:
 	# Read    Hits:      48
 	# Read    Misses:    854
@@ -39515,6 +39557,13 @@ Cache n1c1.l1 stats:
 	Max Response Time:      14369 ns
 	Response Time StdDev:   1203.13
 TrivialCPU n1c2 Finished after 1000 issued reads, 1000 returned (404189 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 854
+- 2 Cycles: 1101
+- 4 Cycles: 436
+- 6 Cycles: 1022
+- 8 Cycles: 20681
+- 10 Cycles: 379887
 Cache n1c2.l1 stats:
 	# Read    Hits:      50
 	# Read    Misses:    823
@@ -39538,6 +39587,13 @@ Cache n1c23l2 stats:
 	# Upgrade Misses:    0
 	# Invalidations:     358
 TrivialCPU n1c3 Finished after 1000 issued reads, 1000 returned (403298 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 800
+- 2 Cycles: 1397
+- 4 Cycles: 1325
+- 6 Cycles: 1402
+- 8 Cycles: 25358
+- 10 Cycles: 372331
 Cache n1c3.l1 stats:
 	# Read    Hits:      41
 	# Read    Misses:    851

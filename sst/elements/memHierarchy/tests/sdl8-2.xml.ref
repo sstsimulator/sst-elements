@@ -44692,4 +44692,18 @@ Cache c1.l2cache stats:
 	# Upgrade Misses:    0
 	# Invalidations:     489
 TrivialCPU cpu0 Finished after 10000 issued reads, 10000 returned (1259686 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 909
+- 2 Cycles: 10393
+- 4 Cycles: 91653
+- 6 Cycles: 251565
+- 8 Cycles: 420530
+- 10 Cycles: 484205
 TrivialCPU cpu1 Finished after 10000 issued reads, 10000 returned (1243443 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 1594
+- 2 Cycles: 13632
+- 4 Cycles: 89460
+- 6 Cycles: 243700
+- 8 Cycles: 414724
+- 10 Cycles: 478427
