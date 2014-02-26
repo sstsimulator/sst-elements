@@ -61,11 +61,7 @@ public:
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
 
-private:
-    EmberEngine(); 							// For serialization only. Do not implement.
-    EmberEngine(const EmberEngine&); 		// Do not implement
-    void operator=(const EmberEngine&); 	// Do not implement
-  
+private:  
 	int thisRank;
 	uint32_t eventCount;
 	char* emptyBuffer;
@@ -103,7 +99,7 @@ private:
 	Histogram<uint64_t>* histoSend;
 	Histogram<uint64_t>* histoCompute;
 
-	EmberEngine();			    // For serialization
+	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement
 	void operator=(const EmberEngine&); // Do not implement
 

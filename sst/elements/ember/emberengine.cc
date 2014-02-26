@@ -270,4 +270,10 @@ void EmberEngine::handleEvent(Event* ev) {
 
 }
 
+EmberEngine::EmberEngine() :
+    Component(-1)
+{
+    // for serialization only
+}
+
 BOOST_CLASS_EXPORT(EmberEngine)
