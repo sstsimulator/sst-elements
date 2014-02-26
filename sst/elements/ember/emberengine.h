@@ -94,6 +94,7 @@ private:
 	//uint64_t nanoRecv;
 	//uint64_t nanoCompute;
 
+	Histogram<uint64_t>* histoStart;
 	Histogram<uint64_t>* histoInit;
 	Histogram<uint64_t>* histoFinalize;
 	Histogram<uint64_t>* histoRecv;

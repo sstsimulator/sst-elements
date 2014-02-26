@@ -78,6 +78,10 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	histoRecv = new Histogram<uint64_t>(5);
 	histoInit = new Histogram<uint64_t>(5);
 	histoFinalize = new Histogram<uint64_t>(5);
+	histoStart = new Histogram<uint64_t>(5);
+
+	// Set the accumulation to be the start
+	accumulateTime = histoStart;
 }
 
 EmberEngine::~EmberEngine() {
