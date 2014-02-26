@@ -242,6 +242,7 @@ void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
 	} else {
 		EmberEvent* nextEv = evQueue.front();
 		evQueue.pop();
+		eventCount--;
 
 		// issue the next event to the engine for deliver later
 		selfEventLink->send(nanoDelay, nanoTimeConverter, nextEv);
