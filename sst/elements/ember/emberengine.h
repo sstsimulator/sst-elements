@@ -62,6 +62,10 @@ public:
 	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
 
 private:
+    EmberEngine(); 							// For serialization only. Do not implement.
+    EmberEngine(const EmberEngine&); 		// Do not implement
+    void operator=(const EmberEngine&); 	// Do not implement
+  
 	int thisRank;
 	uint32_t eventCount;
 	char* emptyBuffer;
