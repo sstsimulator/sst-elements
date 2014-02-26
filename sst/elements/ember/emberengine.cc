@@ -9,6 +9,7 @@ using namespace SST::Statistics;
 using namespace SST::Ember;
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
+    Component( id ),
 	finalizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedFinalize)),
 	initFunctor(HermesAPIFunctor(this, &EmberEngine::completedInit)),
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
@@ -59,10 +60,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Configure self link to handle event timing
 	selfEventLink = configureSelfLink("self", "1ps",
 		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
-
-	// Send an start event to this rank, this starts up the component
-	EmberStartEvent* startEv = new EmberStartEvent();
-	selfEventLink->send(startEv);
 
 	// Add the init event to the queue since all ranks must eventually
 	// initialize themselves
@@ -137,6 +134,10 @@ void EmberEngine::setup() {
 
 	// Update event count to ensure we are not correctly sync'd
 	eventCount = (uint32_t) evQueue.size();
+
+	// Send an start event to this rank, this starts up the component
+	EmberStartEvent* startEv = new EmberStartEvent();
+	selfEventLink->send(startEv);
 }
 
 void EmberEngine::processInitEvent(EmberInitEvent* ev) {
