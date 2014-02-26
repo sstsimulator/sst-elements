@@ -107,20 +107,14 @@ void API::read( nid_t nid, region_t region, void* buf, size_t len,
     m_xxx->read( nid, region, buf, len, functor );
 }
 
-
-RegionEventQ* API::createEventQueue()
+void API::registerRegion( region_t region, nid_t nid, void* buf, size_t len, FunctorBase_0<bool>* functor )
 {
-    return m_xxx->createEventQueue();
+    m_xxx->registerRegion( region, nid, buf, len, functor ); 
 }
 
-void API::registerRegion( region_t region, nid_t nid, void* buf, size_t len, RegionEventQ* q )
+void API::unregisterRegion( region_t region, FunctorBase_0<bool>* functor )
 {
-    m_xxx->registerRegion( region, nid, buf, len, q ); 
-}
-
-void API::unregisterRegion( region_t region )
-{
-    m_xxx->unregisterRegion( region );
+    m_xxx->unregisterRegion( region, functor );
 }
 
 void API::setUsrPtr( CommReq* req, void* ptr )

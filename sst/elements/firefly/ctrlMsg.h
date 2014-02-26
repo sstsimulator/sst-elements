@@ -46,8 +46,6 @@ typedef int region_t;
 
 typedef int RegionEvent;
 
-typedef std::deque<RegionEvent> RegionEventQ;
-
 class API : public ProtocolAPI {
 
   public:
@@ -84,9 +82,8 @@ class API : public ProtocolAPI {
                                     FunctorBase_0<bool>* = NULL );
     size_t shortMsgLength();
 
-    RegionEventQ* createEventQueue( );
-    void registerRegion( region_t, nid_t, void* buf, size_t len, RegionEventQ* );
-    void unregisterRegion( region_t );
+    void registerRegion( region_t, nid_t, void* buf, size_t len, FunctorBase_0<bool>* = NULL );
+    void unregisterRegion( region_t, FunctorBase_0<bool>* = NULL );
 
   private:
     XXX*    m_xxx;

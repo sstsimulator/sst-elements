@@ -67,7 +67,6 @@ void LongMsgProtocol::setup()
     m_my_dbg.setPrefix(buffer);
 
     API::setup();
-    m_regionEventQ = createEventQueue();
 }
 
 void LongMsgProtocol::setRetLink(SST::Link* link)
@@ -310,9 +309,6 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 
     cbe->sendEntry = entry;
 
-    SCBE_Functor* callback =
-        new SCBE_Functor( this, &LongMsgProtocol::postSendEntry_CB, cbe ); 
-
     cbe->hdr.count = entry->count;
     cbe->hdr.dtype = entry->dtype;
     cbe->hdr.tag = entry->tag; 
@@ -323,38 +319,65 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 
     Nic::NodeId destNode =
             info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
-    int   tag;
+
     if ( len <= shortMsgLength() - sizeof(MsgHdr)) {
-        cbe->vec.resize(2);
-        cbe->vec[1].len = len; 
-        cbe->vec[1].ptr = entry->buf;
-        tag = ShortMsgTag;
+
+        std::vector<IoVec>  vec;
+        int   tag = ShortMsgTag;
+
+        vec.resize(2);
+        vec[0].ptr = &cbe->hdr;
+        vec[0].len = sizeof(cbe->hdr);
+        vec[1].len = len; 
+        vec[1].ptr = entry->buf;
+
+        SCBE_Functor* callback =
+        new SCBE_Functor( this, &LongMsgProtocol::postSendEntry_CB, cbe ); 
+
+        sendv( vec, destNode, tag, callback );
+
     } else {
-        cbe->vec.resize(1);
+
         cbe->region = genLongRegion();
-        tag = LongMsgTag | cbe->region;
-        registerRegion( cbe->region, destNode, entry->buf, len, 
-                                                        m_regionEventQ );
+        m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
+
         m_regionM[cbe->region] = cbe;
 
-        m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
+        SCBE_Functor* callback =
+        new SCBE_Functor( this, &LongMsgProtocol::postSendEntryReg_CB, cbe ); 
+
+        registerRegion( cbe->region, destNode, entry->buf, len, callback );
     }
-
-
-    cbe->vec[0].ptr = &cbe->hdr;
-    cbe->vec[0].len = sizeof(cbe->hdr);
-
-    sendv( cbe->vec, destNode, tag, callback );
 }
 
 //
 // postSendEntry_CB
 //
+bool LongMsgProtocol::postSendEntryReg_CB( SendCallbackEntry* cbe )
+{
+    Nic::NodeId destNode =
+            info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
+
+    std::vector<IoVec>  vec;
+    int tag = LongMsgTag | cbe->region;
+
+    m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
+
+    SCBE_Functor* callback =
+    new SCBE_Functor( this, &LongMsgProtocol::postSendEntry_CB, cbe ); 
+    vec.resize(1);
+    vec[0].ptr = &cbe->hdr;
+    vec[0].len = sizeof(cbe->hdr);
+
+    sendv( vec, destNode, tag, callback );
+    return true;
+}
 
 bool LongMsgProtocol::postSendEntry_CB( SendCallbackEntry* scbe )
 {
     // long message
-    if ( scbe->hdr.count && scbe->vec.size() == 1 ) {
+    size_t len = scbe->sendEntry->count * info()->sizeofDataType( scbe->sendEntry->dtype );
+    if ( len > shortMsgLength() - sizeof(MsgHdr)) {
 
         m_my_dbg.verbose(CALL_INFO,1,0,"long\n");
 
@@ -380,27 +403,6 @@ bool LongMsgProtocol::postSendEntry_CB( SendCallbackEntry* scbe )
     return true; 
 }
 
-bool LongMsgProtocol::processRegionEvents()
-{
-    if( ! m_regionEventQ->empty() ) {
-        CtrlMsg::region_t region = m_regionEventQ->front();
-        m_regionEventQ->pop_front();
-
-        m_my_dbg.verbose(CALL_INFO,1,0,"region %#x \n", region );
-        SendCallbackEntry* scbe = m_regionM[region];
-        finishSendCBE( *scbe->sendEntry );
-
-        unregisterRegion( region );
-        m_regionM.erase( region );
-
-        schedDelay( 0, new SCBE_Functor( 
-              this, &LongMsgProtocol::processSendEntryFini_CB, scbe ) ); 
-
-        return true;
-    }
-    return false;
-}
-
 bool LongMsgProtocol::processSendEntryFini_CB( SendCallbackEntry* cbe )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"\n");
@@ -416,27 +418,23 @@ void LongMsgProtocol::postRecvAny(  )
 
     m_my_dbg.verbose(CALL_INFO,1,0,"\n");
 
-    if ( processRegionEvents() ) {
-        return;
-    }
-
     rcbe->recvEntry = NULL;
 
     RCBE_Functor* callback =
         new RCBE_Functor( this, &LongMsgProtocol::postRecvAny_irecv_CB, rcbe );
 
-    rcbe->vec.resize(2);
+    std::vector<IoVec>  vec;
+    vec.resize(2);
 
+    vec[0].ptr = &rcbe->hdr;
+    vec[0].len = sizeof(rcbe->hdr);
 
-    rcbe->vec[0].ptr = &rcbe->hdr;
-    rcbe->vec[0].len = sizeof(rcbe->hdr);
+    rcbe->buf.resize( shortMsgLength() - vec[0].len );
 
-    rcbe->buf.resize( shortMsgLength() - rcbe->vec[0].len );
+    vec[1].len = rcbe->buf.size();
+    vec[1].ptr = &rcbe->buf[0];
 
-    rcbe->vec[1].len = rcbe->buf.size();
-    rcbe->vec[1].ptr = &rcbe->buf[0];
-
-    irecvv( rcbe->vec, CtrlMsg::AnyNid, CtrlMsg::AnyTag, &rcbe->commReq,
+    irecvv( vec, CtrlMsg::AnyNid, CtrlMsg::AnyTag, &rcbe->commReq,
                             callback );
 
     setUsrPtr( &rcbe->commReq, rcbe );
@@ -458,17 +456,23 @@ bool LongMsgProtocol::waitAny_CB( CtrlMsg::CommReq* req )
 {
     int numMatch = 0;
 
-    if ( ! req ) {
-        if ( processRegionEvents() ) {
-            processRegionEvents();
-            return true;
-        } else {
-            assert(0);
-        }
-    }
-
     RecvCallbackEntry *cbe = static_cast<RecvCallbackEntry*>( getUsrPtr(req) );
     assert( cbe );
+
+    CtrlMsg::Status status;
+    getStatus( &cbe->commReq, &status );
+
+    if ( ( status.tag & TagMask ) == LongMsgAckTag)  {
+
+        CtrlMsg::region_t region = cbe->region = status.tag & ~TagMask;
+        SendCallbackEntry* scbe = m_regionM[region];
+        finishSendCBE( *scbe->sendEntry );
+
+        m_regionM.erase( region );
+
+        processSendEntryFini_CB( scbe );
+        return true;
+    }
 
     m_my_dbg.verbose(CALL_INFO,1,0,"\n");
 
@@ -545,27 +549,47 @@ void LongMsgProtocol::processLongMsg( RecvCallbackEntry* cbe )
     CtrlMsg::Status status;
     getStatus( &cbe->commReq, &status );
 
-    CtrlMsg::region_t region = status.tag & ~TagMask;
-    CtrlMsg::nid_t nid = status.nid; 
+    cbe->region = status.tag & ~TagMask;
+    cbe->nid = status.nid; 
     size_t length = cbe->recvEntry->count *
                 info()->sizeofDataType( cbe->recvEntry->dtype );
 
     RCBE_Functor* callback = new RCBE_Functor( 
               this, &LongMsgProtocol::processLongMsg_CB, cbe ); 
 
-    m_my_dbg.verbose(CALL_INFO,1,0,"src=%d region=%#x\n", nid, region );
+    m_my_dbg.verbose(CALL_INFO,1,0,"src=%d region=%#x\n", cbe->nid, cbe->region );
 
-    read( nid, region, cbe->recvEntry->buf, length, callback );
+    read( cbe->nid, cbe->region, cbe->recvEntry->buf, length, callback );
 }
 
 bool LongMsgProtocol::processLongMsg_CB( RecvCallbackEntry* cbe )
+{
+    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    std::vector<IoVec>  vec;
+    vec.resize(1);
+    vec[0].ptr = & cbe->hdr;
+    vec[0].len = sizeof( cbe->hdr );
+    int tag = LongMsgAckTag | cbe->region;
+
+    RCBE_Functor* callback = new RCBE_Functor( 
+              this, &LongMsgProtocol::processLongMsg2_CB, cbe ); 
+
+    m_my_dbg.verbose(CALL_INFO,1,0,"send LongMsgAck nid=%d\n", cbe->nid);
+    sendv( vec, cbe->nid, tag, callback );
+
+    return true;
+}
+
+bool LongMsgProtocol::processLongMsg2_CB( RecvCallbackEntry* cbe )
 {
     m_my_dbg.verbose(CALL_INFO,1,0,"\n");
     finishRecvCBE( *cbe->recvEntry, cbe->hdr );
 
     // state has changed, something may have become unblocked
     processBlocked( cbe->recvEntry );
-    m_my_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    delete cbe; 
     return true;
 }
 

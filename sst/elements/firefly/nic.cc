@@ -62,10 +62,12 @@ Nic::Nic(Component* comp, Params &params) :
                             getTimeLord()->getTimeConverter(link_bw);
     assert( tc );
 
-    int buffer_size = params.find_integer("buffer_size",100);
+    int buffer_size = params.find_integer("buffer_size",1000);
 
     m_dbg.verbose(CALL_INFO,1,0,"id=%d num_vcs=%d buffer_size=%d link_bw=%s\n",
                 m_myNodeId, m_num_vcs, buffer_size, link_bw.c_str());
+
+    printf("buffer_size %d\n",buffer_size);
 
     std::vector<int> buf_size;
     buf_size.resize(m_num_vcs);

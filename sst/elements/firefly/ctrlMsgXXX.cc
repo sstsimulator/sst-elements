@@ -19,6 +19,8 @@
 #include "ctrlMsgSendState.h"
 #include "ctrlMsgRecvState.h"
 #include "ctrlMsgReadState.h"
+#include "ctrlMsgRegRegionState.h"
+#include "ctrlMsgUnregRegionState.h"
 #include "ctrlMsgWaitAnyState.h"
 #include "ctrlMsgProcessQueuesState.h"
 #include "info.h"
@@ -37,9 +39,6 @@ XXX::XXX( Component* owner, Params& params ) :
 
     m_dbg.init("@t:CtrlMsg::@p():@l ", m_dbg_level, 0, m_dbg_loc );
 
-    m_matchTime = params.find_integer("matchTime",0);
-    m_copyTime = params.find_integer("copyTime",0);
-
     std::stringstream ss;
     ss << this;
 
@@ -47,10 +46,13 @@ XXX::XXX( Component* owner, Params& params ) :
         "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
-    m_matchDelay = params.find_integer( "matchDelay_ns", 1 );
-    m_memcpyDelay = params.find_integer( "memcpyDelay_ns", 1 );
+    m_matchDelay_ps = params.find_integer( "matchDelay_ps", 1 );
+    m_memcpyDelay_ps = params.find_integer( "memcpyDelay_ps", 1 );
     m_txDelay = params.find_integer( "txDelay_ns", 100 );
     m_rxDelay = params.find_integer( "rxDelay_ns", 100 );
+    m_regRegionBaseDelay_ps = params.find_integer( "regRegionBaseDelay_ps", 3000 );
+    m_regRegionPerByteDelay_ps = params.find_integer( "regRegionPerByteDelay_ps", 26 );
+    m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 65000 );
     
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 }
@@ -84,10 +86,12 @@ void XXX::setup()
     m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_readState = new ReadState<XXX>( m_dbg_level, m_dbg_loc, *this );
+    m_regRegionState = new RegRegionState<XXX>( m_dbg_level, m_dbg_loc, *this );
+    m_unregRegionState = new UnregRegionState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_processQueuesState = new ProcessQueuesState<XXX>( m_dbg_level, m_dbg_loc, *this );
 
-    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ns\n", m_matchDelay, m_memcpyDelay );
+    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ns\n", m_matchDelay_ps, m_memcpyDelay_ps );
     m_dbg.verbose(CALL_INFO,1,0,"txDelay %d ns. rxDelay %d ns\n", m_txDelay, m_rxDelay );
 }
 
@@ -114,28 +118,25 @@ void XXX::waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* fu
 }
 
 void XXX::read( nid_t nid, region_t region , void* buf, size_t len,
-                                    FunctorBase_0<bool>* functor )
+                                            FunctorBase_0<bool>* functor )
 {
     m_readState->enter( nid, region, buf, len, functor );
 }
 
-void XXX::registerRegion( region_t region, nid_t nid, void* buf, size_t len, RegionEventQ* q )
+void XXX::registerRegion( region_t region, nid_t nid, void* buf, size_t len,
+                                            FunctorBase_0<bool>* functor )
 {
-    m_processQueuesState->registerRegion( region, nid, buf, len, q );
+    m_regRegionState->enter( region, nid, buf, len, functor );
 }
 
-void XXX::unregisterRegion( region_t region )
+void XXX::unregisterRegion( region_t region, FunctorBase_0<bool>* functor )
 {
-    m_processQueuesState->unregisterRegion( region );
-}
-
-RegionEventQ* XXX::createEventQueue()
-{
-    return m_processQueuesState->createEventQueue();
+    m_unregRegionState->enter( region, functor );
 }
 
 void XXX::schedFunctor( FunctorBase_0<bool>* functor, int delay )
 {
+    //printf("XXX sched %d\n",delay);
     m_delayLink->send( delay, new DelayEvent(functor) );
 }
 

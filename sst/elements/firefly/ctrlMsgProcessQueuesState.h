@@ -48,25 +48,24 @@ class ProcessQueuesState : StateBase< T1 >
 
     void enterRead( nid_t nid, region_t region, void* buf, size_t len,
                                      FunctorBase_0<bool>* func = NULL );
-    void registerRegion( region_t region, nid_t nid, void* buf, size_t len, RegionEventQ* );
-    void unregisterRegion( region_t );
-    RegionEventQ* createEventQueue();
 
+    void enterRegRegion( region_t region, nid_t nid, void* buf, size_t len, 
+                                     FunctorBase_0<bool>* func = NULL );
+    void enterUnregRegion( region_t, FunctorBase_0<bool>* func = NULL );
 
   private:
     struct ReadInfo {
-        ReadInfo( region_t _region, void* _buf, size_t _len ) : 
-            region( _region), buf( _buf ), len( _len ), done(false) {} 
+        ReadInfo( nid_t _nid, region_t _region, void* _buf, size_t _len ) : 
+            nid(_nid), region( _region), buf( _buf ), len( _len ), done(false) {} 
 
         nid_t nid;
         region_t region;
+        void* buf;
+        size_t len;
         struct Hdr {
             key_t key;
         } hdr;
-        void* buf;
-        size_t len;
         bool done;
-        RegionEventQ* q;
     };
 
     struct FuncCtxBase {
@@ -109,6 +108,7 @@ class ProcessQueuesState : StateBase< T1 >
     void processLongAck( AckInfo* );
 
     bool enterSend( _CommReq* );
+    bool enterRead( ReadInfo* );
     bool enterRead0( std::deque< FuncCtxBase* >& );
     bool enterWait0( std::deque< FuncCtxBase* >& );
     void processQueues( std::deque< FuncCtxBase* >& );
@@ -245,18 +245,7 @@ void ProcessQueuesState<T1>::enterRead( nid_t nid, region_t region, void* buf, s
                     nid, region, buf, len );
     enter( exitFunctor );
 
-    ReadInfo* info = new ReadInfo( region, buf, len ) ;
-
-    IoVec hdrVec;   
-    hdrVec.ptr = &info->hdr; 
-    hdrVec.len = sizeof( info->hdr ); 
-    info->hdr.key = genReadRspKey( region );
-
-    std::vector<IoVec> vec;
-    vec.insert( vec.begin(), hdrVec );
-
-    SendFunctor<ReadInfo*>* sfunctor = 
-            newPioSendFini<ReadInfo*>( info, &ProcessQueuesState::pioSendFini );
+    ReadInfo* info = new ReadInfo( nid, region, buf, len ) ;
 
     RecvFunctor<ReadInfo*>* rfunctor =
             newDmaRecvFini<ReadInfo*>( info, &ProcessQueuesState::dmaRecvReadBodyFini );
@@ -265,12 +254,37 @@ void ProcessQueuesState<T1>::enterRead( nid_t nid, region_t region, void* buf, s
     dataVec.resize(1);
     dataVec[0].ptr = buf; 
     dataVec[0].len = len; 
+    info->hdr.key = genReadRspKey( info->region );
         
     dbg().verbose(CALL_INFO,1,0,"rspkey=%#x\n", info->hdr.key );
 
     obj().nic().dmaRecv( nid, info->hdr.key, dataVec, rfunctor ); 
 
-    obj().nic().pioSend( nid, genReadReqKey( region), vec, sfunctor );
+    FunctorStatic_0< ProcessQueuesState, ReadInfo*, bool >*  functor;
+    functor = new FunctorStatic_0< ProcessQueuesState, ReadInfo*, bool > 
+          ( this, &ProcessQueuesState::enterRead, info );  
+
+    obj().schedFunctor( functor, obj().regRegionDelay( len ) ); 
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::enterRead( ReadInfo* info )
+{
+    dbg().verbose(CALL_INFO,1,0,"nid=%d region=%d buf=%p len=%lu \n",
+                    info->nid, info->region, info->buf, info->len );
+    std::vector<IoVec> vec;
+    IoVec hdrVec;   
+    hdrVec.ptr = &info->hdr; 
+    hdrVec.len = sizeof( info->hdr ); 
+
+    vec.insert( vec.begin(), hdrVec );
+
+    SendFunctor<ReadInfo*>* sfunctor = 
+            newPioSendFini<ReadInfo*>( info, &ProcessQueuesState::pioSendFini );
+
+    obj().nic().pioSend( info->nid, genReadReqKey( info->region), vec, sfunctor );
+
+    return true;
 }
 
 template< class T1 >
@@ -296,24 +310,17 @@ bool ProcessQueuesState<T1>::enterRead0( std::deque<FuncCtxBase*>& stack )
     return false;
 }
 
-template< class T1 >
-RegionEventQ* ProcessQueuesState<T1>::createEventQueue()
-{
-    dbg().verbose(CALL_INFO,1,0,"\n");
-    return new RegionEventQ;
-}
 
 template< class T1 >
-void ProcessQueuesState<T1>::registerRegion( region_t region, nid_t nid, void* buf,
-                                                                    size_t len, RegionEventQ* q )
+void ProcessQueuesState<T1>::enterRegRegion( region_t region, nid_t nid, 
+                    void* buf, size_t len, FunctorBase_0<bool>* func )
 {
+
     dbg().verbose(CALL_INFO,1,0,"uregion=%d nid=%d buf=%p len=%lu \n",
                     region, nid, buf, len );
-
     
-    ReadInfo* info = new ReadInfo( region, buf, len ) ;
+    ReadInfo* info = new ReadInfo( nid, region, buf, len ) ;
 
-    info->q = q;
     IoVec hdrVec;   
     hdrVec.ptr = &info->hdr; 
     hdrVec.len = sizeof( info->hdr ); 
@@ -323,18 +330,22 @@ void ProcessQueuesState<T1>::registerRegion( region_t region, nid_t nid, void* b
 
     key_t key = genReadReqKey( region );
 
-    dbg().verbose(CALL_INFO,1,0,"reqkeyy=%#x\n",key);
+    dbg().verbose(CALL_INFO,1,0,"reqkey=%#x\n",key);
 
     RecvFunctor<ReadInfo*>* rfunctor =
             newDmaRecvFini<ReadInfo*>( 
                 info, &ProcessQueuesState::dmaRecvReadReqFini );
 
     obj().nic().dmaRecv( nid, key, vec, rfunctor ); 
+
+    obj().schedFunctor( func, obj().regRegionDelay( info->len ) );
 }
+
 template< class T1 >
-void ProcessQueuesState<T1>::unregisterRegion( region_t region )
+void ProcessQueuesState<T1>::enterUnregRegion( region_t region, FunctorBase_0<bool>* func )
 {
     dbg().verbose(CALL_INFO,1,0,"region %d\n",region);
+    assert(0);
 }
 
 template< class T1 >
@@ -510,9 +521,7 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     }
 
     while ( ! m_sendDmaReadFiniQ.empty() ) {
-        ReadInfo* info = m_sendDmaReadFiniQ.front();
-        info->q->push_back( info->region ); 
-        m_pendingEvents = true;
+        //m_pendingEvents = true;
         delete m_sendDmaReadFiniQ.front();
         m_sendDmaReadFiniQ.pop_front();
     }
@@ -579,6 +588,10 @@ bool ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
 
     if ( locals->req ) {
         delay += obj().rxDelay();
+        //printf("XXXXXX %lu\n",locals->buf->hdr.length);
+        if ( locals->buf->hdr.length >= 36  ) {
+            delay += 200;
+        }
     }
 
     FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
@@ -994,6 +1007,7 @@ int ProcessQueuesState<T1>::copyBuf2Req( _CommReq* req, ShortRecvBuffer* buf )
 
     }
     return obj().memcpyDelay( offset );
+//    return obj().memcpyDelay( 0 );
 }
 
 template< class T1 >

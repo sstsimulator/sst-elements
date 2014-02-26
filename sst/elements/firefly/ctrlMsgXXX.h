@@ -32,6 +32,12 @@ template< class T >
 class ReadState;
 
 template< class T >
+class RegRegionState;
+
+template< class T >
+class UnregRegionState;
+
+template< class T >
 class WaitAnyState;
 
 template< class T >
@@ -60,9 +66,6 @@ struct MsgHdr {
 };
 
 static const int    ShortMsgQ       = 0xf00d;
-#if 0
-static const size_t ShortMsgLength  = 1024*32 + 128;
-#endif
 
 class ShortRecvBuffer;
 
@@ -80,11 +83,9 @@ class XXX  {
                         tag_t tag, CommReq*, FunctorBase_0<bool>* );
     void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
 
-    void read( nid_t, region_t, void* buf, size_t len,
-                                    FunctorBase_0<bool>* = NULL );
-    void registerRegion( region_t, nid_t, void* buf, size_t len, RegionEventQ* );
-    void unregisterRegion( region_t );
-    RegionEventQ* createEventQueue();
+    void read( nid_t, region_t, void* buf, size_t len, FunctorBase_0<bool>* );
+    void registerRegion( region_t, nid_t, void* buf, size_t len, FunctorBase_0<bool>* );
+    void unregisterRegion( region_t, FunctorBase_0<bool>* );
 
     Info*           info() { return m_info; }
     Nic::VirtNic&   nic() { return *m_nic; }           
@@ -99,11 +100,21 @@ class XXX  {
     void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq* );
     void schedFunctor( FunctorBase_0<bool>*, int delay = 0 );
     int memcpyDelay(int bytes ) {
-        return bytes * m_memcpyDelay; 
+        return (float) (bytes * m_memcpyDelay_ps)/ 1000.0; 
     } 
 
     int matchDelay( int i ) {
-        return i * m_matchDelay;
+        return i * m_matchDelay_ps;
+    }
+
+    int regRegionDelay( int nbytes ) {
+        // times are in ps.
+        float tmp = m_regRegionBaseDelay_ps;   
+        if ( nbytes > m_regRegionXoverLength  ) {
+            tmp += nbytes * m_regRegionPerByteDelay_ps; 
+        }
+        // return ns.
+        return tmp/1000.0;
     }
 
     int txDelay() {
@@ -113,10 +124,13 @@ class XXX  {
     int rxDelay() {
         return m_rxDelay;
     }
-    int m_matchDelay;
-    int m_memcpyDelay;
+    int m_matchDelay_ps;
+    int m_memcpyDelay_ps;
     int m_txDelay;
     int m_rxDelay;
+    int m_regRegionBaseDelay_ps;
+    int m_regRegionPerByteDelay_ps;
+    int m_regRegionXoverLength;
 
   private:
     class DelayEvent : public SST::Event {
@@ -156,13 +170,12 @@ class XXX  {
     Info*           m_info;
     Nic::VirtNic*   m_nic;
 
-    int             m_matchTime;
-    int             m_copyTime;
-
     FunctorBase_0<bool>*    m_returnState;
     SendState<XXX>*         m_sendState;
     RecvState<XXX>*         m_recvState;
     ReadState<XXX>*         m_readState;
+    RegRegionState<XXX>*    m_regRegionState;
+    UnregRegionState<XXX>*  m_unregRegionState;
     WaitAnyState<XXX>*      m_waitAnyState;
     Output::output_location_t   m_dbg_loc;
     int                         m_dbg_level;
@@ -193,7 +206,7 @@ class _CommReq {
 
     enum Type { Recv, Send };
 
-    _CommReq( Type type, std::vector<IoVec> _ioVec, nid_t nid,
+    _CommReq( Type type, std::vector<IoVec>& _ioVec, nid_t nid,
               tag_t tag, Status* status = NULL) : 
         m_type( type ),
         m_ioVec( _ioVec ),

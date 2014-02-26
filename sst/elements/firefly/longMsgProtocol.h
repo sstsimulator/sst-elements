@@ -44,7 +44,6 @@ class LongMsgProtocol : public CtrlMsg::API  {
     class SendCallbackEntry {
       public:
         MsgHdr              hdr;
-        std::vector<IoVec>  vec;
         SendEntry*          sendEntry;
         CtrlMsg::region_t   region;
     };
@@ -52,9 +51,10 @@ class LongMsgProtocol : public CtrlMsg::API  {
     class RecvCallbackEntry {
       public:
         MsgHdr              hdr;
-        std::vector<IoVec>  vec;
         RecvEntry*          recvEntry;
         CtrlMsg::CommReq    commReq;
+        CtrlMsg::region_t   region;
+        CtrlMsg::nid_t      nid;
         std::vector<unsigned char> buf;
     };
 
@@ -70,9 +70,10 @@ class LongMsgProtocol : public CtrlMsg::API  {
 
     static const uint32_t MaxNumPostedRecvs = 512;
 
-    static const uint32_t ShortMsgTag =   0x80000000;
-    static const uint32_t LongMsgTag =    0x40000000;
-    static const uint32_t TagMask = 0xf0000000;
+    static const uint32_t ShortMsgTag   = 0x80000000;
+    static const uint32_t LongMsgTag    = 0x40000000;
+    static const uint32_t LongMsgAckTag = 0x20000000;
+    static const uint32_t TagMask       = 0xf0000000;
 
   public:
     LongMsgProtocol( Component* owner, Params& );
@@ -110,6 +111,7 @@ class LongMsgProtocol : public CtrlMsg::API  {
     bool waitAnyDelay_CB( RecvCallbackEntry* );
     bool postRecvAny_irecv_CB( RecvCallbackEntry* );
     bool postSendEntry_CB( SendCallbackEntry* );
+    bool postSendEntryReg_CB( SendCallbackEntry* );
     bool processSendEntryFini_CB( SendCallbackEntry* );
 
     bool postRecvEntry_CB( RecvCallbackEntry* );
@@ -118,12 +120,11 @@ class LongMsgProtocol : public CtrlMsg::API  {
     void postRecvAny( );
     void processLongMsg( RecvCallbackEntry* );
     bool processLongMsg_CB( RecvCallbackEntry* );
+    bool processLongMsg2_CB( RecvCallbackEntry* );
     void processShortMsg( RecvCallbackEntry* );
     bool processShortMsg_CB( RecvCallbackEntry* );
     void schedDelay( int, CtrlMsg::FunctorBase_0<bool>* );
     
-    bool processRegionEvents();
-
     bool checkMatch( MsgHdr&, RecvEntry& );
     int calcMatchDelay( int ) { return 0; }
     int calcCopyDelay( int ) { return 0; }
@@ -148,7 +149,6 @@ class LongMsgProtocol : public CtrlMsg::API  {
 
     std::vector<Blocked>    m_blockedList;
 
-    CtrlMsg::RegionEventQ*         m_regionEventQ;
     std::map< CtrlMsg::region_t, SendCallbackEntry* > m_regionM;
 };
 

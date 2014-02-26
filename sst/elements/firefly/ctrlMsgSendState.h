@@ -35,7 +35,7 @@ class SendState : StateBase< T1 >
         dbg().setPrefix(buffer);
 
     }
-    void enter( bool blocking, std::vector<IoVec>, nid_t, tag_t,
+    void enter( bool blocking, std::vector<IoVec>&, nid_t, tag_t,
             CommReq*, FunctorBase_0<bool>*, FunctorBase_0<bool>* func = NULL );
     bool afterProcess();
     bool unblock();
@@ -53,7 +53,7 @@ class SendState : StateBase< T1 >
 };
 
 template< class T1 >
-void SendState<T1>::enter( bool blocking, std::vector<IoVec> ioVec,
+void SendState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
         nid_t dest, tag_t tag, CommReq* commReq,
              FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor)
 {
