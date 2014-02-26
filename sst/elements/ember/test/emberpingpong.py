@@ -9,7 +9,7 @@ sst.merlin._params["xbar_bw"] = "1Ghz"
 sst.merlin._params["num_dims"] = 3
 sst.merlin._params["torus:shape"] = "2x2x2"
 sst.merlin._params["torus:width"] = "1x1x1"
-sst.merlin._params["torus:local_ports"] = 2
+sst.merlin._params["torus:local_ports"] = 1 
 
 nicParams = ({ 
 		"hermesParams.nicParams.debug" : 0,
