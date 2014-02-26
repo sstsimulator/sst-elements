@@ -144,6 +144,13 @@ void EmberEngine::setup() {
 	selfEventLink->send(startEv);
 }
 
+void EmberEngine::processStartEvent(EmberStartEvent* ev) {
+	output.verbose(CALL_INFO, 2, 0, "Processing a Start Event\n");
+
+	issueNextEvent(0);
+        accumulateTime = histoCompute;
+}
+
 void EmberEngine::processInitEvent(EmberInitEvent* ev) {
 	output.verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
 	msgapi->init(&initFunctor);
@@ -268,6 +275,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case COMPUTE:
 		processComputeEvent(dynamic_cast<EmberComputeEvent*>(eEv));
+		break;
+	case START:
+		processStartEvent(dynamic_cast<EmberStartEvent*>(eEv));
 		break;
 	default:
 

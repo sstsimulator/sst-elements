@@ -53,6 +53,7 @@ public:
 	void processSendEvent(EmberSendEvent* ev);
 	void processRecvEvent(EmberRecvEvent* ev);
 	void processComputeEvent(EmberComputeEvent* ev);
+	void processStartEvent(EmberStartEvent* ev);
 
 	void completedInit(int val);
 	void completedFinalize(int val);
