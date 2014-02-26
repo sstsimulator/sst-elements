@@ -21,7 +21,7 @@ MemoryModel::MemoryModel()
    numL1Hits = numL2Hits = numMemoryHits = numTLBMisses = 0;
    numICHits = numIL2Hits = numIMemoryHits = numITLBMisses = 0;
    numSTBHits = numStores = numLoads = 0;
-   lastStore = 0;
+   lastLoad = lastStore = 0;
 }
 
 
