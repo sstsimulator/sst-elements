@@ -30,6 +30,7 @@
 #include "emberstartev.h"
 #include "embercomputeev.h"
 
+using namespace SST::Statistics;
 using namespace SST::Hermes;
 
 namespace SST {

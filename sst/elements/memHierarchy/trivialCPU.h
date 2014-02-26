@@ -27,7 +27,9 @@
 
 #include <sst/core/rng/marsaglia.h>
 #include <sst/core/interfaces/memEvent.h>
+
 using namespace SST::Interfaces;
+using namespace SST::Statistics;
 
 namespace SST {
 namespace MemHierarchy {

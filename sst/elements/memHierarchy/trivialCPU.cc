@@ -24,7 +24,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
-
+using namespace SST::Statistics;
 
 trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)

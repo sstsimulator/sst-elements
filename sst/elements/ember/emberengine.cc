@@ -5,6 +5,7 @@
 #include "emberengine.h"
 
 using namespace std;
+using namespace SST::Statistics;
 using namespace SST::Ember;
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
