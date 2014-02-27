@@ -97,7 +97,7 @@ void trivialCPU::handleEvent(Event *ev)
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
 		// May receive invalidates.  Just ignore 'em.
-		if ( Invalidate == event->getCmd() ) return;
+		if ( Inv == event->getCmd() ) return;
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( requests.end() == i ) {
@@ -148,7 +148,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
 			bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
 
-			MemEvent *e = new MemEvent(this, addr, doWrite ? WriteReq : ReadReq);
+			MemEvent *e = new MemEvent(this, addr, doWrite ? GetX : GetS);
 			e->setSize(4); // Load 4 bytes
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&addr);

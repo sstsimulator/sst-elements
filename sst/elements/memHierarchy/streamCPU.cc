@@ -93,7 +93,7 @@ void streamCPU::handleEvent(Event *ev)
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
 		// May receive invalidates.  Just ignore 'em.
-		if ( event->getCmd() == Invalidate ) return;
+		if ( event->getCmd() == Inv) return;
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
