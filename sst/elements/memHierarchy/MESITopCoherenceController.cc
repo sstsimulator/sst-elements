@@ -183,10 +183,21 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     CCLine* l             = ccLines_[_cacheLine->index()];
 
     /* Send Data in E state */
-    if(protocol_ && l->isShareless() && (state == E || state == M)){
+    if(l->isShareless() && (state == E || state == M)){
+        if(protocol_){
+            l->setExclusiveSharer(_childId);
+            ret = sendResponse(_event, E, data, _childId);      //TODO: l->setExclusiveSharer(_childId);  TODO:  only when E is working, right now data is sent as "S" not "E"
+        }
+        else{
+            l->addSharer(_childId);
+            ret = sendResponse(_event, S, data, _childId);
+        }
+    }
+    /*if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_childId);
         ret = sendResponse(_event, E, data, _childId);      //TODO: l->setExclusiveSharer(_childId);  TODO:  only when E is working, right now data is sent as "S" not "E"
     }
+    */
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->exclusiveSharerExists()) {
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
@@ -222,7 +233,6 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
         d_->debug(_L5_,"GetX Req:  Sharers 'S' exists \n");
         sendInvalidates(Inv, lineIndex, false, _childId, false);
         ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
-        assert(_ret == false);
     }
     
     if(state == E || state == M){

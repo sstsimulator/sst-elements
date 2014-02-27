@@ -338,6 +338,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
                 new Event::Handler<MemController>(this, &MemController::handleEvent));
     }
 
+    std::string protocolStr = params.find_string("coherence_protocol");
+    assert(!protocolStr.empty());
+    
+    if(protocolStr == "mesi" || protocolStr == "MESI") protocol = 1;
+    else protocol = 0;
+
     respondToInvalidates = false;
 
     numReadsSupplied = 0;
@@ -529,12 +535,16 @@ void MemController::addRequest(MemEvent *ev)
         dbg.debug(C,6,0, "Creating DRAM Request for 0x%"PRIx64" (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
         requests.push_back(req);
         requestQueue.push_back(req);
+
+
+        if(!req->isWrite) req->returnInM = false;
         if(req->isWrite && req->cmd != PutM){
             DRAMReq *readReq = new DRAMReq(ev, ev->getSize());
             readReq->setAddr(req->eventBaseAddr);
             readReq->setSize(cacheLineSize);
             readReq->setGetXRespType();
             readReq->setIsWrite(false);
+            readReq->returnInM = true;
             dbg.debug(C,6,0, "Creating DRAM Request for 0x%"PRIx64" (%s)\n", readReq->addr, "READ");
 
             requests.push_back(readReq);
@@ -676,30 +686,20 @@ void MemController::performRequest(DRAMReq *req)
         /* Write request to memory */
         dbg.debug(C,L1,0,"WRITE.  Addr = %llx, Base Addr = %llx, Request size = %i\n",localEventAddr, baseLocalAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
-        for ( int i = 0 ; i < cacheLineSize ; i++ ) resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
-        resp->setGrantedState(E);
+        //for ( int i = 0 ; i < cacheLineSize ; i++ ) resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
         
-        /* Write the cacheline into the response event payload */
-        /*
-        for ( int i = 0 ; i < req->respSize ; i++ )
-            resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
-        
-        
-        int offset = req->eventAddr - req->eventBaseAddr; assert(offset >= 0);
-        for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
-			resp->getPayload()[offset + i] = req->reqEvent->getPayload()[i];
-		}
-
-		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
-			memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
-		}
-        */
         printMemory(req, localEventAddr, localAddr);
         
 	} else {
         dbg.debug(C,0,0,"READ.  Addr = %llx, Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) resp->getPayload()[i] = memBuffer[localAddr + i];
-        resp->setGrantedState(E);
+
+        if(!req->returnInM){
+            if(protocol) resp->setGrantedState(E);
+            else resp->setGrantedState(S);
+        }
+        else resp->setGrantedState(M);
+
         printMemory(req, localAddr, localAddr);
 	}
 }

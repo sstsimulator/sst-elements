@@ -253,10 +253,9 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 }
 
 void PortLink::printQueueSize(){
-    //std::cout << "Name: " << m_name << " - ";
-    //if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0,"Size: %d. Top Event in Queue = %llx \n",m_g5events.size(), (uint64_t)m_g5events.front()->addr);
-
-
+    dbg->debug(CALL_INFO,0,0, "Name: %s",  m_name.c_str());
+    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0,"Size: %d. Top Event in Queue = %llx \n",m_g5events.size(), (uint64_t)m_g5events.front()->addr);
+    else dbg->debug(CALL_INFO,0,0,"\n");
 }
 
 }}

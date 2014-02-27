@@ -71,7 +71,8 @@ void MESIBottomCC::handlePutAck(MemEvent* event, CacheLine* cacheLine){
 
 
 void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd){
-    if(!canInvalidateRequestProceed(event, cacheLine, true)) return;
+    //if(!canInvalidateRequestProceed(event, cacheLine, true)) return;
+    if(!canInvalidateRequestProceed(event, cacheLine, false)) return;
     
     switch(cmd){
         case Inv:
@@ -190,10 +191,15 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
         sendCommand(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
         InvalidatePUTMReqSent_++;
     }
+    else if(state == E){
+        _cacheLine->setState(I);
+        sendCommand(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        InvalidatePUTMReqSent_++;
+    }
     else{
         _cacheLine->setState(I);
         _cacheLine->setAckCount(0);
-        if(state != S) sendAckResponse(_event);
+        //if(state != S) sendAckResponse(_event);
     }
 }
 

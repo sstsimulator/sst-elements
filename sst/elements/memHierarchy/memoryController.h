@@ -78,6 +78,7 @@ public:
         bool isWrite;
         bool canceled;
         bool isACK;
+        bool returnInM;
         
         int respSize;
         Addr eventBaseAddr;
@@ -183,6 +184,7 @@ private:
     bool use_bus;
     bool bus_requested;
     std::deque<DRAMReq*> busReqs;
+    int protocol;
 
     typedef std::deque<DRAMReq*> dramReq_t;
     dramReq_t requestQueue;

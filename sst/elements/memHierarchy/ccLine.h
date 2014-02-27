@@ -73,10 +73,19 @@ public:
         numSharers_ = 0;
         assert(ackCount_ == 0);
     }
+    void assertSharers(){
+        int count = 0;
+        for(int i = 0; i < 128; i++){
+            if(sharers_[i]) count++;
+        }
+        d_->debug(C,L2,0,"Num Sharers = %d, Actual Sharers = %d\n", numSharers_, count);
+        assert(count == numSharers_);
+    }
     void removeSharer(int _id){
         if(_id == -1) return;
         sharers_[_id] = false;
         numSharers_--;
+        //assertSharers();
         assert(numSharers_ >= 0);
         if(numSharers_ <= 0 || numSharers_ > 1) assert(exclusiveSharerExists_ == false);
         d_->debug(C,L2,0, "Removed Sharer: Num Sharers = %u\n", numSharers_);
@@ -86,6 +95,7 @@ public:
         if(_id == -1) return;
         numSharers_++;
         sharers_[_id] = true;
+        //assertSharers();
         d_->debug(C,L2,0, "Added Sharer:  Num Sharers = %u\n", numSharers_);
     }
 
@@ -95,6 +105,7 @@ public:
         sharers_.reset();            
         exclusiveSharerExists_ = false;
         ackCount_ = 0;
+        removeAllSharers();
         state_ = V;
         baseAddr_ = 0;
     }
