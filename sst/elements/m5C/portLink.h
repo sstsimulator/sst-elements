@@ -12,33 +12,41 @@
 #ifndef __portLink_h
 #define __portLink_h
 
-
 #include <debug.h>
 #include <m5.h>
 #include <dll/gem5dll.hh>
 #include <dll/memEvent.hh>
 #include <rawEvent.h>
-
+#include <sst/core/output.h>
 #include <sst/core/component.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
+
 namespace SST {
+
 namespace M5 {
+
+using namespace SST;
+using namespace SST::Interfaces;
 
 class PortLink {
   public:
     PortLink( M5&, Gem5Object_t&, const SST::Params& );
 	void setup(void);
-
+    void printQueueSize();
+    void setOutput(Output* _dbg){
+        dbg = _dbg;
+    }
   private:
     inline void eventHandler( SST::Event* );
 
 	MemPkt* findMatchingEvent(SST::Interfaces::MemEvent *sstev);
 	MemPkt* convertSSTtoGEM5( SST::Event *e );
 	SST::Interfaces::MemEvent* convertGEM5toSST( MemPkt *pkt );
-
+    Output* dbg;
+    
     void poke() {
         DBGX(2,"\n");
         assert( ! m_deferredQ.empty() );
@@ -57,10 +65,8 @@ class PortLink {
     }
 
     bool recv( void* data, size_t len ) {
-        DBGX(2,"\n");
-
         // Note we are not throttling events
-		if ( m_doTranslate ) {
+		if (LIKELY(m_doTranslate)) {
 			m_link->send( convertGEM5toSST(static_cast<MemPkt*>(data)) ); 
 		} else {
 			m_link->send( new RawEvent( data, len ) ); 
@@ -78,11 +84,16 @@ class PortLink {
 
 	bool            m_doTranslate;
     SST::Link*      m_link;
+    std::string     m_name;
     M5&             m_comp;
     MsgEndPoint*    m_gem5EndPoint;
     MsgEndPoint     m_myEndPoint;
     std::deque<RawEvent*>  m_deferredQ;
 	std::list<MemPkt*> m_g5events;
+    int sent;
+    int received;
+    static const uint32_t LOCKED                      = 0x00100000;
+    static const uint32_t UNCACHED                    = 0x00001000;
 };
 
 

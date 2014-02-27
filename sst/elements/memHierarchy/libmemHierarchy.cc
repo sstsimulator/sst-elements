@@ -15,12 +15,12 @@
 #include "sst/core/element.h"
 #include "sst/core/component.h"
 
-#include "cache.h"
+#include "cacheController.h"
 #include "bus.h"
 #include "trivialCPU.h"
 #include "streamCPU.h"
-#include "memController.h"
-#include "dircontroller.h"
+#include "memoryController.h"
+#include "directoryController.h"
 #include "dmaEngine.h"
 
 using namespace SST;
@@ -35,29 +35,33 @@ static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 static Component* create_Cache(ComponentId_t id, Params& params)
 {
-	return new Cache( id, params );
+	return Cache::cacheFactory(id, params);
 }
 
 static const ElementInfoParam cache_params[] = {
-    {"prefetcher",      "Prefetcher to use with cache (loaded as a module)", ""},
-    {"num_ways",        "Associativity of the cache."},
-    {"num_rows",        "How many cache rows. (Must be a power of 2)"},
-    {"blocksize",       "Size of a cache block in bytes."},
-    {"num_upstream",    "How many upstream ports there are. Typically 1 or 0.", "0"},
-    {"next_level",      "Name of the next level cache", "NONE"},
-    {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)", "STANDARD"},
-    {"access_time",     "Time taken to lookup data in the cache.", ""},
-    {"net_addr",        "When using a directory controller, the network address of this cache.", ""},
-    {"maxL1ResponseTime","Maximum allowed response to CPU from L1.  (Useful only on L1 caches, and useful only for debugging.) (0 = off)", "0"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"cache_frequency",         "Cache Frequency.  Usually the same as the CPU's frequency"},
+    {"cache_size",              "Size in bytes.  Eg.  4KB or 1MB \n"},
+    {"associativity",           "Specifies the cache associativity. In set associative caches, this is the number of ways.\n"},
+    {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. \n"},
+    {"cache_line_size",         "Size of a cache block in bytes.\n"},
+    {"low_network_links",       "Number lower level caches are connected to this cache. This is usually the number of banks in the next level cache (closer to the main memory).\n"},
+    {"high_network_links",      "Number higher level caches are connected to this cache (closer to the CPU).\n"},
+    {"access_latency_cycles",   "Access Latency (in Cycles) taken to lookup data in the cache."},
+    {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
+    {"mshr_num_entries",        "Number of entries in the MSHR"},
+    {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"print_stats",             "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
+    {"L1",                      "Specify whether cache is L1:  0, 1"},
+    {"directory_at_next_level", "Specify if there is a flat directory-controller as the higher level memory: 0, 1"},
+    {"stats",                   "Print cache stats at end of simulation: 0, 1", "0"},
+    {"network_address",         "When using a directory controller, the network address of this cache."},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort cache_ports[] = {
-    {"upstream%d",      "Upstream ports, directly connected, count dependant on parameter 'numUpstream'", memEvent_port_events},
-    {"downstream",      "Downstream, directly connected, port", memEvent_port_events},
-    {"snoop_link",      "Link to a Snoopy Bus port", bus_port_events},
+    {"low_network_%d",  "Ports connected to lower level caches (closer to main memory)", memEvent_port_events},
+    {"high_network_%d", "Ports connected to higher level caches (closer to CPU)", memEvent_port_events},
     {"directory",       "Network link port", net_port_events},
     {NULL, NULL, NULL}
 };

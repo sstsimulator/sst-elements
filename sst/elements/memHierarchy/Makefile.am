@@ -10,21 +10,34 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
 libmemHierarchy_la_SOURCES = \
+    bus.h \
+    bus.cc \
 	cacheListener.h \
-	bus.h \
-	bus.cc \
-	cache.h \
-	cache.cc \
+    cacheController.h \
+    cacheEventProcessing.cc \
+    cacheController.cc \
+    cacheFactory.cc \
+    ccLine.h \
+    memoryController.h \
+    memoryController.cc \
+	memNIC.h \
+	memNIC.cc \
+	directoryController.h \
+	directoryController.cc \
+    coherenceControllers.h \
+    coherenceControllers.cc \
+    MESIBottomCoherenceController.h \
+    MESIBottomCoherenceController.cc \
+    MESITopCoherenceController.h \
+    MESITopCoherenceController.cc \
+    cacheArray.cc \
+    cacheArray.h \
+    mshr.h \
 	trivialCPU.h \
 	trivialCPU.cc \
 	streamCPU.h \
 	streamCPU.cc \
-	memController.h \
-	memController.cc \
-	dircontroller.h \
-	dircontroller.cc \
-	memNIC.h \
-	memNIC.cc \
+    util.h \
 	dmaEngine.h \
 	dmaEngine.cc \
 	libmemHierarchy.cc

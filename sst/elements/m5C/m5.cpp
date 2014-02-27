@@ -52,9 +52,9 @@ SST::M5::M5::M5( ComponentId_t id, Params& params ) :
     if ( params.find( "M5debug" ) != params.end() ) {
         enableDebug( params[ "M5debug" ] );
     }
-    if ( params.find( "M5debugFile" ) != params.end() ) {
-//        libgem5::SetLogFile( params[ "M5debugFile" ] );
-    }
+    //if ( params.find( "M5debugFile" ) != params.end() ) {
+    //    libgem5::SetLogFile( params[ "M5debugFile" ] );
+    //}
 
     if ( params.find( "info" ) != params.end() ) {
         if ( params["info"].compare("yes") == 0 ) {
@@ -147,12 +147,16 @@ void SST::M5::M5::init(unsigned int phase)
 
 	}
 
+    portLinkDbg = new Output();
+    portLinkDbg->init("", 6, 0, (Output::output_location_t)params.find_integer("memory_trace", 0));
+
 	/* Setup Links */
 	for ( objectMap_t::iterator i = m_objectMap.begin() ; i != m_objectMap.end() ; ++i ) {
 		Gem5Object_t *obj = i->second;
 		for ( std::deque<void*>::iterator j = obj->links.begin() ; j != obj->links.end() ; ++j ) {
 			PortLink *link = static_cast<PortLink*>(*j);
 			link->setup();
+            link->setOutput(portLinkDbg);
 		}
 	}
 }
@@ -191,13 +195,27 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
     DBGX( 5, "call simulate M5 curTick()=%lu\n", curTick() );
     ::SimLoopExitEvent* exitEvent = simulate( m_m5ticksPerSSTclock );
     DBGX( 5, "simulate returned M5 curTick() %lu\n", curTick() );
-
+    
+    
+    
+    /*
+    if((cycle * m_m5ticksPerSSTclock) % 100000 == 0){
+        for ( objectMap_t::iterator i = m_objectMap.begin() ; i != m_objectMap.end() ; ++i ) {
+            Gem5Object_t *obj = i->second;
+            for ( std::deque<void*>::iterator j = obj->links.begin() ; j != obj->links.end() ; ++j ) {
+                PortLink *link = static_cast<PortLink*>(*j);
+                link->printQueueSize();
+            }
+        }
+    }
+     */
+    
     if( exitEvent->getCode() != 256 )  {
         // for fast-forwarding to reache the ROI at a faster speed in real 
         // benchmarks the exitcode is set to 100 to distinguish from regular 
         // exit
         if ( exitEvent->getCode() == 100 ){
-	        std::cout << "I entered getCode = 100" << std::endl;
+	        //std::cout << "I entered getCode = 100" << std::endl;
 
 	        FastForwarding_flag=true;
 #if 0

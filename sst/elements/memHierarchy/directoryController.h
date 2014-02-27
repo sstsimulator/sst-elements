@@ -51,22 +51,23 @@ class DirectoryController : public Component {
         bool inController; // Whether this is present in the controller, or needs to be fetched
 
 		Addr baseAddr;
+        Addr addr;
+        unsigned int reqSize;
 
 		/* Standard directory data */
 		bool dirty;
 		std::vector<bool> sharers;
 
-        std::list<DirEntry*>::iterator cacheIter;
-
-
-		DirEntry(Addr address, uint32_t bitlength)
+		DirEntry(Addr baseAddress, Addr address, uint32_t reqSize, uint32_t bitlength)
         {
 			activeReq = NULL;
 			nextFunc = NULL;
             lastRequest = NO_LAST_REQUEST;
 			waitingAcks = 0;
             inController = true;
-			baseAddr = address;
+            baseAddr = baseAddress;
+            addr = address;
+            reqSize = reqSize;
 			dirty = false;
 			sharers.resize(bitlength);
 		}
@@ -90,6 +91,7 @@ class DirectoryController : public Component {
         uint32_t findOwner(void)
         {
             assert(dirty);
+            assert(countRefs() == 1);
             for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
                 if ( sharers[i] ) return i;
             }
@@ -133,29 +135,24 @@ class DirectoryController : public Component {
 	SST::Link *memLink;
     MemNIC *network;
 
-    size_t entryCacheMaxSize;
     size_t entryCacheSize;
     std::list<DirEntry*> entryCache;
 
     uint64_t numReqsProcessed;
     uint64_t totalReqProcessTime;
     uint64_t numCacheHits;
-    uint64_t dataReads;
-    uint64_t dataWrites;
-    uint64_t dirEntryReads;
-    uint64_t dirEntryWrites;
     Output::output_location_t printStatsLoc;
 
 
 
-	DirEntry* getDirEntry(Addr target);
-	DirEntry* createDirEntry(Addr target);
+	DirEntry* getDirEntry(Addr baseTarget);
+	DirEntry* createDirEntry(Addr baseTarget, Addr target, uint32_t reqSize);
 
 
 	void handleACK(MemEvent *ev);
 	void handleInvalidate(DirEntry* entry, MemEvent *new_ev);
 	void finishInvalidate(DirEntry *entry, MemEvent *new_ev);
-    void sendInvalidate(int target, Addr address);
+    void sendInvalidate(int target, DirEntry* entry);
 
 	void handleRequestData(DirEntry* entry, MemEvent *new_ev);
 	void finishFetch(DirEntry* entry, MemEvent *new_ev);
@@ -169,6 +166,7 @@ class DirectoryController : public Component {
 	void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 
 	uint32_t node_id(const std::string &name);
+	uint32_t node_name_to_id(const std::string &name);
 
     void updateCacheEntry(DirEntry *entry);
 	void requestDirEntryFromMemory(DirEntry *entry);

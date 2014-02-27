@@ -20,6 +20,7 @@
 #include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
+#include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 
 #include <sst/elements/merlin/linkControl.h>

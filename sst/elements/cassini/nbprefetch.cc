@@ -8,7 +8,6 @@
 #include "sst/core/params.h"
 #include "sst/core/serialization.h"
 
-
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
@@ -21,25 +20,24 @@ NextBlockPrefetcher::NextBlockPrefetcher(Params& params) {
 	hitEventsProcessed = 0;
 }
 
-NextBlockPrefetcher::~NextBlockPrefetcher() {
-
-}
+NextBlockPrefetcher::~NextBlockPrefetcher() {}
 
 void NextBlockPrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr)
 {
 	if(notifyResType == MISS) {
-		missEventsProcessed++;
+	    missEventsProcessed++;
 
-		Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
-		std::vector<Event::HandlerBase*>::iterator callbackItr;
-		prefetchEventsIssued++;
+	    Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
+	    std::vector<Event::HandlerBase*>::iterator callbackItr;
+	    prefetchEventsIssued++;
 
 		// Cycle over each registered call back and notify them that we want to issue a prefetch request
 		for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 			// Create a new read request, we cannot issue a write because the data will get
 			// overwritten and corrupt memory (even if we really do want to do a write)
-			MemEvent* newEv = new MemEvent(owner, nextBlockAddr, RequestData);
-            		newEv->setSize(blockSize);
+            MemEvent* newEv = new MemEvent(owner, nextBlockAddr, GetS);
+            newEv->setSize(blockSize);
+            newEv->setPrefetchFlag(true);
 			(*(*callbackItr))(newEv);
 		}
 	} else {
@@ -57,8 +55,7 @@ void NextBlockPrefetcher::setOwningComponent(const SST::Component* own)
 	owner = own;
 }
 
-void NextBlockPrefetcher::printStats(Output &out) {
-	std::cout << "--------------------------------------------------------------------" << std::endl;
+void NextBlockPrefetcher::printStats(Output& dbg) {
 	std::cout << "Next Block Prefetch Engine:" << std::endl;
 	std::cout << "Cache Miss Events:         " << missEventsProcessed << std::endl;
 	std::cout << "Cache Hit Events:          " << hitEventsProcessed << std::endl;

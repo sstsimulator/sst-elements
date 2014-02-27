@@ -9,9 +9,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+/* 
+ * File:   memController.cc
+ * Author: Caesar De la Paz III
+ * Email:  caesar.sst@gmail.com
+ */
+
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "memController.h"
+#include "memoryController.h"
+#include "util.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -22,6 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/memEvent.h>
@@ -67,7 +75,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event)
 bool SimpleMemory::issueRequest(MemController::DRAMReq *req)
 {
     uint64_t addr = req->addr + req->amt_in_process;
-    ctrl->dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address 0x%"PRIx64"\n", addr);
     self_link->send(1, new MemCtrlEvent(req));
     return true;
 }
@@ -110,7 +118,7 @@ bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req)
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
     if ( !ok ) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address 0x%"PRIx64"\n", addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -131,7 +139,7 @@ void DRAMSimMemory::finish()
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
 {
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
-    ctrl->dbg.output(CALL_INFO, "Memory Request for 0x%"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
+    ctrl->dbg.debug(CALL_INFO,6,0, "Memory Request for 0x%"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
     assert(reqs.size());
     MemController::DRAMReq *req = reqs.front();
     reqs.pop_front();
@@ -170,7 +178,7 @@ bool HybridSimMemory::issueRequest(MemController::DRAMReq *req)
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
     if ( !ok ) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address 0x%"PRIx64"\n", addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -189,7 +197,7 @@ void HybridSimMemory::finish()
 void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
 {
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
-    ctrl->dbg.output(CALL_INFO, "Memory Request for 0x%"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
+    ctrl->dbg.debug(CALL_INFO,6,0, "Memory Request for 0x%"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
     assert(reqs.size());
     MemController::DRAMReq *req = reqs.front();
     reqs.pop_front();
@@ -215,7 +223,7 @@ VaultSimMemory::VaultSimMemory(Component *comp, Params &params) :
 bool VaultSimMemory::issueRequest(MemController::DRAMReq *req)
 {
     uint64_t addr = req->addr + req->amt_in_process;
-    ctrl->dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
         req->status = MemController::DRAMReq::NEW;
@@ -252,27 +260,24 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event)
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 {
-    dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("", 7, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.debug(C,L1,0,"---");
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
     bool tfFound = false;
     std::string traceFile = params.find_string("traceFile", "", tfFound);
     if ( tfFound ) {
-#ifdef HAVE_LIBZ
-	traceFP = gzopen(traceFile.c_str(), "w");
-	gzsetparams(traceFP, 9, Z_DEFAULT_STRATEGY);
-#else
         traceFP = fopen(traceFile.c_str(), "w+");
-#endif
     } else {
         traceFP = NULL;
     }
+    
+    cacheLineSize = 64;
 
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
 	if ( 0 == ramSize )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
 	memSize = ramSize * (1024*1024ul);
-
 	rangeStart = (Addr)params.find_integer("rangeStart", 0);
 	interleaveSize = (Addr)params.find_integer("interleaveSize", 0);
     interleaveSize *= 1024;
@@ -288,7 +293,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 
 	std::string clock_freq = params.find_string("clock", "");
 
-    requestSize = (size_t)params.find_integer("request_width", 64);
+    cacheLineSize = params.find_integer("cache_line_size", 64);
+    requestSize = cacheLineSize;
 
     registerClock(clock_freq, new Clock::Handler<MemController>(this,
 				&MemController::clock));
@@ -327,7 +333,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
     use_bus = (NULL != upstream_link );
 
     if ( !upstream_link ) {
-        std::string link_lat = params.find_string("direct_link_latency", "10 ns");
+        std::string link_lat = params.find_string("direct_link_latency", "100 ns");
         upstream_link = configureLink( "direct_link", link_lat,
                 new Event::Handler<MemController>(this, &MemController::handleEvent));
     }
@@ -368,7 +374,7 @@ void MemController::init(unsigned int phase)
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
-            if ( WriteReq == me->getCmd() ) {
+            if ( GetX == me->getCmd() || WriteReq == me->getCmd() ) {
                 if ( isRequestAddressValid(me) ) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
@@ -377,7 +383,7 @@ void MemController::init(unsigned int phase)
                 }
             } else {
                 Output out("", 0, 0, Output::STDERR);
-                out.output("Memory received unexpected Init Command: %d\n", me->getCmd() );
+                out.debug(CALL_INFO,6,0,"Memory received unexpected Init Command: %d\n", me->getCmd() );
             }
         } else {
             StringEvent *se = dynamic_cast<StringEvent*>(ev);
@@ -437,26 +443,42 @@ void MemController::finish(void)
 void MemController::handleEvent(SST::Event *event)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
+    dbg.output("\n\n----------------------------------------------------------------------------------------\n");
+    dbg.output("Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
     bool to_me = (!use_bus || ( ev->getDst() == getName() || BROADCAST_TARGET == ev->getDst() ));
     switch ( ev->getCmd() ) {
-    case RequestData:
-    case ReadReq:
+    /* Poseidon */
+    case PutM:
+        addRequest(ev);
+        break;
+    case PutS:
+    case PutE:
+        break;
+    //case RequestData:
+    //case ReadReq:
+    //case ReadReqEx:
+    case GetS:
+    case GetSEx:
         if ( to_me ) addRequest(ev);
         break;
-    case ReadResp:
-        if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
-            cancelEvent(ev);
-        break;
-    case WriteReq:
-    case SupplyData:
+    //case ReadResp:
+    //    _abort(MemController, "Not Supported");
+    //    if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
+    //    cancelEvent(ev);
+    //    break;
+    //case WriteReq:
+    //case SupplyData:
+    //    _abort(MemController, "Not Supported");
+    case GetX:
         if ( use_bus ) // don't cancel from what we sent.
             cancelEvent(ev);
         if ( !use_bus || ev->queryFlag(MemEvent::F_WRITEBACK) )
             addRequest(ev);
         break;
-    case Invalidate:
+    /*case Invalidate:
+        _abort(MemController, "Not Supported");
         if ( respondToInvalidates ) {
-            /* We participate, but only by acknoweldging the request */
+            // We participate, but only by acknoweldging the request
             DRAMReq *ackReq = new DRAMReq(ev, requestSize);
             requests.push_back(ackReq);
             ackReq->respEvent = ev->makeResponse(this);
@@ -466,14 +488,16 @@ void MemController::handleEvent(SST::Event *event)
         }
         break;
     case NACK:
-        /* If somebody sent a NACK, that implies that any ReadRequest for the
-         * same thing will need to be re-tried.  Let's cancel any action we
-         * might be taking, and wait for the re-try.
-         */
+        _abort(MemController, "Not Supported");
+        // If somebody sent a NACK, that implies that any ReadRequest for the
+        //same thing will need to be re-tried.  Let's cancel any action we
+        //might be taking, and wait for the re-try.
+        //
         if ( use_bus ) cancelEvent(ev);
         break;
+    */
     default:
-        /* Ignore */
+        _abort(MemController, "Command not supported");
         break;
     }
     delete event;
@@ -499,18 +523,26 @@ void MemController::handleBusEvent(SST::Event *event)
 
 void MemController::addRequest(MemEvent *ev)
 {
-	dbg.output(CALL_INFO, "New Memory Request for 0x%"PRIx64"\n", ev->getAddr());
-
+	dbg.debug(C,6,0, "New Memory Request for 0x%"PRIx64"\n", ev->getAddr());
     if ( isRequestAddressValid(ev) ) {
-
-        DRAMReq *req = new DRAMReq(ev, requestSize);
-        dbg.output(CALL_INFO, "Creating DRAM Request for 0x%"PRIx64" (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
-
+        DRAMReq *req = new DRAMReq(ev, ev->getSize());
+        dbg.debug(C,6,0, "Creating DRAM Request for 0x%"PRIx64" (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
         requests.push_back(req);
         requestQueue.push_back(req);
+        if(req->isWrite && req->cmd != PutM){
+            DRAMReq *readReq = new DRAMReq(ev, ev->getSize());
+            readReq->setAddr(req->eventBaseAddr);
+            readReq->setSize(cacheLineSize);
+            readReq->setGetXRespType();
+            readReq->setIsWrite(false);
+            dbg.debug(C,6,0, "Creating DRAM Request for 0x%"PRIx64" (%s)\n", readReq->addr, "READ");
+
+            requests.push_back(readReq);
+            requestQueue.push_back(readReq);
+        }
     } else {
         /* TODO:  Ideally, if this came over as a direct message, not over a bus, we should NAK this */
-        dbg.output(CALL_INFO, "Ignoring request for 0x%"PRIx64" as it isn't in our range. [0x%"PRIx64" - 0x%"PRIx64"]\n",
+        dbg.debug(C, 0, 0, "Ignoring request for 0x%"PRIx64" as it isn't in our range. [0x%"PRIx64" - 0x%"PRIx64"]\n",
                 ev->getAddr(), rangeStart, rangeStart + memSize);
     }
 
@@ -526,9 +558,9 @@ void MemController::cancelEvent(MemEvent* ev)
                 requests[i]->canceled = true;
                 numReadsCanceled++;
                 if ( NULL != requests[i]->respEvent )
-                    dbg.output(CALL_INFO, "Canceling request 0x%"PRIx64" (%"PRIu64", %d).\n", requests[i]->addr, requests[i]->respEvent->getID().first, requests[i]->respEvent->getID().second);
+                    dbg.debug(CALL_INFO,6,0, "Canceling request 0x%"PRIx64" (%"PRIu64", %d).\n", requests[i]->addr, requests[i]->respEvent->getID().first, requests[i]->respEvent->getID().second);
                 else
-                    dbg.output(CALL_INFO, "Canceling request 0x%"PRIx64" (Not yet processed).\n", requests[i]->addr);
+                    dbg.debug(CALL_INFO,6,0, "Canceling request 0x%"PRIx64" (Not yet processed).\n", requests[i]->addr);
                 if ( DRAMReq::RETURNED == requests[i]->status ) {
                     sendBusCancel(requests[i]->respEvent->getID());
                 }
@@ -558,7 +590,7 @@ bool MemController::clock(Cycle_t cycle)
         req->amt_in_process += requestSize;
 
         if ( req->amt_in_process >= req->size ) {
-            dbg.output(CALL_INFO, "Completed issue of request\n");
+            dbg.debug(CALL_INFO, 6,0, "Completed issue of request\n");
             performRequest(req);
 #ifdef HAVE_LIBZ
             if ( traceFP ) {
@@ -630,35 +662,48 @@ Addr MemController::convertAddressToLocalAddress(Addr addr)
 
 void MemController::performRequest(DRAMReq *req)
 {
+   
 	MemEvent *resp = req->reqEvent->makeResponse(this);
+    if(req->GetXRespType) resp->setCmd(GetXResp);
     Addr localAddr = convertAddressToLocalAddress(req->addr);
-    if ((localAddr + req->reqEvent->getSize()) >= memSize) {
-        _abort(MemController, "Attempting to access past the end of Memory.\n");
-    }
+    Addr localEventAddr = convertAddressToLocalAddress(req->eventAddr);
+    Addr baseLocalAddr = convertAddressToLocalAddress(req->eventBaseAddr);
 
     req->respEvent = resp;
-	if ( req->isWrite ) {
+    
+    resp->setSize(cacheLineSize);  //TODO: make this a full cacheline, not just 64
+	if ( req->isWrite || req->cmd == PutM) {
+        /* Write request to memory */
+        dbg.debug(C,L1,0,"WRITE.  Addr = %llx, Base Addr = %llx, Request size = %i\n",localEventAddr, baseLocalAddr, req->reqEvent->getSize());
+		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
+        for ( int i = 0 ; i < cacheLineSize ; i++ ) resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
+        resp->setGrantedState(E);
+        
+        /* Write the cacheline into the response event payload */
+        /*
+        for ( int i = 0 ; i < req->respSize ; i++ )
+            resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
+        
+        
+        int offset = req->eventAddr - req->eventBaseAddr; assert(offset >= 0);
+        for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
+			resp->getPayload()[offset + i] = req->reqEvent->getPayload()[i];
+		}
+
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
-			memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
+			memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
 		}
-        dbg.output(CALL_INFO, "Writing Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
-                req->size, req->addr,
-                memBuffer[localAddr + 0], memBuffer[localAddr + 1],
-                memBuffer[localAddr + 2], memBuffer[localAddr + 3],
-                memBuffer[localAddr + 4], memBuffer[localAddr + 5],
-                memBuffer[localAddr + 6], memBuffer[localAddr + 7]);
+        */
+        printMemory(req, localEventAddr, localAddr);
+        
 	} else {
-		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) {
-			resp->getPayload()[i] = memBuffer[localAddr + i];
-		}
-        dbg.output(CALL_INFO, "Reading Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
-                req->size, req->addr,
-                memBuffer[localAddr + 0], memBuffer[localAddr + 1],
-                memBuffer[localAddr + 2], memBuffer[localAddr + 3],
-                memBuffer[localAddr + 4], memBuffer[localAddr + 5],
-                memBuffer[localAddr + 6], memBuffer[localAddr + 7]);
+        dbg.debug(C,0,0,"READ.  Addr = %llx, Request size = %i\n",localAddr, req->reqEvent->getSize());
+		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) resp->getPayload()[i] = memBuffer[localAddr + i];
+        resp->setGrantedState(E);
+        printMemory(req, localAddr, localAddr);
 	}
 }
+
 
 
 void MemController::sendBusPacket(Bus::key_t key)
@@ -714,20 +759,37 @@ void MemController::sendResponse(DRAMReq *req)
     if ( use_bus ) {
         busReqs.push_back(req);
         Bus::key_t key = req->respEvent->getID();
-        dbg.output(CALL_INFO, "Requesting bus for event (%"PRIu64", %d)\n", key.first, key.second);
+        dbg.debug(CALL_INFO,6,0, "Requesting bus for event (%"PRIu64", %d)\n", key.first, key.second);
         upstream_link->send(new BusEvent(BusEvent::RequestBus, key));
     } else {
-        upstream_link->send(req->respEvent);
+        if(!req->isWrite){
+            upstream_link->send(req->respEvent);
+        }
         req->status = DRAMReq::DONE;
-        if ( req->respEvent->getCmd() == WriteResp ) numWrites++;
+        if ( req->respEvent->getCmd() == GetXResp || req->respEvent->getCmd() == WriteResp ) numWrites++;
         else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
     }
 }
 
 
+void MemController::printMemory(DRAMReq *req, Addr localEvAddr, Addr localAddr)
+{
+    dbg.debug(C,L1,0,"Resp. Data: ");
+    for(int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%x",(int)memBuffer[localEvAddr + i]);
+    dbg.debug(C,L1,0,"\n");
+    
+    /*dbg.debug(C,L1,0,"Reading Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
+            req->size, req->addr,
+            memBuffer[localAddr + 0], memBuffer[localAddr + 1],
+            memBuffer[localAddr + 2], memBuffer[localAddr + 3],
+            memBuffer[localAddr + 4], memBuffer[localAddr + 5],
+            memBuffer[localAddr + 6], memBuffer[localAddr + 7]);
+            */
+}
+
 void MemController::handleMemResponse(DRAMReq *req)
 {
-    dbg.output(CALL_INFO, "Finishing processing for req 0x%"PRIx64"\n", req->addr);
+    dbg.debug(CALL_INFO, 6,0, "Finishing processing for req 0x%"PRIx64"\n", req->addr);
     req->amt_processed += requestSize;
     if ( req->amt_processed >= req->size ) {
         req->status = DRAMReq::RETURNED;

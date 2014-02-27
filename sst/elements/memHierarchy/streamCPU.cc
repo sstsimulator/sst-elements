@@ -15,6 +15,7 @@
 
 #include <assert.h>
 
+#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/memEvent.h>
@@ -29,9 +30,7 @@ using namespace SST::Interfaces;
 streamCPU::streamCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-	uint32_t verbosity = params.find_integer("verbose", 1);
-
-        out.init("", 0, verbosity, Output::STDOUT);
+    out.init("", 0, 0, Output::NONE);
 
 	// get parameters
 	if ( params.find("workPerCycle") == params.end() ) {
@@ -102,7 +101,7 @@ void streamCPU::handleEvent(Event *ev)
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			out.verbose(CALL_INFO, 0, 1, "%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
+			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
 					getName().c_str(),
 					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
                     requests.size());
@@ -128,7 +127,7 @@ bool streamCPU::clockTic( Cycle_t )
 	// communicate?
 	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
 		if ( requests.size() > 10 ) {
-			out.verbose(CALL_INFO, 0, 1, "%s: Not issuing read.  Too many outstanding requests.\n",
+			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
 		} else {
 
@@ -139,7 +138,7 @@ bool streamCPU::clockTic( Cycle_t )
 
 			bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
 
-			MemEvent *e = new MemEvent(this, nextAddr, doWrite ? WriteReq : ReadReq);
+			MemEvent *e = new MemEvent(this, nextAddr, doWrite ? GetX : GetS);
 			e->setSize(4); // Load 4 bytes
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&nextAddr);
@@ -147,11 +146,11 @@ bool streamCPU::clockTic( Cycle_t )
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			out.verbose(CALL_INFO, 0, 1, "%s: %d Issued %s (%" PRIu64 ") for address 0x%" PRIx64 "\n",
-					getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, nextAddr);
-			//std::cout << getName() << " " << numLS << " issued: " <<
-			//	(doWrite ? "write" : "read") << " (id=" << e->getID().first << ", Addr=" << nextAddr <<
-			//	std::endl;
+			//out.output("%s: %d Issued %s (%"PRIu64") for address 0x%""\n",
+			//		getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, nextAddr);
+			std::cout << getName() << " " << numLS << " issued: " <<
+				(doWrite ? "write" : "read") << " (id=" << e->getID().first << ", Addr=" << nextAddr <<
+				std::endl;
 			num_reads_issued++;
 			nextAddr = (nextAddr + 8);
 

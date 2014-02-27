@@ -61,6 +61,7 @@ class M5 : public SST::IntrospectedComponent
     // flag for fastforwarding
     bool FastForwarding_flag;
 
+    Output* portLinkDbg;
     std::string m_statFile;
 
     // parameters for power modeling

@@ -67,6 +67,10 @@ class MemBackend;
 class MemController : public SST::Component {
 public:
     struct DRAMReq {
+        void setIsWrite(bool write){ isWrite = write; }
+        void setSize(size_t _size){ size = _size; }
+        void setAddr(Addr _addr){ addr = _addr; }
+        void setGetXRespType() { GetXRespType = true; }
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
         MemEvent *reqEvent;
@@ -74,7 +78,13 @@ public:
         bool isWrite;
         bool canceled;
         bool isACK;
-
+        
+        int respSize;
+        Addr eventBaseAddr;
+        Addr eventAddr;
+        Command cmd;
+        bool GetXRespType;
+        
         size_t size;
         size_t amt_in_process;
         size_t amt_processed;
@@ -85,8 +95,8 @@ public:
 
         DRAMReq(MemEvent *ev, const size_t busWidth) :
             reqEvent(new MemEvent(ev)), respEvent(NULL),
-            isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
-            canceled(false), isACK(false),
+            isWrite(ev->getCmd() == SupplyData || ev->getCmd() == GetX || ev->getCmd() == WriteReq || ev->getCmd() == PutM),
+            canceled(false), isACK(false), GetXRespType(false),
             size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
         {
             Addr reqEndAddr = ev->getAddr() + ev->getSize();
@@ -96,6 +106,12 @@ public:
             if ( (reqEndAddr - addr) % busWidth ) num_req++;
 
             size = num_req * busWidth;
+            
+            cmd = ev->getCmd();
+            eventAddr = ev->getAddr();
+            eventBaseAddr = ev->getBaseAddr();
+            respSize = ev->getCacheLineSize();
+            
 #if 0
             printf(
                     "***************************************************\n"
@@ -154,6 +170,8 @@ private:
     void sendResponse(DRAMReq *req);
 
     void handleCubeEvent(SST::Event *event);
+    
+    void printMemory(DRAMReq *req, Addr localEvAddr, Addr localAddr);
 
     bool divert_DC_lookups;
     bool use_dramsim;
@@ -179,6 +197,7 @@ private:
     Addr interleaveSize;
     Addr interleaveStep;
     bool respondToInvalidates;
+    size_t cacheLineSize;
 
 #ifdef HAVE_LIBZ
     gzFile traceFP;
