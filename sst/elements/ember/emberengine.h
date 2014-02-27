@@ -62,6 +62,7 @@ public:
 
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
+	
 
 private:  
 	int thisRank;
@@ -70,6 +71,7 @@ private:
 	uint32_t emptyBufferSize;
 	uint32_t generationPhase;
 	bool printStats;
+	bool continueProcessing;
 
 	std::queue<EmberEvent*> evQueue;
 	EmberGenerator* generator;

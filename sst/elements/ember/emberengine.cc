@@ -85,6 +85,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
+
+	continueProcessing = true;
 }
 
 EmberEngine::~EmberEngine() {
@@ -193,6 +195,8 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 	// Tell the simulator core we are finished and do not need any further
 	// processing to continue
 	primaryComponentOKToEndSim();
+
+	continueProcessing = false;
 }
 
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
@@ -237,19 +241,21 @@ void EmberEngine::checkQueue() {
 }
 
 void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
-	// This issues the next event on the self link
-	// Check the queue, may need refilling
-	checkQueue();
+	if(continueProcessing) {
+		// This issues the next event on the self link
+		// Check the queue, may need refilling
+		checkQueue();
 
-	if(0 == eventCount) {
-		// We are completed so we can now exit
-	} else {
-		EmberEvent* nextEv = evQueue.front();
-		evQueue.pop();
-		eventCount--;
+		if(0 == eventCount) {
+			// We are completed so we can now exit
+		} else {
+			EmberEvent* nextEv = evQueue.front();
+			evQueue.pop();
+			eventCount--;
 
-		// issue the next event to the engine for deliver later
-		selfEventLink->send(nanoDelay, nanoTimeConverter, nextEv);
+			// issue the next event to the engine for deliver later
+			selfEventLink->send(nanoDelay, nanoTimeConverter, nextEv);
+		}
 	}
 }
 
