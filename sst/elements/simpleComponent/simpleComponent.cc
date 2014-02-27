@@ -134,7 +134,8 @@ bool simpleComponent::clockTic( Cycle_t ) {
       e->payload.push_back(1);
     }
     // find target
-    neighbor = (++neighbor) % 4;
+    neighbor = neighbor+1;
+    neighbor = neighbor % 4;
     // send
     switch (neighbor) {
     case 0:
