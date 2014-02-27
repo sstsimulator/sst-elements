@@ -26,6 +26,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Configure the empty buffer ready for use by MPI routines.
 	emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
 	emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
+	for(uint32_t i = 0; i < emptyBufferSize; ++i) {
+		emptyBuffer[i] = 0;
+	}
 
 	// Create the messaging interface we are going to use
 	string msgiface = params.find_string("msgapi");
