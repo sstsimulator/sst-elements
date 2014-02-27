@@ -180,9 +180,9 @@ public:
 		SimTime_t output_latency_cycles, std::string output_latency_timebase) :
 	rtr_id(rtr_id),
 	num_vcs(vcs),
-	vc_heads(vc_heads),
 	topo(topo),
 	port_number(port_number),
+	vc_heads(vc_heads),
 	xbar_in_credits(xbar_in_credits),
 	waiting(true),
 	parent(rif)
