@@ -71,7 +71,7 @@ public:
         L1_ = false;
         protocol_ = _protocol;
         InvReqsSent_ = 0, EvictionInvReqsSent_ = 0;
-        protocol_ = 1;
+        protocol_ = _protocol;
     }
     
     uint InvReqsSent_;

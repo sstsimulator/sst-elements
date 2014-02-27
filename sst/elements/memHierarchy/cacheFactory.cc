@@ -57,7 +57,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     /* Initialization */
     HashFunction* ht = new PureIdHashFunction;
     
-    if(coherenceProtocol == "MESI") protocol = 1;
+    if(coherenceProtocol == "MESI" || coherenceProtocol == "mesi") protocol = 1;
     else protocol = 0;
     
     SST::MemHierarchy::LRUReplacementMgr* replacementManager;
