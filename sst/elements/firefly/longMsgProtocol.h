@@ -76,6 +76,7 @@ class LongMsgProtocol : public CtrlMsg::API  {
     static const uint32_t TagMask       = 0xf0000000;
 
   public:
+    typedef CtrlMsg::CommReq CommReq;
     LongMsgProtocol( Component* owner, Params& );
 
     virtual void setup();

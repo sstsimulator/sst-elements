@@ -110,19 +110,6 @@ Hades::Hades( Component* owner, Params& params ) :
                                                 m_protocolM[ protoNum ];
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_protocolM[ protoNum ]->name().c_str());
 
-    //****************************
-    ++protoNum;
-    tmpParams = params.find_prefix_params("ctrlMsg.");
-    m_protocolM[ protoNum ] = 
-        dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
-                            "firefly.CtrlMsg", owner, tmpParams ) );
-
-    m_protocolM[ protoNum ]->init( &m_info, m_nic->virtNicInit() );
-    m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] = 
-                                                m_protocolM[ protoNum ];
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_protocolM[ protoNum ]->name().c_str());
-
-
     Params funcParams = params.find_prefix_params("functionSM.");
 
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,

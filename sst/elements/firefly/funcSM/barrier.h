@@ -38,7 +38,7 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
         CollectiveTreeFuncSM::handleEnterEvent( retval );
     }
 
-    virtual std::string protocolName() { return "CtrlMsg"; }
+    virtual std::string protocolName() { return "LongMsgProtocol"; }
 };
 
 }

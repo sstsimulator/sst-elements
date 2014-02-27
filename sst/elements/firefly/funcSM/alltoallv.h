@@ -15,7 +15,7 @@
 #include "funcSM/api.h"
 #include "funcSM/event.h"
 #include "info.h"
-#include "ctrlMsg.h"
+#include "longMsgProtocol.h"
 
 namespace SST {
 namespace Firefly {
@@ -54,7 +54,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
 
-    virtual std::string protocolName() { return "CtrlMsg"; }
+    virtual std::string protocolName() { return "LongMsgProtocol"; }
 
   private:
 
@@ -114,10 +114,10 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
+    LongMsgProtocol::API* proto() { return static_cast<LongMsgProtocol::API*>(m_proto); }
 
     AlltoallStartEvent* m_event;
-    CtrlMsg::CommReq    m_recvReq; 
+    LongMsgProtocol::CommReq    m_recvReq; 
     unsigned int        m_count; 
     int                 m_seq;
     unsigned int        m_size;
