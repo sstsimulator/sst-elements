@@ -10,6 +10,7 @@ using namespace SST::Ember;
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
+    generationPhase(0),
 	finalizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedFinalize)),
 	initFunctor(HermesAPIFunctor(this, &EmberEngine::completedInit)),
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
