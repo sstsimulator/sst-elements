@@ -136,7 +136,6 @@ void XXX::unregisterRegion( region_t region, FunctorBase_0<bool>* functor )
 
 void XXX::schedFunctor( FunctorBase_0<bool>* functor, int delay )
 {
-    //printf("XXX sched %d\n",delay);
     m_delayLink->send( delay, new DelayEvent(functor) );
 }
 

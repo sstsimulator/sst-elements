@@ -67,8 +67,6 @@ Nic::Nic(Component* comp, Params &params) :
     m_dbg.verbose(CALL_INFO,1,0,"id=%d num_vcs=%d buffer_size=%d link_bw=%s\n",
                 m_myNodeId, m_num_vcs, buffer_size, link_bw.c_str());
 
-    printf("buffer_size %d\n",buffer_size);
-
     std::vector<int> buf_size;
     buf_size.resize(m_num_vcs);
     for ( unsigned int i = 0; i < buf_size.size(); i++ ) {
