@@ -40,12 +40,12 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 
 static const ElementInfoParam cache_params[] = {
     {"cache_frequency",         "Cache Frequency.  Usually the same as the CPU's frequency"},
-    {"cache_size",              "Size in bytes.  Eg.  4KB or 1MB \n"},
-    {"associativity",           "Specifies the cache associativity. In set associative caches, this is the number of ways.\n"},
-    {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. \n"},
-    {"cache_line_size",         "Size of a cache block in bytes.\n"},
-    {"low_network_links",       "Number lower level caches are connected to this cache. This is usually the number of banks in the next level cache (closer to the main memory).\n"},
-    {"high_network_links",      "Number higher level caches are connected to this cache (closer to the CPU).\n"},
+    {"cache_size",              "Size in bytes.  Eg.  4KB or 1MB "},
+    {"associativity",           "Specifies the cache associativity. In set associative caches, this is the number of ways."},
+    {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. "},
+    {"cache_line_size",         "Size of a cache block in bytes."},
+    {"low_network_links",       "Number lower level caches are connected to this cache. This is usually the number of banks in the next level cache (closer to the main memory)."},
+    {"high_network_links",      "Number higher level caches are connected to this cache (closer to the CPU)."},
     {"access_latency_cycles",   "Access Latency (in Cycles) taken to lookup data in the cache."},
     {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
     {"mshr_num_entries",        "Number of entries in the MSHR"},
