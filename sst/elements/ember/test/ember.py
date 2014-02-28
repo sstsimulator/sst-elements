@@ -9,13 +9,15 @@ print 'Number of arguments:', len(sys.argv), 'arguments.'
 iterations = 1;
 msgSize = 0;
 motif = "PingPong"
+shape = "2"
 
 def main():
     global iterations
     global msgSize
     global motif
+    global shape
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape="])
     except getopt.GetopError as err:
         print str(err)
         sys.exit(2)
@@ -26,6 +28,8 @@ def main():
             msgSize = a
         elif o in ("--motif"):
             motif = a
+        elif o in ("--shape"):
+            shape = a
         else:
             assert False, "unhandle option" 
 
@@ -33,7 +37,28 @@ main()
 
 motif = "ember.Ember" + motif + "Generator"
 
-print motif
+def calcNumRanks( shape ):
+    tmp = shape.split( 'x' )  
+    num = 1
+    for d in tmp:
+        num = num * int(d)
+    return num 
+
+def calcNumDim( shape ):
+    return len( shape.split( 'x' ) ) 
+
+def calcWidth( shape ):
+    tmp = len( shape.split( 'x' ) ) - 1
+    retval = "1"
+    count = 0
+    while ( count < tmp ):
+        retval += "x1" 
+        count  += 1
+    return retval 
+
+numRanks = calcNumRanks( shape )
+numDim = calcNumDim( shape )
+width = calcWidth( shape )
 
 sst.merlin._params["link_lat"] = "40ns"
 sst.merlin._params["link_bw"] = "560Mhz"
@@ -43,9 +68,9 @@ sst.merlin._params["output_latency"] = "25ns"
 sst.merlin._params["input_buf_size"] = 128
 sst.merlin._params["output_buf_size"] = 128
 
-sst.merlin._params["num_dims"] = 3 
-sst.merlin._params["torus:shape"] = "2x2x2"
-sst.merlin._params["torus:width"] = "1x1x1"
+sst.merlin._params["num_dims"] = numDim 
+sst.merlin._params["torus:shape"] = shape 
+sst.merlin._params["torus:width"] = width 
 sst.merlin._params["torus:local_ports"] = 1
 
 nicParams = ({ 
@@ -72,7 +97,7 @@ driverParams = ({
 		"generator" : motif,
 		"generatorParams.messagesize" : msgSize,
 		"generatorParams.iterations" : iterations,
-		"hermesParams.numRanks"  : 8,
+		"hermesParams.numRanks"  : numRanks,
 		"hermesParams.nidListFile" : "nidlist.txt",
 		"hermesParams.nicModule" : "firefly.nic",
 		"hermesParams.policy" : "adjacent",
