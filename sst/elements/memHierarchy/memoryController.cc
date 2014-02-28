@@ -266,8 +266,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 
     bool tfFound = false;
     std::string traceFile = params.find_string("traceFile", "", tfFound);
-    if ( tfFound ) {
-        traceFP = fopen(traceFile.c_str(), "w+");
+	if ( tfFound ) {
+#ifdef HAVE_LIBZ
+		traceFP = gzopen(traceFile.c_str(), "w");
+		gzsetparams(traceFP, 9, Z_DEFAULT_STRATEGY);
+#else
+		traceFP = fopen(traceFile.c_str(), "w+");
+#endif
     } else {
         traceFP = NULL;
     }
