@@ -118,6 +118,32 @@ void EmberEngine::finish() {
 				histoCompute->getBinByIndex(i));
 		}
 
+		output.output("- Histogram of send times:\n");
+		output.output("-> Total time:     %" PRIu64 "\n", histoSend->getValuesSummed());
+		output.output("-> Item count:     %" PRIu64 "\n", histoSend->getItemCount());
+		output.output("-> Average:        %" PRIu64 "\n",
+			histoSend->getItemCount() == 0 ? 0 :
+			(histoSend->getValuesSummed() / histoSend->getItemCount()));
+
+		for(uint32_t i = 0; i < histoSend->getBinCount(); ++i) {
+			printHistoBin(histoSend->getBinStart() + i * histoSend->getBinWidth(),
+				histoSend->getBinWidth(),
+				histoSend->getBinByIndex(i));
+		}
+
+		output.output("- Histogram of recv times:\n");
+		output.output("-> Total time:     %" PRIu64 "\n", histoRecv->getValuesSummed());
+		output.output("-> Item count:     %" PRIu64 "\n", histoRecv->getItemCount());
+		output.output("-> Average:        %" PRIu64 "\n",
+			histoRecv->getItemCount() == 0 ? 0 :
+			(histoRecv->getValuesSummed() / histoRecv->getItemCount()));
+
+		for(uint32_t i = 0; i < histoRecv->getBinCount(); ++i) {
+			printHistoBin(histoRecv->getBinStart() + i * histoRecv->getBinWidth(),
+				histoRecv->getBinWidth(),
+				histoRecv->getBinByIndex(i));
+		}
+
 	}
 }
 
@@ -172,7 +198,7 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 		ev->getTag(), ev->getCommunicator(),
 		&sendFunctor);
 
-	accumulateTime = histoSend;
+	accumulateTime = histoRecv;
 }
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
