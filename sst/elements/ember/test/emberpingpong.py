@@ -2,14 +2,18 @@
 import sst
 from sst.merlin import *
 
-sst.merlin._params["link_lat"] = "10ns"
-sst.merlin._params["link_bw"] = "1Ghz"
-sst.merlin._params["xbar_bw"] = "1Ghz"
+sst.merlin._params["link_lat"] = "40ns"
+sst.merlin._params["link_bw"] = "560Mhz"
+sst.merlin._params["xbar_bw"] = "560Mhz"
+sst.merlin._params["input_latency"] = "25ns"
+sst.merlin._params["output_latency"] = "25ns"
+sst.merlin._params["input_buf_size"] = 128
+sst.merlin._params["output_buf_size"] = 128
 
 sst.merlin._params["num_dims"] = 3
 sst.merlin._params["torus:shape"] = "2x2x2"
 sst.merlin._params["torus:width"] = "1x1x1"
-sst.merlin._params["torus:local_ports"] = 1 
+sst.merlin._params["torus:local_ports"] = 1
 
 nicParams = ({ 
 		"hermesParams.nicParams.debug" : 0,
@@ -17,11 +21,16 @@ nicParams = ({
 		"hermesParams.nicParams.module" : "merlin.linkcontrol",
 		"hermesParams.nicParams.topology" : "merlin.torus",
 		"hermesParams.nicParams.num_vcs" : 2,
-		"hermesParams.nicParams.link_bw" : "1Ghz"
+		"hermesParams.nicParams.link_bw" : "560Mhz",
+		"hermesParams.nicParams.buffer_size" : 128,
+		"hermesParams.nicParams.txBusDelay_ns" : 150,
+		"hermesParams.nicParams.rxBusDelay_ns" : 150,
+		"hermesParams.nicParams.rxMatchDelay_ns" : 100,
+		"hermesParams.nicParams.txDelay_ns" : 100,
 	})
 
 driverParams = ({
-		"debug" : 1,
+		"debug" : 0,
 		"verbose" : 2,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
@@ -35,7 +44,19 @@ driverParams = ({
 		"hermesParams.nicModule" : "firefly.nic",
 		"hermesParams.policy" : "adjacent",
 		"hermesParams.nodeParams.numCores" : 1,
-		"hermesParams.nodeParams.coreNum" : 0
+		"hermesParams.nodeParams.coreNum" : 0,
+		"hermesParams.functionSM.defaultDebug" : 0,
+		"hermesParams.functionSM.defaultVerbose" : 1,
+		"hermesParams.longMsgProtocol.shortMsgLength" : 40000,
+		"hermesParams.longMsgProtocol.debug" : 0,
+		"hermesParams.longMsgProtocol.verboseLevel" : 1,
+		"hermesParams.longMsgProtocol.matchDelay_ps" : 0,
+		"hermesParams.longMsgProtocol.memcpyDelay_ps" : 200,
+		"hermesParams.longMsgProtocol.txDelay_ns" : 300,
+		"hermesParams.longMsgProtocol.rxDelay_ns" : 300,
+		"hermesParams.longMsgProtocol.regRegionBaseDelay_ps" : 10000000,
+		"hermesParams.longMsgProtocol.regRegionPerByteDelay_ps" : 28,
+		"hermesParams.longMsgProtocol.regRegionXoverLength" : 4096,
 	})
 
 class EmberEP(EndPoint):
