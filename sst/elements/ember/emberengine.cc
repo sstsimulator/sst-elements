@@ -198,7 +198,7 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 		ev->getTag(), ev->getCommunicator(),
 		&sendFunctor);
 
-	accumulateTime = histoRecv;
+	accumulateTime = histoSend;
 }
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
