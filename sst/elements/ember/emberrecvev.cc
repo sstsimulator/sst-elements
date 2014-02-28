@@ -36,7 +36,7 @@ int EmberRecvEvent::getTag() {
 
 std::string EmberRecvEvent::getPrintableString() {
 	char buffer[128];
-	sprintf(buffer, "Recv Event (Recv from rank=%" PRIu32 ", Size=%" PRIu32 " bytes, tag=%d\n",
+	sprintf(buffer, "Recv Event (Recv from rank=%" PRIu32 ", Size=%" PRIu32 " bytes, tag=%d",
 		rank, recvSizeBytes, recvTag);
 	std::string bufferStr = buffer;
 	return bufferStr;

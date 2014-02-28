@@ -36,7 +36,7 @@ Communicator EmberSendEvent::getCommunicator() {
 
 std::string EmberSendEvent::getPrintableString() {
 	char buffer[256];
-	sprintf(buffer, "Send Event (Send to Rank=%" PRIu32 ", Message Size=%" PRIu32 " bytes, Tag=%d, Communicator=%" PRIu32 "\n",
+	sprintf(buffer, "Send Event (Send to Rank=%" PRIu32 ", Message Size=%" PRIu32 " bytes, Tag=%d, Communicator=%" PRIu32 ,
 		rank, sendSizeBytes, sendTag, comm);
 	std::string bufferStr = buffer;
 	return bufferStr;

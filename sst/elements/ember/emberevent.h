@@ -2,7 +2,6 @@
 #ifndef _H_EMBER_EVENT
 #define _H_EMBER_EVENT
 
-#include <sst_config.h>
 #include <sst/core/event.h>
 #include <stdint.h>
 #include <string>
