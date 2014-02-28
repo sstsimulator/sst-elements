@@ -4,8 +4,6 @@ from sst.merlin import *
  
 import sys,getopt
 
-print 'Number of arguments:', len(sys.argv), 'arguments.'
-
 iterations = 1;
 msgSize = 0;
 motif = "PingPong"
