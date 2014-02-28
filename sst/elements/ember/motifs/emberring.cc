@@ -27,19 +27,18 @@ void EmberRingGenerator::generate(const SST::Output* output, const uint32_t phas
 
     uint32_t to = mod(rank + 1, size), from = mod( rank - 1, size );
 	if(phase < iterations) {
+
+		EmberSendEvent* send = new EmberSendEvent((uint32_t) to, messageSize, 0, (Communicator) 0);
+		EmberRecvEvent* recv = new EmberRecvEvent((uint32_t) from, messageSize, 0, (Communicator) 0);
+
 		if(0 == rank) {
-			EmberSendEvent* zeroSend = new EmberSendEvent((uint32_t) to, messageSize, 0, (Communicator) 0);
-			EmberRecvEvent* zeroRecv = new EmberRecvEvent((uint32_t) from, messageSize, 0, (Communicator) 0);
-
-			evQ->push(zeroSend);
-			evQ->push(zeroRecv);
+			evQ->push(send);
+			evQ->push(recv);
 		} else {
-			EmberSendEvent* oneSend = new EmberSendEvent((uint32_t) to, messageSize, 0, (Communicator) 0);
-			EmberRecvEvent* oneRecv = new EmberRecvEvent((uint32_t) from, messageSize, 0, (Communicator) 0);
-
-			evQ->push(oneRecv);
-			evQ->push(oneSend);
+			evQ->push(recv);
+			evQ->push(send);
 		}
+
 	} else {
 		EmberFinalizeEvent* finalize = new EmberFinalizeEvent();
 		evQ->push(finalize);
