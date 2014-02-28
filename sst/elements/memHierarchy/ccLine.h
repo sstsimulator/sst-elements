@@ -26,7 +26,7 @@ public:
     }
 
     void setState(TCC_MESIState _newState) {
-        d_->debug(C,L1,0, "Change States: Base Addr = %#016llx, Old State = %s, New State = %s\n",
+        d_->debug(C,L1,0, "Change States: Base Addr = %#016lx, Old State = %s, New State = %s\n",
                   baseAddr_, TccLineString[state_], TccLineString[_newState]);
         state_ = _newState;
         if(_newState == V) assert(getAckCount() == 0);
@@ -74,7 +74,7 @@ public:
         assert(ackCount_ == 0);
     }
     void assertSharers(){
-        int count = 0;
+        unsigned int count = 0;
         for(int i = 0; i < 128; i++){
             if(sharers_[i]) count++;
         }
@@ -100,7 +100,7 @@ public:
     }
 
     void clear() {
-        d_->debug(C,L2,0, "Cleared ccLine\n", numSharers_);
+        d_->debug(C,L2,0, "Clearing ccLine\n");
         numSharers_ = 0;
         sharers_.reset();            
         exclusiveSharerExists_ = false;

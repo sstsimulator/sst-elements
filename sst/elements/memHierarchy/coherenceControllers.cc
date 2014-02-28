@@ -48,7 +48,7 @@ inline bool CoherencyController::sendResponse(MemEvent *_event, BCC_MESIState _n
     }
     if(L1_ && (cmd == GetS || cmd == GetSEx)) printData(d_, "Response Data", _data, offset, (int)_event->getSize());
     else printData(d_, "Response Data", _data);
-    d_->debug(_L1_,"Sending Response:  Addr = %#016llx,  Dst = %s, Size = %i, Granted State = %s\n", (uint64_t)_event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    d_->debug(_L1_,"Sending Response:  Addr = %#016lx,  Dst = %s, Size = %i, Granted State = %s\n", (uint64_t)_event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     Link* deliveryLink = _event->getDeliveryLink();
     uint64_t deliveryTime = _event->queryFlag(MemEvent::F_UNCACHED) ? timestamp_ : timestamp_ + accessLatency_;
     response resp = {deliveryLink, responseEvent, deliveryTime, true};
@@ -61,10 +61,9 @@ inline bool CoherencyController::sendAckResponse(MemEvent *_event){
     Link* deliveryLink = _event->getDeliveryLink();
     MemEvent *responseEvent;
     Command cmd = _event->getCmd();
-    if (cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS){
-        responseEvent = _event->makeResponse((SST::Component*)owner_);
-    }
-    d_->debug(_L1_,"Sending Ack Response:  Addr = %#016llx, Cmd = %s \n", (uint64_t)responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
+    assert(cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS);
+    responseEvent = _event->makeResponse((SST::Component*)owner_);
+    d_->debug(_L1_,"Sending Ack Response:  Addr = %#016lx, Cmd = %s \n", (uint64_t)responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
     response resp = {deliveryLink, responseEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
     return true;

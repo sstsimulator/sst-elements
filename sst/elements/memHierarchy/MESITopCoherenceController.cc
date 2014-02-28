@@ -79,7 +79,6 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
 
 void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
     CCLine* l = ccLines_[_cacheLine->index()];
-    Command newCmd;
     if(!l->exclusiveSharerExists() && l->numSharers() == 0) return;
 
     switch(_cmd){
@@ -149,7 +148,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, int r
     assert(!ccLine->isShareless());  //no sharers for this address in the cache
     unsigned int sentInvalidates = 0;
     
-    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %#016llx\n", ccLine->numSharers(), (uint64_t)ccLine->getBaseAddr());
+    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %#016lx\n", ccLine->numSharers(), (uint64_t)ccLine->getBaseAddr());
     MemEvent* invalidateEvent; 
         for(vector<Link*>::iterator it = childrenLinks_->begin(); it != childrenLinks_->end(); it++){
             Link* link = *it;

@@ -40,8 +40,6 @@ void MESIBottomCC::handleEviction(MemEvent* event, CacheLine* wbCacheLine){
 
 
 void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
-    BCC_MESIState state = _cacheLine->getState();
-    
     switch(_cmd){
     case GetS:
         processGetSRequest(_event, _cacheLine);
@@ -257,7 +255,7 @@ inline void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsig
 
     Command cmd = _event->getCmd();
     MemEvent* forwardEvent;
-    d_->debug(_L1_,"Forwarding Message: Addr = %#016llx, BaseAddr = %#016llx, Cmd = %s, Size = %i \n",
+    d_->debug(_L1_,"Forwarding Message: Addr = %#016lx, BaseAddr = %#016lx, Cmd = %s, Size = %i \n",
              (uint64_t)_event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize());
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, _lineSize);
@@ -281,7 +279,7 @@ inline void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, 
     response resp = {deliveryLink, responseEvent, timestamp_ + accessLatency_, true};
     outgoingEventQueue_.push(resp);
     
-    d_->debug(_L1_,"Sending %s Response Message: Addr = %#016llx, BaseAddr = %#016llx, Cmd = %s, Size = %i \n",
+    d_->debug(_L1_,"Sending %s Response Message: Addr = %#016lx, BaseAddr = %#016lx, Cmd = %s, Size = %i \n",
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
@@ -331,9 +329,9 @@ void MESIBottomCC::printStats(int _stats, uint64_t _GetSExReceived,
     dbg->output(C,"PUTS sent due to evictions: %u\n", EvictionPUTSReqSent_);
     dbg->output(C,"PUTM sent due to evictions: %u\n", EvictionPUTMReqSent_);
     dbg->output(C,"PUTM sent due to invalidations: %u\n", InvalidatePUTMReqSent_);
-    dbg->output(C,"Invalidates recieved that locked due to user atomic lock: %u\n", _invalidateWaitingForUserLock);
-    dbg->output(C,"Total instructions recieved: %u\n", _totalInstReceived);
-    dbg->output(C,"Memory requests received (non-coherency related): %u\n\n", _nonCoherenceReqsReceived);
+    dbg->output(C,"Invalidates recieved that locked due to user atomic lock: %lu\n", _invalidateWaitingForUserLock);
+    dbg->output(C,"Total instructions recieved: %lu\n", _totalInstReceived);
+    dbg->output(C,"Memory requests received (non-coherency related): %lu\n\n", _nonCoherenceReqsReceived);
 }
 
 inline void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){

@@ -30,7 +30,7 @@ bool Cache::MSHR::insertPointer(Addr keyAddr, Addr pointerAddr){
 
 //TODO: send if this returns false;
 bool Cache::MSHR::insert(Addr baseAddr, MemEvent* event){
-    cache_->d_->debug(C,L5,0, "MSHR Event Inserted: Key Addr = %#016llx, Event Addr = %#016llx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, (uint64_t)event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].size());
+    cache_->d_->debug(C,L5,0, "MSHR Event Inserted: Key Addr = %#016lx, Event Addr = %#016lx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, (uint64_t)event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].size());
     return insert(baseAddr, new mshrType(event));
 }
 
@@ -125,7 +125,7 @@ void Cache::MSHR::removeElement(Addr baseAddr, mshrType* mshrEntry){
 
     mshrTable::iterator it = map_.find(baseAddr);
     if(it == map_.end()) return;    
-    cache_->d_->debug(C,0,0, "MSHR Entry size = %d\n", it->second.size());
+    cache_->d_->debug(C,0,0, "MSHR Entry size = %lu\n", it->second.size());
     vector<mshrType*>& res = it->second;
     vector<mshrType*>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(mshrEntry));
     

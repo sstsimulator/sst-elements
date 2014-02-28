@@ -64,7 +64,7 @@ void Cache::init(unsigned int phase){
 
     for(uint idc = 0; idc < childrenLinks_->size(); idc++) {
         SST::Event *ev;// = (childrenLinks_->at(idc))->recvInitData();
-        while (ev = (childrenLinks_->at(idc))->recvInitData()){
+        while ((ev = (childrenLinks_->at(idc))->recvInitData())){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
             if(!memEvent) delete memEvent;
             else{
@@ -94,7 +94,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         d_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %#016llx, BsAddr: %#016llx, Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %i... %s \n", this->getName().c_str(), CommandString[event->getCmd()], (uint64_t)addr, (uint64_t)baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %#016lx, BsAddr: %#016lx, Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %lu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], (uint64_t)addr, (uint64_t)baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
     if(uncached){
         processUncached(event, cmd, baseAddr);
         return;

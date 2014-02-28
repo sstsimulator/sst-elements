@@ -689,14 +689,14 @@ void MemController::performRequest(DRAMReq *req)
     resp->setSize(cacheLineSize);  //TODO: make this a full cacheline, not just 64
 	if ( req->isWrite || req->cmd == PutM) {
         /* Write request to memory */
-        dbg.debug(C,L1,0,"WRITE.  Addr = %llx, Base Addr = %llx, Request size = %i\n",localEventAddr, baseLocalAddr, req->reqEvent->getSize());
+        dbg.debug(C,L1,0,"WRITE.  Addr = %lx, Base Addr = %lx, Request size = %i\n",localEventAddr, baseLocalAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
         //for ( int i = 0 ; i < cacheLineSize ; i++ ) resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
         
         printMemory(req, localEventAddr, localAddr);
         
 	} else {
-        dbg.debug(C,0,0,"READ.  Addr = %llx, Request size = %i\n",localAddr, req->reqEvent->getSize());
+        dbg.debug(C,0,0,"READ.  Addr = %lx, Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) resp->getPayload()[i] = memBuffer[localAddr + i];
 
         if(!req->returnInM){
@@ -780,7 +780,7 @@ void MemController::sendResponse(DRAMReq *req)
 void MemController::printMemory(DRAMReq *req, Addr localEvAddr, Addr localAddr)
 {
     dbg.debug(C,L1,0,"Resp. Data: ");
-    for(int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%x",(int)memBuffer[localEvAddr + i]);
+    for(unsigned int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%d",(int)memBuffer[localEvAddr + i]);
     dbg.debug(C,L1,0,"\n");
     
     /*dbg.debug(C,L1,0,"Reading Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",

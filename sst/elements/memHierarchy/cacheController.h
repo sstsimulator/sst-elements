@@ -178,7 +178,7 @@ private:
     inline bool isCachelineLockedByUser(CacheLine* cacheLine);
     inline bool checkRequestValidity(MemEvent* event, Addr baseAddr) throw(stallException);
 
-    inline bool evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (stallException);
+    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (stallException);
     inline bool isCandidateInTransition(CacheLine* wbCacheLine);
     inline void candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException);
     inline bool writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr baseAddr);
@@ -187,7 +187,7 @@ private:
     inline bool isCacheLineAllocated(int lineIndex);
     inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool reActivation);
 
-    inline bool retryRequestLater(MemEvent* event, Addr baseAddr);
+    inline void retryRequestLater(MemEvent* event, Addr baseAddr);
     inline TopCacheController::CCLine* getCCLine(int index);
     inline bool isCacheLineValidAndWaitingForAck(Addr baseAddr, int lineIndex);
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool reActivation);

@@ -139,7 +139,7 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr baseAddr){
 
 
 /* Evict cache line if necessary.  TopCC sends invalidates to lower level caches */
-bool Cache::evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
+void Cache::evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
     bool invalidatesSent = topCC_->handleEviction(wbCacheLine->index(), wbCacheLine->getState());
     if(invalidatesSent){
         mshr_->insertPointer(wbCacheLine->getBaseAddr(), requestBaseAddr); //insert pointer
@@ -175,10 +175,10 @@ void Cache::replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineInd
 
 
 void Cache::candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
-    d_->debug(_L1_,"Replacement cache needs to be evicted. WbAddr: %#016llx, St: %s\n", (uint64_t)wbCacheLine->getBaseAddr(), BccLineString[wbCacheLine->getState()]);
+    d_->debug(_L1_,"Replacement cache needs to be evicted. WbAddr: %#016lx, St: %s\n", (uint64_t)wbCacheLine->getBaseAddr(), BccLineString[wbCacheLine->getState()]);
     
     if(wbCacheLine->isLockedByUser()){
-        d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %016llx\n", wbCacheLine->getBaseAddr());
+        d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %016lx\n", wbCacheLine->getBaseAddr());
         retryRequestLater(event, requestBaseAddr);
         throw stallException();
     }
@@ -255,7 +255,7 @@ void Cache::activatePrevEvents(Addr baseAddr){
     for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
         if((*it)->elem.type() == typeid(Addr)){                             /* Pointer Type */
             Addr pointerAddr = boost::get<Addr>((*it)->elem);  
-            d_->debug(_L3_,"Pointer Addr: %#016llx\n", pointerAddr);
+            d_->debug(_L3_,"Pointer Addr: %#016lx\n", pointerAddr);
             if(!mshr_->isHit(pointerAddr)){ mshrEntry.erase(it); continue;} /* Entry has been already been processed */
             vector<mshrType*> pointerMSHR = mshr_->remove(pointerAddr);
 
@@ -276,7 +276,7 @@ void Cache::activatePrevEvents(Addr baseAddr){
 
 
 bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType*>& mshrEntry, Addr addr, vector<mshrType*>::iterator it, int i){
-    d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %#016llx, addr: %#016llx, dst: %s\n", i, CommandString[event->getCmd()], (uint64_t)toBaseAddr(event->getAddr()), (uint64_t)event->getAddr(), event->getDst().c_str());
+    d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %#016lx, addr: %#016lx, dst: %s\n", i, CommandString[event->getCmd()], (uint64_t)toBaseAddr(event->getAddr()), (uint64_t)event->getAddr(), event->getDst().c_str());
     d_->debug(_L1_,"--------------------------------------\n");
     this->processEvent(event, true);
     d_->debug(_L1_,"--------------------------------------\n");
@@ -356,7 +356,7 @@ void Cache::pMembers(){
     d_->debug(_INFO_,"MSHR entries:  %d \n\n", MSHRSize_);
 }
 
-bool Cache::retryRequestLater(MemEvent* event, Addr baseAddr){
+void Cache::retryRequestLater(MemEvent* event, Addr baseAddr){
     mshr_->removeElement(baseAddr, event);
     retryQueueNext_.push_back(event);
 }

@@ -48,14 +48,14 @@ public:
     virtual void sendOutgoingCommands() = 0;
     
 protected:
-    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize): owner_(_cache), d_(_dbg),
-                        lineSize_(_lineSize), sentEvents_(0), timestamp_(0), accessLatency_(1){}
+    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize): timestamp_(0), accessLatency_(1),
+                        owner_(_cache), d_(_dbg), lineSize_(_lineSize), sentEvents_(0){}
     ~CoherencyController(){}
     const Cache* owner_;
     Output*    d_;
     uint       lineSize_;
-    bool       L1_;
     int        sentEvents_;
+    bool       L1_;
     queue<response> outgoingEventQueue_;
 };
 
