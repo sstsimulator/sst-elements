@@ -10,6 +10,7 @@
 #include "sst/core/params.h"
 
 #include "motifs/emberpingpong.h"
+#include "motifs/emberring.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -24,6 +25,11 @@ create_EmberComponent(SST::ComponentId_t id,
 static Module*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
+}
+
+static Module*
+load_Ring( Component* comp, Params& params ) {
+	return new EmberRingGenerator(comp, params);
 }
 
 static const ElementInfoParam component_params[] = {
@@ -41,6 +47,13 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_PingPong,
+	NULL
+    },
+    { 	"EmberRingGenerator",
+	"Performs a Ring Motif",
+	NULL,
+	NULL,
+	load_Ring,
 	NULL
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL  }
