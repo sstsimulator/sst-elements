@@ -36,19 +36,14 @@ bool Cache::clockTick(Cycle_t time) {
         }
     }
     else{
+        
         //if(!L1_){
-        //if((timestamp_ % 100000) == 0) std::cout << "Cache Queue Size: " << upperEventQueue_.size() << std::endl;
         if(!upperEventQueue_.empty()){  //TODO: don't call this upperEventQueue.. check where it is being used
             processEvent(upperEventQueue_.front().first, false);
             upperEventQueue_.pop();
         }
-        //}
-        //else{
-        //while(!upperEventQueue_.empty()){  //TODO: don't call this upperEventQueue.. check where it is being used
-        //    processEvent(upperEventQueue_.front().first, false);
-        //    upperEventQueue_.pop();
-        //}
-        //}
+       // TODO:  Logic for <Tag Copies> goes here
+       
     }
     
     return false;
@@ -94,7 +89,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         d_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %#016lx, BsAddr: %#016lx, Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %lu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], (uint64_t)addr, (uint64_t)baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %#016llx, BsAddr: %#016llx, Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], (uint64_t)addr, (uint64_t)baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
     if(uncached){
         processUncached(event, cmd, baseAddr);
         return;

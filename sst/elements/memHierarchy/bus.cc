@@ -108,12 +108,12 @@ void Bus::printStatus(Output &out)
     out.output("MemHierarchy::Bus %s\n", getName().c_str());
     out.output("\tStatus: %s\n", busBusy ? "BUSY" : "IDLE");
     if ( busBusy ) {
-        out.output("\tCurrent Message:\tLink %ld,  key:  (%"PRIu64", %d)\n",
+        out.output("\tCurrent Message:\tLink %ld,  key:  (%#016llx, %d)\n",
                 activePort.first, activePort.second.first, activePort.second.second);
     }
     out.output("\tQueue Depth:\t%zu\n", busRequests.size());
     for ( std::deque<std::pair<LinkId_t, key_t> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
-        out.output("\t\tLink %ld,  key:  (%"PRIu64", %d)\n", i->first, i->second.first, i->second.second);
+        out.output("\t\tLink %ld,  key:  (%#016llx, %d)\n", i->first, i->second.first, i->second.second);
     }
 
 
@@ -123,7 +123,7 @@ void Bus::requestPort(LinkId_t link_id, key_t key)
 {
 
 	busRequests.push_back(std::make_pair(link_id, key));
-	dbg.output(CALL_INFO, "(%lu, (%"PRIu64", %d)) [active = %lu] queue depth = %zu \n", link_id, key.first, key.second, activePort.first, busRequests.size());
+	dbg.output(CALL_INFO, "(%lu, (%#016llx, %d)) [active = %lu] queue depth = %zu \n", link_id, key.first, key.second, activePort.first, busRequests.size());
 
 	if ( BUS_INACTIVE == activePort.first ) {
 		// Nobody's active.  Schedule it.
@@ -134,7 +134,7 @@ void Bus::requestPort(LinkId_t link_id, key_t key)
 
 void Bus::cancelPortRequest(LinkId_t link_id, key_t key)
 {
-	dbg.output(CALL_INFO, "(%lu, (%"PRIu64", %d)) [active = %lu]\n", link_id, key.first, key.second, activePort.first);
+	dbg.output(CALL_INFO, "(%lu, (%#016llx, %d)) [active = %lu]\n", link_id, key.first, key.second, activePort.first);
 
     if ( link_id == activePort.first && (key == activePort.second || ANY_KEY == key )) {
         dbg.output(CALL_INFO, "Canceling active.  Rescheduling\n");
@@ -145,7 +145,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, key_t key)
     for ( std::deque<std::pair<LinkId_t, key_t> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
         if ( i->first == link_id && i->second == key) {
             busRequests.erase(i);
-            dbg.output(CALL_INFO, "Canceling (%lu, (%"PRIu64", %d)\n", link_id, key.first, key.second);
+            dbg.output(CALL_INFO, "Canceling (%lu, (%#016llx, %d)\n", link_id, key.first, key.second);
             break;
         }
     }
@@ -156,7 +156,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, key_t key)
 
 void Bus::sendMessage(BusEvent *ev, LinkId_t from_link)
 {
-    dbg.output(CALL_INFO, "(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
+    dbg.output(CALL_INFO, "(%s -> %s: (%#016llx, %d) %s %#016llx) [active = %lu]\n",
             ev->payload->getSrc().c_str(), ev->payload->getDst().c_str(),
             ev->payload->getID().first, ev->payload->getID().second,
             CommandString[ev->payload->getCmd()], ev->payload->getAddr(),
@@ -169,7 +169,7 @@ void Bus::sendMessage(BusEvent *ev, LinkId_t from_link)
     assert(!busBusy);
 
     if ( ev->key != activePort.second ) {
-        _abort(Bus, "Port %ld sent us key (%"PRIu64", %d), but key (%"PRIu64", %d) is active.\n",
+        _abort(Bus, "Port %ld sent us key (%#016llx, %d), but key (%#016llx, %d) is active.\n",
                 from_link, ev->key.first, ev->key.second, activePort.second.first, activePort.second.second);
     }
 
@@ -230,7 +230,7 @@ void Bus::schedule(void)
     std::pair<LinkId_t, key_t> next_id = arbitrateNext();
 	if ( BUS_INACTIVE != next_id.first ) {
 		activePort = next_id;
-		dbg.output(CALL_INFO, "Setting activePort = (%lu, (%"PRIu64", %d))\n", activePort.first, activePort.second.first, activePort.second.second);
+		dbg.output(CALL_INFO, "Setting activePort = (%lu, (%#016llx, %d))\n", activePort.first, activePort.second.first, activePort.second.second);
 		linkMap[next_id.first]->send(new BusEvent(BusEvent::ClearToSend, activePort.second));
 	}
 }

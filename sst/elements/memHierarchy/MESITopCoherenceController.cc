@@ -148,7 +148,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, int r
     assert(!ccLine->isShareless());  //no sharers for this address in the cache
     unsigned int sentInvalidates = 0;
     
-    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %#016lx\n", ccLine->numSharers(), (uint64_t)ccLine->getBaseAddr());
+    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %#016llx\n", ccLine->numSharers(), (uint64_t)ccLine->getBaseAddr());
     MemEvent* invalidateEvent; 
         for(vector<Link*>::iterator it = childrenLinks_->begin(); it != childrenLinks_->end(); it++){
             Link* link = *it;
@@ -185,7 +185,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     if(l->isShareless() && (state == E || state == M)){
         if(protocol_){
             l->setExclusiveSharer(_childId);
-            ret = sendResponse(_event, E, data, _childId);      //TODO: l->setExclusiveSharer(_childId);  TODO:  only when E is working, right now data is sent as "S" not "E"
+            ret = sendResponse(_event, E, data, _childId);
         }
         else{
             l->addSharer(_childId);
@@ -194,7 +194,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     }
     /*if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_childId);
-        ret = sendResponse(_event, E, data, _childId);      //TODO: l->setExclusiveSharer(_childId);  TODO:  only when E is working, right now data is sent as "S" not "E"
+        ret = sendResponse(_event, E, data, _childId);
     }
     */
     /* If exclusive sharer exists, downgrade it to S state */
@@ -207,7 +207,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
-        l->addSharer(_childId);                             //TODO l->clearExclusiveSharer(_childId);
+        l->addSharer(_childId);
         ret = sendResponse(_event, S, data, _childId);
     }
     else{
@@ -223,7 +223,7 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* Invalidate any exclusive sharers before responding to GetX request */
     if(ccLine->exclusiveSharerExists()){
         d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
-        ccLine->setState(Inv_A);            //M_A state now; wait for invalidate acks
+        ccLine->setState(Inv_A);         
         sendInvalidates(Inv, lineIndex, false, _childId, true);
         return;
     }
@@ -270,5 +270,46 @@ int MESITopCC::getChildId(Link* _childLink){
     }
     _abort(MemHierarchy::Cache, "Panic at the disco! ?!?!?!?!");
     return -1;
+}
+
+//TODO: Fix/Refactor this mess!
+bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, int _childId){
+    if(_event->isPrefetch() || _childId == -1){
+         d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or childId in -1");
+        return true;
+    }
+    MemEvent *responseEvent; Command cmd = _event->getCmd();
+    Addr offset, base;
+    switch(cmd){
+        case GetS: case GetSEx:
+            assert(_data);
+            if(L1_){
+                base = (_event->getAddr()) & ~(lineSize_ - 1);
+                offset = _event->getAddr() - base;
+                responseEvent = _event->makeResponse((SST::Component*)owner_);
+                responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+            }
+            else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
+        break;
+        case GetX:
+            if(L1_){
+                base = (_event->getAddr()) & ~(lineSize_ - 1);
+                offset = _event->getAddr() - base;
+                responseEvent = _event->makeResponse((SST::Component*)owner_);
+                responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+            }
+            else    responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState); //TODO: make sure to look at "Given State" before setting new state at receivingn end
+            break;
+        default:
+            _abort(CoherencyController, "Command not valid as a response. \n");
+    }
+    if(L1_ && (cmd == GetS || cmd == GetSEx)) printData(d_, "Response Data", _data, offset, (int)_event->getSize());
+    else printData(d_, "Response Data", _data);
+    d_->debug(_L1_,"Sending Response:  Addr = %#016llx,  Dst = %s, Size = %i, Granted State = %s\n", (uint64_t)_event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    Link* deliveryLink = _event->getDeliveryLink();
+    uint64_t deliveryTime = _event->queryFlag(MemEvent::F_UNCACHED) ? timestamp_ : timestamp_ + accessLatency_;
+    response resp = {deliveryLink, responseEvent, deliveryTime, true};
+    outgoingEventQueue_.push(resp);
+    return true;
 }
 

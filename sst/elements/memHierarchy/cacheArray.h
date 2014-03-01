@@ -38,7 +38,6 @@ public:
         int             index_;
 
     public:
-
         bool eventsWaitingForLock_;
 
         CacheLine(Output* _dbg, unsigned int  _size) : d_(_dbg), state_(I), baseAddr_(0), ackCount_(0), size_(_size){
@@ -52,10 +51,7 @@ public:
         virtual ~CacheLine(){}
         BCC_MESIState getState() const { return state_; }
         bool waitingForAck(){return inTransition(); }
-        bool inTransition(){
-            return !unlocked();
-        }
-        //bool inPutTransition(){ return  (state_ == SI_PutAck || state_ == EI_PutAck || state_ == MI_PutAck || state_ == MS_PutAck); }
+        bool inTransition(){ return !unlocked();}
         bool valid() { return state_ != I; }
         bool unlocked() { return CacheLine::unlocked(state_);}
         bool locked() {return !unlocked();}
@@ -91,7 +87,7 @@ public:
             }
         }
         void setState(BCC_MESIState _newState){
-            d_->debug(_L1_, "State change: bsAddr = %#016lx, oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
+            d_->debug(_L1_, "State change: bsAddr = %#016llx, oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
             if(inTransition(state_)) ackCount_++;
             if(_newState == I) assert(ackCount_ == 0);
@@ -157,7 +153,6 @@ protected:
         pMembers();
         errorChecking();
         sharersAware_ = _sharersAware;
-
     }
 };
 

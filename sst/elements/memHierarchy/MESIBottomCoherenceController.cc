@@ -69,7 +69,6 @@ void MESIBottomCC::handlePutAck(MemEvent* event, CacheLine* cacheLine){
 
 
 void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd){
-    //if(!canInvalidateRequestProceed(event, cacheLine, true)) return;
     if(!canInvalidateRequestProceed(event, cacheLine, false)) return;
     
     switch(cmd){
@@ -255,12 +254,12 @@ inline void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsig
 
     Command cmd = _event->getCmd();
     MemEvent* forwardEvent;
-    d_->debug(_L1_,"Forwarding Message: Addr = %#016lx, BaseAddr = %#016lx, Cmd = %s, Size = %i \n",
-             (uint64_t)_event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize());
+    d_->debug(_L1_,"Forwarding Message: Addr = %#016llx, BaseAddr = %#016llx, Cmd = %s, Size = %i \n",
+             _event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize());
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, _lineSize);
 
-    uint64_t deliveryTime;
+    uint64 deliveryTime;
     if(_event->queryFlag(MemEvent::F_UNCACHED)){
         forwardEvent->setFlag(MemEvent::F_UNCACHED);
         deliveryTime = timestamp_;
@@ -279,17 +278,37 @@ inline void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, 
     response resp = {deliveryLink, responseEvent, timestamp_ + accessLatency_, true};
     outgoingEventQueue_.push(resp);
     
-    d_->debug(_L1_,"Sending %s Response Message: Addr = %#016lx, BaseAddr = %#016lx, Cmd = %s, Size = %i \n",
+    d_->debug(_L1_,"Sending %s Response Message: Addr = %#016llx, BaseAddr = %#016llx, Cmd = %s, Size = %i \n",
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
+}
+
+inline void MESIBottomCC::sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
+    d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
+    vector<uint8_t>* data = cacheLine->getData();
+    MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cacheLine->getLineSize(), cmd, *data);
+    response resp = {deliveryLink, newCommandEvent, timestamp_, false};
+    outgoingEventQueue_.push(resp);
+}
+
+bool MESIBottomCC::sendAckResponse(MemEvent *_event){
+    Link* deliveryLink = _event->getDeliveryLink();
+    MemEvent *responseEvent;
+    Command cmd = _event->getCmd();
+    assert(cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS);
+    responseEvent = _event->makeResponse((SST::Component*)owner_);
+    d_->debug(_L1_,"Sending Ack Response:  Addr = %#016llx, Cmd = %s \n", (uint64)responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
+    response resp = {deliveryLink, responseEvent, timestamp_, false};
+    outgoingEventQueue_.push(resp);
+    return true;
 }
 
 
 
 unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){
     uint32_t res = 0;
-    uint64_t tmp = wbCacheLine->getBaseAddr();
+    uint64 tmp = wbCacheLine->getBaseAddr();
     for (uint32_t i = 0; i < 4; i++) {
-        res ^= (uint32_t) (((uint64_t)0xffff) & tmp);
+        res ^= (uint32_t) (((uint64)0xffff) & tmp);
         tmp = tmp >> 16;
     }
     return (res % parentLinks_->size());
@@ -298,16 +317,16 @@ unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){
 unsigned int MESIBottomCC::getParentId(Addr baseAddr){
     uint32_t res = 0;
     for (uint32_t i = 0; i < 4; i++) {
-        res ^= (uint32_t) (((uint64_t)0xffff) & baseAddr);
+        res ^= (uint32_t) (((uint64)0xffff) & baseAddr);
         baseAddr = baseAddr >> 16;
     }
     return (res % parentLinks_->size());
 }
 
 
-void MESIBottomCC::printStats(int _stats, uint64_t _GetSExReceived,
-                               uint64_t _invalidateWaitingForUserLock, uint64_t _totalInstReceived,
-                               uint64_t _nonCoherenceReqsReceived){
+void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
+                               uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived,
+                               uint64 _nonCoherenceReqsReceived){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
     int totalMisses = GETXMissIM_ + GETXMissSM_ + GETSMissIS_;
@@ -329,9 +348,9 @@ void MESIBottomCC::printStats(int _stats, uint64_t _GetSExReceived,
     dbg->output(C,"PUTS sent due to evictions: %u\n", EvictionPUTSReqSent_);
     dbg->output(C,"PUTM sent due to evictions: %u\n", EvictionPUTMReqSent_);
     dbg->output(C,"PUTM sent due to invalidations: %u\n", InvalidatePUTMReqSent_);
-    dbg->output(C,"Invalidates recieved that locked due to user atomic lock: %lu\n", _invalidateWaitingForUserLock);
-    dbg->output(C,"Total instructions recieved: %lu\n", _totalInstReceived);
-    dbg->output(C,"Memory requests received (non-coherency related): %lu\n\n", _nonCoherenceReqsReceived);
+    dbg->output(C,"Invalidates recieved that locked due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
+    dbg->output(C,"Total instructions recieved: %llu\n", _totalInstReceived);
+    dbg->output(C,"Memory requests received (non-coherency related): %llu\n\n", _nonCoherenceReqsReceived);
 }
 
 inline void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){

@@ -31,6 +31,7 @@ class CoherencyController{
 public:
     typedef CacheArray::CacheLine CacheLine;
     typedef unsigned int uint;
+    typedef long long unsigned int uint64;
 
     struct response {
         Link* deliveryLink;
@@ -42,9 +43,6 @@ public:
     MemNIC*    directoryLink_;
     uint64_t   timestamp_;
     uint64_t   accessLatency_;
-    virtual bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, int _childId);
-    virtual bool sendAckResponse(MemEvent *event);
-    virtual void sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink);
     virtual void sendOutgoingCommands() = 0;
     
 protected:

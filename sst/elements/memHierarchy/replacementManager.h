@@ -39,8 +39,8 @@ class ReplacementMgr{
      */
     class LRUReplacementMgr : public ReplacementMgr {
     private:
-        uint64_t timestamp; // incremented on each access
-        int32_t bestCandidate; // id
+        uint64_t timestamp;
+        int32_t bestCandidate;
         uint64_t* array;
         uint numLines_;
         Output* d_;
@@ -114,8 +114,8 @@ class ReplacementMgr{
  */
 class LFUReplacementMgr : public ReplacementMgr {
     private:
-        uint64_t timestamp; // incremented on each access
-        int32_t bestCandidate; // id
+        uint64_t timestamp;
+        int32_t bestCandidate;
         struct LFUInfo {
             uint64_t ts;
             uint64_t acc;
@@ -123,7 +123,6 @@ class LFUReplacementMgr : public ReplacementMgr {
         LFUInfo* array;
         uint numLines;
 
-        //NOTE: Rank code could be shared across Replacement policy implementations
         struct Rank {
             LFUInfo lfuInfo;
             uint sharers;
@@ -170,14 +169,13 @@ class LFUReplacementMgr : public ReplacementMgr {
         }
 
         void update(uint id) {
-            //ts is the "center of mass" of all the accesses, i.e. the average timestamp
             array[id].ts = (array[id].acc*array[id].ts + timestamp)/(array[id].acc + 1);
             array[id].acc++;
-            timestamp += 1000; //have larger steps to avoid losing too much resolution over successive divisions
+            timestamp += 1000;
         }
 
         void recordCandidate(uint id) {
-            Rank candRank = {array[id], 0, NULL}; //tcc? tcc->numSharers(id) : 0, NULL};//bcc->isValid(id)};
+            Rank candRank = {array[id], 0, NULL};
 
             if (bestCandidate == -1 || candRank.lessThan(bestRank, timestamp)) {
                 bestRank = candRank;

@@ -57,6 +57,7 @@ public:
     typedef TopCacheController::CCLine CCLine;
     typedef map<Addr, vector<mshrType*> > mshrTable;
     typedef unsigned int uint;
+    typedef long long unsigned int uint64;
     class MSHR{
     public:
         mshrTable map_ ;
@@ -136,13 +137,13 @@ private:
     bool                    sharersAware_;
     vector<MemEvent*>       retryQueue_;
     vector<MemEvent*>       retryQueueNext_;
-    queue<pair<SST::Event*, uint64_t> >   upperEventQueue_;
-    uint64_t                accessLatency_;
-    uint64_t                STAT_GetSExReceived_;
-    uint64_t                STAT_InvalidateWaitingForUserLock_;
-    uint64_t                STAT_TotalInstructionsRecieved_;
-    uint64_t                STAT_NonCoherenceReqsReceived_;
-    uint64_t                timestamp_;
+    queue<pair<SST::Event*, uint64> >   upperEventQueue_;
+    uint64                  accessLatency_;
+    uint64                  STAT_GetSExReceived_;
+    uint64                  STAT_InvalidateWaitingForUserLock_;
+    uint64                  STAT_TotalInstructionsRecieved_;
+    uint64                  STAT_NonCoherenceReqsReceived_;
+    uint64                  timestamp_;
     map<MemEvent::id_type, SimTime_t> latencyTimes;
     int                     stats_;
     

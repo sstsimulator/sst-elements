@@ -54,6 +54,9 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     uint numLines = cacheSize/lineSize;
     uint protocol;
     
+    //TODO:
+    assert(lineSize == 64);  //Work in progress to allow different cache line sizes
+    
     /* Initialization */
     HashFunction* ht = new PureIdHashFunction;
     

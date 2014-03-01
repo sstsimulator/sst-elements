@@ -50,11 +50,10 @@ static const ElementInfoParam cache_params[] = {
     {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
     {"mshr_num_entries",        "Number of entries in the MSHR"},
     {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"print_stats",             "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
     {"L1",                      "Specify whether cache is L1:  0, 1"},
     {"directory_at_next_level", "Specify if there is a flat directory-controller as the higher level memory: 0, 1"},
-    {"stats",                   "Print cache stats at end of simulation: 0, 1", "0"},
+    {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
     {"network_address",         "When using a directory controller, the network address of this cache."},
     {NULL, NULL, NULL}
 };
@@ -122,9 +121,9 @@ static Component* create_MemController(ComponentId_t id, Params& params)
 
 static const ElementInfoParam memctrl_params[] = {
     {"mem_size",        "Size of physical memory in MB", "0"},
-    {"rangeStart",      "Address Range where physical memory begins", "0"},
-    {"interleaveSize",  "Size of interleaved pages in KB.", "0"},
-    {"interleaveStep",  "Distance between sucessive interleaved pages on this controller in KB.", "0"},
+    {"range_start",     "Address Range where physical memory begins", "0"},
+    {"interleave_size", "Size of interleaved pages in KB.", "0"},
+    {"interleave_step", "Distance between sucessive interleaved pages on this controller in KB.", "0"},
     {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
     {"clock",           "Clock frequency of controller", ""},
     {"divert_DC_lookups",  "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
@@ -132,8 +131,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
     {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"traceFile",       "File name (optional) of a trace-file to generate.", ""},
+    {"statistics",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"trace_file",       "File name (optional) of a trace-file to generate.", ""},
     {NULL, NULL, NULL}
 };
 
@@ -208,15 +207,15 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params)
 static const ElementInfoParam dirctrl_params[] = {
     {"network_addr",        "Network address of component.", NULL},
     {"network_bw",          "Network link bandwidth.", NULL},
-    {"backingStoreSize",    "Space reserved in backing store for controller information (default = 0x1000000 (16MB)).", "0x1000000"},
-    {"addrRangeStart",      "Start of Address Range, for this controller.", "0"},
-    {"addrRangeEnd",        "End of Address Range, for this controller.", NULL},
-    {"interleaveSize",      "(optional) Size of interleaved pages in KB.", "0"},
-    {"interleaveStep",      "(optional) Distance between sucessive interleaved pages on this controller in KB.", "0"},
+    {"backing_store_size",  "Space reserved in backing store for controller information (default = 0x1000000 (16MB)).", "0x1000000"},
+    {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
+    {"addr_range_end",      "End of Address Range, for this controller.", NULL},
+    {"interleave_size",     "(optional) Size of interleaved pages in KB.", "0"},
+    {"interleave_step",     "(optional) Distance between sucessive interleaved pages on this controller in KB.", "0"},
     {"clock",               "Clock rate of controller.", "1GHz"},
-    {"entryCacheSize",      "Size (in # of entries) the controller will cache.", "0"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"entry_cache_size",    "Size (in # of entries) the controller will cache.", "0"},
+    {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"print_stats",         "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };
 

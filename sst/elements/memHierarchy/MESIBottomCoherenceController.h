@@ -44,7 +44,7 @@ private:
 public:
     MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener,
-                 unsigned int _lineSize, uint64_t _accessLatency, bool _L1, MemNIC* _directoryLink) :
+                 unsigned int _lineSize, uint64 _accessLatency, bool _L1, MemNIC* _directoryLink) :
                  CoherencyController(_cache, _dbg, _lineSize), parentLinks_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
@@ -83,7 +83,7 @@ public:
     void handleFetch(MemEvent *event, CacheLine* cacheLine, int _parentId);
     void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
     void handlePutAck(MemEvent* event, CacheLine* cacheLine);
-    void printStats(int _stats, uint64_t _GetSExReceived, uint64_t _invalidateWaitingForUserLock, uint64_t _totalInstReceived, uint64_t _nonCoherenceReqsReceived);
+    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived, uint64 _nonCoherenceReqsReceived);
     void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);
     void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
     bool modifiedStateNeeded(MemEvent* _event, CacheLine* _cacheLine);
@@ -96,6 +96,9 @@ public:
     void updateEvictionStats(BCC_MESIState _state);
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
+    void sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink);
+    bool sendAckResponse(MemEvent *event);
+
 };
 
 

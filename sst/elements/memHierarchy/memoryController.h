@@ -117,8 +117,8 @@ public:
             printf(
                     "***************************************************\n"
                     "Buswidth = %zu\n"
-                    "Ev:   0x%08lx  + 0x%02x -> 0x%08lx\n"
-                    "Req:  0x%08lx  + 0x%02x   [%u count]\n"
+                    "Ev:   0x%08llx  + 0x%02x -> 0x%08llx\n"
+                    "Req:  0x%08llx  + 0x%02x   [%u count]\n"
                     "***************************************************\n",
                     busWidth, ev->getAddr(), ev->getSize(), reqEndAddr,
                     addr, size, num_req);

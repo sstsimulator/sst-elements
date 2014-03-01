@@ -25,7 +25,6 @@ libmemHierarchy_la_SOURCES = \
 	directoryController.h \
 	directoryController.cc \
     coherenceControllers.h \
-    coherenceControllers.cc \
     MESIBottomCoherenceController.h \
     MESIBottomCoherenceController.cc \
     MESITopCoherenceController.h \

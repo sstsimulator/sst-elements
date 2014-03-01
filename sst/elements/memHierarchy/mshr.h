@@ -28,9 +28,8 @@ bool Cache::MSHR::insertPointer(Addr keyAddr, Addr pointerAddr){
     return insert(keyAddr, pointerAddr);
 }
 
-//TODO: send if this returns false;
 bool Cache::MSHR::insert(Addr baseAddr, MemEvent* event){
-    cache_->d_->debug(C,L5,0, "MSHR Event Inserted: Key Addr = %#016lx, Event Addr = %#016lx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, (uint64_t)event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].size());
+    cache_->d_->debug(C,L5,0, "MSHR Event Inserted: Key Addr = %#016llx, Event Addr = %#016llx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, (uint64_t)event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].size());
     return insert(baseAddr, new mshrType(event));
 }
 
@@ -56,7 +55,7 @@ bool Cache::MSHR::insert(Addr baseAddr, vector<mshrType*> events){
     }
     //size_ = size_ + events.size();
     //cache_->d_->debug(C,L5,0, "MSHR Inserted All Events\n");
-    //cache_->d_->debug(C,L5,0, "MSHR Inserted All Events: Key Addr = %#016llx, Event Addr = %#016llx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", (uint64_t)baseAddr, (uint64_t)events.front()->getAddr(), CommandString[events.front()->getCmd()], size_, map_[baseAddr].size());
+    //cache_->d_->debug(C,L5,0, "MSHR Inserted All Events: Key Addr = %#016lllx, Event Addr = %#016lllx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", (uint64_t)baseAddr, (uint64_t)events.front()->getAddr(), CommandString[events.front()->getCmd()], size_, map_[baseAddr].size());
     addrLastInserted_ = baseAddr;
     return true;
 }
@@ -68,7 +67,7 @@ vector<mshrType*> Cache::MSHR::remove(Addr baseAddr){
     map_.erase(it);
     //size_ = size_ - res.size(); assert(size_ >= 0);
     //cache_->d_->debug(C,L5,0, "MSHR Removed All Events\n");
-    //cache_->d_->debug(C,L5,0, "MSHR Removed All Events: Key Addr = %#016llx, Entry Size = %lu\n", (uint64_t)baseAddr, res.size());
+    //cache_->d_->debug(C,L5,0, "MSHR Removed All Events: Key Addr = %#016lllx, Entry Size = %lu\n", (uint64_t)baseAddr, res.size());
     return res;
 }
 
@@ -144,7 +143,7 @@ void Cache::MSHR::printEntry(Addr baseAddr){
     int i = 0;
     for(vector<MemEvent*>::iterator it = map_[baseAddr].begin(); it != map_[baseAddr].end(); ++it, ++i) {
         MemEvent* event = (MemEvent*)(*it);
-        cache_->d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016llx, Event Addr: %#016llx, Event Cmd = %s\n", i, (uint64_t)baseAddr, (uint64_t)event->getAddr(), CommandString[event->getCmd()]);
+        cache_->d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, (uint64_t)baseAddr, (uint64_t)event->getAddr(), CommandString[event->getCmd()]);
     }
 }
 
@@ -152,7 +151,7 @@ void Cache::MSHR::printEntry2(vector<MemEvent*> events){
     int i = 0;
     for(vector<MemEvent*>::iterator it = events.begin(); it != events.end(); ++it, ++i) {
         MemEvent* event = (MemEvent*)(*it);
-        cache_->d_->debug(C,L5,0, "Entry %i:  Event Addr: %#016llx, Event Cmd = %s, Dst: %s\n", i, (uint64_t)event->getAddr(), CommandString[event->getCmd()], event->getDst().c_str());
+        cache_->d_->debug(C,L5,0, "Entry %i:  Event Addr: %#016lllx, Event Cmd = %s, Dst: %s\n", i, (uint64_t)event->getAddr(), CommandString[event->getCmd()], event->getDst().c_str());
     }
 }
 */
