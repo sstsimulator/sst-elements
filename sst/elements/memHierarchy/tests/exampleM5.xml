@@ -138,14 +138,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core0-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
 
@@ -159,14 +159,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core1-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
     
@@ -180,14 +180,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core2-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
 
@@ -201,14 +201,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core3-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
     <component name=nid0.cpu4 type=+DerivO3CPU >
@@ -221,14 +221,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core4-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
     <component name=nid0.cpu5 type=+DerivO3CPU >
@@ -241,14 +241,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core5-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
     <component name=nid0.cpu6 type=+DerivO3CPU >
@@ -261,14 +261,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core6-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
     <component name=nid0.cpu7 type=+DerivO3CPU >
@@ -281,15 +281,14 @@
             <link.0.portIndex> 0 </link.0.portIndex>
             <link.0.snoopOut> false </link.0.snoopOut>
             <link.0.snoopIn> true </link.0.snoopIn>
-            <link.0.blocksize> 64 </link.0.blocksize>
+			<link.0.blocksize> 64 </link.0.blocksize>
 
             <link.1.name> core7-icache </link.1.name>
             <link.1.portName> icache_port </link.1.portName>
             <link.1.portIndex> 1 </link.1.portIndex>
             <link.1.snoopOut> false </link.1.snoopOut>
             <link.1.snoopIn> true </link.1.snoopIn>
-            <link.1.blocksize> 64 </link.1.blocksize>
+			<link.1.blocksize> 64 </link.1.blocksize>
         </params>
     </component>
 </sst>
-
