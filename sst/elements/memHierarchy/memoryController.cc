@@ -298,7 +298,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 
 	std::string clock_freq = params.find_string("clock", "");
 
-    cacheLineSize = params.find_integer("cache_line_size", 64);
+    cacheLineSize = params.find_integer("request_width", 64);
     requestSize = cacheLineSize;
 
     registerClock(clock_freq, new Clock::Handler<MemController>(this,

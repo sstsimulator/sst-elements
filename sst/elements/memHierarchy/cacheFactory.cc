@@ -91,7 +91,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     errorChecking();
     /* Prefetcher */
 
-    stats_ = params.find_integer("stats", 0);
+    stats_ = params.find_integer("statistics", 0);
     accessLatency_ = params.find_integer("access_latency_cycles", -1);
     string prefetcher = params.find_string("prefetcher");
     if (prefetcher.empty()) listener_ = new CacheListener();

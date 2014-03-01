@@ -133,6 +133,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"statistics",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"trace_file",       "File name (optional) of a trace-file to generate.", ""},
+    {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
     {NULL, NULL, NULL}
 };
 
