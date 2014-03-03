@@ -41,7 +41,7 @@
             <statistics> 0 </statistics>
             <prefetcher> cassini.NextBlockPrefetcher </prefetcher>
 		</params>
-		<link name=core0-dcache port=high_network_0 latency=$lat />
+		<link name=cpu_cache_link port=high_network_0 latency=$lat />
 		<link name=mem_bus_link port=low_network_0 latency=$buslat />
 	</component>
 
