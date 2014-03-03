@@ -132,7 +132,6 @@ public:
 //!SEC:EDSim
 class networkFlit {
     enum flit_t { HEAD, BODY, NUL};
-    flit_t flitType;
     static const int size=8;     //8 bytes
 };
 //: Network Packet
