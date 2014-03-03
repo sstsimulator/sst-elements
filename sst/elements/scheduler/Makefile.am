@@ -4,9 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_THREAD_LIB)
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
@@ -35,4 +33,4 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc Constr
 	FinalTimeEvent.h \
 faultInjectionComponent.cc	faultInjectionComponent.h
 
-libscheduler_la_LDFLAGS = -module -avoid-version -L/usr/local/lib64 $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
+libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
