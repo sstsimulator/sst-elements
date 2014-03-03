@@ -249,7 +249,7 @@ inline void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine
 }
 
 
-inline void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data){
+void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data){
     Link* deliveryLink = parentLinks_->at(getParentId(_baseAddr));
 
     Command cmd = _event->getCmd();
