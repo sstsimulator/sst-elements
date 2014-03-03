@@ -38,7 +38,6 @@ class topo_fattree: public Topology {
     };
 
 
-    int router_id;
     int rtr_level;
     int edge_loading;
     Addr my_address;
