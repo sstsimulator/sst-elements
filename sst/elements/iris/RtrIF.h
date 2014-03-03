@@ -127,7 +127,7 @@ public:
     void finish() 
     { 
         fprintf(stderr,"\n RtrIF Node %d\n", m_id );
-        fprintf(stderr," Total no of pkts recv %lu \n",stat_total_pkts_recv); 
+        fprintf(stderr," Total no of pkts recv %"PRIu64" \n",stat_total_pkts_recv); 
         fprintf(stderr," Avg pkt latency %0.2f \n",stat_avg_pkt_lat+0.0/stat_total_pkts_recv); 
 //        return 0; 
     }

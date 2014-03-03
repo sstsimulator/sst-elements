@@ -89,12 +89,6 @@ private:
     std::queue<trig_nic_event*> dma_q;
     std::queue<ptl_int_dma_t*> dma_req_q;
     std::queue<trig_nic_event*> dma_hdr_q;
-    // Here's the maximum size of the dma_q.  We need this so we know
-    // when we have room to issue more DMAs.  PIO_Q doesn't need one
-    // because we are doing credits from the host, which mimicks
-    // having a max size for the PIO_Q, but we'll never check that
-    // here.
-    int dma_q_max_size;
 
     typedef union {
 	int64_t int_val;

@@ -27,7 +27,7 @@ namespace Iris {
 
 class irisNPkt;
 class macsim_c;
-class mem_req_s;
+struct mem_req_s;
 
 // class to include within macsim that creates the rtrEvent 
 // for sending to the network
