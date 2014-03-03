@@ -126,7 +126,7 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
-inline bool MESIBottomCC::modifiedStateNeeded(MemEvent* _event, CacheLine* _cacheLine){
+bool MESIBottomCC::modifiedStateNeeded(MemEvent* _event, CacheLine* _cacheLine){
     bool pf = _event->isPrefetch();
     Addr addr = _cacheLine->getBaseAddr();
     BCC_MESIState state = _cacheLine->getState();
@@ -242,7 +242,7 @@ void MESIBottomCC::processPutERequest(MemEvent* event, CacheLine* cacheLine){
     PUTEReqsReceived_++;
 }
 
-inline void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine, vector<uint8_t>* _data){
+void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine, vector<uint8_t>* _data){
     Addr baseAddr = _cacheLine->getBaseAddr();
     unsigned int lineSize = _cacheLine->getLineSize();
     forwardMessage(_event, baseAddr, lineSize, _data);
@@ -269,7 +269,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     outgoingEventQueue_.push(resp);
 }
 
-inline void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId){
+void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId){
     Command cmd = _event->getCmd();
 
     MemEvent *responseEvent = _event->makeResponse((SST::Component*)owner_);
@@ -282,7 +282,7 @@ inline void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, 
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
-inline void MESIBottomCC::sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
+void MESIBottomCC::sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cacheLine->getLineSize(), cmd, *data);
@@ -353,7 +353,7 @@ void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
     dbg->output(C,"Memory requests received (non-coherency related): %llu\n\n", _nonCoherenceReqsReceived);
 }
 
-inline void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){
+void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){
     if(_state == S)      EvictionPUTSReqSent_++;
     else if(_state == M) EvictionPUTMReqSent_++;
     else if(_state == E) EvictionPUTSReqSent_++;
@@ -361,38 +361,38 @@ inline void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){
 }
 
 
-inline void MESIBottomCC::inc_GETXMissSM(Addr addr, bool prefetchRequest){
+void MESIBottomCC::inc_GETXMissSM(Addr addr, bool prefetchRequest){
     if(!prefetchRequest){
         GETXMissSM_++;
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, addr);
     }
 }
-inline void MESIBottomCC::inc_GETXMissIM(Addr addr, bool prefetchRequest){
+void MESIBottomCC::inc_GETXMissIM(Addr addr, bool prefetchRequest){
     if(!prefetchRequest){
         GETXMissIM_++;
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, addr);
     }
 }
-inline void MESIBottomCC::inc_GETSHit(Addr addr, bool prefetchRequest){
+void MESIBottomCC::inc_GETSHit(Addr addr, bool prefetchRequest){
     if(!prefetchRequest){
         GETSHit_++;
         listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, addr);
     }
 }
-inline void MESIBottomCC::inc_GETXHit(Addr addr, bool prefetchRequest){
+void MESIBottomCC::inc_GETXHit(Addr addr, bool prefetchRequest){
     if(!prefetchRequest){
         GETXHit_++;
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, addr);
     }
 }
-inline void MESIBottomCC::inc_GETSMissIS(Addr addr, bool prefetchRequest){
+void MESIBottomCC::inc_GETSMissIS(Addr addr, bool prefetchRequest){
     if(!prefetchRequest){
         GETSMissIS_++;
         listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, addr);
     }
 }
 
-inline bool MESIBottomCC::isExclusive(CacheLine* cacheLine) {
+bool MESIBottomCC::isExclusive(CacheLine* cacheLine) {
     BCC_MESIState state = cacheLine->getState();
     return (state == E) || (state == M);
 }
