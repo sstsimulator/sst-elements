@@ -34,7 +34,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     int accessLatency           = params.find_integer("access_latency_cycles", -1);                 //ns
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
-    int L1int                   = params.find_integer("L1", -1);
+    int L1int                   = params.find_integer("L1", 0);
     int directoryAtNextLevel    = params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = params.find_string("coherence_protocol", "");
 
@@ -43,7 +43,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     if(-1 >= associativity)                   _abort(Cache, "Associativity was not specified.\n");
     if(sizeStr.empty())                       _abort(Cache, "Cache size was not specified. \n")
     if(-1 == lineSize)                        _abort(Cache, "Line size was not specified (blocksize).\n");
-    if(mshrSize == -1)                        _abort(Cache, "MSHR Size not specified correctly\n");
+    if(mshrSize == -1)                        mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
     if(L1int != 1 && L1int != 0)              _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
     if(L1int == 1) numChildren = 1;
     if(numParents <= 0 || numChildren <= 0)   _abort(Cache, "Number of children and parents has each to be greater than zero (L1 have core as a parent). \n");

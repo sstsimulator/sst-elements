@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for i in sdl*.xml.new ; do
+for i in sdl*.xml ; do
     target=`basename $i .new`
-    mv $i ${target}.ref
+    cp $i ${target}.ref
 done

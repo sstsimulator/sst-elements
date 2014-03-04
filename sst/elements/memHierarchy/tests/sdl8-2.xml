@@ -13,105 +13,126 @@
 	<netlat> 2ns </netlat>
 </variables>
 
+<param_include>
+    <cpuParams>
+        <workPerCycle> 1000 </workPerCycle>
+        <commFreq> 100 </commFreq>
+        <memSize> 0x100000 </memSize>
+        <do_write> 1 </do_write>
+        <num_loadstore> 10000 </num_loadstore>
+    </cpuParams>
+    
+    <l1Params>
+        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_size> 4 KB </cache_size>
+        <coherence_protocol> MSI </coherence_protocol>
+        <replacement_policy> lru </replacement_policy> 
+        <associativity> 4 </associativity>
+        <access_latency_cycles> 5  </access_latency_cycles>
+        <low_network_links> 1 </low_network_links>
+        <cache_line_size> 64 </cache_line_size>
+        <L1> 1 </L1>
+        <debug> ${MEM_DEBUG} </debug>
+        <statistics> 1 </statistics>
+    </l1Params>
+    
+    <l2Params>
+        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_size> 32 KB </cache_size>
+        <coherence_protocol> MSI </coherence_protocol>
+        <replacement_policy> lru </replacement_policy> 
+        <associativity> 8 </associativity>
+        <access_latency_cycles> 20  </access_latency_cycles>
+        <high_network_links> 2 </low_network_links>
+        <low_network_links> 1 </low_network_links>
+        <cache_line_size> 64 </cache_line_size>
+        <debug> ${MEM_DEBUG} </debug>
+        <statistics> 1 </statistics>
+    </l2Params>
+    
+    <l3Params>
+        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_size> 64 KB </cache_size>
+        <coherence_protocol> MSI </coherence_protocol>
+        <replacement_policy> lru </replacement_policy> 
+        <associativity> 16 </associativity>
+        <access_latency_cycles> 100  </access_latency_cycles>
+        <high_network_links> 1 </low_network_links>
+        <low_network_links> 1 </low_network_links>
+        <cache_line_size> 64 </cache_line_size>
+        <debug> ${MEM_DEBUG} </debug>
+        <statistics> 1 </statistics>
+    </l3Params>
+    
+    <routerParams>
+        <num_ports> 3 </num_ports>
+        <num_vcs> 3 </num_vcs>
+        <link_bw> 5GHz </link_bw>
+        <xbar_bw> 5GHz </xbar_bw>
+        <topology> merlin.singlerouter </topology>
+        <id> 0 </id>
+    </routerParams>
+    
+    <directoryParams>
+        <coherence_protocol> MSI </coherence_protocol>
+        <network_addr> 0 </network_addr>
+        <network_bw> 1GHz </network_bw>
+        <addrRangeStart> 0x0 </addrRangeStart>
+        <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
+        <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
+        <debug> ${MEM_DEBUG} </debug>
+    </directoryParams>
+    
+    <memParams>
+        <coherence_protocol> MSI </coherence_protocol>
+        <access_time> 1000 ns </access_time>
+        <mem_size> 512 </mem_size>
+        <clock> 1GHz </clock>
+        <debug> ${MEM_DEBUG} </debug>
+	</memParams>
+    
+</param_include>
+
 
 <sst>
 	<component name="cpu0" type="memHierarchy.trivialCPU">
-		<params>
-			<workPerCycle> 1000 </workPerCycle>
-			<commFreq> 100 </commFreq>
-			<memSize> 0x10000 </memSize>
-			<do_write> 1 </do_write>
-            <num_loadstore> 10000 </num_loadstore>
-		</params>
+        <params include=cpuParams />
 		<link name=cpu0_l1cache_link port=mem_link latency=$lat />
 	</component>
 
 	<component name="c0.l1cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 4 </num_ways>
-			<num_rows> 16 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 2 ns </access_time>
-			<num_upstream> 1 </num_upstream>
-			<next_level> c0.l2cache </next_level>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
-		<link name=c0.l1l2cache_link port=downstream latency=$buslat />
+        <params include=l1Params />
+		<link name=cpu0_l1cache_link port=high_network_0 latency=$lat />
+		<link name=c0.l1_l2_link port=low_network_0 latency=$lat />
 	</component>
-
-	<component name="c0.l2cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 8 </num_ways>
-			<num_rows> 64 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 10 ns </access_time>
-            <num_upstream> 1 </num_upstream>
-            <net_addr> 1 </net_addr>
-            <mode> INCLUSIVE </mode>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=c0.l1l2cache_link port=upstream0 latency=$buslat />
-        <link name=cache_net_0 port=directory_link latency=$netlat />
+    
+	<component name="n0.l2cache" type="memHierarchy.Cache">
+        <params include=l2Params />
+		<link name=c0.l1_l2_link port=high_network_0 latency=$lat />
+		<link name=cache_net_0 port=low_network_0 latency=$buslat />
 	</component>
-
-
-	<component name="cpu1" type="memHierarchy.trivialCPU">
-		<params>
-			<workPerCycle> 1000 </workPerCycle>
-			<commFreq> 100 </commFreq>
-			<memSize> 0x10000 </memSize>
-			<do_write> 1 </do_write>
-            <num_loadstore> 10000 </num_loadstore>
-		</params>
+    
+    <component name="cpu1" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
 		<link name=cpu1_l1cache_link port=mem_link latency=$lat />
 	</component>
 
 	<component name="c1.l1cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 4 </num_ways>
-			<num_rows> 16 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 2 ns </access_time>
-			<num_upstream> 1 </num_upstream>
-			<next_level> c1.l2cache </next_level>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
-		<link name=c1.l1l2cache_link port=downstream latency=$buslat />
+        <params include=l1Params />
+		<link name=cpu1_l1cache_link port=high_network_0 latency=$lat />
+		<link name=c1.l1_l2_link port=low_network_0 latency=$lat />
 	</component>
 
-	<component name="c1.l2cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 8 </num_ways>
-			<num_rows> 64 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 10 ns </access_time>
-            <num_upstream> 1 </num_upstream>
-            <net_addr> 2 </net_addr>
-            <mode> INCLUSIVE </mode>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=c1.l1l2cache_link port=upstream0 latency=$buslat />
-        <link name=cache_net_1 port=directory_link latency=$netlat />
+	<component name="n1.l2cache" type="memHierarchy.Cache">
+        <params include=l2Params />
+		<link name=c1.l1_l2_link port=high_network_0 latency=$lat />
+		<link name=cache_net_1 port=low_network_0 latency=$buslat />
 	</component>
-
-
-
+    
 
     <component name="chiprtr" type="merlin.hr_router">
-        <params>
-            <num_ports> 3 </num_ports>
-            <num_vcs> 3 </num_vcs>
-            <link_bw> 5GHz </link_bw>
-            <xbar_bw> 5GHz </xbar_bw>
-            <topology> merlin.singlerouter </topology>
-            <id> 0 </id>
-        </params>
+        <params include=routerParams />
+
         <link name=dir_net_0 port=port0 latency=$netlat />
         <link name=cache_net_0 port=port1 latency=$netlat />
         <link name=cache_net_1 port=port2 latency=$netlat />
@@ -119,25 +140,13 @@
 
 
     <component name="dirctrl" type="memHierarchy.DirectoryController">
-        <params>
-            <network_addr> 0 </network_addr>
-            <network_bw> 1GHz </network_bw>
-            <addrRangeStart> 0x0 </addrRangeStart>
-            <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
-            <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
-            <debug> ${MEM_DEBUG} </debug>
-        </params>
-        <link name=dir_mem_link port=memory latency=$buslat />
+        <params include=directoryParams />
         <link name=dir_net_0 port=network latency=$netlat />
+        <link name=dir_mem_link port=memory latency=$buslat />
     </component>
 
 	<component name="memory" type="memHierarchy.MemController">
-		<params>
-			<access_time> 1000 ns </access_time>
-			<mem_size> 512 </mem_size>
-			<clock> 1GHz </clock>
-            <debug> ${MEM_DEBUG} </debug>
-		</params>
+        <params include=memParams />
 		<link name=dir_mem_link port=direct_link latency=$buslat />
 	</component>
 

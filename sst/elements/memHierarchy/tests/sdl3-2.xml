@@ -1,96 +1,82 @@
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<config>
- stopAtCycle=100000ns
-</config>
 
 <variables>
 	<lat> 1ns </lat>
 	<buslat> 10 ns </buslat>
 </variables>
 
-
-<sst>
-	<component name="cpu0" type="memHierarchy.trivialCPU">
-		<params>
+<param_include>
+    <cpuParams>
 			<workPerCycle> 1000 </workPerCycle>
 			<commFreq> 100 </commFreq>
 			<memSize> 0x1000 </memSize>
+            <num_loadstore> 1000 </num_loadstore>
 			<do_write> 1 </do_write>
-		</params>
+    </cpuParams>
+    <l1Params>
+            <cache_frequency> 2 Ghz  </cache_frequency>
+            <cache_size> 2 KB </cache_size>
+            <coherence_protocol> MSI </coherence_protocol>
+            <replacement_policy> lru </replacement_policy> 
+            <associativity> 2 </associativity>
+            <access_latency_cycles> 3  </access_latency_cycles>
+            <low_network_links> 1 </low_network_links>
+            <cache_line_size> 64 </cache_line_size>
+            <L1> 1 </L1>
+            <debug> ${MEM_DEBUG} </debug>
+            <statistics> 1 </statistics>
+    </l1Params>
+    <l2Params>
+            <cache_frequency> 2 Ghz  </cache_frequency>
+            <cache_size> 8 KB </cache_size>
+            <coherence_protocol> MSI </coherence_protocol>
+            <replacement_policy> lru </replacement_policy> 
+            <associativity> 8 </associativity>
+            <access_latency_cycles> 20  </access_latency_cycles>
+            <high_network_links> 2 </high_network_links>
+            <low_network_links> 1 </low_network_links>
+            <cache_line_size> 64 </cache_line_size>
+            <debug> ${MEM_DEBUG} </debug>
+            <statistics> 1 </statistics>
+    </l2Params>
+</param_include>
+
+
+<sst>
+	<component name="cpu0" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
 		<link name=cpu0_l1cache_link port=mem_link latency=$lat />
 	</component>
 
 	<component name="c0.l1cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 4 </num_ways>
-			<num_rows> 16 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 2 ns </access_time>
-			<next_level> l2cache </next_level>
-			<num_upstream> 1 </num_upstream>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
-		<link name=c0.l1cache_bus_link port=snoop_link latency=$buslat />
+        <params include=l1Params />
+		<link name=cpu0_l1cache_link port=high_network_0 latency=$lat />
+		<link name=c0.l1_l2_link port=low_network_0 latency=$lat />
 	</component>
 
 	<component name="cpu1" type="memHierarchy.trivialCPU">
-		<params>
-			<workPerCycle> 1000 </workPerCycle>
-			<commFreq> 100 </commFreq>
-			<memSize> 0x1000 </memSize>
-			<do_write> 1 </do_write>
-		</params>
+        <params include=cpuParams />
 		<link name=cpu1_l1cache_link port=mem_link latency=$lat />
 	</component>
 
 	<component name="c1.l1cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 4 </num_ways>
-			<num_rows> 16 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 2 ns </access_time>
-			<next_level> l2cache </next_level>
-			<num_upstream> 1 </num_upstream>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
-		<link name=c1.l1cache_bus_link port=snoop_link latency=$buslat />
+        <params include=l1Params />
+		<link name=cpu1_l1cache_link port=high_network_0 latency=$lat />
+		<link name=c1.l1_l2_link port=low_network_0 latency=$lat />
 	</component>
 
 	<component name="l2cache" type="memHierarchy.Cache">
-		<params>
-			<num_ways> 8 </num_ways>
-			<num_rows> 64 </num_rows>
-			<blocksize> 64 </blocksize>
-			<access_time> 10 ns </access_time>
-            <debug> ${MEM_DEBUG} </debug>
-            <printStats> 1 </printStats>
-		</params>
-		<link name=l2cache_bus_link port=snoop_link latency=$buslat />
+        <params include=l2Params />
+		<link name=c0.l1_l2_link port=high_network_0 latency=$lat />
+		<link name=c1.l1_l2_link port=high_network_1 latency=$lat />
+		<link name=mem_bus_link port=low_network_0 latency=$buslat />
 	</component>
-
-
-	<component name="membus" type="memHierarchy.Bus">
-		<params>
-			<numPorts> 4 </numPorts>
-			<busDelay> 20 ns </busDelay>
-            <atomicDelivery> 1 </atomicDelivery>
-            <debug> ${MEM_DEBUG} </debug>
-		</params>
-		<link name=c0.l1cache_bus_link port=port0 latency=$buslat />
-		<link name=c1.l1cache_bus_link port=port1 latency=$buslat />
-		<link name=l2cache_bus_link port=port2 latency=$buslat />
-		<link name=mem_bus_link port=port3 latency=$buslat />
-	</component>
-
 
 	<component name="memory" type="memHierarchy.MemController">
 		<params>
+            <coherence_protocol> MSI </coherence_protocol>
 			<access_time> 1000 ns </access_time>
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
@@ -99,8 +85,9 @@
 			<system_ini> system.ini </system_ini>
             <debug> ${MEM_DEBUG} </debug>
 		</params>
-		<link name=mem_bus_link port=snoop_link latency=$buslat />
+		<link name=mem_bus_link port=direct_link latency=$buslat />
 	</component>
 
 
 </sst>
+
