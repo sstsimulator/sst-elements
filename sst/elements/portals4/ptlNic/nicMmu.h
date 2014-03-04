@@ -172,19 +172,19 @@ class NicMmu
 //        MMU_DBG("vaddr=%#lx\n",vaddr);
         pgd_t* pgd = pgd_offset( vaddr, fill );
         if ( ! pgd ) {
-            fprintf(stderr,"couldn't find pgd for  vaddr=%#lx\n",vaddr);
+            fprintf(stderr,"couldn't find pgd for  vaddr=%#"PRIx64"\n",vaddr);
             abort();
         }
 
         pmd_t* pmd = pmd_offset( pgd, vaddr, fill );
         if ( ! pmd ) {
-            fprintf(stderr,"couldn't find pmd for  vaddr=%#lx\n",vaddr);
+            fprintf(stderr,"couldn't find pmd for  vaddr=%#"PRIx64"\n",vaddr);
             abort();
         }
 
         pte_t* pte = pte_offset( pmd, vaddr, fill );
         if ( ! pte ) {
-            fprintf(stderr,"couldn't find pte for  vaddr=%#lx\n",vaddr);
+            fprintf(stderr,"couldn't find pte for  vaddr=%#"PRIx64"x\n",vaddr);
             abort();
         }
 
