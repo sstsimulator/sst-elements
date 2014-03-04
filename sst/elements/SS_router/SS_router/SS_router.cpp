@@ -128,7 +128,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
     sprintf (LINK_DIR_STR[LINK_NEG_Y], "NEGY");
     sprintf (LINK_DIR_STR[LINK_NEG_Z], "NEGZ");
 
-    for (int ln = 0; ln < ROUTER_NUM_LINKS+1; ln++) {
+    for (int ln = 0; ln < ROUTER_NUM_LINKS; ln++) {
         //No links are set up yet
         rx_netlinks[ln] = NULL;
         tx_netlinks[ln] = NULL;
@@ -288,12 +288,6 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
         rtrEventQ.push_back(event);
     }
 
-    int x,y,z;
-
-    z = routerID / (network->xDimSize() * network->yDimSize());
-    y = (routerID / network->xDimSize()) % network->yDimSize();
-    x = routerID % network->xDimSize();
-
     linkV.resize( ROUTER_NUM_LINKS + 1 );
     for (int dir = 0; dir < ROUTER_NUM_LINKS + 1; dir++) {
         //set up this nodes router link to the neighbor router
@@ -354,15 +348,16 @@ void SS_router::finish () {
 
 void SS_router::dumpStats (FILE* fp) {
     DBprintf("\n");
-    int rxt, txt, myt;
 
     fprintf(fp, "Router %d\n", routerID);
 
+
+#if 0 // dumpStats
+    int rxt, txt, myt;
     rxt = 0;
     txt = 0;
     myt = 0;
 
-#if 0 // dumpStats
     int clockRate = configuration::getValue(":ed:MTA:clockRate");
 
     for (int i = 0; i < ROUTER_NUM_OUTQS; i++) {
