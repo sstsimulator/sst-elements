@@ -29,7 +29,7 @@ l1cache.addParams({
         "access_latency_cycles" : "1",
         "low_network_links" : "1",
         "cache_line_size" : "64",
-        "mshr_num_entries> 4096
+        "mshr_num_entries" : "4096",
         "L1" : "1",
         "debug" : "0",
         "statistics" : "1"
