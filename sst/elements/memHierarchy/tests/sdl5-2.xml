@@ -89,8 +89,8 @@
 
 	<component name="c1.l1cache" type="memHierarchy.Cache">
         <params include=l1Params />
-		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
-		<link name=c1.l1cache_l2cache_link port=snoop_link latency=$buslat />
+		<link name=cpu1_l1cache_link port=high_network_0 latency=$lat />
+		<link name=c1.l1cache_l2cache_link port=low_network_0 latency=$buslat />
 	</component>
     
     <component name="n0.l2cache" type="memHierarchy.Cache">
@@ -126,8 +126,8 @@
 
 	<component name="n1.l2cache" type="memHierarchy.Cache">
         <params include=l2Params />
-		<link name=c2.l1cache_l2cache_link port=high_network_2 latency=$buslat />
-		<link name=c3.l1cache_l2cache_link port=high_network_0 latency=$buslat />
+		<link name=c2.l1cache_l2cache_link port=high_network_0 latency=$buslat />
+		<link name=c3.l1cache_l2cache_link port=high_network_1 latency=$buslat />
 		<link name=n1.l2cache_l3cache_link port=low_network_0 latency=$buslat />
 	</component>
 

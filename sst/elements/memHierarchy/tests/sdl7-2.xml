@@ -37,8 +37,8 @@
         <access_time> 1000 ns </access_time>
         <mem_size> 8 </mem_size>
         <rangeStart> 0x0000000 </rangeStart> <!-- Start at 0MB -->
-        <interleaveSize> 4 </interleaveSize>
-        <interleaveStep> 8 </interleaveStep>
+        <!--<interleaveSize> 4 </interleaveSize>
+        <interleaveStep> 8 </interleaveStep>-->
         <clock> 1GHz </clock>
         <debug> ${MEM_DEBUG} </debug>
 	</memParams>
@@ -47,8 +47,8 @@
         <access_time> 1000 ns </access_time>
         <mem_size> 8 </mem_size>
         <rangeStart> 0x1000 </rangeStart> <!-- Start at 4KB -->
-        <interleaveSize> 4 </interleaveSize>
-        <interleaveStep> 8 </interleaveStep>
+        <!--<interleaveSize> 4 </interleaveSize>
+        <interleaveStep> 8 </interleaveStep>-->
         <clock> 1GHz </clock>
         <debug> ${MEM_DEBUG} </debug>
 	</mem2Params>
