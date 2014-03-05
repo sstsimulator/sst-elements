@@ -28,7 +28,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Component(id), blocksize(0)
 {
     dbg.init("", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
-    printStatsLoc = (Output::output_location_t)params.find_integer("printStats", 0);
+    printStatsLoc = (Output::output_location_t)params.find_integer("statistics", 0);
 
     targetCount = 0;
 
@@ -45,9 +45,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 	addrRangeStart = (uint64_t)params.find_integer("addr_range_start", 0);
 	addrRangeEnd = (uint64_t)params.find_integer("addr_range_end", 0);
 	if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
-	interleaveSize = (Addr)params.find_integer("interleaveSize", 0);
+	interleaveSize = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize *= 1024;
-	interleaveStep = (Addr)params.find_integer("interleaveStep", 0);
+	interleaveStep = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep *= 1024;
 
     numTargets = 0;
@@ -72,7 +72,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 	registerClock(params.find_string("clock", "1GHz"),
 			new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
 
-    lookupBaseAddr = params.find_integer("backingStoreSize", 0x1000000); // 16MB
+    lookupBaseAddr = params.find_integer("backing_store_size", 0x1000000); // 16MB
 
     numReqsProcessed = 0;
     totalReqProcessTime = 0;

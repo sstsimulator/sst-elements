@@ -59,6 +59,7 @@
         <access_latency_cycles> 100  </access_latency_cycles>
         <high_network_links> 1 </high_network_links>
         <low_network_links> 1 </low_network_links>
+        <directory_at_next_level> 1 </directory_at_next_level>
         <cache_line_size> 64 </cache_line_size>
         <debug> ${MEM_DEBUG} </debug>
         <statistics> 1 </statistics>
@@ -115,7 +116,7 @@
 	<component name="l3cache" type="memHierarchy.Cache">
         <params include=l3Params />
 		<link name=l2cache_l3cache_link port=high_network_0 latency=$buslat />
-		<link name=cache_net_0 port=low_network_0 latency=$buslat />
+		<link name=cache_net_0 port=directory_link latency=$buslat />
 	</component>
 
 

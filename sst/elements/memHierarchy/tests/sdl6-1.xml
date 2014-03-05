@@ -42,6 +42,7 @@
         <associativity> 8 </associativity>
         <access_latency_cycles> 10  </access_latency_cycles>
         <low_network_links> 1 </low_network_links>
+        <high_network_links> 1 </high_network_links>
         <cache_line_size> 64 </cache_line_size>
         <debug> ${MEM_DEBUG} </debug>
         <statistics> 1 </statistics>
@@ -70,7 +71,7 @@
 	<component name="l2cache" type="memHierarchy.Cache">
         <params include=l2Params />
 		<link name=l1cache_l2cache_link port=high_network_0 latency=$lat />
-		<link name=mem_bus_link port=direct_link latency=$buslat />
+		<link name=mem_bus_link port=low_network_0 latency=$buslat />
 	</component>
     
 	<component name="memory" type="memHierarchy.MemController">

@@ -1,63 +1,2296 @@
-<?xml version="1.0"?>
-<sdl version="2.0"/>
-<timebase>1ns</timebase>
-<!--
-<config>
- stopAtCycle=5000ns
-</config>
--->
+Warning:  Parameter "printStats" is undocumented.
+Warning:  Parameter "traceFile" is undocumented.
+Warning:  Parameter "rangeStart" is undocumented.
+Warning:  Parameter "interleaveSize" is undocumented.
+Warning:  Parameter "interleaveStep" is undocumented.
+== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
+== Loading system model file 'system.ini' == 
+WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
+===== MemorySystem 0 =====
+CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
+===== MemorySystem 1 =====
+CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
+cpu: 1000 Issued Write (0) for address 0xe5c
+DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz
+WARNING: address 0xe5c is not aligned to the request size of 64
+WARNING: address 0xe5c is not aligned to the request size of 64
+WARNING: address 0xe5c is not aligned to the request size of 64
+cpu: 999 Issued Read (4) for address 0x56c
+cpu: Received MemEvent with command 4 (response to 0, addr 0xe5c) [Time: 60] [1 outstanding requests]
+cpu: 998 Issued Read (8) for address 0x90c
+cpu: Received MemEvent with command 2 (response to 4, addr 0x56c) [Time: 40] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 8, addr 0x90c) [Time: 40] [0 outstanding requests]
+cpu: 997 Issued Read (13) for address 0xb0c
+cpu: 996 Issued Read (16) for address 0x704
+cpu: Received MemEvent with command 2 (response to 13, addr 0xb0c) [Time: 45] [1 outstanding requests]
+cpu: 995 Issued Read (20) for address 0xf1c
+cpu: Received MemEvent with command 2 (response to 16, addr 0x704) [Time: 43] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 20, addr 0xf1c) [Time: 30] [0 outstanding requests]
+cpu: 994 Issued Read (25) for address 0x7e0
+cpu: Received MemEvent with command 2 (response to 25, addr 0x7e0) [Time: 44] [0 outstanding requests]
+cpu: 993 Issued Read (29) for address 0x66c
+cpu: 992 Issued Read (33) for address 0x234
+cpu: Received MemEvent with command 2 (response to 29, addr 0x66c) [Time: 44] [1 outstanding requests]
+cpu: 991 Issued Read (36) for address 0x7c0
+cpu: Received MemEvent with command 2 (response to 36, addr 0x7c0) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 33, addr 0x234) [Time: 40] [0 outstanding requests]
+cpu: 990 Issued Read (39) for address 0xe8
+cpu: Received MemEvent with command 2 (response to 39, addr 0xe8) [Time: 44] [0 outstanding requests]
+cpu: 989 Issued Read (43) for address 0x184
+cpu: Received MemEvent with command 2 (response to 43, addr 0x184) [Time: 44] [0 outstanding requests]
+cpu: 988 Issued Read (47) for address 0xbb4
+cpu: 987 Issued Write (50) for address 0x92c
+WARNING: address 0x92c is not aligned to the request size of 64
+WARNING: address 0x92c is not aligned to the request size of 64
+WARNING: address 0x92c is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 47, addr 0xbb4) [Time: 44] [1 outstanding requests]
+cpu: 986 Issued Read (55) for address 0x25c
+cpu: Received MemEvent with command 4 (response to 50, addr 0x92c) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 55, addr 0x25c) [Time: 59] [0 outstanding requests]
+cpu: 985 Issued Read (60) for address 0x104
+cpu: 984 Issued Read (64) for address 0x768
+cpu: Received MemEvent with command 2 (response to 60, addr 0x104) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 64, addr 0x768) [Time: 42] [0 outstanding requests]
+cpu: 983 Issued Read (69) for address 0xa6c
+cpu: Received MemEvent with command 2 (response to 69, addr 0xa6c) [Time: 44] [0 outstanding requests]
+cpu: 982 Issued Read (73) for address 0x9b8
+cpu: Received MemEvent with command 2 (response to 73, addr 0x9b8) [Time: 44] [0 outstanding requests]
+cpu: 981 Issued Read (77) for address 0xadc
+cpu: Received MemEvent with command 2 (response to 77, addr 0xadc) [Time: 44] [0 outstanding requests]
+cpu: 980 Issued Read (81) for address 0x110
+cpu: Received MemEvent with command 2 (response to 81, addr 0x110) [Time: 4] [0 outstanding requests]
+cpu: 979 Issued Read (83) for address 0xe48
+cpu: Received MemEvent with command 2 (response to 83, addr 0xe48) [Time: 4] [0 outstanding requests]
+cpu: 978 Issued Read (85) for address 0x17c
+cpu: 977 Issued Read (88) for address 0xd64
+cpu: Received MemEvent with command 2 (response to 85, addr 0x17c) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 88, addr 0xd64) [Time: 46] [0 outstanding requests]
+cpu: 976 Issued Read (93) for address 0x868
+cpu: 975 Issued Read (97) for address 0x570
+cpu: Received MemEvent with command 2 (response to 97, addr 0x570) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 93, addr 0x868) [Time: 44] [0 outstanding requests]
+cpu: 974 Issued Read (100) for address 0x450
+cpu: Received MemEvent with command 2 (response to 100, addr 0x450) [Time: 44] [0 outstanding requests]
+cpu: 973 Issued Read (105) for address 0xe30
+cpu: Received MemEvent with command 2 (response to 105, addr 0xe30) [Time: 44] [0 outstanding requests]
+cpu: 972 Issued Read (109) for address 0x974
+cpu: Received MemEvent with command 2 (response to 109, addr 0x974) [Time: 44] [0 outstanding requests]
+cpu: 971 Issued Write (114) for address 0xe68
+cpu: Received MemEvent with command 4 (response to 114, addr 0xe68) [Time: 4] [0 outstanding requests]
+cpu: 970 Issued Read (116) for address 0x704
+cpu: Received MemEvent with command 2 (response to 116, addr 0x704) [Time: 4] [0 outstanding requests]
+cpu: 969 Issued Read (118) for address 0xe2c
+cpu: Received MemEvent with command 2 (response to 118, addr 0xe2c) [Time: 4] [0 outstanding requests]
+cpu: 968 Issued Read (120) for address 0x864
+cpu: Received MemEvent with command 2 (response to 120, addr 0x864) [Time: 4] [0 outstanding requests]
+cpu: 967 Issued Write (122) for address 0x7fc
+WARNING: address 0x7fc is not aligned to the request size of 64
+WARNING: address 0x7fc is not aligned to the request size of 64
+WARNING: address 0x7fc is not aligned to the request size of 64
+cpu: 966 Issued Read (126) for address 0x9c
+cpu: Received MemEvent with command 4 (response to 122, addr 0x7fc) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 126, addr 0x9c) [Time: 56] [0 outstanding requests]
+cpu: 965 Issued Read (131) for address 0xc10
+cpu: Received MemEvent with command 2 (response to 131, addr 0xc10) [Time: 44] [0 outstanding requests]
+cpu: 964 Issued Read (135) for address 0xc90
+cpu: Received MemEvent with command 2 (response to 135, addr 0xc90) [Time: 44] [0 outstanding requests]
+cpu: 963 Issued Read (139) for address 0xca4
+cpu: Received MemEvent with command 2 (response to 139, addr 0xca4) [Time: 4] [0 outstanding requests]
+cpu: 962 Issued Read (141) for address 0x748
+cpu: Received MemEvent with command 2 (response to 141, addr 0x748) [Time: 44] [0 outstanding requests]
+cpu: 961 Issued Read (146) for address 0x714
+cpu: Received MemEvent with command 2 (response to 146, addr 0x714) [Time: 4] [0 outstanding requests]
+cpu: 960 Issued Read (148) for address 0x284
+cpu: Received MemEvent with command 2 (response to 148, addr 0x284) [Time: 44] [0 outstanding requests]
+cpu: 959 Issued Read (152) for address 0x4a8
+cpu: Received MemEvent with command 2 (response to 152, addr 0x4a8) [Time: 44] [0 outstanding requests]
+cpu: 958 Issued Read (156) for address 0xcec
+cpu: Received MemEvent with command 2 (response to 156, addr 0xcec) [Time: 44] [0 outstanding requests]
+cpu: 957 Issued Read (160) for address 0x1f0
+cpu: Received MemEvent with command 2 (response to 160, addr 0x1f0) [Time: 44] [0 outstanding requests]
+cpu: 956 Issued Read (164) for address 0xa68
+cpu: Received MemEvent with command 2 (response to 164, addr 0xa68) [Time: 4] [0 outstanding requests]
+cpu: 955 Issued Read (166) for address 0xc8c
+cpu: Received MemEvent with command 2 (response to 166, addr 0xc8c) [Time: 4] [0 outstanding requests]
+cpu: 954 Issued Read (168) for address 0x760
+cpu: Received MemEvent with command 2 (response to 168, addr 0x760) [Time: 4] [0 outstanding requests]
+cpu: 953 Issued Read (170) for address 0xfb4
+cpu: Received MemEvent with command 2 (response to 170, addr 0xfb4) [Time: 44] [0 outstanding requests]
+cpu: 952 Issued Read (174) for address 0x72c
+cpu: Received MemEvent with command 2 (response to 174, addr 0x72c) [Time: 4] [0 outstanding requests]
+cpu: 951 Issued Read (176) for address 0x604
+cpu: Received MemEvent with command 2 (response to 176, addr 0x604) [Time: 44] [0 outstanding requests]
+cpu: 950 Issued Read (180) for address 0x280
+cpu: Received MemEvent with command 2 (response to 180, addr 0x280) [Time: 4] [0 outstanding requests]
+cpu: 949 Issued Read (182) for address 0x948
+cpu: Received MemEvent with command 2 (response to 182, addr 0x948) [Time: 4] [0 outstanding requests]
+cpu: 948 Issued Write (184) for address 0xc9c
+WARNING: address 0xc9c is not aligned to the request size of 64
+WARNING: address 0xc9c is not aligned to the request size of 64
+cpu: 947 Issued Read (188) for address 0xb88
+WARNING: address 0xc9c is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 188, addr 0xb88) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 184, addr 0xc9c) [Time: 60] [0 outstanding requests]
+cpu: 946 Issued Read (191) for address 0x9e4
+cpu: Received MemEvent with command 2 (response to 191, addr 0x9e4) [Time: 100] [0 outstanding requests]
+cpu: 945 Issued Read (195) for address 0x7d0
+cpu: Received MemEvent with command 2 (response to 195, addr 0x7d0) [Time: 4] [0 outstanding requests]
+cpu: 944 Issued Write (197) for address 0xa8c
+WARNING: address 0xa8c is not aligned to the request size of 64
+WARNING: address 0xa8c is not aligned to the request size of 64
+WARNING: address 0xa8c is not aligned to the request size of 64
+cpu: 943 Issued Read (202) for address 0xcc4
+cpu: Received MemEvent with command 2 (response to 202, addr 0xcc4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 197, addr 0xa8c) [Time: 60] [0 outstanding requests]
+cpu: 942 Issued Read (205) for address 0x90c
+cpu: Received MemEvent with command 2 (response to 205, addr 0x90c) [Time: 4] [0 outstanding requests]
+cpu: 941 Issued Read (207) for address 0x568
+cpu: Received MemEvent with command 2 (response to 207, addr 0x568) [Time: 4] [0 outstanding requests]
+cpu: 940 Issued Read (209) for address 0xb0
+cpu: Received MemEvent with command 2 (response to 209, addr 0xb0) [Time: 44] [0 outstanding requests]
+cpu: 939 Issued Read (214) for address 0x8e0
+cpu: Received MemEvent with command 2 (response to 214, addr 0x8e0) [Time: 44] [0 outstanding requests]
+cpu: 938 Issued Read (218) for address 0x934
+cpu: 937 Issued Read (220) for address 0xa80
+cpu: Received MemEvent with command 2 (response to 218, addr 0x934) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 220, addr 0xa80) [Time: 4] [0 outstanding requests]
+cpu: 936 Issued Read (222) for address 0x7a8
+cpu: 935 Issued Read (226) for address 0xd6c
+cpu: Received MemEvent with command 2 (response to 226, addr 0xd6c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 222, addr 0x7a8) [Time: 44] [0 outstanding requests]
+cpu: 934 Issued Read (229) for address 0x288
+cpu: Received MemEvent with command 2 (response to 229, addr 0x288) [Time: 4] [0 outstanding requests]
+cpu: 933 Issued Read (231) for address 0xc08
+cpu: Received MemEvent with command 2 (response to 231, addr 0xc08) [Time: 4] [0 outstanding requests]
+cpu: 932 Issued Read (233) for address 0x728
+cpu: Received MemEvent with command 2 (response to 233, addr 0x728) [Time: 4] [0 outstanding requests]
+cpu: 931 Issued Read (235) for address 0xee0
+cpu: Received MemEvent with command 2 (response to 235, addr 0xee0) [Time: 44] [0 outstanding requests]
+cpu: 930 Issued Read (240) for address 0x74c
+cpu: Received MemEvent with command 2 (response to 240, addr 0x74c) [Time: 4] [0 outstanding requests]
+cpu: 929 Issued Read (242) for address 0xe64
+cpu: Received MemEvent with command 2 (response to 242, addr 0xe64) [Time: 4] [0 outstanding requests]
+cpu: 928 Issued Read (244) for address 0x68
+cpu: 927 Issued Read (248) for address 0xfac
+cpu: Received MemEvent with command 2 (response to 248, addr 0xfac) [Time: 4] [1 outstanding requests]
+cpu: 926 Issued Read (250) for address 0x4fc
+cpu: Received MemEvent with command 2 (response to 244, addr 0x68) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 250, addr 0x4fc) [Time: 48] [0 outstanding requests]
+cpu: 925 Issued Read (256) for address 0x990
+cpu: Received MemEvent with command 2 (response to 256, addr 0x990) [Time: 4] [0 outstanding requests]
+cpu: 924 Issued Read (258) for address 0x30c
+cpu: Received MemEvent with command 2 (response to 258, addr 0x30c) [Time: 44] [0 outstanding requests]
+cpu: 923 Issued Read (263) for address 0xeb0
+cpu: 922 Issued Read (268) for address 0x98c
+cpu: Received MemEvent with command 2 (response to 268, addr 0x98c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 263, addr 0xeb0) [Time: 63] [0 outstanding requests]
+cpu: 921 Issued Read (271) for address 0x7e8
+cpu: Received MemEvent with command 2 (response to 271, addr 0x7e8) [Time: 4] [0 outstanding requests]
+cpu: 920 Issued Read (273) for address 0xc50
+cpu: 919 Issued Read (278) for address 0x8f4
+cpu: Received MemEvent with command 2 (response to 273, addr 0xc50) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 278, addr 0x8f4) [Time: 4] [0 outstanding requests]
+cpu: 918 Issued Read (280) for address 0x6e8
+cpu: Received MemEvent with command 2 (response to 280, addr 0x6e8) [Time: 44] [0 outstanding requests]
+cpu: 917 Issued Read (285) for address 0x38
+cpu: Received MemEvent with command 2 (response to 285, addr 0x38) [Time: 44] [0 outstanding requests]
+cpu: 916 Issued Read (290) for address 0x14c
+cpu: Received MemEvent with command 2 (response to 290, addr 0x14c) [Time: 44] [0 outstanding requests]
+cpu: 915 Issued Read (295) for address 0x920
+cpu: Received MemEvent with command 2 (response to 295, addr 0x920) [Time: 4] [0 outstanding requests]
+cpu: 914 Issued Read (297) for address 0x870
+cpu: Received MemEvent with command 2 (response to 297, addr 0x870) [Time: 44] [0 outstanding requests]
+cpu: 913 Issued Write (302) for address 0x880
+cpu: 912 Issued Read (307) for address 0x14c
+cpu: Received MemEvent with command 2 (response to 307, addr 0x14c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 302, addr 0x880) [Time: 60] [0 outstanding requests]
+cpu: 911 Issued Read (310) for address 0x4f4
+cpu: Received MemEvent with command 2 (response to 310, addr 0x4f4) [Time: 4] [0 outstanding requests]
+cpu: 910 Issued Read (312) for address 0xf44
+cpu: Received MemEvent with command 2 (response to 312, addr 0xf44) [Time: 44] [0 outstanding requests]
+cpu: 909 Issued Read (317) for address 0xe3c
+cpu: Received MemEvent with command 2 (response to 317, addr 0xe3c) [Time: 4] [0 outstanding requests]
+cpu: 908 Issued Read (319) for address 0xdf0
+cpu: 907 Issued Read (323) for address 0x520
+cpu: Received MemEvent with command 2 (response to 319, addr 0xdf0) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 323, addr 0x520) [Time: 40] [0 outstanding requests]
+cpu: 906 Issued Read (328) for address 0x874
+cpu: Received MemEvent with command 2 (response to 328, addr 0x874) [Time: 4] [0 outstanding requests]
+cpu: 905 Issued Read (330) for address 0xb40
+cpu: Received MemEvent with command 2 (response to 330, addr 0xb40) [Time: 40] [0 outstanding requests]
+cpu: 904 Issued Write (335) for address 0xcd0
+WARNING: address 0xcd0 is not aligned to the request size of 64
+WARNING: address 0xcd0 is not aligned to the request size of 64
+WARNING: address 0xcd0 is not aligned to the request size of 64
+cpu: 903 Issued Read (340) for address 0xdc8
+cpu: Received MemEvent with command 2 (response to 340, addr 0xdc8) [Time: 4] [1 outstanding requests]
+cpu: 902 Issued Read (342) for address 0xfc4
+cpu: Received MemEvent with command 4 (response to 335, addr 0xcd0) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 342, addr 0xfc4) [Time: 29] [0 outstanding requests]
+cpu: 901 Issued Read (348) for address 0xec
+cpu: 900 Issued Read (352) for address 0x764
+cpu: Received MemEvent with command 2 (response to 352, addr 0x764) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 348, addr 0xec) [Time: 44] [0 outstanding requests]
+cpu: 899 Issued Read (355) for address 0x13c
+cpu: Received MemEvent with command 2 (response to 355, addr 0x13c) [Time: 44] [0 outstanding requests]
+cpu: 898 Issued Read (360) for address 0x710
+cpu: Received MemEvent with command 2 (response to 360, addr 0x710) [Time: 44] [0 outstanding requests]
+cpu: 897 Issued Read (365) for address 0x138
+cpu: Received MemEvent with command 2 (response to 365, addr 0x138) [Time: 4] [0 outstanding requests]
+cpu: 896 Issued Read (367) for address 0xa04
+cpu: Received MemEvent with command 2 (response to 367, addr 0xa04) [Time: 44] [0 outstanding requests]
+cpu: 895 Issued Read (372) for address 0xc5c
+cpu: Received MemEvent with command 2 (response to 372, addr 0xc5c) [Time: 4] [0 outstanding requests]
+cpu: 894 Issued Read (374) for address 0xec0
+cpu: Received MemEvent with command 2 (response to 374, addr 0xec0) [Time: 40] [0 outstanding requests]
+cpu: 893 Issued Read (379) for address 0x528
+cpu: Received MemEvent with command 2 (response to 379, addr 0x528) [Time: 4] [0 outstanding requests]
+cpu: 892 Issued Read (381) for address 0xc7c
+cpu: Received MemEvent with command 2 (response to 381, addr 0xc7c) [Time: 4] [0 outstanding requests]
+cpu: 891 Issued Read (383) for address 0x740
+cpu: Received MemEvent with command 2 (response to 383, addr 0x740) [Time: 4] [0 outstanding requests]
+cpu: 890 Issued Read (385) for address 0x710
+cpu: Received MemEvent with command 2 (response to 385, addr 0x710) [Time: 4] [0 outstanding requests]
+cpu: 889 Issued Read (387) for address 0x31c
+cpu: Received MemEvent with command 2 (response to 387, addr 0x31c) [Time: 63] [0 outstanding requests]
+cpu: 888 Issued Write (393) for address 0x6b0
+WARNING: address 0x6b0 is not aligned to the request size of 64
+WARNING: address 0x6b0 is not aligned to the request size of 64
+WARNING: address 0x6b0 is not aligned to the request size of 64
+cpu: 887 Issued Read (399) for address 0x318
+cpu: Received MemEvent with command 2 (response to 399, addr 0x318) [Time: 4] [1 outstanding requests]
+cpu: 886 Issued Write (401) for address 0xd0c
+WARNING: address 0xd0c is not aligned to the request size of 64
+WARNING: address 0xd0c is not aligned to the request size of 64
+WARNING: address 0xd0c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 393, addr 0x6b0) [Time: 63] [1 outstanding requests]
+cpu: 885 Issued Read (407) for address 0x9a0
+cpu: Received MemEvent with command 2 (response to 407, addr 0x9a0) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 401, addr 0xd0c) [Time: 63] [0 outstanding requests]
+cpu: 884 Issued Write (410) for address 0xd70
+WARNING: address 0xd70 is not aligned to the request size of 64
+WARNING: address 0xd70 is not aligned to the request size of 64
+WARNING: address 0xd70 is not aligned to the request size of 64
+cpu: 883 Issued Read (415) for address 0x5f8
+cpu: 882 Issued Read (419) for address 0x1f0
+cpu: Received MemEvent with command 4 (response to 410, addr 0xd70) [Time: 60] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 415, addr 0x5f8) [Time: 38] [1 outstanding requests]
+cpu: 881 Issued Read (426) for address 0x64c
+cpu: Received MemEvent with command 2 (response to 419, addr 0x1f0) [Time: 54] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 426, addr 0x64c) [Time: 67] [0 outstanding requests]
+cpu: 880 Issued Read (433) for address 0x6a4
+cpu: Received MemEvent with command 2 (response to 433, addr 0x6a4) [Time: 4] [0 outstanding requests]
+cpu: 879 Issued Read (435) for address 0x868
+cpu: Received MemEvent with command 2 (response to 435, addr 0x868) [Time: 4] [0 outstanding requests]
+cpu: 878 Issued Read (437) for address 0x50
+cpu: Received MemEvent with command 2 (response to 437, addr 0x50) [Time: 4] [0 outstanding requests]
+cpu: 877 Issued Read (439) for address 0xe1c
+cpu: Received MemEvent with command 2 (response to 439, addr 0xe1c) [Time: 4] [0 outstanding requests]
+cpu: 876 Issued Read (441) for address 0x110
+cpu: Received MemEvent with command 2 (response to 441, addr 0x110) [Time: 44] [0 outstanding requests]
+cpu: 875 Issued Read (446) for address 0x2b4
+cpu: Received MemEvent with command 2 (response to 446, addr 0x2b4) [Time: 4] [0 outstanding requests]
+cpu: 874 Issued Read (448) for address 0xcec
+cpu: Received MemEvent with command 2 (response to 448, addr 0xcec) [Time: 4] [0 outstanding requests]
+cpu: 873 Issued Read (450) for address 0x564
+cpu: 872 Issued Read (454) for address 0x5a0
+cpu: Received MemEvent with command 2 (response to 450, addr 0x564) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 454, addr 0x5a0) [Time: 42] [0 outstanding requests]
+cpu: 871 Issued Read (460) for address 0x334
+cpu: Received MemEvent with command 2 (response to 460, addr 0x334) [Time: 4] [0 outstanding requests]
+cpu: 870 Issued Read (462) for address 0xbec
+cpu: Received MemEvent with command 2 (response to 462, addr 0xbec) [Time: 44] [0 outstanding requests]
+cpu: 869 Issued Read (467) for address 0xed8
+cpu: Received MemEvent with command 2 (response to 467, addr 0xed8) [Time: 4] [0 outstanding requests]
+cpu: 868 Issued Read (469) for address 0x7f0
+cpu: 867 Issued Read (473) for address 0xf38
+cpu: Received MemEvent with command 2 (response to 469, addr 0x7f0) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 473, addr 0xf38) [Time: 49] [0 outstanding requests]
+cpu: 866 Issued Read (479) for address 0x9f0
+cpu: 865 Issued Read (483) for address 0x8cc
+cpu: 864 Issued Read (488) for address 0x784
+cpu: Received MemEvent with command 2 (response to 479, addr 0x9f0) [Time: 44] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 488, addr 0x784) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 483, addr 0x8cc) [Time: 29] [0 outstanding requests]
+cpu: 863 Issued Read (491) for address 0x240
+cpu: Received MemEvent with command 2 (response to 491, addr 0x240) [Time: 40] [0 outstanding requests]
+cpu: 862 Issued Read (496) for address 0x4bc
+cpu: Received MemEvent with command 2 (response to 496, addr 0x4bc) [Time: 44] [0 outstanding requests]
+cpu: 861 Issued Write (501) for address 0x5e0
+WARNING: address 0x5e0 is not aligned to the request size of 64
+WARNING: address 0x5e0 is not aligned to the request size of 64
+WARNING: address 0x5e0 is not aligned to the request size of 64
+cpu: 860 Issued Read (506) for address 0xe30
+cpu: Received MemEvent with command 2 (response to 506, addr 0xe30) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 501, addr 0x5e0) [Time: 60] [0 outstanding requests]
+cpu: 859 Issued Write (509) for address 0x9e0
+WARNING: address 0x9e0 is not aligned to the request size of 64
+WARNING: address 0x9e0 is not aligned to the request size of 64
+WARNING: address 0x9e0 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 509, addr 0x9e0) [Time: 60] [0 outstanding requests]
+cpu: 858 Issued Read (514) for address 0xf00
+cpu: Received MemEvent with command 2 (response to 514, addr 0xf00) [Time: 4] [0 outstanding requests]
+cpu: 857 Issued Write (516) for address 0xc84
+cpu: 856 Issued Write (520) for address 0xd70
+WARNING: address 0xc84 is not aligned to the request size of 64
+WARNING: address 0xc84 is not aligned to the request size of 64
+WARNING: address 0xc84 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 520, addr 0xd70) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 516, addr 0xc84) [Time: 63] [0 outstanding requests]
+cpu: 855 Issued Read (525) for address 0xa98
+cpu: 854 Issued Write (530) for address 0x91c
+WARNING: address 0x91c is not aligned to the request size of 64
+WARNING: address 0x91c is not aligned to the request size of 64
+WARNING: address 0x91c is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 525, addr 0xa98) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 530, addr 0x91c) [Time: 76] [0 outstanding requests]
+cpu: 853 Issued Read (538) for address 0xcd4
+cpu: Received MemEvent with command 2 (response to 538, addr 0xcd4) [Time: 4] [0 outstanding requests]
+cpu: 852 Issued Read (540) for address 0x8c
+cpu: Received MemEvent with command 2 (response to 540, addr 0x8c) [Time: 44] [0 outstanding requests]
+cpu: 851 Issued Read (545) for address 0xd5c
+cpu: Received MemEvent with command 2 (response to 545, addr 0xd5c) [Time: 4] [0 outstanding requests]
+cpu: 850 Issued Read (547) for address 0xb60
+cpu: Received MemEvent with command 2 (response to 547, addr 0xb60) [Time: 4] [0 outstanding requests]
+cpu: 849 Issued Read (549) for address 0x3d4
+cpu: Received MemEvent with command 2 (response to 549, addr 0x3d4) [Time: 44] [0 outstanding requests]
+cpu: 848 Issued Read (554) for address 0x78
+cpu: Received MemEvent with command 2 (response to 554, addr 0x78) [Time: 4] [0 outstanding requests]
+cpu: 847 Issued Read (556) for address 0xd14
+cpu: 846 Issued Read (560) for address 0xda4
+cpu: Received MemEvent with command 2 (response to 556, addr 0xd14) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 560, addr 0xda4) [Time: 46] [0 outstanding requests]
+cpu: 845 Issued Read (566) for address 0x1b4
+cpu: 844 Issued Read (570) for address 0xa38
+cpu: Received MemEvent with command 2 (response to 570, addr 0xa38) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 566, addr 0x1b4) [Time: 44] [0 outstanding requests]
+cpu: 843 Issued Read (573) for address 0x948
+cpu: 842 Issued Read (577) for address 0x2d8
+cpu: Received MemEvent with command 2 (response to 573, addr 0x948) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 577, addr 0x2d8) [Time: 29] [0 outstanding requests]
+cpu: 841 Issued Read (583) for address 0x4c
+cpu: Received MemEvent with command 2 (response to 583, addr 0x4c) [Time: 4] [0 outstanding requests]
+cpu: 840 Issued Read (585) for address 0x8c0
+cpu: Received MemEvent with command 2 (response to 585, addr 0x8c0) [Time: 4] [0 outstanding requests]
+cpu: 839 Issued Read (587) for address 0x384
+cpu: Received MemEvent with command 2 (response to 587, addr 0x384) [Time: 44] [0 outstanding requests]
+cpu: 838 Issued Read (592) for address 0x57c
+cpu: Received MemEvent with command 2 (response to 592, addr 0x57c) [Time: 4] [0 outstanding requests]
+cpu: 837 Issued Write (594) for address 0x374
+cpu: 836 Issued Read (597) for address 0x544
+WARNING: address 0x374 is not aligned to the request size of 64
+WARNING: address 0x374 is not aligned to the request size of 64
+WARNING: address 0x374 is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 597, addr 0x544) [Time: 4] [1 outstanding requests]
+cpu: 835 Issued Read (602) for address 0x6a8
+cpu: Received MemEvent with command 4 (response to 594, addr 0x374) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 602, addr 0x6a8) [Time: 42] [0 outstanding requests]
+cpu: 834 Issued Read (608) for address 0x1a0
+cpu: Received MemEvent with command 2 (response to 608, addr 0x1a0) [Time: 4] [0 outstanding requests]
+cpu: 833 Issued Read (610) for address 0xddc
+cpu: Received MemEvent with command 2 (response to 610, addr 0xddc) [Time: 44] [0 outstanding requests]
+cpu: 832 Issued Read (615) for address 0xf58
+cpu: Received MemEvent with command 2 (response to 615, addr 0xf58) [Time: 44] [0 outstanding requests]
+cpu: 831 Issued Read (620) for address 0x58c
+cpu: Received MemEvent with command 2 (response to 620, addr 0x58c) [Time: 44] [0 outstanding requests]
+cpu: 830 Issued Read (625) for address 0x8c4
+cpu: Received MemEvent with command 2 (response to 625, addr 0x8c4) [Time: 4] [0 outstanding requests]
+cpu: 829 Issued Read (627) for address 0x644
+cpu: Received MemEvent with command 2 (response to 627, addr 0x644) [Time: 4] [0 outstanding requests]
+cpu: 828 Issued Read (629) for address 0x714
+cpu: 827 Issued Read (633) for address 0xa08
+cpu: Received MemEvent with command 2 (response to 633, addr 0xa08) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 629, addr 0x714) [Time: 44] [0 outstanding requests]
+cpu: 826 Issued Read (636) for address 0x31c
+cpu: Received MemEvent with command 2 (response to 636, addr 0x31c) [Time: 44] [0 outstanding requests]
+cpu: 825 Issued Read (641) for address 0xe48
+cpu: Received MemEvent with command 2 (response to 641, addr 0xe48) [Time: 44] [0 outstanding requests]
+cpu: 824 Issued Read (646) for address 0xec4
+cpu: Received MemEvent with command 2 (response to 646, addr 0xec4) [Time: 4] [0 outstanding requests]
+cpu: 823 Issued Read (648) for address 0xf2c
+cpu: 822 Issued Write (653) for address 0xeec
+WARNING: address 0xeec is not aligned to the request size of 64
+WARNING: address 0xeec is not aligned to the request size of 64
+WARNING: address 0xeec is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 648, addr 0xf2c) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 653, addr 0xeec) [Time: 50] [0 outstanding requests]
+cpu: 821 Issued Read (659) for address 0xe0c
+cpu: Received MemEvent with command 2 (response to 659, addr 0xe0c) [Time: 4] [0 outstanding requests]
+cpu: 820 Issued Read (661) for address 0x8ec
+cpu: 819 Issued Read (663) for address 0xb9c
+cpu: Received MemEvent with command 2 (response to 661, addr 0x8ec) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 663, addr 0xb9c) [Time: 44] [0 outstanding requests]
+cpu: 818 Issued Read (668) for address 0xe0c
+cpu: Received MemEvent with command 2 (response to 668, addr 0xe0c) [Time: 4] [0 outstanding requests]
+cpu: 817 Issued Read (670) for address 0xe9c
+cpu: 816 Issued Read (675) for address 0xc48
+cpu: Received MemEvent with command 2 (response to 670, addr 0xe9c) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 675, addr 0xc48) [Time: 43] [0 outstanding requests]
+cpu: 815 Issued Write (681) for address 0xf78
+WARNING: address 0xf78 is not aligned to the request size of 64
+WARNING: address 0xf78 is not aligned to the request size of 64
+WARNING: address 0xf78 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 681, addr 0xf78) [Time: 60] [0 outstanding requests]
+cpu: 814 Issued Read (686) for address 0x97c
+cpu: Received MemEvent with command 2 (response to 686, addr 0x97c) [Time: 4] [0 outstanding requests]
+cpu: 813 Issued Read (688) for address 0xbac
+cpu: Received MemEvent with command 2 (response to 688, addr 0xbac) [Time: 4] [0 outstanding requests]
+cpu: 812 Issued Read (690) for address 0xecc
+cpu: Received MemEvent with command 2 (response to 690, addr 0xecc) [Time: 4] [0 outstanding requests]
+cpu: 811 Issued Read (692) for address 0x460
+cpu: Received MemEvent with command 2 (response to 692, addr 0x460) [Time: 44] [0 outstanding requests]
+cpu: 810 Issued Read (697) for address 0xf0
+cpu: Received MemEvent with command 2 (response to 697, addr 0xf0) [Time: 63] [0 outstanding requests]
+cpu: 809 Issued Read (703) for address 0x368
+cpu: Received MemEvent with command 2 (response to 703, addr 0x368) [Time: 4] [0 outstanding requests]
+cpu: 808 Issued Read (705) for address 0x190
+cpu: Received MemEvent with command 2 (response to 705, addr 0x190) [Time: 4] [0 outstanding requests]
+cpu: 807 Issued Read (707) for address 0xda0
+cpu: 806 Issued Read (711) for address 0x858
+cpu: Received MemEvent with command 2 (response to 707, addr 0xda0) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 711, addr 0x858) [Time: 35] [0 outstanding requests]
+cpu: 805 Issued Read (717) for address 0x5d4
+cpu: Received MemEvent with command 2 (response to 717, addr 0x5d4) [Time: 4] [0 outstanding requests]
+cpu: 804 Issued Read (719) for address 0x234
+cpu: Received MemEvent with command 2 (response to 719, addr 0x234) [Time: 44] [0 outstanding requests]
+cpu: 803 Issued Read (724) for address 0x418
+cpu: Received MemEvent with command 2 (response to 724, addr 0x418) [Time: 44] [0 outstanding requests]
+cpu: 802 Issued Read (729) for address 0xc28
+cpu: Received MemEvent with command 2 (response to 729, addr 0xc28) [Time: 44] [0 outstanding requests]
+cpu: 801 Issued Read (734) for address 0x484
+cpu: 800 Issued Read (738) for address 0x150
+cpu: Received MemEvent with command 2 (response to 734, addr 0x484) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 738, addr 0x150) [Time: 39] [0 outstanding requests]
+cpu: 799 Issued Write (744) for address 0xe78
+WARNING: address 0xe78 is not aligned to the request size of 64
+WARNING: address 0xe78 is not aligned to the request size of 64
+WARNING: address 0xe78 is not aligned to the request size of 64
+cpu: 798 Issued Read (748) for address 0x200
+cpu: Received MemEvent with command 2 (response to 748, addr 0x200) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 744, addr 0xe78) [Time: 60] [0 outstanding requests]
+cpu: 797 Issued Read (751) for address 0x484
+cpu: Received MemEvent with command 2 (response to 751, addr 0x484) [Time: 4] [0 outstanding requests]
+cpu: 796 Issued Read (753) for address 0xd20
+cpu: Received MemEvent with command 2 (response to 753, addr 0xd20) [Time: 4] [0 outstanding requests]
+cpu: 795 Issued Read (755) for address 0xd10
+cpu: Received MemEvent with command 2 (response to 755, addr 0xd10) [Time: 4] [0 outstanding requests]
+cpu: 794 Issued Read (757) for address 0x268
+cpu: Received MemEvent with command 2 (response to 757, addr 0x268) [Time: 44] [0 outstanding requests]
+cpu: 793 Issued Read (762) for address 0x440
+cpu: Received MemEvent with command 2 (response to 762, addr 0x440) [Time: 4] [0 outstanding requests]
+cpu: 792 Issued Read (764) for address 0x930
+cpu: Received MemEvent with command 2 (response to 764, addr 0x930) [Time: 44] [0 outstanding requests]
+cpu: 791 Issued Write (769) for address 0x900
+cpu: Received MemEvent with command 4 (response to 769, addr 0x900) [Time: 60] [0 outstanding requests]
+cpu: 790 Issued Read (774) for address 0x538
+cpu: 789 Issued Read (778) for address 0xb08
+cpu: Received MemEvent with command 2 (response to 774, addr 0x538) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 778, addr 0xb08) [Time: 36] [0 outstanding requests]
+cpu: 788 Issued Write (784) for address 0xe24
+WARNING: address 0xe24 is not aligned to the request size of 64
+WARNING: address 0xe24 is not aligned to the request size of 64
+WARNING: address 0xe24 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 784, addr 0xe24) [Time: 60] [0 outstanding requests]
+cpu: 787 Issued Read (789) for address 0xfb0
+cpu: Received MemEvent with command 2 (response to 789, addr 0xfb0) [Time: 44] [0 outstanding requests]
+cpu: 786 Issued Read (794) for address 0xf88
+cpu: Received MemEvent with command 2 (response to 794, addr 0xf88) [Time: 4] [0 outstanding requests]
+cpu: 785 Issued Read (796) for address 0xef4
+cpu: Received MemEvent with command 2 (response to 796, addr 0xef4) [Time: 4] [0 outstanding requests]
+cpu: 784 Issued Read (798) for address 0xdac
+cpu: Received MemEvent with command 2 (response to 798, addr 0xdac) [Time: 4] [0 outstanding requests]
+cpu: 783 Issued Read (800) for address 0x640
+cpu: 782 Issued Read (804) for address 0x5e4
+cpu: Received MemEvent with command 2 (response to 804, addr 0x5e4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 800, addr 0x640) [Time: 40] [0 outstanding requests]
+cpu: 781 Issued Write (807) for address 0xfc4
+WARNING: address 0xfc4 is not aligned to the request size of 64
+WARNING: address 0xfc4 is not aligned to the request size of 64
+WARNING: address 0xfc4 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 807, addr 0xfc4) [Time: 60] [0 outstanding requests]
+cpu: 780 Issued Read (814) for address 0x654
+cpu: Received MemEvent with command 2 (response to 814, addr 0x654) [Time: 4] [0 outstanding requests]
+cpu: 779 Issued Read (816) for address 0xa88
+cpu: Received MemEvent with command 2 (response to 816, addr 0xa88) [Time: 44] [0 outstanding requests]
+cpu: 778 Issued Read (821) for address 0x920
+cpu: Received MemEvent with command 2 (response to 821, addr 0x920) [Time: 4] [0 outstanding requests]
+cpu: 777 Issued Read (823) for address 0x63c
+cpu: Received MemEvent with command 2 (response to 823, addr 0x63c) [Time: 44] [0 outstanding requests]
+cpu: 776 Issued Read (828) for address 0x8d4
+cpu: Received MemEvent with command 2 (response to 828, addr 0x8d4) [Time: 4] [0 outstanding requests]
+cpu: 775 Issued Read (830) for address 0xa98
+cpu: Received MemEvent with command 2 (response to 830, addr 0xa98) [Time: 4] [0 outstanding requests]
+cpu: 774 Issued Read (832) for address 0xbb0
+cpu: Received MemEvent with command 2 (response to 832, addr 0xbb0) [Time: 4] [0 outstanding requests]
+cpu: 773 Issued Read (834) for address 0xb34
+cpu: 772 Issued Read (836) for address 0xb08
+cpu: Received MemEvent with command 2 (response to 834, addr 0xb34) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 836, addr 0xb08) [Time: 4] [0 outstanding requests]
+cpu: 771 Issued Write (838) for address 0x3ac
+WARNING: address 0x3ac is not aligned to the request size of 64
+WARNING: address 0x3ac is not aligned to the request size of 64
+WARNING: address 0x3ac is not aligned to the request size of 64
+cpu: 770 Issued Read (843) for address 0x254
+cpu: Received MemEvent with command 2 (response to 843, addr 0x254) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 838, addr 0x3ac) [Time: 60] [0 outstanding requests]
+cpu: 769 Issued Read (846) for address 0x2c4
+cpu: Received MemEvent with command 2 (response to 846, addr 0x2c4) [Time: 4] [0 outstanding requests]
+cpu: 768 Issued Read (848) for address 0xecc
+cpu: Received MemEvent with command 2 (response to 848, addr 0xecc) [Time: 4] [0 outstanding requests]
+cpu: 767 Issued Read (850) for address 0xd8c
+cpu: Received MemEvent with command 2 (response to 850, addr 0xd8c) [Time: 4] [0 outstanding requests]
+cpu: 766 Issued Write (852) for address 0x244
+WARNING: address 0x244 is not aligned to the request size of 64
+WARNING: address 0x244 is not aligned to the request size of 64
+WARNING: address 0x244 is not aligned to the request size of 64
+cpu: 765 Issued Read (856) for address 0x7dc
+cpu: Received MemEvent with command 4 (response to 852, addr 0x244) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 856, addr 0x7dc) [Time: 54] [0 outstanding requests]
+cpu: 764 Issued Write (862) for address 0x368
+cpu: Received MemEvent with command 4 (response to 862, addr 0x368) [Time: 4] [0 outstanding requests]
+cpu: 763 Issued Read (864) for address 0xb44
+cpu: Received MemEvent with command 2 (response to 864, addr 0xb44) [Time: 63] [0 outstanding requests]
+cpu: 762 Issued Read (870) for address 0x3bc
+cpu: Received MemEvent with command 2 (response to 870, addr 0x3bc) [Time: 4] [0 outstanding requests]
+cpu: 761 Issued Read (872) for address 0xe48
+cpu: Received MemEvent with command 2 (response to 872, addr 0xe48) [Time: 4] [0 outstanding requests]
+cpu: 760 Issued Read (874) for address 0xd68
+cpu: 759 Issued Read (878) for address 0x70
+cpu: Received MemEvent with command 2 (response to 874, addr 0xd68) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 878, addr 0x70) [Time: 40] [0 outstanding requests]
+cpu: 758 Issued Read (884) for address 0xa90
+cpu: Received MemEvent with command 2 (response to 884, addr 0xa90) [Time: 4] [0 outstanding requests]
+cpu: 757 Issued Read (886) for address 0x5d0
+cpu: Received MemEvent with command 2 (response to 886, addr 0x5d0) [Time: 4] [0 outstanding requests]
+cpu: 756 Issued Read (888) for address 0xa68
+cpu: Received MemEvent with command 2 (response to 888, addr 0xa68) [Time: 44] [0 outstanding requests]
+cpu: 755 Issued Read (893) for address 0xf18
+cpu: Received MemEvent with command 2 (response to 893, addr 0xf18) [Time: 44] [0 outstanding requests]
+cpu: 754 Issued Read (898) for address 0x460
+cpu: Received MemEvent with command 2 (response to 898, addr 0x460) [Time: 63] [0 outstanding requests]
+cpu: 753 Issued Read (904) for address 0xff4
+cpu: Received MemEvent with command 2 (response to 904, addr 0xff4) [Time: 4] [0 outstanding requests]
+cpu: 752 Issued Read (906) for address 0x654
+cpu: Received MemEvent with command 2 (response to 906, addr 0x654) [Time: 63] [0 outstanding requests]
+cpu: 751 Issued Read (912) for address 0xc1c
+cpu: Received MemEvent with command 2 (response to 912, addr 0xc1c) [Time: 4] [0 outstanding requests]
+cpu: 750 Issued Read (914) for address 0x500
+cpu: Received MemEvent with command 2 (response to 914, addr 0x500) [Time: 4] [0 outstanding requests]
+cpu: 749 Issued Read (916) for address 0xed8
+cpu: Received MemEvent with command 2 (response to 916, addr 0xed8) [Time: 4] [0 outstanding requests]
+cpu: 748 Issued Read (918) for address 0x6d0
+cpu: Received MemEvent with command 2 (response to 918, addr 0x6d0) [Time: 44] [0 outstanding requests]
+cpu: 747 Issued Read (923) for address 0x734
+cpu: 746 Issued Read (928) for address 0x564
+cpu: Received MemEvent with command 2 (response to 923, addr 0x734) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 928, addr 0x564) [Time: 64] [0 outstanding requests]
+cpu: 745 Issued Read (934) for address 0x3ec
+cpu: 744 Issued Read (938) for address 0xf40
+cpu: Received MemEvent with command 2 (response to 934, addr 0x3ec) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 938, addr 0xf40) [Time: 55] [0 outstanding requests]
+cpu: 743 Issued Read (945) for address 0xa70
+cpu: Received MemEvent with command 2 (response to 945, addr 0xa70) [Time: 4] [0 outstanding requests]
+cpu: 742 Issued Write (947) for address 0x6fc
+WARNING: address 0x6fc is not aligned to the request size of 64
+WARNING: address 0x6fc is not aligned to the request size of 64
+WARNING: address 0x6fc is not aligned to the request size of 64
+cpu: 741 Issued Read (951) for address 0xf20
+cpu: Received MemEvent with command 4 (response to 947, addr 0x6fc) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 951, addr 0xf20) [Time: 4] [0 outstanding requests]
+cpu: 740 Issued Read (954) for address 0x990
+cpu: Received MemEvent with command 2 (response to 954, addr 0x990) [Time: 44] [0 outstanding requests]
+cpu: 739 Issued Read (959) for address 0x1d0
+cpu: 738 Issued Read (963) for address 0xc34
+cpu: Received MemEvent with command 2 (response to 963, addr 0xc34) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 959, addr 0x1d0) [Time: 45] [0 outstanding requests]
+cpu: 737 Issued Read (966) for address 0xdd0
+cpu: 736 Issued Read (971) for address 0xd1c
+cpu: 735 Issued Write (974) for address 0xd54
+WARNING: address 0xd54 is not aligned to the request size of 64
+WARNING: address 0xd54 is not aligned to the request size of 64
+WARNING: address 0xd54 is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 966, addr 0xdd0) [Time: 64] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 971, addr 0xd1c) [Time: 47] [1 outstanding requests]
+cpu: 734 Issued Write (981) for address 0xf80
+cpu: Received MemEvent with command 4 (response to 974, addr 0xd54) [Time: 71] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 981, addr 0xf80) [Time: 65] [0 outstanding requests]
+cpu: 733 Issued Read (988) for address 0xa00
+cpu: Received MemEvent with command 2 (response to 988, addr 0xa00) [Time: 40] [0 outstanding requests]
+cpu: 732 Issued Write (993) for address 0x69c
+WARNING: address 0x69c is not aligned to the request size of 64
+WARNING: address 0x69c is not aligned to the request size of 64
+WARNING: address 0x69c is not aligned to the request size of 64
+cpu: 731 Issued Read (997) for address 0xa90
+cpu: Received MemEvent with command 2 (response to 997, addr 0xa90) [Time: 4] [1 outstanding requests]
+cpu: 730 Issued Read (999) for address 0x590
+cpu: 729 Issued Read (1003) for address 0x42c
+cpu: Received MemEvent with command 4 (response to 993, addr 0x69c) [Time: 60] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 999, addr 0x590) [Time: 50] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1003, addr 0x42c) [Time: 70] [0 outstanding requests]
+cpu: 728 Issued Read (1011) for address 0xa18
+cpu: 727 Issued Write (1013) for address 0xe7c
+cpu: Received MemEvent with command 2 (response to 1011, addr 0xa18) [Time: 4] [1 outstanding requests]
+WARNING: address 0xe7c is not aligned to the request size of 64
+WARNING: address 0xe7c is not aligned to the request size of 64
+WARNING: address 0xe7c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1013, addr 0xe7c) [Time: 60] [0 outstanding requests]
+cpu: 726 Issued Read (1019) for address 0x924
+cpu: Received MemEvent with command 2 (response to 1019, addr 0x924) [Time: 44] [0 outstanding requests]
+cpu: 725 Issued Read (1024) for address 0x7c8
+cpu: 724 Issued Read (1029) for address 0xbc8
+cpu: Received MemEvent with command 2 (response to 1024, addr 0x7c8) [Time: 64] [1 outstanding requests]
+cpu: 723 Issued Read (1034) for address 0x7ac
+cpu: Received MemEvent with command 2 (response to 1029, addr 0xbc8) [Time: 45] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1034, addr 0x7ac) [Time: 57] [0 outstanding requests]
+cpu: 722 Issued Write (1041) for address 0xe4c
+cpu: Received MemEvent with command 4 (response to 1041, addr 0xe4c) [Time: 4] [0 outstanding requests]
+cpu: 721 Issued Read (1043) for address 0x56c
+cpu: Received MemEvent with command 2 (response to 1043, addr 0x56c) [Time: 4] [0 outstanding requests]
+cpu: 720 Issued Read (1045) for address 0xf8c
+cpu: Received MemEvent with command 2 (response to 1045, addr 0xf8c) [Time: 4] [0 outstanding requests]
+cpu: 719 Issued Read (1047) for address 0x55c
+cpu: Received MemEvent with command 2 (response to 1047, addr 0x55c) [Time: 4] [0 outstanding requests]
+cpu: 718 Issued Read (1049) for address 0xc70
+cpu: Received MemEvent with command 2 (response to 1049, addr 0xc70) [Time: 44] [0 outstanding requests]
+cpu: 717 Issued Read (1054) for address 0x5e0
+cpu: 716 Issued Read (1057) for address 0x10c
+cpu: Received MemEvent with command 2 (response to 1054, addr 0x5e0) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1057, addr 0x10c) [Time: 49] [0 outstanding requests]
+cpu: 715 Issued Read (1064) for address 0xbf8
+cpu: Received MemEvent with command 2 (response to 1064, addr 0xbf8) [Time: 4] [0 outstanding requests]
+cpu: 714 Issued Read (1066) for address 0x628
+cpu: Received MemEvent with command 2 (response to 1066, addr 0x628) [Time: 4] [0 outstanding requests]
+cpu: 713 Issued Read (1068) for address 0x48c
+cpu: Received MemEvent with command 2 (response to 1068, addr 0x48c) [Time: 4] [0 outstanding requests]
+cpu: 712 Issued Read (1070) for address 0x528
+cpu: 711 Issued Read (1074) for address 0xc24
+cpu: Received MemEvent with command 2 (response to 1074, addr 0xc24) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1070, addr 0x528) [Time: 44] [0 outstanding requests]
+cpu: 710 Issued Write (1077) for address 0x900
+cpu: Received MemEvent with command 4 (response to 1077, addr 0x900) [Time: 60] [0 outstanding requests]
+cpu: 709 Issued Read (1082) for address 0x6a8
+cpu: Received MemEvent with command 2 (response to 1082, addr 0x6a8) [Time: 4] [0 outstanding requests]
+cpu: 708 Issued Read (1084) for address 0xe64
+cpu: Received MemEvent with command 2 (response to 1084, addr 0xe64) [Time: 4] [0 outstanding requests]
+cpu: 707 Issued Read (1086) for address 0x464
+cpu: 706 Issued Read (1090) for address 0xb58
+cpu: Received MemEvent with command 2 (response to 1086, addr 0x464) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1090, addr 0xb58) [Time: 4] [0 outstanding requests]
+cpu: 705 Issued Read (1093) for address 0x138
+cpu: Received MemEvent with command 2 (response to 1093, addr 0x138) [Time: 4] [0 outstanding requests]
+cpu: 704 Issued Read (1095) for address 0x704
+cpu: 703 Issued Read (1098) for address 0xfac
+cpu: Received MemEvent with command 2 (response to 1098, addr 0xfac) [Time: 4] [1 outstanding requests]
+cpu: 702 Issued Read (1101) for address 0x578
+cpu: Received MemEvent with command 2 (response to 1101, addr 0x578) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1095, addr 0x704) [Time: 44] [0 outstanding requests]
+cpu: 701 Issued Read (1104) for address 0x338
+cpu: 700 Issued Read (1108) for address 0x3f8
+cpu: Received MemEvent with command 2 (response to 1104, addr 0x338) [Time: 45] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1108, addr 0x3f8) [Time: 31] [0 outstanding requests]
+cpu: 699 Issued Read (1114) for address 0x48
+cpu: Received MemEvent with command 2 (response to 1114, addr 0x48) [Time: 44] [0 outstanding requests]
+cpu: 698 Issued Read (1119) for address 0x584
+cpu: 697 Issued Read (1121) for address 0x6ac
+cpu: Received MemEvent with command 2 (response to 1119, addr 0x584) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1121, addr 0x6ac) [Time: 4] [0 outstanding requests]
+cpu: 696 Issued Read (1123) for address 0xb54
+cpu: Received MemEvent with command 2 (response to 1123, addr 0xb54) [Time: 4] [0 outstanding requests]
+cpu: 695 Issued Read (1125) for address 0x4f8
+cpu: 694 Issued Read (1129) for address 0xc78
+cpu: Received MemEvent with command 2 (response to 1129, addr 0xc78) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1125, addr 0x4f8) [Time: 72] [0 outstanding requests]
+cpu: 693 Issued Write (1132) for address 0x7fc
+WARNING: address 0x7fc is not aligned to the request size of 64
+WARNING: address 0x7fc is not aligned to the request size of 64
+WARNING: address 0x7fc is not aligned to the request size of 64
+cpu: 692 Issued Read (1136) for address 0xd2c
+cpu: Received MemEvent with command 4 (response to 1132, addr 0x7fc) [Time: 60] [1 outstanding requests]
+cpu: 691 Issued Read (1142) for address 0x6d4
+cpu: Received MemEvent with command 2 (response to 1142, addr 0x6d4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1136, addr 0xd2c) [Time: 51] [0 outstanding requests]
+cpu: 690 Issued Read (1145) for address 0x590
+cpu: Received MemEvent with command 2 (response to 1145, addr 0x590) [Time: 4] [0 outstanding requests]
+cpu: 689 Issued Read (1147) for address 0x1c
+cpu: Received MemEvent with command 2 (response to 1147, addr 0x1c) [Time: 44] [0 outstanding requests]
+cpu: 688 Issued Read (1152) for address 0x68c
+cpu: Received MemEvent with command 2 (response to 1152, addr 0x68c) [Time: 4] [0 outstanding requests]
+cpu: 687 Issued Read (1154) for address 0xf24
+cpu: Received MemEvent with command 2 (response to 1154, addr 0xf24) [Time: 44] [0 outstanding requests]
+cpu: 686 Issued Read (1159) for address 0x900
+cpu: Received MemEvent with command 2 (response to 1159, addr 0x900) [Time: 40] [0 outstanding requests]
+cpu: 685 Issued Read (1164) for address 0x544
+cpu: Received MemEvent with command 2 (response to 1164, addr 0x544) [Time: 4] [0 outstanding requests]
+cpu: 684 Issued Read (1166) for address 0xbf4
+cpu: Received MemEvent with command 2 (response to 1166, addr 0xbf4) [Time: 4] [0 outstanding requests]
+cpu: 683 Issued Read (1168) for address 0xcb8
+cpu: Received MemEvent with command 2 (response to 1168, addr 0xcb8) [Time: 44] [0 outstanding requests]
+cpu: 682 Issued Read (1173) for address 0xac0
+cpu: Received MemEvent with command 2 (response to 1173, addr 0xac0) [Time: 40] [0 outstanding requests]
+cpu: 681 Issued Read (1178) for address 0xe2c
+cpu: Received MemEvent with command 2 (response to 1178, addr 0xe2c) [Time: 44] [0 outstanding requests]
+cpu: 680 Issued Read (1183) for address 0xbe8
+cpu: Received MemEvent with command 2 (response to 1183, addr 0xbe8) [Time: 4] [0 outstanding requests]
+cpu: 679 Issued Read (1185) for address 0x4fc
+cpu: Received MemEvent with command 2 (response to 1185, addr 0x4fc) [Time: 4] [0 outstanding requests]
+cpu: 678 Issued Read (1187) for address 0xda8
+cpu: Received MemEvent with command 2 (response to 1187, addr 0xda8) [Time: 44] [0 outstanding requests]
+cpu: 677 Issued Read (1192) for address 0x854
+cpu: Received MemEvent with command 2 (response to 1192, addr 0x854) [Time: 63] [0 outstanding requests]
+cpu: 676 Issued Read (1198) for address 0x7c4
+cpu: 675 Issued Read (1199) for address 0xb80
+cpu: Received MemEvent with command 2 (response to 1198, addr 0x7c4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1199, addr 0xb80) [Time: 40] [0 outstanding requests]
+cpu: 674 Issued Write (1205) for address 0x698
+cpu: Received MemEvent with command 4 (response to 1205, addr 0x698) [Time: 4] [0 outstanding requests]
+cpu: 673 Issued Read (1207) for address 0x220
+cpu: Received MemEvent with command 2 (response to 1207, addr 0x220) [Time: 44] [0 outstanding requests]
+cpu: 672 Issued Read (1212) for address 0xd28
+cpu: Received MemEvent with command 2 (response to 1212, addr 0xd28) [Time: 4] [0 outstanding requests]
+cpu: 671 Issued Read (1214) for address 0x9dc
+cpu: Received MemEvent with command 2 (response to 1214, addr 0x9dc) [Time: 44] [0 outstanding requests]
+cpu: 670 Issued Read (1219) for address 0x8bc
+cpu: 669 Issued Read (1222) for address 0x2dc
+cpu: 668 Issued Read (1228) for address 0xc8c
+cpu: Received MemEvent with command 2 (response to 1228, addr 0xc8c) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1219, addr 0x8bc) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1222, addr 0x2dc) [Time: 72] [0 outstanding requests]
+cpu: 667 Issued Read (1232) for address 0x420
+cpu: Received MemEvent with command 2 (response to 1232, addr 0x420) [Time: 44] [0 outstanding requests]
+cpu: 666 Issued Read (1237) for address 0x324
+cpu: Received MemEvent with command 2 (response to 1237, addr 0x324) [Time: 4] [0 outstanding requests]
+cpu: 665 Issued Read (1239) for address 0x860
+cpu: Received MemEvent with command 2 (response to 1239, addr 0x860) [Time: 4] [0 outstanding requests]
+cpu: 664 Issued Read (1241) for address 0xfa8
+cpu: Received MemEvent with command 2 (response to 1241, addr 0xfa8) [Time: 4] [0 outstanding requests]
+cpu: 663 Issued Read (1243) for address 0xdac
+cpu: Received MemEvent with command 2 (response to 1243, addr 0xdac) [Time: 4] [0 outstanding requests]
+cpu: 662 Issued Read (1245) for address 0x518
+cpu: Received MemEvent with command 2 (response to 1245, addr 0x518) [Time: 44] [0 outstanding requests]
+cpu: 661 Issued Read (1250) for address 0xfe0
+cpu: Received MemEvent with command 2 (response to 1250, addr 0xfe0) [Time: 44] [0 outstanding requests]
+cpu: 660 Issued Read (1255) for address 0x32c
+cpu: Received MemEvent with command 2 (response to 1255, addr 0x32c) [Time: 4] [0 outstanding requests]
+cpu: 659 Issued Read (1257) for address 0x9f8
+cpu: Received MemEvent with command 2 (response to 1257, addr 0x9f8) [Time: 4] [0 outstanding requests]
+cpu: 658 Issued Read (1259) for address 0x540
+cpu: Received MemEvent with command 2 (response to 1259, addr 0x540) [Time: 4] [0 outstanding requests]
+cpu: 657 Issued Write (1261) for address 0x4
+WARNING: address 0x4 is not aligned to the request size of 64
+WARNING: address 0x4 is not aligned to the request size of 64
+WARNING: address 0x4 is not aligned to the request size of 64
+cpu: 656 Issued Read (1265) for address 0xca0
+cpu: Received MemEvent with command 2 (response to 1265, addr 0xca0) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 1261, addr 0x4) [Time: 60] [0 outstanding requests]
+cpu: 655 Issued Write (1268) for address 0xd2c
+WARNING: address 0xd2c is not aligned to the request size of 64
+WARNING: address 0xd2c is not aligned to the request size of 64
+WARNING: address 0xd2c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1268, addr 0xd2c) [Time: 60] [0 outstanding requests]
+cpu: 654 Issued Read (1273) for address 0x42c
+cpu: Received MemEvent with command 2 (response to 1273, addr 0x42c) [Time: 4] [0 outstanding requests]
+cpu: 653 Issued Read (1275) for address 0x564
+cpu: Received MemEvent with command 2 (response to 1275, addr 0x564) [Time: 4] [0 outstanding requests]
+cpu: 652 Issued Read (1277) for address 0xf68
+cpu: Received MemEvent with command 2 (response to 1277, addr 0xf68) [Time: 4] [0 outstanding requests]
+cpu: 651 Issued Read (1279) for address 0x358
+cpu: Received MemEvent with command 2 (response to 1279, addr 0x358) [Time: 63] [0 outstanding requests]
+cpu: 650 Issued Read (1285) for address 0x50c
+cpu: Received MemEvent with command 2 (response to 1285, addr 0x50c) [Time: 4] [0 outstanding requests]
+cpu: 649 Issued Read (1287) for address 0xe28
+cpu: Received MemEvent with command 2 (response to 1287, addr 0xe28) [Time: 4] [0 outstanding requests]
+cpu: 648 Issued Read (1289) for address 0xc9c
+cpu: Received MemEvent with command 2 (response to 1289, addr 0xc9c) [Time: 4] [0 outstanding requests]
+cpu: 647 Issued Write (1291) for address 0x38c
+WARNING: address 0x38c is not aligned to the request size of 64
+WARNING: address 0x38c is not aligned to the request size of 64
+WARNING: address 0x38c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1291, addr 0x38c) [Time: 60] [0 outstanding requests]
+cpu: 646 Issued Read (1297) for address 0x974
+cpu: 645 Issued Read (1301) for address 0x784
+cpu: Received MemEvent with command 2 (response to 1297, addr 0x974) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1301, addr 0x784) [Time: 38] [0 outstanding requests]
+cpu: 644 Issued Read (1307) for address 0x3a0
+cpu: Received MemEvent with command 2 (response to 1307, addr 0x3a0) [Time: 4] [0 outstanding requests]
+cpu: 643 Issued Read (1309) for address 0x6a8
+cpu: Received MemEvent with command 2 (response to 1309, addr 0x6a8) [Time: 4] [0 outstanding requests]
+cpu: 642 Issued Read (1311) for address 0xbec
+cpu: Received MemEvent with command 2 (response to 1311, addr 0xbec) [Time: 4] [0 outstanding requests]
+cpu: 641 Issued Read (1313) for address 0x4d0
+cpu: Received MemEvent with command 2 (response to 1313, addr 0x4d0) [Time: 4] [0 outstanding requests]
+cpu: 640 Issued Read (1315) for address 0xca4
+cpu: Received MemEvent with command 2 (response to 1315, addr 0xca4) [Time: 4] [0 outstanding requests]
+cpu: 639 Issued Write (1317) for address 0x9e0
+WARNING: address 0x9e0 is not aligned to the request size of 64
+WARNING: address 0x9e0 is not aligned to the request size of 64
+WARNING: address 0x9e0 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1317, addr 0x9e0) [Time: 60] [0 outstanding requests]
+cpu: 638 Issued Read (1322) for address 0x648
+cpu: Received MemEvent with command 2 (response to 1322, addr 0x648) [Time: 44] [0 outstanding requests]
+cpu: 637 Issued Read (1327) for address 0xc68
+cpu: Received MemEvent with command 2 (response to 1327, addr 0xc68) [Time: 4] [0 outstanding requests]
+cpu: 636 Issued Read (1329) for address 0xf68
+cpu: Received MemEvent with command 2 (response to 1329, addr 0xf68) [Time: 4] [0 outstanding requests]
+cpu: 635 Issued Read (1331) for address 0xf34
+cpu: 634 Issued Read (1335) for address 0x504
+cpu: Received MemEvent with command 2 (response to 1335, addr 0x504) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1331, addr 0xf34) [Time: 44] [0 outstanding requests]
+cpu: 633 Issued Read (1338) for address 0x4f4
+cpu: Received MemEvent with command 2 (response to 1338, addr 0x4f4) [Time: 4] [0 outstanding requests]
+cpu: 632 Issued Read (1340) for address 0xad0
+cpu: Received MemEvent with command 2 (response to 1340, addr 0xad0) [Time: 4] [0 outstanding requests]
+cpu: 631 Issued Read (1342) for address 0xca4
+cpu: Received MemEvent with command 2 (response to 1342, addr 0xca4) [Time: 4] [0 outstanding requests]
+cpu: 630 Issued Write (1344) for address 0x19c
+WARNING: address 0x19c is not aligned to the request size of 64
+WARNING: address 0x19c is not aligned to the request size of 64
+WARNING: address 0x19c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1344, addr 0x19c) [Time: 63] [0 outstanding requests]
+cpu: 629 Issued Read (1351) for address 0x73c
+cpu: 628 Issued Read (1355) for address 0x988
+cpu: Received MemEvent with command 2 (response to 1351, addr 0x73c) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1355, addr 0x988) [Time: 29] [0 outstanding requests]
+cpu: 627 Issued Read (1361) for address 0x3a4
+cpu: Received MemEvent with command 2 (response to 1361, addr 0x3a4) [Time: 4] [0 outstanding requests]
+cpu: 626 Issued Read (1363) for address 0xf7c
+cpu: Received MemEvent with command 2 (response to 1363, addr 0xf7c) [Time: 4] [0 outstanding requests]
+cpu: 625 Issued Write (1365) for address 0x924
+WARNING: address 0x924 is not aligned to the request size of 64
+WARNING: address 0x924 is not aligned to the request size of 64
+WARNING: address 0x924 is not aligned to the request size of 64
+cpu: 624 Issued Read (1371) for address 0x294
+cpu: Received MemEvent with command 4 (response to 1365, addr 0x924) [Time: 63] [1 outstanding requests]
+cpu: 623 Issued Read (1376) for address 0x1e8
+cpu: Received MemEvent with command 2 (response to 1371, addr 0x294) [Time: 39] [1 outstanding requests]
+cpu: 622 Issued Read (1383) for address 0x450
+cpu: Received MemEvent with command 2 (response to 1376, addr 0x1e8) [Time: 64] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1383, addr 0x450) [Time: 44] [0 outstanding requests]
+cpu: 621 Issued Read (1388) for address 0x748
+cpu: Received MemEvent with command 2 (response to 1388, addr 0x748) [Time: 44] [0 outstanding requests]
+cpu: 620 Issued Read (1393) for address 0x9e8
+cpu: Received MemEvent with command 2 (response to 1393, addr 0x9e8) [Time: 4] [0 outstanding requests]
+cpu: 619 Issued Read (1395) for address 0x68c
+cpu: Received MemEvent with command 2 (response to 1395, addr 0x68c) [Time: 4] [0 outstanding requests]
+cpu: 618 Issued Read (1397) for address 0x96c
+cpu: Received MemEvent with command 2 (response to 1397, addr 0x96c) [Time: 4] [0 outstanding requests]
+cpu: 617 Issued Read (1399) for address 0xd04
+cpu: Received MemEvent with command 2 (response to 1399, addr 0xd04) [Time: 44] [0 outstanding requests]
+cpu: 616 Issued Read (1404) for address 0xe50
+cpu: Received MemEvent with command 2 (response to 1404, addr 0xe50) [Time: 44] [0 outstanding requests]
+cpu: 615 Issued Read (1409) for address 0xd84
+cpu: Received MemEvent with command 2 (response to 1409, addr 0xd84) [Time: 44] [0 outstanding requests]
+cpu: 614 Issued Read (1414) for address 0xf30
+cpu: 613 Issued Read (1418) for address 0xf6c
+cpu: Received MemEvent with command 2 (response to 1418, addr 0xf6c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1414, addr 0xf30) [Time: 44] [0 outstanding requests]
+cpu: 612 Issued Read (1421) for address 0xc8c
+cpu: Received MemEvent with command 2 (response to 1421, addr 0xc8c) [Time: 4] [0 outstanding requests]
+cpu: 611 Issued Read (1423) for address 0x19c
+cpu: Received MemEvent with command 2 (response to 1423, addr 0x19c) [Time: 4] [0 outstanding requests]
+cpu: 610 Issued Read (1425) for address 0x23c
+cpu: Received MemEvent with command 2 (response to 1425, addr 0x23c) [Time: 4] [0 outstanding requests]
+cpu: 609 Issued Read (1427) for address 0x48c
+cpu: Received MemEvent with command 2 (response to 1427, addr 0x48c) [Time: 44] [0 outstanding requests]
+cpu: 608 Issued Read (1432) for address 0x424
+cpu: Received MemEvent with command 2 (response to 1432, addr 0x424) [Time: 4] [0 outstanding requests]
+cpu: 607 Issued Read (1434) for address 0x540
+cpu: 606 Issued Read (1438) for address 0x85c
+cpu: Received MemEvent with command 2 (response to 1434, addr 0x540) [Time: 40] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1438, addr 0x85c) [Time: 31] [0 outstanding requests]
+cpu: 605 Issued Read (1444) for address 0x3a4
+cpu: Received MemEvent with command 2 (response to 1444, addr 0x3a4) [Time: 4] [0 outstanding requests]
+cpu: 604 Issued Read (1446) for address 0xc10
+cpu: Received MemEvent with command 2 (response to 1446, addr 0xc10) [Time: 63] [0 outstanding requests]
+cpu: 603 Issued Read (1452) for address 0x600
+cpu: Received MemEvent with command 2 (response to 1452, addr 0x600) [Time: 40] [0 outstanding requests]
+cpu: 602 Issued Read (1457) for address 0xdb4
+cpu: Received MemEvent with command 2 (response to 1457, addr 0xdb4) [Time: 4] [0 outstanding requests]
+cpu: 601 Issued Read (1459) for address 0x8cc
+cpu: 600 Issued Read (1464) for address 0xa6c
+cpu: Received MemEvent with command 2 (response to 1459, addr 0x8cc) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1464, addr 0xa6c) [Time: 50] [0 outstanding requests]
+cpu: 599 Issued Read (1470) for address 0x9ac
+cpu: Received MemEvent with command 2 (response to 1470, addr 0x9ac) [Time: 4] [0 outstanding requests]
+cpu: 598 Issued Read (1472) for address 0x684
+cpu: Received MemEvent with command 2 (response to 1472, addr 0x684) [Time: 4] [0 outstanding requests]
+cpu: 597 Issued Read (1474) for address 0x340
+cpu: 596 Issued Read (1478) for address 0x580
+cpu: 595 Issued Read (1483) for address 0x680
+cpu: Received MemEvent with command 2 (response to 1483, addr 0x680) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1474, addr 0x340) [Time: 97] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1478, addr 0x580) [Time: 91] [0 outstanding requests]
+cpu: 594 Issued Read (1487) for address 0x46c
+cpu: 593 Issued Read (1488) for address 0x234
+cpu: Received MemEvent with command 2 (response to 1487, addr 0x46c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1488, addr 0x234) [Time: 4] [0 outstanding requests]
+cpu: 592 Issued Read (1491) for address 0xf8
+cpu: 591 Issued Read (1495) for address 0x608
+cpu: Received MemEvent with command 2 (response to 1495, addr 0x608) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1491, addr 0xf8) [Time: 44] [0 outstanding requests]
+cpu: 590 Issued Read (1498) for address 0xfa0
+cpu: Received MemEvent with command 2 (response to 1498, addr 0xfa0) [Time: 63] [0 outstanding requests]
+cpu: 589 Issued Read (1504) for address 0x688
+cpu: Received MemEvent with command 2 (response to 1504, addr 0x688) [Time: 4] [0 outstanding requests]
+cpu: 588 Issued Read (1506) for address 0xe34
+cpu: Received MemEvent with command 2 (response to 1506, addr 0xe34) [Time: 44] [0 outstanding requests]
+cpu: 587 Issued Write (1511) for address 0xd10
+WARNING: address 0xd10 is not aligned to the request size of 64
+WARNING: address 0xd10 is not aligned to the request size of 64
+WARNING: address 0xd10 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1511, addr 0xd10) [Time: 60] [0 outstanding requests]
+cpu: 586 Issued Read (1516) for address 0xf90
+cpu: Received MemEvent with command 2 (response to 1516, addr 0xf90) [Time: 4] [0 outstanding requests]
+cpu: 585 Issued Read (1518) for address 0x38
+cpu: Received MemEvent with command 2 (response to 1518, addr 0x38) [Time: 44] [0 outstanding requests]
+cpu: 584 Issued Write (1523) for address 0xcac
+WARNING: address 0xcac is not aligned to the request size of 64
+WARNING: address 0xcac is not aligned to the request size of 64
+WARNING: address 0xcac is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1523, addr 0xcac) [Time: 60] [0 outstanding requests]
+cpu: 583 Issued Read (1528) for address 0x9e8
+cpu: Received MemEvent with command 2 (response to 1528, addr 0x9e8) [Time: 4] [0 outstanding requests]
+cpu: 582 Issued Read (1530) for address 0x774
+cpu: Received MemEvent with command 2 (response to 1530, addr 0x774) [Time: 44] [0 outstanding requests]
+cpu: 581 Issued Read (1535) for address 0x954
+cpu: 580 Issued Read (1538) for address 0xa38
+cpu: Received MemEvent with command 2 (response to 1535, addr 0x954) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1538, addr 0xa38) [Time: 49] [0 outstanding requests]
+cpu: 579 Issued Read (1545) for address 0x58
+cpu: 578 Issued Read (1549) for address 0x2d8
+cpu: Received MemEvent with command 2 (response to 1545, addr 0x58) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1549, addr 0x2d8) [Time: 33] [0 outstanding requests]
+cpu: 577 Issued Read (1555) for address 0x894
+cpu: Received MemEvent with command 2 (response to 1555, addr 0x894) [Time: 44] [0 outstanding requests]
+cpu: 576 Issued Read (1560) for address 0x38
+cpu: Received MemEvent with command 2 (response to 1560, addr 0x38) [Time: 4] [0 outstanding requests]
+cpu: 575 Issued Read (1562) for address 0x598
+cpu: Received MemEvent with command 2 (response to 1562, addr 0x598) [Time: 4] [0 outstanding requests]
+cpu: 574 Issued Write (1564) for address 0xd24
+cpu: Received MemEvent with command 4 (response to 1564, addr 0xd24) [Time: 4] [0 outstanding requests]
+cpu: 573 Issued Read (1566) for address 0x7dc
+cpu: 572 Issued Read (1570) for address 0x804
+cpu: 571 Issued Read (1574) for address 0xf94
+cpu: Received MemEvent with command 2 (response to 1574, addr 0xf94) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1566, addr 0x7dc) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1570, addr 0x804) [Time: 32] [0 outstanding requests]
+cpu: 570 Issued Write (1578) for address 0xfb8
+WARNING: address 0xfb8 is not aligned to the request size of 64
+WARNING: address 0xfb8 is not aligned to the request size of 64
+WARNING: address 0xfb8 is not aligned to the request size of 64
+cpu: 569 Issued Write (1582) for address 0x5ac
+WARNING: address 0x5ac is not aligned to the request size of 64
+WARNING: address 0x5ac is not aligned to the request size of 64
+WARNING: address 0x5ac is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1578, addr 0xfb8) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 1582, addr 0x5ac) [Time: 69] [0 outstanding requests]
+cpu: 568 Issued Read (1588) for address 0x484
+cpu: Received MemEvent with command 2 (response to 1588, addr 0x484) [Time: 4] [0 outstanding requests]
+cpu: 567 Issued Write (1590) for address 0x8
+WARNING: address 0x8 is not aligned to the request size of 64
+WARNING: address 0x8 is not aligned to the request size of 64
+WARNING: address 0x8 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1590, addr 0x8) [Time: 60] [0 outstanding requests]
+cpu: 566 Issued Read (1595) for address 0xe08
+cpu: Received MemEvent with command 2 (response to 1595, addr 0xe08) [Time: 4] [0 outstanding requests]
+cpu: 565 Issued Read (1597) for address 0x94c
+cpu: Received MemEvent with command 2 (response to 1597, addr 0x94c) [Time: 4] [0 outstanding requests]
+cpu: 564 Issued Read (1599) for address 0xfe4
+cpu: 563 Issued Read (1602) for address 0x564
+cpu: Received MemEvent with command 2 (response to 1602, addr 0x564) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1599, addr 0xfe4) [Time: 44] [0 outstanding requests]
+cpu: 562 Issued Read (1606) for address 0xd7c
+cpu: Received MemEvent with command 2 (response to 1606, addr 0xd7c) [Time: 44] [0 outstanding requests]
+cpu: 561 Issued Write (1611) for address 0x9d0
+cpu: Received MemEvent with command 4 (response to 1611, addr 0x9d0) [Time: 4] [0 outstanding requests]
+cpu: 560 Issued Read (1613) for address 0x560
+cpu: Received MemEvent with command 2 (response to 1613, addr 0x560) [Time: 4] [0 outstanding requests]
+cpu: 559 Issued Read (1615) for address 0x4c8
+cpu: Received MemEvent with command 2 (response to 1615, addr 0x4c8) [Time: 44] [0 outstanding requests]
+cpu: 558 Issued Read (1620) for address 0xf4
+cpu: Received MemEvent with command 2 (response to 1620, addr 0xf4) [Time: 4] [0 outstanding requests]
+cpu: 557 Issued Write (1622) for address 0xc48
+cpu: 556 Issued Write (1625) for address 0x59c
+WARNING: address 0xc48 is not aligned to the request size of 64
+WARNING: address 0xc48 is not aligned to the request size of 64
+WARNING: address 0xc48 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1625, addr 0x59c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 1622, addr 0xc48) [Time: 60] [0 outstanding requests]
+cpu: 555 Issued Write (1630) for address 0x528
+WARNING: address 0x528 is not aligned to the request size of 64
+WARNING: address 0x528 is not aligned to the request size of 64
+WARNING: address 0x528 is not aligned to the request size of 64
+cpu: 554 Issued Read (1635) for address 0x184
+cpu: Received MemEvent with command 4 (response to 1630, addr 0x528) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1635, addr 0x184) [Time: 52] [0 outstanding requests]
+cpu: 553 Issued Write (1641) for address 0x280
+cpu: 552 Issued Read (1648) for address 0xd20
+cpu: Received MemEvent with command 4 (response to 1641, addr 0x280) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1648, addr 0xd20) [Time: 4] [0 outstanding requests]
+cpu: 551 Issued Write (1650) for address 0xe94
+WARNING: address 0xe94 is not aligned to the request size of 64
+WARNING: address 0xe94 is not aligned to the request size of 64
+WARNING: address 0xe94 is not aligned to the request size of 64
+cpu: 550 Issued Read (1656) for address 0x7e0
+cpu: Received MemEvent with command 2 (response to 1656, addr 0x7e0) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 1650, addr 0xe94) [Time: 63] [0 outstanding requests]
+cpu: 549 Issued Read (1659) for address 0xafc
+cpu: Received MemEvent with command 2 (response to 1659, addr 0xafc) [Time: 44] [0 outstanding requests]
+cpu: 548 Issued Read (1664) for address 0xd70
+cpu: Received MemEvent with command 2 (response to 1664, addr 0xd70) [Time: 4] [0 outstanding requests]
+cpu: 547 Issued Read (1666) for address 0xf30
+cpu: 546 Issued Read (1668) for address 0x774
+cpu: Received MemEvent with command 2 (response to 1666, addr 0xf30) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1668, addr 0x774) [Time: 4] [0 outstanding requests]
+cpu: 545 Issued Read (1670) for address 0x390
+cpu: Received MemEvent with command 2 (response to 1670, addr 0x390) [Time: 44] [0 outstanding requests]
+cpu: 544 Issued Read (1675) for address 0x394
+cpu: Received MemEvent with command 2 (response to 1675, addr 0x394) [Time: 4] [0 outstanding requests]
+cpu: 543 Issued Read (1677) for address 0xbc0
+cpu: 542 Issued Read (1681) for address 0x878
+cpu: Received MemEvent with command 2 (response to 1677, addr 0xbc0) [Time: 40] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1681, addr 0x878) [Time: 35] [0 outstanding requests]
+cpu: 541 Issued Read (1687) for address 0x10
+cpu: Received MemEvent with command 2 (response to 1687, addr 0x10) [Time: 4] [0 outstanding requests]
+cpu: 540 Issued Read (1689) for address 0x2c0
+cpu: Received MemEvent with command 2 (response to 1689, addr 0x2c0) [Time: 4] [0 outstanding requests]
+cpu: 539 Issued Read (1691) for address 0xee8
+cpu: 538 Issued Write (1695) for address 0x220
+WARNING: address 0x220 is not aligned to the request size of 64
+WARNING: address 0x220 is not aligned to the request size of 64
+WARNING: address 0x220 is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 1691, addr 0xee8) [Time: 44] [1 outstanding requests]
+cpu: 537 Issued Write (1702) for address 0xe04
+cpu: Received MemEvent with command 4 (response to 1695, addr 0x220) [Time: 51] [1 outstanding requests]
+WARNING: address 0xe04 is not aligned to the request size of 64
+WARNING: address 0xe04 is not aligned to the request size of 64
+WARNING: address 0xe04 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1702, addr 0xe04) [Time: 60] [0 outstanding requests]
+cpu: 536 Issued Read (1707) for address 0xffc
+cpu: 535 Issued Read (1709) for address 0x1f4
+cpu: Received MemEvent with command 2 (response to 1707, addr 0xffc) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1709, addr 0x1f4) [Time: 63] [0 outstanding requests]
+cpu: 534 Issued Read (1715) for address 0x940
+cpu: Received MemEvent with command 2 (response to 1715, addr 0x940) [Time: 4] [0 outstanding requests]
+cpu: 533 Issued Read (1717) for address 0x4f8
+cpu: Received MemEvent with command 2 (response to 1717, addr 0x4f8) [Time: 44] [0 outstanding requests]
+cpu: 532 Issued Read (1722) for address 0x2e8
+cpu: Received MemEvent with command 2 (response to 1722, addr 0x2e8) [Time: 4] [0 outstanding requests]
+cpu: 531 Issued Read (1724) for address 0x440
+cpu: Received MemEvent with command 2 (response to 1724, addr 0x440) [Time: 4] [0 outstanding requests]
+cpu: 530 Issued Read (1726) for address 0x400
+cpu: 529 Issued Read (1730) for address 0xaa4
+cpu: Received MemEvent with command 2 (response to 1726, addr 0x400) [Time: 40] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1730, addr 0xaa4) [Time: 46] [0 outstanding requests]
+cpu: 528 Issued Read (1736) for address 0xff4
+cpu: Received MemEvent with command 2 (response to 1736, addr 0xff4) [Time: 4] [0 outstanding requests]
+cpu: 527 Issued Read (1738) for address 0x46c
+cpu: Received MemEvent with command 2 (response to 1738, addr 0x46c) [Time: 4] [0 outstanding requests]
+cpu: 526 Issued Read (1740) for address 0x578
+cpu: Received MemEvent with command 2 (response to 1740, addr 0x578) [Time: 4] [0 outstanding requests]
+cpu: 525 Issued Read (1742) for address 0x904
+cpu: Received MemEvent with command 2 (response to 1742, addr 0x904) [Time: 4] [0 outstanding requests]
+cpu: 524 Issued Read (1744) for address 0x964
+cpu: Received MemEvent with command 2 (response to 1744, addr 0x964) [Time: 4] [0 outstanding requests]
+cpu: 523 Issued Read (1746) for address 0x2c0
+cpu: Received MemEvent with command 2 (response to 1746, addr 0x2c0) [Time: 4] [0 outstanding requests]
+cpu: 522 Issued Read (1748) for address 0x17c
+cpu: 521 Issued Read (1752) for address 0x880
+cpu: 520 Issued Read (1756) for address 0x264
+cpu: Received MemEvent with command 2 (response to 1748, addr 0x17c) [Time: 44] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1752, addr 0x880) [Time: 40] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1756, addr 0x264) [Time: 29] [0 outstanding requests]
+cpu: 519 Issued Read (1763) for address 0x874
+cpu: Received MemEvent with command 2 (response to 1763, addr 0x874) [Time: 4] [0 outstanding requests]
+cpu: 518 Issued Write (1765) for address 0x148
+WARNING: address 0x148 is not aligned to the request size of 64
+WARNING: address 0x148 is not aligned to the request size of 64
+WARNING: address 0x148 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1765, addr 0x148) [Time: 60] [0 outstanding requests]
+cpu: 517 Issued Read (1770) for address 0x77c
+cpu: Received MemEvent with command 2 (response to 1770, addr 0x77c) [Time: 4] [0 outstanding requests]
+cpu: 516 Issued Read (1772) for address 0x9c4
+cpu: Received MemEvent with command 2 (response to 1772, addr 0x9c4) [Time: 44] [0 outstanding requests]
+cpu: 515 Issued Read (1777) for address 0x7cc
+cpu: Received MemEvent with command 2 (response to 1777, addr 0x7cc) [Time: 44] [0 outstanding requests]
+cpu: 514 Issued Read (1782) for address 0x4b0
+cpu: Received MemEvent with command 2 (response to 1782, addr 0x4b0) [Time: 63] [0 outstanding requests]
+cpu: 513 Issued Read (1788) for address 0x570
+cpu: Received MemEvent with command 2 (response to 1788, addr 0x570) [Time: 4] [0 outstanding requests]
+cpu: 512 Issued Read (1790) for address 0x6ac
+cpu: Received MemEvent with command 2 (response to 1790, addr 0x6ac) [Time: 63] [0 outstanding requests]
+cpu: 511 Issued Read (1796) for address 0xd6c
+cpu: Received MemEvent with command 2 (response to 1796, addr 0xd6c) [Time: 44] [0 outstanding requests]
+cpu: 510 Issued Write (1801) for address 0xe24
+cpu: Received MemEvent with command 4 (response to 1801, addr 0xe24) [Time: 4] [0 outstanding requests]
+cpu: 509 Issued Read (1803) for address 0xf1c
+cpu: Received MemEvent with command 2 (response to 1803, addr 0xf1c) [Time: 4] [0 outstanding requests]
+cpu: 508 Issued Read (1805) for address 0x394
+cpu: Received MemEvent with command 2 (response to 1805, addr 0x394) [Time: 4] [0 outstanding requests]
+cpu: 507 Issued Read (1807) for address 0x638
+cpu: 506 Issued Read (1812) for address 0xf4
+cpu: Received MemEvent with command 2 (response to 1807, addr 0x638) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1812, addr 0xf4) [Time: 45] [0 outstanding requests]
+cpu: 505 Issued Read (1818) for address 0xf0c
+cpu: Received MemEvent with command 2 (response to 1818, addr 0xf0c) [Time: 4] [0 outstanding requests]
+cpu: 504 Issued Read (1820) for address 0x528
+cpu: Received MemEvent with command 2 (response to 1820, addr 0x528) [Time: 4] [0 outstanding requests]
+cpu: 503 Issued Read (1822) for address 0x2a0
+cpu: Received MemEvent with command 2 (response to 1822, addr 0x2a0) [Time: 44] [0 outstanding requests]
+cpu: 502 Issued Read (1827) for address 0xa30
+cpu: 501 Issued Read (1832) for address 0x1f0
+cpu: Received MemEvent with command 2 (response to 1832, addr 0x1f0) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1827, addr 0xa30) [Time: 63] [0 outstanding requests]
+cpu: 500 Issued Read (1835) for address 0x91c
+cpu: Received MemEvent with command 2 (response to 1835, addr 0x91c) [Time: 4] [0 outstanding requests]
+cpu: 499 Issued Read (1837) for address 0x6c0
+cpu: Received MemEvent with command 2 (response to 1837, addr 0x6c0) [Time: 40] [0 outstanding requests]
+cpu: 498 Issued Read (1842) for address 0x19c
+cpu: Received MemEvent with command 2 (response to 1842, addr 0x19c) [Time: 4] [0 outstanding requests]
+cpu: 497 Issued Read (1844) for address 0x99c
+cpu: 496 Issued Read (1849) for address 0x2fc
+cpu: Received MemEvent with command 2 (response to 1849, addr 0x2fc) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1844, addr 0x99c) [Time: 63] [0 outstanding requests]
+cpu: 495 Issued Read (1852) for address 0x190
+cpu: Received MemEvent with command 2 (response to 1852, addr 0x190) [Time: 4] [0 outstanding requests]
+cpu: 494 Issued Read (1854) for address 0xf98
+cpu: 493 Issued Write (1859) for address 0x818
+WARNING: address 0x818 is not aligned to the request size of 64
+WARNING: address 0x818 is not aligned to the request size of 64
+WARNING: address 0x818 is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 1854, addr 0xf98) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 1859, addr 0x818) [Time: 73] [0 outstanding requests]
+cpu: 492 Issued Write (1866) for address 0x2f4
+WARNING: address 0x2f4 is not aligned to the request size of 64
+WARNING: address 0x2f4 is not aligned to the request size of 64
+WARNING: address 0x2f4 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 1866, addr 0x2f4) [Time: 60] [0 outstanding requests]
+cpu: 491 Issued Write (1871) for address 0x170
+cpu: Received MemEvent with command 4 (response to 1871, addr 0x170) [Time: 4] [0 outstanding requests]
+cpu: 490 Issued Read (1873) for address 0xeb8
+cpu: 489 Issued Read (1877) for address 0x44
+cpu: Received MemEvent with command 2 (response to 1873, addr 0xeb8) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1877, addr 0x44) [Time: 65] [0 outstanding requests]
+cpu: 488 Issued Read (1884) for address 0x178
+cpu: Received MemEvent with command 2 (response to 1884, addr 0x178) [Time: 4] [0 outstanding requests]
+cpu: 487 Issued Read (1886) for address 0x1b0
+cpu: Received MemEvent with command 2 (response to 1886, addr 0x1b0) [Time: 4] [0 outstanding requests]
+cpu: 486 Issued Read (1888) for address 0x55c
+cpu: Received MemEvent with command 2 (response to 1888, addr 0x55c) [Time: 4] [0 outstanding requests]
+cpu: 485 Issued Read (1890) for address 0x564
+cpu: Received MemEvent with command 2 (response to 1890, addr 0x564) [Time: 4] [0 outstanding requests]
+cpu: 484 Issued Read (1892) for address 0xd68
+cpu: Received MemEvent with command 2 (response to 1892, addr 0xd68) [Time: 4] [0 outstanding requests]
+cpu: 483 Issued Read (1894) for address 0x778
+cpu: Received MemEvent with command 2 (response to 1894, addr 0x778) [Time: 4] [0 outstanding requests]
+cpu: 482 Issued Read (1896) for address 0x438
+cpu: Received MemEvent with command 2 (response to 1896, addr 0x438) [Time: 63] [0 outstanding requests]
+cpu: 481 Issued Read (1902) for address 0xb00
+cpu: Received MemEvent with command 2 (response to 1902, addr 0xb00) [Time: 59] [0 outstanding requests]
+cpu: 480 Issued Read (1908) for address 0xe1c
+cpu: Received MemEvent with command 2 (response to 1908, addr 0xe1c) [Time: 44] [0 outstanding requests]
+cpu: 479 Issued Read (1913) for address 0xa0
+cpu: Received MemEvent with command 2 (response to 1913, addr 0xa0) [Time: 44] [0 outstanding requests]
+cpu: 478 Issued Read (1918) for address 0xb88
+cpu: Received MemEvent with command 2 (response to 1918, addr 0xb88) [Time: 44] [0 outstanding requests]
+cpu: 477 Issued Read (1923) for address 0x18c
+cpu: Received MemEvent with command 2 (response to 1923, addr 0x18c) [Time: 4] [0 outstanding requests]
+cpu: 476 Issued Read (1925) for address 0x300
+cpu: Received MemEvent with command 2 (response to 1925, addr 0x300) [Time: 40] [0 outstanding requests]
+cpu: 475 Issued Read (1930) for address 0x890
+cpu: 474 Issued Read (1933) for address 0xb40
+cpu: 473 Issued Read (1940) for address 0x240
+cpu: Received MemEvent with command 2 (response to 1930, addr 0x890) [Time: 44] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1940, addr 0x240) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1933, addr 0xb40) [Time: 68] [0 outstanding requests]
+cpu: 472 Issued Read (1943) for address 0x8f0
+cpu: 471 Issued Read (1947) for address 0x2d8
+cpu: Received MemEvent with command 2 (response to 1947, addr 0x2d8) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1943, addr 0x8f0) [Time: 44] [0 outstanding requests]
+cpu: 470 Issued Read (1950) for address 0xa90
+cpu: Received MemEvent with command 2 (response to 1950, addr 0xa90) [Time: 44] [0 outstanding requests]
+cpu: 469 Issued Read (1955) for address 0xd18
+cpu: Received MemEvent with command 2 (response to 1955, addr 0xd18) [Time: 63] [0 outstanding requests]
+cpu: 468 Issued Read (1961) for address 0xbb4
+cpu: Received MemEvent with command 2 (response to 1961, addr 0xbb4) [Time: 4] [0 outstanding requests]
+cpu: 467 Issued Read (1963) for address 0xcb4
+cpu: 466 Issued Read (1967) for address 0x4e8
+cpu: Received MemEvent with command 2 (response to 1963, addr 0xcb4) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1967, addr 0x4e8) [Time: 36] [0 outstanding requests]
+cpu: 465 Issued Read (1973) for address 0x324
+cpu: Received MemEvent with command 2 (response to 1973, addr 0x324) [Time: 4] [0 outstanding requests]
+cpu: 464 Issued Write (1975) for address 0xcb4
+WARNING: address 0xcb4 is not aligned to the request size of 64
+WARNING: address 0xcb4 is not aligned to the request size of 64
+WARNING: address 0xcb4 is not aligned to the request size of 64
+cpu: 463 Issued Read (1979) for address 0x28
+cpu: Received MemEvent with command 4 (response to 1975, addr 0xcb4) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1979, addr 0x28) [Time: 48] [0 outstanding requests]
+cpu: 462 Issued Read (1985) for address 0x8c8
+cpu: Received MemEvent with command 2 (response to 1985, addr 0x8c8) [Time: 4] [0 outstanding requests]
+cpu: 461 Issued Read (1987) for address 0xe0
+cpu: Received MemEvent with command 2 (response to 1987, addr 0xe0) [Time: 44] [0 outstanding requests]
+cpu: 460 Issued Read (1992) for address 0xec0
+cpu: Received MemEvent with command 2 (response to 1992, addr 0xec0) [Time: 59] [0 outstanding requests]
+cpu: 459 Issued Read (1998) for address 0xae4
+cpu: 458 Issued Read (2002) for address 0x758
+cpu: 457 Issued Read (2004) for address 0xeb8
+cpu: Received MemEvent with command 2 (response to 2002, addr 0x758) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 1998, addr 0xae4) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2004, addr 0xeb8) [Time: 37] [0 outstanding requests]
+cpu: 456 Issued Read (2010) for address 0xcb0
+cpu: 455 Issued Read (2012) for address 0x134
+cpu: Received MemEvent with command 2 (response to 2010, addr 0xcb0) [Time: 4] [1 outstanding requests]
+cpu: 454 Issued Read (2017) for address 0x650
+cpu: Received MemEvent with command 2 (response to 2012, addr 0x134) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2017, addr 0x650) [Time: 61] [0 outstanding requests]
+cpu: 453 Issued Read (2023) for address 0x10c
+cpu: Received MemEvent with command 2 (response to 2023, addr 0x10c) [Time: 4] [0 outstanding requests]
+cpu: 452 Issued Read (2025) for address 0x7e0
+cpu: Received MemEvent with command 2 (response to 2025, addr 0x7e0) [Time: 4] [0 outstanding requests]
+cpu: 451 Issued Write (2027) for address 0x10c
+WARNING: address 0x10c is not aligned to the request size of 64
+WARNING: address 0x10c is not aligned to the request size of 64
+WARNING: address 0x10c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2027, addr 0x10c) [Time: 60] [0 outstanding requests]
+cpu: 450 Issued Write (2032) for address 0x270
+WARNING: address 0x270 is not aligned to the request size of 64
+WARNING: address 0x270 is not aligned to the request size of 64
+WARNING: address 0x270 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2032, addr 0x270) [Time: 60] [0 outstanding requests]
+cpu: 449 Issued Read (2037) for address 0xe04
+cpu: Received MemEvent with command 2 (response to 2037, addr 0xe04) [Time: 4] [0 outstanding requests]
+cpu: 448 Issued Read (2039) for address 0xcbc
+cpu: Received MemEvent with command 2 (response to 2039, addr 0xcbc) [Time: 4] [0 outstanding requests]
+cpu: 447 Issued Write (2041) for address 0xd30
+WARNING: address 0xd30 is not aligned to the request size of 64
+WARNING: address 0xd30 is not aligned to the request size of 64
+WARNING: address 0xd30 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2041, addr 0xd30) [Time: 60] [0 outstanding requests]
+cpu: 446 Issued Read (2046) for address 0x598
+cpu: Received MemEvent with command 2 (response to 2046, addr 0x598) [Time: 44] [0 outstanding requests]
+cpu: 445 Issued Read (2051) for address 0x144
+cpu: 444 Issued Read (2055) for address 0x114
+cpu: Received MemEvent with command 2 (response to 2055, addr 0x114) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2051, addr 0x144) [Time: 47] [0 outstanding requests]
+cpu: 443 Issued Read (2058) for address 0x3c4
+cpu: Received MemEvent with command 2 (response to 2058, addr 0x3c4) [Time: 44] [0 outstanding requests]
+cpu: 442 Issued Read (2063) for address 0x7c0
+cpu: Received MemEvent with command 2 (response to 2063, addr 0x7c0) [Time: 4] [0 outstanding requests]
+cpu: 441 Issued Read (2065) for address 0xb28
+cpu: Received MemEvent with command 2 (response to 2065, addr 0xb28) [Time: 4] [0 outstanding requests]
+cpu: 440 Issued Read (2067) for address 0xf14
+cpu: Received MemEvent with command 2 (response to 2067, addr 0xf14) [Time: 44] [0 outstanding requests]
+cpu: 439 Issued Read (2072) for address 0x48
+cpu: Received MemEvent with command 2 (response to 2072, addr 0x48) [Time: 4] [0 outstanding requests]
+cpu: 438 Issued Read (2074) for address 0x414
+cpu: Received MemEvent with command 2 (response to 2074, addr 0x414) [Time: 4] [0 outstanding requests]
+cpu: 437 Issued Read (2076) for address 0x910
+cpu: 436 Issued Read (2082) for address 0xb84
+cpu: Received MemEvent with command 2 (response to 2076, addr 0x910) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2082, addr 0xb84) [Time: 4] [0 outstanding requests]
+cpu: 435 Issued Read (2084) for address 0xe04
+cpu: Received MemEvent with command 2 (response to 2084, addr 0xe04) [Time: 4] [0 outstanding requests]
+cpu: 434 Issued Write (2086) for address 0xd6c
+WARNING: address 0xd6c is not aligned to the request size of 64
+WARNING: address 0xd6c is not aligned to the request size of 64
+WARNING: address 0xd6c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2086, addr 0xd6c) [Time: 60] [0 outstanding requests]
+cpu: 433 Issued Write (2091) for address 0x624
+WARNING: address 0x624 is not aligned to the request size of 64
+WARNING: address 0x624 is not aligned to the request size of 64
+WARNING: address 0x624 is not aligned to the request size of 64
+cpu: 432 Issued Read (2097) for address 0xd2c
+cpu: Received MemEvent with command 4 (response to 2091, addr 0x624) [Time: 63] [1 outstanding requests]
+cpu: 431 Issued Read (2103) for address 0xfc
+cpu: Received MemEvent with command 2 (response to 2103, addr 0xfc) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2097, addr 0xd2c) [Time: 61] [0 outstanding requests]
+cpu: 430 Issued Read (2106) for address 0x3e0
+cpu: Received MemEvent with command 2 (response to 2106, addr 0x3e0) [Time: 4] [0 outstanding requests]
+cpu: 429 Issued Read (2108) for address 0xc2c
+cpu: Received MemEvent with command 2 (response to 2108, addr 0xc2c) [Time: 44] [0 outstanding requests]
+cpu: 428 Issued Read (2113) for address 0xe3c
+cpu: Received MemEvent with command 2 (response to 2113, addr 0xe3c) [Time: 4] [0 outstanding requests]
+cpu: 427 Issued Read (2115) for address 0x91c
+cpu: Received MemEvent with command 2 (response to 2115, addr 0x91c) [Time: 4] [0 outstanding requests]
+cpu: 426 Issued Write (2117) for address 0xdfc
+WARNING: address 0xdfc is not aligned to the request size of 64
+WARNING: address 0xdfc is not aligned to the request size of 64
+WARNING: address 0xdfc is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2117, addr 0xdfc) [Time: 60] [0 outstanding requests]
+cpu: 425 Issued Read (2123) for address 0xc0c
+cpu: Received MemEvent with command 2 (response to 2123, addr 0xc0c) [Time: 4] [0 outstanding requests]
+cpu: 424 Issued Read (2125) for address 0x54
+cpu: Received MemEvent with command 2 (response to 2125, addr 0x54) [Time: 4] [0 outstanding requests]
+cpu: 423 Issued Write (2127) for address 0xac8
+WARNING: address 0xac8 is not aligned to the request size of 64
+WARNING: address 0xac8 is not aligned to the request size of 64
+WARNING: address 0xac8 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2127, addr 0xac8) [Time: 60] [0 outstanding requests]
+cpu: 422 Issued Read (2132) for address 0x894
+cpu: Received MemEvent with command 2 (response to 2132, addr 0x894) [Time: 4] [0 outstanding requests]
+cpu: 421 Issued Read (2134) for address 0xf70
+cpu: Received MemEvent with command 2 (response to 2134, addr 0xf70) [Time: 47] [0 outstanding requests]
+cpu: 420 Issued Read (2139) for address 0xa98
+cpu: Received MemEvent with command 2 (response to 2139, addr 0xa98) [Time: 4] [0 outstanding requests]
+cpu: 419 Issued Read (2141) for address 0x288
+cpu: 418 Issued Read (2145) for address 0x6f0
+cpu: Received MemEvent with command 2 (response to 2141, addr 0x288) [Time: 45] [1 outstanding requests]
+cpu: 417 Issued Write (2150) for address 0xa44
+WARNING: address 0xa44 is not aligned to the request size of 64
+WARNING: address 0xa44 is not aligned to the request size of 64
+WARNING: address 0xa44 is not aligned to the request size of 64
+cpu: Received MemEvent with command 2 (response to 2145, addr 0x6f0) [Time: 43] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2150, addr 0xa44) [Time: 45] [0 outstanding requests]
+cpu: 416 Issued Read (2157) for address 0x96c
+cpu: 415 Issued Read (2161) for address 0x4fc
+cpu: 414 Issued Read (2165) for address 0xc08
+cpu: Received MemEvent with command 2 (response to 2157, addr 0x96c) [Time: 44] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2165, addr 0xc08) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2161, addr 0x4fc) [Time: 29] [0 outstanding requests]
+cpu: 413 Issued Read (2169) for address 0x6e4
+cpu: Received MemEvent with command 2 (response to 2169, addr 0x6e4) [Time: 4] [0 outstanding requests]
+cpu: 412 Issued Read (2171) for address 0xdf0
+cpu: Received MemEvent with command 2 (response to 2171, addr 0xdf0) [Time: 4] [0 outstanding requests]
+cpu: 411 Issued Read (2173) for address 0xdd4
+cpu: Received MemEvent with command 2 (response to 2173, addr 0xdd4) [Time: 4] [0 outstanding requests]
+cpu: 410 Issued Read (2175) for address 0xf90
+cpu: Received MemEvent with command 2 (response to 2175, addr 0xf90) [Time: 4] [0 outstanding requests]
+cpu: 409 Issued Read (2177) for address 0xbe0
+cpu: Received MemEvent with command 2 (response to 2177, addr 0xbe0) [Time: 44] [0 outstanding requests]
+cpu: 408 Issued Read (2182) for address 0x6b0
+cpu: Received MemEvent with command 2 (response to 2182, addr 0x6b0) [Time: 59] [0 outstanding requests]
+cpu: 407 Issued Read (2188) for address 0x8c
+cpu: 406 Issued Read (2192) for address 0x808
+cpu: Received MemEvent with command 2 (response to 2188, addr 0x8c) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2192, addr 0x808) [Time: 29] [0 outstanding requests]
+cpu: 405 Issued Read (2198) for address 0x9f8
+cpu: Received MemEvent with command 2 (response to 2198, addr 0x9f8) [Time: 44] [0 outstanding requests]
+cpu: 404 Issued Read (2203) for address 0xe78
+cpu: Received MemEvent with command 2 (response to 2203, addr 0xe78) [Time: 44] [0 outstanding requests]
+cpu: 403 Issued Read (2208) for address 0xd8c
+cpu: Received MemEvent with command 2 (response to 2208, addr 0xd8c) [Time: 44] [0 outstanding requests]
+cpu: 402 Issued Write (2213) for address 0xb00
+cpu: 401 Issued Read (2217) for address 0x238
+cpu: 400 Issued Read (2222) for address 0xf8c
+cpu: Received MemEvent with command 2 (response to 2222, addr 0xf8c) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2213, addr 0xb00) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2217, addr 0x238) [Time: 53] [0 outstanding requests]
+cpu: 399 Issued Read (2226) for address 0x628
+cpu: Received MemEvent with command 2 (response to 2226, addr 0x628) [Time: 44] [0 outstanding requests]
+cpu: 398 Issued Read (2231) for address 0x2e0
+cpu: Received MemEvent with command 2 (response to 2231, addr 0x2e0) [Time: 44] [0 outstanding requests]
+cpu: 397 Issued Read (2236) for address 0x7e4
+cpu: 396 Issued Read (2240) for address 0x518
+cpu: Received MemEvent with command 2 (response to 2236, addr 0x7e4) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2240, addr 0x518) [Time: 34] [0 outstanding requests]
+cpu: 395 Issued Read (2246) for address 0x218
+cpu: Received MemEvent with command 2 (response to 2246, addr 0x218) [Time: 4] [0 outstanding requests]
+cpu: 394 Issued Read (2248) for address 0xc98
+cpu: 393 Issued Read (2252) for address 0x1fc
+cpu: Received MemEvent with command 2 (response to 2248, addr 0xc98) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2252, addr 0x1fc) [Time: 61] [0 outstanding requests]
+cpu: 392 Issued Write (2259) for address 0xf54
+WARNING: address 0xf54 is not aligned to the request size of 64
+WARNING: address 0xf54 is not aligned to the request size of 64
+WARNING: address 0xf54 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2259, addr 0xf54) [Time: 60] [0 outstanding requests]
+cpu: 391 Issued Read (2264) for address 0x9d0
+cpu: Received MemEvent with command 2 (response to 2264, addr 0x9d0) [Time: 4] [0 outstanding requests]
+cpu: 390 Issued Read (2266) for address 0x198
+cpu: Received MemEvent with command 2 (response to 2266, addr 0x198) [Time: 44] [0 outstanding requests]
+cpu: 389 Issued Read (2271) for address 0x6cc
+cpu: Received MemEvent with command 2 (response to 2271, addr 0x6cc) [Time: 4] [0 outstanding requests]
+cpu: 388 Issued Read (2273) for address 0x480
+cpu: Received MemEvent with command 2 (response to 2273, addr 0x480) [Time: 40] [0 outstanding requests]
+cpu: 387 Issued Write (2278) for address 0x4a0
+WARNING: address 0x4a0 is not aligned to the request size of 64
+WARNING: address 0x4a0 is not aligned to the request size of 64
+WARNING: address 0x4a0 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2278, addr 0x4a0) [Time: 60] [0 outstanding requests]
+cpu: 386 Issued Write (2283) for address 0x97c
+WARNING: address 0x97c is not aligned to the request size of 64
+WARNING: address 0x97c is not aligned to the request size of 64
+WARNING: address 0x97c is not aligned to the request size of 64
+cpu: 385 Issued Read (2287) for address 0x10c
+cpu: 384 Issued Read (2288) for address 0x7d4
+cpu: Received MemEvent with command 2 (response to 2288, addr 0x7d4) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2283, addr 0x97c) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2287, addr 0x10c) [Time: 57] [0 outstanding requests]
+cpu: 383 Issued Read (2295) for address 0xf4c
+cpu: Received MemEvent with command 2 (response to 2295, addr 0xf4c) [Time: 4] [0 outstanding requests]
+cpu: 382 Issued Read (2297) for address 0x7c0
+cpu: Received MemEvent with command 2 (response to 2297, addr 0x7c0) [Time: 4] [0 outstanding requests]
+cpu: 381 Issued Read (2299) for address 0x71c
+cpu: 380 Issued Read (2303) for address 0xca4
+cpu: Received MemEvent with command 2 (response to 2303, addr 0xca4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2299, addr 0x71c) [Time: 44] [0 outstanding requests]
+cpu: 379 Issued Read (2306) for address 0x970
+cpu: Received MemEvent with command 2 (response to 2306, addr 0x970) [Time: 4] [0 outstanding requests]
+cpu: 378 Issued Read (2308) for address 0x3c
+cpu: 377 Issued Read (2312) for address 0x97c
+cpu: Received MemEvent with command 2 (response to 2312, addr 0x97c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2308, addr 0x3c) [Time: 45] [0 outstanding requests]
+cpu: 376 Issued Read (2315) for address 0xc08
+cpu: Received MemEvent with command 2 (response to 2315, addr 0xc08) [Time: 44] [0 outstanding requests]
+cpu: 375 Issued Read (2320) for address 0x8bc
+cpu: 374 Issued Read (2324) for address 0x6ac
+cpu: Received MemEvent with command 2 (response to 2320, addr 0x8bc) [Time: 44] [1 outstanding requests]
+cpu: 373 Issued Read (2329) for address 0xd90
+cpu: Received MemEvent with command 2 (response to 2329, addr 0xd90) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2324, addr 0x6ac) [Time: 49] [0 outstanding requests]
+cpu: 372 Issued Read (2332) for address 0xe20
+cpu: Received MemEvent with command 2 (response to 2332, addr 0xe20) [Time: 44] [0 outstanding requests]
+cpu: 371 Issued Read (2337) for address 0x724
+cpu: Received MemEvent with command 2 (response to 2337, addr 0x724) [Time: 4] [0 outstanding requests]
+cpu: 370 Issued Read (2339) for address 0x514
+cpu: Received MemEvent with command 2 (response to 2339, addr 0x514) [Time: 4] [0 outstanding requests]
+cpu: 369 Issued Read (2341) for address 0xdd8
+cpu: Received MemEvent with command 2 (response to 2341, addr 0xdd8) [Time: 44] [0 outstanding requests]
+cpu: 368 Issued Read (2346) for address 0xc0
+cpu: Received MemEvent with command 2 (response to 2346, addr 0xc0) [Time: 59] [0 outstanding requests]
+cpu: 367 Issued Read (2352) for address 0x12c
+cpu: Received MemEvent with command 2 (response to 2352, addr 0x12c) [Time: 4] [0 outstanding requests]
+cpu: 366 Issued Read (2354) for address 0x3f4
+cpu: Received MemEvent with command 2 (response to 2354, addr 0x3f4) [Time: 44] [0 outstanding requests]
+cpu: 365 Issued Read (2359) for address 0x674
+cpu: Received MemEvent with command 2 (response to 2359, addr 0x674) [Time: 63] [0 outstanding requests]
+cpu: 364 Issued Read (2365) for address 0xba0
+cpu: Received MemEvent with command 2 (response to 2365, addr 0xba0) [Time: 4] [0 outstanding requests]
+cpu: 363 Issued Write (2367) for address 0x1c
+WARNING: address 0x1c is not aligned to the request size of 64
+WARNING: address 0x1c is not aligned to the request size of 64
+WARNING: address 0x1c is not aligned to the request size of 64
+cpu: 362 Issued Read (2371) for address 0xa08
+cpu: Received MemEvent with command 4 (response to 2367, addr 0x1c) [Time: 176] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2371, addr 0xa08) [Time: 103] [0 outstanding requests]
+cpu: 361 Issued Read (2377) for address 0x3c4
+cpu: 360 Issued Read (2378) for address 0xef8
+cpu: Received MemEvent with command 2 (response to 2377, addr 0x3c4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2378, addr 0xef8) [Time: 44] [0 outstanding requests]
+cpu: 359 Issued Read (2384) for address 0x980
+cpu: Received MemEvent with command 2 (response to 2384, addr 0x980) [Time: 40] [0 outstanding requests]
+cpu: 358 Issued Read (2389) for address 0xa4
+cpu: 357 Issued Read (2394) for address 0x194
+cpu: Received MemEvent with command 2 (response to 2394, addr 0x194) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2389, addr 0xa4) [Time: 63] [0 outstanding requests]
+cpu: 356 Issued Read (2397) for address 0xcb8
+cpu: Received MemEvent with command 2 (response to 2397, addr 0xcb8) [Time: 4] [0 outstanding requests]
+cpu: 355 Issued Read (2399) for address 0x284
+cpu: 354 Issued Read (2403) for address 0x954
+cpu: Received MemEvent with command 2 (response to 2403, addr 0x954) [Time: 4] [1 outstanding requests]
+cpu: 353 Issued Read (2405) for address 0x5d4
+cpu: Received MemEvent with command 2 (response to 2399, addr 0x284) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2405, addr 0x5d4) [Time: 32] [0 outstanding requests]
+cpu: 352 Issued Read (2411) for address 0x204
+cpu: 351 Issued Read (2415) for address 0xe94
+cpu: Received MemEvent with command 2 (response to 2411, addr 0x204) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2415, addr 0xe94) [Time: 29] [0 outstanding requests]
+cpu: 350 Issued Read (2421) for address 0x3c
+cpu: Received MemEvent with command 2 (response to 2421, addr 0x3c) [Time: 4] [0 outstanding requests]
+cpu: 349 Issued Read (2423) for address 0xb6c
+cpu: Received MemEvent with command 2 (response to 2423, addr 0xb6c) [Time: 44] [0 outstanding requests]
+cpu: 348 Issued Read (2428) for address 0x458
+cpu: Received MemEvent with command 2 (response to 2428, addr 0x458) [Time: 44] [0 outstanding requests]
+cpu: 347 Issued Write (2433) for address 0x124
+WARNING: address 0x124 is not aligned to the request size of 64
+WARNING: address 0x124 is not aligned to the request size of 64
+WARNING: address 0x124 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2433, addr 0x124) [Time: 60] [0 outstanding requests]
+cpu: 346 Issued Read (2438) for address 0x21c
+cpu: Received MemEvent with command 2 (response to 2438, addr 0x21c) [Time: 4] [0 outstanding requests]
+cpu: 345 Issued Read (2440) for address 0xda0
+cpu: Received MemEvent with command 2 (response to 2440, addr 0xda0) [Time: 4] [0 outstanding requests]
+cpu: 344 Issued Read (2442) for address 0x4a8
+cpu: Received MemEvent with command 2 (response to 2442, addr 0x4a8) [Time: 44] [0 outstanding requests]
+cpu: 343 Issued Read (2447) for address 0xdc4
+cpu: Received MemEvent with command 2 (response to 2447, addr 0xdc4) [Time: 4] [0 outstanding requests]
+cpu: 342 Issued Read (2449) for address 0x364
+cpu: Received MemEvent with command 2 (response to 2449, addr 0x364) [Time: 63] [0 outstanding requests]
+cpu: 341 Issued Read (2455) for address 0xb94
+cpu: Received MemEvent with command 2 (response to 2455, addr 0xb94) [Time: 4] [0 outstanding requests]
+cpu: 340 Issued Read (2457) for address 0xf48
+cpu: Received MemEvent with command 2 (response to 2457, addr 0xf48) [Time: 4] [0 outstanding requests]
+cpu: 339 Issued Read (2459) for address 0xeac
+cpu: Received MemEvent with command 2 (response to 2459, addr 0xeac) [Time: 4] [0 outstanding requests]
+cpu: 338 Issued Read (2461) for address 0x4b4
+cpu: Received MemEvent with command 2 (response to 2461, addr 0x4b4) [Time: 4] [0 outstanding requests]
+cpu: 337 Issued Read (2463) for address 0xc48
+cpu: 336 Issued Read (2468) for address 0xc8
+cpu: Received MemEvent with command 2 (response to 2468, addr 0xc8) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2463, addr 0xc48) [Time: 63] [0 outstanding requests]
+cpu: 335 Issued Write (2471) for address 0x78
+WARNING: address 0x78 is not aligned to the request size of 64
+WARNING: address 0x78 is not aligned to the request size of 64
+WARNING: address 0x78 is not aligned to the request size of 64
+cpu: 334 Issued Read (2476) for address 0x81c
+cpu: Received MemEvent with command 4 (response to 2471, addr 0x78) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2476, addr 0x81c) [Time: 29] [0 outstanding requests]
+cpu: 333 Issued Write (2482) for address 0x2f4
+WARNING: address 0x2f4 is not aligned to the request size of 64
+WARNING: address 0x2f4 is not aligned to the request size of 64
+WARNING: address 0x2f4 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2482, addr 0x2f4) [Time: 60] [0 outstanding requests]
+cpu: 332 Issued Read (2487) for address 0x910
+cpu: Received MemEvent with command 2 (response to 2487, addr 0x910) [Time: 63] [0 outstanding requests]
+cpu: 331 Issued Read (2493) for address 0xb34
+cpu: Received MemEvent with command 2 (response to 2493, addr 0xb34) [Time: 44] [0 outstanding requests]
+cpu: 330 Issued Read (2498) for address 0x620
+cpu: 329 Issued Read (2499) for address 0xe50
+cpu: Received MemEvent with command 2 (response to 2498, addr 0x620) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2499, addr 0xe50) [Time: 51] [0 outstanding requests]
+cpu: 328 Issued Write (2508) for address 0x40c
+WARNING: address 0x40c is not aligned to the request size of 64
+WARNING: address 0x40c is not aligned to the request size of 64
+WARNING: address 0x40c is not aligned to the request size of 64
+cpu: 327 Issued Read (2514) for address 0xfbc
+cpu: Received MemEvent with command 4 (response to 2508, addr 0x40c) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2514, addr 0xfbc) [Time: 37] [0 outstanding requests]
+cpu: 326 Issued Write (2520) for address 0x198
+WARNING: address 0x198 is not aligned to the request size of 64
+WARNING: address 0x198 is not aligned to the request size of 64
+WARNING: address 0x198 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2520, addr 0x198) [Time: 60] [0 outstanding requests]
+cpu: 325 Issued Read (2525) for address 0x2bc
+cpu: Received MemEvent with command 2 (response to 2525, addr 0x2bc) [Time: 4] [0 outstanding requests]
+cpu: 324 Issued Read (2527) for address 0x750
+cpu: Received MemEvent with command 2 (response to 2527, addr 0x750) [Time: 63] [0 outstanding requests]
+cpu: 323 Issued Read (2533) for address 0x278
+cpu: Received MemEvent with command 2 (response to 2533, addr 0x278) [Time: 44] [0 outstanding requests]
+cpu: 322 Issued Read (2538) for address 0xc0
+cpu: Received MemEvent with command 2 (response to 2538, addr 0xc0) [Time: 4] [0 outstanding requests]
+cpu: 321 Issued Read (2540) for address 0x5bc
+cpu: Received MemEvent with command 2 (response to 2540, addr 0x5bc) [Time: 44] [0 outstanding requests]
+cpu: 320 Issued Read (2545) for address 0xd60
+cpu: Received MemEvent with command 2 (response to 2545, addr 0xd60) [Time: 44] [0 outstanding requests]
+cpu: 319 Issued Read (2550) for address 0xd10
+cpu: 318 Issued Read (2554) for address 0x7dc
+cpu: Received MemEvent with command 2 (response to 2554, addr 0x7dc) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2550, addr 0xd10) [Time: 45] [0 outstanding requests]
+cpu: 317 Issued Write (2557) for address 0x540
+cpu: Received MemEvent with command 4 (response to 2557, addr 0x540) [Time: 60] [0 outstanding requests]
+cpu: 316 Issued Read (2563) for address 0xbc4
+cpu: Received MemEvent with command 2 (response to 2563, addr 0xbc4) [Time: 44] [0 outstanding requests]
+cpu: 315 Issued Read (2568) for address 0x1a4
+cpu: 314 Issued Read (2569) for address 0x580
+cpu: Received MemEvent with command 2 (response to 2568, addr 0x1a4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2569, addr 0x580) [Time: 4] [0 outstanding requests]
+cpu: 313 Issued Read (2572) for address 0x178
+cpu: 312 Issued Read (2578) for address 0x208
+cpu: Received MemEvent with command 2 (response to 2572, addr 0x178) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2578, addr 0x208) [Time: 4] [0 outstanding requests]
+cpu: 311 Issued Read (2580) for address 0xd9c
+cpu: 310 Issued Read (2584) for address 0xf3c
+cpu: Received MemEvent with command 2 (response to 2580, addr 0xd9c) [Time: 96] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2584, addr 0xf3c) [Time: 67] [0 outstanding requests]
+cpu: 309 Issued Read (2591) for address 0x928
+cpu: Received MemEvent with command 2 (response to 2591, addr 0x928) [Time: 4] [0 outstanding requests]
+cpu: 308 Issued Read (2593) for address 0x800
+cpu: 307 Issued Read (2595) for address 0x930
+cpu: Received MemEvent with command 2 (response to 2593, addr 0x800) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2595, addr 0x930) [Time: 4] [0 outstanding requests]
+cpu: 306 Issued Read (2597) for address 0xd4
+cpu: Received MemEvent with command 2 (response to 2597, addr 0xd4) [Time: 4] [0 outstanding requests]
+cpu: 305 Issued Read (2599) for address 0xfb8
+cpu: Received MemEvent with command 2 (response to 2599, addr 0xfb8) [Time: 4] [0 outstanding requests]
+cpu: 304 Issued Read (2601) for address 0xf88
+cpu: Received MemEvent with command 2 (response to 2601, addr 0xf88) [Time: 4] [0 outstanding requests]
+cpu: 303 Issued Read (2603) for address 0xb38
+cpu: Received MemEvent with command 2 (response to 2603, addr 0xb38) [Time: 4] [0 outstanding requests]
+cpu: 302 Issued Read (2605) for address 0xe38
+cpu: Received MemEvent with command 2 (response to 2605, addr 0xe38) [Time: 44] [0 outstanding requests]
+cpu: 301 Issued Read (2610) for address 0x11c
+cpu: Received MemEvent with command 2 (response to 2610, addr 0x11c) [Time: 44] [0 outstanding requests]
+cpu: 300 Issued Read (2615) for address 0x1b4
+cpu: Received MemEvent with command 2 (response to 2615, addr 0x1b4) [Time: 4] [0 outstanding requests]
+cpu: 299 Issued Read (2617) for address 0x4
+cpu: Received MemEvent with command 2 (response to 2617, addr 0x4) [Time: 63] [0 outstanding requests]
+cpu: 298 Issued Read (2623) for address 0x78
+cpu: Received MemEvent with command 2 (response to 2623, addr 0x78) [Time: 4] [0 outstanding requests]
+cpu: 297 Issued Read (2625) for address 0x72c
+cpu: Received MemEvent with command 2 (response to 2625, addr 0x72c) [Time: 44] [0 outstanding requests]
+cpu: 296 Issued Read (2630) for address 0xfb0
+cpu: Received MemEvent with command 2 (response to 2630, addr 0xfb0) [Time: 4] [0 outstanding requests]
+cpu: 295 Issued Write (2632) for address 0x568
+cpu: Received MemEvent with command 4 (response to 2632, addr 0x568) [Time: 4] [0 outstanding requests]
+cpu: 294 Issued Read (2634) for address 0xc0
+cpu: Received MemEvent with command 2 (response to 2634, addr 0xc0) [Time: 4] [0 outstanding requests]
+cpu: 293 Issued Read (2636) for address 0xd40
+cpu: Received MemEvent with command 2 (response to 2636, addr 0xd40) [Time: 4] [0 outstanding requests]
+cpu: 292 Issued Read (2638) for address 0x51c
+cpu: 291 Issued Read (2642) for address 0x780
+cpu: Received MemEvent with command 2 (response to 2638, addr 0x51c) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2642, addr 0x780) [Time: 35] [0 outstanding requests]
+cpu: 290 Issued Write (2648) for address 0xf14
+WARNING: address 0xf14 is not aligned to the request size of 64
+WARNING: address 0xf14 is not aligned to the request size of 64
+WARNING: address 0xf14 is not aligned to the request size of 64
+cpu: 289 Issued Read (2653) for address 0xe88
+cpu: Received MemEvent with command 2 (response to 2653, addr 0xe88) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2648, addr 0xf14) [Time: 60] [0 outstanding requests]
+cpu: 288 Issued Read (2656) for address 0xc48
+cpu: Received MemEvent with command 2 (response to 2656, addr 0xc48) [Time: 4] [0 outstanding requests]
+cpu: 287 Issued Read (2658) for address 0x9b4
+cpu: Received MemEvent with command 2 (response to 2658, addr 0x9b4) [Time: 44] [0 outstanding requests]
+cpu: 286 Issued Read (2663) for address 0xa48
+cpu: Received MemEvent with command 2 (response to 2663, addr 0xa48) [Time: 44] [0 outstanding requests]
+cpu: 285 Issued Read (2668) for address 0xb0
+cpu: Received MemEvent with command 2 (response to 2668, addr 0xb0) [Time: 44] [0 outstanding requests]
+cpu: 284 Issued Read (2673) for address 0xdcc
+cpu: Received MemEvent with command 2 (response to 2673, addr 0xdcc) [Time: 4] [0 outstanding requests]
+cpu: 283 Issued Read (2675) for address 0xfc
+cpu: Received MemEvent with command 2 (response to 2675, addr 0xfc) [Time: 4] [0 outstanding requests]
+cpu: 282 Issued Read (2677) for address 0x594
+cpu: 281 Issued Read (2682) for address 0x2f4
+cpu: Received MemEvent with command 2 (response to 2682, addr 0x2f4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2677, addr 0x594) [Time: 63] [0 outstanding requests]
+cpu: 280 Issued Read (2685) for address 0x164
+cpu: Received MemEvent with command 2 (response to 2685, addr 0x164) [Time: 4] [0 outstanding requests]
+cpu: 279 Issued Read (2687) for address 0xfb8
+cpu: Received MemEvent with command 2 (response to 2687, addr 0xfb8) [Time: 4] [0 outstanding requests]
+cpu: 278 Issued Read (2689) for address 0xd4
+cpu: Received MemEvent with command 2 (response to 2689, addr 0xd4) [Time: 4] [0 outstanding requests]
+cpu: 277 Issued Read (2691) for address 0x814
+cpu: Received MemEvent with command 2 (response to 2691, addr 0x814) [Time: 4] [0 outstanding requests]
+cpu: 276 Issued Read (2693) for address 0x6d8
+cpu: 275 Issued Read (2695) for address 0xfb0
+cpu: Received MemEvent with command 2 (response to 2693, addr 0x6d8) [Time: 4] [1 outstanding requests]
+cpu: 274 Issued Write (2697) for address 0x970
+cpu: Received MemEvent with command 2 (response to 2695, addr 0xfb0) [Time: 4] [1 outstanding requests]
+cpu: 273 Issued Read (2700) for address 0xb50
+WARNING: address 0x970 is not aligned to the request size of 64
+WARNING: address 0x970 is not aligned to the request size of 64
+WARNING: address 0x970 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2697, addr 0x970) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2700, addr 0xb50) [Time: 86] [0 outstanding requests]
+cpu: 272 Issued Read (2709) for address 0x830
+cpu: Received MemEvent with command 2 (response to 2709, addr 0x830) [Time: 4] [0 outstanding requests]
+cpu: 271 Issued Read (2711) for address 0x504
+cpu: Received MemEvent with command 2 (response to 2711, addr 0x504) [Time: 4] [0 outstanding requests]
+cpu: 270 Issued Read (2713) for address 0xfb8
+cpu: Received MemEvent with command 2 (response to 2713, addr 0xfb8) [Time: 4] [0 outstanding requests]
+cpu: 269 Issued Read (2715) for address 0x61c
+cpu: 268 Issued Read (2719) for address 0x6a4
+cpu: 267 Issued Read (2723) for address 0xa78
+cpu: Received MemEvent with command 2 (response to 2723, addr 0xa78) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2715, addr 0x61c) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2719, addr 0x6a4) [Time: 36] [0 outstanding requests]
+cpu: 266 Issued Read (2727) for address 0x748
+cpu: Received MemEvent with command 2 (response to 2727, addr 0x748) [Time: 44] [0 outstanding requests]
+cpu: 265 Issued Read (2732) for address 0xcdc
+cpu: 264 Issued Read (2736) for address 0x408
+cpu: Received MemEvent with command 2 (response to 2732, addr 0xcdc) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2736, addr 0x408) [Time: 46] [0 outstanding requests]
+cpu: 263 Issued Read (2742) for address 0x610
+cpu: Received MemEvent with command 2 (response to 2742, addr 0x610) [Time: 4] [0 outstanding requests]
+cpu: 262 Issued Read (2744) for address 0x248
+cpu: Received MemEvent with command 2 (response to 2744, addr 0x248) [Time: 4] [0 outstanding requests]
+cpu: 261 Issued Read (2746) for address 0xf80
+cpu: Received MemEvent with command 2 (response to 2746, addr 0xf80) [Time: 4] [0 outstanding requests]
+cpu: 260 Issued Read (2748) for address 0x988
+cpu: Received MemEvent with command 2 (response to 2748, addr 0x988) [Time: 4] [0 outstanding requests]
+cpu: 259 Issued Read (2750) for address 0xa4
+cpu: Received MemEvent with command 2 (response to 2750, addr 0xa4) [Time: 4] [0 outstanding requests]
+cpu: 258 Issued Read (2752) for address 0x530
+cpu: Received MemEvent with command 2 (response to 2752, addr 0x530) [Time: 4] [0 outstanding requests]
+cpu: 257 Issued Read (2754) for address 0x44c
+cpu: Received MemEvent with command 2 (response to 2754, addr 0x44c) [Time: 63] [0 outstanding requests]
+cpu: 256 Issued Read (2760) for address 0x7b4
+cpu: Received MemEvent with command 2 (response to 2760, addr 0x7b4) [Time: 4] [0 outstanding requests]
+cpu: 255 Issued Read (2762) for address 0xbcc
+cpu: Received MemEvent with command 2 (response to 2762, addr 0xbcc) [Time: 4] [0 outstanding requests]
+cpu: 254 Issued Read (2764) for address 0xf54
+cpu: 253 Issued Read (2768) for address 0x850
+cpu: Received MemEvent with command 2 (response to 2764, addr 0xf54) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2768, addr 0x850) [Time: 48] [0 outstanding requests]
+cpu: 252 Issued Read (2774) for address 0x118
+cpu: Received MemEvent with command 2 (response to 2774, addr 0x118) [Time: 4] [0 outstanding requests]
+cpu: 251 Issued Read (2776) for address 0x348
+cpu: 250 Issued Read (2781) for address 0xb64
+cpu: Received MemEvent with command 2 (response to 2781, addr 0xb64) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2776, addr 0x348) [Time: 63] [0 outstanding requests]
+cpu: 249 Issued Read (2784) for address 0x1cc
+cpu: Received MemEvent with command 2 (response to 2784, addr 0x1cc) [Time: 44] [0 outstanding requests]
+cpu: 248 Issued Write (2789) for address 0x2f4
+cpu: 247 Issued Read (2791) for address 0x1c4
+cpu: Received MemEvent with command 4 (response to 2789, addr 0x2f4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2791, addr 0x1c4) [Time: 4] [0 outstanding requests]
+cpu: 246 Issued Read (2793) for address 0xd9c
+cpu: Received MemEvent with command 2 (response to 2793, addr 0xd9c) [Time: 44] [0 outstanding requests]
+cpu: 245 Issued Read (2798) for address 0x98
+cpu: Received MemEvent with command 2 (response to 2798, addr 0x98) [Time: 4] [0 outstanding requests]
+cpu: 244 Issued Read (2800) for address 0x15c
+cpu: Received MemEvent with command 2 (response to 2800, addr 0x15c) [Time: 44] [0 outstanding requests]
+cpu: 243 Issued Read (2805) for address 0xc4
+cpu: Received MemEvent with command 2 (response to 2805, addr 0xc4) [Time: 4] [0 outstanding requests]
+cpu: 242 Issued Write (2807) for address 0xf20
+cpu: Received MemEvent with command 4 (response to 2807, addr 0xf20) [Time: 4] [0 outstanding requests]
+cpu: 241 Issued Read (2809) for address 0x20
+cpu: Received MemEvent with command 2 (response to 2809, addr 0x20) [Time: 4] [0 outstanding requests]
+cpu: 240 Issued Read (2811) for address 0x300
+cpu: 239 Issued Read (2812) for address 0x990
+cpu: Received MemEvent with command 2 (response to 2812, addr 0x990) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2811, addr 0x300) [Time: 40] [0 outstanding requests]
+cpu: 238 Issued Read (2818) for address 0xca0
+cpu: Received MemEvent with command 2 (response to 2818, addr 0xca0) [Time: 42] [0 outstanding requests]
+cpu: 237 Issued Read (2823) for address 0x3a0
+cpu: 236 Issued Read (2827) for address 0x338
+cpu: Received MemEvent with command 2 (response to 2827, addr 0x338) [Time: 4] [1 outstanding requests]
+cpu: 235 Issued Read (2829) for address 0x92c
+cpu: 234 Issued Read (2830) for address 0xa1c
+cpu: 233 Issued Read (2837) for address 0xa18
+cpu: Received MemEvent with command 2 (response to 2823, addr 0x3a0) [Time: 44] [3 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2829, addr 0x92c) [Time: 29] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2830, addr 0xa1c) [Time: 36] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2837, addr 0xa18) [Time: 25] [0 outstanding requests]
+cpu: 232 Issued Read (2842) for address 0xa10
+cpu: Received MemEvent with command 2 (response to 2842, addr 0xa10) [Time: 4] [0 outstanding requests]
+cpu: 231 Issued Read (2844) for address 0xb94
+cpu: Received MemEvent with command 2 (response to 2844, addr 0xb94) [Time: 44] [0 outstanding requests]
+cpu: 230 Issued Read (2849) for address 0x684
+cpu: Received MemEvent with command 2 (response to 2849, addr 0x684) [Time: 4] [0 outstanding requests]
+cpu: 229 Issued Read (2851) for address 0xfac
+cpu: Received MemEvent with command 2 (response to 2851, addr 0xfac) [Time: 44] [0 outstanding requests]
+cpu: 228 Issued Read (2856) for address 0x364
+cpu: Received MemEvent with command 2 (response to 2856, addr 0x364) [Time: 4] [0 outstanding requests]
+cpu: 227 Issued Read (2858) for address 0x1e8
+cpu: Received MemEvent with command 2 (response to 2858, addr 0x1e8) [Time: 4] [0 outstanding requests]
+cpu: 226 Issued Read (2860) for address 0xe4
+cpu: Received MemEvent with command 2 (response to 2860, addr 0xe4) [Time: 4] [0 outstanding requests]
+cpu: 225 Issued Read (2862) for address 0x1a8
+cpu: Received MemEvent with command 2 (response to 2862, addr 0x1a8) [Time: 44] [0 outstanding requests]
+cpu: 224 Issued Read (2867) for address 0x8ec
+cpu: 223 Issued Read (2871) for address 0x48c
+cpu: Received MemEvent with command 2 (response to 2867, addr 0x8ec) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2871, addr 0x48c) [Time: 32] [0 outstanding requests]
+cpu: 222 Issued Read (2877) for address 0xd0
+cpu: Received MemEvent with command 2 (response to 2877, addr 0xd0) [Time: 4] [0 outstanding requests]
+cpu: 221 Issued Write (2879) for address 0x5d0
+WARNING: address 0x5d0 is not aligned to the request size of 64
+WARNING: address 0x5d0 is not aligned to the request size of 64
+WARNING: address 0x5d0 is not aligned to the request size of 64
+cpu: 220 Issued Read (2884) for address 0x70
+cpu: Received MemEvent with command 4 (response to 2879, addr 0x5d0) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2884, addr 0x70) [Time: 51] [0 outstanding requests]
+cpu: 219 Issued Read (2890) for address 0xcd8
+cpu: Received MemEvent with command 2 (response to 2890, addr 0xcd8) [Time: 4] [0 outstanding requests]
+cpu: 218 Issued Read (2892) for address 0xb64
+cpu: Received MemEvent with command 2 (response to 2892, addr 0xb64) [Time: 4] [0 outstanding requests]
+cpu: 217 Issued Read (2894) for address 0x524
+cpu: Received MemEvent with command 2 (response to 2894, addr 0x524) [Time: 44] [0 outstanding requests]
+cpu: 216 Issued Write (2899) for address 0x4c
+WARNING: address 0x4c is not aligned to the request size of 64
+WARNING: address 0x4c is not aligned to the request size of 64
+WARNING: address 0x4c is not aligned to the request size of 64
+cpu: 215 Issued Read (2904) for address 0xd68
+cpu: Received MemEvent with command 4 (response to 2899, addr 0x4c) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2904, addr 0xd68) [Time: 44] [0 outstanding requests]
+cpu: 214 Issued Write (2909) for address 0xd48
+WARNING: address 0xd48 is not aligned to the request size of 64
+WARNING: address 0xd48 is not aligned to the request size of 64
+WARNING: address 0xd48 is not aligned to the request size of 64
+cpu: 213 Issued Write (2913) for address 0xdd4
+WARNING: address 0xdd4 is not aligned to the request size of 64
+WARNING: address 0xdd4 is not aligned to the request size of 64
+WARNING: address 0xdd4 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 2909, addr 0xd48) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2913, addr 0xdd4) [Time: 76] [0 outstanding requests]
+cpu: 212 Issued Read (2919) for address 0x93c
+cpu: Received MemEvent with command 2 (response to 2919, addr 0x93c) [Time: 4] [0 outstanding requests]
+cpu: 211 Issued Read (2921) for address 0xeb4
+cpu: Received MemEvent with command 2 (response to 2921, addr 0xeb4) [Time: 44] [0 outstanding requests]
+cpu: 210 Issued Read (2926) for address 0xd8
+cpu: Received MemEvent with command 2 (response to 2926, addr 0xd8) [Time: 4] [0 outstanding requests]
+cpu: 209 Issued Read (2928) for address 0x3ac
+cpu: Received MemEvent with command 2 (response to 2928, addr 0x3ac) [Time: 4] [0 outstanding requests]
+cpu: 208 Issued Read (2930) for address 0x5dc
+cpu: Received MemEvent with command 2 (response to 2930, addr 0x5dc) [Time: 4] [0 outstanding requests]
+cpu: 207 Issued Write (2932) for address 0xb14
+WARNING: address 0xb14 is not aligned to the request size of 64
+WARNING: address 0xb14 is not aligned to the request size of 64
+WARNING: address 0xb14 is not aligned to the request size of 64
+cpu: 206 Issued Read (2938) for address 0x208
+cpu: Received MemEvent with command 4 (response to 2932, addr 0xb14) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2938, addr 0x208) [Time: 34] [0 outstanding requests]
+cpu: 205 Issued Read (2944) for address 0x16c
+cpu: Received MemEvent with command 2 (response to 2944, addr 0x16c) [Time: 4] [0 outstanding requests]
+cpu: 204 Issued Read (2946) for address 0x1e4
+cpu: Received MemEvent with command 2 (response to 2946, addr 0x1e4) [Time: 4] [0 outstanding requests]
+cpu: 203 Issued Read (2948) for address 0xac0
+cpu: Received MemEvent with command 2 (response to 2948, addr 0xac0) [Time: 59] [0 outstanding requests]
+cpu: 202 Issued Read (2954) for address 0xb34
+cpu: Received MemEvent with command 2 (response to 2954, addr 0xb34) [Time: 4] [0 outstanding requests]
+cpu: 201 Issued Read (2956) for address 0x6e4
+cpu: Received MemEvent with command 2 (response to 2956, addr 0x6e4) [Time: 44] [0 outstanding requests]
+cpu: 200 Issued Write (2961) for address 0x7dc
+WARNING: address 0x7dc is not aligned to the request size of 64
+WARNING: address 0x7dc is not aligned to the request size of 64
+WARNING: address 0x7dc is not aligned to the request size of 64
+cpu: 199 Issued Read (2966) for address 0x3a8
+cpu: Received MemEvent with command 2 (response to 2966, addr 0x3a8) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2961, addr 0x7dc) [Time: 60] [0 outstanding requests]
+cpu: 198 Issued Read (2969) for address 0xd48
+cpu: Received MemEvent with command 2 (response to 2969, addr 0xd48) [Time: 4] [0 outstanding requests]
+cpu: 197 Issued Read (2971) for address 0x7ac
+cpu: Received MemEvent with command 2 (response to 2971, addr 0x7ac) [Time: 44] [0 outstanding requests]
+cpu: 196 Issued Read (2976) for address 0xd08
+cpu: 195 Issued Read (2980) for address 0x900
+cpu: Received MemEvent with command 2 (response to 2980, addr 0x900) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2976, addr 0xd08) [Time: 44] [0 outstanding requests]
+cpu: 194 Issued Write (2983) for address 0x680
+cpu: Received MemEvent with command 4 (response to 2983, addr 0x680) [Time: 60] [0 outstanding requests]
+cpu: 193 Issued Read (2988) for address 0x94
+cpu: 192 Issued Write (2992) for address 0xcac
+WARNING: address 0xcac is not aligned to the request size of 64
+WARNING: address 0xcac is not aligned to the request size of 64
+WARNING: address 0xcac is not aligned to the request size of 64
+cpu: 191 Issued Read (2997) for address 0x42c
+cpu: Received MemEvent with command 2 (response to 2988, addr 0x94) [Time: 44] [2 outstanding requests]
+cpu: 190 Issued Read (3002) for address 0x204
+cpu: Received MemEvent with command 2 (response to 3002, addr 0x204) [Time: 4] [2 outstanding requests]
+cpu: 189 Issued Read (3004) for address 0xb08
+cpu: Received MemEvent with command 2 (response to 3004, addr 0xb08) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 2992, addr 0xcac) [Time: 55] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 2997, addr 0x42c) [Time: 39] [0 outstanding requests]
+cpu: 188 Issued Read (3008) for address 0xe64
+cpu: Received MemEvent with command 2 (response to 3008, addr 0xe64) [Time: 44] [0 outstanding requests]
+cpu: 187 Issued Read (3013) for address 0xf9c
+cpu: Received MemEvent with command 2 (response to 3013, addr 0xf9c) [Time: 4] [0 outstanding requests]
+cpu: 186 Issued Write (3015) for address 0x464
+WARNING: address 0x464 is not aligned to the request size of 64
+WARNING: address 0x464 is not aligned to the request size of 64
+WARNING: address 0x464 is not aligned to the request size of 64
+cpu: 185 Issued Read (3019) for address 0xa6c
+cpu: Received MemEvent with command 4 (response to 3015, addr 0x464) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3019, addr 0xa6c) [Time: 46] [0 outstanding requests]
+cpu: 184 Issued Read (3025) for address 0xa7c
+cpu: Received MemEvent with command 2 (response to 3025, addr 0xa7c) [Time: 4] [0 outstanding requests]
+cpu: 183 Issued Read (3027) for address 0xe4c
+cpu: Received MemEvent with command 2 (response to 3027, addr 0xe4c) [Time: 4] [0 outstanding requests]
+cpu: 182 Issued Read (3029) for address 0x5a8
+cpu: Received MemEvent with command 2 (response to 3029, addr 0x5a8) [Time: 44] [0 outstanding requests]
+cpu: 181 Issued Read (3034) for address 0xba0
+cpu: Received MemEvent with command 2 (response to 3034, addr 0xba0) [Time: 44] [0 outstanding requests]
+cpu: 180 Issued Read (3039) for address 0x648
+cpu: 179 Issued Read (3044) for address 0x904
+cpu: Received MemEvent with command 2 (response to 3044, addr 0x904) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3039, addr 0x648) [Time: 63] [0 outstanding requests]
+cpu: 178 Issued Read (3047) for address 0xe50
+cpu: Received MemEvent with command 2 (response to 3047, addr 0xe50) [Time: 4] [0 outstanding requests]
+cpu: 177 Issued Write (3049) for address 0x880
+cpu: Received MemEvent with command 4 (response to 3049, addr 0x880) [Time: 117] [0 outstanding requests]
+cpu: 176 Issued Write (3055) for address 0xbbc
+WARNING: address 0xbbc is not aligned to the request size of 64
+WARNING: address 0xbbc is not aligned to the request size of 64
+WARNING: address 0xbbc is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3055, addr 0xbbc) [Time: 60] [0 outstanding requests]
+cpu: 175 Issued Read (3060) for address 0x9e0
+cpu: 174 Issued Read (3065) for address 0x980
+cpu: Received MemEvent with command 2 (response to 3060, addr 0x9e0) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3065, addr 0x980) [Time: 40] [0 outstanding requests]
+cpu: 173 Issued Read (3071) for address 0x65c
+cpu: Received MemEvent with command 2 (response to 3071, addr 0x65c) [Time: 4] [0 outstanding requests]
+cpu: 172 Issued Read (3073) for address 0x4cc
+cpu: Received MemEvent with command 2 (response to 3073, addr 0x4cc) [Time: 44] [0 outstanding requests]
+cpu: 171 Issued Read (3078) for address 0xfec
+cpu: Received MemEvent with command 2 (response to 3078, addr 0xfec) [Time: 63] [0 outstanding requests]
+cpu: 170 Issued Read (3084) for address 0xc9c
+cpu: Received MemEvent with command 2 (response to 3084, addr 0xc9c) [Time: 4] [0 outstanding requests]
+cpu: 169 Issued Read (3086) for address 0x454
+cpu: Received MemEvent with command 2 (response to 3086, addr 0x454) [Time: 4] [0 outstanding requests]
+cpu: 168 Issued Read (3088) for address 0xee4
+cpu: 167 Issued Read (3092) for address 0x3ac
+cpu: Received MemEvent with command 2 (response to 3088, addr 0xee4) [Time: 44] [1 outstanding requests]
+cpu: 166 Issued Read (3098) for address 0x9fc
+cpu: Received MemEvent with command 2 (response to 3092, addr 0x3ac) [Time: 32] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3098, addr 0x9fc) [Time: 4] [0 outstanding requests]
+cpu: 165 Issued Read (3100) for address 0x108
+cpu: Received MemEvent with command 2 (response to 3100, addr 0x108) [Time: 44] [0 outstanding requests]
+cpu: 164 Issued Read (3105) for address 0x8dc
+cpu: Received MemEvent with command 2 (response to 3105, addr 0x8dc) [Time: 44] [0 outstanding requests]
+cpu: 163 Issued Read (3110) for address 0x3b8
+cpu: Received MemEvent with command 2 (response to 3110, addr 0x3b8) [Time: 4] [0 outstanding requests]
+cpu: 162 Issued Write (3112) for address 0x1e4
+WARNING: address 0x1e4 is not aligned to the request size of 64
+WARNING: address 0x1e4 is not aligned to the request size of 64
+WARNING: address 0x1e4 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3112, addr 0x1e4) [Time: 60] [0 outstanding requests]
+cpu: 161 Issued Read (3117) for address 0x48
+cpu: 160 Issued Read (3121) for address 0x744
+cpu: 159 Issued Read (3124) for address 0xb78
+cpu: Received MemEvent with command 2 (response to 3124, addr 0xb78) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3117, addr 0x48) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3121, addr 0x744) [Time: 29] [0 outstanding requests]
+cpu: 158 Issued Read (3129) for address 0xef8
+cpu: Received MemEvent with command 2 (response to 3129, addr 0xef8) [Time: 4] [0 outstanding requests]
+cpu: 157 Issued Read (3131) for address 0x114
+cpu: Received MemEvent with command 2 (response to 3131, addr 0x114) [Time: 4] [0 outstanding requests]
+cpu: 156 Issued Read (3133) for address 0xd14
+cpu: Received MemEvent with command 2 (response to 3133, addr 0xd14) [Time: 4] [0 outstanding requests]
+cpu: 155 Issued Read (3135) for address 0x328
+cpu: 154 Issued Read (3140) for address 0xd50
+cpu: Received MemEvent with command 2 (response to 3140, addr 0xd50) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3135, addr 0x328) [Time: 63] [0 outstanding requests]
+cpu: 153 Issued Write (3143) for address 0x684
+cpu: Received MemEvent with command 4 (response to 3143, addr 0x684) [Time: 4] [0 outstanding requests]
+cpu: 152 Issued Read (3145) for address 0x2fc
+cpu: Received MemEvent with command 2 (response to 3145, addr 0x2fc) [Time: 44] [0 outstanding requests]
+cpu: 151 Issued Read (3150) for address 0x3ec
+cpu: 150 Issued Read (3155) for address 0xaf0
+cpu: Received MemEvent with command 2 (response to 3150, addr 0x3ec) [Time: 63] [1 outstanding requests]
+cpu: 149 Issued Read (3160) for address 0x60c
+cpu: Received MemEvent with command 2 (response to 3155, addr 0xaf0) [Time: 30] [1 outstanding requests]
+cpu: 148 Issued Read (3165) for address 0xac
+cpu: Received MemEvent with command 2 (response to 3165, addr 0xac) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3160, addr 0x60c) [Time: 45] [0 outstanding requests]
+cpu: 147 Issued Read (3168) for address 0xcd4
+cpu: Received MemEvent with command 2 (response to 3168, addr 0xcd4) [Time: 44] [0 outstanding requests]
+cpu: 146 Issued Read (3173) for address 0x1e0
+cpu: Received MemEvent with command 2 (response to 3173, addr 0x1e0) [Time: 4] [0 outstanding requests]
+cpu: 145 Issued Read (3175) for address 0xfdc
+cpu: Received MemEvent with command 2 (response to 3175, addr 0xfdc) [Time: 4] [0 outstanding requests]
+cpu: 144 Issued Read (3177) for address 0x2bc
+cpu: 143 Issued Read (3182) for address 0x588
+cpu: Received MemEvent with command 2 (response to 3182, addr 0x588) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3177, addr 0x2bc) [Time: 63] [0 outstanding requests]
+cpu: 142 Issued Read (3185) for address 0x7f8
+cpu: Received MemEvent with command 2 (response to 3185, addr 0x7f8) [Time: 44] [0 outstanding requests]
+cpu: 141 Issued Read (3190) for address 0xb98
+cpu: Received MemEvent with command 2 (response to 3190, addr 0xb98) [Time: 4] [0 outstanding requests]
+cpu: 140 Issued Read (3192) for address 0x3b0
+cpu: Received MemEvent with command 2 (response to 3192, addr 0x3b0) [Time: 4] [0 outstanding requests]
+cpu: 139 Issued Read (3194) for address 0xf80
+cpu: Received MemEvent with command 2 (response to 3194, addr 0xf80) [Time: 40] [0 outstanding requests]
+cpu: 138 Issued Write (3199) for address 0xa0
+WARNING: address 0xa0 is not aligned to the request size of 64
+WARNING: address 0xa0 is not aligned to the request size of 64
+WARNING: address 0xa0 is not aligned to the request size of 64
+cpu: 137 Issued Write (3203) for address 0x918
+WARNING: address 0x918 is not aligned to the request size of 64
+WARNING: address 0x918 is not aligned to the request size of 64
+WARNING: address 0x918 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3199, addr 0xa0) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 3203, addr 0x918) [Time: 58] [0 outstanding requests]
+cpu: 136 Issued Read (3209) for address 0xf68
+cpu: Received MemEvent with command 2 (response to 3209, addr 0xf68) [Time: 44] [0 outstanding requests]
+cpu: 135 Issued Read (3214) for address 0x784
+cpu: Received MemEvent with command 2 (response to 3214, addr 0x784) [Time: 44] [0 outstanding requests]
+cpu: 134 Issued Read (3219) for address 0xff8
+cpu: Received MemEvent with command 2 (response to 3219, addr 0xff8) [Time: 4] [0 outstanding requests]
+cpu: 133 Issued Read (3221) for address 0xa98
+cpu: 132 Issued Read (3226) for address 0x510
+cpu: Received MemEvent with command 2 (response to 3221, addr 0xa98) [Time: 64] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3226, addr 0x510) [Time: 45] [0 outstanding requests]
+cpu: 131 Issued Write (3232) for address 0xd14
+WARNING: address 0xd14 is not aligned to the request size of 64
+WARNING: address 0xd14 is not aligned to the request size of 64
+WARNING: address 0xd14 is not aligned to the request size of 64
+cpu: 130 Issued Read (3236) for address 0x448
+cpu: Received MemEvent with command 2 (response to 3236, addr 0x448) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 3232, addr 0xd14) [Time: 60] [0 outstanding requests]
+cpu: 129 Issued Read (3239) for address 0x14
+cpu: Received MemEvent with command 2 (response to 3239, addr 0x14) [Time: 44] [0 outstanding requests]
+cpu: 128 Issued Read (3244) for address 0xd30
+cpu: Received MemEvent with command 2 (response to 3244, addr 0xd30) [Time: 4] [0 outstanding requests]
+cpu: 127 Issued Write (3246) for address 0xd20
+cpu: Received MemEvent with command 4 (response to 3246, addr 0xd20) [Time: 4] [0 outstanding requests]
+cpu: 126 Issued Read (3248) for address 0x5b8
+cpu: Received MemEvent with command 2 (response to 3248, addr 0x5b8) [Time: 63] [0 outstanding requests]
+cpu: 125 Issued Read (3254) for address 0x328
+cpu: Received MemEvent with command 2 (response to 3254, addr 0x328) [Time: 4] [0 outstanding requests]
+cpu: 124 Issued Read (3256) for address 0x4a0
+cpu: 123 Issued Read (3257) for address 0xa50
+cpu: Received MemEvent with command 2 (response to 3256, addr 0x4a0) [Time: 63] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3257, addr 0xa50) [Time: 70] [0 outstanding requests]
+cpu: 122 Issued Read (3267) for address 0x210
+cpu: Received MemEvent with command 2 (response to 3267, addr 0x210) [Time: 4] [0 outstanding requests]
+cpu: 121 Issued Read (3269) for address 0x1b4
+cpu: Received MemEvent with command 2 (response to 3269, addr 0x1b4) [Time: 44] [0 outstanding requests]
+cpu: 120 Issued Read (3274) for address 0x438
+cpu: Received MemEvent with command 2 (response to 3274, addr 0x438) [Time: 4] [0 outstanding requests]
+cpu: 119 Issued Read (3276) for address 0xd6c
+cpu: Received MemEvent with command 2 (response to 3276, addr 0xd6c) [Time: 4] [0 outstanding requests]
+cpu: 118 Issued Read (3278) for address 0xa10
+cpu: Received MemEvent with command 2 (response to 3278, addr 0xa10) [Time: 44] [0 outstanding requests]
+cpu: 117 Issued Read (3283) for address 0xaa4
+cpu: Received MemEvent with command 2 (response to 3283, addr 0xaa4) [Time: 4] [0 outstanding requests]
+cpu: 116 Issued Read (3285) for address 0x6a4
+cpu: Received MemEvent with command 2 (response to 3285, addr 0x6a4) [Time: 44] [0 outstanding requests]
+cpu: 115 Issued Read (3290) for address 0xed4
+cpu: Received MemEvent with command 2 (response to 3290, addr 0xed4) [Time: 4] [0 outstanding requests]
+cpu: 114 Issued Read (3292) for address 0x420
+cpu: Received MemEvent with command 2 (response to 3292, addr 0x420) [Time: 4] [0 outstanding requests]
+cpu: 113 Issued Write (3294) for address 0xea0
+WARNING: address 0xea0 is not aligned to the request size of 64
+WARNING: address 0xea0 is not aligned to the request size of 64
+WARNING: address 0xea0 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3294, addr 0xea0) [Time: 63] [0 outstanding requests]
+cpu: 112 Issued Read (3301) for address 0x6cc
+cpu: 111 Issued Read (3305) for address 0xdec
+cpu: Received MemEvent with command 2 (response to 3301, addr 0x6cc) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3305, addr 0xdec) [Time: 29] [0 outstanding requests]
+cpu: 110 Issued Read (3311) for address 0x8a8
+cpu: Received MemEvent with command 2 (response to 3311, addr 0x8a8) [Time: 44] [0 outstanding requests]
+cpu: 109 Issued Read (3316) for address 0xe8
+cpu: 108 Issued Read (3320) for address 0x3e8
+cpu: 107 Issued Read (3325) for address 0x584
+cpu: Received MemEvent with command 2 (response to 3325, addr 0x584) [Time: 4] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3316, addr 0xe8) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3320, addr 0x3e8) [Time: 60] [0 outstanding requests]
+cpu: 106 Issued Read (3329) for address 0x888
+cpu: Received MemEvent with command 2 (response to 3329, addr 0x888) [Time: 4] [0 outstanding requests]
+cpu: 105 Issued Read (3331) for address 0x3fc
+cpu: Received MemEvent with command 2 (response to 3331, addr 0x3fc) [Time: 4] [0 outstanding requests]
+cpu: 104 Issued Read (3333) for address 0xec4
+cpu: Received MemEvent with command 2 (response to 3333, addr 0xec4) [Time: 4] [0 outstanding requests]
+cpu: 103 Issued Read (3335) for address 0x510
+cpu: Received MemEvent with command 2 (response to 3335, addr 0x510) [Time: 4] [0 outstanding requests]
+cpu: 102 Issued Read (3337) for address 0x5b8
+cpu: Received MemEvent with command 2 (response to 3337, addr 0x5b8) [Time: 4] [0 outstanding requests]
+cpu: 101 Issued Read (3339) for address 0x2a0
+cpu: Received MemEvent with command 2 (response to 3339, addr 0x2a0) [Time: 44] [0 outstanding requests]
+cpu: 100 Issued Read (3344) for address 0x508
+cpu: Received MemEvent with command 2 (response to 3344, addr 0x508) [Time: 4] [0 outstanding requests]
+cpu: 99 Issued Read (3346) for address 0xe2c
+cpu: Received MemEvent with command 2 (response to 3346, addr 0xe2c) [Time: 44] [0 outstanding requests]
+cpu: 98 Issued Read (3351) for address 0xa4c
+cpu: Received MemEvent with command 2 (response to 3351, addr 0xa4c) [Time: 4] [0 outstanding requests]
+cpu: 97 Issued Read (3353) for address 0x988
+cpu: Received MemEvent with command 2 (response to 3353, addr 0x988) [Time: 44] [0 outstanding requests]
+cpu: 96 Issued Read (3358) for address 0x48
+cpu: Received MemEvent with command 2 (response to 3358, addr 0x48) [Time: 4] [0 outstanding requests]
+cpu: 95 Issued Read (3360) for address 0x780
+cpu: Received MemEvent with command 2 (response to 3360, addr 0x780) [Time: 4] [0 outstanding requests]
+cpu: 94 Issued Read (3362) for address 0x308
+cpu: Received MemEvent with command 2 (response to 3362, addr 0x308) [Time: 4] [0 outstanding requests]
+cpu: 93 Issued Read (3364) for address 0xfd0
+cpu: Received MemEvent with command 2 (response to 3364, addr 0xfd0) [Time: 4] [0 outstanding requests]
+cpu: 92 Issued Read (3366) for address 0x9a0
+cpu: Received MemEvent with command 2 (response to 3366, addr 0x9a0) [Time: 4] [0 outstanding requests]
+cpu: 91 Issued Read (3368) for address 0x3b0
+cpu: 90 Issued Read (3372) for address 0xc18
+cpu: Received MemEvent with command 2 (response to 3368, addr 0x3b0) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3372, addr 0xc18) [Time: 29] [0 outstanding requests]
+cpu: 89 Issued Read (3378) for address 0x44
+cpu: Received MemEvent with command 2 (response to 3378, addr 0x44) [Time: 4] [0 outstanding requests]
+cpu: 88 Issued Read (3380) for address 0x570
+cpu: 87 Issued Read (3384) for address 0xf8c
+cpu: Received MemEvent with command 2 (response to 3380, addr 0x570) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3384, addr 0xf8c) [Time: 42] [0 outstanding requests]
+cpu: 86 Issued Read (3390) for address 0x17c
+cpu: Received MemEvent with command 2 (response to 3390, addr 0x17c) [Time: 44] [0 outstanding requests]
+cpu: 85 Issued Read (3395) for address 0x688
+cpu: Received MemEvent with command 2 (response to 3395, addr 0x688) [Time: 4] [0 outstanding requests]
+cpu: 84 Issued Read (3397) for address 0xc74
+cpu: 83 Issued Read (3401) for address 0xf80
+cpu: Received MemEvent with command 2 (response to 3401, addr 0xf80) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3397, addr 0xc74) [Time: 44] [0 outstanding requests]
+cpu: 82 Issued Read (3404) for address 0x250
+cpu: Received MemEvent with command 2 (response to 3404, addr 0x250) [Time: 63] [0 outstanding requests]
+cpu: 81 Issued Read (3410) for address 0x69c
+cpu: Received MemEvent with command 2 (response to 3410, addr 0x69c) [Time: 4] [0 outstanding requests]
+cpu: 80 Issued Read (3412) for address 0x378
+cpu: 79 Issued Read (3416) for address 0x5d8
+cpu: Received MemEvent with command 2 (response to 3412, addr 0x378) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3416, addr 0x5d8) [Time: 47] [0 outstanding requests]
+cpu: 78 Issued Read (3422) for address 0xe70
+cpu: Received MemEvent with command 2 (response to 3422, addr 0xe70) [Time: 44] [0 outstanding requests]
+cpu: 77 Issued Read (3427) for address 0xc7c
+cpu: Received MemEvent with command 2 (response to 3427, addr 0xc7c) [Time: 4] [0 outstanding requests]
+cpu: 76 Issued Read (3429) for address 0xa20
+cpu: Received MemEvent with command 2 (response to 3429, addr 0xa20) [Time: 4] [0 outstanding requests]
+cpu: 75 Issued Read (3431) for address 0x5c0
+cpu: Received MemEvent with command 2 (response to 3431, addr 0x5c0) [Time: 4] [0 outstanding requests]
+cpu: 74 Issued Read (3433) for address 0xc8c
+cpu: Received MemEvent with command 2 (response to 3433, addr 0xc8c) [Time: 63] [0 outstanding requests]
+cpu: 73 Issued Read (3439) for address 0x90c
+cpu: Received MemEvent with command 2 (response to 3439, addr 0x90c) [Time: 4] [0 outstanding requests]
+cpu: 72 Issued Read (3441) for address 0x9d8
+cpu: Received MemEvent with command 2 (response to 3441, addr 0x9d8) [Time: 44] [0 outstanding requests]
+cpu: 71 Issued Write (3446) for address 0xdd4
+WARNING: address 0xdd4 is not aligned to the request size of 64
+WARNING: address 0xdd4 is not aligned to the request size of 64
+WARNING: address 0xdd4 is not aligned to the request size of 64
+cpu: 70 Issued Read (3451) for address 0x150
+cpu: Received MemEvent with command 2 (response to 3451, addr 0x150) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 3446, addr 0xdd4) [Time: 60] [0 outstanding requests]
+cpu: 69 Issued Read (3454) for address 0x604
+cpu: Received MemEvent with command 2 (response to 3454, addr 0x604) [Time: 44] [0 outstanding requests]
+cpu: 68 Issued Read (3459) for address 0x6d8
+cpu: Received MemEvent with command 2 (response to 3459, addr 0x6d8) [Time: 4] [0 outstanding requests]
+cpu: 67 Issued Read (3461) for address 0x628
+cpu: Received MemEvent with command 2 (response to 3461, addr 0x628) [Time: 4] [0 outstanding requests]
+cpu: 66 Issued Read (3463) for address 0x3d4
+cpu: Received MemEvent with command 2 (response to 3463, addr 0x3d4) [Time: 44] [0 outstanding requests]
+cpu: 65 Issued Write (3468) for address 0xdf8
+cpu: Received MemEvent with command 4 (response to 3468, addr 0xdf8) [Time: 4] [0 outstanding requests]
+cpu: 64 Issued Read (3470) for address 0x7dc
+cpu: Received MemEvent with command 2 (response to 3470, addr 0x7dc) [Time: 44] [0 outstanding requests]
+cpu: 63 Issued Read (3475) for address 0xf34
+cpu: Received MemEvent with command 2 (response to 3475, addr 0xf34) [Time: 63] [0 outstanding requests]
+cpu: 62 Issued Read (3481) for address 0x5a8
+cpu: Received MemEvent with command 2 (response to 3481, addr 0x5a8) [Time: 44] [0 outstanding requests]
+cpu: 61 Issued Write (3486) for address 0x6e8
+WARNING: address 0x6e8 is not aligned to the request size of 64
+WARNING: address 0x6e8 is not aligned to the request size of 64
+WARNING: address 0x6e8 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3486, addr 0x6e8) [Time: 60] [0 outstanding requests]
+cpu: 60 Issued Read (3491) for address 0xcf0
+cpu: Received MemEvent with command 2 (response to 3491, addr 0xcf0) [Time: 4] [0 outstanding requests]
+cpu: 59 Issued Read (3493) for address 0x148
+cpu: Received MemEvent with command 2 (response to 3493, addr 0x148) [Time: 4] [0 outstanding requests]
+cpu: 58 Issued Write (3495) for address 0x920
+cpu: Received MemEvent with command 4 (response to 3495, addr 0x920) [Time: 4] [0 outstanding requests]
+cpu: 57 Issued Read (3497) for address 0x344
+cpu: Received MemEvent with command 2 (response to 3497, addr 0x344) [Time: 4] [0 outstanding requests]
+cpu: 56 Issued Read (3499) for address 0x6ac
+cpu: Received MemEvent with command 2 (response to 3499, addr 0x6ac) [Time: 4] [0 outstanding requests]
+cpu: 55 Issued Read (3501) for address 0xa58
+cpu: Received MemEvent with command 2 (response to 3501, addr 0xa58) [Time: 44] [0 outstanding requests]
+cpu: 54 Issued Read (3506) for address 0x978
+cpu: 53 Issued Read (3511) for address 0x14c
+cpu: Received MemEvent with command 2 (response to 3511, addr 0x14c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3506, addr 0x978) [Time: 179] [0 outstanding requests]
+cpu: 52 Issued Write (3514) for address 0x118
+WARNING: address 0x118 is not aligned to the request size of 64
+WARNING: address 0x118 is not aligned to the request size of 64
+WARNING: address 0x118 is not aligned to the request size of 64
+cpu: 51 Issued Read (3519) for address 0xb08
+cpu: Received MemEvent with command 4 (response to 3514, addr 0x118) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3519, addr 0xb08) [Time: 39] [0 outstanding requests]
+cpu: 50 Issued Write (3525) for address 0x5e4
+WARNING: address 0x5e4 is not aligned to the request size of 64
+WARNING: address 0x5e4 is not aligned to the request size of 64
+WARNING: address 0x5e4 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3525, addr 0x5e4) [Time: 60] [0 outstanding requests]
+cpu: 49 Issued Read (3531) for address 0x5e4
+cpu: Received MemEvent with command 2 (response to 3531, addr 0x5e4) [Time: 4] [0 outstanding requests]
+cpu: 48 Issued Read (3533) for address 0x588
+cpu: Received MemEvent with command 2 (response to 3533, addr 0x588) [Time: 4] [0 outstanding requests]
+cpu: 47 Issued Write (3535) for address 0x480
+cpu: 46 Issued Read (3540) for address 0x7e0
+cpu: Received MemEvent with command 2 (response to 3540, addr 0x7e0) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 3535, addr 0x480) [Time: 60] [0 outstanding requests]
+cpu: 45 Issued Read (3543) for address 0x930
+cpu: Received MemEvent with command 2 (response to 3543, addr 0x930) [Time: 4] [0 outstanding requests]
+cpu: 44 Issued Read (3545) for address 0x7f8
+cpu: Received MemEvent with command 2 (response to 3545, addr 0x7f8) [Time: 4] [0 outstanding requests]
+cpu: 43 Issued Read (3547) for address 0xe14
+cpu: Received MemEvent with command 2 (response to 3547, addr 0xe14) [Time: 4] [0 outstanding requests]
+cpu: 42 Issued Write (3549) for address 0xbb4
+WARNING: address 0xbb4 is not aligned to the request size of 64
+WARNING: address 0xbb4 is not aligned to the request size of 64
+WARNING: address 0xbb4 is not aligned to the request size of 64
+cpu: 41 Issued Read (3554) for address 0x274
+cpu: Received MemEvent with command 2 (response to 3554, addr 0x274) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 4 (response to 3549, addr 0xbb4) [Time: 60] [0 outstanding requests]
+cpu: 40 Issued Read (3557) for address 0xcfc
+cpu: Received MemEvent with command 2 (response to 3557, addr 0xcfc) [Time: 4] [0 outstanding requests]
+cpu: 39 Issued Read (3559) for address 0xa60
+cpu: Received MemEvent with command 2 (response to 3559, addr 0xa60) [Time: 4] [0 outstanding requests]
+cpu: 38 Issued Read (3561) for address 0xbd4
+cpu: Received MemEvent with command 2 (response to 3561, addr 0xbd4) [Time: 44] [0 outstanding requests]
+cpu: 37 Issued Read (3566) for address 0xf6c
+cpu: 36 Issued Read (3570) for address 0xb28
+cpu: Received MemEvent with command 2 (response to 3570, addr 0xb28) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3566, addr 0xf6c) [Time: 44] [0 outstanding requests]
+cpu: 35 Issued Read (3573) for address 0xe80
+cpu: 34 Issued Read (3577) for address 0x910
+cpu: Received MemEvent with command 2 (response to 3577, addr 0x910) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3573, addr 0xe80) [Time: 40] [0 outstanding requests]
+cpu: 33 Issued Read (3580) for address 0xaf0
+cpu: 32 Issued Read (3584) for address 0xb98
+cpu: Received MemEvent with command 2 (response to 3584, addr 0xb98) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3580, addr 0xaf0) [Time: 45] [0 outstanding requests]
+cpu: 31 Issued Read (3587) for address 0x81c
+cpu: Received MemEvent with command 2 (response to 3587, addr 0x81c) [Time: 44] [0 outstanding requests]
+cpu: 30 Issued Read (3592) for address 0xea4
+cpu: 29 Issued Read (3594) for address 0xc4
+cpu: Received MemEvent with command 2 (response to 3592, addr 0xea4) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3594, addr 0xc4) [Time: 44] [0 outstanding requests]
+cpu: 28 Issued Read (3599) for address 0xd4c
+cpu: 27 Issued Read (3603) for address 0xfd8
+cpu: Received MemEvent with command 2 (response to 3599, addr 0xd4c) [Time: 44] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3603, addr 0xfd8) [Time: 54] [0 outstanding requests]
+cpu: 26 Issued Read (3610) for address 0x38c
+cpu: Received MemEvent with command 2 (response to 3610, addr 0x38c) [Time: 4] [0 outstanding requests]
+cpu: 25 Issued Read (3612) for address 0xc44
+cpu: Received MemEvent with command 2 (response to 3612, addr 0xc44) [Time: 4] [0 outstanding requests]
+cpu: 24 Issued Read (3614) for address 0x5a4
+cpu: Received MemEvent with command 2 (response to 3614, addr 0x5a4) [Time: 4] [0 outstanding requests]
+cpu: 23 Issued Read (3616) for address 0x534
+cpu: Received MemEvent with command 2 (response to 3616, addr 0x534) [Time: 44] [0 outstanding requests]
+cpu: 22 Issued Read (3621) for address 0xc78
+cpu: Received MemEvent with command 2 (response to 3621, addr 0xc78) [Time: 4] [0 outstanding requests]
+cpu: 21 Issued Read (3623) for address 0xd30
+cpu: Received MemEvent with command 2 (response to 3623, addr 0xd30) [Time: 63] [0 outstanding requests]
+cpu: 20 Issued Write (3629) for address 0x88c
+WARNING: address 0x88c is not aligned to the request size of 64
+WARNING: address 0x88c is not aligned to the request size of 64
+WARNING: address 0x88c is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3629, addr 0x88c) [Time: 60] [0 outstanding requests]
+cpu: 19 Issued Read (3635) for address 0x6e8
+cpu: Received MemEvent with command 2 (response to 3635, addr 0x6e8) [Time: 4] [0 outstanding requests]
+cpu: 18 Issued Read (3637) for address 0x998
+cpu: Received MemEvent with command 2 (response to 3637, addr 0x998) [Time: 44] [0 outstanding requests]
+cpu: 17 Issued Write (3642) for address 0x840
+cpu: 16 Issued Read (3647) for address 0x2b0
+cpu: Received MemEvent with command 4 (response to 3642, addr 0x840) [Time: 60] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3647, addr 0x2b0) [Time: 54] [0 outstanding requests]
+cpu: 15 Issued Write (3653) for address 0x4a4
+cpu: Received MemEvent with command 4 (response to 3653, addr 0x4a4) [Time: 4] [0 outstanding requests]
+cpu: 14 Issued Read (3655) for address 0x404
+cpu: Received MemEvent with command 2 (response to 3655, addr 0x404) [Time: 44] [0 outstanding requests]
+cpu: 13 Issued Read (3660) for address 0xb54
+cpu: 12 Issued Read (3664) for address 0x24c
+cpu: Received MemEvent with command 2 (response to 3664, addr 0x24c) [Time: 4] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3660, addr 0xb54) [Time: 44] [0 outstanding requests]
+cpu: 11 Issued Read (3667) for address 0x55c
+cpu: 10 Issued Read (3671) for address 0xeb0
+cpu: Received MemEvent with command 2 (response to 3671, addr 0xeb0) [Time: 4] [1 outstanding requests]
+cpu: 9 Issued Read (3673) for address 0xcac
+cpu: 8 Issued Read (3678) for address 0x718
+cpu: 7 Issued Read (3683) for address 0x128
+cpu: Received MemEvent with command 2 (response to 3667, addr 0x55c) [Time: 44] [3 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3673, addr 0xcac) [Time: 54] [2 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3678, addr 0x718) [Time: 53] [1 outstanding requests]
+cpu: Received MemEvent with command 2 (response to 3683, addr 0x128) [Time: 93] [0 outstanding requests]
+cpu: 6 Issued Read (3691) for address 0xfd8
+cpu: Received MemEvent with command 2 (response to 3691, addr 0xfd8) [Time: 4] [0 outstanding requests]
+cpu: 5 Issued Read (3693) for address 0xab4
+cpu: Received MemEvent with command 2 (response to 3693, addr 0xab4) [Time: 44] [0 outstanding requests]
+cpu: 4 Issued Read (3698) for address 0xe48
+cpu: Received MemEvent with command 2 (response to 3698, addr 0xe48) [Time: 44] [0 outstanding requests]
+cpu: 3 Issued Read (3703) for address 0xc70
+cpu: Received MemEvent with command 2 (response to 3703, addr 0xc70) [Time: 4] [0 outstanding requests]
+cpu: 2 Issued Read (3705) for address 0x998
+cpu: Received MemEvent with command 2 (response to 3705, addr 0x998) [Time: 4] [0 outstanding requests]
+cpu: 1 Issued Write (3707) for address 0x164
+WARNING: address 0x164 is not aligned to the request size of 64
+WARNING: address 0x164 is not aligned to the request size of 64
+WARNING: address 0x164 is not aligned to the request size of 64
+cpu: Received MemEvent with command 4 (response to 3707, addr 0x164) [Time: 60] [0 outstanding requests]
+TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (105857 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+- 0 Cycles: 102444
+- 2 Cycles: 768
+- 4 Cycles: 6
+--------------------------------------------------------------------
+Name: l1cache
+--------------------------------------------------------------------
+GetS-IS misses: 439
+GetX-SM misses: 51
+GetX-IM misses: 46
+GetS hits: 885
+GetX hits: 115
+Total misses: 536
+Total hits: 1000
+Hit Ratio:  65.104%
+PutS received: 0
+PutM received: 0
+PUTS sent due to evictions: 362
+PUTM sent due to evictions: 91
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 1536
+Memory requests received (non-coherency related): 1000
 
-<variables>
-	<lat> 1ns </lat>
-	<buslat> 50 ps </buslat>
-</variables>
-
-
-<sst>
-	<component name="cpu" type="memHierarchy.trivialCPU">
-		<params>
-			<workPerCycle> 1000 </workPerCycle>
-			<commFreq> 100 </commFreq>
-			<memSize> 0x1000 </memSize>
-			<do_write> 1 </do_write>
-            <num_loadstore> 1000 </num_loadstore>
-		</params>
-		<link name=cpu_cache_link port=mem_link latency=$lat />
-	</component>
-
-	<component name="l1cache" type="memHierarchy.Cache">
-		<params>
-            <cache_frequency> 2 Ghz  </cache_frequency>
-            <cache_size> 2 KB </cache_size>
-            <coherence_protocol> MSI </coherence_protocol>
-            <replacement_policy> lru </replacement_policy> 
-            <associativity> 4 </associativity>
-            <access_latency_cycles> 4  </access_latency_cycles>
-            <low_network_links> 1 </low_network_links>
-            <cache_line_size> 64 </cache_line_size>
-            <L1> 1 </L1>
-            <debug> ${MEM_DEBUG} </debug>
-            <statistics> 1 </statistics>
-			<!-- <blocksize> 32 </blocksize> -->
-
-		</params>
-		<link name=cpu_cache_link port=high_network_0 latency=$lat />
-		<link name=mem_bus_link port=low_network_0 latency=$buslat />
-	</component>
-
-
-	<component name="memory" type="memHierarchy.MemController">
-		<params>
-			<access_time> 1000 ns </access_time>
-			<mem_size> 512 </mem_size>
-			<clock> 1GHz </clock>
-            <coherence_protocol> MSI </coherence_protocol>
-            <backend> memHierarchy.dramsim </backend>
-			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
-			<system_ini> system.ini </system_ini>
-            <debug> ${MEM_DEBUG} </debug>
-		</params>
-		<link name=mem_bus_link port=direct_link latency=$buslat />
-	</component>
-
-</sst>

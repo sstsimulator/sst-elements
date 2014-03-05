@@ -52,7 +52,7 @@
 			<system_ini> system.ini </system_ini>
             <debug> ${MEM_DEBUG} </debug>
 		</params>
-		<link name=mem_bus_link port=snoop_link latency=$buslat />
+		<link name=mem_bus_link port=direct_link latency=$buslat />
 	</component>
 
 </sst>
