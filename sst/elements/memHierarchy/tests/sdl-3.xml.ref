@@ -1,5 +1,5 @@
-[sst-devel.sandia.gov:14716] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
-[sst-devel.sandia.gov:14716] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16133] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16133] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
 == Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
 == Loading system model file 'system.ini' == 
 WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
@@ -10,9 +10,6 @@ CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
 Inserting stop event at cycle 5000ns
 cpu: -1 Issued Write (0000000000000000) for address 0x0x00000000000e5c
 DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz
-WARNING: address 0xe5c is not aligned to the request size of 64
-WARNING: address 0xe5c is not aligned to the request size of 64
-WARNING: address 0xe5c is not aligned to the request size of 64
 cpu: -2 Issued Read (0x00000000000004) for address 0x0x0000000000056c
 cpu: Received MemEvent with command 4 (response to 0000000000000000, addr 0x0x00000000000e5c) [Time: 3c] [1 outstanding requests]
 cpu: -3 Issued Read (0x00000000000008) for address 0x0x0000000000090c
@@ -38,9 +35,6 @@ cpu: -12 Issued Read (0x0000000000002b) for address 0x0x00000000000184
 cpu: Received MemEvent with command 2 (response to 0x0000000000002b, addr 0x0x00000000000184) [Time: 2c] [0 outstanding requests]
 cpu: -13 Issued Read (0x0000000000002f) for address 0x0x00000000000bb4
 cpu: -14 Issued Write (0x00000000000032) for address 0x0x0000000000092c
-WARNING: address 0x92c is not aligned to the request size of 64
-WARNING: address 0x92c is not aligned to the request size of 64
-WARNING: address 0x92c is not aligned to the request size of 64
 cpu: Received MemEvent with command 2 (response to 0x0000000000002f, addr 0x0x00000000000bb4) [Time: 2c] [1 outstanding requests]
 cpu: -15 Issued Read (0x00000000000037) for address 0x0x0000000000025c
 cpu: Received MemEvent with command 4 (response to 0x00000000000032, addr 0x0x0000000000092c) [Time: 3c] [1 outstanding requests]
@@ -82,9 +76,6 @@ cpu: Received MemEvent with command 2 (response to 0x00000000000072, addr 0x0x00
 cpu: -33 Issued Read (0x00000000000074) for address 0x0x00000000000864
 cpu: Received MemEvent with command 2 (response to 0x00000000000074, addr 0x0x00000000000864) [Time: 4] [0 outstanding requests]
 cpu: -34 Issued Write (0x00000000000076) for address 0x0x000000000007fc
-WARNING: address 0x7fc is not aligned to the request size of 64
-WARNING: address 0x7fc is not aligned to the request size of 64
-WARNING: address 0x7fc is not aligned to the request size of 64
 cpu: -35 Issued Read (0x0000000000007a) for address 0x0x0000000000009c
 cpu: Received MemEvent with command 4 (response to 0x00000000000076, addr 0x0x000000000007fc) [Time: 3c] [1 outstanding requests]
 cpu: Received MemEvent with command 2 (response to 0x0000000000007a, addr 0x0x0000000000009c) [Time: 38] [0 outstanding requests]

@@ -1,5 +1,5 @@
-[sst-devel.sandia.gov:14743] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
-[sst-devel.sandia.gov:14743] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16161] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16161] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
 cpu: 10000 Issued Write (0000000000000000) for address 0x0x000000000c4f00
 cpu: 9999 Issued Read (0x00000000000004) for address 0x0x0000000004c154
 cpu: 9998 Issued Read (0x00000000000006) for address 0x0x00000000045454

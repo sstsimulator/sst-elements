@@ -1,5 +1,5 @@
-[sst-devel.sandia.gov:14777] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
-[sst-devel.sandia.gov:14777] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16195] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16195] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
 == Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
 == Loading system model file 'system.ini' == 
 WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
@@ -9,9 +9,6 @@ CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
 CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
 cpu0: 1000 Issued Write (0000000000000000) for address 0x0x00000000000e5c
 DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz
-WARNING: address 0xe5c is not aligned to the request size of 64
-WARNING: address 0xe5c is not aligned to the request size of 64
-WARNING: address 0xe5c is not aligned to the request size of 64
 cpu0: 999 Issued Read (0x00000000000005) for address 0x0x0000000000056c
 cpu0: 998 Issued Read (0x00000000000008) for address 0x0x0000000000090c
 cpu0: Received MemEvent with command 4 (response to 0000000000000000, addr 0x0x00000000000e5c) [Time: 66] [2 outstanding requests]
@@ -53,9 +50,6 @@ cpu1: Received MemEvent with command 2 (response to 0x0000000000005f, addr 0x0x0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000067, addr 0x0x00000000000e04) [Time: 56] [0 outstanding requests]
 cpu1: 990 Issued Read (0x0000000000006e) for address 0x0x0000000000044c
 cpu1: 989 Issued Write (0x00000000000072) for address 0x0x00000000000d4c
-WARNING: address 0xd4c is not aligned to the request size of 64
-WARNING: address 0xd4c is not aligned to the request size of 64
-WARNING: address 0xd4c is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x0000000000006e, addr 0x0x0000000000044c) [Time: 56] [1 outstanding requests]
 cpu0: 990 Issued Read (0x00000000000079) for address 0x0x000000000000e8
 cpu1: Received MemEvent with command 4 (response to 0x00000000000072, addr 0x0x00000000000d4c) [Time: 65] [0 outstanding requests]
@@ -72,15 +66,9 @@ cpu1: 985 Issued Read (0x00000000000093) for address 0x0x000000000000f0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000093, addr 0x0x000000000000f0) [Time: 12] [0 outstanding requests]
 cpu1: 984 Issued Write (0x00000000000097) for address 0x0x000000000004e8
 cpu0: 988 Issued Read (0x0000000000009a) for address 0x0x00000000000bb4
-WARNING: address 0x4e8 is not aligned to the request size of 64
-WARNING: address 0x4e8 is not aligned to the request size of 64
-WARNING: address 0x4e8 is not aligned to the request size of 64
 cpu1: 983 Issued Read (0x0000000000009f) for address 0x0x00000000000edc
 cpu0: 987 Issued Write (0x000000000000a3) for address 0x0x0000000000092c
 cpu0: 986 Issued Read (0x000000000000a7) for address 0x0x0000000000025c
-WARNING: address 0x92c is not aligned to the request size of 64
-WARNING: address 0x92c is not aligned to the request size of 64
-WARNING: address 0x92c is not aligned to the request size of 64
 cpu1: 982 Issued Read (0x000000000000ae) for address 0x0x000000000002d8
 cpu1: Received MemEvent with command 4 (response to 0x00000000000097, addr 0x0x000000000004e8) [Time: 66] [2 outstanding requests]
 cpu1: 981 Issued Read (0x000000000000b5) for address 0x0x00000000000ca8
@@ -114,9 +102,6 @@ cpu0: 979 Issued Read (0x000000000000fd) for address 0x0x00000000000e48
 cpu0: Received MemEvent with command 2 (response to 0x000000000000f3, addr 0x0x00000000000adc) [Time: 56] [1 outstanding requests]
 cpu1: 975 Issued Write (0x00000000000102) for address 0x0x00000000000a34
 cpu0: Received MemEvent with command 2 (response to 0x000000000000fd, addr 0x0x00000000000e48) [Time: 12] [0 outstanding requests]
-WARNING: address 0xa34 is not aligned to the request size of 64
-WARNING: address 0xa34 is not aligned to the request size of 64
-WARNING: address 0xa34 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x000000000000f9, addr 0x0x0000000000038c) [Time: 56] [1 outstanding requests]
 cpu0: 978 Issued Read (0x0000000000010c) for address 0x0x0000000000017c
 cpu1: Received MemEvent with command 4 (response to 0x00000000000102, addr 0x0x00000000000a34) [Time: 58] [0 outstanding requests]
@@ -153,9 +138,6 @@ cpu1: 966 Issued Read (0x0000000000015a) for address 0x0x00000000000d9c
 cpu1: Received MemEvent with command 2 (response to 0x0000000000015a, addr 0x0x00000000000d9c) [Time: 4] [0 outstanding requests]
 cpu1: 965 Issued Write (0x0000000000015c) for address 0x0x00000000000158
 cpu1: 964 Issued Read (0x0000000000015f) for address 0x0x00000000000470
-WARNING: address 0x158 is not aligned to the request size of 64
-WARNING: address 0x158 is not aligned to the request size of 64
-WARNING: address 0x158 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x0000000000015f, addr 0x0x00000000000470) [Time: 12] [1 outstanding requests]
 cpu1: 963 Issued Read (0x00000000000166) for address 0x0x000000000008bc
 cpu1: Received MemEvent with command 4 (response to 0x0000000000015c, addr 0x0x00000000000158) [Time: 66] [1 outstanding requests]
@@ -184,9 +166,6 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000192, addr 0x0x0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000197, addr 0x0x00000000000b28) [Time: 12] [0 outstanding requests]
 cpu0: 967 Issued Write (0x0000000000019f) for address 0x0x000000000007fc
 cpu0: 966 Issued Read (0x000000000001a2) for address 0x0x0000000000009c
-WARNING: address 0x7fc is not aligned to the request size of 64
-WARNING: address 0x7fc is not aligned to the request size of 64
-WARNING: address 0x7fc is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x000000000001a2, addr 0x0x0000000000009c) [Time: 12] [1 outstanding requests]
 cpu0: 965 Issued Read (0x000000000001a8) for address 0x0x00000000000c10
 cpu1: 955 Issued Read (0x000000000001ad) for address 0x0x00000000000394
@@ -203,9 +182,6 @@ cpu1: 952 Issued Read (0x000000000001bb) for address 0x0x00000000000458
 cpu1: Received MemEvent with command 2 (response to 0x000000000001bb, addr 0x0x00000000000458) [Time: 4] [0 outstanding requests]
 cpu1: 951 Issued Write (0x000000000001bd) for address 0x0x00000000000d00
 cpu1: 950 Issued Write (0x000000000001c2) for address 0x0x000000000003dc
-WARNING: address 0x3dc is not aligned to the request size of 64
-WARNING: address 0x3dc is not aligned to the request size of 64
-WARNING: address 0x3dc is not aligned to the request size of 64
 cpu1: Received MemEvent with command 4 (response to 0x000000000001bd, addr 0x0x00000000000d00) [Time: 66] [1 outstanding requests]
 cpu1: 949 Issued Read (0x000000000001c9) for address 0x0x00000000000b78
 cpu1: Received MemEvent with command 2 (response to 0x000000000001c9, addr 0x0x00000000000b78) [Time: 4] [1 outstanding requests]
@@ -213,9 +189,6 @@ cpu1: Received MemEvent with command 4 (response to 0x000000000001c2, addr 0x0x0
 cpu0: 963 Issued Read (0x000000000001cd) for address 0x0x00000000000ca4
 cpu0: Received MemEvent with command 2 (response to 0x000000000001cd, addr 0x0x00000000000ca4) [Time: 4] [0 outstanding requests]
 cpu1: 948 Issued Write (0x000000000001cf) for address 0x0x000000000007b0
-WARNING: address 0x7b0 is not aligned to the request size of 64
-WARNING: address 0x7b0 is not aligned to the request size of 64
-WARNING: address 0x7b0 is not aligned to the request size of 64
 cpu0: 962 Issued Read (0x000000000001d5) for address 0x0x00000000000748
 cpu0: Received MemEvent with command 2 (response to 0x000000000001d5, addr 0x0x00000000000748) [Time: 4] [0 outstanding requests]
 cpu1: 947 Issued Read (0x000000000001d7) for address 0x0x00000000000944
@@ -264,9 +237,6 @@ cpu0: Received MemEvent with command 2 (response to 0x00000000000221, addr 0x0x0
 cpu0: 949 Issued Read (0x00000000000223) for address 0x0x00000000000948
 cpu0: Received MemEvent with command 2 (response to 0x00000000000223, addr 0x0x00000000000948) [Time: 4] [0 outstanding requests]
 cpu1: 938 Issued Write (0x00000000000225) for address 0x0x0000000000025c
-WARNING: address 0x25c is not aligned to the request size of 64
-WARNING: address 0x25c is not aligned to the request size of 64
-WARNING: address 0x25c is not aligned to the request size of 64
 cpu1: 937 Issued Read (0x0000000000022a) for address 0x0x000000000005f8
 cpu1: Received MemEvent with command 4 (response to 0x00000000000225, addr 0x0x0000000000025c) [Time: 66] [1 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x0000000000022a, addr 0x0x000000000005f8) [Time: 4e] [0 outstanding requests]
@@ -275,9 +245,6 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000233, addr 0x0x0
 cpu0: 948 Issued Write (0x00000000000235) for address 0x0x00000000000c9c
 cpu0: 947 Issued Read (0x00000000000238) for address 0x0x00000000000b88
 cpu0: Received MemEvent with command 2 (response to 0x00000000000238, addr 0x0x00000000000b88) [Time: 4] [1 outstanding requests]
-WARNING: address 0xc9c is not aligned to the request size of 64
-WARNING: address 0xc9c is not aligned to the request size of 64
-WARNING: address 0xc9c is not aligned to the request size of 64
 cpu0: Received MemEvent with command 4 (response to 0x00000000000235, addr 0x0x00000000000c9c) [Time: 66] [0 outstanding requests]
 cpu1: 935 Issued Read (0x0000000000023e) for address 0x0x00000000000a2c
 cpu1: Received MemEvent with command 2 (response to 0x0000000000023e, addr 0x0x00000000000a2c) [Time: 4] [0 outstanding requests]
@@ -290,17 +257,11 @@ cpu1: 932 Issued Read (0x00000000000246) for address 0x0x00000000000334
 cpu0: Received MemEvent with command 2 (response to 0x00000000000244, addr 0x0x000000000009e4) [Time: 12] [0 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x00000000000246, addr 0x0x00000000000334) [Time: 75] [0 outstanding requests]
 cpu1: 931 Issued Write (0x0000000000024f) for address 0x0x000000000002e0
-WARNING: address 0x2e0 is not aligned to the request size of 64
-WARNING: address 0x2e0 is not aligned to the request size of 64
-WARNING: address 0x2e0 is not aligned to the request size of 64
 cpu0: 945 Issued Read (0x00000000000254) for address 0x0x000000000007d0
 cpu0: Received MemEvent with command 2 (response to 0x00000000000254, addr 0x0x000000000007d0) [Time: 4] [0 outstanding requests]
 cpu0: 944 Issued Write (0x00000000000256) for address 0x0x00000000000a8c
 cpu1: 930 Issued Read (0x00000000000258) for address 0x0x00000000000424
 cpu0: 943 Issued Read (0x0000000000025c) for address 0x0x00000000000cc4
-WARNING: address 0xa8c is not aligned to the request size of 64
-WARNING: address 0xa8c is not aligned to the request size of 64
-WARNING: address 0xa8c is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x0000000000025c, addr 0x0x00000000000cc4) [Time: 4] [1 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x0000000000024f, addr 0x0x000000000002e0) [Time: 66] [1 outstanding requests]
 cpu0: 942 Issued Read (0x00000000000266) for address 0x0x0000000000090c
@@ -320,9 +281,6 @@ cpu1: 926 Issued Read (0x00000000000280) for address 0x0x00000000000270
 cpu1: Received MemEvent with command 2 (response to 0x00000000000280, addr 0x0x00000000000270) [Time: 4] [1 outstanding requests]
 cpu1: 925 Issued Write (0x00000000000283) for address 0x0x000000000008e8
 cpu1: Received MemEvent with command 2 (response to 0x0000000000027d, addr 0x0x00000000000c8c) [Time: 20] [1 outstanding requests]
-WARNING: address 0x8e8 is not aligned to the request size of 64
-WARNING: address 0x8e8 is not aligned to the request size of 64
-WARNING: address 0x8e8 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 4 (response to 0x00000000000283, addr 0x0x000000000008e8) [Time: 66] [0 outstanding requests]
 cpu0: 939 Issued Read (0x0000000000028e) for address 0x0x000000000008e0
 cpu1: 924 Issued Read (0x00000000000291) for address 0x0x00000000000e34
@@ -351,17 +309,11 @@ cpu1: Received MemEvent with command 2 (response to 0x000000000002bb, addr 0x0x0
 cpu0: 931 Issued Read (0x000000000002bd) for address 0x0x00000000000ee0
 cpu0: Received MemEvent with command 2 (response to 0x000000000002bd, addr 0x0x00000000000ee0) [Time: 12] [0 outstanding requests]
 cpu1: 920 Issued Write (0x000000000002c1) for address 0x0x00000000000678
-WARNING: address 0x678 is not aligned to the request size of 64
-WARNING: address 0x678 is not aligned to the request size of 64
-WARNING: address 0x678 is not aligned to the request size of 64
 cpu0: 930 Issued Read (0x000000000002c6) for address 0x0x0000000000074c
 cpu0: Received MemEvent with command 2 (response to 0x000000000002c6, addr 0x0x0000000000074c) [Time: 4] [0 outstanding requests]
 cpu1: 919 Issued Write (0x000000000002c9) for address 0x0x00000000000d94
 cpu1: Received MemEvent with command 4 (response to 0x000000000002c1, addr 0x0x00000000000678) [Time: 66] [1 outstanding requests]
 cpu0: 929 Issued Read (0x000000000002cd) for address 0x0x00000000000e64
-WARNING: address 0xd94 is not aligned to the request size of 64
-WARNING: address 0xd94 is not aligned to the request size of 64
-WARNING: address 0xd94 is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x000000000002cd, addr 0x0x00000000000e64) [Time: 4] [0 outstanding requests]
 cpu1: 918 Issued Read (0x000000000002d2) for address 0x0x000000000007c4
 cpu1: Received MemEvent with command 4 (response to 0x000000000002c9, addr 0x0x00000000000d94) [Time: 66] [1 outstanding requests]
@@ -405,9 +357,6 @@ cpu0: 917 Issued Read (0x00000000000322) for address 0x0x00000000000038
 cpu0: Received MemEvent with command 2 (response to 0x0000000000031c, addr 0x0x000000000006e8) [Time: 56] [1 outstanding requests]
 cpu1: 910 Issued Write (0x00000000000327) for address 0x0x00000000000c7c
 cpu1: 909 Issued Read (0x0000000000032b) for address 0x0x00000000000934
-WARNING: address 0xc7c is not aligned to the request size of 64
-WARNING: address 0xc7c is not aligned to the request size of 64
-WARNING: address 0xc7c is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x0000000000032b, addr 0x0x00000000000934) [Time: 12] [1 outstanding requests]
 cpu0: Received MemEvent with command 2 (response to 0x00000000000322, addr 0x0x00000000000038) [Time: 56] [0 outstanding requests]
 cpu1: 908 Issued Read (0x00000000000334) for address 0x0x0000000000054c
@@ -484,9 +433,6 @@ cpu0: 904 Issued Write (0x000000000003c3) for address 0x0x00000000000cd0
 cpu1: Received MemEvent with command 2 (response to 0x000000000003bf, addr 0x0x00000000000ac4) [Time: 12] [0 outstanding requests]
 cpu0: 903 Issued Read (0x000000000003c8) for address 0x0x00000000000dc8
 cpu0: Received MemEvent with command 2 (response to 0x000000000003c8, addr 0x0x00000000000dc8) [Time: 4] [1 outstanding requests]
-WARNING: address 0xcd0 is not aligned to the request size of 64
-WARNING: address 0xcd0 is not aligned to the request size of 64
-WARNING: address 0xcd0 is not aligned to the request size of 64
 cpu0: 902 Issued Read (0x000000000003cc) for address 0x0x00000000000fc4
 cpu0: Received MemEvent with command 2 (response to 0x000000000003cc, addr 0x0x00000000000fc4) [Time: 12] [1 outstanding requests]
 cpu0: 901 Issued Read (0x000000000003d3) for address 0x0x000000000000ec
@@ -561,10 +507,7 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000444, addr 0x0x0
 cpu0: 888 Issued Write (0x00000000000448) for address 0x0x000000000006b0
 cpu0: 887 Issued Read (0x0000000000044c) for address 0x0x00000000000318
 cpu0: Received MemEvent with command 2 (response to 0x0000000000044c, addr 0x0x00000000000318) [Time: 4] [1 outstanding requests]
-WARNING: address 0x6b0 is not aligned to the request size of 64
-WARNING: address 0x6b0 is not aligned to the request size of 64
 cpu0: 886 Issued Write (0x00000000000450) for address 0x0x00000000000d0c
-WARNING: address 0x6b0 is not aligned to the request size of 64
 cpu0: Received MemEvent with command 4 (response to 0x00000000000450, addr 0x0x00000000000d0c) [Time: 12] [1 outstanding requests]
 cpu1: 864 Issued Read (0x00000000000456) for address 0x0x000000000009dc
 cpu0: 885 Issued Read (0x0000000000045a) for address 0x0x000000000009a0
@@ -608,9 +551,6 @@ cpu0: Received MemEvent with command 2 (response to 0x0000000000049e, addr 0x0x0
 cpu0: 872 Issued Read (0x000000000004a3) for address 0x0x000000000005a0
 cpu0: Received MemEvent with command 2 (response to 0x000000000004a3, addr 0x0x000000000005a0) [Time: 12] [0 outstanding requests]
 cpu1: 858 Issued Write (0x000000000004a8) for address 0x0x00000000000774
-WARNING: address 0x774 is not aligned to the request size of 64
-WARNING: address 0x774 is not aligned to the request size of 64
-WARNING: address 0x774 is not aligned to the request size of 64
 cpu1: 857 Issued Read (0x000000000004ad) for address 0x0x000000000002b8
 cpu1: 856 Issued Read (0x000000000004b0) for address 0x0x00000000000770
 cpu1: Received MemEvent with command 2 (response to 0x000000000004ad, addr 0x0x000000000002b8) [Time: 12] [2 outstanding requests]
@@ -650,9 +590,6 @@ cpu1: 850 Issued Read (0x000000000004f8) for address 0x0x000000000000d8
 cpu1: Received MemEvent with command 2 (response to 0x000000000004f8, addr 0x0x000000000000d8) [Time: 4] [0 outstanding requests]
 cpu0: 861 Issued Write (0x000000000004fa) for address 0x0x000000000005e0
 cpu1: 849 Issued Read (0x000000000004fe) for address 0x0x000000000004c4
-WARNING: address 0x5e0 is not aligned to the request size of 64
-WARNING: address 0x5e0 is not aligned to the request size of 64
-WARNING: address 0x5e0 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x000000000004fe, addr 0x0x000000000004c4) [Time: 12] [0 outstanding requests]
 cpu0: 860 Issued Read (0x00000000000505) for address 0x0x00000000000e30
 cpu0: Received MemEvent with command 2 (response to 0x00000000000505, addr 0x0x00000000000e30) [Time: 4] [1 outstanding requests]
@@ -660,9 +597,6 @@ cpu1: 848 Issued Read (0x00000000000507) for address 0x0x000000000009a8
 cpu1: Received MemEvent with command 2 (response to 0x00000000000507, addr 0x0x000000000009a8) [Time: 4] [0 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x000000000004fa, addr 0x0x000000000005e0) [Time: 66] [0 outstanding requests]
 cpu0: 859 Issued Write (0x0000000000050b) for address 0x0x000000000009e0
-WARNING: address 0x9e0 is not aligned to the request size of 64
-WARNING: address 0x9e0 is not aligned to the request size of 64
-WARNING: address 0x9e0 is not aligned to the request size of 64
 cpu1: 847 Issued Read (0x00000000000510) for address 0x0x00000000000344
 cpu1: Received MemEvent with command 2 (response to 0x00000000000510, addr 0x0x00000000000344) [Time: 4] [0 outstanding requests]
 cpu1: 846 Issued Write (0x00000000000512) for address 0x0x00000000000278
@@ -695,9 +629,6 @@ cpu0: Received MemEvent with command 2 (response to 0x00000000000546, addr 0x0x0
 cpu1: 840 Issued Write (0x0000000000054b) for address 0x0x000000000001c8
 cpu0: 851 Issued Read (0x0000000000054d) for address 0x0x00000000000d5c
 cpu0: Received MemEvent with command 2 (response to 0x0000000000054d, addr 0x0x00000000000d5c) [Time: 4] [0 outstanding requests]
-WARNING: address 0x1c8 is not aligned to the request size of 64
-WARNING: address 0x1c8 is not aligned to the request size of 64
-WARNING: address 0x1c8 is not aligned to the request size of 64
 cpu1: 839 Issued Read (0x00000000000552) for address 0x0x00000000000444
 cpu0: 850 Issued Read (0x00000000000555) for address 0x0x00000000000b60
 cpu0: Received MemEvent with command 2 (response to 0x00000000000555, addr 0x0x00000000000b60) [Time: 4] [0 outstanding requests]
@@ -764,15 +695,9 @@ cpu0: 837 Issued Write (0x000000000005d0) for address 0x0x00000000000374
 cpu0: 836 Issued Read (0x000000000005d2) for address 0x0x00000000000544
 cpu0: Received MemEvent with command 2 (response to 0x000000000005cc, addr 0x0x0000000000057c) [Time: 12] [2 outstanding requests]
 cpu0: Received MemEvent with command 2 (response to 0x000000000005d2, addr 0x0x00000000000544) [Time: 4] [1 outstanding requests]
-WARNING: address 0x374 is not aligned to the request size of 64
-WARNING: address 0x374 is not aligned to the request size of 64
-WARNING: address 0x374 is not aligned to the request size of 64
 cpu0: 835 Issued Read (0x000000000005d8) for address 0x0x000000000006a8
 cpu1: 821 Issued Write (0x000000000005dd) for address 0x0x00000000000ae4
 cpu0: Received MemEvent with command 2 (response to 0x000000000005d8, addr 0x0x000000000006a8) [Time: 12] [1 outstanding requests]
-WARNING: address 0xae4 is not aligned to the request size of 64
-WARNING: address 0xae4 is not aligned to the request size of 64
-WARNING: address 0xae4 is not aligned to the request size of 64
 cpu0: 834 Issued Read (0x000000000005e3) for address 0x0x000000000001a0
 cpu0: Received MemEvent with command 2 (response to 0x000000000005e3, addr 0x0x000000000001a0) [Time: 4] [1 outstanding requests]
 cpu1: 820 Issued Read (0x000000000005e5) for address 0x0x00000000000608
@@ -830,18 +755,12 @@ cpu0: Received MemEvent with command 2 (response to 0x00000000000642, addr 0x0x0
 cpu1: 804 Issued Write (0x00000000000648) for address 0x0x00000000000bb0
 cpu0: 824 Issued Read (0x0000000000064c) for address 0x0x00000000000ec4
 cpu0: Received MemEvent with command 2 (response to 0x0000000000064c, addr 0x0x00000000000ec4) [Time: 4] [0 outstanding requests]
-WARNING: address 0xbb0 is not aligned to the request size of 64
-WARNING: address 0xbb0 is not aligned to the request size of 64
-WARNING: address 0xbb0 is not aligned to the request size of 64
 cpu1: 803 Issued Read (0x00000000000650) for address 0x0x00000000000dc0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000650, addr 0x0x00000000000dc0) [Time: 4] [1 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x00000000000648, addr 0x0x00000000000bb0) [Time: 66] [0 outstanding requests]
 cpu0: 823 Issued Read (0x00000000000654) for address 0x0x00000000000f2c
 cpu0: Received MemEvent with command 2 (response to 0x00000000000654, addr 0x0x00000000000f2c) [Time: 12] [0 outstanding requests]
 cpu0: 822 Issued Write (0x00000000000659) for address 0x0x00000000000eec
-WARNING: address 0xeec is not aligned to the request size of 64
-WARNING: address 0xeec is not aligned to the request size of 64
-WARNING: address 0xeec is not aligned to the request size of 64
 cpu0: 821 Issued Read (0x0000000000065e) for address 0x0x00000000000e0c
 cpu1: 802 Issued Read (0x00000000000660) for address 0x0x00000000000b80
 cpu0: Received MemEvent with command 2 (response to 0x0000000000065e, addr 0x0x00000000000e0c) [Time: 4] [1 outstanding requests]
@@ -860,9 +779,6 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000672, addr 0x0x0
 cpu0: 818 Issued Read (0x00000000000679) for address 0x0x00000000000e0c
 cpu0: Received MemEvent with command 2 (response to 0x00000000000679, addr 0x0x00000000000e0c) [Time: 4] [0 outstanding requests]
 cpu1: 798 Issued Write (0x0000000000067b) for address 0x0x00000000000df4
-WARNING: address 0xdf4 is not aligned to the request size of 64
-WARNING: address 0xdf4 is not aligned to the request size of 64
-WARNING: address 0xdf4 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 4 (response to 0x0000000000067b, addr 0x0x00000000000df4) [Time: 66] [0 outstanding requests]
 cpu0: 817 Issued Read (0x00000000000683) for address 0x0x00000000000e9c
 cpu0: Received MemEvent with command 2 (response to 0x00000000000683, addr 0x0x00000000000e9c) [Time: 12] [0 outstanding requests]
@@ -873,9 +789,6 @@ cpu1: Received MemEvent with command 2 (response to 0x0000000000068c, addr 0x0x0
 cpu0: 815 Issued Write (0x00000000000692) for address 0x0x00000000000f78
 cpu1: 796 Issued Read (0x00000000000695) for address 0x0x00000000000bf0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000695, addr 0x0x00000000000bf0) [Time: 4] [0 outstanding requests]
-WARNING: address 0xf78 is not aligned to the request size of 64
-WARNING: address 0xf78 is not aligned to the request size of 64
-WARNING: address 0xf78 is not aligned to the request size of 64
 cpu0: Received MemEvent with command 4 (response to 0x00000000000692, addr 0x0x00000000000f78) [Time: 66] [0 outstanding requests]
 cpu0: 814 Issued Read (0x0000000000069b) for address 0x0x0000000000097c
 cpu1: 795 Issued Read (0x0000000000069d) for address 0x0x00000000000994
@@ -956,9 +869,6 @@ cpu0: Received MemEvent with command 2 (response to 0x0000000000071c, addr 0x0x0
 cpu0: 796 Issued Read (0x0000000000071e) for address 0x0x00000000000d20
 cpu0: Received MemEvent with command 2 (response to 0x0000000000071e, addr 0x0x00000000000d20) [Time: 4] [0 outstanding requests]
 cpu1: 775 Issued Write (0x00000000000720) for address 0x0x000000000003b0
-WARNING: address 0x3b0 is not aligned to the request size of 64
-WARNING: address 0x3b0 is not aligned to the request size of 64
-WARNING: address 0x3b0 is not aligned to the request size of 64
 cpu0: 795 Issued Read (0x00000000000725) for address 0x0x00000000000d10
 cpu0: Received MemEvent with command 2 (response to 0x00000000000725, addr 0x0x00000000000d10) [Time: 4] [0 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x00000000000720, addr 0x0x000000000003b0) [Time: 66] [0 outstanding requests]
@@ -995,22 +905,13 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000765, addr 0x0x0
 cpu1: 765 Issued Read (0x00000000000767) for address 0x0x00000000000598
 cpu1: Received MemEvent with command 2 (response to 0x00000000000767, addr 0x0x00000000000598) [Time: 12] [0 outstanding requests]
 cpu0: 788 Issued Write (0x0000000000076c) for address 0x0x00000000000e24
-WARNING: address 0xe24 is not aligned to the request size of 64
-WARNING: address 0xe24 is not aligned to the request size of 64
-WARNING: address 0xe24 is not aligned to the request size of 64
 cpu1: 764 Issued Read (0x00000000000771) for address 0x0x00000000000124
 cpu1: Received MemEvent with command 2 (response to 0x00000000000771, addr 0x0x00000000000124) [Time: 12] [0 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x0000000000076c, addr 0x0x00000000000e24) [Time: 66] [0 outstanding requests]
 cpu1: 763 Issued Write (0x00000000000778) for address 0x0x0000000000070c
-WARNING: address 0x70c is not aligned to the request size of 64
-WARNING: address 0x70c is not aligned to the request size of 64
-WARNING: address 0x70c is not aligned to the request size of 64
 cpu0: 787 Issued Read (0x0000000000077d) for address 0x0x00000000000fb0
 cpu1: 762 Issued Write (0x00000000000780) for address 0x0x00000000000b10
 cpu0: Received MemEvent with command 2 (response to 0x0000000000077d, addr 0x0x00000000000fb0) [Time: 12] [0 outstanding requests]
-WARNING: address 0xb10 is not aligned to the request size of 64
-WARNING: address 0xb10 is not aligned to the request size of 64
-WARNING: address 0xb10 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 4 (response to 0x00000000000778, addr 0x0x0000000000070c) [Time: 66] [1 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x00000000000780, addr 0x0x00000000000b10) [Time: 58] [0 outstanding requests]
 cpu1: 761 Issued Read (0x0000000000078c) for address 0x0x00000000000948
@@ -1040,9 +941,6 @@ cpu0: 782 Issued Read (0x000000000007b2) for address 0x0x000000000005e4
 cpu0: Received MemEvent with command 2 (response to 0x000000000007b2, addr 0x0x000000000005e4) [Time: 4] [1 outstanding requests]
 cpu0: Received MemEvent with command 2 (response to 0x000000000007af, addr 0x0x00000000000640) [Time: 12] [0 outstanding requests]
 cpu0: 781 Issued Write (0x000000000007b5) for address 0x0x00000000000fc4
-WARNING: address 0xfc4 is not aligned to the request size of 64
-WARNING: address 0xfc4 is not aligned to the request size of 64
-WARNING: address 0xfc4 is not aligned to the request size of 64
 cpu1: 753 Issued Read (0x000000000007bb) for address 0x0x000000000005a4
 cpu1: Received MemEvent with command 2 (response to 0x000000000007bb, addr 0x0x000000000005a4) [Time: 4] [0 outstanding requests]
 cpu0: 780 Issued Read (0x000000000007bf) for address 0x0x00000000000654
@@ -1215,16 +1113,10 @@ cpu1: Received MemEvent with command 2 (response to 0x000000000008fb, addr 0x0x0
 cpu0: 742 Issued Write (0x00000000000900) for address 0x0x000000000006fc
 cpu1: 707 Issued Read (0x00000000000903) for address 0x0x00000000000220
 cpu1: Received MemEvent with command 2 (response to 0x00000000000903, addr 0x0x00000000000220) [Time: 4] [0 outstanding requests]
-WARNING: address 0x6fc is not aligned to the request size of 64
-WARNING: address 0x6fc is not aligned to the request size of 64
-WARNING: address 0x6fc is not aligned to the request size of 64
 cpu0: 741 Issued Read (0x00000000000907) for address 0x0x00000000000f20
 cpu0: Received MemEvent with command 2 (response to 0x00000000000907, addr 0x0x00000000000f20) [Time: 4] [1 outstanding requests]
 cpu1: 706 Issued Write (0x00000000000909) for address 0x0x00000000000214
 cpu0: 740 Issued Read (0x0000000000090c) for address 0x0x00000000000990
-WARNING: address 0x214 is not aligned to the request size of 64
-WARNING: address 0x214 is not aligned to the request size of 64
-WARNING: address 0x214 is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x0000000000090c, addr 0x0x00000000000990) [Time: 12] [1 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x00000000000900, addr 0x0x000000000006fc) [Time: 66] [0 outstanding requests]
 cpu1: 705 Issued Write (0x00000000000917) for address 0x0x00000000000918
@@ -1458,12 +1350,6 @@ cpu1: 645 Issued Read (0x00000000000ada) for address 0x0x00000000000e50
 cpu1: 644 Issued Write (0x00000000000ade) for address 0x0x0000000000030c
 cpu1: 643 Issued Write (0x00000000000ae4) for address 0x0x000000000002b4
 cpu1: Received MemEvent with command 2 (response to 0x00000000000ada, addr 0x0x00000000000e50) [Time: 20] [2 outstanding requests]
-WARNING: address 0x30c is not aligned to the request size of 64
-WARNING: address 0x30c is not aligned to the request size of 64
-WARNING: address 0x30c is not aligned to the request size of 64
-WARNING: address 0x2b4 is not aligned to the request size of 64
-WARNING: address 0x2b4 is not aligned to the request size of 64
-WARNING: address 0x2b4 is not aligned to the request size of 64
 cpu1: 642 Issued Read (0x00000000000aeb) for address 0x0x00000000000d28
 cpu1: Received MemEvent with command 2 (response to 0x00000000000aeb, addr 0x0x00000000000d28) [Time: 12] [2 outstanding requests]
 cpu0: 686 Issued Read (0x00000000000aef) for address 0x0x00000000000900
@@ -1517,9 +1403,6 @@ cpu0: 675 Issued Read (0x00000000000b4d) for address 0x0x00000000000b80
 cpu0: Received MemEvent with command 2 (response to 0x00000000000b4c, addr 0x0x000000000007c4) [Time: 4] [1 outstanding requests]
 cpu0: Received MemEvent with command 2 (response to 0x00000000000b4d, addr 0x0x00000000000b80) [Time: 12] [0 outstanding requests]
 cpu1: 629 Issued Write (0x00000000000b52) for address 0x0x00000000000108
-WARNING: address 0x108 is not aligned to the request size of 64
-WARNING: address 0x108 is not aligned to the request size of 64
-WARNING: address 0x108 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 4 (response to 0x00000000000b52, addr 0x0x00000000000108) [Time: 66] [0 outstanding requests]
 cpu1: 628 Issued Write (0x00000000000b59) for address 0x0x0000000000032c
 cpu1: Received MemEvent with command 4 (response to 0x00000000000b59, addr 0x0x0000000000032c) [Time: 4] [0 outstanding requests]
@@ -1582,18 +1465,12 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000bbc, addr 0x0x0
 cpu0: 659 Issued Read (0x00000000000bc1) for address 0x0x000000000009f8
 cpu0: Received MemEvent with command 2 (response to 0x00000000000bc1, addr 0x0x000000000009f8) [Time: 4] [0 outstanding requests]
 cpu1: 614 Issued Write (0x00000000000bc3) for address 0x0x00000000000804
-WARNING: address 0x804 is not aligned to the request size of 64
-WARNING: address 0x804 is not aligned to the request size of 64
-WARNING: address 0x804 is not aligned to the request size of 64
 cpu0: 658 Issued Read (0x00000000000bc8) for address 0x0x00000000000540
 cpu1: 613 Issued Read (0x00000000000bca) for address 0x0x00000000000fd0
 cpu0: Received MemEvent with command 2 (response to 0x00000000000bc8, addr 0x0x00000000000540) [Time: 4] [0 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x00000000000bca, addr 0x0x00000000000fd0) [Time: 12] [1 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x00000000000bc3, addr 0x0x00000000000804) [Time: 66] [0 outstanding requests]
 cpu0: 657 Issued Write (0x00000000000bd0) for address 0x0x00000000000004
-WARNING: address 0x4 is not aligned to the request size of 64
-WARNING: address 0x4 is not aligned to the request size of 64
-WARNING: address 0x4 is not aligned to the request size of 64
 cpu1: 612 Issued Write (0x00000000000bd5) for address 0x0x00000000000784
 cpu0: 656 Issued Read (0x00000000000bd9) for address 0x0x00000000000ca0
 cpu0: Received MemEvent with command 2 (response to 0x00000000000bd9, addr 0x0x00000000000ca0) [Time: 4] [1 outstanding requests]
@@ -1714,9 +1591,6 @@ cpu0: Received MemEvent with command 2 (response to 0x00000000000ca1, addr 0x0x0
 cpu0: 630 Issued Write (0x00000000000ca3) for address 0x0x0000000000019c
 cpu1: 580 Issued Read (0x00000000000ca7) for address 0x0x00000000000e48
 cpu1: Received MemEvent with command 2 (response to 0x00000000000ca7, addr 0x0x00000000000e48) [Time: 4] [0 outstanding requests]
-WARNING: address 0x19c is not aligned to the request size of 64
-WARNING: address 0x19c is not aligned to the request size of 64
-WARNING: address 0x19c is not aligned to the request size of 64
 cpu1: 579 Issued Read (0x00000000000cab) for address 0x0x00000000000e70
 cpu1: Received MemEvent with command 2 (response to 0x00000000000cab, addr 0x0x00000000000e70) [Time: 4] [0 outstanding requests]
 cpu1: 578 Issued Read (0x00000000000cad) for address 0x0x00000000000ce4
@@ -1778,9 +1652,6 @@ cpu1: 562 Issued Write (0x00000000000d13) for address 0x0x00000000000448
 cpu1: 561 Issued Read (0x00000000000d16) for address 0x0x000000000006f8
 cpu1: Received MemEvent with command 2 (response to 0x00000000000d16, addr 0x0x000000000006f8) [Time: 4] [1 outstanding requests]
 cpu1: 560 Issued Read (0x00000000000d18) for address 0x0x00000000000e28
-WARNING: address 0x448 is not aligned to the request size of 64
-WARNING: address 0x448 is not aligned to the request size of 64
-WARNING: address 0x448 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x00000000000d18, addr 0x0x00000000000e28) [Time: 4] [1 outstanding requests]
 cpu1: 559 Issued Read (0x00000000000d1c) for address 0x0x0000000000064c
 cpu1: Received MemEvent with command 2 (response to 0x00000000000d1c, addr 0x0x0000000000064c) [Time: 4] [1 outstanding requests]
@@ -1901,9 +1772,6 @@ cpu1: 526 Issued Read (0x00000000000de3) for address 0x0x00000000000d94
 cpu1: Received MemEvent with command 2 (response to 0x00000000000de3, addr 0x0x00000000000d94) [Time: 4] [0 outstanding requests]
 cpu1: 525 Issued Write (0x00000000000de5) for address 0x0x00000000000eac
 cpu1: 524 Issued Write (0x00000000000de8) for address 0x0x0000000000072c
-WARNING: address 0xeac is not aligned to the request size of 64
-WARNING: address 0xeac is not aligned to the request size of 64
-WARNING: address 0xeac is not aligned to the request size of 64
 cpu1: Received MemEvent with command 4 (response to 0x00000000000de8, addr 0x0x0000000000072c) [Time: 12] [1 outstanding requests]
 cpu1: 523 Issued Read (0x00000000000def) for address 0x0x00000000000540
 cpu1: Received MemEvent with command 2 (response to 0x00000000000def, addr 0x0x00000000000540) [Time: 4] [1 outstanding requests]
@@ -1957,9 +1825,6 @@ cpu1: Received MemEvent with command 4 (response to 0x00000000000e3e, addr 0x0x0
 cpu1: 509 Issued Read (0x00000000000e44) for address 0x0x00000000000e00
 cpu1: Received MemEvent with command 2 (response to 0x00000000000e44, addr 0x0x00000000000e00) [Time: 4] [0 outstanding requests]
 cpu1: 508 Issued Write (0x00000000000e46) for address 0x0x00000000000850
-WARNING: address 0x850 is not aligned to the request size of 64
-WARNING: address 0x850 is not aligned to the request size of 64
-WARNING: address 0x850 is not aligned to the request size of 64
 cpu0: 584 Issued Write (0x00000000000e4c) for address 0x0x00000000000cac
 cpu0: Received MemEvent with command 4 (response to 0x00000000000e4c, addr 0x0x00000000000cac) [Time: 12] [0 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x00000000000e46, addr 0x0x00000000000850) [Time: 66] [0 outstanding requests]
@@ -2030,9 +1895,6 @@ cpu1: 489 Issued Read (0x00000000000ec5) for address 0x0x00000000000910
 cpu1: Received MemEvent with command 2 (response to 0x00000000000ec5, addr 0x0x00000000000910) [Time: 4] [0 outstanding requests]
 cpu0: 569 Issued Write (0x00000000000ec8) for address 0x0x000000000005ac
 cpu0: Received MemEvent with command 4 (response to 0x00000000000ec2, addr 0x0x00000000000fb8) [Time: 12] [1 outstanding requests]
-WARNING: address 0x5ac is not aligned to the request size of 64
-WARNING: address 0x5ac is not aligned to the request size of 64
-WARNING: address 0x5ac is not aligned to the request size of 64
 cpu1: 488 Issued Read (0x00000000000ecd) for address 0x0x000000000004b0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000ecd, addr 0x0x000000000004b0) [Time: 4] [0 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x00000000000ec8, addr 0x0x000000000005ac) [Time: 66] [0 outstanding requests]
@@ -2088,9 +1950,6 @@ cpu0: 555 Issued Write (0x00000000000f29) for address 0x0x00000000000528
 cpu1: 476 Issued Read (0x00000000000f2c) for address 0x0x00000000000e14
 cpu1: Received MemEvent with command 2 (response to 0x00000000000f2c, addr 0x0x00000000000e14) [Time: 4] [0 outstanding requests]
 cpu0: 554 Issued Read (0x00000000000f2e) for address 0x0x00000000000184
-WARNING: address 0x528 is not aligned to the request size of 64
-WARNING: address 0x528 is not aligned to the request size of 64
-WARNING: address 0x528 is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x00000000000f2e, addr 0x0x00000000000184) [Time: 12] [1 outstanding requests]
 cpu1: 475 Issued Read (0x00000000000f36) for address 0x0x000000000008f0
 cpu1: Received MemEvent with command 2 (response to 0x00000000000f36, addr 0x0x000000000008f0) [Time: 4] [0 outstanding requests]
@@ -2178,9 +2037,6 @@ cpu1: Received MemEvent with command 2 (response to 0x00000000000fc5, addr 0x0x0
 cpu0: 533 Issued Read (0x00000000000fc7) for address 0x0x000000000004f8
 cpu0: Received MemEvent with command 2 (response to 0x00000000000fc7, addr 0x0x000000000004f8) [Time: 4] [0 outstanding requests]
 cpu1: 454 Issued Write (0x00000000000fc9) for address 0x0x0000000000063c
-WARNING: address 0x63c is not aligned to the request size of 64
-WARNING: address 0x63c is not aligned to the request size of 64
-WARNING: address 0x63c is not aligned to the request size of 64
 cpu1: 453 Issued Read (0x00000000000fce) for address 0x0x00000000000f5c
 cpu1: Received MemEvent with command 2 (response to 0x00000000000fce, addr 0x0x00000000000f5c) [Time: 4] [1 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x00000000000fc9, addr 0x0x0000000000063c) [Time: 66] [0 outstanding requests]
@@ -2669,9 +2525,6 @@ cpu1: 326 Issued Read (0x00000000001342) for address 0x0x00000000000568
 cpu0: Received MemEvent with command 2 (response to 0x00000000001332, addr 0x0x000000000006f0) [Time: 20] [1 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x0000000000133c, addr 0x0x00000000000834) [Time: 13] [1 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x00000000001342, addr 0x0x00000000000568) [Time: 12] [0 outstanding requests]
-WARNING: address 0xa44 is not aligned to the request size of 64
-WARNING: address 0xa44 is not aligned to the request size of 64
-WARNING: address 0xa44 is not aligned to the request size of 64
 cpu0: 416 Issued Read (0x0000000000134c) for address 0x0x0000000000096c
 cpu0: Received MemEvent with command 2 (response to 0x0000000000134c, addr 0x0x0000000000096c) [Time: 12] [1 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x0000000000133b, addr 0x0x00000000000a44) [Time: 66] [0 outstanding requests]
@@ -2793,9 +2646,6 @@ cpu0: 388 Issued Read (0x00000000001441) for address 0x0x00000000000480
 cpu0: Received MemEvent with command 2 (response to 0x00000000001441, addr 0x0x00000000000480) [Time: 12] [0 outstanding requests]
 cpu0: 387 Issued Write (0x00000000001446) for address 0x0x000000000004a0
 cpu1: 295 Issued Read (0x00000000001449) for address 0x0x000000000001dc
-WARNING: address 0x4a0 is not aligned to the request size of 64
-WARNING: address 0x4a0 is not aligned to the request size of 64
-WARNING: address 0x4a0 is not aligned to the request size of 64
 cpu1: 294 Issued Read (0x0000000000144f) for address 0x0x00000000000988
 cpu1: Received MemEvent with command 2 (response to 0x00000000001449, addr 0x0x000000000001dc) [Time: 12] [1 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x0000000000144f, addr 0x0x00000000000988) [Time: 4] [0 outstanding requests]
@@ -2806,9 +2656,6 @@ cpu0: 386 Issued Write (0x00000000001458) for address 0x0x0000000000097c
 cpu0: 385 Issued Read (0x0000000000145b) for address 0x0x0000000000010c
 cpu0: 384 Issued Read (0x0000000000145c) for address 0x0x000000000007d4
 cpu0: Received MemEvent with command 2 (response to 0x0000000000145c, addr 0x0x000000000007d4) [Time: 4] [2 outstanding requests]
-WARNING: address 0x97c is not aligned to the request size of 64
-WARNING: address 0x97c is not aligned to the request size of 64
-WARNING: address 0x97c is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x0000000000145b, addr 0x0x0000000000010c) [Time: 12] [1 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x00000000001458, addr 0x0x0000000000097c) [Time: 66] [0 outstanding requests]
 cpu0: 383 Issued Read (0x00000000001467) for address 0x0x00000000000f4c
@@ -2903,9 +2750,6 @@ cpu1: 272 Issued Read (0x000000000014fb) for address 0x0x00000000000cb0
 cpu1: Received MemEvent with command 2 (response to 0x000000000014fb, addr 0x0x00000000000cb0) [Time: 4] [0 outstanding requests]
 cpu1: 271 Issued Write (0x000000000014fd) for address 0x0x000000000000f4
 cpu0: 359 Issued Read (0x00000000001500) for address 0x0x00000000000980
-WARNING: address 0xf4 is not aligned to the request size of 64
-WARNING: address 0xf4 is not aligned to the request size of 64
-WARNING: address 0xf4 is not aligned to the request size of 64
 cpu0: Received MemEvent with command 2 (response to 0x00000000001500, addr 0x0x00000000000980) [Time: 12] [0 outstanding requests]
 cpu1: Received MemEvent with command 4 (response to 0x000000000014fd, addr 0x0x000000000000f4) [Time: 66] [0 outstanding requests]
 cpu1: 270 Issued Read (0x0000000000150a) for address 0x0x00000000000180
@@ -2954,9 +2798,6 @@ cpu0: 345 Issued Read (0x00000000001558) for address 0x0x00000000000da0
 cpu0: Received MemEvent with command 2 (response to 0x00000000001558, addr 0x0x00000000000da0) [Time: 12] [0 outstanding requests]
 cpu1: 262 Issued Write (0x0000000000155d) for address 0x0x00000000000414
 cpu1: 261 Issued Read (0x00000000001561) for address 0x0x00000000000890
-WARNING: address 0x414 is not aligned to the request size of 64
-WARNING: address 0x414 is not aligned to the request size of 64
-WARNING: address 0x414 is not aligned to the request size of 64
 cpu1: Received MemEvent with command 2 (response to 0x00000000001561, addr 0x0x00000000000890) [Time: 12] [1 outstanding requests]
 cpu1: 260 Issued Read (0x00000000001568) for address 0x0x00000000000120
 cpu0: 344 Issued Read (0x0000000000156f) for address 0x0x000000000004a8
@@ -3004,9 +2845,6 @@ cpu1: 248 Issued Read (0x000000000015b8) for address 0x0x000000000005f8
 cpu0: Received MemEvent with command 2 (response to 0x000000000015b1, addr 0x0x000000000000c8) [Time: 20] [0 outstanding requests]
 cpu1: Received MemEvent with command 2 (response to 0x000000000015b8, addr 0x0x000000000005f8) [Time: 12] [0 outstanding requests]
 cpu0: 335 Issued Write (0x000000000015bd) for address 0x0x00000000000078
-WARNING: address 0x78 is not aligned to the request size of 64
-WARNING: address 0x78 is not aligned to the request size of 64
-WARNING: address 0x78 is not aligned to the request size of 64
 cpu0: 334 Issued Read (0x000000000015c3) for address 0x0x0000000000081c
 cpu0: Received MemEvent with command 2 (response to 0x000000000015c3, addr 0x0x0000000000081c) [Time: 12] [1 outstanding requests]
 cpu0: Received MemEvent with command 4 (response to 0x000000000015bd, addr 0x0x00000000000078) [Time: 66] [0 outstanding requests]
@@ -3203,9 +3041,6 @@ cpu0: Received MemEvent with command 2 (response to 0x0000000000170d, addr 0x0x0
 cpu1: 195 Issued Write (0x00000000001720) for address 0x0x000000000005b4
 cpu1: Received MemEvent with command 4 (response to 0x00000000001720, addr 0x0x000000000005b4) [Time: 12] [0 outstanding requests]
 cpu0: 290 Issued Write (0x00000000001724) for address 0x0x00000000000f14
-WARNING: address 0xf14 is not aligned to the request size of 64
-WARNING: address 0xf14 is not aligned to the request size of 64
-WARNING: address 0xf14 is not aligned to the request size of 64
 cpu0: 289 Issued Read (0x0000000000172a) for address 0x0x00000000000e88
 cpu0: Received MemEvent with command 2 (response to 0x0000000000172a, addr 0x0x00000000000e88) [Time: 4] [1 outstanding requests]
 cpu1: 194 Issued Read (0x0000000000172c) for address 0x0x00000000000830
@@ -3826,9 +3661,6 @@ cpu0: Received MemEvent with command 2 (response to 0x00000000001baa, addr 0x0x0
 cpu1: 37 Issued Read (0x00000000001baf) for address 0x0x00000000000580
 cpu1: Received MemEvent with command 2 (response to 0x00000000001baf, addr 0x0x00000000000580) [Time: 12] [0 outstanding requests]
 cpu0: 138 Issued Write (0x00000000001bb4) for address 0x0x000000000000a0
-WARNING: address 0xa0 is not aligned to the request size of 64
-WARNING: address 0xa0 is not aligned to the request size of 64
-WARNING: address 0xa0 is not aligned to the request size of 64
 cpu0: 137 Issued Write (0x00000000001bb9) for address 0x0x00000000000918
 cpu0: Received MemEvent with command 4 (response to 0x00000000001bb9, addr 0x0x00000000000918) [Time: 12] [1 outstanding requests]
 cpu1: 36 Issued Read (0x00000000001bc0) for address 0x0x000000000005d8

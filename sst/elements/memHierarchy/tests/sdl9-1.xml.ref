@@ -1,5 +1,5 @@
-[sst-devel.sandia.gov:14714] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
-[sst-devel.sandia.gov:14714] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16127] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_pstat_darwin.so: invalid ELF header (ignored)
+[sst-devel.sandia.gov:16127] mca: base: component_find: unable to open /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin: /home/cdelapa/local/packages/OpenMPI-1.6.4/lib/openmpi/mca_sysinfo_darwin.so: invalid ELF header (ignored)
 cpu: 1000 Issued Write (0000000000000000) for address 0x0x00000000000e5c
 cpu: 999 Issued Read (0x00000000000005) for address 0x0x0000000000056c
 cpu: 998 Issued Read (0x00000000000008) for address 0x0x0000000000090c
@@ -338,21 +338,21 @@ cpu: Received MemEvent with command 2 (response to 0x00000000000281, addr 0x0x00
 cpu: 831 Issued Read (0x00000000000283) for address 0x0x0000000000058c
 cpu: Received MemEvent with command 2 (response to 0x00000000000283, addr 0x0x0000000000058c) [Time: 4] [4 outstanding requests]
 cpu: Received MemEvent with command 2 (response to 0x0000000000025e, addr 0x0x000000000002d8) [Time: 3fc] [3 outstanding requests]
-[sst-devel:14707] *** Process received signal ***
-[sst-devel:14707] Signal: Aborted (6)
-[sst-devel:14707] Signal code:  (-6)
-[sst-devel:14707] [ 0] /lib64/libpthread.so.0() [0x3447c0f710]
-[sst-devel:14707] [ 1] /lib64/libc.so.6(gsignal+0x35) [0x3447432925]
-[sst-devel:14707] [ 2] /lib64/libc.so.6(abort+0x175) [0x3447434105]
-[sst-devel:14707] [ 3] /lib64/libc.so.6() [0x344742ba4e]
-[sst-devel:14707] [ 4] /lib64/libc.so.6(__assert_perror_fail+0) [0x344742bb10]
-[sst-devel:14707] [ 5] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache4MSHR6removeEy+0x75) [0x7fb79777b745]
-[sst-devel:14707] [ 6] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache15processUncachedEPNS_10Interfaces8MemEventENS2_7CommandEy+0x134) [0x7fb7977774b4]
-[sst-devel:14707] [ 7] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache12processEventEPNS_5EventEb+0x3a2) [0x7fb797779ea2]
-[sst-devel:14707] [ 8] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache9clockTickEm+0x85) [0x7fb79777a105]
-[sst-devel:14707] [ 9] sst.x(_ZN3SST5Clock7executeEv+0x31) [0x844da1]
-[sst-devel:14707] [10] sst.x(_ZN3SST10Simulation3runEv+0x115) [0x8f7235]
-[sst-devel:14707] [11] sst.x(main+0xaa4) [0x838c34]
-[sst-devel:14707] [12] /lib64/libc.so.6(__libc_start_main+0xfd) [0x344741ed1d]
-[sst-devel:14707] [13] sst.x() [0x82d19d]
-[sst-devel:14707] *** End of error message ***
+[sst-devel:16125] *** Process received signal ***
+[sst-devel:16125] Signal: Aborted (6)
+[sst-devel:16125] Signal code:  (-6)
+[sst-devel:16125] [ 0] /lib64/libpthread.so.0() [0x3447c0f710]
+[sst-devel:16125] [ 1] /lib64/libc.so.6(gsignal+0x35) [0x3447432925]
+[sst-devel:16125] [ 2] /lib64/libc.so.6(abort+0x175) [0x3447434105]
+[sst-devel:16125] [ 3] /lib64/libc.so.6() [0x344742ba4e]
+[sst-devel:16125] [ 4] /lib64/libc.so.6(__assert_perror_fail+0) [0x344742bb10]
+[sst-devel:16125] [ 5] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache4MSHR6removeEy+0x75) [0x7f3004121745]
+[sst-devel:16125] [ 6] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache15processUncachedEPNS_10Interfaces8MemEventENS2_7CommandEy+0x134) [0x7f300411d4b4]
+[sst-devel:16125] [ 7] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache12processEventEPNS_5EventEb+0x3a2) [0x7f300411fea2]
+[sst-devel:16125] [ 8] /home/cdelapa/local/sst/lib/sst/libmemHierarchy.so(_ZN3SST12MemHierarchy5Cache9clockTickEm+0x85) [0x7f3004120105]
+[sst-devel:16125] [ 9] sst.x(_ZN3SST5Clock7executeEv+0x31) [0x844da1]
+[sst-devel:16125] [10] sst.x(_ZN3SST10Simulation3runEv+0x115) [0x8f7235]
+[sst-devel:16125] [11] sst.x(main+0xaa4) [0x838c34]
+[sst-devel:16125] [12] /lib64/libc.so.6(__libc_start_main+0xfd) [0x344741ed1d]
+[sst-devel:16125] [13] sst.x() [0x82d19d]
+[sst-devel:16125] *** End of error message ***
