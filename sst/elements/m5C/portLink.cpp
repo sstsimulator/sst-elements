@@ -176,8 +176,8 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 	memcpy(pkt->data, &(sstev->getPayload()[0]), pkt->size);
     
     dbg->debug(CALL_INFO,0,0,"---->\n");
-    dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %llx, Req Size =%u, Src =%s, QueueSize = %lu, Sent = %i\n", (uint64_t)pkt->addr, sstev->getSize(), sstev->getSrc().c_str(), m_g5events.size(), ++sent);
-    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0," First Addr in Queue = %llx \n", (uint64_t)m_g5events.front()->addr);
+    dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %"PRIu64", Req Size =%u, Src =%s, QueueSize = %lu, Sent = %i\n", pkt->addr, sstev->getSize(), sstev->getSrc().c_str(), m_g5events.size(), ++sent);
+    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0," First Addr in Queue = %"PRIu64"\n", m_g5events.front()->addr);
 
     if(sstev->getCmd() == SST::Interfaces::GetSResp)    dbg->debug(CALL_INFO,0,0," Read Request done. D: ");
     else dbg->debug(CALL_INFO,0,0," Write Request done. W: ");
@@ -237,7 +237,7 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
     m_g5events.push_back(pkt);
     
     dbg->debug(CALL_INFO,0,0,"---->\n");
-    dbg->debug(CALL_INFO,0,0,"Received Event. Queue Size: %lu, Addr: %llx,  ReqSize = %u", m_g5events.size(), (uint64_t)pkt->addr, ev->getSize());
+    dbg->debug(CALL_INFO,0,0,"Received Event. Queue Size: %lu, Addr: %"PRIu64",  ReqSize = %u", m_g5events.size(), pkt->addr, ev->getSize());
     if(ev->getCmd() == SST::Interfaces::GetS) dbg->debug(CALL_INFO,0,0,", R\n");
     else if(ev->getCmd() == SST::Interfaces::GetSEx) dbg->debug(CALL_INFO,0,0,", Read Exclusive\n");
     else {
@@ -254,7 +254,7 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 
 void PortLink::printQueueSize(){
     dbg->debug(CALL_INFO,0,0, "Name: %s",  m_name.c_str());
-    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0,"Size: %d. Top Event in Queue = %llx \n",m_g5events.size(), (uint64_t)m_g5events.front()->addr);
+    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0,"Size: %d. Top Event in Queue = %llx \n",m_g5events.size(), (uint64t)m_g5events.front()->addr);
     else dbg->debug(CALL_INFO,0,0,"\n");
 }
 

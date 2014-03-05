@@ -75,7 +75,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event)
 bool SimpleMemory::issueRequest(MemController::DRAMReq *req)
 {
     uint64_t addr = req->addr + req->amt_in_process;
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %#016llx\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %#016llx\n", (Addr)addr);
     self_link->send(1, new MemCtrlEvent(req));
     return true;
 }
@@ -118,7 +118,7 @@ bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req)
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
     if ( !ok ) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %#016llx\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %#016llx\n", (Addr)addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -139,7 +139,7 @@ void DRAMSimMemory::finish()
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
 {
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
-    ctrl->dbg.debug(CALL_INFO,6,0, "Memory Request for %#016llx Finished [%zu reqs]\n", addr, reqs.size());
+    ctrl->dbg.debug(CALL_INFO,6,0, "Memory Request for %#016llx Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
     MemController::DRAMReq *req = reqs.front();
     reqs.pop_front();
@@ -178,7 +178,7 @@ bool HybridSimMemory::issueRequest(MemController::DRAMReq *req)
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
     if ( !ok ) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %#016llx\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %#016llx\n", (Addr)addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -223,7 +223,7 @@ VaultSimMemory::VaultSimMemory(Component *comp, Params &params) :
 bool VaultSimMemory::issueRequest(MemController::DRAMReq *req)
 {
     uint64_t addr = req->addr + req->amt_in_process;
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction to Cube Chain for address %#016llx\n", addr);
+    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction to Cube Chain for address %#016llx\n", (Addr)addr);
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
         req->status = MemController::DRAMReq::NEW;
@@ -541,7 +541,7 @@ void MemController::cancelEvent(MemEvent* ev)
                 requests[i]->canceled = true;
                 numReadsCanceled++;
                 if ( NULL != requests[i]->respEvent )
-                    dbg.debug(CALL_INFO,6,0, "Canceling request %#016llx (%#016llx, %d).\n", requests[i]->addr, requests[i]->respEvent->getID().first, requests[i]->respEvent->getID().second);
+                    dbg.debug(CALL_INFO,6,0, "Canceling request %#016llx).\n", requests[i]->addr);
                 else
                     dbg.debug(CALL_INFO,6,0, "Canceling request %#016llx (Not yet processed).\n", requests[i]->addr);
                 if ( DRAMReq::RETURNED == requests[i]->status ) {
@@ -693,10 +693,10 @@ void MemController::sendBusPacket(Bus::key_t key)
             req->status = DRAMReq::DONE;
 			if ( !req->canceled ) {
                 MemEvent *ev = req->respEvent;
-				dbg.output(CALL_INFO, "Sending (%#016llx, %d) in response to (%#016llx, %d) %#016llx\n",
-						ev->getID().first, ev->getID().second,
-						ev->getResponseToID().first, ev->getResponseToID().second,
-						ev->getAddr());
+				dbg.output(CALL_INFO, "Sending  Addr: %#016llx in response to (%#016llx, %d) \n",
+                        ev->getAddr(),
+						ev->getResponseToID().first, ev->getResponseToID().second
+						);
                 assert(ev->getID() == key);
                 if ( req->respEvent->getCmd() == WriteResp ) numWrites++;
                 else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;

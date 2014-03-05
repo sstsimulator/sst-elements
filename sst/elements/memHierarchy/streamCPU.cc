@@ -97,11 +97,11 @@ void streamCPU::handleEvent(Event *ev)
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
-			_abort(streamCPU, "Event (%"PRIu64", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
+			_abort(streamCPU, "Event (%#016llx, %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
+			out.output("%s: Received MemEvent with command %d (response to %#016llx, addr 0x%#016llx) [Time: %lx] [%zu outstanding requests]\n",
 					getName().c_str(),
 					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
                     requests.size());

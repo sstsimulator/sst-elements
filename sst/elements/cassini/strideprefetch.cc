@@ -35,7 +35,6 @@ Addr StridePrefetcher::getAddressByIndex(uint32_t index) {
 void StridePrefetcher::DetectStride() {
 	MemEvent* ev = NULL;
 	uint32_t stride;
-	int32_t addrStride;
 	bool foundStride = true;
 	Addr targetAddress = 0;
 	uint32_t strideIndex;
@@ -43,7 +42,6 @@ void StridePrefetcher::DetectStride() {
 	for(uint32_t i = 0; i < recentAddrListCount - 1; ++i) {
 		for(uint32_t j = i + 1; j < recentAddrListCount; ++j) {
 			stride = j - i;
-			addrStride = getAddressByIndex(j) - getAddressByIndex(i);
 			strideIndex = 1;
 			foundStride = true;
 
@@ -58,29 +56,29 @@ void StridePrefetcher::DetectStride() {
 
 			if(foundStride) {
 				if(overrunPageBoundary) {
-					output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIu64 ", prefetch address: %" PRIu64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+					output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %#016llx, prefetch address: %#016llx (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 						targetAddress, targetAddress + (strideReach * stride),
 						(strideReach * stride), stride);
  
 					prefetchOpportunities++;
 					ev = new MemEvent(owner, targetAddress + (strideReach * stride), RequestData);
 				} else {
-					const uint64_t targetPrefetchAddress = targetAddress + (strideReach * stride);
-					const uint64_t targetAddressPhysPage = targetAddress / pageSize;
-					const uint64_t targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
+					const Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
+					const Addr targetAddressPhysPage = targetAddress / pageSize;
+					const Addr targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
 
 					// if the address we found and the next prefetch address are on the same
 					// we can safely prefetch without causing a page fault, otherwise we
 					// choose to not prefetch the address
 					if(targetAddressPhysPage == targetPrefetchAddressPage) {
-						output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIu64 ", prefetch address: %" PRIu64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+						output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %#016llx, prefetch address: %#016llx (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
 
 						ev = new MemEvent(owner, targetPrefetchAddress, RequestData);
 						prefetchOpportunities++;
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
-						output->verbose(CALL_INFO, 4, 0, "Target address: %" PRIu64 ", page=%" PRIu64 ", Prefetch address: %" PRIu64 ", page=%" PRIu64 "\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
+						output->verbose(CALL_INFO, 4, 0, "Target address: %#016llx, page=%#016llx, Prefetch address: %#016llx, page=%#016llx\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
 
 						prefetchIssueCanceledByPageBoundary++;
 						ev = NULL;
@@ -99,11 +97,11 @@ void StridePrefetcher::DetectStride() {
     if(ev != NULL) {
         std::vector<Event::HandlerBase*>::iterator callbackItr;
 
-	uint64_t prefetchCacheLineBase = ev->getAddr() - (ev->getAddr() % blockSize);
+	Addr prefetchCacheLineBase = ev->getAddr() - (ev->getAddr() % blockSize);
 	bool inHistory = false;
 	const uint32_t currentHistCount = prefetchHistory->size();
 
-	output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %" PRIu64 ", valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
+	output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %#016llx, valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
 		currentHistCount);
 
 	for(uint32_t i = 0; i < currentHistCount; ++i) {
@@ -194,15 +192,15 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 void StridePrefetcher::printStats(Output &out) {
 	out.output("Stride Prefetch Engine Statistics (Owner: %s):\n", owner->getName().c_str());
 	out.output("--------------------------------------------------------------------\n");
-	out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
-	out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);
+	out.output("Cache Miss Events:                      %"PRIu64"\n", missEventsProcessed);
+	out.output("Cache Hit Events :                      %"PRIu64"\n", hitEventsProcessed);
 	out.output("Cache Miss Rate (%%):                    %f\n", ((missEventsProcessed
                	/ ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
 	out.output("Cache Hit Rate (%%):                     %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
-                       	hitEventsProcessed))) * 100.0));
-        out.output("Prefetches Opportunities:               %" PRIu64 "\n", prefetchOpportunities);
-        out.output("Prefetches Issued:                      %" PRIu64 "\n", prefetchEventsIssued);
-	out.output("Prefetches canceled by page boundary:   %" PRIu64 "\n", prefetchIssueCanceledByPageBoundary);
-	out.output("Prefetches canceled by history:         %" PRIu64 "\n", prefetchIssueCanceledByHistory);
+                       	hitEventsProcessed))) * 100.0));    
+    out.output("Prefetches Opportunities:               %"PRIu64"\n", prefetchOpportunities);
+    out.output("Prefetches Issued:                      %"PRIu64"\n", prefetchEventsIssued);
+	out.output("Prefetches canceled by page boundary:   %"PRIu64"\n", prefetchIssueCanceledByPageBoundary);
+	out.output("Prefetches canceled by history:         %"PRIu64"\n", prefetchIssueCanceledByHistory);
 	out.output("--------------------------------------------------------------------\n");
 }

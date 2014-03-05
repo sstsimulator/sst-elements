@@ -22,7 +22,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::make_pair((uint64_t)-1, -1);
+const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::make_pair((uint64t)-1, -1);
 
 DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Component(id), blocksize(0)
@@ -42,9 +42,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     int addr = params.find_integer("network_addr");
     std::string net_bw = params.find_string("network_bw");
 
-	addrRangeStart = (uint64_t)params.find_integer("addr_range_start", 0);
-	addrRangeEnd = (uint64_t)params.find_integer("addr_range_end", 0);
-	if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
+	addrRangeStart = (uint64t)params.find_integer("addr_range_start", 0);
+	addrRangeEnd = (uint64t)params.find_integer("addr_range_end", 0);
+	if(0 == addrRangeEnd) addrRangeEnd = (uint64t)-1;
 	interleaveSize = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize *= 1024;
 	interleaveStep = (Addr)params.find_integer("interleave_step", 0);
@@ -674,7 +674,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
 void DirectoryController::resetEntry(DirEntry *entry)
 {
 	if(entry->activeReq) {
-        dbg.output(CALL_INFO, "Resetting entry after event (%#016llx, %d) %s %#016llx.  Processing time: %#016llx\n",
+        dbg.output(CALL_INFO, "Resetting entry after event (%#016llx, %d) %s %#016llx.  Processing time: %lx\n",
                 entry->activeReq->getID().first, entry->activeReq->getID().second,
                 CommandString[entry->activeReq->getCmd()], entry->activeReq->getAddr(),
                 getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());

@@ -25,6 +25,8 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 
+#include "util.h"
+
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -105,7 +107,7 @@ class DirectoryController : public Component {
 
     Output dbg;
 
-	uint64_t lookupBaseAddr;
+	uint64t lookupBaseAddr;
 
     std::set<MemEvent::id_type> ignorableResponses;
 
@@ -138,9 +140,9 @@ class DirectoryController : public Component {
     size_t entryCacheSize;
     std::list<DirEntry*> entryCache;
 
-    uint64_t numReqsProcessed;
-    uint64_t totalReqProcessTime;
-    uint64_t numCacheHits;
+    uint64t numReqsProcessed;
+    uint64t totalReqProcessTime;
+    uint64t numCacheHits;
     Output::output_location_t printStatsLoc;
 
 
