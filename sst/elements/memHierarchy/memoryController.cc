@@ -262,10 +262,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 {
     dbg.init("", 7, 0, (Output::output_location_t)params.find_integer("debug", 0));
     dbg.debug(C,L1,0,"---");
-    statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
+    statsOutputTarget = (Output::output_location_t)params.find_integer("statistics", 0);
 
     bool tfFound = false;
-    std::string traceFile = params.find_string("traceFile", "", tfFound);
+    std::string traceFile = params.find_string("trace_file", "", tfFound);
 	if ( tfFound ) {
 #ifdef HAVE_LIBZ
 		traceFP = gzopen(traceFile.c_str(), "w");
@@ -283,10 +283,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 	if ( 0 == ramSize )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
 	memSize = ramSize * (1024*1024ul);
-	rangeStart = (Addr)params.find_integer("rangeStart", 0);
-	interleaveSize = (Addr)params.find_integer("interleaveSize", 0);
+	rangeStart = (Addr)params.find_integer("range_start", 0);
+	interleaveSize = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize *= 1024;
-	interleaveStep = (Addr)params.find_integer("interleaveStep", 0);
+	interleaveStep = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep *= 1024;
     if ( interleaveStep > 0 && interleaveSize > 0 ) {
         numPages = memSize / interleaveSize;

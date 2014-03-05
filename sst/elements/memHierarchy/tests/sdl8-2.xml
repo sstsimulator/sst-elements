@@ -62,12 +62,13 @@
     
     <directoryParams>
         <coherence_protocol> MSI </coherence_protocol>
-        <network_addr> 0 </network_addr>
         <network_bw> 1.6GHz </network_bw>
         <interleaveSize>    0 </interleaveSize>
         <interleaveStep>    0 </interleaveStep>
         <backingStoreSize>  0 </backingStoreSize> <!-- 16 MB -->
         <entry_cache_size> 32768 </entry_cache_size>
+        <addr_range_start> 0x0 </addr_range_start>
+        <addr_range_end> 0x1FFFFFFF </addr_range_end>
         <debug> ${MEM_DEBUG} </debug>
     </directoryParams>
     
@@ -95,7 +96,9 @@
 	</component>
     
 	<component name="n0.l2cache" type="memHierarchy.Cache">
-        <params include=l2Params />
+        <params include=l2Params>
+            <network_address> 1 </network_address>
+        </params>
 		<link name=c0.l1_l2_link port=high_network_0 latency=$lat />
 		<link name=cache_net_0 port=directory_link latency=$buslat />
 	</component>
@@ -112,7 +115,9 @@
 	</component>
 
 	<component name="n1.l2cache" type="memHierarchy.Cache">
-        <params include=l2Params />
+        <params include=l2Params>
+            <network_address> 2 </network_address>
+        </params>
 		<link name=c1.l1_l2_link port=high_network_0 latency=$lat />
 		<link name=cache_net_1 port=directory_link latency=$buslat />
 	</component>
@@ -127,7 +132,9 @@
 
 
     <component name="dirctrl" type="memHierarchy.DirectoryController">
-        <params include=directoryParams />
+        <params include=directoryParams>
+            <network_addr> 0 </network_addr>
+        </params>
         <link name=dir_net_0 port=network latency=$netlat />
         <link name=dir_mem_link port=memory latency=$buslat />
     </component>

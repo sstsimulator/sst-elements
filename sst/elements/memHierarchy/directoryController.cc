@@ -146,6 +146,7 @@ void DirectoryController::handlePacket(SST::Event *event)
 bool DirectoryController::processPacket(MemEvent *ev)
 {
     assert(isRequestAddressValid(ev));
+    assert(ev->getSrc() != this->getName());
     Command cmd = ev->getCmd();
     uint32_t requesting_node;
 

@@ -18,8 +18,8 @@
         <memSize> 0x1000 </memSize>
         <do_write> 1 </do_write>
         <num_loadstore> 1000 </num_loadstore>
-        <uncacheRangeStart> 0  </uncacheRangeStart>
-        <uncacheRangeEnd> 1000  </uncacheRangeEnd>
+        <uncachedRangeStart> 0  </uncachedRangeStart>
+        <uncachedRangeEnd> 1000  </uncachedRangeEnd>
     </cpuParams>
     <l1Params>
         <cache_frequency> 2 Ghz  </cache_frequency>

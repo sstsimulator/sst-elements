@@ -81,6 +81,7 @@
         <addr_range_start> 0x0 </addr_range_start>
         <addr_range_end> 0x1F000000 </addr_range_end> <!-- 512MB - 16MB for backingStoreSize -->
         <backing_store_size> 0x1000000 </backing_store_size> <!-- 16 MB -->
+        <entry_cache_size> 8192 </entry_cache_size>
         <debug> ${MEM_DEBUG} </debug>
     </directoryParams>
     
@@ -114,7 +115,9 @@
 	</component>
 
 	<component name="l3cache" type="memHierarchy.Cache">
-        <params include=l3Params />
+        <params include=l3Params>
+            <network_address> 1 </network_address>
+        </params>
 		<link name=l2cache_l3cache_link port=high_network_0 latency=$buslat />
 		<link name=cache_net_0 port=directory_link latency=$buslat />
 	</component>
@@ -128,7 +131,9 @@
 
 
     <component name="dirctrl" type="memHierarchy.DirectoryController">
-        <params include=directoryParams />
+        <params include=directoryParams>
+            <network_addr> 0 </network_addr>
+        </params>
         <link name=dir_net_0 port=network latency=$netlat />
         <link name=dir_mem_link port=memory latency=$buslat />
     </component>
