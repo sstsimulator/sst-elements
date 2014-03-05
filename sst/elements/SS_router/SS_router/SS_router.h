@@ -277,9 +277,9 @@ protected:
     typedef netlink* link_t;
 
     //: RX Network links each of the six directions
-    link_t rx_netlinks[ROUTER_NUM_LINKS];
+    link_t rx_netlinks[ROUTER_NUM_LINKS+1];
     //: TX Network links each of the six directions
-    link_t tx_netlinks[ROUTER_NUM_LINKS];
+    link_t tx_netlinks[ROUTER_NUM_LINKS+1];
     //: pointers to neighbors who may send us packets
     // which is used when packets arrive from external sources, to check for a valid sender
     map <Link*, int> rxNeighbor;

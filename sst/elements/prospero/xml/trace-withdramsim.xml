@@ -13,22 +13,6 @@
 
 
 <sst>
-
-<?xml version="1.0"?>
-<sdl version="2.0"/>
-<timebase>1ns</timebase>
-
-<config>
- stopAtCycle=1000000ns
-</config>
-
-<variables>
-	<lat> 1ns </lat>
-        <buslat> 50 ps </buslat>
-</variables>
-
-
-<sst>
     <component name="cpu" type="prospero.prospero" rank=0>
         <params>
             <outputlevel>0</outputlevel>
@@ -54,7 +38,7 @@
             <L1> 1 </L1>
             <statistics> 1 </statistics>
         </params>
-        <link name=core0-dcache port=high_network_0 latency=$lat />
+        <link name=cpu_cache_link port=high_network_0 latency=$lat />
         <link name=mem_bus_link port=low_network_0 latency=$buslat />
     </component>
 

@@ -128,7 +128,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
     sprintf (LINK_DIR_STR[LINK_NEG_Y], "NEGY");
     sprintf (LINK_DIR_STR[LINK_NEG_Z], "NEGZ");
 
-    for (int ln = 0; ln < ROUTER_NUM_LINKS; ln++) {
+    for (int ln = 0; ln < ROUTER_NUM_LINKS+1; ln++) {
         //No links are set up yet
         rx_netlinks[ln] = NULL;
         tx_netlinks[ln] = NULL;

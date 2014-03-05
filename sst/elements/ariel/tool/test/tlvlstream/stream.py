@@ -28,12 +28,18 @@ membus.addParams({
 
 l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 l1cache.addParams({
-	"num_ways" : "8",
-        "num_rows" : "128",
-        "blocksize" : "64",
+	"cache_frequency" : "2GHz",
+	"associativity" : "2",
+	"cache_size" : "4KB",
+        "cache_line_size" : "64",
+	"mshr_num_entries" : "1",
+	"high_network_links" : "1",
+	"low_network_links" : "1",
+	"access_latency_cycles" : "5",
         "access_time" : "1ns",
         "num_upstream" : "1",
-        "printStats" : "1"
+        "printStats" : "1",
+	"L1" : "1"
 	})
 
 memory = sst.Component("memory", "memHierarchy.MemController")
