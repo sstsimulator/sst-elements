@@ -360,10 +360,10 @@ void prospero::createPendingRequest(memory_request mem_req) {
 
 		split_request_count++;
 
-		MemEvent *e_lower = new MemEvent(this, mem_req.memory_address, is_read ? ReadReq : WriteReq);
+		MemEvent *e_lower = new MemEvent(this, mem_req.memory_address, is_read ? GetS : GetX);
 		e_lower->setSize(e_lower_size);
 
-		MemEvent *e_upper = new MemEvent(this, mem_req.memory_address + e_lower_size, is_read ? ReadReq : WriteReq);
+		MemEvent *e_upper = new MemEvent(this, mem_req.memory_address + e_lower_size, is_read ? GetS : GetX);
 		e_upper->setSize(e_upper_size);
 
 		if(is_read) {
@@ -397,7 +397,7 @@ void prospero::createPendingRequest(memory_request mem_req) {
 		pending_requests[e_lower->getID()] = e_lower_req;
 		pending_requests[e_upper->getID()] = e_upper_req;
 	} else {
-		MemEvent *e = new MemEvent(this, mem_req.memory_address, is_read ? ReadReq : WriteReq);
+		MemEvent *e = new MemEvent(this, mem_req.memory_address, is_read ? GetS : GetX);
 		e->setSize(mem_req.size);
 
 		memory_request* e_req = (memory_request*) malloc(sizeof(memory_request));
