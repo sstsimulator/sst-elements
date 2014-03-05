@@ -38,7 +38,7 @@
             <L1> 1 </L1>
             <statistics> 1 </statistics>
         </params>
-        <link name=core0-dcache port=high_network_0 latency=$lat />
+        <link name=cpu_cache_link port=high_network_0 latency=$lat />
         <link name=mem_bus_link port=low_network_0 latency=$buslat />
     </component>
 
