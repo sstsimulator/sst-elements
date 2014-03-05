@@ -102,7 +102,8 @@ public:
             size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
         {
             Addr reqEndAddr = ev->getAddr() + ev->getSize();
-            addr = ev->getAddr() & ~(busWidth -1); // round down to bus alignment;
+            //addr = ev->getAddr() & ~(busWidth -1); // round down to bus alignment;
+            addr = ev->getBaseAddr();
 
             num_req = (reqEndAddr - addr) / busWidth;
             if ( (reqEndAddr - addr) % busWidth ) num_req++;

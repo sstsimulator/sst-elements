@@ -504,7 +504,7 @@ void MemController::addRequest(MemEvent *ev)
 {
 	dbg.debug(C,6,0, "New Memory Request for %#016llx\n", ev->getAddr());
     if ( isRequestAddressValid(ev) ) {
-        DRAMReq *req = new DRAMReq(ev, ev->getSize());
+        DRAMReq *req = new DRAMReq(ev, cacheLineSize);
         dbg.debug(C,6,0, "Creating DRAM Request for %#016llx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
         requests.push_back(req);
         requestQueue.push_back(req);
