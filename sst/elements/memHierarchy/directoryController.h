@@ -60,7 +60,7 @@ class DirectoryController : public Component {
 		bool dirty;
 		std::vector<bool> sharers;
 
-		DirEntry(Addr baseAddress, Addr address, uint32_t reqSize, uint32_t bitlength)
+		DirEntry(Addr baseAddress, Addr _address, unsigned int _reqSize, uint32_t _bitlength)
         {
 			activeReq = NULL;
 			nextFunc = NULL;
@@ -68,10 +68,10 @@ class DirectoryController : public Component {
 			waitingAcks = 0;
             inController = true;
             baseAddr = baseAddress;
-            addr = address;
-            reqSize = reqSize;
+            addr = _address;
+            reqSize = _reqSize;
 			dirty = false;
-			sharers.resize(bitlength);
+			sharers.resize(_bitlength);
 		}
 
 		uint32_t countRefs(void)

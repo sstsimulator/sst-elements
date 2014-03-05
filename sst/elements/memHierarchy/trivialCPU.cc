@@ -105,7 +105,7 @@ void trivialCPU::handleEvent(Event *ev)
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			out.output("%s: Received MemEvent with command %d (response to %#016llx, addr 0x%#016llx) [Time: %lx] [%zu outstanding requests]\n",
+			out.output("%s: Received MemEvent with command %d (response to %#016llx, addr 0x%#016llx) [Time: %"PRIu64"] [%zu outstanding requests]\n",
 					getName().c_str(),
 					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
                     requests.size());

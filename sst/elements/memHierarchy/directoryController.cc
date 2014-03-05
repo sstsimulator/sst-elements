@@ -675,7 +675,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
 void DirectoryController::resetEntry(DirEntry *entry)
 {
 	if(entry->activeReq) {
-        dbg.output(CALL_INFO, "Resetting entry after event (%#016llx, %d) %s %#016llx.  Processing time: %lx\n",
+        dbg.output(CALL_INFO, "Resetting entry after event (%#016llx, %d) %s %#016llx.  Processing time: %"PRIu64"\n",
                 entry->activeReq->getID().first, entry->activeReq->getID().second,
                 CommandString[entry->activeReq->getCmd()], entry->activeReq->getAddr(),
                 getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());

@@ -71,7 +71,7 @@ class ReplacementMgr{
     Rank bestRank;
 
     public:
-    LRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines), d_(_dbg), sharersAware(sharersAware) {
+    LRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines), d_(_dbg), sharersAware(_sharersAware) {
         array = (uint64_t*) calloc(numLines_, sizeof(uint64_t));
         bestRank.reset();
     }
@@ -126,18 +126,17 @@ class LFUReplacementMgr : public ReplacementMgr {
         struct Rank {
             LFUInfo lfuInfo;
             uint sharers;
-            bool valid;
+            BCC_MESIState state;
 
             void reset() {
-                valid = false;
+                state = I;
                 sharers = 0;
                 lfuInfo = (LFUInfo){0, 0};
             }
 
             inline bool lessThan(const Rank& other, const uint64_t curTs) const {
-                if (!valid && other.valid) {
-                    return true;
-                } else if (valid == other.valid) {
+                if(state == I && other.state != I) return true;
+                //else if (valid == other.valid) {
                     if (sharers == 0 && other.sharers > 0) {
                         return true;
                     } else if (sharers > 0 && other.sharers == 0) {
@@ -149,7 +148,7 @@ class LFUReplacementMgr : public ReplacementMgr {
                         uint64_t otherInvFreq = (curTs - other.lfuInfo.ts)/other.lfuInfo.acc;
                         return ownInvFreq > otherInvFreq;
                     }
-                }
+               // }
                 return false;
             }
            
@@ -174,8 +173,8 @@ class LFUReplacementMgr : public ReplacementMgr {
             timestamp += 1000;
         }
 
-        void recordCandidate(uint id) {
-            Rank candRank = {array[id], 0, NULL};
+        void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) {
+            Rank candRank = {array[id], 0, state};
 
             if (bestCandidate == -1 || candRank.lessThan(bestRank, timestamp)) {
                 bestRank = candRank;
