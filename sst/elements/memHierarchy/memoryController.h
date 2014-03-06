@@ -57,8 +57,6 @@ using namespace SST::Interfaces;
 #endif
 #endif
 
-#include "util.h"
-
 namespace SST {
 namespace MemHierarchy {
 

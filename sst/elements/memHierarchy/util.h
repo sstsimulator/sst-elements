@@ -20,8 +20,6 @@ namespace MemHierarchy {
 
 //#define N CALL_INFO
 #define Z 0
-typedef long long unsigned int uint64_t;
-
 
 enum {ERROR, WARNING, INFO, L0, L1, L2, L3, L4, L5};
 #define _ERROR_ C,ERROR,0

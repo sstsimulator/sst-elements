@@ -25,7 +25,6 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 
-#include "util.h"
 
 using namespace SST::Interfaces;
 
