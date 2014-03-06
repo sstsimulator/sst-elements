@@ -18,7 +18,6 @@
 #include <testDriver.h>
 #include <nicTester.h>
 #include <hades.h>
-#include <merlinIO.h>
 #include <funcSM/init.h>
 #include <funcSM/fini.h>
 #include <funcSM/rank.h>

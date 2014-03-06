@@ -10,6 +10,11 @@ comp_LTLIBRARIES = libfirefly.la
 libfirefly_la_SOURCES = \
 	longMsgProtocol.cc \
 	longMsgProtocol.h \
+	protocolAPI.h \
+	ioVec.h \
+	info.h \
+	group.h \
+	nodeInfo.h \
 	ctrlMsg.cc \
 	ctrlMsg.h \
 	ctrlMsgXXX.cc \
@@ -18,11 +23,20 @@ libfirefly_la_SOURCES = \
 	ctrlMsgSendState.h \
 	ctrlMsgRecvState.h \
 	ctrlMsgWaitAnyState.h \
+	ctrlMsgFunctors.h \
+	ctrlMsgReadState.h \
+	ctrlMsgRegRegionState.h \
+	ctrlMsgUnregRegionState.h \
+	ctrlMsgProcessQueuesState.h \
 	entry.h \
 	libfirefly.cc \
 	functionSM.cc \
 	functionSM.h \
+	funcSM/api.h \
 	funcSM/fini.h \
+	funcSM/event.h \
+	funcSM/rank.h \
+	funcSM/size.h \
 	funcSM/alltoallv.h \
 	funcSM/alltoallv.cc \
 	funcSM/gatherv.h \
@@ -44,12 +58,14 @@ libfirefly_la_SOURCES = \
 	funcSM/waitAny.h \
 	funcSM/waitAll.cc \
 	funcSM/waitAll.h \
+	funcSM/init.h \
 	hades.h \
 	hades.h \
 	hades.cc \
 	hadesAPI.cc \
 	testDriver.h \
 	testDriver.cc \
+	merlinEvent.h \
 	nicTester.h \
 	nicTester.cc \
 	nic.h \
