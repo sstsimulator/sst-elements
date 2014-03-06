@@ -81,7 +81,7 @@ void ArielCore::printTraceEntry(const bool isRead,
 
 void ArielCore::commitReadEvent(const uint64_t address, const uint32_t length) {
 	if(length > 0) {
-		MemEvent* memEvent = new MemEvent(owner, address, ReadReq);
+		MemEvent* memEvent = new MemEvent(owner, address, GetS);
 		memEvent->setSize((uint32_t) length);
 
 		pending_transaction_count++;
@@ -98,7 +98,7 @@ void ArielCore::commitReadEvent(const uint64_t address, const uint32_t length) {
 
 void ArielCore::commitWriteEvent(const uint64_t address, const uint32_t length) {
 	if(length > 0) {
-		MemEvent* memEvent = new MemEvent(owner, address, WriteReq);
+		MemEvent* memEvent = new MemEvent(owner, address, GetX);
 		memEvent->setSize((uint32_t) length);
 
 		pending_transaction_count++;
