@@ -173,6 +173,7 @@ bool trivialCPU::clockTic( Cycle_t )
 	}
 
     if ( 0 == numLS && requests.empty() ) {
+        out.output("TrivialCPU: Test Completed Successfuly\n");
         primaryComponentOKToEndSim();
         return true;
     }
