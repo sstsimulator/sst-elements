@@ -39,7 +39,7 @@ class Topo:
 
 class topoSimple:
     def __init__(self):
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Simple"
     def prepParams(self):
@@ -65,7 +65,7 @@ class topoSimple:
 
 class topoTorus(Topo):
     def __init__(self):
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Torus"
     def prepParams(self):
@@ -172,7 +172,7 @@ class topoTorus(Topo):
 
 class topoFatTree(Topo):
     def __init__(self):
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "fattree:loading"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "fattree:loading","input_latency","output_latency","input_buf_size","output_buf_size"]
         self.nicKeys = ["fattree:addr", "fattree:IP", "fattree:loading", "fattree:radix"]
     def getName(self):
         return "Fat Tree"
@@ -281,7 +281,7 @@ class topoFatTree(Topo):
 
 class topoDragonFly(Topo):
     def __init__(self):
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Dragonfly"
 
