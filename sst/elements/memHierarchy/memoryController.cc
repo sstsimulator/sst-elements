@@ -438,9 +438,9 @@ void MemController::finish(void)
 
     Output out("", 0, 0, statsOutputTarget);
     out.output("Memory %s stats:\n"
-            "\t # Reads:             %"PRIx64"\n"
-            "\t # Writes:            %"PRIx64"\n"
-            "\t # Canceled Reads:    %"PRIx64"\n"
+            "\t # Reads:             %"PRIu64"\n"
+            "\t # Writes:            %"PRIu64"\n"
+            "\t # Canceled Reads:    %"PRIu64"\n"
             "\t # Avg. Requests out: %.3f\n",
             getName().c_str(),
             numReadsSupplied,
