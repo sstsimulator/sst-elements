@@ -149,7 +149,7 @@ bool DMAEngine::isIssuable(DMACommand *cmd) const
 
 void DMAEngine::startRequest(Request *req)
 {
-    dbg.output(CALL_INFO, "Received request to transfer from 0x%#015llx to 0x%"PRIx64"\n",
+    dbg.output(CALL_INFO, "Received request to transfer from %#"PRIx64" to 0x%"PRIx64"\n",
             req->getSrc(), req->getDst());
     ++numTransfers;
     Addr ptr = req->getSrc();

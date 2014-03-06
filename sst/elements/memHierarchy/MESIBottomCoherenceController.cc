@@ -296,7 +296,7 @@ bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     Command cmd = _event->getCmd();
     assert(cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS);
     responseEvent = _event->makeResponse((SST::Component*)owner_);
-    d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", (uint64)responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
+    d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
     response resp = {deliveryLink, responseEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
     return true;
@@ -306,9 +306,9 @@ bool MESIBottomCC::sendAckResponse(MemEvent *_event){
 
 unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){
     uint32_t res = 0;
-    uint64 tmp = wbCacheLine->getBaseAddr();
+    uint64_t tmp = wbCacheLine->getBaseAddr();
     for (uint32_t i = 0; i < 4; i++) {
-        res ^= (uint32_t) (((uint64)0xffff) & tmp);
+        res ^= (uint32_t) (((uint64_t)0xffff) & tmp);
         tmp = tmp >> 16;
     }
     return (res % parentLinks_->size());
