@@ -89,7 +89,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         d_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %#016llx, BsAddr: %#016llx, Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
     if(uncached){
         processUncached(event, cmd, baseAddr);
         return;

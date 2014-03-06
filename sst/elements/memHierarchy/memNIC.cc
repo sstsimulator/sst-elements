@@ -139,7 +139,7 @@ void MemNIC::clock(void)
         if ( link_control->spaceToSend(0, head->size_in_flits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
-                dbg.output(CALL_INFO, "Sent message ((%#016llx, %d) %s %#016llx) to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
+                dbg.output(CALL_INFO, "Sent message ((%"PRIx64", %d) %s %"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
                 sendQueue.pop_front();
             }
         }
@@ -174,7 +174,7 @@ MemEvent* MemNIC::recv(void)
 
 void MemNIC::send(MemEvent *ev)
 {
-    dbg.output(CALL_INFO, "Adding event (%#016llx, %d) to send queue\n", ev->getID().first, ev->getID().second);
+    dbg.output(CALL_INFO, "Adding event (%"PRIx64", %d) to send queue\n", ev->getID().first, ev->getID().second);
     MemRtrEvent *mre = new MemRtrEvent(ev);
     mre->src = ci.network_addr;
     mre->dest = addrForDest(ev->getDst());

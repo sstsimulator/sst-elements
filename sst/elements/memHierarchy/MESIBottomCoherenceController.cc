@@ -254,7 +254,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
 
     Command cmd = _event->getCmd();
     MemEvent* forwardEvent;
-    d_->debug(_L1_,"Forwarding Message: Addr = %#016llx, BaseAddr = %#016llx, Cmd = %s, Size = %i \n",
+    d_->debug(_L1_,"Forwarding Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i \n",
              _event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize());
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, _lineSize);
@@ -278,7 +278,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
     response resp = {deliveryLink, responseEvent, timestamp_ + accessLatency_, true};
     outgoingEventQueue_.push(resp);
     
-    d_->debug(_L1_,"Sending %s Response Message: Addr = %#016llx, BaseAddr = %#016llx, Cmd = %s, Size = %i \n",
+    d_->debug(_L1_,"Sending %s Response Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i \n",
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
@@ -296,7 +296,7 @@ bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     Command cmd = _event->getCmd();
     assert(cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS);
     responseEvent = _event->makeResponse((SST::Component*)owner_);
-    d_->debug(_L1_,"Sending Ack Response:  Addr = %#016llx, Cmd = %s \n", (uint64)responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
+    d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", (uint64)responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
     response resp = {deliveryLink, responseEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
     return true;

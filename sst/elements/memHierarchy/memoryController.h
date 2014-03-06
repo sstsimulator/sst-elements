@@ -210,11 +210,11 @@ private:
 #endif
 
     Output::output_location_t statsOutputTarget;
-    uint64t numReadsSupplied;
-    uint64t numReadsCanceled;
-    uint64t numWrites;
-    uint64t numReqOutstanding;
-    uint64t numCycles;
+    uint64_t numReadsSupplied;
+    uint64_t numReadsCanceled;
+    uint64_t numWrites;
+    uint64_t numReqOutstanding;
+    uint64_t numCycles;
 
 };
 

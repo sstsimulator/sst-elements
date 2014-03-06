@@ -148,7 +148,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, int r
     assert(!ccLine->isShareless());  //no sharers for this address in the cache
     unsigned int sentInvalidates = 0;
     
-    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %#016llx\n", ccLine->numSharers(), ccLine->getBaseAddr());
+    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %"PRIx64"\n", ccLine->numSharers(), ccLine->getBaseAddr());
     MemEvent* invalidateEvent; 
         for(vector<Link*>::iterator it = childrenLinks_->begin(); it != childrenLinks_->end(); it++){
             Link* link = *it;
@@ -305,7 +305,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     }
     if(L1_ && (cmd == GetS || cmd == GetSEx)) printData(d_, "Response Data", _data, offset, (int)_event->getSize());
     else printData(d_, "Response Data", _data);
-    d_->debug(_L1_,"Sending Response:  Addr = %#016llx,  Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    d_->debug(_L1_,"Sending Response:  Addr = %"PRIx64",  Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     Link* deliveryLink = _event->getDeliveryLink();
     uint64_t deliveryTime = _event->queryFlag(MemEvent::F_UNCACHED) ? timestamp_ : timestamp_ + accessLatency_;
     response resp = {deliveryLink, responseEvent, deliveryTime, true};

@@ -107,7 +107,7 @@ class DirectoryController : public Component {
 
     Output dbg;
 
-	uint64t lookupBaseAddr;
+	uint64_t lookupBaseAddr;
 
     std::set<MemEvent::id_type> ignorableResponses;
 
@@ -140,9 +140,9 @@ class DirectoryController : public Component {
     size_t entryCacheSize;
     std::list<DirEntry*> entryCache;
 
-    uint64t numReqsProcessed;
-    uint64t totalReqProcessTime;
-    uint64t numCacheHits;
+    uint64_t numReqsProcessed;
+    uint64_t totalReqProcessTime;
+    uint64_t numCacheHits;
     Output::output_location_t printStatsLoc;
 
 

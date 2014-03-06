@@ -26,7 +26,7 @@ public:
     }
 
     void setState(TCC_MESIState _newState) {
-        d_->debug(C,L1,0, "Change States: Base Addr = %#016llx, Old State = %s, New State = %s\n",
+        d_->debug(C,L1,0, "Change States: Base Addr = %"PRIx64", Old State = %s, New State = %s\n",
                   baseAddr_, TccLineString[state_], TccLineString[_newState]);
         state_ = _newState;
         if(_newState == V) assert(getAckCount() == 0);

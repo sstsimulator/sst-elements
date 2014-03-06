@@ -101,11 +101,11 @@ void trivialCPU::handleEvent(Event *ev)
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( requests.end() == i ) {
-			_abort(trivialCPU, "Event (%#016llx, %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
+			_abort(trivialCPU, "Event (%"PRIx64", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			out.output("%s: Received MemEvent with command %d (response to %#016llx, addr 0x%#016llx) [Time: %"PRIu64"] [%zu outstanding requests]\n",
+			out.output("%s: Received MemEvent with command %d (response to %"PRIx64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
 					getName().c_str(),
 					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
                     requests.size());
@@ -163,7 +163,7 @@ bool trivialCPU::clockTic( Cycle_t )
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			out.output("%s: %d Issued %s%s (%#016llx) for address 0x%#016llx\n",
+			out.output("%s: %d Issued %s%s (%"PRIx64") for address 0x%"PRIx64"\n",
 					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
 			num_reads_issued++;
 

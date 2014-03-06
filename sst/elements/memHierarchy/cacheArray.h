@@ -87,7 +87,7 @@ public:
             }
         }
         void setState(BCC_MESIState _newState){
-            d_->debug(_L1_, "State change: bsAddr = %#016llx, oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
+            d_->debug(_L1_, "State change: bsAddr = %"PRIx64", oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
             if(inTransition(state_)) ackCount_++;
             if(_newState == I) assert(ackCount_ == 0);

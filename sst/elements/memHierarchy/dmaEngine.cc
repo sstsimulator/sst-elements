@@ -108,7 +108,7 @@ bool DMAEngine::clock(Cycle_t cycle)
         /* Process network packet */
         Request* req = findRequest(me->getResponseToID());
         if ( NULL == req ) {
-            dbg.output(CALL_INFO, "Received Packet for which we have no response ID waiting.  ID received: (%#016llx, %d)\n", me->getResponseToID().first, me->getResponseToID().second);
+            dbg.output(CALL_INFO, "Received Packet for which we have no response ID waiting.  ID received: (%"PRIx64", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
         }
         processPacket(req, me);
     }
@@ -149,7 +149,7 @@ bool DMAEngine::isIssuable(DMACommand *cmd) const
 
 void DMAEngine::startRequest(Request *req)
 {
-    dbg.output(CALL_INFO, "Received request to transfer from 0x%#015llx to 0x%#016llx\n",
+    dbg.output(CALL_INFO, "Received request to transfer from 0x%#015llx to 0x%"PRIx64"\n",
             req->getSrc(), req->getDst());
     ++numTransfers;
     Addr ptr = req->getSrc();
@@ -187,11 +187,11 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
             // Done with this request.
             activeRequests.erase(req);
             commandLink->send(req->command);
-            dbg.output(CALL_INFO, "Request to transfer 0x%#016llx to 0x%#016llx is complete.\n", req->getSrc(), req->getDst());
+            dbg.output(CALL_INFO, "Request to transfer 0x%"PRIx64" to 0x%"PRIx64" is complete.\n", req->getSrc(), req->getDst());
             delete req;
         }
     } else {
-	dbg.fatal(CALL_INFO, 1, "Received unexpected message %s 0x%#016llx from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
+	dbg.fatal(CALL_INFO, 1, "Received unexpected message %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
     }
 }
 
@@ -245,7 +245,7 @@ std::string DMAEngine::findTargetDirectory(Addr addr)
             }
         }
     }
-    _abort(DMAEngine, "Unable to find directory for address 0x%#016llx\n", addr);
+    _abort(DMAEngine, "Unable to find directory for address 0x%"PRIx64"\n", addr);
     return "";
 }
 

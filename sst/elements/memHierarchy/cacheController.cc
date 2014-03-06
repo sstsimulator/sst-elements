@@ -175,10 +175,10 @@ void Cache::replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineInd
 
 
 void Cache::candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
-    d_->debug(_L1_,"Replacement cache needs to be evicted. WbAddr: %#016llx, St: %s\n", wbCacheLine->getBaseAddr(), BccLineString[wbCacheLine->getState()]);
+    d_->debug(_L1_,"Replacement cache needs to be evicted. WbAddr: %"PRIx64", St: %s\n", wbCacheLine->getBaseAddr(), BccLineString[wbCacheLine->getState()]);
     
     if(wbCacheLine->isLockedByUser()){
-        d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %016llx\n", wbCacheLine->getBaseAddr());
+        d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", wbCacheLine->getBaseAddr());
         retryRequestLater(event, requestBaseAddr);
         throw stallException();
     }
@@ -255,7 +255,7 @@ void Cache::activatePrevEvents(Addr baseAddr){
     for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
         if((*it)->elem.type() == typeid(Addr)){                             /* Pointer Type */
             Addr pointerAddr = boost::get<Addr>((*it)->elem);  
-            d_->debug(_L3_,"Pointer Addr: %#016llx\n", pointerAddr);
+            d_->debug(_L3_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
             if(!mshr_->isHit(pointerAddr)){ mshrEntry.erase(it); continue;} /* Entry has been already been processed */
             vector<mshrType*> pointerMSHR = mshr_->remove(pointerAddr);
 
@@ -276,7 +276,7 @@ void Cache::activatePrevEvents(Addr baseAddr){
 
 
 bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType*>& mshrEntry, Addr addr, vector<mshrType*>::iterator it, int i){
-    d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %#016llx, addr: %#016llx, dst: %s\n", i, CommandString[event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
+    d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %"PRIx64", addr: %"PRIx64", dst: %s\n", i, CommandString[event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
     d_->debug(_L1_,"--------------------------------------\n");
     this->processEvent(event, true);
     d_->debug(_L1_,"--------------------------------------\n");
