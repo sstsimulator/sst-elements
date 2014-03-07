@@ -144,6 +144,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
 void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
     vector<mshrType*> mshrEntry;
     MemEvent* memEvent;
+    int i = 0;
     switch( cmd ){
         case GetS:
             mshrUncached_->insert(baseAddr, event);
@@ -156,11 +157,10 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
         case GetSResp:
         case GetXResp:
             mshrEntry = mshrUncached_->remove(baseAddr);
-            int i = 0;
             for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front()->elem);
                 topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), getChildId(memEvent));
-                mshrEntry.erase(i);
+                mshrEntry.erase(it);
             }
             delete event;
             break;
