@@ -2007,6 +2007,7 @@ cpu: Received MemEvent with command 2 (response to e64, addr 0x788) [Time: 1007]
 cpu: Received MemEvent with command 2 (response to e69, addr 0x95c) [Time: 1007] [2 outstanding requests]
 cpu: Received MemEvent with command 2 (response to e72, addr 0x938) [Time: 1007] [1 outstanding requests]
 cpu: Received MemEvent with command 2 (response to e76, addr 0xa54) [Time: 1007] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (107289 clocks)
 Number of Pending Requests per Cycle (Binned by 2 Requests)
 - 0 Cycles: 2703

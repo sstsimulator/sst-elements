@@ -7624,6 +7624,7 @@ cpu0: Received MemEvent with command 2 (response to 3dce, addr 0xf8c) [Time: 5] 
 cpu2: Received MemEvent with command 2 (response to 3dd0, addr 0xf54) [Time: 5] [0 outstanding requests]
 cpu1: 1 Issued Read (3dd2) for address 0x658
 cpu1: Received MemEvent with command 2 (response to 3dd2, addr 0x658) [Time: 5] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 cpu3: 74 Issued Read (3dd4) for address 0x690
 cpu3: 73 Issued Read (3dd8) for address 0xc7c
 cpu3: Received MemEvent with command 2 (response to 3dd8, addr 0xc7c) [Time: 5] [1 outstanding requests]
@@ -7850,6 +7851,7 @@ cpu3: Received MemEvent with command 2 (response to 3f71, addr 0x640) [Time: 5] 
 cpu2: 1 Issued Read (3f7a) for address 0x598
 cpu0: Received MemEvent with command 4 (response to 3f6c, addr 0x5e4) [Time: 119] [0 outstanding requests]
 cpu2: Received MemEvent with command 2 (response to 3f7a, addr 0x598) [Time: 5] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 cpu3: 29 Issued Read (3f7c) for address 0x1ac
 cpu3: Received MemEvent with command 2 (response to 3f7c, addr 0x1ac) [Time: 5] [0 outstanding requests]
 cpu3: 28 Issued Read (3f7e) for address 0x1c
@@ -7963,6 +7965,7 @@ cpu3: Received MemEvent with command 2 (response to 403f, addr 0x66c) [Time: 5] 
 cpu3: 1 Issued Read (4041) for address 0x234
 cpu0: 22 Issued Read (4043) for address 0xc78
 cpu3: Received MemEvent with command 2 (response to 4041, addr 0x234) [Time: 5] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 cpu0: Received MemEvent with command 2 (response to 4043, addr 0xc78) [Time: 5] [0 outstanding requests]
 cpu0: 21 Issued Read (4045) for address 0xd30
 cpu0: Received MemEvent with command 2 (response to 4045, addr 0xd30) [Time: 119] [0 outstanding requests]
@@ -8006,6 +8009,7 @@ cpu0: 2 Issued Read (409a) for address 0x998
 cpu0: Received MemEvent with command 2 (response to 409a, addr 0x998) [Time: 5] [0 outstanding requests]
 cpu0: 1 Issued Write (409c) for address 0x164
 cpu0: Received MemEvent with command 4 (response to 409c, addr 0x164) [Time: 119] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 --------------------------------------------------------------------
 Name: c0.l1cache
 --------------------------------------------------------------------

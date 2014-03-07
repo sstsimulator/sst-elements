@@ -19,7 +19,7 @@
         <do_write> 1 </do_write>
         <num_loadstore> 1000 </num_loadstore>
         <uncachedRangeStart> 0  </uncachedRangeStart>
-        <uncachedRangeEnd> 1000  </uncachedRangeEnd>
+        <uncachedRangeEnd> 0x1000  </uncachedRangeEnd>
     </cpuParams>
     <l1Params>
         <cache_frequency> 2 Ghz  </cache_frequency>

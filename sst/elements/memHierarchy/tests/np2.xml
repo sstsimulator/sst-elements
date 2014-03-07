@@ -2,12 +2,6 @@
 
 <sdl version="2.0"/>
 
-<!--
-<config>
-    stopAtCycle=1000000000s
-</config>
--->
-
 <variables>
     <lat> 1ns </lat>
 	<buslat> 50 ps </buslat>

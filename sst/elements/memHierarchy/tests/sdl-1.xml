@@ -1,11 +1,6 @@
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<!--
-<config>
- stopAtCycle=10000000ns
-</config>
--->
 
 <variables>
 	<lat> 1ns </lat>

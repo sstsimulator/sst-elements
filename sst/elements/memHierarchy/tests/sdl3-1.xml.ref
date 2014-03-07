@@ -4138,6 +4138,7 @@ cpu0: Received MemEvent with command 2 (response to 2f59, addr 0x444) [Time: 4] 
 cpu0: Received MemEvent with command 2 (response to 2f5b, addr 0x2ac) [Time: 18] [1 outstanding requests]
 cpu0: 11 Issued Read (2f60) for address 0xa58
 cpu1: Received MemEvent with command 2 (response to 2f12, addr 0x21c) [Time: 1491] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 cpu0: 10 Issued Read (2f69) for address 0xbcc
 cpu0: Received MemEvent with command 2 (response to 2f69, addr 0xbcc) [Time: 4] [2 outstanding requests]
 cpu0: 9 Issued Read (2f6b) for address 0x9c8
@@ -4160,6 +4161,7 @@ cpu0: Received MemEvent with command 2 (response to 2f7e, addr 0x26c) [Time: 104
 cpu0: Received MemEvent with command 2 (response to 2f89, addr 0x14c) [Time: 1049] [2 outstanding requests]
 cpu0: Received MemEvent with command 2 (response to 2f96, addr 0x79c) [Time: 1049] [1 outstanding requests]
 cpu0: Received MemEvent with command 2 (response to 2f9c, addr 0x4a8) [Time: 1049] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 --------------------------------------------------------------------
 Name: c0.l1cache
 --------------------------------------------------------------------

@@ -22775,6 +22775,7 @@ cpu: Received MemEvent with command 2 (response to 1f218, addr 0x16ab0) [Time: 1
 cpu: Received MemEvent with command 2 (response to 1f223, addr 0x827e8) [Time: 1212] [2 outstanding requests]
 cpu: Received MemEvent with command 4 (response to 1f231, addr 0x74424) [Time: 1212] [1 outstanding requests]
 cpu: Received MemEvent with command 2 (response to 1f23a, addr 0x57828) [Time: 1212] [0 outstanding requests]
+TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1303196 clocks)
 Number of Pending Requests per Cycle (Binned by 2 Requests)
 - 0 Cycles: 550

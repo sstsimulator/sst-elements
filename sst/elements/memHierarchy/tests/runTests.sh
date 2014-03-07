@@ -16,7 +16,7 @@ runCmd() {
     fi
     rm -f ${1}.new
     echo ${1}
-    sst.x ${1} > ${1}.new 2>&1 && (diff -q ${1}.ref ${1}.new && rm -f ${1}.new) || echo "${1} failed."
+    sst.x ${1} > ${1}.new 2>&1  && (diff -q ${1}.ref ${1}.new && rm -f ${1}.new) || echo "${1} failed."
 }
 
 export -f runCmd
