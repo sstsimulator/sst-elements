@@ -113,6 +113,7 @@ void TestDriver::setup()
     }
 
     m_traceFile.open( tmp.str().c_str() );
+    assert( ! m_traceFile.fail() );
 
     if ( m_hermes->myWorldRank() == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"traceFile `%s`\n",tmp.str().c_str());
