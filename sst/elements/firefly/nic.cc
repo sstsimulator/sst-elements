@@ -36,7 +36,8 @@ Nic::Nic(Component* comp, Params &params) :
     m_txDelay( 50 ),
     m_pendingMerlinEvent( NULL ),
     m_recvNotifyEnabled( false ),
-    m_packetId(0)
+    m_packetId(0),
+    m_ftRadix(0)
 {
     //params.print_all_params( std::cout );
 
@@ -56,13 +57,26 @@ Nic::Nic(Component* comp, Params &params) :
     m_rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
     m_txDelay =      params.find_integer( "txDelay_ns", 50 );
 
+    std::string topo  = params.find_string( "topology", "" );
+
+    if ( 0 == topo.compare("fattree") ) {
+        m_ftLoading = params.find_integer( "fattree:hosts_per_edge_rtr", -1 );
+        m_ftRadix = params.find_integer( "fattree:radix", -1);
+
+        if ( -1 == m_ftLoading || -1 == m_ftRadix ) {
+            assert(0);
+        }
+
+    } else if ( 0 == topo.compare("torus") ) {
+    }
+
     m_num_vcs = params.find_integer("num_vcs",2);
     std::string link_bw = params.find_string("link_bw","2GHz");
     TimeConverter* tc = Simulation::getSimulation()->
                             getTimeLord()->getTimeConverter(link_bw);
     assert( tc );
 
-    int buffer_size = params.find_integer("buffer_size",1000);
+    int buffer_size = params.find_integer("buffer_size",100);
 
     m_dbg.verbose(CALL_INFO,1,0,"id=%d num_vcs=%d buffer_size=%d link_bw=%s\n",
                 m_myNodeId, m_num_vcs, buffer_size, link_bw.c_str());
@@ -95,6 +109,8 @@ Nic::Nic(Component* comp, Params &params) :
     m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
 
     m_recvNotifyEnabled = true;
+
+    m_dbg.verbose(CALL_INFO,1,0,"%d\n", IdToNet( m_myNodeId ) );
 }
 
 Nic::VirtNic* Nic::virtNicInit()
@@ -102,6 +118,68 @@ Nic::VirtNic* Nic::virtNicInit()
     m_vNicV.push_back( new Nic::VirtNic( *this, m_vNicV.size() ) );
     m_recvM.resize( m_vNicV.size() );
     return m_vNicV.back();
+}
+
+int Nic::IP_to_fattree_ID(int ip)
+{
+    union Addr {
+        uint8_t x[4];
+        int32_t s;
+    };
+
+    Addr addr;
+    addr.s = ip;
+
+    int id = 0;
+    id += addr.x[1] * (m_ftRadix/2) * m_ftLoading;
+    id += addr.x[2] * m_ftLoading;
+    id += addr.x[3] -2;
+
+    m_dbg.verbose(CALL_INFO,1,0,"ip=%#x -> id=%d\n", ip, id ); 
+    return id;
+}
+
+int Nic::IdToNet( int v )
+{
+    if ( m_ftRadix ) {
+        return fattree_ID_to_IP( v ); 
+    } else {
+        return v;
+    }
+}
+int Nic::NetToId( int v )
+{
+    if ( m_ftRadix ) {
+        return IP_to_fattree_ID( v );
+    } else {
+        return v;
+    }
+}
+
+int Nic::fattree_ID_to_IP(int id)
+{
+    union Addr {
+        uint8_t x[4];
+        int32_t s;
+    };
+
+    Addr addr;
+
+    int edge_switch = (id / m_ftLoading);
+    int pod = edge_switch / (m_ftRadix/2);
+    int subnet = edge_switch % (m_ftRadix/2);
+
+    addr.x[0] = 10;
+    addr.x[1] = pod;
+    addr.x[2] = subnet;
+    addr.x[3] = 2 + (id % m_ftLoading);
+
+#if 1 
+    m_dbg.verbose(CALL_INFO,1,0,"NIC id %d to %u.%u.%u.%u.\n",
+                        id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]);
+#endif
+
+    return addr.s;
 }
 
 void Nic::handleSelfEvent( Event *e )
@@ -248,8 +326,8 @@ Nic::Entry* Nic::processSend( Entry* entry )
         ret = copyOut( m_dbg, *ev, *entry ); 
 
         print(m_dbg, &ev->buf[0], ev->buf.size() );
-        ev->setDest( entry->node() );
-        ev->setSrc( m_myNodeId );
+        ev->setDest( IdToNet( entry->node() ) );
+        ev->setSrc( IdToNet( m_myNodeId ) );
         ev->setNumFlits( ev->buf.size() );
 
         #if 0 
@@ -337,6 +415,8 @@ bool Nic::recvNotify(int vc)
 
     MerlinFireflyEvent* event = 
             static_cast<MerlinFireflyEvent*>( m_linkControl->recv(vc) );
+
+    event->src = NetToId( event->src ); 
 
     for ( int i = 0; i < m_num_vcs; i++ ) {
         assert( ! m_linkControl->eventToReceive( i ) );
@@ -448,6 +528,7 @@ void Nic::moveEvent( MerlinFireflyEvent* event )
                 if ( event ) break;
             }
             if ( event ) {
+                event->src = NetToId( event->src ); 
                 SelfEvent* tmp = new SelfEvent;
                 tmp->type = SelfEvent::ProcessMerlinEvent;
                 tmp->mEvent = event;

@@ -318,6 +318,11 @@ class Nic : public SST::Module  {
         m_selfLink->send( m_rxBusDelay, event );
     }
 
+    int fattree_ID_to_IP(int id);
+    int IP_to_fattree_ID(int ip);
+    int NetToId( int );
+    int IdToNet( int );
+
     std::deque<Entry*>      m_sendQ;
     Entry*                  m_currentSend;
     std::vector< std::map< int, std::deque<Entry*> > > m_recvM;
@@ -344,6 +349,9 @@ class Nic : public SST::Module  {
 
     bool m_recvNotifyEnabled;
     int  m_packetId;
+    int  m_ftRadix;
+    int  m_ftLoading;
+
 };
 
 } // namesapce Firefly 
