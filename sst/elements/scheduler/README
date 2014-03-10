@@ -27,9 +27,9 @@ start (time 18446744).
 
 SST is run using the command 
 
-./sst.x --sdl-file=example.sdl --verbose 
+./sst --sdl-file=example.sdl --verbose 
 
-where --verbose is optional.  sst.x is in the /core folder of the installation.
+where --verbose is optional.  sst is in the /core folder of the installation.
 The simulation file being run must be copied there as well.  An sdl file for a
 given instance can be generated using makeSDL.pl, with the first argument the
 number of processors, second argument the name of the trace file (the .sim
