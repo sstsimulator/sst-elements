@@ -27,7 +27,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.nofaults.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.nofaults.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.nofaults.xml >> $testLog" );
 
 die "Test 1 failed, fault[s] were generated.  See $testLog\n" if -e $faultLog;
 die "Test 1 failed, error[s] were generated.  See $testLog\n" if -e $errorLog;
@@ -46,7 +46,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.oneleaffault.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.oneleaffault.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.oneleaffault.xml >> $testLog" );
 
 die "Test 2 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 2 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -80,7 +80,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.oneparentfault.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.oneparentfault.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.oneparentfault.xml >> $testLog" );
 
 die "Test 3 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 3 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -114,7 +114,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/1.leaffault_die_default.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/1.leaffault_die_default.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/1.leaffault_die_default.xml >> $testLog" );
 
 die "Test 4 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 4 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -135,7 +135,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/1.leaffault_die_1.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/1.leaffault_die_1.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/1.leaffault_die_1.xml >> $testLog" );
 
 die "Test 5 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 5 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -156,7 +156,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/1.leaffault_nodie.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/1.leaffault_nodie.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/1.leaffault_nodie.xml >> $testLog" );
 
 die "Test 6 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 6 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -179,7 +179,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.oneparentfault.delay.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.oneparentfault.delay.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.oneparentfault.delay.xml >> $testLog" );
 
 die "Test 7 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 7 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -241,7 +241,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.oneparentfault.allfaultskill.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.oneparentfault.allfaultskill.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.oneparentfault.allfaultskill.xml >> $testLog" );
 
 die "Test 8 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 8 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -265,7 +265,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.oneparentfault.parentfaultskill.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.oneparentfault.parentfaultskill.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.oneparentfault.parentfaultskill.xml >> $testLog" );
 
 die "Test 9 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 9 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -289,7 +289,7 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.root_fault.root_log.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.root_fault.root_log.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.root_fault.root_log.xml >> $testLog" );
 
 die "Test 10 failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
 die "Test 10 failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -323,10 +323,10 @@ system( $cleancmd );
 
 
 system( "echo \"testing with $xmlDir/4.seed_41.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.seed_41.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.seed_41.xml >> $testLog" );
 system( "mv error.log error.log.41_1; mv fault.log fault.log.41_1; mv job.log job.log.41_1" );
 system( "echo \"testing with $xmlDir/4.seed_41.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.seed_41.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.seed_41.xml >> $testLog" );
 system( "mv error.log error.log.41_2; mv fault.log fault.log.41_2; mv job.log job.log.41_2" );
 
 die "Test 11.1 failed, two tests with the same seed had different fault logs.  See $testLog\n" if compare( "fault.log.41_1", "fault.log.41_2" ) != 0;
@@ -336,10 +336,10 @@ die "Test 11.1 failed, two tests with the same seed had different job logs.  See
 print "test 11.1 passed\n";
 
 system( "echo \"testing with $xmlDir/4.seed_42.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.seed_42.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.seed_42.xml >> $testLog" );
 system( "mv error.log error.log.42_1; mv fault.log fault.log.42_1; mv job.log job.log.42_1" );
 system( "echo \"testing with $xmlDir/4.seed_42.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.seed_42.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.seed_42.xml >> $testLog" );
 system( "mv error.log error.log.42_2; mv fault.log fault.log.42_2; mv job.log job.log.42_2" );
 
 die "Test 11.2 failed, two tests with the same seed had different fault logs.  See $testLog\n" if compare( "fault.log.42_1", "fault.log.42_2" ) != 0;
@@ -355,11 +355,11 @@ die "Test 11.3 failed, two tests with different seeds had the same job logs.  Se
 print "test 11.3 passed\n";
 
 system( "echo \"testing with $xmlDir/4.seed_no.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.seed_no.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.seed_no.xml >> $testLog" );
 system( "mv error.log error.log.no_1; mv fault.log fault.log.no_1; mv job.log job.log.no_1" );
 sleep 2;        # since this test uses the time to seed, make sure the time changes by at least a second between test
 system( "echo \"testing with $xmlDir/4.seed_no.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.seed_no.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.seed_no.xml >> $testLog" );
 system( "mv error.log error.log.no_2; mv fault.log fault.log.no_2; mv job.log job.log.no_2" );
 
 die "Test 11.4 failed, two tests at different times had the same fault logs.  See $testLog\n" if compare( "fault.log.no_1", "fault.log.no_2" ) == 0;
@@ -474,7 +474,7 @@ foreach $count (0 .. $#test12XML) {
   $killRateIter = $test12KillRates[ $count ];
 
   system( "echo \"testing with $xmlDir/$XMLiter\n\" > $testLog" );
-  system( "$SSTloc/sst.x $SSTargs$xmlDir/$XMLiter >> $testLog" );
+  system( "$SSTloc/sst $SSTargs$xmlDir/$XMLiter >> $testLog" );
 
   die "Test 12.$count failed, fault[s] were not generated.  See $testLog\n" unless -s $faultLog;
   die "Test 12.$count failed, error[s] were not generated.  See $testLog\n" unless -s $errorLog;
@@ -533,7 +533,7 @@ foreach $count (0 .. $#correctedXML){
   $testNum = "13.$count";
 
   system( "echo \"testing with $xmlDir/$XMLfile\n\" > $testLog" );
-  system( "$SSTloc/sst.x $SSTargs$xmlDir/$XMLfile >> $testLog" );
+  system( "$SSTloc/sst $SSTargs$xmlDir/$XMLfile >> $testLog" );
 
   open JOBLOG, $jobLog or die "Could not open the job log: $jobLog";
   while( <JOBLOG> ){
@@ -549,7 +549,7 @@ foreach $count (0 .. $#correctedXML){
 
   # test when each leaf can correct errors with p=0.75
 system( "echo \"testing with $xmlDir/4.sometimesfaultcorrect.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.sometimesfaultcorrect.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.sometimesfaultcorrect.xml >> $testLog" );
 $testNum = "13." . ($#correctedXML + 1);
 
 $startedJobs = 0;
@@ -591,7 +591,7 @@ system( $cleancmd );
 
   # test when no errors are corrected.
 system( "echo \"testing with $xmlDir/4.nofaultcorrect.xml\n\" > $testLog" );
-system( "$SSTloc/sst.x $SSTargs$xmlDir/4.nofaultcorrect.xml >> $testLog" );
+system( "$SSTloc/sst $SSTargs$xmlDir/4.nofaultcorrect.xml >> $testLog" );
 $testNum = "13." . ($#correctedXML + 2);
 
 $startedJobs = 0;
@@ -675,7 +675,7 @@ foreach $testIndex (0 .. $#bigTestXML){
   $jobsIter = $bigTestJobs[ $testIndex ];
 
   system( "echo \"testing with $xmlDir/$xmlIter\n\" > $testLog" );
-  system( "$SSTloc/sst.x $SSTargs$xmlDir/$xmlIter >> $testLog" );
+  system( "$SSTloc/sst $SSTargs$xmlDir/$xmlIter >> $testLog" );
 
   %jobs = ();
   
