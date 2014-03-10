@@ -50,6 +50,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
 
   AC_LANG_POP(C++)
 
+  M5_LIBDIR="$with_gem5"
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
@@ -73,6 +74,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AC_SUBST([M5_CPPFLAGS])
   AC_SUBST([M5_LDFLAGS])
   AC_SUBST([M5_LIB])
+  AC_SUBST([M5_LIBDIR])
 
   # Now uses global DRAMSim check
   SST_CHECK_DRAMSIM([],[],[AC_MSG_ERROR([DRAMSim requested but could not be found])])
@@ -133,5 +135,8 @@ AC_DEFUN([SST_m5C_CONFIG], [
 	 )],
 	[])
 
+  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$happy" = "yes"],
+	[AC_DEFINE_UNQUOTED([HAVE_M5], [1], [Defines whether M5 was found at configure time])])
+  AC_DEFINE_UNQUOTED([M5_LIBDIR], ["$M5_LIBDIR"], [Defines the M5 library directory])
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
