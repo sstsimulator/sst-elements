@@ -56,7 +56,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "network";
     myInfo.link_bandwidth = net_bw;
-	myInfo.num_vcs = params.find_integer("network_num_vc", 4);
+	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
     myInfo.name = getName();
     myInfo.network_addr = addr;
     myInfo.type = MemNIC::TypeDirectoryCtrl;
@@ -218,6 +218,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
         break;
         
     case PutM:        /* Was SupplyData */
+    case PutE:
     //case FetchResp:  /* May be a response to a Fetch/FetchInvalidate, May be a writeback */
         assert(entry);
         dbg.output(CALL_INFO, "\n\nDC PutM - %s - Request Received\n", getName().c_str());
@@ -532,7 +533,7 @@ void DirectoryController::handleWriteback(DirEntry *entry, MemEvent *ev)
     //if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
     entry->sharers[node_id(entry->activeReq->getSrc())] = false;
     assert(entry->countRefs() == 0);
-    writebackData(entry->activeReq);
+    if(ev->getCmd() == PutM) writebackData(entry->activeReq);
 	updateEntryToMemory(entry);
 }
 
