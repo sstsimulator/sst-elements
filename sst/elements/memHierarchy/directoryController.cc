@@ -389,7 +389,7 @@ void DirectoryController::handleACK(MemEvent *ev)
 
 void DirectoryController::sendInvalidate(int target, DirEntry* entry)
 {
-    MemEvent *me = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), 64, Inv, entry->activeReq->getSize());
+    MemEvent *me = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), Inv, entry->activeReq->getSize());
     me->setDst(nodeid_to_name[target]);
     network->send(me);
 }
@@ -408,7 +408,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
         
 		if(entry->activeReq->getCmd() == GetX ||
            entry->activeReq->getCmd() == GetSEx) cmd = FetchInvalidate;
-		MemEvent *ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), 64, cmd, entry->activeReq->getSize());
+		MemEvent *ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), cmd, entry->activeReq->getSize());
         std::string &dest = nodeid_to_name[entry->findOwner()];
         ev->setDst(dest);
 
@@ -585,7 +585,7 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry)
 
 void DirectoryController::requestDataFromMemory(DirEntry *entry)
 {
-    MemEvent *ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), 64, entry->activeReq->getCmd(), entry->activeReq->getSize());
+    MemEvent *ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), entry->activeReq->getCmd(), entry->activeReq->getSize());
     memReqs[ev->getID()] = entry->baseAddr;
     entry->nextCommand = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn = "memory";
@@ -660,8 +660,8 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry)
 
 
 MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
-{   assert(data_event->getSize() == 64);
-	MemEvent *ev = new MemEvent(this, data_event->getBaseAddr(), data_event->getBaseAddr(), 64, PutM, data_event->getSize());
+{   
+	MemEvent *ev = new MemEvent(this, data_event->getBaseAddr(), data_event->getBaseAddr(), PutM, data_event->getSize());
 	ev->setPayload(data_event->getPayload());
     dbg.output(CALL_INFO, "Writing back data to %"PRIx64" (%"PRIx64", %d)\n", data_event->getBaseAddr(), ev->getID().first, ev->getID().second);
 

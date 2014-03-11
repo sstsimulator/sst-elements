@@ -50,8 +50,15 @@ class stallException : public exception{
   }
 };
 
+class mshrException : public exception{
+  public:
+  const char* what () const throw (){
+    return "description";
+  }
+};
     
-class Cache : public SST::Component {
+class Cache
+: public SST::Component {
 public:
     typedef CacheArray::CacheLine CacheLine;
     typedef TopCacheController::CCLine CCLine;
@@ -62,21 +69,20 @@ public:
     public:
         mshrTable map_ ;
         Cache* cache_;
-        uint size_;
-        uint maxSize_;
-        Addr addrLastInserted_;
+        int size_;
+        int maxSize_;
         
-        MSHR(Cache*, uint);
+        MSHR(Cache*, int);
         void insertFront(Addr baseAddr, MemEvent* event);
-        bool insert(Addr, vector<mshrType*>);
+        bool insertAll(Addr, vector<mshrType*>) throw (mshrException);
         bool insert(Addr baseAddr, MemEvent* event);
         bool insertPointer(Addr keyAddr, Addr pointerAddr);
         bool insert(Addr baseAddr, Addr pointer);
-        bool insert(Addr baseAddr, mshrType* mshrEntry);
+        bool insert(Addr baseAddr, mshrType* mshrEntry) throw (mshrException);
         void removeElement(Addr baseAddr, MemEvent* event);
         void removeElement(Addr baseAddr, Addr pointer);
         void removeElement(Addr baseAddr, mshrType* mshrEntry);
-        vector<mshrType*> remove(Addr);
+        vector<mshrType*> removeAll(Addr);
         const vector<mshrType*> lookup(Addr baseAddr);
         bool isHit(Addr baseAddr);
         bool isHitAndStallNeeded(Addr baseAddr, Command cmd);
@@ -137,7 +143,7 @@ private:
     bool                    sharersAware_;
     vector<MemEvent*>       retryQueue_;
     vector<MemEvent*>       retryQueueNext_;
-    queue<pair<SST::Event*, uint64> >   upperEventQueue_;
+    queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
     uint64                  accessLatency_;
     uint64                  STAT_GetSExReceived_;
     uint64                  STAT_InvalidateWaitingForUserLock_;

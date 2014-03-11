@@ -182,7 +182,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     CCLine* l             = ccLines_[_cacheLine->index()];
 
     /* Send Data in E state */
-    if(l->isShareless() && (state == E || state == M)){
+    /* if(l->isShareless() && (state == E || state == M)){
         if(protocol_){
             l->setExclusiveSharer(_childId);
             ret = sendResponse(_event, E, data, _childId);
@@ -191,12 +191,12 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
             l->addSharer(_childId);
             ret = sendResponse(_event, S, data, _childId);
         }
-    }
-    /*if(protocol_ && l->isShareless() && (state == E || state == M)){
+    }*/
+    if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_childId);
         ret = sendResponse(_event, E, data, _childId);
     }
-    */
+    
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->exclusiveSharerExists()) {
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");

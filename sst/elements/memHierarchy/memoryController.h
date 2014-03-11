@@ -95,7 +95,7 @@ public:
 
         DRAMReq(MemEvent *ev, const size_t busWidth) :
             reqEvent(new MemEvent(ev)), respEvent(NULL),
-            isWrite(ev->getCmd() == SupplyData || ev->getCmd() == GetX || ev->getCmd() == WriteReq || ev->getCmd() == PutM),
+            isWrite(ev->getCmd() == GetX || ev->getCmd() == PutM),
             canceled(false), isACK(false), GetXRespType(false),
             size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
         {
@@ -111,7 +111,7 @@ public:
             cmd = ev->getCmd();
             eventAddr = ev->getAddr();
             eventBaseAddr = ev->getBaseAddr();
-            respSize = ev->getCacheLineSize();
+            respSize = busWidth;  //cacheLineSize
             
 #if 0
             printf(

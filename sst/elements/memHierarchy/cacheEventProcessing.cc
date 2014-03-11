@@ -36,13 +36,11 @@ bool Cache::clockTick(Cycle_t time) {
         }
     }
     else{
-        
-        //if(!L1_){
-        if(!upperEventQueue_.empty()){  //TODO: don't call this upperEventQueue.. check where it is being used
-            processEvent(upperEventQueue_.front().first, false);
-            upperEventQueue_.pop();
+        if(!incomingEventQueue_.empty()){
+            processEvent(incomingEventQueue_.front().first, false);
+            incomingEventQueue_.pop();
         }
-       // TODO:  Logic for <Tag Copies> goes here
+       
        
     }
     
@@ -74,7 +72,7 @@ void Cache::init(unsigned int phase){
 }
 
 void Cache::processIncomingEvent(SST::Event *ev){
-    upperEventQueue_.push(make_pair(ev, timestamp_));
+    incomingEventQueue_.push(make_pair(ev, timestamp_));
 }
   
 void Cache::processEvent(SST::Event* ev, bool reActivation) {
@@ -116,6 +114,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
             break;
         case Inv: 
         case InvX:
+            mshr_->insert(baseAddr, event);
             processInvalidate(event, cmd, baseAddr, reActivation);
             break;
         case GetSResp:
@@ -128,6 +127,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         case Fetch:
         case FetchInvalidate:
         case FetchInvalidateX:
+            mshr_->insert(baseAddr, event);
             processFetch(event, baseAddr, reActivation);
             break;
         default:
@@ -138,6 +138,10 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
     }
     catch(stallException const& e){
         //e.what();
+    }
+    catch(mshrException const& e){
+        _abort(MemHierarchy::Cache, "Limited MSHR is not supported yet, increment the number of MSHR entries\n");
+        //topCC_->sendNACK(event);
     }
 }
 
@@ -156,7 +160,7 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
             break;
         case GetSResp:
         case GetXResp:
-            mshrEntry = mshrUncached_->remove(baseAddr);
+            mshrEntry = mshrUncached_->removeAll(baseAddr);
             for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front()->elem);
                 topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), getChildId(memEvent));

@@ -96,7 +96,7 @@ public:
     void updateEvictionStats(BCC_MESIState _state);
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
-    void sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink);
+    void sendWriteback(Command cmd, CacheLine* cacheLine, Link* deliveryLink);
     bool sendAckResponse(MemEvent *event);
 
 };

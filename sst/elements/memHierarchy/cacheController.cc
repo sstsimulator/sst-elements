@@ -52,8 +52,6 @@ void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reAc
 
 /* Function processes incomming invalidate messages.  Redirects message to Top and Bottom controllers appropriately */
 void Cache::processInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation){
-    mshr_->insert(baseAddr, event);
-    
     CacheLine* cacheLine = getCacheLine(baseAddr);
     if(!shouldThisInvalidateRequestProceed(event, cacheLine, baseAddr, reActivation)) return;
     
@@ -98,7 +96,6 @@ void Cache::processAccessAcknowledge(MemEvent* ackEvent, Addr baseAddr){
 /* Function processes incomming Fetch or FetchInvalidate requests from the Directory Controller
    Fetches send data, while FetchInvalidates evict data to the directory controller */
 void Cache::processFetch(MemEvent* event, Addr baseAddr, bool reActivation){
-    mshr_->insert(baseAddr, event);
     CacheLine* cacheLine = getCacheLine(baseAddr);
     Command cmd = event->getCmd();
     
@@ -248,7 +245,7 @@ bool Cache::shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cache
  */
 void Cache::activatePrevEvents(Addr baseAddr){
     if(!mshr_->isHit(baseAddr)) return;
-    vector<mshrType*> mshrEntry = mshr_->remove(baseAddr); assert(!mshr_->isHit(baseAddr));
+    vector<mshrType*> mshrEntry = mshr_->removeAll(baseAddr); assert(!mshr_->isHit(baseAddr));
     bool cont;    int i = 0;
     d_->debug(_L1_,"---------start--------- Size: %lu\n", mshrEntry.size());
     
@@ -257,7 +254,7 @@ void Cache::activatePrevEvents(Addr baseAddr){
             Addr pointerAddr = boost::get<Addr>((*it)->elem);  
             d_->debug(_L3_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
             if(!mshr_->isHit(pointerAddr)){ mshrEntry.erase(it); continue;} /* Entry has been already been processed */
-            vector<mshrType*> pointerMSHR = mshr_->remove(pointerAddr);
+            vector<mshrType*> pointerMSHR = mshr_->removeAll(pointerAddr);
 
             for(vector<mshrType*>::iterator it2 = pointerMSHR.begin(); it2 != pointerMSHR.end(); i++){
                 assert((*it2)->elem.type() == typeid(MemEvent*));
@@ -283,7 +280,10 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType*>& mshrEntry, Add
     mshrEntry.erase(it);
 
     if(mshr_->isHit(addr)){
-        mshr_->insert(addr, mshrEntry);
+        try{ mshr_->insertAll(addr, mshrEntry); }
+        catch(mshrException const& e){
+            _abort(Cache, "MSHR Should not overflow when processing previous events\n");
+        }
         return false;
     }
     return true;

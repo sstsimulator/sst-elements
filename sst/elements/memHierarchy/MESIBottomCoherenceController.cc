@@ -23,15 +23,15 @@ void MESIBottomCC::handleEviction(MemEvent* event, CacheLine* wbCacheLine){
     switch(state){
 	case S:
 		wbCacheLine->setState(I);
-        sendCommand(PutS, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
+        sendWriteback(PutS, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
 		break;
     case E:
 		wbCacheLine->setState(I);
-        sendCommand(PutE, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
+        sendWriteback(PutE, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
         break;
 	case M:
 		wbCacheLine->setState(I);
-		sendCommand(PutM, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
+		sendWriteback(PutM, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
 		break;
 	default:
 		_abort(MemHierarchy::CacheController, "Not a valid state: %s", BccLineString[state]);
@@ -76,7 +76,7 @@ void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Comma
 			processInvRequest(event, cacheLine);
             break;
         case InvX:
-			processInvXRequest(event, cacheLine);  //TODO: not tested yet
+			processInvXRequest(event, cacheLine);
             break;
 	    default:
             _abort(MemHierarchy::CacheController, "Command not supported.\n");
@@ -185,12 +185,12 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     
     if(state == M){
         _cacheLine->setState(I);
-        sendCommand(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
         InvalidatePUTMReqSent_++;
     }
     else if(state == E){
         _cacheLine->setState(I);
-        sendCommand(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        sendWriteback(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
         InvalidatePUTMReqSent_++;
     }
     else{
@@ -205,12 +205,12 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
 
     if(state == M){
-        _cacheLine->setState(I);
-        sendCommand(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        _cacheLine->setState(S);
+        sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
         InvalidatePUTMReqSent_++;
     }
     else{
-        _cacheLine->setState(S);
+        _cacheLine->setState(I);
         sendAckResponse(_event);
     }
 }
@@ -256,8 +256,8 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     MemEvent* forwardEvent;
     d_->debug(_L1_,"Forwarding Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i \n",
              _event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize());
-    if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, *_data);
-    else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, _lineSize, cmd, _lineSize);
+    if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
+    else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
 
     uint64 deliveryTime;
     if(_event->queryFlag(MemEvent::F_UNCACHED)){
@@ -282,10 +282,10 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
-void MESIBottomCC::sendCommand(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
+void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
-    MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cacheLine->getLineSize(), cmd, *data);
+    MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cmd, *data);
     response resp = {deliveryLink, newCommandEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
 }

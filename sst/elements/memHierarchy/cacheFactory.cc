@@ -103,7 +103,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     /* MSHR */
-    mshr_ = new MSHR(this, MSHRSize_ * 100000);
+    mshr_ = new MSHR(this, MSHRSize_);
     mshrUncached_ = new MSHR(this, MSHRSize_);
     /* Links */
     registerTimeBase("2 ns", true);        //  TODO:  Is this right?

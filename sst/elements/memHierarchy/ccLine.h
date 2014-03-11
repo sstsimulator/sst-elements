@@ -100,7 +100,6 @@ public:
     }
 
     void clear() {
-        d_->debug(C,L2,0, "Clearing ccLine\n");
         numSharers_ = 0;
         sharers_.reset();            
         exclusiveSharerExists_ = false;

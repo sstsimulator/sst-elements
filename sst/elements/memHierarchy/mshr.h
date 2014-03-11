@@ -14,7 +14,7 @@ namespace SST { namespace MemHierarchy {
 /*--------------------------------------------------------------------------------------------------------
  *  MSHR Methods
  *--------------------------------------------------------------------------------------------------------*/
-Cache::MSHR::MSHR(Cache* _cache, uint _maxSize): cache_(_cache), size_(0), maxSize_(_maxSize){}
+Cache::MSHR::MSHR(Cache* _cache, int _maxSize): cache_(_cache), size_(0), maxSize_(_maxSize){}
 
 
 const vector<mshrType*> Cache::MSHR::lookup(Addr baseAddr){
@@ -37,36 +37,33 @@ bool Cache::MSHR::insert(Addr baseAddr, Addr pointer){
     return insert(baseAddr, new mshrType(pointer));
 }
 
-bool Cache::MSHR::insert(Addr baseAddr, mshrType* mshrEntry){
+bool Cache::MSHR::insert(Addr baseAddr, mshrType* mshrEntry) throw(mshrException){
+    if(size_ >= maxSize_) throw mshrException();
     map_[baseAddr].push_back(mshrEntry);
     size_++;
-    addrLastInserted_ = baseAddr;
     return true;
 }
 
-bool Cache::MSHR::insert(Addr baseAddr, vector<mshrType*> events){
+bool Cache::MSHR::insertAll(Addr baseAddr, vector<mshrType*> events) throw(mshrException){
     if(events.empty()) return false;
     mshrTable::iterator it = map_.find(baseAddr);
     
     if(it != map_.end()) it->second.insert(it->second.end(), events.begin(), events.end());
     else {
         map_[baseAddr] = events;
-        size_ = 0;
     }
-    //size_ = size_ + events.size();
-    //cache_->d_->debug(C,L5,0, "MSHR Inserted All Events\n");
-    //cache_->d_->debug(C,L5,0, "MSHR Inserted All Events: Key Addr = %#016lllx, Event Addr = %#016lllx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, events.front()->getAddr(), CommandString[events.front()->getCmd()], size_, map_[baseAddr].size());
-    addrLastInserted_ = baseAddr;
+
+    size_ = size_ + events.size();
+    //cache_->d_->debug(C,L5,0, "MSHR Inserted All Events: Key Addr = %#016lllx, Event Addr = %#016lllx, Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", (uint64_t)baseAddr, (uint64_t)events.front()->getAddr(), CommandString[events.front()->getCmd()], size_, map_[baseAddr].size());
     return true;
 }
 
-vector<mshrType*> Cache::MSHR::remove(Addr baseAddr){
+vector<mshrType*> Cache::MSHR::removeAll(Addr baseAddr){
     mshrTable::iterator it = map_.find(baseAddr);
     assert(it != map_.end());
     vector<mshrType*> res = it->second;
     map_.erase(it);
-    //size_ = size_ - res.size(); assert(size_ >= 0);
-    //cache_->d_->debug(C,L5,0, "MSHR Removed All Events\n");
+    size_ = size_ - res.size(); assert(size_ >= 0);
     //cache_->d_->debug(C,L5,0, "MSHR Removed All Events: Key Addr = %#016lllx, Entry Size = %lu\n", baseAddr, res.size());
     return res;
 }
@@ -135,7 +132,6 @@ void Cache::MSHR::removeElement(Addr baseAddr, mshrType* mshrEntry){
     size_--; assert(size_ >= 0);
     cache_->d_->debug(C,0,0, "MSHR Removed Event\n");
 }
-
 /*
 void Cache::MSHR::printEntry(Addr baseAddr){
     mshrTable::iterator it = map_.find(baseAddr);
@@ -146,15 +142,8 @@ void Cache::MSHR::printEntry(Addr baseAddr){
         cache_->d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, baseAddr, event->getAddr(), CommandString[event->getCmd()]);
     }
 }
-
-void Cache::MSHR::printEntry2(vector<MemEvent*> events){
-    int i = 0;
-    for(vector<MemEvent*>::iterator it = events.begin(); it != events.end(); ++it, ++i) {
-        MemEvent* event = (MemEvent*)(*it);
-        cache_->d_->debug(C,L5,0, "Entry %i:  Event Addr: %#016lllx, Event Cmd = %s, Dst: %s\n", i, event->getAddr(), CommandString[event->getCmd()], event->getDst().c_str());
-    }
-}
 */
+
 }};
 
 

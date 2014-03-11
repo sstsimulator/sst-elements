@@ -276,8 +276,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
     } else {
         traceFP = NULL;
     }
-    
-    cacheLineSize = 64;
+
 
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
 	if ( 0 == ramSize )
@@ -512,8 +511,7 @@ void MemController::addRequest(MemEvent *ev)
 
         if(!req->isWrite) req->returnInM = false;
         if(req->isWrite && req->cmd != PutM){
-            DRAMReq *readReq = new DRAMReq(ev, ev->getSize());
-            readReq->setAddr(req->eventBaseAddr);
+            DRAMReq *readReq = new DRAMReq(ev, cacheLineSize);
             readReq->setSize(cacheLineSize);
             readReq->setGetXRespType();
             readReq->setIsWrite(false);
@@ -653,13 +651,13 @@ void MemController::performRequest(DRAMReq *req)
     Addr baseLocalAddr = convertAddressToLocalAddress(req->eventBaseAddr);
 
     req->respEvent = resp;
+    resp->setSize(cacheLineSize);
     
-    resp->setSize(cacheLineSize);  //TODO: make this a full cacheline, not just 64
+    //TODO: No need to write memory on GetX... only on PutM
 	if ( req->isWrite || req->cmd == PutM) {
         /* Write request to memory */
         dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Base Addr = %"PRIx64", Request size = %i\n",localEventAddr, baseLocalAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
-        //for ( int i = 0 ; i < cacheLineSize ; i++ ) resp->getPayload()[i] = memBuffer[baseLocalAddr + i];
         
         printMemory(req, localEventAddr, localAddr);
         
