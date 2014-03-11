@@ -17,8 +17,6 @@
         <memSize> 0x100000 </memSize>
         <do_write> 1 </do_write>
         <num_loadstore> 10000 </num_loadstore>
-        <uncacheRangeStart> 0  </uncacheRangeStart>
-        <uncacheRangeEnd> 1000  </uncacheRangeEnd>
     </cpuParams>
     <l1Params>
         <cache_frequency> 2 Ghz  </cache_frequency>

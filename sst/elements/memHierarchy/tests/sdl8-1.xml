@@ -18,8 +18,8 @@
         <workPerCycle> 1000 </workPerCycle>
         <commFreq> 100 </commFreq>
         <memSize> 0x100000 </memSize>
-        <do_write> 1 </do_write>
         <num_loadstore> 10000 </num_loadstore>
+        <do_write> 1 </do_write>
     </cpuParams>
     
     <l1Params>
@@ -76,7 +76,6 @@
     
     <directoryParams>
         <coherence_protocol> MSI </coherence_protocol>
-        <network_addr> 0 </network_addr>
         <network_bw> 1GHz </network_bw>
         <addr_range_start> 0x0 </addr_range_start>
         <addr_range_end> 0x1F000000 </addr_range_end> <!-- 512MB - 16MB for backingStoreSize -->
