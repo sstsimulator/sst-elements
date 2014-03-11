@@ -294,8 +294,13 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     Addr baseAddr = cacheLine->getBaseAddr();
     if(requestCompleted){
         mshr_->removeElement(baseAddr, event);
-        if(cmd == PutM || cmd == PutE)
-            processInvalidateAcknowledge(event, baseAddr, reActivation); /*PutM also functions as an Inv Ack */
+        if(cmd == PutM || cmd == PutE){
+            if(!L1_){                  /* Check if topCC line is locked */
+                CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[cacheLine->index()];
+                if(cacheLine->unlocked() && ccLine->isValid() && !reActivation) activatePrevEvents(baseAddr);
+            }
+        }
+            //processInvalidateAcknowledge(event, baseAddr, reActivation); /*PutM also functions as an Inv Ack */
         reActivateEventWaitingForUserLock(cacheLine, reActivation);
         delete event;
     }

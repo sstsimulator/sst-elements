@@ -183,6 +183,7 @@ void MESIBottomCC::processGetXRequest(MemEvent* event, CacheLine* cacheLine, Com
 void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     
+    //Refactor like processInvXRequest
     if(state == M){
         _cacheLine->setState(I);
         sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
@@ -203,14 +204,15 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
-
-    if(state == M){
+    if(state == M || state == E){
         _cacheLine->setState(S);
-        sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
         InvalidatePUTMReqSent_++;
+        if(state == M) sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        else           sendWriteback(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
     }
     else{
         _cacheLine->setState(I);
+        //WHY?
         sendAckResponse(_event);
     }
 }

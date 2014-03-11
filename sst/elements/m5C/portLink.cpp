@@ -160,6 +160,8 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 	case SST::Interfaces::GetSResp:
 		pkt->cmd = ::MemCmd::ReadResp;
 		pkt->isResponse = true;
+	    pkt->size = sstev->getSize();
+	    memcpy(pkt->data, &(sstev->getPayload()[0]), pkt->size);
 		break;
 	case SST::Interfaces::GetXResp:
 		pkt->cmd = ::MemCmd::WriteResp;
@@ -170,10 +172,7 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 		break;
 	}
 
-	pkt->size = sstev->getSize();
-    //std::cout << "PktSize: " << pkt->size << "  MemPkt::DataSize: " << (unsigned)MemPkt::DataSize << std::endl;
 	assert(pkt->size <= (unsigned)MemPkt::DataSize);
-	memcpy(pkt->data, &(sstev->getPayload()[0]), pkt->size);
     
     dbg->debug(CALL_INFO,0,0,"---->\n");
     dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %"PRIu64", Req Size =%u, Src =%s, QueueSize = %lu, Sent = %i\n", pkt->addr, sstev->getSize(), sstev->getSrc().c_str(), m_g5events.size(), ++sent);

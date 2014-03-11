@@ -182,16 +182,6 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     CCLine* l             = ccLines_[_cacheLine->index()];
 
     /* Send Data in E state */
-    /* if(l->isShareless() && (state == E || state == M)){
-        if(protocol_){
-            l->setExclusiveSharer(_childId);
-            ret = sendResponse(_event, E, data, _childId);
-        }
-        else{
-            l->addSharer(_childId);
-            ret = sendResponse(_event, S, data, _childId);
-        }
-    }*/
     if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_childId);
         ret = sendResponse(_event, E, data, _childId);
@@ -202,6 +192,8 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
         assert(!l->isSharer(_childId));
         assert(l->numSharers() == 1);                      // TODO: l->setState(InvX_A);  //sendInvalidates(InvX, lineIndex);
+        //l->setState(InvX_A);
+        //sendInvalidates(InvX, lineIndex, false, -1, true);
         l->setState(Inv_A);
         sendInvalidates(Inv, lineIndex, false, -1, true);
     }
@@ -245,8 +237,25 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
 void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _childId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
-    if(!(_ccLine->isSharer(_childId))) return;
-    _ccLine->clearExclusiveSharer(_childId);
+    //DANGEROUS if statement
+    //if(!(_ccLine->isSharer(_childId))) return;
+    if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_childId);
+    else if(_ccLine->isSharer(_childId)) _ccLine->removeSharer(_childId);
+
+   if(_ccLine->getState() == V) return;
+    assert(_ccLine->getAckCount() > 0);
+    _ccLine->decAckCount();
+
+    //assert(_ccLine->isSharer(_childId));
+    //_ccLine->clearExclusiveSharer(_childId);
+    if(_ccLine->getState() == InvX_A){
+        _ccLine->addSharer(_childId);  // M->S
+        assert(_ccLine->numSharers() == 1);
+     }
+     //TODO: get rid of ackCount, not needed since we have a bit vector
+    //if(_ccLine->getState() != V) _ccLine->decAckCount();
+
+
 }
 
 void MESITopCC::processPutSRequest(CCLine* _ccLine, int _childId, bool& _ret){
