@@ -24,9 +24,6 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-const int MemNIC::num_vcs = 3;
-
-
 /* Translates a MemEvent string destination to an integer */
 int MemNIC::addrForDest(const std::string &target)
 {
@@ -46,6 +43,8 @@ MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) 
     comp(comp), ci(ci), recvHandler(handler)
 {
     dbg.init("@t:MemNIC::@p():@l " + comp->getName() + ": ", 0, 0, Output::NONE); //TODO: Parameter
+
+	num_vcs = ci.num_vcs;
 
     flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;

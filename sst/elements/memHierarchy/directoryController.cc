@@ -56,6 +56,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "network";
     myInfo.link_bandwidth = net_bw;
+	myInfo.num_vcs = params.find_integer("network_num_vc", 4);
     myInfo.name = getName();
     myInfo.network_addr = addr;
     myInfo.type = MemNIC::TypeDirectoryCtrl;

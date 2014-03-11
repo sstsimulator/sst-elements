@@ -54,7 +54,8 @@ static const ElementInfoParam cache_params[] = {
     {"L1",                      "Specify whether cache is L1:  0, 1"},
     {"directory_at_next_level", "Specify if there is a flat directory-controller as the higher level memory: 0, 1"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
-    {"network_address",         "When using a directory controller, the network address of this cache."},
+    {"network_address",         "When using a directory controller, the network address of this cache.", ""},
+	{"network_num_vc",          "When using a directory controller, the number of VCS on the on-chip network.", "3"},
     {NULL, NULL, NULL}
 };
 
@@ -208,6 +209,7 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params)
 static const ElementInfoParam dirctrl_params[] = {
     {"network_addr",        "Network address of component.", NULL},
     {"network_bw",          "Network link bandwidth.", NULL},
+	{"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {"backing_store_size",  "Space reserved in backing store for controller information (default = 0x1000000 (16MB)).", "0x1000000"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
     {"addr_range_end",      "End of Address Range, for this controller.", NULL},
@@ -237,6 +239,7 @@ static const ElementInfoParam dmaengine_params[] = {
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
     {"netAddr",         "Network address of component.", NULL},
+	{"network_num_vc",  "The number of VCS on the on-chip network.", "3"},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };

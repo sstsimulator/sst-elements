@@ -117,6 +117,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory_link";
         myInfo.link_bandwidth = "2 ns"; // Time base as registered earlier
+		myInfo.num_vcs = params.find_integer("network_num_vc", 3);
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache;

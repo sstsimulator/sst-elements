@@ -56,6 +56,7 @@ public:
     struct ComponentInfo {
         std::string link_port;
         TimeConverter *link_tc;  // Optional, if link_bandwidth specified
+		int num_vcs;
         std::string link_bandwidth;
         std::string name;
         int network_addr;
@@ -140,7 +141,7 @@ public:
 private:
 
     Output dbg;
-    static const int num_vcs;
+    int num_vcs;
     size_t flitSize;
 
     Component *comp;
