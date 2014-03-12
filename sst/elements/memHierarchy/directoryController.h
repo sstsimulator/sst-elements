@@ -25,7 +25,6 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 
-
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -59,19 +58,21 @@ class DirectoryController : public Component {
 		bool dirty;
 		std::vector<bool> sharers;
 
-		DirEntry(Addr baseAddress, Addr _address, unsigned int _reqSize, uint32_t _bitlength)
+        std::list<DirEntry*>::iterator cacheIter;
+
+        DirEntry(Addr baseAddress, Addr _address, unsigned int _reqSize, uint32_t _bitlength)
         {
-			activeReq = NULL;
-			nextFunc = NULL;
+            activeReq = NULL;
+            nextFunc = NULL;
             lastRequest = NO_LAST_REQUEST;
-			waitingAcks = 0;
+            waitingAcks = 0;
             inController = true;
             baseAddr = baseAddress;
             addr = _address;
             reqSize = _reqSize;
-			dirty = false;
-			sharers.resize(_bitlength);
-		}
+            dirty = false;
+            sharers.resize(_bitlength);
+        }
 
 		uint32_t countRefs(void)
         {
@@ -92,7 +93,6 @@ class DirectoryController : public Component {
         uint32_t findOwner(void)
         {
             assert(dirty);
-            assert(countRefs() == 1);
             for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
                 if ( sharers[i] ) return i;
             }
@@ -136,18 +136,24 @@ class DirectoryController : public Component {
 	SST::Link *memLink;
     MemNIC *network;
 
+    size_t entryCacheMaxSize;
     size_t entryCacheSize;
     std::list<DirEntry*> entryCache;
 
     uint64_t numReqsProcessed;
     uint64_t totalReqProcessTime;
     uint64_t numCacheHits;
+    uint64_t dataReads;
+    uint64_t dataWrites;
+    uint64_t dirEntryReads;
+    uint64_t dirEntryWrites;
     Output::output_location_t printStatsLoc;
 
 
 
-	DirEntry* getDirEntry(Addr baseTarget);
+	DirEntry* getDirEntry(Addr target);
 	DirEntry* createDirEntry(Addr baseTarget, Addr target, uint32_t reqSize);
+
 
 
 	void handleACK(MemEvent *ev);
@@ -160,14 +166,16 @@ class DirectoryController : public Component {
 	void sendRequestedData(DirEntry* entry, MemEvent *new_ev);
 	void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);
 
-	void handleWriteback(DirEntry *entry, MemEvent *ev);
+	void handlePutM(DirEntry *entry, MemEvent *ev);
+	void handlePutS(DirEntry *entry, MemEvent *ev);
 
     void handleEviction(DirEntry *entry, MemEvent *ev);
 
 	void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 
 	uint32_t node_id(const std::string &name);
-	uint32_t node_name_to_id(const std::string &name);
+    uint32_t node_name_to_id(const std::string &name);
+
 
     void updateCacheEntry(DirEntry *entry);
 	void requestDirEntryFromMemory(DirEntry *entry);
