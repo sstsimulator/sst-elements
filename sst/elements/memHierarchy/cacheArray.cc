@@ -16,7 +16,7 @@ namespace SST { namespace MemHierarchy {
 SetAssociativeArray::SetAssociativeArray(Output* _dbg, unsigned int _cacheSize, unsigned int _lineSize, unsigned int _associativity,
                      ReplacementMgr* _rm, HashFunction* _hf, bool _sharersAware) :
                      CacheArray(_dbg, _cacheSize, _cacheSize/_lineSize,
-                     _associativity, _lineSize, _rm, _hf, _sharersAware), d_(_dbg){
+                     _associativity, _lineSize, _rm, _hf, _sharersAware) {
 
 }
 
@@ -65,12 +65,11 @@ void CacheArray::pMembers(){
 }
 
 void CacheArray::errorChecking(){
-    if(0 > cacheSize_ || 0 > numSets_) _abort(CacheArray, "Cache size and/or number of sets not greater than zero.\n");
+    if(0 == cacheSize_ || 0 == numSets_) _abort(CacheArray, "Cache size and/or number of sets not greater than zero.\n");
     if(!isPowerOfTwo(cacheSize_)) _abort(CacheArray, "Cache size is not a power of two. \n");
     if(!isPowerOfTwo(numSets_))   _abort(CacheArray, "Number of sets is not a power of two \n");
     if((numSets_ * associativity_) != numLines_) _abort(CacheArray, "Wrong configuration.  Make sure numSets * associativity = Size/cacheLineSize\n");
     if(associativity_ < 1) _abort(CacheArray, "Associativity has to be greater than zero.\n");
-    if(setMask_ < 0)        _abort(CacheArray, "Set mask not set correctly. \n");
 }
 
 

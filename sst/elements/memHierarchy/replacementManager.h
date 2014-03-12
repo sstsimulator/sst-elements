@@ -43,8 +43,6 @@ class ReplacementMgr{
         int32_t bestCandidate;
         uint64_t* array;
         uint numLines_;
-        Output* d_;
-        bool sharersAware;
 
         struct Rank {
             uint64_t timestamp;
@@ -71,7 +69,7 @@ class ReplacementMgr{
     Rank bestRank;
 
     public:
-    LRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines), d_(_dbg), sharersAware(_sharersAware) {
+    LRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines)  {
         array = (uint64_t*) calloc(numLines_, sizeof(uint64_t));
         bestRank.reset();
     }

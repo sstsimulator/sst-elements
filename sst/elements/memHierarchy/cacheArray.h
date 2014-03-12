@@ -163,12 +163,10 @@ public:
     SetAssociativeArray(Output* _dbg, unsigned int _cacheSize, unsigned int _lineSize, unsigned int _associativity,
                         ReplacementMgr* _rp, HashFunction* _hf, bool _sharersAware);
 
-    inline int find(Addr baseAddr, bool updateReplacement);
-    inline unsigned int preReplace(Addr baseAddr);
-    inline void replace(Addr baseAddr, unsigned int candidate_id);
-    
-private:
-    Output* d_;
+    int find(Addr baseAddr, bool updateReplacement);
+    unsigned int preReplace(Addr baseAddr);
+    void replace(Addr baseAddr, unsigned int candidate_id);
+
 };
 
 }}

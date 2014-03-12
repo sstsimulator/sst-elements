@@ -114,28 +114,28 @@ public:
         }
         friend class boost::serialization::access;
         template<class Archive>
-            void
-            serialize(Archive & ar, const unsigned int version )
-            {
-                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
-                ar & BOOST_SERIALIZATION_NVP(name);
-                ar & BOOST_SERIALIZATION_NVP(address);
-                ar & BOOST_SERIALIZATION_NVP(compType);
-                switch ( compType ) {
-                case TypeCache:
-                    ar & BOOST_SERIALIZATION_NVP(compInfo.cache.blocksize);
-                    ar & BOOST_SERIALIZATION_NVP(compInfo.cache.num_blocks);
-                    break;
-                case TypeDirectoryCtrl:
-                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeStart);
-                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeEnd);
-                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveSize);
-                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveStep);
-                    break;
-                default:
-                    _abort(MemNIC, "Don't know how to serialize this type.\n");
-                }
+        void
+        serialize(Archive & ar, const unsigned int version )
+        {
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
+            switch ( compType ) {
+            case TypeCache:
+                ar & BOOST_SERIALIZATION_NVP(compInfo.cache.blocksize);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.cache.num_blocks);
+                break;
+            case TypeDirectoryCtrl:
+                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeStart);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeEnd);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveSize);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveStep);
+                break;
+            default:
+                _abort(MemNIC, "Don't know how to serialize this type.\n");
             }
+            ar & BOOST_SERIALIZATION_NVP(compType);
+            ar & BOOST_SERIALIZATION_NVP(address);
+            ar & BOOST_SERIALIZATION_NVP(name);
+        }
     };
 
 private:
