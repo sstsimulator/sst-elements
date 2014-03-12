@@ -13,6 +13,7 @@
 
 #include "ctrlMsg.h"
 #include "ctrlMsgXXX.h"
+#include "nic.h"
 
 using namespace SST::Firefly;
 using namespace SST;
@@ -23,7 +24,7 @@ API::API( Component* owner, Params& params )
     m_xxx = new XXX( owner, params );
 }
 
-void API::init( Info* info, Nic::VirtNic* nic )
+void API::init( Info* info, VirtNic* nic )
 {
     m_xxx->init( info, nic );
 }

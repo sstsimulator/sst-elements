@@ -19,13 +19,13 @@
 #include "group.h"
 #include "info.h"
 #include "protocolAPI.h"
-#include "nic.h"
 
 namespace SST {
 namespace Firefly {
 
 class FunctionSM;
 class NodeInfo;
+class VirtNic;
 
 class Hades : public Hermes::MessageInterface
 {
@@ -129,19 +129,7 @@ class Hades : public Hermes::MessageInterface
 
   private:
 
-    enum { WaitFunc, WaitIO } m_state;
-
-    int myNodeId() { 
-        if ( m_nic ) {
-            return m_nic->getNodeId();
-        } else {
-            return -1;
-        }
-    }
-
-    Hermes::RankID _myWorldRank() {
-        return m_info.worldRank();
-    }
+    int myNodeId();
 
     int sizeofDataType( Hermes::PayloadDataType type ) { 
         return m_info.sizeofDataType(type); 
@@ -151,7 +139,7 @@ class Hades : public Hermes::MessageInterface
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
 
     SST::Link*          m_enterLink;  
-    Nic*                m_nic;
+    VirtNic*            m_virtNic;
     NodeInfo*           m_nodeInfo;
     Info                m_info;
     FunctionSM*         m_functionSM;

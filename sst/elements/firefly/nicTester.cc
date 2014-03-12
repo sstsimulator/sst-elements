@@ -13,8 +13,11 @@
 
 #include <sst/core/debug.h>
 #include <sst/core/params.h>
+#include <sst/core/link.h>
 
 #include "nicTester.h"
+#include "ioVec.h"
+#include "virtNic.h"
 
 using namespace SST;
 using namespace SST::Firefly;
@@ -58,31 +61,29 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
 
     Params nicParams = params.find_prefix_params("nicParams." );
 
-    m_nic = dynamic_cast<Nic*>(
+    m_vNic = dynamic_cast<VirtNic*>(
                 loadModuleWithComponent( name, this, nicParams ));
-    assert( m_nic );
+    assert( m_vNic );
 
 
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:NicTester::@p():@l ", m_nic->getNodeId() );
+    snprintf(buffer,100,"@t:%d:NicTester::@p():@l ", m_vNic->getNodeId() );
     m_dbg.setPrefix(buffer);
 
-    m_vNic = m_nic->virtNicInit();
-    assert( m_vNic );
 
     m_vNic->setNotifyOnSendPioDone( 
-        new Nic::Handler<NicTester,void*>(this, &NicTester::notifySendPioDone )
+        new VirtNic::Handler<NicTester,void*>(this, &NicTester::notifySendPioDone )
     );
     m_vNic->setNotifyOnSendDmaDone( 
-        new Nic::Handler<NicTester,void*>(this, &NicTester::notifySendDmaDone )
+        new VirtNic::Handler<NicTester,void*>(this, &NicTester::notifySendDmaDone )
     );
 
     m_vNic->setNotifyOnRecvDmaDone( 
-        new Nic::Handler4Args<NicTester,int,int,size_t,void*>(
+        new VirtNic::Handler4Args<NicTester,int,int,size_t,void*>(
                                 this, &NicTester::notifyRecvDmaDone )
     );
     m_vNic->setNotifyNeedRecv( 
-        new Nic::Handler3Args<NicTester,int,int,size_t>(
+        new VirtNic::Handler3Args<NicTester,int,int,size_t>(
                     this, &NicTester::notifyNeedRecv)
     );
 
@@ -96,7 +97,7 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
 
 void NicTester::init( unsigned int phase )
 {
-    m_nic->init( phase );
+    m_vNic->init( phase );
 }
 
 void NicTester::setup()

@@ -4,7 +4,6 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 
-#include "./nic.h"
 #include <sst/core/output.h>
 
 class DmaEntry;
@@ -21,6 +20,8 @@ namespace Firefly {
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(STRING) #STRING,
 
+
+class VirtNic;
 
 class NicTester : public SST::Component {
 
@@ -49,8 +50,7 @@ class NicTester : public SST::Component {
 
     SST::Link*  m_selfLink;
     SST::Link*  m_hostLink;
-    Nic*            m_nic;
-    Nic::VirtNic*   m_vNic;
+    VirtNic*    m_vNic;
     Output      m_dbg;
 };
 

@@ -14,12 +14,11 @@
 
 #include <sst/core/module.h>
 
-#include "nic.h"
-
 namespace SST {
 namespace Firefly {
 
 class Info;
+class VirtNic;
 
 class ProtocolAPI : public SST::Module 
 {
@@ -28,7 +27,7 @@ class ProtocolAPI : public SST::Module
     virtual ~ProtocolAPI() {}
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
-    virtual void init( Info*, Nic::VirtNic* ) = 0;  
+    virtual void init( Info*, VirtNic* ) = 0;  
     virtual std::string name() = 0;
     virtual void setRetLink(SST::Link* link) { assert(0); } 
 };

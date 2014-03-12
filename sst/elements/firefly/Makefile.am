@@ -68,6 +68,8 @@ libfirefly_la_SOURCES = \
 	merlinEvent.h \
 	nicTester.h \
 	nicTester.cc \
+	virtNic.h \
+	virtNic.cc \
 	nic.h \
 	nic.cc
 

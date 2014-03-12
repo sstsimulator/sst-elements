@@ -317,7 +317,7 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 
     size_t len = entry->count * info()->sizeofDataType( entry->dtype );
 
-    Nic::NodeId destNode =
+    CtrlMsg::nid_t destNode =
             info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
 
     if ( len <= shortMsgLength() - sizeof(MsgHdr)) {
@@ -355,7 +355,7 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 //
 bool LongMsgProtocol::postSendEntryReg_CB( SendCallbackEntry* cbe )
 {
-    Nic::NodeId destNode =
+    CtrlMsg::nid_t destNode =
             info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
 
     std::vector<IoVec>  vec;

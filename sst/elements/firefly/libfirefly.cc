@@ -18,6 +18,7 @@
 #include <testDriver.h>
 #include <nicTester.h>
 #include <hades.h>
+#include <virtNic.h>
 #include <funcSM/init.h>
 #include <funcSM/fini.h>
 #include <funcSM/rank.h>
@@ -42,27 +43,33 @@ using namespace Firefly;
 BOOST_CLASS_EXPORT(MerlinFireflyEvent)
 
 static SST::Component*
+create_testDriver(SST::ComponentId_t id, SST::Params& params)
+{
+    return new TestDriver(id, params);
+}
+
+static SST::Component*
 create_nicTester(SST::ComponentId_t id, SST::Params& params)
 {
     return new NicTester( id, params );
 }
 
-static Module* 
-load_nic(Component* comp, Params& params)
-{
-    return new Nic( comp, params );
-}
-
 static SST::Component*
-create_testDriver(SST::ComponentId_t id, SST::Params& params)
+create_nic(SST::ComponentId_t id, SST::Params& params)
 {
-    return new TestDriver(id, params);
+    return new Nic( id, params );
 }
 
 static Module*
 load_hades(Component* comp, Params& params)
 {
     return new Hades(comp, params);
+}
+
+static Module*
+load_VirtNic(Component* comp, Params& params)
+{
+    return new VirtNic(comp, params);
 }
 
 static Module*
@@ -176,6 +183,11 @@ static const ElementInfoComponent components[] = {
       NULL,
       create_nicTester,
     },
+    { "nic",
+      "nic",
+      NULL,
+      create_nic,
+    },
     { NULL, NULL, NULL, NULL }
 };
 
@@ -187,11 +199,11 @@ static const ElementInfoModule modules[] = {
       load_hades,
       NULL,
     },
-    { "nic",
-      "Nic module",
+    { "VirtNic",
+      "Firefly VirtNic module",
       NULL,
       NULL,
-      load_nic,
+      load_VirtNic,
       NULL,
     },
     { "Init",

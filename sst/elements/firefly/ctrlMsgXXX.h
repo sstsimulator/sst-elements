@@ -14,7 +14,6 @@
 #define COMPONENTS_FIREFLY_CTRLMSGXXX_H
 
 #include "ctrlMsg.h"
-#include "nic.h"
 #include "ioVec.h"
 
 namespace SST {
@@ -48,8 +47,6 @@ class FunctorBase_1;
 
 class StateArgsBase;
 
-class VirtNic; 
-
 typedef unsigned char key_t;
 
 static const key_t LongAckKey  = 1 << (sizeof(key_t) * 8 - 2);
@@ -73,7 +70,7 @@ class XXX  {
 
   public:
     XXX( Component* owner, Params& params );
-    void init( Info* info, Nic::VirtNic* );
+    void init( Info* info, VirtNic* );
     void setup();
     void setRetLink( Link* link );
 
@@ -87,8 +84,8 @@ class XXX  {
     void registerRegion( region_t, nid_t, void* buf, size_t len, FunctorBase_0<bool>* );
     void unregisterRegion( region_t, FunctorBase_0<bool>* );
 
-    Info*           info() { return m_info; }
-    Nic::VirtNic&   nic() { return *m_nic; }           
+    Info*      info() { return m_info; }
+    VirtNic&   nic() { return *m_nic; }           
 
     void setReturnState( FunctorBase_0<bool>* state ) {
         m_returnState = state; 
@@ -168,7 +165,7 @@ class XXX  {
     Link*           m_retLink;
     Link*           m_delayLink;
     Info*           m_info;
-    Nic::VirtNic*   m_nic;
+    VirtNic*        m_nic;
 
     FunctorBase_0<bool>*    m_returnState;
     SendState<XXX>*         m_sendState;

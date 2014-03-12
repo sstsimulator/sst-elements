@@ -13,14 +13,17 @@
 #ifndef COMPONENTS_FIREFLY_CTRLMSG_H
 #define COMPONENTS_FIREFLY_CTRLMSG_H
 
+#include <sst/core/component.h>
 #include "protocolAPI.h"
 #include "ctrlMsgFunctors.h"
+#include "ioVec.h"
 
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
 
-typedef Nic::NodeId  nid_t;
+//typedef VirtNic::NodeId  nid_t;
+typedef int  nid_t;
 typedef uint32_t     tag_t;
 
 struct Status {
@@ -39,7 +42,8 @@ struct CommReq {
     void* usrPtr;
 };
 
-static const nid_t  AnyNid = Nic::AnyId; 
+//static const nid_t  AnyNid = VirtNic::AnyId; 
+static const nid_t  AnyNid = -1;
 static const tag_t  AnyTag = -1; 
 typedef int region_t;
 
@@ -51,7 +55,7 @@ class API : public ProtocolAPI {
   public:
     API( Component* owner, Params& );
 
-    virtual void init( Info* info, Nic::VirtNic* );
+    virtual void init( Info* info, VirtNic* );
     virtual void setup();
     virtual Info* info();
 

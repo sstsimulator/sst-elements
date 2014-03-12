@@ -23,28 +23,134 @@
 namespace SST {
 namespace Firefly {
 
-
 class MerlinFireflyEvent;
 
-class Nic : public SST::Module  {
+class NicInitEvent : public Event {
+
+  public:
+    int node;
+
+    NicInitEvent( int _node ) :
+        Event(),
+        node( _node )
+    {
+    }
+
+  private:
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(node);
+    }
+};
+
+class NicCmdEvent : public Event {
+
+  public:
+    enum Type { PioSend, DmaSend, DmaRecv } type;
+    int  node;
+    int tag;
+    std::vector<IoVec> iovec;
+    void* key;
+
+    NicCmdEvent( Type _type, int _node, int _tag,
+            std::vector<IoVec>& _vec, void* _key ) :
+        Event(),
+        type( _type ),
+        node( _node ),
+        tag( _tag ),
+        iovec( _vec ),
+        key( _key )
+    {
+    }
+
+  private:
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(type);
+        ar & BOOST_SERIALIZATION_NVP(node);
+        ar & BOOST_SERIALIZATION_NVP(tag);
+        ar & BOOST_SERIALIZATION_NVP(iovec);
+        ar & BOOST_SERIALIZATION_NVP(key);
+    }
+};
+
+class NicRespEvent : public Event {
+
+  public:
+    enum Type { PioSend, DmaSend, DmaRecv, NeedRecv } type;
+    int  node;
+    int tag;
+    int len;
+    void* key;
+
+    NicRespEvent( Type _type, int _node, int _tag,
+            int _len, void* _key ) :
+        Event(),
+        type( _type ),
+        node( _node ),
+        tag( _tag ),
+        len( _len ),
+        key( _key )
+    {
+    }
+
+    NicRespEvent( Type _type, int _node, int _tag,
+            int _len ) :
+        Event(),
+        type( _type ),
+        node( _node ),
+        tag( _tag ),
+        len( _len )
+    {
+    }
+
+    NicRespEvent( Type _type, void* _key ) :
+        Event(),
+        type( _type ),
+        key( _key )
+    {
+    }
+
+  private:
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(type);
+        ar & BOOST_SERIALIZATION_NVP(node);
+        ar & BOOST_SERIALIZATION_NVP(tag);
+        ar & BOOST_SERIALIZATION_NVP(len);
+        ar & BOOST_SERIALIZATION_NVP(key);
+    }
+};
+
+class Nic : public SST::Component  {
 
   public:
     typedef uint32_t NodeId;
     static const NodeId AnyId = -1;
 
-    class VirtNic;
-
   private:
 
     class SelfEvent : public SST::Event {
       public:
-        enum { DmaSend, DmaRecv, PioSend, DmaSendFini,
-                DmaRecvFini, PioSendFini, NeedRecvFini,
-                MatchDelay, ProcessMerlinEvent,
+        enum { MatchDelay, ProcessMerlinEvent,
                 ProcessSend } type;
         ~SelfEvent() {}
 
-        VirtNic*            vNic;
         int                 node;
         int                 tag;
         std::vector<IoVec>  iovec;
@@ -52,6 +158,8 @@ class Nic : public SST::Module  {
         size_t              len;
         MerlinFireflyEvent* mEvent;
         bool                retval;
+
+        int                 vNicNum;
     };
 
     struct MsgHdr {
@@ -60,99 +168,39 @@ class Nic : public SST::Module  {
         int    vNicId;
     };
 
-  public:
-
-    // Functor classes for handling callbacks
-    template < typename argT >
-    class HandlerBase {
+    class VirtNic {
+        Nic& m_nic;
       public:
-        virtual bool operator()(argT) = 0;
-        virtual ~HandlerBase() {}
+        VirtNic( Nic&, int id );
+        void handleCoreEvent( Event* );
+        void init( unsigned int phase );
+        Link* m_toCoreLink;
+        int id;
+        void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
+        void notifyNeedRecv( int src, int tag, size_t len );
+        void notifySendDmaDone( void* key );
+        void notifySendPioDone( void* key );
     };
 
-    template <typename classT, typename argT >
-    class Handler : public HandlerBase<argT> {
-      private:
-        typedef bool (classT::*PtrMember)(argT);
-        classT* object;
-        const PtrMember member;
-        argT data;
-
-      public:
-        Handler( classT* const object, PtrMember member ) :
-            object(object),
-            member(member)
-        {}
-
-        bool operator()(argT data) {
-            return (object->*member)(data);
-        }
-    };
-
-    template < typename T1, typename T2, typename T3 >
-    class HandlerBase3Args {
-      public:
-        virtual bool operator()( T1, T2, T3 ) = 0;
-        virtual ~HandlerBase3Args() {}
-    };
-
-    template <typename classT, typename T1, typename T2, typename T3 >
-    class Handler3Args : public HandlerBase3Args< T1, T2, T3 > {
-      private:
-        typedef bool (classT::*PtrMember)( T1, T2, T3 );
-        classT* object;
-        const PtrMember member;
-
-      public:
-        Handler3Args( classT* const object, PtrMember member ) :
-            object(object),
-            member(member)
-        {}
-
-        bool operator()( T1 arg1, T2 arg2, T3 arg3) {
-            return (object->*member)( arg1, arg2, arg3);
-        }
-    };
-
-    template < typename T1, typename T2, typename T3, typename T4 >
-    class HandlerBase4Args {
-      public:
-        virtual bool operator()( T1, T2, T3, T4 ) = 0;
-        virtual ~HandlerBase4Args() {}
-    };
-
-    template <typename classT, typename T1, typename T2,
-                                        typename T3, typename T4 >
-    class Handler4Args : public HandlerBase4Args< T1, T2, T3, T4 > {
-      private:
-        typedef bool (classT::*PtrMember)( T1, T2, T3, T4 );
-        classT* object;
-        const PtrMember member;
-
-      public:
-        Handler4Args( classT* const object, PtrMember member ) :
-            object(object),
-            member(member)
-        {}
-
-        bool operator()( T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-            return (object->*member)( arg1, arg2, arg3, arg4 );
-        }
-    };
 
     class Entry {
       public:
-        Entry( SelfEvent* event ) : 
+        Entry( int _vNicNum, NicCmdEvent* event ) : 
             currentVec(0),
             currentPos(0),
             currentLen(0),
-            m_event( event )
+            m_event( event ),
+            m_vNicNum( _vNicNum )
         {
         }
 
         int node() { return m_event->node; }
+
+        int vNicNum() { return m_vNicNum; }
         std::vector<IoVec>& ioVec() { return m_event->iovec; }
-        SelfEvent* event() { return m_event; }
+
+        NicCmdEvent* event() { return m_event; }
+
         size_t totalBytes() {
             size_t bytes = 0;
             for ( unsigned int i = 0; i < m_event->iovec.size(); i++ ) {
@@ -167,109 +215,25 @@ class Nic : public SST::Module  {
         int         tag;
         size_t      len;
 
+
       private:
-        SelfEvent*  m_event;
+        NicCmdEvent*  m_event;
+        int           m_vNicNum;
     };
 
-    class VirtNic {
-      public:
-        VirtNic( Nic&  nic, int id ) : 
-            m_nic( nic ),
-            m_id( id ),
-            m_notifySendPioDone(NULL),
-            m_notifySendDmaDone(NULL),
-            m_notifyRecvDmaDone(NULL),
-            m_notifyNeedRecv(NULL)
-        {
-        }
- 
-        int getNodeId() { 
-            return m_nic.getNodeId( this );
-        }
+public:
 
-        bool canDmaSend() { return m_nic.canDmaSend( this ); }
-        bool canDmaRecv() { return m_nic.canDmaRecv( this ); }
+    Nic(ComponentId_t, Params& );
 
-        void dmaSend( int dest, int tag, std::vector<IoVec>& vec, void* key ) {
-            m_nic.dmaSend( this, dest, tag, vec, key );
-        }
-
-        void dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key ) {
-            m_nic.dmaRecv( this, src, tag, vec, key );
-        }
-
-        void pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key ) {
-            m_nic.pioSend( this, dest, tag, vec, key );
-        }
-
-        inline void setNotifyOnSendDmaDone(HandlerBase<void*>* functor) { 
-            m_notifySendDmaDone = functor;
-        }
-
-        inline void setNotifyOnRecvDmaDone(
-                HandlerBase4Args<int,int,size_t,void*>* functor) { 
-            m_notifyRecvDmaDone = functor;
-        }
-
-        inline void setNotifyOnSendPioDone(HandlerBase<void*>* functor) { 
-            m_notifySendPioDone = functor;
-        }
-
-        inline void setNotifyNeedRecv(
-                HandlerBase3Args<int,int,size_t>* functor) { 
-            m_notifyNeedRecv = functor;
-        }
-
-        void notifySendPioDone( void* key ) {
-            (*m_notifySendPioDone)(key );
-        }
-
-        void notifySendDmaDone( void* key ) {
-            (*m_notifySendDmaDone)(key );
-        }
-
-        void notifyRecvDmaDone( int src, int tag, size_t len, void* key ) {
-            (*m_notifyRecvDmaDone)( src, tag, len, key  );
-        }
-
-        void notifyNeedRecv( int src, int tag, size_t length ) {
-            (*m_notifyNeedRecv)( src, tag, length );
-        }
-
-        int id() { return m_id; }
-
-      private:   
-        Nic& m_nic;
-        int m_id;
-        HandlerBase<void*>* m_notifySendPioDone; 
-        HandlerBase<void*>* m_notifySendDmaDone; 
-        HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone; 
-        HandlerBase3Args<int, int, size_t>* m_notifyNeedRecv;
-    };
-
-    Nic(Component*, Params& );
-
-    void init( unsigned int phase ) {
-        m_linkControl->init(phase);
-    }
-
-    VirtNic* virtNicInit( );
-
-    int getNodeId( ) { return m_myNodeId; }
-    int getNodeId( VirtNic* vNic ) { return m_myNodeId; }
-    bool canDmaSend( VirtNic* vNic ) { return true; }
-    bool canDmaRecv( VirtNic* vNic ) { return true; }
-    bool canPioSend( VirtNic* vNic ) { return true; } 
-    void dmaSend( VirtNic*, int dest, int tag, std::vector<IoVec>&, void* key );
-    void dmaRecv( VirtNic*, int src, int tag, std::vector<IoVec>&,  void* key );
-    void pioSend( VirtNic*, int dest, int tag, std::vector<IoVec>&, void* key );
-
+    void init( unsigned int phase );
+    int getNodeId() { return m_myNodeId; }
 
   private:
     void handleSelfEvent( Event* );
-    void dmaSend( SelfEvent* );
-    void pioSend( SelfEvent* );
-    void dmaRecv( SelfEvent* );
+    void handleVnicEvent( Event*, int );
+    void dmaSend( NicCmdEvent*, int );
+    void pioSend( NicCmdEvent*, int );
+    void dmaRecv( NicCmdEvent*, int );
     void processSend();
     Entry* processSend( Entry* );
 
@@ -281,42 +245,23 @@ class Nic : public SST::Module  {
     bool findRecv( MerlinFireflyEvent*, MsgHdr& );
     void moveEvent( MerlinFireflyEvent* );
 
-    void notifySendPioDone( VirtNic* nic, void* key ) {
-        SelfEvent* event = new SelfEvent;
-        event->type = SelfEvent::PioSendFini;
-        event->vNic = nic;
-        event->key = key;
-        m_selfLink->send( m_rxBusDelay, event );
+    void notifySendDmaDone( int vNicNum, void* key ) {
+        m_vNicV[vNicNum]->notifySendDmaDone(  key );
+    }
+    void notifySendPioDone( int vNicNum, void* key ) {
+        m_vNicV[vNicNum]->notifySendPioDone(  key );
     }
 
-    void notifySendDmaDone( VirtNic* nic, void* key ) {
-        SelfEvent* event = new SelfEvent;
-        event->type = SelfEvent::DmaSendFini;
-        event->vNic = nic;
-        event->key = key;
-        m_selfLink->send( m_rxBusDelay, event );
+    void notifyRecvDmaDone( int vNicNum, int src, int tag, size_t len, void* key ) {
+        m_vNicV[vNicNum]->notifyRecvDmaDone( src, tag, len, key );
     }
 
-    void notifyRecvDmaDone( VirtNic* nic, int src, int tag, size_t len, void* key ) {
-        SelfEvent* event = new SelfEvent;
-        event->type = SelfEvent::DmaRecvFini;
-        event->vNic = nic;
-        event->key = key;
-        event->node = src;
-        event->tag = tag;
-        event->len = len;
-        m_selfLink->send( m_rxBusDelay, event );
+    void notifyNeedRecv( int vNicNum, int src, int tag, size_t length ) {
+        m_vNicV[vNicNum]->notifyNeedRecv( src, tag, length );
     }
 
-    void notifyNeedRecv( VirtNic*nic, int src, int tag, size_t length ) {
-        SelfEvent* event = new SelfEvent;
-        event->type = SelfEvent::NeedRecvFini;
-        event->vNic = nic;
-        event->node = src;
-        event->tag = tag;
-        event->len = length;
-        m_selfLink->send( m_rxBusDelay, event );
-    }
+    size_t copyIn( Output& dbg, Nic::Entry& entry, MerlinFireflyEvent& event );
+    bool  copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry );
 
     int fattree_ID_to_IP(int id);
     int IP_to_fattree_ID(int ip);
@@ -328,8 +273,6 @@ class Nic : public SST::Module  {
     std::vector< std::map< int, std::deque<Entry*> > > m_recvM;
     std::map< int, Entry* > m_activeRecvM;;
  
-    int                     m_txBusDelay;
-    int                     m_rxBusDelay;
     int                     m_rxMatchDelay;
     int                     m_txDelay;
     MerlinFireflyEvent*     m_pendingMerlinEvent;
@@ -352,7 +295,7 @@ class Nic : public SST::Module  {
     int  m_ftRadix;
     int  m_ftLoading;
 
-};
+}; 
 
 } // namesapce Firefly 
 } // namespace SST

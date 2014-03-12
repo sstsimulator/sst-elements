@@ -15,6 +15,7 @@
 #include <sst/core/params.h>
 #include <sstream>
 
+#include "virtNic.h"
 #include "ctrlMsgXXX.h"
 #include "ctrlMsgSendState.h"
 #include "ctrlMsgRecvState.h"
@@ -57,22 +58,24 @@ XXX::XXX( Component* owner, Params& params ) :
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 }
 
-void XXX::init( Info* info, Nic::VirtNic* nic )
+void XXX::init( Info* info, VirtNic* nic )
 {
     m_info = info;
     m_nic = nic;
-    m_nic->setNotifyOnSendPioDone(
-        new Nic::Handler<XXX,void*>(this, &XXX::notifySendPioDone )
+    nic->setNotifyOnSendPioDone(
+        new VirtNic::Handler<XXX,void*>(this, &XXX::notifySendPioDone )
     );
-    m_nic->setNotifyOnSendDmaDone(
-        new Nic::Handler<XXX,void*>(this, &XXX::notifySendDmaDone )
+    nic->setNotifyOnSendDmaDone(
+        new VirtNic::Handler<XXX,void*>(this, &XXX::notifySendDmaDone )
     );
-    m_nic->setNotifyOnRecvDmaDone(
-        new Nic::Handler4Args<XXX,int,int,size_t,void*>(
+
+    nic->setNotifyOnRecvDmaDone(
+        new VirtNic::Handler4Args<XXX,int,int,size_t,void*>(
                                 this, &XXX::notifyRecvDmaDone )
     );
-    m_nic->setNotifyNeedRecv(
-        new Nic::Handler3Args<XXX,int,int,size_t>(this, &XXX::notifyNeedRecv )
+    nic->setNotifyNeedRecv(
+        new VirtNic::Handler3Args<XXX,int,int,size_t>(
+                                this, &XXX::notifyNeedRecv )
     );
 }
 

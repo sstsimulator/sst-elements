@@ -22,10 +22,10 @@
 #include <iostream>
 #include <fstream>
 
-//#include "ioapi.h"
 #include "functionSM.h"
 #include "entry.h"
 #include "nodeInfo.h"
+#include "virtNic.h"
 
 #include "funcSM/api.h"
 
@@ -34,7 +34,7 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     MessageInterface(),
-    m_state( WaitFunc )
+    m_virtNic(NULL)
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc = 
@@ -45,9 +45,10 @@ Hades::Hades( Component* owner, Params& params ) :
     Params nicParams = params.find_prefix_params("nicParams." );
 
     std::string moduleName = params.find_string("nicModule"); 
-    m_nic = dynamic_cast<Nic*>(owner->loadModuleWithComponent( 
+
+    m_virtNic = dynamic_cast<VirtNic*>(owner->loadModuleWithComponent( 
                         moduleName, owner, nicParams ) );
-    if ( !m_nic ) {
+    if ( !m_virtNic ) {
         m_dbg.fatal(CALL_INFO,0," Unable to find nic module'%s'\n",
                                         moduleName.c_str());
     }
@@ -104,7 +105,7 @@ Hades::Hades( Component* owner, Params& params ) :
         dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
                             "firefly.LongMsgProto", owner, tmpParams ) );
 
-    m_protocolM[ protoNum ]->init( &m_info, m_nic->virtNicInit() );
+    m_protocolM[ protoNum ]->init( &m_info, m_virtNic );
 
     m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] =
                                                 m_protocolM[ protoNum ];
@@ -130,6 +131,7 @@ void Hades::_componentSetup()
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     Group* group = m_info.getGroup(Hermes::GroupWorld);
+    assert( group );
     for ( unsigned int i = 0; i < group->size(); i++ ) {
         m_dbg.verbose(CALL_INFO,2,0,"group rank %d, %d %d\n",
                                     i,group->getNodeId( i ),myNodeId() );
@@ -155,6 +157,15 @@ void Hades::_componentSetup()
     }
 
     m_functionSM->setup();
+}
+
+int Hades::myNodeId()
+{
+    if ( m_virtNic ) {
+        return m_virtNic->id();
+    } else {
+        return -1;
+    }
 }
 
 Group* Hades::initAdjacentMap( int numRanks, 
@@ -200,8 +211,7 @@ Group* Hades::initRoundRobinMap( int numRanks,
 
 void Hades::_componentInit(unsigned int phase )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    m_nic->init(phase);
+    m_virtNic->init( phase );
 }
 
 int Hades::myWorldSize()
@@ -211,7 +221,7 @@ int Hades::myWorldSize()
 
 Hermes::RankID Hades::myWorldRank() 
 {
-    int rank = _myWorldRank();
+    int rank = m_info.worldRank();
     m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);
     if ( -1 == rank ) {
         m_dbg.fatal(CALL_INFO,0,"%s() rank not set yet\n",__func__);
