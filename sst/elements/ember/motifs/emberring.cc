@@ -25,7 +25,9 @@ inline long mod( long a, long b )
 void EmberRingGenerator::generate(const SST::Output* output, const uint32_t phase,
 	std::queue<EmberEvent*>* evQ) {
 
-    uint32_t to = mod(rank + 1, size), from = mod( rank - 1, size );
+    uint32_t to = mod(rank + 1, size), from = mod( (signed int) rank - 1, size );
+    printf("EmberRingGenerator:%s() rank=%d to=%d from=%d\n",__func__,rank,to,from);
+
 	if(phase < iterations) {
 
 		EmberSendEvent* send = new EmberSendEvent((uint32_t) to, messageSize, 0, (Communicator) 0);
