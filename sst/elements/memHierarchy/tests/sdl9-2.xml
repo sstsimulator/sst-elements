@@ -78,7 +78,7 @@
     
     <directoryParams>
         <coherence_protocol> MSI </coherence_protocol>
-        <network_addr> 0 </network_addr>
+        <network_address> 0 </network_address>
         <network_bw> 1GHz </network_bw>
         <addr_range_start> 0x0 </addr_range_start>
         <addr_range_end> 0x1F000000 </addr_range_end> <!-- 512MB - 16MB for backingStoreSize -->
@@ -173,7 +173,7 @@
 
     <component name="dirctrl" type="memHierarchy.DirectoryController">
         <params include=directoryParams>
-            <network_addr> 0 </network_addr>
+            <network_address> 0 </network_address>
         </params>
         <link name=dir_net_0 port=network latency=$netlat />
         <link name=dir_mem_link port=memory latency=$buslat />

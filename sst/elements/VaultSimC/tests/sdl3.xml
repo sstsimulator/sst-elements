@@ -170,7 +170,7 @@
         
         <component name="dirctrl0" type=memHierarchy.DirectoryController >
             <params include=DirCtrlParams >
-                <network_addr> 0 </network_addr>
+                <network_address> 0 </network_address>
                 <addrRangeStart> 0x0 </addrRangeStart>
             </params>
             <link name=dirctrl0_mem port=memory latency=$buslat />
@@ -179,7 +179,7 @@
         
         <component name="dirctrl1" type=memHierarchy.DirectoryController >
             <params include=DirCtrlParams >
-                <network_addr> 1 </network_addr>
+                <network_address> 1 </network_address>
                 <addrRangeStart> 0x1000 </addrRangeStart>
             </params>
             <link name=dirctrl1_mem port=memory latency=$buslat />

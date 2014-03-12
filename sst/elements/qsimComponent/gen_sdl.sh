@@ -118,7 +118,7 @@ print_dirmem() {
   echo -n "  <component name=\"dirctrl0\" rank=\"0\""
   echo       "type=\"memHierarchy.DirectoryController\">"
   echo "    <params>"
-  echo "      <network_addr>0</network_addr>"
+  echo "      <network_address>0</network_address>"
   echo "      <network_bw>$NET_BW</network_bw>"
   echo "      <addrRangeStart>0x0</addrRangeStart>"
   echo "      <addrRangeEnd>0xe8000000</addrRangeEnd>"

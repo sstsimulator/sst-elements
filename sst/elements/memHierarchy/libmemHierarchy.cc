@@ -207,10 +207,9 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam dirctrl_params[] = {
-    {"network_addr",        "Network address of component.", NULL},
+    {"network_address"      "Network address of component.", NULL},
     {"network_bw",          "Network link bandwidth.", NULL},
 	{"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
-    {"backing_store_size",  "Space reserved in backing store for controller information (default = 0x1000000 (16MB)).", "0x1000000"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
     {"addr_range_end",      "End of Address Range, for this controller.", NULL},
     {"interleave_size",     "(optional) Size of interleaved pages in KB.", "0"},
@@ -218,7 +217,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"clock",               "Clock rate of controller.", "1GHz"},
     {"entry_cache_size",    "Size (in # of entries) the controller will cache.", "0"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"print_stats",         "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };
 

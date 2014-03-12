@@ -173,7 +173,7 @@
 
     <component name="dirctrl" type="memHierarchy.DirectoryController">
         <params include=directoryParams>
-            <network_addr> 0 </network_addr>
+            <network_address> 0 </network_address>
         </params>
         <link name=dir_net_0 port=network latency=$netlat />
         <link name=dir_mem_link port=memory latency=$buslat />

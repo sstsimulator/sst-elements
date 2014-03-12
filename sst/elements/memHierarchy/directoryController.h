@@ -120,6 +120,7 @@ class DirectoryController : public Component {
 	/* ie, sum of all caches we talk to */
 	uint32_t numTargets;
     uint32_t blocksize;
+    unsigned int entrySize;
 
 	std::map<Addr, DirEntry*> directory;
 	std::map<std::string, uint32_t> node_lookup;
