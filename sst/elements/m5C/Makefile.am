@@ -14,7 +14,6 @@ libm5C_la_SOURCES = \
     busPlus.cpp \
     busPlus.h \
     debug.cpp \
-    debug.h \
     trace.cpp\
     trace.h\
     dummySystem.h \
@@ -23,23 +22,21 @@ libm5C_la_SOURCES = \
     factory.cpp \
     loadMemory.cpp \
     loadMemory.h \
-    log.h \
     m5.cpp \
     m5.h \
     m5lib.cpp \
     memEvent.h \
     memLink.cpp \
     memLink.h \
-    paramHelp.h \
     physicalPlus.cpp \
     physicalPlus.h \
     physicalMemory.cpp \
-    physical2.h  \
 	portLink.h \
 	portLink.cpp \
     power.cpp \
+    ptlNicMMIF.cpp \
+    ptlNicMMIF.h \
     process.h \
-    rawEvent.h \
     simpleCpu.cpp \
     syscall.cpp \
     syscall.h \
