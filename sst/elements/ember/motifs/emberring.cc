@@ -26,7 +26,7 @@ void EmberRingGenerator::generate(const SST::Output* output, const uint32_t phas
 	std::queue<EmberEvent*>* evQ) {
 
     uint32_t to = mod(rank + 1, size), from = mod( (signed int) rank - 1, size );
-    printf("EmberRingGenerator:%s() rank=%d to=%d from=%d\n",__func__,rank,to,from);
+    //printf("EmberRingGenerator:%s() rank=%d to=%d from=%d\n",__func__,rank,to,from);
 
 	if(phase < iterations) {
 
