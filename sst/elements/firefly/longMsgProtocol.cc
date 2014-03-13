@@ -62,7 +62,7 @@ LongMsgProtocol::LongMsgProtocol( Component* owner, Params& params ) :
 void LongMsgProtocol::setup()
 {
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:%d:LongMsgProtocol::@p():@l ",info()->nodeId(),
+    snprintf(buffer,100,"@t:%#x:%d:LongMsgProtocol::@p():@l ",info()->nodeId(),
                                                 info()->worldRank());
     m_my_dbg.setPrefix(buffer);
 

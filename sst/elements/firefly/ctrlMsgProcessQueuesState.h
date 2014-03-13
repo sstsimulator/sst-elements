@@ -35,7 +35,7 @@ class ProcessQueuesState : StateBase< T1 >
         m_missedInt( false )
     {
         char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
+        snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             obj.info()->nodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
         postShortRecvBuffer();
@@ -970,7 +970,7 @@ bool ProcessQueuesState<T1>::checkMsgHdr( MsgHdr& hdr, MsgHdr& wantHdr )
         return false;
     }
 
-    dbg().verbose(CALL_INFO,1,0,"want nid %d %d\n", wantHdr.nid, hdr.nid );
+    dbg().verbose(CALL_INFO,1,0,"want nid %#x %#x\n", wantHdr.nid, hdr.nid );
     if ( ( AnyNid != wantHdr.nid ) && ( wantHdr.nid != hdr.nid ) ) {
         return false;
     }

@@ -29,10 +29,14 @@ class NicInitEvent : public Event {
 
   public:
     int node;
+    int vNic;
+    int num_vNics;
 
-    NicInitEvent( int _node ) :
+    NicInitEvent( int _node, int _vNic, int _num_vNics ) :
         Event(),
-        node( _node )
+        node( _node ),
+        vNic( _vNic ),
+        num_vNics( _num_vNics )
     {
     }
 
@@ -45,6 +49,8 @@ class NicInitEvent : public Event {
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(node);
+        ar & BOOST_SERIALIZATION_NVP(vNic);
+        ar & BOOST_SERIALIZATION_NVP(num_vNics);
     }
 };
 
@@ -53,15 +59,17 @@ class NicCmdEvent : public Event {
   public:
     enum Type { PioSend, DmaSend, DmaRecv } type;
     int  node;
+	int dst_vNic;
     int tag;
     std::vector<IoVec> iovec;
     void* key;
 
-    NicCmdEvent( Type _type, int _node, int _tag,
+    NicCmdEvent( Type _type, int _vNic, int _node, int _tag,
             std::vector<IoVec>& _vec, void* _key ) :
         Event(),
         type( _type ),
         node( _node ),
+		dst_vNic( _vNic ),  
         tag( _tag ),
         iovec( _vec ),
         key( _key )
@@ -78,6 +86,7 @@ class NicCmdEvent : public Event {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(type);
         ar & BOOST_SERIALIZATION_NVP(node);
+        ar & BOOST_SERIALIZATION_NVP(dst_vNic);
         ar & BOOST_SERIALIZATION_NVP(tag);
         ar & BOOST_SERIALIZATION_NVP(iovec);
         ar & BOOST_SERIALIZATION_NVP(key);
@@ -88,15 +97,17 @@ class NicRespEvent : public Event {
 
   public:
     enum Type { PioSend, DmaSend, DmaRecv, NeedRecv } type;
-    int  node;
+    int src_vNic;
+    int node;
     int tag;
     int len;
     void* key;
 
-    NicRespEvent( Type _type, int _node, int _tag,
+    NicRespEvent( Type _type, int _vNic, int _node, int _tag,
             int _len, void* _key ) :
         Event(),
         type( _type ),
+        src_vNic( _vNic ),
         node( _node ),
         tag( _tag ),
         len( _len ),
@@ -104,10 +115,11 @@ class NicRespEvent : public Event {
     {
     }
 
-    NicRespEvent( Type _type, int _node, int _tag,
+    NicRespEvent( Type _type, int _vNic, int _node, int _tag,
             int _len ) :
         Event(),
         type( _type ),
+        src_vNic( _vNic ),
         node( _node ),
         tag( _tag ),
         len( _len )
@@ -130,6 +142,7 @@ class NicRespEvent : public Event {
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(type);
+        ar & BOOST_SERIALIZATION_NVP(src_vNic);
         ar & BOOST_SERIALIZATION_NVP(node);
         ar & BOOST_SERIALIZATION_NVP(tag);
         ar & BOOST_SERIALIZATION_NVP(len);
@@ -145,6 +158,13 @@ class Nic : public SST::Component  {
 
   private:
 
+    struct MsgHdr {
+        size_t len;
+        int    tag;
+        unsigned char    dst_vNicId;
+        unsigned char    src_vNicId;
+    };
+
     class SelfEvent : public SST::Event {
       public:
         enum { MatchDelay, ProcessMerlinEvent,
@@ -159,13 +179,7 @@ class Nic : public SST::Component  {
         MerlinFireflyEvent* mEvent;
         bool                retval;
 
-        int                 vNicNum;
-    };
-
-    struct MsgHdr {
-        size_t len;
-        int    tag;
-        int    vNicId;
+        MsgHdr				hdr;
     };
 
     class VirtNic {
@@ -176,8 +190,8 @@ class Nic : public SST::Component  {
         void init( unsigned int phase );
         Link* m_toCoreLink;
         int id;
-        void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
-        void notifyNeedRecv( int src, int tag, size_t len );
+        void notifyRecvDmaDone( int src_vNic, int src, int tag, size_t len, void* key );
+        void notifyNeedRecv( int src_vNic, int src, int tag, size_t len );
         void notifySendDmaDone( void* key );
         void notifySendPioDone( void* key );
     };
@@ -197,6 +211,9 @@ class Nic : public SST::Component  {
         int node() { return m_event->node; }
 
         int vNicNum() { return m_vNicNum; }
+        int src_vNicNum() { return m_src_vNicNum; }
+        void set_src_vNicNum( int val ) { m_src_vNicNum = val; }
+
         std::vector<IoVec>& ioVec() { return m_event->iovec; }
 
         NicCmdEvent* event() { return m_event; }
@@ -219,6 +236,7 @@ class Nic : public SST::Component  {
       private:
         NicCmdEvent*  m_event;
         int           m_vNicNum;
+        int           m_src_vNicNum;
     };
 
 public:
@@ -227,6 +245,7 @@ public:
 
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }
+    int getNum_vNics() { return m_num_vNics; }
 
   private:
     void handleSelfEvent( Event* );
@@ -252,12 +271,12 @@ public:
         m_vNicV[vNicNum]->notifySendPioDone(  key );
     }
 
-    void notifyRecvDmaDone( int vNicNum, int src, int tag, size_t len, void* key ) {
-        m_vNicV[vNicNum]->notifyRecvDmaDone( src, tag, len, key );
+    void notifyRecvDmaDone(int vNic, int src_vNic, int src, int tag, size_t len, void* key) {
+        m_vNicV[vNic]->notifyRecvDmaDone( src_vNic, src, tag, len, key );
     }
 
-    void notifyNeedRecv( int vNicNum, int src, int tag, size_t length ) {
-        m_vNicV[vNicNum]->notifyNeedRecv( src, tag, length );
+    void notifyNeedRecv( int vNic, int src_vNic, int src, int tag, size_t length ) {
+        m_vNicV[vNic]->notifyNeedRecv( src_vNic, src, tag, length );
     }
 
     size_t copyIn( Output& dbg, Nic::Entry& entry, MerlinFireflyEvent& event );
@@ -277,6 +296,7 @@ public:
     int                     m_txDelay;
     MerlinFireflyEvent*     m_pendingMerlinEvent;
     int                     m_myNodeId;
+    int                     m_num_vNics;
     SST::Link*              m_selfLink;
     int                     m_num_vcs;
 

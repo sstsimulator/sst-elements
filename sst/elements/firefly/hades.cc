@@ -24,7 +24,6 @@
 
 #include "functionSM.h"
 #include "entry.h"
-#include "nodeInfo.h"
 #include "virtNic.h"
 
 #include "funcSM/api.h"
@@ -34,7 +33,8 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     MessageInterface(),
-    m_virtNic(NULL)
+    m_virtNic(NULL),
+	m_params( params )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc = 
@@ -53,50 +53,6 @@ Hades::Hades( Component* owner, Params& params ) :
                                         moduleName.c_str());
     }
 
-    Params nodeParams = params.find_prefix_params("nodeParams.");
-    
-    m_nodeInfo = new NodeInfo( nodeParams );
-
-    m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
-                        m_nodeInfo->numCores(), m_nodeInfo->coreNum());
-
-    int numRanks = params.find_integer("numRanks");
-    if ( numRanks <= 0 ) {
-        m_dbg.fatal(CALL_INFO,0,"How many global ranks?\n");
-    }
-    m_dbg.verbose(CALL_INFO,1,0,"numRanks %d\n", numRanks);
-
-    std::string nidListFileName = params.find_string("nidListFile");
-
-    m_dbg.verbose(CALL_INFO,1,0,"nidListFile `%s`\n",nidListFileName.c_str());
-
-    std::ifstream nidListFile( nidListFileName.c_str());
-    if ( ! nidListFile.is_open() ) {
-        m_dbg.verbose(CALL_INFO,0,1,"Unable to open nid list '%s'\n",
-                                        nidListFileName.c_str() );
-    }
-
-    Group* group;
-
-    std::string policy = params.find_string("policy");
-    m_dbg.verbose(CALL_INFO,1,0,"load policy `%s`\n",policy.c_str());
-
-    if ( 0 == policy.compare("adjacent") ) {
-        group = initAdjacentMap(numRanks, m_nodeInfo->numCores(), nidListFile);
-#if 0
-    } else if ( 0 == policy.compare("roundRobin") ) {
-        group = initRoundRobinMap(numRanks, m_nodeInfo->numCores(), nidListFile); 
-#endif
-    } else {
-        group = NULL; // get rid of compiler warning
-        m_dbg.fatal(CALL_INFO,0,"unknown load policy `j%s` ",
-                                            policy.c_str() );
-    }
-    m_info.addGroup( Hermes::GroupWorld, group);
-
-    nidListFile.close();
-
-    //****************************
     Params tmpParams;
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     int protoNum = 0;
@@ -115,7 +71,6 @@ Hades::Hades( Component* owner, Params& params ) :
 
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
                                     m_protocolMapByName );
-
 }
 
 void Hades::printStatus( Output& out )
@@ -130,20 +85,59 @@ void Hades::printStatus( Output& out )
 void Hades::_componentSetup()
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    Group* group = m_info.getGroup(Hermes::GroupWorld);
-    assert( group );
+
+    m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
+                        m_virtNic->getNumCores(), m_virtNic->getCoreNum());
+
+    int numRanks = m_params.find_integer("numRanks");
+    if ( numRanks <= 0 ) {
+        m_dbg.fatal(CALL_INFO,0,"How many global ranks?\n");
+    }
+    m_dbg.verbose(CALL_INFO,1,0,"numRanks %d\n", numRanks);
+
+    std::string nidListFileName = m_params.find_string("nidListFile");
+
+    m_dbg.verbose(CALL_INFO,1,0,"nidListFile `%s`\n",nidListFileName.c_str());
+
+    std::ifstream nidListFile( nidListFileName.c_str());
+    if ( ! nidListFile.is_open() ) {
+        m_dbg.verbose(CALL_INFO,0,1,"Unable to open nid list '%s'\n",
+                                        nidListFileName.c_str() );
+    }
+
+    Group* group;
+
+    std::string policy = m_params.find_string("policy");
+    m_dbg.verbose(CALL_INFO,1,0,"load policy `%s`\n",policy.c_str());
+
+    if ( 0 == policy.compare("adjacent") ) {
+        group = initAdjacentMap(numRanks, m_virtNic->getNumCores(), nidListFile);
+#if 0
+    } else if ( 0 == policy.compare("roundRobin") ) {
+        group = initRoundRobinMap(numRanks, m_nodeInfo->numCores(), nidListFile); 
+#endif
+    } else {
+        group = NULL; // get rid of compiler warning
+        m_dbg.fatal(CALL_INFO,0,"unknown load policy `j%s` ",
+                                            policy.c_str() );
+    }
+    m_info.addGroup( Hermes::GroupWorld, group);
+
+    nidListFile.close();
+
+	m_dbg.verbose(CALL_INFO,1,0, "\n");
     for ( unsigned int i = 0; i < group->size(); i++ ) {
-        m_dbg.verbose(CALL_INFO,2,0,"group rank %d, %d %d\n",
-                                    i,group->getNodeId( i ),myNodeId() );
         if ( group->getNodeId( i ) == myNodeId() && 
-                group->getCoreId( i ) == m_nodeInfo->coreNum() ) 
+                group->getCoreId( i ) == m_virtNic->getCoreNum() ) 
         {
-            m_dbg.verbose(CALL_INFO,1,0,"set rank to %d\n",i);
+            m_dbg.verbose(CALL_INFO,1,0,"node=%d core=%d, set rank to %d\n",
+						myNodeId(), m_virtNic->getCoreNum(), i  );
             group->setMyRank( i );
             break;
         }
     } 
 
+	m_dbg.verbose(CALL_INFO,1,0, "\n");
     char buffer[100];
     snprintf(buffer,100,"@t:%d:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
     m_dbg.setPrefix(buffer);
@@ -162,7 +156,7 @@ void Hades::_componentSetup()
 int Hades::myNodeId()
 {
     if ( m_virtNic ) {
-        return m_virtNic->id();
+        return m_virtNic->getNodeId();
     } else {
         return -1;
     }
@@ -171,7 +165,7 @@ int Hades::myNodeId()
 Group* Hades::initAdjacentMap( int numRanks, 
             int numCores, std::ifstream& nidFile )
 {
-    Group* group = new Group( numRanks );
+    Group* group = new Group( m_virtNic, numRanks  );
 
     m_dbg.verbose(CALL_INFO,2,0,"numRanks=%d numCores=%d\n",numRanks,numCores);
 
@@ -192,8 +186,8 @@ Group* Hades::initAdjacentMap( int numRanks,
 
         for ( int core = 0; core < numCores; core++ ) {
             group->set( node * numCores + core, nid, core );
-            m_dbg.verbose(CALL_INFO,2,0,"rank %d is on nid %d\n",
-                                            node * numCores + core , nid);
+            m_dbg.verbose(CALL_INFO,2,0,"rank %d is on nid %d core %d\n",
+                                        node * numCores + core , nid, core);
         }
     }
     return group;
@@ -202,7 +196,7 @@ Group* Hades::initAdjacentMap( int numRanks,
 Group* Hades::initRoundRobinMap( int numRanks, 
             int numCores, std::ifstream& nidFile )
 {
-    Group* group = new Group( numRanks );
+    Group* group = new Group( m_virtNic, numRanks );
     m_dbg.verbose(CALL_INFO,1,0,"numRanks=%d numCores=%d\n",
                             numRanks, numCores);
 

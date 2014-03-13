@@ -35,6 +35,7 @@ class Info {
     int nodeId() {
         return m_groupMap[Hermes::GroupWorld]->getNodeId( worldRank() );
     }
+
     int worldRank() {
         if ( m_groupMap.empty() ) {
             return -1;

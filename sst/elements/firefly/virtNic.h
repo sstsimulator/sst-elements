@@ -24,6 +24,9 @@ namespace Firefly {
 
 class VirtNic : public SST::Module {
 
+    static const int coreShift = 26;
+    static const int nidMask = (1 << coreShift) - 1;
+
     // Functor classes for handling callbacks
     template < typename argT >
     class HandlerBase {
@@ -108,9 +111,32 @@ class VirtNic : public SST::Module {
     VirtNic( Component* owner, Params&);
     void init( unsigned int );
 
+	int getNumCores() {
+		return m_num_vNics;
+	}
+	int getCoreNum() {
+		return m_vNicId;
+	}
     int getNodeId() {
-        return m_nodeId;
+        return calc_virtId( m_nodeId, m_vNicId);
     }
+	int calc_vNic( int id ) {
+		if ( -1 == id ) {
+			return -1;
+		} else {
+			return id >> coreShift;
+		}
+	}
+	int calc_realId( int id ) {
+		if ( -1 == id ) {
+			return -1;
+		} else {
+			return id & nidMask;
+		}
+	}
+	int calc_virtId( int nodeId, int vNicId ) {
+        return (vNicId << coreShift) | nodeId;
+	}
 
     bool canDmaSend();
     bool canDmaRecv();
@@ -129,11 +155,12 @@ class VirtNic : public SST::Module {
     void notifySendDmaDone( void* key );
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
     void notifyNeedRecv( int src, int tag, size_t length );
-    int id() { return m_nodeId; }
 
   private:
     void handleEvent( Event * );
 
+    int         m_vNicId;
+    int         m_num_vNics;
     int         m_nodeId;
     Output      m_dbg;
     Link*       m_toNicLink;

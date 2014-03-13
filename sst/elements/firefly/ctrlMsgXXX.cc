@@ -82,7 +82,7 @@ void XXX::init( Info* info, VirtNic* nic )
 void XXX::setup() 
 {
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:%d:CtrlMsg::XXX::@p():@l ",m_info->nodeId(), 
+    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::XXX::@p():@l ",m_info->nodeId(), 
                                                 m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
@@ -190,7 +190,7 @@ bool XXX::notifySendDmaDone( void* key )
 
 bool XXX::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu key=%p\n",
+    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x len=%lu key=%p\n",
                                                     nid,tag,len,key);
     if ( key ) {
         FunctorBase_3<int,int,size_t,bool>* functor = 
@@ -206,7 +206,7 @@ bool XXX::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
 bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
 {
 
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu\n",nid,tag,len);
+    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x len=%lu\n",nid,tag,len);
     m_processQueuesState->needRecv( nid, tag, len );
     
     return true;

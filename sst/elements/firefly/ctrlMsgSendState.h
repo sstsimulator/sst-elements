@@ -57,7 +57,7 @@ void SendState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
         nid_t dest, tag_t tag, CommReq* commReq,
              FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor)
 {
-    dbg().verbose(CALL_INFO,1,0,"%s dest=%d tag=%#x functor=%p\n",
+    dbg().verbose(CALL_INFO,1,0,"%s dest=%#x tag=%#x functor=%p\n",
                 blocking ? "blocking" : "", dest, tag, functor );
 
     StateBase<T1>::set( stateFunctor );

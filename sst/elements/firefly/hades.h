@@ -14,6 +14,7 @@
 #define COMPONENTS_FIREFLY_HADES_H
 
 #include <sst/core/output.h>
+#include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
 #include "group.h"
@@ -140,10 +141,10 @@ class Hades : public Hermes::MessageInterface
 
     SST::Link*          m_enterLink;  
     VirtNic*            m_virtNic;
-    NodeInfo*           m_nodeInfo;
     Info                m_info;
     FunctionSM*         m_functionSM;
     Output              m_dbg;
+    SST::Params         m_params;
 
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
