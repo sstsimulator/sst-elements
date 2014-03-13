@@ -6,16 +6,18 @@ import sys,getopt
 
 iterations = 1;
 msgSize = 0;
-motif = "PingPong"
+motif = "Ring"
 shape = "2"
+num_vNics = 1
 
 def main():
     global iterations
     global msgSize
     global motif
     global shape
+    global num_vNics
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape=","numCores="])
     except getopt.GetopError as err:
         print str(err)
         sys.exit(2)
@@ -26,6 +28,8 @@ def main():
             msgSize = a
         elif o in ("--motif"):
             motif = a
+        elif o in ("--numCores"):
+            num_vNics = a
         elif o in ("--shape"):
             shape = a
         else:
@@ -35,7 +39,7 @@ main()
 
 motif = "ember.Ember" + motif + "Generator"
 
-def calcNumRanks( shape ):
+def calcNumNodes( shape ):
     tmp = shape.split( 'x' )  
     num = 1
     for d in tmp:
@@ -54,7 +58,7 @@ def calcWidth( shape ):
         count  += 1
     return retval 
 
-numRanks = calcNumRanks( shape )
+numNodes = calcNumNodes( shape )
 numDim = calcNumDim( shape )
 width = calcWidth( shape )
 
@@ -72,38 +76,39 @@ sst.merlin._params["torus:width"] = width
 sst.merlin._params["torus:local_ports"] = 1
 
 nicParams = ({ 
-		"hermesParams.nicParams.debug" : 0,
-		"hermesParams.nicParams.verboseLevel": 2,
-		"hermesParams.nicParams.module" : "merlin.linkcontrol",
-		"hermesParams.nicParams.topology" : "merlin.torus",
-		"hermesParams.nicParams.num_vcs" : 2,
-		"hermesParams.nicParams.link_bw" : "560Mhz",
-		"hermesParams.nicParams.buffer_size" : 128,
-		"hermesParams.nicParams.txBusDelay_ns" : 150,
-		"hermesParams.nicParams.rxBusDelay_ns" : 150,
-		"hermesParams.nicParams.rxMatchDelay_ns" : 100,
-		"hermesParams.nicParams.txDelay_ns" : 100,
+		"debug" : 0,
+		"verboseLevel": 2,
+		"module" : "merlin.linkcontrol",
+		"topology" : "merlin.torus",
+		"num_vcs" : 2,
+		"link_bw" : "560Mhz",
+		"buffer_size" : 128,
+		"rxMatchDelay_ns" : 100,
+		"txDelay_ns" : 100,
+        "num_vNics" : num_vNics,
 	})
 
 driverParams = ({
-		"debug" : 0,
+		"debug" : 1,
 		"verbose" : 2,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
 		"printStats" : 1,
 		"generator" : motif,
+		"buffersize" : 400,
 		"generatorParams.messagesize" : msgSize,
 		"generatorParams.iterations" : iterations,
-		"hermesParams.numRanks"  : numRanks,
+		"hermesParams.debug" : 0,
+		"hermesParams.verboseLevel" : 2,
 		"hermesParams.nidListFile" : "nidlist.txt",
-		"hermesParams.nicModule" : "firefly.nic",
+		"hermesParams.nicModule" : "firefly.VirtNic",
 		"hermesParams.policy" : "adjacent",
-		"hermesParams.nodeParams.numCores" : 1,
-		"hermesParams.nodeParams.coreNum" : 0,
 		"hermesParams.functionSM.defaultDebug" : 0,
 		"hermesParams.functionSM.defaultVerbose" : 1,
-		"hermesParams.longMsgProtocol.shortMsgLength" : 40000,
+		"hermesParams.ctrlMsg.debug" : 0,
+		"hermesParams.ctrlMsg.verboseLevel" : 1,
+		"hermesParams.longMsgProtocol.shortMsgLength" : 400,
 		"hermesParams.longMsgProtocol.debug" : 0,
 		"hermesParams.longMsgProtocol.verboseLevel" : 1,
 		"hermesParams.longMsgProtocol.matchDelay_ps" : 0,
@@ -121,11 +126,20 @@ class EmberEP(EndPoint):
 	def prepParams(self):
 		pass
 	def build(self, nodeID, link, extraKeys):
-		ep = sst.Component("emberEP_" + str(nodeID), "ember.EmberEngine")
-		ep.addParams(nicParams)
-		ep.addParams(driverParams)
-		ep.addParam("hermesParams.nicParams.nid", nodeID)
-		ep.addLink(link, "rtr", "10ns")
+		num_vNics = int(nicParams["num_vNics"])
+		nic = sst.Component("nic" + str(nodeID), "firefly.nic")
+		nic.addParams(nicParams)
+		nic.addParam("nid", nodeID)
+		nic.addLink(link, "rtr", "10ns")
+
+		for x in xrange(num_vNics ):
+			ep = sst.Component("nic" + str(x) + "core" + str(nodeID) + "_EmberEP", "ember.EmberEngine")
+			ep.addParams(driverParams)
+			ep.addParam("hermesParams.numRanks", numNodes * num_vNics );
+			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
+			ep.addLink(nicLink, "nic", "150ns")
+			nic.addLink(nicLink, "core" + str(x), "150ns")
+
 
 topo = topoTorus()
 topo.prepParams()
