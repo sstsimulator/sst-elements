@@ -139,7 +139,7 @@ void Hades::_componentSetup()
 
 	m_dbg.verbose(CALL_INFO,1,0, "\n");
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
+    snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
     m_dbg.setPrefix(buffer);
 
     m_dbg.verbose(CALL_INFO,1,0, "myRank %d\n",
