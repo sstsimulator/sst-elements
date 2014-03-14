@@ -232,11 +232,6 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 
 	accumulateTime = histoFinalize;
 
-	// Tell the simulator core we are finished and do not need any further
-	// processing to continue
-	primaryComponentOKToEndSim();
-
-	continueProcessing = false;
 }
 
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
@@ -254,6 +249,12 @@ void EmberEngine::completedInit(int val) {
 
 void EmberEngine::completedFinalize(int val) {
 	output.verbose(CALL_INFO, 2, 0, "Completed Finalize, result = %d\n", val);
+
+	// Tell the simulator core we are finished and do not need any further
+	// processing to continue
+	primaryComponentOKToEndSim();
+
+	continueProcessing = false;
 	issueNextEvent(0);
 }
 
