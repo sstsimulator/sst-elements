@@ -24,7 +24,7 @@ namespace Firefly {
 
 class VirtNic : public SST::Module {
 
-    static const int coreShift = 26;
+    static const int coreShift = 20;
     static const int nidMask = (1 << coreShift) - 1;
 
     // Functor classes for handling callbacks
@@ -117,9 +117,11 @@ class VirtNic : public SST::Module {
 	int getCoreNum() {
 		return m_vNicId;
 	}
+
     int getNodeId() {
-        return calc_virtId( m_nodeId, m_vNicId);
+        return calc_virtId( m_nodeId, m_vNicId );
     }
+
 	int calc_vNic( int id ) {
 		if ( -1 == id ) {
 			return -1;
