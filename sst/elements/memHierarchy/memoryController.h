@@ -75,17 +75,19 @@ public:
         MemEvent *reqEvent;
         MemEvent *respEvent;
         bool isWrite;
+        Command responseCmd;
         bool canceled;
         bool isACK;
-        bool returnInM;
+        //bool returnInM;
         
         int respSize;
-        Addr eventBaseAddr;
-        Addr eventAddr;
+        //Addr eventBaseAddr;
+        //Addr eventAddr;
         Command cmd;
         bool GetXRespType;
         
         size_t size;
+        
         size_t amt_in_process;
         size_t amt_processed;
         Status_t status;
@@ -93,25 +95,26 @@ public:
         Addr addr;
         uint32_t num_req; // size / bus width;
 
-        DRAMReq(MemEvent *ev, const size_t busWidth) :
-            reqEvent(new MemEvent(ev)), respEvent(NULL),
-            isWrite(ev->getCmd() == GetX || ev->getCmd() == PutM),
-            canceled(false), isACK(false), GetXRespType(false),
-            size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
-        {
-            Addr reqEndAddr = ev->getAddr() + ev->getSize();
-            //addr = ev->getAddr() & ~(busWidth -1); // round down to bus alignment;
-            addr = ev->getBaseAddr();
-
-            num_req = (reqEndAddr - addr) / busWidth;
-            if ( (reqEndAddr - addr) % busWidth ) num_req++;
-
-            size = num_req * busWidth;
+        DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize, Command responseCmd) :
+            reqEvent(new MemEvent(ev)), respEvent(NULL), responseCmd(responseCmd),
+            canceled(false), isACK(false), amt_in_process(0), amt_processed(0), status(NEW){
+            
+            if(responseCmd == NULLCMD){
+                isWrite = true;
+                setSize(ev->getSize());
+                addr = ev->getAddr();
+            }
+            else if(responseCmd == GetSResp || responseCmd == GetXResp){
+                isWrite = false;
+                setSize(cacheLineSize);
+                addr = ev->getBaseAddr();
+                if(GetXResp) setGetXRespType();
+            }
             
             cmd = ev->getCmd();
-            eventAddr = ev->getAddr();
-            eventBaseAddr = ev->getBaseAddr();
-            respSize = busWidth;  //cacheLineSize
+            //eventAddr = ev->getAddr();
+            //eventBaseAddr = ev->getBaseAddr();
+            
             
 #if 0
             printf(
@@ -121,7 +124,7 @@ public:
                     "Req:  0x%08llx  + 0x%02x   [%u count]\n"
                     "***************************************************\n",
                     busWidth, ev->getAddr(), ev->getSize(), reqEndAddr,
-                    addr, size, num_req);
+                    addr, size);
 #endif
         }
 
@@ -172,7 +175,7 @@ private:
 
     void handleCubeEvent(SST::Event *event);
     
-    void printMemory(DRAMReq *req, Addr localEvAddr, Addr localAddr);
+    void printMemory(DRAMReq *req, Addr localAddr);
 
     bool divert_DC_lookups;
     bool use_dramsim;
@@ -200,6 +203,7 @@ private:
     Addr interleaveStep;
     bool respondToInvalidates;
     size_t cacheLineSize;
+    size_t requestWidth;
 
 #ifdef HAVE_LIBZ
     gzFile traceFP;

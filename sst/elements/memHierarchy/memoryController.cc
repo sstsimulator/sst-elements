@@ -298,6 +298,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 	std::string clock_freq = params.find_string("clock", "");
 
     cacheLineSize = params.find_integer("request_width", 64);
+    
+    requestWidth = cacheLineSize;
     requestSize = cacheLineSize;
 
     registerClock(clock_freq, new Clock::Handler<MemController>(this,
@@ -502,31 +504,37 @@ void MemController::handleBusEvent(SST::Event *event)
 void MemController::addRequest(MemEvent *ev)
 {
 	dbg.debug(C,6,0, "New Memory Request for %"PRIx64"\n", ev->getAddr());
-    if ( isRequestAddressValid(ev) ) {
-        DRAMReq *req = new DRAMReq(ev, cacheLineSize);
-        dbg.debug(C,6,0, "Creating DRAM Request for %"PRIx64" (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
-        requests.push_back(req);
-        requestQueue.push_back(req);
-
-
-        if(!req->isWrite) req->returnInM = false;
-        if(req->isWrite && req->cmd != PutM){
-            DRAMReq *readReq = new DRAMReq(ev, cacheLineSize);
-            readReq->setSize(cacheLineSize);
-            readReq->setGetXRespType();
-            readReq->setIsWrite(false);
-            readReq->returnInM = true;
-            dbg.debug(C,6,0, "Creating DRAM Request for %"PRIx64" (%s)\n", readReq->addr, "READ");
-
-            requests.push_back(readReq);
-            requestQueue.push_back(readReq);
+    Command cmd = ev->getCmd();
+    DRAMReq *writeReq, *writeResp, *readReq;
+    assert(isRequestAddressValid(ev));
+    
+    switch(cmd){
+    case GetX:
+    case PutM:
+        writeReq = new DRAMReq(ev, requestWidth, cacheLineSize, NULLCMD);
+        requests.push_back(writeReq);
+        requestQueue.push_back(writeReq);
+        dbg.debug(C,6,0, "Creating DRAM Request for %"PRIx64", Size: %zu, %s\n", writeReq->addr, writeReq->size, writeReq->isWrite ? "WRITE" : "READ");
+        
+        if(cmd != PutM){
+            writeResp = new DRAMReq(ev, requestWidth, cacheLineSize, GetXResp);  //read back what we just wrote
+            requests.push_back(writeResp);
+            requestQueue.push_back(writeResp);
+            dbg.debug(C,6,0, "Creating DRAM Request for %"PRIx64", Size: %zu, %s\n", writeResp->addr, writeResp->size, writeResp->isWrite ? "WRITE" : "READ");
         }
-    } else {
-        /* TODO:  Ideally, if this came over as a direct message, not over a bus, we should NAK this */
-        dbg.debug(C, 0, 0, "Ignoring request for %"PRIx64" as it isn't in our range. [%"PRIx64" - %"PRIx64"]\n",
-                ev->getAddr(), rangeStart, rangeStart + memSize);
+        break;
+    
+    case GetS:
+    case GetSEx:
+        readReq = new DRAMReq(ev, requestWidth, cacheLineSize, GetSResp);
+        requests.push_back(readReq);
+        requestQueue.push_back(readReq);
+        dbg.debug(C,6,0, "Creating DRAM Request for %"PRIx64", Size: %zu, %s\n", readReq->addr, readReq->size, readReq->isWrite ? "WRITE" : "READ");
+        break;
+    default:
+        _abort(MemController, "Command not supported, %s\n", CommandString[cmd]);
+        break;
     }
-
 }
 
 
@@ -645,33 +653,31 @@ void MemController::performRequest(DRAMReq *req)
 {
    
 	MemEvent *resp = req->reqEvent->makeResponse(this);
-    if(req->GetXRespType) resp->setCmd(GetXResp);
+    if(req->GetXRespType && req->cmd == GetX) resp->setCmd(GetXResp);
     Addr localAddr = convertAddressToLocalAddress(req->addr);
-    Addr localEventAddr = convertAddressToLocalAddress(req->eventAddr);
-    Addr baseLocalAddr = convertAddressToLocalAddress(req->eventBaseAddr);
 
     req->respEvent = resp;
     resp->setSize(cacheLineSize);
     
+    //TODO: in MESI, initial GetX response should be in E state (this is for performance optimization, not correctness)
     //TODO: No need to write memory on GetX... only on PutM
-	if ( req->isWrite || req->cmd == PutM) {
-        /* Write request to memory */
-        dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Base Addr = %"PRIx64", Request size = %i\n",localEventAddr, baseLocalAddr, req->reqEvent->getSize());
-		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localEventAddr + i] = req->reqEvent->getPayload()[i];
+	if ( req->isWrite || req->cmd == PutM) {  /* Write request to memory */
+        dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
+		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
         
-        printMemory(req, localEventAddr, localAddr);
+        printMemory(req, localAddr);
         
 	} else {
         dbg.debug(C,0,0,"READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) resp->getPayload()[i] = memBuffer[localAddr + i];
 
-        if(!req->returnInM){
+        if(req->GetXRespType) resp->setGrantedState(M);
+        else{
             if(protocol) resp->setGrantedState(E);
             else resp->setGrantedState(S);
         }
-        else resp->setGrantedState(M);
 
-        printMemory(req, localAddr, localAddr);
+        printMemory(req, localAddr);
 	}
 }
 
@@ -743,19 +749,11 @@ void MemController::sendResponse(DRAMReq *req)
 }
 
 
-void MemController::printMemory(DRAMReq *req, Addr localEvAddr, Addr localAddr)
+void MemController::printMemory(DRAMReq *req, Addr localAddr)
 {
     dbg.debug(C,L1,0,"Resp. Data: ");
-    for(unsigned int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%d",(int)memBuffer[localEvAddr + i]);
+    for(unsigned int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%d",(int)memBuffer[localAddr + i]);
     dbg.debug(C,L1,0,"\n");
-    
-    /*dbg.debug(C,L1,0,"Reading Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
-            req->size, req->addr,
-            memBuffer[localAddr + 0], memBuffer[localAddr + 1],
-            memBuffer[localAddr + 2], memBuffer[localAddr + 3],
-            memBuffer[localAddr + 4], memBuffer[localAddr + 5],
-            memBuffer[localAddr + 6], memBuffer[localAddr + 7]);
-            */
 }
 
 void MemController::handleMemResponse(DRAMReq *req)

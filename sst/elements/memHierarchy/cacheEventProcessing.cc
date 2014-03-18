@@ -22,6 +22,7 @@ using namespace SST::MemHierarchy;
 
 bool Cache::clockTick(Cycle_t time) {
     timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
+    
     if(dirControllerExists_) directoryLink_->clock();
     topCC_->sendOutgoingCommands();
     bottomCC_->sendOutgoingCommands();

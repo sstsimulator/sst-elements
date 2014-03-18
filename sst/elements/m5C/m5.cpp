@@ -244,6 +244,8 @@ void SST::M5::M5::finish()
     Finish_Power();
     #endif
 
+    delete m_barrier;
+    
     if ( !m_statFile.empty() ) {
 	libgem5::DumpStats(m_statFile);
     }

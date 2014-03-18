@@ -56,7 +56,7 @@ void StridePrefetcher::DetectStride() {
 
 			if(foundStride) {
 				if(overrunPageBoundary) {
-					output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %#016llx, prefetch address: %#016llx (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+					output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 						targetAddress, targetAddress + (strideReach * stride),
 						(strideReach * stride), stride);
  
@@ -71,14 +71,14 @@ void StridePrefetcher::DetectStride() {
 					// we can safely prefetch without causing a page fault, otherwise we
 					// choose to not prefetch the address
 					if(targetAddressPhysPage == targetPrefetchAddressPage) {
-						output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %#016llx, prefetch address: %#016llx (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
 
 						ev = new MemEvent(owner, targetPrefetchAddress, RequestData);
 						prefetchOpportunities++;
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
-						output->verbose(CALL_INFO, 4, 0, "Target address: %#016llx, page=%#016llx, Prefetch address: %#016llx, page=%#016llx\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
+						output->verbose(CALL_INFO, 4, 0, "Target address: %"PRIx64", page=%"PRIx64", Prefetch address: %"PRIx64", page=%"PRIx64"\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
 
 						prefetchIssueCanceledByPageBoundary++;
 						ev = NULL;
@@ -101,7 +101,7 @@ void StridePrefetcher::DetectStride() {
 	bool inHistory = false;
 	const uint32_t currentHistCount = prefetchHistory->size();
 
-	output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %#016llx, valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
+	output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %"PRIx64", valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
 		currentHistCount);
 
 	for(uint32_t i = 0; i < currentHistCount; ++i) {

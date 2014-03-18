@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "sst/core/debug.h"
 
 #if 0 
 #define BA_DBG(fmt,args...) \
@@ -60,6 +61,15 @@ class BarrierAction : public SST::Action
             (object->*member)();
         }
     };
+    
+    ~BarrierAction(){
+        close(m_readFd);
+        remove(readFilename.c_str());
+        for(unsigned int i = 0; i < m_writeFds.size(); i++){
+            close(m_writeFds[i]);
+            remove(writeFilenames[i].c_str());
+        }
+    }
 
 
     BarrierAction( int numPerRank ) :
@@ -73,14 +83,14 @@ class BarrierAction : public SST::Action
         SST::Simulation::getSimulation()->insertActivity(
             SST::Simulation::getSimulation()->getTimeLord()->
                 getTimeConverter("1us")->getFactor(),this);
-
-        char buf[100];
+        
+        
         sprintf( buf, "/tmp/sst-barrier.%d", getpid() );
         BA_DBG("filename=`%s`\n",buf);
+        readFilename = buf;
         int rc = mkfifo( buf, 0666 );
-        assert( rc == 0 );
-
-        m_readFd = open( buf, O_RDONLY | O_NONBLOCK ); 
+        if(rc != 0) _abort(BarrierAction, "Unable to create temp file named: %s", buf);
+        m_readFd = open( buf, O_RDONLY | O_NONBLOCK );
         assert( m_readFd > -1 );
 
         m_writeFds.resize( numPerRank );
@@ -89,7 +99,9 @@ class BarrierAction : public SST::Action
             sprintf( buf, "/tmp/sst-barrier-app-%u.%d", i, getpid() );
             rc = mkfifo( buf, 0666);
             BA_DBG("filename=`%s`\n",buf);
-            assert( rc == 0 );
+            std::string name(buf);
+            writeFilenames.push_back(name);
+            if(rc != 0) _abort(BarrierAction, "Unable to create temp file named: %s", buf);
         }
     }
 
@@ -142,6 +154,9 @@ class BarrierAction : public SST::Action
     int m_numReporting;
     int m_opened;
     int m_readFd;
+    char buf[100];
+    std::string readFilename;
+    std::vector<std::string> writeFilenames;
     std::vector< int > m_writeFds;
 };
 
