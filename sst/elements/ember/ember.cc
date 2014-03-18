@@ -11,6 +11,7 @@
 
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
+#include "motifs/emberfini.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -30,6 +31,11 @@ load_PingPong( Component* comp, Params& params ) {
 static Module*
 load_Ring( Component* comp, Params& params ) {
 	return new EmberRingGenerator(comp, params);
+}
+
+static Module*
+load_Fini( Component* comp, Params& params ) {
+	return new EmberFiniGenerator(comp, params);
 }
 
 static const ElementInfoParam component_params[] = {
@@ -60,6 +66,13 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Ring,
+	NULL
+    },
+    { 	"EmberFiniGenerator",
+	"Performs a Fini Motif",
+	NULL,
+	NULL,
+	load_Fini,
 	NULL
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL  }
