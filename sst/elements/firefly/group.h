@@ -21,11 +21,13 @@ namespace Firefly {
 class Group
 {
   public:
-    Group( VirtNic* ) : 
+    Group( VirtNic* nic ) : 
+        m_virtNic( nic ),
         m_rank( -1 ) 
     {}
 
-    Group( VirtNic*, int size ) :
+    Group( VirtNic* nic, int size ) :
+        m_virtNic( nic ),
         m_rank( -1 ) 
     {
         m_rankMap.resize(size);
