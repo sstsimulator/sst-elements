@@ -114,6 +114,7 @@ class VirtNic : public SST::Module {
 	int getNumCores() {
 		return m_num_vNics;
 	}
+
 	int getCoreNum() {
 		return m_vNicId;
 	}
@@ -129,6 +130,7 @@ class VirtNic : public SST::Module {
 			return id >> coreShift;
 		}
 	}
+
 	int calc_realId( int id ) {
 		if ( -1 == id ) {
 			return -1;
@@ -136,6 +138,7 @@ class VirtNic : public SST::Module {
 			return id & nidMask;
 		}
 	}
+
 	int calc_virtId( int nodeId, int vNicId ) {
         return (vNicId << coreShift) | nodeId;
 	}
