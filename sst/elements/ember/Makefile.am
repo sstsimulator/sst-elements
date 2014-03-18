@@ -27,6 +27,8 @@ libember_la_SOURCES = \
 	embercomputeev.cc \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
+	motifs/emberfini.h  \
+	motifs/emberfini.cc  \
 	motifs/emberring.h  \
 	motifs/emberring.cc  \
 	motifs/emberpingpong.cc \
