@@ -33,12 +33,16 @@ load_Ring( Component* comp, Params& params ) {
 }
 
 static const ElementInfoParam component_params[] = {
-    { "seed_w", "" },
-    { "seed_z", "" },
-    { "seed", "" },
-    { "rng", "" },
-    { "count", "" },
-    { NULL, NULL}
+    { "printStats", "Prints the statistics from the component", "0"},
+    { "verbose", "Sets the output verbosity of the component", "0" },
+    { "msgapi", "Sets the messaging API of the end point" },
+    { "send_bin_width", "Bin width of the send time histogram" },
+    { "compute_bin_width", "Bin width of the compute time histogram" },
+    { "init_bin_width", "Bin width of the init time histogram" },
+    { "finalize_bin_width", "Bin width of the finalize time histogram" },
+    { "recv_bin_width", "Bin width of the recv time histogram" },
+    { "buffersize", "Sets the size of the message buffer which is used to back data transmission" },
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoModule modules[] = {
