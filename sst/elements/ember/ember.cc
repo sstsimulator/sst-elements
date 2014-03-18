@@ -36,12 +36,14 @@ static const ElementInfoParam component_params[] = {
     { "printStats", "Prints the statistics from the component", "0"},
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "msgapi", "Sets the messaging API of the end point" },
-    { "send_bin_width", "Bin width of the send time histogram" },
-    { "compute_bin_width", "Bin width of the compute time histogram" },
-    { "init_bin_width", "Bin width of the init time histogram" },
-    { "finalize_bin_width", "Bin width of the finalize time histogram" },
-    { "recv_bin_width", "Bin width of the recv time histogram" },
-    { "buffersize", "Sets the size of the message buffer which is used to back data transmission" },
+    { "generator", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
+    { "start_bin_width", "Bin width of the start time histogram", "5" },
+    { "send_bin_width", "Bin width of the send time histogram", "5" },
+    { "compute_bin_width", "Bin width of the compute time histogram", "5" },
+    { "init_bin_width", "Bin width of the init time histogram", "5" },
+    { "finalize_bin_width", "Bin width of the finalize time histogram", "5"},
+    { "recv_bin_width", "Bin width of the recv time histogram", "5" },
+    { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { NULL, NULL, NULL }
 };
 
