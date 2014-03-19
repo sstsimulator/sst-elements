@@ -83,6 +83,7 @@ class XXX  {
     void read( nid_t, region_t, void* buf, size_t len, FunctorBase_0<bool>* );
     void registerRegion( region_t, nid_t, void* buf, size_t len, FunctorBase_0<bool>* );
     void unregisterRegion( region_t, FunctorBase_0<bool>* );
+    void getStatus( CommReq*, Status* );
 
     Info*      info() { return m_info; }
     VirtNic&   nic() { return *m_nic; }           

@@ -103,15 +103,28 @@ void XXX::setRetLink( Link* link )
     m_retLink = link;
 }
 
+static size_t calcLength( std::vector<IoVec>& ioVec )
+{
+    size_t len = 0;
+    for ( size_t i = 0; i < ioVec.size(); i++ ) {
+        len += ioVec[i].len;
+    }
+    return len;
+}
+
 void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec, nid_t dest, 
                    tag_t tag, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x length=%lu \n",
+                                        dest, tag, calcLength(ioVec) );
     m_sendState->enter( blocking, ioVec, dest, tag, commReq, functor );
 }
 
 void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
       tag_t tag, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
+                                        src, tag, calcLength(ioVec) );
     m_recvState->enter( blocking, ioVec, src, tag, commReq, functor );
 }
 
@@ -135,6 +148,14 @@ void XXX::registerRegion( region_t region, nid_t nid, void* buf, size_t len,
 void XXX::unregisterRegion( region_t region, FunctorBase_0<bool>* functor )
 {
     m_unregRegionState->enter( region, functor );
+}
+
+void XXX::getStatus( CommReq* req, Status* status )
+{
+    *status = req->status;
+    status->nid = info()->nidToWorldRank( status->nid );
+    m_dbg.verbose(CALL_INFO,1,0,"nid=%#x tag=%#x length=%lu \n",
+                        status->nid, status->tag, status->length );
 }
 
 void XXX::schedFunctor( FunctorBase_0<bool>* functor, int delay )

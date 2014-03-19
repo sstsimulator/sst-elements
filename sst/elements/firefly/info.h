@@ -32,6 +32,19 @@ class Info {
         return m_groupMap[group]->getNodeId(rank);
     }
 
+    int rankToWorldRank( Hermes::Communicator group, Hermes::RankID rank ) {
+        assert( Hermes::GroupWorld == group ); 
+        return rank;
+    } 
+
+    int nidToWorldRank( int nid ) {
+        return m_groupMap[Hermes::GroupWorld]->nidToRank( nid );
+    }
+
+    int worldRankToNid( int rank ) {
+        return m_groupMap[Hermes::GroupWorld]->rankToNid( rank );
+    }
+
     int nodeId() {
         return m_groupMap[Hermes::GroupWorld]->getNodeId( worldRank() );
     }

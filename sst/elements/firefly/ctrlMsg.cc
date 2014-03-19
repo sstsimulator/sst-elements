@@ -14,6 +14,7 @@
 #include "ctrlMsg.h"
 #include "ctrlMsgXXX.h"
 #include "nic.h"
+#include "info.h"
 
 using namespace SST::Firefly;
 using namespace SST;
@@ -51,19 +52,22 @@ void API::send( void* buf, size_t len, nid_t dest, tag_t tag,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    m_xxx->sendv( true, ioVec, dest, tag, NULL, functor );
+    m_xxx->sendv( true, ioVec, m_xxx->info()->worldRankToNid(dest),
+                                        tag, NULL, functor );
 }
 void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, tag_t tag,
                                                 FunctorBase_0<bool>* functor )
 {
-    m_xxx->sendv( true, ioVec, dest, tag, NULL, functor );
+    m_xxx->sendv( true, ioVec, m_xxx->info()->worldRankToNid(dest), 
+                                        tag, NULL, functor );
 }
 
 
 void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, tag_t tag,
                             CommReq* req, FunctorBase_0<bool>* functor )
 {
-    m_xxx->sendv( false, ioVec, dest, tag, req, functor );
+    m_xxx->sendv( false, ioVec, m_xxx->info()->worldRankToNid(dest),
+                                        tag, req, functor );
 }
 
 void API::recv( void* buf, size_t len, nid_t src, tag_t tag,
@@ -72,7 +76,8 @@ void API::recv( void* buf, size_t len, nid_t src, tag_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( true, ioVec, src, tag, NULL, functor );
+    m_xxx->recvv( true, ioVec, m_xxx->info()->worldRankToNid(src),
+                                        tag, NULL, functor );
 }
 
 void API::irecv( void* buf, size_t len, nid_t src, tag_t tag,
@@ -81,13 +86,15 @@ void API::irecv( void* buf, size_t len, nid_t src, tag_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( false, ioVec, src, tag, req, functor );
+    m_xxx->recvv( false, ioVec, m_xxx->info()->worldRankToNid(src),
+                                        tag, req, functor );
 }
 
 void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, tag_t tag,
                             CommReq* req, FunctorBase_0<bool>* functor )
 {
-    m_xxx->recvv( false, ioVec, src, tag, req, functor );
+    m_xxx->recvv( false, ioVec, m_xxx->info()->worldRankToNid(src),
+                                        tag, req, functor );
 }
 
 void API::wait( CommReq* req, FunctorBase_1<CommReq*,bool>* functor )
@@ -130,7 +137,7 @@ void* API::getUsrPtr( CommReq* req )
 
 void API::getStatus( CommReq* req, Status* status )
 {
-    *status = req->status;
+    m_xxx->getStatus( req, status );
 }
 
 size_t API::shortMsgLength()

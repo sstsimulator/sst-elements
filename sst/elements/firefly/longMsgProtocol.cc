@@ -318,7 +318,7 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
     size_t len = entry->count * info()->sizeofDataType( entry->dtype );
 
     CtrlMsg::nid_t destNode =
-            info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
+            info()->rankToWorldRank( cbe->sendEntry->group, cbe->sendEntry->dest );
 
     if ( len <= shortMsgLength() - sizeof(MsgHdr)) {
 
@@ -356,7 +356,7 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
 bool LongMsgProtocol::postSendEntryReg_CB( SendCallbackEntry* cbe )
 {
     CtrlMsg::nid_t destNode =
-            info()->rankToNodeId( cbe->sendEntry->group, cbe->sendEntry->dest );
+            info()->rankToWorldRank( cbe->sendEntry->group, cbe->sendEntry->dest );
 
     std::vector<IoVec>  vec;
     int tag = LongMsgTag | cbe->region;
