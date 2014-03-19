@@ -178,7 +178,7 @@ void Nic::handleVnicEvent( Event* ev, int id )
 {
     NicCmdEvent* event = static_cast<NicCmdEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,1,0,"%d\n",event->type);
+    m_dbg.verbose(CALL_INFO,3,0,"%d\n",event->type);
 
     switch ( event->type ) {
     case NicCmdEvent::DmaSend:
@@ -260,12 +260,11 @@ int Nic::fattree_ID_to_IP(int id)
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
-    m_dbg.verbose(CALL_INFO,2,0,"type %d\n", event->type);
 
     switch ( event->type ) {
     case SelfEvent::MatchDelay:
 
-        m_dbg.verbose(CALL_INFO,2,0,"\n");
+        m_dbg.verbose(CALL_INFO,2,0,"MatchDelay\n");
         if ( event->retval ) {
             moveEvent( event->mEvent );
         } else {
@@ -276,10 +275,12 @@ void Nic::handleSelfEvent( Event *e )
         break;
 
     case SelfEvent::ProcessMerlinEvent:
+        m_dbg.verbose(CALL_INFO,2,0,"ProcessMerlinEvent\n");
         processRecvEvent( event->mEvent );
         break;
 
     case SelfEvent::ProcessSend:
+        m_dbg.verbose(CALL_INFO,2,0,"ProcessSend\n");
         processSend();
         break;
     }
@@ -323,15 +324,16 @@ Nic::Entry* Nic::processSend( Entry* entry )
         if ( 0 == entry->currentVec && 
                 0 == entry->currentPos  ) {
             
-            m_dbg.verbose(CALL_INFO,1,0,"start new send %lu bytes\n",
-                                         entry->totalBytes());
             MsgHdr hdr;
             hdr.tag = event->tag;
             hdr.len = entry->totalBytes();
             hdr.dst_vNicId = entry->event()->dst_vNic; 
             hdr.src_vNicId = entry->vNicNum(); 
 
-            m_dbg.verbose(CALL_INFO,1,0,"node=%d vNic=%d\n", entry->node(), hdr.dst_vNicId);
+            m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d, send dstNid=%d "
+                    "dst_vNic=%d tag=%#x bytes=%lu\n",
+                    hdr.src_vNicId,entry->node(), 
+                    hdr.dst_vNicId, hdr.tag, entry->totalBytes()) ;
 
             ev->buf.insert( ev->buf.size(), (const char*) &hdr, 
                                        sizeof(hdr) );
@@ -347,8 +349,8 @@ Nic::Entry* Nic::processSend( Entry* entry )
             ev->setTraceType( Merlin::RtrEvent::ROUTE );
             ev->setTraceID( m_packetId++ );
         #endif
-        m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes %p\n",
-                                                        ev->buf.size(), ev);
+        m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",
+                                                        ev->buf.size());
         assert( ev->buf.size() );
         bool sent = m_linkControl->send( ev, 0 );
         assert( sent );
@@ -376,7 +378,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 {
     Entry* entry = new Entry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,2,0,"dest=%d tag=%d vecLen=%lu length=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
     
     m_sendQ.push_back( entry );
@@ -386,7 +388,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 {
     Entry* entry = new Entry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,2,0,"dest=%d vNic=%d tag=%d vecLen=%lu length=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
              e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
     m_sendQ.push_back( entry );
     processSend();
@@ -396,7 +398,7 @@ void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
 {
     Entry* entry = new Entry( vNicNum, e );
 
-    m_dbg.verbose(CALL_INFO,2,0,"vNicNum=%d src=%#x tag=%#x length=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,0,"vNicNum=%d src=%#x tag=%#x length=%lu\n",
                    vNicNum, e->node, e->tag, entry->totalBytes());
 
     m_recvM[ entry->vNicNum() ][ e->tag ].push_back( entry );
@@ -425,7 +427,7 @@ bool Nic::sendNotify(int)
 
 bool Nic::recvNotify(int vc)
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"network event available\n");
 
     MerlinFireflyEvent* event = 
             static_cast<MerlinFireflyEvent*>( m_linkControl->recv(vc) );
@@ -484,7 +486,7 @@ bool Nic::findRecv( MerlinFireflyEvent* event, MsgHdr& hdr )
 											entry->event()->node, src );
         return false;
     } 
-    m_dbg.verbose(CALL_INFO,2,0,"entry nbytes %lu\n",entry->totalBytes());
+    m_dbg.verbose(CALL_INFO,2,0,"recv entry size %lu\n",entry->totalBytes());
 
     if ( entry->totalBytes() < hdr.len ) {
         assert(0);
@@ -509,17 +511,22 @@ bool Nic::findRecv( MerlinFireflyEvent* event, MsgHdr& hdr )
 
 void Nic::moveEvent( MerlinFireflyEvent* event )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n" );
     int src = event->src;
 
     if ( 0 == m_activeRecvM[ src ]->currentVec && 
              0 == m_activeRecvM[ src ]->currentPos  ) {
-        m_dbg.verbose(CALL_INFO,1,0,"new recv %lu\n", m_activeRecvM[ src ]->totalBytes() );
+        m_dbg.verbose(CALL_INFO,1,0,"dst_vNic %d, recv srcNid=%d "
+                    "src_vNic=%d tag=%x bytes=%lu\n", 
+                        m_activeRecvM[ src ]->vNicNum(),
+                        src,
+                        m_activeRecvM[ src ]->src_vNicNum(),
+                        m_activeRecvM[ src ]->tag,
+                        m_activeRecvM[ src ]->len );
     }
     if ( copyIn( m_dbg, *m_activeRecvM[ src ], *event ) || 
         m_activeRecvM[src]->len == 
                         m_activeRecvM[src]->currentLen ) {
-        m_dbg.verbose(CALL_INFO,1,0,"recv entry done, src=%d\n",src );
+        m_dbg.verbose(CALL_INFO,1,0,"recv entry done, srcNid=%d\n",src );
         notifyRecvDmaDone( m_activeRecvM[src]->vNicNum(),
                             m_activeRecvM[src]->src_vNicNum(),
                             m_activeRecvM[src]->src,
@@ -535,6 +542,7 @@ void Nic::moveEvent( MerlinFireflyEvent* event )
     }
 
     if ( event->buf.empty() ) {
+        m_dbg.verbose(CALL_INFO,2,0,"done with network event\n" );
         delete event;
         if ( ! m_recvNotifyEnabled ) {
             MerlinFireflyEvent* event = NULL;
@@ -550,7 +558,6 @@ void Nic::moveEvent( MerlinFireflyEvent* event )
                 tmp->mEvent = event;
                 schedEvent( tmp );
             } else {
-                m_dbg.verbose(CALL_INFO,2,0,"\n");
                 m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
             }
         }
