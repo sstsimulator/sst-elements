@@ -10,8 +10,6 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
 libmemHierarchy_la_SOURCES = \
-	bus.h \
-	bus.cc \
 	hash.h \
 	cacheListener.h \
 	cacheController.h \
@@ -20,6 +18,8 @@ libmemHierarchy_la_SOURCES = \
 	cacheFactory.cc \
 	ccLine.h \
 	replacementManager.h \
+	bus.h \
+	bus.cc \
 	memoryController.h \
 	memoryController.cc \
 	memNIC.h \

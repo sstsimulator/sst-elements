@@ -30,6 +30,8 @@ private:
     uint FetchInvalidateReqSent_;
     uint FetchInvalidateXReqSent_;
     string ownerName_;
+    string nextLevelCacheName_;
+
     
     void inc_GETXMissSM(Addr addr, bool pf);
     void inc_GETXMissIM(Addr addr, bool pf);
@@ -98,7 +100,7 @@ public:
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
     void sendWriteback(Command cmd, CacheLine* cacheLine, Link* deliveryLink);
     bool sendAckResponse(MemEvent *event);
-
+    void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
 };
 
 

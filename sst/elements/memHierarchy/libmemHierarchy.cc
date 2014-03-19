@@ -28,7 +28,7 @@ using namespace SST::MemHierarchy;
 
 
 static const char * memEvent_port_events[] = {"interfaces.MemEvent", NULL};
-static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
+//static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 
@@ -75,16 +75,19 @@ static Component* create_Bus(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam bus_params[] = {
-    {"numPorts",        "Number of Ports on the bus."},
-    {"busDelay",        "Delay time for the bus.", "100ns"},
-    {"atomicDelivery",  "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy.", "0"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"broadcast",           "Number of Ports on the bus."},
+    {"bus_latency_cycles",  "Number of Ports on the bus."},
+    {"bus_frequency",       "Number of Ports on the bus."},
+    {"low_network_%d",      "Delay time for the bus.", "100ns"},
+    {"high_network_%d",     "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy.", "0"},
+    {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL}
 };
 
 
 static const ElementInfoPort bus_ports[] = {
-    {"port%d",          "Ports, range from 0 to numPorts-1.", bus_port_events},
+    {"low_network_%d",  "Ports connected to lower level caches (closer to main memory)", memEvent_port_events},
+    {"high_network_%d", "Ports connected to higher level caches (closer to CPU)", memEvent_port_events},
     {NULL, NULL, NULL}
 };
 
@@ -140,7 +143,6 @@ static const ElementInfoParam memctrl_params[] = {
 
 
 static const ElementInfoPort memctrl_ports[] = {
-    {"snoop_link",      "Connect to a memHiearchy.bus", bus_port_events},
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
     {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
     {NULL, NULL, NULL}

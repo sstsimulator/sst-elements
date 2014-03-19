@@ -256,11 +256,12 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
 
     Command cmd = _event->getCmd();
     MemEvent* forwardEvent;
-    d_->debug(_L1_,"Forwarding Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i \n",
-             _event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize());
+    d_->debug(_L1_,"Forwarding Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i, Dst = %s \n",
+             _event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize(), nextLevelCacheName_.c_str());
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
 
+    forwardEvent->setDst(nextLevelCacheName_);
     uint64 deliveryTime;
     if(_event->queryFlag(MemEvent::F_UNCACHED)){
         forwardEvent->setFlag(MemEvent::F_UNCACHED);

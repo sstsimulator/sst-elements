@@ -15,6 +15,9 @@
 #include <boost/serialization/deque.hpp>
 #include <boost/serialization/map.hpp>
 
+#include <queue>
+#include <map>
+
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -22,13 +25,12 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
-
 #include <sst/core/interfaces/memEvent.h>
 
+using namespace std;
 using namespace SST::Interfaces;
 
-namespace SST {
-namespace MemHierarchy {
+namespace SST { namespace MemHierarchy {
 
 class BusEvent;
 
@@ -38,91 +40,44 @@ public:
     typedef MemEvent::id_type key_t;
     static const key_t ANY_KEY;
     static const char BUS_INFO_STR[];
-
+    
 	Bus(SST::ComponentId_t id, SST::Params& params);
 	void init(unsigned int phase);
-    void printStatus(Output &out);
 
 private:
 	Bus();  // for serialization only
 	Bus(const Bus&); // do not implement
 	void operator=(const Bus&); // do not implement
 
-	void requestPort(LinkId_t link_id, key_t key);
-	void cancelPortRequest(LinkId_t link_id, key_t key);
-	void sendMessage(BusEvent *ev, LinkId_t from_link);
-    std::pair<LinkId_t, key_t>  arbitrateNext(void);
-
-	void handleEvent( SST::Event *ev );
-
-
-	void schedule(void);
-	void busFinish(void);
-
-	void handleSelfEvent( SST::Event *ev );
+	void processIncomingEvent(SST::Event *ev);
+    void sendSingleEvent(SST::Event *ev);
+    void broadcastEvent(SST::Event *ev);
+    bool clockTick(Cycle_t);
+    void configureParameters(SST::Params&);
+    void configureLinks();
+    
+    void mapNodeEntry(const std::string&, LinkId_t);
+    LinkId_t lookupNode(const std::string&);
 
 
-	class SelfEvent : public Event {
-	public:
-		typedef enum { Schedule, BusFinish } EventType;
-		SelfEvent(EventType t) : SST::Event(), type(t) {}
-		EventType type;
-	};
-
-
-    Output dbg;
-	int numPorts;
-    bool atomicDelivery;
-    std::pair<LinkId_t, key_t> activePort;
-	bool busBusy;
-	TimeConverter *delayTC;
-	SimTime_t busDelay;
-	SST::Link** ports;
-	SST::Link *selfLink;
-	std::deque<std::pair<LinkId_t, key_t> > busRequests;
-	std::map<LinkId_t, SST::Link*> linkMap;
-
-
-	friend class boost::serialization::access;
-	template<class Archive>
-		void save(Archive & ar, const unsigned int version) const
-		{
-			ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-			ar & BOOST_SERIALIZATION_NVP(numPorts);
-			ar & BOOST_SERIALIZATION_NVP(activePort);
-			ar & BOOST_SERIALIZATION_NVP(busBusy);
-			ar & BOOST_SERIALIZATION_NVP(busDelay);
-			for ( int i = 0 ; i < numPorts ; i++ ) {
-				ar & BOOST_SERIALIZATION_NVP(ports[i]);
-			}
-			ar & BOOST_SERIALIZATION_NVP(selfLink);
-			ar & BOOST_SERIALIZATION_NVP(busRequests);
-		}
-
-	template<class Archive>
-		void load(Archive & ar, const unsigned int version)
-		{
-			ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-			ar & BOOST_SERIALIZATION_NVP(numPorts);
-			ar & BOOST_SERIALIZATION_NVP(activePort);
-			ar & BOOST_SERIALIZATION_NVP(busBusy);
-			ar & BOOST_SERIALIZATION_NVP(busDelay);
-			ports = new SST::Link*[numPorts];
-			for ( int i = 0 ; i < numPorts ; i++ ) {
-				ar & BOOST_SERIALIZATION_NVP(ports[i]);
-				//resture links
-				ports[i]->setFunctor(new SST::Event::Handler<Bus>(this,&Bus::handleEvent));
-			}
-			ar & BOOST_SERIALIZATION_NVP(selfLink);
-			selfLink->setFunctor(new SST::Event::Handler<Bus>(this, &Bus::handleSelfEvent));
-			ar & BOOST_SERIALIZATION_NVP(busRequests);
-		}
-
-	BOOST_SERIALIZATION_SPLIT_MEMBER()
-
+    Output dbg_;
+	int numHighNetPorts_;
+    int numLowNetPorts_;
+    int maxNumPorts_;
+    int broadcast_;
+    int latency_;
+    
+    std::string busFrequency_;
+    std::string bus_latency_cycles_;
+	std::vector<SST::Link*> highNetPorts_;
+	std::vector<SST::Link*> lowNetPorts_;
+	std::map<string, LinkId_t> nameMap_;
+    std::map<LinkId_t, SST::Link*> linkIdMap_;
+    std::queue<SST::Event*>   eventQueue_;
+    
 };
 
-
+/*
 class BusEvent : public SST::Event {
 public:
     typedef enum { RequestBus, CancelRequest, SendData, ClearToSend } BusCommand;
@@ -154,19 +109,19 @@ private:
 
     friend class Bus;
 
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive & ar, const unsigned int version )
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(cmd);
         ar & BOOST_SERIALIZATION_NVP(key);
         ar & BOOST_SERIALIZATION_NVP(payload);
     }
 };
+*/
 
 
-};
-};
+}}
 #endif /* SST_MEMHIERARHCY__BUS_H */

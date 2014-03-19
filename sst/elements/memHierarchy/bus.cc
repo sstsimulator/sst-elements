@@ -1,273 +1,221 @@
-// Copyright 2009-2013 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
-// Government retains certain rights in this software.
-//
-// Copyright (c) 2009-2013, Sandia Corporation
-// All rights reserved.
-//
-// This file is part of the SST software package. For license
-// information, see the LICENSE file in the top level directory of the
-// distribution.
+/*
+ * File:   coherenceControllers.cc
+ * Author: Caesar De la Paz III
+ * Email:  caesar.sst@gmail.com
+ */
+
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
 #include "bus.h"
 
-#include <sstream>
-#include <assert.h>
+#include <csignal>
+#include <boost/variant.hpp>
 
-#include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/interfaces/memEvent.h>
 
+using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
-static const LinkId_t BUS_INACTIVE = (LinkId_t)(-2);
-const char Bus::BUS_INFO_STR[] = "SST::MemHierarchy::Bus::Info:";
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
-Bus::Bus(ComponentId_t id, Params& params) :
-	Component(id)
-{
-	// get parameters
-    dbg.init("@t:Bus::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
-	numPorts = params.find_integer("numPorts", 0);
-	if ( numPorts < 1 ) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
-	activePort.first = BUS_INACTIVE;
-	busBusy = false;
 
-
-	std::string delay = params.find_string("busDelay", "100 ns");
-	delayTC = registerTimeBase(delay, false);
-	busDelay = 1;
-
-    atomicDelivery = (0 != params.find_integer("atomicDelivery", 0));
-
-	ports = new SST::Link*[numPorts];
-
-	for ( int i = 0 ; i < numPorts ; i++ ) {
-		std::ostringstream linkName;
-		linkName << "port" << i;
-		std::string ln = linkName.str();
-		ports[i] = configureLink(ln, "50 ps",
-				new Event::Handler<Bus>(this, &Bus::handleEvent));
-		//ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
-		assert(ports[i]);
-		linkMap[ports[i]->getId()] = ports[i];
-		dbg.output(CALL_INFO, "Port %lu = Link %d\n", ports[i]->getId(), i);
-	}
-
-	selfLink = configureSelfLink("Self", "50 ps",
-				new Event::Handler<Bus>(this, &Bus::handleSelfEvent));
-
+Bus::Bus(ComponentId_t id, Params& params) : Component(id){
+	configureParameters(params);
+    configureLinks();
 }
 
 Bus::Bus() :
-	Component(-1)
+    Component(-1)
 {
-	// for serialization only
-}
-
-
-void Bus::init(unsigned int phase)
-{
-	if ( !phase ) {
-        char buf[512];
-        sprintf(buf, "%s\tNumACKPeers: %d", BUS_INFO_STR, atomicDelivery ? 1 : numPorts);
-        std::string busInfo(buf);
-		for ( int i = 0 ; i < numPorts ; i++ ) {
-			ports[i]->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
-            ports[i]->sendInitData(new StringEvent(busInfo));
-		}
-	}
-
-	/* Pass on any messages */
-	for ( int i = 0 ; i < numPorts ; i++ ) {
-		SST::Event *ev = NULL;
-		while ( NULL != (ev = ports[i]->recvInitData()) ) {
-			MemEvent *me = dynamic_cast<MemEvent*>(ev);
-			if ( me ) {
-				for ( int j = 0 ; j < numPorts ; j++ ) {
-					if ( i == j ) continue;
-					ports[j]->sendInitData(new MemEvent(me));
-				}
-			}
-			delete ev;
-		}
-	}
 
 }
 
+void Bus::processIncomingEvent(SST::Event *ev){
+    eventQueue_.push(ev);
+}
 
-void Bus::printStatus(Output &out)
-{
-    out.output("MemHierarchy::Bus %s\n", getName().c_str());
-    out.output("\tStatus: %s\n", busBusy ? "BUSY" : "IDLE");
-    if ( busBusy ) {
-        out.output("\tCurrent Message:\tLink %ld,  key:  (%"PRIx64", %d)\n",
-                activePort.first, activePort.second.first, activePort.second.second);
+bool Bus::clockTick(Cycle_t time) {
+
+    if(!eventQueue_.empty()){
+        SST::Event* event = eventQueue_.front();
+        
+        if(broadcast_) broadcastEvent(event);
+        else sendSingleEvent(event);
+        
+        eventQueue_.pop();
     }
-    out.output("\tQueue Depth:\t%zu\n", busRequests.size());
-    for ( std::deque<std::pair<LinkId_t, key_t> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
-        out.output("\t\tLink %ld,  key:  (%"PRIx64", %d)\n", i->first, i->second.first, i->second.second);
-    }
-
-
+       
+    
+    return false;
 }
 
-void Bus::requestPort(LinkId_t link_id, key_t key)
-{
+void Bus::init(unsigned int phase){
+    SST::Event *ev;
 
-	busRequests.push_back(std::make_pair(link_id, key));
-	dbg.output(CALL_INFO, "(%lu, (%"PRIx64", %d)) [active = %lu] queue depth = %zu \n", link_id, key.first, key.second, activePort.first, busRequests.size());
+	/*if (!phase) {
+         for(int i = 0; i < numHighNetPorts_; i++)
+            highNetPorts_[i]->send(new MemEvent(this, 0, NULLCMD));
+    
+        for(int i = 0; i < numLowNetPorts_; i++)
+            lowNetPorts_[i]->send(new MemEvent(this, 0, NULLCMD));
+	}*/
 
-	if ( BUS_INACTIVE == activePort.first ) {
-		// Nobody's active.  Schedule it.
-		selfLink->send(new SelfEvent(SelfEvent::Schedule));
-	}
-}
-
-
-void Bus::cancelPortRequest(LinkId_t link_id, key_t key)
-{
-	dbg.output(CALL_INFO, "(%lu, (%"PRIx64", %d)) [active = %lu]\n", link_id, key.first, key.second, activePort.first);
-
-    if ( link_id == activePort.first && (key == activePort.second || ANY_KEY == key )) {
-        dbg.output(CALL_INFO, "Canceling active.  Rescheduling\n");
-        activePort.first = BUS_INACTIVE;
-        selfLink->send(new SelfEvent(SelfEvent::Schedule));
-    }
-
-    for ( std::deque<std::pair<LinkId_t, key_t> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
-        if ( i->first == link_id && i->second == key) {
-            busRequests.erase(i);
-            dbg.output(CALL_INFO, "Canceling (%lu, (%"PRIx64", %d)\n", link_id, key.first, key.second);
-            break;
+    cout << "HEREEEE" << endl;
+    
+    for(int i = 0; i < numHighNetPorts_; i++) {
+        while ((ev = highNetPorts_[i]->recvInitData())){
+            
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            if(!memEvent) delete memEvent;
+            else if(memEvent->getCmd() == NULLCMD){
+                mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]->getId());
+            }
+            else{
+                for(int k = 0; k < numLowNetPorts_; k++)
+                    lowNetPorts_[k]->sendInitData(memEvent);
+            }
         }
     }
-
-
-}
-
-
-void Bus::sendMessage(BusEvent *ev, LinkId_t from_link)
-{
-    dbg.output(CALL_INFO, "(%s -> %s: (%"PRIx64", %d) %s %"PRIx64") [active = %lu]\n",
-            ev->payload->getSrc().c_str(), ev->payload->getDst().c_str(),
-            ev->payload->getID().first, ev->payload->getID().second,
-            CommandString[ev->payload->getCmd()], ev->payload->getAddr(),
-            activePort.first);
-    // Only should be sending data if have clear-to-send
-    if ( from_link != activePort.first ) {
-        _abort(Bus, "Port %ld tried talking, but %ld is active.\n", from_link, activePort.first);
+    
+    
+    MemEvent* temp;
+    for(int i = 0; i < numLowNetPorts_; i++) {
+        while ((ev = lowNetPorts_[i]->recvInitData())){
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            if(!memEvent) delete memEvent;
+            else if(memEvent->getCmd() == NULLCMD){
+                mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
+                for(int i = 0; i < numHighNetPorts_; i++) {
+                    temp = new MemEvent(memEvent);
+                    highNetPorts_[i]->sendInitData(memEvent);
+                    cout << "sent memEvent, src: " << temp->getSrc() << " linkID: " << highNetPorts_[i]->getId() << endl;
+                }
+            }
+            else{
+                //Ignore responses
+            }
+        }
     }
-    // Can't send while already busy
-    assert(!busBusy);
-
-    if ( ev->key != activePort.second ) {
-        _abort(Bus, "Port %ld sent us key (%"PRIx64", %d), but key (%"PRIx64", %d) is active.\n",
-                from_link, ev->key.first, ev->key.second, activePort.second.first, activePort.second.second);
-    }
-
-    // TODO:  Calcuate delay including message size
-    for ( int i = 0 ; i < numPorts ; i++ ) {
-        ports[i]->send(busDelay, delayTC, new BusEvent(new MemEvent(ev->payload)));
-    }
-    //delete ev->payload;
-    selfLink->send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));
-    busBusy = true;
-}
-
-
-std::pair<LinkId_t, Bus::key_t> Bus::arbitrateNext(void)
-{
-	if ( busRequests.size() > 0 ) {
-        std::pair<LinkId_t, key_t> id = busRequests.front();
-		busRequests.pop_front();
-		return id;
-	}
-	return std::make_pair(BUS_INACTIVE, ANY_KEY);
+    
+    
 }
 
 
 
-// incoming events are scanned and deleted
-void Bus::handleEvent(Event *ev) {
-	BusEvent *event = static_cast<BusEvent*>(ev);
-    LinkId_t link_id = event->getLinkId();
-    switch(event->cmd)
-    {
-    case BusEvent::RequestBus:
-        requestPort(link_id, event->key);
-        break;
-    case BusEvent::CancelRequest:
-        cancelPortRequest(link_id, event->key);
-        break;
-    case BusEvent::SendData:
-        sendMessage(event, link_id);
-        delete event->payload;
-        event->payload = NULL;
-        break;
-    default:
-        _abort(Bus, "Bus should never receive a ClearToSend.\n");
+void Bus::broadcastEvent(SST::Event *ev){
+    MemEvent* memEvent = dynamic_cast<MemEvent*>(ev); assert(memEvent);
+    LinkId_t srcLinkId = lookupNode(memEvent->getSrc());
+    SST::Link* srcLink = linkIdMap_[srcLinkId];
+
+    for(int i = 0; i < numHighNetPorts_; i++) {
+        if(highNetPorts_[i] == srcLink) continue;
+        highNetPorts_[i]->send(new MemEvent(memEvent));
     }
+    
+    for(int i = 0; i < numLowNetPorts_; i++) {
+        if(lowNetPorts_[i] == srcLink) continue;
+        lowNetPorts_[i]->send( new MemEvent(memEvent));
+    }
+    
+    delete memEvent;
+}
+
+
+
+void Bus::sendSingleEvent(SST::Event *ev){
+    MemEvent *event = static_cast<MemEvent*>(ev); assert(event);
+    LinkId_t dstLinkId = lookupNode(event->getDst());
+    SST::Link* dstLink = linkIdMap_[dstLinkId];
+    dstLink->send(new MemEvent(event));
+    
     delete event;
 }
 
+//------------------
+// EXTRAS
+//------------------
 
-
-void Bus::schedule(void)
-{
-	if ( BUS_INACTIVE != activePort.first || busBusy ) {
-		// Most likely, two people asked to schedule in the same cycle.
-		return;
-	}
-
-    std::pair<LinkId_t, key_t> next_id = arbitrateNext();
-	if ( BUS_INACTIVE != next_id.first ) {
-		activePort = next_id;
-		dbg.output(CALL_INFO, "Setting activePort = (%lu, (%"PRIx64", %d))\n", activePort.first, activePort.second.first, activePort.second.second);
-		linkMap[next_id.first]->send(new BusEvent(BusEvent::ClearToSend, activePort.second));
-	}
+void Bus::mapNodeEntry(const std::string &name, LinkId_t id){
+    cout << "New map name: " << name << endl;
+	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
+	assert(nameMap_.end() == it);
+    nameMap_[name] = id;
 }
 
+LinkId_t Bus::lookupNode(const std::string &name){
+    cout << "Name lookup: " << name << endl;
 
-void Bus::busFinish(void)
-{
-	dbg.output(CALL_INFO, "\n");
-	busBusy = false;
-	activePort.first = BUS_INACTIVE;
-	schedule();
+	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
+	assert(nameMap_.end() != it);
+    return it->second;
 }
 
+void Bus::configureParameters(SST::Params& params){
+    dbg_.init("" + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+	//numHighNetPorts_ = params.find_integer("num_high_network_ports", 0);
+    numHighNetPorts_ = 0;
+	//numLowNetPorts_ = params.find_integer("num_low_network_ports", 0);
+    numLowNetPorts_ = 0;
+    maxNumPorts_ = 500;
+    
+	latency_ = params.find_integer("bus_latency_cycles", 1);
+    busFrequency_ = params.find_string("bus_frequency", "");
+    broadcast_ = params.find_integer("broadcast", 0);
 
-// incoming events are scanned and deleted
-void Bus::handleSelfEvent(Event *ev) {
-	SelfEvent *event = dynamic_cast<SelfEvent*>(ev);
-	if (event) {
-        dbg.output(CALL_INFO, "Received selfEvent type %d\n", event->type);
-		switch(event->type)
-		{
-		case SelfEvent::Schedule:
-			schedule();
-			break;
-		case SelfEvent::BusFinish:
-			busFinish();
-			break;
-		}
-		delete event;
-	} else {
-		printf("Error! Bad Event Type!\n");
+	broadcast_ = params.find_integer("broadcast", 0);
+    if(busFrequency_ == "Invalid") _abort(Bus, "Bus Frequency was not specified\n");
+	//if(numLowNetPorts_ < 1 || numHighNetPorts_ < 1) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
+    if(broadcast_ < 0 || broadcast_ > 1) _abort(Bus, "Broadcast feature was not specified correctly\n");
+    
+	//highNetPorts_ = new SST::Link*[numHighNetPorts_];
+	//lowNetPorts_ = new SST::Link*[numLowNetPorts_];
+
+    registerClock(busFrequency_, new Clock::Handler<Bus>(this, &Bus::clockTick));
+}
+
+void Bus::configureLinks(){
+    SST::Link* link;
+	for ( int i = 0 ; i < maxNumPorts_ ; i++ ) {
+		std::ostringstream linkName;
+		linkName << "high_network_" << i;
+		std::string ln = linkName.str();
+		link = configureLink(ln, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+		if(link){
+            highNetPorts_.push_back(link);
+            numHighNetPorts_++;
+            //assert(highNetPorts_[i]);
+            linkIdMap_[highNetPorts_[i]->getId()] = highNetPorts_[i];
+            dbg_.output(CALL_INFO, "Port %lu = Link %d\n", highNetPorts_[i]->getId(), i);
+        }
+    }
+    
+    for ( int i = 0 ; i < maxNumPorts_ ; i++ ) {
+		std::ostringstream linkName;
+		linkName << "low_network_" << i;
+		std::string ln = linkName.str();
+		link = configureLink(ln, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        if(link){
+            lowNetPorts_.push_back(link);
+            numLowNetPorts_++;
+            //assert(lowNetPorts_[i]);
+            linkIdMap_[lowNetPorts_[i]->getId()] = lowNetPorts_[i];
+            dbg_.output(CALL_INFO, "Port %lu = Link %d\n", lowNetPorts_[i]->getId(), i);
+        }
 	}
-}
+    //if(numLowNetPorts_ < 1 || numHighNetPorts_ < 1) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
 
+    cout << "Bus number of ports:  H: " << numHighNetPorts_ << " L: " << numLowNetPorts_ << endl;
+}
 
 // Element Libarary / Serialization stuff
 
-BOOST_CLASS_EXPORT(Bus)
-BOOST_CLASS_EXPORT(BusEvent)
+//BOOST_CLASS_EXPORT(Bus)
+//BOOST_CLASS_EXPORT(BusEvent)
+
 

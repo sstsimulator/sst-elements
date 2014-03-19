@@ -49,6 +49,8 @@ bool Cache::clockTick(Cycle_t time) {
 }
 
 void Cache::init(unsigned int phase){
+    
+    /*
     if(directoryLink_) directoryLink_->init(phase);
     if(!phase){
         for(uint idc = 0; idc < childrenLinks_->size(); idc++) childrenLinks_->at(idc)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
@@ -69,7 +71,59 @@ void Cache::init(unsigned int phase){
                 }
             }
         }
-    }    
+    }
+    */
+    ///*
+    SST::Event *ev;
+    if(directoryLink_) directoryLink_->init(phase);
+    
+    if(!phase){
+        if(L1_) for(uint idc = 0; idc < childrenLinks_->size(); idc++) childrenLinks_->at(idc)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+        else{
+            for(uint i = 0; i < childrenLinks_->size(); i++) {
+                childrenLinks_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));
+            }
+        }
+        if(!dirControllerExists_){
+            for(uint i = 0; i < parentLinks_->size(); i++){
+                parentLinks_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
+            }
+        }
+    }
+
+    //leave as is!!!!!!!!!!!!!
+    for(uint idc = 0; idc < childrenLinks_->size(); idc++) {
+        while ((ev = (childrenLinks_->at(idc))->recvInitData())){
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            //assert(memEvent->getSrc());
+            if(!memEvent) delete memEvent;
+            else{
+                if(dirControllerExists_) directoryLink_->sendInitData(memEvent);
+                else{
+                    for(uint idp = 0; idp < parentLinks_->size(); idp++){
+                        parentLinks_->at(idp)->sendInitData(memEvent);
+                    }
+                }
+            }
+        }
+    }
+    
+    for(uint i = 0; i < parentLinks_->size(); i++) {
+        while ((ev = parentLinks_->at(i)->recvInitData())){
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            if(!memEvent) delete memEvent;
+            else if(memEvent->getCmd() == NULLCMD){
+                nextLevelCacheName_ = memEvent->getSrc();
+                delete memEvent;
+            }
+        }
+    }
+    //*/
+    
+}
+
+void Cache::setup(){
+    bottomCC_->setNextLevelCache(nextLevelCacheName_);
 }
 
 void Cache::processIncomingEvent(SST::Event *ev){
@@ -78,17 +132,22 @@ void Cache::processIncomingEvent(SST::Event *ev){
   
 void Cache::processEvent(SST::Event* ev, bool reActivation) {
     MemEvent *event = static_cast<MemEvent*>(ev); assert_msg(event, "Event is Null!!");
+    assert(event);
+    
     Command cmd     = event->getCmd(); string prefetch =  event->isPrefetch() ? "true" : "false";
     Addr addr       = event->getAddr(), baseAddr = toBaseAddr(addr);
     int childId     = getChildId(event);
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
+    
+    //if(event->getSrc().empty()) return;
+    
     if(!reActivation){
         STAT_TotalInstructionsRecieved_++;
         registerNewRequest(event->getID());
         d_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), childId, prefetch.c_str(), timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId(), prefetch.c_str(), timestamp_, uncached ? "un$" : "");
     if(uncached){
         processUncached(event, cmd, baseAddr);
         return;

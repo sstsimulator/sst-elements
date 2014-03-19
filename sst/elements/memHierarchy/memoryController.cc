@@ -378,7 +378,7 @@ MemController::~MemController()
 void MemController::init(unsigned int phase)
 {
 	if ( !phase ) {
-        upstream_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+        //upstream_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 	}
 
 	SST::Event *ev = NULL;
@@ -396,25 +396,6 @@ void MemController::init(unsigned int phase)
             } else {
                 Output out("", 0, 0, Output::STDERR);
                 out.debug(CALL_INFO,6,0,"Memory received unexpected Init Command: %d\n", me->getCmd() );
-            }
-        } else {
-            StringEvent *se = dynamic_cast<StringEvent*>(ev);
-            if ( se ) {
-                if ( std::string::npos != se->getString().find(Bus::BUS_INFO_STR) ) {
-                    /* Determine if we are to participate in ACK'ing Invalidates */
-                    std::istringstream is(se->getString());
-                    std::string header;
-                    is >> header;
-                    assert(!header.compare(Bus::BUS_INFO_STR));
-                    std::string tag;
-                    is >> tag;
-                    int numPeers = 1;
-                    if ( !tag.compare("NumACKPeers:") ) {
-                        is >> numPeers;
-                    }
-
-                    respondToInvalidates = (numPeers > 1);
-                }
             }
         }
         delete ev;
@@ -483,9 +464,9 @@ void MemController::handleEvent(SST::Event *event)
     delete event;
 }
 
-
 void MemController::handleBusEvent(SST::Event *event)
 {
+/*
     BusEvent *be = static_cast<BusEvent*>(event);
     switch ( be->getCmd() ) {
     case BusEvent::ClearToSend:
@@ -498,8 +479,8 @@ void MemController::handleBusEvent(SST::Event *event)
         _abort(MemController, "Bus Client should not be receiving this command.\n");
     }
     delete be;
+*/
 }
-
 
 void MemController::addRequest(MemEvent *ev)
 {
@@ -683,69 +664,22 @@ void MemController::performRequest(DRAMReq *req)
 
 
 
-void MemController::sendBusPacket(Bus::key_t key)
-{
-    assert(use_bus);
-	for (;;) {
-		if ( 0 == busReqs.size() ) {
-            dbg.output(CALL_INFO, "Sending cancelation, as we have nothing in the queue.\n");
-			upstream_link->send(new BusEvent(BusEvent::CancelRequest, key));
-			break;
-		} else {
-            DRAMReq *req = busReqs.front();
-			busReqs.pop_front();
-            req->status = DRAMReq::DONE;
-			if ( !req->canceled ) {
-                MemEvent *ev = req->respEvent;
-				dbg.output(CALL_INFO, "Sending  Addr: %"PRIx64" in response to (%"PRIx64", %d) \n",
-                        ev->getAddr(),
-						ev->getResponseToID().first, ev->getResponseToID().second
-						);
-                assert(ev->getID() == key);
-                if ( req->respEvent->getCmd() == WriteResp ) numWrites++;
-                else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
-				upstream_link->send(0, new BusEvent(ev));
-				break;
-            } else {
-                if ( req->respEvent->getID() == key ) {
-                    /* Bus asked for this item, but it is canceled.
-                     * This most likely means that we raced a cancelation
-                     * and the bus giving us permission.  A bus cancelation
-                     * will be received by the bus, and we don't need to do
-                     * anything.  Pretend this thing never happened.
-                     */
-                    dbg.output(CALL_INFO, "Choosing to not send event for (%"PRIx64", %d), because we think it was recently canceled.\n", key.first, key.second);
-                    break;
-                } else {
-                    dbg.output(CALL_INFO, "Skipping over canceled event (%"PRIx64", %d)\n", req->respEvent->getID().first, req->respEvent->getID().second);
-                }
-            }
-		}
-	}
-}
-
-void MemController::sendBusCancel(Bus::key_t key) {
-    assert(use_bus);
-    dbg.output(CALL_INFO, "Sending cancelation of event (%"PRIx64", %d)\n", key.first, key.second);
-    upstream_link->send(new BusEvent(BusEvent::CancelRequest, key));
-}
-
-
 void MemController::sendResponse(DRAMReq *req)
 {
+    /*
     if ( use_bus ) {
         busReqs.push_back(req);
         Bus::key_t key = req->respEvent->getID();
         dbg.debug(CALL_INFO,6,0, "Requesting bus for event (%"PRIx64", %d)\n", key.first, key.second);
         upstream_link->send(new BusEvent(BusEvent::RequestBus, key));
-    } else {
+    } else { */
         if(!req->isWrite){
             upstream_link->send(req->respEvent);
         }
         req->status = DRAMReq::DONE;
         if ( req->respEvent->getCmd() == GetXResp || req->respEvent->getCmd() == WriteResp ) numWrites++;
         else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
-    }
+    //}
 }
 
 
@@ -776,5 +710,57 @@ void MemController::handleMemResponse(DRAMReq *req)
        }
     }
 
+}
+
+
+void MemController::sendBusPacket(Bus::key_t key)
+{
+/*
+    assert(use_bus);
+	for (;;) {
+		if ( 0 == busReqs.size() ) {
+            dbg.output(CALL_INFO, "Sending cancelation, as we have nothing in the queue.\n");
+			upstream_link->send(new BusEvent(BusEvent::CancelRequest, key));
+			break;
+		} else {
+            DRAMReq *req = busReqs.front();
+			busReqs.pop_front();
+            req->status = DRAMReq::DONE;
+			if ( !req->canceled ) {
+                MemEvent *ev = req->respEvent;
+				dbg.output(CALL_INFO, "Sending  Addr: %"PRIx64" in response to (%"PRIx64", %d) \n",
+                        ev->getAddr(),
+						ev->getResponseToID().first, ev->getResponseToID().second
+						);
+                assert(ev->getID() == key);
+                if ( req->respEvent->getCmd() == WriteResp ) numWrites++;
+                else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
+				upstream_link->send(0, new BusEvent(ev));
+				break;
+            } else {
+                if ( req->respEvent->getID() == key ) {
+                    // Bus asked for this item, but it is canceled.
+                    //This most likely means that we raced a cancelation
+                    //and the bus giving us permission.  A bus cancelation
+                    //will be received by the bus, and we don't need to do
+                    //anything.  Pretend this thing never happened.
+                    //
+                    dbg.output(CALL_INFO, "Choosing to not send event for (%"PRIx64", %d), because we think it was recently canceled.\n", key.first, key.second);
+                    break;
+                } else {
+                    dbg.output(CALL_INFO, "Skipping over canceled event (%"PRIx64", %d)\n", req->respEvent->getID().first, req->respEvent->getID().second);
+                }
+            }
+		}
+	}
+*/
+}
+
+void MemController::sendBusCancel(Bus::key_t key) {
+    /*
+    assert(use_bus);
+    dbg.output(CALL_INFO, "Sending cancelation of event (%"PRIx64", %d)\n", key.first, key.second);
+    upstream_link->send(new BusEvent(BusEvent::CancelRequest, key));
+    */
 }
 

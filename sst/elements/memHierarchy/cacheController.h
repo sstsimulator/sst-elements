@@ -95,7 +95,7 @@ public:
     
     bool clockTick(Cycle_t);
     virtual void init(unsigned int);
-    virtual void setup(void){}
+    virtual void setup(void);
     virtual void finish(void){
         bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_, STAT_TotalInstructionsRecieved_, STAT_NonCoherenceReqsReceived_);
         topCC_->printStats(stats_);
@@ -134,6 +134,7 @@ private:
     uint                    numLines_;
     uint                    lineSize_;
     uint                    MSHRSize_;
+    string                  nextLevelCacheName_;
     bool                    L1_;
     bool                    dirControllerExists_;
     MSHR*                   mshr_;
