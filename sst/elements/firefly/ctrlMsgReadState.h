@@ -29,7 +29,7 @@ class ReadState : StateBase< T1 >
         m_unblock( this, &ReadState<T1>::unblock )
     {
         char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ReadState::@p():@l ",
+        snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ReadState::@p():@l ",
                             obj.info()->nodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
 

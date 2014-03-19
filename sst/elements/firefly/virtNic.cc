@@ -52,7 +52,8 @@ void VirtNic::init( unsigned int phase )
         snprintf(buffer,100,"@t:%d:%d:VirtNic::@p():@l ", m_nodeId, m_vNicId );
         m_dbg.setPrefix( buffer );
 
-        m_dbg.verbose(CALL_INFO,1,0,"we are node %d\n",m_nodeId);
+        m_dbg.verbose(CALL_INFO,1,0,"we are node=%d core=%d\n",
+                        m_nodeId, m_vNicId );
     }
 }
 
@@ -60,7 +61,7 @@ void VirtNic::handleEvent( Event* ev )
 {
     NicRespEvent* event = static_cast<NicRespEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,1,0,"%d\n",event->type);
+    m_dbg.verbose(CALL_INFO,2,0,"%d\n",event->type);
 
     switch( event->type ) {
     case NicRespEvent::PioSend:
@@ -100,41 +101,41 @@ bool VirtNic::canDmaRecv()
 
 void VirtNic::dmaSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
 
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaSend, 
             calc_vNic(dest), calc_realId(dest), tag, vec, key ) );
 }
 void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaRecv,
             calc_vNic(src), calc_realId(src), tag, vec, key ) );
 }
 
 void VirtNic::pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend, 
 			calc_vNic(dest), calc_realId(dest), tag, vec, key ) );
 }
 
 void VirtNic::setNotifyOnSendDmaDone(VirtNic::HandlerBase<void*>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_notifySendDmaDone = functor;
 }
 
 void VirtNic::setNotifyOnRecvDmaDone(
                 VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_notifyRecvDmaDone = functor;
 }
 
 void VirtNic::setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_notifySendPioDone = functor;
 }
 

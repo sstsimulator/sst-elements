@@ -30,7 +30,7 @@ class RecvState : StateBase< T1 >
         m_unblock( this, &RecvState<T1>::unblock )
     {
         char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:CtrlMsg::RecvState::@p():@l ",
+        snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::RecvState::@p():@l ",
                             obj.info()->nodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
 
@@ -65,8 +65,6 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
     m_functor = functor;
     m_blocking = blocking;
 
-
-    dbg().verbose(CALL_INFO,1,0,"%p\n",commReq);
     if ( ! blocking ) {
         m_req = new _CommReq( _CommReq::Send, ioVec, src, tag, &commReq->status );
         commReq->req = m_req;
@@ -82,7 +80,7 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
 template< class T1 >
 bool RecvState<T1>::afterProcess()
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,2,0,"\n");
 
     if ( m_blocking ) {
         if ( m_req->isDone() ) {

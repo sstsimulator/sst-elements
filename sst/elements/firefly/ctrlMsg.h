@@ -74,7 +74,7 @@ class API : public ProtocolAPI {
                                         FunctorBase_0<bool>* = NULL );
     void irecv( void* buf, size_t len, nid_t src, tag_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
-    void irecvv( std::vector<IoVec>&, nid_t src,  tag_t tag, CommReq*,
+    void irecvv( std::vector<IoVec>&, nid_t src, tag_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
     void wait( CommReq*, FunctorBase_1<CommReq*,bool>* = NULL );
     void waitAny( std::vector<CommReq*>&, FunctorBase_1<CommReq*, bool>* = NULL );

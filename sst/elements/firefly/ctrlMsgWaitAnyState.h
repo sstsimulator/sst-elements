@@ -28,7 +28,7 @@ class WaitAnyState : StateBase< T1 >
         m_unblock( this, &WaitAnyState<T1>::unblock )
     {
         char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:CtrlMsg::WaitAnyState::@p():@l ",
+        snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::WaitAnyState::@p():@l ",
                             obj.info()->nodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
     }

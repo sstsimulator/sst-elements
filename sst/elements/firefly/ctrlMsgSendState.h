@@ -30,7 +30,7 @@ class SendState : StateBase< T1 >
         m_unblock( this, &SendState<T1>::unblock )
     {
         char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:CtrlMsg::SendState::@p():@l ",
+        snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::SendState::@p():@l ",
                             obj.info()->nodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
 
@@ -77,7 +77,7 @@ void SendState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
 template< class T1 >
 bool SendState<T1>::afterProcess()
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,2,0,"\n");
 
     if ( m_blocking ) {
         if ( m_req->isDone() ) {

@@ -130,7 +130,7 @@ void Hades::_componentSetup()
         if ( group->getNodeId( i ) == myNodeId() && 
                 group->getCoreId( i ) == m_virtNic->getCoreNum() ) 
         {
-            m_dbg.verbose(CALL_INFO,1,0,"node=%d core=%d, set rank to %d\n",
+            m_dbg.verbose(CALL_INFO,1,0,"node=%#x core=%d, set rank to %d\n",
 						myNodeId(), m_virtNic->getCoreNum(), i  );
             group->setMyRank( i );
             break;

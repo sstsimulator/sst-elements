@@ -62,7 +62,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 {
     int child;
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n", stateName(m_state).c_str());
+    m_dbg.verbose(CALL_INFO,1,0,"%s state\n", stateName(m_state).c_str());
 
     switch ( m_state ) {
     case WaitUp:
