@@ -34,15 +34,6 @@ libpatterns_la_SOURCES = \
 	components/bit_bucket/bit_bucket.cc \
 	components/routermodel/routermodel.h \
 	components/routermodel/routermodel.cc \
-	benchmarks/src_ghost_bench/ghost.h \
-	benchmarks/src_ghost_bench/memory.h \
-	benchmarks/src_ghost_bench/memory.c \
-	benchmarks/src_ghost_bench/ranks.h \
-	benchmarks/src_ghost_bench/ranks.c \
-	benchmarks/src_ghost_bench/neighbors.h \
-	benchmarks/src_ghost_bench/neighbors.c \
-	benchmarks/src_ghost_bench/work.h \
-	benchmarks/src_ghost_bench/work.c \
 	util/stats.h  \
 	util/stats.cc \
 	collective_patterns/barrier_op.h \
@@ -73,6 +64,21 @@ libpatterns_la_SOURCES = \
 	support/state_machine.h \
 	patterns.cc \
 	patterns.h
+
+
+
+if SST_USE_MPI
+libpatterns_la_SOURCES += \
+	benchmarks/src_ghost_bench/ghost.h \
+	benchmarks/src_ghost_bench/memory.h \
+	benchmarks/src_ghost_bench/memory.c \
+	benchmarks/src_ghost_bench/ranks.h \
+	benchmarks/src_ghost_bench/ranks.c \
+	benchmarks/src_ghost_bench/neighbors.h \
+	benchmarks/src_ghost_bench/neighbors.c \
+	benchmarks/src_ghost_bench/work.h \
+	benchmarks/src_ghost_bench/work.c
+endif
 
 ### ADD EXTRA FILES TO THE BUILD IF USING THE POWER COMPONENTS
 if USE_MCPAT
