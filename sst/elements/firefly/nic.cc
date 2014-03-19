@@ -301,13 +301,16 @@ void Nic::processSend( )
             m_dbg.verbose(CALL_INFO,2,0,"set send notify\n");
             m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
         }
-    } else if ( ! m_sendQ.empty() ) {
+    }
+    if ( ! m_currentSend && ! m_sendQ.empty() ) {
         m_currentSend = m_sendQ.front();
         m_sendQ.pop_front();
+        m_dbg.verbose(CALL_INFO,2,0,"new Send\n");
         SelfEvent* event = new SelfEvent;
         event->type = SelfEvent::ProcessSend;
         schedEvent( event, m_txDelay );
-    } else {
+    }
+    if ( ! m_currentSend ) {
         m_dbg.verbose(CALL_INFO,2,0,"remove send notify\n");
         m_linkControl->setNotifyOnSend( NULL );
     }
@@ -388,7 +391,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 {
     Entry* entry = new Entry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n", vNicNum,
              e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
     m_sendQ.push_back( entry );
     processSend();

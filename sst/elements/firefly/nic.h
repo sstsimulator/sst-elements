@@ -161,8 +161,8 @@ class Nic : public SST::Component  {
     struct MsgHdr {
         size_t len;
         int    tag;
-        unsigned char    dst_vNicId;
-        unsigned char    src_vNicId;
+        unsigned short    dst_vNicId;
+        unsigned short    src_vNicId;
     };
 
     class SelfEvent : public SST::Event {
