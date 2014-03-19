@@ -16,6 +16,8 @@
 #include <sst/core/timeLord.h>
 #include <sst/core/element.h>
 
+#include <sstream>
+
 #include "nic.h"
 #include "merlinEvent.h"
 
