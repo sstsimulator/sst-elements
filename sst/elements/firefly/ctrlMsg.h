@@ -22,9 +22,14 @@ namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
 
-//typedef VirtNic::NodeId  nid_t;
 typedef int  nid_t;
 typedef uint32_t     tag_t;
+
+static const tag_t AllgatherTag  = 0x10000000;
+static const tag_t AlltoallvTag  = 0x20000000;
+static const tag_t CollectiveTag = 0x30000000;
+static const tag_t GathervTag    = 0x40000000;
+static const tag_t LongProtoTag  = 0x50000000;
 
 struct Status {
     nid_t   nid;
@@ -42,11 +47,9 @@ struct CommReq {
     void* usrPtr;
 };
 
-//static const nid_t  AnyNid = VirtNic::AnyId; 
 static const nid_t  AnyNid = -1;
 static const tag_t  AnyTag = -1; 
 typedef int region_t;
-
 
 typedef int RegionEvent;
 

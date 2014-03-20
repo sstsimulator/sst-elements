@@ -29,7 +29,9 @@ class LongMsgProtocol : public CtrlMsg::API  {
 
     class SelfEvent : public SST::Event {
       public:
-        SelfEvent( CtrlMsg::FunctorBase_0<bool>* arg) : Event(), callback(arg) {}
+        SelfEvent( CtrlMsg::FunctorBase_0<bool>* arg) :
+            Event(), callback(arg)
+        {}
         CtrlMsg::FunctorBase_0<bool>* callback; 
     };
 

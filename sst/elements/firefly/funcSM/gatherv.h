@@ -125,9 +125,6 @@ class QQQ {
 
 class GathervFuncSM :  public FunctionSMInterface
 {
-
-    static const int GathervTag = 0xf0020000;
-
     enum StateEnum {
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
@@ -169,7 +166,7 @@ class GathervFuncSM :  public FunctionSMInterface
     bool sendUp(Retval&);
     void doRoot();
     uint32_t    genTag( int i = 0 ) {
-        return GathervTag | i << 8 | (m_seq & 0xff);
+        return CtrlMsg::GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
     LongMsgProtocol::API* proto() { return static_cast<LongMsgProtocol::API*>(m_proto); }

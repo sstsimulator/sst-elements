@@ -34,8 +34,6 @@ namespace Firefly {
 
 class AllgatherFuncSM :  public FunctionSMInterface
 {
-    static const unsigned int AllgatherTag = 0xf0010000;
-
     enum StateEnum {
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
@@ -73,7 +71,9 @@ class AllgatherFuncSM :  public FunctionSMInterface
 
     long mod( long a, long b ) { return (a % b + b) % b; }
 
-    uint32_t genTag() { return AllgatherTag | (( m_seq & 0xff) << 8 ); }
+    uint32_t genTag() {
+        return CtrlMsg::AllgatherTag | (( m_seq & 0xff) << 8 ); 
+    }
 
     int calcSrc ( int offset) {
         int src = ( m_rank - offset );

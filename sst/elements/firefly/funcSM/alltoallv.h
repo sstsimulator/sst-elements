@@ -32,8 +32,6 @@ namespace Firefly {
 
 class AlltoallvFuncSM :  public FunctionSMInterface
 {
-    static const int AlltoallvTag = 0xf0030000;
-
     enum StateEnum {
          FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
@@ -59,7 +57,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
   private:
 
     uint32_t    genTag() {
-        return AlltoallvTag | (( m_seq & 0xff) << 8 );
+        return CtrlMsg::AlltoallvTag | (( m_seq & 0xff) << 8 );
     }
 
     unsigned char* sendChunkPtr( int rank ) {

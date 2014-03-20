@@ -100,8 +100,6 @@ class YYY {
 
 class CollectiveTreeFuncSM :  public FunctionSMInterface
 {
-    static const int CollectiveTag = 0xf0000000;
-
     enum StateEnum { 
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
@@ -138,7 +136,7 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
   private:
 
     uint32_t    genTag() {
-        return CollectiveTag | (m_seq & 0xffff);
+        return CtrlMsg::CollectiveTag | (m_seq & 0xffff);
     }
 
     LongMsgProtocol::API* proto() { return static_cast<LongMsgProtocol::API*>(m_proto); }
