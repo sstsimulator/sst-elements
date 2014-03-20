@@ -26,14 +26,14 @@
      <hermesModule> firefly.hades </hermesModule>
      <traceFile> prepostedTrace.out </traceFile>
      <sharedTraceFile> 0 </sharedTraceFile>
-     <hermesParams.debug> 1 </hermesParams.debug>
+     <hermesParams.debug> 0 </hermesParams.debug>
      <hermesParams.verboseLevel> 3 </hermesParams.verboseLevel>
      <hermesParams.numRanks> 2 </hermesParams.numRanks>
      <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
      <hermesParams.policy> adjacent </hermesParams.policy>
 
      <hermesParams.nicModule> firefly.VirtNic </hermesParams.nicModule>
-     <hermesParams.nicParams.debug> 1 </hermesParams.nicParams.debug>
+     <hermesParams.nicParams.debug> 0 </hermesParams.nicParams.debug>
      <hermesParams.nicParams.debugLevel> 1 </hermesParams.nicParams.debugLevel>
 
      <hermesParams.functionSM.defaultDebug> 1 </hermesParams.functionSM.defaultDebug>
@@ -41,10 +41,10 @@
      <hermesParams.functionSM.Allgather.debug> 0 </hermesParams.functionSM.Allgather.debug>
      <hermesParams.functionSM.Allgather.verbose> 1 </hermesParams.functionSM.Allgather.verbose>
 
-     <hermesParams.ctrlMsg.debug> 1 </hermesParams.ctrlMsg.debug>
+     <hermesParams.ctrlMsg.debug> 0 </hermesParams.ctrlMsg.debug>
      <hermesParams.ctrlMsg.verboseLevel> 1 </hermesParams.ctrlMsg.verboseLevel>
 
-     <hermesParams.longMsgProtocol.debug> 1 </hermesParams.longMsgProtocol.debug>
+     <hermesParams.longMsgProtocol.debug> 0 </hermesParams.longMsgProtocol.debug>
      <hermesParams.longMsgProtocol.verboseLevel> 1 </hermesParams.longMsgProtocol.verboseLevel>
 
      <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
@@ -52,18 +52,16 @@
   </driverParams>
 
   <nicParams>
-     <debug> 1 </debug>
+     <debug> 0 </debug>
      <verboseLevel> 2 </verboseLevel>
      <module> merlin.linkcontrol </module>
      <topology> merlin.torus </topology>
      <num_vcs> 2 </num_vcs>
      <link_bw> 2Ghz </link_bw>
 
-     <txBusDelay_ns> 150  </txBusDelay_ns>
-     <rxBusDelay_ns> 150  </rxBusDelay_ns>
      <rxMatchDelay_ns> 100  </rxMatchDelay_ns>
      <txDelay_ns> 50 </txDelay_ns>
-     <numCores> 1 </numCores>
+     <num_vNics> 1 </num_vNics>
 
   </nicParams>
 
@@ -74,23 +72,21 @@
 
     <component name="0.driver" type=firefly.testDriver >
         <params include=driverParams>
-            <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
         </params>
-        <link name=nic0_core0 port=nic latency=1ns />
+        <link name=nic0core0 port=nic latency=1ns />
     </component>
 
     <component name="1.driver" type=firefly.testDriver >
         <params include=driverParams>
-            <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
         </params>
-        <link name=nic1_core0 port=nic latency=1ns />
+        <link name=nic1core0 port=nic latency=1ns />
     </component>
 
     <component name="0.nic" type=firefly.nic >
         <params include=nicParams>
             <nid> 0 </nid>
         </params>
-        <link name=nic0_core0 port=core latency=1ns />
+        <link name=nic0core0 port=core0 latency=1ns />
         <link name=nic0 port=rtr latency=1ns />
     </component>
 
@@ -98,7 +94,7 @@
         <params include=nicParams>
             <nid> 1 </nid>
         </params>
-        <link name=nic1_core0 port=core latency=1ns />
+        <link name=nic1core0 port=core0 latency=1ns />
         <link name=nic1 port=rtr latency=1ns />
     </component>
 
