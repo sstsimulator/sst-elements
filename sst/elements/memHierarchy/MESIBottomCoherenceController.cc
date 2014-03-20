@@ -261,6 +261,8 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
 
+    cout << "Name set: " << nextLevelCacheName_ << endl;
+
     forwardEvent->setDst(nextLevelCacheName_);
     uint64 deliveryTime;
     if(_event->queryFlag(MemEvent::F_UNCACHED)){
@@ -289,6 +291,7 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine, Link* delive
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cmd, *data);
+    newCommandEvent->setDst(nextLevelCacheName_);
     response resp = {deliveryLink, newCommandEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
 }

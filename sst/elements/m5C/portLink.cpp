@@ -246,7 +246,8 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
     }
     dbg->debug(CALL_INFO,0,0,"<----\n");
     
-
+    ev->setSrc(m_name);
+    
 	//fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
 	return ev;
 }

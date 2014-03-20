@@ -113,6 +113,7 @@ void Cache::init(unsigned int phase){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
             if(!memEvent) delete memEvent;
             else if(memEvent->getCmd() == NULLCMD){
+                cout << "This: " << this->getName() << ", Name set: " << memEvent->getSrc() << endl;
                 nextLevelCacheName_ = memEvent->getSrc();
                 delete memEvent;
             }

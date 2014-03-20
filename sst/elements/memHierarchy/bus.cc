@@ -66,7 +66,6 @@ void Bus::init(unsigned int phase){
             lowNetPorts_[i]->send(new MemEvent(this, 0, NULLCMD));
 	}*/
 
-    cout << "HEREEEE" << endl;
     
     for(int i = 0; i < numHighNetPorts_; i++) {
         while ((ev = highNetPorts_[i]->recvInitData())){
@@ -93,8 +92,8 @@ void Bus::init(unsigned int phase){
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
                 for(int i = 0; i < numHighNetPorts_; i++) {
                     temp = new MemEvent(memEvent);
-                    highNetPorts_[i]->sendInitData(memEvent);
-                    cout << "sent memEvent, src: " << temp->getSrc() << " linkID: " << highNetPorts_[i]->getId() << endl;
+                    highNetPorts_[i]->sendInitData(temp);
+                    //cout << "sent memEvent, src: " << temp->getSrc() << " linkID: " << highNetPorts_[i]->getId() << endl;
                 }
             }
             else{
@@ -130,6 +129,9 @@ void Bus::broadcastEvent(SST::Event *ev){
 
 void Bus::sendSingleEvent(SST::Event *ev){
     MemEvent *event = static_cast<MemEvent*>(ev); assert(event);
+    printf("\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+    printf("Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
+
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
     dstLink->send(new MemEvent(event));
