@@ -269,7 +269,7 @@ void Nic::handleSelfEvent( Event *e )
             moveEvent( event->mEvent );
         } else {
             notifyNeedRecv( event->hdr.dst_vNicId, event->hdr.src_vNicId,
-											 event->node, event->tag, event->len);
+							 event->node, event->hdr.tag, event->hdr.len);
             m_pendingMerlinEvent = event->mEvent;
         }
         break;
@@ -474,8 +474,8 @@ bool Nic::findRecv( MerlinFireflyEvent* event, MsgHdr& hdr )
     int src = event->src;
     memcpy( &hdr, &event->buf[0], sizeof(hdr) );
 
-    m_dbg.verbose(CALL_INFO,2,0,"need a recv entry, src=%d src_vNic=%d dst_vNic=%d tag=%#x "
-                                "len=%lu\n", src, hdr.src_vNicId,
+    m_dbg.verbose(CALL_INFO,2,0,"need a recv entry, src=%d src_vNic=%d "
+                "dst_vNic=%d tag=%#x len=%lu\n", src, hdr.src_vNicId,
 						hdr.dst_vNicId, hdr.tag, hdr.len);
 
     if ( m_recvM[hdr.dst_vNicId].find( hdr.tag ) == m_recvM[hdr.dst_vNicId].end() ) {
