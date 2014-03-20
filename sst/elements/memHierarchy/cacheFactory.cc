@@ -20,7 +20,11 @@ namespace SST{ namespace MemHierarchy{
 
 Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     Output* dbg = new Output();
-    dbg->init("", 8, 0,(Output::output_location_t)params.find_integer("debug", 0));
+    
+    int debugLevel = params.find_integer("debug_level", 0);
+    if(debugLevel < 0 || debugLevel > 8)     _abort(Cache, "Debugging level must be betwee 0 and 8. \n");
+    
+    dbg->init("", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
     dbg->debug(C,L1,0,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
     /* Get Parameters */
@@ -111,7 +115,6 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     parentLinksListSize_ = parentLinks_->size(); 
     childrenLinks_ = new vector<Link*>(numChildren_);
     
-    /* TODO:  Check to see if 'directory_link' exists */
     if (dirControllerExists_) {
         assert(isPortConnected("directory_link"));
         MemNIC::ComponentInfo myInfo;

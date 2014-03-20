@@ -28,7 +28,7 @@ using namespace SST::MemHierarchy;
 
 
 static const char * memEvent_port_events[] = {"interfaces.MemEvent", NULL};
-//static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
+static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 
@@ -49,13 +49,14 @@ static const ElementInfoParam cache_params[] = {
     {"access_latency_cycles",   "Access Latency (in Cycles) taken to lookup data in the cache."},
     {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
     {"mshr_num_entries",        "Number of entries in the MSHR"},
-    {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
     {"L1",                      "Specify whether cache is L1:  0, 1"},
     {"directory_at_next_level", "Specify if there is a flat directory-controller as the higher level memory: 0, 1"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
     {"network_address",         "When using a directory controller, the network address of this cache.", ""},
 	{"network_num_vc",          "When using a directory controller, the number of VCS on the on-chip network.", "3"},
+    {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",             "Debugging level: 0 to 8"},
     {NULL, NULL, NULL}
 };
 
@@ -143,6 +144,7 @@ static const ElementInfoParam memctrl_params[] = {
 
 
 static const ElementInfoPort memctrl_ports[] = {
+    {"snoop_link",      "Connect to a memHiearchy.bus", bus_port_events},
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
     {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
     {NULL, NULL, NULL}
@@ -209,8 +211,8 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam dirctrl_params[] = {
-    {"network_address"      "Network address of component.", NULL},
     {"network_bw",          "Network link bandwidth.", NULL},
+    {"network_address"      "Network address of component.", ""},
 	{"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
     {"addr_range_end",      "End of Address Range, for this controller.", NULL},

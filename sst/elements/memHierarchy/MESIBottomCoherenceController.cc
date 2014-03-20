@@ -261,8 +261,6 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
 
-    cout << "Name set: " << nextLevelCacheName_ << endl;
-
     forwardEvent->setDst(nextLevelCacheName_);
     uint64 deliveryTime;
     if(_event->queryFlag(MemEvent::F_UNCACHED)){

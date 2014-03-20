@@ -118,6 +118,7 @@ private:
            uint _numParents, uint _numChildren, Output* _d_, LRUReplacementMgr* _rm, uint _numLines, uint lineSize,
            uint MSHRSize, bool _L1, bool _dirControllerExists);
 
+
     uint                    ID_;
     CacheArray*             cArray_;
     CacheListener*          listener_;
@@ -153,7 +154,8 @@ private:
     uint64                  timestamp_;
     map<MemEvent::id_type, SimTime_t> latencyTimes;
     int                     stats_;
-    
+ 	std::map<string, LinkId_t>     nameMap_;
+    std::map<LinkId_t, SST::Link*> linkIdMap_;
     
     void initStats();
     void errorChecking();
@@ -199,7 +201,8 @@ private:
     inline TopCacheController::CCLine* getCCLine(int index);
     inline bool isCacheLineValidAndWaitingForAck(Addr baseAddr, int lineIndex);
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool reActivation);
-
+    inline LinkId_t lookupNode(const std::string &name);
+    inline void mapNodeEntry(const std::string &name, LinkId_t id);
 
 };
 

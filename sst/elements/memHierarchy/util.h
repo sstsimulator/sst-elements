@@ -21,7 +21,7 @@ namespace MemHierarchy {
 //#define N CALL_INFO
 #define Z 0
 
-enum {ERROR, WARNING, INFO, L0, L1, L2, L3, L4, L5};
+enum {ERROR, WARNING, INFO, L0, L1, L2, L3, L4, L5, L6};
 #define _ERROR_ C,ERROR,0
 #define _WARNING_ C,WARNING,0
 #define _INFO_ C,INFO,0
@@ -31,6 +31,8 @@ enum {ERROR, WARNING, INFO, L0, L1, L2, L3, L4, L5};
 #define _L3_ C,L3,0
 #define _L4_ C,L4,0
 #define _L5_ C,L5,0
+#define _L6_ C,L5,0
+
 
 struct mshrType {
     boost::variant<Addr, MemEvent*> elem;

@@ -108,14 +108,15 @@ void Cache::init(unsigned int phase){
         }
     }
     
-    for(uint i = 0; i < parentLinks_->size(); i++) {
-        while ((ev = parentLinks_->at(i)->recvInitData())){
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if(!memEvent) delete memEvent;
-            else if(memEvent->getCmd() == NULLCMD){
-                cout << "This: " << this->getName() << ", Name set: " << memEvent->getSrc() << endl;
-                nextLevelCacheName_ = memEvent->getSrc();
-                delete memEvent;
+    if(!dirControllerExists_){
+        for(uint i = 0; i < parentLinks_->size(); i++) {
+            while ((ev = parentLinks_->at(i)->recvInitData())){
+                MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+                if(!memEvent) delete memEvent;
+                else if(memEvent->getCmd() == NULLCMD){
+                    nextLevelCacheName_ = memEvent->getSrc();
+                    delete memEvent;
+                }
             }
         }
     }
@@ -148,7 +149,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         d_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId(), prefetch.c_str(), timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), prefetch.c_str(), timestamp_, uncached ? "un$" : "");
     if(uncached){
         processUncached(event, cmd, baseAddr);
         return;
