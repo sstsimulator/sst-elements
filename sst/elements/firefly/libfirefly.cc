@@ -347,15 +347,15 @@ static const ElementInfoEvent events[] = {
     { "MerlinFireflyEvent",
       "MerlinFireflyEvent",
         NULL,
-        init_MerlinFireflyEvent 
+        init_MerlinFireflyEvent
     },
     { NULL, NULL, NULL, NULL}
 };
 
 extern "C" {
     ElementLibraryInfo firefly_eli = {
-        NULL,
-        NULL, 
+        "Firefly",
+        "Is a communication protocol module used within SST to replicate message-passing style behavior",
         components,
         events,
         NULL,
