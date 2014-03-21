@@ -178,7 +178,7 @@ class ProcessQueuesState : StateBase< T1 >
     bool dmaSendFini( _CommReq* );
     bool dmaSendFini( ReadInfo* );
 
-    bool                checkMsgHdr( MsgHdr& hdr, MsgHdr& wantHdr );
+    bool                checkMsgHdr( MsgHdr& hdr, MsgHdr& wantHdr, tag_t ignore );
     _CommReq*           searchPostedRecv( MsgHdr& hdr, int& delay );
     void                print( char* buf, int len );
 
@@ -949,7 +949,7 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MsgHdr& hdr, int& delay )
     for ( ; iter != m_pstdRcvQ.end(); ++iter ) {
 
         ++count;
-        if ( ! checkMsgHdr( hdr, (*iter)->hdr() ) ) {
+        if ( ! checkMsgHdr( hdr, (*iter)->hdr(), (*iter)->ignore() ) ) {
             continue;
         }
 
@@ -963,10 +963,12 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MsgHdr& hdr, int& delay )
 }
 
 template< class T1 >
-bool ProcessQueuesState<T1>::checkMsgHdr( MsgHdr& hdr, MsgHdr& wantHdr )
+bool ProcessQueuesState<T1>::checkMsgHdr( MsgHdr& hdr, MsgHdr& wantHdr, tag_t ignore )
 {
-    dbg().verbose(CALL_INFO,1,0,"want tag %#x %#x\n", wantHdr.tag, hdr.tag );
-    if ( ( AnyTag != wantHdr.tag ) && ( wantHdr.tag != hdr.tag ) ) {
+    dbg().verbose(CALL_INFO,1,0,"want tag %#x %#x ignore=%#x\n",
+                                                wantHdr.tag, hdr.tag, ignore );
+    if ( ( AnyTag != wantHdr.tag ) && 
+        ( ( wantHdr.tag & ~ignore ) != (hdr.tag & ~ignore ) ) ) {
         return false;
     }
 

@@ -35,7 +35,7 @@ class RecvState : StateBase< T1 >
         dbg().setPrefix(buffer);
 
     }
-    void enter( bool blocking, std::vector<IoVec>&, nid_t, tag_t, CommReq*,
+    void enter( bool blocking, std::vector<IoVec>&, nid_t, tag_t, tag_t, CommReq*,
                 FunctorBase_0<bool>*, FunctorBase_0<bool>* = NULL );
 
     bool afterProcess();
@@ -55,7 +55,7 @@ class RecvState : StateBase< T1 >
 
 template< class T1 >
 void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
-      tag_t tag, CommReq* commReq,
+      tag_t tag, tag_t ignore, CommReq* commReq,
             FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
     dbg().verbose(CALL_INFO,1,0,"%s src=%d tag=%#x functor=%p\n",
@@ -73,6 +73,7 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
     }
 
     m_req->initHdrNid( src );
+    m_req->initIgnore( ignore );
 
     obj().m_processQueuesState->enterRecv( m_req, &m_afterProcess );
 }

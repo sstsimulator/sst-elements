@@ -72,10 +72,10 @@ class LongMsgProtocol : public CtrlMsg::API  {
 
     static const uint32_t MaxNumPostedRecvs = 512;
 
-    static const uint32_t ShortMsgTag   = 0x80000000;
-    static const uint32_t LongMsgTag    = 0x40000000;
-    static const uint32_t LongMsgAckTag = 0x20000000;
-    static const uint32_t TagMask       = 0xf0000000;
+    static const uint32_t ShortMsgTag   = 0x08000000;
+    static const uint32_t LongMsgTag    = 0x04000000;
+    static const uint32_t LongMsgAckTag = 0x02000000;
+    static const uint32_t TagMask       = 0x0f000000;
 
   public:
     typedef CtrlMsg::CommReq CommReq;

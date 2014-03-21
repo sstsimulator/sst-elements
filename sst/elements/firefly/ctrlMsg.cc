@@ -97,6 +97,13 @@ void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, tag_t tag,
                                         tag, req, functor );
 }
 
+void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, tag_t tag, tag_t ignore,
+                            CommReq* req, FunctorBase_0<bool>* functor )
+{
+    m_xxx->recvv( false, ioVec, m_xxx->info()->worldRankToNid(src),
+                                        tag, ignore, req, functor );
+}
+
 void API::wait( CommReq* req, FunctorBase_1<CommReq*,bool>* functor )
 {
     std::vector<CommReq*> tmp; 

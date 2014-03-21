@@ -323,7 +323,7 @@ void LongMsgProtocol::postSendEntry( SendEntry* entry )
     if ( len <= shortMsgLength() - sizeof(MsgHdr)) {
 
         std::vector<IoVec>  vec;
-        int   tag = ShortMsgTag;
+        int   tag = CtrlMsg::LongProtoTag | ShortMsgTag;
 
         vec.resize(2);
         vec[0].ptr = &cbe->hdr;
@@ -359,7 +359,7 @@ bool LongMsgProtocol::postSendEntryReg_CB( SendCallbackEntry* cbe )
             info()->rankToWorldRank( cbe->sendEntry->group, cbe->sendEntry->dest );
 
     std::vector<IoVec>  vec;
-    int tag = LongMsgTag | cbe->region;
+    int tag = CtrlMsg::LongProtoTag | LongMsgTag | cbe->region;
 
     m_my_dbg.verbose(CALL_INFO,1,0,"region=%#x\n",cbe->region);
 
@@ -434,7 +434,9 @@ void LongMsgProtocol::postRecvAny(  )
     vec[1].len = rcbe->buf.size();
     vec[1].ptr = &rcbe->buf[0];
 
-    irecvv( vec, CtrlMsg::AnyNid, CtrlMsg::AnyTag, &rcbe->commReq,
+    CtrlMsg::tag_t ignore = CtrlMsg::TagMask;
+    CtrlMsg::tag_t tag = CtrlMsg::LongProtoTag | ignore;
+    irecvv( vec, CtrlMsg::AnyNid, tag, ignore, &rcbe->commReq,
                             callback );
 
     setUsrPtr( &rcbe->commReq, rcbe );
@@ -570,7 +572,7 @@ bool LongMsgProtocol::processLongMsg_CB( RecvCallbackEntry* cbe )
     vec.resize(1);
     vec[0].ptr = & cbe->hdr;
     vec[0].len = sizeof( cbe->hdr );
-    int tag = LongMsgAckTag | cbe->region;
+    int tag = CtrlMsg::LongProtoTag | LongMsgAckTag | cbe->region;
 
     RCBE_Functor* callback = new RCBE_Functor( 
               this, &LongMsgProtocol::processLongMsg2_CB, cbe ); 

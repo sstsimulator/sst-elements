@@ -125,8 +125,17 @@ void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
-    m_recvState->enter( blocking, ioVec, src, tag, commReq, functor );
+    m_recvState->enter( blocking, ioVec, src, tag, 0, commReq, functor );
 }
+
+void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
+      tag_t tag, tag_t ignore, CommReq* commReq, FunctorBase_0<bool>* functor )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
+                                        src, tag, calcLength(ioVec) );
+    m_recvState->enter( blocking, ioVec, src, tag, ignore, commReq, functor );
+}
+
 
 void XXX::waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* functor )
 {

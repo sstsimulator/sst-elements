@@ -78,6 +78,8 @@ class XXX  {
                         tag_t tag, CommReq*, FunctorBase_0<bool>* );
     void recvv( bool blocking, std::vector<IoVec>&, nid_t src,
                         tag_t tag, CommReq*, FunctorBase_0<bool>* );
+    void recvv( bool blocking, std::vector<IoVec>&, nid_t src,
+                        tag_t tag, tag_t ignore, CommReq*, FunctorBase_0<bool>* );
     void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
 
     void read( nid_t, region_t, void* buf, size_t len, FunctorBase_0<bool>* );
@@ -219,6 +221,13 @@ class _CommReq {
         m_hdr.nid  = nid;
     }
 
+    void initIgnore( tag_t ignore ) {
+        m_ignore = ignore;
+    }
+    tag_t ignore( ) {
+        return m_ignore;
+    }
+
     MsgHdr& hdr() { return m_hdr; }
     
     std::vector<IoVec>& ioVec() {
@@ -254,6 +263,7 @@ class _CommReq {
     Status*             m_status;
     bool                m_done;
     nid_t               m_nid;
+    tag_t               m_ignore;
 };
 
 

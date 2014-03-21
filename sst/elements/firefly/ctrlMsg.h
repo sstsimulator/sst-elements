@@ -30,6 +30,7 @@ static const tag_t AlltoallvTag  = 0x20000000;
 static const tag_t CollectiveTag = 0x30000000;
 static const tag_t GathervTag    = 0x40000000;
 static const tag_t LongProtoTag  = 0x50000000;
+static const tag_t TagMask       = (1<<28) - 1;
 
 struct Status {
     nid_t   nid;
@@ -79,6 +80,8 @@ class API : public ProtocolAPI {
                                         FunctorBase_0<bool>* = NULL );
     void irecvv( std::vector<IoVec>&, nid_t src, tag_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
+    void irecvv( std::vector<IoVec>&, nid_t src, tag_t tag, tag_t ignoreBits,
+                                    CommReq*, FunctorBase_0<bool>* = NULL );
     void wait( CommReq*, FunctorBase_1<CommReq*,bool>* = NULL );
     void waitAny( std::vector<CommReq*>&, FunctorBase_1<CommReq*, bool>* = NULL );
     void setUsrPtr( CommReq*, void* );
