@@ -7,6 +7,9 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
+
+#include <sstream>
+
 #include "bus.h"
 
 #include <csignal>
