@@ -143,6 +143,10 @@ class VirtNic : public SST::Module {
         return (vNicId << coreShift) | nodeId;
 	}
 
+    bool isLocal( int nodeId ) {
+        return ( calc_realId( nodeId ) == m_nodeId );
+    }
+
     bool canDmaSend();
     bool canDmaRecv();
 

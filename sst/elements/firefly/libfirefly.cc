@@ -35,6 +35,7 @@
 #include <funcSM/waitAll.h>
 #include <ctrlMsg.h>
 #include <longMsgProtocol.h>
+#include <loopBack.h>
 #include <merlinEvent.h>
 
 using namespace Firefly;
@@ -58,6 +59,12 @@ static SST::Component*
 create_nic(SST::ComponentId_t id, SST::Params& params)
 {
     return new Nic( id, params );
+}
+
+static SST::Component*
+create_loopBack(SST::ComponentId_t id, SST::Params& params)
+{
+    return new LoopBack( id, params );
 }
 
 static Module*
@@ -187,6 +194,11 @@ static const ElementInfoComponent components[] = {
       "nic",
       NULL,
       create_nic,
+    },
+    { "loopBack",
+      "loopBack",
+      NULL,
+      create_loopBack,
     },
     { NULL, NULL, NULL, NULL }
 };

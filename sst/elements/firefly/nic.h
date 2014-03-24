@@ -242,6 +242,7 @@ class Nic : public SST::Component  {
 public:
 
     Nic(ComponentId_t, Params& );
+    ~Nic(){}
 
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }

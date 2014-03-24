@@ -36,7 +36,7 @@ class StateBase {
     StateBase( int verbose, Output::output_location_t loc, T1& _obj ) 
         : obj( _obj ), m_functor(NULL) 
     {
-        m_dbg.init("", 1, verbose, loc );
+        m_dbg.init("", verbose, 0, loc );
     }
     virtual ~StateBase() {}
 

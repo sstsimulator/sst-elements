@@ -29,6 +29,8 @@ libfirefly_la_SOURCES = \
 	ctrlMsgUnregRegionState.h \
 	ctrlMsgProcessQueuesState.h \
 	entry.h \
+	loopBack.h \
+	loopBack.cc \
 	libfirefly.cc \
 	functionSM.cc \
 	functionSM.h \

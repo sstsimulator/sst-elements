@@ -25,6 +25,7 @@
 #include "ctrlMsgWaitAnyState.h"
 #include "ctrlMsgProcessQueuesState.h"
 #include "info.h"
+#include "loopBack.h"
 
 using namespace SST::Firefly::CtrlMsg;
 using namespace SST::Firefly;
@@ -56,6 +57,10 @@ XXX::XXX( Component* owner, Params& params ) :
     m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 65000 );
     
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
+
+    m_loopLink = owner->configureLink("loop", "1 ns",
+            new Event::Handler<XXX>(this,&XXX::loopHandler) );
+    assert(m_loopLink);
 }
 
 void XXX::init( Info* info, VirtNic* nic )
@@ -101,6 +106,32 @@ void XXX::setup()
 void XXX::setRetLink( Link* link ) 
 {
     m_retLink = link;
+}
+
+class Foo : public LoopBackEvent {
+  public:
+    Foo( int core, _CommReq* _req, bool _response ) : 
+        LoopBackEvent( core ),
+        req( _req ),
+        response( _response ) 
+    {
+    }
+    _CommReq* req;
+    bool      response;
+};
+
+void XXX::loopSend( int core, _CommReq* req, bool response ) 
+{
+    m_dbg.verbose(CALL_INFO,1,0,"dest core=%d req=%p\n",core,req);    
+    
+    m_loopLink->send(0, new Foo( core, req, response ) );
+}    
+
+void XXX::loopHandler( Event* ev )
+{
+    Foo* event = static_cast< Foo* >(ev);
+    m_dbg.verbose(CALL_INFO,1,0,"req=%p\n",event->req);    
+    m_processQueuesState->loopHandler( event->req, event->response );
 }
 
 static size_t calcLength( std::vector<IoVec>& ioVec )

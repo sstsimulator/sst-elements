@@ -157,6 +157,7 @@ class XXX  {
 
   private:
     void delayHandler( Event* );
+    void loopHandler( Event* );
     bool notifySendPioDone( void* );
     bool notifySendDmaDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
@@ -167,6 +168,7 @@ class XXX  {
     Output          m_dbg;
     Link*           m_retLink;
     Link*           m_delayLink;
+    Link*           m_loopLink;
     Info*           m_info;
     VirtNic*        m_nic;
 
@@ -182,6 +184,7 @@ class XXX  {
     size_t                  m_shortMsgLength;
   public:
     ProcessQueuesState<XXX>*     m_processQueuesState;
+    void loopSend( int, _CommReq*, bool response = false);
 };
 
 class ShortRecvBuffer {
@@ -248,7 +251,6 @@ class _CommReq {
     void setDone() { m_done = true; }
     nid_t nid() { return m_nid; }
 
-  private:
     size_t  getLength() {
         size_t length = 0;
         for ( size_t i = 0; i < m_ioVec.size(); i++ ) {
@@ -256,6 +258,8 @@ class _CommReq {
         }
         return length;
     }
+
+  private:
 
     MsgHdr              m_hdr; 
     Type                m_type;

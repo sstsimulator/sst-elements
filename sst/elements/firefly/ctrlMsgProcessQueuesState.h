@@ -52,6 +52,7 @@ class ProcessQueuesState : StateBase< T1 >
     void enterRegRegion( region_t region, nid_t nid, void* buf, size_t len, 
                                      FunctorBase_0<bool>* func = NULL );
     void enterUnregRegion( region_t, FunctorBase_0<bool>* func = NULL );
+    void loopHandler( _CommReq* req, bool response );
 
   private:
     struct ReadInfo {
@@ -87,6 +88,13 @@ class ProcessQueuesState : StateBase< T1 >
         int pos;
     };
 
+    class ProcessLoopBackLocals : public LocalsBase {
+      public:
+        _CommReq*        sReq; 
+        _CommReq*        rReq; 
+    };
+
+
     class WaitLocals : public LocalsBase {
       public:
         std::set<_CommReq*> reqs;
@@ -119,12 +127,18 @@ class ProcessQueuesState : StateBase< T1 >
     bool processShortList2( std::deque< FuncCtxBase* >& );
     bool processShortList3( std::deque< FuncCtxBase* >& );
 
+    bool processLoopBack( std::deque< FuncCtxBase* >& );
+    bool processLoopBack0( std::deque< FuncCtxBase* >& );
+    bool processLoopBack1( std::deque< FuncCtxBase* >& );
+    bool processLoopBack2( std::deque< FuncCtxBase* >& );
+
     void processReadReq( ReadInfo* );
 
     void foo();
     bool foo0( std::deque< FuncCtxBase* >& );
 
     int copyBuf2Req( _CommReq* req, ShortRecvBuffer* buf );
+    int copyReq2Req( _CommReq* dest, _CommReq* src );
 
   private:
     Output& dbg()   { return StateBase<T1>::m_dbg; }
@@ -228,6 +242,9 @@ class ProcessQueuesState : StateBase< T1 >
 
     std::deque< FuncCtxBase* >      m_funcStack; 
     std::deque< FuncCtxBase* >      m_intStack; 
+
+    std::deque< _CommReq* >         m_loopBackReqQ;
+    std::deque< _CommReq* >         m_loopBackRespQ;
 
     bool m_isRead;
     bool m_pendingEvents;
@@ -367,6 +384,17 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 template< class T1 >
 bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
 {
+    if ( obj().nic().isLocal( req->nid() ) ) {
+        dbg().verbose(CALL_INFO,2,0,"loopSend\n");
+        obj().loopSend( obj().nic().calc_vNic( req->nid() ), req );
+
+        exit();
+        m_missedInt = false;
+        m_enableInt = false;
+
+        return true;
+    }
+
     SendFunctor<_CommReq*>* functor = 
             newPioSendFini<_CommReq*>( req, &ProcessQueuesState::pioSendFini );
 
@@ -505,10 +533,12 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
         m_longRspQ.front()->setDone();
         m_longRspQ.pop_front();
     }
+
     while ( ! m_longAckQ.empty() ) {
         processLongAck( m_longAckQ.front() );
         m_longAckQ.pop_front();
     }
+
     while ( ! m_sendDmaFiniQ.empty() ) {
         m_sendDmaFiniQ.front()->setDone();
         m_sendDmaFiniQ.pop_front();
@@ -529,6 +559,14 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
         m_readBodyFiniQ.front()->done = true;
         m_readBodyFiniQ.pop_front();
     }
+
+
+    while ( ! m_loopBackRespQ.empty() ) {
+        dbg().verbose(CALL_INFO,2,0,"loopBack send setDone()\n");
+        m_loopBackRespQ.front()->setDone();
+        m_loopBackRespQ.pop_front();
+    }
+
       
     if ( ! m_shortMsgV.empty() ) {
         FuncCtxBase* ctx = new FuncCtxBase;
@@ -538,6 +576,16 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
           ( this, &ProcessQueuesState::processQueues0, stack );  
         stack.push_back( ctx );
         processShortList( stack );
+
+    } else if ( ! m_loopBackReqQ.empty() ) {
+
+        FuncCtxBase* ctx = new FuncCtxBase;
+        ctx->retFunctor = new FunctorStatic_0< ProcessQueuesState,
+                                            std::deque< FuncCtxBase* >&,
+                                            bool > 
+          ( this, &ProcessQueuesState::processQueues0, stack );  
+        stack.push_back( ctx );
+        processLoopBack( stack );
  
     } else {
         obj().schedFunctor( stack.back()->retFunctor, delay );
@@ -697,6 +745,95 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         processShortList0( stack );
     }
+    return true;
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::processLoopBack( std::deque<FuncCtxBase*>& stack )
+{
+    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+
+    FuncCtxBase* ctx = new FuncCtxBase;
+    ProcessLoopBackLocals* locals = new ProcessLoopBackLocals;
+    locals->sReq = m_loopBackReqQ.front();
+    ctx->locals = locals; 
+    stack.push_back( ctx );
+
+    processLoopBack0( stack );
+ 
+    return false;
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::processLoopBack0( std::deque<FuncCtxBase*>& stack )
+{
+    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+
+    FuncCtxBase* ctx = stack.back();
+    ProcessLoopBackLocals* locals = 
+                static_cast<ProcessLoopBackLocals*>(ctx->locals);
+
+    int delay;
+    locals->rReq = searchPostedRecv( locals->sReq->hdr(), delay );
+
+    dbg().verbose(CALL_INFO,1,0,"rReq=%p delay=%d\n",locals->rReq,delay);
+
+    FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
+                                            std::deque< FuncCtxBase* >&,
+                                            bool > 
+          ( this, &ProcessQueuesState::processLoopBack1, stack );  
+    obj().schedFunctor( functor, delay );
+    return false;
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::processLoopBack1( std::deque<FuncCtxBase*>& stack )
+{
+    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+
+    FuncCtxBase* ctx = stack.back();
+    ProcessLoopBackLocals* locals = 
+                static_cast<ProcessLoopBackLocals*>(ctx->locals);
+    int delay = 0;
+
+    if ( locals->rReq ) {
+        m_loopBackReqQ.pop_front();
+        locals->rReq->setStatus( locals->sReq->hdr().nid,
+                                locals->sReq->hdr().tag, 
+                            locals->sReq->hdr().length );
+        delay = copyReq2Req( locals->rReq, locals->sReq );
+    }
+
+    FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
+                                            std::deque< FuncCtxBase* >&,
+                                            bool > 
+                    ( this, &ProcessQueuesState::processLoopBack2, stack );  
+    obj().schedFunctor( functor, delay );
+    return false;
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::processLoopBack2( std::deque<FuncCtxBase*>& stack )
+{
+    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+
+
+    FuncCtxBase* ctx = stack.back();
+    ProcessLoopBackLocals* locals = 
+                static_cast<ProcessLoopBackLocals*>(ctx->locals);
+    if ( locals->rReq ) {
+        locals->rReq->setDone();
+        obj().loopSend( 
+            obj().nic().calc_vNic( locals->sReq->hdr().nid ), locals->sReq, true );
+    }
+
+    dbg().verbose(CALL_INFO,2,0,"return up the stack\n");
+    delete stack.back()->locals;
+    delete stack.back(); 
+    stack.pop_back();
+
+    obj().schedFunctor( stack.back()->retFunctor );
+
     return true;
 }
 
@@ -939,6 +1076,20 @@ void ProcessQueuesState<T1>::needRecv( int nid, int tag, size_t length  )
 }
 
 template< class T1 >
+void ProcessQueuesState<T1>::loopHandler( _CommReq* req, bool response )
+{
+    dbg().verbose(CALL_INFO,1,0,"src=%#x req=%p n",req->hdr().nid,req);
+
+    if ( response ) {
+        m_loopBackRespQ.push_back( req );
+    } else {
+        m_loopBackReqQ.push_back( req );
+    }
+
+    foo();
+}
+
+template< class T1 >
 _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MsgHdr& hdr, int& delay )
 {
     _CommReq* req = NULL;
@@ -1009,7 +1160,31 @@ int ProcessQueuesState<T1>::copyBuf2Req( _CommReq* req, ShortRecvBuffer* buf )
 
     }
     return obj().memcpyDelay( offset );
-//    return obj().memcpyDelay( 0 );
+}
+
+template< class T1 >
+int ProcessQueuesState<T1>::copyReq2Req( _CommReq* req, _CommReq* sReq )
+{
+    dbg().verbose(CALL_INFO,2,0,"ioVec().size() %lu, length %lu\n",
+                req->ioVec().size(), sReq->getLength() );
+
+    std::vector<IoVec>& ioVec = sReq->ioVec();
+
+    size_t rV = 0,rP =0;
+    for ( unsigned int i=0; i < ioVec.size(); i++ ) 
+    {
+        assert( rV < req->ioVec().size() );
+        dbg().verbose(CALL_INFO,2,0,"vec[%d].len %lu\n", i, ioVec[i].len);
+
+        for ( unsigned int j=0; j < ioVec[i].len; j++ ) {
+            ((char*)req->ioVec()[rV].ptr)[rP] = ((char*)ioVec[i].ptr)[j];
+            ++rP;
+            if ( rP == req->ioVec()[rV].len ) {
+                ++rV;
+            } 
+        }
+    }
+    return obj().memcpyDelay( sReq->getLength() );
 }
 
 template< class T1 >

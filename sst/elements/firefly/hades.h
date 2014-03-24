@@ -32,6 +32,7 @@ class Hades : public Hermes::MessageInterface
 {
   public:
     Hades(Component*, Params&);
+    ~Hades(){}
     virtual void printStatus( Output& );
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
