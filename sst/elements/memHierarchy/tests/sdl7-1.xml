@@ -19,6 +19,7 @@
         <do_write> 1 </do_write>
         <num_loadstore> 10000 </num_loadstore>
     </cpuParams>
+
     <l1Params>
         <cache_frequency> 2 Ghz  </cache_frequency>
         <cache_size> 4 KB </cache_size>
@@ -32,6 +33,7 @@
         <debug> ${MEM_DEBUG} </debug>
         <statistics> 1 </statistics>
     </l1Params>
+
     <memParams>
         <coherence_protocol> MSI </coherence_protocol>
         <access_time> 1000 ns </access_time>
@@ -40,6 +42,12 @@
         <clock> 1GHz </clock>
         <debug> ${MEM_DEBUG} </debug>
 	</memParams>
+
+    <busParams>
+        <fanout> 1 </fanout>
+        <bus_frequency> 2 Ghz </bus_frequency>
+    </busParams>
+
     <mem2Params>
         <coherence_protocol> MSI </coherence_protocol>
         <access_time> 1000 ns </access_time>
@@ -62,14 +70,21 @@
 		<link name=cache_bus_link port=low_network_0 latency=$buslat />
 	</component>
 
+    <component name="bus" type="memHierarchy.Bus">
+        <params include=busParams />
+		<link name=cache_bus_link port=high_network_0 latency=$buslat />
+		<link name=bus_memory1 port=low_network_0 latency=$buslat />
+		<link name=bus_memory2 port=low_network_1 latency=$buslat />
+    </component>
+
 	<component name="memory1" type="memHierarchy.MemController">
         <params include=memParams />
-		<link name=cache_bus_link port=direct_link latency=$buslat />
+		<link name=bus_memory1 port=direct_link latency=$buslat />
 	</component>
    
 	<component name="memory2" type="memHierarchy.MemController">
         <params include=mem2Params />
-		<link name=cache_bus_link port=direct_link latency=$buslat />
+		<link name=bus_memory2 port=direct_link latency=$buslat />
 	</component>
 
 </sst>
