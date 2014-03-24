@@ -89,6 +89,7 @@ void Cache::init(unsigned int phase){
                 parentLinks_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
             }
         }
+        
     }
 
     //leave as is!!!!!!!!!!!!!
@@ -115,6 +116,7 @@ void Cache::init(unsigned int phase){
                 if(!memEvent) delete memEvent;
                 else if(memEvent->getCmd() == NULLCMD){
                     nextLevelCacheName_ = memEvent->getSrc();
+                    //printf("Next Level Cache: %s\n", nextLevelCacheName_.c_str());
                     delete memEvent;
                 }
             }
