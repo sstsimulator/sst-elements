@@ -32,18 +32,13 @@ LoopBack::LoopBack(ComponentId_t id, Params& params ) :
 
     assert(m_handler);
 
-    std::cout << "numCores " << numCores << std::endl;
-
     for ( int i = 0; i < numCores; i++ ) {
         std::ostringstream tmp;
         tmp <<  i;
-        std::cout << "core" << tmp.str().c_str() << std::endl;
         Link* link = configureLink("core" + tmp.str(), "1 ns", m_handler );
         assert(link);
         m_links.push_back( link );
     }
-
-    std::cout << "LoopBack::" << __func__ << "():"<< __LINE__ << std::endl;
 }
 
 LoopBack::~LoopBack()
@@ -56,7 +51,6 @@ LoopBack::~LoopBack()
 }
 
 void LoopBack::handleCoreEvent( Event* ev ) {
-    std::cout << "LoopBack::" << __func__ << "():"<< __LINE__ << std::endl;
     LoopBackEvent* event = static_cast<LoopBackEvent*>(ev);
     m_links[event->dest]->send(0,ev );
 }
