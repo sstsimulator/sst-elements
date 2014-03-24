@@ -77,7 +77,7 @@ sst.merlin._params["torus:local_ports"] = 1
 
 nicParams = ({ 
 		"debug" : 0,
-		"verboseLevel": 2,
+		"verboseLevel": 1,
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin.torus",
 		"num_vcs" : 2,
@@ -90,7 +90,7 @@ nicParams = ({
 
 driverParams = ({
 		"debug" : 1,
-		"verbose" : 2,
+		"verbose" : 1,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
@@ -100,9 +100,11 @@ driverParams = ({
 		"generatorParams.messagesize" : msgSize,
 		"generatorParams.iterations" : iterations,
 		"hermesParams.debug" : 0,
-		"hermesParams.verboseLevel" : 2,
+		"hermesParams.verboseLevel" : 1,
 		"hermesParams.nidListFile" : "nidlist.txt",
 		"hermesParams.nicModule" : "firefly.VirtNic",
+		"hermesParams.nicParams.debug" : 0,
+		"hermesParams.nicParams.debugLevel" : 1 ,
 		"hermesParams.policy" : "adjacent",
 		"hermesParams.functionSM.defaultDebug" : 0,
 		"hermesParams.functionSM.defaultVerbose" : 1,
@@ -132,14 +134,20 @@ class EmberEP(EndPoint):
 		nic.addParam("nid", nodeID)
 		nic.addLink(link, "rtr", "10ns")
 
+		loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
+		loopBack.addParam("numCores", num_vNics)
+
 		for x in xrange(num_vNics ):
 			ep = sst.Component("nic" + str(x) + "core" + str(nodeID) + "_EmberEP", "ember.EmberEngine")
 			ep.addParams(driverParams)
 			ep.addParam("hermesParams.numRanks", numNodes * num_vNics );
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
+			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
 			ep.addLink(nicLink, "nic", "150ns")
 			nic.addLink(nicLink, "core" + str(x), "150ns")
 
+			ep.addLink(loopLink, "loop", "1ns")
+			loopBack.addLink(loopLink, "core" + str(x), "1ns")
 
 topo = topoTorus()
 topo.prepParams()
