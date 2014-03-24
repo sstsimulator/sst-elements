@@ -30,7 +30,6 @@ using namespace SST::Interfaces;
 /* Function processes incomming access requests from HiLv$ or the CPU
  * It appropriately redirects requests to Top and/or Bottom controllers.  */
 void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation) throw(stallException){
-    int srcID = getChildId(event);
     int lineIndex = cArray_->find(baseAddr, (!reActivation && MemEvent::isDataRequest(cmd)));  //Update only if it's NOT reActivation
     
     if(isCacheMiss(lineIndex)){                                /* Miss.  If needed, evict candidate */
@@ -45,7 +44,7 @@ void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reAc
     bottomCC_->handleAccess(event, cacheLine, cmd);            /* upgrade or fetch line from higher level caches */
     if(cacheLine->inTransition()) return;                      /* stall request if upgrade is in progress */
     
-    bool done = topCC_->handleAccess(event, cacheLine, srcID); /* Invalidate sharers, send respond to requestor if needed */
+    bool done = topCC_->handleAccess(event, cacheLine); /* Invalidate sharers, send respond to requestor if needed */
     postRequestProcessing(event, cacheLine, done, reActivation);
 }
 
@@ -73,7 +72,7 @@ void Cache::processInvalidateAcknowledge(MemEvent* event, Addr baseAddr, bool re
     CCLine* ccLine = getCCLine(cacheLine->index());
     if(ccLine->getState() == V) return;
     
-    topCC_->handleInvAck(event, ccLine, getChildId(event));
+    topCC_->handleInvAck(event, ccLine);
     
     if(cacheLine->unlocked() && ccLine->isValid() && !reActivation) activatePrevEvents(baseAddr);
     else d_->debug(_L1_,"Received InvAck but states are still not valid.  BottomState: %s, Sharers: %i \n",
@@ -385,15 +384,6 @@ CacheArray::CacheLine* Cache::getCacheLine(int lineIndex){
     }
 }
 
-int Cache::getChildId(MemEvent* event){
-    Link* childLink = event->getDeliveryLink();
-    for(size_t i = 0; i < childrenLinks_->size(); i++){
-        if((Link*)childrenLinks_->at(i) == childLink) return i;
-    }
-    return -1;
-}
-
-
 int Cache::getParentId(MemEvent* event){
     Link* parentLink = event->getDeliveryLink();
     for(size_t i = 0; i < parentLinks_->size(); i++){
@@ -440,6 +430,7 @@ bool Cache::checkRequestValidity(MemEvent* event, Addr baseAddr) throw(stallExce
     }
     return true;
 }
+
 
 bool operator== ( const mshrType& n1, const mshrType& n2) {
     if(n1.elem.type() == typeid(Addr)) return false;

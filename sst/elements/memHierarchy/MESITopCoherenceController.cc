@@ -16,18 +16,19 @@ using namespace SST::Interfaces;
  * Top Coherence Controller Implementation
  *-------------------------------------------------------------------------------------*/
 
-bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine, int _childId){
+bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
     Command cmd           = _event->getCmd();
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
+
     switch(cmd){
         case GetS:
             if(state == S || state == M || state == E)
-                return sendResponse(_event, S, data, _childId);
+                return sendResponse(_event, S, data, 0);
             break;
         case GetSEx:
         case GetX:
-            if(state == M) return sendResponse(_event, M, data, _childId);
+            if(state == M) return sendResponse(_event, M, data, 0);
             break;
         default:
             _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -35,25 +36,26 @@ bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine, i
     return false;
 }
 
-bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, int _childId){
-    Command cmd    = _event->getCmd();
+bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
+    Command cmd = _event->getCmd();
+    int id = lowNetworkNodeLookup(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->index()];
     bool ret       = false;
 
     switch(cmd){
         case GetS:
-            processGetSRequest(_event, _cacheLine, _childId, ret);
+            processGetSRequest(_event, _cacheLine, id, ret);
             break;
         case GetSEx:
         case GetX:
-            processGetXRequest(_event, _cacheLine, _childId, ret);
+            processGetXRequest(_event, _cacheLine, id, ret);
             break;
         case PutM:
         case PutE:
-            processPutMRequest(ccLine, _cacheLine->getState(), _childId, ret);
+            processPutMRequest(ccLine, _cacheLine->getState(), id, ret);
             break;
         case PutS:
-            processPutSRequest(ccLine, _childId, ret);
+            processPutSRequest(ccLine, id, ret);
             break;
         default:
             _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -68,10 +70,10 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
     
     if(l->exclusiveSharerExists()){
         l->setState(Inv_A);
-        sendInvalidates(_cmd, _lineIndex, false, -1, true);
+        sendInvalidates(_cmd, _lineIndex, false, "", true);
     }
     else{
-        sendInvalidates(_cmd, _lineIndex, false, -1, false);
+        sendInvalidates(_cmd, _lineIndex, false, "", false);
         l->removeAllSharers();
     }
     return;
@@ -86,10 +88,10 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
             if(l->exclusiveSharerExists()) {
                 assert(l->numSharers() == 1);
                 l->setState(Inv_A);            //M_A state now; wait for invalidate acks
-                sendInvalidates(Inv, _cacheLine->index(), false, -1, true);
+                sendInvalidates(Inv, _cacheLine->index(), false, "", true);
             }
             else if(l->numSharers() > 0){
-                sendInvalidates(Inv, _cacheLine->index(), false, -1, false);
+                sendInvalidates(Inv, _cacheLine->index(), false, "", false);
                 l->setAckCount(0);
                 l->removeAllSharers();
             }else{
@@ -103,11 +105,12 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
     }
 }
 
-void MESITopCC::handleInvAck(MemEvent* event, CCLine* ccLine, int childId){
-    assert(ccLine->getAckCount() > 0);
-    if(ccLine->exclusiveSharerExists()) ccLine->clearExclusiveSharer(childId);
-    else if(ccLine->isSharer(childId)) ccLine->removeSharer(childId);
-    ccLine->decAckCount();
+void MESITopCC::handleInvAck(MemEvent* _event, CCLine* _ccLine){
+    assert(_ccLine->getAckCount() > 0);
+    int sharerId = lowNetworkNodeLookup(_event->getSrc());
+    if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(sharerId);
+    else if(_ccLine->isSharer(sharerId)) _ccLine->removeSharer(sharerId);
+    _ccLine->decAckCount();
 }
 
 /* Function sends invalidates to lower level caches, removes sharers if needed.  
@@ -128,13 +131,13 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
         d_->debug(_L1_,"Stalling request: Eviction requires invalidation of lw lvl caches. St = %s, ExSharerFlag = %s \n", BccLineString[_state], waitForInvalidateAck ? "True" : "False");
         if(waitForInvalidateAck){
             ccLine->setState(Inv_A);
-            sendInvalidates(Inv, lineIndex, true, -1, true);
+            sendInvalidates(Inv, lineIndex, true, "", true);
             return true;
         }
         else{
             assert(ccLine->exclusiveSharerExists() || _state != IM);
             assert(ccLine->getState() == V);
-            sendInvalidates(Inv, lineIndex, true, -1, false);
+            sendInvalidates(Inv, lineIndex, true, "", false);
             ccLine->removeAllSharers();
         }
     }
@@ -142,24 +145,25 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
 }
 
 
-void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, int requestLink, bool acksNeeded){
+void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded){
     CCLine* ccLine = ccLines_[lineIndex];
     assert(ccLine->getAckCount() == 0);
     assert(!ccLine->isShareless());  //no sharers for this address in the cache
     unsigned int sentInvalidates = 0;
+    int requestingId = requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
     
     d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %"PRIx64"\n", ccLine->numSharers(), ccLine->getBaseAddr());
     MemEvent* invalidateEvent; 
-        for(vector<Link*>::iterator it = childrenLinks_->begin(); it != childrenLinks_->end(); it++){
-            Link* link = *it;
-            int childId = getChildId(link);
-            if(requestLink == childId) continue;
-            if(ccLine->isSharer(childId)){
+        for(map<string, int>::iterator sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++){
+            int sharerId = sharer->second;
+            if(requestingId == sharerId) continue;
+            if(ccLine->isSharer(sharerId)){
                 sentInvalidates++;
                 if(!eviction) InvReqsSent_++;
                 else EvictionInvReqsSent_++;
                 invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), cmd);
-                response resp = {link, invalidateEvent, timestamp_ + accessLatency_, false};
+                invalidateEvent->setDst(sharer->first);
+                response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
                 outgoingEventQueue_.push(resp);
             }
     }
@@ -175,7 +179,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, int r
 
 
 
-void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId,bool& ret){
+void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool& ret){
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
@@ -183,31 +187,31 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
 
     /* Send Data in E state */
     if(protocol_ && l->isShareless() && (state == E || state == M)){
-        l->setExclusiveSharer(_childId);
-        ret = sendResponse(_event, E, data, _childId);
+        l->setExclusiveSharer(_sharerId);
+        ret = sendResponse(_event, E, data, _sharerId);
     }
     
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->exclusiveSharerExists()) {
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
-        assert(!l->isSharer(_childId));
+        assert(!l->isSharer(_sharerId));
         assert(l->numSharers() == 1);                      // TODO: l->setState(InvX_A);  //sendInvalidates(InvX, lineIndex);
         //l->setState(InvX_A);
         //sendInvalidates(InvX, lineIndex, false, -1, true);
         l->setState(Inv_A);
-        sendInvalidates(Inv, lineIndex, false, -1, true);
+        sendInvalidates(Inv, lineIndex, false, "", true);
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
-        l->addSharer(_childId);
-        ret = sendResponse(_event, S, data, _childId);
+        l->addSharer(_sharerId);
+        ret = sendResponse(_event, S, data, _sharerId);
     }
     else{
         _abort(MemHierarchy::CacheController, "Unkwown state!");
     }
 }
 
-void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret){
+void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool& _ret){
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
     CCLine* ccLine        = ccLines_[lineIndex];
@@ -216,40 +220,40 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     if(ccLine->exclusiveSharerExists()){
         d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
         ccLine->setState(Inv_A);         
-        sendInvalidates(Inv, lineIndex, false, _childId, true);
+        sendInvalidates(Inv, lineIndex, false, _event->getSrc(), true);
         return;
     }
     /* Sharers exist */
     else if(ccLine->numSharers() > 0){
         d_->debug(_L5_,"GetX Req:  Sharers 'S' exists \n");
-        sendInvalidates(Inv, lineIndex, false, _childId, false);
+        sendInvalidates(Inv, lineIndex, false, _event->getSrc(), false);
         ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
     }
     
     if(state == E || state == M){
-        ccLine->setExclusiveSharer(_childId);
-        sendResponse(_event, M, _cacheLine->getData(), _childId);
+        ccLine->setExclusiveSharer(_sharerId);
+        sendResponse(_event, M, _cacheLine->getData(), _sharerId);
         _ret = true;
     }
 }
 
 
-void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _childId, bool& _ret){
+void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
     //DANGEROUS if statement
-    //if(!(_ccLine->isSharer(_childId))) return;
-    if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_childId);
-    else if(_ccLine->isSharer(_childId)) _ccLine->removeSharer(_childId);
+    //if(!(_ccLine->isSharer(_sharerId))) return;
+    if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_sharerId);
+    else if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
 
    if(_ccLine->getState() == V) return;
     assert(_ccLine->getAckCount() > 0);
     _ccLine->decAckCount();
 
-    //assert(_ccLine->isSharer(_childId));
-    //_ccLine->clearExclusiveSharer(_childId);
+    //assert(_ccLine->isSharer(_sharerId));
+    //_ccLine->clearExclusiveSharer(_sharerId);
     if(_ccLine->getState() == InvX_A){
-        _ccLine->addSharer(_childId);  // M->S
+        _ccLine->addSharer(_sharerId);  // M->S
         assert(_ccLine->numSharers() == 1);
      }
      //TODO: get rid of ackCount, not needed since we have a bit vector
@@ -258,9 +262,9 @@ void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _c
 
 }
 
-void MESITopCC::processPutSRequest(CCLine* _ccLine, int _childId, bool& _ret){
+void MESITopCC::processPutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
     _ret = true;
-    if(_ccLine->isSharer(_childId)) _ccLine->removeSharer(_childId);
+    if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
 }
 
 void MESITopCC::printStats(int _stats){
@@ -271,26 +275,17 @@ void MESITopCC::printStats(int _stats){
 }
 
 
-int MESITopCC::getChildId(Link* _childLink){
-    for(size_t i = 0; i < childrenLinks_->size(); i++){
-        if((Link*)childrenLinks_->at(i) == _childLink){
-            return i;
-        }
-    }
-    _abort(MemHierarchy::Cache, "Panic at the disco! ?!?!?!?!");
-    return -1;
-}
-
 //TODO: Fix/Refactor this mess!
-bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, int _childId){
-    if(_event->isPrefetch() || _childId == -1){
-         d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or childId in -1");
+bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, int _sharerId){
+    assert(_sharerId != -1); //TODO: no need to pass sharerId argument?
+    if(_event->isPrefetch()){ //|| _sharerId == -1){
+         d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");
         return true;
     }
     MemEvent *responseEvent; Command cmd = _event->getCmd();
     Addr offset, base;
     switch(cmd){
-        case GetS: case GetSEx:
+        case GetS: case GetSEx: case GetX:
             assert(_data);
             if(L1_){
                 base = (_event->getAddr()) & ~(lineSize_ - 1);
@@ -299,26 +294,31 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
                 responseEvent->setPayload(_event->getSize(), &_data->at(offset));
             }
             else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
-        break;
-        case GetX:
-            if(L1_){
-                base = (_event->getAddr()) & ~(lineSize_ - 1);
-                offset = _event->getAddr() - base;
-                responseEvent = _event->makeResponse((SST::Component*)owner_);
-                responseEvent->setPayload(_event->getSize(), &_data->at(offset));
-            }
-            else    responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState); //TODO: make sure to look at "Given State" before setting new state at receivingn end
+            responseEvent->setDst(_event->getSrc());
             break;
         default:
             _abort(CoherencyController, "Command not valid as a response. \n");
     }
+
     if(L1_ && (cmd == GetS || cmd == GetSEx)) printData(d_, "Response Data", _data, offset, (int)_event->getSize());
     else printData(d_, "Response Data", _data);
+    
     d_->debug(_L1_,"Sending Response:  Addr = %"PRIx64",  Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
-    Link* deliveryLink = _event->getDeliveryLink();
     uint64_t deliveryTime = _event->queryFlag(MemEvent::F_UNCACHED) ? timestamp_ : timestamp_ + accessLatency_;
-    response resp = {deliveryLink, responseEvent, deliveryTime, true};
+    
+    response resp = {responseEvent, deliveryTime, true};
     outgoingEventQueue_.push(resp);
     return true;
+}
+
+int MESITopCC::lowNetworkNodeLookup(const std::string &name){
+	int id;
+	std::map<string, int>::iterator it = lowNetworkNameMap_.find(name);
+	if(lowNetworkNameMap_.end() == it) {
+		lowNetworkNameMap_[name] = id = lowNetworkNodeCount_++;
+	} else {
+		id = it->second;
+	}
+	return id;
 }
 

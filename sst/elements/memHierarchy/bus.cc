@@ -132,8 +132,8 @@ void Bus::broadcastEvent(SST::Event *ev){
 
 void Bus::sendSingleEvent(SST::Event *ev){
     MemEvent *event = static_cast<MemEvent*>(ev); assert(event);
-    printf("\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-    printf("Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
+    //printf("\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+    //printf("Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
 
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
@@ -147,14 +147,14 @@ void Bus::sendSingleEvent(SST::Event *ev){
 //------------------
 
 void Bus::mapNodeEntry(const std::string &name, LinkId_t id){
-    cout << "New map name: " << name << endl;
+    //cout << "New map name: " << name << endl;
 	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
 	assert(nameMap_.end() == it);
     nameMap_[name] = id;
 }
 
 LinkId_t Bus::lookupNode(const std::string &name){
-    cout << "Name lookup: " << name << endl;
+    //cout << "Name lookup: " << name << endl;
 
 	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
 	assert(nameMap_.end() != it);
@@ -215,7 +215,7 @@ void Bus::configureLinks(){
 	}
     //if(numLowNetPorts_ < 1 || numHighNetPorts_ < 1) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
 
-    cout << "Bus number of ports:  H: " << numHighNetPorts_ << " L: " << numLowNetPorts_ << endl;
+    //cout << "Bus number of ports:  H: " << numHighNetPorts_ << " L: " << numLowNetPorts_ << endl;
 }
 
 // Element Libarary / Serialization stuff

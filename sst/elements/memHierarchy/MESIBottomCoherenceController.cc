@@ -204,16 +204,19 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
+    
     if(state == M || state == E){
         _cacheLine->setState(S);
         InvalidatePUTMReqSent_++;
-        if(state == M) sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
-        else           sendWriteback(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        if(state == M){
+            sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        }else{
+            sendWriteback(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        }
     }
     else{
         _cacheLine->setState(I);
-        //WHY?
-        sendAckResponse(_event);
+        sendAckResponse(_event); //WHY?
     }
 }
 
@@ -252,7 +255,6 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine, vecto
 
 
 void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data){
-    Link* deliveryLink = parentLinks_->at(getParentId(_baseAddr));
 
     Command cmd = _event->getCmd();
     MemEvent* forwardEvent;
@@ -268,7 +270,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
         deliveryTime = timestamp_;
     }
     else deliveryTime =  timestamp_ + accessLatency_;
-    response resp = {deliveryLink, forwardEvent, deliveryTime, false};
+    response resp = {forwardEvent, deliveryTime, false};
     outgoingEventQueue_.push(resp);
 }
 
@@ -277,31 +279,31 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
 
     MemEvent *responseEvent = _event->makeResponse((SST::Component*)owner_);
     responseEvent->setPayload(*_cacheLine->getData());
-    Link* deliveryLink = _event->getDeliveryLink();
-    response resp = {deliveryLink, responseEvent, timestamp_ + accessLatency_, true};
+
+    response resp = {responseEvent, timestamp_ + accessLatency_, true};
     outgoingEventQueue_.push(resp);
     
     d_->debug(_L1_,"Sending %s Response Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i \n",
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
+//TODO: remove deliveryLink
 void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cmd, *data);
     newCommandEvent->setDst(nextLevelCacheName_);
-    response resp = {deliveryLink, newCommandEvent, timestamp_, false};
+    response resp = {newCommandEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
 }
 
 bool MESIBottomCC::sendAckResponse(MemEvent *_event){
-    Link* deliveryLink = _event->getDeliveryLink();
     MemEvent *responseEvent;
     Command cmd = _event->getCmd();
     assert(cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS);
     responseEvent = _event->makeResponse((SST::Component*)owner_);
     d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
-    response resp = {deliveryLink, responseEvent, timestamp_, false};
+    response resp = {responseEvent, timestamp_, false};
     outgoingEventQueue_.push(resp);
     return true;
 }

@@ -70,7 +70,7 @@ public:
     void sendOutgoingCommands(){
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             if(directoryLink_) directoryLink_->send(outgoingEventQueue_.front().event);
-            else outgoingEventQueue_.front().deliveryLink->send(outgoingEventQueue_.front().event);
+            else parentLinks_->at(0)->send(outgoingEventQueue_.front().event);
             outgoingEventQueue_.pop();
         }
     }

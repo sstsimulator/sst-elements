@@ -105,7 +105,6 @@ public:
     static Cache* cacheFactory(SST::ComponentId_t id, SST::Params& params);
     void setParents(vector<Link*>* _parentLinks) { parentLinks_ = _parentLinks;}
     void setChildren(vector<Link*>* _childrenLinks) { childrenLinks_ = _childrenLinks; }
-    int getChildId(MemEvent* event);
     int getParentId(Addr baseAddr);
     int getParentId(MemEvent* event);
     Addr toBaseAddr(Addr addr){

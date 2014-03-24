@@ -34,7 +34,6 @@ public:
     typedef long long unsigned int uint64;
 
     struct response {
-        Link* deliveryLink;
         MemEvent* event;
         uint64_t deliveryTime;
         bool cpuResponse;

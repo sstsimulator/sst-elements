@@ -138,7 +138,6 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
     
     Command cmd     = event->getCmd(); string prefetch =  event->isPrefetch() ? "true" : "false";
     Addr addr       = event->getAddr(), baseAddr = toBaseAddr(addr);
-    int childId     = getChildId(event);
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
     
     //if(event->getSrc().empty()) return;
@@ -225,7 +224,7 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
             mshrEntry = mshrUncached_->removeAll(baseAddr);
             for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front()->elem);
-                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), getChildId(memEvent));
+                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), 0);
                 mshrEntry.erase(it);
             }
             delete event;
