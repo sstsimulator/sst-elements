@@ -154,7 +154,7 @@
 		<link name=c3L1cache_bus port=low_network_0 latency=$buslat />
 	</component>
 
-    <component name="n1.bus" type="memHierarchy.Cache">
+    <component name="n1.bus" type="memHierarchy.Bus">
         <params include=busParams />
         <link name=c2L1cache_bus port=high_network_0 latency=$buslat />
         <link name=c3L1cache_bus port=high_network_1 latency=$buslat />
@@ -167,7 +167,7 @@
 		<link name=n1L2cache_bus port=low_network_0 latency=$buslat />
 	</component>
 
-    <component name="n2.bus" type="memHierarchy.Cache">
+    <component name="n2.bus" type="memHierarchy.Bus">
         <params include=busParams />
         <link name=n0L2cache_bus port=high_network_0 latency=$buslat />
         <link name=n1L2cache_bus port=high_network_1 latency=$buslat />
