@@ -9,6 +9,14 @@
 namespace SST {
 namespace Ember {
 
+enum EmberMessageDataType {
+	CHAR,
+	DOUBLE,
+	FLOAT,
+	INT32,
+	INT64
+};
+
 enum EmberEventType {
 	INIT,
 	FINALIZE,
