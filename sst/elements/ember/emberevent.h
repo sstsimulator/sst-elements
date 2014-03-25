@@ -10,11 +10,11 @@ namespace SST {
 namespace Ember {
 
 enum EmberMessageDataType {
-	CHAR,
-	DOUBLE,
-	FLOAT,
-	INT32,
-	INT64
+	EMBER_CHAR,
+	EMBER_DOUBLE,
+	EMBER_FLOAT,
+	EMBER_INT32,
+	EMBER_INT64
 };
 
 enum EmberEventType {
