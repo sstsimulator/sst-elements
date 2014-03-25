@@ -3,6 +3,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/params.h>
+#include <sst/core/math/sqrt.h>
 
 #include "emberhalo2d.h"
 
@@ -27,10 +28,15 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	sizeY = (uint32_t) params.find_integer("generator.sizey", 0);
 
 	// Set configuration so we do not exchange messages
-	procLeft = -1;
-	procRight = -1;
-	procAbove = -1;
-	procBelow = -1;
+	procLeft  = 0;
+	procRight = 0;
+	procAbove = 0;
+	procBelow = 0;
+
+	sendLeft = false;
+	sendRight = false;
+	sendAbove = false;
+	sendBelow = false;
 }
 
 void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
@@ -39,10 +45,11 @@ void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint3
 
 	// Do we need to auto-size the 2D processor array?
 	if(0 == sizeX || 0 == sizeY) {
-		uint32_t localX = (worldSize / 2);
+		uint32_t localX = SST::Math::square_root(worldSize);
 
 		while(localX >= 1) {
 			uint32_t localY = (uint32_t) worldSize / localX;
+
 			if(localY * localX == worldSize) {
 				break;
 			}
@@ -57,21 +64,36 @@ void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint3
 	// Check we are not leaving ranks behind
 	assert(worldSize == (sizeX * sizeY));
 
-	if(rank % sizeX == 0) {
-		procLeft = (int32_t) rank - 1;
+	output->verbose(CALL_INFO, 2, 0, "Processor grid dimensions, X=%" PRIu32 ", Y=%" PRIu32 "\n",
+		sizeX, sizeY);
+
+	if(rank % sizeX > 0) {
+		sendLeft = true;
+		procLeft = rank - 1;
 	}
 
-	if((rank + 1) % sizeX == 0) {
-		procRight = (int32_t) rank + 1;
+	if((rank + 1) % sizeX != 0) {
+		sendRight = true;
+		procRight = rank + 1;
 	}
 
-	if(rank < sizeX) {
-		procBelow = (int32_t) rank - sizeX;
+	if(rank > sizeX) {
+		sendAbove = true;
+		procAbove = rank - sizeX;
 	}
 
-	if(rank > (worldSize - sizeX)) {
-		procAbove = (int32_t) rank + sizeX;
+	if(rank < (worldSize - sizeX)) {
+		sendBelow = true;
+		procBelow = rank + sizeX;
 	}
+
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
+		", send above=%s %" PRIu32 ", send below=%s %" PRIu32 "\n",
+		rank,
+		(sendLeft ? "Y" : "N"), procLeft,
+		(sendRight ? "Y" : "N"), procRight,
+		(sendBelow ? "Y" : "N"), procBelow,
+		(sendAbove ? "Y" : "N"), procAbove);
 }
 
 void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {

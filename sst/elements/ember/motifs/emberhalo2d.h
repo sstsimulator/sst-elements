@@ -24,6 +24,11 @@ private:
 	uint32_t iterations;
 	bool xBeforeY;
 
+	bool sendLeft;
+	bool sendRight;
+	bool sendAbove;
+	bool sendBelow;
+
 	int32_t  procLeft;
 	int32_t  procRight;
 	int32_t  procAbove;
