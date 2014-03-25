@@ -31,7 +31,6 @@
         <replacement_policy> lru </replacement_policy> 
         <associativity> 4 </associativity>
         <access_latency_cycles> 5  </access_latency_cycles>
-        <low_network_links> 1 </low_network_links>
         <cache_line_size> 64 </cache_line_size>
         <L1> 1 </L1>
         <debug> ${MEM_DEBUG} </debug>
@@ -45,8 +44,6 @@
         <replacement_policy> lru </replacement_policy> 
         <associativity> 8 </associativity>
         <access_latency_cycles> 20  </access_latency_cycles>
-        <high_network_links> 2 </high_network_links>
-        <low_network_links> 1 </low_network_links>
         <cache_line_size> 64 </cache_line_size>
         <debug> ${MEM_DEBUG} </debug>
         <statistics> 1 </statistics>
@@ -59,13 +56,15 @@
         <replacement_policy> lru </replacement_policy> 
         <associativity> 16 </associativity>
         <access_latency_cycles> 100  </access_latency_cycles>
-        <high_network_links> 2 </high_network_links>
-        <low_network_links> 1 </low_network_links>
         <directory_at_next_level> 1 </directory_at_next_level>
         <cache_line_size> 64 </cache_line_size>
         <debug> ${MEM_DEBUG} </debug>
         <statistics> 1 </statistics>
     </l3Params>
+
+    <busParams>
+        <bus_frequency> 2 Ghz </bus_frequency>
+    </busParams>
 
     <routerParams>
         <num_ports> 2 </num_ports>
@@ -100,68 +99,86 @@
 <sst>
 	<component name="cpu0" type="memHierarchy.trivialCPU">
         <params include=cpuParams />
-		<link name=c0.l1cache_link port=mem_link latency=$lat />
+		<link name=c0_l1cache port=mem_link latency=$lat />
 	</component>
 
 	<component name="c0.l1cache" type="memHierarchy.Cache">
         <params include=l1Params />
-		<link name=c0.l1cache_link port=high_network_0 latency=$lat />
-		<link name=c0.l1cache_l2cache_link port=low_network_0 latency=$buslat />
+		<link name=c0_l1cache port=high_network_0 latency=$lat />
+		<link name=c0L1cache_bus port=low_network_0 latency=$buslat />
 	</component>
     
     <component name="cpu1" type="memHierarchy.trivialCPU">
         <params include=cpuParams />
-		<link name=c1.l1cache_link port=mem_link latency=$lat />
+		<link name=c1_l1cache port=mem_link latency=$lat />
 	</component>
 
 	<component name="c1.l1cache" type="memHierarchy.Cache">
         <params include=l1Params />
-		<link name=c1.l1cache_link port=high_network_0 latency=$lat />
-		<link name=c1.l1cache_l2cache_link port=low_network_0 latency=$buslat />
+		<link name=c1_l1cache port=high_network_0 latency=$lat />
+		<link name=c1L1cache_bus port=low_network_0 latency=$buslat />
 	</component>
+
+    <component name="n0.bus" type="memHierarchy.Bus">
+        <params include=busParams />
+		<link name=c0L1cache_bus port=high_network_0 latency=$buslat />
+		<link name=c1L1cache_bus port=high_network_1 latency=$buslat />
+		<link name=bus_n0L2cache  port=low_network_0 latency=$buslat />
+    </component>
 
     <component name="n0.l2cache" type="memHierarchy.Cache">
         <params include=l2Params />
-        <link name=c0.l1cache_l2cache_link port=high_network_0 latency=$buslat />
-        <link name=c1.l1cache_l2cache_link port=high_network_1 latency=$buslat />
-		<link name=n0.l2cache_l3cache_link port=low_network_0 latency=$buslat />
+        <link name=bus_n0L2cache port=high_network_0 latency=$buslat />
+		<link name=n0L2cache_bus port=low_network_0 latency=$buslat />
 	</component>
     
     <component name="cpu2" type="memHierarchy.trivialCPU">
         <params include=cpuParams />
-		<link name=c2.l1cache_link port=mem_link latency=$lat />
+		<link name=c2_l1cache port=mem_link latency=$lat />
 	</component>
 
 	<component name="c2.l1cache" type="memHierarchy.Cache">
         <params include=l1Params />
-		<link name=c2.l1cache_link port=high_network_0 latency=$lat />
-		<link name=c2.l1cache_l2cache_link port=low_network_0 latency=$buslat />
+		<link name=c2_l1cache port=high_network_0 latency=$lat />
+		<link name=c2L1cache_bus port=low_network_0 latency=$buslat />
 	</component>
     
     <component name="cpu3" type="memHierarchy.trivialCPU">
         <params include=cpuParams />
-		<link name=c3.l1cache_link port=mem_link latency=$lat />
+		<link name=c3_l1cache port=mem_link latency=$lat />
 	</component>
 
 	<component name="c3.l1cache" type="memHierarchy.Cache">
         <params include=l1Params />
-		<link name=c3.l1cache_link port=high_network_0 latency=$lat />
-		<link name=c3.l1cache_l2cache_link port=low_network_0 latency=$buslat />
+		<link name=c3_l1cache port=high_network_0 latency=$lat />
+		<link name=c3L1cache_bus port=low_network_0 latency=$buslat />
+	</component>
+
+    <component name="n1.bus" type="memHierarchy.Cache">
+        <params include=busParams />
+        <link name=c2L1cache_bus port=high_network_0 latency=$buslat />
+        <link name=c3L1cache_bus port=high_network_1 latency=$buslat />
+		<link name=bus_n1L2cache port=low_network_0 latency=$buslat />
 	</component>
 
     <component name="n1.l2cache" type="memHierarchy.Cache">
         <params include=l2Params />
-        <link name=c2.l1cache_l2cache_link port=high_network_0 latency=$buslat />
-        <link name=c3.l1cache_l2cache_link port=high_network_1 latency=$buslat />
-		<link name=n1.l2cache_l3cache_link port=low_network_0 latency=$buslat />
+        <link name=bus_n1L2cache port=high_network_0 latency=$buslat />
+		<link name=n1L2cache_bus port=low_network_0 latency=$buslat />
+	</component>
+
+    <component name="n2.bus" type="memHierarchy.Cache">
+        <params include=busParams />
+        <link name=n0L2cache_bus port=high_network_0 latency=$buslat />
+        <link name=n1L2cache_bus port=high_network_1 latency=$buslat />
+		<link name=bus_l3cache port=low_network_0 latency=$buslat />
 	</component>
 
 	<component name="l3cache" type="memHierarchy.Cache">
         <params include=l3Params>
             <network_address> 1 </network_address>
         </params>
-		<link name=n0.l2cache_l3cache_link port=high_network_0 latency=$buslat />
-		<link name=n1.l2cache_l3cache_link port=high_network_1 latency=$buslat />
+		<link name=bus_l3cache port=high_network_0 latency=$buslat />
 		<link name=cache_net_0 port=directory_link latency=$buslat />
 	</component>
 

@@ -62,6 +62,10 @@
         <debug> ${MEM_DEBUG} </debug>
         <statistics> 1 </statistics>
     </l3Params>
+
+    <busParams>
+        <bus_frequency> 2 Ghz </bus_frequency>
+    </busParams>
     
     <memParams>
         <coherence_protocol> MSI </coherence_protocol>
@@ -74,9 +78,6 @@
         <debug> ${MEM_DEBUG} </debug>
 	</memParams>
 
-    <busParams>
-        <bus_frequency> 2 Ghz </bus_frequency>
-    </busParams>
 
 </param_include>
 
