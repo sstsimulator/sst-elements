@@ -150,6 +150,8 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
 void Cache::configureLinks(){
     char buf[200];
     char buf2[200];
+    bool highNetExists = false;
+    bool lowNetExists = false;
     sprintf(buf2, "High network port was not specified correctly on componenent %s.  Please name ports \'high_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
     sprintf(buf, "Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
     if(!dirControllerExists_){
@@ -159,8 +161,7 @@ void Cache::configureLinks(){
             if(link){
                 d_->debug(_INFO_,"Low Netowork Link ID: %u \n", (uint)link->getId());
                 lowNetPorts_->push_back(link);
-                assert(lowNetPorts_->at(0));
-                assert(lowNetPorts_->size() == 1);
+                lowNetExists = true;
             }else break;
             
         }
@@ -172,14 +173,13 @@ void Cache::configureLinks(){
         if(link) {
             d_->debug(_INFO_,"High Network Link ID: %u \n", (uint)link->getId());
             highNetPorts_->push_back(link);
-            assert(highNetPorts_->at(0));
-            assert(highNetPorts_->size() == 1);
+            highNetExists = true;
         }else break;
     }
     
     
-    if(!dirControllerExists_) BOOST_ASSERT_MSG(lowNetPorts_->at(0), buf);
-    BOOST_ASSERT_MSG(highNetPorts_->at(0),  buf2);
+    if(!dirControllerExists_) BOOST_ASSERT_MSG(lowNetExists, buf);
+    BOOST_ASSERT_MSG(highNetExists,  buf2);
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
 }
 
