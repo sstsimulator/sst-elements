@@ -23,15 +23,15 @@ void MESIBottomCC::handleEviction(MemEvent* event, CacheLine* wbCacheLine){
     switch(state){
 	case S:
 		wbCacheLine->setState(I);
-        sendWriteback(PutS, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
+        sendWriteback(PutS, wbCacheLine);
 		break;
     case E:
 		wbCacheLine->setState(I);
-        sendWriteback(PutE, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
+        sendWriteback(PutE, wbCacheLine);
         break;
 	case M:
 		wbCacheLine->setState(I);
-		sendWriteback(PutM, wbCacheLine, parentLinks_->at(getParentId(wbCacheLine)));
+		sendWriteback(PutM, wbCacheLine);
 		break;
 	default:
 		_abort(MemHierarchy::CacheController, "Not a valid state: %s", BccLineString[state]);
@@ -186,12 +186,12 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     //Refactor like processInvXRequest
     if(state == M){
         _cacheLine->setState(I);
-        sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        sendWriteback(PutM, _cacheLine);
         InvalidatePUTMReqSent_++;
     }
     else if(state == E){
         _cacheLine->setState(I);
-        sendWriteback(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+        sendWriteback(PutE, _cacheLine);
         InvalidatePUTMReqSent_++;
     }
     else{
@@ -209,9 +209,9 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
         _cacheLine->setState(S);
         InvalidatePUTMReqSent_++;
         if(state == M){
-            sendWriteback(PutM, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+            sendWriteback(PutM, _cacheLine);
         }else{
-            sendWriteback(PutE, _cacheLine, parentLinks_->at(getParentId(_cacheLine)));
+            sendWriteback(PutE, _cacheLine);
         }
     }
     else{
@@ -288,7 +288,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
 }
 
 //TODO: remove deliveryLink
-void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine, Link* deliveryLink){
+void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(),cacheLine->getBaseAddr(), cmd, *data);
@@ -311,22 +311,11 @@ bool MESIBottomCC::sendAckResponse(MemEvent *_event){
 
 
 unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){
-    uint32_t res = 0;
-    uint64_t tmp = wbCacheLine->getBaseAddr();
-    for (uint32_t i = 0; i < 4; i++) {
-        res ^= (uint32_t) (((uint64_t)0xffff) & tmp);
-        tmp = tmp >> 16;
-    }
-    return (res % parentLinks_->size());
+    return 0;
 }
 
 unsigned int MESIBottomCC::getParentId(Addr baseAddr){
-    uint32_t res = 0;
-    for (uint32_t i = 0; i < 4; i++) {
-        res ^= (uint32_t) (((uint64)0xffff) & baseAddr);
-        baseAddr = baseAddr >> 16;
-    }
-    return (res % parentLinks_->size());
+    return 0;
 }
 
 

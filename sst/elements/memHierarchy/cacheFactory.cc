@@ -33,8 +33,8 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     int associativity           = params.find_integer("associativity", -1);
     string sizeStr              = params.find_string("cache_size", "");                  //Bytes
     int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
-    int numParents              = params.find_integer("low_network_links", -1);
-    int numChildren             = params.find_integer("high_network_links", -1);
+    //int numParents              = params.find_integer("low_network_links", -1);
+    //int numChildren             = params.find_integer("high_network_links", -1);
     int accessLatency           = params.find_integer("access_latency_cycles", -1);                 //ns
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
@@ -49,8 +49,8 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     if(-1 == lineSize)                        _abort(Cache, "Line size was not specified (blocksize).\n");
     if(mshrSize == -1)                        mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
     if(L1int != 1 && L1int != 0)              _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
-    if(L1int == 1) numChildren = 1;
-    if(numParents <= 0 || numChildren <= 0)   _abort(Cache, "Number of children and parents has each to be greater than zero (L1 have core as a parent). \n");
+    //if(L1int == 1) numChildren = 1;
+    //if(numParents <= 0 || numChildren <= 0)   _abort(Cache, "Number of children and parents has each to be greater than zero (L1 have core as a parent). \n");
     if(accessLatency == -1 )                  _abort(Cache, "Access time not specified\n");
     if(directoryAtNextLevel > 1 ||
        directoryAtNextLevel < 0)              _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");
@@ -76,18 +76,18 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     
     bool L1 = (L1int == 1) ? true : false;
     CacheArray* array = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replacementManager, ht, !L1);
-    Cache* cache = new Cache(id, params, cacheFrequency, array, protocol, numParents, numChildren, dbg,
+    Cache* cache = new Cache(id, params, cacheFrequency, array, protocol, dbg,
                              replacementManager, numLines, lineSize, mshrSize, L1, directoryAtNextLevel);
     return cache;
 }
 
 
 
-Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, uint _numParents,
-             uint _numChildren, Output* _dbg, LRUReplacementMgr* _rm, uint _numLines, uint _lineSize, uint _MSHRSize,
+Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol,
+             Output* _dbg, LRUReplacementMgr* _rm, uint _numLines, uint _lineSize, uint _MSHRSize,
              bool _L1, bool _dirControllerExists) :
-               Component(id), cArray_(_cacheArray), protocol_(_protocol), numParents_(_numParents), numChildren_(_numChildren),
-	           d_(_dbg), replacementMgr_(_rm), numLines_(_numLines), lineSize_(_lineSize), MSHRSize_(_MSHRSize), L1_(_L1),
+               Component(id), cArray_(_cacheArray), protocol_(_protocol), d_(_dbg), replacementMgr_(_rm),
+               numLines_(_numLines), lineSize_(_lineSize), MSHRSize_(_MSHRSize), L1_(_L1),
                dirControllerExists_(_dirControllerExists){
 
     d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
@@ -110,10 +110,9 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     mshr_ = new MSHR(this, MSHRSize_);
     mshrUncached_ = new MSHR(this, MSHRSize_);
     /* Links */
-    registerTimeBase("2 ns", true);        //  TODO:  Is this right?
-    parentLinks_ = new vector<Link*>(numParents_);
-    parentLinksListSize_ = parentLinks_->size(); 
-    childrenLinks_ = new vector<Link*>(numChildren_);
+    registerTimeBase("2 ns", true);       //  TODO:  Is this right?
+    lowNetPorts_ = new vector<Link*>();
+    highNetPorts_ = new vector<Link*>();
     
     if (dirControllerExists_) {
         assert(isPortConnected("directory_link"));
@@ -131,38 +130,56 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     } else {
         directoryLink_ = NULL;
     }
+    
+    configureLinks();
+
 
     /* Coherence Controllers */
     sharersAware_ = (L1_) ? false : true;
-    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, childrenLinks_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, childrenLinks_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, parentLinks_, listener_, lineSize_, accessLatency_, L1_, directoryLink_);
+    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, highNetPorts_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, L1_, directoryLink_);
     /* Replacement Manager */
     replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
     
     registerClock(_cacheFrequency, new Clock::Handler<Cache>(this, &Cache::clockTick));
-    configureLinks();
     timestamp_ = 0;
     STAT_GetSExReceived_ = 0, STAT_InvalidateWaitingForUserLock_ = 0, STAT_TotalInstructionsRecieved_ = 0;
 }
 
 
 void Cache::configureLinks(){
+    char buf[200];
+    char buf2[200];
+    sprintf(buf2, "High network port was not specified correctly on componenent %s.  Please name ports \'high_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
+    sprintf(buf, "Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
     if(!dirControllerExists_){
-        for(uint id = 0 ; id < parentLinks_->size(); id++) {
+        for(uint id = 0 ; id < 200; id++) {
             string linkName = "low_network_" + boost::lexical_cast<std::string>(id);
-            parentLinks_->at(id) = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-            d_->debug(_INFO_,"Parent Link ID: %u \n", (uint)parentLinks_->at(id)->getId());
-            assert_msg(parentLinks_->at(id),  "Link port was not specified correctly.  Please name ports \'parent_id_X' where X starts at 0\n");
+            SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+            if(link){
+                d_->debug(_INFO_,"Low Netowork Link ID: %u \n", (uint)link->getId());
+                lowNetPorts_->push_back(link);
+                assert(lowNetPorts_->at(0));
+                assert(lowNetPorts_->size() == 1);
+            }else break;
+            
         }
     }
 
-    for(uint id = 0 ; id < childrenLinks_->size(); id++) {
+    for(uint id = 0 ; id < 200; id++) {
         string linkName = "high_network_" + boost::lexical_cast<std::string>(id);
-        childrenLinks_->at(id) = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));  //TODO: fix
-        d_->debug(_INFO_,"Child Link ID: %u \n", (uint)childrenLinks_->at(id)->getId());
-        assert_msg(childrenLinks_->at(id), "Link port was not specified correctly.  Please name ports \'child_id_X' where X starts at 0\n");
+        SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));  //TODO: fix
+        if(link) {
+            d_->debug(_INFO_,"High Network Link ID: %u \n", (uint)link->getId());
+            highNetPorts_->push_back(link);
+            assert(highNetPorts_->at(0));
+            assert(highNetPorts_->size() == 1);
+        }else break;
     }
     
+    
+    if(!dirControllerExists_) BOOST_ASSERT_MSG(lowNetPorts_->at(0), buf);
+    BOOST_ASSERT_MSG(highNetPorts_->at(0),  buf2);
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
 }
 

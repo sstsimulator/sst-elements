@@ -13,7 +13,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIBottomCC : public CoherencyController{
 private:
-    vector<Link*>* parentLinks_;
+    vector<Link*>* lowNetPorts_;
 
     CacheListener* listener_;
     uint GETSMissIS_;
@@ -47,7 +47,7 @@ public:
     MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener,
                  unsigned int _lineSize, uint64 _accessLatency, bool _L1, MemNIC* _directoryLink) :
-                 CoherencyController(_cache, _dbg, _lineSize), parentLinks_(_parentLinks),
+                 CoherencyController(_cache, _dbg, _lineSize), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
         GETSMissIS_            = 0;
@@ -70,7 +70,7 @@ public:
     void sendOutgoingCommands(){
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             if(directoryLink_) directoryLink_->send(outgoingEventQueue_.front().event);
-            else parentLinks_->at(0)->send(outgoingEventQueue_.front().event);
+            else lowNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
             outgoingEventQueue_.pop();
         }
     }
@@ -98,7 +98,7 @@ public:
     void updateEvictionStats(BCC_MESIState _state);
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
-    void sendWriteback(Command cmd, CacheLine* cacheLine, Link* deliveryLink);
+    void sendWriteback(Command cmd, CacheLine* cacheLine);
     bool sendAckResponse(MemEvent *event);
     void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
 };

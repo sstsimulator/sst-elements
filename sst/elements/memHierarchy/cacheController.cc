@@ -343,8 +343,6 @@ void Cache::errorChecking(){
     if(!isPowerOfTwo(MSHRSize_))   _abort(Cache, "MSHR size is not a power of two. \n");
     if(numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
     if(!isPowerOfTwo(lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");
-    if(numParents_ <= 0)           _abort(Cache, "Number of parents not specified correctly. \n");
-    if(!L1_ && numChildren_ <= 0)  _abort(Cache, "Number of children not specified correctly. \n\n");
 }
 
 void Cache::pMembers(){
@@ -355,8 +353,6 @@ void Cache::pMembers(){
     d_->debug(_INFO_,"Coherence Protocol: %s \n", protocolStr.c_str());
     d_->debug(_INFO_,"Cache lines: %d \n", numLines_);
     d_->debug(_INFO_,"Cache line size: %d \n", lineSize_);
-    d_->debug(_INFO_,"Parents: %d \n", numParents_);
-    d_->debug(_INFO_,"Children: %d \n", numChildren_);
     d_->debug(_INFO_,"MSHR entries:  %d \n\n", MSHRSize_);
 }
 
@@ -385,20 +381,11 @@ CacheArray::CacheLine* Cache::getCacheLine(int lineIndex){
 }
 
 int Cache::getParentId(MemEvent* event){
-    Link* parentLink = event->getDeliveryLink();
-    for(size_t i = 0; i < parentLinks_->size(); i++){
-        if((Link*)parentLinks_->at(i) == parentLink) return i;
-    }
-    return -1;
+    return 0;
 }
 
 int Cache::getParentId(Addr baseAddr){
-    uint32_t res = 0;
-    for (uint32_t i = 0; i < 4; i++) {
-        res ^= (uint32_t) (((uint64_t)0xffff) & baseAddr);
-        baseAddr = baseAddr >> 16;
-    }
-    return (res % parentLinksListSize_);
+    return 0;
 }
 
 bool Cache::isCacheLineAllocated(int lineIndex){

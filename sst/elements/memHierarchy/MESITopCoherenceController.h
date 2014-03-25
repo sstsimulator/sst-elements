@@ -28,7 +28,7 @@ public:
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_ = true;
         accessLatency_ = _accessLatency;
-        childrenLinks_ = _childrenLinks;
+        highNetPorts_ = _childrenLinks;
     }
     
     virtual TCC_MESIState getState(int lineIndex) { return V; }
@@ -41,15 +41,16 @@ public:
     virtual void printStats(int _stats){};
     
     virtual void sendOutgoingCommands(){
+        assert(highNetPorts_->at(0));
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
-            childrenLinks_->at(0)->send(outgoingEventQueue_.front().event);
+            highNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
             outgoingEventQueue_.pop();
         }
     }
     
     bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, int _childId);
     void sendNack(SST::Interfaces::MemEvent*);
-    vector<Link*>* childrenLinks_;
+    vector<Link*>* highNetPorts_;
 
 };
 

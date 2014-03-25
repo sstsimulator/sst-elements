@@ -35,6 +35,7 @@
 #include "util.h"
 #include "cacheListener.h"
 #include "memNIC.h"
+#include <boost/assert.hpp>
 
 #define assert_msg BOOST_ASSERT_MSG
 
@@ -42,6 +43,7 @@ namespace SST { namespace MemHierarchy {
 
 using namespace std;
 using namespace SST::Interfaces;
+
 
 class stallException : public exception{
   public:
@@ -103,8 +105,6 @@ public:
     }
     
     static Cache* cacheFactory(SST::ComponentId_t id, SST::Params& params);
-    void setParents(vector<Link*>* _parentLinks) { parentLinks_ = _parentLinks;}
-    void setChildren(vector<Link*>* _childrenLinks) { childrenLinks_ = _childrenLinks; }
     int getParentId(Addr baseAddr);
     int getParentId(MemEvent* event);
     Addr toBaseAddr(Addr addr){
@@ -114,19 +114,15 @@ public:
 
 private:
     Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, 
-           uint _numParents, uint _numChildren, Output* _d_, LRUReplacementMgr* _rm, uint _numLines, uint lineSize,
-           uint MSHRSize, bool _L1, bool _dirControllerExists);
+           Output* _d_, LRUReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
 
 
     uint                    ID_;
     CacheArray*             cArray_;
     CacheListener*          listener_;
     uint                    protocol_;
-    uint                    numParents_;
-    uint                    numChildren_;
-    vector<Link*>*          parentLinks_;
-    uint                    parentLinksListSize_;
-    vector<Link*>*          childrenLinks_;
+    vector<Link*>*          lowNetPorts_;
+    vector<Link*>*          highNetPorts_;
     Link*                   selfLink_;
     MemNIC*                 directoryLink_;
     Output*                 d_;

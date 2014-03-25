@@ -79,8 +79,7 @@
         <network_bw> 1GHz </network_bw>
         <addr_range_start> 0x0 </addr_range_start>
         <addr_range_end> 0x1F000000 </addr_range_end> <!-- 512MB - 16MB for backingStoreSize -->
-        <backing_store_size> 0x1000000 </backing_store_size> <!-- 16 MB -->
-        <entry_cache_size> 8192 </entry_cache_size>
+        <entry_cache_size> 16384 </entry_cache_size>
         <debug> ${MEM_DEBUG} </debug>
     </directoryParams>
     

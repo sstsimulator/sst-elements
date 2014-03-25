@@ -50,59 +50,35 @@ bool Cache::clockTick(Cycle_t time) {
 
 void Cache::init(unsigned int phase){
     
-    /*
-    if(directoryLink_) directoryLink_->init(phase);
-    if(!phase){
-        for(uint idc = 0; idc < childrenLinks_->size(); idc++) childrenLinks_->at(idc)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
-        if(!dirControllerExists_)
-            for(uint idp = 0; idp < parentLinks_->size(); idp++) parentLinks_->at(idp)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
-    }
-
-    for(uint idc = 0; idc < childrenLinks_->size(); idc++) {
-        SST::Event *ev;// = (childrenLinks_->at(idc))->recvInitData();
-        while ((ev = (childrenLinks_->at(idc))->recvInitData())){
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if(!memEvent) delete memEvent;
-            else{
-                if(dirControllerExists_) directoryLink_->sendInitData(memEvent);
-                else{
-                    for(uint idp = 0; idp < parentLinks_->size(); idp++)
-                        parentLinks_->at(idp)->sendInitData(memEvent);
-                }
-            }
-        }
-    }
-    */
-    ///*
     SST::Event *ev;
     if(directoryLink_) directoryLink_->init(phase);
     
     if(!phase){
-        if(L1_) for(uint idc = 0; idc < childrenLinks_->size(); idc++) childrenLinks_->at(idc)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+        if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
         else{
-            for(uint i = 0; i < childrenLinks_->size(); i++) {
-                childrenLinks_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));
+            for(uint i = 0; i < highNetPorts_->size(); i++) {
+                highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));
             }
         }
         if(!dirControllerExists_){
-            for(uint i = 0; i < parentLinks_->size(); i++){
-                parentLinks_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
+            for(uint i = 0; i < lowNetPorts_->size(); i++){
+                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
             }
         }
         
     }
 
     //leave as is!!!!!!!!!!!!!
-    for(uint idc = 0; idc < childrenLinks_->size(); idc++) {
-        while ((ev = (childrenLinks_->at(idc))->recvInitData())){
+    for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
+        while ((ev = (highNetPorts_->at(idc))->recvInitData())){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
             //assert(memEvent->getSrc());
             if(!memEvent) delete memEvent;
             else{
                 if(dirControllerExists_) directoryLink_->sendInitData(memEvent);
                 else{
-                    for(uint idp = 0; idp < parentLinks_->size(); idp++){
-                        parentLinks_->at(idp)->sendInitData(memEvent);
+                    for(uint idp = 0; idp < lowNetPorts_->size(); idp++){
+                        lowNetPorts_->at(idp)->sendInitData(memEvent);
                     }
                 }
             }
@@ -110,8 +86,8 @@ void Cache::init(unsigned int phase){
     }
     
     if(!dirControllerExists_){
-        for(uint i = 0; i < parentLinks_->size(); i++) {
-            while ((ev = parentLinks_->at(i)->recvInitData())){
+        for(uint i = 0; i < lowNetPorts_->size(); i++) {
+            while ((ev = lowNetPorts_->at(i)->recvInitData())){
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
                 if(!memEvent) delete memEvent;
                 else if(memEvent->getCmd() == NULLCMD){

@@ -505,7 +505,7 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
 	sendResponse(ev);
     if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED) &&
             0 == entry->countRefs()) {
-        assert(0);
+        //assert(0);
         // Uncached request, entry not cached anywhere.  Delete
         directory.erase(entry->baseAddr);
     } else {
