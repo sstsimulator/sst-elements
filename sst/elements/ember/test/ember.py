@@ -6,8 +6,8 @@ import sys,getopt
 
 iterations = 1;
 msgSize = 0;
-motif = "Ring"
-shape = "2"
+motif = "Halo2D"
+shape = "18"
 num_vNics = 1
 
 def main():
@@ -38,6 +38,7 @@ def main():
 main()
 
 motif = "ember.Ember" + motif + "Generator"
+print "Ember communication motif is " + motif
 
 def calcNumNodes( shape ):
     tmp = shape.split( 'x' )  
@@ -90,7 +91,7 @@ nicParams = ({
 
 driverParams = ({
 		"debug" : 1,
-		"verbose" : 1,
+		"verbose" : 4,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",

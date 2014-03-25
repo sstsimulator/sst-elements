@@ -102,36 +102,36 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 		evQ->push(compute);
 
 		if(xBeforeY) {
-			if(procLeft > -1) {
+			if(sendLeft) {
 
 			}
 
-			if(procRight > -1) {
+			if(sendRight) {
 
 			}
 
-			if(procAbove > -1) {
+			if(sendAbove) {
 
 			}
 
-			if(procBelow > -1) {
+			if(sendBelow) {
 
 			}
 
 		} else {
-			if(procAbove > -1) {
+			if(sendAbove) {
 
 			}
 
-			if(procBelow > -1) {
+			if(sendBelow) {
 
 			}
 
-			if(procLeft > -1) {
+			if(sendLeft) {
 
 			}
 
-			if(procRight > -1) {
+			if(sendRight) {
 
 			}
 		}
