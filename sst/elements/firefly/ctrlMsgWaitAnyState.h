@@ -79,7 +79,6 @@ bool WaitAnyState<T1>::unblock()
         }
     }
     assert(0);
-    obj().passCtrlToFunction( 0, m_functor, NULL );
     return false;
 }
 
