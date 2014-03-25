@@ -10,7 +10,7 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, Params& pa
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 }
 
-void EmberPingPongGenerator::configureEnvironment(uint32_t pRank, uint32_t worldSize) {
+void EmberPingPongGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
 }
 

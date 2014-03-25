@@ -16,6 +16,13 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	messageSizeX = (uint32_t) params.find_integer("generator.messagesizey", 128);
 	messageSizeY = (uint32_t) params.find_integer("generator.messagesizex", 128);
 
+	uint32_t ordering = (uint32_t) params.find_integer("generator.messageorder", 0);
+	if(0 == ordering) {
+		xBeforeY = true;
+	} else {
+		xBeforeY = false;
+	}
+
 	sizeX = (uint32_t) params.find_integer("generator.sizex", 0);
 	sizeY = (uint32_t) params.find_integer("generator.sizey", 0);
 
@@ -26,7 +33,7 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	procBelow = -1;
 }
 
-void EmberHalo2DGenerator::configureEnvironment(uint32_t pRank, uint32_t worldSize) {
+void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
 	//size = worldSize;
 
@@ -72,21 +79,41 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 		EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
 		evQ->push(compute);
 
-		if(procLeft > -1) {
+		if(xBeforeY) {
+			if(procLeft > -1) {
 
+			}
+
+			if(procRight > -1) {
+
+			}
+
+			if(procAbove > -1) {
+
+			}
+
+			if(procBelow > -1) {
+
+			}
+
+		} else {
+			if(procAbove > -1) {
+
+			}
+
+			if(procBelow > -1) {
+
+			}
+
+			if(procLeft > -1) {
+
+			}
+
+			if(procRight > -1) {
+
+			}
 		}
 
-		if(procRight > -1) {
-
-		}
-
-		if(procAbove > -1) {
-
-		}
-
-		if(procBelow > -1) {
-
-		}
 
 /*		if(0 == rank) {
 			EmberRecvEvent* recvRight = new EmberRecvEvent(1, messageSize, 0, (Communicator) 0);

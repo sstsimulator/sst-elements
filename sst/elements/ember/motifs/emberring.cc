@@ -10,7 +10,7 @@ EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 }
 
-void EmberRingGenerator::configureEnvironment(uint32_t pRank, uint32_t worldSize) {
+void EmberRingGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
     size = worldSize;
 }

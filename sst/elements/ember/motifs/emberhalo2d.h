@@ -11,7 +11,7 @@ class EmberHalo2DGenerator : public EmberGenerator {
 
 public:
 	EmberHalo2DGenerator(SST::Component* owner, Params& params);
-	void configureEnvironment(uint32_t rank, uint32_t worldSize);
+	void configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize);
         void generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ);
 
 private:
@@ -22,6 +22,7 @@ private:
 	uint32_t messageSizeX;
 	uint32_t messageSizeY;
 	uint32_t iterations;
+	bool xBeforeY;
 
 	int32_t  procLeft;
 	int32_t  procRight;

@@ -175,7 +175,7 @@ void EmberEngine::setup() {
 	thisRank = (uint32_t) msgapi->myWorldRank();
 	uint32_t worldSize = (uint32_t) msgapi->myWorldSize();
 
-	generator->configureEnvironment(thisRank, worldSize);
+	generator->configureEnvironment(&output, thisRank, worldSize);
 
 	char outputPrefix[256];
 	sprintf(outputPrefix, "@t:%d:Ember::@p:@l: ", (int) thisRank);

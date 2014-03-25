@@ -16,7 +16,7 @@ EmberHalo1DGenerator::EmberHalo1DGenerator(SST::Component* owner, Params& params
 	messageSize = (uint32_t) params.find_integer("generator.messagesize", 128);
 }
 
-void EmberHalo1DGenerator::configureEnvironment(uint32_t pRank, uint32_t worldSize) {
+void EmberHalo1DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
 	size = worldSize;
 }

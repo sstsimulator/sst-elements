@@ -12,7 +12,7 @@ class EmberPingPongGenerator : public EmberGenerator {
 
 public:
 	EmberPingPongGenerator(SST::Component* owner, Params& params);
-	void configureEnvironment(uint32_t rank, uint32_t worldSize);
+	void configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize);
         void generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ);
 
 private:

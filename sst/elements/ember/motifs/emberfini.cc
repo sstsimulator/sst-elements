@@ -7,7 +7,7 @@ EmberFiniGenerator::EmberFiniGenerator(SST::Component* owner, Params& params) :
 	EmberGenerator(owner, params) {
 }
 
-void EmberFiniGenerator::configureEnvironment(uint32_t pRank, uint32_t worldSize) {
+void EmberFiniGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
     size = worldSize;
 }
