@@ -9,6 +9,7 @@
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
+#include "motifs/emberhalo2d.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
@@ -36,6 +37,11 @@ load_Ring( Component* comp, Params& params ) {
 static Module*
 load_Fini( Component* comp, Params& params ) {
 	return new EmberFiniGenerator(comp, params);
+}
+
+static Module*
+load_Halo2D( Component* comp, Params& params ) {
+	return new EmberHalo2DGenerator(comp, params);
 }
 
 static const ElementInfoParam component_params[] = {
@@ -68,8 +74,15 @@ static const ElementInfoModule modules[] = {
 	load_Ring,
 	NULL
     },
+    { 	"EmberHalo2DGenerator",
+	"Performs a 2D halo exchange Motif",
+	NULL,
+	NULL,
+	load_Halo2D,
+	NULL
+    },
     { 	"EmberFiniGenerator",
-	"Performs a Fini Motif",
+	"Performs a communication finalize Motif",
 	NULL,
 	NULL,
 	load_Fini,

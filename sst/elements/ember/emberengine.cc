@@ -336,6 +336,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	}
 
+	// Delete the current event
+	delete ev;
+
 }
 
 EmberEngine::EmberEngine() :
