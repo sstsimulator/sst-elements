@@ -613,7 +613,7 @@
                 <net_addr> 2 </net_addr>
             </params>
             <link name=n0.l2cache-bus port=snoop_link latency=$buslat />
-            <link name=n0.l2cache-net port=directory_link latency=$netlat />
+            <link name=n0.l2cache-net port=directory latency=$netlat />
         </component>
         
         <component name="n0.membus" type=memHierarchy.Bus >
@@ -703,7 +703,7 @@
                 <net_addr> 3 </net_addr>
             </params>
             <link name=n1.l2cache-bus port=snoop_link latency=$buslat />
-            <link name=n1.l2cache-net port=directory_link latency=$netlat />
+            <link name=n1.l2cache-net port=directory latency=$netlat />
         </component>
         
         <component name="n1.membus" type=memHierarchy.Bus >

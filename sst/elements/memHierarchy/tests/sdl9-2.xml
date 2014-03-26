@@ -227,7 +227,7 @@
             <network_address> 1 </network_address>
         </params>
 		<link name=n2bus_l3cache port=high_network_0 latency=$buslat />
-		<link name=cache_net_0 port=directory_link latency=$buslat />
+		<link name=cache_net_0 port=directory latency=$buslat />
 	</component>
 
 

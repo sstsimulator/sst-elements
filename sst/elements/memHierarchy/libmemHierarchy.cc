@@ -39,22 +39,22 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam cache_params[] = {
-    {"cache_frequency",         "Cache Frequency.  Usually the same as the CPU's frequency"},
-    {"cache_size",              "Size in bytes.  Eg.  4KB or 1MB "},
+    {"cache_frequency",         "Cache clock frequency.  In the case of L1s, this is usually the same as the CPU's frequency"},
+    {"cache_size",              "Cache size in bytes.  Eg.  4KB or 1MB "},
     {"associativity",           "Specifies the cache associativity. In set associative caches, this is the number of ways."},
     {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. "},
-    {"cache_line_size",         "Size of a cache block in bytes."},
-    {"access_latency_cycles",   "Access Latency (in Cycles) taken to lookup data in the cache."},
+    {"cache_line_size",         "Size of a cache line (aka cache block) in bytes.", "64"},
+    {"access_latency_cycles",   "Latency (in Cycles) to lookup data in the cache."},
     {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
     {"mshr_num_entries",        "Number of entries in the MSHR"},
     {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
-    {"L1",                      "Specify whether cache is L1:  0, 1"},
-    {"directory_at_next_level", "Specify if there is a flat directory-controller as the higher level memory: 0, 1"},
+    {"L1",                      "Parameter specifies whether cache is an L1:  0, 1"},
+    {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
-    {"network_address",         "When using a directory controller, the network address of this cache.", ""},
-	{"network_num_vc",          "When using a directory controller, the number of VCS on the on-chip network.", "3"},
-    {"debug",                   "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"debug_level",             "Debugging level: 0 to 8"},
+    {"network_address",         "When using a directory controller, this parameter represents the network address of this cache.", ""},
+	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
+    {"debug",                   "0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",             "Debugging level: 0 to 10", "8"},
     {NULL, NULL, NULL}
 };
 
@@ -123,20 +123,20 @@ static Component* create_MemController(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam memctrl_params[] = {
-    {"mem_size",        "Size of physical memory in MB", "0"},
-    {"range_start",     "Address Range where physical memory begins", "0"},
-    {"interleave_size", "Size of interleaved pages in KB.", "0"},
-    {"interleave_step", "Distance between sucessive interleaved pages on this controller in KB.", "0"},
-    {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
-    {"clock",           "Clock frequency of controller", ""},
-    {"divert_DC_lookups",  "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
-    {"backend",         "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
-    {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
-    {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
-    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"statistics",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
-    {"trace_file",       "File name (optional) of a trace-file to generate.", ""},
-    {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
+    {"mem_size",            "Size of physical memory in MB", "0"},
+    {"range_start",         "Address Range where physical memory begins", "0"},
+    {"interleave_size",     "Size of interleaved pages in KB.", "0"},
+    {"interleave_step",     "Distance between sucessive interleaved pages on this controller in KB.", "0"},
+    {"memory_file",         "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
+    {"clock",               "Clock frequency of controller", ""},
+    {"divert_DC_lookups",   "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
+    {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
+    {"request_width",       "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
+    {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
+    {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
+    {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
     {NULL, NULL, NULL}
 };
 

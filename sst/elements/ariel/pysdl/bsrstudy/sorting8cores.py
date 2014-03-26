@@ -81,7 +81,7 @@ def sstcreatemodel():
     #sst.addcompparam(l2_q1, "debug", "3")
     sst.addcompparam(l2_q1, "mode", "INCLUSIVE")
     sst.addcomplink(l2_q1, "l2cache_0_link", "snoop_link", "1ns")
-    sst.addcomplink(l2_q1, "l2cache_0_dirlink", "directory_link", "10ns")
+    sst.addcomplink(l2_q1, "l2cache_0_dirlink", "directory", "10ns")
 
     l2_q2 = sst.createcomponent("l2cache_1", "memHierarchy.Cache")
     sst.addcompparam(l2_q2, "num_ways", "16")
@@ -93,7 +93,7 @@ def sstcreatemodel():
     #sst.addcompparam(l2_q2, "debug", "3")
     sst.addcompparam(l2_q2, "mode", "INCLUSIVE")
     sst.addcomplink(l2_q2, "l2cache_1_link", "snoop_link", "1ns")
-    sst.addcomplink(l2_q2, "l2cache_1_dirlink", "directory_link", "10ns")
+    sst.addcomplink(l2_q2, "l2cache_1_dirlink", "directory", "10ns")
 
     # Put a link to memory from the memory bus
     sst.addcomplink(membus0, "l2cache_0_link", "port%d"%(corecount/2), "1ns")

@@ -100,7 +100,7 @@
             <network_address> 1 </network_address>
         </params>
 		<link name=c0.l1_l2_link port=high_network_0 latency=$lat />
-		<link name=cache_net_0 port=directory_link latency=$buslat />
+		<link name=cache_net_0 port=directory latency=$buslat />
 	</component>
     
     <component name="cpu1" type="memHierarchy.trivialCPU">
@@ -119,7 +119,7 @@
             <network_address> 2 </network_address>
         </params>
 		<link name=c1.l1_l2_link port=high_network_0 latency=$lat />
-		<link name=cache_net_1 port=directory_link latency=$buslat />
+		<link name=cache_net_1 port=directory latency=$buslat />
 	</component>
     
 

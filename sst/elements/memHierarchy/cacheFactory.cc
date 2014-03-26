@@ -115,9 +115,9 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     highNetPorts_ = new vector<Link*>();
     
     if (dirControllerExists_) {
-        assert(isPortConnected("directory_link"));
+        assert(isPortConnected("directory"));
         MemNIC::ComponentInfo myInfo;
-        myInfo.link_port = "directory_link";
+        myInfo.link_port = "directory";
         myInfo.link_bandwidth = "2 ns"; // Time base as registered earlier
 		myInfo.num_vcs = params.find_integer("network_num_vc", 3);
         myInfo.name = getName();

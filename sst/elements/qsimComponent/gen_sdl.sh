@@ -86,7 +86,7 @@ print_l2_cache() {
   echo "      <printStats>1</printStats>"
   echo "    </params>"
   echo "    <link name=c${i}_l1l2cache_link port=upstream0 latency=$L1LAT />"
-  echo "    <link name=cache_net_${i} port=directory_link latency=$BUSLAT />"
+  echo "    <link name=cache_net_${i} port=directory latency=$BUSLAT />"
   echo "  </component>"
   echo
 }
