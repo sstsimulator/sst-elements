@@ -77,7 +77,7 @@ class BarrierAction : public SST::Action
                 if(fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
             }
         }
-        cathc(const std::exception& e){}
+        catch(const std::exception& e){}
     }
 
 
