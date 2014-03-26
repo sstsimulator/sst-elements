@@ -65,16 +65,19 @@ class BarrierAction : public SST::Action
     };
     
     ~BarrierAction(){
-        close(m_readFd);
-        if (fileExists(readFilename.c_str())) remove(readFilename.c_str());
-        for(unsigned int i = 0; i < m_writeFds.size(); i++){
-            close(m_writeFds[i]);
+        try{
+            close(m_readFd);
+            if (fileExists(readFilename.c_str())) remove(readFilename.c_str());
+            for(unsigned int i = 0; i < m_writeFds.size(); i++){
+                close(m_writeFds[i]);
+            }
+            
+            for(unsigned int i = 0; i < writeFilenames.size(); i++){
+                if(writeFilenames[i].empty()) continue;
+                if(fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
+            }
         }
-        
-        for(unsigned int i = 0; i < writeFilenames.size(); i++){
-            if(writeFilenames[i].empty()) continue;
-            if(fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
-        }
+        cathc(const std::exception& e){}
     }
 
 
