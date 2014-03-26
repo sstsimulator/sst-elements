@@ -72,7 +72,6 @@ void Cache::init(unsigned int phase){
     for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
         while ((ev = (highNetPorts_->at(idc))->recvInitData())){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            //assert(memEvent->getSrc());
             if(!memEvent) delete memEvent;
             else{
                 if(dirControllerExists_) directoryLink_->sendInitData(memEvent);
@@ -92,17 +91,19 @@ void Cache::init(unsigned int phase){
                 if(!memEvent) delete memEvent;
                 else if(memEvent->getCmd() == NULLCMD){
                     nextLevelCacheName_ = memEvent->getSrc();
-                    //printf("Next Level Cache: %s\n", nextLevelCacheName_.c_str());
                     delete memEvent;
                 }
             }
         }
     }
-    //*/
+    
+    //printf("Cache: %s, Next Level Cache: %s\n", this->getName().c_str(), nextLevelCacheName_.c_str());
+
     
 }
 
 void Cache::setup(){
+    if(!dirControllerExists_) assert(!nextLevelCacheName_.empty());
     bottomCC_->setNextLevelCache(nextLevelCacheName_);
 }
 
