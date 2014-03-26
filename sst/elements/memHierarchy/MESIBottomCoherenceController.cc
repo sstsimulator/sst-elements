@@ -221,6 +221,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     }
 }
 
+
 void MESIBottomCC::processGetSRequest(MemEvent* event, CacheLine* cacheLine){
     BCC_MESIState state = cacheLine->getState();
     Addr addr = cacheLine->getBaseAddr();
@@ -234,6 +235,7 @@ void MESIBottomCC::processGetSRequest(MemEvent* event, CacheLine* cacheLine){
     else inc_GETSHit(addr, pf);
 }
 
+
 void MESIBottomCC::processPutMRequest(MemEvent* event, CacheLine* cacheLine){
     BCC_MESIState state = cacheLine->getState();
     assert(state == M || state == E);
@@ -242,11 +244,13 @@ void MESIBottomCC::processPutMRequest(MemEvent* event, CacheLine* cacheLine){
     PUTMReqsReceived_++;
 }
 
+
 void MESIBottomCC::processPutERequest(MemEvent* event, CacheLine* cacheLine){
     BCC_MESIState state = cacheLine->getState();
     assert(state == E || state == M);
     PUTEReqsReceived_++;
 }
+
 
 void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine, vector<uint8_t>* _data){
     Addr baseAddr = _cacheLine->getBaseAddr();
@@ -276,6 +280,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
              _event->getAddr(), _baseAddr, CommandString[cmd], _event->getSize(), nextLevelCacheName_.c_str());
 }
 
+
 void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId){
     Command cmd = _event->getCmd();
 
@@ -299,6 +304,7 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
     outgoingEventQueue_.push(resp);
 }
 
+
 bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     MemEvent *responseEvent;
     Command cmd = _event->getCmd();
@@ -315,6 +321,7 @@ bool MESIBottomCC::sendAckResponse(MemEvent *_event){
 unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){
     return 0;
 }
+
 
 unsigned int MESIBottomCC::getParentId(Addr baseAddr){
     return 0;

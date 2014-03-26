@@ -48,7 +48,7 @@ public:
         }
     }
     
-    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, int _childId);
+    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data);
     void sendNack(SST::Interfaces::MemEvent*);
     vector<Link*>* highNetPorts_;
 

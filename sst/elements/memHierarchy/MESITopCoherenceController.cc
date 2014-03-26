@@ -24,11 +24,11 @@ bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
     switch(cmd){
         case GetS:
             if(state == S || state == M || state == E)
-                return sendResponse(_event, S, data, 0);
+                return sendResponse(_event, S, data);
             break;
         case GetSEx:
         case GetX:
-            if(state == M) return sendResponse(_event, M, data, 0);
+            if(state == M) return sendResponse(_event, M, data);
             break;
         default:
             _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -96,7 +96,7 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
             }
             break;
         case FetchInvalidateX:
-            assert(0); //TODO
+            assert(0);
         default:
             _abort(MemHierarchy::CacheController, "Command not supported");
     }
@@ -143,7 +143,6 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
 
 void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded){
     CCLine* ccLine = ccLines_[lineIndex];
-    //assert(ccLine->getAckCount() == 0);
     assert(!ccLine->isShareless());  //no sharers for this address in the cache
     unsigned int sentInvalidates = 0;
     int requestingId = requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
@@ -166,10 +165,6 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
             outgoingEventQueue_.push(resp);
         }
     }
-    
-
-    //assert(sentInvalidates == ccLine->numSharers());   - 1 (requestLink)
-    //if(acksNeeded) ccLine->setAckCount(sentInvalidates);
 }
 
 
@@ -189,7 +184,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* Send Data in E state */
     if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_sharerId);
-        ret = sendResponse(_event, E, data, _sharerId);
+        ret = sendResponse(_event, E, data);
     }
     
     /* If exclusive sharer exists, downgrade it to S state */
@@ -204,7 +199,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
         l->addSharer(_sharerId);
-        ret = sendResponse(_event, S, data, _sharerId);
+        ret = sendResponse(_event, S, data);
     }
     else{
         _abort(MemHierarchy::CacheController, "Unkwown state!");
@@ -232,7 +227,7 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     
     if(state == E || state == M){
         ccLine->setExclusiveSharer(_sharerId);
-        sendResponse(_event, M, _cacheLine->getData(), _sharerId);
+        sendResponse(_event, M, _cacheLine->getData());
         _ret = true;
     }
 }
@@ -241,24 +236,17 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
 void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
-    //DANGEROUS if statement
-    //if(!(_ccLine->isSharer(_sharerId))) return;
+
     if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_sharerId);
     else if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
 
     if(_ccLine->getState() == V) return;
-    //assert(_ccLine->getAckCount() > 0);
     _ccLine->decAckCount();
 
-    //assert(_ccLine->isSharer(_sharerId));
-    //_ccLine->clearExclusiveSharer(_sharerId);
     if(_ccLine->getState() == InvX_A){
         _ccLine->addSharer(_sharerId);  // M->S
         assert(_ccLine->numSharers() == 1);
      }
-     //TODO: get rid of ackCount, not needed since we have a bit vector
-    //if(_ccLine->getState() != V) _ccLine->decAckCount();
-
 
 }
 
@@ -276,8 +264,7 @@ void MESITopCC::printStats(int _stats){
 
 
 //TODO: Fix/Refactor this mess!
-bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, int _sharerId){
-    assert(_sharerId != -1); //TODO: no need to pass sharerId argument?
+bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data){
     if(_event->isPrefetch()){ //|| _sharerId == -1){
          d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");
         return true;

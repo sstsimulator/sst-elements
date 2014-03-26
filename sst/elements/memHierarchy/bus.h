@@ -26,6 +26,7 @@
 #include <sst/core/output.h>
 
 #include <sst/core/interfaces/memEvent.h>
+#include "util.h"
 
 using namespace std;
 using namespace SST::Interfaces;
@@ -63,9 +64,12 @@ private:
     Output dbg_;
 	int numHighNetPorts_;
     int numLowNetPorts_;
+    int numHighNetPortsX_;
+    int numLowNetPortsX_;
     int maxNumPorts_;
     int broadcast_;
     int latency_;
+    int fanout_;
     
     std::string busFrequency_;
     std::string bus_latency_cycles_;

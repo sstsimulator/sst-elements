@@ -96,10 +96,6 @@ void Cache::init(unsigned int phase){
             }
         }
     }
-    
-    //printf("Cache: %s, Next Level Cache: %s\n", this->getName().c_str(), nextLevelCacheName_.c_str());
-
-    
 }
 
 void Cache::setup(){
@@ -117,9 +113,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
     Command cmd     = event->getCmd(); string prefetch =  event->isPrefetch() ? "true" : "false";
     Addr addr       = event->getAddr(), baseAddr = toBaseAddr(addr);
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
-    
-    //if(event->getSrc().empty()) return;
-    
+        
     if(!reActivation){
         STAT_TotalInstructionsRecieved_++;
         registerNewRequest(event->getID());
@@ -202,7 +196,7 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
             mshrEntry = mshrUncached_->removeAll(baseAddr);
             for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front()->elem);
-                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), 0);
+                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload());
                 mshrEntry.erase(it);
             }
             delete event;
