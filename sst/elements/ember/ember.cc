@@ -10,6 +10,7 @@
 #include "sst/core/params.h"
 
 #include "motifs/emberhalo2d.h"
+#include "motifs/embersweep2d.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
@@ -42,6 +43,11 @@ load_Fini( Component* comp, Params& params ) {
 static Module*
 load_Halo2D( Component* comp, Params& params ) {
 	return new EmberHalo2DGenerator(comp, params);
+}
+
+static Module*
+load_Sweep2D( Component* comp, Params& params ) {
+	return new EmberSweep2DGenerator(comp, params);
 }
 
 static const ElementInfoParam component_params[] = {
@@ -79,6 +85,13 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo2D,
+	NULL
+    },
+    { 	"EmberSweep2DGenerator",
+	"Performs a 2D sweep exchange Motif with multiple vertex communication ordering",
+	NULL,
+	NULL,
+	load_Sweep2D,
 	NULL
     },
     { 	"EmberFiniGenerator",

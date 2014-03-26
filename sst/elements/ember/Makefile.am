@@ -29,6 +29,8 @@ libember_la_SOURCES = \
 	motifs/emberhalo1d.cc  \
 	motifs/emberhalo2d.h  \
 	motifs/emberhalo2d.cc  \
+	motifs/embersweep2d.h  \
+	motifs/embersweep2d.cc  \
 	motifs/emberfini.h  \
 	motifs/emberfini.cc  \
 	motifs/emberring.h  \
