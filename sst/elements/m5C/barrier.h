@@ -67,26 +67,24 @@ class BarrierAction : public SST::Action
     ~BarrierAction(){
         try{
             close(m_readFd);
-            if (fileExists(readFilename.c_str())) remove(readFilename.c_str());
+            if(!m_readFilename.empty() && fileExists(m_readFilename.c_str())) remove(m_readFilename.c_str());
             for(unsigned int i = 0; i < m_writeFds.size(); i++){
                 close(m_writeFds[i]);
             }
             
-            for(unsigned int i = 0; i < writeFilenames.size(); i++){
-                if(writeFilenames[i].empty()) continue;
-                if(fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
+            for(unsigned int i = 0; i < m_writeFilenames.size(); i++){
+                if(m_writeFilenames[i].empty()) continue;
+                if(fileExists(m_writeFilenames[i].c_str())) remove(m_writeFilenames[i].c_str());
             }
         }
         catch(const std::exception& e){}
     }
 
 
-    BarrierAction( int numPerRank ) :
-        m_numReporting( 0 ),
-        m_opened( false )
-    {
+    BarrierAction( int numPerRank ) :m_numReporting( 0 ), m_opened( false ){
         BA_DBG("\n");
         setPriority(75);
+        char buf[100];
         m_nRanks = SST::Simulation::getSimulation()->getNumRanks();
 
         SST::Simulation::getSimulation()->insertActivity(
@@ -96,20 +94,21 @@ class BarrierAction : public SST::Action
         
         sprintf( buf, "/tmp/sst-barrier.%d", getpid() );
         BA_DBG("filename=`%s`\n",buf);
-        readFilename = buf;
+        m_readFilename = buf;
         int rc = mkfifo( buf, 0666 );
         if(rc != 0) _abort(BarrierAction, "Unable to create temp file named: %s", buf);
         m_readFd = open( buf, O_RDONLY | O_NONBLOCK );
         assert( m_readFd > -1 );
 
         m_writeFds.resize( numPerRank );
+        m_writeFilenames.resize(numPerRank);
 
         for ( unsigned int i = 0; i < m_writeFds.size(); i++ ) {
             sprintf( buf, "/tmp/sst-barrier-app-%u.%d", i, getpid() );
             rc = mkfifo( buf, 0666);
             BA_DBG("filename=`%s`\n",buf);
             std::string name(buf);
-            writeFilenames.push_back(name);
+            m_writeFilenames.push_back(name);
             if(rc != 0) _abort(BarrierAction, "Unable to create temp file named: %s", buf);
         }
     }
@@ -145,7 +144,7 @@ class BarrierAction : public SST::Action
         }  
 
         SST::SimTime_t next = sim->getCurrentSimCycle() +
-            sim->getTimeLord()->getTimeConverter("1us")->getFactor();
+        sim->getTimeLord()->getTimeConverter("1us")->getFactor();
         sim->insertActivity( next, this );
     }
 
@@ -163,9 +162,8 @@ class BarrierAction : public SST::Action
     int m_numReporting;
     int m_opened;
     int m_readFd;
-    char buf[100];
-    std::string readFilename;
-    std::vector<std::string> writeFilenames;
+    std::string m_readFilename;
+    std::vector<std::string> m_writeFilenames;
     std::vector< int > m_writeFds;
     
     inline bool fileExists(const std::string& name) {
