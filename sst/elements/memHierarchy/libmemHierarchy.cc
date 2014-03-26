@@ -44,8 +44,6 @@ static const ElementInfoParam cache_params[] = {
     {"associativity",           "Specifies the cache associativity. In set associative caches, this is the number of ways."},
     {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. "},
     {"cache_line_size",         "Size of a cache block in bytes."},
-    {"low_network_links",       "Number lower level caches are connected to this cache. This is usually the number of banks in the next level cache (closer to the main memory)."},
-    {"high_network_links",      "Number higher level caches are connected to this cache (closer to the CPU)."},
     {"access_latency_cycles",   "Access Latency (in Cycles) taken to lookup data in the cache."},
     {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
     {"mshr_num_entries",        "Number of entries in the MSHR"},

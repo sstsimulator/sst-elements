@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+
 #include "sst/core/debug.h"
 
 #if 0 
@@ -64,10 +66,10 @@ class BarrierAction : public SST::Action
     
     ~BarrierAction(){
         close(m_readFd);
-        remove(readFilename.c_str());
+        if (fileExists(readFilename.c_str())) remove(readFilename.c_str());
         for(unsigned int i = 0; i < m_writeFds.size(); i++){
             close(m_writeFds[i]);
-            remove(writeFilenames[i].c_str());
+            if (fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
         }
     }
 
@@ -158,8 +160,12 @@ class BarrierAction : public SST::Action
     std::string readFilename;
     std::vector<std::string> writeFilenames;
     std::vector< int > m_writeFds;
+    
+    inline bool fileExists(const std::string& name) {
+        struct stat buffer;
+        return (stat (name.c_str(), &buffer) == 0);
+    }
 };
 
-}
-}
+}}
 #endif
