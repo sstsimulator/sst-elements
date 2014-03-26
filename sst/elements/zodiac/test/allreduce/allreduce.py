@@ -61,8 +61,6 @@ numRanks = numNodes * num_vNics
 print numNodes
 print numRanks
 
-exit
-
 sst.merlin._params["link_lat"] = "40ns"
 sst.merlin._params["link_bw"] = "560Mhz"
 sst.merlin._params["xbar_bw"] = "560Mhz"
@@ -77,7 +75,7 @@ sst.merlin._params["torus:width"] = width
 sst.merlin._params["torus:local_ports"] = 1
 
 nicParams = ({ 
-		"debug" : 1,
+		"debug" : 0,
 		"verboseLevel": 2,
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin.torus",
@@ -99,19 +97,19 @@ driverParams = ({
 		"sharedTrace" : "allred-128.stf",
 		"printStats" : 1,
 		"buffersize" : 140,
-		"hermesParams.debug" : 1,
+		"hermesParams.debug" : 0,
 		"hermesParams.verboseLevel" : 1,
 		"hermesParams.nidListFile" : "nidlist.txt",
 		"hermesParams.nicModule" : "firefly.VirtNic",
-		"hermesParams.nicParams.debug" : 1 ,
+		"hermesParams.nicParams.debug" : 0,
 		"hermesParams.nicParams.debugLevel" : 1 ,
 		"hermesParams.policy" : "adjacent",
-		"hermesParams.functionSM.defaultDebug" : 1,
+		"hermesParams.functionSM.defaultDebug" : 0,
 		"hermesParams.functionSM.defaultVerbose" : 1,
-		"hermesParams.ctrlMsg.debug" : 1,
+		"hermesParams.ctrlMsg.debug" : 0,
 		"hermesParams.ctrlMsg.verboseLevel" : 1,
 		"hermesParams.longMsgProtocol.shortMsgLength" : 4000,
-		"hermesParams.longMsgProtocol.debug" : 1,
+		"hermesParams.longMsgProtocol.debug" : 0,
 		"hermesParams.longMsgProtocol.verboseLevel" : 1,
 		"hermesParams.longMsgProtocol.matchDelay_ps" : 1,
 		"hermesParams.longMsgProtocol.memcpyDelay_ps" : 200,
@@ -134,13 +132,20 @@ class EmberEP(EndPoint):
 		nic.addParam("nid", nodeID)
 		nic.addLink(link, "rtr", "10ns")
 
+		loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
+		loopBack.addParam("numCores", num_vNics)
+
 		for x in xrange(num_vNics ):
-			ep = sst.Component("nic" + str(x) + "core" + str(nodeID) + "_TraceReader", "zodiac.ZodiacSiriusTraceReader")
+			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_TraceReader", "zodiac.ZodiacSiriusTraceReader")
 			ep.addParams(driverParams)
 			ep.addParam("hermesParams.numRanks", numRanks )
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
+			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
 			ep.addLink(nicLink, "nic", "150ns")
 			nic.addLink(nicLink, "core" + str(x), "150ns")
+            
+			ep.addLink(loopLink, "loop", "1ns")
+			loopBack.addLink(loopLink, "core" + str(x), "1ns")
 
 
 topo = topoTorus()
