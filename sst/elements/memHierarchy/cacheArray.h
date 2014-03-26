@@ -39,6 +39,7 @@ public:
 
     public:
         bool eventsWaitingForLock_;
+        virtual ~CacheLine(){}
 
         CacheLine(Output* _dbg, unsigned int  _size) : d_(_dbg), state_(I), baseAddr_(0), ackCount_(0), size_(_size){
             data_.resize(size_/sizeof(uint8_t));
@@ -47,28 +48,30 @@ public:
             index_ = -1;
             eventsWaitingForLock_ = false;
         }
-	
-        virtual ~CacheLine(){}
-        BCC_MESIState getState() const { return state_; }
-        bool waitingForAck(){return inTransition(); }
-        bool inTransition(){ return !unlocked();}
-        bool valid() { return state_ != I; }
-        bool unlocked() { return CacheLine::unlocked(state_);}
-        bool locked() {return !unlocked();}
-        MemEvent* getCurrentEvent() { return currentEvent_; }
-        Addr getBaseAddr() { return baseAddr_; }
-        void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
-        unsigned int getLineSize(){ return size_; }
-        vector<uint8_t>* getData(){ return &data_; }
-        unsigned int getAckCount(){ assert(ackCount_ >= 0); return ackCount_; }
-        void decAckCount(){ ackCount_--; if(ackCount_ == 0) setState(nextState[state_]); assert(ackCount_ >= 0);}
-        void setAckCount(unsigned int _ackCount){ ackCount_ = _ackCount; }
-        static bool unlocked(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
-        static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
-        void incLock(){ userLock_++; d_->debug(_L1_,"User Lock set on this cache line\n"); }
-        void decLock(){ userLock_--; if(userLock_ == 0) d_->debug(_L1_,"User lock cleared on this cache line\n");}
-        bool isLockedByUser(){ return (userLock_ > 0) ? true : false; }
-        bool waitingForInvAck(){ return (state_ == SI || state_ == EI || state_ == MI || state_ == MS) ? true : false; }
+        
+        unsigned int getAckCount(){
+            assert(ackCount_ >= 0);
+            return ackCount_;
+        }
+        
+        void decAckCount(){
+            ackCount_--;
+            if(ackCount_ == 0) setState(nextState[state_]);
+            assert(ackCount_ >= 0);
+        }
+
+        
+        void incLock(){
+            userLock_++;
+            d_->debug(_L1_,"User Lock set on this cache line\n");
+        }
+        
+        void decLock(){
+            userLock_--;
+            if(userLock_ == 0) d_->debug(_L1_,"User lock cleared on this cache line\n");
+        }
+        
+
         void setData(vector<uint8_t> _data, MemEvent* ev){
             if (ev->getSize() == size_ || ev->getCmd() == GetSEx) {
                 std::copy(_data.begin(), _data.end(), this->data_.begin());
@@ -86,6 +89,7 @@ public:
                 }
             }
         }
+        
         void setState(BCC_MESIState _newState){
             d_->debug(_L1_, "State change: bsAddr = %"PRIx64", oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
@@ -95,23 +99,36 @@ public:
             assert(userLock_ == 0);
         }
         
-        void setIndex(int _index){ index_ = _index; }
+        BCC_MESIState getState() const { return state_; }
+        bool waitingForAck(){return inTransition(); }
+        bool inTransition(){ return !unlocked();}
+        bool valid() { return state_ != I; }
+        bool unlocked() { return CacheLine::unlocked(state_);}
+        bool locked() {return !unlocked();}
+        MemEvent* getCurrentEvent() { return currentEvent_; }
+        Addr getBaseAddr() { return baseAddr_; }
+        void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
+        unsigned int getLineSize(){ return size_; }
+        vector<uint8_t>* getData(){ return &data_; }
+        bool isLockedByUser(){ return (userLock_ > 0) ? true : false; }
+        bool waitingForInvAck(){ return (state_ == SI || state_ == EI || state_ == MI || state_ == MS) ? true : false; }
+        void setAckCount(unsigned int _ackCount){ ackCount_ = _ackCount; }
+        static bool unlocked(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
+        static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}        void setIndex(int _index){ index_ = _index; }
         int  index(){ return index_; }
-};
+    };
     
     typedef CacheArray::CacheLine CacheLine;
 
-    /* Returns tag's ID if present, -1 otherwise.
-     * If updateReplacement is set, runs the replacement algorithm on the updated block. 
+    /* Function returns the cacheline tag's ID if its valid (-1 if unvalid).
+     * If updateReplacement is set, the replacement stats are updated
      */
     virtual int find(Addr baseAddr, bool updateReplacement) = 0;
 
     /* Runs replacement scheme, returns tag ID of new pos and address of line to write back*/
     virtual unsigned int preReplace(Addr baseAddr) = 0;
 
-    /* Write the new address in block. Only to be called
-     * after preReplace
-     */
+    /* Replace cache line */
     virtual void replace(Addr baseAddr, unsigned int candidate_id) = 0;
  
     vector<CacheLine*> lines_;
