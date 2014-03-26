@@ -103,7 +103,6 @@ void Cache::init(unsigned int phase){
 }
 
 void Cache::setup(){
-    if(!dirControllerExists_) assert(!nextLevelCacheName_.empty());
     bottomCC_->setNextLevelCache(nextLevelCacheName_);
 }
 
