@@ -69,7 +69,11 @@ class BarrierAction : public SST::Action
         if (fileExists(readFilename.c_str())) remove(readFilename.c_str());
         for(unsigned int i = 0; i < m_writeFds.size(); i++){
             close(m_writeFds[i]);
-            if (fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
+        }
+        
+        for(unsigned int i = 0; i < writeFilenames.size(); i++){
+            if(writeFilenames[i].empty()) continue;
+            if(fileExists(writeFilenames[i].c_str())) remove(writeFilenames[i].c_str());
         }
     }
 
