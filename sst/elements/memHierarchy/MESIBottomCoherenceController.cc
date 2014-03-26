@@ -96,6 +96,7 @@ void MESIBottomCC::handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, con
     Command origCmd  = origEv->getCmd();
     assert(MemEvent::isDataRequest(origCmd));
     cacheLine->setData(ackEvent->getPayload(), ackEvent);
+    d_->debug(_L4_,"CacheLine State: %s, Granted State: %s", BccLineString[cacheLine->getState()], BccLineString[ackEvent->getGrantedState()]);
     if(cacheLine->getState() == S && ackEvent->getGrantedState() == E) cacheLine->setState(E);
 
 }

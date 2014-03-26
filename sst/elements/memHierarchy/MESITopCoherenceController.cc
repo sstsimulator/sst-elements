@@ -69,7 +69,6 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
     if(l->isShareless()) return;
     
     if(l->exclusiveSharerExists()){
-        l->setState(Inv_A);
         sendInvalidates(_cmd, _lineIndex, false, "", true);
     }
     else{
@@ -87,12 +86,10 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
         case FetchInvalidate:
             if(l->exclusiveSharerExists()) {
                 assert(l->numSharers() == 1);
-                l->setState(Inv_A);            //M_A state now; wait for invalidate acks
                 sendInvalidates(Inv, _cacheLine->index(), false, "", true);
             }
             else if(l->numSharers() > 0){
                 sendInvalidates(Inv, _cacheLine->index(), false, "", false);
-                l->setAckCount(0);
                 l->removeAllSharers();
             }else{
                 _abort(MemHierarchy::CacheController, "Command not supported");
@@ -106,7 +103,7 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
 }
 
 void MESITopCC::handleInvAck(MemEvent* _event, CCLine* _ccLine){
-    assert(_ccLine->getAckCount() > 0);
+    //assert(_ccLine->getAckCount() > 0);
     int sharerId = lowNetworkNodeLookup(_event->getSrc());
     if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(sharerId);
     else if(_ccLine->isSharer(sharerId)) _ccLine->removeSharer(sharerId);
@@ -121,7 +118,7 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
     bool waitForInvalidateAck = false;
     assert(!CacheArray::CacheLine::inTransition(_state));
     CCLine* ccLine = ccLines_[lineIndex];
-    assert(ccLine->getAckCount() == 0 && ccLine->valid());
+    assert(ccLine->valid());
     
     if(ccLine->exclusiveSharerExists()){
         waitForInvalidateAck = true;
@@ -130,9 +127,8 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
     if(!ccLine->isShareless()){
         d_->debug(_L1_,"Stalling request: Eviction requires invalidation of lw lvl caches. St = %s, ExSharerFlag = %s \n", BccLineString[_state], waitForInvalidateAck ? "True" : "False");
         if(waitForInvalidateAck){
-            ccLine->setState(Inv_A);
             sendInvalidates(Inv, lineIndex, true, "", true);
-            return true;
+            return (ccLine->getState() != V);
         }
         else{
             assert(ccLine->exclusiveSharerExists() || _state != IM);
@@ -147,28 +143,33 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
 
 void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded){
     CCLine* ccLine = ccLines_[lineIndex];
-    assert(ccLine->getAckCount() == 0);
+    //assert(ccLine->getAckCount() == 0);
     assert(!ccLine->isShareless());  //no sharers for this address in the cache
     unsigned int sentInvalidates = 0;
     int requestingId = requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
     
-    d_->debug(_L1_,"Sending Invalidates: %u (numSharers), Invalidating Addr: %"PRIx64"\n", ccLine->numSharers(), ccLine->getBaseAddr());
-    MemEvent* invalidateEvent; 
-        for(map<string, int>::iterator sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++){
-            int sharerId = sharer->second;
-            if(requestingId == sharerId) continue;
-            if(ccLine->isSharer(sharerId)){
-                sentInvalidates++;
-                if(!eviction) InvReqsSent_++;
-                else EvictionInvReqsSent_++;
-                invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), cmd);
-                invalidateEvent->setDst(sharer->first);
-                response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
-                outgoingEventQueue_.push(resp);
-            }
+    d_->debug(_L1_,"Number of Sharers: %u \n", ccLine->numSharers());
+
+    MemEvent* invalidateEvent;
+    for(map<string, int>::iterator sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++){
+        int sharerId = sharer->second;
+        if(requestingId == sharerId) continue;
+        if(ccLine->isSharer(sharerId)){
+            if(acksNeeded) ccLine->setState(Inv_A);
+            sentInvalidates++;
+            if(!eviction) InvReqsSent_++;
+            else EvictionInvReqsSent_++;
+            invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), cmd);
+            d_->debug(_L1_,"Invalidate sent: %u (numSharers), Invalidating Addr: %"PRIx64", Dst: %s\n", ccLine->numSharers(), ccLine->getBaseAddr(),  sharer->first.c_str());
+            invalidateEvent->setDst(sharer->first);
+            response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
+            outgoingEventQueue_.push(resp);
+        }
     }
+    
+
     //assert(sentInvalidates == ccLine->numSharers());   - 1 (requestLink)
-    if(acksNeeded) ccLine->setAckCount(sentInvalidates);
+    //if(acksNeeded) ccLine->setAckCount(sentInvalidates);
 }
 
 
@@ -198,7 +199,6 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
         assert(l->numSharers() == 1);                      // TODO: l->setState(InvX_A);  //sendInvalidates(InvX, lineIndex);
         //l->setState(InvX_A);
         //sendInvalidates(InvX, lineIndex, false, -1, true);
-        l->setState(Inv_A);
         sendInvalidates(Inv, lineIndex, false, "", true);
     }
     /* Send Data in S state */
@@ -219,7 +219,7 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* Invalidate any exclusive sharers before responding to GetX request */
     if(ccLine->exclusiveSharerExists()){
         d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
-        ccLine->setState(Inv_A);         
+        assert(!ccLine->isSharer(_sharerId));
         sendInvalidates(Inv, lineIndex, false, _event->getSrc(), true);
         return;
     }
@@ -246,8 +246,8 @@ void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _s
     if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_sharerId);
     else if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
 
-   if(_ccLine->getState() == V) return;
-    assert(_ccLine->getAckCount() > 0);
+    if(_ccLine->getState() == V) return;
+    //assert(_ccLine->getAckCount() > 0);
     _ccLine->decAckCount();
 
     //assert(_ccLine->isSharer(_sharerId));

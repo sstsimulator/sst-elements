@@ -33,7 +33,7 @@ public:
     }
     TCC_MESIState getState() {return state_; }
     bool isValid(){ return getState() == V; }
-    void decAckCount() { ackCount_--; if(ackCount_ == 0) setState(V); d_->debug(C,L4,0, "Decremented Ack Count.  Ack Count = %u\n",ackCount_);}
+    void decAckCount() { if(numSharers_ == 0) setState(V); d_->debug(C,L4,0, "Decremented Ack Count.  Ack Count = %u\n",ackCount_);}
     void setAckCount(uint _ackCount) {
         ackCount_ = _ackCount;
         if(ackCount_) assert(state_ != V);
