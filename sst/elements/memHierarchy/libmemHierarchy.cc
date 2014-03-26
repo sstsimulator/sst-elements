@@ -39,28 +39,32 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam cache_params[] = {
-    {"cache_frequency",         "Cache clock frequency.  In the case of L1s, this is usually the same as the CPU's frequency"},
-    {"cache_size",              "Cache size in bytes.  Eg.  4KB or 1MB "},
+    /* Required */
+    {"cache_frequency",         "Cache clock frequency.  In the case of L1s, this is usually the same as the CPU's frequency."},
+    {"cache_size",              "Cache size in bytes.  Eg.  4KB or 1MB"},
     {"associativity",           "Specifies the cache associativity. In set associative caches, this is the number of ways."},
     {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. "},
-    {"cache_line_size",         "Size of a cache line (aka cache block) in bytes.", "64"},
     {"access_latency_cycles",   "Latency (in Cycles) to lookup data in the cache."},
-    {"coherence_protocol",      "Coherence protocol.  Supported: MESI (default), MSI"},
-    {"mshr_num_entries",        "Number of entries in the MSHR"},
+    {"L1",                      "Parameter specifies whether cache is an L1 --0, or 1--"},
+    {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},
+    {"mshr_num_entries",        "Number of MSHR entries"},
+    /* Not required */
+    {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
-    {"L1",                      "Parameter specifies whether cache is an L1:  0, 1"},
-    {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1"},
+    {"high_network_ports",      "Number of high network ports (closer to the CPU)",""},
+    {"low_network_ports"        "Number of low network ports (closer to the memory)", ""},
+    {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1", "0"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
-    {"network_address",         "When using a directory controller, this parameter represents the network address of this cache.", ""},
+    {"network_address",         "When using a directory controller, this parameter represents the network address of this cache.", "0"},
 	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
-    {"debug",                   "0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "8"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort cache_ports[] = {
-    {"low_network_%d",  "Ports connected to lower level caches (closer to main memory)", memEvent_port_events},
-    {"high_network_%d", "Ports connected to higher level caches (closer to CPU)", memEvent_port_events},
+    {"low_network_%(low_network_ports)d",  "Ports connected to lower level caches (closer to main memory)", memEvent_port_events},
+    {"high_network_%(high_network_ports)d", "Ports connected to higher level caches (closer to CPU)", memEvent_port_events},
     {"directory",       "Network link port", net_port_events},
     {NULL, NULL, NULL}
 };
@@ -74,25 +78,25 @@ static Component* create_Bus(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam bus_params[] = {
-    {"broadcast",           "Number of Ports on the bus."},
-    {"bus_latency_cycles",  "Number of Ports on the bus."},
     {"bus_frequency",       "Number of Ports on the bus."},
-    {"low_network_%d",      "Delay time for the bus.", "100ns"},
-    {"high_network_%d",     "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy.", "0"},
-    {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
+    {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports.", "0"},
+    {"bus_latency_cycles",  "Number of ports on the bus.", "0"},
+    {"high_network_ports",  "Number of high network ports (closer to the CPU)",""},
+    {"low_network_ports"    "Number of low network ports (closer to the memory)", ""},
+    {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {NULL, NULL}
 };
 
 
 static const ElementInfoPort bus_ports[] = {
-    {"low_network_%d",  "Ports connected to lower level caches (closer to main memory)", memEvent_port_events},
-    {"high_network_%d", "Ports connected to higher level caches (closer to CPU)", memEvent_port_events},
+    {"low_network_%(low_network_ports)d",  "Ports connected to lower level caches (closer to main memory)", memEvent_port_events},
+    {"high_network_%(high_network_ports)d", "Ports connected to higher level caches (closer to CPU)", memEvent_port_events},
     {NULL, NULL, NULL}
 };
 
 
-static Component* create_trivialCPU(ComponentId_t id, Params& params)
-{
+static Component* create_trivialCPU(ComponentId_t id, Params& params){
 	return new trivialCPU( id, params );
 }
 
@@ -110,15 +114,13 @@ static const ElementInfoParam cpu_params[] = {
 };
 
 
-static Component* create_streamCPU(ComponentId_t id, Params& params)
-{
+static Component* create_streamCPU(ComponentId_t id, Params& params){
 	return new streamCPU( id, params );
 }
 
 
 
-static Component* create_MemController(ComponentId_t id, Params& params)
-{
+static Component* create_MemController(ComponentId_t id, Params& params){
 	return new MemController( id, params );
 }
 
@@ -149,8 +151,7 @@ static const ElementInfoPort memctrl_ports[] = {
 };
 
 
-static Module* create_Mem_SimpleSim(Component* comp, Params& params)
-{
+static Module* create_Mem_SimpleSim(Component* comp, Params& params){
     return new SimpleMemory(comp, params);
 }
 
@@ -161,8 +162,7 @@ static const ElementInfoParam simpleMem_params[] = {
 
 
 #if defined(HAVE_LIBDRAMSIM)
-static Module* create_Mem_DRAMSim(Component* comp, Params& params)
-{
+static Module* create_Mem_DRAMSim(Component* comp, Params& params){
     return new DRAMSimMemory(comp, params);
 }
 
@@ -176,8 +176,7 @@ static const ElementInfoParam dramsimMem_params[] = {
 #endif
 
 #if defined(HAVE_LIBHYBRIDSIM)
-static Module* create_Mem_HybridSim(Component* comp, Params& params)
-{
+static Module* create_Mem_HybridSim(Component* comp, Params& params){
     return new HybridSimMemory(comp, params);
 }
 
@@ -190,8 +189,7 @@ static const ElementInfoParam hybridsimMem_params[] = {
 
 #endif
 
-static Module* create_Mem_VaultSim(Component* comp, Params& params)
-{
+static Module* create_Mem_VaultSim(Component* comp, Params& params){
     return new VaultSimMemory(comp, params);
 }
 
@@ -203,8 +201,7 @@ static const ElementInfoParam vaultsimMem_params[] = {
 
 
 
-static Component* create_DirectoryController(ComponentId_t id, Params& params)
-{
+static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
 }
 
@@ -231,8 +228,7 @@ static const ElementInfoPort dirctrl_ports[] = {
 
 
 
-static Component* create_DMAEngine(ComponentId_t id, Params& params)
-{
+static Component* create_DMAEngine(ComponentId_t id, Params& params){
 	return new DMAEngine( id, params );
 }
 
