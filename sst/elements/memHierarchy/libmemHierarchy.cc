@@ -52,7 +52,7 @@ static const ElementInfoParam cache_params[] = {
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
     {"high_network_ports",      "Number of high network ports (closer to the CPU)",""},
-    {"low_network_ports"        "Number of low network ports (closer to the memory)", ""},
+    {"low_network_ports",       "Number of low network ports (closer to the memory)", ""},
     {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1", "0"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
     {"network_address",         "When using a directory controller, this parameter represents the network address of this cache.", "0"},
@@ -83,7 +83,7 @@ static const ElementInfoParam bus_params[] = {
     {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports.", "0"},
     {"bus_latency_cycles",  "Number of ports on the bus.", "0"},
     {"high_network_ports",  "Number of high network ports (closer to the CPU)",""},
-    {"low_network_ports"    "Number of low network ports (closer to the memory)", ""},
+    {"low_network_ports",   "Number of low network ports (closer to the memory)", ""},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {NULL, NULL}
 };
@@ -207,7 +207,7 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 
 static const ElementInfoParam dirctrl_params[] = {
     {"network_bw",          "Network link bandwidth.", NULL},
-    {"network_address"      "Network address of component.", ""},
+    {"network_address",     "Network address of component.", ""},
 	{"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
     {"addr_range_end",      "End of Address Range, for this controller.", NULL},
@@ -353,7 +353,7 @@ static const ElementInfoComponent components[] = {
 extern "C" {
 	ElementLibraryInfo memHierarchy_eli = {
 		"memHierarchy",
-		"Simple Memory Hierarchy",
+		"Cache Hierarchy",
 		components,
         NULL, /* Events */
         NULL, /* Introspectors */
