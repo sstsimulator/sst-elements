@@ -74,7 +74,7 @@ class BarrierAction : public SST::Action
             
             for(unsigned int i = 0; i < m_writeFilenames.size(); i++){
                 if(m_writeFilenames[i].empty()) continue;
-                if(fileExists(m_writeFilenames[i]) remove(m_writeFilenames[i].c_str());
+                if(fileExists(m_writeFilenames[i])) remove(m_writeFilenames[i].c_str());
             }
         }
         catch(const std::exception& e){}
