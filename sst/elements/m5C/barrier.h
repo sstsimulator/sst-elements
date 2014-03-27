@@ -65,22 +65,20 @@ class BarrierAction : public SST::Action
     };
     
     ~BarrierAction(){
-        //try{
-            //close(m_readFd);
-            //boost::filesystem::exists(m_readFilename.c_str());
-            //if(!m_readFilename.empty() && fileExists(m_readFilename)) remove(m_readFilename.c_str());
-            //for(unsigned int i = 0; i < m_writeFds.size(); i++){
-              //  close(m_writeFds[i]);
-            //}
+        try{
+            close(m_readFd);
+            if(!m_readFilename.empty() && fileExists(m_readFilename)) remove(m_readFilename.c_str());
+            for(unsigned int i = 0; i < m_writeFds.size(); i++){
+                close(m_writeFds[i]);
+            }
             
-            //for(unsigned int i = 0; i < m_writeFilenames.size(); i++){
-            //     boost::filesystem::exists(m_writeFilenames[i].c_str());
-
-            //    if(m_writeFilenames[i].empty()) continue;
-            //    if(fileExists(m_writeFilenames[i])) remove(m_writeFilenames[i].c_str());
-        //    }
-        //}
-        //catch(const std::exception& e){}
+            for(unsigned int i = 0; i < m_writeFilenames.size(); i++){
+                 //boost::filesystem::exists(m_writeFilenames[i].c_str());
+                if(m_writeFilenames[i].empty()) continue;
+                if(fileExists(m_writeFilenames[i])) remove(m_writeFilenames[i].c_str());
+            }
+        }
+        catch(const std::exception& e){}
     }
 
 
