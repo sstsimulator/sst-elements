@@ -145,17 +145,17 @@ StridePrefetcher::StridePrefetcher(Params& params) {
 	output = new Output("StridePrefetcher", verbosity, 0, Output::STDOUT);
 
 	recheckCountdown = 0;
-        blockSize = (uint64_t) params.find_integer("prefetcher:blocksize", 64);
+        blockSize = (uint64_t) params.find_integer("prefetcher:cache_line_size", 64);
 
 	prefetchHistoryCount = (uint32_t) params.find_integer("prefetcher:history", 16);
 	prefetchHistory = new std::deque<uint64_t>();
 
 	strideReach = (uint32_t) params.find_integer("strideprefetcher:reach", 2);
-        strideDetectionRange = (uint64_t) params.find_integer("strideprefetcher:detectrange", 4);
-	recentAddrListCount = (uint32_t) params.find_integer("strideprefetcher:addresscount", 64);
-	pageSize = (uint64_t) params.find_integer("strideprefetcher:pagesize", 4096);
+        strideDetectionRange = (uint64_t) params.find_integer("strideprefetcher:detect_range", 4);
+	recentAddrListCount = (uint32_t) params.find_integer("strideprefetcher:address_count", 64);
+	pageSize = (uint64_t) params.find_integer("strideprefetcher:page_size", 4096);
 
-	uint32_t overrunPB = (uint32_t) params.find_integer("strideprefetcher:overrunpageboundaries", 0);
+	uint32_t overrunPB = (uint32_t) params.find_integer("strideprefetcher:overrun_page_boundaries", 0);
 	overrunPageBoundary = (overrunPB == 0) ? false : true;
 
 	nextRecentAddressIndex = 0;
@@ -165,9 +165,9 @@ StridePrefetcher::StridePrefetcher(Params& params) {
 		recentAddrList[i] = (Addr) 0;
 	}
 
-        prefetchEventsIssued = 0;
-        missEventsProcessed = 0;
-        hitEventsProcessed = 0;
+    prefetchEventsIssued = 0;
+    missEventsProcessed = 0;
+    hitEventsProcessed = 0;
 	prefetchIssueCanceledByPageBoundary = 0;
 	prefetchIssueCanceledByHistory = 0;
 	prefetchOpportunities = 0;

@@ -14,7 +14,7 @@ using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
 NextBlockPrefetcher::NextBlockPrefetcher(Params& params) {
-	blockSize = (uint64_t) params.find_integer("prefetcher:blocksize", 64);
+	blockSize = (uint64_t) params.find_integer("prefetcher:cache_line_size", 64);
 	prefetchEventsIssued = 0;
 	missEventsProcessed = 0;
 	hitEventsProcessed = 0;

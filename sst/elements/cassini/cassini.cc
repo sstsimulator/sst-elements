@@ -10,22 +10,30 @@
 using namespace SST;
 using namespace SST::Cassini;
 
-static Module*
-load_NextBlockPrefetcher(Params& params)
-{
+static Module* load_NextBlockPrefetcher(Params& params){
     return new NextBlockPrefetcher(params);
 }
 
-static Module*
-load_StridePrefetcher(Params& params)
-{
+static const ElementInfoParam nextBlockPrefetcher_params[] = {
+    {"cache_line_size",             "Network link bandwidth.", "64"},
+    {NULL, NULL, NULL}
+};
+
+static Module* load_StridePrefetcher(Params& params){
     return new StridePrefetcher(params);
 }
 
-/*static const ElementInfoParam component_params[] = {
-    {"pending", "Maximum pending prefetch requests which can be in flight."},
-    { NULL, NULL }
-};*/
+static const ElementInfoParam stridePrefetcher_params[] = {
+    {"verbose",                     "xxxx", ""},
+    {"cache_line_size",             "The number of VCS on the on-chip network.", "64"},
+    {"history",                     "Start of Address Range, for this controller.", "16"},
+    {"reach",                       "Network link bandwidth.", "2"},
+    {"detect_range",                "Network address of component.", "4"},
+	{"address_count",               "The number of VCS on the on-chip network.", "64"},
+    {"page_size",                   "Start of Address Range, for this controller.", "4096"},
+    {"overrun_page_boundaries",     "End of Address Range, for this controller.", "0"},
+    {NULL, NULL, NULL}
+};
 
 static const ElementInfoModule modules[] = {
     { "NextBlockPrefetcher",
@@ -54,14 +62,12 @@ static const ElementInfoModule modules[] = {
 extern "C" {
     ElementLibraryInfo cassini_eli = {
         "Cassini",
-        "Cassini Uncore Processor Components",
+        "CPU Prefetcher to used along with MemHierarchy",
         NULL, //components,
         NULL,
-	NULL,
-	modules,
-        // partitioners,
-        // generators,
         NULL,
-	NULL,
+        modules,
+        NULL,
+        NULL,
     };
 }
