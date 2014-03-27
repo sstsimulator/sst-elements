@@ -66,11 +66,11 @@ class BarrierAction : public SST::Action
     
     ~BarrierAction(){
         try{
-            close(m_readFd);
+            //close(m_readFd);
             if(!m_readFilename.empty() && fileExists(m_readFilename.c_str())) remove(m_readFilename.c_str());
-            for(unsigned int i = 0; i < m_writeFds.size(); i++){
-                close(m_writeFds[i]);
-            }
+            //for(unsigned int i = 0; i < m_writeFds.size(); i++){
+              //  close(m_writeFds[i]);
+            //}
             
             for(unsigned int i = 0; i < m_writeFilenames.size(); i++){
                 if(m_writeFilenames[i].empty()) continue;
