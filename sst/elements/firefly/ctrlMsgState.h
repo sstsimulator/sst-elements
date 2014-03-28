@@ -19,16 +19,6 @@ namespace CtrlMsg {
 
 #include "ctrlMsgXXX.h"
 
-class  StateArgsBase {
-  protected:
-    virtual ~StateArgsBase() = 0; 
-};
-
-class  LocalsBase {
-  public:
-    virtual ~LocalsBase(){} 
-};
-
 template< class T1 >
 class StateBase {
   public:

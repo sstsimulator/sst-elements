@@ -52,6 +52,7 @@ class LongMsgProtocol : public CtrlMsg::API  {
 
     class RecvCallbackEntry {
       public:
+
         MsgHdr              hdr;
         RecvEntry*          recvEntry;
         CtrlMsg::CommReq    commReq;
@@ -140,7 +141,7 @@ class LongMsgProtocol : public CtrlMsg::API  {
     int         m_longMsgRegion;
     int         genLongRegion() { return m_longMsgRegion++ & 0x3f; }
 
-    std::deque<RecvEntry*>  m_postedQ;
+    std::deque< RecvEntry* >  m_postedQ;
 
     std::deque< RecvCallbackEntry* >      m_unexpectedQ;
 
@@ -150,7 +151,7 @@ class LongMsgProtocol : public CtrlMsg::API  {
         int*                       index;
     };
 
-    std::vector<Blocked>    m_blockedList;
+    std::vector< Blocked >    m_blockedList;
 
     std::map< CtrlMsg::region_t, SendCallbackEntry* > m_regionM;
 };

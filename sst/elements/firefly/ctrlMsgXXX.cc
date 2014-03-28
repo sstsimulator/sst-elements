@@ -132,6 +132,7 @@ void XXX::loopHandler( Event* ev )
     Foo* event = static_cast< Foo* >(ev);
     m_dbg.verbose(CALL_INFO,1,0,"req=%p\n",event->req);    
     m_processQueuesState->loopHandler( event->req, event->response );
+    delete ev;
 }
 
 static size_t calcLength( std::vector<IoVec>& ioVec )
@@ -217,7 +218,6 @@ void XXX::delayHandler( SST::Event* e )
             delete event->functor1;
         }
     }
-
     delete e;
 }
 

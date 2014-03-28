@@ -20,24 +20,28 @@ template< class TRetval = void  >
 class FunctorBase_0 {
   public:
     virtual TRetval operator()() = 0;
+	virtual ~FunctorBase_0() {}
 };
 
 template< class T1, class TRetval = void  >
 class FunctorBase_1 {
   public:
     virtual TRetval operator()(T1) = 0;
+	virtual ~FunctorBase_1() {}
 };
 
 template< class T1, class T2, class TRetval = void  >
 class FunctorBase_2 {
   public:
     virtual TRetval operator()(T1,T2) = 0;
+	virtual ~FunctorBase_2() {}
 };
 
 template< class T1, class T2, class T3, class TRetval = void  >
 class FunctorBase_3 {
   public:
     virtual TRetval operator()(T1,T2,T3) = 0;
+	virtual ~FunctorBase_3() {}
 };
 
 

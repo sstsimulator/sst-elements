@@ -149,7 +149,6 @@ class XXX  {
             req( _req )
         {}
 
-
         FunctorBase_0<bool>*    functor0;
         FunctorBase_1<CommReq*,bool>*    functor1;
         CommReq*                         req;
