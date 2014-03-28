@@ -65,6 +65,7 @@ class BarrierAction : public SST::Action
     };
     
     ~BarrierAction(){
+    /*
         try{
             close(m_readFd);
             if(!m_readFilename.empty() && fileExists(m_readFilename)) remove(m_readFilename.c_str());
@@ -79,6 +80,7 @@ class BarrierAction : public SST::Action
             }
         }
         catch(const std::exception& e){}
+    */
     }
 
 
