@@ -10,8 +10,8 @@
      <debug> 0 </debug>
     <num_ports> 3 </num_ports>
     <num_vcs> 2 </num_vcs>
-    <link_bw> 2GHz </link_bw>
-    <xbar_bw> 2GHz </xbar_bw>
+    <link_bw> 2Ghz </link_bw>
+    <xbar_bw> 2Ghz </xbar_bw>
     <topology> merlin.torus </topology>
     <torus:shape> 2 </torus:shape>
     <torus:width> 1 </torus:width>
@@ -55,7 +55,7 @@
      <hermesParams.nicParams.module> merlin.linkcontrol </hermesParams.nicParams.module>
      <hermesParams.nicParams.topology> merlin.torus </hermesParams.nicParams.topology>
      <hermesParams.nicParams.num_vcs> 2 </hermesParams.nicParams.num_vcs>
-     <hermesParams.nicParams.link_bw> 2GHz </hermesParams.nicParams.link_bw>
+     <hermesParams.nicParams.link_bw> 2Ghz </hermesParams.nicParams.link_bw>
 
      <hermesParams.nicParams.txBusDelay_ns> 150  </hermesParams.nicParams.txBusDelay_ns>
      <hermesParams.nicParams.rxBusDelay_ns> 150  </hermesParams.nicParams.rxBusDelay_ns>

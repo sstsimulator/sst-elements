@@ -14,14 +14,14 @@
         <info>                     no    </info>
         <registerExit>            yes    </registerExit>
         <numBarrier>                1    </numBarrier>
-        <frequency>             2 GHz    </frequency>
+        <frequency>             2 Ghz    </frequency>
         <statFile>            out.txt    </statFile>
         <configFile>    exampleM5.xml    </configFile> 
   </M5Params>
 
   <l1CacheParams>
             <debug> 0 </debug>
-            <cache_frequency> 2 GHz  </cache_frequency>
+            <cache_frequency> 2 Ghz  </cache_frequency>
             <coherence_protocol> MSI </coherence_protocol>
             <replacement_policy> lru </replacement_policy> 
             <associativity> 1 </associativity>
@@ -34,7 +34,7 @@
   </l1CacheParams>
   <l2CacheParams>
             <debug> 0 </debug>
-            <cache_frequency> 2.0 GHz  </cache_frequency>
+            <cache_frequency> 2.0 Ghz  </cache_frequency>
             <coherence_protocol> MSI </coherence_protocol>
             <replacement_policy> lru </replacement_policy> 
             <associativity> 4 </associativity>
@@ -47,7 +47,7 @@
             <L1> 0 </L1>
   </l2CacheParams>
   <busParams>
-        <bus_frequency> 2 GHz </bus_frequency>
+        <bus_frequency> 2 Ghz </bus_frequency>
   </busParams>
   <memControllerParams>
         <debug> 0  </debug>

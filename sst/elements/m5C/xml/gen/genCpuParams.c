@@ -107,7 +107,7 @@ static char *str = "<cpuParams>\n\
     <base.max_insts_any_thread> 0 </base.max_insts_any_thread>\n\
     <base.max_loads_all_threads> 0 </base.max_loads_all_threads>\n\
     <base.max_loads_any_thread> 0 </base.max_loads_any_thread>\n\
-    <base.clock> 2.0GHz </base.clock>\n\
+    <base.clock> 2.0Ghz </base.clock>\n\
     <base.function_trace_start> 0 </base.function_trace_start>\n\
     <base.phase> 0 </base.phase>\n\
     <base.progress_interval> 0 </base.progress_interval>\n\

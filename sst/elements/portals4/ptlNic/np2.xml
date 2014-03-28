@@ -18,7 +18,7 @@
 
 <param_include>
     <rtr_params>
-        <clock>         500MHz </clock>
+        <clock>         500Mhz </clock>
         <debug>         no     </debug>
         <info>          no     </info>
 
@@ -41,7 +41,7 @@
     </rtr_params>
 
     <nic_params1>
-        <clock>500MHz</clock>
+        <clock>500Mhz</clock>
         <dmaEngine.bytesPerClock> 6 </dmaEngine.bytesPerClock>
     </nic_params1>
 

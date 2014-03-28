@@ -7,7 +7,7 @@
     </osParams>
 
     <littleCpuParams>
-        <base.clock>                               1.0 GHz       </base.clock>
+        <base.clock>                               1.0 Ghz       </base.clock>
 
 
         <base.dtb.size>                                128       </base.dtb.size>
@@ -142,7 +142,7 @@
     </littleCpuParams>
 
     <bigCpuParams>
-        <base.clock>                                2.9GHz       </base.clock>
+        <base.clock>                                2.9Ghz       </base.clock>
 
         <base.process.executable>  ./stream.1K  </base.process.executable>
         <base.process.cmd.0>  ./stream.1K  </base.process.cmd.0>

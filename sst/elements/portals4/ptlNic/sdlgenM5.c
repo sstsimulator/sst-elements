@@ -135,7 +135,7 @@ void sdlgenM5( const char* file, int numM5Nids )
     fprintf(output,"%s    <base.max_insts_any_thread> 0 </base.max_insts_any_thread>\n",indent);
     fprintf(output,"%s    <base.max_loads_all_threads> 0 </base.max_loads_all_threads>\n",indent);
     fprintf(output,"%s    <base.max_loads_any_thread> 0 </base.max_loads_any_thread>\n",indent);
-    fprintf(output,"%s    <base.clock> 2GHz </base.clock>\n",indent);
+    fprintf(output,"%s    <base.clock> 2Ghz </base.clock>\n",indent);
     fprintf(output,"%s    <base.function_trace_start> 0 </base.function_trace_start>\n",indent);
     fprintf(output,"%s    <base.phase> 0 </base.phase>\n",indent);
     fprintf(output,"%s    <base.progress_interval> 0 </base.progress_interval>\n",indent);
@@ -186,7 +186,7 @@ void sdlgenM5( const char* file, int numM5Nids )
     fprintf(output,"%s\n",indent);
 
     fprintf(output,"%s<busParams>\n",indent);
-    fprintf(output,"%s    <clock> 1GHz </clock>\n",indent);
+    fprintf(output,"%s    <clock> 1Ghz </clock>\n",indent);
     fprintf(output,"%s    <responder_set> false </responder_set>\n",indent);
     fprintf(output,"%s    <block_size> 64 </block_size>\n",indent);
     fprintf(output,"%s    <bus_id> 0 </bus_id>\n",indent);

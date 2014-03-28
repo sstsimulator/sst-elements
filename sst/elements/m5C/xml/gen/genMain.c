@@ -68,7 +68,7 @@ static void foo( FILE *fp, int numCores, int argc, char *argv[] )
                     L1_iCacheSize, L1_dCacheSize, L2_cacheSize);
     fprintf(stderr, "L1 latency %d cycles\nL2 latency %d cycles\n",
                                         L1_lat, L2_lat );
-    fprintf(stderr, "L1 bus clock %f GHz\nL2 bus clock %f GHz\n",
+    fprintf(stderr, "L1 bus clock %f Ghz\nL2 bus clock %f Ghz\n",
                                         L1_busClock,L2_busClock); 
     // but called functions want 0 based argv but don't used argv[0]
     // so cheat

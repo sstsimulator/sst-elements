@@ -63,7 +63,7 @@ PHXSimWrap::PHXSimWrap( const Params* p ) :
     m_tickEvent = new TickEvent( this, delay );
 
     unsigned long freqHz = ( ( 1.0 / delay ) * 1000000000000 ); 
-    printf("PHXSimWrap clock %lu Hz\n", freqHz );
+    printf("PHXSimWrap clock %lu hz\n", freqHz );
     m_memorySystem->SetCPUClock(freqHz);
 }
 

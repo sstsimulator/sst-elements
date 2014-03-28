@@ -109,7 +109,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     m_tickEvent = new TickEvent( this, delay );
 
     unsigned long freqHz = ( ( 1.0 / delay ) * 1000000000000 ); 
-    printf("DRAMSimWrap clock %lu Hz\n", freqHz );
+    printf("DRAMSimWrap clock %lu hz\n", freqHz );
     MS_CAST( m_memorySystem )->setCPUClockSpeed(freqHz);
 }
 

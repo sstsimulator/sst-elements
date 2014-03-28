@@ -3,8 +3,8 @@ import sst
 from sst.merlin import *
 
 sst.merlin._params["link_lat"] = "40ns"
-sst.merlin._params["link_bw"] = "560MHz"
-sst.merlin._params["xbar_bw"] = "560MHz"
+sst.merlin._params["link_bw"] = "560Mhz"
+sst.merlin._params["xbar_bw"] = "560Mhz"
 sst.merlin._params["input_latency"] = "25ns"
 sst.merlin._params["output_latency"] = "25ns"
 sst.merlin._params["input_buf_size"] = 128
@@ -21,7 +21,7 @@ nicParams = ({
 		"hermesParams.nicParams.module" : "merlin.linkcontrol",
 		"hermesParams.nicParams.topology" : "merlin.torus",
 		"hermesParams.nicParams.num_vcs" : 2,
-		"hermesParams.nicParams.link_bw" : "560MHz",
+		"hermesParams.nicParams.link_bw" : "560Mhz",
 		"hermesParams.nicParams.buffer_size" : 128,
 		"hermesParams.nicParams.txBusDelay_ns" : 150,
 		"hermesParams.nicParams.rxBusDelay_ns" : 150,

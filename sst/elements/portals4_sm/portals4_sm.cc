@@ -185,7 +185,7 @@ static void generate(ConfigGraph* graph, string options, int ranks) {
     int size = x_count * y_count * z_count;
 
     Params rtr_params;
-    rtr_params["clock"] = "500MHz";
+    rtr_params["clock"] = "500Mhz";
     rtr_params["debug"] = "no";
     rtr_params["info"] = "no";
     rtr_params["iLCBLat"] = "13";

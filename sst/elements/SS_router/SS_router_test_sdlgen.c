@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     printf("</config>\n");
     printf("\n");
     printf("<rtr_params>\n");
-    printf("    <clock>         500MHz </clock>\n");
+    printf("    <clock>         500Mhz </clock>\n");
     printf("    <debug>         no     </debug>\n");
     printf("    <info>          no     </info>\n");
     printf("\n");
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     printf("</rtr_params>\n");
     printf("\n");
     printf("<nic_params1>\n");
-    printf("    <clock>500MHz</clock>\n");
+    printf("    <clock>500Mhz</clock>\n");
     printf("</nic_params1>\n");
     printf("\n");
     printf("<nic_params2>\n");

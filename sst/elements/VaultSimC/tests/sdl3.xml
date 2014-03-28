@@ -194,7 +194,7 @@
             
         <component name="LL0" type=VaultSimC.logicLayer >
             <params>
-                <clock> 500MHz </clock>
+                <clock> 500Mhz </clock>
                 <vaults>16</vaults>
                 <llID>0</llID>
                 <bwlimit>8</bwlimit>
@@ -223,7 +223,7 @@
             
         <component name="Vault0.0" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 0 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -232,7 +232,7 @@
             
         <component name="Vault0.1" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 1 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -241,7 +241,7 @@
             
         <component name="Vault0.2" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 2 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -250,7 +250,7 @@
             
         <component name="Vault0.3" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 3 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -259,7 +259,7 @@
             
         <component name="Vault0.4" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 4 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -268,7 +268,7 @@
             
         <component name="Vault0.5" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 5 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -277,7 +277,7 @@
             
         <component name="Vault0.6" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 6 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -286,7 +286,7 @@
             
         <component name="Vault0.7" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 7 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -295,7 +295,7 @@
             
         <component name="Vault0.8" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 8 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -304,7 +304,7 @@
             
         <component name="Vault0.9" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 9 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -313,7 +313,7 @@
             
         <component name="Vault0.10" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 10 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -322,7 +322,7 @@
             
         <component name="Vault0.11" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 11 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -331,7 +331,7 @@
             
         <component name="Vault0.12" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 12 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -340,7 +340,7 @@
             
         <component name="Vault0.13" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 13 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -349,7 +349,7 @@
             
         <component name="Vault0.14" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 14 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -358,7 +358,7 @@
             
         <component name="Vault0.15" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 15 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -373,7 +373,7 @@
             
         <component name="LL1" type=VaultSimC.logicLayer >
             <params>
-                <clock> 500MHz </clock>
+                <clock> 500Mhz </clock>
                 <vaults>16</vaults>
                 <llID>0</llID>
                 <bwlimit>8</bwlimit>
@@ -402,7 +402,7 @@
             
         <component name="Vault1.0" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 0 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -411,7 +411,7 @@
             
         <component name="Vault1.1" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 1 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -420,7 +420,7 @@
             
         <component name="Vault1.2" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 2 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -429,7 +429,7 @@
             
         <component name="Vault1.3" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 3 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -438,7 +438,7 @@
             
         <component name="Vault1.4" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 4 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -447,7 +447,7 @@
             
         <component name="Vault1.5" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 5 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -456,7 +456,7 @@
             
         <component name="Vault1.6" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 6 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -465,7 +465,7 @@
             
         <component name="Vault1.7" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 7 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -474,7 +474,7 @@
             
         <component name="Vault1.8" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 8 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -483,7 +483,7 @@
             
         <component name="Vault1.9" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 9 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -492,7 +492,7 @@
             
         <component name="Vault1.10" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 10 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -501,7 +501,7 @@
             
         <component name="Vault1.11" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 11 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -510,7 +510,7 @@
             
         <component name="Vault1.12" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 12 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -519,7 +519,7 @@
             
         <component name="Vault1.13" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 13 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -528,7 +528,7 @@
             
         <component name="Vault1.14" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 14 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>
@@ -537,7 +537,7 @@
             
         <component name="Vault1.15" type=VaultSimC.VaultSimC >
             <params>
-                <clock> 750MHz </clock>
+                <clock> 750Mhz </clock>
                 <VaultID> 15 </VaultID>
                 <numVaults2> 4 </numVaults2>
             </params>

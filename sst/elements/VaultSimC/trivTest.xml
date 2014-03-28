@@ -66,7 +66,7 @@
  
   <component name="ll0" type=VaultSimC.logicLayer rank=0>
     <params>
-      <clock>500MHz</clock>
+      <clock>500Mhz</clock>
       <vaults>8</vaults>
       <llID>0</llID>
       <bwlimit>16</bwlimit>
@@ -87,7 +87,7 @@
   
   <component name="c0.0" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>0</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -96,7 +96,7 @@
   
   <component name="c0.1" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>1</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -105,7 +105,7 @@
   
   <component name="c0.2" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>2</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -114,7 +114,7 @@
 
   <component name="c0.3" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>3</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -123,7 +123,7 @@
 
   <component name="c0.4" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>4</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -132,7 +132,7 @@
 
   <component name="c0.5" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>5</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -141,7 +141,7 @@
 
   <component name="c0.6" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>6</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -150,7 +150,7 @@
 
   <component name="c0.7" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>7</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -159,7 +159,7 @@
 
   <component name="ll1" type=VaultSimC.logicLayer rank=0>
     <params>
-      <clock>500MHz</clock>
+      <clock>500Mhz</clock>
       <vaults>8</vaults>
       <llID>1</llID>
       <bwlimit>16</bwlimit>
@@ -179,7 +179,7 @@
   
   <component name="c1.0" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>0</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -188,7 +188,7 @@
   
   <component name="c1.1" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>1</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -197,7 +197,7 @@
 
   <component name="c1.2" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>2</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -206,7 +206,7 @@
 
   <component name="c1.3" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>3</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -215,7 +215,7 @@
 
   <component name="c1.4" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>4</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -224,7 +224,7 @@
 
   <component name="c1.5" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>5</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -233,7 +233,7 @@
 
   <component name="c1.6" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>6</VaultID>
       <numVaults2>3</numVaults2>
     </params>
@@ -242,7 +242,7 @@
 
   <component name="c1.7" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750MHz</clock>
+      <clock>750Mhz</clock>
       <VaultID>7</VaultID>
       <numVaults2>3</numVaults2>
     </params>
