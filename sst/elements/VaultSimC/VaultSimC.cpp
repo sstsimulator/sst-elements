@@ -34,7 +34,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
 	   (Output::output_location_t)params.find_integer("debug", 0));  
   
   std::string frequency = "2.2 GHz";
-  frequency = params.find_string("clock", "2.2 Ghz");
+  frequency = params.find_string("clock", "2.2 GHz");
   
   // number of bits to determin vault address
   int nv2 = params.find_integer( "numVaults2", -1 );

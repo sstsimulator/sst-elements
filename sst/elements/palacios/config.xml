@@ -14,7 +14,7 @@
 
 <param_include>
    <rtr_params>
-        <clock>         500Mhz </clock>
+        <clock>         500MHz </clock>
         <debug>         no     </debug>
         <info>          no     </info>
 
@@ -37,7 +37,7 @@
     </rtr_params>
 
     <nic_params1>
-        <clock>500Mhz</clock>
+        <clock>500MHz</clock>
         <dmaEngine.bytesPerClock> 4 </dmaEngine.bytesPerClock>
     </nic_params1>
 
@@ -66,7 +66,7 @@
             <nid> 0 </nid>
             <id> 0 </id>
             <dma-virt2phys> false </dma-virt2phys>
-            <clock> 500 Mhz </clock>
+            <clock> 500 MHz </clock>
         </params>
         <link name=0.ptlNicLink port=mmif latency=$NicMMIF_link_lat />
         <link name=0.dmaLink port=dma latency=$NicMMIF_link_lat />
@@ -99,7 +99,7 @@
             <nid> 1 </nid>
             <id> 1 </id>
             <dma-virt2phys> false </dma-virt2phys>
-            <clock> 500 Mhz </clock>
+            <clock> 500 MHz </clock>
         </params>
         <link name=1.ptlNicLink port=mmif latency=$NicMMIF_link_lat />
         <link name=1.dmaLink port=dma latency=$NicMMIF_link_lat />

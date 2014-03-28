@@ -22,7 +22,7 @@
 
 	<component name="l1cache" type="memHierarchy.Cache">
 		<params>
-            <cache_frequency> 2 Ghz  </cache_frequency>
+            <cache_frequency> 2 GHz  </cache_frequency>
             <cache_size> 2 KB </cache_size>
             <coherence_protocol> MSI </coherence_protocol>
             <replacement_policy> lru </replacement_policy> 

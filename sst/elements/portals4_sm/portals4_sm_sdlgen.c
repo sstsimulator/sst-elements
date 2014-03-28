@@ -103,7 +103,7 @@ main(int argc, char **argv)
     }
     
     fprintf(output, "%s<rtr_params>\n",indent);
-    fprintf(output, "%s    <clock>         500Mhz </clock>\n",indent);
+    fprintf(output, "%s    <clock>         500MHz </clock>\n",indent);
     fprintf(output, "%s    <debug>         no     </debug>\n",indent);
     fprintf(output, "%s    <info>          no     </info>\n",indent);
     fprintf(output, "\n");
@@ -145,7 +145,7 @@ main(int argc, char **argv)
     fprintf(output, "%s</cpu_params>\n",indent);
     fprintf(output, "\n");
     fprintf(output, "%s<nic_params1>\n",indent);
-    fprintf(output, "%s    <clock>500Mhz</clock>\n",indent);
+    fprintf(output, "%s    <clock>500MHz</clock>\n",indent);
     fprintf(output, "%s    <timing_set> %d </timing_set>\n",indent,args.timing_set);
     fprintf(output, "%s</nic_params1>\n",indent);
     fprintf(output, "\n");

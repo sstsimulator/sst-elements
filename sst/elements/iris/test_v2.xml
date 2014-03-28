@@ -39,7 +39,7 @@
      </cpu_params>
 
      <nic_params1>
-         <clock>500Mhz</clock>
+         <clock>500MHz</clock>
          <timing_set> 2 </timing_set>
      </nic_params1>
 

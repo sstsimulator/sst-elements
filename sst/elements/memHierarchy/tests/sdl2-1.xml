@@ -17,7 +17,7 @@
             <num_loadstore> 1000 </num_loadstore>
     </cpuParams>
     <l1Params>
-            <cache_frequency> 2 Ghz  </cache_frequency>
+            <cache_frequency> 2 GHz  </cache_frequency>
             <cache_size> 2 KB </cache_size>
             <coherence_protocol> MSI </coherence_protocol>
             <replacement_policy> lru </replacement_policy> 
@@ -30,7 +30,7 @@
             <statistics> 1 </statistics>
     </l1Params>
     <l2Params>
-            <cache_frequency> 2 Ghz  </cache_frequency>
+            <cache_frequency> 2 GHz  </cache_frequency>
             <cache_size> 16 KB </cache_size>
             <coherence_protocol> MSI </coherence_protocol>
             <replacement_policy> lru </replacement_policy> 

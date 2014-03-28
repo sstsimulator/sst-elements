@@ -22,7 +22,7 @@
         <uncacheRangeEnd> 0x100  </uncacheRangeEnd>
     </cpuParams>
     <l1Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 4 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 
@@ -35,7 +35,7 @@
         <statistics> 1 </statistics>
     </l1Params>
     <l2Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 32 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 
@@ -48,7 +48,7 @@
         <statistics> 1 </statistics>
     </l2Params>
     <l3Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 64 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 
@@ -114,7 +114,7 @@
         <uncachedRangeEnd> 0x0100 </uncachedRangeEnd>
     </cpuParams>
     <l1Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 4 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 
@@ -127,7 +127,7 @@
         <statistics> 1 </statistics>
     </l1Params>
     <l2Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 16 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 

@@ -86,7 +86,7 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params& params ) :
     m_runCycles          = params.find_integer( "minCycles", m_runCycles );
     float runPeriod          = (1.0/m_guestHz) * m_runCycles;
 
-    INFO("minCycles=%lu, guest CPU freq %lu hz, runPeriod %.15f\n",
+    INFO("minCycles=%lu, guest CPU freq %lu Hz, runPeriod %.15f\n",
                      m_runCycles, m_guestHz, runPeriod );
 #if USE_THREAD 
     INFO("Using a thread to run palacios\n");

@@ -64,8 +64,8 @@ numDim = calcNumDim( shape )
 width = calcWidth( shape )
 
 sst.merlin._params["link_lat"] = "40ns"
-sst.merlin._params["link_bw"] = "560Mhz"
-sst.merlin._params["xbar_bw"] = "560Mhz"
+sst.merlin._params["link_bw"] = "560MHz"
+sst.merlin._params["xbar_bw"] = "560MHz"
 sst.merlin._params["input_latency"] = "25ns"
 sst.merlin._params["output_latency"] = "25ns"
 sst.merlin._params["input_buf_size"] = 128
@@ -82,7 +82,7 @@ nicParams = ({
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin.torus",
 		"num_vcs" : 2,
-		"link_bw" : "560Mhz",
+		"link_bw" : "560MHz",
 		"buffer_size" : 128,
 		"rxMatchDelay_ns" : 100,
 		"txDelay_ns" : 100,

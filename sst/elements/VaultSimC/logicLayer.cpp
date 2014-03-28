@@ -30,7 +30,7 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   dbg.output(CALL_INFO, "making logicLayer\n");
 
   std::string frequency = "2.2 GHz";
-  frequency = params.find_string("clock", "2.2 Ghz");
+  frequency = params.find_string("clock", "2.2 GHz");
 
   int ident = params.find_integer("llID", -1);
   if (-1 == ident) {

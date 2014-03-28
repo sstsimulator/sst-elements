@@ -100,7 +100,7 @@
     <base.max_insts_any_thread> 0 </base.max_insts_any_thread>
     <base.max_loads_all_threads> 0 </base.max_loads_all_threads>
     <base.max_loads_any_thread> 0 </base.max_loads_any_thread>
-    <base.clock> 2.933Ghz </base.clock>
+    <base.clock> 2.933GHz </base.clock>
     <base.function_trace_start> 0 </base.function_trace_start>
     <base.phase> 0 </base.phase>
     <base.progress_interval> 0 </base.progress_interval>
@@ -146,7 +146,7 @@
 </cacheParams>
 
 <busParams>
-    <clock> 2.933Ghz </clock>
+    <clock> 2.933GHz </clock>
     <responder_set> false </responder_set>
     <block_size> 64 </block_size>
     <bus_id> 0 </bus_id>

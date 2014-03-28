@@ -20,7 +20,7 @@ print OUT<<EOT;
 <sst>
   <component name="cpu" type=VaultSimC.cpu rank=0>
     <params>
-      <clock>500Mhz</clock>
+      <clock>500MHz</clock>
       <threads>$threads</threads>
       <app>$app</app>
       <bwlimit>$bwlimit</bwlimit>
@@ -43,7 +43,7 @@ for ($i = 0; $i < $cubes; ++$i) {
     print OUT<<EOT;
   <component name="ll$i" type=VaultSimC.logicLayer rank=0>
     <params>
-      <clock>500Mhz</clock>
+      <clock>500MHz</clock>
       <vaults>$vaults</vaults>
       <llID>$i</llID>
       <bwlimit>$bwlimit</bwlimit>
@@ -79,7 +79,7 @@ EOT
 	print OUT<<EOT;
   <component name="c$i.$v" type=VaultSimC.VaultSimC rank=0>
     <params>
-      <clock>750Mhz</clock>
+      <clock>750MHz</clock>
       <VaultID>$v</VaultID>
       <numVaults2>$nv2</numVaults2>
     </params>

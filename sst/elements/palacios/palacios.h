@@ -314,7 +314,7 @@ uint64_t PalaciosIF::getCpuFreq() {
     uint64_t ret;
     pthread_mutex_lock(&m_thread_mutex);
     
-    ret = v3_user_host_dev_getcpuhz( m_fd );
+    ret = v3_user_host_dev_getcpuHz( m_fd );
 
     pthread_mutex_unlock(&m_thread_mutex);
     return ret;

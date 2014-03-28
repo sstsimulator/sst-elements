@@ -20,7 +20,7 @@
     </cpuParams>
 
     <l1Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 4 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 
@@ -34,7 +34,7 @@
     </l1Params>
 
     <l2Params>
-        <cache_frequency> 2 Ghz  </cache_frequency>
+        <cache_frequency> 2 GHz  </cache_frequency>
         <cache_size> 32 KB </cache_size>
         <coherence_protocol> MSI </coherence_protocol>
         <replacement_policy> lru </replacement_policy> 
@@ -48,7 +48,7 @@
     </l2Params>
 
     <busParams>
-        <bus_frequency> 2 Ghz </bus_frequency>
+        <bus_frequency> 2 GHz </bus_frequency>
     </busParams>
 
     <memParams>
