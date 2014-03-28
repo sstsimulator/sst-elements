@@ -77,14 +77,14 @@ public:
 
     
     void init(const char* name){}
-    void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
-    void handleAccess(MemEvent* event, CacheLine* cacheLine, Command cmd);
-    void handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType*> mshrEntry);
-    void handleWritebackOnAccess(Addr lineAddr, CacheLine* cacheLine, Command type);
-    void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
-    void handleFetch(MemEvent *event, CacheLine* cacheLine, int _parentId);
-    void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
-    void handlePutAck(MemEvent* event, CacheLine* cacheLine);
+    
+    virtual void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
+    virtual void handleAccess(MemEvent* event, CacheLine* cacheLine, Command cmd);
+    virtual void handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType*> mshrEntry);
+    virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
+    virtual void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
+    virtual void handlePutAck(MemEvent* event, CacheLine* cacheLine);
+    
     void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived, uint64 _nonCoherenceReqsReceived);
     void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);
     void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);

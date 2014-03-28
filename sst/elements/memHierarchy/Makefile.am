@@ -31,6 +31,10 @@ libmemHierarchy_la_SOURCES = \
 	MESIBottomCoherenceController.cc \
 	MESITopCoherenceController.h \
 	MESITopCoherenceController.cc \
+	MOESIBottomCoherenceController.h \
+	MOESIBottomCoherenceController.cc \
+	MOESITopCoherenceController.h \
+	MOESITopCoherenceController.cc \
 	cacheArray.cc \
 	cacheArray.h \
 	mshr.h \

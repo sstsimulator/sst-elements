@@ -8,6 +8,7 @@
 #define MESITOPCOHERENCECONTROLLERS_H
 
 #include <iostream>
+#include "MESITopCoherenceController.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -56,7 +57,7 @@ public:
 
 /*--------------------------------------------------------------------------------------------
  * Top Controller that implements the MESI protocol, should be use by any cache that is not L1
- * Keeps sharers state, and handles downgrades and invalidates to lower level hierarchies
+ * keeps sharers state, and handles downgrades and invalidates to lower level hierarchies
   -------------------------------------------------------------------------------------------*/
 class MESITopCC : public TopCacheController{
 private:
@@ -84,13 +85,13 @@ public:
     uint InvReqsSent_;
     uint EvictionInvReqsSent_;
     vector<CCLine*> ccLines_;
-    TCC_MESIState getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
-    uint numSharers(int lineIndex){return ccLines_[lineIndex]->numSharers();}
-    bool handleEviction(int lineIndex, BCC_MESIState _state);
-    void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
-    bool handleAccess(MemEvent* event, CacheLine* cacheLine);
-    void handleInvalidate(int lineIndex, Command cmd);
-    void handleInvAck(MemEvent* event, CCLine* ccLine);
+
+    virtual bool handleEviction(int lineIndex, BCC_MESIState _state);
+    virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
+    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine);
+    virtual void handleInvalidate(int lineIndex, Command cmd);
+    virtual void handleInvAck(MemEvent* event, CCLine* ccLine);
+    
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);
     void sendOutgoingCommands(){ TopCacheController::sendOutgoingCommands(); }
@@ -98,6 +99,10 @@ public:
     void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
     void processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _childId, bool& _ret);
     void processPutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
+    
+    TCC_MESIState getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
+    uint numSharers(int lineIndex){return ccLines_[lineIndex]->numSharers();}
+    
 };
 
 }}
