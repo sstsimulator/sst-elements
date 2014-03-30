@@ -25,6 +25,10 @@ libember_la_SOURCES = \
 	emberstartev.cc \
 	embercomputeev.h \
 	embercomputeev.cc \
+	emberwaitev.cc \
+	emberwaitev.h \
+	emberirecvev.cc \
+	emberirecvev.h \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
 	motifs/emberhalo2d.h  \

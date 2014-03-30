@@ -6,6 +6,9 @@
 #include <sst/core/math/sqrt.h>
 
 #include "emberhalo2d.h"
+#include "emberwaitev.h"
+#include "emberirecvev.h"
+#include "embersendev.h"
 
 using namespace SST::Ember;
 
@@ -13,7 +16,7 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	EmberGenerator(owner, params) {
 
 	iterations = (uint32_t) params.find_integer("generator.iterations", 10);
-	nsCompute = (uint32_t) params.find_integer("generator.computenano", 1000);
+	nsCompute = (uint32_t) params.find_integer("generator.computenano", 10);
 	messageSizeX = (uint32_t) params.find_integer("generator.messagesizey", 128);
 	messageSizeY = (uint32_t) params.find_integer("generator.messagesizex", 128);
 
@@ -90,7 +93,7 @@ void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint3
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
 		", send above=%s %" PRIu32 ", send below=%s %" PRIu32 "\n",
 		rank,
-		(sendLeft ? "Y" : "N"), procLeft,
+		(sendLeft  ? "Y" : "N"), procLeft,
 		(sendRight ? "Y" : "N"), procRight,
 		(sendBelow ? "Y" : "N"), procBelow,
 		(sendAbove ? "Y" : "N"), procAbove);
@@ -98,69 +101,56 @@ void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint3
 
 void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
 	if(phase < iterations) {
+		output->verbose(CALL_INFO, 2, 0, "Halo 2D motif generating events for phase %" PRIu32 "\n", phase);
+
 		EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
 		evQ->push(compute);
 
-		if(xBeforeY) {
-			if(sendLeft) {
+		if(sendLeft) {
+			MessageRequest*  leftReq    = new MessageRequest();
+			EmberIRecvEvent* recvEvLeft = new EmberIRecvEvent(procLeft, sizeX, 0, (Communicator) 0, leftReq);
+			EmberSendEvent*  sendEvLeft = new EmberSendEvent(procLeft, sizeX, 0, (Communicator) 0);
+			EmberWaitEvent*  waitEvLeft = new EmberWaitEvent(leftReq);
 
-			}
-
-			if(sendRight) {
-
-			}
-
-			if(sendAbove) {
-
-			}
-
-			if(sendBelow) {
-
-			}
-
-		} else {
-			if(sendAbove) {
-
-			}
-
-			if(sendBelow) {
-
-			}
-
-			if(sendLeft) {
-
-			}
-
-			if(sendRight) {
-
-			}
+			evQ->push(recvEvLeft);
+			evQ->push(sendEvLeft);
+			evQ->push(waitEvLeft);
 		}
 
+		if(sendRight) {
+			MessageRequest*  rightReq    = new MessageRequest();
+			EmberIRecvEvent* recvEvRight = new EmberIRecvEvent(procRight, sizeX, 0, (Communicator) 0, rightReq);
+			EmberSendEvent*  sendEvRight = new EmberSendEvent(procRight, sizeX, 0, (Communicator) 0);
+			EmberWaitEvent*  waitEvRight = new EmberWaitEvent(rightReq);
 
-/*		if(0 == rank) {
-			EmberRecvEvent* recvRight = new EmberRecvEvent(1, messageSize, 0, (Communicator) 0);
-			EmberSendEvent* sendRight = new EmberSendEvent(1, messageSize, 0, (Communicator) 0);
-
-			evQ->push(recvRight);
-			evQ->push(sendRight);
-		} else if( (size - 1) == rank ) {
-			EmberSendEvent* sendLeft = new EmberSendEvent(rank - 1, messageSize, 0, (Communicator) 0);
-			EmberRecvEvent* recvLeft = new EmberRecvEvent(rank - 1, messageSize, 0, (Communicator) 0);
-
-			evQ->push(sendLeft);
-			evQ->push(recvLeft);
-		} else {
-			EmberSendEvent* sendLeft = new EmberSendEvent(rank - 1, messageSize, 0, (Communicator) 0);
-			EmberRecvEvent* recvRight = new EmberRecvEvent(rank + 1, messageSize, 0, (Communicator) 0);
-			EmberSendEvent* sendRight = new EmberSendEvent(rank + 1, messageSize, 0, (Communicator) 0);
-			EmberRecvEvent* recvLeft =new EmberRecvEvent(rank - 1, messageSize, 0, (Communicator) 0);
-
-			evQ->push(sendLeft);
-			evQ->push(recvRight);
-			evQ->push(sendRight);
-			evQ->push(recvLeft);
+			evQ->push(recvEvRight);
+			evQ->push(sendEvRight);
+			evQ->push(waitEvRight);
 		}
-*/
+
+		if(sendAbove) {
+			MessageRequest*  aboveReq    = new MessageRequest();
+			EmberIRecvEvent* recvEvAbove = new EmberIRecvEvent(procAbove, sizeY, 0, (Communicator) 0, aboveReq);
+			EmberSendEvent*  sendEvAbove = new EmberSendEvent(procAbove, sizeY, 0, (Communicator) 0);
+			EmberWaitEvent*  waitEvAbove = new EmberWaitEvent(aboveReq);
+
+			evQ->push(recvEvAbove);
+			evQ->push(sendEvAbove);
+			evQ->push(waitEvAbove);
+		}
+
+		if(sendBelow) {
+			MessageRequest*  belowReq    = new MessageRequest();
+			EmberIRecvEvent* recvEvBelow = new EmberIRecvEvent(procBelow, sizeY, 0, (Communicator) 0, belowReq);
+			EmberSendEvent*  sendEvBelow = new EmberSendEvent(procBelow, sizeY, 0, (Communicator) 0);
+			EmberWaitEvent*  waitEvBelow = new EmberWaitEvent(belowReq);
+
+			evQ->push(recvEvBelow);
+			evQ->push(sendEvBelow);
+			evQ->push(waitEvBelow);
+		}
+
+		output->verbose(CALL_INFO, 2, 0, "Halo 2D motif completed event generation for phase: %" PRIu32 "\n", phase);
 	} else {
 		EmberFinalizeEvent* finalize = new EmberFinalizeEvent();
 		evQ->push(finalize);
