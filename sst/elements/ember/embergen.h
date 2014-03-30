@@ -25,6 +25,7 @@ public:
 	virtual void configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize) = 0;
 	virtual void generate(const SST::Output* output, const uint32_t phase,
 		std::queue<EmberEvent*>* evQ) = 0;
+	virtual void finish(const SST::Output* output) = 0;
 
 protected:
 	~EmberGenerator();

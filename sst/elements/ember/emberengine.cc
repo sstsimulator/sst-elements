@@ -18,10 +18,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv))
 {
+	output = new Output();
+
 	// Get the level of verbosity the user is asking to print out, default is 1
 	// which means don't print much.
 	uint32_t verbosity = (uint32_t) params.find_integer("verbose", 1);
-	output.init("EmberEngine", verbosity, (uint32_t) 0, Output::STDOUT);
+	output->init("EmberEngine", verbosity, (uint32_t) 0, Output::STDOUT);
 
 	// See if the user requested that we print statistics for this run
 	printStats = ((uint32_t) (params.find_integer("printStats", 0))) != ((uint32_t) 0);
@@ -52,14 +54,14 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Create the generator
 	string gentype = params.find_string("generator");
 	if( gentype == "" ) {
-		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'generator\')\n");
+		output->fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'generator\')\n");
 	} else {
 		Params generatorParams = params.find_prefix_params("generatorParams.");
 
 		generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
 
 		if(NULL == generator) {
-			output.fatal(CALL_INFO, -1, "Error: Could not load the generator %s for Ember\n", gentype.c_str());
+			output->fatal(CALL_INFO, -1, "Error: Could not load the generator %s for Ember\n", gentype.c_str());
 		}
 	}
 
@@ -120,30 +122,33 @@ void EmberEngine::init(unsigned int phase) {
 }
 
 void EmberEngine::finish() {
+	// Tell the generator we are finishing the simulation
+	generator->finish(output);
+
 	if(printStats) {
-		output.output("Ember End Point Completed at: %" PRIu64 "\n", getCurrentSimTimeNano());
-		output.output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
-/*		output.output("- Time spent in compute:         %" PRIu64 " ns\n", nanoCompute);
-		output.output("- Time spent in init:            %" PRIu64 " ns\n", nanoInit);
-		output.output("- Time spent in finalize:        %" PRIu64 " ns\n", nanoFinalize);
-		output.output("- Time spent in send:            %" PRIu64 " ns\n", nanoSend);
-		output.output("- Time spent in recv:            %" PRIu64 " ns\n", nanoRecv);
+		output->output("Ember End Point Completed at: %" PRIu64 "\n", getCurrentSimTimeNano());
+		output->output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
+/*		output->output("- Time spent in compute:         %" PRIu64 " ns\n", nanoCompute);
+		output->output("- Time spent in init:            %" PRIu64 " ns\n", nanoInit);
+		output->output("- Time spent in finalize:        %" PRIu64 " ns\n", nanoFinalize);
+		output->output("- Time spent in send:            %" PRIu64 " ns\n", nanoSend);
+		output->output("- Time spent in recv:            %" PRIu64 " ns\n", nanoRecv);
 */
 
-		output.output("- Histogram of compute times:\n");
+		output->output("- Histogram of compute times:\n");
 		for(uint32_t i = 0; i < histoCompute->getBinCount(); ++i) {
 			printHistoBin(histoCompute->getBinStart() + i * histoCompute->getBinWidth(),
 				histoCompute->getBinWidth(),
 				histoCompute->getBinByIndex(i));
 		}
 
-		output.output("- Histogram of send times:\n");
-		output.output("--> Total time:     %" PRIu64 "\n", histoSend->getValuesSummed());
-		output.output("--> Item count:     %" PRIu64 "\n", histoSend->getItemCount());
-		output.output("--> Average:        %" PRIu64 "\n",
+		output->output("- Histogram of send times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoSend->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoSend->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
 			histoSend->getItemCount() == 0 ? 0 :
 			(histoSend->getValuesSummed() / histoSend->getItemCount()));
-		output.output("- Distribution:\n");
+		output->output("- Distribution:\n");
 
 		for(uint32_t i = 0; i < histoSend->getBinCount(); ++i) {
 			printHistoBin(histoSend->getBinStart() + i * histoSend->getBinWidth(),
@@ -151,13 +156,13 @@ void EmberEngine::finish() {
 				histoSend->getBinByIndex(i));
 		}
 
-		output.output("- Histogram of recv times:\n");
-		output.output("--> Total time:     %" PRIu64 "\n", histoRecv->getValuesSummed());
-		output.output("--> Item count:     %" PRIu64 "\n", histoRecv->getItemCount());
-		output.output("--> Average:        %" PRIu64 "\n",
+		output->output("- Histogram of recv times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoRecv->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoRecv->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
 			histoRecv->getItemCount() == 0 ? 0 :
 			(histoRecv->getValuesSummed() / histoRecv->getItemCount()));
-		output.output("- Distribution:\n");
+		output->output("- Distribution:\n");
 
 		for(uint32_t i = 0; i < histoRecv->getBinCount(); ++i) {
 			printHistoBin(histoRecv->getBinStart() + i * histoRecv->getBinWidth(),
@@ -169,7 +174,7 @@ void EmberEngine::finish() {
 }
 
 void EmberEngine::printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin) {
-	output.output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
+	output->output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
 		binStart, binStart + width, *bin);
 }
 
@@ -183,12 +188,12 @@ void EmberEngine::setup() {
 	thisRank = (uint32_t) msgapi->myWorldRank();
 	uint32_t worldSize = (uint32_t) msgapi->myWorldSize();
 
-	generator->configureEnvironment(&output, thisRank, worldSize);
+	generator->configureEnvironment(output, thisRank, worldSize);
 
 	char outputPrefix[256];
-	sprintf(outputPrefix, "@t:%d:Ember::@p:@l: ", (int) thisRank);
+	sprintf(outputPrefix, "@t:%d:EmberEngine::@p:@l: ", (int) thisRank);
 	string outputPrefixStr = outputPrefix;
-	output.setPrefix(outputPrefixStr);
+	output->setPrefix(outputPrefixStr);
 
 	// Update event count to ensure we are not correctly sync'd
 	eventCount = (uint32_t) evQueue.size();
@@ -199,21 +204,21 @@ void EmberEngine::setup() {
 }
 
 void EmberEngine::processStartEvent(EmberStartEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing a Start Event\n");
+	output->verbose(CALL_INFO, 2, 0, "Processing a Start Event\n");
 
 	issueNextEvent(0);
         accumulateTime = histoCompute;
 }
 
 void EmberEngine::processInitEvent(EmberInitEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
+	output->verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
 	msgapi->init(&initFunctor);
 
 	accumulateTime = histoInit;
 }
 
 void EmberEngine::processSendEvent(EmberSendEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing a Send Event (%s)\n", ev->getPrintableString().c_str());
+	output->verbose(CALL_INFO, 2, 0, "Processing a Send Event (%s)\n", ev->getPrintableString().c_str());
 	msgapi->send((Addr) emptyBuffer, ev->getMessageSize(),
 		CHAR, (RankID) ev->getSendToRank(),
 		ev->getTag(), ev->getCommunicator(),
@@ -223,16 +228,19 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 }
 
 void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
+	output->verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
 
 	memset(&currentRecv, 0, sizeof(MessageResponse));
 	msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitFunctor);
+
+	// Keep track of the current request handle, we will free this auto(magically).
+	currentReq = ev->getMessageRequestHandle();
 
 	accumulateTime = histoWait;
 }
 
 void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
+	output->verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
 
 	msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
 		CHAR, (RankID) ev->getRecvFromRank(),
@@ -243,7 +251,7 @@ void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 }
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
+	output->verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
 
 	memset(&currentRecv, 0, sizeof(MessageResponse));
 	msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
@@ -255,7 +263,7 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 }
 
 void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing a Finalize Event\n");
+	output->verbose(CALL_INFO, 2, 0, "Processing a Finalize Event\n");
 	msgapi->fini(&finalizeFunctor);
 
 	accumulateTime = histoFinalize;
@@ -263,7 +271,7 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 }
 
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
-	output.verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
+	output->verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
 
 	// Issue the next event with a delay (essentially the time we computed something)
 	issueNextEvent(ev->getNanoSecondDelay());
@@ -271,12 +279,12 @@ void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
 }
 
 void EmberEngine::completedInit(int val) {
-	output.verbose(CALL_INFO, 2, 0, "Completed Init, result = %d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed Init, result = %d\n", val);
 	issueNextEvent(0);
 }
 
 void EmberEngine::completedFinalize(int val) {
-	output.verbose(CALL_INFO, 2, 0, "Completed Finalize, result = %d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed Finalize, result = %d\n", val);
 
 	// Tell the simulator core we are finished and do not need any further
 	// processing to continue
@@ -287,27 +295,31 @@ void EmberEngine::completedFinalize(int val) {
 }
 
 void EmberEngine::completedWait(int val) {
-	output.verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
+
+	// Delete the previous MessageRequest
+	delete currentReq;
+
 	issueNextEvent(0);
 }
 
 void EmberEngine::completedIRecv(int val) {
-	output.verbose(CALL_INFO, 2, 0, "Completed IRecv, result=%d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result=%d\n", val);
 	issueNextEvent(0);
 }
 
 void EmberEngine::completedSend(int val) {
-	output.verbose(CALL_INFO, 2, 0, "Completed Send, result = %d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed Send, result = %d\n", val);
 	issueNextEvent(0);
 }
 
 void EmberEngine::completedRecv(int val) {
-	output.verbose(CALL_INFO, 2, 0, "Completed Recv, result = %d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed Recv, result = %d\n", val);
 	issueNextEvent(0);
 }
 
 void EmberEngine::refillQueue() {
-	generator->generate(&output, generationPhase++, &evQueue);
+	generator->generate(output, generationPhase++, &evQueue);
 	eventCount = evQueue.size();
 }
 
@@ -356,6 +368,12 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case RECV:
 		processRecvEvent(dynamic_cast<EmberRecvEvent*>(eEv));
+		break;
+	case IRECV:
+		processIRecvEvent(dynamic_cast<EmberIRecvEvent*>(eEv));
+		break;
+	case WAIT:
+		processWaitEvent(dynamic_cast<EmberWaitEvent*>(eEv));
 		break;
 	case FINALIZE:
 		processFinalizeEvent(dynamic_cast<EmberFinalizeEvent*>(eEv));

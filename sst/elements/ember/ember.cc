@@ -61,6 +61,8 @@ static const ElementInfoParam component_params[] = {
     { "init_bin_width", "Bin width of the init time histogram", "5" },
     { "finalize_bin_width", "Bin width of the finalize time histogram", "5"},
     { "recv_bin_width", "Bin width of the recv time histogram", "5" },
+    { "irecv_bin_width", "Bin width of the irecv time histogram", "5" },
+    { "wait_bin_width", "Bin width of the wait time histogram", "5" },
     { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { NULL, NULL, NULL }
 };

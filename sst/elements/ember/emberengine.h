@@ -83,9 +83,10 @@ private:
 	EmberGenerator* generator;
 	SST::Link* selfEventLink;
 	MessageInterface* msgapi;
-	Output output;
+	Output* output;
 	SST::TimeConverter* nanoTimeConverter;
 	MessageResponse currentRecv;
+	MessageRequest* currentReq;
 
 	typedef Arg_Functor<EmberEngine, int> HermesAPIFunctor;
 
