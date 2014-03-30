@@ -126,7 +126,7 @@ void EmberEngine::finish() {
 	generator->finish(output);
 
 	if(printStats) {
-		output->output("Ember End Point Completed at: %" PRIu64 "\n", getCurrentSimTimeNano());
+		output->output("Ember End Point Completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
 		output->output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
 /*		output->output("- Time spent in compute:         %" PRIu64 " ns\n", nanoCompute);
 		output->output("- Time spent in init:            %" PRIu64 " ns\n", nanoInit);
