@@ -70,9 +70,9 @@ create_simpleClocker(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam component_params[] = {
-    { "clock", "Clock frequency" },
-    { "clockcount", "Number of clock ticks to execute" },
-    { NULL, NULL}
+    { "clock", "Clock frequency", "1GHz" },
+    { "clockcount", "Number of clock ticks to execute", "100000"},
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoComponent components[] = {
@@ -80,7 +80,8 @@ static const ElementInfoComponent components[] = {
       "Clock benchmark component",
       NULL,
       create_simpleClocker,
-      component_params
+      component_params,
+	COMPONENT_CATEGORY_UNCATEGORIZED
     },
     { NULL, NULL, NULL, NULL }
 };
