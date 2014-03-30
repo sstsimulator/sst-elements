@@ -15,7 +15,7 @@ static Module* load_NextBlockPrefetcher(Params& params){
 }
 
 static const ElementInfoParam nextBlockPrefetcher_params[] = {
-    {"cache_line_size",             "Network link bandwidth.", "64"},
+    {"cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
     {NULL, NULL, NULL}
 };
 
@@ -24,15 +24,15 @@ static Module* load_StridePrefetcher(Params& params){
 }
 
 static const ElementInfoParam stridePrefetcher_params[] = {
-    {"verbose",                     "xxxx", ""},
-    {"cache_line_size",             "The number of VCS on the on-chip network.", "64"},
+    {"verbose",                     "Controls the verbosity of the cassini components", ""},
+    {"cache_line_size",             "Controls the cache line size of the cache the prefetcher is attached too", "64"},
     {"history",                     "Start of Address Range, for this controller.", "16"},
-    {"reach",                       "Network link bandwidth.", "2"},
-    {"detect_range",                "Network address of component.", "4"},
-	{"address_count",               "The number of VCS on the on-chip network.", "64"},
+    {"reach",                       "Reach of the prefetcher (ie how far forward to make requests)", "2"},
+    {"detect_range",                "Range to detact addresses over in request-counts, default is 4.", "4"},
+    {"address_count",               "Number of addresses to keep in the prefetch table", "64"},
     {"page_size",                   "Start of Address Range, for this controller.", "4096"},
-    {"overrun_page_boundaries",     "End of Address Range, for this controller.", "0"},
-    {NULL, NULL, NULL}
+    {"overrun_page_boundaries",     "Allow prefetcher to run over page alignment boundaries, default is 0 (false)", "0"},
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoModule modules[] = {
@@ -41,23 +41,17 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_NextBlockPrefetcher,
       NULL,
+      nextBlockPrefetcher_params
     },
     { "StridePrefetcher",
       "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data",
       NULL,
       load_StridePrefetcher,
       NULL,
+      stridePrefetcher_params,
     },
     { NULL, NULL, NULL, NULL, NULL }
 };
-
-/*extern "C" {
-    ElementLibraryInfo cassini_eli = {
-        "cassini",
-        "Cassini Uncore Components",
-        components,
-    };
-}*/
 
 extern "C" {
     ElementLibraryInfo cassini_eli = {
