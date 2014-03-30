@@ -15,20 +15,20 @@ using namespace SST::Ember;
 EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params) :
 	EmberGenerator(owner, params) {
 
-	iterations = (uint32_t) params.find_integer("generator.iterations", 10);
-	nsCompute = (uint32_t) params.find_integer("generator.computenano", 10);
-	messageSizeX = (uint32_t) params.find_integer("generator.messagesizey", 128);
-	messageSizeY = (uint32_t) params.find_integer("generator.messagesizex", 128);
+	iterations = (uint32_t) params.find_integer("iterations", 10);
+	nsCompute = (uint32_t) params.find_integer("computenano", 10);
+	messageSizeX = (uint32_t) params.find_integer("messagesizey", 128);
+	messageSizeY = (uint32_t) params.find_integer("messagesizex", 128);
 
-	uint32_t ordering = (uint32_t) params.find_integer("generator.messageorder", 0);
+	uint32_t ordering = (uint32_t) params.find_integer("messageorder", 0);
 	if(0 == ordering) {
 		xBeforeY = true;
 	} else {
 		xBeforeY = false;
 	}
 
-	sizeX = (uint32_t) params.find_integer("generator.sizex", 0);
-	sizeY = (uint32_t) params.find_integer("generator.sizey", 0);
+	sizeX = (uint32_t) params.find_integer("sizex", 0);
+	sizeY = (uint32_t) params.find_integer("sizey", 0);
 
 	// Set configuration so we do not exchange messages
 	procLeft  = 0;
@@ -40,6 +40,10 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	sendRight = false;
 	sendAbove = false;
 	sendBelow = false;
+}
+
+void EmberHalo2DGenerator::finish(const SST::Output* output) {
+	output->verbose(CALL_INFO, 2, 0, "Generator finishing, sent: %" PRIu32 " messages.\n", messageCount);
 }
 
 void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
@@ -108,8 +112,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 
 		if(sendLeft) {
 			MessageRequest*  leftReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvLeft = new EmberIRecvEvent(procLeft, sizeX, 0, (Communicator) 0, leftReq);
-			EmberSendEvent*  sendEvLeft = new EmberSendEvent(procLeft, sizeX, 0, (Communicator) 0);
+			EmberIRecvEvent* recvEvLeft = new EmberIRecvEvent(procLeft, messageSizeX, 0, (Communicator) 0, leftReq);
+			EmberSendEvent*  sendEvLeft = new EmberSendEvent(procLeft, messageSizeX, 0, (Communicator) 0);
 			EmberWaitEvent*  waitEvLeft = new EmberWaitEvent(leftReq);
 
 			evQ->push(recvEvLeft);
@@ -119,8 +123,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 
 		if(sendRight) {
 			MessageRequest*  rightReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvRight = new EmberIRecvEvent(procRight, sizeX, 0, (Communicator) 0, rightReq);
-			EmberSendEvent*  sendEvRight = new EmberSendEvent(procRight, sizeX, 0, (Communicator) 0);
+			EmberIRecvEvent* recvEvRight = new EmberIRecvEvent(procRight, messageSizeX, 0, (Communicator) 0, rightReq);
+			EmberSendEvent*  sendEvRight = new EmberSendEvent(procRight, messageSizeX, 0, (Communicator) 0);
 			EmberWaitEvent*  waitEvRight = new EmberWaitEvent(rightReq);
 
 			evQ->push(recvEvRight);
@@ -130,8 +134,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 
 		if(sendAbove) {
 			MessageRequest*  aboveReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvAbove = new EmberIRecvEvent(procAbove, sizeY, 0, (Communicator) 0, aboveReq);
-			EmberSendEvent*  sendEvAbove = new EmberSendEvent(procAbove, sizeY, 0, (Communicator) 0);
+			EmberIRecvEvent* recvEvAbove = new EmberIRecvEvent(procAbove, messageSizeY, 0, (Communicator) 0, aboveReq);
+			EmberSendEvent*  sendEvAbove = new EmberSendEvent(procAbove, messageSizeY, 0, (Communicator) 0);
 			EmberWaitEvent*  waitEvAbove = new EmberWaitEvent(aboveReq);
 
 			evQ->push(recvEvAbove);
@@ -141,8 +145,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 
 		if(sendBelow) {
 			MessageRequest*  belowReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvBelow = new EmberIRecvEvent(procBelow, sizeY, 0, (Communicator) 0, belowReq);
-			EmberSendEvent*  sendEvBelow = new EmberSendEvent(procBelow, sizeY, 0, (Communicator) 0);
+			EmberIRecvEvent* recvEvBelow = new EmberIRecvEvent(procBelow, messageSizeY, 0, (Communicator) 0, belowReq);
+			EmberSendEvent*  sendEvBelow = new EmberSendEvent(procBelow, messageSizeY, 0, (Communicator) 0);
 			EmberWaitEvent*  waitEvBelow = new EmberWaitEvent(belowReq);
 
 			evQ->push(recvEvBelow);
