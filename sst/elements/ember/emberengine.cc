@@ -14,7 +14,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	finalizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedFinalize)),
 	initFunctor(HermesAPIFunctor(this, &EmberEngine::completedInit)),
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
-	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend))
+	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
+	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
+	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv))
 {
 	// Get the level of verbosity the user is asking to print out, default is 1
 	// which means don't print much.
@@ -94,6 +96,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	userBinWidth = (uint64_t) params.find_integer("start_bin_width", 5);
 	histoStart = new Histogram<uint64_t>(userBinWidth);
+
+	userBinWidth = (uint64_t) params.find_integer("wait_bin_width", 5);
+	histoWait = new Histogram<uint64_t>(userBinWidth);
+
+	userBinWidth = (uint64_t) params.find_integer("irecv_bin_width", 5);
+	histoIRecv = new Histogram<uint64_t>(userBinWidth);
 
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
@@ -214,6 +222,26 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 	accumulateTime = histoSend;
 }
 
+void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
+	output.verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
+
+	memset(&currentRecv, 0, sizeof(MessageResponse));
+	msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitFunctor);
+
+	accumulateTime = histoWait;
+}
+
+void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
+	output.verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
+
+	msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
+		CHAR, (RankID) ev->getRecvFromRank(),
+		ev->getTag(), ev->getCommunicator(),
+		ev->getMessageRequestHandle(), &irecvFunctor);
+
+	accumulateTime = histoIRecv;
+}
+
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 	output.verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
 
@@ -255,6 +283,16 @@ void EmberEngine::completedFinalize(int val) {
 	primaryComponentOKToEndSim();
 
 	continueProcessing = false;
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedWait(int val) {
+	output.verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedIRecv(int val) {
+	output.verbose(CALL_INFO, 2, 0, "Completed IRecv, result=%d\n", val);
 	issueNextEvent(0);
 }
 

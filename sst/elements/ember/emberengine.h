@@ -27,6 +27,8 @@
 #include "emberfinalizeev.h"
 #include "embersendev.h"
 #include "emberrecvev.h"
+#include "emberirecvev.h"
+#include "emberwaitev.h"
 #include "emberstartev.h"
 #include "embercomputeev.h"
 
@@ -54,11 +56,15 @@ public:
 	void processRecvEvent(EmberRecvEvent* ev);
 	void processComputeEvent(EmberComputeEvent* ev);
 	void processStartEvent(EmberStartEvent* ev);
+	void processWaitEvent(EmberWaitEvent* ev);
+	void processIRecvEvent(EmberIRecvEvent* ev);
 
 	void completedInit(int val);
 	void completedFinalize(int val);
 	void completedSend(int val);
 	void completedRecv(int val);
+	void completedIRecv(int val);
+	void completedWait(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
@@ -87,6 +93,8 @@ private:
 	HermesAPIFunctor initFunctor;
 	HermesAPIFunctor recvFunctor;
 	HermesAPIFunctor sendFunctor;
+	HermesAPIFunctor waitFunctor;
+	HermesAPIFunctor irecvFunctor;
 
 	Histogram<uint64_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
@@ -103,6 +111,8 @@ private:
 	Histogram<uint64_t>* histoRecv;
 	Histogram<uint64_t>* histoSend;
 	Histogram<uint64_t>* histoCompute;
+	Histogram<uint64_t>* histoWait;
+	Histogram<uint64_t>* histoIRecv;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement
