@@ -43,7 +43,7 @@ static SST::Component * create_faultInjectionComponent( SST::ComponentId_t id, S
 
 static const SST::ElementInfoComponent components[] = {
     { "schedComponent",
-        "Schedular Component",
+        "Scheduler Component",
         NULL,
         create_schedComponent
     },
@@ -68,7 +68,7 @@ static const SST::ElementInfoComponent components[] = {
 extern "C" {
     SST::ElementLibraryInfo scheduler_eli = {
         "scheduler",
-        "High Level Schedular Components",
+        "High Level Scheduler Components",
         components,
     };
 }
