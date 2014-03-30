@@ -14,6 +14,7 @@
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
+#include "motifs/emberbarrier.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -28,6 +29,11 @@ create_EmberComponent(SST::ComponentId_t id,
 static Module*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
+}
+
+static Module*
+load_Barrier( Component* comp, Params& params ) {
+	return new EmberBarrierGenerator(comp, params);
 }
 
 static Module*
@@ -63,6 +69,7 @@ static const ElementInfoParam component_params[] = {
     { "recv_bin_width", "Bin width of the recv time histogram", "5" },
     { "irecv_bin_width", "Bin width of the irecv time histogram", "5" },
     { "wait_bin_width", "Bin width of the wait time histogram", "5" },
+    { "barrier_bin_width", "Bin width of the barrier time histogram", "5" },
     { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { NULL, NULL, NULL }
 };
@@ -80,6 +87,13 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Ring,
+	NULL
+    },
+    { 	"EmberBarrierGenerator",
+	"Performs a Barrier Motif",
+	NULL,
+	NULL,
+	load_Barrier,
 	NULL
     },
     { 	"EmberHalo2DGenerator",

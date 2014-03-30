@@ -16,7 +16,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
-	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv))
+	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
+	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier))
 {
 	output = new Output();
 
@@ -105,6 +106,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	userBinWidth = (uint64_t) params.find_integer("irecv_bin_width", 5);
 	histoIRecv = new Histogram<uint64_t>(userBinWidth);
 
+	userBinWidth = (uint64_t) params.find_integer("barrier_bin_width", 5);
+	histoBarrier = new Histogram<uint64_t>(userBinWidth);
+
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
 
@@ -170,6 +174,20 @@ void EmberEngine::finish() {
 					histoRecv->getBinByIndex(i));
 		}
 
+		output->output("- Histogram of barrier times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoBarrier->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoBarrier->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
+			histoBarrier->getItemCount() == 0 ? 0 :
+			(histoBarrier->getValuesSummed() / histoBarrier->getItemCount()));
+		output->output("- Distribution:\n");
+
+		for(uint32_t i = 0; i < histoBarrier->getBinCount(); ++i) {
+				printHistoBin(histoBarrier->getBinStart() + i * histoBarrier->getBinWidth(),
+					histoBarrier->getBinWidth(),
+					histoBarrier->getBinByIndex(i));
+		}
+
 	}
 }
 
@@ -217,6 +235,13 @@ void EmberEngine::processInitEvent(EmberInitEvent* ev) {
 	msgapi->init(&initFunctor);
 
 	accumulateTime = histoInit;
+}
+
+void EmberEngine::processBarrierEvent(EmberBarrierEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a Barrier Event\n");
+	msgapi->barrier(ev->getCommunicator(), &barrierFunctor);
+
+	accumulateTime = histoBarrier;
 }
 
 void EmberEngine::processSendEvent(EmberSendEvent* ev) {
@@ -293,6 +318,11 @@ void EmberEngine::completedFinalize(int val) {
 	primaryComponentOKToEndSim();
 
 	continueProcessing = false;
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedBarrier(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed Barrier, result = %d\n", val);
 	issueNextEvent(0);
 }
 
@@ -376,6 +406,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case WAIT:
 		processWaitEvent( (EmberWaitEvent*) eEv);
+		break;
+	case BARRIER:
+		processBarrierEvent( (EmberBarrierEvent*) eEv );
 		break;
 	case FINALIZE:
 		processFinalizeEvent(dynamic_cast<EmberFinalizeEvent*>(eEv));

@@ -29,6 +29,8 @@ libember_la_SOURCES = \
 	emberwaitev.h \
 	emberirecvev.cc \
 	emberirecvev.h \
+	emberbarrierev.h \
+	emberbarrierev.cc \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
 	motifs/emberhalo2d.h  \
@@ -40,7 +42,9 @@ libember_la_SOURCES = \
 	motifs/emberring.h  \
 	motifs/emberring.cc  \
 	motifs/emberpingpong.cc \
-	motifs/emberpingpong.h
+	motifs/emberpingpong.h \
+	motifs/emberbarrier.cc \
+	motfis/emberbarrier.h
 
 
 libember_la_LDFLAGS = -module -avoid-version

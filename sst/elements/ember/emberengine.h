@@ -31,6 +31,7 @@
 #include "emberwaitev.h"
 #include "emberstartev.h"
 #include "embercomputeev.h"
+#include "emberbarrierev.h"
 
 using namespace SST::Statistics;
 using namespace SST::Hermes;
@@ -58,6 +59,7 @@ public:
 	void processStartEvent(EmberStartEvent* ev);
 	void processWaitEvent(EmberWaitEvent* ev);
 	void processIRecvEvent(EmberIRecvEvent* ev);
+	void processBarrierEvent(EmberBarrierEvent* ev);
 
 	void completedInit(int val);
 	void completedFinalize(int val);
@@ -65,6 +67,7 @@ public:
 	void completedRecv(int val);
 	void completedIRecv(int val);
 	void completedWait(int val);
+	void completedBarrier(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
@@ -96,6 +99,7 @@ private:
 	HermesAPIFunctor sendFunctor;
 	HermesAPIFunctor waitFunctor;
 	HermesAPIFunctor irecvFunctor;
+	HermesAPIFunctor barrierFunctor;
 
 	Histogram<uint64_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
@@ -114,6 +118,7 @@ private:
 	Histogram<uint64_t>* histoCompute;
 	Histogram<uint64_t>* histoWait;
 	Histogram<uint64_t>* histoIRecv;
+	Histogram<uint64_t>* histoBarrier;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement
