@@ -113,12 +113,12 @@ create_simpleRNGComponent(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam component_params[] = {
-    { "seed_w", "" },
-    { "seed_z", "" },
-    { "seed", "" },
-    { "rng", "" },
-    { "count", "" },
-    { NULL, NULL}
+    { "seed_w", "The seed to use for the random number generator", "7" },
+    { "seed_z", "The seed to use for the random number generator", "5" },
+    { "seed", "The seed to use for the random number generator.", "11" },
+    { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
+    { "count", "The number of random numbers to generate, default is 1000", "1000" },
+    { NULL, NULL }
 };
 
 static const ElementInfoComponent components[] = {
@@ -126,7 +126,8 @@ static const ElementInfoComponent components[] = {
       "Random number generation component",
       NULL,
       create_simpleRNGComponent,
-      component_params
+      component_params,
+      COMPONENT_CATEGORY_UNCATEGORIZED
     },
     { NULL, NULL, NULL, NULL }
 };
