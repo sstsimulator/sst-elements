@@ -109,7 +109,12 @@ create_simpleDistribComponent(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam component_params[] = {
-    { NULL, NULL}
+	{ "count", "Number of random values to generate from the distribution", "1000"},
+	{ "distrib", "Random distribution to use - \"gaussian\" (or \"normal\"), or \"exponential\"", "gaussian"},
+	{ "mean", "Mean value to use if we are sampling from the Gaussian/Normal distribution", "1.0"},
+	{ "stddev", "Standard deviation to use for the distribution", "0.2"},
+	{ "lambda", "Lambda value to use for the exponential distribution", "1.0"},
+    	{ NULL, NULL, NULL }
 };
 
 static const ElementInfoComponent components[] = {
@@ -117,7 +122,8 @@ static const ElementInfoComponent components[] = {
       "Random number generation component",
       NULL,
       create_simpleDistribComponent,
-      component_params
+      component_params,
+	COMPONENT_CATEGORY_UNCATEGORIZED
     },
     { NULL, NULL, NULL, NULL }
 };
