@@ -137,9 +137,9 @@ void EmberEngine::finish() {
 
 		output->output("- Histogram of compute times:\n");
 		for(uint32_t i = 0; i < histoCompute->getBinCount(); ++i) {
-			printHistoBin(histoCompute->getBinStart() + i * histoCompute->getBinWidth(),
-				histoCompute->getBinWidth(),
-				histoCompute->getBinByIndex(i));
+				printHistoBin(histoCompute->getBinStart() + i * histoCompute->getBinWidth(),
+					histoCompute->getBinWidth(),
+					histoCompute->getBinByIndex(i));
 		}
 
 		output->output("- Histogram of send times:\n");
@@ -151,9 +151,9 @@ void EmberEngine::finish() {
 		output->output("- Distribution:\n");
 
 		for(uint32_t i = 0; i < histoSend->getBinCount(); ++i) {
-			printHistoBin(histoSend->getBinStart() + i * histoSend->getBinWidth(),
-				histoSend->getBinWidth(),
-				histoSend->getBinByIndex(i));
+				printHistoBin(histoSend->getBinStart() + i * histoSend->getBinWidth(),
+					histoSend->getBinWidth(),
+					histoSend->getBinByIndex(i));
 		}
 
 		output->output("- Histogram of recv times:\n");
@@ -165,17 +165,19 @@ void EmberEngine::finish() {
 		output->output("- Distribution:\n");
 
 		for(uint32_t i = 0; i < histoRecv->getBinCount(); ++i) {
-			printHistoBin(histoRecv->getBinStart() + i * histoRecv->getBinWidth(),
-				histoRecv->getBinWidth(),
-				histoRecv->getBinByIndex(i));
+				printHistoBin(histoRecv->getBinStart() + i * histoRecv->getBinWidth(),
+					histoRecv->getBinWidth(),
+					histoRecv->getBinByIndex(i));
 		}
 
 	}
 }
 
 void EmberEngine::printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin) {
-	output->output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
-		binStart, binStart + width, *bin);
+	if( (*bin) > 0) {
+		output->output("-   [%" PRIu64 " to %" PRIu64 "] : %" PRIu64 "\n",
+			binStart, binStart + width, *bin);
+	}
 }
 
 void EmberEngine::setup() {
@@ -304,7 +306,7 @@ void EmberEngine::completedWait(int val) {
 }
 
 void EmberEngine::completedIRecv(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result=%d\n", val);
+	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result = %d\n", val);
 	issueNextEvent(0);
 }
 
@@ -364,16 +366,16 @@ void EmberEngine::handleEvent(Event* ev) {
 	// Process the next event
 	switch(eEv->getEventType()) {
 	case SEND:
-		processSendEvent(dynamic_cast<EmberSendEvent*>(eEv));
+		processSendEvent( (EmberSendEvent*) eEv );
 		break;
 	case RECV:
-		processRecvEvent(dynamic_cast<EmberRecvEvent*>(eEv));
+		processRecvEvent( (EmberRecvEvent*) eEv );
 		break;
 	case IRECV:
-		processIRecvEvent(dynamic_cast<EmberIRecvEvent*>(eEv));
+		processIRecvEvent( (EmberIRecvEvent*) eEv);
 		break;
 	case WAIT:
-		processWaitEvent(dynamic_cast<EmberWaitEvent*>(eEv));
+		processWaitEvent( (EmberWaitEvent*) eEv);
 		break;
 	case FINALIZE:
 		processFinalizeEvent(dynamic_cast<EmberFinalizeEvent*>(eEv));
