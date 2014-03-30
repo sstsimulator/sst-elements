@@ -15,6 +15,7 @@
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
 #include "motifs/emberbarrier.h"
+#include "motifs/emberallpingpong.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -29,6 +30,11 @@ create_EmberComponent(SST::ComponentId_t id,
 static Module*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
+}
+
+static Module*
+load_AllPingPong( Component* comp, Params& params ) {
+	return new EmberAllPingPongGenerator(comp, params);
 }
 
 static Module*
@@ -94,6 +100,13 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Barrier,
+	NULL
+    },
+    { 	"EmberAllPingPongGenerator",
+	"Performs a All Ping Pong Motif",
+	NULL,
+	NULL,
+	load_AllPingPong,
 	NULL
     },
     { 	"EmberHalo2DGenerator",

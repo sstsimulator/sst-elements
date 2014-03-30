@@ -24,6 +24,7 @@ private:
 	uint32_t messageSize;
 	uint32_t myRank;
 	uint32_t halfWorld;
+	uint32_t computeTime;
 
 };
 

@@ -6,8 +6,9 @@ using namespace SST::Ember;
 EmberAllPingPongGenerator::EmberAllPingPongGenerator(SST::Component* owner, Params& params) :
 	EmberGenerator(owner, params) {
 
-	iterations = (uint32_t) params.find_integer("iterations", 1);
+	iterations = (uint32_t) params.find_integer("iterations", 1024);
 	messageSize = (uint32_t) params.find_integer("messagesize", 128);
+	computeTime = (uint32_t) params.find_integer("computetime", 1000);
 
 	assert(messageSize > 0);
 }
@@ -27,6 +28,9 @@ void EmberAllPingPongGenerator::configureEnvironment(const SST::Output* output, 
 
 void EmberAllPingPongGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
 	if(phase < iterations) {
+	       EmberComputeEvent* compute = new EmberComputeEvent(computeTime);
+               evQ->push(compute);
+
                EmberRecvEvent* recvEv = new EmberRecvEvent(commWithRank, messageSize, 0, (Communicator) 0);
                EmberSendEvent* sendEv = new EmberSendEvent(commWithRank, messageSize, 0, (Communicator) 0);
 
