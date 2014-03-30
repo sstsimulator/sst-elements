@@ -511,11 +511,37 @@ create_prospero(SST::ComponentId_t id,
     return new prospero( id, params );
 }
 
+static const ElementInfoParam component_params[] = {
+    { "clock", "Clock frequency", "2GHz" },
+    { "outputlevel", "Level of messages or information to output", "0"},
+    { "maximum_items", "Maximum number of items to be executed", "4611686018427390000"},
+    { "physlimit", "Physical maximum address allowed in the memory requests (checks no trace faults/errors)", "1073741824"},
+    { "translateaddresses", "Prospero performs a virtual to physical mapping based on malloc/free, default is 1 (yes)", "1"},
+    { "trace", "Trace file to read requests from" },
+    { "request_limit", "Maximum number of requests which can be inflight per cycle", "16"},
+    { "page_size", "Virtual page size in bytes, only a single page size is currently allowed", "4096" },
+    { "max_ticks", "Maximum number of ticks the Prospero CPU can execute for", "4611686018427390000" },
+    { "cache_line", "Size of the first level cache block in bytes (Prospero does non-aligned address splits)", "64"},
+    { "timemultipler", "Dilate time in trace file based on this value, >1.0 = take longer, <1.0 take shorter, default=1.0","1.0" },
+    { NULL, NULL, NULL }
+};
+
+static const char * cache_port_events[] = {"interfaces.MemEvent", NULL};
+
+static const ElementInfoPort cache_ports[] = {
+    { "cache_link", "Port to connect to the first level cache", cache_port_events },
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoComponent components[] = {
-    { "prospero",
-      "Memory tracing component",
-      NULL,
-      create_prospero
+    {
+	"prospero",
+      	"Memory tracing component",
+      	NULL,
+      	create_prospero,
+        component_params,
+	cache_ports,
+	COMPONENT_CATEGORY_PROCESSOR | COMPONENT_CATEGORY_MEMORY
     },
     { NULL, NULL, NULL, NULL }
 };
