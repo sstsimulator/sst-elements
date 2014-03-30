@@ -22,12 +22,15 @@ using namespace std;
 using namespace SST;
 using namespace SST::Zodiac;
 
+//Disabled for current release and development
+#if 0
 static Component*
 create_ZodiacTraceReader(SST::ComponentId_t id,
                   SST::Params& params)
 {
     return new ZodiacTraceReader( id, params );
 }
+#endif
 
 static Component*
 create_ZodiacSiriusTraceReader(SST::ComponentId_t id,
@@ -35,6 +38,14 @@ create_ZodiacSiriusTraceReader(SST::ComponentId_t id,
 {
     return new ZodiacSiriusTraceReader( id, params );
 }
+
+static const ElementInfoParam sirius_params[] = {
+	{ "msgapi", "Sets the messaging API to use for generation and handling of the message protocol" },
+	{ "scalecompute", "Scale compute event times by a double precision value (allows dilation of times in traces), default is 1.0", "1.0"},
+	{ "verbose", "Sets the verbosity level for the component to output debug/information messages", "0"},
+	{ "buffer", "Sets the size of the buffer to use for message data backing, default is 4096 bytes", "4096"},
+    	{ NULL, NULL, NULL }
+};
 
 #ifdef HAVE_ZODIAC_DUMPI
 static Component*
@@ -56,17 +67,23 @@ create_ZodiacOTFTraceReader(SST::ComponentId_t id,
 #endif
 
 static const ElementInfoComponent components[] = {
+// Disabled for current release and development builds
+#if 0
     {
 	"ZodiacTraceReader",
 	"Application Communication Trace Reader",
 	NULL,
 	create_ZodiacTraceReader,
     },
+#endif
     {
 	"ZodiacSiriusTraceReader",
 	"Application Communication Sirius Trace Reader",
 	NULL,
 	create_ZodiacSiriusTraceReader,
+	sirius_params,
+	NULL,
+	COMPONENT_CATEGORY_NETWORK
     },
 #ifdef HAVE_ZODIAC_DUMPI
     {
