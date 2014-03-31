@@ -90,7 +90,7 @@ nicParams = ({
 	})
 
 driverParams = ({
-		"debug" : 1,
+		"debug" : 0,
 		"verbose" : 4,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
@@ -139,7 +139,7 @@ class EmberEP(EndPoint):
 		loopBack.addParam("numCores", num_vNics)
 
 		for x in xrange(num_vNics ):
-			ep = sst.Component("nic" + str(x) + "core" + str(nodeID) + "_EmberEP", "ember.EmberEngine")
+			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 			ep.addParams(driverParams)
 			ep.addParam("hermesParams.numRanks", numNodes * num_vNics );
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
