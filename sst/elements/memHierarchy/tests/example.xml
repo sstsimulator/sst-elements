@@ -13,7 +13,6 @@
         <memory_trace>              0    </memory_trace>
         <info>                     no    </info>
         <registerExit>            yes    </registerExit>
-        <numBarrier>                1    </numBarrier>
         <frequency>             2 Ghz    </frequency>
         <statFile>            out.txt    </statFile>
         <configFile>    exampleM5.xml    </configFile> 
