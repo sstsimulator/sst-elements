@@ -12,6 +12,8 @@
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/stats/histo/histo.h>
+#include <sst/core/rng/gaussian.h>
+#include <sst/core/rng/constant.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,6 +102,8 @@ private:
 	HermesAPIFunctor waitFunctor;
 	HermesAPIFunctor irecvFunctor;
 	HermesAPIFunctor barrierFunctor;
+
+	SSTRandomDistribution* computeNoiseDistrib;
 
 	Histogram<uint64_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;

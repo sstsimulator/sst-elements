@@ -52,6 +52,19 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
         	}
     	}
 
+	// Create a noise distribution
+	double compNoiseMean = (double) params.find_floating("noisemean", 1.0);
+	double compNoiseStdDev = (double) params.find_floating("noisestddev", 0.1);
+	string noiseType = params.find_string("noisegen", "constant");
+
+	if("gaussian" == noiseType) {
+		computeNoiseDistrib = new SSTGaussianDistribution(compNoiseMean, compNoiseStdDev);
+	} else if ("constant" == noiseType) {
+		computeNoiseDistrib = new SSTConstantDistribution(compNoiseMean);
+	} else {
+		output->fatal(CALL_INFO, -1, "Unknown computational noise distribution (%s)\n", noiseType.c_str());
+	}
+
 	// Create the generator
 	string gentype = params.find_string("generator");
 	if( gentype == "" ) {
@@ -301,7 +314,7 @@ void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
 
 	// Issue the next event with a delay (essentially the time we computed something)
-	issueNextEvent(ev->getNanoSecondDelay());
+	issueNextEvent((uint64_t) (computeNoiseDistrib->getNextDouble() * ev->getNanoSecondDelay()));
 	accumulateTime = histoCompute;
 }
 
