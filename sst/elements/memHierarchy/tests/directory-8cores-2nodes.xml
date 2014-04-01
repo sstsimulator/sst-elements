@@ -285,8 +285,8 @@
     <component name="dirctrl1" type=memHierarchy.DirectoryController >
         <params include=DirCtrlParams >
             <network_address> 1 </network_address>
-            <addrRangeStart> 0x20000000 </addrRangeStart>
-            <addrRangeEnd>   0x3FFFFFFF </addrRangeEnd> 
+            <addr_range_start> 0x20000000 </addr_range_start>
+            <addr_range_end>   0x3FFFFFFF </addr_range_end> 
         </params>
         <link name=dirctrl1_mem port=memory latency=$buslat />
         <link name=dirctrl1_bus port=network latency=$buslat />
