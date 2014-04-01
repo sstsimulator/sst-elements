@@ -27,6 +27,8 @@ using namespace SST::MemHierarchy;
 /* Translates a MemEvent string destination to an integer */
 int MemNIC::addrForDest(const std::string &target)
 {
+    if ( addrMap.find(target) == addrMap.end() )
+        dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
     dbg.output(CALL_INFO, "Translated address %s to %d\n", target.c_str(), addrMap[target]);
     return addrMap[target];
 }
