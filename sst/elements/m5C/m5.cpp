@@ -88,12 +88,10 @@ SST::M5::M5::M5( ComponentId_t id, Params& params ) :
     DBGX(3, "m_m5ticksPerSSTClock = %d\n", m_m5ticksPerSSTclock);
 
 
-    if ( params.find( "registerExit" ) != params.end() ) {
-        if( ! params["registerExit"].compare("yes") ) {
-            INFO("registering exit\n");
-            IntrospectedComponent::registerAsPrimaryComponent();
-            IntrospectedComponent::primaryComponentDoNotEndSim();
-        }
+    if ( ! params.find_string("registerExit", "yes").compare("yes") ) {
+        INFO("registering exit\n");
+        IntrospectedComponent::registerAsPrimaryComponent();
+        IntrospectedComponent::primaryComponentDoNotEndSim();
     }
 
     int numBarrier = params.find_integer( "numBarrier" );
