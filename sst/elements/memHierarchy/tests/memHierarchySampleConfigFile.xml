@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <sdl version="2.0"/>
 
 <variables>
@@ -46,9 +45,11 @@
         <mshr_num_entries> 4096 </mshr_num_entries>
         <L1> 0 </L1>
     </l2CacheParams>
+
     <busParams>
         <bus_frequency> 2 Ghz </bus_frequency>
     </busParams>
+
     <memControllerParams>
         <debug> 0  </debug>
         <rangeStart>  0 </rangeStart>
@@ -212,13 +213,11 @@
 		<link name=bus_l2cache  port=low_network_0 latency=$buslat />
     </component>
 
-
 	<component name="l2cache" type="memHierarchy.Cache">
 		<params include=l2CacheParams />
 		<link name=bus_l2cache  port=high_network_0 latency=$buslat />
 		<link name=mem_bus_link port=low_network_0 latency=$buslat />
 	</component>
-
 
     <component name="memory" type="memHierarchy.MemController">
         <params include=memControllerParams />
