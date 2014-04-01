@@ -15,12 +15,8 @@
 #include "pymodule.h"
 
 static char pymerlin[] = {
-#ifdef HAVE_XXD
 #include "pymerlin.inc"
-    , 0x00 };
-#else
     0x00};
-#endif
 
 void* genMerlinPyModule(void)
 {
