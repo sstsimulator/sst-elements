@@ -34,8 +34,6 @@ libm5C_la_SOURCES = \
 	portLink.h \
 	portLink.cpp \
     power.cpp \
-    ptlNicMMIF.cpp \
-    ptlNicMMIF.h \
     process.h \
     simpleCpu.cpp \
     syscall.cpp \
