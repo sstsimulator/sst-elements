@@ -1,4 +1,0 @@
-
-OPENMPI=/home/mjleven/openMPISVN/sandbox1/build/install
-
-gcc -static mpi.c pthread.c -I$OPENMPI/include -L$OPENMPI/lib -lmpi -lm  -lportals -lptlNic -lruntime -lstdc++ -L/home/mjleven/sstSVN/sandbox-1/sst/elements/portals4/usr_lib/lib aio.c clock_gettime.c -o mpi
