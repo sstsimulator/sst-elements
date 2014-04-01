@@ -9,13 +9,13 @@
 
 <param_include>
     <M5Params>
-        <debug>                     0    </debug>
-        <memory_trace>              0    </memory_trace>
-        <info>                     no    </info>
-        <registerExit>            yes    </registerExit>
-        <frequency>             2 Ghz    </frequency>
-        <statFile>            out.txt    </statFile>
-        <configFile>    exampleM5.xml    </configFile> 
+        <debug> 0 </debug>
+        <memory_trace> 0 </memory_trace>
+        <info> no </info>
+        <registerExit> yes </registerExit>
+        <frequency>  2 Ghz </frequency>
+        <statFile> out.txt </statFile>
+        <configFile>  memHierarchySampleConfigFileM5.xml </configFile> 
     </M5Params>
 
     <l1CacheParams>
@@ -31,6 +31,7 @@
         <mshr_num_entries> 4096 </mshr_num_entries>
         <L1> 1 </L1>
     </l1CacheParams>
+
     <l2CacheParams>
         <debug> 0 </debug>
         <cache_frequency> 2.0 Ghz  </cache_frequency>
