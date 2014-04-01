@@ -144,7 +144,7 @@ void Bus::configureParameters(SST::Params& params){
     maxNumPorts_ = 500;
     
 	latency_ = params.find_integer("bus_latency_cycles", 1);
-    busFrequency_ = params.find_string("bus_frequency", "");
+    busFrequency_ = params.find_string("bus_frequency", "Invalid");
     broadcast_ = params.find_integer("broadcast", 0);
     fanout_ = params.find_integer("fanout", 0);
 
