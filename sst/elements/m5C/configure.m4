@@ -115,12 +115,6 @@ AC_DEFUN([SST_m5C_CONFIG], [
 
   # PHXSim configuration end
 
-  AS_IF([test -z "$enable-gem5-power-model" -a "$happy" = "yes"],
-	[AC_MSG_NOTICE([GEM5 Power Models are enabled.])],
-	[AC_MSG_NOTICE([GEM5 Power Models are disabled for this build.])]) 
-  AM_CONDITIONAL([ENABLE_GEM5_POWER_MODEL], 
-	[test -z "$enable-gem5-power-model" -a "$happy" = "yes"])
-
   AS_IF([test "$enable_static" = "yes" -a "$enable_shared" = "no"],
 	[AC_MSG_NOTICE([GEM5 will be configured to support static object construction.])],
 	[AC_MSG_NOTICE([GEM5 will use dynamic object construction.])])

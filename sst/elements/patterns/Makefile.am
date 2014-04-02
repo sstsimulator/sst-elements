@@ -80,28 +80,6 @@ libpatterns_la_SOURCES += \
 	benchmarks/src_ghost_bench/work.c
 endif
 
-### ADD EXTRA FILES TO THE BUILD IF USING THE POWER COMPONENTS
-if USE_MCPAT
-if USE_ORION
-if USE_HOTSPOT
-libpatterns_la_SOURCES += \
-	power_power.cc \
-	power_HotSpot-interface.cc
-
-libpatterns_la_CXXFLAGS = -DWITH_POWER -I$(top_srcdir)/sst/elements/power
-
-libpatterns_la_LDFLAGS += $(MCPAT_LDFLAGS) $(HOTSPOT_LDFLAGS) $(ORION_LDFLAGS)
-libpatterns_la_LIBADD = $(MCPAT_LIB) $(HOTSPOT_LIB) $(ORION_LIB)
-endif
-endif
-endif
-
-# Work around bad habit of including source files from another component.
-power_power.cc: $(top_srcdir)/sst/elements/power/power.cc
-	@cp $(top_srcdir)/sst/elements/power/power.cc $(srcdir)/power_power.cc
-power_HotSpot-interface.cc: $(top_srcdir)/sst/elements/power/HotSpot-interface.cc
-	@cp $(top_srcdir)/sst/elements/power/HotSpot-interface.cc $(srcdir)/power_HotSpot-interface.cc
-
 ### BUILD THE genPatterns application
 include src_genPatterns/Makefile.inc
 
