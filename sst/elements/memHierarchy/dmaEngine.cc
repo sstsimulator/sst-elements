@@ -158,7 +158,7 @@ void DMAEngine::startRequest(Request *req)
         MemEvent *ev = new MemEvent(this, ptr, RequestData);
         ev->setSize(blocksize);
         ev->setFlag(MemEvent::F_UNCACHED);
-        ev->setDst(findTargetDirectory(ptr));
+        ev->setDst(networkLink->findTargetDirectory(ptr));
         req->loadKeys.insert(ev->getID());
         networkLink->send(ev);
         ptr += blocksize;
@@ -178,7 +178,7 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
         MemEvent *storeEV = new MemEvent(this, (req->getDst() + offset), SupplyData);
         storeEV->setFlag(MemEvent::F_UNCACHED);
         storeEV->setPayload(ev->getPayload());
-        storeEV->setDst(findTargetDirectory(req->getDst() + offset));
+        storeEV->setDst(networkLink->findTargetDirectory(req->getDst() + offset));
         req->storeKeys.insert(storeEV->getID());
         networkLink->send(storeEV);
     } else if ( ev->getCmd() == WriteResp ) {
@@ -227,26 +227,4 @@ DMAEngine::Request* DMAEngine::findRequest(MemEvent::id_type id)
     return NULL;
 }
 
-
-std::string DMAEngine::findTargetDirectory(Addr addr)
-{
-    for ( std::vector<MemNIC::ComponentInfo>::iterator i = directories.begin() ; i != directories.end() ; ++i ) {
-        MemNIC::ComponentTypeInfo &di = i->typeInfo;
-        //dbg.output(CALL_INFO, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
-        //        addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
-        if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
-            if ( 0 == di.dirctrl.interleaveSize ) {
-                return i->name;
-            } else {
-                Addr temp = addr - di.dirctrl.rangeStart;
-                Addr offset = temp % di.dirctrl.interleaveStep;
-                if ( offset < di.dirctrl.interleaveSize ) {
-                    return i->name;
-                }
-            }
-        }
-    }
-    _abort(DMAEngine, "Unable to find directory for address 0x%"PRIx64"\n", addr);
-    return "";
-}
 

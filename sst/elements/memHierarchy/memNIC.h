@@ -155,10 +155,13 @@ private:
     std::map<std::string, int> addrMap;
     /* Built during init -> available in Setup and later */
     std::vector<ComponentInfo> peers;
+    /* Built during init -> available for lookups later */
+    std::vector<MemNIC::ComponentInfo> directories;
 
 
-    /* Translates a MemEvent string destination to an integer */
-    int addrForDest(const std::string &target);
+    /* Translates a MemEvent string destination to an network address
+       (integer) */
+    int addrForDest(const std::string &target) const;
 
     /* Get size in flits for a MemEvent */
     int getFlitSize(MemEvent *ev);
@@ -180,6 +183,9 @@ public:
     void sendInitData(MemEvent *ev);
     MemEvent* recvInitData(void);
     const std::vector<ComponentInfo>& getPeerInfo(void) const { return peers; }
+    // translate a memory address to a network target (string)
+    std::string findTargetDirectory(Addr addr);
+    // NOTE: does not clear the listing of directories which are used for address lookups
     void clearPeerInfo(void) { peers.clear(); }
 
 };

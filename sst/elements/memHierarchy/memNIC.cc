@@ -24,13 +24,14 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-/* Translates a MemEvent string destination to an integer */
-int MemNIC::addrForDest(const std::string &target)
+/* Translates a MemEvent string destination to a network address (integer) */
+int MemNIC::addrForDest(const std::string &target) const
 {
-    if ( addrMap.find(target) == addrMap.end() )
-        dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
-    dbg.output(CALL_INFO, "Translated address %s to %d\n", target.c_str(), addrMap[target]);
-    return addrMap[target];
+  std::map<std::string, int>::const_iterator addrIter = addrMap.find(target);
+  if ( addrIter == addrMap.end() )
+    dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
+  dbg.output(CALL_INFO, "Translated address %s to %d\n", target.c_str(), addrIter->second);
+  return addrIter->second;
 }
 
 /* Get size in flits for a MemEvent */
@@ -96,6 +97,11 @@ void MemNIC::init(unsigned int phase)
             ci.type = imre->compType;
             ci.typeInfo = imre->compInfo;
             peers.push_back(ci);
+
+	    // save a copy for directory controller lookups later
+	    if (ci.type == MemNIC::TypeDirectoryCtrl) {
+	      directories.push_back(ci);
+	    }
         } else {
             initQueue.push_back(static_cast<MemRtrEvent*>(ev));
         }
@@ -128,6 +134,29 @@ MemEvent* MemNIC::recvInitData(void)
         return ev;
     }
     return NULL;
+}
+
+std::string MemNIC::findTargetDirectory(Addr addr)
+{
+  for ( std::vector<MemNIC::ComponentInfo>::const_iterator i = directories.begin() ;
+	i != directories.end() ; ++i ) {
+    const MemNIC::ComponentTypeInfo &di = i->typeInfo;
+    //dbg.output(CALL_INFO, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
+    //        addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
+    if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
+      if ( 0 == di.dirctrl.interleaveSize ) {
+	return i->name;
+      } else {
+	Addr temp = addr - di.dirctrl.rangeStart;
+	Addr offset = temp % di.dirctrl.interleaveStep;
+	if ( offset < di.dirctrl.interleaveSize ) {
+	  return i->name;
+	}
+      }
+    }
+  }
+  _abort(DMAEngine, "Unable to find directory for address 0x%"PRIx64"\n", addr);
+  return "";
 }
 
 

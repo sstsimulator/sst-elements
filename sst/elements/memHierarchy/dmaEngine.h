@@ -109,7 +109,7 @@ private:
     bool findOverlap(DMACommand *c1, DMACommand *c2) const;
     bool findOverlap(Addr a1, size_t s1, Addr a2, size_t s2) const;
     Request* findRequest(MemEvent::id_type id);
-    std::string findTargetDirectory(Addr addr);
+    //std::string findTargetDirectory(Addr addr); Moved to MemNIC
 };
 
 }

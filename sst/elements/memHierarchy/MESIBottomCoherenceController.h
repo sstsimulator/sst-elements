@@ -69,9 +69,15 @@ public:
    
     void sendOutgoingCommands(){
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
-            if(directoryLink_) directoryLink_->send(outgoingEventQueue_.front().event);
-            else lowNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
-            outgoingEventQueue_.pop();
+	  if(directoryLink_) {
+	    // reset the destination string
+	    MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
+	    outgoingEvent->setDst(directoryLink_->findTargetDirectory(outgoingEvent->getBaseAddr()));
+	    directoryLink_->send(outgoingEvent);
+	  } else {
+	    lowNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
+	  }
+	  outgoingEventQueue_.pop();
         }
     }
 
