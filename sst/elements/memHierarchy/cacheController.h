@@ -198,7 +198,6 @@ private:
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool reActivation);
     inline LinkId_t lookupNode(const std::string &name);
     inline void mapNodeEntry(const std::string &name, LinkId_t id);
-
 };
 
 }}

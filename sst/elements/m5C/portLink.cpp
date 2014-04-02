@@ -46,13 +46,8 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
     uint64_t addrStart = 0, addrEnd = -1;
 	unsigned blocksize = 0;
 
-    if ( params.find_string("snoopOut").compare("true") == 0 ) {
-        snoopOut = true;
-    }
-
-    if ( params.find_string("snoopIn").compare("true") == 0 ) {
-        snoopIn = true;
-    }
+    snoopOut = false;
+    snoopIn = true;
 
     if ( params.find("range.start") != params.end() ) {
         addrStart = params.find_integer("range.start");

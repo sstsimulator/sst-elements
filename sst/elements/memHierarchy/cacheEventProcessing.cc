@@ -184,12 +184,14 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
     int i = 0;
     switch( cmd ){
         case GetS:
-            mshrUncached_->insert(baseAddr, event);
-            bottomCC_->forwardMessage(event, baseAddr, lineSize_, NULL);
-            break;
         case GetX:
+            if(mshrUncached_->isHitAndStallNeeded(baseAddr, cmd)){
+                mshrUncached_->insert(baseAddr, event);
+                return;
+            }
             mshrUncached_->insert(baseAddr, event);
-            bottomCC_->forwardMessage(event, baseAddr, lineSize_, &event->getPayload());
+            if(cmd == GetS) bottomCC_->forwardMessage(event, baseAddr, lineSize_, NULL);
+            else bottomCC_->forwardMessage(event, baseAddr, lineSize_, &event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
