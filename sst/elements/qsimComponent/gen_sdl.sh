@@ -8,14 +8,17 @@ IPILAT=10ns
 BUSLAT=10ns
 NETLAT=5ns
 
+CACHECLOCK=${CACHECLOCK:=1GHz}
+COHERENCEPROTO=${COHERENCEPROTO:=MSI}
+
 CACHEBLOCK=${CACHEBLOCK:=64}
 L1WAYS=${L1WAYS:=4}
-L1SETS=${L1SETS:=16}
-L1ATIME=${L1ATIME:=0ps}
+L1SIZE=${L1SIZE:=8}
+L1ATIME=${L1ATIME:=1}
 
 L2WAYS=${L2WAYS:=16}
-L2SETS=${L2SETS:=32}
-L2ATIME=${L2ATIME:=10ns}
+L2SIZE=${L2SIZE:=64}
+L2ATIME=${L2ATIME:=10}
 
 RTR_LINK_BW=${RTR_LINK_BW:=5GHz}
 RTR_XBAR_BW=${RTR_XBAR_BW:=5GHz}
@@ -48,8 +51,9 @@ print_trivial_cpu() {
   echo "      <commFreq>100</commFreq>"
   echo "      <memSize>0x8000000</memSize>"
   echo "      <doWrite>1</doWrite>"
+  echo "      <num_loadstore> 1000 </num_loadstore>"
   echo "    </params>"
-  echo "    <link name=c$i_l1cache_link port=memLink latency=$L1LAT />"
+  echo "    <link name=c${i}_l1cache_link port=mem_link latency=$L1LAT />"
   echo "  </component>"
   echo
 }
@@ -57,16 +61,19 @@ print_trivial_cpu() {
 print_l1_cache() {
   echo "  <component name=\"c${i}.l1cache\" rank=\"$i\" type=\"memHierarchy.Cache\">"
   echo "    <params>"
-  echo "      <num_ways>$L1WAYS</num_ways>"
-  echo "      <num_rows>$L1SETS</num_rows>"
-  echo "      <blocksize>$CACHEBLOCK</blocksize>"
-  echo "      <access_time>$L1ATIME</access_time>"
-  echo "      <num_upstream>1</num_upstream>"
-  echo "      <next_level>c${i}.l2cache</next_level>"
-  echo "      <printStats>1</printStats>"
+  echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"
+  echo "      <cache_frequency>$CACHECLOCK</cache_frequency>"
+  echo "      <replacement_policy> LRU </replacement_policy>"
+  echo "      <associativity>$L1WAYS</associativity>"
+  echo "      <cache_size>$L1SIZE KB</cache_size>"
+  echo "      <cache_line_size>$CACHEBLOCK</cache_line_size>"
+  echo "      <access_latency_cycles>$L1ATIME</access_latency_cycles>"
+  echo "      <low_network_links> 1 </low_network_links>"
+  echo "      <L1>1</L1>"
+  echo "      <statistics>1</statistics>"
   echo "    </params>"
-  echo "    <link name=c${i}_l1cache_link port=upstream0 latency=$L1LAT />"
-  echo "    <link name=c${i}_l1l2cache_link port=downstream latency=$BUSLAT />"
+  echo "    <link name=c${i}_l1cache_link port=high_network_0 latency=$L1LAT />"
+  echo "    <link name=c${i}_l1l2cache_link port=low_network_0 latency=$BUSLAT />"
   echo "  </component>"
   echo
 }
@@ -76,16 +83,21 @@ print_l2_cache() {
 
   echo "  <component name=\"c${i}.l2cache\" rank=\"$i\" type=\"memHierarchy.Cache\">"
   echo "    <params>"
-  echo "      <num_ways>$L2WAYS</num_ways>"
-  echo "      <num_rows>$L2SETS</num_rows>"
-  echo "      <blocksize>$CACHEBLOCK</blocksize>"
-  echo "      <access_time>$L2ATIME</access_time>"
-  echo "      <num_upstream>1</num_upstream>"
-  echo "      <net_addr>$j</net_addr>"
+  echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"
+  echo "      <cache_frequency>$CACHECLOCK</cache_frequency>"
+  echo "      <replacement_policy> LRU </replacement_policy>"
+  echo "      <associativity>$L2WAYS</associativity>"
+  echo "      <cache_size>$L2SIZE KB</cache_size>"
+  echo "      <cache_line_size>$CACHEBLOCK</cache_line_size>"
+  echo "      <access_latency_cycles>$L2ATIME</access_latency_cycles>"
+  echo "      <high_network_links> 1 </high_network_links>"
+  echo "      <L1>0</L1>"
+  echo "      <directory_at_next_level> 1 </directory_at_next_level>"
+  echo "      <network_address>$j</network_address>"
   echo "      <mode>INCLUSIVE</mode>"
   echo "      <printStats>1</printStats>"
   echo "    </params>"
-  echo "    <link name=c${i}_l1l2cache_link port=upstream0 latency=$L1LAT />"
+  echo "    <link name=c${i}_l1l2cache_link port=high_network_0 latency=$L1LAT />"
   echo "    <link name=cache_net_${i} port=directory latency=$BUSLAT />"
   echo "  </component>"
   echo
@@ -118,11 +130,12 @@ print_dirmem() {
   echo -n "  <component name=\"dirctrl0\" rank=\"0\""
   echo       "type=\"memHierarchy.DirectoryController\">"
   echo "    <params>"
-  echo "      <network_address>0</network_address>"
+  echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"
   echo "      <network_bw>$NET_BW</network_bw>"
-  echo "      <addrRangeStart>0x0</addrRangeStart>"
-  echo "      <addrRangeEnd>0xe8000000</addrRangeEnd>"
-  echo "      <backingStoreSize>0x8000000</backingStoreSize>"
+  echo "      <network_address>0</network_address>"
+  echo "      <addr_range_start>0x0</addr_range_start>"
+  echo "      <addr_range_end>0xe8000000</addr_range_end>"
+  echo "      <backingStoreSize>0</backingStoreSize>"
   echo "    </params>"
   echo "    <link name=dir_mem_link_0 port=memory latency=$BUSLAT />"
   echo "    <link name=dir_net_0 port=network latency=$NETLAT />"
@@ -130,6 +143,7 @@ print_dirmem() {
   echo
   echo "  <component name=\"memory0\" rank=\"0\" type=\"memHierarchy.MemController\">"
   echo "    <params>"
+  echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"
   echo "      <access_time>$DRAM_ATIME</access_time>"
   echo "      <mem_size>4096</mem_size>"
   echo "      <clock>$DRAM_CLOCK</clock>"
