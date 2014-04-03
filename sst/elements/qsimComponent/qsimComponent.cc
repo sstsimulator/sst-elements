@@ -106,7 +106,7 @@ void qsimComponent::init(unsigned phase) {
 
   if (hwThreadId == 0) {
     out.output("qsimComponent %u init: sending init data\n", hwThreadId);
-    MemEvent *e = new MemEvent(this, 0, WriteReq);
+    MemEvent *e = new MemEvent(this, 0, GetX);
     e->setPayload(1024ul*1024*osd->get_ram_size_mb(),
                   osd->get_ramdesc().mem_ptr);
     memLink->sendInitData(e);
@@ -174,7 +174,7 @@ int qsimComponent::mem_cb(int c, uint64_t v, uint64_t p, uint8_t s, int w) {
     else if (s-i >= 2 && ((p+i) & 1) == 0) increment = 2;
     else increment = 1;
 
-    MemEvent *e = new MemEvent(this, p+i, w ? WriteReq : ReadReq);
+    MemEvent *e = new MemEvent(this, p+i, w ? GetX : GetS);
     e->setSize(increment);
     if (v && ((lock == 1 && !w) || (lock == 2 && w)) && i == 0) {
       e->setFlags(MemEvent::F_LOCKED);
@@ -213,7 +213,7 @@ void qsimComponent::inst_cb(int c, uint64_t v, uint64_t p, uint8_t l,
     else if (l-i >= 2 && ((p+i) & 1) == 0) increment = 2;
     else increment = 1;
 
-    MemEvent *e = new MemEvent(this, p + i, ReadReq);
+    MemEvent *e = new MemEvent(this, p + i, Gets);
     e->setSize(increment);
     if (iMemLink) iMemLink->send(e);
     else memLink->send(e);
