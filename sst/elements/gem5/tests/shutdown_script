@@ -1,0 +1,2 @@
+echo "shutdown_script"
+/sbin/m5 exit
