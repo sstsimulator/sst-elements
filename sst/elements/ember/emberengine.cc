@@ -131,6 +131,18 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 EmberEngine::~EmberEngine() {
 	// Free the big buffer we have been using
 	free(emptyBuffer);
+	delete histoBarrier;
+	delete histoIRecv;
+	delete histoWait;
+	delete histoStart;
+	delete histoFinalize;
+	delete histoInit;
+	delete histoRecv;
+	delete histoSend;
+	delete histoCompute;
+	delete computeNoiseDistrib;
+	delete output;
+	delete msgapi;
 }
 
 void EmberEngine::init(unsigned int phase) {
@@ -259,6 +271,7 @@ void EmberEngine::processBarrierEvent(EmberBarrierEvent* ev) {
 
 void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Send Event (%s)\n", ev->getPrintableString().c_str());
+    assert( emptyBufferSize >= ev->getMessageSize() );
 	msgapi->send((Addr) emptyBuffer, ev->getMessageSize(),
 		CHAR, (RankID) ev->getSendToRank(),
 		ev->getTag(), ev->getCommunicator(),
@@ -282,6 +295,7 @@ void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
 
+    assert( emptyBufferSize >= ev->getMessageSize() );
 	msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
 		CHAR, (RankID) ev->getRecvFromRank(),
 		ev->getTag(), ev->getCommunicator(),
@@ -294,6 +308,7 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
 
 	memset(&currentRecv, 0, sizeof(MessageResponse));
+    assert( emptyBufferSize >= ev->getMessageSize() );
 	msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
 		CHAR, (RankID) ev->getRecvFromRank(),
 		ev->getTag(), ev->getCommunicator(),
