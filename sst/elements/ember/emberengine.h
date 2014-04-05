@@ -72,10 +72,9 @@ public:
 	void completedBarrier(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
-	void printHistoBin(uint64_t binStart, uint64_t width, uint64_t* bin);
-	
+	void printHistogram(Histogram<uint64_t, uint64_t>* histo);
 
-private:  
+private:
 	int thisRank;
 	uint32_t eventCount;
 	char* emptyBuffer;
@@ -105,7 +104,7 @@ private:
 
 	SSTRandomDistribution* computeNoiseDistrib;
 
-	Histogram<uint64_t>* accumulateTime;
+	Histogram<uint64_t, uint64_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
 
 	//uint64_t nanoInit;
@@ -114,15 +113,15 @@ private:
 	//uint64_t nanoRecv;
 	//uint64_t nanoCompute;
 
-	Histogram<uint64_t>* histoStart;
-	Histogram<uint64_t>* histoInit;
-	Histogram<uint64_t>* histoFinalize;
-	Histogram<uint64_t>* histoRecv;
-	Histogram<uint64_t>* histoSend;
-	Histogram<uint64_t>* histoCompute;
-	Histogram<uint64_t>* histoWait;
-	Histogram<uint64_t>* histoIRecv;
-	Histogram<uint64_t>* histoBarrier;
+	Histogram<uint64_t, uint64_t>* histoStart;
+	Histogram<uint64_t, uint64_t>* histoInit;
+	Histogram<uint64_t, uint64_t>* histoFinalize;
+	Histogram<uint64_t, uint64_t>* histoRecv;
+	Histogram<uint64_t, uint64_t>* histoSend;
+	Histogram<uint64_t, uint64_t>* histoCompute;
+	Histogram<uint64_t, uint64_t>* histoWait;
+	Histogram<uint64_t, uint64_t>* histoIRecv;
+	Histogram<uint64_t, uint64_t>* histoBarrier;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement
