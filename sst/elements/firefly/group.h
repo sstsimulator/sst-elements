@@ -19,7 +19,6 @@ namespace SST {
 namespace Firefly {
 
 //#define MEMORY_PIG
-#define printf(... )
 class Group
 {
   public:
@@ -53,8 +52,6 @@ class Group
 #ifdef MEMORY_PIG 
         assert( (size_t) pos < m_rankMap.size() );
         m_rankMap[pos] = m_virtNic->calc_virtId( nid, core );
-        printf("%d: Group::%s() pos=%d nid=%d core=%d vnid=%#x\n", 
-                    m_rank,__func__, pos,nid,core,m_rankMap[pos]);
 #endif
 
     }
@@ -69,37 +66,28 @@ class Group
         int realId = m_virtNic->calc_realId( nid );
         int numCores = m_virtNic->getNumCores();
         rank = numCores * realId + vNic;
-        printf("%d: Group::%s() nid=%#x -> rank=%d %d %d\n",m_rank,__func__,
-                                nid,rank,vNic,realId);
-//        assert(0);
         return rank;
     }
 
     int rankToNid( int rank ) {
         int nid = -1; 
         if ( -1 == rank ) {
-            printf("TTTTTTTTTTT rank=%d\n",rank);
             return -1;
         }
         nid = getNodeId( rank );
-        printf("%d: Group::%s() rank=%d -> nid=%#x\n",m_rank,__func__,rank,nid);
         return nid;
     } 
 
     int getNodeId( int pos ) {
 #ifdef MEMORY_PIG 
-        printf("%s() rank=%d vnid=%#x\n",__func__,pos,-1);
 
         assert( (size_t) pos < m_rankMap.size() );
         int tmp = m_rankMap[pos];
-        printf("%s() rank=%d vnid=%#x\n",__func__,pos,tmp);
         return tmp;
 #else
         int numCores = m_virtNic->getNumCores();
         int nid = pos / numCores;
         int core = pos % numCores;//m_virtNic->getCoreNum();
-        printf("%d: Group::%s() rank=%d numCores=%d nid=%d core=%d\n",m_rank,__func__,
-                                    pos,numCores,nid,core);
         return m_virtNic->calc_virtId( nid, core );
 #endif
     }
@@ -108,10 +96,8 @@ class Group
 #ifdef MEMORY_PIG 
         assert( (size_t) pos < m_rankMap.size() );
         int tmp = m_virtNic->calc_vNic( m_rankMap[pos] );
-        printf("%s() rank=%d core=%d\n",__func__,pos,tmp);
         return tmp;
 #else
-        printf("%d: Group::%s() rank=%d\n",m_rank,__func__,pos);
         return pos % m_virtNic->getNumCores();
 #endif
     }
