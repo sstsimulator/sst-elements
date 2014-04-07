@@ -46,9 +46,9 @@ public:
             		out.output("\t%zu Uncached Reads\n\t%zu Uncached Writes\n", uncachedReads, uncachedWrites);
 
 		out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
-		for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinMax(); i += requestsPendingCycle->getBinWidth()) {
+		for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
 			out.output("  [%" PRIu64 ", %" PRIu64 "]  %" PRIu64 "\n",
-			i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinByIndex(i));
+			i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinCountByBinStart(i));
 		}
 	}
 
@@ -71,7 +71,7 @@ private:
     uint64_t uncachedRangeStart, uncachedRangeEnd;
     uint64_t clock_ticks;
     size_t uncachedReads, uncachedWrites;
-    Histogram<uint64_t>* requestsPendingCycle;
+    Histogram<uint64_t, uint64_t>* requestsPendingCycle;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
 
