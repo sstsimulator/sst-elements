@@ -24,7 +24,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     int debugLevel = params.find_integer("debug_level", 0);
     if(debugLevel < 0 || debugLevel > 8)     _abort(Cache, "Debugging level must be betwee 0 and 8. \n");
     
-    dbg->init("", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
+    dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
     dbg->debug(C,L1,0,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
     /* Get Parameters */
@@ -62,7 +62,8 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     HashFunction* ht = new PureIdHashFunction;
     
     if(coherenceProtocol == "MESI" || coherenceProtocol == "mesi") protocol = 1;
-    else protocol = 0;
+    else if(coherenceProtocol == "MSI" || coherenceProtocol == "msi") protocol = 0;
+    else _abort(Cache, "Not supported protocol\n");
     
     SST::MemHierarchy::LRUReplacementMgr* replacementManager;
     if (boost::iequals(replacementProtocol, "lru"))         replacementManager = new LRUReplacementMgr(dbg, numLines,true);

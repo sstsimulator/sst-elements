@@ -78,7 +78,7 @@ void Bus::broadcastEvent(SST::Event *ev){
 void Bus::sendSingleEvent(SST::Event *ev){
     MemEvent *event = static_cast<MemEvent*>(ev); assert(event);
     dbg_.debug(_L3_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %i \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
+    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
 
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];

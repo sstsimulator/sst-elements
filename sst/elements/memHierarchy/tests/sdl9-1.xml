@@ -19,7 +19,7 @@ Uncached Requests
 </variables>
 
 <config>
-    stopAtCycle=10000ns
+    stopAtCycle=200000ns
 </config>
 
 <param_include>

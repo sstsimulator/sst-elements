@@ -29,7 +29,7 @@ using namespace SST::Statistics;
 trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-    requestsPendingCycle = new Histogram<uint64_t, uint64_t>(2);
+    requestsPendingCycle = new Histogram<uint64_t>(2);
 
     out.init("", 0, 0, Output::STDOUT);
 
