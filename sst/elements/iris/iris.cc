@@ -66,7 +66,7 @@ static const SST::ElementInfoComponent components[] = {
 extern "C" {
     SST::ElementLibraryInfo iris_eli = {
         "iris",
-        "Trying Desperately to switch out redstorm",
+        "IRIS Network Router",
         components,
     };
 }
