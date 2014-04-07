@@ -2,6 +2,8 @@
 #
 #
 
+if HAVE_LIBPHX
+
 EXTRA_DIST = 
 
 compdir = $(pkglibdir)
@@ -15,23 +17,12 @@ libVaultSimC_la_SOURCES = \
 	app.cpp \
 	VaultSimC.cpp \
 	VaultSimC.h \
-	vaultGlobals.h \
-	libphx/BankState.cpp \
-	libphx/BankState.h \
-	libphx/BusPacket.cpp \
-	libphx/BusPacket.h \
-	libphx/Callback.h \
-	libphx/Globals.h \
-	libphx/Partition.cpp \
-	libphx/Partition.h \
-	libphx/Transaction.cpp \
-	libphx/Transaction.h \
-	libphx/Vault.cpp \
-	libphx/Vault.h \
-	libphx/VaultController.cpp \
-	libphx/VaultController.h
+	vaultGlobals.h
 
 libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
-            -I$(top_srcdir)/sst/elements/include -I$(srcdir)/libphx
-libVaultSimC_la_LDFLAGS = -module -avoid-version 
-#libVaultSimC_la_LIBADD = $(PHXSIM_LIB)
+	$(LIBPHX_CPPFLAGS)
+libVaultSimC_la_LDFLAGS = -module -avoid-version \
+	$(LIBPHX_LDFLAGS) $(LIBPHX_LIBDIR) 
+libVaultSimC_la_LIBADD = $(LIBPHX_LIB)
+
+endif

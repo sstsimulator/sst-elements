@@ -18,7 +18,7 @@
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
-#include "libphx/Globals.h"
+#include "Globals.h"
 #include <vaultGlobals.h>
 
 //typedef  VaultCompleteFn; 
