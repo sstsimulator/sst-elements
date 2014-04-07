@@ -30,7 +30,7 @@ public:
 
     virtual void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
     virtual void handleAccess(MemEvent* event, CacheLine* cacheLine, Command cmd);
-    virtual void handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType*> mshrEntry);
+    virtual void handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry);
     virtual void handleWritebackOnAccess(Addr lineAddr, CacheLine* cacheLine, Command type);
     virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
     virtual void handleFetch(MemEvent *event, CacheLine* cacheLine, int _parentId);

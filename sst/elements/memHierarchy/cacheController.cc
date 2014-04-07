@@ -59,6 +59,7 @@ void Cache::processInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool 
     
     bottomCC_->handleInvalidate(event, cacheLine, cmd);   /* Invalidate this cache line */
     mshr_->removeElement(baseAddr, event);                //TODO: delete event;???
+    delete event;
     return;
 }
 
@@ -244,26 +245,33 @@ bool Cache::shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cache
  */
 void Cache::activatePrevEvents(Addr baseAddr){
     if(!mshr_->isHit(baseAddr)) return;
-    vector<mshrType*> mshrEntry = mshr_->removeAll(baseAddr); assert(!mshr_->isHit(baseAddr));
+    vector<mshrType> mshrEntry = mshr_->removeAll(baseAddr); assert(!mshr_->isHit(baseAddr));
     bool cont;    int i = 0;
     d_->debug(_L1_,"---------start--------- Size: %lu\n", mshrEntry.size());
     
-    for(vector<mshrType*>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
-        if((*it)->elem.type() == typeid(Addr)){                             /* Pointer Type */
-            Addr pointerAddr = boost::get<Addr>((*it)->elem);  
+    for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
+        if((*it).elem.type() == typeid(Addr)){                             /* Pointer Type */
+            Addr pointerAddr = boost::get<Addr>((*it).elem);
             d_->debug(_L3_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
-            if(!mshr_->isHit(pointerAddr)){ mshrEntry.erase(it); continue;} /* Entry has been already been processed */
-            vector<mshrType*> pointerMSHR = mshr_->removeAll(pointerAddr);
+            if(!mshr_->isHit(pointerAddr)){ /* Entry has been already been processed, delete mshr entry */
+                //delete *it;
+                mshrEntry.erase(it);
+                continue;
+            }
+            
+            vector<mshrType> pointerMSHR = mshr_->removeAll(pointerAddr);
 
-            for(vector<mshrType*>::iterator it2 = pointerMSHR.begin(); it2 != pointerMSHR.end(); i++){
-                assert((*it2)->elem.type() == typeid(MemEvent*));
-                cont = activatePrevEvent(boost::get<MemEvent*>((*it2)->elem), pointerMSHR, pointerAddr, it2, i);
+            for(vector<mshrType>::iterator it2 = pointerMSHR.begin(); it2 != pointerMSHR.end(); i++){
+                assert((*it2).elem.type() == typeid(MemEvent*));
+                cont = activatePrevEvent(boost::get<MemEvent*>((*it2).elem), pointerMSHR, pointerAddr, it2, i);
                 if(!cont) break;
             }
+            
+            //delete *it;
             mshrEntry.erase(it);
         }
         else{                                                                /* MemEvent Type */
-            cont = activatePrevEvent(boost::get<MemEvent*>((*it)->elem), mshrEntry, baseAddr, it, i);
+            cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, baseAddr, it, i);
             if(!cont) break;
         }
     }
@@ -271,13 +279,15 @@ void Cache::activatePrevEvents(Addr baseAddr){
 }
 
 
-bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType*>& mshrEntry, Addr addr, vector<mshrType*>::iterator it, int i){
+bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr addr, vector<mshrType>::iterator it, int i){
     d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %"PRIx64", addr: %"PRIx64", dst: %s\n", i, CommandString[event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
     d_->debug(_L1_,"--------------------------------------\n");
     this->processEvent(event, true);
     d_->debug(_L1_,"--------------------------------------\n");
-    mshrEntry.erase(it);
 
+    //delete *it;
+    mshrEntry.erase(it);
+    
     if(mshr_->isHit(addr)){
         try{ mshr_->insertAll(addr, mshrEntry); }
         catch(mshrException const& e){

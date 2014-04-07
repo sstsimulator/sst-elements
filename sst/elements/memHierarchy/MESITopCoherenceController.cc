@@ -299,10 +299,11 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
 }
 
 int MESITopCC::lowNetworkNodeLookup(const std::string &name){
-	int id;
+	int id = -1;
 	std::map<string, int>::iterator it = lowNetworkNameMap_.find(name);
 	if(lowNetworkNameMap_.end() == it) {
-		lowNetworkNameMap_[name] = id = lowNetworkNodeCount_++;
+        id = lowNetworkNodeCount_++;
+		lowNetworkNameMap_[name] = id;
 	} else {
 		id = it->second;
 	}

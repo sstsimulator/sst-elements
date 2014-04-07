@@ -36,8 +36,11 @@ enum {ERROR, WARNING, INFO, L0, L1, L2, L3, L4, L5, L6};
 
 struct mshrType {
     boost::variant<Addr, MemEvent*> elem;
-    mshrType(MemEvent* _memEvent) : elem(_memEvent) {}
+    MemEvent* memEvent_;
+    mshrType(MemEvent* _memEvent) : elem(_memEvent), memEvent_(_memEvent) {}
     mshrType(Addr _addr) : elem(_addr) {}
+    //~mshrType(){ delete memEvent_; }
+    
 };
 
 #define MAX_CACHE_CHILDREN (512);

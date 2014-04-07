@@ -1,0 +1,959 @@
+Inserting stop event at cycle 10000ns, 10000000
+cpu0: 1000 Issued Write (9) for address 0xc4f00
+cpu0: 999 Issued Read (c) for address 0x4c154
+cpu0: 998 Issued Read (f) for address 0x45454
+cpu3: 1000 Issued Read (12) for address 0xb7284
+cpu2: 1000 Issued Read (15) for address 0x30624
+cpu3: 999 Issued Read (18) for address 0x51cb4
+cpu1: 1000 Issued Read (1d) for address 0x6b864
+cpu0: 997 Issued Read (20) for address 0x917c8
+cpu2: 999 Issued Read (25) for address 0x8fec
+cpu0: 996 Issued Read (2d) for address 0xd43cc
+cpu0: 995 Issued Read (34) for address 0x63fc4
+cpu2: 998 Issued Read (35) for address 0x9314
+cpu3: 998 Issued Read (3c) for address 0xb9f0c
+cpu3: 997 Issued Read (48) for address 0xe46b4
+cpu3: 996 Issued Read (52) for address 0xe53a8
+cpu0: 994 Issued Read (55) for address 0x367c8
+cpu2: 997 Issued Read (59) for address 0xd6874
+cpu3: 995 Issued Read (5b) for address 0x156e0
+cpu2: 996 Issued Read (66) for address 0x200f8
+cpu1: 999 Issued Read (68) for address 0x91e8c
+cpu2: 995 Issued Read (6d) for address 0xf6c94
+cpu0: Received MemEvent with command 4 (response to 9, addr 0xc4f00) [Time: 354] [6 outstanding requests]
+cpu2: 994 Issued Read (88) for address 0xb94a4
+cpu2: 993 Issued Read (93) for address 0x5df08
+cpu0: Received MemEvent with command 2 (response to c, addr 0x4c154) [Time: 354] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to f, addr 0x45454) [Time: 354] [4 outstanding requests]
+cpu1: 998 Issued Read (a2) for address 0x42270
+cpu0: 993 Issued Read (a6) for address 0xbb5e0
+cpu1: 997 Issued Read (a9) for address 0xb209c
+cpu3: Received MemEvent with command 2 (response to 12, addr 0xb7284) [Time: 354] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 15, addr 0x30624) [Time: 353] [7 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 18, addr 0x51cb4) [Time: 354] [4 outstanding requests]
+cpu0: 992 Issued Read (c2) for address 0x30ebc
+cpu1: Received MemEvent with command 2 (response to 1d, addr 0x6b864) [Time: 352] [3 outstanding requests]
+cpu0: 991 Issued Read (c9) for address 0xe2294
+cpu1: 996 Issued Read (cb) for address 0xe09b0
+cpu0: Received MemEvent with command 2 (response to 20, addr 0x917c8) [Time: 354] [6 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 25, addr 0x8fec) [Time: 356] [6 outstanding requests]
+cpu3: 994 Issued Read (e1) for address 0x87a9c
+cpu0: Received MemEvent with command 2 (response to 2d, addr 0xd43cc) [Time: 354] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 34, addr 0x63fc4) [Time: 354] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 35, addr 0x9314) [Time: 362] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 3c, addr 0xb9f0c) [Time: 357] [4 outstanding requests]
+cpu2: 992 Issued Read (fa) for address 0x69df0
+cpu3: Received MemEvent with command 2 (response to 48, addr 0xe46b4) [Time: 354] [3 outstanding requests]
+cpu1: 995 Issued Read (104) for address 0x55b8c
+cpu2: 991 Issued Read (105) for address 0x4b330
+cpu3: Received MemEvent with command 2 (response to 52, addr 0xe53a8) [Time: 354] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 55, addr 0x367c8) [Time: 360] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 59, addr 0xd6874) [Time: 356] [6 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 5b, addr 0x156e0) [Time: 355] [1 outstanding requests]
+cpu1: 994 Issued Read (11c) for address 0x929e0
+cpu3: 993 Issued Write (11f) for address 0x14ac0
+cpu2: Received MemEvent with command 2 (response to 66, addr 0x200f8) [Time: 354] [5 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 68, addr 0x91e8c) [Time: 360] [5 outstanding requests]
+cpu3: 992 Issued Read (129) for address 0xf0ae4
+cpu2: Received MemEvent with command 2 (response to 6d, addr 0xf6c94) [Time: 360] [4 outstanding requests]
+cpu1: 993 Issued Read (13a) for address 0x149fc
+cpu2: Received MemEvent with command 2 (response to 88, addr 0xb94a4) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 93, addr 0x5df08) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to a2, addr 0x42270) [Time: 354] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to a6, addr 0xbb5e0) [Time: 358] [2 outstanding requests]
+cpu1: 992 Issued Read (152) for address 0x93fb4
+cpu1: Received MemEvent with command 2 (response to a9, addr 0xb209c) [Time: 363] [5 outstanding requests]
+cpu1: 991 Issued Read (159) for address 0xd1cc8
+cpu0: Received MemEvent with command 2 (response to c2, addr 0x30ebc) [Time: 354] [1 outstanding requests]
+cpu2: 990 Issued Read (163) for address 0x56010
+cpu0: Received MemEvent with command 2 (response to c9, addr 0xe2294) [Time: 354] [0 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to cb, addr 0xe09b0) [Time: 361] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to e1, addr 0x87a9c) [Time: 354] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to fa, addr 0x69df0) [Time: 354] [2 outstanding requests]
+cpu1: 990 Issued Read (180) for address 0x5212c
+cpu3: 991 Issued Read (181) for address 0x7ca78
+cpu1: Received MemEvent with command 2 (response to 104, addr 0x55b8c) [Time: 354] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 105, addr 0x4b330) [Time: 362] [1 outstanding requests]
+cpu1: 989 Issued Write (18d) for address 0x608a4
+cpu1: Received MemEvent with command 2 (response to 11c, addr 0x929e0) [Time: 354] [5 outstanding requests]
+cpu3: Received MemEvent with command 4 (response to 11f, addr 0x14ac0) [Time: 354] [2 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 129, addr 0xf0ae4) [Time: 353] [1 outstanding requests]
+cpu0: 990 Issued Read (19a) for address 0xe34a4
+cpu1: Received MemEvent with command 2 (response to 13a, addr 0x149fc) [Time: 354] [4 outstanding requests]
+cpu1: 988 Issued Read (1ae) for address 0xc056c
+cpu2: 989 Issued Read (1b0) for address 0x1c544
+cpu2: 988 Issued Read (1b2) for address 0x52b14
+cpu1: Received MemEvent with command 2 (response to 152, addr 0x93fb4) [Time: 355] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 159, addr 0xd1cc8) [Time: 353] [3 outstanding requests]
+cpu3: 990 Issued Write (1bf) for address 0x477e4
+cpu2: Received MemEvent with command 2 (response to 163, addr 0x56010) [Time: 354] [2 outstanding requests]
+cpu3: 989 Issued Read (1c9) for address 0xed2d4
+cpu2: 987 Issued Read (1cb) for address 0x86c70
+cpu2: 986 Issued Read (1d7) for address 0x2128c
+cpu1: Received MemEvent with command 2 (response to 180, addr 0x5212c) [Time: 354] [2 outstanding requests]
+cpu2: 985 Issued Read (1e0) for address 0x7d614
+cpu3: Received MemEvent with command 2 (response to 181, addr 0x7ca78) [Time: 361] [2 outstanding requests]
+cpu3: 988 Issued Read (1e4) for address 0x83094
+cpu1: 987 Issued Write (1e5) for address 0x45924
+cpu3: 987 Issued Read (1eb) for address 0xc0c54
+cpu0: 989 Issued Read (1ee) for address 0xc6008
+cpu1: Received MemEvent with command 4 (response to 18d, addr 0x608a4) [Time: 354] [2 outstanding requests]
+cpu2: 984 Issued Read (1f6) for address 0x27f38
+cpu3: 986 Issued Read (204) for address 0xbb130
+cpu1: 986 Issued Read (209) for address 0x895ec
+cpu0: Received MemEvent with command 2 (response to 19a, addr 0xe34a4) [Time: 354] [1 outstanding requests]
+cpu1: 985 Issued Read (219) for address 0x3f7f4
+cpu2: 983 Issued Read (224) for address 0x12284
+cpu1: 984 Issued Write (22a) for address 0x872cc
+cpu0: 988 Issued Read (22e) for address 0x90f30
+cpu1: Received MemEvent with command 2 (response to 1ae, addr 0xc056c) [Time: 354] [4 outstanding requests]
+cpu3: 985 Issued Read (23a) for address 0x56ef4
+cpu1: 983 Issued Read (23d) for address 0x4b74c
+cpu2: Received MemEvent with command 2 (response to 1b0, addr 0x1c544) [Time: 359] [6 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 1b2, addr 0x52b14) [Time: 364] [5 outstanding requests]
+cpu0: 987 Issued Write (246) for address 0xca834
+cpu0: 986 Issued Read (24c) for address 0x2fc04
+cpu3: Received MemEvent with command 4 (response to 1bf, addr 0x477e4) [Time: 354] [5 outstanding requests]
+cpu3: 984 Issued Read (256) for address 0x2b33c
+cpu1: 982 Issued Read (258) for address 0xf6348
+cpu1: 981 Issued Read (267) for address 0x59684
+cpu2: 982 Issued Read (26d) for address 0xa284
+cpu1: 980 Issued Read (271) for address 0x3a46c
+cpu3: Received MemEvent with command 2 (response to 1c9, addr 0xed2d4) [Time: 354] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 1cb, addr 0x86c70) [Time: 354] [5 outstanding requests]
+cpu3: 983 Issued Read (283) for address 0x98c88
+cpu1: 979 Issued Read (285) for address 0xb884c
+cpu2: Received MemEvent with command 2 (response to 1d7, addr 0x2128c) [Time: 354] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 1e0, addr 0x7d614) [Time: 354] [3 outstanding requests]
+cpu2: 981 Issued Read (29f) for address 0xf2dac
+cpu3: Received MemEvent with command 2 (response to 1e4, addr 0x83094) [Time: 352] [5 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to 1e5, addr 0x45924) [Time: 359] [8 outstanding requests]
+cpu2: 980 Issued Write (2a5) for address 0x9ad0c
+cpu3: Received MemEvent with command 2 (response to 1eb, addr 0xc0c54) [Time: 354] [4 outstanding requests]
+cpu3: 982 Issued Read (2ae) for address 0xd9378
+cpu0: Received MemEvent with command 2 (response to 1ee, addr 0xc6008) [Time: 358] [3 outstanding requests]
+cpu2: 979 Issued Read (2bb) for address 0xbde74
+cpu2: Received MemEvent with command 2 (response to 1f6, addr 0x27f38) [Time: 354] [5 outstanding requests]
+cpu0: 985 Issued Read (2c5) for address 0xd1f50
+cpu1: 978 Issued Read (2c9) for address 0x73660
+cpu3: Received MemEvent with command 2 (response to 204, addr 0xbb130) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 209, addr 0x895ec) [Time: 358] [8 outstanding requests]
+cpu0: 984 Issued Read (2dd) for address 0x4ae28
+cpu2: 978 Issued Read (2e9) for address 0x938e8
+cpu1: Received MemEvent with command 2 (response to 219, addr 0x3f7f4) [Time: 354] [7 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 224, addr 0x12284) [Time: 354] [5 outstanding requests]
+cpu0: 983 Issued Read (2f7) for address 0xf15e8
+cpu1: Received MemEvent with command 4 (response to 22a, addr 0x872cc) [Time: 354] [6 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 22e, addr 0x90f30) [Time: 354] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 23a, addr 0x56ef4) [Time: 354] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 23d, addr 0x4b74c) [Time: 360] [5 outstanding requests]
+cpu3: 981 Issued Read (315) for address 0xb3a64
+cpu0: Received MemEvent with command 4 (response to 246, addr 0xca834) [Time: 354] [4 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 24c, addr 0x2fc04) [Time: 354] [3 outstanding requests]
+cpu1: 977 Issued Read (31e) for address 0xf584
+cpu3: 980 Issued Read (320) for address 0x82078
+cpu3: Received MemEvent with command 2 (response to 256, addr 0x2b33c) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 258, addr 0xf6348) [Time: 361] [5 outstanding requests]
+cpu0: 982 Issued Read (32f) for address 0x6db48
+cpu1: Received MemEvent with command 2 (response to 267, addr 0x59684) [Time: 353] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 26d, addr 0xa284) [Time: 358] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 271, addr 0x3a46c) [Time: 361] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 283, addr 0x98c88) [Time: 354] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 285, addr 0xb884c) [Time: 359] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 29f, addr 0xf2dac) [Time: 354] [3 outstanding requests]
+cpu3: 979 Issued Read (352) for address 0xe5054
+cpu2: Received MemEvent with command 4 (response to 2a5, addr 0x9ad0c) [Time: 353] [2 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 2ae, addr 0xd9378) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 2bb, addr 0xbde74) [Time: 354] [1 outstanding requests]
+cpu3: 978 Issued Read (364) for address 0x56da0
+cpu0: Received MemEvent with command 2 (response to 2c5, addr 0xd1f50) [Time: 354] [3 outstanding requests]
+cpu2: 977 Issued Read (36a) for address 0x6ffc
+cpu1: Received MemEvent with command 2 (response to 2c9, addr 0x73660) [Time: 357] [1 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 2dd, addr 0x4ae28) [Time: 354] [2 outstanding requests]
+cpu3: 977 Issued Read (372) for address 0xff714
+cpu2: 976 Issued Read (376) for address 0xb4244
+cpu2: Received MemEvent with command 2 (response to 2e9, addr 0x938e8) [Time: 354] [2 outstanding requests]
+cpu2: 975 Issued Read (37f) for address 0xcb57c
+cpu3: 976 Issued Read (387) for address 0x1d8b0
+cpu0: Received MemEvent with command 2 (response to 2f7, addr 0xf15e8) [Time: 354] [1 outstanding requests]
+cpu2: 974 Issued Write (38a) for address 0x763a4
+cpu3: 975 Issued Read (38c) for address 0x91594
+cpu0: 981 Issued Read (393) for address 0xcabb4
+cpu3: Received MemEvent with command 2 (response to 315, addr 0xb3a64) [Time: 354] [6 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 31e, addr 0xf584) [Time: 354] [0 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 320, addr 0x82078) [Time: 358] [5 outstanding requests]
+cpu0: 980 Issued Read (3a8) for address 0x47ecc
+cpu1: 976 Issued Read (3ae) for address 0xf9e98
+cpu0: Received MemEvent with command 2 (response to 32f, addr 0x6db48) [Time: 354] [2 outstanding requests]
+cpu0: 979 Issued Read (3b3) for address 0x698f0
+cpu2: 973 Issued Read (3b6) for address 0x354dc
+cpu3: 974 Issued Read (3b8) for address 0x1f594
+cpu1: 975 Issued Write (3bb) for address 0x5d860
+cpu3: 973 Issued Read (3d3) for address 0xaf870
+cpu3: Received MemEvent with command 2 (response to 352, addr 0xe5054) [Time: 354] [6 outstanding requests]
+cpu0: 978 Issued Read (3db) for address 0xc1f54
+cpu0: 977 Issued Read (3df) for address 0x5e8b0
+cpu3: Received MemEvent with command 2 (response to 364, addr 0x56da0) [Time: 354] [5 outstanding requests]
+cpu2: 972 Issued Read (3f9) for address 0x13f98
+cpu3: 972 Issued Read (400) for address 0x574e4
+cpu2: Received MemEvent with command 2 (response to 36a, addr 0x6ffc) [Time: 354] [5 outstanding requests]
+cpu2: 971 Issued Read (404) for address 0x9e0bc
+cpu3: 971 Issued Read (40a) for address 0xfe260
+cpu1: 974 Issued Read (40e) for address 0x320
+cpu2: 970 Issued Read (412) for address 0xcb564
+cpu3: Received MemEvent with command 2 (response to 372, addr 0xff714) [Time: 354] [6 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 376, addr 0xb4244) [Time: 357] [6 outstanding requests]
+cpu2: 969 Issued Read (41b) for address 0x757fc
+cpu2: Received MemEvent with command 2 (response to 37f, addr 0xcb57c) [Time: 354] [6 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 412, addr 0xcb564) [Time: 29] [5 outstanding requests]
+cpu3: 970 Issued Read (428) for address 0xbb9f0
+cpu3: Received MemEvent with command 2 (response to 387, addr 0x1d8b0) [Time: 354] [6 outstanding requests]
+cpu2: Received MemEvent with command 4 (response to 38a, addr 0x763a4) [Time: 354] [4 outstanding requests]
+cpu1: 973 Issued Read (439) for address 0xbbd88
+cpu3: Received MemEvent with command 2 (response to 38c, addr 0x91594) [Time: 357] [5 outstanding requests]
+cpu2: 968 Issued Read (43b) for address 0xcd918
+cpu0: Received MemEvent with command 2 (response to 393, addr 0xcabb4) [Time: 354] [4 outstanding requests]
+cpu2: 967 Issued Read (453) for address 0x4a0a8
+cpu2: 966 Issued Read (458) for address 0xa784c
+cpu0: Received MemEvent with command 2 (response to 3a8, addr 0x47ecc) [Time: 354] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 3ae, addr 0xf9e98) [Time: 353] [3 outstanding requests]
+cpu0: 976 Issued Read (464) for address 0x2cf70
+cpu0: 975 Issued Read (46b) for address 0xe81f4
+cpu0: Received MemEvent with command 2 (response to 3b3, addr 0x698f0) [Time: 354] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 3b6, addr 0x354dc) [Time: 357] [6 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 3b8, addr 0x1f594) [Time: 363] [4 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to 3bb, addr 0x5d860) [Time: 366] [2 outstanding requests]
+cpu2: 965 Issued Read (477) for address 0xb01f4
+cpu3: Received MemEvent with command 2 (response to 3d3, addr 0xaf870) [Time: 354] [3 outstanding requests]
+cpu1: 972 Issued Read (48b) for address 0xb6ad0
+cpu1: 971 Issued Read (492) for address 0x8cb3c
+cpu0: Received MemEvent with command 2 (response to 3db, addr 0xc1f54) [Time: 354] [3 outstanding requests]
+cpu3: 969 Issued Read (495) for address 0x72598
+cpu0: Received MemEvent with command 2 (response to 3df, addr 0x5e8b0) [Time: 356] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 3f9, addr 0x13f98) [Time: 354] [6 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 400, addr 0x574e4) [Time: 356] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 404, addr 0x9e0bc) [Time: 358] [5 outstanding requests]
+cpu1: 970 Issued Read (4b7) for address 0xe0fc0
+cpu3: Received MemEvent with command 2 (response to 40a, addr 0xfe260) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 40e, addr 0x320) [Time: 360] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 41b, addr 0x757fc) [Time: 354] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 428, addr 0xbb9f0) [Time: 353] [1 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 439, addr 0xbbd88) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 43b, addr 0xcd918) [Time: 359] [3 outstanding requests]
+cpu0: 974 Issued Read (4d6) for address 0xca7b0
+cpu2: Received MemEvent with command 2 (response to 453, addr 0x4a0a8) [Time: 354] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 458, addr 0xa784c) [Time: 352] [1 outstanding requests]
+cpu3: 968 Issued Write (4de) for address 0x5c34
+cpu2: 964 Issued Read (4e3) for address 0xaa84
+cpu0: Received MemEvent with command 2 (response to 464, addr 0x2cf70) [Time: 354] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 46b, addr 0xe81f4) [Time: 356] [1 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 477, addr 0xb01f4) [Time: 354] [1 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 48b, addr 0xb6ad0) [Time: 354] [2 outstanding requests]
+cpu1: 969 Issued Read (4f8) for address 0xa1174
+cpu1: Received MemEvent with command 2 (response to 492, addr 0x8cb3c) [Time: 354] [2 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 495, addr 0x72598) [Time: 358] [1 outstanding requests]
+cpu2: 963 Issued Write (502) for address 0xdb054
+cpu0: 973 Issued Read (504) for address 0xac580
+cpu3: 967 Issued Read (50b) for address 0xf1158
+cpu2: 962 Issued Read (511) for address 0x467f4
+cpu1: Received MemEvent with command 2 (response to 4b7, addr 0xe0fc0) [Time: 354] [1 outstanding requests]
+cpu0: 972 Issued Read (523) for address 0xbb6c8
+cpu3: 966 Issued Read (529) for address 0xcc5a4
+cpu1: 968 Issued Read (52e) for address 0x233e0
+cpu0: Received MemEvent with command 2 (response to 4d6, addr 0xca7b0) [Time: 354] [2 outstanding requests]
+cpu3: Received MemEvent with command 4 (response to 4de, addr 0x5c34) [Time: 354] [2 outstanding requests]
+cpu1: 967 Issued Read (539) for address 0xb6250
+cpu2: Received MemEvent with command 2 (response to 4e3, addr 0xaa84) [Time: 354] [2 outstanding requests]
+cpu2: 961 Issued Read (53f) for address 0x120a8
+cpu2: 960 Issued Read (553) for address 0xec880
+cpu1: Received MemEvent with command 2 (response to 4f8, addr 0xa1174) [Time: 354] [2 outstanding requests]
+cpu2: Received MemEvent with command 4 (response to 502, addr 0xdb054) [Time: 354] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 504, addr 0xac580) [Time: 356] [1 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 50b, addr 0xf1158) [Time: 354] [1 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 511, addr 0x467f4) [Time: 354] [2 outstanding requests]
+cpu2: 959 Issued Read (569) for address 0x7bb0c
+cpu1: 966 Issued Read (56d) for address 0xe8380
+cpu2: 958 Issued Read (571) for address 0x699b4
+cpu1: 965 Issued Write (577) for address 0x48b44
+cpu1: 964 Issued Read (57c) for address 0x3f2d8
+cpu1: 963 Issued Read (587) for address 0x3ab34
+cpu0: Received MemEvent with command 2 (response to 523, addr 0xbb6c8) [Time: 354] [0 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 529, addr 0xcc5a4) [Time: 354] [0 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 52e, addr 0x233e0) [Time: 354] [5 outstanding requests]
+cpu3: 965 Issued Read (59c) for address 0x69f04
+cpu1: Received MemEvent with command 2 (response to 539, addr 0xb6250) [Time: 354] [4 outstanding requests]
+cpu1: 962 Issued Read (59f) for address 0xa0c5c
+cpu2: 957 Issued Read (5a6) for address 0x8d28c
+cpu2: Received MemEvent with command 2 (response to 53f, addr 0x120a8) [Time: 354] [4 outstanding requests]
+cpu3: 964 Issued Read (5ac) for address 0xa5618
+cpu0: 971 Issued Write (5ae) for address 0xd56ac
+cpu1: 961 Issued Read (5b2) for address 0xc78a8
+cpu2: 956 Issued Read (5bf) for address 0x1bdc
+cpu2: Received MemEvent with command 2 (response to 553, addr 0xec880) [Time: 354] [4 outstanding requests]
+cpu1: 960 Issued Read (5c5) for address 0xa7c64
+cpu1: 959 Issued Read (5d2) for address 0xa870c
+cpu1: 958 Issued Read (5d5) for address 0x36058
+cpu0: 970 Issued Read (5d8) for address 0x873b0
+cpu2: Received MemEvent with command 2 (response to 569, addr 0x7bb0c) [Time: 354] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 56d, addr 0xe8380) [Time: 357] [8 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 571, addr 0x699b4) [Time: 356] [2 outstanding requests]
+cpu0: 969 Issued Read (5fb) for address 0x634b4
+cpu1: Received MemEvent with command 4 (response to 577, addr 0x48b44) [Time: 354] [7 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 57c, addr 0x3f2d8) [Time: 354] [6 outstanding requests]
+cpu1: 957 Issued Read (606) for address 0x9bfe4
+cpu1: Received MemEvent with command 2 (response to 587, addr 0x3ab34) [Time: 354] [6 outstanding requests]
+cpu2: 955 Issued Read (619) for address 0xac7f0
+cpu2: 954 Issued Read (61d) for address 0xf87a4
+cpu1: 956 Issued Read (621) for address 0x50f94
+cpu0: 968 Issued Read (624) for address 0xb9a7c
+cpu0: 967 Issued Write (62d) for address 0xc56cc
+cpu3: Received MemEvent with command 2 (response to 59c, addr 0x69f04) [Time: 354] [1 outstanding requests]
+cpu2: 953 Issued Read (633) for address 0xa938c
+cpu1: Received MemEvent with command 2 (response to 59f, addr 0xa0c5c) [Time: 353] [6 outstanding requests]
+cpu0: 966 Issued Read (637) for address 0x18b5c
+cpu2: Received MemEvent with command 2 (response to 5a6, addr 0x8d28c) [Time: 354] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 5ac, addr 0xa5618) [Time: 353] [0 outstanding requests]
+cpu0: Received MemEvent with command 4 (response to 5ae, addr 0xd56ac) [Time: 357] [5 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 5b2, addr 0xc78a8) [Time: 352] [5 outstanding requests]
+cpu3: 963 Issued Read (653) for address 0xb925c
+cpu0: 965 Issued Read (657) for address 0x317d4
+cpu2: 952 Issued Read (65b) for address 0xdd220
+cpu1: 955 Issued Read (65e) for address 0x189ec
+cpu2: Received MemEvent with command 2 (response to 5bf, addr 0x1bdc) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 5c5, addr 0xa7c64) [Time: 355] [5 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 5d2, addr 0xa870c) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 5d5, addr 0x36058) [Time: 360] [3 outstanding requests]
+cpu2: 951 Issued Read (67a) for address 0xc68dc
+cpu3: 962 Issued Read (67d) for address 0xa148
+cpu3: 961 Issued Read (682) for address 0x9bbc8
+cpu0: Received MemEvent with command 2 (response to 5d8, addr 0x873b0) [Time: 365] [5 outstanding requests]
+cpu1: 954 Issued Read (689) for address 0xb7ab4
+cpu2: 950 Issued Read (698) for address 0xa3908
+cpu0: Received MemEvent with command 2 (response to 5fb, addr 0x634b4) [Time: 354] [4 outstanding requests]
+cpu3: 960 Issued Read (6a8) for address 0xa9ff8
+cpu1: Received MemEvent with command 2 (response to 606, addr 0x9bfe4) [Time: 354] [3 outstanding requests]
+cpu2: 949 Issued Read (6b0) for address 0x9aa9c
+cpu2: 948 Issued Read (6b8) for address 0x5eadc
+cpu1: 953 Issued Read (6bd) for address 0xaced0
+cpu0: 964 Issued Read (6c2) for address 0x3e27c
+cpu3: 959 Issued Read (6c8) for address 0xe8b70
+cpu2: Received MemEvent with command 2 (response to 619, addr 0xac7f0) [Time: 354] [7 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 61d, addr 0xf87a4) [Time: 352] [6 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 621, addr 0x50f94) [Time: 354] [3 outstanding requests]
+cpu2: 947 Issued Write (6d8) for address 0xcb4d8
+cpu0: Received MemEvent with command 2 (response to 624, addr 0xb9a7c) [Time: 355] [4 outstanding requests]
+cpu0: Received MemEvent with command 4 (response to 62d, addr 0xc56cc) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 633, addr 0xa938c) [Time: 354] [6 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 637, addr 0x18b5c) [Time: 358] [2 outstanding requests]
+cpu2: 946 Issued Read (6f2) for address 0x536c8
+cpu1: 952 Issued Read (6f6) for address 0x9d83c
+cpu2: 945 Issued Read (701) for address 0x3c424
+cpu3: 958 Issued Read (707) for address 0xe68d4
+cpu3: Received MemEvent with command 2 (response to 653, addr 0xb925c) [Time: 354] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 657, addr 0x317d4) [Time: 352] [1 outstanding requests]
+cpu2: 944 Issued Read (70f) for address 0x59250
+cpu2: Received MemEvent with command 2 (response to 65b, addr 0xdd220) [Time: 352] [8 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 65e, addr 0x189ec) [Time: 357] [3 outstanding requests]
+cpu2: 943 Issued Read (723) for address 0x4ca34
+cpu2: Received MemEvent with command 2 (response to 67a, addr 0xc68dc) [Time: 354] [8 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 67d, addr 0xa148) [Time: 360] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 682, addr 0x9bbc8) [Time: 365] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 689, addr 0xb7ab4) [Time: 354] [2 outstanding requests]
+cpu3: 957 Issued Write (744) for address 0x8fd1c
+cpu2: Received MemEvent with command 2 (response to 698, addr 0xa3908) [Time: 354] [7 outstanding requests]
+cpu1: 951 Issued Write (749) for address 0x9ce08
+cpu3: 956 Issued Read (74f) for address 0xac70c
+cpu3: Received MemEvent with command 2 (response to 6a8, addr 0xa9ff8) [Time: 354] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 6b0, addr 0x9aa9c) [Time: 354] [6 outstanding requests]
+cpu1: 950 Issued Write (75c) for address 0x66574
+cpu2: Received MemEvent with command 2 (response to 6b8, addr 0x5eadc) [Time: 352] [5 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 6bd, addr 0xaced0) [Time: 352] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 6c2, addr 0x3e27c) [Time: 354] [0 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 6c8, addr 0xe8b70) [Time: 354] [3 outstanding requests]
+cpu2: 942 Issued Read (76e) for address 0x53b24
+cpu2: Received MemEvent with command 4 (response to 6d8, addr 0xcb4d8) [Time: 354] [5 outstanding requests]
+cpu1: 949 Issued Read (776) for address 0xba278
+cpu3: 955 Issued Read (787) for address 0x8c46c
+cpu2: Received MemEvent with command 2 (response to 6f2, addr 0x536c8) [Time: 354] [4 outstanding requests]
+cpu2: 941 Issued Read (78f) for address 0x7cad4
+cpu0: 963 Issued Read (790) for address 0x2713c
+cpu1: Received MemEvent with command 2 (response to 6f6, addr 0x9d83c) [Time: 356] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 701, addr 0x3c424) [Time: 353] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 707, addr 0xe68d4) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 70f, addr 0x59250) [Time: 354] [3 outstanding requests]
+cpu1: 948 Issued Write (79d) for address 0x249d4
+cpu0: 962 Issued Read (7ac) for address 0xecf8
+cpu2: Received MemEvent with command 2 (response to 723, addr 0x4ca34) [Time: 354] [2 outstanding requests]
+cpu1: 947 Issued Read (7b1) for address 0x13ac4
+cpu3: Received MemEvent with command 4 (response to 744, addr 0x8fd1c) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to 749, addr 0x9ce08) [Time: 354] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 74f, addr 0xac70c) [Time: 354] [1 outstanding requests]
+cpu3: 954 Issued Read (7d0) for address 0x642a8
+cpu3: 953 Issued Read (7d1) for address 0xb8f2c
+cpu2: 940 Issued Read (7d7) for address 0xa2ca0
+cpu1: Received MemEvent with command 4 (response to 75c, addr 0x66574) [Time: 354] [3 outstanding requests]
+cpu3: 952 Issued Read (7e1) for address 0xa6108
+cpu0: 961 Issued Read (7ee) for address 0x8db74
+cpu2: Received MemEvent with command 2 (response to 76e, addr 0x53b24) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 776, addr 0xba278) [Time: 354] [2 outstanding requests]
+cpu2: 939 Issued Read (7fb) for address 0xc02b4
+cpu3: 951 Issued Write (7ff) for address 0xc49c8
+cpu3: Received MemEvent with command 2 (response to 787, addr 0x8c46c) [Time: 354] [4 outstanding requests]
+cpu3: 950 Issued Write (80b) for address 0x5f2a8
+cpu2: Received MemEvent with command 2 (response to 78f, addr 0x7cad4) [Time: 354] [2 outstanding requests]
+cpu2: 938 Issued Read (810) for address 0x2f4c
+cpu0: 960 Issued Read (813) for address 0x21fe0
+cpu0: Received MemEvent with command 2 (response to 790, addr 0x2713c) [Time: 361] [3 outstanding requests]
+cpu2: 937 Issued Read (817) for address 0x60370
+cpu3: 949 Issued Read (81c) for address 0x96a80
+cpu1: 946 Issued Read (826) for address 0xe55e0
+cpu1: Received MemEvent with command 4 (response to 79d, addr 0x249d4) [Time: 354] [2 outstanding requests]
+cpu1: 945 Issued Read (82e) for address 0x84f04
+cpu0: Received MemEvent with command 2 (response to 7ac, addr 0xecf8) [Time: 354] [2 outstanding requests]
+cpu0: 959 Issued Read (837) for address 0x87510
+cpu2: 936 Issued Read (83d) for address 0x85740
+cpu1: Received MemEvent with command 2 (response to 7b1, addr 0x13ac4) [Time: 354] [2 outstanding requests]
+cpu1: 944 Issued Read (841) for address 0x16b68
+cpu2: 935 Issued Read (845) for address 0xe685c
+cpu0: 958 Issued Read (85e) for address 0xbd2cc
+cpu1: 943 Issued Read (86c) for address 0x2f7f8
+cpu1: 942 Issued Read (873) for address 0xe8f4c
+cpu2: 934 Issued Read (877) for address 0xb881c
+cpu0: 957 Issued Read (87b) for address 0xae858
+cpu3: Received MemEvent with command 2 (response to 7d0, addr 0x642a8) [Time: 354] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 7d1, addr 0xb8f2c) [Time: 361] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 7d7, addr 0xa2ca0) [Time: 354] [6 outstanding requests]
+cpu3: 948 Issued Read (88c) for address 0xb3610
+cpu3: Received MemEvent with command 2 (response to 7e1, addr 0xa6108) [Time: 354] [4 outstanding requests]
+cpu2: 933 Issued Read (89f) for address 0x3f83c
+cpu2: 932 Issued Read (8a7) for address 0xb1538
+cpu0: Received MemEvent with command 2 (response to 7ee, addr 0x8db74) [Time: 354] [4 outstanding requests]
+cpu1: 941 Issued Read (8ae) for address 0xba1f4
+cpu1: 940 Issued Read (8af) for address 0x40d20
+cpu0: 956 Issued Read (8b3) for address 0xf54f0
+cpu0: 955 Issued Read (8b8) for address 0x9180c
+cpu3: 947 Issued Read (8bd) for address 0x8c368
+cpu3: 946 Issued Read (8c2) for address 0x76994
+cpu2: Received MemEvent with command 2 (response to 7fb, addr 0xc02b4) [Time: 354] [7 outstanding requests]
+cpu3: Received MemEvent with command 4 (response to 7ff, addr 0xc49c8) [Time: 359] [5 outstanding requests]
+cpu0: 954 Issued Read (8df) for address 0x279cc
+cpu3: Received MemEvent with command 4 (response to 80b, addr 0x5f2a8) [Time: 354] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 810, addr 0x2f4c) [Time: 356] [6 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 813, addr 0x21fe0) [Time: 356] [6 outstanding requests]
+cpu3: 945 Issued Read (8ec) for address 0xef544
+cpu2: Received MemEvent with command 2 (response to 817, addr 0x60370) [Time: 359] [5 outstanding requests]
+cpu3: 944 Issued Read (8f1) for address 0xd5368
+cpu0: 953 Issued Read (8f4) for address 0xaa2f8
+cpu3: Received MemEvent with command 2 (response to 81c, addr 0x96a80) [Time: 354] [5 outstanding requests]
+cpu2: 931 Issued Read (8fa) for address 0x126a4
+cpu1: 939 Issued Read (901) for address 0x10c74
+cpu1: Received MemEvent with command 2 (response to 826, addr 0xe55e0) [Time: 354] [7 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 82e, addr 0x84f04) [Time: 353] [6 outstanding requests]
+cpu2: 930 Issued Read (918) for address 0x8de04
+cpu0: Received MemEvent with command 2 (response to 837, addr 0x87510) [Time: 354] [6 outstanding requests]
+cpu0: 952 Issued Read (91e) for address 0xd7834
+cpu2: Received MemEvent with command 2 (response to 83d, addr 0x85740) [Time: 354] [6 outstanding requests]
+cpu0: 951 Issued Read (929) for address 0x5298
+cpu1: Received MemEvent with command 2 (response to 841, addr 0x16b68) [Time: 356] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 845, addr 0xe685c) [Time: 361] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 85e, addr 0xbd2cc) [Time: 354] [7 outstanding requests]
+cpu2: 929 Issued Read (949) for address 0xfe720
+cpu2: 928 Issued Read (94e) for address 0x8bfb0
+cpu2: 927 Issued Read (952) for address 0x73688
+cpu1: Received MemEvent with command 2 (response to 86c, addr 0x2f7f8) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 873, addr 0xe8f4c) [Time: 354] [3 outstanding requests]
+cpu2: 926 Issued Write (966) for address 0x6baac
+cpu2: Received MemEvent with command 2 (response to 877, addr 0xb881c) [Time: 358] [8 outstanding requests]
+cpu3: 943 Issued Read (96d) for address 0x28690
+cpu0: Received MemEvent with command 2 (response to 87b, addr 0xae858) [Time: 364] [6 outstanding requests]
+cpu3: 942 Issued Read (978) for address 0x97380
+cpu0: 950 Issued Read (97c) for address 0x8ccc8
+cpu3: Received MemEvent with command 2 (response to 88c, addr 0xb3610) [Time: 354] [6 outstanding requests]
+cpu0: 949 Issued Read (98c) for address 0xfc2bc
+cpu2: Received MemEvent with command 2 (response to 89f, addr 0x3f83c) [Time: 354] [7 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 8a7, addr 0xb1538) [Time: 354] [6 outstanding requests]
+cpu1: 938 Issued Write (9a4) for address 0xa810
+cpu1: Received MemEvent with command 2 (response to 8ae, addr 0xba1f4) [Time: 353] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 8af, addr 0x40d20) [Time: 360] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 8b3, addr 0xf54f0) [Time: 367] [7 outstanding requests]
+cpu2: 925 Issued Read (9b2) for address 0xd5eac
+cpu0: Received MemEvent with command 2 (response to 8b8, addr 0x9180c) [Time: 370] [6 outstanding requests]
+cpu1: 937 Issued Read (9ba) for address 0x7f9b4
+cpu3: Received MemEvent with command 2 (response to 8bd, addr 0x8c368) [Time: 366] [5 outstanding requests]
+cpu2: 924 Issued Read (9c3) for address 0xc0d1c
+cpu3: Received MemEvent with command 2 (response to 8c2, addr 0x76994) [Time: 368] [4 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 8df, addr 0x279cc) [Time: 354] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 8ec, addr 0xef544) [Time: 354] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 8f1, addr 0xd5368) [Time: 356] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 8f4, addr 0xaa2f8) [Time: 362] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 8fa, addr 0x126a4) [Time: 360] [7 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 901, addr 0x10c74) [Time: 360] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 918, addr 0x8de04) [Time: 354] [6 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 91e, addr 0xd7834) [Time: 358] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 929, addr 0x5298) [Time: 352] [2 outstanding requests]
+cpu1: 936 Issued Read (9f9) for address 0xdd4c8
+cpu3: 941 Issued Read (a07) for address 0x2c64c
+cpu0: 948 Issued Write (a0a) for address 0xe2b70
+cpu0: 947 Issued Read (a0e) for address 0xf9b28
+cpu2: Received MemEvent with command 2 (response to 949, addr 0xfe720) [Time: 354] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 94e, addr 0x8bfb0) [Time: 359] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 952, addr 0x73688) [Time: 362] [3 outstanding requests]
+cpu3: 940 Issued Read (a1c) for address 0x5ef50
+cpu2: Received MemEvent with command 4 (response to 966, addr 0x6baac) [Time: 354] [2 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 96d, addr 0x28690) [Time: 354] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to 978, addr 0x97380) [Time: 354] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to 97c, addr 0x8ccc8) [Time: 360] [3 outstanding requests]
+cpu3: 939 Issued Read (a30) for address 0xea724
+cpu0: Received MemEvent with command 2 (response to 98c, addr 0xfc2bc) [Time: 354] [2 outstanding requests]
+cpu1: 935 Issued Read (a36) for address 0xb1660
+cpu1: Received MemEvent with command 4 (response to 9a4, addr 0xa810) [Time: 354] [3 outstanding requests]
+cpu1: 934 Issued Read (a48) for address 0xe985c
+cpu2: Received MemEvent with command 2 (response to 9b2, addr 0xd5eac) [Time: 354] [1 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to 9ba, addr 0x7f9b4) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to 9c3, addr 0xc0d1c) [Time: 354] [0 outstanding requests]
+cpu3: 938 Issued Read (a52) for address 0xfc9c4
+cpu1: 933 Issued Read (a53) for address 0x1d978
+cpu3: 937 Issued Read (a5f) for address 0x274c
+cpu0: 946 Issued Read (a6c) for address 0x86fb0
+cpu1: 932 Issued Read (a6e) for address 0xf8ae8
+cpu2: 923 Issued Read (a74) for address 0x8a7e4
+cpu2: 922 Issued Read (a78) for address 0x5e1e8
+cpu1: Received MemEvent with command 2 (response to 9f9, addr 0xdd4c8) [Time: 354] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to a07, addr 0x2c64c) [Time: 354] [4 outstanding requests]
+cpu0: Received MemEvent with command 4 (response to a0a, addr 0xe2b70) [Time: 355] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to a0e, addr 0xf9b28) [Time: 354] [1 outstanding requests]
+cpu2: 921 Issued Write (a94) for address 0xf5ab0
+cpu3: Received MemEvent with command 2 (response to a1c, addr 0x5ef50) [Time: 354] [3 outstanding requests]
+cpu1: 931 Issued Write (a9d) for address 0x71d94
+cpu0: 945 Issued Read (aac) for address 0x250a4
+cpu3: Received MemEvent with command 2 (response to a30, addr 0xea724) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to a36, addr 0xb1660) [Time: 354] [4 outstanding requests]
+cpu0: 944 Issued Write (ab3) for address 0x20ae4
+cpu1: 930 Issued Read (ab7) for address 0x13e80
+cpu0: 943 Issued Read (abc) for address 0x410d8
+cpu3: 936 Issued Read (ac2) for address 0x261c4
+cpu1: Received MemEvent with command 2 (response to a48, addr 0xe985c) [Time: 354] [4 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to a52, addr 0xfc9c4) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to a53, addr 0x1d978) [Time: 361] [3 outstanding requests]
+cpu0: 942 Issued Read (ae0) for address 0x5aa28
+cpu2: 920 Issued Read (ae3) for address 0xcca18
+cpu2: 919 Issued Read (ae4) for address 0xfb4c4
+cpu1: 929 Issued Read (aed) for address 0x9b6a0
+cpu3: Received MemEvent with command 2 (response to a5f, addr 0x274c) [Time: 354] [1 outstanding requests]
+cpu1: 928 Issued Read (af2) for address 0x4ac34
+cpu0: 941 Issued Read (af6) for address 0x8cc5c
+cpu0: Received MemEvent with command 2 (response to a6c, addr 0x86fb0) [Time: 354] [5 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to a6e, addr 0xf8ae8) [Time: 358] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to a74, addr 0x8a7e4) [Time: 358] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to a78, addr 0x5e1e8) [Time: 359] [3 outstanding requests]
+cpu2: 918 Issued Read (b17) for address 0x9af70
+cpu2: Received MemEvent with command 4 (response to a94, addr 0xf5ab0) [Time: 354] [3 outstanding requests]
+cpu3: 935 Issued Read (b2b) for address 0xea60
+cpu1: Received MemEvent with command 4 (response to a9d, addr 0x71d94) [Time: 354] [3 outstanding requests]
+cpu3: 934 Issued Read (b38) for address 0x247b0
+cpu0: Received MemEvent with command 2 (response to aac, addr 0x250a4) [Time: 354] [4 outstanding requests]
+cpu0: 940 Issued Read (b3b) for address 0x8dabc
+cpu0: Received MemEvent with command 4 (response to ab3, addr 0x20ae4) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to ab7, addr 0x13e80) [Time: 354] [2 outstanding requests]
+cpu3: 933 Issued Read (b4d) for address 0xa8780
+cpu0: Received MemEvent with command 2 (response to abc, addr 0x410d8) [Time: 354] [3 outstanding requests]
+cpu3: 932 Issued Read (b50) for address 0xa4b8c
+cpu3: Received MemEvent with command 2 (response to ac2, addr 0x261c4) [Time: 355] [4 outstanding requests]
+cpu1: 927 Issued Read (b5e) for address 0x9d994
+cpu1: 926 Issued Read (b62) for address 0xb5bf0
+cpu1: 925 Issued Write (b66) for address 0xc588
+cpu0: Received MemEvent with command 2 (response to ae0, addr 0x5aa28) [Time: 354] [2 outstanding requests]
+cpu3: 931 Issued Read (b74) for address 0xfb628
+cpu2: Received MemEvent with command 2 (response to ae3, addr 0xcca18) [Time: 354] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to ae4, addr 0xfb4c4) [Time: 361] [1 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to aed, addr 0x9b6a0) [Time: 363] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to af2, addr 0x4ac34) [Time: 364] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to af6, addr 0x8cc5c) [Time: 366] [1 outstanding requests]
+cpu2: 917 Issued Read (b91) for address 0x4130c
+cpu2: Received MemEvent with command 2 (response to b17, addr 0x9af70) [Time: 354] [1 outstanding requests]
+cpu0: 939 Issued Read (ba0) for address 0xcd5ac
+cpu1: 924 Issued Read (ba2) for address 0x9950
+cpu3: Received MemEvent with command 2 (response to b2b, addr 0xea60) [Time: 354] [4 outstanding requests]
+cpu2: 916 Issued Read (bad) for address 0x87f10
+cpu3: 930 Issued Read (bb0) for address 0xe37c
+cpu2: 915 Issued Read (bbb) for address 0x3c78c
+cpu3: Received MemEvent with command 2 (response to b38, addr 0x247b0) [Time: 354] [4 outstanding requests]
+cpu0: 938 Issued Read (bc4) for address 0xcae64
+cpu0: 937 Issued Read (bc8) for address 0xae00c
+cpu0: Received MemEvent with command 2 (response to b3b, addr 0x8dabc) [Time: 353] [3 outstanding requests]
+cpu2: 914 Issued Read (bd6) for address 0xd1fe0
+cpu3: Received MemEvent with command 2 (response to b4d, addr 0xa8780) [Time: 354] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to b50, addr 0xa4b8c) [Time: 359] [2 outstanding requests]
+cpu3: 929 Issued Read (be4) for address 0x32610
+cpu3: 928 Issued Read (be6) for address 0xea330
+cpu3: 927 Issued Read (be9) for address 0x28f0
+cpu1: 923 Issued Read (beb) for address 0xe026c
+cpu1: Received MemEvent with command 2 (response to b5e, addr 0x9d994) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to b62, addr 0xb5bf0) [Time: 359] [3 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to b66, addr 0xc588) [Time: 354] [2 outstanding requests]
+cpu0: 936 Issued Read (c04) for address 0xd7f30
+cpu3: Received MemEvent with command 2 (response to b74, addr 0xfb628) [Time: 354] [4 outstanding requests]
+cpu0: 935 Issued Read (c09) for address 0x20238
+cpu1: 922 Issued Read (c0d) for address 0xf19f4
+cpu2: Received MemEvent with command 2 (response to b91, addr 0x4130c) [Time: 354] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to ba0, addr 0xcd5ac) [Time: 354] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to ba2, addr 0x9950) [Time: 358] [2 outstanding requests]
+cpu0: 934 Issued Read (c3d) for address 0xd1f5c
+cpu3: 926 Issued Read (c42) for address 0x711f0
+cpu2: Received MemEvent with command 2 (response to bad, addr 0x87f10) [Time: 354] [2 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to bb0, addr 0xe37c) [Time: 357] [4 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to bbb, addr 0x3c78c) [Time: 354] [1 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to c3d, addr 0xd1f5c) [Time: 59] [4 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to bc4, addr 0xcae64) [Time: 354] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to bc8, addr 0xae00c) [Time: 358] [2 outstanding requests]
+cpu3: 925 Issued Read (c58) for address 0xb9ee0
+cpu0: 933 Issued Read (c60) for address 0x27224
+cpu2: Received MemEvent with command 2 (response to bd6, addr 0xd1fe0) [Time: 354] [0 outstanding requests]
+cpu0: 932 Issued Read (c67) for address 0x17370
+cpu2: 913 Issued Read (c6b) for address 0x3c70
+cpu3: Received MemEvent with command 2 (response to be4, addr 0x32610) [Time: 354] [4 outstanding requests]
+cpu2: 912 Issued Read (c74) for address 0x5ef34
+cpu3: Received MemEvent with command 2 (response to be6, addr 0xea330) [Time: 360] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to be9, addr 0x28f0) [Time: 366] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to beb, addr 0xe026c) [Time: 372] [1 outstanding requests]
+cpu3: 924 Issued Read (c82) for address 0x90558
+cpu0: Received MemEvent with command 2 (response to c04, addr 0xd7f30) [Time: 354] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to c09, addr 0x20238) [Time: 355] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to c0d, addr 0xf19f4) [Time: 354] [0 outstanding requests]
+cpu2: 911 Issued Read (c8d) for address 0xf2114
+cpu3: 923 Issued Read (c90) for address 0xfa67c
+cpu1: 921 Issued Read (c94) for address 0x1035c
+cpu0: 931 Issued Read (ca6) for address 0x51f34
+cpu1: 920 Issued Write (cae) for address 0x448bc
+cpu3: 922 Issued Read (cbe) for address 0xb4e2c
+cpu3: Received MemEvent with command 2 (response to c42, addr 0x711f0) [Time: 354] [4 outstanding requests]
+cpu0: 930 Issued Read (cc7) for address 0x40694
+cpu1: 919 Issued Write (cd0) for address 0xff064
+cpu3: Received MemEvent with command 2 (response to c58, addr 0xb9ee0) [Time: 354] [3 outstanding requests]
+cpu0: 929 Issued Read (cd8) for address 0x75560
+cpu0: Received MemEvent with command 2 (response to c60, addr 0x27224) [Time: 354] [4 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to c67, addr 0x17370) [Time: 354] [3 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to c6b, addr 0x3c70) [Time: 356] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to c74, addr 0x5ef34) [Time: 354] [1 outstanding requests]
+cpu1: 918 Issued Read (cf1) for address 0x2977c
+cpu3: Received MemEvent with command 2 (response to c82, addr 0x90558) [Time: 354] [2 outstanding requests]
+cpu0: 928 Issued Read (cf7) for address 0xc747c
+cpu1: 917 Issued Read (cfe) for address 0x45b80
+cpu0: 927 Issued Read (d01) for address 0x89110
+cpu0: 926 Issued Read (d0c) for address 0x36e70
+cpu2: Received MemEvent with command 2 (response to c8d, addr 0xf2114) [Time: 354] [0 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to c90, addr 0xfa67c) [Time: 360] [1 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to c94, addr 0x1035c) [Time: 360] [4 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to ca6, addr 0x51f34) [Time: 354] [5 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to cae, addr 0x448bc) [Time: 354] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to cbe, addr 0xb4e2c) [Time: 354] [0 outstanding requests]
+cpu0: 925 Issued Read (d31) for address 0x25a58
+cpu0: Received MemEvent with command 2 (response to cc7, addr 0x40694) [Time: 354] [5 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to cd0, addr 0xff064) [Time: 354] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to cd8, addr 0x75560) [Time: 354] [4 outstanding requests]
+cpu3: 921 Issued Read (d44) for address 0x6cb7c
+cpu0: 924 Issued Read (d48) for address 0x1dca8
+cpu3: 920 Issued Read (d4c) for address 0x51d74
+cpu1: 916 Issued Read (d54) for address 0xa9684
+cpu1: Received MemEvent with command 2 (response to cf1, addr 0x2977c) [Time: 354] [2 outstanding requests]
+cpu1: 915 Issued Read (d5d) for address 0x26270
+cpu0: Received MemEvent with command 2 (response to cf7, addr 0xc747c) [Time: 354] [4 outstanding requests]
+cpu3: 919 Issued Read (d64) for address 0x7860c
+cpu1: Received MemEvent with command 2 (response to cfe, addr 0x45b80) [Time: 354] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to d01, addr 0x89110) [Time: 359] [3 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to d0c, addr 0x36e70) [Time: 353] [2 outstanding requests]
+cpu2: 910 Issued Write (d6f) for address 0x80bd8
+cpu3: 918 Issued Write (d7b) for address 0x8f754
+cpu3: 917 Issued Read (d81) for address 0x33128
+cpu0: 923 Issued Read (d82) for address 0x7e420
+cpu3: 916 Issued Read (d83) for address 0x943bc
+cpu2: 909 Issued Read (d91) for address 0x36f8c
+cpu0: 922 Issued Read (d96) for address 0x7e54
+cpu0: Received MemEvent with command 2 (response to d31, addr 0x25a58) [Time: 354] [3 outstanding requests]
+cpu0: 921 Issued Read (da8) for address 0x6e8c4
+cpu2: 908 Issued Read (dae) for address 0xad578
+cpu2: 907 Issued Read (db5) for address 0xc1e84
+cpu3: Received MemEvent with command 2 (response to d44, addr 0x6cb7c) [Time: 354] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to d48, addr 0x1dca8) [Time: 355] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to d4c, addr 0x51d74) [Time: 352] [4 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to d54, addr 0xa9684) [Time: 354] [1 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to d5d, addr 0x26270) [Time: 354] [0 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to d64, addr 0x7860c) [Time: 354] [3 outstanding requests]
+cpu2: 906 Issued Read (de4) for address 0x1ac8c
+cpu2: Received MemEvent with command 4 (response to d6f, addr 0x80bd8) [Time: 354] [4 outstanding requests]
+cpu2: 905 Issued Read (df3) for address 0xdb658
+cpu2: 904 Issued Read (df4) for address 0x75894
+cpu3: Received MemEvent with command 4 (response to d7b, addr 0x8f754) [Time: 354] [2 outstanding requests]
+cpu3: 915 Issued Read (dfe) for address 0x41228
+cpu3: Received MemEvent with command 2 (response to d81, addr 0x33128) [Time: 354] [2 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to d82, addr 0x7e420) [Time: 361] [2 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to d83, addr 0x943bc) [Time: 369] [1 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to d91, addr 0x36f8c) [Time: 354] [5 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to d96, addr 0x7e54) [Time: 354] [1 outstanding requests]
+cpu3: 914 Issued Read (e15) for address 0x10f90
+cpu0: Received MemEvent with command 2 (response to da8, addr 0x6e8c4) [Time: 354] [0 outstanding requests]
+cpu2: 903 Issued Read (e1f) for address 0x3de04
+cpu2: Received MemEvent with command 2 (response to dae, addr 0xad578) [Time: 354] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to db5, addr 0xc1e84) [Time: 354] [4 outstanding requests]
+cpu2: 902 Issued Read (e2a) for address 0x13c3c
+cpu1: 914 Issued Read (e2e) for address 0xc7f4
+cpu3: 913 Issued Read (e39) for address 0xc4f88
+cpu2: 901 Issued Read (e41) for address 0x19518
+cpu2: Received MemEvent with command 2 (response to de4, addr 0x1ac8c) [Time: 354] [5 outstanding requests]
+cpu2: 900 Issued Read (e4d) for address 0x822d0
+cpu2: 899 Issued Read (e55) for address 0x3618
+cpu1: 913 Issued Read (e5b) for address 0xff004
+cpu0: 920 Issued Read (e5d) for address 0xba9d4
+cpu2: Received MemEvent with command 2 (response to df3, addr 0xdb658) [Time: 354] [6 outstanding requests]
+cpu1: 912 Issued Read (e61) for address 0x27cd8
+cpu3: 912 Issued Read (e64) for address 0x81474
+cpu2: Received MemEvent with command 2 (response to df4, addr 0x75894) [Time: 361] [5 outstanding requests]
+cpu2: 898 Issued Read (e6d) for address 0x7fdc8
+cpu3: Received MemEvent with command 2 (response to dfe, addr 0x41228) [Time: 354] [3 outstanding requests]
+cpu1: 911 Issued Read (e71) for address 0x4e444
+cpu0: 919 Issued Read (e7a) for address 0x2e0ec
+cpu0: 918 Issued Read (e81) for address 0x92ce4
+cpu3: Received MemEvent with command 2 (response to e15, addr 0x10f90) [Time: 354] [2 outstanding requests]
+cpu2: 897 Issued Read (e92) for address 0x6f720
+cpu2: 896 Issued Write (e93) for address 0xb40cc
+cpu0: 917 Issued Read (ea2) for address 0xce9c8
+cpu2: Received MemEvent with command 2 (response to e1f, addr 0x3de04) [Time: 354] [7 outstanding requests]
+cpu2: 895 Issued Read (eb9) for address 0xab3ac
+cpu1: 910 Issued Write (eba) for address 0xf7504
+cpu1: 909 Issued Read (ec1) for address 0x937c
+cpu2: Received MemEvent with command 2 (response to e2a, addr 0x13c3c) [Time: 354] [7 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to e2e, addr 0xc7f4) [Time: 356] [5 outstanding requests]
+cpu3: 911 Issued Read (ec9) for address 0x624c4
+cpu2: 894 Issued Read (ece) for address 0x25200
+cpu1: 908 Issued Read (ed5) for address 0xb5700
+cpu1: 907 Issued Read (ede) for address 0x99970
+cpu3: Received MemEvent with command 2 (response to e39, addr 0xc4f88) [Time: 354] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to e41, addr 0x19518) [Time: 352] [7 outstanding requests]
+cpu2: 893 Issued Read (ef8) for address 0xeabb0
+cpu3: 910 Issued Read (f02) for address 0x29500
+cpu2: Received MemEvent with command 2 (response to e4d, addr 0x822d0) [Time: 354] [7 outstanding requests]
+cpu2: 892 Issued Read (f13) for address 0x7bf0c
+cpu3: 909 Issued Read (f18) for address 0x117e8
+cpu1: 906 Issued Read (f1b) for address 0x399ac
+cpu2: Received MemEvent with command 2 (response to e55, addr 0x3618) [Time: 354] [7 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to e5b, addr 0xff004) [Time: 354] [7 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to e5d, addr 0xba9d4) [Time: 354] [3 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to e61, addr 0x27cd8) [Time: 356] [6 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to e64, addr 0x81474) [Time: 362] [3 outstanding requests]
+cpu2: 891 Issued Read (f37) for address 0x5d21c
+cpu2: Received MemEvent with command 2 (response to e6d, addr 0x7fdc8) [Time: 353] [7 outstanding requests]
+cpu1: 905 Issued Read (f3e) for address 0xa188
+cpu1: Received MemEvent with command 2 (response to e71, addr 0x4e444) [Time: 356] [6 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to e7a, addr 0x2e0ec) [Time: 354] [2 outstanding requests]
+cpu3: 908 Issued Read (f46) for address 0xa3200
+cpu0: Received MemEvent with command 2 (response to e81, addr 0x92ce4) [Time: 354] [1 outstanding requests]
+cpu2: 890 Issued Read (f53) for address 0x8caec
+cpu2: 889 Issued Read (f62) for address 0x702dc
+cpu2: Received MemEvent with command 2 (response to e92, addr 0x6f720) [Time: 354] [8 outstanding requests]
+cpu2: Received MemEvent with command 4 (response to e93, addr 0xb40cc) [Time: 361] [7 outstanding requests]
+cpu0: Received MemEvent with command 2 (response to ea2, addr 0xce9c8) [Time: 354] [0 outstanding requests]
+cpu3: 907 Issued Read (f7c) for address 0x3bd54
+cpu3: 906 Issued Read (f81) for address 0x2a8a4
+cpu2: Received MemEvent with command 2 (response to eb9, addr 0xab3ac) [Time: 354] [6 outstanding requests]
+cpu1: 904 Issued Write (f88) for address 0xcae10
+cpu1: Received MemEvent with command 4 (response to eba, addr 0xf7504) [Time: 361] [6 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to ec1, addr 0x937c) [Time: 354] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to ec9, addr 0x624c4) [Time: 354] [5 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to ece, addr 0x25200) [Time: 352] [5 outstanding requests]
+cpu1: 903 Issued Read (f9c) for address 0x4a5a0
+cpu1: Received MemEvent with command 2 (response to ed5, addr 0xb5700) [Time: 354] [5 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to ede, addr 0x99970) [Time: 354] [4 outstanding requests]
+cpu1: 902 Issued Read (fac) for address 0xd2bb0
+cpu1: 901 Issued Read (fb1) for address 0x3db50
+cpu2: Received MemEvent with command 2 (response to ef8, addr 0xeabb0) [Time: 354] [4 outstanding requests]
+cpu3: 905 Issued Read (fbd) for address 0x19ffc
+cpu3: Received MemEvent with command 2 (response to f02, addr 0x29500) [Time: 354] [5 outstanding requests]
+cpu1: 900 Issued Read (fca) for address 0x649f4
+cpu3: 904 Issued Read (fce) for address 0x8d838
+cpu2: Received MemEvent with command 2 (response to f13, addr 0x7bf0c) [Time: 354] [3 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to f18, addr 0x117e8) [Time: 355] [5 outstanding requests]
+cpu0: 916 Issued Read (fd9) for address 0x65c84
+cpu1: Received MemEvent with command 2 (response to f1b, addr 0x399ac) [Time: 359] [6 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to f37, addr 0x5d21c) [Time: 354] [2 outstanding requests]
+cpu1: Received MemEvent with command 2 (response to f3e, addr 0xa188) [Time: 352] [5 outstanding requests]
+cpu3: 903 Issued Read (ff2) for address 0xcbcb4
+cpu3: Received MemEvent with command 2 (response to f46, addr 0xa3200) [Time: 354] [5 outstanding requests]
+cpu2: 888 Issued Read (ffe) for address 0x7e00
+cpu2: Received MemEvent with command 2 (response to f53, addr 0x8caec) [Time: 354] [2 outstanding requests]
+cpu2: Received MemEvent with command 2 (response to f62, addr 0x702dc) [Time: 354] [1 outstanding requests]
+cpu2: 887 Issued Read (100c) for address 0xe2e90
+cpu3: 902 Issued Read (1010) for address 0x39078
+cpu1: 899 Issued Read (101a) for address 0x134f8
+cpu3: Received MemEvent with command 2 (response to f7c, addr 0x3bd54) [Time: 354] [5 outstanding requests]
+cpu3: Received MemEvent with command 2 (response to f81, addr 0x2a8a4) [Time: 355] [4 outstanding requests]
+cpu1: Received MemEvent with command 4 (response to f88, addr 0xcae10) [Time: 353] [5 outstanding requests]
+--------------------------------------------------------------------
+Name: c0.l1cache
+--------------------------------------------------------------------
+GetS-IS misses: 79
+GetX-SM misses: 0
+GetX-IM misses: 6
+GetS hits: 78
+GetX hits: 6
+Total misses: 85
+Total hits: 84
+Hit Ratio:  49.704%
+PutS received: 0
+PutM received: 0
+PUTS sent due to evictions: 23
+PUTM sent due to evictions: 3
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 169
+Memory requests received (non-coherency related): 85
+
+--------------------------------------------------------------------
+Name: c1.l1cache
+--------------------------------------------------------------------
+GetS-IS misses: 87
+GetX-SM misses: 0
+GetX-IM misses: 15
+GetS hits: 82
+GetX hits: 15
+Total misses: 102
+Total hits: 97
+Hit Ratio:  48.744%
+PutS received: 0
+PutM received: 0
+PUTS sent due to evictions: 35
+PUTM sent due to evictions: 5
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 199
+Memory requests received (non-coherency related): 102
+
+--------------------------------------------------------------------
+Name: c2.l1cache
+--------------------------------------------------------------------
+GetS-IS misses: 105
+GetX-SM misses: 0
+GetX-IM misses: 8
+GetS hits: 104
+GetX hits: 8
+Total misses: 113
+Total hits: 112
+Hit Ratio:  49.778%
+PutS received: 0
+PutM received: 0
+PUTS sent due to evictions: 49
+PUTM sent due to evictions: 3
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 225
+Memory requests received (non-coherency related): 114
+
+--------------------------------------------------------------------
+Name: c3.l1cache
+--------------------------------------------------------------------
+GetS-IS misses: 92
+GetX-SM misses: 0
+GetX-IM misses: 7
+GetS hits: 88
+GetX hits: 7
+Total misses: 99
+Total hits: 95
+Hit Ratio:  48.969%
+PutS received: 0
+PutM received: 0
+PUTS sent due to evictions: 35
+PUTM sent due to evictions: 2
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 194
+Memory requests received (non-coherency related): 99
+
+TrivialCPU cpu0 Finished after 85 issued reads, 84 returned (9999 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+  [0, 2]  2511
+  [2, 4]  3628
+  [4, 6]  2940
+  [6, 8]  811
+TrivialCPU cpu1 Finished after 102 issued reads, 97 returned (9999 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+  [0, 2]  1257
+  [2, 4]  4000
+  [4, 6]  3185
+  [6, 8]  1229
+TrivialCPU cpu2 Finished after 114 issued reads, 112 returned (9999 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+  [0, 2]  1326
+  [2, 4]  3193
+  [4, 6]  2874
+  [6, 8]  1978
+TrivialCPU cpu3 Finished after 99 issued reads, 95 returned (9999 clocks)
+Number of Pending Requests per Cycle (Binned by 2 Requests)
+  [0, 2]  1222
+  [2, 4]  3891
+  [4, 6]  3680
+--------------------------------------------------------------------
+Name: l3cache
+--------------------------------------------------------------------
+GetS-IS misses: 361
+GetX-SM misses: 0
+GetX-IM misses: 36
+GetS hits: 354
+GetX hits: 36
+Total misses: 397
+Total hits: 390
+Hit Ratio:  49.555%
+PutS received: 1
+PutM received: 0
+PUTS sent due to evictions: 0
+PUTM sent due to evictions: 0
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 788
+Memory requests received (non-coherency related): 397
+
+Invalidates sent (non-eviction): 0
+Invalidates sent due to evictions: 0
+--------------------------------------------------------------------
+Name: n0.l2cache
+--------------------------------------------------------------------
+GetS-IS misses: 165
+GetX-SM misses: 0
+GetX-IM misses: 21
+GetS hits: 161
+GetX hits: 21
+Total misses: 186
+Total hits: 182
+Hit Ratio:  49.457%
+PutS received: 58
+PutM received: 8
+PUTS sent due to evictions: 1
+PUTM sent due to evictions: 0
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 434
+Memory requests received (non-coherency related): 187
+
+Invalidates sent (non-eviction): 0
+Invalidates sent due to evictions: 0
+--------------------------------------------------------------------
+Name: n1.l2cache
+--------------------------------------------------------------------
+GetS-IS misses: 197
+GetX-SM misses: 0
+GetX-IM misses: 15
+GetS hits: 191
+GetX hits: 15
+Total misses: 212
+Total hits: 206
+Hit Ratio:  49.282%
+PutS received: 84
+PutM received: 5
+PUTS sent due to evictions: 0
+PUTM sent due to evictions: 0
+PUTM sent due to invalidations: 0
+Invalidates recieved that locked due to user atomic lock: 0
+Total instructions recieved: 507
+Memory requests received (non-coherency related): 212
+
+Invalidates sent (non-eviction): 0
+Invalidates sent due to evictions: 0
+Simulation is complete, simulated time: 10 us

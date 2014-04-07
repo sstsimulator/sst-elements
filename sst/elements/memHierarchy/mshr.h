@@ -17,10 +17,10 @@ namespace SST { namespace MemHierarchy {
 Cache::MSHR::MSHR(Cache* _cache, int _maxSize): cache_(_cache), size_(0), maxSize_(_maxSize){}
 
 
-const vector<mshrType*> Cache::MSHR::lookup(Addr baseAddr){
+const vector<mshrType> Cache::MSHR::lookup(Addr baseAddr){
     mshrTable::iterator it = map_.find(baseAddr);
     assert(it != map_.end());
-    vector<mshrType*> res = it->second;
+    vector<mshrType> res = it->second;
     return res;
 }
 
@@ -30,21 +30,21 @@ bool Cache::MSHR::insertPointer(Addr keyAddr, Addr pointerAddr){
 
 bool Cache::MSHR::insert(Addr baseAddr, MemEvent* event){
     cache_->d_->debug(_L6_, "MSHR Event Inserted: Key Addr = %"PRIx64", Event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].size());
-    return insert(baseAddr, new mshrType(event));
+    return insert(baseAddr, mshrType(event));
 }
 
 bool Cache::MSHR::insert(Addr baseAddr, Addr pointer){
-    return insert(baseAddr, new mshrType(pointer));
+    return insert(baseAddr, mshrType(pointer));
 }
 
-bool Cache::MSHR::insert(Addr baseAddr, mshrType* mshrEntry) throw(mshrException){
+bool Cache::MSHR::insert(Addr baseAddr, mshrType mshrEntry) throw(mshrException){
     if(size_ >= maxSize_) throw mshrException();
     map_[baseAddr].push_back(mshrEntry);
     size_++;
     return true;
 }
 
-bool Cache::MSHR::insertAll(Addr baseAddr, vector<mshrType*> events) throw(mshrException){
+bool Cache::MSHR::insertAll(Addr baseAddr, vector<mshrType> events) throw(mshrException){
     if(events.empty()) return false;
     mshrTable::iterator it = map_.find(baseAddr);
     
@@ -58,10 +58,10 @@ bool Cache::MSHR::insertAll(Addr baseAddr, vector<mshrType*> events) throw(mshrE
     return true;
 }
 
-vector<mshrType*> Cache::MSHR::removeAll(Addr baseAddr){
+vector<mshrType> Cache::MSHR::removeAll(Addr baseAddr){
     mshrTable::iterator it = map_.find(baseAddr);
     assert(it != map_.end());
-    vector<mshrType*> res = it->second;
+    vector<mshrType> res = it->second;
     map_.erase(it);
     size_ = size_ - res.size(); assert(size_ >= 0);
     //cache_->d_->debug(C,L5,0, "MSHR Removed All Events: Key Addr = %#016lllx, Entry Size = %lu\n", baseAddr, res.size());
@@ -79,8 +79,8 @@ bool Cache::MSHR::isHitAndStallNeeded(Addr baseAddr, Command cmd){
      * since cache line can be user-locked.  If user-locked, Invalidates can pile up in the MSHR
      * but GetX still needs to continue since Inv won't get re-activated until user-lock is released */
     if(it == map_.end() || it->second.empty()) return false;
-    if(it->second.front()->elem.type() == typeid(Addr)) return false;  //front-of-the-vector event cannot be of pointer type
-    MemEvent* frontEvent = boost::get<MemEvent*>(it->second.front()->elem);
+    if(it->second.front().elem.type() == typeid(Addr)) return false;  //front-of-the-vector event cannot be of pointer type
+    MemEvent* frontEvent = boost::get<MemEvent*>(it->second.front().elem);
     if(cmd == GetX) return (it != map_.end() &&  frontEvent->getCmd() != Inv);  
     else{
         cache_->d_->debug(_WARNING_, "Blocking Request: MSHR entry exists and waiting to complete. TopOfQueue Request Cmd: %s\n", CommandString[frontEvent->getCmd()]);
@@ -94,13 +94,13 @@ struct MSHREntryCompare {
         if(m->elem.type() == typeid(MemEvent*)) type = Event;
         else type = Pointer;
     }
-    bool operator() (mshrType* &n){
+    bool operator() (mshrType &n){
         if(type == Event){
-            if(n->elem.type() == typeid(MemEvent*)) return boost::get<MemEvent*>(m->elem) == boost::get<MemEvent*>(n->elem);
+            if(n.elem.type() == typeid(MemEvent*)) return boost::get<MemEvent*>(m->elem) == boost::get<MemEvent*>(n.elem);
             return false;
         }
         else{
-            if(n->elem.type() == typeid(Addr)) return boost::get<Addr>(m->elem) == boost::get<Addr>(n->elem);
+            if(n.elem.type() == typeid(Addr)) return boost::get<Addr>(m->elem) == boost::get<Addr>(n.elem);
             return false;
         }
     }
@@ -110,23 +110,23 @@ struct MSHREntryCompare {
 
 
 void Cache::MSHR::removeElement(Addr baseAddr, MemEvent* event){
-    removeElement(baseAddr, new mshrType(event));
+    removeElement(baseAddr, mshrType(event));
 }
 
 void Cache::MSHR::removeElement(Addr baseAddr, Addr pointer){
-    removeElement(baseAddr, new mshrType(pointer));
+    removeElement(baseAddr, mshrType(pointer));
 }
 
-void Cache::MSHR::removeElement(Addr baseAddr, mshrType* mshrEntry){
+void Cache::MSHR::removeElement(Addr baseAddr, mshrType mshrEntry){
 
     mshrTable::iterator it = map_.find(baseAddr);
     if(it == map_.end()) return;    
     cache_->d_->debug(_L6_,"MSHR Entry size = %lu\n", it->second.size());
-    vector<mshrType*>& res = it->second;
-    vector<mshrType*>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(mshrEntry));
+    vector<mshrType>& res = it->second;
+    vector<mshrType>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&mshrEntry));
     
     if(itv == res.end()) return;
-    res.erase(std::remove_if(res.begin(), res.end(), MSHREntryCompare(mshrEntry)), res.end());
+    res.erase(std::remove_if(res.begin(), res.end(), MSHREntryCompare(&mshrEntry)), res.end());
 
     if(res.empty()) map_.erase(it);
     size_--; assert(size_ >= 0);

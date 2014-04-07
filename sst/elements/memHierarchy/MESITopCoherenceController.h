@@ -69,7 +69,7 @@ private:
     
 public:
     MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines, uint _lineSize, uint64_t _accessLatency, vector<Link*>* _childrenLinks) :
-           TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _childrenLinks), numLines_(_numLines){
+           TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _childrenLinks), numLines_(_numLines), lowNetworkNodeCount_(0){
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);
         ccLines_.resize(numLines_);

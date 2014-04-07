@@ -64,7 +64,7 @@ class Cache
 public:
     typedef CacheArray::CacheLine CacheLine;
     typedef TopCacheController::CCLine CCLine;
-    typedef map<Addr, vector<mshrType*> > mshrTable;
+    typedef map<Addr, vector<mshrType> > mshrTable;
     typedef unsigned int uint;
     typedef long long unsigned int uint64;
     class MSHR{
@@ -76,16 +76,16 @@ public:
         
         MSHR(Cache*, int);
         void insertFront(Addr baseAddr, MemEvent* event);
-        bool insertAll(Addr, vector<mshrType*>) throw (mshrException);
+        bool insertAll(Addr, vector<mshrType>) throw (mshrException);
         bool insert(Addr baseAddr, MemEvent* event);
         bool insertPointer(Addr keyAddr, Addr pointerAddr);
         bool insert(Addr baseAddr, Addr pointer);
-        bool insert(Addr baseAddr, mshrType* mshrEntry) throw (mshrException);
+        bool insert(Addr baseAddr, mshrType mshrEntry) throw (mshrException);
         void removeElement(Addr baseAddr, MemEvent* event);
         void removeElement(Addr baseAddr, Addr pointer);
-        void removeElement(Addr baseAddr, mshrType* mshrEntry);
-        vector<mshrType*> removeAll(Addr);
-        const vector<mshrType*> lookup(Addr baseAddr);
+        void removeElement(Addr baseAddr, mshrType mshrEntry);
+        vector<mshrType> removeAll(Addr);
+        const vector<mshrType> lookup(Addr baseAddr);
         bool isHit(Addr baseAddr);
         bool isHitAndStallNeeded(Addr baseAddr, Command cmd);
         uint getSize(){ return size_; }
@@ -169,7 +169,7 @@ private:
     void processFetch(MemEvent* event, Addr baseAddr, bool reActivation);
     bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }
     inline void activatePrevEvents(Addr baseAddr);
-    inline bool activatePrevEvent(MemEvent* event, vector<mshrType*>& mshrEntry, Addr addr, vector<mshrType*>::iterator it, int i);
+    inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr addr, vector<mshrType>::iterator it, int i);
     void handleEvent(SST::Event *event);
     Addr getIndex(Addr addr){ return (addr >> log2Of(cArray_->getLineSize())); }
     inline CacheLine* getCacheLine(Addr baseAddr);

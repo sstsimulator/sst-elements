@@ -84,15 +84,15 @@ void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Comma
 
 }
 
-void MESIBottomCC::handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType*> mshrEntry){
+void MESIBottomCC::handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry){
     cacheLine->decAckCount();
     printData(d_, "Response Data", &ackEvent->getPayload());
     
     assert(cacheLine->getAckCount() == 0);
-    assert(mshrEntry.front()->elem.type() == typeid(MemEvent*));
+    assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
     assert(cacheLine->unlocked());
     
-    MemEvent* origEv = boost::get<MemEvent*>(mshrEntry.front()->elem);
+    MemEvent* origEv = boost::get<MemEvent*>(mshrEntry.front().elem);
     Command origCmd  = origEv->getCmd();
     assert(MemEvent::isDataRequest(origCmd));
     cacheLine->setData(ackEvent->getPayload(), ackEvent);

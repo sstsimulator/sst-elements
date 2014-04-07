@@ -2011,12 +2011,11 @@ TrivialCPU: Test Completed Successfuly
 Exiting...
 TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (107289 clocks)
 Number of Pending Requests per Cycle (Binned by 2 Requests)
-- 0 Cycles: 2703
-- 2 Cycles: 17823
-- 4 Cycles: 36870
-- 6 Cycles: 30335
-- 8 Cycles: 15174
-- 10 Cycles: 4384
+  [0, 2]  2703
+  [2, 4]  17823
+  [4, 6]  36870
+  [6, 8]  30335
+  [8, 10]  15174
 --------------------------------------------------------------------
 Name: l1cache
 --------------------------------------------------------------------
