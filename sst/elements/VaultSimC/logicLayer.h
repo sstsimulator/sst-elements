@@ -13,7 +13,6 @@
 #ifndef _LOGICLAYER_H
 #define _LOGICLAYER_H
 
-#include <sst/core/log.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/output.h>
