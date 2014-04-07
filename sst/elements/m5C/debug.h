@@ -13,7 +13,7 @@
 #ifndef _debug_h
 #define _debug_h
 
-#include <log.h>
+#include "log.h"
 #include <cxxabi.h>
 
 namespace SST {

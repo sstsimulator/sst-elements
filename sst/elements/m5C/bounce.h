@@ -13,16 +13,13 @@
 #define _m5bounce_h
 
 #include <sst/core/serialization.h>
-#include <sst/core/log.h>
+#include <sst/core/output.h>
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
 #define BOUNCE_DBG 1
-
-#define DBG( fmt, args... ) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 namespace SST {
 namespace M5 {
@@ -37,20 +34,16 @@ class Bounce : public SST::Component
          
         std::vector<SST::Link*>  m_linkM;
         SST::TimeConverter      *m_tc;
-        SST::Log<BOUNCE_DBG>     m_dbg;
+        SST::Output              m_dbg;
 };
 
 inline Bounce::Bounce( SST::ComponentId_t id, Params& params ) :
-    Component( id ),
-    m_dbg( "Bounce::", false )
+    Component( id )
 {
-    if ( params.find( "debug" ) != params.end() ) {
-        if ( params["debug"].compare("yes") == 0 ) {
-            m_dbg.enable();
-        }
-    }
+    m_dbg.init("@t:Bounce::@p():@l " + getName() + ": ", 0, 0,
+            (Output::output_location_t)params.find_integer("debug", 0));
 
-    DBG("Bounce::Bounce\n");
+    m_dbg.output(CALL_INFO, "Bounce::Bounce\n");
 
     m_linkM.resize(2);
 
