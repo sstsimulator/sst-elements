@@ -1,16 +1,27 @@
+<!--
+Topology:
+            Core  Core   Core   Core
+             L1    L1     L1     L1
+                Bus          Bus
+                L2           L2
+                      Bus
+                      L3
+                    DRAMSim
+ 
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<!--
-<config>
- stopAtCycle=1000000ns
-</config>
--->
 
 <variables>
 	<lat> 1ns </lat>
 	<buslat> 10 ns </buslat>
 </variables>
+
+<config>
+    stopAtCycle=10000ns
+</config>
 
 <param_include>
     <cpuParams>

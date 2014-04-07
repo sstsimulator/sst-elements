@@ -1,3 +1,14 @@
+<!--
+Topology:
+            Core  Core
+             L1    L1
+                Bus
+                L2
+           SimpleMemory
+ 
+1000 writes/reads
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
@@ -6,6 +17,10 @@
 	<lat> 1ns </lat>
 	<buslat> 10 ns </buslat>
 </variables>
+
+<config>
+    stopAtCycle=5000ns
+</config>
 
 <param_include>
     <cpuParams>
@@ -51,7 +66,7 @@
     <memControllerParams>
         <debug> 0  </debug>
         <coherence_protocol> MSI </coherence_protocol>
-        <access_time> 1000 ns </access_time>
+        <access_time> 100 ns </access_time>
         <mem_size> 512 </mem_size>
         <clock> 1GHz </clock>
         <debug> ${MEM_DEBUG} </debug>

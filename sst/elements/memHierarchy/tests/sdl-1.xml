@@ -1,3 +1,14 @@
+<!--
+Topology:
+            Core
+             L1
+            Memory
+
+1000 writes/reads
+
+-->
+
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>

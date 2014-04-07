@@ -1,11 +1,20 @@
+<!--
+Topology:
+            Core
+             L1
+           DRAMSim
+ 
+1000 writes/reads
+32B Cache Lines
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<!--
+
 <config>
  stopAtCycle=5000ns
 </config>
--->
 
 <variables>
 	<lat> 1ns </lat>
@@ -34,12 +43,10 @@
             <associativity> 4 </associativity>
             <access_latency_cycles> 4  </access_latency_cycles>
             <low_network_links> 1 </low_network_links>
-            <cache_line_size> 64 </cache_line_size>
+            <cache_line_size> 32 </cache_line_size>
             <L1> 1 </L1>
             <debug> ${MEM_DEBUG} </debug>
             <statistics> 1 </statistics>
-			<!-- <blocksize> 32 </blocksize> -->
-
 		</params>
 		<link name=cpu_cache_link port=high_network_0 latency=$lat />
 		<link name=mem_bus_link port=low_network_0 latency=$buslat />
@@ -48,7 +55,8 @@
 
 	<component name="memory" type="memHierarchy.MemController">
 		<params>
-			<access_time> 1000 ns </access_time>
+			<access_time> 100 ns </access_time>
+            <request_width> 32 </request_width>
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
             <coherence_protocol> MSI </coherence_protocol>

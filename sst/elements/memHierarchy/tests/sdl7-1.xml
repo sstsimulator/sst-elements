@@ -1,10 +1,14 @@
+<!--
+Topology:
+            Core
+             L1
+             Bus
+        Mem1     Mem2
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
-<timebase>1ns</timebase>
-
-<!--
-     Test for two mem controllers, sequential layout
--->
+<timebase> 1ns </timebase>
 
 <variables>
 	<lat> 1ns </lat>
@@ -36,7 +40,7 @@
 
     <memParams>
         <coherence_protocol> MSI </coherence_protocol>
-        <access_time> 1000 ns </access_time>
+        <access_time> 100 ns </access_time>
         <mem_size> 8 </mem_size>
         <rangeStart> 0x0000000 </rangeStart> <!-- Start at 0MB -->
         <clock> 1GHz </clock>
@@ -50,7 +54,7 @@
 
     <mem2Params>
         <coherence_protocol> MSI </coherence_protocol>
-        <access_time> 1000 ns </access_time>
+        <access_time> 100 ns </access_time>
         <mem_size> 8 </mem_size>
         <rangeStart> 0x800000 </rangeStart> <!-- Start at 8MB -->
         <clock> 1GHz </clock>

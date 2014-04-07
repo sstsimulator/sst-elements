@@ -1,12 +1,20 @@
+<!--
+Topology:
+            Core  Core   Core   Core
+             L1    L1     L1     L1
+                Bus          Bus
+                L2           L2
+                      Bus
+                      L3
+                     Router
+               DirectoryController
+ 
+Difference from sld8-3.xml: Directory has entry cache
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
-<timebase>1ns</timebase>
-<!-- This SDL represents a dual-socket quad-core (n0, n1),
-     each socket containing 4 cores, each with private L1 I&D
-     Two L2's per socket (each backing 2 cores), and one
-     L3. Uses Directory out to memory / between nodes.
-     Diff from 8-3:  Directory has entry cache
--->
+<timebase> 1ns </timebase>
 
 <variables>
 	<lat> 1ns </lat>
@@ -14,6 +22,9 @@
 	<netlat> 2ns </netlat>
 </variables>
 
+<config>
+    stopAtCycle=10000ns
+</config>
 
 <param_include>
     <cpuParams>
@@ -82,14 +93,14 @@
         <addr_range_start> 0x0 </addr_range_start>
         <addr_range_end> 0x1F000000 </addr_range_end> <!-- 512MB - 16MB for backingStoreSize -->
         <backing_store_size> 0x1000000 </backing_store_size> <!-- 16 MB -->
-        <entry_cache_size> 16384 </entry_cache_size>
+        <entry_cache_size> 1024 </entry_cache_size>
         <debug> ${MEM_DEBUG} </debug>
     </directoryParams>
     
     <memParams>
         <coherence_protocol> MSI </coherence_protocol>
         <request_width> 64 </request_width>
-        <access_time> 1000 ns </access_time>
+        <access_time> 100 ns </access_time>
         <mem_size> 512 </mem_size>
         <clock> 1GHz </clock>
         <debug> ${MEM_DEBUG} </debug>

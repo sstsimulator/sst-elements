@@ -185,20 +185,14 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     
     //Refactor like processInvXRequest
-    if(state == M){
+    if(state == M || state == E){
         _cacheLine->setState(I);
-        sendWriteback(PutM, _cacheLine);
         InvalidatePUTMReqSent_++;
-    }
-    else if(state == E){
-        _cacheLine->setState(I);
-        sendWriteback(PutE, _cacheLine);
-        InvalidatePUTMReqSent_++;
+        if(state == M) sendWriteback(PutM, _cacheLine);
+        else           sendWriteback(PutE, _cacheLine);
     }
     else{
         _cacheLine->setState(I);
-        _cacheLine->setAckCount(0);
-        //if(state != S) sendAckResponse(_event);
     }
 }
 
@@ -209,15 +203,11 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == M || state == E){
         _cacheLine->setState(S);
         InvalidatePUTMReqSent_++;
-        if(state == M){
-            sendWriteback(PutM, _cacheLine);
-        }else{
-            sendWriteback(PutE, _cacheLine);
-        }
+        if(state == M) sendWriteback(PutM, _cacheLine);
+        else           sendWriteback(PutE, _cacheLine);
     }
     else{
         _cacheLine->setState(I);
-        sendAckResponse(_event); //WHY?
     }
 }
 
@@ -263,7 +253,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
 
     Command cmd = _event->getCmd();
     MemEvent* forwardEvent;
-        if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
+    if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
     else forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
 
     forwardEvent->setDst(nextLevelCacheName_);

@@ -1,3 +1,13 @@
+<!--
+Topology:
+            Core
+             L1
+           DRAMSim
+ 
+1000 writes/reads
+64B Cache Lines
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
@@ -7,6 +17,9 @@
 	<buslat> 50 ps </buslat>
 </variables>
 
+<config>
+    stopAtCycle=5000ns
+</config>
 
 <sst>
 	<component name="cpu" type="memHierarchy.trivialCPU">
@@ -41,7 +54,8 @@
 
 	<component name="memory" type="memHierarchy.MemController">
 		<params>
-			<access_time> 1000 ns </access_time>
+			<access_time> 100 ns </access_time>
+            <request_width> 64 </request_width>
 			<mem_size> 512 </mem_size>
             <coherence_protocol> MSI </coherence_protocol>
 			<clock> 1GHz </clock>

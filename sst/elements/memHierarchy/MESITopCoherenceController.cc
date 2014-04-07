@@ -154,7 +154,10 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
         int sharerId = sharer->second;
         if(requestingId == sharerId) continue;
         if(ccLine->isSharer(sharerId)){
-            if(acksNeeded) ccLine->setState(Inv_A);
+            if(acksNeeded){
+                if(cmd == Inv)ccLine->setState(Inv_A);
+                else if(cmd == InvX) ccLine->setState(InvX_A);
+            }
             sentInvalidates++;
             if(!eviction) InvReqsSent_++;
             else EvictionInvReqsSent_++;
@@ -193,8 +196,8 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
         assert(!l->isSharer(_sharerId));
         assert(l->numSharers() == 1);                      // TODO: l->setState(InvX_A);  //sendInvalidates(InvX, lineIndex);
         //l->setState(InvX_A);
-        //sendInvalidates(InvX, lineIndex, false, -1, true);
-        sendInvalidates(Inv, lineIndex, false, "", true);
+        sendInvalidates(InvX, lineIndex, false, "", true);
+        //sendInvalidates(Inv, lineIndex, false, "", true);
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
@@ -236,18 +239,23 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
 void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
+    //assert(_ccLine->getState() != V);  Could be an eviction without invalidate, delete this statement
 
     if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_sharerId);
     else if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
 
-    if(_ccLine->getState() == V) return;
-    _ccLine->decAckCount();
 
     if(_ccLine->getState() == InvX_A){
         _ccLine->addSharer(_sharerId);  // M->S
         assert(_ccLine->numSharers() == 1);
      }
+    
+     _ccLine->setState(V);
 
+    
+     if(_ccLine->getState() == V) return;
+
+     _ccLine->decAckCount();
 }
 
 void MESITopCC::processPutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){

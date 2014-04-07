@@ -1,17 +1,26 @@
+<!--
+Topology:
+            Core
+             L1
+             L2
+             L3
+            Router
+      DirectoryController
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<!-- This SDL file represents a single cpu with 3 layers of cache,
-     avoiding coherency, directly linked.
-     L3 Cache is INCLUSIVE
-     Uses Directory out to memory
--->
 
 <variables>
 	<lat> 1ns </lat>
 	<buslat> 10ns </buslat>
 	<netlat> 2ns </netlat>
 </variables>
+
+<config>
+    stopAtCycle=10000ns
+</config>
 
 <param_include>
     <cpuParams>
@@ -85,7 +94,7 @@
     
     <memParams>
         <coherence_protocol> MSI </coherence_protocol>
-        <access_time> 1000 ns </access_time>
+        <access_time> 100 ns </access_time>
         <mem_size> 512 </mem_size>
         <clock> 1GHz </clock>
         <debug> ${MEM_DEBUG} </debug>

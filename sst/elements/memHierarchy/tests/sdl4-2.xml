@@ -1,14 +1,28 @@
+<!--
+Topology:
+            Core  Core
+             L1    L1
+                Bus
+                L2
+              DRAMSim
+ 
+1000 writes/reads
+Difference from sdl4-1.xml:  DRAMSim
+-->
+
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<config>
- stopAtCycle=100000ns
-</config>
 
 <variables>
 	<lat> 1ns </lat>
 	<buslat> 10 ns </buslat>
 </variables>
+
+<config>
+    stopAtCycle=5000ns
+</config>
+
 
 <param_include>
     <cpuParams>
@@ -53,7 +67,7 @@
 
     <memParams>
         <coherence_protocol> MSI </coherence_protocol>
-        <access_time> 1000 ns </access_time>
+        <access_time> 100 ns </access_time>
         <mem_size> 512 </mem_size>
         <clock> 1GHz </clock>
         <backend> memHierarchy.dramsim </backend>
