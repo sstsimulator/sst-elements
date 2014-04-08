@@ -24,7 +24,6 @@ private:
 	uint32_t messageSizeY;
 	uint32_t iterations;
 	uint32_t messageCount;
-	bool xBeforeY;
 
 	bool sendLeft;
 	bool sendRight;

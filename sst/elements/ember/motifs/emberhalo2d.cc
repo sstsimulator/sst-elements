@@ -20,13 +20,6 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	messageSizeX = (uint32_t) params.find_integer("messagesizey", 128);
 	messageSizeY = (uint32_t) params.find_integer("messagesizex", 128);
 
-	uint32_t ordering = (uint32_t) params.find_integer("messageorder", 0);
-	if(0 == ordering) {
-		xBeforeY = true;
-	} else {
-		xBeforeY = false;
-	}
-
 	sizeX = (uint32_t) params.find_integer("sizex", 0);
 	sizeY = (uint32_t) params.find_integer("sizey", 0);
 
