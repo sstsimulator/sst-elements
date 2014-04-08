@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "emberring.h"
 
 using namespace SST::Ember;

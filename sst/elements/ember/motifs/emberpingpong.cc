@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "emberpingpong.h"
 
 using namespace SST::Ember;
