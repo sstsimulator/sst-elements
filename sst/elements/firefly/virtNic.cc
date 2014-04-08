@@ -9,6 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include "sst_config.h"
+
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 #include "virtNic.h"
