@@ -35,6 +35,14 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
     assert( m_toNicLink );
 }
 
+VirtNic::~VirtNic()
+{
+    if ( m_notifySendPioDone ) delete m_notifySendPioDone;
+    if ( m_notifySendDmaDone ) delete m_notifySendDmaDone;
+    if ( m_notifyRecvDmaDone ) delete m_notifyRecvDmaDone;
+    if ( m_notifyNeedRecv ) delete m_notifyNeedRecv;
+}
+
 void VirtNic::init( unsigned int phase )
 {
     m_dbg.verbose(CALL_INFO,1,0,"phase=%d\n",phase);

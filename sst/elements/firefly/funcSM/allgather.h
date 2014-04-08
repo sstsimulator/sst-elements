@@ -14,7 +14,7 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "longMsgProtocol.h"
+#include "ctrlMsg.h"
 #include "info.h"
 
 namespace SST {
@@ -60,7 +60,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
 
-    virtual std::string protocolName() { return "LongMsgProtocol"; }
+    virtual std::string protocolName() { return "CtrlMsgProtocol"; }
 
   private:
 
@@ -105,10 +105,10 @@ class AllgatherFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    LongMsgProtocol::API* proto() { return static_cast<LongMsgProtocol::API*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
-    std::vector<LongMsgProtocol::CommReq>  m_recvReqV;
-    LongMsgProtocol::CommReq    m_recvReq; 
+    std::vector<CtrlMsg::CommReq>  m_recvReqV;
+    CtrlMsg::CommReq    m_recvReq; 
     GatherStartEvent*   m_event;
     int                 m_seq;
     SetupState          m_setupState;

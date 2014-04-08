@@ -15,7 +15,6 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include "sst/elements/hermes/msgapi.h"
-#include "entry.h"
 #include "api.h"
 
 namespace SST {
@@ -68,14 +67,27 @@ class RecvStartEvent : public Event {
 
   public:
     RecvStartEvent(
-            Hermes::Addr buf, uint32_t count,
-            Hermes::PayloadDataType dtype, Hermes::RankID src,
-            uint32_t tag, Hermes::Communicator group, 
-            Hermes::MessageRequest* req, Hermes::MessageResponse* resp ) :
-        entry( new RecvEntry( buf, count, dtype, src, tag, group, resp, req ) )
+            Hermes::Addr _buf, uint32_t _count,
+            Hermes::PayloadDataType _dtype, Hermes::RankID _src,
+            uint32_t _tag, Hermes::Communicator _group, 
+            Hermes::MessageRequest* _req, Hermes::MessageResponse* _resp ) :
+        buf( _buf ),
+        count( _count ),
+        dtype( _dtype ),      
+        src( _src ),
+        tag( _tag ),
+        group( _group ),
+        resp( _resp ),
+        req( _req )
     {}
-
-    RecvEntry*   entry;
+    Hermes::Addr                buf;
+    uint32_t                    count;
+    Hermes::PayloadDataType     dtype;
+    Hermes::RankID              src;
+    uint32_t                    tag;
+    Hermes::Communicator        group;
+    Hermes::MessageResponse*    resp;
+    Hermes::MessageRequest*     req;
 };
 
 
@@ -83,14 +95,25 @@ class SendStartEvent : public Event {
 
   public:
     SendStartEvent(
-                Hermes::Addr buf, uint32_t count,
-                Hermes::PayloadDataType dtype, Hermes::RankID dest,
-                uint32_t tag, Hermes::Communicator group, 
-                Hermes::MessageRequest* req ) :
-        entry( new SendEntry( buf, count, dtype, dest, tag, group, req ) ) 
+                Hermes::Addr _buf, uint32_t _count,
+                Hermes::PayloadDataType _dtype, Hermes::RankID _dest,
+                uint32_t _tag, Hermes::Communicator _group, 
+                Hermes::MessageRequest* _req ) :
+        buf( _buf ),
+        count( _count ),
+        dtype( _dtype ),      
+        dest( _dest ),
+        tag( _tag ),
+        group( _group ),
+        req( _req )
     {}
-
-    SendEntry*   entry;
+    Hermes::Addr                buf;
+    uint32_t                    count;
+    Hermes::PayloadDataType     dtype;
+    Hermes::RankID              dest;
+    uint32_t                    tag;
+    Hermes::Communicator        group;
+    Hermes::MessageRequest*     req;
 };
 
 class CollectiveStartEvent : public Event {

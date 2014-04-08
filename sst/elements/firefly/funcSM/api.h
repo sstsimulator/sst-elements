@@ -18,6 +18,7 @@
 #include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
+#include "ctrlMsgFunctors.h"
 
 namespace SST {
 namespace Firefly {
@@ -69,6 +70,9 @@ class FunctionSMInterface : public Module {
 
     virtual ~FunctionSMInterface() {} 
     virtual void printStatus( Output& ) {}
+    void setBackToMe( CtrlMsg::FunctorBase_0<bool>* functor ) {
+        m_backToMe = functor;
+    }
 
     void setInfo( Info* info ) { m_info = info; }
     void setProtocol( ProtocolAPI* proto ) { m_proto = proto; }
@@ -86,6 +90,7 @@ class FunctionSMInterface : public Module {
     std::string     m_name;
     int             m_enterLatency;
     int             m_returnLatency;
+    CtrlMsg::FunctorBase_0<bool>* m_backToMe;
 };
 
 }

@@ -14,7 +14,7 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "longMsgProtocol.h"
+#include "ctrlMsg.h"
 
 namespace SST {
 namespace Firefly {
@@ -158,7 +158,7 @@ class GathervFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event *e, Retval& );
     virtual void handleEnterEvent( Retval& );
 
-    virtual std::string protocolName() { return "LongMsgProtocol"; }
+    virtual std::string protocolName() { return "CtrlMsgProtocol"; }
 
   private:
 
@@ -169,11 +169,11 @@ class GathervFuncSM :  public FunctionSMInterface
         return CtrlMsg::GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
-    LongMsgProtocol::API* proto() { return static_cast<LongMsgProtocol::API*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     GatherStartEvent*   m_event;
     QQQ*                m_qqq;
-    std::vector<LongMsgProtocol::CommReq>  m_recvReqV;
+    std::vector<CtrlMsg::CommReq>  m_recvReqV;
 
     std::vector<int>    m_waitUpSize;
     std::vector<unsigned char>  m_recvBuf;

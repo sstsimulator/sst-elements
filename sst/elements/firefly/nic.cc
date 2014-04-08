@@ -113,6 +113,41 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvM.resize( m_vNicV.size() );
 }
 
+Nic::~Nic()
+{
+	delete m_linkControl;
+
+	if ( m_recvNotifyFunctor ) delete m_recvNotifyFunctor;
+	if ( m_sendNotifyFunctor ) delete m_sendNotifyFunctor;
+
+    for ( int i = 0; i < m_num_vNics; i++ ) {
+        delete m_vNicV[i];
+    }
+
+    for ( unsigned i = 0; i < m_recvM.size(); i++ ) {
+        std::map< int, std::deque<Entry*> >::iterator iter;
+
+        for ( iter = m_recvM[i].begin(); iter != m_recvM[i].end(); ++iter ) {
+            while ( ! (*iter).second.empty() ) {
+                delete (*iter).second.front();
+                (*iter).second.pop_front(); 
+            }
+        }
+    }
+
+    while ( ! m_activeRecvM.empty() ) {
+        delete m_activeRecvM.begin()->second;
+        m_activeRecvM.erase( m_activeRecvM.begin() );
+    }
+
+    while ( ! m_sendQ.empty() ) {
+        delete m_sendQ.front();
+        m_sendQ.pop_front();
+    }
+
+    if ( m_currentSend ) delete m_currentSend;
+}
+
 Nic::VirtNic::VirtNic( Nic& nic, int _id ) : 
     m_nic( nic ),
     id( _id )
@@ -349,7 +384,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
         ev->setNumFlits( ev->buf.size() );
 
         #if 0 
-            ev->setTraceType( Merlin::RtrEvent::ROUTE );
+            ev->setTraceType( Merlin::RtrEvent::FULL );
             ev->setTraceID( m_packetId++ );
         #endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",

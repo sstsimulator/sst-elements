@@ -18,6 +18,9 @@ namespace SST {
 namespace Firefly {
 
 struct IoVec {
+    IoVec() {}
+    IoVec( void* _ptr, size_t _size ) : 
+        ptr( _ptr ), len( _size ) {}
     void*  ptr;
     size_t len;
 };

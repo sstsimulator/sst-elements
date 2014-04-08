@@ -23,7 +23,6 @@
 #include <fstream>
 
 #include "functionSM.h"
-#include "entry.h"
 #include "virtNic.h"
 
 #include "funcSM/api.h"
@@ -56,11 +55,12 @@ Hades::Hades( Component* owner, Params& params ) :
     Params tmpParams;
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     int protoNum = 0;
-    tmpParams = params.find_prefix_params("longMsgProtocol.");
+    tmpParams = params.find_prefix_params("ctrlMsg.");
     m_protocolM[ protoNum ] = 
         dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
-                            "firefly.LongMsgProto", owner, tmpParams ) );
+                            "firefly.CtrlMsgProto", owner, tmpParams ) );
 
+    assert( m_protocolM[ protoNum ]);
     m_protocolM[ protoNum ]->init( &m_info, m_virtNic );
 
     m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] =
@@ -71,6 +71,17 @@ Hades::Hades( Component* owner, Params& params ) :
 
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
                                     m_protocolMapByName );
+}
+
+Hades::~Hades()
+{
+    while ( ! m_protocolM.empty() ) {
+        delete m_protocolM.begin()->second;
+        m_protocolM.erase( m_protocolM.begin() );
+    }
+    
+    delete m_functionSM;
+    delete m_virtNic;
 }
 
 void Hades::printStatus( Output& out )

@@ -36,7 +36,7 @@ class FiniFuncSM :  public BarrierFuncSM
         BarrierFuncSM::handleEnterEvent( retval );
     }
 
-    virtual std::string protocolName() { return "LongMsgProtocol"; }
+    virtual std::string protocolName() { return "CtrlMsgProtocol"; }
 };
 
 }

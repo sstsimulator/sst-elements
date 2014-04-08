@@ -17,26 +17,20 @@
 #include "protocolAPI.h"
 #include "ctrlMsgFunctors.h"
 #include "ioVec.h"
+#include "sst/elements/hermes/msgapi.h"
 
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
 
 typedef int  nid_t;
-typedef uint32_t     tag_t;
 
-static const tag_t AllgatherTag  = 0x10000000;
-static const tag_t AlltoallvTag  = 0x20000000;
-static const tag_t CollectiveTag = 0x30000000;
-static const tag_t GathervTag    = 0x40000000;
-static const tag_t LongProtoTag  = 0x50000000;
-static const tag_t TagMask       = (1<<28) - 1;
-
-struct Status {
-    nid_t   nid;
-    tag_t   tag; 
-    size_t  length;
-};
+static const uint64_t AllgatherTag  = 0x10000000;
+static const uint64_t AlltoallvTag  = 0x20000000;
+static const uint64_t CollectiveTag = 0x30000000;
+static const uint64_t GathervTag    = 0x40000000;
+static const uint64_t LongProtoTag  = 0x50000000;
+static const uint64_t TagMask       = 0xf0000000;
 
 class XXX;
 
@@ -44,12 +38,10 @@ class _CommReq;
 
 struct CommReq {
     _CommReq* req;
-    Status status;
-    void* usrPtr;
 };
 
 static const nid_t  AnyNid = -1;
-static const tag_t  AnyTag = -1; 
+static const uint64_t  AnyTag = -1; 
 typedef int region_t;
 
 typedef int RegionEvent;
@@ -58,42 +50,60 @@ class API : public ProtocolAPI {
 
   public:
     API( Component* owner, Params& );
+    ~API();
 
     virtual void init( Info* info, VirtNic* );
     virtual void setup();
     virtual Info* info();
 
-    virtual std::string name() { return "CtrlMsg"; }
+    virtual std::string name() { return "CtrlMsgProtocol"; }
     virtual void setRetLink( Link* link );
 
-    void send( void* buf, size_t len, nid_t dest, tag_t tag, 
+    void send( void* buf, size_t len, nid_t dest, uint64_t tag, 
                                         FunctorBase_0<bool>* = NULL );
-    void sendv( std::vector<IoVec>&, nid_t dest, tag_t tag,
+    void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag,
                                         FunctorBase_0<bool>* = NULL );
-    void isendv( std::vector<IoVec>&, nid_t dest, tag_t tag, CommReq*,
+    void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
-    void recv( void* buf, size_t len, nid_t src, tag_t tag,
+    void recv( void* buf, size_t len, nid_t src, uint64_t tag,
                                         FunctorBase_0<bool>* = NULL );
-    void recvv( std::vector<IoVec>&, nid_t src, tag_t tag,
+    void recvv( std::vector<IoVec>&, nid_t src, uint64_t tag,
                                         FunctorBase_0<bool>* = NULL );
-    void irecv( void* buf, size_t len, nid_t src, tag_t tag, CommReq*,
+    void irecv( void* buf, size_t len, nid_t src, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
-    void irecvv( std::vector<IoVec>&, nid_t src, tag_t tag, CommReq*,
+    void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
-    void irecvv( std::vector<IoVec>&, nid_t src, tag_t tag, tag_t ignoreBits,
-                                    CommReq*, FunctorBase_0<bool>* = NULL );
+
     void wait( CommReq*, FunctorBase_1<CommReq*,bool>* = NULL );
     void waitAny( std::vector<CommReq*>&, FunctorBase_1<CommReq*, bool>* = NULL );
-    void setUsrPtr( CommReq*, void* );
-    void* getUsrPtr( CommReq* );
-    void getStatus( CommReq*, CtrlMsg::Status* );
 
-    void read( nid_t, region_t, void* buf, size_t len, 
-                                    FunctorBase_0<bool>* = NULL );
+	void send(Hermes::Addr buf, uint32_t count, 
+		Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, FunctorBase_0<bool>* func );
+
+	void isend(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+		FunctorBase_0<bool>* func );
+
+    void recv(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageResponse* resp,
+		FunctorBase_0<bool>* func );
+
+    void irecv(Hermes::Addr _buf, uint32_t _count,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+        FunctorBase_0<bool>* func );
+
+	void wait( Hermes::MessageRequest, Hermes::MessageResponse* resp,
+				FunctorBase_0<bool>* func );
+   	void waitAny( int count, Hermes::MessageRequest req[], int *index,
+              	Hermes::MessageResponse* resp, FunctorBase_0<bool>* func );
+    void waitAll( int count, Hermes::MessageRequest req[],
+                Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func );
+
     size_t shortMsgLength();
-
-    void registerRegion( region_t, nid_t, void* buf, size_t len, FunctorBase_0<bool>* = NULL );
-    void unregisterRegion( region_t, FunctorBase_0<bool>* = NULL );
 
   private:
     XXX*    m_xxx;

@@ -286,10 +286,9 @@ void TestDriver::funcDone( int retval )
 
 void TestDriver::recvReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x count=%d status=%d\n",
                 my_resp[RecvReq].src, my_resp[RecvReq].tag, 
-                my_resp[RecvReq].dtype, my_resp[RecvReq].count,
-                my_resp[RecvReq].status );
+                my_resp[RecvReq].count, my_resp[RecvReq].status );
     if ( my_resp[RecvReq].count != m_recvBuf.size() ) {
         printf("ERROR %d != %lu\n", my_resp[RecvReq].count, m_recvBuf.size());
         return;
@@ -303,10 +302,9 @@ void TestDriver::recvReturn( )
 
 void TestDriver::waitRecvReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
-                my_resp[RecvReq].src, my_resp[RecvReq].tag, 
-                my_resp[RecvReq].dtype, my_resp[RecvReq].count,
-                my_resp[RecvReq].status );
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x count=%d status=%d\n",
+                my_resp[RecvReq].src, my_resp[RecvReq].tag,
+                my_resp[RecvReq].count, my_resp[RecvReq].status );
     if ( my_resp[RecvReq].count != m_recvBuf.size() ) {
         printf("ERROR %d != %lu\n", my_resp[RecvReq].count, m_recvBuf.size());
         return;
@@ -320,10 +318,9 @@ void TestDriver::waitRecvReturn( )
 
 void TestDriver::waitanyRecvReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x count=%d status=%d\n",
                 my_resp[my_index].src, my_resp[my_index].tag, 
-                my_resp[my_index].dtype, my_resp[my_index].count,
-                my_resp[my_index].status );
+                my_resp[my_index].count, my_resp[my_index].status );
     if ( my_resp[my_index].count != m_recvBuf.size() ) {
         printf("ERROR %d != %lu\n", my_resp[my_index].count, m_recvBuf.size());
         return;
@@ -337,10 +334,9 @@ void TestDriver::waitanyRecvReturn( )
 
 void TestDriver::waitallReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x count=%d status=%d\n",
                 my_resp[RecvReq].src, my_resp[RecvReq].tag, 
-                my_resp[RecvReq].dtype, my_resp[RecvReq].count,
-                my_resp[RecvReq].status );
+                my_resp[RecvReq].count, my_resp[RecvReq].status );
 
     m_dbg.verbose(CALL_INFO,1,0,"status=%d\n", my_resp[SendReq].status );
 

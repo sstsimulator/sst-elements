@@ -43,18 +43,12 @@ typedef struct MessageResponse {
     uint32_t        tag;  
     RankID          src; 
     uint32_t        count;
-    PayloadDataType dtype;
     bool            status;
 } MessageResponse;
 
 class MessageRequestBase {
   public:
-    MessageRequestBase() : m_done(false) {}
     virtual ~MessageRequestBase() {};
-    void setDone() { m_done = true; }
-    bool isDone() { return m_done; } 
-  private:
-    bool m_done;
 };
 
 typedef MessageRequestBase* MessageRequest;

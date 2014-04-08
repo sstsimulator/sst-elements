@@ -14,7 +14,7 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "longMsgProtocol.h"
+#include "ctrlMsg.h"
 
 namespace SST {
 namespace Firefly {
@@ -139,13 +139,13 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
         return CtrlMsg::CollectiveTag | (m_seq & 0xffff);
     }
 
-    LongMsgProtocol::API* proto() { return static_cast<LongMsgProtocol::API*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     WaitUpState         m_waitUpState;
     SendDownState       m_sendDownState;
 
     CollectiveStartEvent*   m_event;
-    std::vector<LongMsgProtocol::CommReq>  m_recvReqV;
+    std::vector<CtrlMsg::CommReq>  m_recvReqV;
     std::vector<void*>  m_bufV;
     size_t              m_bufLen;
     YYY*                m_yyy;

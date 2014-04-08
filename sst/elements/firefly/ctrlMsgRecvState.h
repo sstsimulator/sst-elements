@@ -35,8 +35,10 @@ class RecvState : StateBase< T1 >
         dbg().setPrefix(buffer);
 
     }
-    void enter( bool blocking, std::vector<IoVec>&, nid_t, tag_t, tag_t, CommReq*,
-                FunctorBase_0<bool>*, FunctorBase_0<bool>* = NULL );
+    void enter( bool blocking, std::vector<IoVec>&,
+            Hermes::PayloadDataType, Hermes::RankID dest, uint32_t tag,
+            Hermes::Communicator group, CommReq*,
+            FunctorBase_0<bool>*, FunctorBase_0<bool>* = NULL );
 
     bool afterProcess();
     bool unblock();
@@ -54,26 +56,23 @@ class RecvState : StateBase< T1 >
 };
 
 template< class T1 >
-void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
-      tag_t tag, tag_t ignore, CommReq* commReq,
-            FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
+void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, CommReq* commReq,
+        FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
     dbg().verbose(CALL_INFO,1,0,"%s src=%d tag=%#x functor=%p\n",
                 blocking ? "blocking" : "non-blocking", src, tag, functor );
 
-    StateBase<T1>::set( stateFunctor );
+    StateBase<T1>::setExit( stateFunctor );
     m_functor = functor;
     m_blocking = blocking;
 
+    m_req = new _CommReq( blocking ? _CommReq::Recv: _CommReq::Irecv,
+        ioVec, obj().info()->sizeofDataType(dtype), src, tag, group );
     if ( ! blocking ) {
-        m_req = new _CommReq( _CommReq::Send, ioVec, src, tag, &commReq->status );
         commReq->req = m_req;
-    } else {
-        m_req = new _CommReq( _CommReq::Send, ioVec, src, tag );
     }
-
-    m_req->initHdrNid( src );
-    m_req->initIgnore( ignore );
 
     obj().m_processQueuesState->enterRecv( m_req, &m_afterProcess );
 }
@@ -88,9 +87,7 @@ bool RecvState<T1>::afterProcess()
             obj().passCtrlToFunction( 0, m_functor );
             delete m_req;
         } else {
-            std::set<_CommReq*> tmp;
-            tmp.insert( m_req );
-            obj().m_processQueuesState->enterWait( tmp, &m_unblock );
+            obj().m_processQueuesState->enterWait( new WaitReq(m_req), &m_unblock );
         }
     } else {
         obj().passCtrlToFunction( 0, m_functor );

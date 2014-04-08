@@ -186,6 +186,7 @@ class Nic : public SST::Component  {
         Nic& m_nic;
       public:
         VirtNic( Nic&, int id );
+		~VirtNic() {}
         void handleCoreEvent( Event* );
         void init( unsigned int phase );
         Link* m_toCoreLink;
@@ -242,7 +243,7 @@ class Nic : public SST::Component  {
 public:
 
     Nic(ComponentId_t, Params& );
-    ~Nic(){}
+    ~Nic();
 
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }

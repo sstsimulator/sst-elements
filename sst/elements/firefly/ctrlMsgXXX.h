@@ -28,15 +28,6 @@ template< class T >
 class RecvState;
 
 template< class T >
-class ReadState;
-
-template< class T >
-class RegRegionState;
-
-template< class T >
-class UnregRegionState;
-
-template< class T >
 class WaitAnyState;
 
 template< class T >
@@ -54,12 +45,18 @@ static const key_t LongRspKey  = 2 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadReqKey  = 3 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
 
-struct MsgHdr {
-    tag_t     tag;
-    nid_t     nid;
-    size_t    length;
-    key_t     ackKey;      
+struct MatchHdr {
+    uint32_t count; 
+    uint32_t dtypeSize;
+    Hermes::RankID rank;
+    Hermes::Communicator group;
+    uint64_t    tag;
+    key_t       ackKey;      
+};
+
+struct CtrlHdr {
     key_t     rspKey;
+    key_t     ackKey;      
 };
 
 static const int    ShortMsgQ       = 0xf00d;
@@ -70,25 +67,51 @@ class XXX  {
 
   public:
     XXX( Component* owner, Params& params );
+    ~XXX();
     void init( Info* info, VirtNic* );
     void setup();
     void setRetLink( Link* link );
 
-    void sendv( bool blocking,  std::vector<IoVec>&, nid_t dest,
-                        tag_t tag, CommReq*, FunctorBase_0<bool>* );
-    void recvv( bool blocking, std::vector<IoVec>&, nid_t src,
-                        tag_t tag, CommReq*, FunctorBase_0<bool>* );
-    void recvv( bool blocking, std::vector<IoVec>&, nid_t src,
-                        tag_t tag, tag_t ignore, CommReq*, FunctorBase_0<bool>* );
-    void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
-
-    void read( nid_t, region_t, void* buf, size_t len, FunctorBase_0<bool>* );
-    void registerRegion( region_t, nid_t, void* buf, size_t len, FunctorBase_0<bool>* );
-    void unregisterRegion( region_t, FunctorBase_0<bool>* );
-    void getStatus( CommReq*, Status* );
-
     Info*      info() { return m_info; }
     VirtNic&   nic() { return *m_nic; }           
+
+    void sendv( bool blocking, std::vector<IoVec>&,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, CommReq*, FunctorBase_0<bool>* );
+
+    void recvv( bool blocking, std::vector<IoVec>&,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, CommReq*, FunctorBase_0<bool>* );
+
+    void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
+
+    void send(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, FunctorBase_0<bool>* func );
+
+    void isend(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+		FunctorBase_0<bool>* func );
+
+    void recv(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageResponse* resp,
+		FunctorBase_0<bool>* func );
+
+    void irecv(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+        FunctorBase_0<bool>* func );
+
+    void wait( Hermes::MessageRequest, Hermes::MessageResponse* resp,
+		FunctorBase_0<bool>* func );
+
+    void waitAny( int count, Hermes::MessageRequest req[], int *index,
+        Hermes::MessageResponse* resp, FunctorBase_0<bool>* func  );
+
+    void waitAll( int count, Hermes::MessageRequest req[],
+        Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func );
 
     void setReturnState( FunctorBase_0<bool>* state ) {
         m_returnState = state; 
@@ -97,8 +120,9 @@ class XXX  {
     size_t shortMsgLength() { return m_shortMsgLength; }
 
     void passCtrlToFunction(int delay, FunctorBase_0<bool>* );
-    void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq* );
+    void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
     void schedFunctor( FunctorBase_0<bool>*, int delay = 0 );
+
     int memcpyDelay(int bytes ) {
         return (float) (bytes * m_memcpyDelay_ps)/ 1000.0; 
     } 
@@ -162,8 +186,6 @@ class XXX  {
     bool notifyRecvDmaDone( int, int, size_t, void* );
     bool notifyNeedRecv( int, int, size_t );
 
-    bool checkMsgHdr( MsgHdr&, MsgHdr& );
-
     Output          m_dbg;
     Link*           m_retLink;
     Link*           m_delayLink;
@@ -174,83 +196,114 @@ class XXX  {
     FunctorBase_0<bool>*    m_returnState;
     SendState<XXX>*         m_sendState;
     RecvState<XXX>*         m_recvState;
-    ReadState<XXX>*         m_readState;
-    RegRegionState<XXX>*    m_regRegionState;
-    UnregRegionState<XXX>*  m_unregRegionState;
     WaitAnyState<XXX>*      m_waitAnyState;
     Output::output_location_t   m_dbg_loc;
     int                         m_dbg_level;
     size_t                  m_shortMsgLength;
   public:
     ProcessQueuesState<XXX>*     m_processQueuesState;
-    void loopSend( int, _CommReq*, bool response = false);
+    void loopSend( std::vector<IoVec>&, int, void* );
+    void loopSend( int, void* );
 };
 
-class ShortRecvBuffer {
-  public:
-    ShortRecvBuffer(size_t length ) { 
-        ioVec.resize(2);    
-
-        ioVec[0].ptr = &hdr;
-        ioVec[0].len = sizeof(hdr);
-
-        buf.resize( length );
-        ioVec[1].ptr = &buf[0];
-            ioVec[1].len = buf.size();
-        }
-    MsgHdr              hdr;
-    std::vector<IoVec>  ioVec; 
-    std::vector<unsigned char> buf;
-};
-
-class _CommReq {
+class _CommReq : public Hermes::MessageRequestBase {
   public:
 
-    enum Type { Recv, Send };
+    enum Type { Recv, Send, Isend, Irecv };
 
-    _CommReq( Type type, std::vector<IoVec>& _ioVec, nid_t nid,
-              tag_t tag, Status* status = NULL) : 
+    _CommReq( Type type, std::vector<IoVec>& _ioVec, 
+        unsigned int dtypeSize, Hermes::RankID rank, uint32_t tag,
+        Hermes::Communicator group ) : 
         m_type( type ),
+        m_buf( NULL ),
         m_ioVec( _ioVec ),
-        m_status( status ),
+        m_resp( NULL ),
         m_done( false ),
-        m_nid ( nid )
+        m_destRank( Hermes::AnySrc ),
+        m_ignore( 0 )
     {
-        m_hdr.tag  = tag;
-        m_hdr.length = getLength();
-    }
-    void initHdrNid( nid_t nid ) {
-        m_hdr.nid  = nid;
+        m_hdr.count = getLength() / dtypeSize;
+        m_hdr.dtypeSize = dtypeSize; 
+
+        if ( m_type == Recv || m_type == Irecv ) {
+            m_hdr.rank = rank;
+        } else {
+            m_destRank = rank;
+        }
+
+        m_hdr.tag = tag;
+        m_hdr.group = group;
     }
 
-    void initIgnore( tag_t ignore ) {
-        m_ignore = ignore;
+    _CommReq( Type type, Hermes::Addr buf, uint32_t count,
+        unsigned int dtypeSize, Hermes::RankID rank, uint32_t tag, 
+        Hermes::Communicator group, Hermes::MessageResponse* resp = NULL ) :
+        m_type( type ),
+        m_buf( buf ),
+        m_resp( resp ),
+        m_done( false ),
+        m_destRank( Hermes::AnySrc ),
+        m_ignore( 0 )
+    { 
+        m_hdr.count = count;
+        m_hdr.dtypeSize = dtypeSize; 
+
+        if ( m_type == Recv || m_type == Irecv ) {
+            m_hdr.rank = rank;
+            if ( Hermes::AnyTag == tag  ) {
+                m_ignore = 0xffffffff;
+            }
+        } else {
+            m_destRank = rank;
+        }
+
+        m_hdr.tag = tag;
+        m_hdr.group = group;
+        m_ioVec.resize( 1 );
+        m_ioVec[0].ptr = buf;
+        m_ioVec[0].len = dtypeSize * count;
     }
-    tag_t ignore( ) {
-        return m_ignore;
+    ~_CommReq() {
     }
 
-    MsgHdr& hdr() { return m_hdr; }
+    bool isBlocking() {
+        return m_type == Recv || m_type == Send;
+    }
+
+    uint64_t ignore() { return m_ignore; }
+    void setSrcRank( Hermes::RankID rank ) {
+        m_hdr.rank = rank;
+    }
+
+    MatchHdr& hdr() { return m_hdr; }
     
-    std::vector<IoVec>& ioVec() {
-        return m_ioVec;
+    std::vector<IoVec>& ioVec() { 
+        assert( ! m_ioVec.empty() );
+        return m_ioVec; 
     }
 
     bool isDone() { return m_done; }
-    bool isSend() { return m_type == Send; }
+    void setDone() { m_done = true; }
 
-    void setStatus( nid_t nid, tag_t tag, size_t length ) {
-        if ( m_status ) {
-            m_status->nid = nid;
-            m_status->tag = tag;
-            m_status->length = length;
+    void getResp( Hermes::MessageResponse* resp ) {
+        *resp = m_matchInfo;
+    }
+
+    void setResp( uint32_t tag, Hermes::RankID src, uint32_t count )
+    {
+        m_matchInfo.tag = tag;
+        m_matchInfo.src = src;
+        m_matchInfo.count = count;
+
+        if ( m_resp ) {
+            *m_resp = m_matchInfo;
         }
     }
 
-    void setDone() { m_done = true; }
-    nid_t nid() { return m_nid; }
-
-    size_t  getLength() {
+    Hermes::RankID getDestRank() { return m_destRank; }
+    Hermes::Communicator getGroup() { return m_hdr.group; }
+    
+    size_t getLength( ) {
         size_t length = 0;
         for ( size_t i = 0; i < m_ioVec.size(); i++ ) {
             length += m_ioVec[i].len;
@@ -258,17 +311,96 @@ class _CommReq {
         return length;
     }
 
+    bool isMine( ) {
+        return NULL != m_buf;
+    }
+
   private:
 
-    MsgHdr              m_hdr; 
+    MatchHdr            m_hdr; 
     Type                m_type;
+    Hermes::Addr        m_buf;
     std::vector<IoVec>  m_ioVec;
-    Status*             m_status;
+    Hermes::MessageResponse* m_resp;
     bool                m_done;
-    nid_t               m_nid;
-    tag_t               m_ignore;
+    Hermes::RankID      m_destRank;
+    Hermes::MessageResponse  m_matchInfo;
+    uint64_t            m_ignore;
 };
 
+class WaitReq {
+    struct X {
+        X( _CommReq* _req, Hermes::MessageResponse* _resp = NULL ) : 
+            pos(0), req(_req), resp(_resp) {}
+
+        X( int _pos, _CommReq* _req, Hermes::MessageResponse* _resp = NULL ) : 
+            pos(_pos), req(_req), resp(_resp) {}
+
+        int pos;
+        _CommReq* req;
+        Hermes::MessageResponse* resp;
+    };
+
+  public:
+    WaitReq( _CommReq* req ) : indexPtr(NULL) {
+        reqQ.push_back( X( req ) ); 
+    }
+
+    WaitReq( std::vector<_CommReq*> reqs ) : indexPtr(NULL) {
+        for ( unsigned int i = 0; i < reqs.size(); i++ ) {
+            reqQ.push_back( X( i, reqs[i] ) ); 
+        } 
+    }
+
+    WaitReq( Hermes::MessageRequest req, Hermes::MessageResponse* resp ) :
+        indexPtr(NULL)
+    {
+        reqQ.push_back( X( static_cast<_CommReq*>(req), resp ) );
+    }
+
+    WaitReq( int count, Hermes::MessageRequest req[], int *index,
+                                        Hermes::MessageResponse* resp ) :
+        indexPtr(index)
+    {
+        for ( int i = 0; i < count; i++ ) {
+            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), resp ) );
+        }
+    }
+
+    WaitReq( int count, Hermes::MessageRequest req[],
+                                        Hermes::MessageResponse* resp[] ) : 
+        indexPtr(NULL)
+    {
+        for ( int i = 0; i < count; i++ ) {
+            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), resp[i] ) );
+        }
+    }
+
+    bool isDone() {
+        std::deque<X>::iterator iter = reqQ.begin();
+        for ( ; iter != reqQ.end(); ++ iter) {
+            if ( iter->req->isDone() ) {
+                if ( iter->resp ) {
+                    iter->req->getResp( iter->resp );
+                }
+                if ( indexPtr ) { 
+                    *indexPtr = iter->pos;
+                    reqQ.clear();
+                } else {
+                    reqQ.erase( iter );
+                }
+                if ( iter->req->isMine() ) {
+                    delete iter->req;
+                }
+                break;
+            } 
+        } 
+        return reqQ.empty();
+    }
+
+    std::deque< X > reqQ;
+    int* indexPtr; 
+};
 
 }
 }

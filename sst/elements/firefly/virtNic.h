@@ -109,6 +109,7 @@ class VirtNic : public SST::Module {
 
 
     VirtNic( Component* owner, Params&);
+    ~VirtNic();
     void init( unsigned int );
 
 	int getNumCores() {

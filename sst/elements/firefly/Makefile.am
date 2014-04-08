@@ -8,8 +8,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libfirefly.la
 
 libfirefly_la_SOURCES = \
-	longMsgProtocol.cc \
-	longMsgProtocol.h \
 	protocolAPI.h \
 	ioVec.h \
 	info.h \
@@ -24,11 +22,7 @@ libfirefly_la_SOURCES = \
 	ctrlMsgRecvState.h \
 	ctrlMsgWaitAnyState.h \
 	ctrlMsgFunctors.h \
-	ctrlMsgReadState.h \
-	ctrlMsgRegRegionState.h \
-	ctrlMsgUnregRegionState.h \
 	ctrlMsgProcessQueuesState.h \
-	entry.h \
 	loopBack.h \
 	loopBack.cc \
 	libfirefly.cc \

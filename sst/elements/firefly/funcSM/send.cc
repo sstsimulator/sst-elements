@@ -27,42 +27,25 @@ void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_event = static_cast< SendStartEvent* >(e);
 
     m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d dest=%d tag=%#x\n",
-                m_event->entry->req ? "Isend":"Send",
-                m_event->entry->buf,
-                m_event->entry->count,
-                m_event->entry->dtype,
-                m_event->entry->dest,
-                m_event->entry->tag );
+                m_event->req ? "Isend":"Send",
+                m_event->buf,
+                m_event->count,
+                m_event->dtype,
+                m_event->dest,
+                m_event->tag );
 
-    SendEntry* sendEntry;
-
-    if ( m_event->entry->req == NULL ) {
-        m_state = Wait;
-        sendEntry = m_event->entry;
-    } else {
-        m_state = Exit;
-        sendEntry = new SendEntry;
-        *sendEntry = *m_event->entry;
-
-        *sendEntry->req = sendEntry;
-    }
-
-    proto()->postSendEntry( sendEntry );
+	if ( NULL == m_event->req ) {
+		proto()->send( m_event->buf, m_event->count, m_event->dtype, m_event->dest,
+			m_event->tag, m_event->group, m_backToMe );
+	} else {
+		proto()->isend( m_event->buf, m_event->count, m_event->dtype, m_event->dest,
+			m_event->tag, m_event->group, m_event->req, m_backToMe );
+	}
 }
 
 void SendFuncSM::handleEnterEvent( Retval& retval )
 {
-    switch( m_state ) {
-      case Wait:
-        m_dbg.verbose(CALL_INFO,1,0,"waiting\n");
-        proto()->wait( m_event->entry );
-        m_state = Exit;
-        return;
-
-      case Exit:
-        m_dbg.verbose(CALL_INFO,1,0,"done\n");
-        retval.setExit(0);
-        delete m_event;
-        m_event = NULL;
-    }
+    delete m_event;
+    m_event = NULL;
+    retval.setExit(0);
 }

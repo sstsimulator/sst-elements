@@ -34,12 +34,10 @@
 #include <funcSM/waitAny.h>
 #include <funcSM/waitAll.h>
 #include <ctrlMsg.h>
-#include <longMsgProtocol.h>
 #include <loopBack.h>
 #include <merlinEvent.h>
 
 using namespace Firefly;
-
 
 BOOST_CLASS_EXPORT(MerlinFireflyEvent)
 
@@ -167,12 +165,6 @@ static Module*
 load_ctrlMsgProtocol( Component* comp, Params& params )
 {
     return new CtrlMsg::API( comp, params );
-}
-
-static Module*
-load_LongMsgProtocol( Component* comp, Params& params )
-{
-    return new LongMsgProtocol( comp, params );
 }
 
 static void init_MerlinFireflyEvent()
@@ -338,18 +330,11 @@ static const ElementInfoModule modules[] = {
       load_hermesWaitAllSM,
       NULL,
     },
-    { "CtrlMsg",
-      "CtrlMsg protocol",
+    { "CtrlMsgProto",
+      "Ctrl Message Pootocol",
       NULL,
       NULL,
       load_ctrlMsgProtocol,
-      NULL,
-    },
-    { "LongMsgProto",
-      "Long Message Pootocol",
-      NULL,
-      NULL,
-      load_LongMsgProtocol,
       NULL,
     },
     { NULL, NULL, NULL, NULL, NULL }

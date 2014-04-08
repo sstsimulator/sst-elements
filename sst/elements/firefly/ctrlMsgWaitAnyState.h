@@ -43,6 +43,7 @@ class WaitAnyState : StateBase< T1 >
     FunctorBase_1<CommReq*,bool>*       m_functor;
     Functor_0<WaitAnyState<T1>,bool>    m_unblock;
     std::vector<CommReq*>               m_reqs; 
+    WaitReq*                            m_waitReq;
 };
 
 template< class T1 >
@@ -50,18 +51,18 @@ void WaitAnyState<T1>::enter( std::vector<CommReq*>& reqs,
     FunctorBase_1<CommReq*,bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
     dbg().verbose(CALL_INFO,1,0,"num reqs %lu\n", reqs.size());
-    StateBase<T1>::set( stateFunctor );
+    StateBase<T1>::setExit( stateFunctor );
 
     m_reqs = reqs;
     m_functor = functor;
 
-    std::set<_CommReq*> tmp;
+    std::vector<_CommReq*> tmp;
     std::vector<CommReq*>::iterator iter = reqs.begin();
     for ( ; iter != reqs.end(); ++iter ) {
-        tmp.insert( (*iter)->req );
+        tmp.push_back( (*iter)->req );
     }
     
-    obj().m_processQueuesState->enterWait( tmp, &m_unblock );
+    obj().m_processQueuesState->enterWait( new WaitReq( tmp ), &m_unblock );
 }
 
 template< class T1 >
@@ -78,7 +79,8 @@ bool WaitAnyState<T1>::unblock()
             return false;
         }
     }
-    assert(0);
+    dbg().verbose(CALL_INFO,1,0,"no CommReq must be a CommEvent\n");
+    obj().passCtrlToFunction( 0, m_functor, NULL );
     return false;
 }
 

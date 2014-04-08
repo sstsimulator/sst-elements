@@ -46,10 +46,15 @@ class StateBase {
         m_functor = NULL;
     }
 
-    void set( FunctorBase_0<bool>* functor ) {
+    void setExit( FunctorBase_0<bool>* functor ) {
         //m_dbg.verbose(CALL_INFO,1,0,"\n");
         assert( !m_functor );
         m_functor = functor;
+    }
+    FunctorBase_0<bool>* clearExit(  ) {
+        FunctorBase_0<bool>* functor = m_functor;
+        m_functor = NULL;
+        return functor;
     }
 
     T1&         obj;

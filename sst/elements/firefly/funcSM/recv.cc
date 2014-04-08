@@ -27,49 +27,26 @@ void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_event = static_cast< RecvStartEvent* >(e);
 
     m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
-                m_event->entry->req ? "Irecv":"Recv", 
-                m_event->entry->buf,
-                m_event->entry->count,
-                m_event->entry->dtype,
-                m_event->entry->src,
-                m_event->entry->tag );
+                m_event->req ? "Irecv":"Recv", 
+                m_event->buf,
+                m_event->count,
+                m_event->dtype,
+                m_event->src,
+                m_event->tag );
 
-    RecvEntry* recvEntry;
-
-    // if blocking recv 
-    if ( m_event->entry->req == NULL ) {
-
-        m_state = Wait;
-        recvEntry = m_event->entry;
-
-    } else {
-
-        m_state = Exit;
-
-        recvEntry = new RecvEntry;
-        *recvEntry = *m_event->entry; 
-
-        recvEntry->resp = new Hermes::MessageResponse;
-
-        *recvEntry->req = recvEntry;
-    }
-
-    proto()->postRecvEntry( recvEntry );
+    if ( m_event->req == NULL ) {
+		proto()->recv( m_event->buf, m_event->count, m_event->dtype, m_event->src, 
+			m_event->tag, m_event->group, m_event->resp, m_backToMe );
+	} else {
+		proto()->irecv( m_event->buf, m_event->count, m_event->dtype, m_event->src, 
+			m_event->tag, m_event->group, m_event->req, m_backToMe );
+	}
 }
 
 void RecvFuncSM::handleEnterEvent( Retval& retval )
 {
-    switch( m_state ) {
-      case Wait:
-        m_dbg.verbose(CALL_INFO,1,0,"waiting\n");
-        proto()->wait( m_event->entry, m_event->entry->resp );
-        m_state = Exit;
-        return;
-
-      case Exit:
-        m_dbg.verbose(CALL_INFO,1,0,"done\n");
-        retval.setExit(0);
-        delete m_event;
-        m_event = NULL;
-    }
+	retval.setExit(0);
+    delete m_event;
+    m_event = NULL;
+	retval.setExit(0);
 }

@@ -20,6 +20,12 @@ namespace Firefly {
 
 class Info {
   public:
+	~Info() {
+    	std::map<Hermes::Communicator, Group*>::iterator iter; 
+		for ( iter = m_groupMap.begin(); iter != m_groupMap.end(); ++iter ) {
+			delete (*iter).second;	
+		}
+	}
     void addGroup( Hermes::Communicator group, Group* x ) {
         m_groupMap[group] = x; 
     }

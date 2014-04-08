@@ -20,12 +20,9 @@ namespace Firefly {
 class LoopBackEvent : public Event {
 
   public:
-    LoopBackEvent( int _dest ) :
-        Event(),
-        dest( _dest )
-    {
-    }
-    int dest;
+    LoopBackEvent( int _core ) : Event(), core( _core ) {}
+    int core;
+
   private:
         friend class boost::serialization::access;
     template<class Archive>
@@ -33,19 +30,18 @@ class LoopBackEvent : public Event {
     serialize(Archive & ar, const unsigned int version )
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(dest);
+        ar & BOOST_SERIALIZATION_NVP(core);
     }
 };
 
 class LoopBack : public SST::Component  {
   public:
     LoopBack(ComponentId_t id, Params& params );
-    ~LoopBack();
-    void handleCoreEvent( Event* ev );
+    ~LoopBack() {}
+    void handleCoreEvent( Event* ev, int );
 
   private:
     std::vector<Link*>          m_links;   
-    Event::Handler<LoopBack>*   m_handler;
 };
 
 }

@@ -16,6 +16,7 @@
 #include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
+#include "ctrlMsgFunctors.h"
 #include "funcSM/api.h"
 
 #include "info.h"
@@ -55,6 +56,7 @@ class ProtocolAPI;
 class FunctionSM  {
 
     typedef FunctionSMInterface::Retval Retval;
+	typedef CtrlMsg::Functor_0<FunctionSM, bool> Functor;
 
     static const char *m_functionName[];
 
@@ -82,6 +84,8 @@ class FunctionSM  {
     
     void initFunction( SST::Component*, Info*, FunctionEnum,
                                     std::string, Params&, Params& );
+	bool backToMe();
+	Functor             m_backToMe;
 
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*    m_sm; 

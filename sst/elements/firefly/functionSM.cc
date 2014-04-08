@@ -40,6 +40,7 @@ class DriverEvent : public SST::Event {
 
 FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 
         SST::Link* toProgressLink, std::map<std::string,ProtocolAPI*>& proto ) :
+	m_backToMe( Functor( this, &FunctionSM::backToMe ) ),
     m_sm( NULL ),
     m_info( info ),
     m_params( params ),
@@ -76,7 +77,6 @@ FunctionSM::~FunctionSM()
     for ( unsigned int i=0; i < m_smV.size(); i++ ) {
         delete m_smV[i];
     }
-    delete m_fromDriverLink;
 }
 
 void FunctionSM::printStatus( Output& out )
@@ -153,15 +153,26 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 
     m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
                              params );
+    m_smV[ num ]->setBackToMe( &m_backToMe );
 
     assert( m_smV[ Init ] );
     m_smV[ num ]->setInfo( info ); 
 
     if ( ! m_smV[ num ]->protocolName().empty() ) {
         ProtocolAPI* proto = m_proto[ m_smV[ num ]->protocolName() ];
-        m_dbg.verbose(CALL_INFO,3,0,"%p\n", proto );
+        assert(proto);
         m_smV[ num ]->setProtocol( proto ); 
     }
+}
+
+bool FunctionSM::backToMe()
+{
+    assert( m_sm );
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
+    Retval retval;
+    m_sm->handleEnterEvent( retval );
+    processRetval( retval );
+	return false;
 }
 
 void FunctionSM::enter( )

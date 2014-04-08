@@ -19,9 +19,6 @@
 #include "ctrlMsgXXX.h"
 #include "ctrlMsgSendState.h"
 #include "ctrlMsgRecvState.h"
-#include "ctrlMsgReadState.h"
-#include "ctrlMsgRegRegionState.h"
-#include "ctrlMsgUnregRegionState.h"
 #include "ctrlMsgWaitAnyState.h"
 #include "ctrlMsgProcessQueuesState.h"
 #include "info.h"
@@ -63,6 +60,14 @@ XXX::XXX( Component* owner, Params& params ) :
     assert(m_loopLink);
 }
 
+XXX::~XXX()
+{
+    delete m_sendState;
+    delete m_recvState;
+    delete m_waitAnyState;
+    delete m_processQueuesState;
+}
+
 void XXX::init( Info* info, VirtNic* nic )
 {
     m_info = info;
@@ -93,14 +98,14 @@ void XXX::setup()
 
     m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_readState = new ReadState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_regRegionState = new RegRegionState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_unregRegionState = new UnregRegionState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_processQueuesState = new ProcessQueuesState<XXX>( m_dbg_level, m_dbg_loc, *this );
+    m_processQueuesState = new ProcessQueuesState<XXX>(
+                        m_dbg_level, m_dbg_loc, *this );
 
-    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ns\n", m_matchDelay_ps, m_memcpyDelay_ps );
-    m_dbg.verbose(CALL_INFO,1,0,"txDelay %d ns. rxDelay %d ns\n", m_txDelay, m_rxDelay );
+    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ns\n",
+                            m_matchDelay_ps, m_memcpyDelay_ps );
+    m_dbg.verbose(CALL_INFO,1,0,"txDelay %d ns. rxDelay %d ns\n",
+                            m_txDelay, m_rxDelay );
 }
 
 void XXX::setRetLink( Link* link ) 
@@ -110,30 +115,18 @@ void XXX::setRetLink( Link* link )
 
 class Foo : public LoopBackEvent {
   public:
-    Foo( int core, _CommReq* _req, bool _response ) : 
-        LoopBackEvent( core ),
-        req( _req ),
-        response( _response ) 
-    {
-    }
-    _CommReq* req;
-    bool      response;
+    Foo( std::vector<IoVec>& _vec, int core, void* _key ) : 
+        LoopBackEvent( core ), vec( _vec ), key( _key ), response( false ) 
+    {}
+
+    Foo( int core, void* _key ) : 
+        LoopBackEvent( core ), key( _key ), response( true ) 
+    {}
+
+    std::vector<IoVec>  vec;
+    void*               key;
+    bool                response;
 };
-
-void XXX::loopSend( int core, _CommReq* req, bool response ) 
-{
-    m_dbg.verbose(CALL_INFO,1,0,"dest core=%d req=%p\n",core,req);    
-    
-    m_loopLink->send(0, new Foo( core, req, response ) );
-}    
-
-void XXX::loopHandler( Event* ev )
-{
-    Foo* event = static_cast< Foo* >(ev);
-    m_dbg.verbose(CALL_INFO,1,0,"req=%p\n",event->req);    
-    m_processQueuesState->loopHandler( event->req, event->response );
-    delete ev;
-}
 
 static size_t calcLength( std::vector<IoVec>& ioVec )
 {
@@ -144,59 +137,108 @@ static size_t calcLength( std::vector<IoVec>& ioVec )
     return len;
 }
 
-void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec, nid_t dest, 
-                   tag_t tag, CommReq* commReq, FunctorBase_0<bool>* functor )
+void XXX::loopSend( std::vector<IoVec>& vec, int core, void* key ) 
+{
+    m_dbg.verbose(CALL_INFO,1,0,"dest core=%d key=%p\n",core,key);    
+    
+    m_loopLink->send(0, new Foo( vec, core, key ) );
+}    
+
+void XXX::loopSend( int core, void* key ) 
+{
+    m_dbg.verbose(CALL_INFO,1,0,"dest core=%d key=%p\n",core,key);    
+    m_loopLink->send(0, new Foo( core, key ) );
+}
+
+void XXX::loopHandler( Event* ev )
+{
+    Foo* event = static_cast< Foo* >(ev);
+    m_dbg.verbose(CALL_INFO,1,0,"%s key=%p\n",
+        event->vec.empty() ? "Response" : "Request", event->key);    
+
+    if ( event->vec.empty() ) {
+        m_processQueuesState->loopHandler(event->core, event->key );
+    } else { 
+        m_processQueuesState->loopHandler(event->core, event->vec, event->key);
+    }
+    delete ev;
+}
+
+void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec, 
+    Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+    Hermes::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x length=%lu \n",
                                         dest, tag, calcLength(ioVec) );
-    m_sendState->enter( blocking, ioVec, dest, tag, commReq, functor );
+    m_sendState->enter( blocking, ioVec, dtype, dest, tag, group,
+                                        commReq, functor );
 }
 
-void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
-      tag_t tag, CommReq* commReq, FunctorBase_0<bool>* functor )
+void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, 
+    Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+    Hermes::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
-    m_recvState->enter( blocking, ioVec, src, tag, 0, commReq, functor );
+    m_recvState->enter( blocking, ioVec, dtype, src, tag, group,commReq, functor );
 }
 
-void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, nid_t src,
-      tag_t tag, tag_t ignore, CommReq* commReq, FunctorBase_0<bool>* functor )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
-                                        src, tag, calcLength(ioVec) );
-    m_recvState->enter( blocking, ioVec, src, tag, ignore, commReq, functor );
-}
-
-
-void XXX::waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* functor )
+void XXX::waitAny( std::vector<CommReq*>& reqs,
+                                FunctorBase_1<CommReq*,bool>* functor )
 {
     m_waitAnyState->enter( reqs, functor );
 }
 
-void XXX::read( nid_t nid, region_t region , void* buf, size_t len,
-                                            FunctorBase_0<bool>* functor )
+void XXX::send(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, FunctorBase_0<bool>* func )
 {
-    m_readState->enter( nid, region, buf, len, functor );
+    m_processQueuesState->send( buf, count, dtype, dest, tag, group, func );
 }
 
-void XXX::registerRegion( region_t region, nid_t nid, void* buf, size_t len,
-                                            FunctorBase_0<bool>* functor )
+void XXX::isend(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+		FunctorBase_0<bool>* func )
 {
-    m_regRegionState->enter( region, nid, buf, len, functor );
+
+    m_processQueuesState->isend( buf, count, dtype, dest, tag, group,
+													req, func );
 }
 
-void XXX::unregisterRegion( region_t region, FunctorBase_0<bool>* functor )
+void XXX::recv(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageResponse* resp,
+		FunctorBase_0<bool>* func )
 {
-    m_unregRegionState->enter( region, functor );
+    m_processQueuesState->recv( buf, count, dtype, src, tag, group, resp, func);
 }
 
-void XXX::getStatus( CommReq* req, Status* status )
+void XXX::irecv(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+        FunctorBase_0<bool>* func )
 {
-    *status = req->status;
-    status->nid = info()->nidToWorldRank( status->nid );
-    m_dbg.verbose(CALL_INFO,1,0,"nid=%#x tag=%#x length=%lu \n",
-                        status->nid, status->tag, status->length );
+    m_processQueuesState->irecv( buf, count, dtype, src, tag, group,
+						req, func );
+}
+
+void XXX::wait( Hermes::MessageRequest req, Hermes::MessageResponse* resp,
+		FunctorBase_0<bool>* func )
+{
+	m_processQueuesState->wait( req, resp, func );
+}
+
+void XXX::waitAny( int count, Hermes::MessageRequest req[], int *index,
+        Hermes::MessageResponse* resp, FunctorBase_0<bool>* func  )
+{
+	m_processQueuesState->waitAny( count, req, index, resp, func );
+}
+
+void XXX::waitAll( int count, Hermes::MessageRequest req[],
+	Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func )
+{
+	m_processQueuesState->waitAll( count, req, resp, func );
 }
 
 void XXX::schedFunctor( FunctorBase_0<bool>* functor, int delay )
@@ -209,6 +251,7 @@ void XXX::delayHandler( SST::Event* e )
     DelayEvent* event = static_cast<DelayEvent*>(e);
     
     m_dbg.verbose(CALL_INFO,2,0,"\n");
+
     if ( event->functor0 ) {
         if ( (*event->functor0)( ) ) {
             delete event->functor0;

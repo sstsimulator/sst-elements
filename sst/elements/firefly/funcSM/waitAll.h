@@ -14,7 +14,7 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "longMsgProtocol.h"
+#include "ctrlMsg.h"
 
 namespace SST {
 namespace Firefly {
@@ -27,10 +27,10 @@ class WaitAllFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
     
-    virtual std::string protocolName() { return "LongMsgProtocol"; }
+    virtual std::string protocolName() { return "CtrlMsgProtocol"; }
 
   private:
-    LongMsgProtocol* proto() { return static_cast<LongMsgProtocol*>(m_proto); }
+    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     WaitAllStartEvent* m_event;
 };

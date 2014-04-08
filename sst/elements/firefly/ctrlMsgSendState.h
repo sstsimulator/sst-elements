@@ -35,8 +35,10 @@ class SendState : StateBase< T1 >
         dbg().setPrefix(buffer);
 
     }
-    void enter( bool blocking, std::vector<IoVec>&, nid_t, tag_t,
-            CommReq*, FunctorBase_0<bool>*, FunctorBase_0<bool>* func = NULL );
+    void enter( bool blocking, std::vector<IoVec>&,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, CommReq*,
+        FunctorBase_0<bool>*, FunctorBase_0<bool>* func = NULL );
     bool afterProcess();
     bool unblock();
 
@@ -54,19 +56,21 @@ class SendState : StateBase< T1 >
 
 template< class T1 >
 void SendState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
-        nid_t dest, tag_t tag, CommReq* commReq,
-             FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor)
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, CommReq* commReq,
+        FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor)
 {
     dbg().verbose(CALL_INFO,1,0,"%s dest=%#x tag=%#x functor=%p\n",
                 blocking ? "blocking" : "", dest, tag, functor );
 
-    StateBase<T1>::set( stateFunctor );
+    StateBase<T1>::setExit( stateFunctor );
     m_functor = functor;
     m_blocking = blocking;
 
-    m_req = new _CommReq( _CommReq::Send, ioVec, dest, tag );
-    m_req->initHdrNid( obj().info()->nodeId()  );
+    m_req = new _CommReq( blocking ? _CommReq::Send : _CommReq::Isend,
+        ioVec, obj().info()->sizeofDataType(dtype), dest, tag, group );
     
+    dbg().verbose(CALL_INFO,1,0,"%p\n",m_req );
     if ( ! blocking ) { 
         commReq->req = m_req;
     }
@@ -84,9 +88,7 @@ bool SendState<T1>::afterProcess()
             obj().passCtrlToFunction( 0, m_functor );
             delete m_req;
         } else {
-            std::set<_CommReq*> tmp;
-            tmp.insert( m_req );
-            obj().m_processQueuesState->enterWait( tmp, &m_unblock );
+            obj().m_processQueuesState->enterWait( new WaitReq( m_req ), &m_unblock );
         }
     } else {
         obj().passCtrlToFunction( 0, m_functor );

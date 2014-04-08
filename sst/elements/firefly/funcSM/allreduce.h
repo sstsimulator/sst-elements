@@ -30,7 +30,7 @@ class AllreduceFuncSM :  public CollectiveTreeFuncSM
         CollectiveTreeFuncSM::handleEnterEvent( retval );
     }
 
-    virtual std::string protocolName() { return "LongMsgProtocol"; }
+    virtual std::string protocolName() { return "CtrlMsgProtocol"; }
 };
 
 }

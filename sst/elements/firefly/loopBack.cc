@@ -14,7 +14,6 @@
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/link.h>
-//#include <sst/core/timeLord.h>
 
 #include <sstream>
 
@@ -27,31 +26,24 @@ LoopBack::LoopBack(ComponentId_t id, Params& params ) :
         Component( id )
 {
     int numCores = params.find_integer("numCores", 1 );
-    m_handler = new Event::Handler<LoopBack>(
-                this, &LoopBack::handleCoreEvent );
-
-    assert(m_handler);
 
     for ( int i = 0; i < numCores; i++ ) {
         std::ostringstream tmp;
         tmp <<  i;
-        Link* link = configureLink("core" + tmp.str(), "1 ns", m_handler );
+
+        Event::Handler<LoopBack,int>* handler =
+                new Event::Handler<LoopBack,int>(
+                                this, &LoopBack::handleCoreEvent, i );
+
+        Link* link = configureLink("core" + tmp.str(), "1 ns", handler );
         assert(link);
         m_links.push_back( link );
     }
 }
 
-LoopBack::~LoopBack()
-{
-    delete m_handler;
-
-    for ( unsigned int i = 0; i < m_links.size(); i++ ) {
-        m_links[i]->setFunctor(NULL); 
-    }
-}
-
-void LoopBack::handleCoreEvent( Event* ev ) {
+void LoopBack::handleCoreEvent( Event* ev, int src ) {
     LoopBackEvent* event = static_cast<LoopBackEvent*>(ev);
-    m_links[event->dest]->send(0,ev );
+    int dest = event->core;
+    event->core = src; 
+    m_links[dest]->send(0,ev );
 }
-
