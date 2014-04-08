@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "emberbarrierev.h"
 
 using namespace SST::Ember;

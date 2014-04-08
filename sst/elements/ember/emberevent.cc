@@ -1,4 +1,4 @@
-
+#include <sst/sst_config.h>
 #include "emberevent.h"
 
 using namespace SST::Ember;
