@@ -9,6 +9,7 @@ msgSize = 0;
 motif = "Halo2D"
 shape = "18"
 num_vNics = 1
+debug = 0
 
 def main():
     global iterations
@@ -16,8 +17,9 @@ def main():
     global motif
     global shape
     global num_vNics
+    global debug
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape=","numCores="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape=","debug=","numCores="])
     except getopt.GetopError as err:
         print str(err)
         sys.exit(2)
@@ -32,6 +34,8 @@ def main():
             num_vNics = a
         elif o in ("--shape"):
             shape = a
+        elif o in ("--debug"):
+            debug = a
         else:
             assert False, "unhandle option" 
 
@@ -77,7 +81,7 @@ sst.merlin._params["torus:width"] = width
 sst.merlin._params["torus:local_ports"] = 1
 
 nicParams = ({ 
-		"debug" : 0,
+		"debug" : debug,
 		"verboseLevel": 1,
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin.torus",
@@ -90,7 +94,7 @@ nicParams = ({
 	})
 
 driverParams = ({
-		"debug" : 0,
+		"debug" : debug,
 		"verbose" : 4,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
@@ -100,16 +104,16 @@ driverParams = ({
 		"buffersize" : 400,
 		"generatorParams.messagesize" : msgSize,
 		"generatorParams.iterations" : iterations,
-		"hermesParams.debug" : 0,
+		"hermesParams.debug" : debug,
 		"hermesParams.verboseLevel" : 1,
 		"hermesParams.nidListFile" : "nidlist.txt",
 		"hermesParams.nicModule" : "firefly.VirtNic",
-		"hermesParams.nicParams.debug" : 0,
+		"hermesParams.nicParams.debug" : debug,
 		"hermesParams.nicParams.debugLevel" : 1 ,
 		"hermesParams.policy" : "adjacent",
-		"hermesParams.functionSM.defaultDebug" : 0,
+		"hermesParams.functionSM.defaultDebug" : debug,
 		"hermesParams.functionSM.defaultVerbose" : 1,
-		"hermesParams.ctrlMsg.debug" : 0,
+		"hermesParams.ctrlMsg.debug" : debug,
 		"hermesParams.ctrlMsg.verboseLevel" : 1,
 		"hermesParams.longMsgProtocol.shortMsgLength" : 400,
 		"hermesParams.longMsgProtocol.debug" : 0,
