@@ -77,7 +77,7 @@ void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint3
 		procRight = rank + 1;
 	}
 
-	if(rank > sizeX) {
+	if(rank >= sizeX) {
 		sendAbove = true;
 		procAbove = rank - sizeX;
 	}
