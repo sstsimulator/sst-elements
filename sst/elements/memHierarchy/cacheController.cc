@@ -1,3 +1,14 @@
+// Copyright 2009-2013 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2013, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 /*
  * File:   cache.cc
  * Author: Caesar De la Paz III
@@ -267,7 +278,6 @@ void Cache::activatePrevEvents(Addr baseAddr){
                 if(!cont) break;
             }
             
-            //delete *it;
             mshrEntry.erase(it);
         }
         else{                                                                /* MemEvent Type */
@@ -285,9 +295,9 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr
     this->processEvent(event, true);
     d_->debug(_L1_,"--------------------------------------\n");
 
-    //delete *it;
     mshrEntry.erase(it);
     
+    // If the event we just ran 'blocked', then there is not reason to activate other events.
     if(mshr_->isHit(addr)){
         try{ mshr_->insertAll(addr, mshrEntry); }
         catch(mshrException const& e){

@@ -1,3 +1,14 @@
+// Copyright 2009-2013 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2013, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 /*
  * File:   cache.cc
  * Author: Caesar De la Paz III
@@ -171,7 +182,9 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
     }
     }
     catch(stallException const& e){
-        //e.what();
+        /* Do nothing.  The controller can't continue with the request (ie memEvent is stalling)
+        since this request needs to wait for another request to finish.  This event is in MSHR waiting to 'reactive'
+        upon completion of the outstanding request in progress  */
     }
     catch(mshrException const& e){
         _abort(MemHierarchy::Cache, "Limited MSHR is not supported yet, increment the number of MSHR entries\n");
@@ -200,7 +213,9 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
             for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front().elem);
                 topCC_->sendResponse(memEvent, DUMMY, &event->getPayload());
+                delete memEvent;
                 mshrEntry.erase(it);
+                
             }
             delete event;
             break;

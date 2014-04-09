@@ -179,6 +179,7 @@ int qsimComponent::mem_cb(int c, uint64_t v, uint64_t p, uint8_t s, int w) {
     if (v && ((lock == 1 && !w) || (lock == 2 && w)) && i == 0) {
       e->setFlags(MemEvent::F_LOCKED);
       e->setLockID(hwThreadId);
+      if(!w) e->setCmd(GetSEx);
 
       if (lock == 1 && !w) lock = 2;
       if (lock == 2 && w) lock = 0;
