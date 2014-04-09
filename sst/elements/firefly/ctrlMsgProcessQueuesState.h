@@ -246,7 +246,7 @@ class ProcessQueuesState : StateBase< T1 >
         void incPos() { ++m_iter; }
       private:
         std::deque<Msg*> 			m_msgQ; 
-        typename std::deque<ProcessQueuesState<T1>::Msg*>::iterator 	m_iter;
+        typename std::deque<Msg*>::iterator 	m_iter;
     };
 
     class WaitCtx : public FuncCtxBase {
