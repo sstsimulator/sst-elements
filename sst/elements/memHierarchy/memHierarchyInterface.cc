@@ -15,8 +15,8 @@
 #include <sst/core/serialization.h>
 #include "memHierarchyInterface.h"
 
-#include <sst/core/Component.h>
-#include <sst/core/Link.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 
 
 using namespace SST;
