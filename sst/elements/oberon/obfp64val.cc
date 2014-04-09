@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "obfp64val.h"
 
 using namespace SST;

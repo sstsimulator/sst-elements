@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "arielnoop.h"
 
 using namespace SST::ArielComponent;

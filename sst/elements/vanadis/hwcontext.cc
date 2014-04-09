@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "hwcontext.h"
 
 VanadisHWContext::VandisHWContext(uint32_t thrID, VanadisRegisterSet* regs, VanadisDispatchEngine* dispatch) :

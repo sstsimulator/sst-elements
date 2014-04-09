@@ -14,6 +14,7 @@
  */
 
 
+#include <sst_config.h>
 #include <vector>
 #include <string>
 #include <sstream>

@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include <vcpu.h>
 
 VanadisProcessor::VanadisProcessor(ComponentId_t id, Params& params) :

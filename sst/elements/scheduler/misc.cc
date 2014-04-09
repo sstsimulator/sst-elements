@@ -13,6 +13,7 @@
  * Miscellaneous code (outside a class or too small a class for its own file)
  */
 
+#include <sst_config.h>
 //#include <stdlib.h>
 #include <vector>
 #include <string>

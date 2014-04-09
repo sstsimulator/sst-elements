@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "oberonengine.h"
 
 using namespace SST::Oberon;

@@ -7,8 +7,8 @@
 // and makes it available to other pieces of the pattern generators.
 //
 
+#include <sst_config.h>
 #include <stdio.h>
-#define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		// For PRId64
 #include "patterns.h"
 #include "machine_info.h"

@@ -12,6 +12,7 @@
 
 
 */
+#include <sst_config.h>
 #include <stdio.h>
 #include "state_machine.h"
 

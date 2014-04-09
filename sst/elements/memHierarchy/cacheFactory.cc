@@ -5,6 +5,7 @@
  */
 
 
+#include <sst_config.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include "hash.h"
 #include "cacheController.h"

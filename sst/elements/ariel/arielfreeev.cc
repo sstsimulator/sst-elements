@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "arielfreeev.h"
 
 using namespace SST::ArielComponent;

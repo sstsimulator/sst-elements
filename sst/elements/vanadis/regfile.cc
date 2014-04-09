@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "regfile.h"
 
 VanadisRegisterFile::VanadisRegisterFile(uint32_t thrCount, uint32_t regCount, uint32_t regWidthBytes) :

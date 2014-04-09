@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include <regset.h>
 
 VanadisRegisterSet::VanadisRegisterSet(uint32_t thrID,

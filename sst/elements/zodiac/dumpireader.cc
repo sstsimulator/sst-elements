@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "dumpireader.h"
 
 using namespace std;

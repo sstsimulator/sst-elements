@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "otfreader.h"
 
 using namespace std;

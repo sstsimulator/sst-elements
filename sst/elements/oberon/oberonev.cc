@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "oberonev.h"
 
 using namespace SST;

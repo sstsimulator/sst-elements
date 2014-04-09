@@ -16,7 +16,6 @@
 */
 #include <sst_config.h>
 #include <stdio.h>
-#define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		// For PRId64
 #include <string>
 #include <boost/serialization/vector.hpp>

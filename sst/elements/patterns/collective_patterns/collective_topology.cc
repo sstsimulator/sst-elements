@@ -31,6 +31,7 @@ sort of physcial distance in the hardware topology.
 If TREE_BINARY is selected, then a simple binary tree is created.
 
 */
+#include <sst_config.h>
 
 #include "collective_topology.h"
 

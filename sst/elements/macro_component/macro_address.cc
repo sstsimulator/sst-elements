@@ -14,6 +14,7 @@
  *               The macroscale architecture simulator from the SST suite.
  */
 
+#include <sst_config.h>
 #include "macro_address.h"
 
 using namespace sstmac;

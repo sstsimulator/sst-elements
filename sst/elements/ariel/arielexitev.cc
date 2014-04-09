@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "arielexitev.h"
 
 using namespace SST::ArielComponent;

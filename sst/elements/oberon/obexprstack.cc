@@ -1,3 +1,4 @@
+#include <sst_config.h>
 #include "obexprstack.h"
 
 using namespace SST;
