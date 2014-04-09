@@ -191,6 +191,7 @@ class ProcessQueuesState : StateBase< T1 >
         FuncCtxBase( FunctorBase_0< bool >* ret = NULL ) : 
 			retFunctor(ret) {}
 
+		virtual ~FuncCtxBase() {}
         FunctorBase_0< bool >* getRetFunctor() {
 			return retFunctor;
 		} 
@@ -217,32 +218,35 @@ class ProcessQueuesState : StateBase< T1 >
 
     class ProcessShortListCtx : public FuncCtxBase {
       public:
-        ProcessShortListCtx( std::vector<Msg*>& vec ) : m_pos(0), m_vec(vec) {}
+        ProcessShortListCtx( std::deque<Msg*>& q ) : 
+            m_msgQ(q), m_iter(m_msgQ.begin()) { }
 
         MatchHdr&   hdr() {
-            return m_vec[m_pos]->hdr();
+            return (*m_iter)->hdr();
         }
 
         std::vector<IoVec>& ioVec() { 
-            return m_vec[m_pos]->ioVec();
+     	 	return (*m_iter)->ioVec();
         }
+
         Msg* msg() {
-            return m_vec[m_pos];
+            return *m_iter;
         }
+        std::deque<Msg*>& getMsgQ() { return m_msgQ; }
+        bool msgQempty() { return m_msgQ.empty(); } 
 
         _CommReq*    req; 
 
-        void setDone() { 
-            delete m_vec[m_pos];
-            m_vec.erase(m_vec.begin() + m_pos);
-            m_pos = m_vec.size();
+        void removeMsg() { 
+            delete *m_iter;
+            m_iter = m_msgQ.erase(m_iter);
         }
 
-        bool isDone() { return m_pos == m_vec.size(); }
-        void incPos() { ++m_pos; }
+        bool isDone() { return m_iter == m_msgQ.end(); }
+        void incPos() { ++m_iter; }
       private:
-        unsigned int      m_pos;              
-        std::vector<Msg*>& m_vec; 
+        std::deque<Msg*> 			m_msgQ; 
+        typename std::deque<ProcessQueuesState<T1>::Msg*>::iterator 	m_iter;
     };
 
     class WaitCtx : public FuncCtxBase {
@@ -379,7 +383,7 @@ class ProcessQueuesState : StateBase< T1 >
     bool    m_missedInt;
 
     std::deque< _CommReq* >         m_pstdRcvQ;
-    std::vector< Msg* >             m_recvdMsgV;
+    std::deque< Msg* >              m_recvdMsgQ;
     std::deque< _CommReq* >         m_longRspQ;
     std::deque< AckInfo* >          m_longAckQ;
     std::deque<_CommReq*>           m_sendDmaFiniQ;
@@ -513,7 +517,7 @@ void ProcessQueuesState<T1>::enterWait( WaitReq* req,
                                     FunctorBase_0<bool>* exitFunctor  )
 {
     dbg().verbose(CALL_INFO,1,0,"num pstd %lu, num short %lu\n",
-                            m_pstdRcvQ.size(), m_recvdMsgV.size() );
+                            m_pstdRcvQ.size(), m_recvdMsgQ.size() );
 
     setExit( exitFunctor );
 
@@ -531,6 +535,8 @@ template< class T1 >
 bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
 {
     dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+    dbg().verbose(CALL_INFO,1,0,"num pstd %lu, num short %lu\n",
+                            m_pstdRcvQ.size(), m_recvdMsgQ.size() );
     WaitCtx* ctx = static_cast<WaitCtx*>( stack.back() );
 
     stack.pop_back();
@@ -555,7 +561,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
 {
     int delay = 0;
-    dbg().verbose(CALL_INFO,2,0,"shortMsgV.size=%lu\n", m_recvdMsgV.size() );
+    dbg().verbose(CALL_INFO,2,0,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
     dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
 
     while ( m_needRecv ) {
@@ -583,7 +589,7 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
         m_loopResp.pop_front(); 
     }
 
-    if ( ! m_recvdMsgV.empty() ) {
+    if ( ! m_recvdMsgQ.empty() ) {
 
         ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
         	new FunctorStatic_0< ProcessQueuesState,
@@ -614,7 +620,8 @@ void ProcessQueuesState<T1>::processShortList( std::deque<FuncCtxBase*>& stack )
 {
     dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
 
-    ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgV );
+    ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgQ );
+	m_recvdMsgQ.clear();
     stack.push_back( ctx );
 
     processShortList0( stack );
@@ -693,10 +700,12 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         LoopReq* loopReq;
         if ( ( loopReq = dynamic_cast<LoopReq*>( ctx->msg() ) ) ) {
+		    dbg().verbose(CALL_INFO,1,0,"loop\n");
             req->setDone();
             obj().loopSend( loopReq->srcCore , loopReq->key );
 
         } else if ( length <= obj().shortMsgLength() ) { 
+		    dbg().verbose(CALL_INFO,1,0,"short\n");
             req->setDone();
         } else {
 
@@ -720,7 +729,6 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
             std::vector<IoVec> vec;
             vec.insert( vec.begin(), hdrVec );
 
-
             dbg().verbose(CALL_INFO,1,0,"send long msg response ackKey=%#x"
                 " rspkey=%#x\n", ctx->hdr().ackKey, rspKey );
             hdr->rspKey = rspKey;
@@ -728,19 +736,23 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
             obj().nic().pioSend( nid, hdr->ackKey, vec, functor );
         }
-        ctx->setDone();
+        ctx->removeMsg();
     } else {
         ctx->incPos();
-    } 
+    }
 
     if ( ctx->isDone() ) {
         dbg().verbose(CALL_INFO,2,0,"return up the stack\n");
+
+		if ( ! ctx->msgQempty() ) {
+			m_recvdMsgQ.insert( m_recvdMsgQ.begin(), ctx->getMsgQ().begin(),
+														ctx->getMsgQ().end() );
+		}
         delete stack.back(); 
         stack.pop_back();
-
         obj().schedFunctor( stack.back()->getRetFunctor() );
     } else {
-        dbg().verbose(CALL_INFO,1,0,"set next buffer\n");
+        dbg().verbose(CALL_INFO,1,0,"work on next Msg\n");
 
         processShortList0( stack );
     }
@@ -797,7 +809,7 @@ bool ProcessQueuesState<T1>::dmaRecvFini( ShortRecvBuffer* buf, nid_t nid,
                             buf->hdr.count, buf->hdr.dtypeSize );
 
     assert( tag == (uint32_t) ShortMsgQ );
-    m_recvdMsgV.push_back( buf );
+    m_recvdMsgQ.push_back( buf );
 
     foo();
 
@@ -855,10 +867,10 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 		delete retFunctor;
 	}
 
-	if ( m_intCtx && m_missedInt ) {
-		foo();
-		m_missedInt = false;
-	}
+    if ( m_intCtx && m_missedInt ) {
+        foo();
+        m_missedInt = false;
+    }
     return true; 
 }
 
@@ -950,7 +962,7 @@ void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, 
 
     dbg().verbose(CALL_INFO,1,0,"src rank %d\n",hdr->rank);
     
-    m_recvdMsgV.push_back( new LoopReq( srcCore, vec, key ) );
+    m_recvdMsgQ.push_back( new LoopReq( srcCore, vec, key ) );
 
     foo();
 }
