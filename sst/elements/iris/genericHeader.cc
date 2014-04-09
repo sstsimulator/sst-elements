@@ -23,6 +23,7 @@
 #ifndef  _GERNERICHEADER_CC_INC
 #define  _GERNERICHEADER_CC_INC
 
+#include <sst_config.h>
 #include        "router_params.h"
 
 namespace SST {

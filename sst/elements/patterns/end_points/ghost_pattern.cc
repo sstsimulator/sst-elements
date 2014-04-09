@@ -19,6 +19,7 @@
 
 /*
 */
+#include <sst_config.h>
 #include "ghost_pattern.h"
 
 #ifndef __STDC_FORMAT_MACROS

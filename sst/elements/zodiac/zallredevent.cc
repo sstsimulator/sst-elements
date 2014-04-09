@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "zallredevent.h"
 
 using namespace SST::Hermes;

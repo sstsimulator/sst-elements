@@ -24,6 +24,7 @@ the operation in the first Fdata field of the exit event.
 The operation to be performed can be chosen by setting the first
 Idata field. See allreduce_op_t in allreduce.h for possible values.
 */
+#include <sst_config.h>
 #include <boost/serialization/list.hpp>
 #include "allreduce_op.h"
 

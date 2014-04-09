@@ -18,6 +18,7 @@ message length.  It is used as the simulated message length for
 scatter messages.
 
 */
+#include <sst_config.h>
 #include <boost/serialization/list.hpp>
 #include "scatter_op.h"
 

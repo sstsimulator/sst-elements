@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "zwaitevent.h"
 
 using namespace SST::Hermes;

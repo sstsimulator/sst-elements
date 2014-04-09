@@ -19,6 +19,7 @@
 
 /*
 */
+#include <sst_config.h>
 #include "fft_pattern.h"
 
 #ifndef __STDC_FORMAT_MACROS

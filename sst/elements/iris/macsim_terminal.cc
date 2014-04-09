@@ -22,6 +22,7 @@
 #ifndef  _MACSIM_TERMINAL_CC_INC
 #define  _MACSIM_TERMINAL_CC_INC
 
+#include <sst_config.h>
 #include	"macsim_terminal.h"
 
 //Include macsim main SST class here adding dummy for now

@@ -22,6 +22,7 @@
 #ifndef  _GENERICBUFFER_CC_INC
 #define  _GENERICBUFFER_CC_INC
 
+#include <sst_config.h>
 #include	"genericBuffer.h"
 
 using namespace SST::Iris;

@@ -19,6 +19,7 @@
 
 /*
 */
+#include <sst_config.h>
 #include "allreduce_pattern.h"
 #include <sst/core/element.h>
 #include "util/stats.h"

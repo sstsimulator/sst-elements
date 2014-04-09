@@ -18,6 +18,7 @@ message length.  It is used as the simulated message length for
 gather messages.
 
 */
+#include <sst_config.h>
 #include "gather_op.h"
 
 

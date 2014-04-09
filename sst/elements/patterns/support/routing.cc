@@ -4,6 +4,7 @@
 //
 // Rolf Riesen, October 2011
 //
+#include <sst_config.h>
 #include <boost/serialization/vector.hpp>
 #include "routing.h"
 

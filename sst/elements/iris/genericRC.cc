@@ -22,6 +22,7 @@
 #ifndef  _GENERICRC_CC_INC
 #define  _GENERICRC_CC_INC
 
+#include <sst_config.h>
 #include "genericRC.h"
 
 using namespace SST::Iris;

@@ -41,6 +41,7 @@
     In the second test, rank 0 sends messages round-robin to ranks
     1...n-1.
 */
+#include <sst_config.h>
 #include "msgrate_pattern.h"
 #include <sst/core/element.h>
 

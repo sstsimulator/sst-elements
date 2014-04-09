@@ -18,6 +18,7 @@ alltoall messages.
 No actual data is transferred, only events of the appropriate length.
 
 */
+#include <sst_config.h>
 #include "alltoall_op.h"
 
 

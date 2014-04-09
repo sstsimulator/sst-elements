@@ -10,6 +10,7 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS	(1)
 #endif
+#include <sst_config.h>
 #include <inttypes.h>		// For PRIx64
 
 #include "comm_pattern.h"

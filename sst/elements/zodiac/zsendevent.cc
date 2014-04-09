@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include "zsendevent.h"
 
 using namespace SST::Hermes;

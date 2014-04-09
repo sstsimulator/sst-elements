@@ -21,6 +21,7 @@
 #ifndef  _GENERICSWA_CC_INC
 #define  _GENERICSWA_CC_INC
 
+#include <sst_config.h>
 #include	"genericSwa.h"
 
 using namespace SST::Iris;

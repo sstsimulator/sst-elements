@@ -23,6 +23,7 @@ The barrier at the end is there only for testing of the barrier
 iteself and the gate keeper mechanism in comm_pattern.cc
 
 */
+#include <sst_config.h>
 #include "pingpong_pattern.h"
 #include <sst/core/element.h>
 #include <sst/core/component.h>
