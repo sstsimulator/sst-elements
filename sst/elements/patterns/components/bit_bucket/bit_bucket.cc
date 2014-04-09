@@ -27,7 +27,7 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include <sst/core/cpunicEvent.h>
+#include <cpunicEvent.h>
 #include "bit_bucket.h"
 
 

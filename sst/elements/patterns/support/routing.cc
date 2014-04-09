@@ -41,7 +41,7 @@
 //     Off-node traffic that travels through one of the short cut links
 //
 void
-Router::attach_route(SST::CPUNicEvent *e, int dest_core)
+Router::attach_route(CPUNicEvent *e, int dest_core)
 {
 
 int my_router, dest_router;
@@ -112,7 +112,7 @@ int my_router, dest_router;
 
 
 void
-Router::show_route(std::string net_name, SST::CPUNicEvent *e, int src_rank, int dest_rank)
+Router::show_route(std::string net_name, CPUNicEvent *e, int src_rank, int dest_rank)
 {
 
 #if ROUTE_DEBUG
@@ -140,7 +140,7 @@ std::vector<int>::iterator itNum;
 // We use it to traverse the machine network as well as the NoC
 //
 void
-Router::gen_route(SST::CPUNicEvent *e, int src, int dest, int width, int height, int depth,
+Router::gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int depth,
 	int x_wrap, int y_wrap, int z_wrap)
 {
 

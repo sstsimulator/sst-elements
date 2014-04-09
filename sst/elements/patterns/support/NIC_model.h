@@ -12,7 +12,7 @@
 #include "patterns.h"
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
-#include <sst/core/cpunicEvent.h>
+#include <cpunicEvent.h>
 #include "machine_info.h"
 #include "routing.h"
 #include "NIC_stats.h"
@@ -54,7 +54,7 @@ class NIC_model   {
 
 
 
-	SST::SimTime_t send(SST::CPUNicEvent *e, int dest_rank);
+	SST::SimTime_t send(CPUNicEvent *e, int dest_rank);
 	SST::SimTime_t delay(int bytes);
 	void handle_rcv_events(SST::Event *sst_event);
 	void set_send_link(SST::Link *link) {send_link= link;}

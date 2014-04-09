@@ -10,7 +10,7 @@
 
 #include "patterns.h"
 #include <sst/core/sst_types.h>
-#include <sst/core/cpunicEvent.h>
+#include <cpunicEvent.h>
 #include "machine_info.h"
 
 
@@ -24,12 +24,12 @@ class Router   {
 	~Router()   {
 	}
 
-	void attach_route(SST::CPUNicEvent *e, int dest_core);
-	void show_route(std::string net_name, SST::CPUNicEvent *e, int src_rank, int dest_rank);
+	void attach_route(CPUNicEvent *e, int dest_core);
+	void show_route(std::string net_name, CPUNicEvent *e, int src_rank, int dest_rank);
 
 
     private:
-	void gen_route(SST::CPUNicEvent *e, int src, int dest, int width, int height,
+	void gen_route(CPUNicEvent *e, int src, int dest, int width, int height,
 		int depth, int x_wrap, int y_wrap, int z_wrap);
 
 	MachineInfo *_m;

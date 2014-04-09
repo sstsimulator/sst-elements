@@ -17,7 +17,7 @@
 #include <assert.h>
 
 #include "sst/core/element.h"
-#include <sst/core/cpunicEvent.h>
+#include <cpunicEvent.h>
 
 // The lower 27 bits of the event ID are the rank number, high order bits are sequence
 #define RANK_FIELD              (27)

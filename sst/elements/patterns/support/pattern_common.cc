@@ -57,11 +57,11 @@ void
 Patterns::self_event_send(int event, int32_t tag, SST::SimTime_t delay)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 
 
     // Create an event and fill in the event info
-    e= new SST::CPUNicEvent();
+    e= new CPUNicEvent();
     e->SetRoutine(event);
     e->router_delay= 0;
     e->hops= 0;
@@ -87,12 +87,12 @@ Patterns::event_send(int dest_rank, int event, int32_t tag, uint32_t msg_len,
 	const char *payload, int payload_len, int blocking)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 SST::SimTime_t delay;
 
 
     // Create an event and fill in the event info
-    e= new SST::CPUNicEvent();
+    e= new CPUNicEvent();
     e->SetRoutine(event);
     e->router_delay= 0;
     e->hops= 0;
@@ -150,13 +150,13 @@ void
 Patterns::storage_write(int data_size, int return_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 int my_core;
 uint64_t delay;
 
 
     // Create an event and fill in the event info
-    e= new SST::CPUNicEvent();
+    e= new CPUNicEvent();
     assert(0);  // FIXME: We need to SetRoutine()
     // e->SetRoutine(BIT_BUCKET_WRITE_START);
     e->router_delay= 0;
@@ -194,13 +194,13 @@ void
 Patterns::nvram_write(int data_size, int return_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 int my_core;
 uint64_t delay;
 
 
     // Create an event and fill in the event info
-    e= new SST::CPUNicEvent();
+    e= new CPUNicEvent();
     assert(0);  // FIXME: We need to SetRoutine()
     // e->SetRoutine(BIT_BUCKET_WRITE_START);
     e->router_delay= 0;

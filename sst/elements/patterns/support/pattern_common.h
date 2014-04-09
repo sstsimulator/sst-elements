@@ -20,7 +20,7 @@
 #include <sst/core/component.h>		// For SST::Params
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
-#include <sst/core/cpunicEvent.h>
+#include <cpunicEvent.h>
 #include "machine_info.h"
 #include "NIC_model.h"
 

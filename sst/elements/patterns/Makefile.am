@@ -62,6 +62,8 @@ libpatterns_la_SOURCES = \
 	support/routing.h \
 	support/state_machine.cc \
 	support/state_machine.h \
+	cpunicEvent.cc \
+	cpunicEvent.h \
 	patterns.cc \
 	patterns.h
 

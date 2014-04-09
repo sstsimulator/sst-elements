@@ -13,7 +13,7 @@
 
 #include "patterns.h"
 
-#include <sst/core/cpunicEvent.h>
+#include <cpunicEvent.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>

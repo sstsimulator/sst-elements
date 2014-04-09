@@ -36,7 +36,7 @@ type_name(NIC_model_t nic)
 // delays.
 //
 SST::SimTime_t
-NIC_model::send(SST::CPUNicEvent *e, int dest_rank)
+NIC_model::send(CPUNicEvent *e, int dest_rank)
 {
 
 SST::SimTime_t current_time;
@@ -95,14 +95,14 @@ void
 NIC_model::handle_rcv_events(SST::Event *sst_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 int64_t nic_delay;
 int64_t event_delay;
 SST::SimTime_t current_time;
 
 
     current_time= (*NICtime_handler)(NICtime_obj);
-    e= (SST::CPUNicEvent *)sst_event;
+    e= (CPUNicEvent *)sst_event;
     nstats->record_rcv(e->hops, e->congestion_cnt, e->congestion_delay,
 	e->msg_len);
 
