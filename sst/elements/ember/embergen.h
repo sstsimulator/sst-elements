@@ -2,7 +2,6 @@
 #ifndef _H_EMBER_GENERATOR
 #define _H_EMBER_GENERATOR
 
-#include <sst_config.h>
 #include <sst/core/output.h>
 #include <sst/core/module.h>
 
