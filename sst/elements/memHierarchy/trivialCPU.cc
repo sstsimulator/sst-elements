@@ -17,9 +17,9 @@
 
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
-#include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
+#include "memHierarchyInterface.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -61,12 +61,12 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-	// configure out links
-	mem_link = configureLink( "mem_link",
-			new Event::Handler<trivialCPU>(this,
-				&trivialCPU::
-				handleEvent) );
-	assert(mem_link);
+    memory = dynamic_cast<MemHierarchyInterface*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+    if ( !memory ) {
+        _abort(TrivialCPU, "Unable to load Module as memory\n");
+    }
+    memory->initialize("mem_link",
+			new MemHierarchyInterface::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
 
 	registerTimeBase("1 ns", true);
 	//set our clock
@@ -87,35 +87,27 @@ trivialCPU::trivialCPU() :
 void trivialCPU::init(unsigned int phase)
 {
 	if ( !phase ) {
-		mem_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		memory->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 	}
 }
 
 // incoming events are scanned and deleted
-void trivialCPU::handleEvent(Event *ev)
+void trivialCPU::handleEvent(MemHierarchyInterface::Request *req)
 {
-	MemEvent *event = dynamic_cast<MemEvent*>(ev);
-	if (event) {
-		// May receive invalidates.  Just ignore 'em.
-		if ( Inv == event->getCmd() ) return;
+    std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
+    if ( requests.end() == i ) {
+        _abort(trivialCPU, "Event (%"PRIx64") not found!\n", req->id);
+    } else {
+        SimTime_t et = getCurrentSimTime() - i->second;
+        requests.erase(i);
+        out.output("%s: Received Request with command %d (response to %"PRIx64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
+                getName().c_str(),
+                req->cmd, req->id, req->addr, et,
+                requests.size());
+        num_reads_returned++;
+    }
 
-		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
-		if ( requests.end() == i ) {
-			_abort(trivialCPU, "Event (%"PRIx64", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
-		} else {
-			SimTime_t et = getCurrentSimTime() - i->second;
-			requests.erase(i);
-			out.output("%s: Received MemEvent with command %d (response to %"PRIx64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
-					getName().c_str(),
-					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
-                    requests.size());
-			num_reads_returned++;
-		}
-
-		delete event;
-	} else {
-		out.output("Error! Bad Event Type!\n");
-	}
+    delete req;
 }
 
 
@@ -148,23 +140,26 @@ bool trivialCPU::clockTic( Cycle_t )
 
 			bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
 
-			MemEvent *e = new MemEvent(this, addr, doWrite ? GetX : GetS);
-			e->setSize(4); // Load 4 bytes
+            MemHierarchyInterface::Request *req = new MemHierarchyInterface::Request((doWrite ? MemHierarchyInterface::Request::Write : MemHierarchyInterface::Request::Read), addr, 4 /*4 bytes*/);
 			if ( doWrite ) {
-				e->setPayload(4, (uint8_t*)&addr);
+				req->data.resize(4);
+                req->data[0] = (addr >> 24) & 0xff;
+                req->data[1] = (addr >> 16) & 0xff;
+                req->data[2] = (addr >>  8) & 0xff;
+                req->data[3] = (addr >>  0) & 0xff;
 			}
 
             bool uncached = ( addr >= uncachedRangeStart && addr < uncachedRangeEnd );
             if ( uncached ) {
-                e->setFlag(MemEvent::F_UNCACHED);
+                req->flags |= MemHierarchyInterface::Request::F_UNCACHED;
                 if ( doWrite ) { ++uncachedWrites; } else { ++uncachedReads; }
             }
 
-			mem_link->send(e);
-			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
+			memory->sendRequest(req);
+			requests[req->id] =  getCurrentSimTime();
 
 			out.output("%s: %d Issued %s%s (%"PRIx64") for address 0x%"PRIx64"\n",
-					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
+					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", req->id, addr);
 			num_reads_issued++;
 
             numLS--;
@@ -181,9 +176,5 @@ bool trivialCPU::clockTic( Cycle_t )
 	// return false so we keep going
 	return false;
 }
-
-// Element Libarary / Serialization stuff
-
-BOOST_CLASS_EXPORT(trivialCPU)
 
 

@@ -200,6 +200,10 @@ static const ElementInfoParam vaultsimMem_params[] = {
 
 
 
+static Module* create_MemInterface(Component *comp, Params &params) {
+    return new MemHierarchyInterface(comp, params);
+}
+
 
 static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
@@ -284,6 +288,14 @@ static const ElementInfoModule modules[] = {
         NULL, /* ModuleAlloc */
         create_Mem_VaultSim, /* Module Alloc w/ params */
         vaultsimMem_params
+    },
+    {
+        "memInterface",
+        "Simplified interface to Memory Hierarchy",
+        NULL,
+        NULL,
+        create_MemInterface,
+        NULL
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };

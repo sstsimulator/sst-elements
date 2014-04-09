@@ -26,13 +26,14 @@
 #include <sst/core/stats/histo/histo.h>
 
 #include <sst/core/rng/marsaglia.h>
-#include <sst/core/interfaces/memEvent.h>
 
-using namespace SST::Interfaces;
+#include "memHierarchyInterface.h"
+
 using namespace SST::Statistics;
 
 namespace SST {
 namespace MemHierarchy {
+
 
 class trivialCPU : public SST::Component {
 public:
@@ -58,7 +59,7 @@ private:
 	void operator=(const trivialCPU&); // do not implement
 	void init(unsigned int phase);
 
-	void handleEvent( SST::Event *ev );
+	void handleEvent( MemHierarchyInterface::Request *ev );
 	virtual bool clockTic( SST::Cycle_t );
 
     Output out;
@@ -73,39 +74,14 @@ private:
     size_t uncachedReads, uncachedWrites;
     Histogram<uint64_t, uint64_t>* requestsPendingCycle;
 
-	std::map<MemEvent::id_type, SimTime_t> requests;
+	std::map<uint64_t, SimTime_t> requests;
 
-	SST::Link* mem_link;
+	MemHierarchyInterface *memory;
 
     SST::RNG::MarsagliaRNG rng;
 
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
-
-	friend class boost::serialization::access;
-	template<class Archive>
-	void save(Archive & ar, const unsigned int version) const
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-		ar & BOOST_SERIALIZATION_NVP(workPerCycle);
-		ar & BOOST_SERIALIZATION_NVP(commFreq);
-		ar & BOOST_SERIALIZATION_NVP(maxAddr);
-		ar & BOOST_SERIALIZATION_NVP(mem_link);
-	}
-
-	template<class Archive>
-	void load(Archive & ar, const unsigned int version)
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-		ar & BOOST_SERIALIZATION_NVP(workPerCycle);
-		ar & BOOST_SERIALIZATION_NVP(commFreq);
-		ar & BOOST_SERIALIZATION_NVP(maxAddr);
-		ar & BOOST_SERIALIZATION_NVP(mem_link);
-		//resture links
-		mem_link->setFunctor(new SST::Event::Handler<trivialCPU>(this,&trivialCPU::handleEvent));
-	}
-
-	BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 };
 
