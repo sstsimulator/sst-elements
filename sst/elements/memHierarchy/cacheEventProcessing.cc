@@ -74,13 +74,14 @@ void Cache::init(unsigned int phase){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
             if(!memEvent) delete memEvent;
             else{
-                if(dirControllerExists_) directoryLink_->sendInitData(memEvent);
+                if(dirControllerExists_) directoryLink_->sendInitData(new MemEvent(memEvent));
                 else{
                     for(uint idp = 0; idp < lowNetPorts_->size(); idp++){
-                        lowNetPorts_->at(idp)->sendInitData(memEvent);
+                        lowNetPorts_->at(idp)->sendInitData(new MemEvent(memEvent));
                     }
                 }
             }
+            delete memEvent;
         }
     }
     
@@ -91,8 +92,8 @@ void Cache::init(unsigned int phase){
                 if(!memEvent) delete memEvent;
                 else if(memEvent->getCmd() == NULLCMD){
                     nextLevelCacheName_ = memEvent->getSrc();
-                    delete memEvent;
                 }
+                delete memEvent;
             }
         }
     }

@@ -50,8 +50,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     if(-1 == lineSize)                        _abort(Cache, "Line size was not specified (blocksize).\n");
     if(mshrSize == -1)                        mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
     if(L1int != 1 && L1int != 0)              _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
-    //if(L1int == 1) numChildren = 1;
-    //if(numParents <= 0 || numChildren <= 0)   _abort(Cache, "Number of children and parents has each to be greater than zero (L1 have core as a parent). \n");
     if(accessLatency == -1 )                  _abort(Cache, "Access time not specified\n");
     if(directoryAtNextLevel > 1 ||
        directoryAtNextLevel < 0)              _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");

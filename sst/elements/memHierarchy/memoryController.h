@@ -78,11 +78,8 @@ public:
         Command responseCmd;
         bool canceled;
         bool isACK;
-        //bool returnInM;
         
         int respSize;
-        //Addr eventBaseAddr;
-        //Addr eventAddr;
         Command cmd;
         bool GetXRespType;
         
@@ -97,7 +94,7 @@ public:
 
         DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize, Command responseCmd) :
             reqEvent(new MemEvent(ev)), respEvent(NULL), responseCmd(responseCmd),
-            canceled(false), isACK(false), amt_in_process(0), amt_processed(0), status(NEW){
+            canceled(false), isACK(false), GetXRespType(false), amt_in_process(0), amt_processed(0), status(NEW){
             
             if(responseCmd == NULLCMD){
                 isWrite = true;

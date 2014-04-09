@@ -102,6 +102,13 @@ public:
         bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_, STAT_TotalInstructionsRecieved_, STAT_NonCoherenceReqsReceived_);
         topCC_->printStats(stats_);
         listener_->printStats(*d_);
+        delete cArray_;
+        delete replacementMgr_;
+        delete d_;
+        retryQueue_.clear();
+        retryQueueNext_.clear();
+        linkIdMap_.clear();
+        nameMap_.clear();
     }
     
     static Cache* cacheFactory(SST::ComponentId_t id, SST::Params& params);
@@ -114,7 +121,7 @@ public:
 
 private:
     Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, 
-           Output* _d_, LRUReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
+           Output* _d, LRUReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
 
 
     uint                    ID_;

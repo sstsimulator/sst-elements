@@ -82,6 +82,11 @@ public:
         protocol_ = _protocol;
     }
     
+    ~MESITopCC(){
+        for(unsigned int i = 0; i < ccLines_.size(); i++) delete ccLines_[i];
+        lowNetworkNameMap_.clear();
+    }
+    
     uint InvReqsSent_;
     uint EvictionInvReqsSent_;
     vector<CCLine*> ccLines_;

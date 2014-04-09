@@ -43,7 +43,7 @@ public:
     static const char BUS_INFO_STR[];
     
 	Bus(SST::ComponentId_t id, SST::Params& params);
-	void init(unsigned int phase);
+	virtual void init(unsigned int phase);
 
 private:
 	Bus();  // for serialization only

@@ -137,6 +137,10 @@ public:
     Addr getLineSize(){ return lineSize_; }
     Addr toLineAddr(Addr addr);
 
+    ~CacheArray(){
+        for (unsigned int i = 0; i < lines_.size(); i++) delete lines_[i];
+    }
+    
 private:
     void pMembers();
     void errorChecking();
@@ -171,6 +175,8 @@ protected:
         errorChecking();
         sharersAware_ = _sharersAware;
     }
+    
+
 };
 
 /* Set-associative cache array */

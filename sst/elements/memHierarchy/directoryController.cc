@@ -169,6 +169,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     }
 
     if(InvAck == cmd) {
+        dbg.output(CALL_INFO, "InvACK command recieve.  Ignoring");
         delete ev;
         return true;
     }
@@ -184,7 +185,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
 
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
 
+    if(!entry) dbg.output(CALL_INFO, "Entry not found\n");
+
     if(entry && entry->inProgress()) {
+        dbg.output(CALL_INFO, "Entry found and in progress\n");
         if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM)) &&
           ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())) {
             dbg.output(CALL_INFO, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
@@ -197,7 +201,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             return true;
         } else {
             dbg.output(CALL_INFO, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
-            dbg.output(CALL_INFO, "Re-enqueuing for  [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
+            //dbg.output(CALL_INFO, "Re-enqueuing for  [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
             return false;
             /*switch(ev->getCmd()) {
             case Invalidate:
@@ -216,6 +220,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
         }
        
     }
+    
 
 
     /* New Request */
@@ -378,8 +383,12 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
     network->clock();
 
     if(!workQueue.empty()){
-        if(processPacket(workQueue.front())) {
-            workQueue.erase(workQueue.begin());
+        MemEvent *event = workQueue.front();
+        bool ret = processPacket(event);
+        if(ret) workQueue.erase(workQueue.begin());
+        else {
+            workQueue.pop_front();
+            workQueue.push_back(event);
         }
 	}
 

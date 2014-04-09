@@ -166,12 +166,12 @@ void Bus::init(unsigned int phase){
             }
             else{
                 for(int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(memEvent);
+                    lowNetPorts_[k]->sendInitData(new MemEvent(memEvent));
             }
+            delete memEvent;
         }
     }
     
-    MemEvent* temp;
     for(int i = 0; i < numLowNetPorts_; i++) {
         while ((ev = lowNetPorts_[i]->recvInitData())){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
@@ -179,15 +179,21 @@ void Bus::init(unsigned int phase){
             else if(memEvent->getCmd() == NULLCMD){
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
                 for(int i = 0; i < numHighNetPorts_; i++) {
-                    temp = new MemEvent(memEvent);
-                    highNetPorts_[i]->sendInitData(temp);
+                    highNetPorts_[i]->sendInitData(new MemEvent(memEvent));
                     //cout << "sent memEvent, src: " << temp->getSrc() << " linkID: " << highNetPorts_[i]->getId() << endl;
                 }
             }
             else{/*Ignore responses */}
+            delete memEvent;
         }
     }
 }
+
+
+//void Bus::finish(){
+//    for(unsigned int i = 0; i < highNetPorts_.size(); i++)  delete highNetPorts_[i];
+//    for(unsigned int i = 0; i < highNetPorts_.size(); i++)  delete lowNetPorts_[i];
+//}
 
 
 
