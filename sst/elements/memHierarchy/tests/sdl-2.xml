@@ -13,7 +13,7 @@ Topology:
 <timebase>1ns</timebase>
 
 <config>
- stopAtCycle=5000ns
+ stopAtCycle=200ms
 </config>
 
 <variables>
