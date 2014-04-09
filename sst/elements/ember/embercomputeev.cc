@@ -1,4 +1,4 @@
-#include <sst/sst_config.h>
+#include <sst_config.h>
 #include "embercomputeev.h"
 
 using namespace SST::Ember;
