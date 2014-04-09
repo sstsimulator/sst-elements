@@ -16,7 +16,7 @@ EmberAllPingPongGenerator::EmberAllPingPongGenerator(SST::Component* owner, Para
 
 void EmberAllPingPongGenerator::configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize) {
 	halfWorld = worldSize / 2;
-	assert(halfWorld > 2);
+	assert(halfWorld >= 1);
 
 	if(rank < halfWorld) {
 		commWithRank = rank + halfWorld;
