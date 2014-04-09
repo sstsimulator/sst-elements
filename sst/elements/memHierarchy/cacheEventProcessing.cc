@@ -170,7 +170,6 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
     }
     }
     catch(stallException const& e){
-         fprintf(stderr, "Received Stall Exception\n");
         //e.what();
     }
     catch(mshrException const& e){
