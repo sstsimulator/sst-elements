@@ -70,9 +70,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	if( gentype == "" ) {
 		output->fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'generator\')\n");
 	} else {
-		//Params generatorParams = params.find_prefix_params("generatorParams");
+		Params generatorParams = params.find_prefix_params("generatorParams.");
 
-		generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, params ) );
+		generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
 
 		if(NULL == generator) {
 			output->fatal(CALL_INFO, -1, "Error: Could not load the generator %s for Ember\n", gentype.c_str());

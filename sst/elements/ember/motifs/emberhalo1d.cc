@@ -11,9 +11,9 @@ using namespace SST::Ember;
 EmberHalo1DGenerator::EmberHalo1DGenerator(SST::Component* owner, Params& params) :
 	EmberGenerator(owner, params) {
 
-	iterations = (uint32_t) params.find_integer("generator.iterations", 10);
-	nsCompute = (uint32_t) params.find_integer("generator.computenano", 1000);
-	messageSize = (uint32_t) params.find_integer("generator.messagesize", 128);
+	iterations = (uint32_t) params.find_integer("iterations", 10);
+	nsCompute = (uint32_t) params.find_integer("computenano", 1000);
+	messageSize = (uint32_t) params.find_integer("messagesize", 128);
 }
 
 void EmberHalo1DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
