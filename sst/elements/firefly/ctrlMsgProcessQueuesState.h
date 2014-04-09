@@ -823,7 +823,10 @@ void ProcessQueuesState<T1>::enableInt( FuncCtxBase* ctx,
 {
   	dbg().verbose(CALL_INFO,2,0,"ctx=%p\n",ctx);
 	assert( m_funcStack.empty() );
-	assert( ! m_intCtx );
+    if ( m_intCtx ) {
+  	    dbg().verbose(CALL_INFO,2,0,"already have a return ctx\n");
+        return; 
+    }
 
 	m_funcStack.push_back(ctx);
 	ctx->setRetFunctor( new FunctorStatic_0< ProcessQueuesState,
@@ -859,6 +862,12 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 
     dbg().verbose(CALL_INFO,2,0,"\n" );
 
+    if ( m_missedInt ) {
+        foo();
+        m_missedInt = false;
+        return true;
+    }
+
 	FunctorBase_0< bool >* retFunctor = m_intCtx->getRetFunctor();
 
 	m_intCtx = NULL;
@@ -867,10 +876,6 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 		delete retFunctor;
 	}
 
-    if ( m_intCtx && m_missedInt ) {
-        foo();
-        m_missedInt = false;
-    }
     return true; 
 }
 
