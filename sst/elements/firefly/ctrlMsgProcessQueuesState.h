@@ -403,6 +403,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::enterSend( _CommReq* req,
                                         FunctorBase_0<bool>* exitFunctor )
 {
+    int pagePinDelay = 0; 
     dbg().verbose(CALL_INFO,2,0,"new send CommReq\n");
 
     req->setSrcRank( getMyRank( req ) );
@@ -412,13 +413,18 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
         functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
           ( this, &ProcessQueuesState::enterSendLoop, req );  
     } else {
+        size_t length = req->getLength( );
+
+        if ( length > obj().shortMsgLength() ) {
+            pagePinDelay += obj().regRegionDelay( length );
+        }
         functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
           ( this, &ProcessQueuesState::enterSend, req );  
     }
 
     setExit( exitFunctor );
 
-    obj().schedFunctor( functor, obj().txDelay() );
+    obj().schedFunctor( functor, obj().txDelay() + pagePinDelay );
 }
 
 template< class T1 >
@@ -674,6 +680,7 @@ bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
             delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
         } else {
             dbg().verbose(CALL_INFO,1,0,"receive long message\n"); 
+            delay += obj().regRegionDelay( length );
         }
     }
 
