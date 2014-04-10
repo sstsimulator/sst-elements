@@ -74,6 +74,11 @@ Interfaces::MemEvent* MemHierarchyInterface::createMemEvent(MemHierarchyInterfac
     case Request::WriteResp: cmd = Interfaces::GetSResp; break;
     }
     Interfaces::MemEvent *me = new Interfaces::MemEvent(owner, req->addr, cmd);
+    me->setSize(req->size);
+
+    if ( Request::Write == req->cmd ) {
+        me->setPayload(req->data);
+    }
 
     if ( req->flags & Request::F_UNCACHED )     me->setFlag(Interfaces::MemEvent::F_UNCACHED);
     if ( req->flags & Request::F_EXCLUSIVE )    me->setFlag(Interfaces::MemEvent::F_EXCLUSIVE);
@@ -138,7 +143,7 @@ void MemHierarchyInterface::updateRequest(MemHierarchyInterface::Request* req, I
     case Interfaces::GetSResp:
         req->cmd = Request::ReadResp;
         req->data = me->getPayload();
-        req->size = me->getSize();
+        req->size = me->getPayload().size();
         break;
     case Interfaces::GetXResp:
         req->cmd = Request::WriteResp;

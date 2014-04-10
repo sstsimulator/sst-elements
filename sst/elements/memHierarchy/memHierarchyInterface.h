@@ -71,6 +71,19 @@ public:
             id = main_id++;
         }
 
+        void setPayload(const std::vector<uint8_t> & data_in )
+        {
+            data = data_in;
+        }
+
+        void setPayload(uint8_t *data_in, size_t len)
+        {
+            data.resize(len);
+            for ( size_t i = 0 ; i < len ; i++ ) {
+                data[i] = data_in[i];
+            }
+        }
+
     private:
         static uint64_t main_id;
     };
@@ -144,6 +157,8 @@ public:
 
     void sendInitData(SST::Event *ev) { link->sendInitData(ev); }
     SST::Event* recvInitData() { return link->recvInitData(); }
+
+    SST::Link* getLink(void) const { return link; }
 
     void sendRequest(Request *req);
     Request* recvResponse(void);
