@@ -105,11 +105,20 @@ MemHierarchyInterface::Request* MemHierarchyInterface::processIncoming(Interface
 {
     Request *req = NULL;
     Interfaces::MemEvent::id_type origID = ev->getResponseToID();
-    if ( Interfaces::Inv == ev->getCmd() ) return NULL; //Ignore Invalidate request
+    if ( Interfaces::Inv == ev->getCmd() ) {
+        return NULL; //Ignore Invalidate request
+    }
 
     std::map<Interfaces::MemEvent::id_type, Request*>::iterator i = requests.find(origID);
     if ( i != requests.end() ) {
         req = i->second;
+
+        // We received a NACK.  Just re-issue it
+        if ( Interfaces::NACK == ev->getCmd() ) {
+            link->send(createMemEvent(req));
+            return NULL;
+        }
+
         requests.erase(i);
         updateRequest(req, ev);
     } else {

@@ -140,7 +140,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     
     registerClock(_cacheFrequency, new Clock::Handler<Cache>(this, &Cache::clockTick));
     timestamp_ = 0;
-    STAT_GetSExReceived_ = 0, STAT_InvalidateWaitingForUserLock_ = 0, STAT_TotalInstructionsRecieved_ = 0;
+    STAT_GetSExReceived_ = 0, STAT_InvalidateWaitingForUserLock_ = 0, STAT_TotalInstructionsRecieved_ = STAT_NonCoherenceReqsReceived_ = 0;
 }
 
 
