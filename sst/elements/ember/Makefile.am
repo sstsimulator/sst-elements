@@ -44,9 +44,9 @@ libember_la_SOURCES = \
 	motifs/emberpingpong.cc \
 	motifs/emberpingpong.h \
 	motifs/emberbarrier.cc \
-	motfis/emberbarrier.h \
+	motifs/emberbarrier.h \
 	motifs/emberallpingpong.cc \
-	motfis/emberallpingpong.h
+	motifs/emberallpingpong.h
 
 
 libember_la_LDFLAGS = -module -avoid-version
