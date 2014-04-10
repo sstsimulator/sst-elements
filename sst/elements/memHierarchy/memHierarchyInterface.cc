@@ -66,7 +66,7 @@ MemHierarchyInterface::Request* MemHierarchyInterface::recvResponse(void)
 
 Interfaces::MemEvent* MemHierarchyInterface::createMemEvent(MemHierarchyInterface::Request *req) const
 {
-    Interfaces::Command cmd;
+    Interfaces::Command cmd = Interfaces::NULLCMD;
     switch ( req->cmd ) {
     case Request::Read:      cmd = Interfaces::GetS;     break;
     case Request::Write:     cmd = Interfaces::GetX;     break;
