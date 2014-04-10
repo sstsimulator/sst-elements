@@ -33,6 +33,8 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	sendRight = false;
 	sendAbove = false;
 	sendBelow = false;
+
+	messageCount = 0;
 }
 
 void EmberHalo2DGenerator::finish(const SST::Output* output) {
@@ -112,6 +114,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 			evQ->push(recvEvLeft);
 			evQ->push(sendEvLeft);
 			evQ->push(waitEvLeft);
+
+			messageCount++;
 		}
 
 		if(sendRight) {
@@ -123,6 +127,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 			evQ->push(recvEvRight);
 			evQ->push(sendEvRight);
 			evQ->push(waitEvRight);
+
+			messageCount++;
 		}
 
 		if(sendAbove) {
@@ -134,6 +140,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 			evQ->push(recvEvAbove);
 			evQ->push(sendEvAbove);
 			evQ->push(waitEvAbove);
+
+			messageCount++;
 		}
 
 		if(sendBelow) {
@@ -145,6 +153,8 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 			evQ->push(recvEvBelow);
 			evQ->push(sendEvBelow);
 			evQ->push(waitEvBelow);
+
+			messageCount++;
 		}
 
 		output->verbose(CALL_INFO, 2, 0, "Halo 2D motif completed event generation for phase: %" PRIu32 "\n", phase);
