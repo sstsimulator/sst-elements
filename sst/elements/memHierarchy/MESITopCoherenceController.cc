@@ -270,7 +270,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
         return true;
     }
     MemEvent *responseEvent; Command cmd = _event->getCmd();
-    Addr offset, base;
+    Addr offset = 0, base = 0;
     switch(cmd){
         case GetS: case GetSEx: case GetX:
             assert(_data);
