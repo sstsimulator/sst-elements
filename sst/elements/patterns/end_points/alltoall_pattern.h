@@ -42,34 +42,18 @@ class Alltoall_pattern : public Comm_pattern    {
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
-	    num_sets= 9;
-	    num_doubles= 1;
-	    nnodes= 0;
+	    num_sets= params.find_integer("num_sets", 9);
+	    num_doubles= params.find_integer("num_doubles", 1);
+	    nnodes= params.find_integer("start_nnodes", 0);
 
 
-	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
-            while (it != params.end())   {
-		if (!it->first.compare("num_sets"))   {
-		    sscanf(it->second.c_str(), "%d", &num_sets);
-		}
 
-		if (!it->first.compare("num_doubles"))   {
-		    sscanf(it->second.c_str(), "%d", &num_doubles);
-		}
-
-		if (!it->first.compare("start_nnodes"))   {
-		    sscanf(it->second.c_str(), "%d", &nnodes);
-		    if ((nnodes < 0) || (nnodes >= num_ranks))   {
+		if ((nnodes < 0) || (nnodes >= num_ranks))   {
 			if (my_rank == 0)   {
-			    printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
+				printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
 			}
 			exit(-2);
-		    }
 		}
-
-                ++it;
-            }
 
 
 	    if (num_ranks < 2)   {

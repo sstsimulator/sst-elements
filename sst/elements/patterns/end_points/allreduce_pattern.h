@@ -42,59 +42,37 @@ class Allreduce_pattern : public Comm_pattern    {
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
-	    num_sets= 9;
-	    num_doubles= 1;
+	    num_sets= params.find_integer("num_sets", 9);
+	    num_doubles= params.find_integer("num_doubles", 1);
+	    start_nnodes= params.find_integer("start_nnodes", 1);
+	    end_nnodes= params.find_integer("end_nnodes", 0);
+
+		std::string tree_type_str = params.find_string("tree_type", "deep");
 	    tree_type= TREE_DEEP;
-	    start_nnodes= 1;
-	    end_nnodes= 0;
 
 
-	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
-            while (it != params.end())   {
-		if (!it->first.compare("num_sets"))   {
-		    sscanf(it->second.c_str(), "%d", &num_sets);
-		}
-
-		if (!it->first.compare("start_nnodes"))   {
-		    sscanf(it->second.c_str(), "%d", &start_nnodes);
-		    if ((start_nnodes < 0) || (start_nnodes >= num_ranks))   {
-          if (my_rank == 0)   {
-			      printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
-			    }
-			    exit(-2);
-		    }
-		    // Perform a check to see if we are setup for nnodes being 0
-		    // if yes, on allreduce start the nnodes at 1
-		    if (start_nnodes <= 0){
-		      start_nnodes = 1;
-		    }
-		}
-
-
-		if (!it->first.compare("end_nnodes"))   {
-		    sscanf(it->second.c_str(), "%d", &end_nnodes);
-		}
-
-		if (!it->first.compare("num_doubles"))   {
-		    sscanf(it->second.c_str(), "%d", &num_doubles);
-		}
-
-		if (!it->first.compare("tree_type"))   {
-		    if (!it->second.compare("deep"))   {
-			tree_type= TREE_DEEP;
-		    } else if (!it->second.compare("binary"))   {
-			tree_type= TREE_BINARY;
-		    } else   {
+		if ((start_nnodes < 0) || (start_nnodes >= num_ranks))   {
 			if (my_rank == 0)   {
-			    printf("#  |||  Unknown tree type!\n");
+				printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
 			}
 			exit(-2);
-		    }
+		}
+		// Perform a check to see if we are setup for nnodes being 0
+		// if yes, on allreduce start the nnodes at 1
+		if (start_nnodes <= 0){
+			start_nnodes = 1;
 		}
 
-                ++it;
-            }
+		if (!tree_type_str.compare("deep"))   {
+			tree_type= TREE_DEEP;
+		} else if (!tree_type_str.compare("binary"))   {
+			tree_type= TREE_BINARY;
+		} else   {
+			if (my_rank == 0)   {
+				printf("#  |||  Unknown tree type!\n");
+			}
+			exit(-2);
+		}
 
 
 	    if (num_ranks < 2)   {

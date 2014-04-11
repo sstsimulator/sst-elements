@@ -43,63 +43,17 @@ class Ghost_pattern : public Comm_pattern    {
 	    decomposition_only(0)
         {
 	    // Defaults for paramters
-	    time_steps= 1000;
-	    x_elements= 400;
-	    y_elements= 400;
-	    z_elements= 400;
-	    loops= 16;
-	    reduce_steps= 20;
-	    delay= 0;
-	    compute_imbalance= 0;
-	    verbose= 1;
-	    time_per_flop= 10;
+	    time_steps= params.find_integer("time_steps", 1000);
+	    x_elements= params.find_integer("x_elements", 400);
+	    y_elements= params.find_integer("y_elements", 400);
+	    z_elements= params.find_integer("z_elements", 400);
+	    loops= params.find_integer("loops", 16);
+	    reduce_steps= params.find_integer("reduce_steps", 20);
+	    delay= params.find_floating("delay", 0.0);
+	    compute_imbalance= params.find_integer("imbalance", 0);
+	    time_per_flop= params.find_integer("time_per_flop", 10);
+	    verbose= params.find_integer("verbose", 1);
 
-
-	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
-            while (it != params.end())   {
-		if (!it->first.compare("time_steps"))   {
-		    sscanf(it->second.c_str(), "%d", &time_steps);
-		}
-
-		if (!it->first.compare("x_elements"))   {
-		    sscanf(it->second.c_str(), "%d", &x_elements);
-		}
-
-		if (!it->first.compare("y_elements"))   {
-		    sscanf(it->second.c_str(), "%d", &y_elements);
-		}
-
-		if (!it->first.compare("z_elements"))   {
-		    sscanf(it->second.c_str(), "%d", &z_elements);
-		}
-
-		if (!it->first.compare("loops"))   {
-		    sscanf(it->second.c_str(), "%d", &loops);
-		}
-
-		if (!it->first.compare("reduce_steps"))   {
-		    sscanf(it->second.c_str(), "%d", &reduce_steps);
-		}
-
-		if (!it->first.compare("delay"))   {
-		    sscanf(it->second.c_str(), "%lf", &delay);
-		}
-
-		if (!it->first.compare("imbalance"))   {
-		    sscanf(it->second.c_str(), "%d", &compute_imbalance);
-		}
-
-		if (!it->first.compare("time_per_flop"))   {
-		    sscanf(it->second.c_str(), "%d", &time_per_flop);
-		}
-
-		if (!it->first.compare("verbose"))   {
-		    sscanf(it->second.c_str(), "%d", &verbose);
-		}
-
-                ++it;
-            }
 
 
 	    if (num_ranks < 2)   {

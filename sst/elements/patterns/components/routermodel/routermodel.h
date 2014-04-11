@@ -98,207 +98,122 @@ class Routermodel : public IntrospectedComponent {
         {
             Params::iterator it= params.begin();
 	    // Defaults
-	    router_model_debug= 0;
-	    num_ports= -1;
-	    hop_delay= 20;
-	    router_bw= 1200000000; // Bytes per second
-	    aggregator= false;
+	    router_model_debug= params.find_integer("debug", 0);
+	    num_ports= params.find_integer("num_ports", -1);
+	    hop_delay= params.find_integer("hop_delay", 20);
+	    router_bw= params.find_integer("bw", 1200000000); // Bytes per second
+	    aggregator= (bool)params.find_integer("aggregator", 0);
 	    congestion_out_cnt= 0;
 	    congestion_out= 0;
 	    congestion_in_cnt= 0;
 	    congestion_in= 0;
 	    msg_cnt= 0;
 
-#ifdef WITH_POWER
-	    // Power modeling
-	    router_totaldelay= 0;
-	    ifModelPower= false;
-	    num_local_message= 0;
-#endif
 
-
-
-            while (it != params.end())   {
-                _ROUTER_MODEL_DBG(2, "Router %s: key=%s value=%s\n", component_name.c_str(),
-		    it->first.c_str(), it->second.c_str());
-
-		if (!it->first.compare("debug"))   {
-		    sscanf(it->second.c_str(), "%d", &router_model_debug);
-		}
-
-		else if (!it->first.compare("hop_delay"))   {
-		    sscanf(it->second.c_str(), "%" PRIu64, (uint64_t *)&hop_delay);
-		}
-
-		else if (!it->first.compare("bw"))   {
-		    sscanf(it->second.c_str(), "%" PRIu64, (uint64_t *)&router_bw);
-		}
-
-		else if (!it->first.compare("aggregator"))   {
-		    int tmp;
-		    sscanf(it->second.c_str(), "%d", &tmp);
-		    if (tmp != 0)   {
-			aggregator= true;
-		    }
-		}
-
-		else if (!it->first.compare("component_name"))   {
-		    component_name= it->second;
-		    _ROUTER_MODEL_DBG(2, "Component name for ID %lu is \"%s\"\n", id,
-			component_name.c_str());
-		}
-
-		else if (!it->first.compare("num_ports"))   {
-		    sscanf(it->second.c_str(), "%d", &num_ports);
-		}
+		component_name = params.find_string("component_name", component_name);
 
 		// Power modeling paramters
-    		else if (!it->first.compare("frequency"))   {
-        	    frequency= it->second;
-    		}
 
-    		else if (!it->first.compare("push_introspector"))   {
-#ifdef WITH_POWER
-        	    pushIntrospector= it->second;
-#endif
-    		}
+		frequency = params.find_string("frequency", frequency);
 
-		else if (!it->first.compare("router_power_model"))   {
-#ifdef WITH_POWER
-		    if (!it->second.compare("McPAT"))   {
-			powerModel= McPAT;
-			ifModelPower= true;
-			_ROUTER_MODEL_DBG(2, "%s: Power modeling enabled, using McPAT\n",
-			    component_name.c_str());
-		    } else if (!it->second.compare("ORION"))   {
-			powerModel= ORION;
-			ifModelPower= true;
-			_ROUTER_MODEL_DBG(2, "%s: Power modeling enabled, using ORION\n",
-			    component_name.c_str());
-		    } else   {
-			_abort(Routermodel, "Unknown power model!\n");
-		    }
-#else
-		    _abort(Routermodel, "You can't specify a power model, if you have selected the plain router!");
-#endif
-    		}
+#define MAX_ROUTERS 1024
+		for ( int index = 0 ; index < MAX_ROUTERS ; index++ ) {
+			bool pfound;
+			uint64_t val;
+			char param[64] = {0};
+			std::list<Rtrparams_t>::iterator k;
 
-		if (it->first.find("Rtrinflection") != std::string::npos)   {
-		    int index;
-		    bool found;
-		    std::list<Rtrparams_t>::iterator k;
 
-		    if (sscanf(it->first.c_str(), "Rtrinflection%d", &index) != 1)   {
-			it++;
-			continue;
-		    }
-		    // Is that index in the list already?
-		    found= false;
-		    for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
-			if (k->index == index)   {
-			    // Yes? Update the entry
-			    k->inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
-			    found= true;
+			sprintf(param, "Rtrinflection%d", index);
+			val = params.find_integer(param, 0, pfound);
+			if ( pfound ) {
+				bool found = false;
+				for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
+					if (k->index == index)   {
+						// Yes? Update the entry
+						k->inflectionpoint= val;
+						found= true;
+					}
+				}
+				if (!found)   {
+					// No? Create a new entry
+					Rtrparams_t another;
+					another.inflectionpoint= val;
+					another.index= index;
+					another.latency= -1;
+					Rtrparams.push_back(another);
+				}
 			}
-		    }
-		    if (!found)   {
-			// No? Create a new entry
-			Rtrparams_t another;
-			another.inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
-			another.index= index;
-			another.latency= -1;
-			Rtrparams.push_back(another);
-		    }
-		}
 
-		if (it->first.find("Rtrlatency") != std::string::npos)   {
-		    int index;
-		    bool found;
-		    std::list<Rtrparams_t>::iterator k;
 
-		    if (sscanf(it->first.c_str(), "Rtrlatency%d", &index) != 1)   {
-			it++;
-			continue;
-		    }
-		    // Is that index in the list already?
-		    found= false;
-		    for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
-			if (k->index == index)   {
-			    // Yes? Update the entry
-			    k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
-			    found= true;
+			sprintf(param, "Rtrlatency%d", index);
+			val = params.find_integer(param, 0, pfound);
+			if ( pfound ) {
+				bool found= false;
+				for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
+					if (k->index == index)   {
+						// Yes? Update the entry
+						k->latency= val;
+						found= true;
+					}
+				}
+				if (!found)   {
+					// No? Create a new entry
+					Rtrparams_t another;
+					another.latency= val;
+					another.index= index;
+					another.inflectionpoint= -1;
+					Rtrparams.push_back(another);
+				}
 			}
-		    }
-		    if (!found)   {
-			// No? Create a new entry
-			Rtrparams_t another;
-			another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
-			another.index= index;
-			another.inflectionpoint= -1;
-			Rtrparams.push_back(another);
-		    }
-		}
 
 
-		if (it->first.find("NICinflection") != std::string::npos)   {
-		    int index;
-		    bool found;
-		    std::list<Rtrparams_t>::iterator k;
-
-		    if (sscanf(it->first.c_str(), "NICinflection%d", &index) != 1)   {
-			it++;
-			continue;
-		    }
-		    // Is that index in the list already?
-		    found= false;
-		    for (k= NICparams.begin(); k != NICparams.end(); k++)   {
-			if (k->index == index)   {
-			    // Yes? Update the entry
-			    k->inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
-			    found= true;
+			sprintf(param, "NICinflection%d", index);
+			val = params.find_integer(param, 0, pfound);
+			if ( pfound ) {
+				// Is that index in the list already?
+				bool found= false;
+				for (k= NICparams.begin(); k != NICparams.end(); k++)   {
+					if (k->index == index)   {
+						// Yes? Update the entry
+						k->inflectionpoint= val;
+						found= true;
+					}
+				}
+				if (!found)   {
+					// No? Create a new entry
+					Rtrparams_t another;
+					another.inflectionpoint= val;
+					another.index= index;
+					another.latency= -1;
+					NICparams.push_back(another);
+				}
 			}
-		    }
-		    if (!found)   {
-			// No? Create a new entry
-			Rtrparams_t another;
-			another.inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
-			another.index= index;
-			another.latency= -1;
-			NICparams.push_back(another);
-		    }
-		}
 
-		if (it->first.find("NIClatency") != std::string::npos)   {
-		    int index;
-		    bool found;
-		    std::list<Rtrparams_t>::iterator k;
 
-		    if (sscanf(it->first.c_str(), "NIClatency%d", &index) != 1)   {
-			it++;
-			continue;
-		    }
-		    // Is that index in the list already?
-		    found= false;
-		    for (k= NICparams.begin(); k != NICparams.end(); k++)   {
-			if (k->index == index)   {
-			    // Yes? Update the entry
-			    k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
-			    found= true;
+			sprintf(param, "NIClatency%d", index);
+			val = params.find_integer(param, 0, pfound);
+			if ( pfound ) {
+				// Is that index in the list already?
+				bool found= false;
+				for (k= NICparams.begin(); k != NICparams.end(); k++)   {
+					if (k->index == index)   {
+						// Yes? Update the entry
+						k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
+						found= true;
+					}
+				}
+				if (!found)   {
+					// No? Create a new entry
+					Rtrparams_t another;
+					another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
+					another.index= index;
+					another.inflectionpoint= -1;
+					NICparams.push_back(another);
+				}
 			}
-		    }
-		    if (!found)   {
-			// No? Create a new entry
-			Rtrparams_t another;
-			another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
-			another.index= index;
-			another.inflectionpoint= -1;
-			NICparams.push_back(another);
-		    }
+
 		}
-
-
-                ++it;
-            }
 
 
 	    if (num_ports < 1)   {
@@ -312,15 +227,6 @@ class Routermodel : public IntrospectedComponent {
 
       	    tc= registerTimeBase(frequency, true);
 
-#ifdef WITH_POWER
-	    if (!aggregator)   {
-		// for power introspection
-		if (ifModelPower)   {
-		    registerClock(frequency, new Clock::Handler<Routermodel>
-			(this, &Routermodel::pushData));
-		}
-	    }
-#endif
 
 
 	    if (Rtrparams.size() < 2)   {
@@ -359,7 +265,7 @@ class Routermodel : public IntrospectedComponent {
 		sprintf(link_name, "Link%dname", i);
 		it= params.begin();
 		while (it != params.end())   {
-		    if (!it->first.compare(link_name))   {
+		    if (!Params::getParamName(it->first).compare(link_name))   {
 			break;
 		    }
 		    it++;

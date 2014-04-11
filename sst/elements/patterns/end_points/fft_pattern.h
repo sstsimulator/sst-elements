@@ -37,47 +37,26 @@ class FFT_pattern : public Comm_pattern    {
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
-	    N= -1;
-	    iter= 1;
+	    N= params.find_integer("N", -1);
+	    iter= params.find_integer("iter", 1);
 	    tree_type= TREE_DEEP;
-	    time_per_flop= 10;
-	    verbose= 0;
+		std::string tree_type_str= params.find_string("tree_type", "deep");
+	    time_per_flop= params.find_integer("time_per_flop", 10);
+	    verbose= params.find_integer("verbose", 0);
 
 
-	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
-            while (it != params.end())   {
-		if (!it->first.compare("N"))   {
-		    sscanf(it->second.c_str(), "%d", &N);
-		}
 
-		if (!it->first.compare("iter"))   {
-		    sscanf(it->second.c_str(), "%d", &iter);
-		}
-
-		if (!it->first.compare("tree_type"))   {
-		    if (!it->second.compare("deep"))   {
+		if (!tree_type_str.compare("deep"))   {
 			tree_type= TREE_DEEP;
-		    } else if (!it->second.compare("binary"))   {
+		} else if (!tree_type_str.compare("binary"))   {
 			tree_type= TREE_BINARY;
-		    } else   {
+		} else   {
 			if (my_rank == 0)   {
-			    printf("#  |||  Unknown tree type!\n");
+				printf("#  |||  Unknown tree type!\n");
 			}
 			exit(-2);
-		    }
 		}
 
-		if (!it->first.compare("time_per_flop"))   {
-		    sscanf(it->second.c_str(), "%d", &time_per_flop);
-		}
-
-		if (!it->first.compare("verbose"))   {
-		    sscanf(it->second.c_str(), "%d", &verbose);
-		}
-
-                ++it;
-            }
 
 	    if (N <= 0)   {
 		if (my_rank == 0)   {
