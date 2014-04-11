@@ -12,7 +12,6 @@ libfirefly_la_SOURCES = \
 	ioVec.h \
 	info.h \
 	group.h \
-	nodeInfo.h \
 	ctrlMsg.cc \
 	ctrlMsg.h \
 	ctrlMsgXXX.cc \
