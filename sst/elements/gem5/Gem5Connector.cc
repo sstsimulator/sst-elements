@@ -19,9 +19,10 @@
 #include <mem/request.hh>
 #include <mem/ext_connector.hh>
 
+#include <sst/core/params.h>
 #include <sst/core/output.h>
 #include <sst/core/link.h>
-#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 #include "gem5.h"
 
@@ -31,7 +32,7 @@
 
 using namespace SST;
 using namespace SST::gem5;
-using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 
 static void g5RecvHandler(::PacketPtr pkt, void *obj)
@@ -49,9 +50,10 @@ Gem5Connector::Gem5Connector(Gem5Comp *g5Comp, Output &out,
     if ( !conn ) out.fatal(CALL_INFO, 1, "SimObject not a ExtConnector\n");
     if ( linkName == "system.mem_ctrls.connector" ) conn->setDebug( true );
 
-
-    sstlink = comp->configureLink(linkName, "1GHz",
-            new Event::Handler<Gem5Connector>(this, &Gem5Connector::handleRecvFromSST));
+    SST::Params params;
+    sstlink = static_cast<SimpleMem*>(comp->loadModuleWithComponent("memHierarchy.memInterface", comp, params));
+    sstlink->initialize(linkName,
+            new SimpleMem::Handler<Gem5Connector>(this, &Gem5Connector::handleRecvFromSST));
 
     if ( !sstlink ) {
         out.fatal(CALL_INFO, 1, "Failed to configure link %s\n", linkName.c_str());
@@ -66,9 +68,9 @@ void Gem5Connector::init(unsigned int phase)
     simPhase = INIT;
     if ( !initBlobs.empty() ) {
         for ( std::vector<Blob>::iterator i = initBlobs.begin(); i != initBlobs.end(); ++i ) {
-            MemEvent *ev = new MemEvent(comp, i->addr, WriteReq);
-            ev->setPayload(i->data);
-            sstlink->sendInitData(ev);
+            SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, i->addr, i->size);
+            req->setPayload(i->data);
+            sstlink->sendInitData(req);
         }
         initBlobs.clear();
     }
@@ -91,26 +93,24 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
     }
 
 
-    MemEvent *ev = new MemEvent(comp, pkt->getAddr(), SST::MemHierarchy::NULLCMD);
-    ev->setPayload(pkt->getSize(), pkt->getPtr<uint8_t>());
+    SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, pkt->getAddr(), pkt->getSize());
+    req->setPayload(pkt->getPtr<uint8_t>(), pkt->getSize());
 
     if ( pkt->req->isLocked() ) {
-        ev->setFlags(MemEvent::F_LOCKED);
-        ev->setLockID((((uint64_t)pkt->req->contextId()) << 32) |
-                    (uint64_t)(pkt->req->threadId()));
+        req->flags |= (SimpleMem::Request::F_LOCKED);
     }
 
     if ( pkt->req->isUncacheable() ) {
-        ev->setFlags(MemEvent::F_UNCACHED);
+        req->flags |= (SimpleMem::Request::F_UNCACHED);
     }
 
     switch ( (::MemCmd::Command)pkt->cmd.toInt() ) {
 	case ::MemCmd::ReadReq:
 	case ::MemCmd::ReadExReq:
-		ev->setCmd(SST::MemHierarchy::GetS);
+		req->cmd = SimpleMem::Request::Read;
 		break;
 	case ::MemCmd::WriteReq:
-		ev->setCmd(SST::MemHierarchy::GetX);
+		req->cmd = SimpleMem::Request::Write;
 		break;
     default:
         out.fatal(CALL_INFO, 1, "Don't know how to convert GEM5 command %s to SST\n", pkt->cmd.toString().c_str());
@@ -118,24 +118,21 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
 
 
     if ( INIT == simPhase ) {
-        sstlink->sendInitData(ev);
+        sstlink->sendInitData(req);
         delete pkt;
     } else {
         if ( pkt->needsResponse() )
-            g5packets[ev->getID()] = pkt;
+            g5packets[req->id] = pkt;
 
-        sstlink->send(ev);
+        sstlink->sendRequest(req);
     }
 
 }
 
 
-void Gem5Connector::handleRecvFromSST(SST::Event *event)
+void Gem5Connector::handleRecvFromSST(SimpleMem::Request *event)
 {
-    MemEvent *ev = static_cast<MemEvent*>(event);
-
-    MemEvent::id_type origID = ev->getResponseToID();
-    assert(origID != MemEvent::NO_ID);
+    SimpleMem::Request::id_t origID = event->id;
 
     PacketMap_t::iterator mi = g5packets.find(origID);
     assert(mi != g5packets.end());
@@ -144,11 +141,10 @@ void Gem5Connector::handleRecvFromSST(SST::Event *event)
     g5packets.erase(mi);
 
     pkt->makeResponse();  // Convert to a response packet
-    pkt->setData(ev->getPayload().data());
+    pkt->setData(event->data.data());
 
     // Clear out bus delay notifications
     pkt->busFirstWordDelay = pkt->busLastWordDelay = 0;
-
 
 
     bool ok = conn->sendResponsePacket(pkt);

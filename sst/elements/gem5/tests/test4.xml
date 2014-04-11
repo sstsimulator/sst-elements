@@ -8,7 +8,7 @@
 
 <param_include>
   <l1CacheParams>
-      <debug> 2 </debug>
+      <debug> 0 </debug>
       <debug_level> 8 </debug_level>
       <coherence_protocol> MSI </coherence_protocol>
       <cache_frequency> 1GHz </cache_frequency>
@@ -34,7 +34,7 @@
 	<access_latency_cycles> 8 </access_latency_cycles>
 	<mshr_num_entries> 4096 </mshr_num_entries>
 	<L1> 0 </L1>
-	<debug> 2 </debug>
+	<debug> 0 </debug>
 	<debug_level> 8 </debug_level>
 	<statistics> 1 </statistics>
   </l2CacheParams>

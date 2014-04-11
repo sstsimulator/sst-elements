@@ -15,11 +15,12 @@
 #include <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
-#include <sst/elements/MemHierarchy/memEvent.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 class SimObject;
 class ExtConnector;
 class Packet;
+
 
 namespace SST {
 class Link;
@@ -31,10 +32,10 @@ class Gem5Comp;
 class Gem5Connector {
 
     struct Blob {
-        MemHierachy::Addr addr;
+        Interfaces::SimpleMem::Addr addr;
         size_t size;
         std::vector<uint8_t> data;
-        Blob(MemHierachy::Addr _addr, size_t _size, uint8_t *_data)
+        Blob(Interfaces::SimpleMem::Addr _addr, size_t _size, uint8_t *_data)
             : addr(_addr), size(_size)
         {
             data.resize(size);
@@ -48,12 +49,12 @@ class Gem5Connector {
 
     Gem5Comp *comp;
     Output &out;
-    Link *sstlink;
+    Interfaces::SimpleMem *sstlink;
     ExtConnector *conn;
     Phase simPhase;
     std::vector<Blob> initBlobs;
 
-    typedef std::map<MemHierarchy::MemEvent::id_type, ::Packet*> PacketMap_t;
+    typedef std::map<Interfaces::SimpleMem::Request::id_t, ::Packet*> PacketMap_t;
     PacketMap_t g5packets;
 
 public:
@@ -62,8 +63,7 @@ public:
     void setup();
 
     void handleRecvFromG5(::Packet *pkt);
-    void handleRecvFromSST(SST::Event *event);
-    SST::Link* getLink(void) const { return sstlink; }
+    void handleRecvFromSST(Interfaces::SimpleMem::Request *event);
 
 };
 
