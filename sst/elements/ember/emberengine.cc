@@ -66,11 +66,11 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	}
 
 	// Create the generator
-	string gentype = params.find_string("generator");
+	string gentype = params.find_string("motif");
 	if( gentype == "" ) {
 		output->fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'generator\')\n");
 	} else {
-		Params generatorParams = params.find_prefix_params("generatorParams.");
+		Params generatorParams = params.find_prefix_params("motifParams.");
 
 		generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
 

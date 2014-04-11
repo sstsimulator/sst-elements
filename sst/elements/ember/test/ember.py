@@ -5,9 +5,9 @@ from sst.merlin import *
 import sys,getopt
 
 iterations = 1;
-msgSize = 0;
+msgSize = 1024;
 motif = "Halo2D"
-shape = "18"
+shape = "2"
 num_vNics = 1
 debug = 0
 
@@ -41,7 +41,7 @@ def main():
 
 main()
 
-motif = "ember.Ember" + motif + "Generator"
+motif = "ember." + motif + "Motif"
 print "Ember communication motif is " + motif
 
 def calcNumNodes( shape ):
@@ -100,12 +100,12 @@ driverParams = ({
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
 		"printStats" : 1,
-		"generator" : motif,
-		"buffersize" : 4000000,
-		"generatorParams.messagesize" : msgSize,
-		"generatorParams.messagesizex" : msgSize,
-		"generatorParams.messagesizey" : msgSize,
-		"generatorParams.iterations" : iterations,
+		"motif" : motif,
+		"buffersize" : 8192,
+		"motifParams.messagesize" : msgSize,
+		"motifParams.messagesizex" : msgSize,
+		"motifParams.messagesizey" : msgSize,
+		"motifParams.iterations" : iterations,
 		"hermesParams.debug" : debug,
 		"hermesParams.verboseLevel" : 1,
 		"hermesParams.nidListFile" : "nidlist.txt",
