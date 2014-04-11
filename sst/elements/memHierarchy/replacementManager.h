@@ -1,4 +1,15 @@
-/* 
+// Copyright 2009-2013 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2013, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+/*
  * File:   replacementManager.h
  * Author: Caesar De la Paz III
  * Email:  caesar.sst@gmail.com
@@ -28,53 +39,53 @@ class ReplacementMgr{
         virtual void replaced(uint id) = 0;
         void setTopCC(TopCacheController* cc) {topCC_ = cc;}
         void setBottomCC(MESIBottomCC* cc) {bottomCC_ = cc;}
-        
+        virtual ~ReplacementMgr(){}
     protected:
         TopCacheController* topCC_;
         MESIBottomCC* bottomCC_;
+};
+
+/*
+ * LRU
+ */
+class LRUReplacementMgr : public ReplacementMgr {
+private:
+    uint64_t timestamp;
+    int32_t bestCandidate;
+    uint64_t* array;
+    uint numLines_;
+
+    struct Rank {
+        uint64_t timestamp;
+        uint sharers;
+        BCC_MESIState state;
+
+        void reset() {
+            state = I;
+            sharers = 0;
+            timestamp = 0;
+        }
+
+        inline bool lessThan(const Rank& other) const {
+            if(state == I && other.state != I) return true;
+            //if(!CacheArray::CacheLine::inTransition(state) && CacheArray::CacheLine::inTransition(other.state)) return true;
+            else{
+                if (sharers == 0 && other.sharers > 0) return true;
+                else if (sharers > 0 && other.sharers == 0) return false;
+                else return timestamp < other.timestamp;
+            }
+        }
     };
 
-    /* 
-     * LRU
-     */
-    class LRUReplacementMgr : public ReplacementMgr {
-    private:
-        uint64_t timestamp;
-        int32_t bestCandidate;
-        uint64_t* array;
-        uint numLines_;
+Rank bestRank;
 
-        struct Rank {
-            uint64_t timestamp;
-            uint sharers;
-            BCC_MESIState state;
-
-            void reset() {
-                state = I;
-                sharers = 0;
-                timestamp = 0;
-            }
-
-            inline bool lessThan(const Rank& other) const {
-                if(state == I && other.state != I) return true;
-                //if(!CacheArray::CacheLine::inTransition(state) && CacheArray::CacheLine::inTransition(other.state)) return true;
-                else{
-                    if (sharers == 0 && other.sharers > 0) return true;
-                    else if (sharers > 0 && other.sharers == 0) return false;
-                    else return timestamp < other.timestamp;
-                }
-            }
-        };
-
-    Rank bestRank;
-
-    public:
+public:
     LRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines)  {
         array = (uint64_t*) calloc(numLines_, sizeof(uint64_t));
         bestRank.reset();
     }
 
-    ~LRUReplacementMgr() {
+    virtual ~LRUReplacementMgr() {
         free(array);
     }
 
@@ -99,7 +110,7 @@ class ReplacementMgr{
         bestRank.reset();
         array[id] = 0;
     }
-    
+
     void startReplacement() {
         bestCandidate = -1;
         bestRank.reset();
