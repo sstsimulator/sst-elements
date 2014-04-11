@@ -122,7 +122,7 @@ Gem5Object_t* Factory::createDirectObject( const std::string name,
 
     SST::Params::iterator iter = params.begin(), end = params.end();
     for (int i = 0 ; iter != end ; ++iter, i++) {
-        m5_params[i].key   = strdup(iter->first.c_str());
+        m5_params[i].key   = strdup(Params::getParamName(iter->first).c_str());
         m5_params[i].value = strdup(iter->second.c_str());
         if (NULL == m5_params[i].key || NULL == m5_params[i].value) abort();
     }
