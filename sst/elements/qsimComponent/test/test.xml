@@ -2,6 +2,50 @@
 <sdl version="2.0"/>
 
 <sst>
+
+    <!-- qsimComponent needs memHierarchy to be loaded before it.  Put the memory first. -->
+
+  <component name="chiprtr" rank="0" type="merlin.hr_router">
+    <params>
+      <num_ports>5</num_ports>
+      <num_vcs>3</num_vcs>
+      <link_bw>5GHz</link_bw>
+      <xbar_bw>5GHz</xbar_bw>
+      <topology>merlin.singlerouter</topology>
+      <id>0</id>
+    </params>
+    <link name=dir_net_0 port=port0 latency=5ns />
+    <link name=cache_net_0 port=port1 latency=5ns />
+    <link name=cache_net_1 port=port2 latency=5ns />
+    <link name=cache_net_2 port=port3 latency=5ns />
+    <link name=cache_net_3 port=port4 latency=5ns />
+  </component>
+
+  <component name="dirctrl0" rank="0"type="memHierarchy.DirectoryController">
+    <params>
+      <coherence_protocol>MSI</coherence_protocol>
+      <network_bw>5GHz</network_bw>
+      <network_address>0</network_address>
+      <addr_range_start>0x0</addr_range_start>
+      <addr_range_end>0xe8000000</addr_range_end>
+      <backingStoreSize>0</backingStoreSize>
+    </params>
+    <link name=dir_mem_link_0 port=memory latency=10ns />
+    <link name=dir_net_0 port=network latency=5ns />
+  </component>
+
+  <component name="memory0" rank="0" type="memHierarchy.MemController">
+    <params>
+      <coherence_protocol>MSI</coherence_protocol>
+      <access_time>50ns</access_time>
+      <mem_size>4096</mem_size>
+      <clock>1GHz</clock>
+    </params>
+    <link name=dir_mem_link_0 port=direct_link latency=10ns />
+  </component>
+
+  <!--<><><><><><><><><><><><><><>-<><><><><><><><><><><><><><>-->
+
   <component name="cpu0" rank="0" type="qsimComponent">
     <params>
       <state>/home/jpvandy/CentOS-bamboo-Apr03_1611/devel/trunk/sst/elements/qsimComponent/test/state.4</state>
@@ -198,44 +242,4 @@
     <link name=cache_net_3 port=directory latency=10ns />
   </component>
 
-  <!--<><><><><><><><><><><><><><>-<><><><><><><><><><><><><><>-->
-
-  <component name="chiprtr" rank="0" type="merlin.hr_router">
-    <params>
-      <num_ports>5</num_ports>
-      <num_vcs>3</num_vcs>
-      <link_bw>5GHz</link_bw>
-      <xbar_bw>5GHz</xbar_bw>
-      <topology>merlin.singlerouter</topology>
-      <id>0</id>
-    </params>
-    <link name=dir_net_0 port=port0 latency=5ns />
-    <link name=cache_net_0 port=port1 latency=5ns />
-    <link name=cache_net_1 port=port2 latency=5ns />
-    <link name=cache_net_2 port=port3 latency=5ns />
-    <link name=cache_net_3 port=port4 latency=5ns />
-  </component>
-
-  <component name="dirctrl0" rank="0"type="memHierarchy.DirectoryController">
-    <params>
-      <coherence_protocol>MSI</coherence_protocol>
-      <network_bw>5GHz</network_bw>
-      <network_address>0</network_address>
-      <addr_range_start>0x0</addr_range_start>
-      <addr_range_end>0xe8000000</addr_range_end>
-      <backingStoreSize>0</backingStoreSize>
-    </params>
-    <link name=dir_mem_link_0 port=memory latency=10ns />
-    <link name=dir_net_0 port=network latency=5ns />
-  </component>
-
-  <component name="memory0" rank="0" type="memHierarchy.MemController">
-    <params>
-      <coherence_protocol>MSI</coherence_protocol>
-      <access_time>50ns</access_time>
-      <mem_size>4096</mem_size>
-      <clock>1GHz</clock>
-    </params>
-    <link name=dir_mem_link_0 port=direct_link latency=10ns />
-  </component>
 </sst>
