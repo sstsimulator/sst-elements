@@ -87,7 +87,11 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const
 
     if ( req->flags & SimpleMem::Request::F_UNCACHED )     me->setFlag(MemEvent::F_UNCACHED);
     if ( req->flags & SimpleMem::Request::F_EXCLUSIVE )    me->setFlag(MemEvent::F_EXCLUSIVE);
-    if ( req->flags & SimpleMem::Request::F_LOCKED )       me->setFlag(MemEvent::F_LOCKED);
+    if ( req->flags & SimpleMem::Request::F_LOCKED ) {
+        me->setFlag(MemEvent::F_LOCKED);
+        if ( req->cmd == SimpleMem::Request::Read )
+            me->setCmd(GetSEx);
+    }
 
     return me;
 }
