@@ -21,14 +21,13 @@
 #include <vector>
 #include <cstdlib>
 #include "hash.h"
-#include "sst/core/interfaces/memEvent.h"
+#include "memEvent.h"
 #include <sst/core/serialization/element.h>
 #include "sst/core/output.h"
 #include "util.h"
 
 
 using namespace std;
-using namespace SST::Interfaces;
 
 namespace SST { namespace MemHierarchy {
 

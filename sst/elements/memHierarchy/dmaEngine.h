@@ -21,8 +21,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/memEvent.h>
 
+#include "memEvent.h"
 #include "memNIC.h"
 
 

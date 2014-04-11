@@ -32,6 +32,8 @@ class SimLoopExitEvent;
 namespace SST {
 namespace M5 {
 
+class PortLink;
+
 class M5 : public SST::IntrospectedComponent
 {
   public:
@@ -48,6 +50,8 @@ class M5 : public SST::IntrospectedComponent
 
     objectMap_t& objectMap() { return m_objectMap; }
 
+    void registerPortLink(const std::string& name, PortLink *pl );
+
   private:
     bool clock( SST::Cycle_t cycle );
 
@@ -57,6 +61,7 @@ class M5 : public SST::IntrospectedComponent
     int                 m_m5ticksPerSSTclock;
     objectMap_t         m_objectMap;
 	std::string         m_init_link_name;
+    PortLink*           m_init_link;
 
     // flag for fastforwarding
     bool FastForwarding_flag;

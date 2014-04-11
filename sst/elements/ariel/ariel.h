@@ -18,7 +18,6 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-#include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
 
 #include <cstring>
@@ -34,7 +33,6 @@
 #include "arielcore.h"
 
 using namespace std;
-using namespace SST::Interfaces;
 
 namespace SST {
 namespace ArielComponent {

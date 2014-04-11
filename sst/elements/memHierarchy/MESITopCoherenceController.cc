@@ -21,7 +21,6 @@
 #include "MESITopCoherenceController.h"
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 /*-------------------------------------------------------------------------------------
  * Top Coherence Controller Implementation

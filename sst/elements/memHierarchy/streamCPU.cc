@@ -18,13 +18,12 @@
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
-#include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
+#include "memEvent.h"
 
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 
 streamCPU::streamCPU(ComponentId_t id, Params& params) :
@@ -82,7 +81,7 @@ streamCPU::streamCPU() :
 void streamCPU::init(unsigned int phase)
 {
 	if ( !phase ) {
-		mem_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		mem_link->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
 	}
 }
 

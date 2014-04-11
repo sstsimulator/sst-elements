@@ -17,6 +17,7 @@
 #include <sst/core/link.h>
 #include <sst/core/linkMap.h>
 #include <sst/core/params.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 #include <dll/gem5dll.hh>
 #include <sim/simulate.hh>
@@ -121,8 +122,7 @@ void SST::M5::M5::init(unsigned int phase)
 
 		/* Because there's no clean way to get my link (that was configured elsewhere... */
 		if ( m_init_link_name != "" ) {
-			SST::Link* memInitLink = Simulation::getSimulation()->getComponentLinkMap(getId())->getLink(m_init_link_name);
-			assert( memInitLink );
+            Interfaces::SimpleMem *memInitLink = m_init_link->getSSTInterface();
 			/* TODO: Should be part of intitialization
 			 * Also, the call to InitAllObjects will need to be done
 			 * before this call. */
@@ -131,8 +131,8 @@ void SST::M5::M5::init(unsigned int phase)
 
 			/* blobs -> memInitLink */
 			for ( std::vector<libgem5::Blob>::iterator i = blobs.begin() ; i != blobs.end() ; ++i ) {
-				SST::Interfaces::MemEvent *ev = new SST::Interfaces::MemEvent(this, i->address, SST::Interfaces::WriteReq);
-				ev->setPayload(i->size, i->data);
+				Interfaces::SimpleMem::Request *ev = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Write, i->address, i->size);
+				ev->setPayload(i->data, i->size);
 
 				memInitLink->sendInitData(ev);
 
@@ -238,16 +238,22 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
 
 void SST::M5::M5::finish()
 {
-    #ifdef M5_WITH_POWER
+#ifdef M5_WITH_POWER
     Finish_Power();
-    #endif
+#endif
 
     delete m_barrier;
-    
-    if ( !m_statFile.empty() ) {
-	libgem5::DumpStats(m_statFile);
-    }
 
+    if ( !m_statFile.empty() ) {
+        libgem5::DumpStats(m_statFile);
+    }
 }
 
 
+
+void SST::M5::M5::registerPortLink(const std::string &name, PortLink* pl)
+{
+    if ( !name.compare(m_init_link_name) ) {
+        m_init_link = pl;
+    }
+}

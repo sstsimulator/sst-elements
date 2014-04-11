@@ -24,7 +24,6 @@
 #include "MESITopCoherenceController.h"
 
 using namespace std;
-using namespace SST::Interfaces;
 namespace SST {
 namespace MemHierarchy {
 

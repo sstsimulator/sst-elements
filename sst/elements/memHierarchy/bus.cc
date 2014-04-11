@@ -29,12 +29,11 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
-#include <sst/core/interfaces/memEvent.h>
+#include "memEvent.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 

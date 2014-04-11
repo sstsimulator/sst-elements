@@ -23,7 +23,7 @@
 #include <qsim-load.h>
 
 using namespace SST;
-using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 using SST::QsimComponent::qsimComponent;
 using namespace Qsim;
 using namespace std;

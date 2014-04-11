@@ -42,7 +42,6 @@
 namespace SST { namespace MemHierarchy {
 
 using namespace std;
-using namespace SST::Interfaces;
 
 
 class stallException : public exception{

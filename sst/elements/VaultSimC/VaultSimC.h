@@ -16,7 +16,7 @@
 #include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
 #include <Vault.h>
@@ -41,14 +41,14 @@ class VaultSimC : public IntrospectedComponent {
     private: // types
 
         typedef SST::Link memChan_t;
-	typedef map<unsigned, Interfaces::MemEvent*> t2MEMap_t;
+	typedef map<unsigned, MemHierarchy::MemEvent*> t2MEMap_t;
 
     private: // functions
 
         VaultSimC( const VaultSimC& c );
         bool clock( Cycle_t );
 
-        inline PHXSim::TransactionType convertType( SST::Interfaces::Command type );
+        inline PHXSim::TransactionType convertType( SST::MemHierarchy::Command type );
 
         void readData(BusPacket bp, unsigned clockcycle);
         void writeData(BusPacket bp, unsigned clockcycle);
@@ -62,7 +62,7 @@ class VaultSimC : public IntrospectedComponent {
         Output dbg;
 
 	unsigned vaultID;
-	size_t getInternalAddress(Interfaces::Addr in) {
+	size_t getInternalAddress(MemHierarchy::Addr in) {
 	  // calculate address
 	  size_t lower = in & VAULT_MASK;
 	  size_t upper = in >> (numVaults2 + VAULT_SHIFT);
@@ -71,15 +71,15 @@ class VaultSimC : public IntrospectedComponent {
 	}
 };
 
-inline PHXSim::TransactionType VaultSimC::convertType( SST::Interfaces::Command type )
+inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Command type )
 {
     switch( type ) 
       {
-      case SST::Interfaces::ReadReq:
-      case SST::Interfaces::RequestData:
+      case SST::MemHierarchy::ReadReq:
+      case SST::MemHierarchy::RequestData:
 	return PHXSim::DATA_READ;
-      case SST::Interfaces::SupplyData:
-      case SST::Interfaces::WriteReq:
+      case SST::MemHierarchy::SupplyData:
+      case SST::MemHierarchy::WriteReq:
 	return PHXSim::DATA_WRITE;
       default: 
 	_abort(VaultSimC,"Tried to convert unknown memEvent request type (%d) to PHXSim transaction type \n", type);

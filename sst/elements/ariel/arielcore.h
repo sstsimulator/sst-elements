@@ -7,7 +7,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/element.h>
 
 #include <sst/core/simulation.h>
@@ -54,7 +54,7 @@ namespace ArielComponent {
 class ArielCore {
 
 	public:
-		ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans,
+		ArielCore(int fd_in, SimpleMem *coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans,
 			Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen, int pipeTimeO,
 			uint64_t cacheLineSz, SST::Component* owner,
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string tracePrefix);
@@ -72,8 +72,8 @@ class ArielCore {
 		void createExitEvent();
 		void createSwitchPoolEvent(uint32_t pool);
 
-		void setCacheLink(SST::Link* newCacheLink);
-		void handleEvent(SST::Event* event);
+		void setCacheLink(SimpleMem* newCacheLink);
+		void handleEvent(SimpleMem::Request* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
@@ -94,9 +94,9 @@ class ArielCore {
 		Output* output;
 		std::queue<ArielEvent*>* coreQ;
 		bool isHalted;
-		SST::Link* cacheLink;
+		SimpleMem* cacheLink;
 		int fd_input;
-		std::map<MemEvent::id_type, MemEvent*>* pendingTransactions;
+		std::map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;
 		uint32_t maxQLength;
 		int readPipeTimeOut;

@@ -18,12 +18,10 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
-
-#include "memHierarchyInterface.h"
+#include <sst/core/interfaces/simpleMem.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 using namespace SST::Statistics;
 
 trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
@@ -61,12 +59,12 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    memory = dynamic_cast<MemHierarchyInterface*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+    memory = dynamic_cast<Interfaces::SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
     if ( !memory ) {
         _abort(TrivialCPU, "Unable to load Module as memory\n");
     }
     memory->initialize("mem_link",
-			new MemHierarchyInterface::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
+			new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
 
 	registerTimeBase("1 ns", true);
 	//set our clock
@@ -87,12 +85,12 @@ trivialCPU::trivialCPU() :
 void trivialCPU::init(unsigned int phase)
 {
 	if ( !phase ) {
-		memory->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		memory->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
 	}
 }
 
 // incoming events are scanned and deleted
-void trivialCPU::handleEvent(MemHierarchyInterface::Request *req)
+void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
 {
     std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
     if ( requests.end() == i ) {
@@ -136,11 +134,11 @@ bool trivialCPU::clockTic( Cycle_t )
 			// yes, communicate
 			// create event
 			// x4 to prevent splitting blocks
-			Addr addr = ((((Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
+            Interfaces::SimpleMem::Addr addr = ((((Interfaces::SimpleMem::Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
 
 			bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
 
-            MemHierarchyInterface::Request *req = new MemHierarchyInterface::Request((doWrite ? MemHierarchyInterface::Request::Write : MemHierarchyInterface::Request::Read), addr, 4 /*4 bytes*/);
+            Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request((doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read), addr, 4 /*4 bytes*/);
 			if ( doWrite ) {
 				req->data.resize(4);
                 req->data[0] = (addr >> 24) & 0xff;
@@ -151,7 +149,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
             bool uncached = ( addr >= uncachedRangeStart && addr < uncachedRangeEnd );
             if ( uncached ) {
-                req->flags |= MemHierarchyInterface::Request::F_UNCACHED;
+                req->flags |= Interfaces::SimpleMem::Request::F_UNCACHED;
                 if ( doWrite ) { ++uncachedWrites; } else { ++uncachedReads; }
             }
 

@@ -14,6 +14,7 @@
 #include "portLink.h"
 #include <unistd.h>
 #include <sst/core/component.h>
+#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/interfaces/stringEvent.h>
 
 #include <debug.h>
@@ -21,8 +22,8 @@
 #include <dll/gem5dll.hh>
 #include <dll/memEvent.hh>
 #include <rawEvent.h>
-//#include <sst/elements/interfaces/memEvent.h>
 
+using namespace SST::Interfaces;
 
 namespace SST {
 namespace M5 {
@@ -32,7 +33,6 @@ static const uint32_t LOCKED                      = 0x00100000;
 static const uint32_t UNCACHED                    = 0x00001000;
 
 PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
-	m_doTranslate( false ),
     m_comp( comp ),
     m_myEndPoint( this, recv, poke )
 {
@@ -61,47 +61,32 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
 
     DBGX(2,"%s portName=%s index=%d\n", name.c_str(), portName.c_str(), idx );
 
-    m_link = comp.configureLink( name,
-        new SST::Event::Handler<PortLink>( this, &PortLink::eventHandler ) );
-    if(!m_link) {
-        std::cout << "There is an issue connecting link: " << name << std::endl;
-    }
-    assert( m_link );
+    m_sstInterface = dynamic_cast<SimpleMem*>(comp.loadModuleWithComponent("memHierarchy.memInterface", &m_comp, const_cast<SST::Params&>(params)));
+    m_sstInterface->initialize(name, new SimpleMem::Handler<PortLink>( this, &PortLink::eventHandler ) );
+    comp.registerPortLink(name, this);
 
-    m_gem5EndPoint = GetPort(obj, m_myEndPoint, snoopOut, snoopIn, 
-                            addrStart, addrEnd, blocksize, name, portName, idx ); 
+    m_gem5EndPoint = GetPort(obj, m_myEndPoint, snoopOut, snoopIn,
+                            addrStart, addrEnd, blocksize, name, portName, idx );
 
     sent = 0, received = 0;
     assert( m_gem5EndPoint );
 }
 
+
 void PortLink::setup(void) {
 	SST::Event *ev = NULL;
-	while ( (ev = m_link->recvInitData()) != NULL ) {
-		SST::Interfaces::StringEvent *se = dynamic_cast<SST::Interfaces::StringEvent*>(ev);
-		if ( se ) {
-			std::string str = se->getString();
-			if ( str == "SST::Interfaces::MemEvent" ) {
-				m_doTranslate = true;
-			}
-		}
+	while ( (ev = m_sstInterface->recvInitData()) != NULL ) {
 		delete ev;
 	}
 }
 
-void PortLink::eventHandler( SST::Event *e )
+
+void PortLink::eventHandler( SimpleMem::Request *e )
 {
 
-    DBGX(2,"\n");
-	RawEvent *event = NULL;
-
-	if ( m_doTranslate ) {
-		event = new RawEvent(convertSSTtoGEM5(e), sizeof(MemPkt));
-		delete e;
-		e = event;
-	} else {
-		event = static_cast<RawEvent*>( e );
-	}
+    DBGX(2,"PortLink::eventHandler()\n");
+	RawEvent *event = new RawEvent(convertSSTtoGEM5(e), sizeof(MemPkt));
+    delete e;
 
 	if ( ! m_deferredQ.empty() ) {
 		DBGX(2,"blocked, defer event\n");
@@ -115,71 +100,61 @@ void PortLink::eventHandler( SST::Event *e )
 		return;
 	}
 
-    delete e;
+    delete event;
 }
 
 
 
-MemPkt* PortLink::findMatchingEvent(SST::Interfaces::MemEvent *sstev)
+MemPkt* PortLink::findMatchingEvent(SimpleMem::Request *e)
 {
 	MemPkt* g5ev = NULL;
-	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
-    //std::cout << "----Incoming: 0x" << std::hex << sstev->getAddr() << " Cmd: " << sstev->getCmd() << std::endl;
-	for ( std::list<MemPkt*>::iterator i = m_g5events.begin() ; i != m_g5events.end() ; ++i ) {
-		MemPkt *ev = *i;
-        //std::cout << "In Queue: 0x" << std::hex << ev->addr << " Cmd: " << ev->cmd << std::endl;
-		/* TODO:  More intelligent matching? */
-		if ( ev->addr == sstev->getAddr() ) {
-			g5ev = ev;
-			m_g5events.erase(i);
-         //assert(ev->size == sstev->getSize());
-			break;
-		}
-	}
-    //if(g5ev == NULL) _abort(PortLink, "g5ev NULL??!?!");
-	//fprintf(stderr, "%s:%d %s: Returning patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, g5ev->pktId);
+
+    std::map<uint64_t, MemPkt*>::iterator i = m_g5events.find(e->id);
+    if ( i != m_g5events.end() ) {
+        g5ev = i->second;
+        m_g5events.erase(i);
+    }
+
 	return g5ev;
 }
 
 
-MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
+MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 {
 	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
-	SST::Interfaces::MemEvent *sstev = static_cast<SST::Interfaces::MemEvent*>(e);
-	MemPkt* pkt = findMatchingEvent(sstev);
+	MemPkt* pkt = findMatchingEvent(e);
 	if ( !pkt ) {
 		_abort(Gem5Converter, "Trying to convert SST even for which no matching GEM5 event is found.\n");
 	}
 
-	switch ( sstev->getCmd() ) {
-	case SST::Interfaces::GetSResp:
+	switch ( e->cmd ) {
+    case SimpleMem::Request::ReadResp:
+        //fprintf(stderr, "Found a ReadResp of size %zu [asked for %zu]\n", e->size, pkt->size);
 		pkt->cmd = ::MemCmd::ReadResp;
 		pkt->isResponse = true;
-	    pkt->size = sstev->getSize();
-	    memcpy(pkt->data, &(sstev->getPayload()[0]), pkt->size);
+	    pkt->size = e->size;
+	    memcpy(pkt->data, &(e->data[0]), pkt->size);
 		break;
-	case SST::Interfaces::GetXResp:
+    case SimpleMem::Request::WriteResp:
+        //fprintf(stderr, "Found a WriteResp\n");
 		pkt->cmd = ::MemCmd::WriteResp;
 		pkt->isResponse = true;
 		break;
 	default:
-		_abort(Gem5Converter, "Trying to map SST cmd %s to GEM5\n", CommandString[sstev->getCmd()]);
+		_abort(Gem5Converter, "Trying to map SST cmd %d to GEM5\n", e->cmd);
 		break;
 	}
 
 	assert(pkt->size <= (unsigned)MemPkt::DataSize);
-    
-    dbg->debug(CALL_INFO,0,0,"---->\n");
-    dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %"PRIu64", Req Size =%u, Src =%s, QueueSize = %lu, Sent = %i\n", pkt->addr, sstev->getSize(), sstev->getSrc().c_str(), m_g5events.size(), ++sent);
-    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0," First Addr in Queue = %"PRIu64"\n", m_g5events.front()->addr);
 
-    if(sstev->getCmd() == SST::Interfaces::GetSResp)    dbg->debug(CALL_INFO,0,0," Read Request done. D: ");
-    else dbg->debug(CALL_INFO,0,0," Write Request done. W: ");
+    dbg->debug(CALL_INFO,0,0,"---->\n");
+    dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %"PRIu64", Req Size =%zu, QueueSize = %lu, Sent = %i\n", pkt->addr, e->size, m_g5events.size(), ++sent);
+
 
     for(unsigned int i = 0; i < pkt->size; i++) dbg->debug(CALL_INFO,0,0,"%x", (int)pkt->data[i]);
     dbg->debug(CALL_INFO,0,0,"\n");
     dbg->debug(CALL_INFO,0,0,"<----\n");
-    
+
 
 	/* Swap src/dst */
 	int tmp = pkt->src;
@@ -191,66 +166,49 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 }
 
 
-SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
+SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
 {
-    SST::Interfaces::MemEvent *ev = new SST::Interfaces::MemEvent(&m_comp, pkt->addr, SST::Interfaces::NULLCMD);
-    ev->setSize(pkt->size);
+    SimpleMem::Request *req =
+        new SimpleMem::Request(SimpleMem::Request::Read, pkt->addr, pkt->size);
     bool readEx = false;
 
     /* From ${GEM5}/src/mem/request.hh */
 
     if ( pkt->req.flags & UNCACHED ) {
-        ev->setFlags(SST::Interfaces::MemEvent::F_UNCACHED);
+        req->flags |=(SimpleMem::Request::F_UNCACHED);
     }
     else if (UNLIKELY(pkt->req.flags & LOCKED)) {
-        ev->setFlags(SST::Interfaces::MemEvent::F_LOCKED);
-        ev->setLockID(((uint64_t)(pkt->req.contextId) <<32) | (uint64_t)(pkt->req.threadId));
+        req->flags |= (SimpleMem::Request::F_LOCKED);
         readEx = true;
     }
 
     switch ( (::MemCmd::Command)pkt->cmd) {
-    case ::MemCmd::ReadExReq:
-        _abort(Gem5Converter, "Not Supported, ReadExReq");
     case ::MemCmd::ReadReq:
-        ev->setCmd(SST::Interfaces::GetS);
-        if(UNLIKELY(readEx)) ev->setCmd(SST::Interfaces::GetSEx);
+        req->cmd = SimpleMem::Request::Read;
+        //fprintf(stderr, "Creating Read Req for addr 0x%"PRIx64" of size %zu\n", req->addr, req->size);
+        if(UNLIKELY(readEx))
+            req->flags |= (SimpleMem::Request::F_EXCLUSIVE);
         break;
     case ::MemCmd::WriteReq:
-        ev->setCmd(SST::Interfaces::GetX);
-        ev->setPayload(pkt->size, pkt->data);
-        break;
-    case ::MemCmd::Writeback:
-        _abort(Gem5Converter, "Not Supported, Writeback");
-        ev->setCmd(SST::Interfaces::WriteReq);
-        ev->setFlags(SST::Interfaces::MemEvent::F_WRITEBACK);
-        ev->setPayload(pkt->size, pkt->data);
+        //fprintf(stderr, "Creating Write Req for addr 0x%"PRIx64" of size %zu [0x%x]\n", req->addr, req->size, *(uint64_t*)&(pkt->data[0]));
+        req->cmd = SimpleMem::Request::Write;
+        req->setPayload(pkt->data, pkt->size);
         break;
     default:
         _abort(Gem5Converter, "Don't know how to convert command %d to SST\n", pkt->cmd);
     }
-    m_g5events.push_back(pkt);
-    
+    m_g5events[req->id] = pkt;
+
     dbg->debug(CALL_INFO,0,0,"---->\n");
-    dbg->debug(CALL_INFO,0,0,"Received Event. Queue Size: %lu, Addr: %"PRIu64",  ReqSize = %u", m_g5events.size(), pkt->addr, ev->getSize());
-    if(ev->getCmd() == SST::Interfaces::GetS) dbg->debug(CALL_INFO,0,0,", R\n");
-    else if(ev->getCmd() == SST::Interfaces::GetSEx) dbg->debug(CALL_INFO,0,0,", Read Exclusive\n");
-    else {
-        dbg->debug(CALL_INFO,0,0," W, D: ");
-        for(unsigned int i = 0; i < pkt->size; i++) dbg->debug(CALL_INFO,0,0,"%x", (int)pkt->data[i]);
-        dbg->debug(CALL_INFO,0,0,"\n");
-    }
+    dbg->debug(CALL_INFO,0,0,"Received Event. Queue Size: %zu, Addr: %"PRIu64",  ReqSize = %zu", m_g5events.size(), pkt->addr, req->size);
     dbg->debug(CALL_INFO,0,0,"<----\n");
-    
-    ev->setSrc(m_name);
-    
-	//fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
-	return ev;
+
+	return req;
 }
 
 void PortLink::printQueueSize(){
     dbg->debug(CALL_INFO,0,0, "Name: %s",  m_name.c_str());
-    if(m_g5events.size() > 0) dbg->debug(CALL_INFO,0,0,"Size: %d. Top Event in Queue = %llx \n",m_g5events.size(), (uint64_t)m_g5events.front()->addr);
-    else dbg->debug(CALL_INFO,0,0,"\n");
+    dbg->debug(CALL_INFO,0,0, "Size: %zu.\n",m_g5events.size());
 }
 
 }}

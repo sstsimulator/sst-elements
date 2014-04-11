@@ -18,7 +18,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 #include <cstdio>
 #include <cstring>
@@ -117,7 +117,7 @@ public:
 //	return 0; 
   }
 
-  void handleEvent(SST::Event* event);
+  void handleEvent(SimpleMem::Request* event);
   void createPendingRequest(memory_request req);
   read_trace_return readNextRequest(memory_request* req);
 
@@ -149,14 +149,14 @@ private:
   map<uint64_t, uint64_t> page_table;
   int new_page_creates;
   uint8_t* zero_buffer;
-  map<MemEvent::id_type, memory_request*> pending_requests;
+  map<SimpleMem::Request::id_t, memory_request*> pending_requests;
   bool keep_generating;
   uint64_t phys_limit;
   double timeMultiplier;
   bool performVirtualTranslation;
   uint64_t lineCount;
 
-  SST::Link* cache_link;
+  SimpleMem* cache_link;
 
   friend class boost::serialization::access;
   template<class Archive>

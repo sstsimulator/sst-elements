@@ -25,7 +25,7 @@
 
 static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 
-using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
   IntrospectedComponent( id )

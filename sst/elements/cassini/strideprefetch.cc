@@ -12,7 +12,6 @@
 #define CASSINI_MIN(a,b) (((a)<(b)) ? a : b)
 
 using namespace SST;
-using namespace SST::Interfaces;
 using namespace SST::Cassini;
 
 void StridePrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) {

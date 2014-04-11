@@ -19,10 +19,9 @@
 #include <rawEvent.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-
 
 namespace SST {
 
@@ -39,16 +38,18 @@ class PortLink {
     void setOutput(Output* _dbg){
         dbg = _dbg;
     }
-  private:
-    inline void eventHandler( SST::Event* );
 
-	MemPkt* findMatchingEvent(SST::Interfaces::MemEvent *sstev);
-	MemPkt* convertSSTtoGEM5( SST::Event *e );
-	SST::Interfaces::MemEvent* convertGEM5toSST( MemPkt *pkt );
+    SimpleMem* getSSTInterface() { return m_sstInterface; }
+  private:
+    void eventHandler( SimpleMem::Request *e );
+
+	MemPkt* findMatchingEvent( SimpleMem::Request *e);
+	MemPkt* convertSSTtoGEM5( SimpleMem::Request *e );
+    SimpleMem::Request* convertGEM5toSST( MemPkt *pkt );
     Output* dbg;
-    
+
     void poke() {
-        DBGX(2,"\n");
+        DBGX(2,"PorkLink::poke()\n");
         assert( ! m_deferredQ.empty() );
 
         while ( ! m_deferredQ.empty() ) {
@@ -66,11 +67,8 @@ class PortLink {
 
     bool recv( void* data, size_t len ) {
         // Note we are not throttling events
-		if (LIKELY(m_doTranslate)) {
-			m_link->send( convertGEM5toSST(static_cast<MemPkt*>(data)) ); 
-		} else {
-			m_link->send( new RawEvent( data, len ) ); 
-		}
+        DBGX(2, "PortLink::recv\n");
+        m_sstInterface->sendRequest( convertGEM5toSST(static_cast<MemPkt*>(data)) );
         return true;
     }
 
@@ -82,14 +80,13 @@ class PortLink {
         return ((PortLink*)obj)->recv( data, len );
     }
 
-	bool            m_doTranslate;
-    SST::Link*      m_link;
+    SimpleMem *m_sstInterface;
     std::string     m_name;
     M5&             m_comp;
     MsgEndPoint*    m_gem5EndPoint;
     MsgEndPoint     m_myEndPoint;
     std::deque<RawEvent*>  m_deferredQ;
-	std::list<MemPkt*> m_g5events;
+	std::map<uint64_t, MemPkt*> m_g5events;
     int sent;
     int received;
     static const uint32_t LOCKED                      = 0x00100000;

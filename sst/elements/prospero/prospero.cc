@@ -156,9 +156,9 @@ prospero::prospero(ComponentId_t id, Params& params) :
   }
 
   // configure link to cache components
-  cache_link = configureLink( "cache_link", new Event::Handler<prospero>(this,
+  cache_link = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+  cache_link->initialize("cache_link", new SimpleMem::Handler<prospero>(this,
                                 &prospero::handleEvent) );
-  assert(cache_link);
 
   // Create a big buffer from which to take write request data
   zero_buffer = (uint8_t*) malloc(sizeof(uint8_t) * 2048);
@@ -303,33 +303,22 @@ prospero::prospero() :
     // for serialization only
 }
 
-void prospero::handleEvent(Event *ev)
+void prospero::handleEvent(SimpleMem::Request *event)
 {
-        MemEvent *event = dynamic_cast<MemEvent*>(ev);
-        if (event) {
-                // Branden says to ignore invalidates
-                if ( event->getCmd() == Invalidate ) {
-			delete event;
-			return;
-		}
+    std::map<SimpleMem::Request::id_t, memory_request*>::iterator req_itr = pending_requests.find(event->id);
 
-		std::map<MemEvent::id_type, memory_request*>::iterator req_itr = pending_requests.find(event->getResponseToID());
+    if(req_itr == pending_requests.end()) {
+        // Something bad happen?
+        std::cerr << "TRACE: Recv an ID which was not in the pending requests queue." << std::endl;
+        exit(-1);
+    } else {
+        // Free the event copy we made and then clear out the map, we're done with this
+        // event.
+        free(pending_requests[event->id]);
+        pending_requests.erase(req_itr);
+    }
 
-		if(req_itr == pending_requests.end()) {
-			// Something bad happen?
-			std::cerr << "TRACE: Recv an ID which was not in the pending requests queue." << std::endl;
-			exit(-1);
-		} else {
-			// Free the event copy we made and then clear out the map, we're done with this
-			// event.
-			free(pending_requests[event->getResponseToID()]);
-			pending_requests.erase(req_itr);
-		}
-
-                delete event;
-        } else {
-                printf("Error! Bad Event Type!\n");
-        }
+    delete event;
 }
 
 void prospero::createPendingRequest(memory_request mem_req) {
@@ -360,24 +349,26 @@ void prospero::createPendingRequest(memory_request mem_req) {
 
 		split_request_count++;
 
-		MemEvent *e_lower = new MemEvent(this, mem_req.memory_address, is_read ? GetS : GetX);
-		e_lower->setSize(e_lower_size);
+        SimpleMem::Request *e_lower = new SimpleMem::Request(
+                is_read ? SimpleMem::Request::Read : SimpleMem::Request::Write,
+                mem_req.memory_address, e_lower_size);
 
-		MemEvent *e_upper = new MemEvent(this, mem_req.memory_address + e_lower_size, is_read ? GetS : GetX);
-		e_upper->setSize(e_upper_size);
+        SimpleMem::Request *e_upper = new SimpleMem::Request(
+                is_read ? SimpleMem::Request::Read : SimpleMem::Request::Write,
+                mem_req.memory_address + e_lower_size, e_upper_size);
 
 		if(is_read) {
 			total_bytes_read += mem_req.size;
 			read_req_generated += 2;
 		} else {
-			e_lower->setPayload(e_lower_size, zero_buffer);
-			e_upper->setPayload(e_upper_size, zero_buffer);
+			e_lower->setPayload(zero_buffer, e_lower_size);
+			e_upper->setPayload(zero_buffer, e_upper_size);
 			total_bytes_written += mem_req.size;
 			write_req_generated += 2;
 		}
 
-		cache_link->send(e_lower); 
-		cache_link->send(e_upper); 
+		cache_link->sendRequest(e_lower);
+		cache_link->sendRequest(e_upper);
 
 		memory_request* e_lower_req = (memory_request*) malloc(sizeof(memory_request));
 		memory_request* e_upper_req = (memory_request*) malloc(sizeof(memory_request));
@@ -394,11 +385,12 @@ void prospero::createPendingRequest(memory_request mem_req) {
 		e_lower_req->instruction_count = mem_req.instruction_count;
 		e_upper_req->instruction_count = mem_req.instruction_count;
 
-		pending_requests[e_lower->getID()] = e_lower_req;
-		pending_requests[e_upper->getID()] = e_upper_req;
+		pending_requests[e_lower->id] = e_lower_req;
+		pending_requests[e_upper->id] = e_upper_req;
 	} else {
-		MemEvent *e = new MemEvent(this, mem_req.memory_address, is_read ? GetS : GetX);
-		e->setSize(mem_req.size);
+        SimpleMem::Request *e = new SimpleMem::Request(
+                is_read ? SimpleMem::Request::Read : SimpleMem::Request::Write,
+                mem_req.memory_address, mem_req.size);
 
 		memory_request* e_req = (memory_request*) malloc(sizeof(memory_request));
 		e_req->memory_op_type = mem_req.memory_op_type;
@@ -410,13 +402,13 @@ void prospero::createPendingRequest(memory_request mem_req) {
 			total_bytes_read += mem_req.size;
 			read_req_generated++;
 		} else {
-			e->setPayload(mem_req.size, zero_buffer);
+			e->setPayload(zero_buffer, mem_req.size);
 			total_bytes_written += mem_req.size;
 			write_req_generated++;
 		}
 
-		cache_link->send(e); 
-		pending_requests[e->getID()] = e_req;
+		cache_link->sendRequest(e);
+		pending_requests[e->id] = e_req;
 	}
 }
 
@@ -526,7 +518,7 @@ static const ElementInfoParam component_params[] = {
     { NULL, NULL, NULL }
 };
 
-static const char * cache_port_events[] = {"interfaces.MemEvent", NULL};
+static const char * cache_port_events[] = {"memHierarchy.MemEvent", NULL};
 
 static const ElementInfoPort cache_ports[] = {
     { "cache_link", "Port to connect to the first level cache", cache_port_events },

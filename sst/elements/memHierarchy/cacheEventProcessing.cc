@@ -23,12 +23,11 @@
 #include <boost/lexical_cast.hpp>
 #include <csignal>
 
-#include <sst/core/interfaces/memEvent.h>
+#include "memEvent.h"
 #include <sst/core/interfaces/stringEvent.h>
 
 
 using namespace SST;
-using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
 bool Cache::clockTick(Cycle_t time) {
@@ -65,7 +64,7 @@ void Cache::init(unsigned int phase){
     if(directoryLink_) directoryLink_->init(phase);
     
     if(!phase){
-        if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+        if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
         else{
             for(uint i = 0; i < highNetPorts_->size(); i++) {
                 highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));

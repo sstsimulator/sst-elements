@@ -32,16 +32,15 @@
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
-#include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
+#include "memEvent.h"
 #include "bus.h"
 
 #define NO_STRING_DEFINED "N/A"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 
 MemBackend::MemBackend(Component *comp, Params &params) :
@@ -229,7 +228,7 @@ bool VaultSimMemory::issueRequest(MemController::DRAMReq *req)
         req->status = MemController::DRAMReq::NEW;
         return false;
     }
-    SST::Interfaces::MemEvent::id_type reqID = req->reqEvent->getID();
+    MemEvent::id_type reqID = req->reqEvent->getID();
     assert(outToCubes.find(reqID) == outToCubes.end());
     outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
     MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
@@ -378,7 +377,7 @@ MemController::~MemController()
 void MemController::init(unsigned int phase)
 {
 	if ( !phase ) {
-        //upstream_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+        //upstream_link->sendInitData(new StringEvent("SST::MemHierarchy::MemEvent"));
 	}
 
 	SST::Event *ev = NULL;

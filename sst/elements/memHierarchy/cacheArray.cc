@@ -20,8 +20,6 @@
 #include <vector>
 #include "replacementManager.h"
 
-using namespace SST::Interfaces;
-
 namespace SST { namespace MemHierarchy {
 
 SetAssociativeArray::SetAssociativeArray(Output* _dbg, unsigned int _cacheSize, unsigned int _lineSize, unsigned int _associativity,

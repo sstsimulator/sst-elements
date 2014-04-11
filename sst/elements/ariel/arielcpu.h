@@ -1,6 +1,7 @@
 #ifndef _H_ARIEL_CPU
 #define _H_ARIEL_CPU
 
+#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 
@@ -28,7 +29,7 @@ class ArielCPU : public SST::Component {
     	SST::Output* output;
     	ArielMemoryManager* memmgr;
     	ArielCore** cpu_cores;
-    	SST::Link** cpu_to_cache_links;
+        Interfaces::SimpleMem** cpu_to_cache_links;
 
     	uint32_t core_count;
 		uint32_t memory_levels;

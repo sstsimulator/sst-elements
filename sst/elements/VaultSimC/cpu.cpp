@@ -83,8 +83,8 @@ bool cpu::clock( Cycle_t current )
 
   // check for events from the memory chain
   while((e = toMem->recv())) {
-    SST::Interfaces::MemEvent *event = 
-      dynamic_cast<SST::Interfaces::MemEvent*>(e);
+    SST::MemHierarchy::MemEvent *event = 
+      dynamic_cast<SST::MemHierarchy::MemEvent*>(e);
     if (event == NULL) {
       _abort(cpu::clock, "CPU got bad event\n");
     }
@@ -107,13 +107,13 @@ bool cpu::clock( Cycle_t current )
     for (int c = 0; c < threads; ++c) {
       if (outstanding < MAX_OUT && Missued <= bwlimit) {    
 	if (thrOutstanding[c].size() <= MAX_OUT_THR) {
-	  SST::Interfaces::MemEvent *event = getInst(1,app,c); // L1
+	  SST::MemHierarchy::MemEvent *event = getInst(1,app,c); // L1
 	  inst++;
 	  if (event) {
 	    toMem->send( event );
 	    outstanding++;
 	    Missued++;
-	    if (event->getCmd() == SST::Interfaces::ReadReq) {
+	    if (event->getCmd() == SST::MemHierarchy::ReadReq) {
 	      thrOutstanding[c].insert(event->getAddr());
 	    }
 	  }

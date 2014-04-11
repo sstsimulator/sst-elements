@@ -26,7 +26,7 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
-#include <sst/core/interfaces/memEvent.h>
+#include "memEvent.h"
 
 #include "mshr.h"
 #include "coherenceControllers.h"
@@ -35,7 +35,6 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 
 /* Function processes incomming access requests from HiLv$ or the CPU

@@ -24,10 +24,9 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 #include <sst/core/stats/histo/histo.h>
-
+#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/rng/marsaglia.h>
 
-#include "memHierarchyInterface.h"
 
 using namespace SST::Statistics;
 
@@ -59,7 +58,7 @@ private:
 	void operator=(const trivialCPU&); // do not implement
 	void init(unsigned int phase);
 
-	void handleEvent( MemHierarchyInterface::Request *ev );
+	void handleEvent( Interfaces::SimpleMem::Request *ev );
 	virtual bool clockTic( SST::Cycle_t );
 
     Output out;
@@ -76,7 +75,7 @@ private:
 
 	std::map<uint64_t, SimTime_t> requests;
 
-	MemHierarchyInterface *memory;
+    Interfaces::SimpleMem *memory;
 
     SST::RNG::MarsagliaRNG rng;
 

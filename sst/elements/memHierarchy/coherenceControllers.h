@@ -32,7 +32,6 @@
 
 using namespace std;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 namespace SST { namespace MemHierarchy {
 

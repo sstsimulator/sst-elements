@@ -24,8 +24,9 @@
 #include <sst/core/event.h>
 #include <sst/core/module.h>
 
+#include "memEvent.h"
+
 using namespace SST;
-using namespace SST::Interfaces;
 
 namespace SST {
 class Output;

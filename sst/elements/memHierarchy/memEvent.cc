@@ -9,16 +9,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * File:   MESITopCoherenceController.cc
- * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
- */
-
-#include <sst_config.h>
-#include <vector>
-#include "coherenceControllers.h"
-#include "MOESITopCoherenceController.h"
+#include "sst_config.h"
+#include "sst/core/serialization.h"
+#include "memEvent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+
+uint64_t SST::MemHierarchy::MemEvent::main_id = 0;
+const SST::MemHierarchy::MemEvent::id_type SST::MemHierarchy::MemEvent::NO_ID = std::make_pair(0, -1);
+
+BOOST_CLASS_EXPORT(MemEvent)

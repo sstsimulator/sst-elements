@@ -14,11 +14,12 @@
 #include <logicLayer.h>
 
 #include <sst/core/interfaces/stringEvent.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
 using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 
 #define DBG( fmt, args... )m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
@@ -98,7 +99,7 @@ void logicLayer::init(unsigned int phase) {
   // in the chain should report, so every one sends towards the cpu,
   // but only the first one will arrive.
   if ( !phase ) {
-    toCPU->sendInitData(new SST::Interfaces::StringEvent("SST::Interfaces::MemEvent"));
+    toCPU->sendInitData(new SST::Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
   }
 
   // rec data events from the direction of the cpu

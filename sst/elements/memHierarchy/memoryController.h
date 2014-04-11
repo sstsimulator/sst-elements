@@ -25,8 +25,7 @@
 #include <zlib.h>
 #endif
 
-#include <sst/core/interfaces/memEvent.h>
-using namespace SST::Interfaces;
+#include "memEvent.h"
 
 #include "bus.h"
 

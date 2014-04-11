@@ -21,7 +21,7 @@
 
 #include <sst/core/output.h>
 #include <sst/core/link.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 
 #include "gem5.h"
 
@@ -31,7 +31,7 @@
 
 using namespace SST;
 using namespace SST::gem5;
-using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 
 
 static void g5RecvHandler(::PacketPtr pkt, void *obj)
@@ -91,7 +91,7 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
     }
 
 
-    MemEvent *ev = new MemEvent(comp, pkt->getAddr(), SST::Interfaces::NULLCMD);
+    MemEvent *ev = new MemEvent(comp, pkt->getAddr(), SST::MemHierarchy::NULLCMD);
     ev->setPayload(pkt->getSize(), pkt->getPtr<uint8_t>());
 
     if ( pkt->req->isLocked() ) {
@@ -107,14 +107,10 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
     switch ( (::MemCmd::Command)pkt->cmd.toInt() ) {
 	case ::MemCmd::ReadReq:
 	case ::MemCmd::ReadExReq:
-		ev->setCmd(SST::Interfaces::GetS);
+		ev->setCmd(SST::MemHierarchy::GetS);
 		break;
 	case ::MemCmd::WriteReq:
-		ev->setCmd(SST::Interfaces::GetX);
-		break;
-	case ::MemCmd::Writeback:
-		ev->setCmd(SST::Interfaces::GetX);
-		ev->setFlags(SST::Interfaces::MemEvent::F_WRITEBACK);
+		ev->setCmd(SST::MemHierarchy::GetX);
 		break;
     default:
         out.fatal(CALL_INFO, 1, "Don't know how to convert GEM5 command %s to SST\n", pkt->cmd.toString().c_str());

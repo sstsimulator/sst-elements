@@ -2,7 +2,7 @@
 
 #include "arielcore.h"
 
-ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
+ArielCore::ArielCore(int fd_in, SimpleMem* coreToCacheLink, uint32_t thisCoreID,
 	uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc,
 	uint32_t maxQLen, int pipeTO, uint64_t cacheLineSz, SST::Component* own,
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string traceFilePrefix) :
@@ -25,7 +25,7 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
 	memmgr = memMgr;
 
 	coreQ = new std::queue<ArielEvent*>();
-	pendingTransactions = new std::map<MemEvent::id_type, MemEvent*>();
+	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
 	read_requests = 0;
@@ -65,7 +65,7 @@ ArielCore::~ArielCore() {
 
 }
 
-void ArielCore::setCacheLink(SST::Link* newLink) {
+void ArielCore::setCacheLink(SimpleMem* newLink) {
 	cacheLink = newLink;
 }
 
@@ -82,67 +82,53 @@ void ArielCore::printTraceEntry(const bool isRead,
 
 void ArielCore::commitReadEvent(const uint64_t address, const uint32_t length) {
 	if(length > 0) {
-		MemEvent* memEvent = new MemEvent(owner, address, GetS);
-		memEvent->setSize((uint32_t) length);
+        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, address, length);
 
 		pending_transaction_count++;
-	        pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
+	        pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
 	        if(enableTracing) {
-	        	printTraceEntry(true, (const uint64_t) memEvent->getAddr(), (const uint32_t) length);
+	        	printTraceEntry(true, (const uint64_t) req->addr, (const uint32_t) length);
 	        }
 
 	        // Actually send the event to the cache
-	        cacheLink->send(memEvent);
+	        cacheLink->sendRequest(req);
 	}
 }
 
 void ArielCore::commitWriteEvent(const uint64_t address, const uint32_t length) {
 	if(length > 0) {
-		MemEvent* memEvent = new MemEvent(owner, address, GetX);
-		memEvent->setSize((uint32_t) length);
+        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
+        // TODO BJM:  DO we need to fill in dummy data?
 
 		pending_transaction_count++;
-	        pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
+	        pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
 
 	        if(enableTracing) {
-	        	printTraceEntry(false, (const uint64_t) memEvent->getAddr(), (const uint32_t) length);
+	        	printTraceEntry(false, (const uint64_t) req->addr, (const uint32_t) length);
 	        }
 
 	        // Actually send the event to the cache
-        	cacheLink->send(memEvent);
+        	cacheLink->sendRequest(req);
 	}
 }
 
-void ArielCore::handleEvent(SST::Event* event) {
-	//output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling an event...\n", coreID);
-	MemEvent* memEv = dynamic_cast<MemEvent*>(event);
+void ArielCore::handleEvent(SimpleMem::Request* event) {
+    output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID);
 
-	if(memEv) {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID);
+    SimpleMem::Request::id_t mev_id = event->id;
+    std::map<SimpleMem::Request::id_t, SimpleMem::Request*>::iterator find_entry = pendingTransactions->find(mev_id);
 
-		// Ignore invalidation requests at the core
-		if( memEv->getCmd() == Invalidate ) {
-			delete event;
-			return;
-		}
+    if(find_entry != pendingTransactions->end()) {
+        output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list leaving: %" PRIu32 " transactions\n",
+                (uint32_t) pendingTransactions->size());
 
-		MemEvent::id_type mev_id = memEv->getResponseToID();
-		std::map<MemEvent::id_type, MemEvent*>::iterator find_entry = pendingTransactions->find(mev_id);
-
-		if(find_entry != pendingTransactions->end()) {
-			output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list leaving: %" PRIu32 " transactions\n",
-				(uint32_t) pendingTransactions->size());
-
-			pendingTransactions->erase(find_entry);
-			pending_transaction_count--;
-			delete memEv;
-		} else {
-			output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
-		}
-	} else {
-		delete event;
-	}
+        pendingTransactions->erase(find_entry);
+        pending_transaction_count--;
+    } else {
+        output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
+    }
+    delete event;
 }
 
 void ArielCore::finishCore() {

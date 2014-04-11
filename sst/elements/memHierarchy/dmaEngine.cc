@@ -18,7 +18,6 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 uint64_t DMACommand::main_id = 0;
 

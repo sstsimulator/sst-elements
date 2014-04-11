@@ -24,8 +24,6 @@
 #include <assert.h>
 #include "sst/core/debug.h"
 
-using namespace SST::Interfaces;
-
 namespace SST {
 namespace MemHierarchy {
 

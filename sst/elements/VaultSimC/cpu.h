@@ -14,7 +14,7 @@
 #define _CPU_H
 
 #include <sst/core/introspectedComponent.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/rng/sstrand.h>
 #include <sst/core/output.h>
 
@@ -57,7 +57,7 @@ private:
   thrSet_t thrOutstanding;
   coreVec_t coreAddr;
 
-  SST::Interfaces::MemEvent *getInst(int cacheLevel, int app, int core);
+  SST::MemHierarchy::MemEvent *getInst(int cacheLevel, int app, int core);
 };
 
 #endif

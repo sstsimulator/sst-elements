@@ -183,7 +183,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	}
 
 	output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
-	cpu_to_cache_links = (SST::Link**) malloc( sizeof(SST::Link*) * core_count );
+	cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
 	output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
 	cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
@@ -196,7 +196,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		cpu_cores[i] = new ArielCore(pipe_fds[i], NULL, i, maxPendingTransCore, output, 
 			maxIssuesPerCycle, maxCoreQueueLen, pipeReadTimeOut, cacheLineSize, this,
 			memmgr, perform_checks, tracePrefix);
-		cpu_to_cache_links[i] = configureLink( link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent) );
+        cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
+        cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
 		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 	}
 	free(link_buffer);

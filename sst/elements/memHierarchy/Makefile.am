@@ -22,6 +22,8 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
+	memEvent.h \
+	memEvent.cc \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \

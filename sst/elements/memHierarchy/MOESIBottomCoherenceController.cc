@@ -22,7 +22,6 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-using namespace SST::Interfaces;
 
 /*----------------------------------------------------------------------------------------------------------------------
  * Bottom Coherence Controller Implementation

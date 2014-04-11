@@ -2,7 +2,6 @@
 #ifndef _H_ARIEL_MEM_MANAGER
 #define _H_ARIEL_MEM_MANAGER
 
-#include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
 
 #include <stdint.h>

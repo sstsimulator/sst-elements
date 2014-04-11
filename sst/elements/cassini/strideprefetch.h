@@ -9,13 +9,12 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/elements/memHierarchy/cacheListener.h>
 
 #include <sst/core/output.h>
 
 using namespace SST;
-using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 using namespace std;
 

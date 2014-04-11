@@ -22,12 +22,13 @@
 #include "memoryController.h"
 #include "directoryController.h"
 #include "dmaEngine.h"
+#include "memHierarchyInterface.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-static const char * memEvent_port_events[] = {"interfaces.MemEvent", NULL};
+static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
 static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 

@@ -21,11 +21,10 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/memEvent.h>
+#include "memEvent.h"
 
 #include <sst/elements/merlin/linkControl.h>
 
-using namespace SST::Interfaces;
 
 namespace SST {
 namespace MemHierarchy {

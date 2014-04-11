@@ -21,13 +21,11 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
-
-
-uint64_t MemHierarchyInterface::Request::main_id = 0;
+using namespace SST::Interfaces;
 
 
 MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
-    owner(comp), recvHandler(NULL), link(NULL)
+    SimpleMem(comp, params), owner(comp), recvHandler(NULL), link(NULL)
 { }
 
 void MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler)
@@ -41,20 +39,27 @@ void MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase 
 }
 
 
-void MemHierarchyInterface::sendRequest(MemHierarchyInterface::Request *req)
+void MemHierarchyInterface::sendInitData(SimpleMem::Request *req)
 {
-    Interfaces::MemEvent *me = createMemEvent(req);
+    MemEvent *me = createMemEvent(req);
+    link->sendInitData(me);
+}
+
+
+void MemHierarchyInterface::sendRequest(SimpleMem::Request *req)
+{
+    MemEvent *me = createMemEvent(req);
     requests[me->getID()] = req;
     link->send(me);
 }
 
 
-MemHierarchyInterface::Request* MemHierarchyInterface::recvResponse(void)
+SimpleMem::Request* MemHierarchyInterface::recvResponse(void)
 {
     SST::Event *ev = link->recv();
     if ( NULL != ev ) {
-        Interfaces::MemEvent *me = static_cast<Interfaces::MemEvent*>(ev);
-        Request *req = processIncoming(me);
+        MemEvent *me = static_cast<MemEvent*>(ev);
+        SimpleMem::Request *req = processIncoming(me);
         delete me;
         return req;
     }
@@ -64,25 +69,25 @@ MemHierarchyInterface::Request* MemHierarchyInterface::recvResponse(void)
 
 
 
-Interfaces::MemEvent* MemHierarchyInterface::createMemEvent(MemHierarchyInterface::Request *req) const
+MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const
 {
-    Interfaces::Command cmd = Interfaces::NULLCMD;
+    Command cmd = NULLCMD;
     switch ( req->cmd ) {
-    case Request::Read:      cmd = Interfaces::GetS;     break;
-    case Request::Write:     cmd = Interfaces::GetX;     break;
-    case Request::ReadResp:  cmd = Interfaces::GetXResp; break;
-    case Request::WriteResp: cmd = Interfaces::GetSResp; break;
+    case SimpleMem::Request::Read:      cmd = GetS;     break;
+    case SimpleMem::Request::Write:     cmd = GetX;     break;
+    case SimpleMem::Request::ReadResp:  cmd = GetXResp; break;
+    case SimpleMem::Request::WriteResp: cmd = GetSResp; break;
     }
-    Interfaces::MemEvent *me = new Interfaces::MemEvent(owner, req->addr, cmd);
+    MemEvent *me = new MemEvent(owner, req->addr, cmd);
     me->setSize(req->size);
 
-    if ( Request::Write == req->cmd ) {
+    if ( SimpleMem::Request::Write == req->cmd ) {
         me->setPayload(req->data);
     }
 
-    if ( req->flags & Request::F_UNCACHED )     me->setFlag(Interfaces::MemEvent::F_UNCACHED);
-    if ( req->flags & Request::F_EXCLUSIVE )    me->setFlag(Interfaces::MemEvent::F_EXCLUSIVE);
-    if ( req->flags & Request::F_LOCKED )       me->setFlag(Interfaces::MemEvent::F_LOCKED);
+    if ( req->flags & SimpleMem::Request::F_UNCACHED )     me->setFlag(MemEvent::F_UNCACHED);
+    if ( req->flags & SimpleMem::Request::F_EXCLUSIVE )    me->setFlag(MemEvent::F_EXCLUSIVE);
+    if ( req->flags & SimpleMem::Request::F_LOCKED )       me->setFlag(MemEvent::F_LOCKED);
 
     return me;
 }
@@ -94,8 +99,8 @@ Interfaces::MemEvent* MemHierarchyInterface::createMemEvent(MemHierarchyInterfac
  */
 void MemHierarchyInterface::handleIncoming(SST::Event *ev)
 {
-    Interfaces::MemEvent *me = static_cast<Interfaces::MemEvent*>(ev);
-    Request *req = processIncoming(me);
+    MemEvent *me = static_cast<MemEvent*>(ev);
+    SimpleMem::Request *req = processIncoming(me);
     if ( req ) {
         (*recvHandler)(req);
     }
@@ -106,20 +111,20 @@ void MemHierarchyInterface::handleIncoming(SST::Event *ev)
 /**
  * Process MemEvents into updated Requests
  */
-MemHierarchyInterface::Request* MemHierarchyInterface::processIncoming(Interfaces::MemEvent *ev)
+SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev)
 {
-    Request *req = NULL;
-    Interfaces::MemEvent::id_type origID = ev->getResponseToID();
-    if ( Interfaces::Inv == ev->getCmd() ) {
+    SimpleMem::Request *req = NULL;
+    MemEvent::id_type origID = ev->getResponseToID();
+    if ( Inv == ev->getCmd() ) {
         return NULL; //Ignore Invalidate request
     }
 
-    std::map<Interfaces::MemEvent::id_type, Request*>::iterator i = requests.find(origID);
+    std::map<MemEvent::id_type, SimpleMem::Request*>::iterator i = requests.find(origID);
     if ( i != requests.end() ) {
         req = i->second;
 
         // We received a NACK.  Just re-issue it
-        if ( Interfaces::NACK == ev->getCmd() ) {
+        if ( NACK == ev->getCmd() ) {
             link->send(createMemEvent(req));
             return NULL;
         }
@@ -137,19 +142,19 @@ MemHierarchyInterface::Request* MemHierarchyInterface::processIncoming(Interface
 /**
  * Update Request with results of MemEvent
  */
-void MemHierarchyInterface::updateRequest(MemHierarchyInterface::Request* req, Interfaces::MemEvent *me) const
+void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const
 {
     switch (me->getCmd()) {
-    case Interfaces::GetSResp:
-        req->cmd = Request::ReadResp;
+    case GetSResp:
+        req->cmd = SimpleMem::Request::ReadResp;
         req->data = me->getPayload();
         req->size = me->getPayload().size();
         break;
-    case Interfaces::GetXResp:
-        req->cmd = Request::WriteResp;
+    case GetXResp:
+        req->cmd = SimpleMem::Request::WriteResp;
         break;
     default:
         //TODO
-        fprintf(stderr, "Don't know how to deal with command %s\n", Interfaces::CommandString[me->getCmd()]);
+        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[me->getCmd()]);
     }
 }

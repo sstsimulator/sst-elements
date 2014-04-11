@@ -15,7 +15,7 @@
 #include <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/MemHierarchy/memEvent.h>
 
 class SimObject;
 class ExtConnector;
@@ -31,10 +31,10 @@ class Gem5Comp;
 class Gem5Connector {
 
     struct Blob {
-        Interfaces::Addr addr;
+        MemHierachy::Addr addr;
         size_t size;
         std::vector<uint8_t> data;
-        Blob(Interfaces::Addr _addr, size_t _size, uint8_t *_data)
+        Blob(MemHierachy::Addr _addr, size_t _size, uint8_t *_data)
             : addr(_addr), size(_size)
         {
             data.resize(size);
@@ -53,7 +53,7 @@ class Gem5Connector {
     Phase simPhase;
     std::vector<Blob> initBlobs;
 
-    typedef std::map<Interfaces::MemEvent::id_type, ::Packet*> PacketMap_t;
+    typedef std::map<MemHierarchy::MemEvent::id_type, ::Packet*> PacketMap_t;
     PacketMap_t g5packets;
 
 public:

@@ -3,12 +3,12 @@
 #include "sst/core/serialization.h"
 #include "sst/core/element.h"
 
-#include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 #include <pageentry.h>
 
 using namespace std;
 using namespace SST;
-using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
 CassiniPageEntry::CassiniPageEntry(Addr vPageStart, Addr pPageStart, uint64_t pageLen) {
