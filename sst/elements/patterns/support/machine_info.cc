@@ -91,13 +91,13 @@ FarLink_t fl;
 			insert_inflection_point(NoC, index, val);
 		}
 
-		sprintf(param, "NetNIClatnecy%d", index);
+		sprintf(param, "NetNIClatency%d", index);
 		val = params.find_integer(param, 0, pfound);
 		if ( pfound ) {
 			insert_inflection_latency(Net, index, val);
 		}
 
-		sprintf(param, "NoCNIClatnecy%d", index);
+		sprintf(param, "NoCNIClatency%d", index);
 		val = params.find_integer(param, 0, pfound);
 		if ( pfound ) {
 			insert_inflection_latency(NoC, index, val);
