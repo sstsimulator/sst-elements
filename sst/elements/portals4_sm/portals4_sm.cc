@@ -66,7 +66,7 @@ static void partition(ConfigGraph* graph, int ranks) {
     for ( ConfigComponentMap_t::iterator iter = comps.begin();
                             iter != comps.end(); ++iter )
     {
-	ConfigComponent* ccomp = (*iter).second;
+	ConfigComponent* ccomp = &(*iter);
 	if ( ccomp->type == "SS_router.SS_router" ) {
 	    sx = ccomp->params.find_integer("network.xDimSize");
 	    sy = ccomp->params.find_integer("network.yDimSize");
@@ -82,7 +82,7 @@ static void partition(ConfigGraph* graph, int ranks) {
     for ( ConfigComponentMap_t::iterator iter = comps.begin();
                             iter != comps.end(); ++iter )
     {
-	ConfigComponent* ccomp = (*iter).second;
+	ConfigComponent* ccomp = &(*iter);
 	int id = ccomp->params.find_integer("id");
 	if ( id == -1 ) {
 	    printf("Couldn't find id for component %s, aborting...\n",ccomp->name.c_str());

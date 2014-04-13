@@ -45,6 +45,9 @@ class Allreduce_pattern : public Comm_pattern    {
 	    num_sets= params.find_integer("num_sets", 9);
 	    num_doubles= params.find_integer("num_doubles", 1);
 	    start_nnodes= params.find_integer("start_nnodes", 1);
+        // Perform a check to see if we are setup for nnodes being 0
+        // if yes, on allreduce start the nnodes at 1
+        if ( start_nnodes <= 0 ) start_nnodes = 1;
 	    end_nnodes= params.find_integer("end_nnodes", 0);
 
 		std::string tree_type_str = params.find_string("tree_type", "deep");
