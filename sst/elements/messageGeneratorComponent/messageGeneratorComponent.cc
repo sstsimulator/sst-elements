@@ -125,12 +125,21 @@ static const ElementInfoParam component_params[] = {
     { NULL, NULL, NULL }
 };
 
+static const char * port_events[] = {"messageGeneratorComponent.simpleMessage", NULL};
+
+static const ElementInfoPort ports[] = {
+    { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", port_events },
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoComponent components[] = {
     { "messageGeneratorComponent",
       "Messaging rate benchmark component",
       NULL,
       create_messageGeneratorComponent,
-      component_params
+      component_params,
+      ports,
+      COMPONENT_CATEGORY_NETWORK
     },
     { NULL, NULL, NULL, NULL }
 };
