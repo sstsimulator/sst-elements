@@ -111,17 +111,26 @@ BOOST_CLASS_EXPORT(simpleMessage)
 BOOST_CLASS_EXPORT(messageGeneratorComponent)
 
 static Component*
-create_messageGeneratorComponent(SST::ComponentId_t id, 
+create_messageGeneratorComponent(SST::ComponentId_t id,
                   SST::Params& params)
 {
     return new messageGeneratorComponent( id, params );
 }
 
+static const ElementInfoParam component_params[] = {
+    { "printStats", "Prints the statistics from the component", "0"},
+    { "clock", "Sets the clock for the message generator", "1GHz" },
+    { "sendount", "Sets the number of sends in the simulation.", "1000" },
+    { "outputinfo", "Sets the level of output information", "1" },
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoComponent components[] = {
     { "messageGeneratorComponent",
       "Messaging rate benchmark component",
       NULL,
-      create_messageGeneratorComponent
+      create_messageGeneratorComponent,
+      component_params
     },
     { NULL, NULL, NULL, NULL }
 };
