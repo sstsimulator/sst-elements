@@ -38,6 +38,7 @@ libm5C_la_SOURCES = \
 	portLink.cpp \
     power.cpp \
     process.h \
+    rawEvent.h \
     simpleCpu.cpp \
     syscall.cpp \
     syscall.h \
