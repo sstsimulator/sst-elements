@@ -31,6 +31,7 @@ libm5C_la_SOURCES = \
     memLink.cpp \
     memLink.h \
     paramHelp.h \
+    physical2.h \
     physicalPlus.cpp \
     physicalPlus.h \
     physicalMemory.cpp \
