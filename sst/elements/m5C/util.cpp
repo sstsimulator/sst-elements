@@ -56,12 +56,12 @@ objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string config
 
     for ( lmIter = graph.getLinkMap().begin(); 
                 lmIter != graph.getLinkMap().end(); ++lmIter ) {
-        SST::ConfigLink& tmp = *(*lmIter).second;
+        SST::ConfigLink& tmp = (*lmIter).second;
         DBGC(2,"key=%s name=%s\n",(*lmIter).first.c_str(), tmp.name.c_str());
 
         LinkInfo l0,l1;
-        l0.compName = graph.getComponentMap()[ tmp.component[0] ]->name.c_str();
-        l1.compName = graph.getComponentMap()[ tmp.component[1] ]->name.c_str();
+        l0.compName = graph.getComponentMap()[ tmp.component[0] ].name.c_str();
+        l1.compName = graph.getComponentMap()[ tmp.component[1] ].name.c_str();
 
         l0.portName = tmp.port[0];
         l1.portName = tmp.port[1];
@@ -77,8 +77,8 @@ objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string config
 
     for ( iter = graph.getComponentMap().begin(); 
             iter != graph.getComponentMap().end(); ++iter ) {
-        SST::ConfigComponent& tmp = *(*iter).second;
-        DBGC(2,"id=%d %s %s\n",(*iter).first, tmp.name.c_str(), 
+        SST::ConfigComponent& tmp = (*iter);
+        DBGC(2,"id=%d %s %s\n",tmp.id, tmp.name.c_str(), 
                                                     tmp.type.c_str());
 
         SST::Params tmpParams = params.find_prefix_params( tmp.name + "." );
