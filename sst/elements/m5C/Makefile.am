@@ -23,6 +23,7 @@ libm5C_la_SOURCES = \
     factory.cpp \
     loadMemory.cpp \
     loadMemory.h \
+    log.h \
     m5.cpp \
     m5.h \
     m5lib.cpp \
