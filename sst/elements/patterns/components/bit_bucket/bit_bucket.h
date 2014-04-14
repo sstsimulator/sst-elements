@@ -58,11 +58,12 @@ class Bit_bucket : public Component {
 	    Component(id),
             params(params)
         {
-	    bit_bucket_debug= params.find_integer("debug", 0);
+            Params::iterator it= params.begin();
+	    bit_bucket_debug= 0;
 	    read_pipe= 0;
 	    write_pipe= 0;
-	    write_bw= params.find_integer("write_bw", 0);
-	    read_bw= params.find_integer("read_bw", 0);
+	    write_bw= 0;
+	    read_bw= 0;
 	    bytes_written= 0;
 	    bytes_read= 0;
 	    total_read_delay= 0;
@@ -71,6 +72,19 @@ class Bit_bucket : public Component {
 	    total_writes= 0;
 
 
+            while (it != params.end())   {
+		if (!SST::Params::getParamName(it->first).compare("debug"))   {
+		    sscanf(it->second.c_str(), "%d", &bit_bucket_debug);
+		
+		} else if (!SST::Params::getParamName(it->first).compare("write_bw"))   {
+		    sscanf(it->second.c_str(), "%"PRIu64, (uint64_t *)&write_bw);
+		
+		} else if (!SST::Params::getParamName(it->first).compare("read_bw"))   {
+		    sscanf(it->second.c_str(), "%"PRIu64, (uint64_t *)&read_bw);
+		}
+						                                                                                                        
+                ++it;
+            }
 
 	    // Check the parameters
 	    if ((write_bw == 0) || (read_bw == 0))   {

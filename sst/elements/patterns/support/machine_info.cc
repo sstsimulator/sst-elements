@@ -24,94 +24,189 @@ bool
 MachineInfo::init(SST::Params& params)
 {
 
+int index;
 int far_dest, far_dest_port, far_src, far_src_port;
 FarLink_t fl;
 
 
     verbose= 0;
-    debug= params.find_integer("debug", 0);
-    _my_rank= params.find_integer("rank", -1);
+    debug= 0;
+    _my_rank= -1;
     _my_core= -1;
-    Net_width= params.find_integer("Net_x_dim", -1);
-    Net_height= params.find_integer("Net_y_dim", -1);
-    Net_depth= params.find_integer("Net_z_dim", -1);
-    NoC_width= params.find_integer("NoC_x_dim", -1);
-    NoC_height= params.find_integer("NoC_y_dim", -1);
-    NoC_depth= params.find_integer("NoC_z_dim", -1);
-    cores_per_NoC_router= params.find_integer("cores", -1);
+    Net_width= -1;
+    Net_height= -1;
+    Net_depth= -1;
+    NoC_width= -1;
+    NoC_height= -1;
+    NoC_depth= -1;
+    cores_per_NoC_router= -1;
     cores_per_Net_router= -1;
-    num_router_nodes= params.find_integer("nodes", -1);
+    num_router_nodes= -1;
 
     // FIXME: Maybe some day I should make NIC_model_t an iterator
     for (int i= Net; i <= Far; i++)   {
-        NICgap[i]= 0;
+	NICgap[i]= 0;
     }
-    NICgap[Net] = params.find_integer("NetNICgap", 0);
-    NICgap[NoC] = params.find_integer("NoCNICgap", 0);
 
     // FIXME: Make these a parameter
     NICsend_fraction[NoC]= 0.5;
     NICsend_fraction[Net]= 0.75;
     NICsend_fraction[Far]= 0.5;
 
-    NetXwrap= params.find_integer("NetXwrap", 0);
-    NetYwrap= params.find_integer("NetYwrap", 0);
-    NetZwrap= params.find_integer("NetZwrap", 0);
-    NoCXwrap= params.find_integer("NoCXwrap", 0);
-    NoCYwrap= params.find_integer("NoCYwrap", 0);
-    NoCZwrap= params.find_integer("NoCZwrap", 0);
+    NetXwrap= 0;
+    NetYwrap= 0;
+    NetZwrap= 0;
+    NoCXwrap= 0;
+    NoCYwrap= 0;
+    NoCZwrap= 0;
 
-    FarLinkPortFieldWidth= params.find_integer("FarLinkPortFieldWidth", 0);
+    FarLinkPortFieldWidth= 0;
     FarLinknum= 0;
 
-    LinkBandwidth[Net] = params.find_integer("NetLinkBandwidth", 0);
-    LinkBandwidth[NoC] = params.find_integer("NoCLinkBandwidth", 0);
-    LinkLatency[Net] = params.find_integer("NetLinkLatency", 0);
-    LinkLatency[NoC] = params.find_integer("NoCLinkLatency", 0);
-
-    IOLinkBandwidth = params.find_integer("IOLinkBandwidth", 0);
-    IOLinkLatency = params.find_integer("IOLinkLatency", 0);
 
     // Pre processing the parameter list
-#define MAX_NIC 1024
-	for ( int index = 0 ; index < MAX_NIC ; index++ ) {
-		char param[64] = {0};
-		uint64_t val = 0;
-		bool pfound = false;
-
-		sprintf(param, "NetNICinflection%d", index);
-		val = params.find_integer(param, 0, pfound);
-		if ( pfound ) {
-			insert_inflection_point(Net, index, val);
-		}
-
-		sprintf(param, "NoCNICinflection%d", index);
-		val = params.find_integer(param, 0, pfound);
-		if ( pfound ) {
-			insert_inflection_point(NoC, index, val);
-		}
-
-		sprintf(param, "NetNIClatency%d", index);
-		val = params.find_integer(param, 0, pfound);
-		if ( pfound ) {
-			insert_inflection_latency(Net, index, val);
-		}
-
-		sprintf(param, "NoCNIClatency%d", index);
-		val = params.find_integer(param, 0, pfound);
-		if ( pfound ) {
-			insert_inflection_latency(NoC, index, val);
-		}
-
-
-		sprintf(param, "NICstat%d", index);
-		val = params.find_integer(param, 0, pfound);
-		if ( pfound ) {
-			NICstat_ranks.insert(val);
-		}
+    SST::Params::iterator it= params.begin();
+    while (it != params.end())   {
+	if (!SST::Params::getParamName(it->first).compare("rank"))   {
+	    sscanf(it->second.c_str(), "%d", &_my_rank);
+	}
+	if (!SST::Params::getParamName(it->first).compare("debug"))   {
+	    sscanf(it->second.c_str(), "0x%x", &debug);
+	}
+	if (!SST::Params::getParamName(it->first).compare("FarLinkPortFieldWidth"))   {
+	    sscanf(it->second.c_str(), "%d", &FarLinkPortFieldWidth);
 	}
 
+	if (!SST::Params::getParamName(it->first).compare("Net_x_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &Net_width);
+	}
 
+	if (!SST::Params::getParamName(it->first).compare("Net_y_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &Net_height);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("Net_z_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &Net_depth);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoC_x_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &NoC_width);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoC_y_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &NoC_height);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoC_z_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &NoC_depth);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NetXwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetXwrap);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NetYwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetYwrap);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NetZwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetZwrap);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoCXwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCXwrap);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoCYwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCYwrap);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoCZwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCZwrap);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("cores"))   {
+	    sscanf(it->second.c_str(), "%d", &cores_per_NoC_router);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("nodes"))   {
+	    sscanf(it->second.c_str(), "%d", &num_router_nodes);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NetNICgap"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &NICgap[Net]);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoCNICgap"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &NICgap[NoC]);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NetLinkBandwidth"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &LinkBandwidth[Net]);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NetLinkLatency"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &LinkLatency[Net]);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoCLinkBandwidth"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &LinkBandwidth[NoC]);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("NoCLinkLatency"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &LinkLatency[NoC]);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("IOLinkBandwidth"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &IOLinkBandwidth);
+	}
+
+	if (!SST::Params::getParamName(it->first).compare("IOLinkLatency"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &IOLinkLatency);
+	}
+
+	if (SST::Params::getParamName(it->first).find("NetNICinflection") != std::string::npos)   {
+	    if (sscanf(SST::Params::getParamName(it->first).c_str(), "NetNICinflection%d", &index) != 1)   {
+		it++;
+		continue;
+	    }
+	    insert_inflection_point(Net, index, strtoll(it->second.c_str(), (char **)NULL, 0));
+	}
+
+	if (SST::Params::getParamName(it->first).find("NoCNICinflection") != std::string::npos)   {
+	    if (sscanf(SST::Params::getParamName(it->first).c_str(), "NoCNICinflection%d", &index) != 1)   {
+		it++;
+		continue;
+	    }
+	    insert_inflection_point(NoC, index, strtoll(it->second.c_str(), (char **)NULL, 0));
+	}
+
+	if (SST::Params::getParamName(it->first).find("NetNIClatency") != std::string::npos)   {
+	    if (sscanf(SST::Params::getParamName(it->first).c_str(), "NetNIClatency%d", &index) != 1)   {
+		it++;
+		continue;
+	    }
+	    insert_inflection_latency(Net, index, strtoll(it->second.c_str(), (char **)NULL, 0));
+	}
+
+	if (SST::Params::getParamName(it->first).find("NoCNIClatency") != std::string::npos)   {
+	    if (sscanf(SST::Params::getParamName(it->first).c_str(), "NoCNIClatency%d", &index) != 1)   {
+		it++;
+		continue;
+	    }
+	    insert_inflection_latency(NoC, index, strtoll(it->second.c_str(), (char **)NULL, 0));
+	}
+
+	if (SST::Params::getParamName(it->first).find("NICstat") != std::string::npos)   {
+	    if (sscanf(SST::Params::getParamName(it->first).c_str(), "NICstat%d", &index) == 1)   {
+		int r;
+		sscanf(it->second.c_str(), "%d", &r);
+		NICstat_ranks.insert(r);
+	    }
+	}
+
+	it++;
+    }
 
 
     if (_my_rank < 0)   {
@@ -124,38 +219,36 @@ FarLink_t fl;
     // I have to do this seperaty because I need to know what my node ID
     // and FarLinkPortFieldWidth is first.
     uint64_t code;
-#define MAX_NODES 1024
-#define MAX_PORTS 1024
-	for ( far_src = 0 ; far_src < MAX_NODES ; far_src++ ) {
-		for ( far_src_port = 0 ; far_src_port < MAX_PORTS ; far_src_port++ ) {
-			char param[64] = {0};
-			bool found = false;
-			sprintf(param, "FarLink%dp%d", far_src, far_src_port);
-			code = params.find_integer(param, 0, found);
-			if ( found ) {
-				far_dest= code >> FarLinkPortFieldWidth;
-				far_dest_port= code & ((1 << FarLinkPortFieldWidth) - 1);
+    it= params.begin();
+    while (it != params.end())   {
+	if (SST::Params::getParamName(it->first).find("FarLink") != std::string::npos)   {
+	    if (sscanf(SST::Params::getParamName(it->first).c_str(), "FarLink%dp%d", &far_src, &far_src_port) == 2)   {
+		sscanf(it->second.c_str(), "%" PRId64, &code);
+		far_dest= code >> FarLinkPortFieldWidth;
+		far_dest_port= code & ((1 << FarLinkPortFieldWidth) - 1);
 
-				if (far_src == myNode())   {
-					// I can reach the destination node via a far link
-					fl.dest= far_dest;
-					fl.dest_port= far_dest_port;
-					fl.src_port= far_src_port;
-					FarLink.insert(fl);
-				} else if (far_dest == myNode())   {
-					// I am the destination of a far link; i.e.,
-					// I can get to the source via the link.
-					// We assume bidirection links
-					fl.dest= far_src;
-					fl.dest_port= far_src_port;
-					fl.src_port= far_dest_port;
-					FarLink.insert(fl);
-				}
-				// Count all links in system
-				FarLinknum++;
-			}
+		if (far_src == myNode())   {
+		    // I can reach the destination node via a far link
+		    fl.dest= far_dest;
+		    fl.dest_port= far_dest_port;
+		    fl.src_port= far_src_port;
+		    FarLink.insert(fl);
+		} else if (far_dest == myNode())   {
+		    // I am the destination of a far link; i.e.,
+		    // I can get to the source via the link.
+		    // We assume bidirection links
+		    fl.dest= far_src;
+		    fl.dest_port= far_src_port;
+		    fl.src_port= far_dest_port;
+		    FarLink.insert(fl);
 		}
+		// Count all links in system
+		FarLinknum++;
+	    }
 	}
+
+	it++;
+    }
 
     if (!error_check())   {
 	return false;

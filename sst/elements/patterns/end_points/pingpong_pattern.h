@@ -32,16 +32,44 @@ class Pingpong_pattern : public Comm_pattern {
 	    // The default for "dest" is to place it as far away
 	    // as possible in the (logical) torus created by the
 	    // Comm_pattern object
-	    dest= params.find_integer("destination", machine->get_total_cores() / 2);
+	    dest= machine->get_total_cores() / 2;
 
 	    // Set some more defaults
-	    num_msgs= params.find_integer("num_msgs", 10);
-	    end_len= params.find_integer("end_len", 1048576);
-	    user_len_inc= params.find_integer("len_inc", -1);
+	    num_msgs= 10;
+	    end_len= 1048576;
+	    user_len_inc= -1;
 	    len_inc= 8;
-	    allreduce_msglen= params.find_integer("allreduce_msglen", sizeof(double));
+	    allreduce_msglen= sizeof(double);
 
 
+
+	    // Process the ping/pong pattern specific parameters
+	    Params::iterator it= params.begin();
+
+	    while (it != params.end())   {
+		if (!SST::Params::getParamName(it->first).compare("destination"))   {
+		    sscanf(it->second.c_str(), "%d", &dest);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("num_msgs"))   {
+		    sscanf(it->second.c_str(), "%d", &num_msgs);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("end_len"))   {
+		    sscanf(it->second.c_str(), "%d", &end_len);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("len_inc"))   {
+		    sscanf(it->second.c_str(), "%d", &user_len_inc);
+		}
+
+		// Parameter for allreduce
+		if (!SST::Params::getParamName(it->first).compare("allreduce_msglen"))   {
+		    sscanf(it->second.c_str(), "%d", &allreduce_msglen);
+		}
+
+		it++;
+	    }
 
 	    if (dest >= num_ranks)   {
 		_abort(pingpong_pattern, "[%3d] Invalid destination %d for %d ranks\n",

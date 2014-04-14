@@ -37,26 +37,47 @@ class FFT_pattern : public Comm_pattern    {
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
-	    N= params.find_integer("N", -1);
-	    iter= params.find_integer("iter", 1);
+	    N= -1;
+	    iter= 1;
 	    tree_type= TREE_DEEP;
-		std::string tree_type_str= params.find_string("tree_type", "deep");
-	    time_per_flop= params.find_integer("time_per_flop", 10);
-	    verbose= params.find_integer("verbose", 0);
+	    time_per_flop= 10;
+	    verbose= 0;
 
 
-
-		if (!tree_type_str.compare("deep"))   {
-			tree_type= TREE_DEEP;
-		} else if (!tree_type_str.compare("binary"))   {
-			tree_type= TREE_BINARY;
-		} else   {
-			if (my_rank == 0)   {
-				printf("#  |||  Unknown tree type!\n");
-			}
-			exit(-2);
+	    // Process the message rate specific paramaters
+            Params::iterator it= params.begin();
+            while (it != params.end())   {
+		if (!SST::Params::getParamName(it->first).compare("N"))   {
+		    sscanf(it->second.c_str(), "%d", &N);
 		}
 
+		if (!SST::Params::getParamName(it->first).compare("iter"))   {
+		    sscanf(it->second.c_str(), "%d", &iter);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("tree_type"))   {
+		    if (!it->second.compare("deep"))   {
+			tree_type= TREE_DEEP;
+		    } else if (!it->second.compare("binary"))   {
+			tree_type= TREE_BINARY;
+		    } else   {
+			if (my_rank == 0)   {
+			    printf("#  |||  Unknown tree type!\n");
+			}
+			exit(-2);
+		    }
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("time_per_flop"))   {
+		    sscanf(it->second.c_str(), "%d", &time_per_flop);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("verbose"))   {
+		    sscanf(it->second.c_str(), "%d", &verbose);
+		}
+
+                ++it;
+            }
 
 	    if (N <= 0)   {
 		if (my_rank == 0)   {

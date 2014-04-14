@@ -43,10 +43,26 @@ class Msgrate_pattern : public Comm_pattern    {
 
 
 	    // Process the message rate specific paramaters
-		num_msgs = params.find_integer("num_msgs", 20);
-		msg_len = params.find_integer("msg_len", 0);
-		rank_stride = params.find_integer("rank_stride", 0);
-		start_rank = params.find_integer("start_rank", 8);
+            Params::iterator it= params.begin();
+            while (it != params.end())   {
+		if (!SST::Params::getParamName(it->first).compare("num_msgs"))   {
+		    sscanf(it->second.c_str(), "%d", &num_msgs);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("msg_len"))   {
+		    sscanf(it->second.c_str(), "%d", &msg_len);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("rank_stride"))   {
+		    sscanf(it->second.c_str(), "%d", &rank_stride);
+		}
+
+		if (!SST::Params::getParamName(it->first).compare("start_rank"))   {
+		    sscanf(it->second.c_str(), "%d", &start_rank);
+		}
+
+                ++it;
+            }
 
 
 	    if (num_ranks % 2 != 0)   {
