@@ -14,6 +14,7 @@ libm5C_la_SOURCES = \
     busPlus.cpp \
     busPlus.h \
     debug.cpp \
+    debug.h \
     trace.cpp\
     trace.h\
     dummySystem.h \
@@ -28,6 +29,7 @@ libm5C_la_SOURCES = \
     memEvent.h \
     memLink.cpp \
     memLink.h \
+    paramHelp.h \
     physicalPlus.cpp \
     physicalPlus.h \
     physicalMemory.cpp \
