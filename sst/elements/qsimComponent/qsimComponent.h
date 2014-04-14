@@ -23,14 +23,14 @@
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
 
-#include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 
 #include <qsim.h>
 
 #include <string>
 
-namespace SST { 
+namespace SST {
 class Params;
 namespace QsimComponent {
   class qsimComponent : public Component {
@@ -80,12 +80,14 @@ namespace QsimComponent {
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 
   private:
+    void handleEvent(Interfaces::SimpleMem::Request *);
     void handleEvent(Event *);
     bool clockTick(Cycle_t);
     bool timerTick(Cycle_t);
 
     Qsim::OSDomain *osd;
-    Link *memLink, *iMemLink, *ipiRingIn, *ipiRingOut;
+    Interfaces::SimpleMem *memLink, *iMemLink;
+    Link *ipiRingIn, *ipiRingOut;
 
     unsigned hwThreadId;
     unsigned long icount, rcount, mcount;

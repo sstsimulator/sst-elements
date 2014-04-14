@@ -23,11 +23,12 @@
 #include <qsim-load.h>
 
 using namespace SST;
-using namespace SST::MemHierarchy;
-using SST::QsimComponent::qsimComponent;
+using namespace SST::Interfaces;
+using namespace SST::QsimComponent;
 using namespace Qsim;
 using namespace std;
 
+namespace SST { namespace QsimComponent {
 class IPIEvent : public Event {
 public:
   IPIEvent(int dest, uint8_t vec): dest(dest), vec(vec) {}
@@ -43,6 +44,7 @@ private:
     ar & BOOST_SERIALIZATION_NVP(vec);
   }
 };
+}}
 
 qsimComponent::qsimComponent(ComponentId_t id, Params &p):
   Component(id), icount(0), rcount(0), mcount(0), stalled(false),
@@ -65,16 +67,22 @@ qsimComponent::qsimComponent(ComponentId_t id, Params &p):
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
+  memLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, p));
+  iMemLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterfaces", this, p));
+  assert(memLink && iMemLink);
+
+  typedef SimpleMem::Handler<qsimComponent> qc_mh;
+  memLink->initialize("memLink",
+          new qc_mh(this, &qsimComponent::handleEvent));
+  iMemLink->initialize("iMemLink",
+          new qc_mh(this, &qsimComponent::handleEvent));
+
   typedef Event::Handler<qsimComponent> qc_eh;
-  memLink = configureLink("memLink",
-                          new qc_eh(this, &qsimComponent::handleEvent));
-  iMemLink = configureLink("iMemLink",
-                           new qc_eh(this, &qsimComponent::handleEvent));
   ipiRingIn = configureLink("ipiRingIn",
                             new qc_eh(this, &qsimComponent::handleEvent));
   ipiRingOut = configureLink("ipiRingOut",
                              new qc_eh(this, &qsimComponent::handleEvent));
-  assert(memLink); assert(ipiRingIn); assert(ipiRingOut);
+  assert(ipiRingIn && ipiRingOut);
 
   typedef Clock::Handler<qsimComponent> qc_ch;
   registerClock(clockFreq, new qc_ch(this, &qsimComponent::clockTick));
@@ -106,10 +114,10 @@ void qsimComponent::init(unsigned phase) {
 
   if (hwThreadId == 0) {
     out.output("qsimComponent %u init: sending init data\n", hwThreadId);
-    MemEvent *e = new MemEvent(this, 0, GetX);
-    e->setPayload(1024ul*1024*osd->get_ram_size_mb(),
-                  osd->get_ramdesc().mem_ptr);
-    memLink->sendInitData(e);
+
+    SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, 0, 1024ul*1024*osd->get_ram_size_mb());
+    req->setPayload(osd->get_ramdesc().mem_ptr, 1024ul*1024*osd->get_ram_size_mb());
+    memLink->sendInitData(req);
     out.output("qsimComponent %u init: sent init data\n", hwThreadId);
   }
 }
@@ -122,16 +130,20 @@ void qsimComponent::finish() {
   out.output("%lu sim cycles\n", simCycle);
 }
 
-void qsimComponent::handleEvent(Event *event) {
-  if (MemEvent *e = dynamic_cast<MemEvent*>(event)) {
+
+void qsimComponent::handleEvent(SimpleMem::Request *req) {
     if (--rcount == 0) stalled = false;
     ++mcount;
 
-    for (unsigned i = 0; i < e->getPayload().size(); ++i)
-      osd->get_ramdesc().mem_ptr[e->getAddr() + i] = e->getPayload()[i];
+    for (unsigned i = 0; i < req->data.size(); ++i)
+      osd->get_ramdesc().mem_ptr[req->addr + i] = req->data[i];
 
-    delete e;
-  } else if (IPIEvent *e = dynamic_cast<IPIEvent*>(event)) {
+    delete req;
+}
+
+
+void qsimComponent::handleEvent(Event *event) {
+  if (IPIEvent *e = dynamic_cast<IPIEvent*>(event)) {
     if (e->dest == -1) {
       out.output("qsimComponent %u handleEvent: End message.\n", hwThreadId);
       unregisterExit();
@@ -174,21 +186,18 @@ int qsimComponent::mem_cb(int c, uint64_t v, uint64_t p, uint8_t s, int w) {
     else if (s-i >= 2 && ((p+i) & 1) == 0) increment = 2;
     else increment = 1;
 
-    MemEvent *e = new MemEvent(this, p+i, w ? GetX : GetS);
-    e->setSize(increment);
+    SimpleMem::Request *req = new SimpleMem::Request(w ? SimpleMem::Request::Write : SimpleMem::Request::Read, p+i, increment);
     if (v && ((lock == 1 && !w) || (lock == 2 && w)) && i == 0) {
-      e->setFlags(MemEvent::F_LOCKED);
-      e->setLockID(hwThreadId);
-      if(!w) e->setCmd(GetSEx);
+      req->flags |= (SimpleMem::Request::F_LOCKED);
 
       if (lock == 1 && !w) lock = 2;
       if (lock == 2 && w) lock = 0;
     }
 
-    if (w) e->setPayload(increment, osd->get_ramdesc().mem_ptr + p + i);
+    if (w) req->setPayload(osd->get_ramdesc().mem_ptr + p + i, increment);
 
-    if (translating && !w && iMemLink) iMemLink->send(e);
-    else memLink->send(e);
+    if (translating && !w && iMemLink) iMemLink->sendRequest(req);
+    else memLink->sendRequest(req);
 
     stalled = !w;
     ++rcount;
