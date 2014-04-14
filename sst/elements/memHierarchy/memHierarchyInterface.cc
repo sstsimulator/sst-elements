@@ -28,7 +28,7 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
     SimpleMem(comp, params), owner(comp), recvHandler(NULL), link(NULL)
 { }
 
-void MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler)
+bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler)
 {
     recvHandler = handler;
     if ( NULL == recvHandler ) {
@@ -36,6 +36,7 @@ void MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase 
     } else {
         link = owner->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
     }
+    return (link != NULL);
 }
 
 

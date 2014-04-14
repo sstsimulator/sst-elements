@@ -68,14 +68,19 @@ qsimComponent::qsimComponent(ComponentId_t id, Params &p):
   primaryComponentDoNotEndSim();
 
   memLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, p));
+  assert(memLink);
   iMemLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, p));
-  assert(memLink && iMemLink);
+  assert(iMemLink);
 
   typedef SimpleMem::Handler<qsimComponent> qc_mh;
-  memLink->initialize("memLink",
-          new qc_mh(this, &qsimComponent::handleEvent));
-  iMemLink->initialize("iMemLink",
-          new qc_mh(this, &qsimComponent::handleEvent));
+  if ( !memLink->initialize("memLink",
+          new qc_mh(this, &qsimComponent::handleEvent)) ) {
+      _abort(qsimComponent, "Unable to load Link memLink\n");
+  }
+  if ( ! iMemLink->initialize("iMemLink", new qc_mh(this, &qsimComponent::handleEvent)) ) {
+      delete iMemLink;
+      iMemLink = NULL;
+  }
 
   typedef Event::Handler<qsimComponent> qc_eh;
   ipiRingIn = configureLink("ipiRingIn",

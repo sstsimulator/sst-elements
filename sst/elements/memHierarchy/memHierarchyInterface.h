@@ -35,7 +35,7 @@ class MemHierarchyInterface : public Interfaces::SimpleMem {
 
 public:
     MemHierarchyInterface(SST::Component *comp, Params &params);
-    virtual void initialize(const std::string &linkName, HandlerBase *handler = NULL);
+    virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);
 
     virtual SST::Link* getLink(void) const { return link; }
 
