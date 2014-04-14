@@ -68,7 +68,7 @@ qsimComponent::qsimComponent(ComponentId_t id, Params &p):
   primaryComponentDoNotEndSim();
 
   memLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, p));
-  iMemLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterfaces", this, p));
+  iMemLink = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, p));
   assert(memLink && iMemLink);
 
   typedef SimpleMem::Handler<qsimComponent> qc_mh;
