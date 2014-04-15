@@ -25,43 +25,45 @@ typedef uint64_t Addr;
 
 
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
-
+/* DO NOT CHANGE ORDERING!!!!   */
 #define X_TYPES \
-    /* CPU <-> Cache */ \
+    /* Requests [0-2] */ \
     X(GetS) \
     X(GetSEx) \
-    X(GetSResp) \
     X(GetX) \
+    /* Request Responses [3-4] */ \
+    X(GetSResp) \
     X(GetXResp) \
+    /* Writebacks [5-7] */ \
+    X(PutS) \
+    X(PutM) \
+    X(PutE) \
+    /* Invalidates [8-9]*/ \
+    X(Inv)  \
+    X(InvX) \
+    /* Directory Controller [10-13]*/ \
+    X(Fetch) \
+    X(FetchInvalidate) \
+    X(FetchInvalidateX) \
+    X(FetchResp) \
+    X(NULLCMD) \
+    /* Others */ \
+    X(InvAck)  \
+    X(Nack) \
+    X(NACK) \
+    X(PutAck) \
     X(ReadReq) \
     X(ReadReqEx) \
     X(ReadResp) \
     X(WriteReq) \
     X(WriteResp) \
     /* Cache <-> Cache/MemControl/DirCtrl */ \
-    X(PutS) \
-    X(PutE) \
-    X(PutM) \
-    X(InvX) \
-    X(Inv)  \
-    X(InvAck)  \
-    X(PutMAck) \
-    X(PutSAck) \
-    X(PutAck) \
-    X(AccessAck) \
     X(RequestData) \
     X(SupplyData) \
     X(Invalidate) \
     X(ACK) \
-    X(Nack) \
-    X(NACK) \
     /* Directory Controller */ \
-    X(Fetch) \
-    X(FetchInvalidate) \
-    X(FetchInvalidateX) \
-    X(FetchResp) \
-    X(Evicted) \
-    X(NULLCMD)
+    X(Evicted)
 
 /** Valid commands for the MemEvent */
 typedef enum {

@@ -148,11 +148,10 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 	assert(pkt->size <= (unsigned)MemPkt::DataSize);
 
     dbg->debug(CALL_INFO,0,0,"---->\n");
-    dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %"PRIu64", Req Size =%zu, QueueSize = %lu, Sent = %i\n", pkt->addr, e->size, m_g5events.size(), ++sent);
-
-
-    for(unsigned int i = 0; i < pkt->size; i++) dbg->debug(CALL_INFO,0,0,"%x", (int)pkt->data[i]);
-    dbg->debug(CALL_INFO,0,0,"\n");
+    dbg->debug(CALL_INFO,0,0,"Sent Event. Addr = %"PRIx64", Req Size =%zu, QueueSize = %lu, Sent = %i\n", pkt->addr, e->size, m_g5events.size(), ++sent);
+    for(std::map<uint64_t, MemPkt*>::iterator it = m_g5events.begin(); it != m_g5events.end(); it++){
+        dbg->debug(CALL_INFO,0,0,"Queue Addr = %"PRIx64"\n", (*it).second->addr);
+    }
     dbg->debug(CALL_INFO,0,0,"<----\n");
 
 
@@ -200,7 +199,10 @@ SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
     m_g5events[req->id] = pkt;
 
     dbg->debug(CALL_INFO,0,0,"---->\n");
-    dbg->debug(CALL_INFO,0,0,"Received Event. Queue Size: %zu, Addr: %"PRIu64",  ReqSize = %zu", m_g5events.size(), pkt->addr, req->size);
+    dbg->debug(CALL_INFO,0,0,"Received Event.  Addr: %"PRIx64", Queue Size: %zu,  ReqSize = %zu \n", pkt->addr, m_g5events.size(), req->size);
+    for(std::map<uint64_t, MemPkt*>::iterator it = m_g5events.begin(); it != m_g5events.end(); it++){
+        dbg->debug(CALL_INFO,0,0,"Queue Addr = %"PRIx64"\n", (*it).second->addr);
+    }
     dbg->debug(CALL_INFO,0,0,"<----\n");
 
 	return req;
@@ -209,6 +211,9 @@ SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
 void PortLink::printQueueSize(){
     dbg->debug(CALL_INFO,0,0, "Name: %s",  m_name.c_str());
     dbg->debug(CALL_INFO,0,0, "Size: %zu.\n",m_g5events.size());
+    for(std::map<uint64_t, MemPkt*>::iterator it = m_g5events.begin(); it != m_g5events.end(); it++){
+        dbg->debug(CALL_INFO,0,0,"Queue Addr = %"PRIx64"\n", (*it).second->addr);
+    }
 }
 
 }}

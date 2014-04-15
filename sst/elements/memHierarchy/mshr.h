@@ -89,10 +89,11 @@ bool Cache::MSHR::isHitAndStallNeeded(Addr baseAddr, Command cmd){
     /*GetX does not stall if there is there is an Inv at the front of MSHR queue 
      * since cache line can be user-locked.  If user-locked, Invalidates can pile up in the MSHR
      * but GetX still needs to continue since Inv won't get re-activated until user-lock is released */
-    if(it == map_.end() || it->second.empty()) return false;
+    if(it == map_.end()) return false;
+    //if(it->second.empty()) return false;
     if(it->second.front().elem.type() == typeid(Addr)) return false;  //front-of-the-vector event cannot be of pointer type
     MemEvent* frontEvent = boost::get<MemEvent*>(it->second.front().elem);
-    if(cmd == GetX) return (it != map_.end() &&  frontEvent->getCmd() != Inv);  
+    if(cmd == GetX) return (frontEvent->getCmd() != Inv);
     else{
         cache_->d_->debug(_WARNING_, "Blocking Request: MSHR entry exists and waiting to complete. TopOfQueue Request Cmd: %s\n", CommandString[frontEvent->getCmd()]);
         return true;

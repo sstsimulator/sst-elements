@@ -37,7 +37,7 @@ bool Cache::clockTick(Cycle_t time) {
     topCC_->sendOutgoingCommands();
     bottomCC_->sendOutgoingCommands();
     
-    if(UNLIKELY(!retryQueueNext_.empty())){
+    if(UNLIKELY(!retryQueueNext_.empty() && timestamp_ % 20 == 0)){
         retryQueue_ = retryQueueNext_;
         retryQueueNext_.clear();
         for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
@@ -46,13 +46,18 @@ bool Cache::clockTick(Cycle_t time) {
             retryQueue_.erase(it);
         }
     }
-    else{
-        if(!incomingEventQueue_.empty()){
-            processEvent(incomingEventQueue_.front().first, false);
-            incomingEventQueue_.pop();
-        }
-       
-       
+    else if(!incomingEventQueue_.empty()){
+        processEvent(incomingEventQueue_.front().first, false);
+        incomingEventQueue_.pop();
+        idleCount_ = 0;
+    }
+    else if(clockOn_) idleCount_++;
+    
+    
+    if(idleCount_ > 6){
+        clockOn_ = false;
+        idleCount_ = 0;
+        return true;
     }
     
     return false;
@@ -115,9 +120,15 @@ void Cache::setup(){
 
 void Cache::processIncomingEvent(SST::Event *ev){
     incomingEventQueue_.push(make_pair(ev, timestamp_));
+    if(!clockOn_){
+        //std::cout << "HEREEEE" << std::endl;
+        timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
+        clockOn_ = true;
+        idleCount_ = 0;
+    }
 }
   
-void Cache::processEvent(SST::Event* ev, bool reActivation) {
+inline void Cache::processEvent(SST::Event* ev, bool reActivation) {
     MemEvent *event = static_cast<MemEvent*>(ev); assert_msg(event, "Event is Null!!");
     assert(event);
     
@@ -137,58 +148,36 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         return;
     }
     
-    try{
+   // try{
+    if(cmd <= 2) {      /* GetS, GetX, GetSEx */
+        if(cmd == GetSEx && !reActivation) STAT_GetSExReceived_++;
+        if(!reActivation) STAT_NonCoherenceReqsReceived_++;
+        if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
+            mshr_->insert(baseAddr, event);
+            d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+            return;
+        }
+        processAccess(event, cmd, baseAddr, reActivation);
+    }
+    else if (cmd <= 4) processAccessAcknowledge(event, baseAddr);           /* GetSResp, GetXResp */
+    else if(cmd <= 7)  processAccess(event, cmd, baseAddr, reActivation);   /* PutM, PutS, PutE */
+    else if(cmd <= 9){                                                      /* Inv, InvX */
+        mshr_->insert(baseAddr, event);
+        processInvalidate(event, cmd, baseAddr, reActivation);
+    }
+    else if(cmd <= 12){   /* Fetch, FetchInvalidate, FetchInvalidateX */
+        mshr_->insert(baseAddr, event);
+        processFetch(event, baseAddr, reActivation);
+    }
+    else{
+        assert(0);
+        _abort(MemHierarchy::Cache, "Command not supported");
+    }
 
-    switch (cmd) {
-        case GetSEx:
-            if(!reActivation) STAT_GetSExReceived_++;
-        case GetS: 
-        case GetX:
-            if(!reActivation) STAT_NonCoherenceReqsReceived_++;
-            if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
-                mshr_->insert(baseAddr, event);
-                d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
-                return;
-            }
-        case PutM:
-        case PutE:
-        case PutS:
-            mshr_->insert(baseAddr, event);
-            processAccess(event, cmd, baseAddr, reActivation);
-            break;
-        case Inv: 
-        case InvX:
-            mshr_->insert(baseAddr, event);
-            processInvalidate(event, cmd, baseAddr, reActivation);
-            break;
-        case GetSResp:
-        case GetXResp:
-            processAccessAcknowledge(event, baseAddr);
-            break;
-        case InvAck:
-            processInvalidateAcknowledge(event, baseAddr, reActivation);
-            break;
-        case Fetch:
-        case FetchInvalidate:
-        case FetchInvalidateX:
-            mshr_->insert(baseAddr, event);
-            processFetch(event, baseAddr, reActivation);
-            break;
-        default:
-            delete event;
-            _abort(MemHierarchy::Cache, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
-            break;
-    }
-    }
-    catch(stallException const& e){
-        /* Do nothing.  The controller can't continue with the request (ie memEvent is stalling)
-        since this request needs to wait for another request to finish.  This event is in MSHR waiting to 'reactive'
-        upon completion of the outstanding request in progress  */
-    }
-    catch(mshrException const& e){
-        _abort(MemHierarchy::Cache, "Limited MSHR is not supported yet, increment the number of MSHR entries\n");
+    //catch(mshrException const& e){
+    //    _abort(MemHierarchy::Cache, "Limited MSHR is not supported yet, increment the number of MSHR entries\n");
         //topCC_->sendNACK(event);
-    }
+    //}
 }
 
 void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){

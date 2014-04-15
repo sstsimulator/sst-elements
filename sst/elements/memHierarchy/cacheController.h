@@ -158,6 +158,11 @@ private:
  	std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
     
+    int idleCount_;
+    bool clockOn_;
+    Clock::Handler<Cache>* clockHandler_;
+    TimeConverter* defaultTimeBase_;
+    
     void initStats();
     void errorChecking();
     void pMembers();
@@ -167,7 +172,7 @@ private:
     void processEvent(SST::Event* ev, bool reActivation);
     inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(stallException);
     void processIncomingEvent(SST::Event *event);
-    void processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation) throw(stallException);
+    void processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation);
     void processInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation);
     void processAccessAcknowledge(MemEvent* ackEvent, Addr baseAddr);
     void processInvalidateAcknowledge(MemEvent* event, Addr baseAddr, bool reActivation);
@@ -187,16 +192,16 @@ private:
 
     inline bool isCacheMiss(int lineIndex);
     inline bool isCachelineLockedByUser(CacheLine* cacheLine);
-    inline bool checkRequestValidity(MemEvent* event, Addr baseAddr) throw(stallException);
+    inline void checkRequestValidity(MemEvent* event, Addr baseAddr) throw(stallException);
 
     inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (stallException);
     inline bool isCandidateInTransition(CacheLine* wbCacheLine);
     inline void candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException);
-    inline bool writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr baseAddr);
+    inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr baseAddr);
     inline void replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineIndex, Addr newBaseAddr);
     inline CacheLine* findReplacementCacheLine(Addr baseAddr);
     inline bool isCacheLineAllocated(int lineIndex);
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool reActivation);
+    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool reActivation) throw(stallException);
 
     inline void retryRequestLater(MemEvent* event, Addr baseAddr);
     inline TopCacheController::CCLine* getCCLine(int index);

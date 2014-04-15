@@ -52,8 +52,7 @@ public:
     virtual void handleInvAck(MemEvent* event, CCLine* ccLine){return;};
     virtual void printStats(int _stats){};
     
-    virtual void sendOutgoingCommands(){
-        assert(highNetPorts_->at(0));
+    void sendOutgoingCommands(){
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             highNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
             outgoingEventQueue_.pop();
@@ -110,7 +109,7 @@ public:
     
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);
-    void sendOutgoingCommands(){ TopCacheController::sendOutgoingCommands(); }
+    //void sendOutgoingCommands(){ TopCacheController::sendOutgoingCommands(); }
     void processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
     void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
     void processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _childId, bool& _ret);

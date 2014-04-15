@@ -36,17 +36,25 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
-
+const int IDLE_MAX = 6;
 
 Bus::Bus(ComponentId_t id, Params& params) : Component(id){
 	configureParameters(params);
     configureLinks();
+    idleCount_ = 0;
+    busOn_ = true;
 }
 
 Bus::Bus() : Component(-1) {}
 
 void Bus::processIncomingEvent(SST::Event *ev){
     eventQueue_.push(ev);
+    if(!busOn_){
+        //std::cout << "HEREEEE" << std::endl;
+        reregisterClock(defaultTimeBase_, clockHandler_);
+        busOn_ = true;
+        idleCount_ = 0;
+    }
 }
 
 bool Bus::clockTick(Cycle_t time) {
@@ -58,6 +66,14 @@ bool Bus::clockTick(Cycle_t time) {
         else sendSingleEvent(event);
         
         eventQueue_.pop();
+    }
+    else if(busOn_) idleCount_++;
+    
+    
+    if(idleCount_ > IDLE_MAX){
+        busOn_ = false;
+        idleCount_ = 0;
+        return true;
     }
     
     return false;
@@ -160,7 +176,8 @@ void Bus::configureParameters(SST::Params& params){
 
     if(busFrequency_ == "Invalid") _abort(Bus, "Bus Frequency was not specified\n");
     if(broadcast_ < 0 || broadcast_ > 1) _abort(Bus, "Broadcast feature was not specified correctly\n");
-    registerClock(busFrequency_, new Clock::Handler<Bus>(this, &Bus::clockTick));
+    clockHandler_ = new Clock::Handler<Bus>(this, &Bus::clockTick);
+    defaultTimeBase_ = registerClock(busFrequency_, clockHandler_);
 }
 
 void Bus::init(unsigned int phase){

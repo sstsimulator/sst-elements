@@ -35,14 +35,14 @@ void MESIBottomCC::handleEviction(MemEvent* event, CacheLine* wbCacheLine){
 		wbCacheLine->setState(I);
         sendWriteback(PutS, wbCacheLine);
 		break;
-    case E:
-		wbCacheLine->setState(I);
-        sendWriteback(PutE, wbCacheLine);
-        break;
 	case M:
 		wbCacheLine->setState(I);
 		sendWriteback(PutM, wbCacheLine);
 		break;
+    case E:
+		wbCacheLine->setState(I);
+        sendWriteback(PutE, wbCacheLine);
+        break;
 	default:
 		_abort(MemHierarchy::CacheController, "Not a valid state: %s", BccLineString[state]);
     }
@@ -54,17 +54,19 @@ void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command
     case GetS:
         processGetSRequest(_event, _cacheLine);
         break;
-    case GetSEx:
     case GetX:
+    case GetSEx:
         if(modifiedStateNeeded(_event, _cacheLine)) return;
         processGetXRequest(_event, _cacheLine, _cmd);
         break;
     case PutS:
         PUTSReqsReceived_++;
         break;
+    case PutM:
+        processPutMRequest(_event, _cacheLine);
+        break;
     case PutE:
         processPutERequest(_event, _cacheLine);
-    case PutM:
         processPutMRequest(_event, _cacheLine);
         break;
     default:
@@ -142,7 +144,7 @@ bool MESIBottomCC::modifiedStateNeeded(MemEvent* _event, CacheLine* _cacheLine){
     Addr addr = _cacheLine->getBaseAddr();
     BCC_MESIState state = _cacheLine->getState();
 
-    if(state == I || state == S){
+    if(state == S || state == I){
         if(state == S){
             inc_GETXMissSM(addr, pf);
             _cacheLine->setState(SM);
@@ -227,12 +229,12 @@ void MESIBottomCC::processGetSRequest(MemEvent* event, CacheLine* cacheLine){
     Addr addr = cacheLine->getBaseAddr();
     bool pf = event->isPrefetch();
 
-    if(state == I){
+    if(state != I) inc_GETSHit(addr, pf);
+    else{
         cacheLine->setState(IS);
         forwardMessage(event, cacheLine, NULL);
         inc_GETSMissIS(addr, pf);
     }
-    else inc_GETSHit(addr, pf);
 }
 
 
@@ -308,7 +310,7 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
 bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     MemEvent *responseEvent;
     Command cmd = _event->getCmd();
-    assert(cmd == Inv || cmd == InvX || cmd == PutM ||  cmd == PutS);
+    assert(cmd == Inv || cmd == PutM ||  cmd == PutS || cmd == InvX);
     responseEvent = _event->makeResponse((SST::Component*)owner_);
     d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
     response resp = {responseEvent, timestamp_, false};

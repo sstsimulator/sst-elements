@@ -70,6 +70,11 @@ private:
     int latency_;
     int fanout_;
     
+    int idleCount_;
+    bool busOn_;
+    Clock::Handler<Bus>* clockHandler_;
+    TimeConverter* defaultTimeBase_;
+    
     std::string busFrequency_;
     std::string bus_latency_cycles_;
 	std::vector<SST::Link*> highNetPorts_;

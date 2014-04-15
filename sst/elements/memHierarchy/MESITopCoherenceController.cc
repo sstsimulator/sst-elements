@@ -36,8 +36,8 @@ bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
             if(state == S || state == M || state == E)
                 return sendResponse(_event, S, data);
             break;
-        case GetSEx:
         case GetX:
+        case GetSEx:
             if(state == M) return sendResponse(_event, M, data);
             break;
         default:
@@ -56,17 +56,18 @@ bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
         case GetS:
             processGetSRequest(_event, _cacheLine, id, ret);
             break;
-        case GetSEx:
         case GetX:
+        case GetSEx:
             processGetXRequest(_event, _cacheLine, id, ret);
+            break;
+        case PutS:
+            processPutSRequest(ccLine, id, ret);
             break;
         case PutM:
         case PutE:
             processPutMRequest(ccLine, _cacheLine->getState(), id, ret);
             break;
-        case PutS:
-            processPutSRequest(ccLine, id, ret);
-            break;
+
         default:
             _abort(MemHierarchy::CacheController, "Wrong command type!");
     }
@@ -166,8 +167,10 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
         if(ccLine->isSharer(sharerId)){
             if(acksNeeded) ccLine->setState(Inv_A);
             sentInvalidates++;
+            
             if(!eviction) InvReqsSent_++;
             else EvictionInvReqsSent_++;
+            
             invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), cmd);
             d_->debug(_L1_,"Invalidate sent: %u (numSharers), Invalidating Addr: %"PRIx64", Dst: %s\n", ccLine->numSharers(), ccLine->getBaseAddr(),  sharer->first.c_str());
             invalidateEvent->setDst(sharer->first);
