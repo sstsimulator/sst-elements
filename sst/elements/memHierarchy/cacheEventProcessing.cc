@@ -51,14 +51,14 @@ bool Cache::clockTick(Cycle_t time) {
         incomingEventQueue_.pop();
         idleCount_ = 0;
     }
-    else if(clockOn_) idleCount_++;
+    //else if(clockOn_) idleCount_++;
     
     
-    if(idleCount_ > 6){
+    /*if(idleCount_ > 6){
         clockOn_ = false;
         idleCount_ = 0;
         return true;
-    }
+    }*/
     
     return false;
 }
@@ -149,7 +149,7 @@ inline void Cache::processEvent(SST::Event* ev, bool reActivation) {
     }
     
    // try{
-    if(cmd <= 2) {      /* GetS, GetX, GetSEx */
+    if(cmd <= 2) {                                                          /* GetS, GetX, GetSEx */
         if(cmd == GetSEx && !reActivation) STAT_GetSExReceived_++;
         if(!reActivation) STAT_NonCoherenceReqsReceived_++;
         if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){

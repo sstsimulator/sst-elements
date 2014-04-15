@@ -67,7 +67,7 @@ bool Bus::clockTick(Cycle_t time) {
         
         eventQueue_.pop();
     }
-    else if(busOn_) idleCount_++;
+    /*else if(busOn_) idleCount_++;
     
     
     if(idleCount_ > IDLE_MAX){
@@ -75,7 +75,7 @@ bool Bus::clockTick(Cycle_t time) {
         idleCount_ = 0;
         return true;
     }
-    
+    */
     return false;
 }
 
