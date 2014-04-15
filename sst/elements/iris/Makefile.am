@@ -34,6 +34,9 @@ libiris_la_SOURCES = \
 	trig_nic/trig_nic.h \
 	ex_macsim_component.h
 
+EXTRA_DIST = \
+	test_v2.xml
+
 sstdir = $(includedir)/sst/elements/iris
 nobase_sst_HEADERS = \
 	RtrIF.h 

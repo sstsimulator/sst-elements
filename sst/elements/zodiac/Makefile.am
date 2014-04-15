@@ -45,6 +45,9 @@ libzodiac_la_SOURCES = \
 	zcollective.h \
 	zcollective.cc
 
+EXTRA_DIST = \
+	test/allreduce/allreduce.py
+
 libzodiac_la_LDFLAGS = -module -avoid-version
 
 if USE_OTF

@@ -39,4 +39,8 @@ libsst_mcopteron_la_SOURCES = \
 	mcopteron/Listener.h \
 	mcopteron/mersenne.h
 
+EXTRA_DIST = \
+	test1.xml \
+        test2.xml
+
 libsst_mcopteron_la_LDFLAGS = -module -avoid-version

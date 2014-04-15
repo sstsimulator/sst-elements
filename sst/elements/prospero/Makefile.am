@@ -9,4 +9,8 @@ libprospero_la_SOURCES = \
         prospero.h \
         prospero.cc
 
+EXTRA_DIST = \
+	xml/trace.xml \
+	xml/trace-withdramsim.xml
+
 libprospero_la_LDFLAGS = -module -avoid-version

@@ -13,4 +13,7 @@ libmessageGeneratorComponent_la_SOURCES = \
 	messageGeneratorComponent.cc \
 	simpleMessage.h 
 
+EXTRA_DIST = \
+	test.xml
+
 libmessageGeneratorComponent_la_LDFLAGS = -module -avoid-version

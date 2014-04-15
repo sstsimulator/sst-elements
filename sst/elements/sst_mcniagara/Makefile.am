@@ -30,5 +30,13 @@ libsst_mcniagara_la_SOURCES = \
 #	mcniagara/McNiagara-mem.cc \
 #	mcniagara/readdefs.cc 
 
+EXTRA_DIST = \
+	test1.xml \
+        test2.xml \
+	mcniagara/inst_prob.h \
+	mcniagara/perf_cnt.h \
+	mcniagara/INPUT \
+	mcniagara/sample_trace.txt
+
 libsst_mcniagara_la_LDFLAGS = -module -avoid-version
 

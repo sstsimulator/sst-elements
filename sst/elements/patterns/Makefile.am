@@ -67,6 +67,9 @@ libpatterns_la_SOURCES = \
 	patterns.cc \
 	patterns.h
 
+EXTRA_DIST = \
+	config_files/M_Shamrock.in \
+	config_files/M_XE.in
 
 
 if SST_USE_MPI

@@ -33,4 +33,7 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc Constr
 	FinalTimeEvent.h \
 faultInjectionComponent.cc	faultInjectionComponent.h
 
+EXTRA_DIST = \
+	simulations/makeSDL.pl
+
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
