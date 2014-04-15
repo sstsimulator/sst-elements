@@ -686,7 +686,6 @@ void MemController::printMemory(DRAMReq *req, Addr localAddr)
 {
     dbg.debug(C,L1,0,"Resp. Data: ");
     for(unsigned int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%d",(int)memBuffer[localAddr + i]);
-    dbg.debug(C,L1,0,"\n");
 }
 
 void MemController::handleMemResponse(DRAMReq *req)

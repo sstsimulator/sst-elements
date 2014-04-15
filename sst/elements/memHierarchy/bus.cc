@@ -36,7 +36,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
-const int IDLE_MAX = 6;
 
 Bus::Bus(ComponentId_t id, Params& params) : Component(id){
 	configureParameters(params);
@@ -67,15 +66,15 @@ bool Bus::clockTick(Cycle_t time) {
         
         eventQueue_.pop();
     }
-    /*else if(busOn_) idleCount_++;
+    else if(busOn_) idleCount_++;
     
     
-    if(idleCount_ > IDLE_MAX){
+    if(idleCount_ > idleMax_){
         busOn_ = false;
         idleCount_ = 0;
         return true;
     }
-    */
+    
     return false;
 }
 
@@ -103,7 +102,8 @@ void Bus::broadcastEvent(SST::Event *ev){
 
 void Bus::sendSingleEvent(SST::Event *ev){
     MemEvent *event = static_cast<MemEvent*>(ev); assert(event);
-    dbg_.debug(_L3_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+    dbg_.debug(_L3_,"\n\n");
+    dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
 
     LinkId_t dstLinkId = lookupNode(event->getDst());
@@ -170,6 +170,7 @@ void Bus::configureParameters(SST::Params& params){
     maxNumPorts_ = 500;
     
 	latency_ = params.find_integer("bus_latency_cycles", 1);
+    idleMax_ = params.find_integer("idle_max", 6);
     busFrequency_ = params.find_string("bus_frequency", "Invalid");
     broadcast_ = params.find_integer("broadcast", 0);
     fanout_ = params.find_integer("fanout", 0);

@@ -50,6 +50,7 @@ static const ElementInfoParam cache_params[] = {
     {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},
     {"mshr_num_entries",        "Number of MSHR entries"},
     /* Not required */
+    {"idle_max",                "Cache temporarily turns off its clock after this amount of idle cycles", "6"},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
     {"high_network_ports",      "Number of high network ports (closer to the CPU)",""},
@@ -83,6 +84,7 @@ static const ElementInfoParam bus_params[] = {
     {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
     {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports.", "0"},
     {"bus_latency_cycles",  "Number of ports on the bus.", "0"},
+    {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"high_network_ports",  "Number of high network ports (closer to the CPU)",""},
     {"low_network_ports",   "Number of low network ports (closer to the memory)", ""},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},

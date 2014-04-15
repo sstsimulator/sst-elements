@@ -102,8 +102,12 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     pMembers();
     errorChecking();
     /* Prefetcher */
+    
+    d2_ = new Output();
+    d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
 
     stats_ = params.find_integer("statistics", 0);
+    idleMax_ = params.find_integer("idle_max", 6);
     accessLatency_ = params.find_integer("access_latency_cycles", -1);
     string prefetcher = params.find_string("prefetcher");
     if (prefetcher.empty()) listener_ = new CacheListener();
@@ -121,6 +125,9 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
     lowNetPorts_ = new vector<Link*>();
     highNetPorts_ = new vector<Link*>();
+    
+    clockHandler_ = new Clock::Handler<Cache>(this, &Cache::clockTick);
+    defaultTimeBase_ = registerClock(_cacheFrequency, clockHandler_);
     
     if (dirControllerExists_) {
         assert(isPortConnected("directory"));
@@ -143,6 +150,8 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
 
     clockOn_ = true;
     idleCount_ = 0;
+    memNICIdleCount_ = 0;
+    memNICIdle_ = false;
 
     /* Coherence Controllers */
     sharersAware_ = (L1_) ? false : true;
@@ -151,9 +160,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     /* Replacement Manager */
     replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
     
-    clockHandler_ = new Clock::Handler<Cache>(this, &Cache::clockTick);
-    defaultTimeBase_ = registerClock(_cacheFrequency, clockHandler_);
-    
+
     timestamp_ = 0;
     STAT_GetSExReceived_ = 0, STAT_InvalidateWaitingForUserLock_ = 0, STAT_TotalInstructionsRecieved_ = STAT_NonCoherenceReqsReceived_ = 0;
 }

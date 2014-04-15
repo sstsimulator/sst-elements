@@ -25,7 +25,7 @@ typedef uint64_t Addr;
 
 
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
-/* DO NOT CHANGE ORDERING!!!!   */
+/* DO NOT CHANGE ORDERING!!!!  If ordering needs to change, change code in cacheEventProcessing.cc   */
 #define X_TYPES \
     /* Requests [0-2] */ \
     X(GetS) \
@@ -34,20 +34,21 @@ typedef uint64_t Addr;
     /* Request Responses [3-4] */ \
     X(GetSResp) \
     X(GetXResp) \
-    /* Writebacks [5-7] */ \
+    /* Writebacks [5-8] */ \
     X(PutS) \
     X(PutM) \
     X(PutE) \
-    /* Invalidates [8-9]*/ \
+    X(PutX) \
+    /* Invalidates [9-10]*/ \
     X(Inv)  \
     X(InvX) \
-    /* Directory Controller [10-13]*/ \
+    /* Directory Controller [11-14]*/ \
     X(Fetch) \
     X(FetchInvalidate) \
     X(FetchInvalidateX) \
     X(FetchResp) \
-    X(NULLCMD) \
     /* Others */ \
+    X(NULLCMD) \
     X(InvAck)  \
     X(Nack) \
     X(NACK) \

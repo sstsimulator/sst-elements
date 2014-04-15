@@ -33,7 +33,10 @@ using namespace SST::MemHierarchy;
 bool Cache::clockTick(Cycle_t time) {
     timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
     
-    if(dirControllerExists_) directoryLink_->clock();
+    if(dirControllerExists_) memNICIdle_ = directoryLink_->clock();
+    /*if(memNICIdle_) memNICIdleCount_++;
+    else memNICIdleCount_ = 0;*/
+    
     topCC_->sendOutgoingCommands();
     bottomCC_->sendOutgoingCommands();
     
@@ -51,14 +54,18 @@ bool Cache::clockTick(Cycle_t time) {
         incomingEventQueue_.pop();
         idleCount_ = 0;
     }
-    //else if(clockOn_) idleCount_++;
+    else if(clockOn_ && dirControllerExists_ == false){
+        ///std::cout << "idleCount " << idleCount_ << std::endl;
+        idleCount_++;
+    }
     
     
-    /*if(idleCount_ > 6){
+    if(idleCount_ > idleMax_ && dirControllerExists_ == false){
+        //std::cout << "idleMax " << idleMax_ << " turning off clock" << std::endl;
         clockOn_ = false;
         idleCount_ = 0;
         return true;
-    }*/
+    }
     
     return false;
 }
@@ -120,10 +127,12 @@ void Cache::setup(){
 
 void Cache::processIncomingEvent(SST::Event *ev){
     incomingEventQueue_.push(make_pair(ev, timestamp_));
+    //std::cout << "Received event" << std::endl;
     if(!clockOn_){
-        //std::cout << "HEREEEE" << std::endl;
+        //std::cout << "Turning on clock" << std::endl;
         timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
         clockOn_ = true;
+        memNICIdleCount_ = 0;
         idleCount_ = 0;
     }
 }
@@ -138,8 +147,7 @@ inline void Cache::processEvent(SST::Event* ev, bool reActivation) {
         
     if(!reActivation){
         STAT_TotalInstructionsRecieved_++;
-        registerNewRequest(event->getID());
-        d_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+        d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
 
     d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), prefetch.c_str(), timestamp_, uncached ? "un$" : "");
@@ -159,13 +167,13 @@ inline void Cache::processEvent(SST::Event* ev, bool reActivation) {
         }
         processAccess(event, cmd, baseAddr, reActivation);
     }
-    else if (cmd <= 4) processAccessAcknowledge(event, baseAddr);           /* GetSResp, GetXResp */
-    else if(cmd <= 7)  processAccess(event, cmd, baseAddr, reActivation);   /* PutM, PutS, PutE */
-    else if(cmd <= 9){                                                      /* Inv, InvX */
+    else if(cmd <= 4)  processAccessAcknowledge(event, baseAddr);           /* GetSResp, GetXResp */
+    else if(cmd <= 8)  processAccess(event, cmd, baseAddr, reActivation);   /* PutM, PutS, Put, PutXE */
+    else if(cmd <= 10){                                                     /* Inv, InvX */
         mshr_->insert(baseAddr, event);
         processInvalidate(event, cmd, baseAddr, reActivation);
     }
-    else if(cmd <= 12){   /* Fetch, FetchInvalidate, FetchInvalidateX */
+    else if(cmd <= 14){   /* Fetch, FetchInvalidate, FetchInvalidateX */
         mshr_->insert(baseAddr, event);
         processFetch(event, baseAddr, reActivation);
     }

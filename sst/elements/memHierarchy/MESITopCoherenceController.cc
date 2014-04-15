@@ -291,17 +291,15 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
                 base = (_event->getAddr()) & ~(lineSize_ - 1);
                 offset = _event->getAddr() - base;
                 responseEvent = _event->makeResponse((SST::Component*)owner_);
-                responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+                if(cmd != GetX) responseEvent->setPayload(_event->getSize(), &_data->at(offset));
             }
             else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
+            
             responseEvent->setDst(_event->getSrc());
             break;
         default:
             _abort(CoherencyController, "Command not valid as a response. \n");
     }
-
-    if(L1_ && (cmd == GetS || cmd == GetSEx)) printData(d_, "Response Data", _data, offset, (int)_event->getSize());
-    else printData(d_, "Response Data", _data);
     
     d_->debug(_L1_,"Sending Response:  Addr = %"PRIx64",  Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     uint64_t deliveryTime = _event->queryFlag(MemEvent::F_UNCACHED) ? timestamp_ : timestamp_ + accessLatency_;

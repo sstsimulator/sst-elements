@@ -69,6 +69,7 @@ private:
     int broadcast_;
     int latency_;
     int fanout_;
+    int idleMax_;
     
     int idleCount_;
     bool busOn_;

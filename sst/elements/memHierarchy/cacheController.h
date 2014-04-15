@@ -132,6 +132,7 @@ private:
     Link*                   selfLink_;
     MemNIC*                 directoryLink_;
     Output*                 d_;
+    Output*                 d2_;
     LRUReplacementMgr*      replacementMgr_;
     uint                    numLines_;
     uint                    lineSize_;
@@ -153,12 +154,14 @@ private:
     uint64                  STAT_TotalInstructionsRecieved_;
     uint64                  STAT_NonCoherenceReqsReceived_;
     uint64                  timestamp_;
-    map<MemEvent::id_type, SimTime_t> latencyTimes;
     int                     stats_;
+    int                     idleMax_;
  	std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
     
     int idleCount_;
+    bool memNICIdle_;
+    int memNICIdleCount_;
     bool clockOn_;
     Clock::Handler<Cache>* clockHandler_;
     TimeConverter* defaultTimeBase_;
@@ -188,7 +191,6 @@ private:
     void configureLinks();
     void handlePrefetchEvent(SST::Event *event);
     void handleSelfEvent(SST::Event *event);
-    void registerNewRequest(MemEvent::id_type id){ latencyTimes[id] = getCurrentSimTimeNano(); }
 
     inline bool isCacheMiss(int lineIndex);
     inline bool isCachelineLockedByUser(CacheLine* cacheLine);

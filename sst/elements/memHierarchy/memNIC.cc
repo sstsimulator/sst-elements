@@ -160,10 +160,11 @@ std::string MemNIC::findTargetDirectory(Addr addr)
 }
 
 
-void MemNIC::clock(void)
+bool MemNIC::clock(void)
 {
     /* If stuff to send, and space to send it, send */
-    if ( !sendQueue.empty() ) {
+    bool empty = sendQueue.empty();
+    if (!empty) {
         dbg.output(CALL_INFO, "SendQueue has %zu elements in it.\n", sendQueue.size());
         MemRtrEvent *head = sendQueue.front();
         if ( link_control->spaceToSend(0, head->size_in_flits) ) {
@@ -181,6 +182,8 @@ void MemNIC::clock(void)
             (*recvHandler)(me);
         }
     }
+    
+    return (empty == true);
 }
 
 MemEvent* MemNIC::recv(void)
