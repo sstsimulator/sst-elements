@@ -209,10 +209,8 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->exclusiveSharerExists()) {
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
-        assert(!l->isSharer(_sharerId) && l->numSharers() == 1);                      //
-        //l->setState(InvX_A);
+        assert(!l->isSharer(_sharerId) && l->numSharers() == 1);
         sendInvalidates(InvX, lineIndex, false, "", true); //TODO: ""? do we really need it?
-        //sendInvalidates(Inv, lineIndex, false, "", true);
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
@@ -233,7 +231,6 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     if(ccLine->exclusiveSharerExists()){
         d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
         assert(!ccLine->isSharer(_sharerId));
-        //l->setState(Inv_A);
         sendInvalidates(Inv, lineIndex, false, _event->getSrc(), true);
         return;
     }
@@ -251,15 +248,15 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     }
 }
 
-
+//TODO: create processPutXFunction to avoid that extra if inside here
 void MESITopCC::processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
 
-    //Remove exclusivity
+    /* Remove exclusivity for all: PutM, PutX, PutE */
     if(_ccLine->exclusiveSharerExists())  _ccLine->clearExclusiveSharer(_sharerId);
 
-    //If PutX, keep as sharer since transition was M->S
+    /*If PutX, keep as sharer since transition ia M->S */
     if(_cmd == PutX){                   //If PutX, then state = V since we only wanted to get rid of the M-state hglv cache
         _ccLine->addSharer(_sharerId);
         _ccLine->setState(V);
@@ -281,7 +278,6 @@ void MESITopCC::printStats(int _stats){
 }
 
 
-//TODO: Fix/Refactor this mess!
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data){
     if(_event->isPrefetch()){ //|| _sharerId == -1){
          d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");

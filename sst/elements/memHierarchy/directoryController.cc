@@ -510,9 +510,11 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
 
 void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
 	MemEvent *ev = entry->activeReq->makeResponse(this);
-	ev->setPayload(new_ev->getPayload());
+	//TODO:  only if write should you set the payload
+    ev->setPayload(new_ev->getPayload());
     dbg.output(CALL_INFO, "Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());
 	sendResponse(ev);
+    
     if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED) &&
             0 == entry->countRefs()) {
         //assert(0);
@@ -521,6 +523,7 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
     } else {
         updateEntryToMemory(entry);
     }
+    delete entry->activeReq;
 }
 
 

@@ -632,11 +632,9 @@ Addr MemController::convertAddressToLocalAddress(Addr addr)
 void MemController::performRequest(DRAMReq *req)
 {
    
-	req->respEvent = req->reqEvent->makeResponse(this);
-    if(req->GetXRespType && req->cmd == GetX) req->respEvent->setCmd(GetXResp);
+
     Addr localAddr = convertAddressToLocalAddress(req->addr);
 
-    req->respEvent->setSize(cacheLineSize);
     
     //TODO: in MESI, initial GetX response should be in E state (this is for performance optimization, not correctness)
     //TODO: No need to write memory on GetX... only on PutM
@@ -648,6 +646,13 @@ void MemController::performRequest(DRAMReq *req)
         //printMemory(req, localAddr);
         
 	} else {
+    	req->respEvent = req->reqEvent->makeResponse(this);
+        if(req->GetXRespType && req->cmd == GetX){
+            req->respEvent->setCmd(GetXResp);
+        }
+        req->respEvent->setSize(cacheLineSize);
+
+    
         dbg.debug(C,0,0,"READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->respEvent->getSize() ; i++ )
             req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
@@ -666,19 +671,13 @@ void MemController::performRequest(DRAMReq *req)
 
 void MemController::sendResponse(DRAMReq *req)
 {
-    /*
-    if ( use_bus ) {
-        busReqs.push_back(req);
-        Bus::key_t key = req->respEvent->getID();
-        dbg.debug(CALL_INFO,6,0, "Requesting bus for event (%"PRIx64", %d)\n", key.first, key.second);
-        upstream_link->send(new BusEvent(BusEvent::RequestBus, key));
-    } else { */
-        if(!req->isWrite){
-            upstream_link->send(req->respEvent);
-        }
-        req->status = DRAMReq::DONE;
-        if ( req->respEvent->getCmd() == GetXResp || req->respEvent->getCmd() == WriteResp ) numWrites++;
-        else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
+
+    if(!req->isWrite){
+        upstream_link->send(req->respEvent);
+    }
+    req->status = DRAMReq::DONE;
+    //if ( req->respEvent->getCmd() == GetXResp || req->respEvent->getCmd() == WriteResp ) numWrites++;
+    //else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
     //}
 }
 
