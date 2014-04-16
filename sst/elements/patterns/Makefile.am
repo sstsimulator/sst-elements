@@ -69,7 +69,9 @@ libpatterns_la_SOURCES = \
 
 EXTRA_DIST = \
 	config_files/M_Shamrock.in \
-	config_files/M_XE.in
+	config_files/M_XE.in \
+	config_files/ping.in \
+	config_files/alltoall.in
 
 
 if SST_USE_MPI
