@@ -168,7 +168,10 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
         int sharerId = sharer->second;
         if(requestingId == sharerId) continue;
         if(ccLine->isSharer(sharerId)){
-            if(acksNeeded) ccLine->setState(Inv_A);
+            if(acksNeeded){
+                if(cmd == Inv) ccLine->setState(Inv_A);
+                else ccLine->setState(InvX_A);
+            }
             sentInvalidates++;
             
             if(!eviction) InvReqsSent_++;
@@ -257,13 +260,11 @@ void MESITopCC::processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState 
     if(_ccLine->exclusiveSharerExists())  _ccLine->clearExclusiveSharer(_sharerId);
 
     //If PutX, keep as sharer since transition was M->S
-    if(_cmd == PutX){
+    if(_cmd == PutX){                   //If PutX, then state = V since we only wanted to get rid of the M-state hglv cache
         _ccLine->addSharer(_sharerId);
         _ccLine->setState(V);
      }
-    
-    if(_ccLine->getState() == V) return;
-    _ccLine->decAckCount();
+    else _ccLine->decAckCount();        //Id PutE, PutM -> num sharers should be 0 before state goes to (V)
 
 }
 

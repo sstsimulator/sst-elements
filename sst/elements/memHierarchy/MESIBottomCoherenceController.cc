@@ -215,8 +215,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == M || state == E){
         _cacheLine->setState(S);
         InvalidatePUTMReqSent_++;
-        if(state == M) sendWriteback(PutX, _cacheLine);
-        else           sendWriteback(PutE, _cacheLine);
+        sendWriteback(PutX, _cacheLine);  //TODO: send PutXE, PutXM;  lower level caches doesn't know if data needs to be actual written in their cache
     }
     else{
         _cacheLine->setState(I);
