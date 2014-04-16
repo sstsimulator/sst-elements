@@ -51,6 +51,13 @@ class stallException : public exception{
   }
 };
 
+class ignoreEventException : public exception{
+  public:
+  const char* what () const throw (){
+    return "description";
+  }
+};
+
 class mshrException : public exception{
   public:
   const char* what () const throw (){
@@ -171,14 +178,13 @@ private:
     void pMembers();
     bool shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool reActivation);
     bool invalidatesInProgress(int lineIndex);
-    bool isCacheLineStable(CacheLine* cacheLine, Command cmd);
+    void checkCacheLineIsStable(CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
     void processEvent(SST::Event* ev, bool reActivation);
     inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(stallException);
     void processIncomingEvent(SST::Event *event);
     void processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation);
     void processInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation);
     void processAccessAcknowledge(MemEvent* ackEvent, Addr baseAddr);
-    void processInvalidateAcknowledge(MemEvent* event, Addr baseAddr, bool reActivation);
     void processUncached(MemEvent* event, Command cmd, Addr baseAddr);
     void processFetch(MemEvent* event, Addr baseAddr, bool reActivation);
     bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }
@@ -194,7 +200,7 @@ private:
 
     inline bool isCacheMiss(int lineIndex);
     inline bool isCachelineLockedByUser(CacheLine* cacheLine);
-    inline void checkRequestValidity(MemEvent* event, Addr baseAddr) throw(stallException);
+    inline void checkRequestValidity(MemEvent* event, Addr baseAddr) throw(ignoreEventException);
 
     inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (stallException);
     inline bool isCandidateInTransition(CacheLine* wbCacheLine);

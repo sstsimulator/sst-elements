@@ -49,7 +49,7 @@ public:
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd) {}
     virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine);
     virtual void handleInvalidate(int lineIndex, Command cmd){return;}
-    virtual void handleInvAck(MemEvent* event, CCLine* ccLine){return;};
+    //virtual void handleInvAck(MemEvent* event, CCLine* ccLine){return;};
     virtual void printStats(int _stats){};
     
     void sendOutgoingCommands(){
@@ -105,14 +105,14 @@ public:
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
     virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine);
     virtual void handleInvalidate(int lineIndex, Command cmd);
-    virtual void handleInvAck(MemEvent* event, CCLine* ccLine);
+    //virtual void handleInvAck(MemEvent* event, CCLine* ccLine);
     
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);
     //void sendOutgoingCommands(){ TopCacheController::sendOutgoingCommands(); }
     void processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
     void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
-    void processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _childId, bool& _ret);
+    void processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _childId, bool& _ret);
     void processPutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
     
     TCC_MESIState getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }

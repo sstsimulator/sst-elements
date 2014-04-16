@@ -178,8 +178,7 @@ inline void Cache::processEvent(SST::Event* ev, bool reActivation) {
         processFetch(event, baseAddr, reActivation);
     }
     else{
-        assert(0);
-        _abort(MemHierarchy::Cache, "Command not supported");
+        _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);
     }
 
     //catch(mshrException const& e){

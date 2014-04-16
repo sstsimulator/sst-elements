@@ -65,7 +65,8 @@ bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
             break;
         case PutM:
         case PutE:
-            processPutMRequest(ccLine, _cacheLine->getState(), id, ret);
+        case PutX:
+            processPutMRequest(ccLine, cmd, _cacheLine->getState(), id, ret);
             break;
 
         default:
@@ -113,6 +114,7 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
     }
 }
 
+/*
 void MESITopCC::handleInvAck(MemEvent* _event, CCLine* _ccLine){
     //assert(_ccLine->getAckCount() > 0);
     int sharerId = lowNetworkNodeLookup(_event->getSrc());
@@ -120,6 +122,7 @@ void MESITopCC::handleInvAck(MemEvent* _event, CCLine* _ccLine){
     else if(_ccLine->isSharer(sharerId)) _ccLine->removeSharer(sharerId);
     _ccLine->decAckCount();
 }
+*/
 
 /* Function sends invalidates to lower level caches, removes sharers if needed.  
  * Currently it implements weak consistency, ie. invalidates to sharers do not need acknowledgment
@@ -203,11 +206,10 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->exclusiveSharerExists()) {
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
-        assert(!l->isSharer(_sharerId));
-        assert(l->numSharers() == 1);                      // TODO: l->setState(InvX_A);  //sendInvalidates(InvX, lineIndex);
+        assert(!l->isSharer(_sharerId) && l->numSharers() == 1);                      //
         //l->setState(InvX_A);
-        //sendInvalidates(InvX, lineIndex, false, -1, true);
-        sendInvalidates(Inv, lineIndex, false, "", true);
+        sendInvalidates(InvX, lineIndex, false, "", true); //TODO: ""? do we really need it?
+        //sendInvalidates(Inv, lineIndex, false, "", true);
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
@@ -228,6 +230,7 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     if(ccLine->exclusiveSharerExists()){
         d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
         assert(!ccLine->isSharer(_sharerId));
+        //l->setState(Inv_A);
         sendInvalidates(Inv, lineIndex, false, _event->getSrc(), true);
         return;
     }
@@ -246,20 +249,21 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
 }
 
 
-void MESITopCC::processPutMRequest(CCLine* _ccLine, BCC_MESIState _state, int _sharerId, bool& _ret){
+void MESITopCC::processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
 
-    if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(_sharerId);
-    else if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
+    //Remove exclusivity
+    if(_ccLine->exclusiveSharerExists())  _ccLine->clearExclusiveSharer(_sharerId);
 
+    //If PutX, keep as sharer since transition was M->S
+    if(_cmd == PutX){
+        _ccLine->addSharer(_sharerId);
+        _ccLine->setState(V);
+     }
+    
     if(_ccLine->getState() == V) return;
     _ccLine->decAckCount();
-
-    if(_ccLine->getState() == InvX_A){
-        _ccLine->addSharer(_sharerId);  // M->S
-        assert(_ccLine->numSharers() == 1);
-     }
 
 }
 

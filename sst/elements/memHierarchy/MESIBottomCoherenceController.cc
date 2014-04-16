@@ -62,12 +62,13 @@ void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command
     case PutS:
         PUTSReqsReceived_++;
         break;
+    //TODO:  Case PutX:  PUTXReqsReceived_++;
     case PutM:
+    case PutX:
         processPutMRequest(_event, _cacheLine);
         break;
     case PutE:
         processPutERequest(_event, _cacheLine);
-        processPutMRequest(_event, _cacheLine);
         break;
     default:
         _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -196,7 +197,6 @@ void MESIBottomCC::processGetXRequest(MemEvent* event, CacheLine* cacheLine, Com
 void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     
-    //Refactor like processInvXRequest
     if(state == M || state == E){
         _cacheLine->setState(I);
         InvalidatePUTMReqSent_++;
@@ -215,7 +215,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == M || state == E){
         _cacheLine->setState(S);
         InvalidatePUTMReqSent_++;
-        if(state == M) sendWriteback(PutM, _cacheLine);
+        if(state == M) sendWriteback(PutX, _cacheLine);
         else           sendWriteback(PutE, _cacheLine);
     }
     else{
@@ -296,7 +296,6 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
-//TODO: remove deliveryLink
 void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
@@ -306,7 +305,7 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
     outgoingEventQueue_.push(resp);
 }
 
-
+//TODO: change name
 bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     MemEvent *responseEvent;
     Command cmd = _event->getCmd();
@@ -317,7 +316,6 @@ bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     outgoingEventQueue_.push(resp);
     return true;
 }
-
 
 
 unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){

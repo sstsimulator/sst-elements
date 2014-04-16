@@ -25,7 +25,7 @@ typedef uint64_t Addr;
 
 
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
-/* DO NOT CHANGE ORDERING!!!!  If ordering needs to change, change code in cacheEventProcessing.cc   */
+/* DO NOT CHANGE ORDERING!!!!  If ordering needs to change, change code in cacheEventProcessing.cc, cacheController::checkCacheLineIsStable   */
 #define X_TYPES \
     /* Requests [0-2] */ \
     X(GetS) \
@@ -452,24 +452,6 @@ public:
             return GetSResp;
         case GetX:
             return GetXResp;
-        case PutM:
-        case PutE:
-        case PutS:
-            return PutAck;
-        case Inv:
-        case InvX:
-            return InvAck;
-        case RequestData:
-            return SupplyData;
-        case SupplyData:
-            return WriteResp;
-        case ReadReqEx:
-        case ReadReq:
-            return ReadResp;
-        case WriteReq:
-            return WriteResp;
-        case Invalidate:
-            return ACK;
         case Fetch:
         case FetchInvalidate:
         case FetchInvalidateX:

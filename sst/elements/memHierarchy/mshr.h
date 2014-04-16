@@ -93,7 +93,7 @@ bool Cache::MSHR::isHitAndStallNeeded(Addr baseAddr, Command cmd){
     //if(it->second.empty()) return false;
     if(it->second.front().elem.type() == typeid(Addr)) return false;  //front-of-the-vector event cannot be of pointer type
     MemEvent* frontEvent = boost::get<MemEvent*>(it->second.front().elem);
-    if(cmd == GetX) return (frontEvent->getCmd() != Inv);
+    if(cmd == GetX) return (frontEvent->getCmd() != Inv && frontEvent->getCmd() != InvX);  //An Inv is at the front of the queue, wait for Inv Responses from higher network
     else{
         cache_->d_->debug(_WARNING_, "Blocking Request: MSHR entry exists and waiting to complete. TopOfQueue Request Cmd: %s\n", CommandString[frontEvent->getCmd()]);
         return true;

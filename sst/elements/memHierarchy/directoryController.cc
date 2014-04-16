@@ -251,7 +251,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
         break;
     */
     case PutM:        /* Was SupplyData */
-    case PutE:     
+    case PutE:
+    case PutX:
         assert(entry);
         dbg.output(CALL_INFO, "\n\nDC PutM - %s - Request Received\n", getName().c_str());
         entry->activeReq = ev;

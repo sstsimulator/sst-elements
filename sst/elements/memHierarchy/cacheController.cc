@@ -50,20 +50,22 @@ void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reAc
         }
         
         CacheLine* cacheLine = getCacheLine(lineIndex);
-        if(!isCacheLineStable(cacheLine, cmd)) throw stallException();          /* If cache line is locked or in transition, wait until it is stable */
+        checkCacheLineIsStable(cacheLine, cmd);                                 /* If cache line is locked or in transition, wait until it is stable */
         
         /* Time to process request */
         bottomCC_->handleAccess(event, cacheLine, cmd);                         /* upgrade or fetch line from higher level caches */
         if(cacheLine->inTransition()) throw stallException();                   /* stall request if upgrade is in progress */
         
-        bool done = topCC_->handleAccess(event, cacheLine); /* Invalidate sharers, send respond to requestor if needed */
+        bool done = topCC_->handleAccess(event, cacheLine);                     /* Invalidate sharers, send respond to requestor if needed */
         postRequestProcessing(event, cacheLine, done, reActivation);
     
-    } catch(stallException const& e){
+    }
+    catch(stallException const& e){
         mshr_->insert(baseAddr, event);
         /* This request needs to wait for another request to finish.  This event is now in the  MSHR waiting to 'reactive'
         upon completion of the outstanding request in progress  */
     }
+    catch(ignoreEventException const& e){}
     
 }
 
@@ -80,23 +82,6 @@ void Cache::processInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool 
     mshr_->removeElement(baseAddr, event);
     delete event;
     return;
-}
-
-
-/* Function processes incomming Invalidate-Acknowledge messages.  Redirects message to Top Controller */
-void Cache::processInvalidateAcknowledge(MemEvent* event, Addr baseAddr, bool reActivation){
-    d_->debug(_L1_,"Processing invalidate ack\n");
-
-    CacheLine* cacheLine = getCacheLine(baseAddr);
-    if(!cacheLine) return;
-    CCLine* ccLine = getCCLine(cacheLine->index());
-    if(ccLine->getState() == V) return;
-    
-    topCC_->handleInvAck(event, ccLine);
-    
-    if(cacheLine->unlocked() && ccLine->isValid() && !reActivation) activatePrevEvents(baseAddr);
-    else d_->debug(_L1_,"Received InvAck but states are still not valid.  BottomState: %s, Sharers: %i \n",
-                   BccLineString[cacheLine->getState()], ccLine->numSharers());
 }
 
 
@@ -318,7 +303,7 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     Command cmd = event->getCmd();
     Addr baseAddr = cacheLine->getBaseAddr();
     if(requestCompleted){
-        if(cmd == PutM || cmd == PutE){
+        if(cmd == PutM || cmd == PutE || cmd == PutX){
             if(!L1_){                  /* Check if topCC line is locked */
                 CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[cacheLine->index()];
                 if(cacheLine->unlocked() && ccLine->isValid() && !reActivation) activatePrevEvents(baseAddr);
@@ -340,22 +325,19 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool reActiv
     }
 }
 
-bool Cache::isCacheLineStable(CacheLine* _cacheLine, Command _cmd){
-    bool stable = true;
-    
+void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
     if(_cacheLine->inTransition()){ /* Check if cache line is locked */
         d_->debug(_L1_,"Stalling request: Cache line in transition. BccSt: %s\n", BccLineString[_cacheLine->getState()]);
-        stable = false;
+        throw ignoreEventException();
     }
     else if(!L1_){                  /* Check if topCC line is locked */
         CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_cacheLine->index()];
         assert(ccLine);
-        if(ccLine->inTransition() && _cmd != PutM && _cmd != PutE && _cmd != PutS){
+        if(ccLine->inTransition() && _cmd < 5 && _cmd > 8){  //InTransition && !PutM, !PutX, !PutS, !PutE
             d_->debug(_L1_,"Stalling request: Cache line in transition. TccSt: %s\n", TccLineString[ccLine->getState()]);
-            stable = false;
+            throw ignoreEventException();
         }
     }
-    return stable;
 }
 
 
@@ -432,11 +414,12 @@ TopCacheController::CCLine* Cache::getCCLine(int index){
 
 }
 
-void Cache::checkRequestValidity(MemEvent* event, Addr baseAddr) throw(stallException){
+void Cache::checkRequestValidity(MemEvent* event, Addr baseAddr) throw(ignoreEventException){
     Command cmd = event->getCmd();
-    assert(cmd != PutM && cmd != PutE);
+    assert(cmd != PutM && cmd != PutE && cmd != PutX);
     if(cmd == PutS) {
         d_->debug(_WARNING_,"Ignoring PutS request. \n");
+        throw ignoreEventException();
     }
 }
 
