@@ -632,32 +632,33 @@ Addr MemController::convertAddressToLocalAddress(Addr addr)
 void MemController::performRequest(DRAMReq *req)
 {
    
-	MemEvent *resp = req->reqEvent->makeResponse(this);
-    if(req->GetXRespType && req->cmd == GetX) resp->setCmd(GetXResp);
+	req->respEvent = req->reqEvent->makeResponse(this);
+    if(req->GetXRespType && req->cmd == GetX) req->respEvent->setCmd(GetXResp);
     Addr localAddr = convertAddressToLocalAddress(req->addr);
 
-    req->respEvent = resp;
-    resp->setSize(cacheLineSize);
+    req->respEvent->setSize(cacheLineSize);
     
     //TODO: in MESI, initial GetX response should be in E state (this is for performance optimization, not correctness)
     //TODO: No need to write memory on GetX... only on PutM
 	if ( req->isWrite || req->cmd == PutM) {  /* Write request to memory */
         dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
-		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
+		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
+            memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
         
-        printMemory(req, localAddr);
+        //printMemory(req, localAddr);
         
 	} else {
         dbg.debug(C,0,0,"READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
-		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) resp->getPayload()[i] = memBuffer[localAddr + i];
+		for ( size_t i = 0 ; i < req->respEvent->getSize() ; i++ )
+            req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
 
-        if(req->GetXRespType) resp->setGrantedState(M);
+        if(req->GetXRespType) req->respEvent->setGrantedState(M);
         else{
-            if(protocol) resp->setGrantedState(E);
-            else resp->setGrantedState(S);
+            if(protocol) req->respEvent->setGrantedState(E);
+            else req->respEvent->setGrantedState(S);
         }
 
-        printMemory(req, localAddr);
+        //printMemory(req, localAddr);
 	}
 }
 

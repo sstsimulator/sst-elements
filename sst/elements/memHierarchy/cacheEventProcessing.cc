@@ -137,7 +137,7 @@ void Cache::processIncomingEvent(SST::Event *ev){
     }
 }
   
-inline void Cache::processEvent(SST::Event* ev, bool reActivation) {
+void Cache::processEvent(SST::Event* ev, bool reActivation) {
     MemEvent *event = static_cast<MemEvent*>(ev); assert_msg(event, "Event is Null!!");
     assert(event);
     
