@@ -1,3 +1,14 @@
+// Copyright 2009-2014 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2014, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #define	PB_6_CTI_N	725415718ULL
 #define	PB_6_INT_N	204944803ULL
 #define	PB_25_INT_N	0ULL
