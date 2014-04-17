@@ -175,7 +175,7 @@ void EmberEngine::finish() {
 	// Tell the generator we are finishing the simulation
 	generator->finish(output);
 
-	if(printStats) {
+	if(printStats > 0) {
 		output->output("Ember End Point Completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
 		output->output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
 
@@ -188,8 +188,10 @@ void EmberEngine::finish() {
 		output->output("--> Average:        %" PRIu64 "\n",
 			histoSend->getItemCount() == 0 ? 0 :
 			(histoSend->getValuesSummed() / histoSend->getItemCount()));
-		output->output("- Distribution:\n");
-		printHistogram(histoSend);
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoSend);
+		}
 
 		output->output("- Histogram of recv times:\n");
 		output->output("--> Total time:     %" PRIu64 "\n", histoRecv->getValuesSummed());
@@ -197,8 +199,10 @@ void EmberEngine::finish() {
 		output->output("--> Average:        %" PRIu64 "\n",
 			histoRecv->getItemCount() == 0 ? 0 :
 			(histoRecv->getValuesSummed() / histoRecv->getItemCount()));
-		output->output("- Distribution:\n");
-		printHistogram(histoRecv);
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoRecv);
+		}
 
 		output->output("- Histogram of barrier times:\n");
 		output->output("--> Total time:     %" PRIu64 "\n", histoBarrier->getValuesSummed());
@@ -206,9 +210,10 @@ void EmberEngine::finish() {
 		output->output("--> Average:        %" PRIu64 "\n",
 			histoBarrier->getItemCount() == 0 ? 0 :
 			(histoBarrier->getValuesSummed() / histoBarrier->getItemCount()));
-		output->output("- Distribution:\n");
-		printHistogram(histoBarrier);
-
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoBarrier);
+		}
 	}
 }
 
