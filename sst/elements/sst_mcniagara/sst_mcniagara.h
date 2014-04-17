@@ -51,8 +51,8 @@ public:
 	string appDirectory;//="."
 	string inputfile;// = "INPUT";
 	string outputfile;
-	string iprobfile;//= "inst_prob.h";
-	string pcntfile;//= "perf_cnt.h";
+	string iprobfile;//= "inst_prob.data";
+	string pcntfile;//= "perf_cnt.data";
 	string tracefile;
 
 	//bookkeeping

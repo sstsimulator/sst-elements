@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "McNiagara.h"
-//#include "perf_cnt.h"           // Performance Counters data!
-//#include "inst_prob.h"          // Instruction Special Probabilities
+//#include "perf_cnt.data"           // Performance Counters data!
+//#include "inst_prob.data"          // Instruction Special Probabilities
 
 ///
 /// @brief Add main memory request to memory queue

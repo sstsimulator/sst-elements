@@ -11,9 +11,9 @@ clean:
 dox:
 	doxygen doxygen.cfg
 
-McNiagara.o: McNiagara.h OffCpuIF.h inst_prob.h perf_cnt.h mersenne.h 
-McNiagara-sim.o: McNiagara.h OffCpuIF.h inst_prob.h perf_cnt.h mersenne.h 
-#McNiagara-mem.o: McNiagara.h OffCpuIF.h inst_prob.h perf_cnt.h mersenne.h 
+McNiagara.o: McNiagara.h OffCpuIF.h inst_prob.data perf_cnt.data mersenne.h 
+McNiagara-sim.o: McNiagara.h OffCpuIF.h inst_prob.data perf_cnt.data mersenne.h 
+#McNiagara-mem.o: McNiagara.h OffCpuIF.h inst_prob.data perf_cnt.data mersenne.h 
 Dependency.o: Dependency.h
 MemoryModel.o: MemoryModel.h
 CycleTracker.o: CycleTracker.h 

@@ -113,8 +113,8 @@ namespace McNiagara{
 			} v;
 		};
 
-		ModelParam performanceCtr[20];  ///< parameters from perf_cnt.h (really 19)
-		ModelParam instructionProb[30]; ///< parameters from inst_prob.h (really 28)
+		ModelParam performanceCtr[20];  ///< parameters from perf_cnt.data (really 19)
+		ModelParam instructionProb[30]; ///< parameters from inst_prob.data (really 28)
 
 		enum InstructionProbIDs {
 			PB_6_CTI_N, PB_6_INT_N, PB_25_INT_N, PB_6_FGU_N, PB_30_FGU_N,

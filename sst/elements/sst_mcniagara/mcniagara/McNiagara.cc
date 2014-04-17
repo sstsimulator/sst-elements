@@ -46,8 +46,8 @@ using std::vector;
 #include "stringutil.h"
 #include "mersenne.h"           // The code for the MERSENNE PRNG
 
-//#include "perf_cnt.h"           // Performance Counters data!
-//#include "inst_prob.h"          // Instruction Special Probabilities
+//#include "perf_cnt.data"           // Performance Counters data!
+//#include "inst_prob.data"          // Instruction Special Probabilities
 using namespace McNiagara;
 	//
 	// Name strings for the parameters read in from files
@@ -1050,9 +1050,9 @@ static string helpMessage =
 		--ihist filename  use named file for histogram input file\n\
 		(default: INPUT)\n\
 		--iprob filename  use named file for instruction probabilities\n\
-		(default: inst_prob.h)\n\
+		(default: inst_prob.data)\n\
 		--perf  filename  use named file for performance counter data\n\
-		(default: perf_cnt.h)\n\
+		(default: perf_cnt.data)\n\
 		--trace filename  use named file for trace-drive simulation\n\
 		(default: perform stochastic simulation)\n\
 		--outf  filename  use named file for output results\n\
@@ -1080,8 +1080,8 @@ int main(int argc, char **argv)
 	McNiagara::McNiagara cpu;
 	string inputfile = "INPUT";//char *inputfile = "INPUT";
 	string outputfile; //char *outputfile = 0;
-	string iprobfile = "inst_prob.h";//char *iprobfile = "inst_prob.h";
-	string pcntfile = "perf_cnt.h";//char *pcntfile = "perf_cnt.h";
+	string iprobfile = "inst_prob.data";//char *iprobfile = "inst_prob.data";
+	string pcntfile = "perf_cnt.data";//char *pcntfile = "perf_cnt.data";
 	string tracefile; //char *tracefile = 0;    // default: run monte carlo
 	unsigned long seed = 0; // default: select time-random seed
 	i = 1;

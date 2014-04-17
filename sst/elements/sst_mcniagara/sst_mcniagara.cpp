@@ -70,13 +70,13 @@ SSTMcNiagara::SSTMcNiagara(ComponentId_t id, Params& params):Component(id){
 	//cout<<"  Reading inputhist"<<endl;
 	if ( params.find("inputHistogram") == params.end() ) inputfile="INPUT";
 	else inputfile = params[ "inputHistogram" ];
-	//instprob (default="inst_prob.h")
+	//instprob (default="inst_prob.data")
 	//cout<<"  Reading instprob"<<endl;
-	if ( params.find("instructionProbabilityFile") == params.end() ) iprobfile="inst_prob.h";
+	if ( params.find("instructionProbabilityFile") == params.end() ) iprobfile="inst_prob.data";
 	else iprobfile = params[ "instructionProbabilityFile" ];
-	//performanceCounterFile (default="perf_cnt.h")
+	//performanceCounterFile (default="perf_cnt.data")
 	//cout<<"  Reading performanceCounterFile"<<endl;
-	if ( params.find("performanceCounterFile") == params.end() ) pcntfile="perf_cnt.h";
+	if ( params.find("performanceCounterFile") == params.end() ) pcntfile="perf_cnt.data";
 	else pcntfile = params[ "performanceCounterFile" ];
 	//traceFile (default=null)
 	//cout<<"  Reading traceFile"<<endl;

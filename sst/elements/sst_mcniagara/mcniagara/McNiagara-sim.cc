@@ -23,7 +23,7 @@ using std::endl;
 #include "McNiagara.h"
 
 namespace McNiagara{
-//#include "inst_prob.h"   // Instruction Special Probabilities
+//#include "inst_prob.data"   // Instruction Special Probabilities
 // NOTE: the inst_prob defs are now read in as a data file
 //       and accessed through the instructionProb[] array
 // NOTE2: all of the commented out accesses have NOT been updated

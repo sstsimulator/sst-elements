@@ -11,8 +11,8 @@
 
 // By:Waleed Al-Kohlani
 
-#include "perf_cnt.h"           // Performance Counters data!
-#include "inst_prob.h"          // Instruction Special Probabilities
+#include "perf_cnt.data"           // Performance Counters data!
+#include "inst_prob.data"          // Instruction Special Probabilities
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

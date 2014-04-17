@@ -27,13 +27,13 @@
 				INPUT
 			</inputHistogram>
 			<instructionProbabilityFile><!-- use 'name' as insn mix input file -->
-				inst_prob.h
+				inst_prob.data
 			</instructionProbabilityFile>
 			<traceFile><!-- use 'name' as input instruction trace file -->
 			sample_trace.txt
 			</traceFile>
 			<performanceCounterFile><!-- use 'name' as an i-mix-only file (new format) -->
-				perf_cnt.h
+				perf_cnt.data
 			</performanceCounterFile>
 			<outputFile><!-- use 'name' as instruction size distribution file (instrSizeDistr.txt) -->
 			</outputFile>

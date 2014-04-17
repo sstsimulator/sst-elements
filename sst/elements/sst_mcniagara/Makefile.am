@@ -33,8 +33,8 @@ libsst_mcniagara_la_SOURCES = \
 EXTRA_DIST = \
 	test1.xml \
         test2.xml \
-	mcniagara/inst_prob.h \
-	mcniagara/perf_cnt.h \
+	mcniagara/inst_prob.data \
+	mcniagara/perf_cnt.data \
 	mcniagara/INPUT \
 	mcniagara/sample_trace.txt
 
