@@ -41,6 +41,8 @@ libsst_mcopteron_la_SOURCES = \
 
 EXTRA_DIST = \
 	test1.xml \
-        test2.xml
+        test2.xml \
+        cpuconfig.ini \
+        appconfig.ini
 
 libsst_mcopteron_la_LDFLAGS = -module -avoid-version
