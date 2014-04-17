@@ -175,13 +175,36 @@ static Component* create_SSTMcOpteron(SST::ComponentId_t id,SST::Params& params)
 	return new SSTMcOpteron(id,params);
 }
 
+static const ElementInfoParam mcopteron_params[] = {
+  {"debugLevel","Print differen levels of debugging info (1-3)","1"},
+  {"cycles","Number of cycles to simulate","100000"},
+  {"converge","Run until CPI converges?","0"},
+  {"defFile","Instruction definition file","opteron-insn.txt"},
+  {"debugCycles","What cycle to start debug output","0"},
+  {"printStaticMix","Print out static input instruction mix at begining of simulation","0"},
+  {"printInstructionMix","Print out simulated instruction mix at end","0"},
+  {"mixFile","Instruction mix input file",""},
+  {"appDirectory","What directory to look for files in","./mcopteron"},
+  {"seed","Seed for random number generator","100"},
+  {"traceFile","Instruction Trace file, trumps instruction mix",""},
+  {"traceOut","Generate a token trace to stderr?",""},
+  {"instructionSizeFile","Instruction size distribution file","instrSizeDistr.txt"},
+  {"fetchSizeFile","Fetch size distribution file","fetchSizeDistr.txt"},
+  {"transfile","Markov transis file, trumps instruction mix",""},
+  {"repeatTrace","Loop tracefile?","0"},
+  {NULL,NULL,NULL}
+};
+
 static const ElementInfoComponent components[] = {
 	{ 	"SSTMcOpteron",
 		"Multicore Opteron Component",
 		NULL,
-		create_SSTMcOpteron
+		create_SSTMcOpteron,
+    mcopteron_params,
+    NULL,
+    COMPONENT_CATEGORY_PROCESSOR
 	},
-	{ NULL, NULL, NULL, NULL }
+	{ NULL, NULL, NULL, NULL, NULL, NULL,0 }
 };
 
 //extern "C" {
@@ -189,6 +212,9 @@ static const ElementInfoComponent components[] = {
 		"SSTMcOpteron",
 		"Multicore Opteron Component",
 		components,
+    NULL,
+    NULL,
+    NULL
 	};
 //}
 
