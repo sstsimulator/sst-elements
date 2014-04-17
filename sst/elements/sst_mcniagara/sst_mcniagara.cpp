@@ -146,11 +146,26 @@ static Component* create_SSTMcNiagara(SST::ComponentId_t id,SST::Params& params)
 	return new SSTMcNiagara(id,params);
 }
 
+static const ElementInfoParam mcniagara_params[] = {
+  {"Debug","Set the debug level","0"},
+  {"seed","Set RNG seed","100"},
+  {"cycles","set number of cycles to simulate","100000"},
+  {"converge","Run until CPI converges?","0"},
+  {"appDirector","What directory to look for files in",""},
+  {"inputHistogram","The input histogram",""},
+  {"instructionProbabiltiyFile","Instruction mix input file",""},
+  {"tracefile","Use for instruction trace file, trumps instruction mix",""},
+  {"performanceCounterFile","used as an instruction mix only file",""},
+  {"outptFile","an output file",""},
+  {NULL,NULL,NULL}
+};
+
 static const ElementInfoComponent components[] = {
 	{ 	"SSTMcNiagara",
 		"Multicore Niagara Component",
 		NULL,
-		create_SSTMcNiagara
+		create_SSTMcNiagara,
+    mcniagara_params,
 	},
 	{ NULL, NULL, NULL, NULL }
 };
@@ -159,4 +174,7 @@ ElementLibraryInfo sst_mcniagara_eli = {
 	"SSTMcNiagara",
 	"Multicore Niagara Component",
 	components,
+  NULL,
+  NULL,
+  NULL
 };
