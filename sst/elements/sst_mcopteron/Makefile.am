@@ -43,6 +43,12 @@ EXTRA_DIST = \
 	test1.xml \
         test2.xml \
         cpuconfig.ini \
-        appconfig.ini
+        appconfig.ini \
+        mcopteron/agner-insn.txt \
+        mcopteron/instrSizeDistr.txt \
+        mcopteron/instrMix.txt \
+        mcopteron/instrSizeDistr.txt \
+        mcopteron/transition_prob.txt \
+        mcopteron/usedist_new.all
 
 libsst_mcopteron_la_LDFLAGS = -module -avoid-version
