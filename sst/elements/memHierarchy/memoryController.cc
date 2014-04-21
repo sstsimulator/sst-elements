@@ -249,70 +249,52 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 #else
 		traceFP = fopen(traceFile.c_str(), "w+");
 #endif
-    } else {
-        traceFP = NULL;
-    }
+    } else  traceFP = NULL;
 
 
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
-	if ( 0 == ramSize )
-		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
-	memSize = ramSize * (1024*1024ul);
-	rangeStart = (Addr)params.find_integer("range_start", 0);
-	interleaveSize = (Addr)params.find_integer("interleave_size", 0);
-    interleaveSize *= 1024;
-	interleaveStep = (Addr)params.find_integer("interleave_step", 0);
-    interleaveStep *= 1024;
-    if ( interleaveStep > 0 && interleaveSize > 0 ) {
-        numPages = memSize / interleaveSize;
-    } else {
-        numPages = 0;
-    }
+	if ( 0 == ramSize ) _abort(MemController, "Must specify RAM size (mem_size) in MB\n");
+	
+    memSize         = ramSize * (1024*1024ul);
+	rangeStart      = (Addr)params.find_integer("range_start", 0);
+	interleaveSize  = (Addr)params.find_integer("interleave_size", 0);
+    interleaveSize  *= 1024;
+	interleaveStep  = (Addr)params.find_integer("interleave_step", 0);
+    interleaveStep  *= 1024;
+    if ( interleaveStep > 0 && interleaveSize > 0 ) numPages = memSize / interleaveSize;
+    else numPages = 0;
 
-	std::string memoryFile = params.find_string("memory_file", NO_STRING_DEFINED);
 
-	std::string clock_freq = params.find_string("clock", "");
+	std::string memoryFile  = params.find_string("memory_file", NO_STRING_DEFINED);
+	std::string clock_freq  = params.find_string("clock", "");
+    cacheLineSize           = params.find_integer("request_width", 64);
+    divert_DC_lookups       = params.find_integer("divert_DC_lookups", 0);
+    std::string backendName = params.find_string("backend", "memHierarchy.simpleMem");
 
-    cacheLineSize = params.find_integer("request_width", 64);
-    
-    requestWidth = cacheLineSize;
-    requestSize = cacheLineSize;
+    requestWidth    = cacheLineSize;
+    requestSize     = cacheLineSize;
 
-    registerClock(clock_freq, new Clock::Handler<MemController>(this,
-				&MemController::clock));
+    registerClock(clock_freq, new Clock::Handler<MemController>(this, &MemController::clock));
     registerTimeBase("1 ns", true);
 
-    // do we divert directory to the self-link?
-    divert_DC_lookups = params.find_integer("divert_DC_lookups", 0);
 
-    // check for and initialize dramsim
-    std::string backendName = params.find_string("backend", "memHierarchy.simpleMem");
     backend = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
-    if ( !backend ) {
-        _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
-    }
-
-
+    if (!backend)  _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
 
 	int mmap_flags = MAP_PRIVATE;
 	if ( NO_STRING_DEFINED != memoryFile ) {
 		backing_fd = open(memoryFile.c_str(), O_RDWR);
-		if ( backing_fd < 0 ) {
-			_abort(MemController, "Unable to open backing file!\n");
-		}
+		if ( backing_fd < 0 ) _abort(MemController, "Unable to open backing file!\n");
 	} else {
-		backing_fd = -1;
-		mmap_flags |= MAP_ANON;
+		backing_fd  = -1;
+		mmap_flags  |= MAP_ANON;
 	}
 
 	memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, mmap_flags, backing_fd, 0);
-	if ( !memBuffer ) {
-		_abort(MemController, "Unable to MMAP backing store for Memory\n");
-	}
+	if ( !memBuffer ) _abort(MemController, "Unable to MMAP backing store for Memory\n");
 
-	upstream_link = configureLink( "snoop_link", "50 ps",
-			new Event::Handler<MemController>(this, &MemController::handleBusEvent));
-    use_bus = (NULL != upstream_link );
+	upstream_link   = configureLink( "snoop_link", "50 ps", new Event::Handler<MemController>(this, &MemController::handleBusEvent));
+    use_bus         = (NULL != upstream_link );
 
     if ( !upstream_link ) {
         std::string link_lat = params.find_string("direct_link_latency", "100 ns");
@@ -328,11 +310,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 
     respondToInvalidates = false;
 
-    numReadsSupplied = 0;
-    numReadsCanceled = 0;
-    numWrites = 0;
-    numReqOutstanding = 0;
-    numCycles = 0;
+    numReadsSupplied    = 0;
+    numReadsCanceled    = 0;
+    numWrites           = 0;
+    numReqOutstanding   = 0;
+    numCycles           = 0;
 }
 
 
@@ -380,9 +362,7 @@ void MemController::setup(void){
 
 void MemController::finish(void){
 	munmap(memBuffer, memSize);
-	if ( -1 != backing_fd ) {
-		close(backing_fd);
-	}
+	if ( -1 != backing_fd ) close(backing_fd);
 
     backend->finish();
 
@@ -392,12 +372,7 @@ void MemController::finish(void){
             "\t # Writes:            %"PRIu64"\n"
             "\t # Canceled Reads:    %"PRIu64"\n"
             "\t # Avg. Requests out: %.3f\n",
-            getName().c_str(),
-            numReadsSupplied,
-            numWrites,
-            numReadsCanceled,
-            float(numReqOutstanding)/float(numCycles)
-);
+            getName().c_str(), numReadsSupplied, numWrites, numReadsCanceled, float(numReqOutstanding)/float(numCycles));
 
 }
 
@@ -407,26 +382,18 @@ void MemController::handleEvent(SST::Event *event){
     dbg.output("Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
 
     switch ( ev->getCmd() ) {
-    /* Poseidon */
-    case PutM: case GetS: case GetSEx:
-        addRequest(ev);
-        break;
-    case PutS: case PutE:
-        break;
-    case GetX:
-        if ( use_bus ) // don't cancel from what we sent.
-            cancelEvent(ev);
-        if ( !use_bus || ev->queryFlag(MemEvent::F_WRITEBACK) )
+        case PutM: case GetS: case GetSEx: case GetX:
             addRequest(ev);
-        break;
-    default:
-        _abort(MemController, "Command not supported");
-        break;
+            break;
+        case PutS: case PutE:
+            break;
+        default:
+            _abort(MemController, "Command not supported");
+            break;
     }
     delete event;
 }
 
-void MemController::handleBusEvent(SST::Event *event){}
 
 void MemController::addRequest(MemEvent *ev){
 	dbg.debug(C,6,0, "New Memory Request for %"PRIx64"\n", ev->getAddr());
@@ -614,4 +581,6 @@ void MemController::handleMemResponse(DRAMReq *req){
 void MemController::sendBusPacket(Bus::key_t key){}
 
 void MemController::sendBusCancel(Bus::key_t key) {}
+
+void MemController::handleBusEvent(SST::Event *event){}
 

@@ -106,10 +106,13 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     d2_ = new Output();
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
 
-    stats_ = params.find_integer("statistics", 0);
-    idleMax_ = params.find_integer("idle_max", 6);
-    accessLatency_ = params.find_integer("access_latency_cycles", -1);
-    string prefetcher = params.find_string("prefetcher");
+    stats_              = params.find_integer("statistics", 0);
+    idleMax_            = params.find_integer("idle_max", 10);
+    accessLatency_      = params.find_integer("access_latency_cycles", -1);
+    string prefetcher   = params.find_string("prefetcher");
+    
+    
+    /* Listener */
     if (prefetcher.empty()) listener_ = new CacheListener();
     else {
         listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
@@ -118,17 +121,21 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     listener_->setOwningComponent(this);
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
+
     /* MSHR */
-    mshr_ = new MSHR(this, MSHRSize_);
-    mshrUncached_ = new MSHR(this, MSHRSize_);
+    mshr_               = new MSHR(this, MSHRSize_);
+    mshrUncached_       = new MSHR(this, MSHRSize_);
+    
     /* Links */
+    lowNetPorts_        = new vector<Link*>();
+    highNetPorts_       = new vector<Link*>();
+    
+    /* Clock */
+    clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
+    defaultTimeBase_    = registerClock(_cacheFrequency, clockHandler_);
+    
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
-    lowNetPorts_ = new vector<Link*>();
-    highNetPorts_ = new vector<Link*>();
-    
-    clockHandler_ = new Clock::Handler<Cache>(this, &Cache::clockTick);
-    defaultTimeBase_ = registerClock(_cacheFrequency, clockHandler_);
-    
+
     if (dirControllerExists_) {
         assert(isPortConnected("directory"));
         MemNIC::ComponentInfo myInfo;
@@ -148,21 +155,24 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     
     configureLinks();
 
-    clockOn_ = true;
-    idleCount_ = 0;
-    memNICIdleCount_ = 0;
-    memNICIdle_ = false;
 
     /* Coherence Controllers */
     sharersAware_ = (L1_) ? false : true;
     (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, highNetPorts_);
     bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, L1_, directoryLink_);
-    /* Replacement Manager */
+   
+     /* Replacement Manager */
     replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
     
-
-    timestamp_ = 0;
-    STAT_GetSExReceived_ = 0, STAT_InvalidateWaitingForUserLock_ = 0, STAT_TotalInstructionsRecieved_ = STAT_NonCoherenceReqsReceived_ = 0;
+    clockOn_                            = true;
+    idleCount_                          = 0;
+    memNICIdleCount_                    = 0;
+    memNICIdle_                         = false;
+    timestamp_                          = 0;
+    STAT_GetSExReceived_                = 0;
+    STAT_InvalidateWaitingForUserLock_  = 0;
+    STAT_TotalInstructionsRecieved_     = 0;
+    STAT_NonCoherenceReqsReceived_      = 0;
 }
 
 

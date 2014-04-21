@@ -89,7 +89,7 @@ public:
         Status_t status;
 
         Addr addr;
-        uint32_t num_req; // size / bus width;
+        uint32_t num_req;
 
         DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize) :
             reqEvent(new MemEvent(ev)), respEvent(NULL), responseCmd(responseCmd),
@@ -102,7 +102,7 @@ public:
             if(cmd == GetX) setGetXRespType();
 
             setSize(cacheLineSize);
-            addr = ev->getBaseAddr();            
+            addr = ev->getBaseAddr();
             
 #if 0
             printf(
