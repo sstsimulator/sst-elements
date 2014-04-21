@@ -91,26 +91,18 @@ public:
         Addr addr;
         uint32_t num_req; // size / bus width;
 
-        DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize, Command responseCmd) :
+        DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize) :
             reqEvent(new MemEvent(ev)), respEvent(NULL), responseCmd(responseCmd),
             canceled(false), isACK(false), GetXRespType(false), amt_in_process(0), amt_processed(0), status(NEW){
             
-            if(responseCmd == NULLCMD){
-                isWrite = true;
-                setSize(ev->getSize());
-                addr = ev->getAddr();
-            }
-            else if(responseCmd == GetSResp || responseCmd == GetXResp){
-                isWrite = false;
-                setSize(cacheLineSize);
-                addr = ev->getBaseAddr();
-                if(GetXResp) setGetXRespType();
-            }
-            
             cmd = ev->getCmd();
-            //eventAddr = ev->getAddr();
-            //eventBaseAddr = ev->getBaseAddr();
-            
+            if(cmd == PutM) isWrite = true;
+            else isWrite = false;
+
+            if(cmd == GetX) setGetXRespType();
+
+            setSize(cacheLineSize);
+            addr = ev->getBaseAddr();            
             
 #if 0
             printf(
