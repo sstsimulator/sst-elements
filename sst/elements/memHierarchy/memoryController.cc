@@ -293,14 +293,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 	memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, mmap_flags, backing_fd, 0);
 	if ( !memBuffer ) _abort(MemController, "Unable to MMAP backing store for Memory\n");
 
-	upstream_link   = configureLink( "snoop_link", "50 ps", new Event::Handler<MemController>(this, &MemController::handleBusEvent));
-    use_bus         = (NULL != upstream_link );
-
-    if ( !upstream_link ) {
-        std::string link_lat = params.find_string("direct_link_latency", "100 ns");
-        upstream_link = configureLink( "direct_link", link_lat,
-                new Event::Handler<MemController>(this, &MemController::handleEvent));
-    }
+    std::string link_lat = params.find_string("direct_link_latency", "100 ns");
+    upstream_link = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
     std::string protocolStr = params.find_string("coherence_protocol");
     assert(!protocolStr.empty());
@@ -382,16 +376,22 @@ void MemController::handleEvent(SST::Event *event){
     dbg.output("Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
 
     switch ( ev->getCmd() ) {
-        case PutM: case GetS: case GetSEx: case GetX:
+        case PutM:
+        case GetX:
+        case GetS:
+        case GetSEx:
             addRequest(ev);
             break;
-        case PutS: case PutE:
+        case PutS:
+        case PutE:
             break;
         default:
             _abort(MemController, "Command not supported");
             break;
     }
     delete event;
+    
+    cout << flush;
 }
 
 
@@ -408,24 +408,6 @@ void MemController::addRequest(MemEvent *ev){
 }
 
 
-void MemController::cancelEvent(MemEvent* ev){
-	dbg.output(CALL_INFO, "Looking to cancel for (%"PRIx64")\n", ev->getAddr());
-    for ( size_t i = 0 ; i < requests.size() ; ++i ) {
-        if ( requests[i]->isSatisfiedBy(ev) ) {
-            if ( !requests[i]->isWrite && !requests[i]->canceled ) {
-                requests[i]->canceled = true;
-                numReadsCanceled++;
-                if ( NULL != requests[i]->respEvent )
-                    dbg.debug(CALL_INFO,6,0, "Canceling request %"PRIx64").\n", requests[i]->addr);
-                else
-                    dbg.debug(CALL_INFO,6,0, "Canceling request %"PRIx64" (Not yet processed).\n", requests[i]->addr);
-                if ( DRAMReq::RETURNED == requests[i]->status ) {
-                    sendBusCancel(requests[i]->respEvent->getID());
-                }
-            }
-        }
-    }
-}
 
 bool MemController::clock(Cycle_t cycle){
     backend->clock();
@@ -517,17 +499,12 @@ void MemController::performRequest(DRAMReq *req){
 
     Addr localAddr = convertAddressToLocalAddress(req->addr);
 
-    if ( req->isWrite || req->cmd == PutM) {  /* Write request to memory */
+    if (req->cmd == PutM) {  /* Write request to memory */
         dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
             memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
-        
-        
 	} else {
     	req->respEvent = req->reqEvent->makeResponse(this);
-        if(req->GetXRespType && req->cmd == GetX){
-            req->respEvent->setCmd(GetXResp);
-        }
         req->respEvent->setSize(cacheLineSize);
 
     
@@ -535,7 +512,10 @@ void MemController::performRequest(DRAMReq *req){
 		for ( size_t i = 0 ; i < req->respEvent->getSize() ; i++ )
             req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
 
-        if(req->GetXRespType) req->respEvent->setGrantedState(M);
+        if(req->reqEvent->getCmd() == GetX){
+            //if(protocol) req->respEvent->setGrantedState(E);
+             req->respEvent->setGrantedState(M);
+        }
         else{
             if(protocol) req->respEvent->setGrantedState(E);
             else req->respEvent->setGrantedState(S);
@@ -546,7 +526,7 @@ void MemController::performRequest(DRAMReq *req){
 
 
 void MemController::sendResponse(DRAMReq *req){
-    if(!req->isWrite){
+    if(req->reqEvent->getCmd() != PutM){
         upstream_link->send(req->respEvent);
         numWrites++;
     }
@@ -562,9 +542,10 @@ void MemController::printMemory(DRAMReq *req, Addr localAddr){
 }
 
 void MemController::handleMemResponse(DRAMReq *req){
-    dbg.debug(CALL_INFO, 6,0, "Finishing processing for req %"PRIx64"\n", req->addr);
     req->amt_processed += requestSize;
     if (req->amt_processed >= req->size) req->status = DRAMReq::RETURNED;
+
+    dbg.debug(CALL_INFO, 6,0, "Finishing processing for req %"PRIx64" %s\n", req->addr, req->status == DRAMReq::RETURNED ? "RETURNED" : "");
 
     if ( DRAMReq::RETURNED == req->status ) {
         if (!req->canceled) sendResponse(req);
@@ -577,6 +558,7 @@ void MemController::handleMemResponse(DRAMReq *req){
 
 }
 
+void MemController::cancelEvent(MemEvent* ev){}
 
 void MemController::sendBusPacket(Bus::key_t key){}
 

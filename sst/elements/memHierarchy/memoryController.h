@@ -68,19 +68,17 @@ public:
         void setIsWrite(bool write){ isWrite = write; }
         void setSize(size_t _size){ size = _size; }
         void setAddr(Addr _addr){ addr = _addr; }
-        void setGetXRespType() { GetXRespType = true; }
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
         MemEvent *reqEvent;
         MemEvent *respEvent;
         bool isWrite;
-        Command responseCmd;
         bool canceled;
         bool isACK;
-        
+        bool responseNeeded;
+
         int respSize;
         Command cmd;
-        bool GetXRespType;
         
         size_t size;
         
@@ -92,14 +90,14 @@ public:
         uint32_t num_req;
 
         DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize) :
-            reqEvent(new MemEvent(ev)), respEvent(NULL), responseCmd(responseCmd),
-            canceled(false), isACK(false), GetXRespType(false), amt_in_process(0), amt_processed(0), status(NEW){
+            reqEvent(new MemEvent(ev)), respEvent(NULL),
+            canceled(false), isACK(false), responseNeeded(false), amt_in_process(0), amt_processed(0), status(NEW){
             
             cmd = ev->getCmd();
             if(cmd == PutM) isWrite = true;
             else isWrite = false;
-
-            if(cmd == GetX) setGetXRespType();
+            
+            if(cmd == GetS || cmd == GetSEx || cmd == GetX) responseNeeded = true;
 
             setSize(cacheLineSize);
             addr = ev->getBaseAddr();

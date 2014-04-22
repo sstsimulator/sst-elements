@@ -20,7 +20,7 @@ Difference from sdl4-1.xml:  DRAMSim
 </variables>
 
 <config>
-    stopAtCycle=200ms
+    stopAtCycle=300000ns
 </config>
 
 

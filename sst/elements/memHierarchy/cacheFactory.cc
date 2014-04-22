@@ -107,7 +107,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
 
     stats_              = params.find_integer("statistics", 0);
-    idleMax_            = params.find_integer("idle_max", 10);
+    idleMax_            = params.find_integer("idle_max", 10000);
     accessLatency_      = params.find_integer("access_latency_cycles", -1);
     string prefetcher   = params.find_string("prefetcher");
     

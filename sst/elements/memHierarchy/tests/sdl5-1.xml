@@ -20,7 +20,7 @@ Topology:
 </variables>
 
 <config>
-    stopAtCycle=200ms
+    stopAtCycle=300000ns
 </config>
 
 <param_include>

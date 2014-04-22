@@ -181,6 +181,7 @@ void Cache::processEvent(SST::Event* ev, bool reActivation) {
         _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);
     }
 
+    cout << flush;
     //catch(mshrException const& e){
     //    _abort(MemHierarchy::Cache, "Limited MSHR is not supported yet, increment the number of MSHR entries\n");
         //topCC_->sendNACK(event);

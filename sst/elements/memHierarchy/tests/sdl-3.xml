@@ -18,7 +18,7 @@ Topology:
 </variables>
 
 <config>
-    stopAtCycle=200ms
+    stopAtCycle=200000ns
 </config>
 
 <sst>
