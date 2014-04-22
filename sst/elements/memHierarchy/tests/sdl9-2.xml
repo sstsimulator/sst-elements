@@ -16,6 +16,9 @@ Uncached Requests
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
 
+<config>
+    stopAtCycle=500000ns
+</config>
 
 <variables>
 	<lat> 1ns </lat>
