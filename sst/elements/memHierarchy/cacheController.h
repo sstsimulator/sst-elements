@@ -100,8 +100,6 @@ public:
     };
     
 
-    
-    bool clockTick(Cycle_t);
     virtual void init(unsigned int);
     virtual void setup(void);
     virtual void finish(void){
@@ -217,6 +215,49 @@ private:
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool reActivation);
     inline LinkId_t lookupNode(const std::string &name);
     inline void mapNodeEntry(const std::string &name, LinkId_t id);
+
+    bool clockTick(Cycle_t time) {
+        timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
+        
+        if(dirControllerExists_) memNICIdle_ = directoryLink_->clock();
+        
+        bool topCCBusy      = topCC_->queueBusy();
+        bool bottomCCBusy   = bottomCC_->queueBusy();
+        
+        if(topCCBusy)     topCC_->sendOutgoingCommands();
+        if(bottomCCBusy)  bottomCC_->sendOutgoingCommands();
+
+        bool cacheControllerBusy = !incomingEventQueue_.empty();
+        bool retryBufferBusy     = !retryQueueNext_.empty();
+        
+
+        if(cacheControllerBusy){
+            processEvent(incomingEventQueue_.front().first, false);
+            incomingEventQueue_.pop();
+            idleCount_ = 0;
+        }
+        else if(UNLIKELY(retryBufferBusy)){
+            retryQueue_ = retryQueueNext_;
+            retryQueueNext_.clear();
+            for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
+                d_->debug(_L1_,"RETRYING EVENT\n");
+                processEvent(*it, true);
+                retryQueue_.erase(it);
+            }
+            idleCount_ = 0;
+        }
+        else if(!topCCBusy && !bottomCCBusy && clockOn_ && !dirControllerExists_){
+            idleCount_++;
+            if(dirControllerExists_ == false && idleCount_ > idleMax_){
+                clockOn_ = false;
+                idleCount_ = 0;
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
 };
 
 }}

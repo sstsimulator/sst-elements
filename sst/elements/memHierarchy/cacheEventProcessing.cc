@@ -30,45 +30,6 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-bool Cache::clockTick(Cycle_t time) {
-    timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
-    
-    if(dirControllerExists_) memNICIdle_ = directoryLink_->clock();
-    /*if(memNICIdle_) memNICIdleCount_++;
-    else memNICIdleCount_ = 0;*/
-    
-    topCC_->sendOutgoingCommands();
-    bottomCC_->sendOutgoingCommands();
-    
-    if(UNLIKELY(!retryQueueNext_.empty() && timestamp_ % 20 == 0)){
-        retryQueue_ = retryQueueNext_;
-        retryQueueNext_.clear();
-        for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
-            d_->debug(_L1_,"RETRYING EVENT\n");
-            processEvent(*it, true);
-            retryQueue_.erase(it);
-        }
-    }
-    else if(!incomingEventQueue_.empty()){
-        processEvent(incomingEventQueue_.front().first, false);
-        incomingEventQueue_.pop();
-        idleCount_ = 0;
-    }
-    else if(clockOn_ && dirControllerExists_ == false){
-        ///std::cout << "idleCount " << idleCount_ << std::endl;
-        idleCount_++;
-    }
-    
-    
-    if(idleCount_ > idleMax_ && dirControllerExists_ == false){
-        //std::cout << "idleMax " << idleMax_ << " turning off clock" << std::endl;
-        clockOn_ = false;
-        idleCount_ = 0;
-        return true;
-    }
-    
-    return false;
-}
 
 void Cache::init(unsigned int phase){
     

@@ -155,15 +155,6 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     
     configureLinks();
 
-
-    /* Coherence Controllers */
-    sharersAware_ = (L1_) ? false : true;
-    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, L1_, directoryLink_);
-   
-     /* Replacement Manager */
-    replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
-    
     clockOn_                            = true;
     idleCount_                          = 0;
     memNICIdleCount_                    = 0;
@@ -173,6 +164,16 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     STAT_InvalidateWaitingForUserLock_  = 0;
     STAT_TotalInstructionsRecieved_     = 0;
     STAT_NonCoherenceReqsReceived_      = 0;
+
+    
+    /* Coherence Controllers */
+    sharersAware_ = (L1_) ? false : true;
+    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, highNetPorts_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, L1_, directoryLink_);
+   
+    /* Replacement Manager */
+    replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
+
 }
 
 

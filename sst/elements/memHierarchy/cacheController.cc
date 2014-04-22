@@ -41,9 +41,7 @@ using namespace SST::MemHierarchy;
  * It appropriately redirects requests to Top and/or Bottom controllers.  */
 void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation){
     try{
-    
         int lineIndex = cArray_->find(baseAddr, (!reActivation && MemEvent::isDataRequest(cmd)));  //Update only if it's NOT reActivation
-        
         if(isCacheMiss(lineIndex)){                                             /* Miss.  If needed, evict candidate */
             checkRequestValidity(event, baseAddr);
             allocateCacheLine(event, baseAddr, lineIndex);
@@ -52,7 +50,6 @@ void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reAc
         CacheLine* cacheLine = getCacheLine(lineIndex);
         checkCacheLineIsStable(cacheLine, cmd);                                 /* If cache line is locked or in transition, wait until it is stable */
         
-        /* Time to process request */
         bottomCC_->handleAccess(event, cacheLine, cmd);                         /* upgrade or fetch line from higher level caches */
         if(cacheLine->inTransition()) throw stallException();                   /* stall request if upgrade is in progress */
         
@@ -61,12 +58,9 @@ void Cache::processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reAc
     
     }
     catch(stallException const& e){
-        mshr_->insert(baseAddr, event);
-        /* This request needs to wait for another request to finish.  This event is now in the  MSHR waiting to 'reactive'
-        upon completion of the outstanding request in progress  */
+        mshr_->insert(baseAddr, event);                                        /* This request needs to wait for another request to finish.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
     }
     catch(ignoreEventException const& e){}
-    
 }
 
 

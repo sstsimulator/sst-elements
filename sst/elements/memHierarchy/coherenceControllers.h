@@ -53,6 +53,11 @@ public:
     uint64_t   timestamp_;
     uint64_t   accessLatency_;
     virtual void sendOutgoingCommands() = 0;
+    queue<response> outgoingEventQueue_;
+    
+    bool queueBusy(){
+        return (!outgoingEventQueue_.empty());
+    }
     
 protected:
     CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize): timestamp_(0), accessLatency_(1),
@@ -63,7 +68,6 @@ protected:
     uint       lineSize_;
     int        sentEvents_;
     bool       L1_;
-    queue<response> outgoingEventQueue_;
 };
 
 

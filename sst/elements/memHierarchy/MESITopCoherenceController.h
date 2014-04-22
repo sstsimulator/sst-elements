@@ -109,7 +109,6 @@ public:
     
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);
-    //void sendOutgoingCommands(){ TopCacheController::sendOutgoingCommands(); }
     void processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
     void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
     void processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _childId, bool& _ret);

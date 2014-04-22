@@ -65,6 +65,7 @@ bool Bus::clockTick(Cycle_t time) {
         else sendSingleEvent(event);
         
         eventQueue_.pop();
+        idleCount_ = 0;
     }
     else if(busOn_) idleCount_++;
     
