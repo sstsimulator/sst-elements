@@ -19,10 +19,6 @@ Difference from sdl4-1.xml:  DRAMSim
 	<buslat> 10 ns </buslat>
 </variables>
 
-<config>
-    stopAtCycle=300000ns
-</config>
-
 
 <param_include>
     <cpuParams>
