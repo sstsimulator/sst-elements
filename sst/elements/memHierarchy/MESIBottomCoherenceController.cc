@@ -58,6 +58,7 @@ void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command
     case GetSEx:
         if(modifiedStateNeeded(_event, _cacheLine)) return;
         processGetXRequest(_event, _cacheLine, _cmd);
+        GetSExReqsReceived_++;
         break;
     case PutS:
         PUTSReqsReceived_++;
@@ -73,11 +74,6 @@ void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command
     default:
         _abort(MemHierarchy::CacheController, "Wrong command type!");
     }
-}
-
-
-void MESIBottomCC::handlePutAck(MemEvent* event, CacheLine* cacheLine){
-    cacheLine->decAckCount();
 }
 
 
@@ -97,7 +93,7 @@ void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Comma
 
 }
 
-void MESIBottomCC::handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry){
+void MESIBottomCC::handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry){
     cacheLine->decAckCount();
     printData(d_, "Response Data", &ackEvent->getPayload());
     
@@ -115,7 +111,7 @@ void MESIBottomCC::handleAccessAck(MemEvent* ackEvent, CacheLine* cacheLine, con
 }
 
 
-void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId){
+void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     if(!canInvalidateRequestProceed(_event, _cacheLine, false)) return;
     Command cmd = _event->getCmd();
 
@@ -132,7 +128,7 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
             _abort(MemHierarchy::CacheController, "Command not supported.\n");
 	}
     
-    sendResponse(_event, _cacheLine, _parentId);
+    sendResponse(_event, _cacheLine, _parentId, _mshrHit);
 }
 
 
@@ -282,13 +278,14 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
 }
 
 
-void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId){
+void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     Command cmd = _event->getCmd();
 
     MemEvent *responseEvent = _event->makeResponse((SST::Component*)owner_);
     responseEvent->setPayload(*_cacheLine->getData());
 
-    response resp = {responseEvent, timestamp_ + accessLatency_, true};
+    uint64 latency = _mshrHit ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    response resp  = {responseEvent, latency, true};
     outgoingEventQueue_.push(resp);
     
     d_->debug(_L1_,"Sending %s Response Message: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s, Size = %i \n",
@@ -329,7 +326,7 @@ unsigned int MESIBottomCC::getParentId(Addr baseAddr){
 
 void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
                                uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived,
-                               uint64 _nonCoherenceReqsReceived){
+                               uint64 _nonCoherenceReqsReceived, uint64 _mshrHits){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
     int totalMisses = GETXMissIM_ + GETXMissSM_ + GETSMissIS_;
@@ -348,11 +345,13 @@ void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
     dbg->output(C,"Hit Ratio:  %.3f%%\n", hitRatio);
     dbg->output(C,"PutS received: %i\n", PUTSReqsReceived_);
     dbg->output(C,"PutM received: %i\n", PUTMReqsReceived_);
+    dbg->output(C,"GetSEx received: %i\n", GetSExReqsReceived_);
     dbg->output(C,"PUTS sent due to evictions: %u\n", EvictionPUTSReqSent_);
     dbg->output(C,"PUTM sent due to evictions: %u\n", EvictionPUTMReqSent_);
     dbg->output(C,"PUTM sent due to invalidations: %u\n", InvalidatePUTMReqSent_);
     dbg->output(C,"Invalidates recieved that locked due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
     dbg->output(C,"Total instructions recieved: %llu\n", _totalInstReceived);
+    dbg->output(C,"Total MSHR hits: %llu\n", _mshrHits);
     dbg->output(C,"Memory requests received (non-coherency related): %llu\n\n", _nonCoherenceReqsReceived);
 }
 

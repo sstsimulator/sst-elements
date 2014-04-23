@@ -103,7 +103,7 @@ public:
     virtual void init(unsigned int);
     virtual void setup(void);
     virtual void finish(void){
-        bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_, STAT_TotalInstructionsRecieved_, STAT_NonCoherenceReqsReceived_);
+        bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_, STAT_TotalInstructionsRecieved_, STAT_NonCoherenceReqsReceived_, STAT_TotalMSHRHits_);
         topCC_->printStats(stats_);
         listener_->printStats(*d_);
         delete cArray_;
@@ -154,10 +154,12 @@ private:
     vector<MemEvent*>       retryQueueNext_;
     queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
     uint64                  accessLatency_;
+    uint64                  mshrLatency_;
     uint64                  STAT_GetSExReceived_;
     uint64                  STAT_InvalidateWaitingForUserLock_;
     uint64                  STAT_TotalInstructionsRecieved_;
     uint64                  STAT_NonCoherenceReqsReceived_;
+    uint64                  STAT_TotalMSHRHits_;
     uint64                  timestamp_;
     int                     stats_;
     int                     idleMax_;
@@ -174,17 +176,17 @@ private:
     void initStats();
     void errorChecking();
     void pMembers();
-    bool shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool reActivation);
+    bool shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool mshrHit);
     bool invalidatesInProgress(int lineIndex);
     void checkCacheLineIsStable(CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
-    void processEvent(SST::Event* ev, bool reActivation);
+    void processEvent(SST::Event* ev, bool mshrHit);
     inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(stallException);
     void processIncomingEvent(SST::Event *event);
-    void processAccess(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation);
-    void processInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool reActivation);
-    void processAccessAcknowledge(MemEvent* ackEvent, Addr baseAddr);
+    void processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
+    void processCacheInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
+    void processCacheResponse(MemEvent* ackEvent, Addr baseAddr);
     void processUncached(MemEvent* event, Command cmd, Addr baseAddr);
-    void processFetch(MemEvent* event, Addr baseAddr, bool reActivation);
+    void processFetch(MemEvent* event, Addr baseAddr, bool mshrHit);
     bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }
     inline void activatePrevEvents(Addr baseAddr);
     inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr addr, vector<mshrType>::iterator it, int i);
@@ -207,58 +209,70 @@ private:
     inline void replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineIndex, Addr newBaseAddr);
     inline CacheLine* findReplacementCacheLine(Addr baseAddr);
     inline bool isCacheLineAllocated(int lineIndex);
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool reActivation) throw(stallException);
+    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool mshrHit) throw(stallException);
 
     inline void retryRequestLater(MemEvent* event, Addr baseAddr);
     inline TopCacheController::CCLine* getCCLine(int index);
     inline bool isCacheLineValidAndWaitingForAck(Addr baseAddr, int lineIndex);
-    inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool reActivation);
+    inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool mshrHit);
     inline LinkId_t lookupNode(const std::string &name);
     inline void mapNodeEntry(const std::string &name, LinkId_t id);
+    void intrapolateMSHRLatency();
+
 
     bool clockTick(Cycle_t time) {
         timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
+        bool ret = false;
         
         if(dirControllerExists_) memNICIdle_ = directoryLink_->clock();
         
         bool topCCBusy      = topCC_->queueBusy();
         bool bottomCCBusy   = bottomCC_->queueBusy();
+        bool cacheBusy      = !incomingEventQueue_.empty();
         
         if(topCCBusy)     topCC_->sendOutgoingCommands();
         if(bottomCCBusy)  bottomCC_->sendOutgoingCommands();
 
-        bool cacheControllerBusy = !incomingEventQueue_.empty();
-        bool retryBufferBusy     = !retryQueueNext_.empty();
+        if(cacheBusy) processQueueRequest();
+        else if(UNLIKELY(!retryQueueNext_.empty())) retryEvent();
+        else if(!topCCBusy && !bottomCCBusy && !dirControllerExists_)
+            ret = incIdleCount();
         
-
-        if(cacheControllerBusy){
-            processEvent(incomingEventQueue_.front().first, false);
-            incomingEventQueue_.pop();
+        return ret;
+    }
+    
+    void processQueueRequest(){
+        processEvent(incomingEventQueue_.front().first, false);
+        incomingEventQueue_.pop();
+        idleCount_ = 0;
+    }
+    
+    void retryEvent(){
+        retryQueue_ = retryQueueNext_;
+        retryQueueNext_.clear();
+        for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
+            d_->debug(_L1_,"Retrying event\n");
+            processEvent(*it, true);
+            retryQueue_.erase(it);
+        }
+        idleCount_ = 0;
+    }
+    
+    bool incIdleCount(){
+        idleCount_++;
+        if(!dirControllerExists_ && idleCount_ > idleMax_){
+            clockOn_ = false;
             idleCount_ = 0;
+            return true;
         }
-        else if(UNLIKELY(retryBufferBusy)){
-            retryQueue_ = retryQueueNext_;
-            retryQueueNext_.clear();
-            for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
-                d_->debug(_L1_,"RETRYING EVENT\n");
-                processEvent(*it, true);
-                retryQueue_.erase(it);
-            }
-            idleCount_ = 0;
-        }
-        else if(!topCCBusy && !bottomCCBusy && clockOn_ && !dirControllerExists_){
-            idleCount_++;
-            if(dirControllerExists_ == false && idleCount_ > idleMax_){
-                clockOn_ = false;
-                idleCount_ = 0;
-                return true;
-            }
-        }
-        
         return false;
     }
-
+    
+    
 };
+
+
+
 
 }}
 

@@ -98,55 +98,63 @@ void Cache::processIncomingEvent(SST::Event *ev){
     }
 }
   
-void Cache::processEvent(SST::Event* ev, bool reActivation) {
-    MemEvent *event = static_cast<MemEvent*>(ev); assert_msg(event, "Event is Null!!");
-    assert(event);
+void Cache::processEvent(SST::Event* ev, bool mshrHit) {
+    MemEvent *event = static_cast<MemEvent*>(ev);
     
-    Command cmd     = event->getCmd(); string prefetch =  event->isPrefetch() ? "true" : "false";
-    Addr addr       = event->getAddr(), baseAddr = toBaseAddr(addr);
+    Command cmd     = event->getCmd();
+    Addr baseAddr   = toBaseAddr(event->getAddr());
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
         
-    if(!reActivation){
+    if(!mshrHit){
         STAT_TotalInstructionsRecieved_++;
         d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
+    else STAT_TotalMSHRHits_++;
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n", this->getName().c_str(), CommandString[event->getCmd()], addr, baseAddr, event->getSrc().c_str(), event->getDst().c_str(), prefetch.c_str(), timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), baseAddr, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "");
+    
     if(uncached){
         processUncached(event, cmd, baseAddr);
         return;
     }
     
-   // try{
-    if(cmd <= 2) {                                                          /* GetS, GetX, GetSEx */
-        if(cmd == GetSEx && !reActivation) STAT_GetSExReceived_++;
-        if(!reActivation) STAT_NonCoherenceReqsReceived_++;
-        if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
+    switch(cmd){
+        case GetS:
+        case GetX:
+        case GetSEx:
+            if(!mshrHit) STAT_NonCoherenceReqsReceived_++;
+            if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
+                mshr_->insert(baseAddr, event);
+                d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                return;
+            }
+            processCacheRequest(event, cmd, baseAddr, mshrHit);
+            break;
+        case GetSResp:
+        case GetXResp:
+            processCacheResponse(event, baseAddr);
+            break;
+        case PutM:
+        case PutS:
+        case PutE:
+        case PutX:
+            processCacheRequest(event, cmd, baseAddr, mshrHit);
+            break;
+        case Inv:
+        case InvX:
             mshr_->insert(baseAddr, event);
-            d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
-            return;
-        }
-        processAccess(event, cmd, baseAddr, reActivation);
+            processCacheInvalidate(event, cmd, baseAddr, mshrHit);
+            break;
+        case Fetch:
+        case FetchInvalidate:
+        case FetchInvalidateX:
+            mshr_->insert(baseAddr, event);
+            processFetch(event, baseAddr, mshrHit);
+            break;
+        default:
+            _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);
     }
-    else if(cmd <= 4)  processAccessAcknowledge(event, baseAddr);           /* GetSResp, GetXResp */
-    else if(cmd <= 8)  processAccess(event, cmd, baseAddr, reActivation);   /* PutM, PutS, Put, PutXE */
-    else if(cmd <= 10){                                                     /* Inv, InvX */
-        mshr_->insert(baseAddr, event);
-        processInvalidate(event, cmd, baseAddr, reActivation);
-    }
-    else if(cmd <= 14){   /* Fetch, FetchInvalidate, FetchInvalidateX */
-        mshr_->insert(baseAddr, event);
-        processFetch(event, baseAddr, reActivation);
-    }
-    else{
-        _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);
-    }
-
-    cout << flush;
-    //catch(mshrException const& e){
-    //    _abort(MemHierarchy::Cache, "Limited MSHR is not supported yet, increment the number of MSHR entries\n");
-        //topCC_->sendNACK(event);
-    //}
 }
 
 void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
@@ -169,7 +177,7 @@ void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
             mshrEntry = mshrUncached_->removeAll(baseAddr);
             for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front().elem);
-                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload());
+                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), true);
                 delete memEvent;
                 mshrEntry.erase(it);
                 

@@ -26,7 +26,7 @@ using namespace SST::MemHierarchy;
  * Top Coherence Controller Implementation
  *-------------------------------------------------------------------------------------*/
 
-bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
+bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd           = _event->getCmd();
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
@@ -34,11 +34,11 @@ bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
     switch(cmd){
         case GetS:
             if(state == S || state == M || state == E)
-                return sendResponse(_event, S, data);
+                return sendResponse(_event, S, data, _mshrHit);
             break;
         case GetX:
         case GetSEx:
-            if(state == M) return sendResponse(_event, M, data);
+            if(state == M) return sendResponse(_event, M, data, _mshrHit);
             break;
         default:
             _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -46,7 +46,7 @@ bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
     return false;
 }
 
-bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
+bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd = _event->getCmd();
     int id = lowNetworkNodeLookup(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->index()];
@@ -54,11 +54,11 @@ bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine){
 
     switch(cmd){
         case GetS:
-            processGetSRequest(_event, _cacheLine, id, ret);
+            processGetSRequest(_event, _cacheLine, id, _mshrHit, ret);
             break;
         case GetX:
         case GetSEx:
-            processGetXRequest(_event, _cacheLine, id, ret);
+            processGetXRequest(_event, _cacheLine, id, _mshrHit, ret);
             break;
         case PutS:
             processPutSRequest(ccLine, id, ret);
@@ -114,15 +114,6 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
     }
 }
 
-/*
-void MESITopCC::handleInvAck(MemEvent* _event, CCLine* _ccLine){
-    //assert(_ccLine->getAckCount() > 0);
-    int sharerId = lowNetworkNodeLookup(_event->getSrc());
-    if(_ccLine->exclusiveSharerExists()) _ccLine->clearExclusiveSharer(sharerId);
-    else if(_ccLine->isSharer(sharerId)) _ccLine->removeSharer(sharerId);
-    _ccLine->decAckCount();
-}
-*/
 
 /* Function sends invalidates to lower level caches, removes sharers if needed.  
  * Currently it implements weak consistency, ie. invalidates to sharers do not need acknowledgment
@@ -194,7 +185,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
 
 
 
-void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool& ret){
+void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& ret){
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
@@ -203,7 +194,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* Send Data in E state */
     if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_sharerId);
-        ret = sendResponse(_event, E, data);
+        ret = sendResponse(_event, E, data, _mshrHit);
     }
     
     /* If exclusive sharer exists, downgrade it to S state */
@@ -215,14 +206,14 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
         l->addSharer(_sharerId);
-        ret = sendResponse(_event, S, data);
+        ret = sendResponse(_event, S, data, _mshrHit);
     }
     else{
         _abort(MemHierarchy::CacheController, "Unkwown state!");
     }
 }
 
-void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool& _ret){
+void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
     CCLine* ccLine        = ccLines_[lineIndex];
@@ -243,7 +234,7 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     
     if(state == E || state == M){
         ccLine->setExclusiveSharer(_sharerId);
-        sendResponse(_event, M, _cacheLine->getData());
+        sendResponse(_event, M, _cacheLine->getData(), _mshrHit);
         _ret = true;
     }
 }
@@ -278,9 +269,9 @@ void MESITopCC::printStats(int _stats){
 }
 
 
-bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data){
+bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
     if(_event->isPrefetch()){ //|| _sharerId == -1){
-         d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");
+        d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");
         return true;
     }
     MemEvent *responseEvent; Command cmd = _event->getCmd();
@@ -302,10 +293,10 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
             _abort(CoherencyController, "Command not valid as a response. \n");
     }
     
-    d_->debug(_L1_,"Sending Response:  Addr = %"PRIx64",  Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
-    uint64_t deliveryTime = _event->queryFlag(MemEvent::F_UNCACHED) ? timestamp_ : timestamp_ + accessLatency_;
+    d_->debug(_L1_,"Sending Response: Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     
-    response resp = {responseEvent, deliveryTime, true};
+    uint64 latency = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    response resp = {responseEvent, latency, true};
     outgoingEventQueue_.push(resp);
     return true;
 }

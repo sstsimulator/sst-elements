@@ -35,19 +35,21 @@ class TopCacheController : public CoherencyController {
 public:
     #include "ccLine.h"
     
-    TopCacheController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency, vector<Link*>* _childrenLinks)
-                        : CoherencyController(_cache, _dbg, _lineSize){
+    TopCacheController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency,
+                       uint64_t _mshrLatency, vector<Link*>* _childrenLinks)
+                       : CoherencyController(_cache, _dbg, _lineSize){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_ = true;
         accessLatency_ = _accessLatency;
-        highNetPorts_ = _childrenLinks;
+        mshrLatency_   = _mshrLatency;
+        highNetPorts_  = _childrenLinks;
     }
     
     virtual TCC_MESIState getState(int lineIndex) { return V; }
     virtual uint numSharers(int lineIndex){ return 0; }
     virtual bool handleEviction(int lineIndex, BCC_MESIState _state) {return false;}
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd) {}
-    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine);
+    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
     virtual void handleInvalidate(int lineIndex, Command cmd){return;}
     //virtual void handleInvAck(MemEvent* event, CCLine* ccLine){return;};
     virtual void printStats(int _stats){};
@@ -59,7 +61,7 @@ public:
         }
     }
     
-    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data);
+    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, bool _mshrHit);
     void sendNack(MemEvent*);
     vector<Link*>* highNetPorts_;
 
@@ -78,8 +80,10 @@ private:
     void sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded);
     
 public:
-    MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines, uint _lineSize, uint64_t _accessLatency, vector<Link*>* _childrenLinks) :
-           TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _childrenLinks), numLines_(_numLines), lowNetworkNodeCount_(0){
+    MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines,
+              uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks) :
+              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency, _childrenLinks),
+              numLines_(_numLines), lowNetworkNodeCount_(0){
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);
         ccLines_.resize(numLines_);
@@ -103,14 +107,14 @@ public:
 
     virtual bool handleEviction(int lineIndex, BCC_MESIState _state);
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
-    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine);
+    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
     virtual void handleInvalidate(int lineIndex, Command cmd);
     //virtual void handleInvAck(MemEvent* event, CCLine* ccLine);
     
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);
-    void processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
-    void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool& _ret);
+    void processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
+    void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
     void processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _childId, bool& _ret);
     void processPutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
     

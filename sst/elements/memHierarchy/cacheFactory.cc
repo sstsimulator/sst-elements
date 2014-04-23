@@ -25,6 +25,7 @@
 #include <sst/core/params.h>
 #include <boost/lexical_cast.hpp>
 
+#define N   110
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -74,7 +75,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     if(coherenceProtocol == "MESI" || coherenceProtocol == "mesi") protocol = 1;
     else if(coherenceProtocol == "MSI" || coherenceProtocol == "msi") protocol = 0;
     else _abort(Cache, "Not supported protocol\n");
-    
+
     SST::MemHierarchy::LRUReplacementMgr* replacementManager;
     if (boost::iequals(replacementProtocol, "lru"))         replacementManager = new LRUReplacementMgr(dbg, numLines,true);
     else if (boost::iequals(replacementProtocol, "lfu"))    replacementManager = new LRUReplacementMgr(dbg, numLines, true);
@@ -110,6 +111,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     idleMax_            = params.find_integer("idle_max", 10000);
     accessLatency_      = params.find_integer("access_latency_cycles", -1);
     string prefetcher   = params.find_string("prefetcher");
+    mshrLatency_        = params.find_integer("mshr_latency_cycles", -1);
     
     
     /* Listener */
@@ -120,6 +122,13 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     }
     listener_->setOwningComponent(this);
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+
+    
+    /* Latency */
+    assert(accessLatency_ >= 1);
+    if(mshrLatency_ < 1) intrapolateMSHRLatency();
+
+    assert(mshrLatency_   >= 1);
 
 
     /* MSHR */
@@ -164,12 +173,11 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     STAT_InvalidateWaitingForUserLock_  = 0;
     STAT_TotalInstructionsRecieved_     = 0;
     STAT_NonCoherenceReqsReceived_      = 0;
-
-    
+        
     /* Coherence Controllers */
     sharersAware_ = (L1_) ? false : true;
-    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, L1_, directoryLink_);
+    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_);
    
     /* Replacement Manager */
     replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
@@ -211,6 +219,42 @@ void Cache::configureLinks(){
     if(!dirControllerExists_) BOOST_ASSERT_MSG(lowNetExists, buf);
     BOOST_ASSERT_MSG(highNetExists,  buf2);
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
+}
+
+
+
+void Cache::intrapolateMSHRLatency(){
+    int y[N];
+
+    if(L1_){
+        mshrLatency_ = accessLatency_;
+        return;
+    }
+    
+    /* L2 */
+    y[0] = 0;
+    y[1] = 1;
+    for(int idx = 2; idx < 12; idx++){
+       y[idx] = 2;
+    }
+    for(int idx = 13; idx < 16; idx++){
+       y[idx] = 3;
+    }
+    for(int idx = 17; idx < 26; idx++){
+       y[idx] = 6;
+    }
+    
+    /* L3 */
+    for(int idx = 27; idx < 48; idx++){
+        y[idx] = 17;
+    }
+    for(int idx = 49; idx < N; idx++){
+        y[idx] = 28;
+    }
+    
+    assert(accessLatency_ < N);
+    mshrLatency_ = y[accessLatency_];
+
 }
 
 }}

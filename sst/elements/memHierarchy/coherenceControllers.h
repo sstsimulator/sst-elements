@@ -52,6 +52,7 @@ public:
     MemNIC*    directoryLink_;
     uint64_t   timestamp_;
     uint64_t   accessLatency_;
+    uint64_t   mshrLatency_;
     virtual void sendOutgoingCommands() = 0;
     queue<response> outgoingEventQueue_;
     
