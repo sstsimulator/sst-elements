@@ -25,7 +25,7 @@
 #include <sst/core/params.h>
 #include <boost/lexical_cast.hpp>
 
-#define N   110
+#define N   200
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -227,32 +227,26 @@ void Cache::intrapolateMSHRLatency(){
     int y[N];
 
     if(L1_){
-        mshrLatency_ = accessLatency_;
+        mshrLatency_ = 1;
         return;
     }
     
     /* L2 */
+    assert_msg(accessLatency_ > 4, "L2 should have a latency bigger than 4 cycles.");
     y[0] = 0;
     y[1] = 1;
-    for(int idx = 2; idx < 12; idx++){
-       y[idx] = 2;
-    }
-    for(int idx = 13; idx < 16; idx++){
-       y[idx] = 3;
-    }
-    for(int idx = 17; idx < 26; idx++){
-       y[idx] = 6;
-    }
+    for(int idx = 2; idx < 12; idx++)  y[idx] = 2;
+    for(int idx = 13; idx < 16; idx++) y[idx] = 3;
+    for(int idx = 17; idx < 26; idx++) y[idx] = 5;
+
     
     /* L3 */
-    for(int idx = 27; idx < 48; idx++){
-        y[idx] = 17;
-    }
-    for(int idx = 49; idx < N; idx++){
-        y[idx] = 28;
-    }
+    for(int idx = 27; idx < 46; idx++) y[idx] = 19;
+    for(int idx = 47; idx < 68; idx++) y[idx] = 26;
+    for(int idx = 69; idx < N; idx++)  y[idx] = 32;
     
-    assert(accessLatency_ < N);
+    assert_msg(accessLatency_ > 4, "Cache access latencies greater than 200 cycles not supported.");
+
     mshrLatency_ = y[accessLatency_];
 
 }
