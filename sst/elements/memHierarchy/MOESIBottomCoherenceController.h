@@ -40,7 +40,7 @@ public:
                  _accessLatency, _mshrLatency, _L1, _directoryLink) {}
 
     virtual void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
-    virtual void handleAccess(MemEvent* event, CacheLine* cacheLine, Command cmd);
+    virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
     virtual void handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry);
     virtual void handleWritebackOnAccess(Addr lineAddr, CacheLine* cacheLine, Command type);
     virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);

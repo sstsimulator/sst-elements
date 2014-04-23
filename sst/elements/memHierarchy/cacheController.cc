@@ -37,8 +37,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-/** Function processes incomming access requests from HiLv$ or the CPU
-    It appropriately redirects requests to Top and/or Bottom controllers.  */
+
 void Cache::processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit){
     try{
         int lineIndex = cArray_->find(baseAddr, (!mshrHit && MemEvent::isDataRequest(cmd)));  //Update only if it's NOT mshrHit
@@ -50,10 +49,10 @@ void Cache::processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, boo
         CacheLine* cacheLine = getCacheLine(lineIndex);
         checkCacheLineIsStable(cacheLine, cmd);                             /* If cache line is locked or in transition, wait until it is stable */
         
-        bottomCC_->handleAccess(event, cacheLine, cmd);                     /* upgrade or fetch line from higher level caches */
+        bottomCC_->handleRequest(event, cacheLine, cmd);                     /* upgrade or fetch line from higher level caches */
         if(cacheLine->inTransition()) throw stallException();               /* stall request if upgrade is in progress */
         
-        bool done = topCC_->handleAccess(event, cacheLine, mshrHit);        /* Invalidate sharers, send respond to requestor if needed */
+        bool done = topCC_->handleRequest(event, cacheLine, mshrHit);        /* Invalidate sharers, send respond to requestor if needed */
         postRequestProcessing(event, cacheLine, done, mshrHit);
     
     }
@@ -64,7 +63,6 @@ void Cache::processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, boo
 }
 
 
-/* Function processes incomming invalidate messages.  Redirects message to Top and Bottom controllers appropriately */
 void Cache::processCacheInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit){
     CacheLine* cacheLine = getCacheLine(baseAddr);
     if(!shouldThisInvalidateRequestProceed(event, cacheLine, baseAddr, mshrHit)) return;
@@ -79,7 +77,6 @@ void Cache::processCacheInvalidate(MemEvent *event, Command cmd, Addr baseAddr, 
 }
 
 
-/* Function processes incomming GetS/GetX responses.  Redirects message to Top Controller */
 void Cache::processCacheResponse(MemEvent* ackEvent, Addr baseAddr){
     CacheLine* cacheLine = getCacheLine(baseAddr); assert(cacheLine);
     
@@ -91,8 +88,7 @@ void Cache::processCacheResponse(MemEvent* ackEvent, Addr baseAddr){
     delete ackEvent;
 }
 
-/* Function processes incomming Fetch or FetchInvalidate requests from the Directory Controller
-   Fetches send data, while FetchInvalidates evict data to the directory controller */
+
 void Cache::processFetch(MemEvent* event, Addr baseAddr, bool mshrHit){
     CacheLine* cacheLine = getCacheLine(baseAddr);
     Command cmd = event->getCmd();
@@ -124,46 +120,13 @@ void Cache::allocateCacheLine(MemEvent *event, Addr baseAddr, int& newCacheLineI
     if(!isCacheLineAllocated(newCacheLineIndex)) throw stallException();
 }
 
-/* Depending on the replacement policy and cache array type, we need appropriately search for the replacement candidate */
+
 CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr baseAddr){
     int wbLineIndex = cArray_->preReplace(baseAddr);        assert(wbLineIndex >= 0);
     CacheLine* wbCacheLine = cArray_->lines_[wbLineIndex];  assert(wbCacheLine);
     wbCacheLine->setIndex(wbLineIndex);
     return wbCacheLine;
 }
-
-
-/* Evict cache line if necessary.  TopCC sends invalidates to lower level caches */
-void Cache::evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
-    bool invalidatesSent = topCC_->handleEviction(wbCacheLine->index(), wbCacheLine->getState());
-    if(invalidatesSent){
-        mshr_->insertPointer(wbCacheLine->getBaseAddr(), requestBaseAddr);
-        throw stallException();
-    }
-    if(!L1_){
-        CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[wbCacheLine->index()];
-        ccLine->clear();
-    }
-}
-
-
-/* Writeback cache line to lower level caches */
-void Cache::writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr requestBaseAddr){
-    bottomCC_->handleEviction(event, wbCacheLine);
-    d_->debug(_L1_,"Replacement cache line evicted.\n");
-}
-
-/* Eviction succeeded.  Now 'cache line' is available and replaced with the Addr of the current request */
-void Cache::replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineIndex, Addr newBaseAddr){
-    if(!L1_){
-        CCLine* wbCCLine = ((MESITopCC*)topCC_)->ccLines_[replacementCacheLineIndex];
-        wbCCLine->setBaseAddr(newBaseAddr);
-    }
-    newCacheLineIndex = replacementCacheLineIndex;
-    cArray_->replace(newBaseAddr, newCacheLineIndex);
-    d_->debug(_L1_,"Allocated current request in a cache line.\n");
-}
-
 
 
 void Cache::candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
@@ -181,7 +144,6 @@ void Cache::candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr request
     return;
 }
 
-/* If Candidate is in transition then we cannot writeback cacheline, postpone current request */
 bool Cache::isCandidateInTransition(CacheLine* wbCacheLine){
     CCLine* wbCCLine = getCCLine(wbCacheLine->index());
     if(CacheLine::inTransition(wbCacheLine->getState()) || (!L1_ && wbCCLine->getState() != V)){
@@ -189,6 +151,35 @@ bool Cache::isCandidateInTransition(CacheLine* wbCacheLine){
         return true;
     }
     return false;
+}
+
+void Cache::evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
+    bool invalidatesSent = topCC_->handleEviction(wbCacheLine->index(), wbCacheLine->getState());
+    if(invalidatesSent){
+        mshr_->insertPointer(wbCacheLine->getBaseAddr(), requestBaseAddr);
+        throw stallException();
+    }
+    if(!L1_){
+        CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[wbCacheLine->index()];
+        ccLine->clear();
+    }
+}
+
+
+void Cache::writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr requestBaseAddr){
+    bottomCC_->handleEviction(event, wbCacheLine);
+    d_->debug(_L1_,"Replacement cache line evicted.\n");
+}
+
+
+void Cache::replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineIndex, Addr newBaseAddr){
+    if(!L1_){
+        CCLine* wbCCLine = ((MESITopCC*)topCC_)->ccLines_[replacementCacheLineIndex];
+        wbCCLine->setBaseAddr(newBaseAddr);
+    }
+    newCacheLineIndex = replacementCacheLineIndex;
+    cArray_->replace(newBaseAddr, newCacheLineIndex);
+    d_->debug(_L1_,"Allocated current request in a cache line.\n");
 }
 
 
@@ -234,9 +225,6 @@ bool Cache::shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cache
             Helper Functions
  ------------------------------------------------------------------------------------- */
 
-/* Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
-   If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes,
- */
 void Cache::activatePrevEvents(Addr baseAddr){
     if(!mshr_->isHit(baseAddr)) return;
     vector<mshrType> mshrEntry = mshr_->removeAll(baseAddr);
@@ -307,7 +295,7 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     else throw stallException();
 }
 
-/* if cache line was user-locked, then events might be waiting for lock to be released and need to be reactivated */
+
 void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool mshrHit){
     Addr baseAddr = cacheLine->getBaseAddr();
     if(cacheLine->eventsWaitingForLock_ && !cacheLine->isLockedByUser() && !mshrHit){
@@ -331,6 +319,13 @@ void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ig
     }
 }
 
+bool Cache::isCacheMiss(int lineIndex){
+    if(lineIndex == -1){
+        d_->debug(_L1_,"-- Cache Miss --\n");
+        return true;
+    }
+    else return false;
+}
 
 /* ---------------------------------------
    Extras
@@ -355,9 +350,9 @@ void Cache::pMembers(){
 }
 
 void Cache::retryRequestLater(MemEvent* event, Addr baseAddr){
-    //mshr_->removeElement(baseAddr, event);
     retryQueueNext_.push_back(event);
 }
+
 
 CacheArray::CacheLine* Cache::getCacheLine(Addr baseAddr){
     int lineIndex =  cArray_->find(baseAddr, false);
@@ -378,24 +373,9 @@ CacheArray::CacheLine* Cache::getCacheLine(int lineIndex){
     }
 }
 
-int Cache::getParentId(MemEvent* event){
-    return 0;
-}
-
-int Cache::getParentId(Addr baseAddr){
-    return 0;
-}
 
 bool Cache::isCacheLineAllocated(int lineIndex){
     return (lineIndex == -1) ? false : true;
-}
-
-bool Cache::isCacheMiss(int lineIndex){
-    if(lineIndex == -1){
-        d_->debug(_L1_,"-- Cache Miss --\n");
-        return true;
-    }
-    else return false;
 }
 
 

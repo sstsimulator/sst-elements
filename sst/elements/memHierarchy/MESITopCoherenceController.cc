@@ -26,7 +26,7 @@ using namespace SST::MemHierarchy;
  * Top Coherence Controller Implementation
  *-------------------------------------------------------------------------------------*/
 
-bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
+bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd           = _event->getCmd();
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
@@ -46,7 +46,7 @@ bool TopCacheController::handleAccess(MemEvent* _event, CacheLine* _cacheLine, b
     return false;
 }
 
-bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
+bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd = _event->getCmd();
     int id = lowNetworkNodeLookup(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->index()];
@@ -54,19 +54,19 @@ bool MESITopCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, bool _mshr
 
     switch(cmd){
         case GetS:
-            processGetSRequest(_event, _cacheLine, id, _mshrHit, ret);
+            handleGetSRequest(_event, _cacheLine, id, _mshrHit, ret);
             break;
         case GetX:
         case GetSEx:
-            processGetXRequest(_event, _cacheLine, id, _mshrHit, ret);
+            handleGetXRequest(_event, _cacheLine, id, _mshrHit, ret);
             break;
         case PutS:
-            processPutSRequest(ccLine, id, ret);
+            handlePutSRequest(ccLine, id, ret);
             break;
         case PutM:
         case PutE:
         case PutX:
-            processPutMRequest(ccLine, cmd, _cacheLine->getState(), id, ret);
+            handlePutMRequest(ccLine, cmd, _cacheLine->getState(), id, ret);
             break;
 
         default:
@@ -179,7 +179,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
 
 
 
-void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& ret){
+void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& ret){
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
@@ -207,7 +207,7 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     }
 }
 
-void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
+void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
     CCLine* ccLine        = ccLines_[lineIndex];
@@ -234,7 +234,7 @@ void MESITopCC::processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int 
 }
 
 //TODO: create processPutXFunction to avoid that extra if inside here
-void MESITopCC::processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
+void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
 
@@ -242,15 +242,15 @@ void MESITopCC::processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState 
     if(_ccLine->exclusiveSharerExists())  _ccLine->clearExclusiveSharer(_sharerId);
 
     /*If PutX, keep as sharer since transition ia M->S */
-    if(_cmd == PutX){                   //If PutX, then state = V since we only wanted to get rid of the M-state hglv cache
+    if(_cmd == PutX){                   /* If PutX, then state = V since we only wanted to get rid of the M-state hglv cache */
         _ccLine->addSharer(_sharerId);
         _ccLine->setState(V);
      }
-    else _ccLine->updateState();        //Id PutE, PutM -> num sharers should be 0 before state goes to (V)
+    else _ccLine->updateState();        /* Id PutE, PutM -> num sharers should be 0 before state goes to (V) */
 
 }
 
-void MESITopCC::processPutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
+void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
     _ret = true;
     if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
 }
@@ -264,10 +264,11 @@ void MESITopCC::printStats(int _stats){
 
 
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
-    if(_event->isPrefetch()){ //|| _sharerId == -1){
+    if(_event->isPrefetch()){
         d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");
         return true;
     }
+    
     MemEvent *responseEvent; Command cmd = _event->getCmd();
     Addr offset = 0, base = 0;
     switch(cmd){

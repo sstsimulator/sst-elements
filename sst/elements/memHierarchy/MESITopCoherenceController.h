@@ -49,7 +49,7 @@ public:
     virtual uint numSharers(int lineIndex){ return 0; }
     virtual bool handleEviction(int lineIndex, BCC_MESIState _state) {return false;}
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd) {}
-    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
+    virtual bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
     virtual void handleInvalidate(int lineIndex, Command cmd){return;}
     //virtual void handleInvAck(MemEvent* event, CCLine* ccLine){return;};
     virtual void printStats(int _stats){};
@@ -107,16 +107,16 @@ public:
 
     virtual bool handleEviction(int lineIndex, BCC_MESIState _state);
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
-    virtual bool handleAccess(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
+    virtual bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
     virtual void handleInvalidate(int lineIndex, Command cmd);
     //virtual void handleInvAck(MemEvent* event, CCLine* ccLine);
     
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);
-    void processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
-    void processGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
-    void processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _childId, bool& _ret);
-    void processPutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
+    void handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
+    void handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
+    void handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _childId, bool& _ret);
+    void handlePutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
     
     TCC_MESIState getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
     uint numSharers(int lineIndex){return ccLines_[lineIndex]->numSharers();}

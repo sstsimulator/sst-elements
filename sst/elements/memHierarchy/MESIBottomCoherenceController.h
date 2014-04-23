@@ -51,8 +51,6 @@ private:
     void inc_GETSMissIS(Addr addr, bool pf);
     bool isExclusive(CacheLine* cacheLine);
     
-    unsigned int getParentId(CacheLine* wbCacheLine);
-    unsigned int getParentId(Addr baseAddr);
 
 public:
     MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
@@ -80,6 +78,8 @@ public:
         directoryLink_ = _directoryLink;
     }
 
+    /* Send andy outgoing messages directed to lower level caches or 
+       directory controller (if one exists) */
     void sendOutgoingCommands(){
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
@@ -93,30 +93,64 @@ public:
         }
     }
 
-    
+    /** Init funciton */
     void init(const char* name){}
     
+    /** Send cache line data to the lower level caches */
     virtual void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
-    virtual void handleAccess(MemEvent* event, CacheLine* cacheLine, Command cmd);
-    virtual void handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry);
-    virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
-    virtual void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
+
+    /** Process new cache request:  GetX, GetS, GetSEx, PutM, PutS, PutX */
+    virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
     
-    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived, uint64 _nonCoherenceReqsReceived, uint64 _mshrHits);
-    void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);
-    void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
-    bool modifiedStateNeeded(MemEvent* _event, CacheLine* _cacheLine);
-    void processGetXRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
-    void processGetSRequest(MemEvent* event, CacheLine* cacheLine);
-    void processPutMRequest(MemEvent* event, CacheLine* cacheLine);
-    void processPutERequest(MemEvent* event, CacheLine* cacheLine);
-    void processInvRequest(MemEvent* event, CacheLine* cacheLine);
-    void processInvXRequest(MemEvent* event, CacheLine* cacheLine);
-    void updateEvictionStats(BCC_MESIState _state);
+    /** Process Inv/InvX request.  Arguably the most important function within MemHierarchy.
+       Most errors come from deadlocks due to invalidation/evicitons/upgrades.  Great care
+       needs to be taken when a invalidate is received. */
+    virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
+
+    /** Process GetSResp/GetXResp.  Update the cache line with the 
+        provided/given state and payload */
+    virtual void handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry);
+    
+    /** Handle request from Directory controller to invalidate, and 'fetch' or provide 
+        the up-to-date cache line to the directory controller. */
+    virtual void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
+
+    /** Function serves three purposes:  1) check if we need to to upgrade the cache line
+        and 2) change to transition state if upgrade needed, and 3) forward request to
+        lower level cache */
+    bool isUpgradeNeeded(MemEvent* _event, CacheLine* _cacheLine);
+
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
+
+    void handleGetXRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
+
+    void processInvRequest(MemEvent* event, CacheLine* cacheLine);
+    
+    
+    void processInvXRequest(MemEvent* event, CacheLine* cacheLine);
+    
+    void handleGetSRequest(MemEvent* event, CacheLine* cacheLine);
+    
+    
+    void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
+
+    void handlePutERequest(MemEvent* event, CacheLine* cacheLine);
+    
+    /** Wrapper for the other 'forwardMessage' function with a different signature */
+    void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);
+    
+    /** Cache line needs to be upgraded in order to proceed with the request.  
+        Forward request to lower level caches */
+    void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
+
+    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived, uint64 _nonCoherenceReqsReceived, uint64 _mshrHits);
+
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
+
     void sendWriteback(Command cmd, CacheLine* cacheLine);
-    bool sendAckResponse(MemEvent *event);
+
+    void updateEvictionStats(BCC_MESIState _state);
+    
     void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
 };
 

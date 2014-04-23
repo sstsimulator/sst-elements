@@ -43,7 +43,7 @@ public:
     
     bool handleEviction(int lineIndex, BCC_MESIState _state);
     void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
-    bool handleAccess(MemEvent* event, CacheLine* cacheLine);
+    bool handleRequest(MemEvent* event, CacheLine* cacheLine);
     void handleInvalidate(int lineIndex, Command cmd);
     void handleInvAck(MemEvent* event, CCLine* ccLine);
 

@@ -49,27 +49,26 @@ void MESIBottomCC::handleEviction(MemEvent* event, CacheLine* wbCacheLine){
 }
 
 
-void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
+void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
     switch(_cmd){
     case GetS:
-        processGetSRequest(_event, _cacheLine);
+        handleGetSRequest(_event, _cacheLine);
         break;
     case GetX:
     case GetSEx:
-        if(modifiedStateNeeded(_event, _cacheLine)) return;
-        processGetXRequest(_event, _cacheLine, _cmd);
+        if(isUpgradeNeeded(_event, _cacheLine)) return;
+        handleGetXRequest(_event, _cacheLine, _cmd);
         GetSExReqsReceived_++;
         break;
     case PutS:
         PUTSReqsReceived_++;
         break;
-    //TODO:  Case PutX:  PUTXReqsReceived_++;
     case PutM:
-    case PutX:
-        processPutMRequest(_event, _cacheLine);
+    case PutX:                                 //TODO:  Case PutX:  PUTXReqsReceived_++;
+        handlePutMRequest(_event, _cacheLine);
         break;
     case PutE:
-        processPutERequest(_event, _cacheLine);
+        handlePutERequest(_event, _cacheLine);
         break;
     default:
         _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -78,6 +77,12 @@ void MESIBottomCC::handleAccess(MemEvent* _event, CacheLine* _cacheLine, Command
 
 
 void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd){
+    /* Important note: If cache line is in transition, ignore request (remove from MSHR and drop this event)
+       Since this cache line is in transition, any other requests will not proceed. This makes the cache line 
+       behave as if it was in I state.  Because of this lower level cache can proceed even though this cache line
+       is not actually invalidated.  No need for an ack sent to lower level cache since only possible 
+       transitional state is (SM);  lower level cache knows this state is in S state so it proceeds (weak consistency).  
+       This cache eventually gets M state since the requests actually gets store in the MSHR of the lwlvl cache */
     if(!canInvalidateRequestProceed(event, cacheLine, false)) return;
     
     switch(cmd){
@@ -105,7 +110,6 @@ void MESIBottomCC::handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, cons
     cacheLine->setData(ackEvent->getPayload(), ackEvent);
     d_->debug(_L4_,"CacheLine State: %s, Granted State: %s \n", BccLineString[cacheLine->getState()], BccLineString[ackEvent->getGrantedState()]);
     if(cacheLine->getState() == S && ackEvent->getGrantedState() == E) cacheLine->setState(E);
-
 }
 
 
@@ -134,7 +138,7 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
-bool MESIBottomCC::modifiedStateNeeded(MemEvent* _event, CacheLine* _cacheLine){
+bool MESIBottomCC::isUpgradeNeeded(MemEvent* _event, CacheLine* _cacheLine){
     bool pf = _event->isPrefetch();
     Addr addr = _cacheLine->getBaseAddr();
     BCC_MESIState state = _cacheLine->getState();
@@ -162,13 +166,11 @@ bool MESIBottomCC::canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cac
         ret = false;
     }
     
-    if(!ret && _sendAcks) sendAckResponse(_event);
-
     return ret;
 }
 
 
-void MESIBottomCC::processGetXRequest(MemEvent* event, CacheLine* cacheLine, Command cmd){
+void MESIBottomCC::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, Command cmd){
     BCC_MESIState state = cacheLine->getState();
     Addr addr = cacheLine->getBaseAddr();
     bool pf = event->isPrefetch();
@@ -209,7 +211,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == M || state == E){
         _cacheLine->setState(S);
         InvalidatePUTMReqSent_++;
-        sendWriteback(PutX, _cacheLine);  //TODO: send PutXE, PutXM;  lower level caches doesn't know if data needs to be actual written in their cache
+        sendWriteback(PutX, _cacheLine);
     }
     else{
         _cacheLine->setState(I);
@@ -217,7 +219,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
 }
 
 
-void MESIBottomCC::processGetSRequest(MemEvent* event, CacheLine* cacheLine){
+void MESIBottomCC::handleGetSRequest(MemEvent* event, CacheLine* cacheLine){
     BCC_MESIState state = cacheLine->getState();
     Addr addr = cacheLine->getBaseAddr();
     bool pf = event->isPrefetch();
@@ -231,7 +233,7 @@ void MESIBottomCC::processGetSRequest(MemEvent* event, CacheLine* cacheLine){
 }
 
 
-void MESIBottomCC::processPutMRequest(MemEvent* event, CacheLine* cacheLine){
+void MESIBottomCC::handlePutMRequest(MemEvent* event, CacheLine* cacheLine){
     BCC_MESIState state = cacheLine->getState();
     assert(state == M || state == E);
     if(state == E) cacheLine->setState(M);
@@ -240,7 +242,7 @@ void MESIBottomCC::processPutMRequest(MemEvent* event, CacheLine* cacheLine){
 }
 
 
-void MESIBottomCC::processPutERequest(MemEvent* event, CacheLine* cacheLine){
+void MESIBottomCC::handlePutERequest(MemEvent* event, CacheLine* cacheLine){
     BCC_MESIState state = cacheLine->getState();
     assert(state == E || state == M);
     PUTEReqsReceived_++;
@@ -290,6 +292,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
               CommandString[cmd], _event->getBaseAddr(), _event->getBaseAddr(), CommandString[cmd], lineSize_);
 }
 
+
 void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
     d_->debug(_L1_,"Sending Command:  Cmd = %s\n", CommandString[cmd]);
     vector<uint8_t>* data = cacheLine->getData();
@@ -299,27 +302,6 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
     outgoingEventQueue_.push(resp);
 }
 
-//TODO: change name
-bool MESIBottomCC::sendAckResponse(MemEvent *_event){
-    MemEvent *responseEvent;
-    Command cmd = _event->getCmd();
-    assert(cmd == PutM ||  cmd == PutS || cmd == Inv || cmd == InvX);
-    responseEvent = _event->makeResponse((SST::Component*)owner_);
-    d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
-    response resp = {responseEvent, timestamp_, false};
-    outgoingEventQueue_.push(resp);
-    return true;
-}
-
-
-unsigned int MESIBottomCC::getParentId(CacheLine* wbCacheLine){
-    return 0;
-}
-
-
-unsigned int MESIBottomCC::getParentId(Addr baseAddr){
-    return 0;
-}
 
 
 void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
