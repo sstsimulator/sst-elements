@@ -347,8 +347,8 @@ void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
     dbg->output(C,"PUTS sent due to evictions: %u\n", EvictionPUTSReqSent_);
     dbg->output(C,"PUTM sent due to evictions: %u\n", EvictionPUTMReqSent_);
     dbg->output(C,"PUTM sent due to invalidations: %u\n", InvalidatePUTMReqSent_);
-    dbg->output(C,"Invalidates recieved that locked due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
-    dbg->output(C,"Total instructions recieved: %llu\n", _totalInstReceived);
+    dbg->output(C,"Invalidates received that locked due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
+    dbg->output(C,"Total instructions received: %llu\n", _totalInstReceived);
     dbg->output(C,"Total MSHR hits: %llu\n", _mshrHits);
     dbg->output(C,"Memory requests received (non-coherency related): %llu\n\n", _nonCoherenceReqsReceived);
 }
