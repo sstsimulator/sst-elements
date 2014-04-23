@@ -82,7 +82,7 @@ bool Bus::clockTick(Cycle_t time) {
 
 
 void Bus::broadcastEvent(SST::Event *ev){
-    MemEvent* memEvent = dynamic_cast<MemEvent*>(ev); assert(memEvent);
+    MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
     LinkId_t srcLinkId = lookupNode(memEvent->getSrc());
     SST::Link* srcLink = linkIdMap_[srcLinkId];
 
@@ -102,7 +102,7 @@ void Bus::broadcastEvent(SST::Event *ev){
 
 
 void Bus::sendSingleEvent(SST::Event *ev){
-    MemEvent *event = static_cast<MemEvent*>(ev); assert(event);
+    MemEvent *event = static_cast<MemEvent*>(ev);
     dbg_.debug(_L3_,"\n\n");
     dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
@@ -140,7 +140,6 @@ void Bus::configureLinks(){
 		if(link){
             highNetPorts_.push_back(link);
             numHighNetPorts_++;
-            //assert(highNetPorts_[i]);
             linkIdMap_[highNetPorts_[i]->getId()] = highNetPorts_[i];
             dbg_.output(CALL_INFO, "Port %lu = Link %d\n", highNetPorts_[i]->getId(), i);
         }

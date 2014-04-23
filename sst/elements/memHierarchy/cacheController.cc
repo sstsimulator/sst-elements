@@ -150,8 +150,6 @@ void Cache::evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAdd
 /* Writeback cache line to lower level caches */
 void Cache::writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr requestBaseAddr){
     bottomCC_->handleEviction(event, wbCacheLine);
-
-    //assert(!wbCacheLine->isLockedByUser() && wbCacheLine->getState() == I);
     d_->debug(_L1_,"Replacement cache line evicted.\n");
 }
 
@@ -241,7 +239,7 @@ bool Cache::shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cache
  */
 void Cache::activatePrevEvents(Addr baseAddr){
     if(!mshr_->isHit(baseAddr)) return;
-    vector<mshrType> mshrEntry = mshr_->removeAll(baseAddr); assert(!mshr_->isHit(baseAddr));
+    vector<mshrType> mshrEntry = mshr_->removeAll(baseAddr);
     bool cont;    int i = 0;
     d_->debug(_L1_,"---------start--------- Size: %lu\n", mshrEntry.size());
     
@@ -326,7 +324,6 @@ void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ig
     }
     else if(!L1_){                  /* Check if topCC line is locked */
         CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_cacheLine->index()];
-        assert(ccLine);
         if(ccLine->inTransition() && _cmd < 5 && _cmd > 8){  //InTransition && !PutM, !PutX, !PutS, !PutE
             d_->debug(_L1_,"Stalling request: Cache line in transition. TccSt: %s\n", TccLineString[ccLine->getState()]);
             throw ignoreEventException();

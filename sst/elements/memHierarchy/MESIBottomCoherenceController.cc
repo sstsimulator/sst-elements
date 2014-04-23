@@ -94,12 +94,10 @@ void MESIBottomCC::handleInvalidate(MemEvent *event, CacheLine* cacheLine, Comma
 }
 
 void MESIBottomCC::handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry){
-    cacheLine->decAckCount();
+    cacheLine->updateState();
     printData(d_, "Response Data", &ackEvent->getPayload());
     
-    assert(cacheLine->getAckCount() == 0);
     assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
-    assert(cacheLine->unlocked());
     
     MemEvent* origEv = boost::get<MemEvent*>(mshrEntry.front().elem);
     Command origCmd  = origEv->getCmd();
@@ -305,7 +303,7 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
 bool MESIBottomCC::sendAckResponse(MemEvent *_event){
     MemEvent *responseEvent;
     Command cmd = _event->getCmd();
-    assert(cmd == Inv || cmd == PutM ||  cmd == PutS || cmd == InvX);
+    assert(cmd == PutM ||  cmd == PutS || cmd == Inv || cmd == InvX);
     responseEvent = _event->makeResponse((SST::Component*)owner_);
     d_->debug(_L1_,"Sending Ack Response:  Addr = %"PRIx64", Cmd = %s \n", responseEvent->getAddr(), CommandString[responseEvent->getCmd()]);
     response resp = {responseEvent, timestamp_, false};

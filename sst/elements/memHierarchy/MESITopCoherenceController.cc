@@ -96,16 +96,13 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
 
     switch(_cmd){
         case FetchInvalidate:
-            if(l->exclusiveSharerExists()) {
-                assert(l->numSharers() == 1);
+            if(l->exclusiveSharerExists())
                 sendInvalidates(Inv, _cacheLine->index(), false, "", true);
-            }
             else if(l->numSharers() > 0){
                 sendInvalidates(Inv, _cacheLine->index(), false, "", false);
                 l->removeAllSharers();
-            }else{
-                _abort(MemHierarchy::CacheController, "Command not supported");
             }
+            else _abort(MemHierarchy::CacheController, "Command not supported");
             break;
         case FetchInvalidateX:
             assert(0);
@@ -125,10 +122,7 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
     CCLine* ccLine = ccLines_[lineIndex];
     assert(ccLine->valid());
     
-    if(ccLine->exclusiveSharerExists()){
-        waitForInvalidateAck = true;
-        assert(!ccLine->isShareless());
-    }
+    if(ccLine->exclusiveSharerExists()) waitForInvalidateAck = true;
     if(!ccLine->isShareless()){
         d_->debug(_L1_,"Stalling request: Eviction requires invalidation of lw lvl caches. St = %s, ExSharerFlag = %s \n", BccLineString[_state], waitForInvalidateAck ? "True" : "False");
         if(waitForInvalidateAck){
@@ -136,7 +130,7 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
             return (ccLine->getState() != V);
         }
         else{
-            assert(ccLine->exclusiveSharerExists() || _state != IM);
+            assert(_state != IM || ccLine->exclusiveSharerExists());
             assert(ccLine->getState() == V);
             sendInvalidates(Inv, lineIndex, true, "", false);
             ccLine->removeAllSharers();
@@ -148,7 +142,7 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
 
 void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded){
     CCLine* ccLine = ccLines_[lineIndex];
-    assert(!ccLine->isShareless());  //no sharers for this address in the cache
+    assert(!ccLine->isShareless());         //Make sure there's actually sharers
     unsigned int sentInvalidates = 0;
     int requestingId = requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
     
@@ -200,8 +194,8 @@ void MESITopCC::processGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int 
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->exclusiveSharerExists()) {
         d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
-        assert(!l->isSharer(_sharerId) && l->numSharers() == 1);
-        sendInvalidates(InvX, lineIndex, false, "", true); //TODO: ""? do we really need it?
+        assert(!l->isSharer(_sharerId));                    /* Cache should not ask for 'S' if its already Exclusive */
+        sendInvalidates(InvX, lineIndex, false, "", true);  //TODO: ""? do we really need it?
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
@@ -252,7 +246,7 @@ void MESITopCC::processPutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState 
         _ccLine->addSharer(_sharerId);
         _ccLine->setState(V);
      }
-    else _ccLine->decAckCount();        //Id PutE, PutM -> num sharers should be 0 before state goes to (V)
+    else _ccLine->updateState();        //Id PutE, PutM -> num sharers should be 0 before state goes to (V)
 
 }
 
@@ -278,7 +272,6 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     Addr offset = 0, base = 0;
     switch(cmd){
         case GetS: case GetSEx: case GetX:
-            assert(_data);
             if(L1_){
                 base = (_event->getAddr()) & ~(lineSize_ - 1);
                 offset = _event->getAddr() - base;
