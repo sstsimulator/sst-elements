@@ -160,5 +160,6 @@ topo = topoTorus()
 topo.prepParams()
 endPoint = EmberEP()
 endPoint.prepParams()
-topo.build(endPoint)
 
+topo.setEndPoint(endPoint)
+topo.build()
