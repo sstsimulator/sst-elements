@@ -126,13 +126,13 @@ bool MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
     if(!ccLine->isShareless()){
         d_->debug(_L1_,"Stalling request: Eviction requires invalidation of lw lvl caches. St = %s, ExSharerFlag = %s \n", BccLineString[_state], waitForInvalidateAck ? "True" : "False");
         if(waitForInvalidateAck){
-            sendInvalidates(Inv, lineIndex, true, "", true);
+            sendInvalidates(Inv, _lineIndex, true, "", true);
             return (ccLine->getState() != V);
         }
         else{
             assert(_state != IM || ccLine->exclusiveSharerExists());
             assert(ccLine->getState() == V);
-            sendInvalidates(Inv, lineIndex, true, "", false);
+            sendInvalidates(Inv, _lineIndex, true, "", false);
             ccLine->removeAllSharers();
         }
     }
@@ -144,7 +144,7 @@ void MESITopCC::sendInvalidates(Command _cmd, int _lineIndex, bool _eviction, st
     CCLine* ccLine = ccLines_[_lineIndex];
     assert(!ccLine->isShareless());         //Make sure there's actually sharers
     unsigned int sentInvalidates = 0;
-    int requestingId = _requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
+    int requestingId = _requestingNode.empty() ? -1 : lowNetworkNodeLookup(_requestingNode);
     
     d_->debug(_L1_,"Number of Sharers: %u \n", ccLine->numSharers());
 

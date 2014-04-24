@@ -39,7 +39,7 @@ public:
                  MESIBottomCC(_cache, _ownerName, _dbg, _parentLinks, _listener, _lineSize,
                  _accessLatency, _mshrLatency, _L1, _directoryLink) {}
 
-    virtual void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
+    virtual void handleEviction(CacheLine* wbCacheLine);
     virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
     virtual void handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry);
     virtual void handleWritebackOnAccess(Addr lineAddr, CacheLine* cacheLine, Command type);
