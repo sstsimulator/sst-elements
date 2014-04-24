@@ -38,68 +38,70 @@ using namespace SST::MemHierarchy;
 
 
 
-void Cache::processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit){
+void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
     try{
-        int lineIndex = cArray_->find(baseAddr, (!mshrHit && MemEvent::isDataRequest(cmd)));  //Update only if it's NOT mshrHit
-        if(isCacheMiss(lineIndex)){                                         /* Miss.  If needed, evict candidate */
-            checkRequestValidity(event, baseAddr);
-            allocateCacheLine(event, baseAddr, lineIndex);
+        bool updateCacheline = !_mshrHit && MemEvent::isDataRequest(_cmd);
+        int lineIndex = cArray_->find(_baseAddr, updateCacheline);      /* Update cacheline only if it's NOT mshrHit */
+        
+        if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
+            checkRequestValidity(_event);
+            allocateCacheLine(_event, _baseAddr, lineIndex);
         }
         
         CacheLine* cacheLine = getCacheLine(lineIndex);
-        checkCacheLineIsStable(cacheLine, cmd);                             /* If cache line is locked or in transition, wait until it is stable */
+        checkCacheLineIsStable(cacheLine, _cmd);                        /* If cache line is locked or in transition, wait until it is stable */
         
-        bottomCC_->handleRequest(event, cacheLine, cmd);                     /* upgrade or fetch line from higher level caches */
-        if(cacheLine->inTransition()) throw stallException();               /* stall request if upgrade is in progress */
+        bottomCC_->handleRequest(_event, cacheLine, _cmd);              /* upgrade or fetch line from higher level caches */
+        if(cacheLine->inTransition()) throw stallException();           /* stall request if upgrade is in progress */
         
-        bool done = topCC_->handleRequest(event, cacheLine, mshrHit);        /* Invalidate sharers, send respond to requestor if needed */
-        postRequestProcessing(event, cacheLine, done, mshrHit);
+        bool done = topCC_->handleRequest(_event, cacheLine, _mshrHit); /* Invalidate sharers, send respond to requestor if needed */
+        postRequestProcessing(_event, cacheLine, done, _mshrHit);
     
     }
     catch(stallException const& e){
-        mshr_->insert(baseAddr, event);                                     /* This request needs to wait for another request to finish.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
+        mshr_->insert(_baseAddr, _event);                               /* This request needs to wait for another request to finish.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
     }
     catch(ignoreEventException const& e){}
 }
 
 
-void Cache::processCacheInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit){
-    CacheLine* cacheLine = getCacheLine(baseAddr);
-    if(!shouldThisInvalidateRequestProceed(event, cacheLine, baseAddr, mshrHit)) return;
+void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
+    CacheLine* cacheLine = getCacheLine(_baseAddr);
+    if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
     
-    topCC_->handleInvalidate(cacheLine->index(), cmd);    /* Invalidate lower levels */
+    topCC_->handleInvalidate(cacheLine->index(), _cmd);     /* Invalidate lower levels */
     if(invalidatesInProgress(cacheLine->index())) return;
     
-    bottomCC_->handleInvalidate(event, cacheLine, cmd);   /* Invalidate this cache line */
-    mshr_->removeElement(baseAddr, event);
-    delete event;
+    bottomCC_->handleInvalidate(_event, cacheLine, _cmd);   /* Invalidate this cache line */
+    mshr_->removeElement(_baseAddr, _event);
+    delete _event;
     return;
 }
 
 
-void Cache::processCacheResponse(MemEvent* ackEvent, Addr baseAddr){
-    CacheLine* cacheLine = getCacheLine(baseAddr); assert(cacheLine);
+void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
+    CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
     
-    bottomCC_->handleResponse(ackEvent, cacheLine, mshr_->lookup(baseAddr));
-    if(topCC_->getState(cArray_->find(baseAddr, false)) == V) activatePrevEvents(baseAddr);
+    bottomCC_->handleResponse(_responseEvent, cacheLine, mshr_->lookup(_baseAddr));
+    if(topCC_->getState(cArray_->find(_baseAddr, false)) == V) activatePrevEvents(_baseAddr);
     else d_->debug(_L1_,"Received AccessAck but states are still not valid.  BottomState: %s\n",
                    BccLineString[cacheLine->getState()]);
     
-    delete ackEvent;
+    delete _responseEvent;
 }
 
 
-void Cache::processFetch(MemEvent* event, Addr baseAddr, bool mshrHit){
-    CacheLine* cacheLine = getCacheLine(baseAddr);
-    Command cmd = event->getCmd();
+void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
+    CacheLine* cacheLine = getCacheLine(_baseAddr);
+    Command cmd = _event->getCmd();
     
-    if(!shouldThisInvalidateRequestProceed(event, cacheLine, baseAddr, mshrHit)) return;
+    if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
 
     topCC_->handleFetchInvalidate(cacheLine, cmd);
     if(invalidatesInProgress(cacheLine->index())) return;
     
-    bottomCC_->handleFetchInvalidate(event, cacheLine, cmd, mshrHit);
-    mshr_->removeElement(baseAddr, event);
+    bottomCC_->handleFetchInvalidate(_event, cacheLine, cmd, _mshrHit);
+    mshr_->removeElement(_baseAddr, _event);
 }
 
 
@@ -107,78 +109,80 @@ void Cache::processFetch(MemEvent* event, Addr baseAddr, bool mshrHit){
    Writeback Related Functions
    --------------------------------- */
 
-void Cache::allocateCacheLine(MemEvent *event, Addr baseAddr, int& newCacheLineIndex) throw(stallException){
-    CacheLine* wbCacheLine = findReplacementCacheLine(baseAddr);
+void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLineIndex) throw(stallException){
+    CacheLine* wbCacheLine = findReplacementCacheLine(_baseAddr);
     
     /* Is writeback candidate invalid and not in transition? */
     if(wbCacheLine->valid()){
-        candidacyCheck(event, wbCacheLine, baseAddr);
-        evictInHigherLevelCaches(wbCacheLine, baseAddr);
-        writebackToLowerLevelCaches(event, wbCacheLine, baseAddr);
+        candidacyCheck(_event, wbCacheLine, _baseAddr);
+        evictInHigherLevelCaches(wbCacheLine, _baseAddr);
+        writebackToLowerLevelCaches(_event, wbCacheLine);
     }
-    replaceCacheLine(wbCacheLine->index(), newCacheLineIndex, baseAddr); /* OK to change addr of topCC cache line, OK to replace cache line  */
-    if(!isCacheLineAllocated(newCacheLineIndex)) throw stallException();
+    replaceCacheLine(wbCacheLine->index(), _newCacheLineIndex, _baseAddr); /* OK to change addr of topCC cache line, OK to replace cache line  */
+    if(!isCacheLineAllocated(_newCacheLineIndex)) throw stallException();
 }
 
 
-CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr baseAddr){
-    int wbLineIndex = cArray_->preReplace(baseAddr);        assert(wbLineIndex >= 0);
-    CacheLine* wbCacheLine = cArray_->lines_[wbLineIndex];  assert(wbCacheLine);
+CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
+    int wbLineIndex = cArray_->preReplace(_baseAddr);        assert(wbLineIndex >= 0);
+    CacheLine* wbCacheLine = cArray_->lines_[wbLineIndex];   assert(wbCacheLine);
     wbCacheLine->setIndex(wbLineIndex);
     return wbCacheLine;
 }
 
 
-void Cache::candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
-    d_->debug(_L1_,"Replacement cache needs to be evicted. WbAddr: %"PRIx64", St: %s\n", wbCacheLine->getBaseAddr(), BccLineString[wbCacheLine->getState()]);
+void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
+    d_->debug(_L1_,"Replacement cache needs to be evicted. WbAddr: %"PRIx64", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
     
-    if(wbCacheLine->isLockedByUser()){
-        d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", wbCacheLine->getBaseAddr());
-        retryRequestLater(event, requestBaseAddr);
+    if(_wbCacheLine->isLockedByUser()){
+        d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", _wbCacheLine->getBaseAddr());
+        retryRequestLater(_event);
         throw stallException();
     }
-    else if(isCandidateInTransition(wbCacheLine)){
-        mshr_->insertPointer(wbCacheLine->getBaseAddr(), requestBaseAddr);
+    else if(isCandidateInTransition(_wbCacheLine)){
+        mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw stallException();
     }
     return;
 }
 
-bool Cache::isCandidateInTransition(CacheLine* wbCacheLine){
-    CCLine* wbCCLine = getCCLine(wbCacheLine->index());
-    if(CacheLine::inTransition(wbCacheLine->getState()) || (!L1_ && wbCCLine->getState() != V)){
+
+bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
+    CCLine* wbCCLine = getCCLine(_wbCacheLine->index());
+    if(CacheLine::inTransition(_wbCacheLine->getState()) || (!L1_ && wbCCLine->getState() != V)){
         d_->debug(_L1_,"Stalling request: Replacement cache line in transition.\n");
         return true;
     }
     return false;
 }
 
-void Cache::evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException){
-    bool invalidatesSent = topCC_->handleEviction(wbCacheLine->index(), wbCacheLine->getState());
+
+void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
+    bool invalidatesSent = topCC_->handleEviction(_wbCacheLine->index(), _wbCacheLine->getState());
     if(invalidatesSent){
-        mshr_->insertPointer(wbCacheLine->getBaseAddr(), requestBaseAddr);
+        mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw stallException();
     }
     if(!L1_){
-        CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[wbCacheLine->index()];
+        CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_wbCacheLine->index()];
         ccLine->clear();
     }
 }
 
 
-void Cache::writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr requestBaseAddr){
-    bottomCC_->handleEviction(event, wbCacheLine);
+void Cache::writebackToLowerLevelCaches(MemEvent* _event, CacheLine* _wbCacheLine){
+    bottomCC_->handleEviction(_wbCacheLine);
     d_->debug(_L1_,"Replacement cache line evicted.\n");
 }
 
 
-void Cache::replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineIndex, Addr newBaseAddr){
+void Cache::replaceCacheLine(int _replacementCacheLineIndex, int& _newCacheLineIndex, Addr _newBaseAddr){
     if(!L1_){
-        CCLine* wbCCLine = ((MESITopCC*)topCC_)->ccLines_[replacementCacheLineIndex];
-        wbCCLine->setBaseAddr(newBaseAddr);
+        CCLine* wbCCLine = ((MESITopCC*)topCC_)->ccLines_[_replacementCacheLineIndex];
+        wbCCLine->setBaseAddr(_newBaseAddr);
     }
-    newCacheLineIndex = replacementCacheLineIndex;
-    cArray_->replace(newBaseAddr, newCacheLineIndex);
+    _newCacheLineIndex = _replacementCacheLineIndex;
+    cArray_->replace(_newBaseAddr, _newCacheLineIndex);
     d_->debug(_L1_,"Allocated current request in a cache line.\n");
 }
 
@@ -186,10 +190,10 @@ void Cache::replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineInd
 /* ---------------------------------------
    Invalidate Request helper functions
    --------------------------------------- */
-bool Cache::invalidatesInProgress(int lineIndex){
+bool Cache::invalidatesInProgress(int _lineIndex){
     if(L1_) return false;
     
-    CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[lineIndex];
+    CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_lineIndex];
     if(ccLine->inTransition()){
         d_->debug(_L1_,"Invalidate request needs to be forwared to HiLv caches.\n");
         return true;
@@ -197,27 +201,27 @@ bool Cache::invalidatesInProgress(int lineIndex){
     return false;
 }
 
-bool Cache::shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool mshrHit){
+bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Addr _baseAddr, bool _mshrHit){
     /* Scenario where this 'if' occurs:  HiLv$ evicts a shared line (S->I), sends PutS to LowLv$.
        Simultaneously, LowLv$ sends an Inv to HiLv$. Thus, HiLv$ sends an Inv an already invalidated line */
-    if(!cacheLine || (cacheLine->getState() == I && !mshrHit)){
-        mshr_->removeElement(baseAddr, event);
+    if(!_cacheLine || (_cacheLine->getState() == I && !_mshrHit)){
+        mshr_->removeElement(_baseAddr, _event);
         d_->debug(_WARNING_,"Warning: Ignoring request. CLine doesn't exists or invalid.\n");
         return false;
     }
    
-    if(cacheLine->isLockedByUser()){        /* If user-locked then wait this lock is released to activate this event. */
+    if(_cacheLine->isLockedByUser()){        /* If user-locked then wait this lock is released to activate this event. */
         STAT_InvalidateWaitingForUserLock_++;
-        cacheLine->eventsWaitingForLock_ = true;
+        _cacheLine->eventsWaitingForLock_ = true;
         d_->debug(_WARNING_,"Warning:  CLine is user-locked.\n");
         return false;
     }
     
     if(!L1_){
-        CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[cacheLine->index()];
+        CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_cacheLine->index()];
         if(ccLine->getState() != V) return false;
     }
-    d_->debug(_L1_,"Invalidate request is valid. State: %s\n", BccLineString[cacheLine->getState()]);
+    d_->debug(_L1_,"Invalidate request is valid. State: %s\n", BccLineString[_cacheLine->getState()]);
     return true;
 }
 
@@ -225,9 +229,9 @@ bool Cache::shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cache
             Helper Functions
  ------------------------------------------------------------------------------------- */
 
-void Cache::activatePrevEvents(Addr baseAddr){
-    if(!mshr_->isHit(baseAddr)) return;
-    vector<mshrType> mshrEntry = mshr_->removeAll(baseAddr);
+void Cache::activatePrevEvents(Addr _baseAddr){
+    if(!mshr_->isHit(_baseAddr)) return;
+    vector<mshrType> mshrEntry = mshr_->removeAll(_baseAddr);
     bool cont;    int i = 0;
     d_->debug(_L1_,"---------start--------- Size: %lu\n", mshrEntry.size());
     
@@ -236,7 +240,6 @@ void Cache::activatePrevEvents(Addr baseAddr){
             Addr pointerAddr = boost::get<Addr>((*it).elem);
             d_->debug(_L3_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
             if(!mshr_->isHit(pointerAddr)){ /* Entry has been already been processed, delete mshr entry */
-                //delete *it;
                 mshrEntry.erase(it);
                 continue;
             }
@@ -252,7 +255,7 @@ void Cache::activatePrevEvents(Addr baseAddr){
             mshrEntry.erase(it);
         }
         else{                                                                /* MemEvent Type */
-            cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, baseAddr, it, i);
+            cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
         }
     }
@@ -260,17 +263,18 @@ void Cache::activatePrevEvents(Addr baseAddr){
 }
 
 
-bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr addr, vector<mshrType>::iterator it, int i){
-    d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %"PRIx64", addr: %"PRIx64", dst: %s\n", i, CommandString[event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
+bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Addr _addr, vector<mshrType>::iterator _it, int _i){
+    d_->debug(_L1_,"Activating event #%i, cmd = %s, bsAddr: %"PRIx64", addr: %"PRIx64", dst: %s\n",
+                  _i, CommandString[_event->getCmd()], toBaseAddr(_event->getAddr()), _event->getAddr(), _event->getDst().c_str());
     d_->debug(_L1_,"--------------------------------------\n");
-    this->processEvent(event, true);
+    this->processEvent(_event, true);
     d_->debug(_L1_,"--------------------------------------\n");
 
-    mshrEntry.erase(it);
+    _mshrEntry.erase(_it);
     
     // If the event we just ran 'blocked', then there is not reason to activate other events.
-    if(mshr_->isHit(addr)){
-        try{ mshr_->insertAll(addr, mshrEntry); }
+    if(mshr_->isHit(_addr)){
+        try{ mshr_->insertAll(_addr, _mshrEntry); }
         catch(mshrException const& e){
             _abort(Cache, "MSHR Should not overflow when processing previous events\n");
         }
@@ -279,29 +283,29 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr
     return true;
 }
 
-void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool mshrHit) throw(stallException){
-    Command cmd = event->getCmd();
-    Addr baseAddr = cacheLine->getBaseAddr();
-    if(requestCompleted){
+void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(stallException){
+    Command cmd = _event->getCmd();
+    Addr baseAddr = _cacheLine->getBaseAddr();
+    if(_requestCompleted){
         if(cmd == PutM || cmd == PutE || cmd == PutX){
             if(!L1_){                  /* Check if topCC line is locked */
-                CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[cacheLine->index()];
-                if(cacheLine->unlocked() && ccLine->isValid() && !mshrHit) activatePrevEvents(baseAddr);
+                CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_cacheLine->index()];
+                if(_cacheLine->unlocked() && ccLine->isValid() && !_mshrHit) activatePrevEvents(baseAddr);
             }
         }
-        reActivateEventWaitingForUserLock(cacheLine, mshrHit);
-        delete event;
+        reActivateEventWaitingForUserLock(_cacheLine, _mshrHit);
+        delete _event;
     }
     else throw stallException();
 }
 
 
-void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool mshrHit){
-    Addr baseAddr = cacheLine->getBaseAddr();
-    if(cacheLine->eventsWaitingForLock_ && !cacheLine->isLockedByUser() && !mshrHit){
+void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine, bool _mshrHit){
+    Addr baseAddr = _cacheLine->getBaseAddr();
+    if(_cacheLine->eventsWaitingForLock_ && !_cacheLine->isLockedByUser() && !_mshrHit){
         d_->debug(_L1_,"Reactivating events:  User-locked cache line is now available\n");
         if(mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);
-        cacheLine->eventsWaitingForLock_ = false;
+        _cacheLine->eventsWaitingForLock_ = false;
     }
 }
 
@@ -319,8 +323,8 @@ void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ig
     }
 }
 
-bool Cache::isCacheMiss(int lineIndex){
-    if(lineIndex == -1){
+bool Cache::isCacheMiss(int _lineIndex){
+    if(_lineIndex == -1){
         d_->debug(_L1_,"-- Cache Miss --\n");
         return true;
     }
@@ -349,13 +353,13 @@ void Cache::pMembers(){
     d_->debug(_INFO_,"MSHR entries:  %d \n\n", MSHRSize_);
 }
 
-void Cache::retryRequestLater(MemEvent* event, Addr baseAddr){
-    retryQueueNext_.push_back(event);
+void Cache::retryRequestLater(MemEvent* _event){
+    retryQueueNext_.push_back(_event);
 }
 
 
-CacheArray::CacheLine* Cache::getCacheLine(Addr baseAddr){
-    int lineIndex =  cArray_->find(baseAddr, false);
+CacheArray::CacheLine* Cache::getCacheLine(Addr _baseAddr){
+    int lineIndex =  cArray_->find(_baseAddr, false);
     if(lineIndex == -1) return NULL;
     else{
         CacheLine* cacheLine = cArray_->lines_[lineIndex];
@@ -364,29 +368,29 @@ CacheArray::CacheLine* Cache::getCacheLine(Addr baseAddr){
     }
 }
 
-CacheArray::CacheLine* Cache::getCacheLine(int lineIndex){
-    if(lineIndex == -1) return NULL;
+CacheArray::CacheLine* Cache::getCacheLine(int _lineIndex){
+    if(_lineIndex == -1) return NULL;
     else{
-        CacheLine* cacheLine = cArray_->lines_[lineIndex];
-        cacheLine->setIndex(lineIndex);
+        CacheLine* cacheLine = cArray_->lines_[_lineIndex];
+        cacheLine->setIndex(_lineIndex);
         return cacheLine;
     }
 }
 
 
-bool Cache::isCacheLineAllocated(int lineIndex){
-    return (lineIndex == -1) ? false : true;
+bool Cache::isCacheLineAllocated(int _lineIndex){
+    return (_lineIndex == -1) ? false : true;
 }
 
 
-TopCacheController::CCLine* Cache::getCCLine(int index){
-    if(!L1_) return ((MESITopCC*)topCC_)->ccLines_[index];
+TopCacheController::CCLine* Cache::getCCLine(int _index){
+    if(!L1_) return ((MESITopCC*)topCC_)->ccLines_[_index];
     else return NULL;
 
 }
 
-void Cache::checkRequestValidity(MemEvent* event, Addr baseAddr) throw(ignoreEventException){
-    Command cmd = event->getCmd();
+void Cache::checkRequestValidity(MemEvent* _event) throw(ignoreEventException){
+    Command cmd = _event->getCmd();
     assert(cmd != PutM && cmd != PutE && cmd != PutX);
     if(cmd == PutS) {
         d_->debug(_WARNING_,"Ignoring PutS request. \n");
@@ -395,7 +399,7 @@ void Cache::checkRequestValidity(MemEvent* event, Addr baseAddr) throw(ignoreEve
 }
 
 
-bool operator== ( const mshrType& n1, const mshrType& n2) {
-    if(n1.elem.type() == typeid(Addr)) return false;
-    return(boost::get<MemEvent*>(n1.elem) == boost::get<MemEvent*>(n2.elem));
+bool operator== ( const mshrType& _n1, const mshrType& _n2) {
+    if(_n1.elem.type() == typeid(Addr)) return false;
+    return(boost::get<MemEvent*>(_n1.elem) == boost::get<MemEvent*>(_n2.elem));
 }

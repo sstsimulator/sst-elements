@@ -46,8 +46,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     int associativity           = params.find_integer("associativity", -1);
     string sizeStr              = params.find_string("cache_size", "");                  //Bytes
     int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
-    //int numParents              = params.find_integer("low_network_links", -1);
-    //int numChildren             = params.find_integer("high_network_links", -1);
     int accessLatency           = params.find_integer("access_latency_cycles", -1);                 //ns
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
@@ -56,15 +54,15 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     string coherenceProtocol    = params.find_string("coherence_protocol", "");
 
     /* Check user specified all required fields */
-    if(cacheFrequency.empty())                _abort(Cache, "No cache frequency specified (usually frequency = cpu frequency).\n");
-    if(-1 >= associativity)                   _abort(Cache, "Associativity was not specified.\n");
-    if(sizeStr.empty())                       _abort(Cache, "Cache size was not specified. \n")
-    if(-1 == lineSize)                        _abort(Cache, "Line size was not specified (blocksize).\n");
-    if(mshrSize == -1)                        mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
-    if(L1int != 1 && L1int != 0)              _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
-    if(accessLatency == -1 )                  _abort(Cache, "Access time not specified\n");
+    if(cacheFrequency.empty())          _abort(Cache, "No cache frequency specified (usually frequency = cpu frequency).\n");
+    if(-1 >= associativity)             _abort(Cache, "Associativity was not specified.\n");
+    if(sizeStr.empty())                 _abort(Cache, "Cache size was not specified. \n")
+    if(-1 == lineSize)                  _abort(Cache, "Line size was not specified (blocksize).\n");
+    if(mshrSize == -1)                  mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
+    if(L1int != 1 && L1int != 0)        _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
+    if(accessLatency == -1 )            _abort(Cache, "Access time not specified\n");
     if(directoryAtNextLevel > 1 ||
-       directoryAtNextLevel < 0)              _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");
+       directoryAtNextLevel < 0)        _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");
     long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
     uint numLines = cacheSize/lineSize;
     uint protocol;
@@ -72,8 +70,8 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     /* Initialization */
     HashFunction* ht = new PureIdHashFunction;
     
-    if(coherenceProtocol == "MESI" || coherenceProtocol == "mesi") protocol = 1;
-    else if(coherenceProtocol == "MSI" || coherenceProtocol == "msi") protocol = 0;
+    if(coherenceProtocol == "MESI" || coherenceProtocol == "mesi")      protocol = 1;
+    else if(coherenceProtocol == "MSI" || coherenceProtocol == "msi")   protocol = 0;
     else _abort(Cache, "Not supported protocol\n");
 
     SST::MemHierarchy::LRUReplacementMgr* replacementManager;
@@ -102,7 +100,6 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
     pMembers();
     errorChecking();
-    /* Prefetcher */
     
     d2_ = new Output();
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
@@ -114,7 +111,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     mshrLatency_        = params.find_integer("mshr_latency_cycles", -1);
     
     
-    /* Listener */
+    /* Prefetcher */
     if (prefetcher.empty()) listener_ = new CacheListener();
     else {
         listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
@@ -129,7 +126,6 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     if(mshrLatency_ < 1) intrapolateMSHRLatency();
 
     assert(mshrLatency_   >= 1);
-
 
     /* MSHR */
     mshr_               = new MSHR(this, MSHRSize_);
@@ -235,7 +231,7 @@ void Cache::intrapolateMSHRLatency(){
     assert_msg(accessLatency_ > 4, "L2 should have a latency bigger than 4 cycles.");
     y[0] = 0;
     y[1] = 1;
-    for(int idx = 2; idx < 12; idx++)  y[idx] = 2;
+    for(int idx = 2;  idx < 12; idx++) y[idx] = 2;
     for(int idx = 13; idx < 16; idx++) y[idx] = 3;
     for(int idx = 17; idx < 26; idx++) y[idx] = 5;
 
@@ -243,7 +239,7 @@ void Cache::intrapolateMSHRLatency(){
     /* L3 */
     for(int idx = 27; idx < 46; idx++) y[idx] = 19;
     for(int idx = 47; idx < 68; idx++) y[idx] = 26;
-    for(int idx = 69; idx < N; idx++)  y[idx] = 32;
+    for(int idx = 69; idx < N;  idx++) y[idx] = 32;
     
     assert_msg(accessLatency_ > 4, "Cache access latencies greater than 200 cycles not supported.");
 

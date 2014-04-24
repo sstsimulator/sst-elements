@@ -115,11 +115,11 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
 /* Function sends invalidates to lower level caches, removes sharers if needed.  
  * Currently it implements weak consistency, ie. invalidates to sharers do not need acknowledgment
  * Returns true if eviction requires a response from Child, and false if no response is expected */
-bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
+bool MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
     if(_state == I) return false;
     bool waitForInvalidateAck = false;
     assert(!CacheArray::CacheLine::inTransition(_state));
-    CCLine* ccLine = ccLines_[lineIndex];
+    CCLine* ccLine = ccLines_[_lineIndex];
     assert(ccLine->valid());
     
     if(ccLine->exclusiveSharerExists()) waitForInvalidateAck = true;
@@ -140,11 +140,11 @@ bool MESITopCC::handleEviction(int lineIndex,  BCC_MESIState _state){
 }
 
 
-void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded){
-    CCLine* ccLine = ccLines_[lineIndex];
+void MESITopCC::sendInvalidates(Command _cmd, int _lineIndex, bool _eviction, string _requestingNode, bool _acksNeeded){
+    CCLine* ccLine = ccLines_[_lineIndex];
     assert(!ccLine->isShareless());         //Make sure there's actually sharers
     unsigned int sentInvalidates = 0;
-    int requestingId = requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
+    int requestingId = _requestingNode.empty() ? -1 : lowNetworkNodeLookup(requestingNode);
     
     d_->debug(_L1_,"Number of Sharers: %u \n", ccLine->numSharers());
 
@@ -153,16 +153,16 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
         int sharerId = sharer->second;
         if(requestingId == sharerId) continue;
         if(ccLine->isSharer(sharerId)){
-            if(acksNeeded){
-                if(cmd == Inv) ccLine->setState(Inv_A);
+            if(_acksNeeded){
+                if(_cmd == Inv) ccLine->setState(Inv_A);
                 else ccLine->setState(InvX_A);
             }
             sentInvalidates++;
             
-            if(!eviction) InvReqsSent_++;
+            if(!_eviction) InvReqsSent_++;
             else EvictionInvReqsSent_++;
             
-            invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), cmd);
+            invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), _cmd);
             d_->debug(_L1_,"Invalidate sent: %u (numSharers), Invalidating Addr: %"PRIx64", Dst: %s\n", ccLine->numSharers(), ccLine->getBaseAddr(),  sharer->first.c_str());
             invalidateEvent->setDst(sharer->first);
             response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
@@ -179,7 +179,7 @@ void MESITopCC::sendInvalidates(Command cmd, int lineIndex, bool eviction, strin
 
 
 
-void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& ret){
+void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
@@ -188,7 +188,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* Send Data in E state */
     if(protocol_ && l->isShareless() && (state == E || state == M)){
         l->setExclusiveSharer(_sharerId);
-        ret = sendResponse(_event, E, data, _mshrHit);
+        _ret = sendResponse(_event, E, data, _mshrHit);
     }
     
     /* If exclusive sharer exists, downgrade it to S state */
@@ -200,7 +200,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
         l->addSharer(_sharerId);
-        ret = sendResponse(_event, S, data, _mshrHit);
+        _ret = sendResponse(_event, S, data, _mshrHit);
     }
     else{
         _abort(MemHierarchy::CacheController, "Unkwown state!");
@@ -295,12 +295,12 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     return true;
 }
 
-int MESITopCC::lowNetworkNodeLookup(const std::string &name){
+int MESITopCC::lowNetworkNodeLookup(const std::string& _name){
 	int id = -1;
-	std::map<string, int>::iterator it = lowNetworkNameMap_.find(name);
+	std::map<string, int>::iterator it = lowNetworkNameMap_.find(_name);
 	if(lowNetworkNameMap_.end() == it) {
         id = lowNetworkNodeCount_++;
-		lowNetworkNameMap_[name] = id;
+		lowNetworkNameMap_[_name] = id;
 	} else {
 		id = it->second;
 	}

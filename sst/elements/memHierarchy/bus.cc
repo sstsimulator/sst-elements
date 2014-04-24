@@ -37,8 +37,8 @@ using namespace SST::MemHierarchy;
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
-Bus::Bus(ComponentId_t id, Params& params) : Component(id){
-	configureParameters(params);
+Bus::Bus(ComponentId_t _id, Params& _params) : Component(_id){
+	configureParameters(_params);
     configureLinks();
     idleCount_ = 0;
     busOn_ = true;
@@ -46,8 +46,8 @@ Bus::Bus(ComponentId_t id, Params& params) : Component(id){
 
 Bus::Bus() : Component(-1) {}
 
-void Bus::processIncomingEvent(SST::Event *ev){
-    eventQueue_.push(ev);
+void Bus::processIncomingEvent(SST::Event* _ev){
+    eventQueue_.push(_ev);
     if(!busOn_){
         //std::cout << "HEREEEE" << std::endl;
         reregisterClock(defaultTimeBase_, clockHandler_);
@@ -56,7 +56,7 @@ void Bus::processIncomingEvent(SST::Event *ev){
     }
 }
 
-bool Bus::clockTick(Cycle_t time) {
+bool Bus::clockTick(Cycle_t _time) {
 
     if(!eventQueue_.empty()){
         SST::Event* event = eventQueue_.front();
@@ -81,8 +81,8 @@ bool Bus::clockTick(Cycle_t time) {
 
 
 
-void Bus::broadcastEvent(SST::Event *ev){
-    MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+void Bus::broadcastEvent(SST::Event* _ev){
+    MemEvent* memEvent = dynamic_cast<MemEvent*>(_ev);
     LinkId_t srcLinkId = lookupNode(memEvent->getSrc());
     SST::Link* srcLink = linkIdMap_[srcLinkId];
 
@@ -101,11 +101,12 @@ void Bus::broadcastEvent(SST::Event *ev){
 
 
 
-void Bus::sendSingleEvent(SST::Event *ev){
-    MemEvent *event = static_cast<MemEvent*>(ev);
+void Bus::sendSingleEvent(SST::Event* _ev){
+    MemEvent *event = static_cast<MemEvent*>(_ev);
     dbg_.debug(_L3_,"\n\n");
     dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n", this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), ev->getDeliveryLink()->getId());
+    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
 
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
@@ -114,18 +115,18 @@ void Bus::sendSingleEvent(SST::Event *ev){
     delete event;
 }
 
-//------------------
-// EXTRAS
-//------------------
+/*----------------------------------------
+ * Helper functions
+ *---------------------------------------*/
 
-void Bus::mapNodeEntry(const std::string &name, LinkId_t id){
-	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
+void Bus::mapNodeEntry(const std::string& _name, LinkId_t _id){
+	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(_name);
 	assert(nameMap_.end() == it);
-    nameMap_[name] = id;
+    nameMap_[_name] = _id;
 }
 
-LinkId_t Bus::lookupNode(const std::string &name){
-	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(name);
+LinkId_t Bus::lookupNode(const std::string& _name){
+	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(_name);
 	assert(nameMap_.end() != it);
     return it->second;
 }
@@ -161,19 +162,19 @@ void Bus::configureLinks(){
 
 }
 
-void Bus::configureParameters(SST::Params& params){
-    dbg_.init("" + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
-    numLowNetPortsX_ = params.find_integer("low_network_ports", 0);
-	numHighNetPortsX_ = params.find_integer("high_network_ports", 0);
-    numHighNetPorts_ = 0;
-    numLowNetPorts_ = 0;
-    maxNumPorts_ = 500;
+void Bus::configureParameters(SST::Params& _params){
+    dbg_.init("" + getName() + ": ", 0, 0, (Output::output_location_t)_params.find_integer("debug", 0));
+    numLowNetPortsX_  = _params.find_integer("low_network_ports", 0);
+	numHighNetPortsX_ = _params.find_integer("high_network_ports", 0);
+    numHighNetPorts_  = 0;
+    numLowNetPorts_   = 0;
+    maxNumPorts_      = 500;
     
-	latency_ = params.find_integer("bus_latency_cycles", 1);
-    idleMax_ = params.find_integer("idle_max", 6);
-    busFrequency_ = params.find_string("bus_frequency", "Invalid");
-    broadcast_ = params.find_integer("broadcast", 0);
-    fanout_ = params.find_integer("fanout", 0);
+	latency_      = _params.find_integer("bus_latency_cycles", 1);
+    idleMax_      = _params.find_integer("idle_max", 6);
+    busFrequency_ = _params.find_string("bus_frequency", "Invalid");
+    broadcast_    = _params.find_integer("broadcast", 0);
+    fanout_       = _params.find_integer("fanout", 0);
 
     if(busFrequency_ == "Invalid") _abort(Bus, "Bus Frequency was not specified\n");
     if(broadcast_ < 0 || broadcast_ > 1) _abort(Bus, "Broadcast feature was not specified correctly\n");
@@ -181,7 +182,7 @@ void Bus::configureParameters(SST::Params& params){
     defaultTimeBase_ = registerClock(busFrequency_, clockHandler_);
 }
 
-void Bus::init(unsigned int phase){
+void Bus::init(unsigned int _phase){
     SST::Event *ev;
 
     for(int i = 0; i < numHighNetPorts_; i++) {
@@ -216,18 +217,4 @@ void Bus::init(unsigned int phase){
         }
     }
 }
-
-
-//void Bus::finish(){
-//    for(unsigned int i = 0; i < highNetPorts_.size(); i++)  delete highNetPorts_[i];
-//    for(unsigned int i = 0; i < highNetPorts_.size(); i++)  delete lowNetPorts_[i];
-//}
-
-
-
-// Element Libarary / Serialization stuff
-
-//BOOST_CLASS_EXPORT(Bus)
-//BOOST_CLASS_EXPORT(BusEvent)
-
 

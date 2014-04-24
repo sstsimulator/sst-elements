@@ -31,12 +31,12 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::init(unsigned int phase){
+void Cache::init(unsigned int _phase){
     
     SST::Event *ev;
-    if(directoryLink_) directoryLink_->init(phase);
+    if(directoryLink_) directoryLink_->init(_phase);
     
-    if(!phase){
+    if(!_phase){
         if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
         else{
             for(uint i = 0; i < highNetPorts_->size(); i++)
@@ -80,8 +80,8 @@ void Cache::setup(){
     bottomCC_->setNextLevelCache(nextLevelCacheName_);
 }
 
-void Cache::processIncomingEvent(SST::Event *ev){
-    incomingEventQueue_.push(make_pair(ev, timestamp_));
+void Cache::processIncomingEvent(SST::Event* _ev){
+    incomingEventQueue_.push(make_pair(_ev, timestamp_));
     if(!clockOn_){
         timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
         clockOn_ = true;
@@ -90,14 +90,14 @@ void Cache::processIncomingEvent(SST::Event *ev){
     }
 }
   
-void Cache::processEvent(SST::Event* ev, bool mshrHit) {
-    MemEvent *event = static_cast<MemEvent*>(ev);
+void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
+    MemEvent *event = static_cast<MemEvent*>(_ev);
     
     Command cmd     = event->getCmd();
     Addr baseAddr   = toBaseAddr(event->getAddr());
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
         
-    if(!mshrHit){
+    if(!_mshrHit){
         STAT_TotalInstructionsRecieved_++;
         d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
@@ -115,13 +115,13 @@ void Cache::processEvent(SST::Event* ev, bool mshrHit) {
         case GetS:
         case GetX:
         case GetSEx:
-            if(!mshrHit) STAT_NonCoherenceReqsReceived_++;
+            if(!_mshrHit) STAT_NonCoherenceReqsReceived_++;
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 mshr_->insert(baseAddr, event);
                 d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                 return;
             }
-            processCacheRequest(event, cmd, baseAddr, mshrHit);
+            processCacheRequest(event, cmd, baseAddr, _mshrHit);
             break;
         case GetSResp:
         case GetXResp:
@@ -131,64 +131,64 @@ void Cache::processEvent(SST::Event* ev, bool mshrHit) {
         case PutS:
         case PutE:
         case PutX:
-            processCacheRequest(event, cmd, baseAddr, mshrHit);
+            processCacheRequest(event, cmd, baseAddr, _mshrHit);
             break;
         case Inv:
         case InvX:
             mshr_->insert(baseAddr, event);
-            processCacheInvalidate(event, cmd, baseAddr, mshrHit);
+            processCacheInvalidate(event, cmd, baseAddr, _mshrHit);
             break;
         case Fetch:
         case FetchInvalidate:
         case FetchInvalidateX:
             mshr_->insert(baseAddr, event);
-            processFetch(event, baseAddr, mshrHit);
+            processFetch(event, baseAddr, _mshrHit);
             break;
         default:
             _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);
     }
 }
 
-void Cache::processUncached(MemEvent* event, Command cmd, Addr baseAddr){
+void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
     vector<mshrType> mshrEntry;
     MemEvent* memEvent;
     int i = 0;
-    switch( cmd ){
+    switch(_cmd){
         case GetS:
         case GetX:
-            if(mshrUncached_->isHitAndStallNeeded(baseAddr, cmd)){
-                mshrUncached_->insert(baseAddr, event);
+            if(mshrUncached_->isHitAndStallNeeded(_baseAddr, _cmd)){
+                mshrUncached_->insert(_baseAddr, _event);
                 return;
             }
-            mshrUncached_->insert(baseAddr, event);
-            if(cmd == GetS) bottomCC_->forwardMessage(event, baseAddr, lineSize_, NULL);
-            else bottomCC_->forwardMessage(event, baseAddr, lineSize_, &event->getPayload());
+            mshrUncached_->insert(_baseAddr, _event);
+            if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, lineSize_, NULL);
+            else bottomCC_->forwardMessage(_event, _baseAddr, lineSize_, &_event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
-            mshrEntry = mshrUncached_->removeAll(baseAddr);
+            mshrEntry = mshrUncached_->removeAll(_baseAddr);
             for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
                 memEvent = boost::get<MemEvent*>(mshrEntry.front().elem);
-                topCC_->sendResponse(memEvent, DUMMY, &event->getPayload(), true);
+                topCC_->sendResponse(memEvent, DUMMY, &_event->getPayload(), true);
                 delete memEvent;
                 mshrEntry.erase(it);
                 
             }
-            delete event;
+            delete _event;
             break;
         default:
-            _abort(MemHierarchy::Cache, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
+            _abort(MemHierarchy::Cache, "Command does not exist. Command: %s, Src: %s\n", CommandString[_cmd], _event->getSrc().c_str());
             break;
     }
 }
 
 
-void Cache::handlePrefetchEvent(SST::Event *event) {
-    selfLink_->send(1, event);
+void Cache::handlePrefetchEvent(SST::Event* _event) {
+    selfLink_->send(1, _event);
 }
 
-void Cache::handleSelfEvent(SST::Event *event){
-    MemEvent* ev = static_cast<MemEvent*>(event);
-    processEvent(event, ev->isPrefetch());
+void Cache::handleSelfEvent(SST::Event* _event){
+    MemEvent* ev = static_cast<MemEvent*>(_event);
+    processEvent(_event, ev->isPrefetch());
 }
 

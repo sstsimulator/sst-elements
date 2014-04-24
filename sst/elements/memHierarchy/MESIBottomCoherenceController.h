@@ -49,9 +49,7 @@ private:
     void inc_GETSHit(Addr addr, bool pf);
     void inc_GETXHit(Addr addr, bool pf);
     void inc_GETSMissIS(Addr addr, bool pf);
-    bool isExclusive(CacheLine* cacheLine);
     
-
 public:
     MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
@@ -97,14 +95,14 @@ public:
     void init(const char* name){}
     
     /** Send cache line data to the lower level caches */
-    virtual void handleEviction(MemEvent* event, CacheLine* wbCacheLine);
+    virtual void handleEviction(CacheLine* _wbCacheLine);
 
     /** Process new cache request:  GetX, GetS, GetSEx, PutM, PutS, PutX */
     virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
     
-    /** Process Inv/InvX request.  Arguably the most important function within MemHierarchy.
-       Most errors come from deadlocks due to invalidation/evicitons/upgrades.  Great care
-       needs to be taken when a invalidate is received. */
+    /** Process Inv/InvX request.  -----Arguably the most important function within MemHierarchy.-----
+       Most errors come from deadlocks due to invalidation/evicitons/upgrades all happening simultaneously
+       Special care needs to be taken when a invalidate is received. */
     virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
 
     /** Process GetSResp/GetXResp.  Update the cache line with the 
@@ -122,7 +120,7 @@ public:
 
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
 
-    void handleGetXRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
+    void handleGetXRequest(MemEvent* _event, CacheLine* cacheLine);
 
     void processInvRequest(MemEvent* event, CacheLine* cacheLine);
     
@@ -134,7 +132,7 @@ public:
     
     void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
 
-    void handlePutERequest(MemEvent* event, CacheLine* cacheLine);
+    void handlePutERequest(CacheLine* cacheLine);
     
     /** Wrapper for the other 'forwardMessage' function with a different signature */
     void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);

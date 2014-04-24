@@ -220,7 +220,7 @@ private:
     inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (stallException);
 
     /** Writeback cache line to lower level caches */
-    inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine, Addr baseAddr);
+    inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine);
 
     /** At this point, cache line has been evicted or is not valid. 
         This function replaces cache line with the info/addr of the current request */
@@ -235,7 +235,7 @@ private:
 
     /* Invalidate was received. This function checks wheter this invalidate request can proceed.
        This function prevents deadlocks by giving priority to requests in progress */
-    bool shouldThisInvalidateRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool mshrHit);
+    bool shouldInvRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool mshrHit);
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
@@ -271,7 +271,7 @@ private:
     inline TopCacheController::CCLine* getCCLine(int index);
 
     /** Check the 'validity' of the request.  Assert expected state */
-    inline void checkRequestValidity(MemEvent* event, Addr baseAddr) throw(ignoreEventException);
+    inline void checkRequestValidity(MemEvent* event) throw(ignoreEventException);
 
     /** Verify that input parameters are valid */
     void errorChecking();
@@ -288,7 +288,7 @@ private:
     void intrapolateMSHRLatency();
 
     /** Add requests to the 'retry queue.'  This event will be reissued at a later time */
-    inline void retryRequestLater(MemEvent* event, Addr baseAddr);
+    inline void retryRequestLater(MemEvent* event);
 
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
