@@ -46,5 +46,6 @@ if __name__ == "__main__":
 
     topo.prepParams()
     endPoint.prepParams()
-    topo.build(endPoint)
+    topo.setEndPoint(endPoint)
+    topo.build()
 

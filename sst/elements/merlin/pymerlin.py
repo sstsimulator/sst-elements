@@ -29,16 +29,27 @@ debug = 0
 
 
 class Topo:
+    def __init__(self):
+        def epFunc(epID):
+            return None
+        self._getEndPoint = epFunc
     def getName(self):
         return "NoName"
     def prepParams(self):
         pass
-    def build(self, endPoint):
+    def setEndPoint(self, endPoint):
+        def epFunc(epID):
+            return endPoint
+        self._getEndPoint = epFunc
+    def setEndPointFunc(self, epFunc):
+        self._getEndPoint = epFunc
+    def build(self):
         pass
         
 
-class topoSimple:
+class topoSimple(Topo):
     def __init__(self):
+        Topo.__init__(self)
         self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Simple"
@@ -65,6 +76,7 @@ class topoSimple:
 
 class topoTorus(Topo):
     def __init__(self):
+        Topo.__init__(self)
         self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Torus"
@@ -109,7 +121,7 @@ class topoTorus(Topo):
     def formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
-    def build(self, endPoint):
+    def build(self):
         def idToLoc(rtr_id):
             foo = list()
             for i in xrange(self.nd-1, 0, -1):
@@ -164,7 +176,7 @@ class topoTorus(Topo):
                 rtr.addLink(nicLink, "port%d"%port, _params["link_lat"])
                 port = port+1
                 nodeID = int(_params["torus:local_ports"]) * i + n
-                endPoint.build(nodeID, nicLink, [])
+                self._getEndPoint(nodeID).build(nodeID, nicLink, [])
 
 
 
@@ -172,6 +184,7 @@ class topoTorus(Topo):
 
 class topoFatTree(Topo):
     def __init__(self):
+        Topo.__init__(self)
         self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "fattree:loading","input_latency","output_latency","input_buf_size","output_buf_size"]
         self.nicKeys = ["fattree:addr", "fattree:IP", "fattree:loading", "fattree:radix"]
     def getName(self):
@@ -187,7 +200,7 @@ class topoFatTree(Topo):
         _params["num_vcs"] = 2
         _params["num_peers"] = _params["router_radix"] * (_params["router_radix"]/2) * _params["fattree:hosts_per_edge_rtr"]
 
-    def build(self, endPoint):
+    def build(self):
         def addrToNum(addr):
             return (addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8) | addr[0]
         def formatAddr(addr):
@@ -273,7 +286,7 @@ class topoFatTree(Topo):
 
                     _params["fattree:addr"] = addrToNum(myip);
                     _params["fattree:IP"] = formatAddr(myip);
-                    endPoint.build(node_id, getLink("link:pod%d_edge%d_node%d"%(pod, r, node_id)), self.nicKeys)
+                    self._getEndPoint(node_id).build(node_id, getLink("link:pod%d_edge%d_node%d"%(pod, r, node_id)), self.nicKeys)
 
 
 
@@ -281,6 +294,7 @@ class topoFatTree(Topo):
 
 class topoDragonFly(Topo):
     def __init__(self):
+        Topo.__init__(self)
         self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Dragonfly"
@@ -305,7 +319,7 @@ class topoDragonFly(Topo):
             self.rtrKeys.append("dragonfly:algorithm")
 
 
-    def build(self, endPoint):
+    def build(self):
         links = dict()
         def getLink(name):
             if name not in links:
@@ -328,7 +342,7 @@ class topoDragonFly(Topo):
                 for p in xrange(_params["dragonfly:hosts_per_router"]):
                     link = sst.Link("link:g%dr%dh%d"%(g, r, p))
                     rtr.addLink(link, "port%d"%port, _params["link_lat"])
-                    endPoint.build(nic_num, link, [])
+                    self._getEndPoint(nic_num).build(nic_num, link, [])
                     nic_num = nic_num + 1
                     port = port + 1
 
@@ -462,5 +476,6 @@ if __name__ == "__main__":
 
     topo.prepParams()
     endPoint.prepParams()
-    topo.build(endPoint)
+    topo.setEndPoint(endPoint)
+    topo.build()
 
