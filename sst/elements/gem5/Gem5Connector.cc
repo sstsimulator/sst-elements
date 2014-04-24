@@ -52,10 +52,10 @@ Gem5Connector::Gem5Connector(Gem5Comp *g5Comp, Output &out,
 
     SST::Params params;
     sstlink = static_cast<SimpleMem*>(comp->loadModuleWithComponent("memHierarchy.memInterface", comp, params));
-    sstlink->initialize(linkName,
+    bool ok = sstlink->initialize(linkName,
             new SimpleMem::Handler<Gem5Connector>(this, &Gem5Connector::handleRecvFromSST));
 
-    if ( !sstlink ) {
+    if ( !ok ) {
         out.fatal(CALL_INFO, 1, "Failed to configure link %s\n", linkName.c_str());
     }
 
