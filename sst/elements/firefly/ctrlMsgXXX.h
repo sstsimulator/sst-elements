@@ -148,10 +148,22 @@ class XXX  {
     int rxDelay() {
         return m_rxDelay;
     }
+
+    int txNicDelay() {
+        return m_txNicDelay;
+    }
+
+    int rxNicDelay() {
+        return m_rxNicDelay;
+    }
+
+
     int m_matchDelay_ps;
     int m_memcpyDelay_ps;
     int m_txDelay;
     int m_rxDelay;
+    int m_txNicDelay;
+    int m_rxNicDelay;
     int m_regRegionBaseDelay_ps;
     int m_regRegionPerByteDelay_ps;
     int m_regRegionXoverLength;

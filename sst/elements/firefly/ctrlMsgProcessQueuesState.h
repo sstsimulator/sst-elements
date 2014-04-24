@@ -403,7 +403,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::enterSend( _CommReq* req,
                                         FunctorBase_0<bool>* exitFunctor )
 {
-    int pagePinDelay = 0; 
+    int delay = obj().txDelay();
     dbg().verbose(CALL_INFO,2,0,"new send CommReq\n");
 
     req->setSrcRank( getMyRank( req ) );
@@ -413,10 +413,11 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
         functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
           ( this, &ProcessQueuesState::enterSendLoop, req );  
     } else {
+        delay += obj().txNicDelay();
         size_t length = req->getLength( );
 
         if ( length > obj().shortMsgLength() ) {
-            pagePinDelay += obj().regRegionDelay( length );
+            delay += obj().regRegionDelay( length );
         }
         functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
           ( this, &ProcessQueuesState::enterSend, req );  
@@ -424,7 +425,7 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 
     setExit( exitFunctor );
 
-    obj().schedFunctor( functor, obj().txDelay() + pagePinDelay );
+    obj().schedFunctor( functor, delay );
 }
 
 template< class T1 >
@@ -648,6 +649,9 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
         size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
         if ( length >= 36  ) {
             delay += 200;
+        }
+        if ( ! obj().nic().isLocal( calcNid( ctx->req, ctx->hdr().rank ) ) ) {
+            delay += obj().rxNicDelay();
         }
     }
 
