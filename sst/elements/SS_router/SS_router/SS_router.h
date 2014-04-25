@@ -35,7 +35,7 @@
 #include <queue>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/log.h>
+#include <sst/core/output.h>
 #include <sst/core/params.h>
 
 #include "SS_network.h"
@@ -44,16 +44,7 @@ using namespace std;
 namespace SST {
 namespace SS_router {
 
-#define SS_ROUTER_DBG 1 
-#ifndef SS_ROUTER_DBG
-#define SS_ROUTER_DBG 0
-#endif
-
 #include "SS_network.h"
-
-
-#define DBprintf(fmt,args...) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 #define cycle() m_cycle
 
@@ -484,8 +475,8 @@ private:
 
     Cycle_t                 m_cycle;
     bool                    m_print_info;
-    Log< SS_ROUTER_DBG >&   m_dbg;
-    Log<>&                  m_log;
+    Output                  m_dbg;
+    Output                  m_log;
 };
 
 #include "SS_router-inline.h"

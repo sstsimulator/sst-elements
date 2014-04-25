@@ -37,14 +37,6 @@
 
 #include "SS_network.h"
 
-#define RTRIF_DBG 1 
-#ifndef RTRIF_DBG
-#define RTRIF_DBG 0
-#endif
-
-#define db_RtrIF(fmt,args...) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
-
 namespace SST {
 namespace SS_router {
 

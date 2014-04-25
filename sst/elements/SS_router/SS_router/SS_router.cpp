@@ -49,7 +49,7 @@ const char* SST::SS_router::LinkNames[] = {
 // When tokens are returned, this might cause an output queue to become ready to accept data
 void SS_router::updateToken_flits( int link, int vc, int flits )
 {
-    DBprintf ("%lld: link %d return %d flit token to rtr %d, vc %d\n",
+    m_dbg.output(CALL_INFO, "%lld: link %d return %d flit token to rtr %d, vc %d\n",
               cycle(), link, flits, routerID, vc);
 
     int old_tokens = outLCB[link].vcTokens[vc];
@@ -71,7 +71,7 @@ void SS_router::updateToken_flits( int link, int vc, int flits )
 
 void SS_router::returnToken_flits (int dir, int flits, int vc) {
 
-    DBprintf("dir=%d flits=%d vc=%d\n",dir,flits,vc );
+    m_dbg.output(CALL_INFO, "dir=%d flits=%d vc=%d\n",dir,flits,vc );
     RtrEvent* event = new RtrEvent;
     event->type  = RtrEvent::Credit;
     if ( dir == ROUTER_HOST_PORT ) {
@@ -91,35 +91,27 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
         oLCB_maxSize_flits(512),
         dumpTables(false),
         clock_count(0),
-        m_cycle(0),
-        m_dbg( *new Log< SS_ROUTER_DBG >( "SS_router::", false ) ),
-        m_log( *new Log<>( "INFO SS_router: ", false ) )
+        m_cycle(0)
 {
     int tmp;
     //printParams(params);
-    if ( params.find( "info" ) != params.end() ) {
-        if ( params[ "info" ].compare( "yes" ) == 0 ) {
-            m_log.enable();
-        }
-    }
-
-    if ( params.find( "debug" ) != params.end() ) {
-        if ( params[ "debug" ].compare( "yes" ) == 0 ) {
-            m_dbg.enable();
-        }
-    }
 
     routerID = params.find_integer("id");
     if ( routerID == -1 ) {
         _abort(SS_router,"couldn't find routerID\n" );
     }
 
-    std::ostringstream idStr;
-    idStr << routerID << ":";
-    m_dbg.prepend( idStr.str() );
-    m_log.prepend( idStr.str() );
+    bool do_dbg = !params.find_string("debug", "no").compare("yes");
+    bool do_log = !params.find_string("info", "no").compare("yes");
 
-    DBprintf("this=%p id=%d\n",this,id);
+    std::ostringstream idStr;
+    idStr << "SS_Router: " << routerID << ":";
+
+    m_dbg.init(idStr.str(), 0, 0, do_dbg ? Output::STDOUT : Output::NONE);
+    m_log.init(idStr.str(), 0, 0, do_log ? Output::STDOUT : Output::NONE);
+
+
+    m_dbg.output(CALL_INFO, "this=%p id=%lu\n",this,id);
 
     sprintf (LINK_DIR_STR[LINK_POS_X], "POSX");
     sprintf (LINK_DIR_STR[LINK_POS_Y], "POSY");
@@ -159,7 +151,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
         _abort(SS_router,"couldn't find OutputQSize_flits\n" );
     }
 
-    m_log.write("OutputQSize_flits=%d\n",tmp);
+    m_log.output("OutputQSize_flits=%d\n",tmp);
 
     for ( int i = 0; i < ROUTER_NUM_LINKS; i++ ) {
         rtrOutput_maxQSize_flits[i] = tmp;
@@ -169,7 +161,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
     if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find InputQSize_flits\n" );
     }
-    m_log.write("InputQSize_flits=%d\n",tmp);
+    m_log.output("InputQSize_flits=%d\n",tmp);
 
     for ( int i = 0; i < ROUTER_NUM_LINKS; i++ ) {
         rtrInput_maxQSize_flits[i] = tmp;
@@ -180,7 +172,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
         _abort(SS_router,"couldn't find Router2NodeQSize_flits\n" );
     }
 
-    m_log.write("Router2NodeQSize_flits=%d\n",tmp);
+    m_log.output("Router2NodeQSize_flits=%d\n",tmp);
 
     rtrOutput_maxQSize_flits[ROUTER_HOST_PORT] = tmp;
     rtrInput_maxQSize_flits[ROUTER_HOST_PORT] = tmp;
@@ -191,7 +183,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
 
     overheadMultP = params.find_integer( "overheadMult", 0 );
 
-    m_log.write("overhead mult %f\n",overheadMultP);
+    m_log.output("overhead mult %f\n",overheadMultP);
 
     int ln, ch, iln;
 
@@ -296,7 +288,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
 //                             SS_router, bool, Event*, int >
 //                        ( this, &SS_router::handleParcel, dir );
 
-        DBprintf("adding link %s\n", LinkNames[dir] );
+        m_dbg.output(CALL_INFO, "adding link %s\n", LinkNames[dir] );
 	linkV[dir] = configureLink( LinkNames[dir],
 				    new Event::Handler<SS_router,int>(this, &SS_router::handleParcel, dir));
 
@@ -309,7 +301,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
         frequency = params["clock"];
     }
 
-    m_log.write("frequency=%s\n", frequency.c_str() );
+    m_log.output("frequency=%s\n", frequency.c_str() );
 
 //     ClockHandler_t*     clockHandler;
 //     clockHandler = new EventHandler< SS_router, bool, Cycle_t >
@@ -330,7 +322,7 @@ void SS_router::newSetup() {
 //: Output statistics
 void SS_router::finish () {
 #if 0 // newFinish() dumpTables
-    DBprintf("\n");
+    m_dbg.output(CALL_INFO, "\n");
     if ( m_print_info )
         dumpStats(stdout);
 
@@ -347,7 +339,7 @@ void SS_router::finish () {
 }
 
 void SS_router::dumpStats (FILE* fp) {
-    DBprintf("\n");
+    m_dbg.output(CALL_INFO, "\n");
 
     fprintf(fp, "Router %d\n", routerID);
 
@@ -380,7 +372,7 @@ void SS_router::dumpStats (FILE* fp) {
 // and connect this and a neighboring router together over it
 void SS_router::txlinkTo (Link* neighbor, int dir) {
 
-    DBprintf("dir=%d link=%p\n",dir,neighbor);
+    m_dbg.output(CALL_INFO, "dir=%d link=%p\n",dir,neighbor);
 
     if (tx_netlinks[dir] != NULL) {
         printf ("Error: router %d cannot tx link to %d dir, already linked\n", routerID, dir);
@@ -393,13 +385,13 @@ void SS_router::txlinkTo (Link* neighbor, int dir) {
     ln->link = neighbor;
     ln->dir = dir;
 
-    DBprintf ("Router %d tx linked to router XXX in %d direction\n", routerID, dir);
+    m_dbg.output(CALL_INFO, "Router %d tx linked to router XXX in %d direction\n", routerID, dir);
 }
 
 //: Used to see if all the links have been initialized for this router
 bool SS_router::checkLinks() {
 
-    DBprintf("\n");
+    m_dbg.output(CALL_INFO, "\n");
     for (int ln = 0; ln < ROUTER_NUM_LINKS; ln++)
         if ( (rx_netlinks[ln] == NULL) || (tx_netlinks[ln] == NULL) )
             return false;
@@ -411,7 +403,7 @@ bool SS_router::checkLinks() {
 //: Dump the routing table for debugging
 void SS_router::dumpTable (FILE *fp) {
 
-    DBprintf("\n");
+    m_dbg.output(CALL_INFO, "\n");
     pair<int, int> key, localdest;
     int nodes = network->size();
 
@@ -433,7 +425,7 @@ void SS_router::dumpTable (FILE *fp) {
 void SS_router::setupRoutingTable( Params params, int nodes,
                                    int xDim, int yDim, int zDim) {
 
-    DBprintf("\n");
+    m_dbg.output(CALL_INFO, "\n");
 
     int tmp;
     tmp = params.find_integer("xDateline");
@@ -510,10 +502,10 @@ void SS_router::handleParcel( Event* e, int dir )
     RtrEvent*  event = static_cast<RtrEvent*>(e);
 
     m_cycle = getCurrentSimTime();
-    DBprintf("got event type %#ld on link %s\n", event->type, LinkNames[dir] );
+    m_dbg.output(CALL_INFO, "got event type %d on link %s\n", event->type, LinkNames[dir] );
 
     if ( event->type == RtrEvent::Credit ) {
-        DBprintf("%s returned tokens vc=%d num=%ld\n", LinkNames[dir],
+        m_dbg.output(CALL_INFO, "%s returned tokens vc=%d num=%" PRIu32 "\n", LinkNames[dir],
                  event->credit.vc, event->credit.num );
         updateToken_flits( dir, event->credit.vc, event->credit.num );
         delete event;
@@ -542,7 +534,7 @@ void SS_router::handleParcel( Event* e, int dir )
 //: route a packet
 bool SS_router::route(rtrP* rp)
 {
-    DBprintf("\n");
+    m_dbg.output(CALL_INFO, "\n");
     networkPacket *packet =  &rp->event->packet;
 
     return findRoute( packet->destNum, 
@@ -601,7 +593,7 @@ bool SS_router::route(rtrP* rp)
         }
     }
 
-    DBprintf ("%lld: router %d parcel final dest %d (inc vc %d) local dest :%d:%d:\n",
+    m_dbg.output(CALL_INFO, "%lld: router %d parcel final dest %d (inc vc %d) local dest :%d:%d:\n",
               cycle(), routerID, key.first, key.second, localDest.first,
               localDest.second);
 

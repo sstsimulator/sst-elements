@@ -18,16 +18,9 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/log.h>
+#include <sst/core/output.h>
 #include "sst/elements/SS_router/SS_router/SS_network.h"
 
-#define RTRIF_DBG 1 
-#ifndef RTRIF_DBG
-#define RTRIF_DBG 0
-#endif
-
-#define db_RtrIF(fmt,args...) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 namespace SST {
 namespace SS_router {
@@ -82,9 +75,9 @@ private:
     int                     m_current_send_node;
     int                     m_node_recvd;
     bool                    m_exit;
-    Log< RTRIF_DBG >&       m_dbg;
-    Log< RTRIF_DBG >&       m_dummyDbg;
-    Log<>&                  m_log;
+    Output                  m_dbg;
+    Output                  m_dummyDbg;
+    Output                  m_log;
 
 
 public:
@@ -95,31 +88,10 @@ public:
    RtrIF( ComponentId_t id, Params& params ) :
         Component(id),
         rtrCountP(0),
-        num_vcP(2),
-        m_dbg( *new Log< RTRIF_DBG >( "RtrIF::", false ) ),
-        m_dummyDbg( *new Log< RTRIF_DBG >( "Dummy::RtrIF::", false ) ),
-        m_log( *new Log<>( "INFO RtrIF: ", false ) )
+        num_vcP(2)
     {
         int num_tokens = 512;
         std::string frequency;
-
-        if ( params.find( "info" ) != params.end() ) {
-            if ( params[ "info" ].compare( "yes" ) == 0 ) {
-                m_log.enable();
-            }
-        }
-
-        if ( params.find( "debug" ) != params.end() ) {
-            if ( params[ "debug" ].compare( "yes" ) == 0 ) {
-                m_dbg.enable();
-            }
-        }
-
-        if ( params.find( "dummyDebug" ) != params.end() ) {
-            if ( params[ "dummyDebug" ].compare( "yes" ) == 0 ) {
-                m_dummyDbg.enable();
-            }
-        }
 
         if ( params.find( "id" ) == params.end() ) {
             _abort(RtrIF,"couldn't find routerID\n" );
@@ -138,14 +110,16 @@ public:
             num_tokens = params.find_integer( "Node2RouterQSize_flits" );
         }
 
-        std::ostringstream idStr;
-        idStr << m_id << ":";
-        m_dbg.prepend( idStr.str() );
-        m_dummyDbg.prepend( idStr.str() );
-        m_log.prepend( idStr.str() );
+        bool do_dbg = !params.find_string("debug", "no").compare("yes");
+        bool do_log = !params.find_string("info", "no").compare("yes");
+        bool do_dummyDbg = !params.find_string("dummyDebug", "no").compare("yes");
 
-        m_log.write("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
-        m_log.write("nic id=%d frequency=%s\n", m_id, frequency.c_str());
+        m_dbg.init(idStr.str(), 0, 0, do_dbg ? Output::STDOUT : Output::FILE);
+        m_log.init(idStr.str(), 0, 0, do_log ? Output::STDOUT : Output::FILE);
+        m_dummyDbg.init(idStr.str(), 0, 0, do_dummyDebug ? Output::STDOUT : Output::FILE);
+
+        m_log.output("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
+        m_log.output("nic id=%d frequency=%s\n", m_id, frequency.c_str());
 
         registerAsPrimaryComponent();
         primaryComponentDoNotEndSim();
@@ -163,7 +137,7 @@ public:
 //         }
 	registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock) );
 
-        db_RtrIF("Done registering clock\n");
+        m_dbg.output(CALL_INFO, "Done registering clock\n");
 
         for ( unsigned int i=0; i < num_vcP; i++ ) {
             toNicMapP[i] = new ToNic();
@@ -184,14 +158,14 @@ public:
     RtrEvent *toNicQ_front(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
-        db_RtrIF("vc=%d\n",vc);
+        m_dbg.output(CALL_INFO, "vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
     void toNicQ_pop(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
-        db_RtrIF("vc=%d\n",vc);
+        m_dbg.output(CALL_INFO, "vc=%d\n",vc);
         returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits );
         toNicMapP[vc]->pop_front();
     }
@@ -202,7 +176,7 @@ public:
         if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
         bool retval = toRtrMapP[pkt->vc]->push( event );
         if ( retval )
-            db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
+            m_dbg.output(CALL_INFO, "vc=%d src=%d dest=%d pkt=%p\n",
                      pkt->vc,pkt->srcNum,pkt->destNum,pkt);
         if ( retval ) {
             sendPktToRtr( toRtrQP.front() );
@@ -223,7 +197,7 @@ private:
     bool rtrWillTake( unsigned int vc, int numFlits )
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"\n");
-        db_RtrIF("vc=%d numFlits=%d\n",vc,numFlits);
+        m_dbg.output(CALL_INFO, "vc=%d numFlits=%d\n",vc,numFlits);
         return toRtrMapP[vc]->willTake( numFlits );
     }
 
@@ -232,7 +206,7 @@ private:
     {
         RtrEvent* event = static_cast<RtrEvent*>(e);
 
-        db_RtrIF("type=%ld\n",event->type);
+        m_dbg.output(CALL_INFO, "type=%ld\n",event->type);
 
         switch ( event->type ) {
         case RtrEvent::Credit:
@@ -270,7 +244,7 @@ private:
             _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc,pkt);
         }
 
-        db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
+        m_dbg.output(CALL_INFO, "vc=%d src=%d dest=%d pkt=%p\n",
                  pkt->vc,pkt->srcNum,pkt->destNum,pkt);
         toNicMapP[pkt->vc]->push_back( event );
     }
@@ -278,7 +252,7 @@ private:
     void returnTokens2Nic( unsigned int vc, uint32_t num )
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"\n");
-        db_RtrIF("vc=%d numFlits=%d\n", vc, num );
+        m_dbg.output(CALL_INFO, "vc=%d numFlits=%d\n", vc, num );
         toRtrMapP[vc]->returnTokens( num );
     }
 
@@ -286,7 +260,7 @@ private:
     {
         RtrEvent* event = new RtrEvent;
 
-        db_RtrIF("vc=%d numFlits=%d\n", vc, numFlits );
+        m_dbg.output(CALL_INFO, "vc=%d numFlits=%d\n", vc, numFlits );
 
         event->type = RtrEvent::Credit;
         event->credit.num = numFlits;
@@ -298,7 +272,7 @@ private:
     {
         networkPacket* pkt = &event->packet;
 
-        db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
+        m_dbg.output(CALL_INFO, "vc=%d src=%d dest=%d pkt=%p\n",
                  pkt->vc,pkt->srcNum,pkt->destNum,pkt);
 
         event->type = RtrEvent::Packet;
@@ -309,7 +283,7 @@ private:
 
     int reserveRtrLine (int cyc)
     {
-        db_RtrIF("cyc=%d\n",cyc);
+        m_dbg.output(CALL_INFO, "cyc=%d\n",cyc);
         int ret = (rtrCountP <= 0) ? -rtrCountP : 0;
         rtrCountP -= cyc;
         return ret;

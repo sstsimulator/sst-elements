@@ -19,7 +19,7 @@
 #include "RtrIF.h"
 
 #define db_dummy(fmt,args...) \
-    m_dummyDbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
+    m_dummyDbg.output(CALL_INFO, fmt, ##args)
 
 using namespace SST::SS_router;
 
