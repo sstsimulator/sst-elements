@@ -50,3 +50,6 @@ libember_la_SOURCES = \
 
 
 libember_la_LDFLAGS = -module -avoid-version
+
+EXTRA_DIST = \
+	test/embernightly.py
