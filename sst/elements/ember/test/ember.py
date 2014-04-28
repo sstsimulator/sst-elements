@@ -108,11 +108,9 @@ driverParams = ({
 		"motifParams.iterations" : iterations,
 		"hermesParams.debug" : debug,
 		"hermesParams.verboseLevel" : 1,
-		"hermesParams.nidListFile" : "nidlist.txt",
 		"hermesParams.nicModule" : "firefly.VirtNic",
 		"hermesParams.nicParams.debug" : debug,
 		"hermesParams.nicParams.debugLevel" : 1 ,
-		"hermesParams.policy" : "adjacent",
 		"hermesParams.functionSM.defaultDebug" : debug,
 		"hermesParams.functionSM.defaultVerbose" : 1,
 		"hermesParams.ctrlMsg.debug" : debug,
@@ -147,7 +145,8 @@ class EmberEP(EndPoint):
 		for x in xrange(num_vNics ):
 			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 			ep.addParams(driverParams)
-			ep.addParam("hermesParams.numRanks", numNodes * num_vNics );
+			nidList = "0:" + str(numNodes*num_vNics) 
+			ep.addParam("hermesParams.nidListString", nidList);
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
 			ep.addLink(nicLink, "nic", "150ns")
