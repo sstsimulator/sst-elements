@@ -40,8 +40,10 @@ void EmberAllPingPongGenerator::configureEnvironment(const SST::Output* output, 
 
 void EmberAllPingPongGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
 	if(phase < iterations) {
+        if ( computeTime ) {
 	       EmberComputeEvent* compute = new EmberComputeEvent(computeTime);
                evQ->push(compute);
+        }
 
                EmberRecvEvent* recvEv = new EmberRecvEvent(commWithRank, messageSize, 0, (Communicator) 0);
                EmberSendEvent* sendEv = new EmberSendEvent(commWithRank, messageSize, 0, (Communicator) 0);
