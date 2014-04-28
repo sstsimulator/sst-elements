@@ -514,7 +514,8 @@ static const ElementInfoParam component_params[] = {
     { "page_size", "Virtual page size in bytes, only a single page size is currently allowed", "4096" },
     { "max_ticks", "Maximum number of ticks the Prospero CPU can execute for", "4611686018427390000" },
     { "cache_line", "Size of the first level cache block in bytes (Prospero does non-aligned address splits)", "64"},
-    { "timemultipler", "Dilate time in trace file based on this value, >1.0 = take longer, <1.0 take shorter, default=1.0","1.0" },
+    { "timemultiplier", "Dilate time in trace file based on this value, >1.0 = take longer, <1.0 take shorter, default=1.0","1.0" },
+    { "traceformat", "Trace file format: 0: rb,  1: rt", "0"},
     { NULL, NULL, NULL }
 };
 
