@@ -25,7 +25,7 @@ public:
 	EmberRingGenerator(SST::Component* owner, Params& params);
 	void configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize);
         void generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ);
-	void finish(const SST::Output* output) { }
+	void finish(const SST::Output* output);
 
 private:
     uint32_t size;

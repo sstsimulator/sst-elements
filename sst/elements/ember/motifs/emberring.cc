@@ -25,6 +25,12 @@ EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
 void EmberRingGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
     size = worldSize;
+	output->verbose(CALL_INFO, 2, 0,"rank=%d size=%d\n",rank,size);
+}
+
+
+void EmberRingGenerator::finish(const SST::Output* output) {
+    output->verbose(CALL_INFO, 2, 0, "Generator finishing\n");
 }
 
 
@@ -38,7 +44,7 @@ void EmberRingGenerator::generate(const SST::Output* output, const uint32_t phas
 	std::queue<EmberEvent*>* evQ) {
 
     uint32_t to = mod(rank + 1, size), from = mod( (signed int) rank - 1, size );
-    //printf("EmberRingGenerator:%s() rank=%d to=%d from=%d\n",__func__,rank,to,from);
+    output->verbose(CALL_INFO, 2, 0,"to=%d from=%d\n",to,from);
 
 	if(phase < iterations) {
 
