@@ -99,11 +99,9 @@ driverParams = ({
 		"buffersize" : 140,
 		"hermesParams.debug" : 0,
 		"hermesParams.verboseLevel" : 1,
-		"hermesParams.nidListFile" : "nidlist.txt",
 		"hermesParams.nicModule" : "firefly.VirtNic",
 		"hermesParams.nicParams.debug" : 0,
 		"hermesParams.nicParams.debugLevel" : 1 ,
-		"hermesParams.policy" : "adjacent",
 		"hermesParams.functionSM.defaultDebug" : 0,
 		"hermesParams.functionSM.defaultVerbose" : 1,
 		"hermesParams.ctrlMsg.debug" : 0,
@@ -138,7 +136,8 @@ class EmberEP(EndPoint):
 		for x in xrange(num_vNics ):
 			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_TraceReader", "zodiac.ZodiacSiriusTraceReader")
 			ep.addParams(driverParams)
-			ep.addParam("hermesParams.numRanks", numRanks )
+			nidList = "0:" + str(numRanks);
+			ep.addParam("hermesParams.nidListString", nidList )
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
 			ep.addLink(nicLink, "nic", "150ns")
