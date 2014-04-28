@@ -266,11 +266,19 @@ static Component* create_qsimComponent(ComponentId_t id, Params &p) {
 }
 
 static const ElementInfoParam component_params[] = {
-  {"state",    "QSim saved state file."},
-  {"app",      "Benchmark .tar file."},
-  {"clock",    "Clock rate (default 2GHz)."},
-  {"hwthread", "Hardware thread ID (default 0)."},
-  {NULL, NULL}
+  {"state",    "QSim saved state file.", NULL},
+  {"app",      "Benchmark .tar file.", NULL},
+  {"clock",    "Clock rate (default 2GHz).", "2GHz"},
+  {"hwthread", "Hardware thread ID (default 0).", "0"},
+  {NULL, NULL, NULL}
+};
+
+static const ElementInfoPort component_ports[] = {
+    {"memLink", "Main Memory Link", NULL},
+    {"iMemLink", "Alternate Memory Link for Translated Reads", NULL},
+    {"ipiRingIn", "Inter-QSim Component Ring Network", NULL},
+    {"ipiRingOut", "Inter-QSim Component Ring Network", NULL},
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoComponent components[] = {
@@ -278,9 +286,11 @@ static const ElementInfoComponent components[] = {
     "Distributed QSim CPU model component.",
     NULL,
     create_qsimComponent,
-    component_params
+    component_params,
+    component_ports,
+    COMPONENT_CATEGORY_PROCESSOR
   },
-  {NULL, NULL, NULL, NULL}
+  {NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
 
 extern "C" {
