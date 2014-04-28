@@ -1,0 +1,2 @@
+Ring nidList=2:2 iterations=1 messagesize=128
+Halo2D nidList=0:2 iterations=100 messagesize=128
