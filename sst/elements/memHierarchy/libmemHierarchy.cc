@@ -29,7 +29,6 @@ using namespace SST::MemHierarchy;
 
 
 static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
-static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 
@@ -53,7 +52,7 @@ static const ElementInfoParam cache_params[] = {
     {"mshr_latency_cycles",     "Latency (in Cycles) to lookup data in the MSHR. If not specified, simple intrapolation is used based on the access latency", "-1"},
     {"idle_max",                "Cache temporarily turns off its clock after this amount of idle cycles", "6"},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
-    {"prefetcher",              "Prefetcher Module:  0, 1", "0"},
+    {"prefetcher",              "Prefetcher Module", ""},
     {"high_network_ports",      "Number of high network ports (closer to the CPU)",""},
     {"low_network_ports",       "Number of low network ports (closer to the memory)", ""},
     {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1", "0"},
@@ -104,6 +103,10 @@ static Component* create_trivialCPU(ComponentId_t id, Params& params){
 	return new trivialCPU( id, params );
 }
 
+static const ElementInfoPort cpu_ports[] = {
+    {"mem_link", "Connection to caches.", NULL},
+    {NULL, NULL, NULL}
+};
 
 static const ElementInfoParam cpu_params[] = {
     {"verbose",             "Determine how verbose the output from the CPU is", "1"},
@@ -134,7 +137,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"interleave_size",     "Size of interleaved pages in KB.", "0"},
     {"interleave_step",     "Distance between sucessive interleaved pages on this controller in KB.", "0"},
     {"memory_file",         "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
-    {"clock",               "Clock frequency of controller", ""},
+    {"clock",               "Clock frequency of controller", NULL},
     {"divert_DC_lookups",   "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
     {"request_width",       "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
@@ -148,7 +151,6 @@ static const ElementInfoParam memctrl_params[] = {
 
 
 static const ElementInfoPort memctrl_ports[] = {
-    {"snoop_link",      "Connect to a memHiearchy.bus", bus_port_events},
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
     {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
     {NULL, NULL, NULL}
@@ -351,7 +353,7 @@ static const ElementInfoComponent components[] = {
 		NULL,
 		create_trivialCPU,
         cpu_params,
-        NULL,
+        cpu_ports,
         COMPONENT_CATEGORY_PROCESSOR
 	},
 	{"streamCPU",
@@ -359,7 +361,7 @@ static const ElementInfoComponent components[] = {
 		NULL,
 		create_streamCPU,
         cpu_params,
-        NULL,
+        cpu_ports,
         COMPONENT_CATEGORY_PROCESSOR
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
