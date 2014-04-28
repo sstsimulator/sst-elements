@@ -41,7 +41,11 @@ bool Cache::MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr){
 
 bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
     cache_->d_->debug(_L6_, "MSHR Event Inserted: Key Addr = %"PRIx64", Event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
-    return insert(_baseAddr, mshrType(_event));
+    bool ret = insert(_baseAddr, mshrType(_event));
+    if(LIKELY(ret)){
+        _event->setStartTime(cache_->getCurrentSimTime());
+    }
+    return ret;
 }
 
 bool Cache::MSHR::insert(Addr _baseAddr, Addr _pointer){

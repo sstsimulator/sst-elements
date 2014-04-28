@@ -442,6 +442,10 @@ public:
 
     /** Return the BaseAddr */
     Addr getBaseAddr(){ return baseAddr; }
+    
+    void setStartTime(SimTime_t sTime) { startTime = sTime; }
+    
+    SimTime_t getStartTime(){ return startTime; }
 
     /** Return the command that is the Response to the input command */
     static Command commandResponse(Command c)
@@ -482,6 +486,8 @@ private:
     uint32_t flags; 
     bool prefetch;
     BCC_MESIState grantedState;
+    
+    SimTime_t startTime;
 
     MemEvent() {} // For serialization only
 

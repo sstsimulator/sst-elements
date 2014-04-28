@@ -89,7 +89,8 @@ public:
     virtual void init(unsigned int);
     virtual void setup(void);
     virtual void finish(void){
-        bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_, STAT_TotalInstructionsRecieved_, STAT_NonCoherenceReqsReceived_, STAT_TotalMSHRHits_);
+        bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_,
+                              STAT_TotalRequestsRecieved_, STAT_TotalMSHRHits_, averageUpgradeLatency_);
         topCC_->printStats(stats_);
         listener_->printStats(*d_);
         delete cArray_;
@@ -152,9 +153,10 @@ private:
     uint64                  mshrLatency_;
     uint64                  STAT_GetSExReceived_;
     uint64                  STAT_InvalidateWaitingForUserLock_;
-    uint64                  STAT_TotalInstructionsRecieved_;
-    uint64                  STAT_NonCoherenceReqsReceived_;
+    uint64                  STAT_TotalRequestsRecieved_;
     uint64                  STAT_TotalMSHRHits_;
+    SimTime_t               averageUpgradeLatency_;
+    uint64                  upgradeCount_;
     uint64                  timestamp_;
     int                     stats_;
     int                     idleMax_;

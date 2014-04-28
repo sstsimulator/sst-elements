@@ -28,8 +28,7 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
     SimpleMem(comp, params), owner(comp), recvHandler(NULL), link(NULL)
 { }
 
-bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler)
-{
+bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
     recvHandler = handler;
     if ( NULL == recvHandler ) {
         link = owner->configureLink(linkName);
@@ -40,23 +39,20 @@ bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase 
 }
 
 
-void MemHierarchyInterface::sendInitData(SimpleMem::Request *req)
-{
+void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
     MemEvent *me = createMemEvent(req);
     link->sendInitData(me);
 }
 
 
-void MemHierarchyInterface::sendRequest(SimpleMem::Request *req)
-{
+void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
     MemEvent *me = createMemEvent(req);
     requests[me->getID()] = req;
     link->send(me);
 }
 
 
-SimpleMem::Request* MemHierarchyInterface::recvResponse(void)
-{
+SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
     SST::Event *ev = link->recv();
     if ( NULL != ev ) {
         MemEvent *me = static_cast<MemEvent*>(ev);
@@ -70,8 +66,7 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void)
 
 
 
-MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const
-{
+MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     Command cmd = NULLCMD;
     switch ( req->cmd ) {
     case SimpleMem::Request::Read:      cmd = GetS;     break;
@@ -102,8 +97,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const
 /**
  * Convert any incoming events to updated Requests, and fire handler.
  */
-void MemHierarchyInterface::handleIncoming(SST::Event *ev)
-{
+void MemHierarchyInterface::handleIncoming(SST::Event *ev){
     MemEvent *me = static_cast<MemEvent*>(ev);
     SimpleMem::Request *req = processIncoming(me);
     if ( req ) {
@@ -116,8 +110,7 @@ void MemHierarchyInterface::handleIncoming(SST::Event *ev)
 /**
  * Process MemEvents into updated Requests
  */
-SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev)
-{
+SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
     SimpleMem::Request *req = NULL;
     MemEvent::id_type origID = ev->getResponseToID();
     if ( Inv == ev->getCmd() ) {
@@ -147,8 +140,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev)
 /**
  * Update Request with results of MemEvent
  */
-void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const
-{
+void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const{
     switch (me->getCmd()) {
     case GetSResp:
         req->cmd = SimpleMem::Request::ReadResp;

@@ -50,15 +50,20 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine){
 
 
 void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
+    bool upgrade;
+    
     switch(_cmd){
     case GetS:
         handleGetSRequest(_event, _cacheLine);
         break;
     case GetX:
     case GetSEx:
-        if(isUpgradeNeeded(_event, _cacheLine)) return;
+        upgrade = isUpgradeToModifiedNeeded(_event, _cacheLine);
+        if(upgrade){
+            forwardMessage(_event, _cacheLine, &_event->getPayload());
+            return;
+        }
         handleGetXRequest(_event, _cacheLine);
-        GetSExReqsReceived_++;
         break;
     case PutS:
         PUTSReqsReceived_++;
@@ -138,7 +143,7 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
-bool MESIBottomCC::isUpgradeNeeded(MemEvent* _event, CacheLine* _cacheLine){
+bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine){
     bool pf = _event->isPrefetch();
     Addr addr = _cacheLine->getBaseAddr();
     BCC_MESIState state = _cacheLine->getState();
@@ -152,7 +157,6 @@ bool MESIBottomCC::isUpgradeNeeded(MemEvent* _event, CacheLine* _cacheLine){
             inc_GETXMissIM(addr, pf);
             _cacheLine->setState(IM);
         }
-        forwardMessage(_event, _cacheLine, &_event->getPayload());
         return true;
     }
     return false;
@@ -181,13 +185,17 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
     assert(_cacheLine->getState() == M);
     
     if(cmd == GetX){
+        GetXReqsReceived_++;
         _cacheLine->setData(_event->getPayload(), _event);
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
             assert(_cacheLine->isLockedByUser());
             _cacheLine->decLock();
         }
     }
-    if(L1_ && cmd == GetSEx) _cacheLine->incLock();
+    else{
+        GetSExReqsReceived_++;
+        if(L1_) _cacheLine->incLock();
+    }
     inc_GETXHit(addr, pf);
 }
 
@@ -226,7 +234,10 @@ void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
     Addr addr = _cacheLine->getBaseAddr();
     bool pf = _event->isPrefetch();
 
-    if(state != I) inc_GETSHit(addr, pf);
+    if(state != I){
+        inc_GETSHit(addr, pf);
+        GetSReqsReceived_++;
+    }
     else{
         _cacheLine->setState(IS);
         forwardMessage(_event, _cacheLine, NULL);
@@ -236,13 +247,21 @@ void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 
 void MESIBottomCC::handlePutMRequest(MemEvent* _event, CacheLine* _cacheLine){
+    updateCacheLineRxWriteback(_event, _cacheLine);
+    PUTMReqsReceived_++;
+}
+
+void MESIBottomCC::handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine){
+    updateCacheLineRxWriteback(_event, _cacheLine);
+    PUTXReqsReceived_++;
+}
+
+void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     assert(state == M || state == E);
     if(state == E) _cacheLine->setState(M);
     _cacheLine->setData(_event->getPayload(), _event);
-    PUTMReqsReceived_++;
 }
-
 
 void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
@@ -307,8 +326,8 @@ void MESIBottomCC::sendWriteback(Command cmd, CacheLine* cacheLine){
 
 
 void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
-                               uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived,
-                               uint64 _nonCoherenceReqsReceived, uint64 _mshrHits){
+                               uint64 _invalidateWaitingForUserLock, uint64 _totalReqReceived,
+                               uint64 _mshrHits, uint64 _updgradeLatency){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
     int totalMisses = GETXMissIM_ + GETXMissSM_ + GETSMissIS_;
@@ -317,24 +336,29 @@ void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
     dbg->output(C,"--------------------------------------------------------------------\n");
     dbg->output(C,"Name: %s\n", ownerName_.c_str());
     dbg->output(C,"--------------------------------------------------------------------\n");
+    dbg->output(C,"Total misses: %i\n", totalMisses);
+    dbg->output(C,"Total hits: %i\n", totalHits);
+    dbg->output(C,"Hit ratio:  %.3f%%\n", hitRatio);
+    dbg->output(C,"Miss ratio:  %.3f%%\n", 100 - hitRatio);
+    dbg->output(C,"Read misses:  %i\n", GETSMissIS_);
+    dbg->output(C,"Write misses:  %i\n", GETXMissSM_ + GETXMissIM_);
+    dbg->output(C,"GetS received: %i\n", GetSReqsReceived_);
+    dbg->output(C,"GetX received: %i\n", GetXReqsReceived_);
+    dbg->output(C,"GetSEx received: %i\n", GetSExReqsReceived_);
     dbg->output(C,"GetS-IS misses: %i\n", GETSMissIS_);
     dbg->output(C,"GetX-SM misses: %i\n", GETXMissSM_);
     dbg->output(C,"GetX-IM misses: %i\n", GETXMissIM_);
     dbg->output(C,"GetS hits: %i\n", GETSHit_);
     dbg->output(C,"GetX hits: %i\n", GETXHit_);
-    dbg->output(C,"Total misses: %i\n", totalMisses);
-    dbg->output(C,"Total hits: %i\n", totalHits);
-    dbg->output(C,"Hit Ratio:  %.3f%%\n", hitRatio);
+    dbg->output(C,"Average updgrade  latency: %llu cycles\n", _updgradeLatency);
     dbg->output(C,"PutS received: %i\n", PUTSReqsReceived_);
     dbg->output(C,"PutM received: %i\n", PUTMReqsReceived_);
-    dbg->output(C,"GetSEx received: %i\n", GetSExReqsReceived_);
     dbg->output(C,"PUTS sent due to evictions: %u\n", EvictionPUTSReqSent_);
     dbg->output(C,"PUTM sent due to evictions: %u\n", EvictionPUTMReqSent_);
     dbg->output(C,"PUTM sent due to invalidations: %u\n", InvalidatePUTMReqSent_);
-    dbg->output(C,"Invalidates received that locked due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
-    dbg->output(C,"Total instructions received: %llu\n", _totalInstReceived);
-    dbg->output(C,"Total MSHR hits: %llu\n", _mshrHits);
-    dbg->output(C,"Memory requests received (non-coherency related): %llu\n\n", _nonCoherenceReqsReceived);
+    dbg->output(C,"Invalidates received that stalled due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
+    dbg->output(C,"Total instructions received: %llu\n", _totalReqReceived);
+    dbg->output(C,"Total requests handled by MSHR (MSHR hits): %llu\n", _mshrHits);
 }
 
 void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){

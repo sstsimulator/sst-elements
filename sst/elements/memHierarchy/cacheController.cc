@@ -231,6 +231,8 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
 
 void Cache::activatePrevEvents(Addr _baseAddr){
     if(!mshr_->isHit(_baseAddr)) return;
+    
+    int upgradeLatency;
     vector<mshrType> mshrEntry = mshr_->removeAll(_baseAddr);
     bool cont;    int i = 0;
     d_->debug(_L1_,"---------start--------- Size: %lu\n", mshrEntry.size());
@@ -254,9 +256,14 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             
             mshrEntry.erase(it);
         }
-        else{                                                                /* MemEvent Type */
+        else{                                                               /* MemEvent Type */
+            SimTime_t start = boost::get<MemEvent*>((*it).elem)->getStartTime();
             cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
+            else{
+                upgradeLatency = getCurrentSimTime() - start;
+                averageUpgradeLatency_ += ((upgradeLatency - averageUpgradeLatency_)/(++upgradeCount_));
+            }
         }
     }
     d_->debug(_L1_,"---------end---------\n");

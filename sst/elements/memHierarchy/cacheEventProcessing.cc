@@ -98,7 +98,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
         
     if(!_mshrHit){
-        STAT_TotalInstructionsRecieved_++;
+        STAT_TotalRequestsRecieved_++;
         d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
     else STAT_TotalMSHRHits_++;
@@ -115,7 +115,6 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case GetS:
         case GetX:
         case GetSEx:
-            if(!_mshrHit) STAT_NonCoherenceReqsReceived_++;
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 mshr_->insert(baseAddr, event);
                 d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");

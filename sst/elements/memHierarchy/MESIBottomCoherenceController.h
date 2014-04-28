@@ -35,7 +35,10 @@ private:
     uint PUTSReqsReceived_;
     uint PUTEReqsReceived_;
     uint PUTMReqsReceived_;
+    uint PUTXReqsReceived_;
     uint GetSExReqsReceived_;
+    uint GetXReqsReceived_;
+    uint GetSReqsReceived_;
     uint EvictionPUTSReqSent_;
     uint EvictionPUTMReqSent_;
     uint InvalidatePUTMReqSent_;
@@ -65,10 +68,13 @@ public:
         PUTSReqsReceived_      = 0;
         PUTEReqsReceived_      = 0;
         PUTMReqsReceived_      = 0;
+        PUTXReqsReceived_      = 0;
         GetSExReqsReceived_    = 0;
         EvictionPUTSReqSent_   = 0;
         EvictionPUTMReqSent_   = 0;
         InvalidatePUTMReqSent_ = 0;
+        GetSReqsReceived_      = 0;
+        GetXReqsReceived_      = 0;
         
         L1_ = _L1;
         accessLatency_ = _accessLatency;
@@ -116,7 +122,7 @@ public:
     /** Function serves three purposes:  1) check if we need to to upgrade the cache line
         and 2) change to transition state if upgrade needed, and 3) forward request to
         lower level cache */
-    bool isUpgradeNeeded(MemEvent* _event, CacheLine* _cacheLine);
+    bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine);
 
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
 
@@ -131,8 +137,14 @@ public:
     
     
     void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
-
+    
+    
+    void handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine);
+    
+    
     void handlePutERequest(CacheLine* cacheLine);
+    
+    void updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine);
     
     /** Wrapper for the other 'forwardMessage' function with a different signature */
     void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);
@@ -141,7 +153,7 @@ public:
         Forward request to lower level caches */
     void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
 
-    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalInstReceived, uint64 _nonCoherenceReqsReceived, uint64 _mshrHits);
+    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalReqsReceived, uint64 _mshrHits, uint64 _updgradeLatency);
 
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
 
