@@ -41,7 +41,10 @@ private:
     uint GetSReqsReceived_;
     uint EvictionPUTSReqSent_;
     uint EvictionPUTMReqSent_;
+    uint EvictionPUTEReqSent_;
     uint InvalidatePUTMReqSent_;
+    uint InvalidatePUTEReqSent_;
+    uint InvalidatePUTXReqSent_;
     uint FetchInvalidateReqSent_;
     uint FetchInvalidateXReqSent_;
     string ownerName_;
@@ -72,7 +75,11 @@ public:
         GetSExReqsReceived_    = 0;
         EvictionPUTSReqSent_   = 0;
         EvictionPUTMReqSent_   = 0;
+        EvictionPUTEReqSent_   = 0;
         InvalidatePUTMReqSent_ = 0;
+        InvalidatePUTEReqSent_ = 0;
+        InvalidatePUTXReqSent_ = 0;
+        InvalidatePUTXReqSent_ = 0;
         GetSReqsReceived_      = 0;
         GetXReqsReceived_      = 0;
         

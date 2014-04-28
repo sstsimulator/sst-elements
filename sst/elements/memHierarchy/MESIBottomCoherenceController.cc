@@ -32,14 +32,17 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine){
     
     switch(state){
 	case S:
+        EvictionPUTSReqSent_++;
 		_wbCacheLine->setState(I);
         sendWriteback(PutS, _wbCacheLine);
 		break;
 	case M:
-		_wbCacheLine->setState(I);
+        EvictionPUTMReqSent_++;
+        _wbCacheLine->setState(I);
 		sendWriteback(PutM, _wbCacheLine);
 		break;
     case E:
+        EvictionPUTEReqSent_++;
 		_wbCacheLine->setState(I);
         sendWriteback(PutE, _wbCacheLine);
         break;
@@ -205,9 +208,14 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     
     if(state == M || state == E){
         _cacheLine->setState(I);
-        InvalidatePUTMReqSent_++;
-        if(state == M) sendWriteback(PutM, _cacheLine);
-        else           sendWriteback(PutE, _cacheLine);
+        if(state == M){
+            InvalidatePUTMReqSent_++;
+            sendWriteback(PutM, _cacheLine);
+        }
+        else{
+            InvalidatePUTEReqSent_++;
+            sendWriteback(PutE, _cacheLine);
+        }
     }
     else{
         _cacheLine->setState(I);
@@ -220,7 +228,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     
     if(state == M || state == E){
         _cacheLine->setState(S);
-        InvalidatePUTMReqSent_++;
+        InvalidatePUTXReqSent_++;
         sendWriteback(PutX, _cacheLine);
     }
     else{
@@ -350,19 +358,22 @@ void MESIBottomCC::printStats(int _stats, uint64 _GetSExReceived,
     dbg->output(C,"GetX-IM misses: %i\n", GETXMissIM_);
     dbg->output(C,"GetS hits: %i\n", GETSHit_);
     dbg->output(C,"GetX hits: %i\n", GETXHit_);
-    dbg->output(C,"Average updgrade  latency: %llu cycles\n", _updgradeLatency);
+    dbg->output(C,"Average updgrade latency: %llu cycles\n", _updgradeLatency);
     dbg->output(C,"PutS received: %i\n", PUTSReqsReceived_);
     dbg->output(C,"PutM received: %i\n", PUTMReqsReceived_);
     dbg->output(C,"PUTS sent due to evictions: %u\n", EvictionPUTSReqSent_);
     dbg->output(C,"PUTM sent due to evictions: %u\n", EvictionPUTMReqSent_);
+    dbg->output(C,"PUTE sent due to evictions: %u\n", EvictionPUTEReqSent_);
     dbg->output(C,"PUTM sent due to invalidations: %u\n", InvalidatePUTMReqSent_);
+    dbg->output(C,"PUTE sent due to invalidations: %u\n", InvalidatePUTEReqSent_);
+    dbg->output(C,"PUTX sent due to invalidations: %u\n", InvalidatePUTXReqSent_);
     dbg->output(C,"Invalidates received that stalled due to user atomic lock: %llu\n", _invalidateWaitingForUserLock);
     dbg->output(C,"Total instructions received: %llu\n", _totalReqReceived);
     dbg->output(C,"Total requests handled by MSHR (MSHR hits): %llu\n", _mshrHits);
 }
 
 void MESIBottomCC::updateEvictionStats(BCC_MESIState _state){
-    if(_state == S)      EvictionPUTSReqSent_++;
+    if(_state == S)      ;
     else if(_state == M) EvictionPUTMReqSent_++;
     else if(_state == E) EvictionPUTSReqSent_++;
     else _abort(MemHierarchy::CacheController, "State not supported for eviction.\n");
