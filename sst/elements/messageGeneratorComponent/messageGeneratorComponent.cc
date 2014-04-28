@@ -120,7 +120,7 @@ create_messageGeneratorComponent(SST::ComponentId_t id,
 static const ElementInfoParam component_params[] = {
     { "printStats", "Prints the statistics from the component", "0"},
     { "clock", "Sets the clock for the message generator", "1GHz" },
-    { "sendount", "Sets the number of sends in the simulation.", "1000" },
+    { "sendcount", "Sets the number of sends in the simulation.", "1000" },
     { "outputinfo", "Sets the level of output information", "1" },
     { NULL, NULL, NULL }
 };
