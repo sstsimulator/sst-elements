@@ -173,10 +173,20 @@ create_simpleComponent(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam component_params[] = {
-    { "workPerCycle", "Count of busy work to do during a clock tick." },
-    { "commFreq", "Approximate frequency of sending an event during a clock tick." },
-    { "commSize", "Size of communication to send." },
-    { NULL, NULL}
+    { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
+    { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},
+    { "commSize", "Size of communication to send.", NULL},
+    { NULL, NULL, NULL}
+};
+
+static const char *port_events[] = { "simpleComponent.simpleEvent", NULL };
+
+static const ElementInfoPort component_ports[] = {
+    {"Nlink", "Link to the SimpleComponent to the North", port_events},
+    {"Slink", "Link to the SimpleComponent to the South", port_events},
+    {"Elink", "Link to the SimpleComponent to the East", port_events},
+    {"Wlink", "Link to the SimpleComponent to the West", port_events},
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoComponent components[] = {
@@ -184,9 +194,11 @@ static const ElementInfoComponent components[] = {
       "Simple Demo Component",
       NULL,
       create_simpleComponent,
-      component_params
+      component_params,
+      component_ports,
+      COMPONENT_CATEGORY_PROCESSOR
     },
-    { NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
 
 extern "C" {
