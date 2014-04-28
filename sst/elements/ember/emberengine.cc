@@ -193,6 +193,17 @@ void EmberEngine::finish() {
 			printHistogram(histoSend);
 		}
 
+		output->output("- Histogram of irecv times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoIRecv->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoIRecv->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
+			histoIRecv->getItemCount() == 0 ? 0 :
+			(histoIRecv->getValuesSummed() / histoIRecv->getItemCount()));
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoIRecv);
+		}
+
 		output->output("- Histogram of recv times:\n");
 		output->output("--> Total time:     %" PRIu64 "\n", histoRecv->getValuesSummed());
 		output->output("--> Item count:     %" PRIu64 "\n", histoRecv->getItemCount());
@@ -202,6 +213,17 @@ void EmberEngine::finish() {
 		if(printStats > 1) {
 			output->output("- Distribution:\n");
 			printHistogram(histoRecv);
+		}
+
+		output->output("- Histogram of wait times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoWait->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoWait->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
+			histoWait->getItemCount() == 0 ? 0 :
+			(histoWait->getValuesSummed() / histoWait->getItemCount()));
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoWait);
 		}
 
 		output->output("- Histogram of barrier times:\n");
@@ -338,6 +360,7 @@ void EmberEngine::completedFinalize(int val) {
 	// Tell the simulator core we are finished and do not need any further
 	// processing to continue
 	primaryComponentOKToEndSim();
+	output->output("Ember End Point Finalize completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
 
 	continueProcessing = false;
 	issueNextEvent(0);
