@@ -43,10 +43,6 @@ class Info {
         return rank;
     } 
 
-    int nidToWorldRank( int nid ) {
-        return m_groupMap[Hermes::GroupWorld]->nidToRank( nid );
-    }
-
     int worldRankToNid( int rank ) {
         return m_groupMap[Hermes::GroupWorld]->rankToNid( rank );
     }

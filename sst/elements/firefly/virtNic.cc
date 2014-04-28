@@ -20,7 +20,7 @@ using namespace SST::Firefly;
 using namespace SST;
 
 VirtNic::VirtNic( Component* owner, Params& params ) :
-    m_nodeId(-1),
+    m_realNicId(-1),
     m_notifySendPioDone(NULL),
     m_notifySendDmaDone(NULL),
     m_notifyRecvDmaDone(NULL),
@@ -53,17 +53,18 @@ void VirtNic::init( unsigned int phase )
         NicInitEvent* ev = 
                         static_cast<NicInitEvent*>(m_toNicLink->recvInitData());
         assert( ev );
-        m_nodeId = ev->node;
-        m_vNicId = ev->vNic;
-        m_num_vNics = ev->num_vNics;
+        m_realNicId = ev->node;
+        m_coreId = ev->vNic;
+        m_numCores = ev->num_vNics;
         delete ev;
     
         char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:VirtNic::@p():@l ", m_nodeId, m_vNicId );
+        snprintf(buffer,100,"@t:%d:%d:VirtNic::@p():@l ", m_realNicId,
+							m_coreId );
         m_dbg.setPrefix( buffer );
 
-        m_dbg.verbose(CALL_INFO,1,0,"we are node=%d core=%d\n",
-                        m_nodeId, m_vNicId );
+        m_dbg.verbose(CALL_INFO,1,0,"we are nic=%d core=%d\n",
+                        m_realNicId, m_coreId );
     }
 }
 
@@ -81,11 +82,11 @@ void VirtNic::handleEvent( Event* ev )
         (*m_notifySendDmaDone)( event->key );
         break;
     case NicRespEvent::DmaRecv:
-        (*m_notifyRecvDmaDone)( calc_virtId(event->node, event->src_vNic),
+        (*m_notifyRecvDmaDone)( calcVirtNicId(event->node, event->src_vNic),
                     event->tag, event->len, event->key  );
         break;
     case NicRespEvent::NeedRecv:
-        (*m_notifyNeedRecv)( calc_virtId( event->node, event->src_vNic),
+        (*m_notifyNeedRecv)( calcVirtNicId( event->node, event->src_vNic),
                     event->tag, event->len );
         break;
     default:
@@ -114,20 +115,20 @@ void VirtNic::dmaSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
     m_dbg.verbose(CALL_INFO,2,0,"\n");
 
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaSend, 
-            calc_vNic(dest), calc_realId(dest), tag, vec, key ) );
+            calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
 }
 void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaRecv,
-            calc_vNic(src), calc_realId(src), tag, vec, key ) );
+            calcCoreId(src), calcRealNicId(src), tag, vec, key ) );
 }
 
 void VirtNic::pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend, 
-			calc_vNic(dest), calc_realId(dest), tag, vec, key ) );
+			calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
 }
 
 void VirtNic::setNotifyOnSendDmaDone(VirtNic::HandlerBase<void*>* functor) 

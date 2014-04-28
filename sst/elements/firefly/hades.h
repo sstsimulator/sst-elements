@@ -137,8 +137,7 @@ class Hades : public Hermes::MessageInterface
         return m_info.sizeofDataType(type); 
     }
 
-    Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
-    Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
+    Group* initAdjacentMap( std::istream& );
 
     SST::Link*          m_enterLink;  
     VirtNic*            m_virtNic;

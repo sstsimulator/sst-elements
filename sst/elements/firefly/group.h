@@ -18,57 +18,46 @@
 namespace SST {
 namespace Firefly {
 
-//#define MEMORY_PIG
 class Group
 {
   public:
     Group( VirtNic* nic ) : 
         m_virtNic( nic ),
-        m_rank( -1 ) 
+        m_rank( -1 )
     {}
 
-    Group( VirtNic* nic, int size ) :
-        m_virtNic( nic ),
-        m_rank( -1 ) 
-    {
-#ifdef MEMORY_PIG 
-        m_rankMap.resize(size);
-#else
-        m_size = size;
-#endif
+    int getMyRank() { return m_rank; }
+
+    size_t size() { 
+		return m_rankMap.rbegin()->first; 
+	}
+
+    void set( int rank, int nid, int num ) {
+		m_rankMap[ rank ] = nid;		
+		m_rankMap[ rank + num ] = -1;
     }
 
-    int getMyRank() {
-        return m_rank;
-    }
-
-#ifdef MEMORY_PIG 
-    size_t size() { return m_rankMap.size(); }
-#else
-    size_t size() { return m_size; }
-#endif
-
-    void set( int pos, int nid, int core ) {
-#ifdef MEMORY_PIG 
-        assert( (size_t) pos < m_rankMap.size() );
-        m_rankMap[pos] = m_virtNic->calc_virtId( nid, core );
-#endif
-
-    }
-
-    void setMyRank( int rank) {
-        m_rank = rank;
-    }
-
-    int nidToRank( int nid ) {
-        int rank = -1;
-        int vNic = m_virtNic->calc_vNic( nid );
-        int realId = m_virtNic->calc_realId( nid );
+    void initMyRank() {
         int numCores = m_virtNic->getNumCores();
-        rank = numCores * realId + vNic;
-        return rank;
+		int coreNum = m_virtNic->getCoreId();
+		int nodeId = m_virtNic->getRealNicId();
+		int nid = numCores * nodeId + coreNum;
+		std::map<int,int>::iterator iter;
+
+		for ( iter = m_rankMap.begin(); iter != m_rankMap.end(); ++iter ) {
+		
+			std::map<int,int>::iterator next = iter;
+			++next;
+			int len = next->first - iter->first;
+			if ( nid >= iter->second && nid < iter->second + len ) {
+        		m_rank = iter->first + (nid - iter->second);
+				break;
+			}
+		}
+		assert( -1 != m_rank );
     }
 
+	// this is special case of rankToNid that handles wildcard
     int rankToNid( int rank ) {
         int nid = -1; 
         if ( -1 == rank ) {
@@ -78,38 +67,26 @@ class Group
         return nid;
     } 
 
-    int getNodeId( int pos ) {
-#ifdef MEMORY_PIG 
-
-        assert( (size_t) pos < m_rankMap.size() );
-        int tmp = m_rankMap[pos];
-        return tmp;
-#else
+    int getNodeId( int rank ) {
+		int nid = -1;
+		std::map<int,int>::iterator iter;
+		
+		for ( iter = m_rankMap.begin(); iter != m_rankMap.end(); ++iter ) {
+			std::map<int,int>::iterator next = iter;
+			++next;
+			if ( rank >= iter->first && rank < next->first ) {
+				nid = iter->second + (rank - iter->first); 
+				break;
+			}
+		}
         int numCores = m_virtNic->getNumCores();
-        int nid = pos / numCores;
-        int core = pos % numCores;//m_virtNic->getCoreNum();
-        return m_virtNic->calc_virtId( nid, core );
-#endif
-    }
-
-    int getCoreId( int pos ) {
-#ifdef MEMORY_PIG 
-        assert( (size_t) pos < m_rankMap.size() );
-        int tmp = m_virtNic->calc_vNic( m_rankMap[pos] );
-        return tmp;
-#else
-        return pos % m_virtNic->getNumCores();
-#endif
+        return m_virtNic->calcVirtNicId( nid / numCores, nid % numCores );
     }
 
   private:
     VirtNic* m_virtNic;
-    int m_rank;
-#ifdef MEMORY_PIG 
-    std::vector< int > m_rankMap;
-#else
-    size_t m_size;
-#endif
+    int 	m_rank;
+    std::map< int, int> m_rankMap;
 
 };
 }

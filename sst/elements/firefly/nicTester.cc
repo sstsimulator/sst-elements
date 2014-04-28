@@ -67,7 +67,7 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
 
 
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:NicTester::@p():@l ", m_vNic->getNodeId() );
+    snprintf(buffer,100,"@t:%d:NicTester::@p():@l ", m_vNic->getVirtNicId() );
     m_dbg.setPrefix(buffer);
 
 
@@ -196,7 +196,7 @@ void NicTester::postSend()
         entry->body[i] = i;
     }
 
-    m_vNic->pioSend( (m_vNic->getNodeId() + 1 ) % 2, SHORT_MSG, iovec, entry );
+    m_vNic->pioSend( (m_vNic->getVirtNicId() + 1 ) % 2, SHORT_MSG, iovec, entry );
 
     m_state = WaitSend; 
 

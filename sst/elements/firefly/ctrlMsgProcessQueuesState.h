@@ -442,7 +442,7 @@ bool ProcessQueuesState<T1>::enterSendLoop( _CommReq* req )
     vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
 
-    obj().loopSend( vec, obj().nic().calc_vNic( 
+    obj().loopSend( vec, obj().nic().calcCoreId( 
                         calcNid( req, req->getDestRank() ) ), req );
 
     if ( ! req->isBlocking() ) {

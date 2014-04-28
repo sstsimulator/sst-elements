@@ -113,39 +113,43 @@ class VirtNic : public SST::Module {
     void init( unsigned int );
 
 	int getNumCores() {
-		return m_num_vNics;
+		return m_numCores;
 	}
 
-	int getCoreNum() {
-		return m_vNicId;
+	int getCoreId() {
+		return m_coreId;
 	}
 
-    int getNodeId() {
-        return calc_virtId( m_nodeId, m_vNicId );
+	int getRealNicId() {
+		return m_realNicId;
+	}
+
+    int getVirtNicId() {
+        return calcVirtNicId( m_realNicId, m_coreId );
     }
 
-	int calc_vNic( int id ) {
-		if ( -1 == id ) {
+	int calcCoreId( int virtNicId ) {
+		if ( -1 == virtNicId ) {
 			return -1;
 		} else {
-			return id >> coreShift;
+			return virtNicId >> coreShift;
 		}
 	}
 
-	int calc_realId( int id ) {
-		if ( -1 == id ) {
+	int calcRealNicId( int virtNicId ) {
+		if ( -1 == virtNicId ) {
 			return -1;
 		} else {
-			return id & nidMask;
+			return virtNicId & nidMask;
 		}
 	}
 
-	int calc_virtId( int nodeId, int vNicId ) {
-        return (vNicId << coreShift) | nodeId;
+	int calcVirtNicId( int realNicId, int coreId ) {
+        return (coreId << coreShift) | realNicId;
 	}
 
-    bool isLocal( int nodeId ) {
-        return ( calc_realId( nodeId ) == m_nodeId );
+    bool isLocal( int virtNicId ) {
+        return ( calcRealNicId( virtNicId ) == m_realNicId );
     }
 
     bool canDmaSend();
@@ -167,11 +171,12 @@ class VirtNic : public SST::Module {
     void notifyNeedRecv( int src, int tag, size_t length );
 
   private:
+
     void handleEvent( Event * );
 
-    int         m_vNicId;
-    int         m_num_vNics;
-    int         m_nodeId;
+    int         m_realNicId;
+    int         m_coreId;
+    int         m_numCores;
     Output      m_dbg;
     Link*       m_toNicLink;
 

@@ -95,17 +95,9 @@ void Hades::printStatus( Output& out )
 
 void Hades::_componentSetup()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-
     m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
-                        m_virtNic->getNumCores(), m_virtNic->getCoreNum());
-
-    int numRanks = m_params.find_integer("numRanks");
-    if ( numRanks <= 0 ) {
-        m_dbg.fatal(CALL_INFO,0,"How many global ranks?\n");
-    }
-    m_dbg.verbose(CALL_INFO,1,0,"numRanks %d\n", numRanks);
-
+                        m_virtNic->getNumCores(), m_virtNic->getCoreId());
+#if 0
     std::string nidListFileName = m_params.find_string("nidListFile");
 
     m_dbg.verbose(CALL_INFO,1,0,"nidListFile `%s`\n",nidListFileName.c_str());
@@ -115,40 +107,23 @@ void Hades::_componentSetup()
         m_dbg.verbose(CALL_INFO,0,1,"Unable to open nid list '%s'\n",
                                         nidListFileName.c_str() );
     }
-
-    Group* group;
-
-    std::string policy = m_params.find_string("policy");
-    m_dbg.verbose(CALL_INFO,1,0,"load policy `%s`\n",policy.c_str());
-
-    if ( 0 == policy.compare("adjacent") ) {
-        group = initAdjacentMap(numRanks, m_virtNic->getNumCores(), nidListFile);
-#if 0
-    } else if ( 0 == policy.compare("roundRobin") ) {
-        group = initRoundRobinMap(numRanks, m_nodeInfo->numCores(), nidListFile); 
 #endif
-    } else {
-        group = NULL; // get rid of compiler warning
-        m_dbg.fatal(CALL_INFO,0,"unknown load policy `j%s` ",
-                                            policy.c_str() );
-    }
+
+    std::string nidListString = m_params.find_string("nidListString");
+
+	std::istringstream iss(nidListString);
+
+    Group* group = initAdjacentMap(iss);
     m_info.addGroup( Hermes::GroupWorld, group);
 
+    m_dbg.verbose(CALL_INFO,1,0,"numRanks %lu\n", group->size());
+
+#if 0
     nidListFile.close();
+#endif
 
-	m_dbg.verbose(CALL_INFO,1,0, "\n");
-    for ( unsigned int i = 0; i < group->size(); i++ ) {
-        if ( group->getNodeId( i ) == myNodeId() && 
-                group->getCoreId( i ) == m_virtNic->getCoreNum() ) 
-        {
-            m_dbg.verbose(CALL_INFO,1,0,"node=%#x core=%d, set rank to %d\n",
-						myNodeId(), m_virtNic->getCoreNum(), i  );
-            group->setMyRank( i );
-            break;
-        }
-    } 
+	group->initMyRank();
 
-	m_dbg.verbose(CALL_INFO,1,0, "\n");
     char buffer[100];
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
     m_dbg.setPrefix(buffer);
@@ -167,50 +142,35 @@ void Hades::_componentSetup()
 int Hades::myNodeId()
 {
     if ( m_virtNic ) {
-        return m_virtNic->getNodeId();
+        return m_virtNic->getVirtNicId();
     } else {
         return -1;
     }
 }
 
-Group* Hades::initAdjacentMap( int numRanks, 
-            int numCores, std::ifstream& nidFile )
+Group* Hades::initAdjacentMap( std::istream& nidList )
 {
-    Group* group = new Group( m_virtNic, numRanks  );
+	int rank = 0;
+    Group* group = new Group( m_virtNic );
 
-    m_dbg.verbose(CALL_INFO,2,0,"numRanks=%d numCores=%d\n",numRanks,numCores);
+	assert( nidList.peek() != EOF );
 
-    int nid = -1;
-    for ( int node = 0; node < numRanks/numCores; node++ ) {
-
-        if ( ! nidFile.is_open()  ) { 
-            ++nid;
-        } else {
-            std::string line;
-            getline( nidFile, line );
-            int ret = sscanf( line.c_str(), "%d", &nid ); 
-            if( ret != 1 ) {
-                _abort(Hades, "ERROR: nidList is not long enough, "
-                                        "want %d %d\n", numRanks, ret);
-            }
-        }
-
-        for ( int core = 0; core < numCores; core++ ) {
-            group->set( node * numCores + core, nid, core );
-            m_dbg.verbose(CALL_INFO,2,0,"rank %d is on nid %d core %d\n",
-                                        node * numCores + core , nid, core);
-        }
-    }
-    return group;
-}
-
-Group* Hades::initRoundRobinMap( int numRanks, 
-            int numCores, std::ifstream& nidFile )
-{
-    Group* group = new Group( m_virtNic, numRanks );
-    m_dbg.verbose(CALL_INFO,1,0,"numRanks=%d numCores=%d\n",
-                            numRanks, numCores);
-
+	std::string tmp;
+	do { 
+		char c = nidList.get();
+		tmp += c;
+		if ( c == ',' || nidList.peek() == EOF ) {
+			size_t pos = tmp.find(":");
+			int nid;
+			int len;
+			std::istringstream ( tmp.substr(0, pos ) ) >> nid;
+			std::istringstream ( tmp.substr( pos + 1 ) ) >> len; 
+    		m_dbg.verbose(CALL_INFO,1,0,"rank=%d nid=%d num=%d\n",rank,nid,len);
+			group->set( rank, nid, len );
+			rank += len;
+		}
+	} while ( nidList.peek() != EOF );
+		
     return group;
 }
 
