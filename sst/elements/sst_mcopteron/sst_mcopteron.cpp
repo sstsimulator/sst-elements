@@ -190,8 +190,10 @@ static const ElementInfoParam mcopteron_params[] = {
   {"traceOut","Generate a token trace to stderr?",""},
   {"instructionSizeFile","Instruction size distribution file","instrSizeDistr.txt"},
   {"fetchSizeFile","Fetch size distribution file","fetchSizeDistr.txt"},
-  {"transfile","Markov transis file, trumps instruction mix",""},
+  {"transFile","Markov transition file, trumps instruction mix",""},
   {"repeatTrace","Loop tracefile?","0"},
+  {"seperateSize","keep instruction types seperate on operand size","0"},
+  {"newMixFile","use as an i-mix-only file (new format)",""},
   {NULL,NULL,NULL}
 };
 

@@ -57,8 +57,8 @@
 			<!-- instructionsizefile and fetchsizefile are exclusive options; only one of them should be used -->
 			<fetchSizeFile><!-- use 'name' as fetch size distribution file (fetchSizeDistr.txt) -->
 			</fetchSizeFile>
-			<transfile><!-- se 'name' as instr transition probability file for Markov-based token generator -->
-			</transfile>
+			<transFile><!-- se 'name' as instr transition probability file for Markov-based token generator -->
+			</transFile>
 			<repeatTrace><!-- use the input trace over and over -->
 				0
 			</repeatTrace>

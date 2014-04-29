@@ -151,12 +151,12 @@ static const ElementInfoParam mcniagara_params[] = {
   {"seed","Set RNG seed","100"},
   {"cycles","set number of cycles to simulate","100000"},
   {"converge","Run until CPI converges?","0"},
-  {"appDirector","What directory to look for files in",""},
+  {"appDirectory","What directory to look for files in",""},
   {"inputHistogram","The input histogram",""},
-  {"instructionProbabiltiyFile","Instruction mix input file",""},
-  {"tracefile","Use for instruction trace file, trumps instruction mix",""},
+  {"instructionProbabilityFile","Instruction mix input file",""},
+  {"traceFile","Use for instruction trace file, trumps instruction mix",""},
   {"performanceCounterFile","used as an instruction mix only file",""},
-  {"outptFile","an output file",""},
+  {"outputFile","an output file",""},
   {NULL,NULL,NULL}
 };
 
