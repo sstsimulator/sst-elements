@@ -23,6 +23,7 @@ libember_la_SOURCES = \
 	embersendev.h \
 	emberstartev.h \
 	emberstartev.cc \
+	emberstopev.h \
 	embercomputeev.h \
 	embercomputeev.cc \
 	emberwaitev.cc \
@@ -40,6 +41,7 @@ libember_la_SOURCES = \
 	motifs/embersweep2d.cc  \
 	motifs/emberfini.h  \
 	motifs/emberfini.cc  \
+	motifs/embernull.h \
 	motifs/emberring.h  \
 	motifs/emberring.cc  \
 	motifs/emberpingpong.cc \
