@@ -113,10 +113,6 @@ class XXX  {
     void waitAll( int count, Hermes::MessageRequest req[],
         Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func );
 
-    void setReturnState( FunctorBase_0<bool>* state ) {
-        m_returnState = state; 
-    }
-
     size_t shortMsgLength() { return m_shortMsgLength; }
 
     void passCtrlToFunction(int delay, FunctorBase_0<bool>* );
@@ -205,7 +201,6 @@ class XXX  {
     Info*           m_info;
     VirtNic*        m_nic;
 
-    FunctorBase_0<bool>*    m_returnState;
     SendState<XXX>*         m_sendState;
     RecvState<XXX>*         m_recvState;
     WaitAnyState<XXX>*      m_waitAnyState;
