@@ -37,7 +37,8 @@ enum EmberEventType {
 	WAIT,
 	COMPUTE,
 	BARRIER,
-	START
+	START,
+	STOP,
 };
 
 class EmberEvent : public SST::Event {

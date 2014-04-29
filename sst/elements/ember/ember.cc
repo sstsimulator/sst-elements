@@ -27,6 +27,7 @@
 #include "motifs/emberfini.h"
 #include "motifs/emberbarrier.h"
 #include "motifs/emberallpingpong.h"
+#include "motifs/embernull.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -72,6 +73,12 @@ static Module*
 load_Sweep2D( Component* comp, Params& params ) {
 	return new EmberSweep2DGenerator(comp, params);
 }
+
+static Module*
+load_Null( Component* comp, Params& params ) {
+	return new EmberNullGenerator(comp, params);
+}
+
 
 static const ElementInfoParam component_params[] = {
     { "printStats", "Prints the statistics from the component", "0"},
@@ -142,6 +149,13 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Fini,
+	NULL
+    },
+    { 	"NullMotif",
+	"Does bupkis",
+	NULL,
+	NULL,
+	load_Null,
 	NULL
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL  }

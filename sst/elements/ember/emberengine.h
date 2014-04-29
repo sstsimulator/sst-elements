@@ -43,6 +43,7 @@
 #include "emberirecvev.h"
 #include "emberwaitev.h"
 #include "emberstartev.h"
+#include "emberstopev.h"
 #include "embercomputeev.h"
 #include "emberbarrierev.h"
 
@@ -70,6 +71,7 @@ public:
 	void processRecvEvent(EmberRecvEvent* ev);
 	void processComputeEvent(EmberComputeEvent* ev);
 	void processStartEvent(EmberStartEvent* ev);
+	void processStopEvent(EmberStopEvent* ev);
 	void processWaitEvent(EmberWaitEvent* ev);
 	void processIRecvEvent(EmberIRecvEvent* ev);
 	void processBarrierEvent(EmberBarrierEvent* ev);

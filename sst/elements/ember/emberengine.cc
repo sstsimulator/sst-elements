@@ -96,8 +96,10 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	// Add the init event to the queue since all ranks must eventually
 	// initialize themselves
+#if 0	
 	EmberInitEvent* initEv = new EmberInitEvent();
 	evQueue.push(initEv);
+#endif
 
 	// Make sure we don't stop the simulation until we are ready
     	registerAsPrimaryComponent();
@@ -271,6 +273,14 @@ void EmberEngine::processStartEvent(EmberStartEvent* ev) {
         accumulateTime = histoCompute;
 }
 
+void EmberEngine::processStopEvent(EmberStopEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a Stop Event\n");
+
+	primaryComponentOKToEndSim();
+	output->output("Ember End Point Finalize completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
+}
+
+
 void EmberEngine::processInitEvent(EmberInitEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
 	msgapi->init(&initFunctor);
@@ -338,7 +348,6 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 	msgapi->fini(&finalizeFunctor);
 
 	accumulateTime = histoFinalize;
-
 }
 
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
@@ -466,6 +475,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case START:
 		processStartEvent(dynamic_cast<EmberStartEvent*>(eEv));
+		break;
+	case STOP:
+		processStopEvent(dynamic_cast<EmberStopEvent*>(eEv));
 		break;
 	default:
 
