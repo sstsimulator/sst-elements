@@ -321,7 +321,7 @@ void DirectoryController::finish(void){
 
     Output out("", 0, 0, printStatsLoc);
     out.output("Directory %s stats:\n"
-            "\t# Requests:            %"PRIu64"\n"
+            "\t#  Requests:            %"PRIu64"\n"
             "\t#  Memory Data Reads:  %"PRIu64"\n"
             "\t#  Memory Data Writes: %"PRIu64"\n"
             "\t#  Entry Data Reads:   %"PRIu64"\n"

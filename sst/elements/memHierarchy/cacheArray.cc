@@ -81,8 +81,5 @@ void CacheArray::errorChecking(){
     if(associativity_ < 1) _abort(CacheArray, "Associativity has to be greater than zero.\n");
 }
 
-
-Addr CacheArray::toLineAddr(Addr addr){ return (addr >> lineOffset_); }
-
 }}
 

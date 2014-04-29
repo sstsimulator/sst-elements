@@ -109,7 +109,6 @@ public:
     virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
     virtual bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
     virtual void handleInvalidate(int lineIndex, Command cmd);
-    //virtual void handleInvAck(MemEvent* event, CCLine* ccLine);
     
     void printStats(int _stats);
     int  lowNetworkNodeLookup(const std::string &name);

@@ -50,14 +50,50 @@ public:
         bool eventsWaitingForLock_;
         virtual ~CacheLine(){}
 
-        CacheLine(Output* _dbg, unsigned int  _size) : d_(_dbg), state_(I), baseAddr_(0), size_(_size){
+        typedef CacheArray::CacheLine CacheLine;
+        
+   
+         /** Constructor */
+        CacheLine(Output* _dbg, unsigned int _size) :
+                 d_(_dbg), state_(I), baseAddr_(0), size_(_size){
             data_.resize(size_/sizeof(uint8_t));
-            for(vector<uint8_t>::iterator it = data_.begin(); it != data_.end(); it++) *it = 0;
+            for(vector<uint8_t>::iterator it = data_.begin(); it != data_.end(); it++)
+                *it = 0;
             userLock_ = 0;
             index_ = -1;
             eventsWaitingForLock_ = false;
         }
         
+        /** Destructor - Delete all cache line objects */
+        virtual ~CacheArray(){
+            for (unsigned int i = 0; i < lines_.size(); i++)
+                delete lines_[i];
+        }
+        
+        /** Function returns the cacheline tag's ID if its valid (-1 if unvalid).
+            If updateReplacement is set, the replacement stats are updated */
+        virtual int find(Addr baseAddr, bool updateReplacement) = 0;
+
+        /** Runs replacement scheme, returns tag ID of new pos and address of line to write back */
+        virtual unsigned int preReplace(Addr baseAddr) = 0;
+
+        /** Replace cache line */
+        virtual void replace(Addr baseAddr, unsigned int candidate_id) = 0;
+     
+        vector<CacheLine*> lines_;
+        
+        /** Determine if number is a power of 2 */
+        bool isPowerOfTwo(unsigned int x){
+            return (x & (x - 1)) == 0;
+        }
+        
+        /** Get line size.  Should not change at runtime */
+        Addr getLineSize(){ return lineSize_; }
+        
+        /** Drop block offset bits (ie. log2(lineSize) */
+        Addr toLineAddr(Addr addr){
+            return (addr >> lineOffset_);
+        }
 
         
         void updateState(){ setState(nextState[state_]); }
@@ -109,32 +145,12 @@ public:
         bool isLockedByUser(){ return (userLock_ > 0) ? true : false; }
         static bool unlocked(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
         static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
+        
         void setIndex(int _index){ index_ = _index; }
-        int index(){ return index_; }
+        int  index(){ return index_; }
     };
     
-    typedef CacheArray::CacheLine CacheLine;
 
-    /* Function returns the cacheline tag's ID if its valid (-1 if unvalid).
-     * If updateReplacement is set, the replacement stats are updated
-     */
-    virtual int find(Addr baseAddr, bool updateReplacement) = 0;
-
-    /* Runs replacement scheme, returns tag ID of new pos and address of line to write back*/
-    virtual unsigned int preReplace(Addr baseAddr) = 0;
-
-    /* Replace cache line */
-    virtual void replace(Addr baseAddr, unsigned int candidate_id) = 0;
- 
-    vector<CacheLine*> lines_;
-    
-    bool isPowerOfTwo(unsigned int x){ return (x & (x - 1)) == 0; }
-    Addr getLineSize(){ return lineSize_; }
-    Addr toLineAddr(Addr addr);
-
-    virtual ~CacheArray(){
-        for (unsigned int i = 0; i < lines_.size(); i++) delete lines_[i];
-    }
     
 private:
     void pMembers();

@@ -131,26 +131,35 @@ public:
         lower level cache */
     bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine);
 
+    /** Determine if can process an invalidate request.  Prevents possible deadlocks */
     bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
 
+    /** Handle GetX request.  Cache line is already in the correct state
+        and/or has been upgraded */
     void handleGetXRequest(MemEvent* _event, CacheLine* cacheLine);
 
-    void processInvRequest(MemEvent* event, CacheLine* cacheLine);
-    
-    
-    void processInvXRequest(MemEvent* event, CacheLine* cacheLine);
-    
+    /** Handle GetS request.  Cache line is already in the correct state
+        and/or has been upgraded */
     void handleGetSRequest(MemEvent* event, CacheLine* cacheLine);
     
-    
+    /** Handle PutM request.  Write data to cache line.  Update E->M state if necessary */
     void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
     
-    
+    /** Handle PutM request.  Same as handlePutMRequest, just updates different stats */
     void handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine);
     
-    
+    /** Does nothing except for update stats */
     void handlePutERequest(CacheLine* cacheLine);
     
+    /** Handle Inv request.  Cache line is already in the correct state
+        and/or has been upgraded */
+    void processInvRequest(MemEvent* event, CacheLine* cacheLine);
+    
+    /** Handle InvX request.  Cache line is already in the correct state
+        and/or has been upgraded */
+    void processInvXRequest(MemEvent* event, CacheLine* cacheLine);
+    
+    /** Write data to cache line */
     void updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine);
     
     /** Wrapper for the other 'forwardMessage' function with a different signature */
@@ -160,14 +169,13 @@ public:
         Forward request to lower level caches */
     void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
 
-    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalReqsReceived, uint64 _mshrHits, uint64 _updgradeLatency);
-
+    /** Send response memEvent to lower level caches */
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
 
+    /** Send writeback request to lower level caches */
     void sendWriteback(Command cmd, CacheLine* cacheLine);
 
-    void updateEvictionStats(BCC_MESIState _state);
-    
+    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalReqsReceived, uint64 _mshrHits, uint64 _updgradeLatency);
     void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
 };
 

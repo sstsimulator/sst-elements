@@ -160,15 +160,15 @@ private:
     uint64                  timestamp_;
     int                     stats_;
     int                     idleMax_;
+    int                     idleCount_;
+    bool                    memNICIdle_;
+    int                     memNICIdleCount_;
+    bool                    clockOn_;
+    Clock::Handler<Cache>*  clockHandler_;
+    TimeConverter*          defaultTimeBase_;
  	std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
     
-    int idleCount_;
-    bool memNICIdle_;
-    int memNICIdleCount_;
-    bool clockOn_;
-    Clock::Handler<Cache>* clockHandler_;
-    TimeConverter* defaultTimeBase_;
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
