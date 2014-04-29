@@ -35,6 +35,36 @@ class ReplacementMgr;
 
 class CacheArray {
 public:
+    
+    /** Function returns the cacheline tag's ID if its valid (-1 if unvalid).
+        If updateReplacement is set, the replacement stats are updated */
+    virtual int find(Addr baseAddr, bool updateReplacement) = 0;
+
+    /** Runs replacement scheme, returns tag ID of new pos and address of line to write back */
+    virtual unsigned int preReplace(Addr baseAddr) = 0;
+
+    /** Replace cache line */
+    virtual void replace(Addr baseAddr, unsigned int candidate_id) = 0;
+    
+    /** Determine if number is a power of 2 */
+    bool isPowerOfTwo(unsigned int x){
+        return (x & (x - 1)) == 0;
+    }
+    
+    /** Get line size.  Should not change at runtime */
+    Addr getLineSize(){ return lineSize_; }
+    
+    /** Drop block offset bits (ie. log2(lineSize) */
+    Addr toLineAddr(Addr addr){
+        return (addr >> lineOffset_);
+    }
+    
+    /** Destructor - Delete all cache line objects */
+    virtual ~CacheArray(){
+        for (unsigned int i = 0; i < lines_.size(); i++)
+            delete lines_[i];
+    }
+
     class CacheLine {
     private:
         Output*         d_;
@@ -42,17 +72,12 @@ public:
         Addr            baseAddr_;
         vector<uint8_t> data_;
         unsigned int    size_;
-        MemEvent*       currentEvent_;
         unsigned int    userLock_;
         int             index_;
 
     public:
         bool eventsWaitingForLock_;
-        virtual ~CacheLine(){}
-
-        typedef CacheArray::CacheLine CacheLine;
         
-   
          /** Constructor */
         CacheLine(Output* _dbg, unsigned int _size) :
                  d_(_dbg), state_(I), baseAddr_(0), size_(_size){
@@ -64,39 +89,8 @@ public:
             eventsWaitingForLock_ = false;
         }
         
-        /** Destructor - Delete all cache line objects */
-        virtual ~CacheArray(){
-            for (unsigned int i = 0; i < lines_.size(); i++)
-                delete lines_[i];
-        }
-        
-        /** Function returns the cacheline tag's ID if its valid (-1 if unvalid).
-            If updateReplacement is set, the replacement stats are updated */
-        virtual int find(Addr baseAddr, bool updateReplacement) = 0;
 
-        /** Runs replacement scheme, returns tag ID of new pos and address of line to write back */
-        virtual unsigned int preReplace(Addr baseAddr) = 0;
-
-        /** Replace cache line */
-        virtual void replace(Addr baseAddr, unsigned int candidate_id) = 0;
-     
-        vector<CacheLine*> lines_;
-        
-        /** Determine if number is a power of 2 */
-        bool isPowerOfTwo(unsigned int x){
-            return (x & (x - 1)) == 0;
-        }
-        
-        /** Get line size.  Should not change at runtime */
-        Addr getLineSize(){ return lineSize_; }
-        
-        /** Drop block offset bits (ie. log2(lineSize) */
-        Addr toLineAddr(Addr addr){
-            return (addr >> lineOffset_);
-        }
-
-        
-        void updateState(){ setState(nextState[state_]); }
+        bool isLockedByUser(){ return (userLock_ > 0) ? true : false; }
 
         void incLock(){
             userLock_++;
@@ -107,6 +101,8 @@ public:
             userLock_--;
             if(userLock_ == 0) d_->debug(_L1_,"User lock cleared on this cache line\n");
         }
+        
+        vector<uint8_t>* getData(){ return &data_; }
         
         void setData(vector<uint8_t> _data, MemEvent* ev){
             if (ev->getSize() == size_ || ev->getCmd() == GetSEx) {
@@ -126,30 +122,35 @@ public:
             }
         }
         
+        BCC_MESIState getState() const { return state_; }
+        void updateState(){ setState(nextState[state_]); }
         void setState(BCC_MESIState _newState){
             d_->debug(_L1_, "State change: bsAddr = %"PRIx64", oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
             assert(userLock_ == 0);
         }
         
-        BCC_MESIState getState() const { return state_; }
-        bool inTransition(){ return !unlocked();}
         bool valid() { return state_ != I; }
-        bool unlocked() { return CacheLine::unlocked(state_);}
-        bool locked() {return !unlocked();}
-        MemEvent* getCurrentEvent() { return currentEvent_; }
+        bool inTransition(){ return !unlocked();}
+        static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
+
         Addr getBaseAddr() { return baseAddr_; }
         void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
-        unsigned int getLineSize(){ return size_; }
-        vector<uint8_t>* getData(){ return &data_; }
-        bool isLockedByUser(){ return (userLock_ > 0) ? true : false; }
+        
+        bool locked() {return !unlocked();}
+        bool unlocked() { return CacheLine::unlocked(state_);}
         static bool unlocked(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
-        static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
+        
         
         void setIndex(int _index){ index_ = _index; }
         int  index(){ return index_; }
+
+        unsigned int getLineSize(){ return size_; }
+
     };
     
+    typedef CacheArray::CacheLine CacheLine;
+    vector<CacheLine*> lines_;
 
     
 private:
