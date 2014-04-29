@@ -31,6 +31,7 @@ class Info {
     }
 
     Group* getGroup( Hermes::Communicator group ) {
+		if ( m_groupMap.empty() ) return NULL;
         return m_groupMap[group];
     } 
 

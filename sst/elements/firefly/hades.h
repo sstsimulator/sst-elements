@@ -144,7 +144,6 @@ class Hades : public Hermes::MessageInterface
     Info                m_info;
     FunctionSM*         m_functionSM;
     Output              m_dbg;
-    SST::Params         m_params;
 
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;

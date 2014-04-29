@@ -33,7 +33,7 @@ using namespace SST;
 Hades::Hades( Component* owner, Params& params ) :
     MessageInterface(),
     m_virtNic(NULL),
-	m_params( params )
+	m_functionSM( NULL )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc = 
@@ -51,6 +51,23 @@ Hades::Hades( Component* owner, Params& params ) :
         m_dbg.fatal(CALL_INFO,0," Unable to find nic module'%s'\n",
                                         moduleName.c_str());
     }
+
+    std::string nidListString = params.find_string("nidListString");
+    m_dbg.verbose(CALL_INFO,1,0,"nidListString `%s`\n", nidListString.c_str());
+
+	if ( ! nidListString.empty() ) {
+
+		std::istringstream iss(nidListString);
+
+    	m_info.addGroup( Hermes::GroupWorld, initAdjacentMap(iss) );
+
+	}
+
+  	Group* group = m_info.getGroup(Hermes::GroupWorld);
+
+if ( group ) {
+
+  	m_dbg.verbose(CALL_INFO,1,0,"numRanks %lu\n", group->size());
 
     Params tmpParams;
     m_dbg.verbose(CALL_INFO,1,0,"\n");
@@ -72,6 +89,7 @@ Hades::Hades( Component* owner, Params& params ) :
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
                                     m_protocolMapByName );
 }
+}
 
 Hades::~Hades()
 {
@@ -80,8 +98,8 @@ Hades::~Hades()
         m_protocolM.erase( m_protocolM.begin() );
     }
     
-    delete m_functionSM;
-    delete m_virtNic;
+    if ( m_functionSM ) delete m_functionSM;
+    if ( m_virtNic ) delete m_virtNic;
 }
 
 void Hades::printStatus( Output& out )
@@ -97,46 +115,25 @@ void Hades::_componentSetup()
 {
     m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
                         m_virtNic->getNumCores(), m_virtNic->getCoreId());
-#if 0
-    std::string nidListFileName = m_params.find_string("nidListFile");
 
-    m_dbg.verbose(CALL_INFO,1,0,"nidListFile `%s`\n",nidListFileName.c_str());
+	Group* group = m_info.getGroup(Hermes::GroupWorld);
 
-    std::ifstream nidListFile( nidListFileName.c_str());
-    if ( ! nidListFile.is_open() ) {
-        m_dbg.verbose(CALL_INFO,0,1,"Unable to open nid list '%s'\n",
-                                        nidListFileName.c_str() );
-    }
-#endif
+	// if there is a group we need to setup the message passing stack
+	if ( group ) {
 
-    std::string nidListString = m_params.find_string("nidListString");
+		group->initMyRank();
 
-	std::istringstream iss(nidListString);
+    	std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
+    	for ( ; iter != m_protocolM.end(); ++iter ) {
+        	iter->second->setup();
+    	}
 
-    Group* group = initAdjacentMap(iss);
-    m_info.addGroup( Hermes::GroupWorld, group);
-
-    m_dbg.verbose(CALL_INFO,1,0,"numRanks %lu\n", group->size());
-
-#if 0
-    nidListFile.close();
-#endif
-
-	group->initMyRank();
+    	m_functionSM->setup();
+	}
 
     char buffer[100];
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
     m_dbg.setPrefix(buffer);
-
-    m_dbg.verbose(CALL_INFO,1,0, "myRank %d\n",
-                m_info.getGroup(Hermes::GroupWorld)->getMyRank() );
-    
-    std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
-    for ( ; iter != m_protocolM.end(); ++iter ) {
-        iter->second->setup();
-    }
-
-    m_functionSM->setup();
 }
 
 int Hades::myNodeId()
@@ -181,7 +178,12 @@ void Hades::_componentInit(unsigned int phase )
 
 int Hades::myWorldSize()
 {
-    return m_info.getGroup(Hermes::GroupWorld)->size();
+	Group* group = m_info.getGroup(Hermes::GroupWorld);
+	if ( group ) { 
+    	return group->size();
+	} else {
+		return -1;
+	}
 }
 
 Hermes::RankID Hades::myWorldRank() 
@@ -189,7 +191,6 @@ Hermes::RankID Hades::myWorldRank()
     int rank = m_info.worldRank();
     m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);
     if ( -1 == rank ) {
-        m_dbg.fatal(CALL_INFO,0,"%s() rank not set yet\n",__func__);
         return -1; 
     } else {
         return rank;
