@@ -31,7 +31,10 @@ using namespace SST;
 XXX::XXX( Component* owner, Params& params ) :
     m_retLink( NULL ),
     m_info( NULL ),
-    m_returnState( NULL )
+    m_sendState( NULL ),
+    m_recvState( NULL ),
+    m_waitAnyState( NULL ),
+    m_processQueuesState( NULL )
 {
     m_dbg_level = params.find_integer("verboseLevel",0);
     m_dbg_loc = (Output::output_location_t)params.find_integer("debug", 0);
@@ -64,10 +67,10 @@ XXX::XXX( Component* owner, Params& params ) :
 
 XXX::~XXX()
 {
-    delete m_sendState;
-    delete m_recvState;
-    delete m_waitAnyState;
-    delete m_processQueuesState;
+	if ( m_sendState ) delete m_sendState;
+	if ( m_recvState ) delete m_recvState;
+	if ( m_waitAnyState) delete m_waitAnyState;
+	if ( m_processQueuesState) delete m_processQueuesState;
 }
 
 void XXX::init( Info* info, VirtNic* nic )
