@@ -159,17 +159,17 @@ private:
 
 
 protected:
-    Output* d_;
-    unsigned int cacheSize_; 
-    unsigned int numSets_;
-    unsigned int numLines_;
-    unsigned int associativity_;
-    unsigned int lineSize_;
-    unsigned int setMask_;
-    unsigned int lineOffset_;
+    Output*         d_;
+    unsigned int    cacheSize_;
+    unsigned int    numSets_;
+    unsigned int    numLines_;
+    unsigned int    associativity_;
+    unsigned int    lineSize_;
+    unsigned int    setMask_;
+    unsigned int    lineOffset_;
     ReplacementMgr* replacementMgr_;
     HashFunction*   hash_;
-    bool sharersAware_;
+    bool            sharersAware_;
     
     CacheArray(Output* _dbg, unsigned int _cacheSize, unsigned int _numLines, unsigned int _associativity, unsigned int _lineSize,
                ReplacementMgr* _replacementMgr, HashFunction* _hash, bool _sharersAware) : d_(_dbg), cacheSize_(_cacheSize),

@@ -46,6 +46,10 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
     return false;
 }
 
+/*-------------------------------------------------------------------------------------
+ * MESI Top Coherence Controller Implementation
+ *-------------------------------------------------------------------------------------*/
+
 bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd = _event->getCmd();
     int id = lowNetworkNodeLookup(_event->getSrc());
@@ -112,9 +116,6 @@ void MESITopCC::handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd){
 }
 
 
-/* Function sends invalidates to lower level caches, removes sharers if needed.  
- * Currently it implements weak consistency, ie. invalidates to sharers do not need acknowledgment
- * Returns true if eviction requires a response from Child, and false if no response is expected */
 bool MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
     if(_state == I) return false;
     bool waitForInvalidateAck = false;
@@ -233,7 +234,6 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     }
 }
 
-//TODO: create processPutXFunction to avoid that extra if inside here
 void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);

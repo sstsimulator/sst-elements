@@ -23,87 +23,26 @@
 namespace SST { namespace MemHierarchy {
 
 class MESIBottomCC : public CoherencyController{
-private:
-    vector<Link*>* lowNetPorts_;
-
-    CacheListener* listener_;
-    uint GETSMissIS_;
-    uint GETXMissSM_;
-    uint GETXMissIM_;
-    uint GETSHit_;
-    uint GETXHit_;
-    uint PUTSReqsReceived_;
-    uint PUTEReqsReceived_;
-    uint PUTMReqsReceived_;
-    uint PUTXReqsReceived_;
-    uint GetSExReqsReceived_;
-    uint GetXReqsReceived_;
-    uint GetSReqsReceived_;
-    uint EvictionPUTSReqSent_;
-    uint EvictionPUTMReqSent_;
-    uint EvictionPUTEReqSent_;
-    uint InvalidatePUTMReqSent_;
-    uint InvalidatePUTEReqSent_;
-    uint InvalidatePUTXReqSent_;
-    uint FetchInvalidateReqSent_;
-    uint FetchInvalidateXReqSent_;
-    string ownerName_;
-    string nextLevelCacheName_;
-    
-    void inc_GETXMissSM(Addr addr, bool pf);
-    void inc_GETXMissIM(Addr addr, bool pf);
-    void inc_GETSHit(Addr addr, bool pf);
-    void inc_GETXHit(Addr addr, bool pf);
-    void inc_GETSMissIS(Addr addr, bool pf);
-    
 public:
+    /** Constructor for MESIBottomCC. */
     MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
                  uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink) :
                  CoherencyController(_cache, _dbg, _lineSize), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
-        GETSMissIS_            = 0;
-        GETXMissSM_            = 0;
-        GETXMissIM_            = 0;
-        GETSHit_               = 0;
-        GETXHit_               = 0;
-        PUTSReqsReceived_      = 0;
-        PUTEReqsReceived_      = 0;
-        PUTMReqsReceived_      = 0;
-        PUTXReqsReceived_      = 0;
-        GetSExReqsReceived_    = 0;
-        EvictionPUTSReqSent_   = 0;
-        EvictionPUTMReqSent_   = 0;
-        EvictionPUTEReqSent_   = 0;
-        InvalidatePUTMReqSent_ = 0;
-        InvalidatePUTEReqSent_ = 0;
-        InvalidatePUTXReqSent_ = 0;
-        InvalidatePUTXReqSent_ = 0;
-        GetSReqsReceived_      = 0;
-        GetXReqsReceived_      = 0;
-        
-        L1_ = _L1;
-        accessLatency_ = _accessLatency;
-        mshrLatency_   = _mshrLatency;
-        directoryLink_ = _directoryLink;
-    }
+        GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
+        PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
+        EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
+        InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = 0;
+        GetSExReqsReceived_ = GetSReqsReceived_ = GetXReqsReceived_ = 0;
+        FetchInvalidateReqSent_ = FetchInvalidateXReqSent_ = 0;
 
-    /* Send andy outgoing messages directed to lower level caches or 
-       directory controller (if one exists) */
-    void sendOutgoingCommands(){
-        while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
-            MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
-            if(directoryLink_) {
-                outgoingEvent->setDst(directoryLink_->findTargetDirectory(outgoingEvent->getBaseAddr()));
-                directoryLink_->send(outgoingEvent);
-            } else {
-                lowNetPorts_->at(0)->send(outgoingEvent);
-            }
-            outgoingEventQueue_.pop();
-        }
+        L1_             = _L1;
+        accessLatency_  = _accessLatency;
+        mshrLatency_    = _mshrLatency;
+        directoryLink_  = _directoryLink;
     }
-
     /** Init funciton */
     void init(const char* name){}
     
@@ -175,8 +114,62 @@ public:
     /** Send writeback request to lower level caches */
     void sendWriteback(Command cmd, CacheLine* cacheLine);
 
+    /** Print statistics at the end of simulation */
     void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalReqsReceived, uint64 _mshrHits, uint64 _updgradeLatency);
+    
+    /** Sets the name of the next level cache */
     void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
+
+
+    /* Send andy outgoing messages directed to lower level caches or 
+       directory controller (if one exists) */
+    void sendOutgoingCommands(){
+        while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
+            MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
+            if(directoryLink_) {
+                outgoingEvent->setDst(directoryLink_->findTargetDirectory(outgoingEvent->getBaseAddr()));
+                directoryLink_->send(outgoingEvent);
+            } else {
+                lowNetPorts_->at(0)->send(outgoingEvent);
+            }
+            outgoingEventQueue_.pop();
+        }
+    }
+
+private:
+    vector<Link*>* lowNetPorts_;
+
+    CacheListener* listener_;
+    uint    GETSMissIS_,
+            GETXMissSM_,
+            GETXMissIM_,
+            GETSHit_,
+            GETXHit_,
+            PUTSReqsReceived_,
+            PUTEReqsReceived_,
+            PUTMReqsReceived_,
+            PUTXReqsReceived_,
+            GetSExReqsReceived_,
+            GetXReqsReceived_,
+            GetSReqsReceived_,
+            EvictionPUTSReqSent_,
+            EvictionPUTMReqSent_,
+            EvictionPUTEReqSent_,
+            InvalidatePUTMReqSent_,
+            InvalidatePUTEReqSent_,
+            InvalidatePUTXReqSent_,
+            FetchInvalidateReqSent_,
+            FetchInvalidateXReqSent_;
+    string ownerName_;
+    string nextLevelCacheName_;
+    
+    void inc_GETXMissSM(Addr addr, bool pf);
+    void inc_GETXMissIM(Addr addr, bool pf);
+    void inc_GETSHit(Addr addr, bool pf);
+    void inc_GETXHit(Addr addr, bool pf);
+    void inc_GETSMissIS(Addr addr, bool pf);
+    
+
 };
 
 

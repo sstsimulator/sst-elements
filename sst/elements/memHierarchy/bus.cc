@@ -44,7 +44,6 @@ Bus::Bus(ComponentId_t _id, Params& _params) : Component(_id){
     busOn_ = true;
 }
 
-Bus::Bus() : Component(-1) {}
 
 void Bus::processIncomingEvent(SST::Event* _ev){
     eventQueue_.push(_ev);
@@ -174,7 +173,7 @@ void Bus::configureParameters(SST::Params& _params){
     idleMax_      = _params.find_integer("idle_max", 6);
     busFrequency_ = _params.find_string("bus_frequency", "Invalid");
     broadcast_    = _params.find_integer("broadcast", 0);
-    fanout_       = _params.find_integer("fanout", 0);
+    fanout_       = _params.find_integer("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
 
     if(busFrequency_ == "Invalid") _abort(Bus, "Bus Frequency was not specified\n");
     if(broadcast_ < 0 || broadcast_ > 1) _abort(Bus, "Broadcast feature was not specified correctly\n");

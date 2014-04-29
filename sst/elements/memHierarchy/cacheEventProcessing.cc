@@ -76,8 +76,24 @@ void Cache::init(unsigned int _phase){
     }
 }
 
+
 void Cache::setup(){
     bottomCC_->setNextLevelCache(nextLevelCacheName_);
+}
+
+
+void Cache::finish(){
+    bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_,
+                          STAT_TotalRequestsRecieved_, STAT_TotalMSHRHits_, averageUpgradeLatency_);
+    topCC_->printStats(stats_);
+    listener_->printStats(*d_);
+    delete cArray_;
+    delete replacementMgr_;
+    delete d_;
+    retryQueue_.clear();
+    retryQueueNext_.clear();
+    linkIdMap_.clear();
+    nameMap_.clear();
 }
 
 void Cache::processIncomingEvent(SST::Event* _ev){

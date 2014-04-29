@@ -45,14 +45,20 @@ public:
 	virtual void init(unsigned int phase);
 
 private:
-	Bus();  // for serialization only
-	Bus(const Bus&); // do not implement
-	void operator=(const Bus&); // do not implement
 
+    /** Adds event to the incoming event queue.  Reregisters clock if needed */
 	void processIncomingEvent(SST::Event *ev);
+    
+    /** Send event to a single destination */
     void sendSingleEvent(SST::Event *ev);
+    
+    /** Broadcast event to all ports */
     void broadcastEvent(SST::Event *ev);
+    
+    /**  Clock Handler */
     bool clockTick(Cycle_t);
+    
+    /** Configure Bus objects with the appropriate parameters */
     void configureParameters(SST::Params&);
     void configureLinks();
     
@@ -60,77 +66,30 @@ private:
     LinkId_t lookupNode(const std::string&);
 
 
-    Output dbg_;
-	int numHighNetPorts_;
-    int numLowNetPorts_;
-    int numHighNetPortsX_;
-    int numLowNetPortsX_;
-    int maxNumPorts_;
-    int broadcast_;
-    int latency_;
-    int fanout_;
-    int idleMax_;
+    Output                          dbg_;
+	int                             numHighNetPorts_,
+                                    numLowNetPorts_,
+                                    numHighNetPortsX_,
+                                    numLowNetPortsX_,
+                                    maxNumPorts_,
+                                    broadcast_,
+                                    latency_,
+                                    fanout_,
+                                    idleMax_,
+                                    idleCount_;
+    bool                            busOn_;
+    Clock::Handler<Bus>*            clockHandler_;
+    TimeConverter*                  defaultTimeBase_;
     
-    int idleCount_;
-    bool busOn_;
-    Clock::Handler<Bus>* clockHandler_;
-    TimeConverter* defaultTimeBase_;
-    
-    std::string busFrequency_;
-    std::string bus_latency_cycles_;
-	std::vector<SST::Link*> highNetPorts_;
-	std::vector<SST::Link*> lowNetPorts_;
-	std::map<string, LinkId_t> nameMap_;
-    std::map<LinkId_t, SST::Link*> linkIdMap_;
-    std::queue<SST::Event*>   eventQueue_;
+    std::string                     busFrequency_;
+    std::string                     bus_latency_cycles_;
+	std::vector<SST::Link*>         highNetPorts_;
+	std::vector<SST::Link*>         lowNetPorts_;
+	std::map<string, LinkId_t>      nameMap_;
+    std::map<LinkId_t, SST::Link*>  linkIdMap_;
+    std::queue<SST::Event*>         eventQueue_;
     
 };
-
-/*
-class BusEvent : public SST::Event {
-public:
-    typedef enum { RequestBus, CancelRequest, SendData, ClearToSend } BusCommand;
-
-    BusEvent(BusCommand cmd, Bus::key_t key) :
-        cmd(cmd), key(key), payload(NULL)
-    { }
-
-    BusEvent(MemEvent *payload) :
-        cmd(SendData), key(payload->getID()), payload(payload)
-    { }
-
-    BusEvent(BusEvent *be) :
-        cmd(be->cmd), key(be->key), payload(be->payload)
-    { }
-
-    Bus::key_t getKey() const { return key; }
-    BusCommand getCmd() const { return cmd; }
-    MemEvent* getPayload() const { return payload; }
-
-
-private:
-    BusCommand cmd;
-    Bus::key_t key;
-    MemEvent *payload;
-
-
-    BusEvent() {} // Serialization only
-
-    friend class Bus;
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(cmd);
-        ar & BOOST_SERIALIZATION_NVP(key);
-        ar & BOOST_SERIALIZATION_NVP(payload);
-    }
-};
-*/
-
 
 }}
 #endif /* SST_MEMHIERARHCY__BUS_H */

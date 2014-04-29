@@ -47,24 +47,21 @@ using namespace std;
 class Cache : public SST::Component {
 public:
 
+    typedef CacheArray::CacheLine           CacheLine;
+    typedef TopCacheController::CCLine      CCLine;
+    typedef map<Addr, vector<mshrType> >    mshrTable;
+    typedef unsigned int                    uint;
+    typedef long long unsigned int          uint64;
 
     
-    typedef CacheArray::CacheLine CacheLine;
-    typedef TopCacheController::CCLine CCLine;
-    typedef map<Addr, vector<mshrType> > mshrTable;
-    typedef unsigned int uint;
-    typedef long long unsigned int uint64;
+    class mshrException : public exception{ const char* what () const throw (){ return "Memory requests needs to be NACKed. MSHR is full\n"; }};
 
-    class mshrException : public exception{
-        const char* what () const throw (){ return "Memory requests needs to be NACKed. MSHR is full\n"; }
-    };
-    
     class MSHR{
     public:
-        mshrTable map_ ;
-        Cache* cache_;
-        int size_;
-        int maxSize_;
+        mshrTable   map_ ;
+        Cache*      cache_;
+        int         size_;
+        int         maxSize_;
         
         MSHR(Cache*, int);
         void insertFront(Addr baseAddr, MemEvent* event);
@@ -85,36 +82,25 @@ public:
         void printEntry2(vector<MemEvent*> events);
     };
     
-
     virtual void init(unsigned int);
     virtual void setup(void);
-    virtual void finish(void){
-        bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_,
-                              STAT_TotalRequestsRecieved_, STAT_TotalMSHRHits_, averageUpgradeLatency_);
-        topCC_->printStats(stats_);
-        listener_->printStats(*d_);
-        delete cArray_;
-        delete replacementMgr_;
-        delete d_;
-        retryQueue_.clear();
-        retryQueueNext_.clear();
-        linkIdMap_.clear();
-        nameMap_.clear();
-    }
+    virtual void finish(void);
     
+    /** Creates cache componennt */
     static Cache* cacheFactory(SST::ComponentId_t id, SST::Params& params);
+    
+    /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
-        Addr baseAddr = (addr) & ~(cArray_->getLineSize() - 1);
+        Addr baseAddr = (addr) & ~(cArray_->getLineSize() - 1);  //Remove the block offset bits
         return baseAddr;
     }
     
-    class stallException : public exception{
-        const char* what () const throw (){ return "Memory requests needs to 'stall'. Request will be processed at a later time\n"; }
-    };
-
-    class ignoreEventException : public exception{
-        const char* what () const throw (){ return "Memory requests needs to be ignored. Request is irrelevant or out-of-date\n"; }
-    };
+    /** Stall Exception.  Exception thrown when an events needs to stall due 
+        to an upgrade needed, cache line being locked, etc */
+    class stallException : public exception{ const char* what () const throw (){ return "Memory requests needs to 'stall'. Request will be processed at a later time\n"; } };
+    
+    /** Ignore Event Exception.  Exception thrown when the event received is considered to be irrelevant (ie Invalidate received when cacheline was alread invalid (due to eviction) */
+    class ignoreEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to be ignored. Request is irrelevant or out-of-date\n"; }};
 
 
 private:
@@ -122,52 +108,6 @@ private:
     /** Constructor for Cache Component */
     Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, 
            Output* _d, LRUReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
-
-
-    uint                    ID_;
-    CacheArray*             cArray_;
-    CacheListener*          listener_;
-    uint                    protocol_;
-    vector<Link*>*          lowNetPorts_;
-    vector<Link*>*          highNetPorts_;
-    Link*                   selfLink_;
-    MemNIC*                 directoryLink_;
-    Output*                 d_;
-    Output*                 d2_;
-    LRUReplacementMgr*      replacementMgr_;
-    uint                    numLines_;
-    uint                    lineSize_;
-    uint                    MSHRSize_;
-    string                  nextLevelCacheName_;
-    bool                    L1_;
-    bool                    dirControllerExists_;
-    MSHR*                   mshr_;
-    MSHR*                   mshrUncached_;
-    TopCacheController*     topCC_;
-    MESIBottomCC*           bottomCC_;
-    bool                    sharersAware_;
-    vector<MemEvent*>       retryQueue_;
-    vector<MemEvent*>       retryQueueNext_;
-    queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
-    uint64                  accessLatency_;
-    uint64                  mshrLatency_;
-    uint64                  STAT_GetSExReceived_;
-    uint64                  STAT_InvalidateWaitingForUserLock_;
-    uint64                  STAT_TotalRequestsRecieved_;
-    uint64                  STAT_TotalMSHRHits_;
-    SimTime_t               averageUpgradeLatency_;
-    uint64                  upgradeCount_;
-    uint64                  timestamp_;
-    int                     stats_;
-    int                     idleMax_;
-    int                     idleCount_;
-    bool                    memNICIdle_;
-    int                     memNICIdleCount_;
-    bool                    clockOn_;
-    Clock::Handler<Cache>*  clockHandler_;
-    TimeConverter*          defaultTimeBase_;
- 	std::map<string, LinkId_t>     nameMap_;
-    std::map<LinkId_t, SST::Link*> linkIdMap_;
     
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
@@ -345,6 +285,51 @@ private:
         }
         return false;
     }
+    
+    uint                    ID_;
+    CacheArray*             cArray_;
+    CacheListener*          listener_;
+    uint                    protocol_;
+    vector<Link*>*          lowNetPorts_;
+    vector<Link*>*          highNetPorts_;
+    Link*                   selfLink_;
+    MemNIC*                 directoryLink_;
+    Output*                 d_;
+    Output*                 d2_;
+    LRUReplacementMgr*      replacementMgr_;
+    uint                    numLines_;
+    uint                    lineSize_;
+    uint                    MSHRSize_;
+    string                  nextLevelCacheName_;
+    bool                    L1_;
+    bool                    dirControllerExists_;
+    MSHR*                   mshr_;
+    MSHR*                   mshrUncached_;
+    TopCacheController*     topCC_;
+    MESIBottomCC*           bottomCC_;
+    bool                    sharersAware_;
+    vector<MemEvent*>       retryQueue_;
+    vector<MemEvent*>       retryQueueNext_;
+    queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
+    uint64                  accessLatency_;
+    uint64                  mshrLatency_;
+    uint64                  STAT_GetSExReceived_;
+    uint64                  STAT_InvalidateWaitingForUserLock_;
+    uint64                  STAT_TotalRequestsRecieved_;
+    uint64                  STAT_TotalMSHRHits_;
+    SimTime_t               averageUpgradeLatency_;
+    uint64                  upgradeCount_;
+    uint64                  timestamp_;
+    int                     stats_;
+    int                     idleMax_;
+    int                     idleCount_;
+    bool                    memNICIdle_;
+    int                     memNICIdleCount_;
+    bool                    clockOn_;
+    Clock::Handler<Cache>*  clockHandler_;
+    TimeConverter*          defaultTimeBase_;
+ 	std::map<string, LinkId_t>     nameMap_;
+    std::map<LinkId_t, SST::Link*> linkIdMap_;
 
 };
 
