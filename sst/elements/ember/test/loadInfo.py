@@ -3,11 +3,10 @@ import sst
 from sst.merlin import *
 
 class EmberEP( EndPoint ):
-    def __init__( self, driverParams, nicParams, numCores, numRanks ):
+    def __init__( self, driverParams, nicParams, numCores ):
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
-        self.numRanks = numRanks
 
     def getName( self ):
         return "EmberEP"
@@ -31,7 +30,6 @@ class EmberEP( EndPoint ):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
                                             "_EmberEP", "ember.EmberEngine")
             ep.addParams(self.driverParams)
-            ep.addParam("hermesParams.numRanks", self.numRanks)
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
             loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) +
@@ -52,17 +50,19 @@ class LoadInfo:
 		self.numCores = numCores
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
+		self.nullEP, nidlist = self.foo( self.readCmdLine("Null nidList=") )
+		self.nullEP.prepParams()
 
 	def foo( self, x ):
 		nidList, numCores, params = x
 
 		params.update( self.epParams )
 		params['hermesParams.nidListString'] = nidList 
-		numRanks = self.calcNumRanks( nidList, numCores )
-		ep = EmberEP( params, self.nicParams, numCores, numRanks )
+		ep = EmberEP( params, self.nicParams, numCores )
 
 		ep.prepParams()
-		self.map.append( (ep, nidList  ) ) 
+		return (ep, nidList)
+	
 
 	def calcNumRanks( self, nidList, numCores ):
 		return 2 
@@ -70,12 +70,13 @@ class LoadInfo:
 	def initFile(self, fileName ):
 		fo = open(fileName)
 		for line in iter(fo.readline,b''):
-			self.foo( self.readCmdLine(line ) )
+			if  line[0] != '#':
+				self.map.append( self.foo( self.readCmdLine(line ) ) )
 		fo.close()
 		self.verifyLoadInfo()
 
 	def initCmd(self, cmd ):
-		self.foo( self.readCmdLine( cmd ) )
+		self.map.append( self.foo( self.readCmdLine( cmd ) ) )
 		self.verifyLoadInfo()
 
 	def readCmdLine(self, cmdLine ):
@@ -113,3 +114,4 @@ class LoadInfo:
 			tmp = nidList.split(':')
 			if self.inRange( nodeId, int(tmp[0]), int(tmp[1]) ):
 				return ep 
+		return self.nullEP
