@@ -1,19 +1,21 @@
 
+import sys,getopt
+
 import sst
 from sst.merlin import *
- 
-import sys,getopt,loadInfo
+
+import loadInfo
 from loadInfo import *
 
 loadFile = ""
 cmdLine  = ""
-shape    = "4"
+shape    = "2"
 numCores = 1
 debug    = 0
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["shape=","debug=",
-									"numCores","loadFile=","cmdLine="])
+									"numCores=","loadFile=","cmdLine="])
 except getopt.GetopError as err:
     print str(err)
     sys.exit(2)
@@ -21,7 +23,7 @@ except getopt.GetopError as err:
 for o, a in opts:
     if o in ("--shape"):
         shape = a
-    if o in ("--numCores"):
+    elif o in ("--numCores"):
         numCores = a
     elif o in ("--debug"):
         debug = a
