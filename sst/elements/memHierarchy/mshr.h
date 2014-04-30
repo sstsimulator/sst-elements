@@ -54,13 +54,14 @@ bool Cache::MSHR::insert(Addr _baseAddr, Addr _pointer){
 }
 
 bool Cache::MSHR::insert(Addr _baseAddr, mshrType _mshrEntry) throw(mshrException){
-    if(size_ >= maxSize_) throw mshrException();
+    //if(size_ >= maxSize_) throw mshrException();  TODO
+    //if(size_ >= maxSize_) return false;
     map_[_baseAddr].push_back(_mshrEntry);
     size_++;
     return true;
 }
 
-bool Cache::MSHR::insertAll(Addr _baseAddr, vector<mshrType> _events) throw(mshrException){
+bool Cache::MSHR::insertAll(Addr _baseAddr, vector<mshrType> _events){
     if(_events.empty()) return false;
     mshrTable::iterator it = map_.find(_baseAddr);
     

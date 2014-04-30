@@ -281,10 +281,7 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
     
     // If the event we just ran 'blocked', then there is not reason to activate other events.
     if(mshr_->isHit(_addr)){
-        try{ mshr_->insertAll(_addr, _mshrEntry); }
-        catch(mshrException const& e){
-            _abort(Cache, "MSHR Should not overflow when processing previous events\n");
-        }
+        mshr_->insertAll(_addr, _mshrEntry);
         return false;
     }
     return true;
