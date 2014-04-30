@@ -65,7 +65,7 @@ public:
         
         MSHR(Cache*, int);
         void insertFront(Addr baseAddr, MemEvent* event);
-        bool insertAll(Addr, vector<mshrType>) throw (mshrException);
+        bool insertAll(Addr, vector<mshrType>);
         bool insert(Addr baseAddr, MemEvent* event);
         bool insertPointer(Addr keyAddr, Addr pointerAddr);
         bool insert(Addr baseAddr, Addr pointer);
