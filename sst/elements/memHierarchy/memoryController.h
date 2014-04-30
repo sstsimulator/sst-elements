@@ -198,9 +198,10 @@ private:
 #endif
 
     Output::output_location_t statsOutputTarget;
-    uint64_t numReadsSupplied;
-    uint64_t numReadsCanceled;
-    uint64_t numWrites;
+    uint64_t GetSReqReceived;
+    uint64_t GetXReqReceived;
+    uint64_t PutMReqReceived;
+    uint64_t GetSExReqReceived;
     uint64_t numReqOutstanding;
     uint64_t numCycles;
 

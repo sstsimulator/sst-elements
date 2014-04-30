@@ -147,6 +147,14 @@ class DirectoryController : public Component {
     uint64_t dataWrites;
     uint64_t dirEntryReads;
     uint64_t dirEntryWrites;
+    
+    uint64_t GetXReqReceived;
+    uint64_t GetSExReqReceived;
+    uint64_t GetSReqReceived;
+    
+    uint64_t PutMReqReceived;
+    uint64_t PutEReqReceived;
+    uint64_t PutSReqReceived;
     Output::output_location_t printStatsLoc;
 
 

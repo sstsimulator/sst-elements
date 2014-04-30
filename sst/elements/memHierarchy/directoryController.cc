@@ -81,15 +81,23 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /*Parameter not needed since cache entries are always stored at address 0.
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
-    //lookupBaseAddr = params.find_integer("backing_store_size", 0x1000000); // 16MB
-    lookupBaseAddr = 128;
-    numReqsProcessed = 0;
+    lookupBaseAddr      = 128;
+    numReqsProcessed    = 0;
     totalReqProcessTime = 0;
-    numCacheHits = 0;
-    dataReads = 0;
-    dataWrites = 0;
-    dirEntryReads = 0;
-    dirEntryWrites = 0;
+    numCacheHits        = 0;
+    dataReads           = 0;
+    dataWrites          = 0;
+    dirEntryReads       = 0;
+    dirEntryWrites      = 0;
+    
+    GetXReqReceived     = 0;
+    GetSExReqReceived   = 0;
+    GetSReqReceived     = 0;
+    
+    PutMReqReceived     = 0;
+    PutEReqReceived     = 0;
+    PutSReqReceived     = 0;
+
 }
 
 
@@ -194,29 +202,14 @@ bool DirectoryController::processPacket(MemEvent *ev){
             dbg.output(CALL_INFO, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
             if(ev->getResponseToID() != entry->lastRequest) {
                 dbg.output(CALL_INFO, "This isn't a response to our request, but it fulfills the need.  Placing(%"PRIu64", %d) into list of ignorable responses.\n", entry->lastRequest.first, entry->lastRequest.second);
-                //ignorableResponses.insert(entry->lastRequest);
             }
             advanceEntry(entry, ev);
             delete ev;
             return true;
         } else {
             dbg.output(CALL_INFO, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
-            //dbg.output(CALL_INFO, "Re-enqueuing for  [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
             return false;
-            /*switch(ev->getCmd()) {
-            case Invalidate:
-            case RequestData: {
-                MemEvent *nack = ev->makeResponse(this);
-                dbg.output(CALL_INFO, "Sending NACK(%"PRIu64", %d) for [%s,%s 0x%"PRIx64"]\n", nack->getID().first, nack->getID().second, CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
-                nack->setCmd(NACK);
-                sendResponse(nack);
-                delete ev;
-                break;
-            }
-            default:
-                dbg.output(CALL_INFO, "Re-enqueuing for  [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
-                return false;
-            }*/
+
         }
        
     }
@@ -227,7 +220,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
 
     switch(cmd) {
     case PutS:
-    case InvAck:
+        PutSReqReceived++;
+        
         assert(entry);
         if(entry->dirty) return true;  //ignore request
 
@@ -237,22 +231,12 @@ bool DirectoryController::processPacket(MemEvent *ev){
         entry->sharers[requesting_node]= false;
         resetEntry(entry);
         break;
-     /*   assert(entry);
-        if(entry->inController) {
-            if(entry->dirty) return true;  //ignore request
-            ++numCacheHits;
-            handlePutS(entry, ev);
-        } else {
-            dbg.output(CALL_INFO, "Entry %"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
-            entry->nextFunc = &DirectoryController::handlePutS;
-            requestDirEntryFromMemory(entry);
-        }
 
-        break;
-    */
-    case PutM:        /* Was SupplyData */
+    case PutM:
     case PutE:
-    case PutX:
+        if(cmd == PutM)         PutMReqReceived++;
+        else if(cmd == PutE)    PutEReqReceived++;
+        
         assert(entry);
         dbg.output(CALL_INFO, "\n\nDC PutM - %s - Request Received\n", getName().c_str());
         entry->activeReq = ev;
@@ -266,9 +250,13 @@ bool DirectoryController::processPacket(MemEvent *ev){
         }
         break;
     
-    case GetX:    /* was RequestData */
+    case GetX:
     case GetSEx:
     case GetS:
+        if(cmd == GetS)         GetSReqReceived++;
+        else if(cmd == GetX)    GetXReqReceived++;
+        else if(cmd == GetSEx)  GetSExReqReceived++;
+        
         dbg.output(CALL_INFO, "\n\nDC GetS/GetX - %s - Request Received\n", getName().c_str());
         if(!entry) {
             entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
@@ -276,19 +264,15 @@ bool DirectoryController::processPacket(MemEvent *ev){
         }
 
         if(entry->inController) {
-            ++numCacheHits;  //TODO: not a hit if it was created above
+            ++numCacheHits;
             handleRequestData(entry, ev);
         } else {
-            //_abort(DirectoryController, "When is the entry NOT in the dirController?");
             dbg.output(CALL_INFO, "Entry %"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
             entry->nextFunc = &DirectoryController::handleRequestData;
             requestDirEntryFromMemory(entry);
         }
         break;
         
-    case Inv:
-        _abort(DirectoryController, "No Inv allowed..");
-        break;
     default:
         /* Ignore unexpected */
         _abort(DirectoryController, "Cmd not expected, Cmd = %s\n", CommandString[cmd]);
@@ -320,19 +304,21 @@ void DirectoryController::finish(void){
     network->finish();
 
     Output out("", 0, 0, printStatsLoc);
-    out.output("Directory %s stats:\n"
-            "\t#  Requests:            %"PRIu64"\n"
-            "\t#  Memory Data Reads:  %"PRIu64"\n"
-            "\t#  Memory Data Writes: %"PRIu64"\n"
-            "\t#  Entry Data Reads:   %"PRIu64"\n"
-            "\t#  Entry Data Writes:  %"PRIu64"\n"
-            "\tAvg Req Time:          %"PRIu64" ns\n"
-            "\tEntry Cache Hits:      %"PRIu64"\n",
-            getName().c_str(),
-            numReqsProcessed,
-            dataReads, dataWrites, dirEntryReads, dirEntryWrites,
-           (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0,
-            numCacheHits);
+    out.output("\n--------------------------------------------------------------------\n");
+    out.output("--- Directory Controller\n");
+    out.output("--- Name: %s\n", getName().c_str());
+    out.output("--------------------------------------------------------------------\n");
+    out.output("- Total requests received:  %"PRIu64"\n", numReqsProcessed);
+    out.output("- GetS recieved:  %"PRIu64"\n", GetSReqReceived);
+    out.output("- GetX received:  %"PRIu64"\n", GetXReqReceived);
+    out.output("- GetSEx recieved:  %"PRIu64"\n", GetSExReqReceived);
+    out.output("- PutM received:  %"PRIu64"\n", PutMReqReceived);
+    out.output("- PutE received:  %"PRIu64"\n", PutEReqReceived);
+    out.output("- PutS received:  %"PRIu64"\n", PutSReqReceived);
+    out.output("- Entry Data Reads:  %"PRIu64"\n", dirEntryReads);
+    out.output("- Entry Data Writes:  %"PRIu64"\n", dirEntryWrites);
+    out.output("- Avg Req Time:  %"PRIu64" ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
+    out.output("- Entry Cache Hits:  %"PRIu64"\n", numCacheHits);
 }
 
 

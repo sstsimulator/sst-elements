@@ -223,6 +223,8 @@ private:
     
     /** Find out if number is a power of 2 */
     bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }
+    
+    uint64 getTimestamp(){ return timestamp_; }
 
     /** Find the appropriate MSHR lookup latency cycles in case the user did not provide
         any parameter values for this type of latency.  This function intrapolates from 
@@ -317,7 +319,7 @@ private:
     uint64                  STAT_InvalidateWaitingForUserLock_;
     uint64                  STAT_TotalRequestsRecieved_;
     uint64                  STAT_TotalMSHRHits_;
-    SimTime_t               averageUpgradeLatency_;
+    uint64                  totalUpgradeLatency_;
     uint64                  upgradeCount_;
     uint64                  timestamp_;
     int                     stats_;

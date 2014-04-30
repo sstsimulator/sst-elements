@@ -84,7 +84,7 @@ void Cache::setup(){
 
 void Cache::finish(){
     bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_,
-                          STAT_TotalRequestsRecieved_, STAT_TotalMSHRHits_, averageUpgradeLatency_);
+                          STAT_TotalRequestsRecieved_, STAT_TotalMSHRHits_, totalUpgradeLatency_/upgradeCount_);
     topCC_->printStats(stats_);
     listener_->printStats(*d_);
     delete cArray_;

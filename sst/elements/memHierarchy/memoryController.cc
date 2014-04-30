@@ -304,9 +304,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 
     respondToInvalidates = false;
 
-    numReadsSupplied    = 0;
-    numReadsCanceled    = 0;
-    numWrites           = 0;
+    GetSReqReceived     = 0;
+    GetXReqReceived     = 0;
+    PutMReqReceived     = 0;
+    GetSExReqReceived   = 0;
     numReqOutstanding   = 0;
     numCycles           = 0;
 }
@@ -330,19 +331,21 @@ void MemController::init(unsigned int phase){
 	SST::Event *ev = NULL;
     while ( NULL != (ev = upstream_link->recvInitData()) ) {
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
-        if ( me ) {
-            /* Push data to memory */
-            if ( GetX == me->getCmd() || WriteReq == me->getCmd() ) {
-                if ( isRequestAddressValid(me) ) {
-                    Addr localAddr = convertAddressToLocalAddress(me->getAddr());
-                    for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
-                        memBuffer[localAddr + i] = me->getPayload()[i];
-                    }
-                }
-            } else {
-                Output out("", 0, 0, Output::STDERR);
-                out.debug(CALL_INFO,6,0,"Memory received unexpected Init Command: %d\n", me->getCmd() );
+        if(!me){
+            delete ev;
+            return;
+        }
+        /* Push data to memory */
+        if (GetX == me->getCmd()) {
+            if ( isRequestAddressValid(me) ) {
+                Addr localAddr = convertAddressToLocalAddress(me->getAddr());
+                for ( size_t i = 0 ; i < me->getSize() ; i++ )
+                    memBuffer[localAddr + i] = me->getPayload()[i];
             }
+        }
+        else {
+            Output out("", 0, 0, Output::STDERR);
+            out.debug(CALL_INFO,6,0,"Memory received unexpected Init Command: %d\n", me->getCmd() );
         }
         delete ev;
     }
@@ -361,12 +364,15 @@ void MemController::finish(void){
     backend->finish();
 
     Output out("", 0, 0, statsOutputTarget);
-    out.output("Memory %s stats:\n"
-            "\t # Reads:             %"PRIu64"\n"
-            "\t # Writes:            %"PRIu64"\n"
-            "\t # Canceled Reads:    %"PRIu64"\n"
-            "\t # Avg. Requests out: %.3f\n",
-            getName().c_str(), numReadsSupplied, numWrites, numReadsCanceled, float(numReqOutstanding)/float(numCycles));
+    out.output("\n--------------------------------------------------------------------\n");
+    out.output("--- Main Memory Stats\n");
+    out.output("--- Name: %s\n", getName().c_str());
+    out.output("--------------------------------------------------------------------\n");
+    out.output("- GetS received (read):  %"PRIu64"\n", GetSReqReceived);
+    out.output("- GetX received (read):  %"PRIu64"\n", GetXReqReceived);
+    out.output("- GetSEx received (read):  %"PRIu64"\n", GetSExReqReceived);
+    out.output("- PutM received (write):  %"PRIu64"\n", PutMReqReceived);
+    out.output("- Avg. Requests out: %.3f\n",float(numReqOutstanding)/float(numCycles));
 
 }
 
@@ -374,21 +380,19 @@ void MemController::handleEvent(SST::Event *event){
 	MemEvent *ev = static_cast<MemEvent*>(event);
     dbg.output("\n\n----------------------------------------------------------------------------------------\n");
     dbg.output("Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
-
-    switch ( ev->getCmd() ) {
-        case PutM:
-        case GetX:
-        case GetS:
-        case GetSEx:
-            addRequest(ev);
-            break;
-        case PutS:
-        case PutE:
-            break;
-        default:
-            _abort(MemController, "Command not supported");
-            break;
+    Command cmd = ev->getCmd();
+    
+    if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM){
+        if(cmd == GetS)         GetSReqReceived++;
+        else if(cmd == GetX)    GetXReqReceived++;
+        else if(cmd == GetSEx)  GetSExReqReceived++;
+        else if(cmd == PutM)    PutMReqReceived++;
+    
+        addRequest(ev);
     }
+    else if(cmd == PutS || cmd == PutE) return;
+    else _abort(MemController, "Command not supported");
+    
     delete event;
     
     cout << flush;
@@ -526,12 +530,8 @@ void MemController::performRequest(DRAMReq *req){
 
 
 void MemController::sendResponse(DRAMReq *req){
-    if(req->reqEvent->getCmd() != PutM){
+    if(req->reqEvent->getCmd() != PutM)
         upstream_link->send(req->respEvent);
-        numWrites++;
-    }
-    else numReadsSupplied++;
-
     req->status = DRAMReq::DONE;
 }
 
