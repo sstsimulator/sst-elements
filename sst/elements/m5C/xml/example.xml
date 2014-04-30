@@ -3,7 +3,7 @@
 <sdl version="2.0"/>
 
 <config>
-    stopAtCycle=1000000000s
+    stopAtCycle=500ms
 </config>
 
 <sst>
