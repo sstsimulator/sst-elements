@@ -14,11 +14,12 @@
 #define _H_EMBER_HALO_1D
 
 #include "embergen.h"
+#include "embermpigen.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberHalo1DGenerator : public EmberGenerator {
+class EmberHalo1DGenerator : public EmberMessagePassingGenerator {
 
 public:
 	EmberHalo1DGenerator(SST::Component* owner, Params& params);

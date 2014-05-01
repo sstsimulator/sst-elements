@@ -24,7 +24,7 @@
 using namespace SST::Ember;
 
 EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params) :
-	EmberGenerator(owner, params) {
+	EmberMessagePassingGenerator(owner, params) {
 
 	iterations = (uint32_t) params.find_integer("iterations", 10);
 	nsCompute = (uint32_t) params.find_integer("computenano", 10);

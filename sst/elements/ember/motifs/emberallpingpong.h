@@ -14,14 +14,16 @@
 #define _H_EMBER_ALL_PINGPONG_MOTIF
 
 #include <sst/core/params.h>
+
 #include "embergen.h"
+#include "embermpigen.h"
 #include "embersendev.h"
 #include "emberrecvev.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberAllPingPongGenerator : public EmberGenerator {
+class EmberAllPingPongGenerator : public EmberMessagePassingGenerator {
 
 public:
 	EmberAllPingPongGenerator(SST::Component* owner, Params& params);

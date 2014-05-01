@@ -21,7 +21,7 @@
 using namespace SST::Ember;
 
 EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& params) :
-	EmberGenerator(owner, params) {
+	EmberMessagePassingGenerator(owner, params) {
 
 	outer_iterations = (uint32_t) params.find_integer("generator.iterations", 10);
 	inner_iterations = (uint32_t) params.find_integer("generator.inner_iterations", 10);

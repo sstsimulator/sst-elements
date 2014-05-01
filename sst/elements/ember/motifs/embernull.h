@@ -15,6 +15,7 @@
 
 #include <sst/core/params.h>
 #include "embergen.h"
+#include "embermpigen.h"
 
 namespace SST {
 namespace Ember {

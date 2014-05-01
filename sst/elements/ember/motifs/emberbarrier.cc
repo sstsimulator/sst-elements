@@ -16,7 +16,7 @@
 using namespace SST::Ember;
 
 EmberBarrierGenerator::EmberBarrierGenerator(SST::Component* owner, Params& params) :
-	EmberGenerator(owner, params) {
+	EmberMessagePassingGenerator(owner, params) {
 
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 }

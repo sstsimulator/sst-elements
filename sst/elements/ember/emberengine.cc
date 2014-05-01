@@ -94,13 +94,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	selfEventLink = configureSelfLink("self", "1ps",
 		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
 
-	// Add the init event to the queue since all ranks must eventually
-	// initialize themselves
-#if 0	
-	EmberInitEvent* initEv = new EmberInitEvent();
-	evQueue.push(initEv);
-#endif
-
 	// Make sure we don't stop the simulation until we are ready
     	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -264,6 +257,12 @@ void EmberEngine::setup() {
 	// Send an start event to this rank, this starts up the component
 	EmberStartEvent* startEv = new EmberStartEvent();
 	selfEventLink->send(startEv);
+
+        // Add the init event to the queue if the motif is set to auto initialize true
+        if(generator->autoInitialize()) {
+                EmberInitEvent* initEv = new EmberInitEvent();
+                evQueue.push(initEv);
+        }
 }
 
 void EmberEngine::processStartEvent(EmberStartEvent* ev) {

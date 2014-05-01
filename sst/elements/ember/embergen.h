@@ -36,6 +36,7 @@ public:
 	virtual void generate(const SST::Output* output, const uint32_t phase,
 		std::queue<EmberEvent*>* evQ) = 0;
 	virtual void finish(const SST::Output* output) = 0;
+	virtual bool autoInitialize() { return false; }
 
 protected:
 	~EmberGenerator();

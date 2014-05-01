@@ -14,11 +14,12 @@
 #define _H_EMBER_SWEEP_2D
 
 #include "embergen.h"
+#include "embermpigen.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberSweep2DGenerator : public EmberGenerator {
+class EmberSweep2DGenerator : public EmberMessagePassingGenerator {
 
 public:
 	EmberSweep2DGenerator(SST::Component* owner, Params& params);

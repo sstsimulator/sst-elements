@@ -7,7 +7,7 @@ import sys,getopt
 iterations = 1;
 msgSize = 1024;
 motif = "Halo2D"
-shape = "2"
+shape = "64x64"
 num_vNics = 1
 debug = 0
 
@@ -95,7 +95,7 @@ nicParams = ({
 
 driverParams = ({
 		"debug" : debug,
-		"verbose" : 2,
+		"verbose" : 0,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",

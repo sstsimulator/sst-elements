@@ -16,7 +16,7 @@
 using namespace SST::Ember;
 
 EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, Params& params) :
-	EmberGenerator(owner, params) {
+	EmberMessagePassingGenerator(owner, params) {
 
 	messageSize = (uint32_t) params.find_integer("messagesize", 1024);
 	iterations = (uint32_t) params.find_integer("iterations", 1);

@@ -15,11 +15,12 @@
 
 #include <sst/core/params.h>
 #include "embergen.h"
+#include "embermpigen.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberRingGenerator : public EmberGenerator {
+class EmberRingGenerator : public EmberMessagePassingGenerator {
 
 public:
 	EmberRingGenerator(SST::Component* owner, Params& params);
