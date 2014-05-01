@@ -13,7 +13,7 @@ class TorusInfo(TopoInfo):
 		self.params["torus:shape"] = shape
 		self.params["torus:width"] = self.calcWidth(shape)
 		self.params["torus:local_ports"] = 1
-		self.numNodes = calcNumNodes( shape )
+		self.numNodes = self.calcNumNodes( shape )
 
 	def getNetworkParams(self):
 		return self.params
