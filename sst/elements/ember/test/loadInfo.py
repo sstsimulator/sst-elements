@@ -3,19 +3,17 @@ import sst
 from sst.merlin import *
 
 class EmberEP( EndPoint ):
-    def __init__( self, driverParams, nicParams, numCores ):
+    def __init__( self, jobId, driverParams, nicParams, numCores ):
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
+        self.driverParams['jobId'] = jobId
 
     def getName( self ):
         return "EmberEP"
 
     def prepParams( self ):
         pass
-
-    def foo( self, nodeID ):
-        return True
 
     def build( self, nodeID, link, extraKeys ):
         nic = sst.Component( "nic" + str(nodeID), "firefly.nic" )
@@ -52,29 +50,31 @@ class LoadInfo:
 		self.numCores = numCores
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
-		self.nullEP, nidlist = self.foo( self.readCmdLine("Null nidList=") )
+		self.nullEP, nidlist = self.foo( -1, self.readCmdLine("Null nidList=") )
 		self.nullEP.prepParams()
 
-	def foo( self, x ):
+	def foo( self, jobId, x ):
 		nidList, numCores, params = x
 
 		params.update( self.epParams )
 		params['hermesParams.nidListString'] = nidList 
-		ep = EmberEP( params, self.nicParams, numCores )
+		ep = EmberEP( jobId, params, self.nicParams, numCores )
 
 		ep.prepParams()
 		return (ep, nidList)
 		
 	def initFile(self, fileName ):
 		fo = open(fileName)
+		jobId = 0
 		for line in iter(fo.readline,b''):
 			if  line[0] != '#':
-				self.map.append( self.foo( self.readCmdLine(line ) ) )
+				self.map.append( self.foo( jobId, self.readCmdLine(line ) ) )
+				jobId += 1
 		fo.close()
 		self.verifyLoadInfo()
 
 	def initCmd(self, cmd ):
-		self.map.append( self.foo( self.readCmdLine( cmd ) ) )
+		self.map.append( self.foo( 0, self.readCmdLine( cmd ) ) )
 		self.verifyLoadInfo()
 
 	def readCmdLine(self, cmdLine ):

@@ -88,6 +88,7 @@ public:
 	void printHistogram(Histogram<uint64_t, uint64_t>* histo);
 
 private:
+	int jobId;
 	int thisRank;
 	uint32_t eventCount;
 	char* emptyBuffer;
