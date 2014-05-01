@@ -45,6 +45,7 @@ class EmberEP( EndPoint ):
 class LoadInfo:
 
 	def __init__(self, nicParams, epParams, numNodes, numCores ):
+		print "numNodes", numNodes
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = numNodes
