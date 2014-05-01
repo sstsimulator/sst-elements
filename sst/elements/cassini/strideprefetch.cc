@@ -151,6 +151,8 @@ void StridePrefetcher::DetectStride() {
 }
 
 StridePrefetcher::StridePrefetcher(Params& params) {
+	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
+
 	verbosity = params.find_integer("prefetcher:verbose", 0);
 	output = new Output("StridePrefetcher", verbosity, 0, Output::STDOUT);
 

@@ -24,6 +24,8 @@ using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
 NextBlockPrefetcher::NextBlockPrefetcher(Params& params) {
+	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
+
 	blockSize = (uint64_t) params.find_integer("prefetcher:cache_line_size", 64);
 	prefetchEventsIssued = 0;
 	missEventsProcessed = 0;
