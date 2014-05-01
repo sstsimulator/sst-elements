@@ -52,8 +52,10 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         checkCacheLineIsStable(cacheLine, _cmd);                        /* If cache line is locked or in transition, wait until it is stable */
         
         bottomCC_->handleRequest(_event, cacheLine, _cmd);              /* upgrade or fetch line from higher level caches */
-        if(cacheLine->inTransition()) throw stallException();           /* stall request if upgrade is in progress */
-        
+        if(cacheLine->inTransition()){
+            upgradeCount_++;
+            throw stallException();                                     /* stall request if upgrade is in progress */
+        }
         bool done = topCC_->handleRequest(_event, cacheLine, _mshrHit); /* Invalidate sharers, send respond to requestor if needed */
         postRequestProcessing(_event, cacheLine, done, _mshrHit);
     
@@ -83,9 +85,9 @@ void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
     CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
     
     bottomCC_->handleResponse(_responseEvent, cacheLine, mshr_->lookup(_baseAddr));
-    if(topCC_->getState(cArray_->find(_baseAddr, false)) == V) activatePrevEvents(_baseAddr);
-    else d_->debug(_L1_,"Received AccessAck but states are still not valid.  BottomState: %s\n",
-                   BccLineString[cacheLine->getState()]);
+    activatePrevEvents(_baseAddr);
+    //if(topCC_->getState(cArray_->find(_baseAddr, false)) == V) activatePrevEvents(_baseAddr);
+    //else d_->debug(_L1_,"Received AccessAck but states are still not valid.  BottomState: %s\n", BccLineString[cacheLine->getState()]);
     
     delete _responseEvent;
 }

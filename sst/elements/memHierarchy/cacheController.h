@@ -321,6 +321,7 @@ private:
     uint64                  STAT_TotalMSHRHits_;
     uint64                  totalUpgradeLatency_;
     uint64                  upgradeCount_;
+    uint64                  mshrHits_;
     uint64                  timestamp_;
     int                     stats_;
     int                     idleMax_;

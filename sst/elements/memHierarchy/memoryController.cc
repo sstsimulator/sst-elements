@@ -517,7 +517,6 @@ void MemController::performRequest(DRAMReq *req){
             req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
 
         if(req->reqEvent->getCmd() == GetX){
-            //if(protocol) req->respEvent->setGrantedState(E);
              req->respEvent->setGrantedState(M);
         }
         else{
