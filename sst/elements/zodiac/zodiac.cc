@@ -51,6 +51,7 @@ create_ZodiacSiriusTraceReader(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam sirius_params[] = {
+	{ "trace", "Set the trace file to be read in for this end point." },
 	{ "msgapi", "Sets the messaging API to use for generation and handling of the message protocol" },
 	{ "scalecompute", "Scale compute event times by a double precision value (allows dilation of times in traces), default is 1.0", "1.0"},
 	{ "verbose", "Sets the verbosity level for the component to output debug/information messages", "0"},
