@@ -20,6 +20,7 @@ class EmberEP( EndPoint ):
     def build( self, nodeID, link, extraKeys ):
         nic = sst.Component( "nic" + str(nodeID), "firefly.nic" )
         nic.addParams( self.nicParams )
+        nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
         nic.addLink( link, "rtr", "10ns" )
 
@@ -62,10 +63,6 @@ class LoadInfo:
 
 		ep.prepParams()
 		return (ep, nidList)
-	
-
-	def calcNumRanks( self, nidList, numCores ):
-		return 2 
 		
 	def initFile(self, fileName ):
 		fo = open(fileName)
