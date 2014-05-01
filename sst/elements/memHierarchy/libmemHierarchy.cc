@@ -367,13 +367,18 @@ static const ElementInfoComponent components[] = {
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
 
+static const ElementInfoEvent memHierarchy_events[] = {
+	{ "MemEvent", "Event to interact with the memHierarchy", NULL, NULL },
+	{ "DMACommand", "Event to interact with DMA engine", NULL, NULL },
+	{ NULL, NULL, NULL, NULL }
+};
 
 extern "C" {
 	ElementLibraryInfo memHierarchy_eli = {
 		"memHierarchy",
 		"Cache Hierarchy",
 		components,
-        NULL, /* Events */
+        memHierarchy_events, /* Events */
         NULL, /* Introspectors */
         modules,
 	};
