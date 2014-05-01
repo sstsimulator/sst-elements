@@ -59,7 +59,7 @@ SimpleDistribComponent::SimpleDistribComponent(ComponentId_t id, Params& params)
 	comp_distrib = new SSTGaussianDistribution(mean, stddev, new MersenneRNG(10111));
   } else if("exponential" == distrib_type) {
 	double lambda = params.find_floating("lambda", 1.0);
-	comp_distrib = new SSTExponentialDistribution(lambda);
+	comp_distrib = new SSTExponentialDistribution(lambda, new MersenneRNG(10111));
   } else {
 	std::cerr << "Unknown distribution type." << std::endl;
 	exit(-1);
