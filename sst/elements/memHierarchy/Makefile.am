@@ -23,7 +23,6 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.h \
 	memoryController.cc \
 	memEvent.h \
-	memEvent.cc \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \

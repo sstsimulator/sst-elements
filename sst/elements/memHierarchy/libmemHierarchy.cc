@@ -379,4 +379,6 @@ extern "C" {
 	};
 }
 
+BOOST_CLASS_EXPORT(MemEvent)
 BOOST_CLASS_EXPORT(DMACommand)
+

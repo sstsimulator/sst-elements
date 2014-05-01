@@ -171,15 +171,11 @@ public:
 
     /** Data Payload type */
     typedef std::vector<uint8_t> dataVec;
-    /** Each MemEvent has a unique (auto-generated) ID of this type */
-    typedef std::pair<uint64_t, int> id_type;
-    /** Constant, default value for MemEvent IDs */
-    static const id_type NO_ID;
 
     /** Creates a new MemEvent */
     MemEvent(const Component *_src, Addr _addr, Command _cmd) :
         SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()){
-        event_id = std::make_pair(main_id++, _src->getId());
+        event_id = generateUniqueId();
         response_to_id = NO_ID;
         baseAddr = _addr;
         dst = BROADCAST_TARGET;
@@ -204,7 +200,7 @@ public:
     /** Creates a new MemEvent */
     MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size) :                //READS
         SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()){
-        event_id = std::make_pair(main_id++, _src->getId());
+        event_id = generateUniqueId();
         response_to_id = NO_ID;
         baseAddr = _baseAddr;
         size = _size;
@@ -217,7 +213,7 @@ public:
     /** Creates a new MemEvent */
     MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& data) :    //WRITES
         SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()){
-        event_id = std::make_pair(main_id++, _src->getId());
+        event_id = generateUniqueId();
         response_to_id = NO_ID;
         baseAddr = _baseAddr;
         dst = BROADCAST_TARGET;
@@ -468,7 +464,6 @@ public:
         }
     }
 private:
-    static uint64_t main_id;
     id_type event_id;
     id_type response_to_id;
     uint64_t lockid; 
