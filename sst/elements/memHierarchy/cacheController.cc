@@ -89,9 +89,7 @@ void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
     
     bottomCC_->handleResponse(_responseEvent, cacheLine, origRequest);
     activatePrevEvents(_baseAddr);
-    //if(topCC_->getState(cArray_->find(_baseAddr, false)) == V) activatePrevEvents(_baseAddr);
-    //else d_->debug(_L1_,"Received AccessAck but states are still not valid.  BottomState: %s\n", BccLineString[cacheLine->getState()]);
-    
+
     delete _responseEvent;
 }
 
@@ -265,7 +263,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
             else{
-                totalUpgradeLatency_ += (timestamp_ - start);
+                totalLatency_ += (timestamp_ - start);
                 mshrHits_++;
             }
         }

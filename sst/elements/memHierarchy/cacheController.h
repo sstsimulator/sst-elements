@@ -326,7 +326,8 @@ private:
     uint64                  STAT_InvalidateWaitingForUserLock_;
     uint64                  STAT_TotalRequestsRecieved_;
     uint64                  STAT_TotalMSHRHits_;
-    uint64                  totalUpgradeLatency_;
+    uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
+    uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
     uint64                  mshrHits_;
     uint64                  upgradeCount_;
     uint64                  timestamp_;
