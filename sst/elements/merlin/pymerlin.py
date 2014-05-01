@@ -176,7 +176,7 @@ class topoTorus(Topo):
                 rtr.addLink(nicLink, "port%d"%port, _params["link_lat"])
                 port = port+1
                 nodeID = int(_params["torus:local_ports"]) * i + n
-                self._getEndPoint(nodeID).build(nodeID, nicLink, [])
+                self._getEndPoint(nodeID).build(nodeID, nicLink, {})
 
 
 
@@ -286,7 +286,7 @@ class topoFatTree(Topo):
 
                     _params["fattree:addr"] = addrToNum(myip);
                     _params["fattree:IP"] = formatAddr(myip);
-                    self._getEndPoint(node_id).build(node_id, getLink("link:pod%d_edge%d_node%d"%(pod, r, node_id)), self.nicKeys)
+                    self._getEndPoint(node_id).build(node_id, getLink("link:pod%d_edge%d_node%d"%(pod, r, node_id)), _params.subset(self.nicKeys))
 
 
 
@@ -342,7 +342,7 @@ class topoDragonFly(Topo):
                 for p in xrange(_params["dragonfly:hosts_per_router"]):
                     link = sst.Link("link:g%dr%dh%d"%(g, r, p))
                     rtr.addLink(link, "port%d"%port, _params["link_lat"])
-                    self._getEndPoint(nic_num).build(nic_num, link, [])
+                    self._getEndPoint(nic_num).build(nic_num, link, {})
                     nic_num = nic_num + 1
                     port = port + 1
 
