@@ -130,7 +130,7 @@ static const ElementInfoComponent components[] = {
 
 extern "C" {
     ElementLibraryInfo simpleDistribComponent_eli = {
-        "SimpleDistribComponent",
+        "simpleDistribComponent",
         "Random number distribution component",
         components,
     };
