@@ -14,12 +14,18 @@ cpu.addParams({
 
 l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 l1cache.addParams({
+		"cache_frequency" : "1GHz",
+		"associativity" : "4",
+		"cache_size" : "1MB", 
+		"cache_line_size" : "64",
 		"num_ways" : "4",
 		"num_rows" : "32",
 		"blocksize" : "64",
+		"access_latency_cycles" : "4",
 		"prefetcher" : "cassini.StridePrefetcher",
 		"prefetcher:verbose" : "0", 
 		"strideprefetcher:reach" : "4",
+		"coherence_protocol" : "MESI",
 #		"prefetcher" : "cassini.NextBlockPrefetcher",
 		"access_time" : "2ns",
 		"num_upstream" : "1",
