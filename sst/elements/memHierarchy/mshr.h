@@ -30,7 +30,7 @@ Cache::MSHR::MSHR(Cache* _cache, int _maxSize): cache_(_cache), size_(0), maxSiz
 
 
 const vector<mshrType> Cache::MSHR::lookup(Addr _baseAddr){
-    cache_->upgradeCount_++;
+    cache_->mshrHits_++;
     mshrTable::iterator it = map_.find(_baseAddr);
     assert(it != map_.end());
     vector<mshrType> res = it->second;

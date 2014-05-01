@@ -59,7 +59,7 @@ public:
 
     /** Process GetSResp/GetXResp.  Update the cache line with the 
         provided/given state and payload */
-    virtual void handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, const vector<mshrType> mshrEntry);
+    virtual void handleResponse(MemEvent* _responseEvent, CacheLine* cacheLine, MemEvent* _origRequest);
     
     /** Handle request from Directory controller to invalidate, and 'fetch' or provide 
         the up-to-date cache line to the directory controller. */

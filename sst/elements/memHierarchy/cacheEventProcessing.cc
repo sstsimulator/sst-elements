@@ -84,7 +84,7 @@ void Cache::setup(){
 
 void Cache::finish(){
     uint64_t averageLatency;
-    if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
+    if(mshrHits_ > 0) averageLatency = totalUpgradeLatency_/mshrHits_;
     else averageLatency = 0;
     
     bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_,

@@ -105,18 +105,15 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
 
 }
 
-void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLine, const vector<mshrType> _mshrEntry){
+void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLine, MemEvent* _origRequest){
     _cacheLine->updateState();
-    printData(d_, "Response Data", &_responseEvent->getPayload());
+    //printData(d_, "Response Data", &_responseEvent->getPayload());
+    Command origCmd = _origRequest->getCmd();  assert(MemEvent::isDataRequest(origCmd));
     
-    assert(_mshrEntry.front().elem.type() == typeid(MemEvent*));
-    
-    MemEvent* origEv = boost::get<MemEvent*>(_mshrEntry.front().elem);
-    Command origCmd  = origEv->getCmd();
-    assert(MemEvent::isDataRequest(origCmd));
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
-    d_->debug(_L4_,"CacheLine State: %s, Granted State: %s \n", BccLineString[_cacheLine->getState()], BccLineString[_responseEvent->getGrantedState()]);
     if(_cacheLine->getState() == S && _responseEvent->getGrantedState() == E) _cacheLine->setState(E);
+
+    d_->debug(_L4_,"CacheLine State: %s, Granted State: %s \n", BccLineString[_cacheLine->getState()], BccLineString[_responseEvent->getGrantedState()]);
 }
 
 

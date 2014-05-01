@@ -84,7 +84,10 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
 void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
     CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
     
-    bottomCC_->handleResponse(_responseEvent, cacheLine, mshr_->lookup(_baseAddr));
+    MemEvent* origRequest = getOriginalRequest(mshr_->lookup(_baseAddr));
+    updateUpgradeLatencyAverage(origRequest);
+    
+    bottomCC_->handleResponse(_responseEvent, cacheLine, origRequest);
     activatePrevEvents(_baseAddr);
     //if(topCC_->getState(cArray_->find(_baseAddr, false)) == V) activatePrevEvents(_baseAddr);
     //else d_->debug(_L1_,"Received AccessAck but states are still not valid.  BottomState: %s\n", BccLineString[cacheLine->getState()]);
@@ -263,7 +266,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             if(!cont) break;
             else{
                 totalUpgradeLatency_ += (timestamp_ - start);
-                upgradeCount_++;
+                mshrHits_++;
             }
         }
     }
@@ -339,6 +342,17 @@ bool Cache::isCacheMiss(int _lineIndex){
 /* ---------------------------------------
    Extras
    --------------------------------------- */
+MemEvent* Cache::getOriginalRequest(const vector<mshrType> _mshrEntry){
+    assert(_mshrEntry.front().elem.type() == typeid(MemEvent*));
+    return boost::get<MemEvent*>(_mshrEntry.front().elem);
+
+}
+void Cache::updateUpgradeLatencyAverage(MemEvent* _origMemEvent){
+    SimTime_t start = _origMemEvent->getStartTime();
+    totalUpgradeLatency_ += (timestamp_ - start);
+    upgradeCount_++;
+}
+
 
 void Cache::errorChecking(){
     if(MSHRSize_ <= 0)             _abort(Cache, "MSHR size not specified correctly. \n");
