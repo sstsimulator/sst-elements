@@ -48,7 +48,7 @@ XXX::XXX( Component* owner, Params& params ) :
         "CtrlMsgSelfLink." + ss.str(), "1 ns",
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
-    m_matchDelay_ps = params.find_integer( "matchDelay_ps", 1 );
+    m_matchDelay_ns = params.find_integer( "matchDelay_ns", 1 );
     m_memcpyDelay_ps = params.find_integer( "memcpyDelay_ps", 1 );
     m_txDelay = params.find_integer( "txDelay_ns", 100 );
     m_rxDelay = params.find_integer( "rxDelay_ns", 100 );
@@ -107,8 +107,8 @@ void XXX::setup()
     m_processQueuesState = new ProcessQueuesState<XXX>(
                         m_dbg_level, m_dbg_loc, *this );
 
-    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ns\n",
-                            m_matchDelay_ps, m_memcpyDelay_ps );
+    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ps\n",
+                            m_matchDelay_ns, m_memcpyDelay_ps );
     m_dbg.verbose(CALL_INFO,1,0,"txDelay %d ns. rxDelay %d ns\n",
                             m_txDelay, m_rxDelay );
 }

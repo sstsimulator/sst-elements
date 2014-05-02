@@ -124,7 +124,7 @@ class XXX  {
     } 
 
     int matchDelay( int i ) {
-        return i * m_matchDelay_ps;
+        return i * m_matchDelay_ns;
     }
 
     int regRegionDelay( int nbytes ) {
@@ -154,7 +154,7 @@ class XXX  {
     }
 
 
-    int m_matchDelay_ps;
+    int m_matchDelay_ns;
     int m_memcpyDelay_ps;
     int m_txDelay;
     int m_rxDelay;
