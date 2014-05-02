@@ -136,7 +136,7 @@ class EmberEP(EndPoint):
 		for x in xrange(num_vNics ):
 			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_TraceReader", "zodiac.ZodiacSiriusTraceReader")
 			ep.addParams(driverParams)
-			nidList = "0:" + str(numRanks);
+			nidList = "0-" + str(numRanks-1);
 			ep.addParam("hermesParams.nidListString", nidList )
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
