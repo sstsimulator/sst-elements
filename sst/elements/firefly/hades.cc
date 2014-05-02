@@ -156,14 +156,21 @@ Group* Hades::initAdjacentMap( std::istream& nidList )
 	do { 
 		char c = nidList.get();
 		tmp += c;
+	
 		if ( c == ',' || nidList.peek() == EOF ) {
-			size_t pos = tmp.find(":");
-			int nid;
-			int len;
-			std::istringstream ( tmp.substr(0, pos ) ) >> nid;
-			std::istringstream ( tmp.substr( pos + 1 ) ) >> len; 
-    		m_dbg.verbose(CALL_INFO,1,0,"rank=%d nid=%d num=%d\n",rank,nid,len);
-			group->set( rank, nid, len );
+			int pos = tmp.find("-");
+			int startNid;
+			int endNid;
+			std::istringstream ( tmp.substr(0, pos ) ) >> startNid;
+			if ( EOF != pos ) { 
+				std::istringstream ( tmp.substr( pos + 1 ) ) >> endNid; 
+			} else {
+				endNid = startNid;
+			}
+			size_t len = (endNid-startNid) + 1;
+    		m_dbg.verbose(CALL_INFO,1,0,"rank=%d startNid=%d endNid=%d\n",
+								rank,startNid,endNid);
+			group->set( rank, startNid, len );
 			rank += len;
 			tmp.clear();
 		}
