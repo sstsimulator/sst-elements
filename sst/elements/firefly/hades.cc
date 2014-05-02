@@ -165,6 +165,7 @@ Group* Hades::initAdjacentMap( std::istream& nidList )
     		m_dbg.verbose(CALL_INFO,1,0,"rank=%d nid=%d num=%d\n",rank,nid,len);
 			group->set( rank, nid, len );
 			rank += len;
+			tmp.clear();
 		}
 	} while ( nidList.peek() != EOF );
 		
