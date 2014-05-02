@@ -101,15 +101,22 @@ class LoadInfo:
 			#print nidList
 		return True
 
-	def inRange( self, nid, start, len ):
+	def inRange( self, nid, start, end ):
 		if nid >= start:
-			if nid < (start + len):
+			if nid <= end:
 				return True	
 		return False
 
 	def setNode(self,nodeId):
 		for ep, nidList in self.map:
-			tmp = nidList.split(':')
-			if self.inRange( nodeId, int(tmp[0]), int(tmp[1]) ):
-				return ep 
+			x = nidList.split(',')
+			for y in x:	
+				tmp = y.split('-')
+
+				if 1 == len(tmp):
+					if nodeId == int( tmp[0] ):
+						return ep 
+				else:
+					if self.inRange( nodeId, int(tmp[0]), int(tmp[1]) ):
+						return ep 
 		return self.nullEP
