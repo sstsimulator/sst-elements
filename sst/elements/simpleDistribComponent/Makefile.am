@@ -13,3 +13,7 @@ libsimpleDistribComponent_la_SOURCES = \
 	simpleDistribComponent.cc
 
 libsimpleDistribComponent_la_LDFLAGS = -module -avoid-version
+
+EXTRA_DIST = \
+	simpleexpon.py \
+	simplegaussian.py
