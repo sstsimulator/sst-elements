@@ -145,7 +145,7 @@ class EmberEP(EndPoint):
 		for x in xrange(num_vNics ):
 			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 			ep.addParams(driverParams)
-			nidList = "0:" + str(numNodes*num_vNics) 
+			nidList = "0-" + str(numNodes*num_vNics-1) 
 			ep.addParam("hermesParams.nidListString", nidList);
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
