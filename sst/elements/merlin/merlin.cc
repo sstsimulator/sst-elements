@@ -149,6 +149,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_torus_topology,
       NULL,
+      "SST::Merlin::Topology"
     },
     { "singlerouter",
       "Simple, single-router topology object",
@@ -156,6 +157,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_singlerouter_topology,
       NULL,
+      "SST::Merlin::Topology"
     },
     { "fattree",
       "Fattree topology object",
@@ -163,6 +165,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_fattree_topology,
       NULL,
+      "SST::Merlin::Topology"
     },
     { "dragonfly",
       "Dragonfly topology object",
@@ -170,14 +173,17 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_dragonfly_topology,
       NULL,
+      "SST::Merlin::Topology"
     },
     { "linkcontrol",
       "Link Control module for building Merlin-enabled NICs",
       NULL,
       load_linkcontrol,
       NULL,
+      NULL,
+      "SST::Merlin::LinkControl"
     },
-    { NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 

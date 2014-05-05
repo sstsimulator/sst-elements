@@ -52,7 +52,8 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_NextBlockPrefetcher,
       NULL,
-      nextBlockPrefetcher_params
+      nextBlockPrefetcher_params,
+      "SST::MemHierarchy::CacheListener"
     },
     { "StridePrefetcher",
       "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data",
@@ -60,8 +61,9 @@ static const ElementInfoModule modules[] = {
       load_StridePrefetcher,
       NULL,
       stridePrefetcher_params,
+      "SST::MemHierarchy::CacheListener"
     },
-    { NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 extern "C" {

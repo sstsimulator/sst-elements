@@ -162,7 +162,7 @@ static Module* create_Mem_SimpleSim(Component* comp, Params& params){
 }
 
 static const ElementInfoParam simpleMem_params[] = {
-    {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
+    {"access_time",     "Constant latency of memory operation.", "100 ns"},
     {NULL, NULL}
 };
 
@@ -265,7 +265,8 @@ static const ElementInfoModule modules[] = {
         NULL, /* Advanced help */
         NULL, /* ModuleAlloc */
         create_Mem_SimpleSim, /* Module Alloc w/ params */
-        simpleMem_params
+        simpleMem_params,
+        "SST::MemHierarchy::MemBackend"
     },
 #if defined(HAVE_LIBDRAMSIM)
     {
@@ -274,7 +275,8 @@ static const ElementInfoModule modules[] = {
         NULL, /* Advanced help */
         NULL, /* ModuleAlloc */
         create_Mem_DRAMSim, /* Module Alloc w/ params */
-        dramsimMem_params
+        dramsimMem_params,
+        "SST::MemHierarchy::MemBackend"
     },
 #endif
 #if defined(HAVE_LIBHYBRIDSIM)
@@ -284,7 +286,8 @@ static const ElementInfoModule modules[] = {
         NULL, /* Advanced help */
         NULL, /* ModuleAlloc */
         create_Mem_HybridSim, /* Module Alloc w/ params */
-        hybridsimMem_params
+        hybridsimMem_params,
+        "SST::MemHierarchy::MemBackend"
     },
 #endif
     {
@@ -293,7 +296,8 @@ static const ElementInfoModule modules[] = {
         NULL, /* Advanced help */
         NULL, /* ModuleAlloc */
         create_Mem_VaultSim, /* Module Alloc w/ params */
-        vaultsimMem_params
+        vaultsimMem_params,
+        "SST::MemHierarchy::MemBackend"
     },
     {
         "memInterface",
@@ -301,7 +305,8 @@ static const ElementInfoModule modules[] = {
         NULL,
         NULL,
         create_MemInterface,
-        NULL
+        NULL,
+        "SST::Interfaces::SimpleMem"
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };

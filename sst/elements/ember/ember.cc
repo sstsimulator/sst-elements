@@ -108,58 +108,66 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_PingPong,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"RingMotif",
 	"Performs a Ring Motif",
 	NULL,
 	NULL,
 	load_Ring,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"BarrierMotif",
 	"Performs a Barrier Motif",
 	NULL,
 	NULL,
 	load_Barrier,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"AllPingPongMotif",
 	"Performs a All Ping Pong Motif",
 	NULL,
 	NULL,
 	load_AllPingPong,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"Halo2DMotif",
 	"Performs a 2D halo exchange Motif",
 	NULL,
 	NULL,
 	load_Halo2D,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"Sweep2DMotif",
 	"Performs a 2D sweep exchange Motif with multiple vertex communication ordering",
 	NULL,
 	NULL,
 	load_Sweep2D,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"FiniMotif",
 	"Performs a communication finalize Motif",
 	NULL,
 	NULL,
 	load_Fini,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
     { 	"NullMotif",
 	"Does bupkis",
 	NULL,
 	NULL,
 	load_Null,
-	NULL
+	NULL,
+    "SST::Ember::EmberGenerator"
     },
-    {   NULL, NULL, NULL, NULL, NULL, NULL  }
+    {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
 };
 
 static const ElementInfoComponent components[] = {
