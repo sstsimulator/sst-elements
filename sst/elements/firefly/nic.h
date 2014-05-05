@@ -32,6 +32,9 @@ class NicInitEvent : public Event {
     int vNic;
     int num_vNics;
 
+	NicInitEvent() :
+		Event() {}
+
     NicInitEvent( int _node, int _vNic, int _num_vNics ) :
         Event(),
         node( _node ),
@@ -278,6 +281,9 @@ public:
     }
 
     void notifyNeedRecv( int vNic, int src_vNic, int src, int tag, size_t length ) {
+    	m_dbg.verbose(CALL_INFO,2,0,"src_vNic=%d src=%d tag=%#x len=%lu\n",
+                                            src_vNic,src,tag,length);
+
         m_vNicV[vNic]->notifyNeedRecv( src_vNic, src, tag, length );
     }
 

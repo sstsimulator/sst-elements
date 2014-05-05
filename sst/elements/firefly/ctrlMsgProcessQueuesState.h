@@ -843,6 +843,8 @@ void ProcessQueuesState<T1>::enableInt( FuncCtxBase* ctx,
 	ctx->setRetFunctor( new FunctorStatic_0< ProcessQueuesState,
           std::deque< FuncCtxBase* >&, bool > ( this, funcPtr, m_funcStack ) );
 	m_intCtx = ctx;
+
+	if ( m_missedInt ) foo();
 }
 
 template< class T1 >

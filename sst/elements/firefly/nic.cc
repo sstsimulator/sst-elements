@@ -24,6 +24,7 @@
 using namespace SST;
 using namespace SST::Firefly;
 
+
 static void print( Output& dbg, char* buf, int len );
 
 Nic::Nic(ComponentId_t id, Params &params) :
@@ -36,8 +37,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_packetId(0),
     m_ftRadix(0)
 {
-    //params.print_all_params( std::cout );
-
     m_myNodeId = params.find_integer("nid", -1);
     assert( m_myNodeId != -1 );
 
@@ -53,16 +52,20 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     std::string topo  = params.find_string( "topology", "" );
 
-    if ( 0 == topo.compare("fattree") ) {
-        m_ftLoading = params.find_integer( "fattree:hosts_per_edge_rtr", -1 );
+    if ( 0 == topo.compare("merlin.fattree") ) {
+        m_ftLoading = params.find_integer( "fattree:loading", -1 );
         m_ftRadix = params.find_integer( "fattree:radix", -1);
 
         if ( -1 == m_ftLoading || -1 == m_ftRadix ) {
             assert(0);
         }
+    	m_dbg.verbose(CALL_INFO,1,0,"Fattree\n");
 
-    } else if ( 0 == topo.compare("torus") ) {
-    }
+    } else if ( 0 == topo.compare("merlin.torus") ) {
+    	m_dbg.verbose(CALL_INFO,1,0,"Torus\n");
+    } else {
+		assert(0);
+	}
 
     m_num_vcs = params.find_integer("num_vcs",2);
     std::string link_bw = params.find_string("link_bw","2GHz");
@@ -688,3 +691,4 @@ bool  Nic::copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry )
     return ( entry.currentVec == entry.ioVec().size() ) ;
 }
 
+BOOST_CLASS_EXPORT( NicInitEvent )
