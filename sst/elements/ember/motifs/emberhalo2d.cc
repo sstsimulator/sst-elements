@@ -35,15 +35,15 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	sizeY = (uint32_t) params.find_integer("sizey", 0);
 
 	// Set configuration so we do not exchange messages
-	procLeft  = 0;
-	procRight = 0;
-	procAbove = 0;
-	procBelow = 0;
+	procWest  = 0;
+	procEast = 0;
+	procNorth = 0;
+	procSouth = 0;
 
-	sendLeft = false;
-	sendRight = false;
-	sendAbove = false;
-	sendBelow = false;
+	sendWest = false;
+	sendEast = false;
+	sendNorth = false;
+	sendSouth = false;
 
 	messageCount = 0;
 }
@@ -81,32 +81,32 @@ void EmberHalo2DGenerator::configureEnvironment(const SST::Output* output, uint3
 		sizeX, sizeY);
 
 	if(rank % sizeX > 0) {
-		sendLeft = true;
-		procLeft = rank - 1;
+		sendWest = true;
+		procWest = rank - 1;
 	}
 
 	if((rank + 1) % sizeX != 0) {
-		sendRight = true;
-		procRight = rank + 1;
+		sendEast = true;
+		procEast = rank + 1;
 	}
 
 	if(rank >= sizeX) {
-		sendAbove = true;
-		procAbove = rank - sizeX;
+		sendNorth = true;
+		procNorth = rank - sizeX;
 	}
 
 	if(rank < (worldSize - sizeX)) {
-		sendBelow = true;
-		procBelow = rank + sizeX;
+		sendSouth = true;
+		procSouth = rank + sizeX;
 	}
 
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
 		", send above=%s %" PRIu32 ", send below=%s %" PRIu32 "\n",
 		rank,
-		(sendLeft  ? "Y" : "N"), procLeft,
-		(sendRight ? "Y" : "N"), procRight,
-		(sendBelow ? "Y" : "N"), procBelow,
-		(sendAbove ? "Y" : "N"), procAbove);
+		(sendWest  ? "Y" : "N"), procWest,
+		(sendEast ? "Y" : "N"), procEast,
+		(sendSouth ? "Y" : "N"), procSouth,
+		(sendNorth ? "Y" : "N"), procNorth);
 }
 
 void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
@@ -116,56 +116,90 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 		EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
 		evQ->push(compute);
 
-		if(sendLeft) {
-			MessageRequest*  leftReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvLeft = new EmberIRecvEvent(procLeft, messageSizeX, 0, (Communicator) 0, leftReq);
-			EmberSendEvent*  sendEvLeft = new EmberSendEvent(procLeft, messageSizeX, 0, (Communicator) 0);
-			EmberWaitEvent*  waitEvLeft = new EmberWaitEvent(leftReq);
+		// Do the horizontal exchange first
+		if(rank % 2 == 0) {
+			if(sendEast) {
+				EmberRecvEvent*  recvEvEast = new EmberRecvEvent(procEast, messageSizeX, 0, (Communicator) 0);
+				EmberSendEvent*  sendEvEast = new EmberSendEvent(procEast, messageSizeX, 0, (Communicator) 0);
 
-			evQ->push(recvEvLeft);
-			evQ->push(sendEvLeft);
-			evQ->push(waitEvLeft);
+				evQ->push(recvEvEast);
+				evQ->push(sendEvEast);
 
-			messageCount++;
+				messageCount++;
+			}
+
+			if(sendWest) {
+				EmberRecvEvent*  recvEvWest = new EmberRecvEvent(procWest, messageSizeX, 0, (Communicator) 0);
+				EmberSendEvent*  sendEvWest = new EmberSendEvent(procWest, messageSizeX, 0, (Communicator) 0);
+
+				evQ->push(recvEvWest);
+				evQ->push(sendEvWest);
+
+				messageCount++;
+			}
+		} else {
+			if(sendEast) {
+				EmberRecvEvent*  recvEvEast = new EmberRecvEvent(procEast, messageSizeX, 0, (Communicator) 0);
+				EmberSendEvent*  sendEvEast = new EmberSendEvent(procEast, messageSizeX, 0, (Communicator) 0);
+
+				evQ->push(sendEvEast);
+				evQ->push(recvEvEast);
+
+				messageCount++;
+			}
+
+			if(sendWest) {
+				EmberRecvEvent*  recvEvWest = new EmberRecvEvent(procWest, messageSizeX, 0, (Communicator) 0);
+				EmberSendEvent*  sendEvWest = new EmberSendEvent(procWest, messageSizeX, 0, (Communicator) 0);
+
+				evQ->push(sendEvWest);
+				evQ->push(recvEvWest);
+
+				messageCount++;
+			}
 		}
 
-		if(sendRight) {
-			MessageRequest*  rightReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvRight = new EmberIRecvEvent(procRight, messageSizeX, 0, (Communicator) 0, rightReq);
-			EmberSendEvent*  sendEvRight = new EmberSendEvent(procRight, messageSizeX, 0, (Communicator) 0);
-			EmberWaitEvent*  waitEvRight = new EmberWaitEvent(rightReq);
+		// Now do the vertical exchanges
+		if( (rank / sizeX) % 2 == 0) {
+			if(sendNorth) {
+				EmberRecvEvent* recvEvNorth = new EmberRecvEvent(procNorth, messageSizeY, 0, (Communicator) 0);
+				EmberSendEvent* sendEvNorth = new EmberSendEvent(procNorth, messageSizeY, 0, (Communicator) 0);
 
-			evQ->push(recvEvRight);
-			evQ->push(sendEvRight);
-			evQ->push(waitEvRight);
+				evQ->push(recvEvNorth);
+				evQ->push(sendEvNorth);
 
-			messageCount++;
-		}
+				messageCount++;
+			}
 
-		if(sendAbove) {
-			MessageRequest*  aboveReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvAbove = new EmberIRecvEvent(procAbove, messageSizeY, 0, (Communicator) 0, aboveReq);
-			EmberSendEvent*  sendEvAbove = new EmberSendEvent(procAbove, messageSizeY, 0, (Communicator) 0);
-			EmberWaitEvent*  waitEvAbove = new EmberWaitEvent(aboveReq);
+			if(sendSouth) {
+				EmberRecvEvent* recvEvSouth = new EmberRecvEvent(procSouth, messageSizeY, 0, (Communicator) 0);
+				EmberSendEvent* sendEvSouth = new EmberSendEvent(procSouth, messageSizeY, 0, (Communicator) 0);
 
-			evQ->push(recvEvAbove);
-			evQ->push(sendEvAbove);
-			evQ->push(waitEvAbove);
+				evQ->push(recvEvSouth);
+				evQ->push(sendEvSouth);
 
-			messageCount++;
-		}
+				messageCount++;
+			}
+		} else {
+			if(sendNorth) {
+				EmberRecvEvent* recvEvNorth = new EmberRecvEvent(procNorth, messageSizeY, 0, (Communicator) 0);
+				EmberSendEvent* sendEvNorth = new EmberSendEvent(procNorth, messageSizeY, 0, (Communicator) 0);
 
-		if(sendBelow) {
-			MessageRequest*  belowReq    = new MessageRequest();
-			EmberIRecvEvent* recvEvBelow = new EmberIRecvEvent(procBelow, messageSizeY, 0, (Communicator) 0, belowReq);
-			EmberSendEvent*  sendEvBelow = new EmberSendEvent(procBelow, messageSizeY, 0, (Communicator) 0);
-			EmberWaitEvent*  waitEvBelow = new EmberWaitEvent(belowReq);
+				evQ->push(sendEvNorth);
+				evQ->push(recvEvNorth);
 
-			evQ->push(recvEvBelow);
-			evQ->push(sendEvBelow);
-			evQ->push(waitEvBelow);
+				messageCount++;
+			}
 
-			messageCount++;
+			if(sendSouth) {
+				EmberRecvEvent* recvEvSouth = new EmberRecvEvent(procSouth, messageSizeY, 0, (Communicator) 0);
+				EmberSendEvent* sendEvSouth = new EmberSendEvent(procSouth, messageSizeY, 0, (Communicator) 0);
+
+				evQ->push(sendEvSouth);
+				evQ->push(recvEvSouth);
+
+				messageCount++;
+			}
 		}
 
 		output->verbose(CALL_INFO, 2, 0, "Halo 2D motif completed event generation for phase: %" PRIu32 "\n", phase);

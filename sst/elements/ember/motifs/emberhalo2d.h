@@ -37,15 +37,15 @@ private:
 	uint32_t iterations;
 	uint32_t messageCount;
 
-	bool sendLeft;
-	bool sendRight;
-	bool sendAbove;
-	bool sendBelow;
+	bool sendWest;
+	bool sendEast;
+	bool sendNorth;
+	bool sendSouth;
 
-	int32_t  procLeft;
-	int32_t  procRight;
-	int32_t  procAbove;
-	int32_t  procBelow;
+	int32_t  procEast;
+	int32_t  procWest;
+	int32_t  procNorth;
+	int32_t  procSouth;
 
 };
 
