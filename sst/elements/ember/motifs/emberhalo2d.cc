@@ -31,6 +31,8 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	messageSizeX = (uint32_t) params.find_integer("messagesizey", 128);
 	messageSizeY = (uint32_t) params.find_integer("messagesizex", 128);
 
+	nsCopyTime = (uint32_t) params.find_integer("computecopy", 5);
+
 	sizeX = (uint32_t) params.find_integer("sizex", 0);
 	sizeY = (uint32_t) params.find_integer("sizey", 0);
 
@@ -158,6 +160,10 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 				messageCount++;
 			}
 		}
+
+		// Add a compute event to allow any copying for diagonals
+		EmberComputeEvent* computeCopy = new EmberComputeEvent(nsCopyTime);
+		evQ->push(computeCopy);
 
 		// Now do the vertical exchanges
 		if( (rank / sizeX) % 2 == 0) {
