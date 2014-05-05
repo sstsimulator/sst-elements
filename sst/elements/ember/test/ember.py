@@ -7,7 +7,7 @@ import sys,getopt
 iterations = 1;
 msgSize = 1024;
 motif = "Halo2D"
-shape = "64x64"
+shape = "8x8"
 num_vNics = 1
 debug = 0
 
@@ -96,6 +96,7 @@ nicParams = ({
 driverParams = ({
 		"debug" : debug,
 		"verbose" : 0,
+		"jobId" : 0,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
@@ -145,7 +146,7 @@ class EmberEP(EndPoint):
 		for x in xrange(num_vNics ):
 			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 			ep.addParams(driverParams)
-			nidList = "0:" + str(numNodes*num_vNics) 
+			nidList = "0-" + str(numNodes*num_vNics-1) 
 			ep.addParam("hermesParams.nidListString", nidList);
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
