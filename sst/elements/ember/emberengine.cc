@@ -38,7 +38,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	output->init("EmberEngine", verbosity, (uint32_t) 0, Output::STDOUT);
 
 	// See if the user requested that we print statistics for this run
-	printStats = ((uint32_t) (params.find_integer("printStats", 0))) != ((uint32_t) 0);
+	printStats = ((uint32_t) (params.find_integer("printStats", 0)));
 
 	// Configure the empty buffer ready for use by MPI routines.
 	emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
