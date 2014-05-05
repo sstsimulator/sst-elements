@@ -138,22 +138,22 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 				messageCount++;
 			}
 		} else {
-			if(sendEast) {
-				EmberRecvEvent*  recvEvEast = new EmberRecvEvent(procEast, messageSizeX, 0, (Communicator) 0);
-				EmberSendEvent*  sendEvEast = new EmberSendEvent(procEast, messageSizeX, 0, (Communicator) 0);
-
-				evQ->push(sendEvEast);
-				evQ->push(recvEvEast);
-
-				messageCount++;
-			}
-
 			if(sendWest) {
 				EmberRecvEvent*  recvEvWest = new EmberRecvEvent(procWest, messageSizeX, 0, (Communicator) 0);
 				EmberSendEvent*  sendEvWest = new EmberSendEvent(procWest, messageSizeX, 0, (Communicator) 0);
 
 				evQ->push(sendEvWest);
 				evQ->push(recvEvWest);
+
+				messageCount++;
+			}
+
+			if(sendEast) {
+				EmberRecvEvent*  recvEvEast = new EmberRecvEvent(procEast, messageSizeX, 0, (Communicator) 0);
+				EmberSendEvent*  sendEvEast = new EmberSendEvent(procEast, messageSizeX, 0, (Communicator) 0);
+
+				evQ->push(sendEvEast);
+				evQ->push(recvEvEast);
 
 				messageCount++;
 			}
@@ -181,22 +181,22 @@ void EmberHalo2DGenerator::generate(const SST::Output* output, const uint32_t ph
 				messageCount++;
 			}
 		} else {
-			if(sendNorth) {
-				EmberRecvEvent* recvEvNorth = new EmberRecvEvent(procNorth, messageSizeY, 0, (Communicator) 0);
-				EmberSendEvent* sendEvNorth = new EmberSendEvent(procNorth, messageSizeY, 0, (Communicator) 0);
-
-				evQ->push(sendEvNorth);
-				evQ->push(recvEvNorth);
-
-				messageCount++;
-			}
-
 			if(sendSouth) {
 				EmberRecvEvent* recvEvSouth = new EmberRecvEvent(procSouth, messageSizeY, 0, (Communicator) 0);
 				EmberSendEvent* sendEvSouth = new EmberSendEvent(procSouth, messageSizeY, 0, (Communicator) 0);
 
 				evQ->push(sendEvSouth);
 				evQ->push(recvEvSouth);
+
+				messageCount++;
+			}
+
+			if(sendNorth) {
+				EmberRecvEvent* recvEvNorth = new EmberRecvEvent(procNorth, messageSizeY, 0, (Communicator) 0);
+				EmberSendEvent* sendEvNorth = new EmberSendEvent(procNorth, messageSizeY, 0, (Communicator) 0);
+
+				evQ->push(sendEvNorth);
+				evQ->push(recvEvNorth);
 
 				messageCount++;
 			}
