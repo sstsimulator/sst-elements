@@ -182,12 +182,13 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
 
 
 void Cache::configureLinks(){
-    char buf[200];
-    char buf2[200];
-    bool highNetExists = false;
+    char buf[200], buf2[200], buf3[200];
+    int highNetCount = 0;
     bool lowNetExists = false;
-    sprintf(buf2, "High network port was not specified correctly on componenent %s.  Please name ports \'high_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
-    sprintf(buf, "Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
+    sprintf(buf2, "Error:  High network port was not specified correctly on componenent %s.  Please name ports \'high_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
+    sprintf(buf, "Error:  Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
+    sprintf(buf3, "Error:  More than one high network port specified in %s.  Please use a 'Bus' component when connecting more than one higher level cache (eg. 2 L1s, 1 L2)\n", this->getName().c_str());
+
     if(!dirControllerExists_){
         for(uint id = 0 ; id < 200; id++) {
             string linkName = "low_network_" + boost::lexical_cast<std::string>(id);
@@ -207,13 +208,14 @@ void Cache::configureLinks(){
         if(link) {
             d_->debug(_INFO_,"High Network Link ID: %u \n", (uint)link->getId());
             highNetPorts_->push_back(link);
-            highNetExists = true;
+            highNetCount++;
         }else break;
     }
     
     
     if(!dirControllerExists_) BOOST_ASSERT_MSG(lowNetExists, buf);
-    BOOST_ASSERT_MSG(highNetExists,  buf2);
+    BOOST_ASSERT_MSG(highNetCount > 0,  buf2);
+    BOOST_ASSERT_MSG(highNetCount < 2,  buf3);
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
 }
 
