@@ -482,7 +482,7 @@ bool prospero::tick( Cycle_t ) {
 		}
 
 
-		queue_count_bins[pending_requests.size()]++;
+		queue_count_bins[pending_requests.size()-1]++;
 		return false;
 	} else {
 		if(pending_requests.size() == 0) {
