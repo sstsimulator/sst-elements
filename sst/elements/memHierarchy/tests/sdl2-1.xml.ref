@@ -3,124 +3,146 @@ cpu: 1000 Issued Write (0) for address 0xe5c
 cpu: 999 Issued Read (1) for address 0x56c
 cpu: 998 Issued Read (2) for address 0x90c
 cpu: 997 Issued Read (3) for address 0xb0c
-cpu: Received Request with command 3 (response to 0, addr 0xe5c) [Time: 150] [3 outstanding requests]
+cpu: Received Request with command 3 (response to 0, addr 0xe5c) [Time: 144] [3 outstanding requests]
 cpu: 996 Issued Read (4) for address 0x704
 cpu: 995 Issued Read (5) for address 0xf1c
-cpu: Received Request with command 2 (response to 1, addr 0x56c) [Time: 150] [4 outstanding requests]
-cpu: Received Request with command 2 (response to 2, addr 0x90c) [Time: 150] [3 outstanding requests]
+cpu: Received Request with command 2 (response to 1, addr 0x56c) [Time: 144] [4 outstanding requests]
+cpu: Received Request with command 2 (response to 2, addr 0x90c) [Time: 144] [3 outstanding requests]
 cpu: 994 Issued Read (6) for address 0x7e0
-cpu: Received Request with command 2 (response to 3, addr 0xb0c) [Time: 150] [3 outstanding requests]
-cpu: Received Request with command 2 (response to 4, addr 0x704) [Time: 150] [2 outstanding requests]
-cpu: Received Request with command 2 (response to 5, addr 0xf1c) [Time: 150] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 6, addr 0x7e0) [Time: 150] [0 outstanding requests]
+cpu: Received Request with command 2 (response to 3, addr 0xb0c) [Time: 144] [3 outstanding requests]
+cpu: Received Request with command 2 (response to 4, addr 0x704) [Time: 144] [2 outstanding requests]
+cpu: Received Request with command 2 (response to 5, addr 0xf1c) [Time: 144] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 6, addr 0x7e0) [Time: 144] [0 outstanding requests]
 cpu: 993 Issued Read (7) for address 0x66c
 cpu: 992 Issued Read (8) for address 0x234
 cpu: 991 Issued Read (9) for address 0x7c0
 cpu: Received Request with command 2 (response to 9, addr 0x7c0) [Time: 4] [2 outstanding requests]
-cpu: Received Request with command 2 (response to 7, addr 0x66c) [Time: 150] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 8, addr 0x234) [Time: 150] [0 outstanding requests]
-cpu: 990 Issued Read (a) for address 0xe8
-cpu: Received Request with command 2 (response to a, addr 0xe8) [Time: 150] [0 outstanding requests]
-cpu: 989 Issued Read (b) for address 0x184
-cpu: 988 Issued Read (c) for address 0xbb4
-cpu: Received Request with command 2 (response to b, addr 0x184) [Time: 150] [1 outstanding requests]
-cpu: 987 Issued Write (d) for address 0x92c
-cpu: 986 Issued Read (e) for address 0x25c
-cpu: Received Request with command 2 (response to c, addr 0xbb4) [Time: 150] [2 outstanding requests]
-cpu: Received Request with command 3 (response to d, addr 0x92c) [Time: 150] [1 outstanding requests]
-cpu: Received Request with command 2 (response to e, addr 0x25c) [Time: 150] [0 outstanding requests]
-cpu: 985 Issued Read (f) for address 0x104
-cpu: 984 Issued Read (10) for address 0x768
-cpu: 983 Issued Read (11) for address 0xa6c
-cpu: Received Request with command 2 (response to f, addr 0x104) [Time: 150] [2 outstanding requests]
-cpu: Received Request with command 2 (response to 10, addr 0x768) [Time: 150] [1 outstanding requests]
-cpu: 982 Issued Read (12) for address 0x9b8
-cpu: Received Request with command 2 (response to 11, addr 0xa6c) [Time: 150] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 12, addr 0x9b8) [Time: 150] [0 outstanding requests]
-cpu: 981 Issued Read (13) for address 0xadc
-cpu: 980 Issued Read (14) for address 0x110
-cpu: Received Request with command 2 (response to 14, addr 0x110) [Time: 4] [1 outstanding requests]
-cpu: 979 Issued Read (15) for address 0xe48
-cpu: Received Request with command 2 (response to 15, addr 0xe48) [Time: 4] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 13, addr 0xadc) [Time: 150] [0 outstanding requests]
-cpu: 978 Issued Read (16) for address 0x17c
-cpu: 977 Issued Read (17) for address 0xd64
-cpu: Received Request with command 2 (response to 16, addr 0x17c) [Time: 150] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 17, addr 0xd64) [Time: 150] [0 outstanding requests]
-cpu: 976 Issued Read (18) for address 0x868
-cpu: 975 Issued Read (19) for address 0x570
-cpu: Received Request with command 2 (response to 19, addr 0x570) [Time: 4] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 18, addr 0x868) [Time: 150] [0 outstanding requests]
-cpu: 974 Issued Read (1a) for address 0x450
-cpu: Received Request with command 2 (response to 1a, addr 0x450) [Time: 150] [0 outstanding requests]
-cpu: 973 Issued Read (1b) for address 0xe30
-cpu: Received Request with command 2 (response to 1b, addr 0xe30) [Time: 150] [0 outstanding requests]
-cpu: 972 Issued Read (1c) for address 0x974
-cpu: Received Request with command 2 (response to 1c, addr 0x974) [Time: 150] [0 outstanding requests]
-cpu: 971 Issued Write (1d) for address 0xe68
-cpu: Received Request with command 3 (response to 1d, addr 0xe68) [Time: 4] [0 outstanding requests]
-cpu: 970 Issued Read (1e) for address 0x704
-cpu: Received Request with command 2 (response to 1e, addr 0x704) [Time: 4] [0 outstanding requests]
-cpu: 969 Issued Read (1f) for address 0xe2c
-cpu: Received Request with command 2 (response to 1f, addr 0xe2c) [Time: 4] [0 outstanding requests]
-cpu: 968 Issued Read (20) for address 0x864
-cpu: Received Request with command 2 (response to 20, addr 0x864) [Time: 4] [0 outstanding requests]
-cpu: 967 Issued Write (21) for address 0x7fc
-cpu: 966 Issued Read (22) for address 0x9c
-cpu: 965 Issued Read (23) for address 0xc10
-cpu: Received Request with command 3 (response to 21, addr 0x7fc) [Time: 150] [2 outstanding requests]
-cpu: Received Request with command 2 (response to 22, addr 0x9c) [Time: 150] [1 outstanding requests]
-cpu: Received Request with command 2 (response to 23, addr 0xc10) [Time: 150] [0 outstanding requests]
-cpu: 964 Issued Read (24) for address 0xc90
-cpu: Received Request with command 2 (response to 24, addr 0xc90) [Time: 150] [0 outstanding requests]
-cpu: 963 Issued Read (25) for address 0xca4
-cpu: Received Request with command 2 (response to 25, addr 0xca4) [Time: 4] [0 outstanding requests]
-cpu: 962 Issued Read (26) for address 0x748
-cpu: Received Request with command 2 (response to 26, addr 0x748) [Time: 23] [0 outstanding requests]
+cpu: Received Request with command 2 (response to 7, addr 0x66c) [Time: 144] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 8, addr 0x234) [Time: 144] [0 outstanding requests]
+cpu: 990 Issued Read (10) for address 0xe8
+cpu: Received Request with command 2 (response to 10, addr 0xe8) [Time: 144] [0 outstanding requests]
+cpu: 989 Issued Read (11) for address 0x184
+cpu: Received Request with command 2 (response to 11, addr 0x184) [Time: 144] [0 outstanding requests]
+cpu: 988 Issued Read (12) for address 0xbb4
+cpu: 987 Issued Write (13) for address 0x92c
+cpu: 986 Issued Read (14) for address 0x25c
+cpu: Received Request with command 2 (response to 12, addr 0xbb4) [Time: 144] [2 outstanding requests]
+cpu: Received Request with command 3 (response to 13, addr 0x92c) [Time: 144] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 14, addr 0x25c) [Time: 144] [0 outstanding requests]
+cpu: 985 Issued Read (15) for address 0x104
+cpu: 984 Issued Read (16) for address 0x768
+cpu: 983 Issued Read (17) for address 0xa6c
+cpu: Received Request with command 2 (response to 15, addr 0x104) [Time: 144] [2 outstanding requests]
+cpu: Received Request with command 2 (response to 16, addr 0x768) [Time: 144] [1 outstanding requests]
+cpu: 982 Issued Read (18) for address 0x9b8
+cpu: Received Request with command 2 (response to 17, addr 0xa6c) [Time: 144] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 18, addr 0x9b8) [Time: 144] [0 outstanding requests]
+cpu: 981 Issued Read (19) for address 0xadc
+cpu: 980 Issued Read (20) for address 0x110
+cpu: Received Request with command 2 (response to 20, addr 0x110) [Time: 4] [1 outstanding requests]
+cpu: 979 Issued Read (21) for address 0xe48
+cpu: Received Request with command 2 (response to 21, addr 0xe48) [Time: 4] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 19, addr 0xadc) [Time: 144] [0 outstanding requests]
+cpu: 978 Issued Read (22) for address 0x17c
+cpu: 977 Issued Read (23) for address 0xd64
+cpu: Received Request with command 2 (response to 22, addr 0x17c) [Time: 144] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 23, addr 0xd64) [Time: 144] [0 outstanding requests]
+cpu: 976 Issued Read (24) for address 0x868
+cpu: 975 Issued Read (25) for address 0x570
+cpu: Received Request with command 2 (response to 25, addr 0x570) [Time: 4] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 24, addr 0x868) [Time: 144] [0 outstanding requests]
+cpu: 974 Issued Read (26) for address 0x450
+cpu: Received Request with command 2 (response to 26, addr 0x450) [Time: 144] [0 outstanding requests]
+cpu: 973 Issued Read (27) for address 0xe30
+cpu: Received Request with command 2 (response to 27, addr 0xe30) [Time: 144] [0 outstanding requests]
+cpu: 972 Issued Read (28) for address 0x974
+cpu: Received Request with command 2 (response to 28, addr 0x974) [Time: 144] [0 outstanding requests]
+cpu: 971 Issued Write (29) for address 0xe68
+cpu: Received Request with command 3 (response to 29, addr 0xe68) [Time: 4] [0 outstanding requests]
+cpu: 970 Issued Read (30) for address 0x704
+cpu: Received Request with command 2 (response to 30, addr 0x704) [Time: 4] [0 outstanding requests]
+cpu: 969 Issued Read (31) for address 0xe2c
+cpu: Received Request with command 2 (response to 31, addr 0xe2c) [Time: 4] [0 outstanding requests]
+cpu: 968 Issued Read (32) for address 0x864
+cpu: Received Request with command 2 (response to 32, addr 0x864) [Time: 4] [0 outstanding requests]
+cpu: 967 Issued Write (33) for address 0x7fc
+cpu: 966 Issued Read (34) for address 0x9c
+cpu: 965 Issued Read (35) for address 0xc10
+cpu: Received Request with command 3 (response to 33, addr 0x7fc) [Time: 144] [2 outstanding requests]
+cpu: Received Request with command 2 (response to 34, addr 0x9c) [Time: 144] [1 outstanding requests]
+cpu: Received Request with command 2 (response to 35, addr 0xc10) [Time: 144] [0 outstanding requests]
+cpu: 964 Issued Read (36) for address 0xc90
+cpu: Received Request with command 2 (response to 36, addr 0xc90) [Time: 144] [0 outstanding requests]
+cpu: 963 Issued Read (37) for address 0xca4
+cpu: Received Request with command 2 (response to 37, addr 0xca4) [Time: 4] [0 outstanding requests]
+cpu: 962 Issued Read (38) for address 0x748
+cpu: Received Request with command 2 (response to 38, addr 0x748) [Time: 22] [0 outstanding requests]
 TrivialCPU cpu Finished after 39 issued reads, 39 returned (4999 clocks)
 Number of Pending Requests per Cycle (Binned by 2 Requests)
-  [0, 2]  3950
-  [2, 4]  974
---------------------------------------------------------------------
-Name: l1cache
---------------------------------------------------------------------
-GetS-IS misses: 27
-GetX-SM misses: 2
-GetX-IM misses: 1
-GetS hits: 35
-GetX hits: 4
-Total misses: 30
-Total hits: 39
-Hit Ratio:  56.522%
-PutS received: 0
-PutM received: 0
-PUTS sent due to evictions: 5
-PUTM sent due to evictions: 0
-PUTM sent due to invalidations: 0
-Invalidates recieved that locked due to user atomic lock: 0
-Total instructions recieved: 69
-Memory requests received (non-coherency related): 39
+  [0, 2]  3993
+  [2, 4]  949
 
 --------------------------------------------------------------------
-Name: l2cache
+--- Cache Stats
+--- Name: l1cache
 --------------------------------------------------------------------
-GetS-IS misses: 26
-GetX-SM misses: 2
-GetX-IM misses: 1
-GetS hits: 27
-GetX hits: 3
-Total misses: 29
-Total hits: 30
-Hit Ratio:  50.847%
-PutS received: 5
-PutM received: 0
-PUTS sent due to evictions: 0
-PUTM sent due to evictions: 0
-PUTM sent due to invalidations: 0
-Invalidates recieved that locked due to user atomic lock: 0
-Total instructions recieved: 64
-Memory requests received (non-coherency related): 30
+- Total misses: 30
+- Total hits:  39
+- Hit ratio:  56.522%
+- Miss ratio:  43.478%
+- Read misses:  27
+- Write misses:  3
+- GetS received: 35
+- GetX received: 4
+- GetSEx received: 0
+- GetS-IS misses:  27
+- GetX-SM misses:  2
+- GetX-IM misses:  1
+- GetS hits:  35
+- GetX hits:  4
+- Average updgrade latency:  136 cycles
+- PutS received:  0
+- PutM received:  0
+- PUTM sent due to invalidations:  0
+- PUTE sent due to invalidations:  0
+- PUTX sent due to invalidations:  0
+- PUTS sent due to evictions:  5
+- PUTM sent due to evictions:  0
+- PUTE sent due to evictions:  0
+- Inv received stalled bc atomic lock:  0
+- Total requests received:  69
+- Total requests handled by MSHR (MSHR hits):  30
 
+--------------------------------------------------------------------
+--- Cache Stats
+--- Name: l2cache
+--------------------------------------------------------------------
+- Total misses: 29
+- Total hits:  30
+- Hit ratio:  50.847%
+- Miss ratio:  49.153%
+- Read misses:  26
+- Write misses:  3
+- GetS received: 27
+- GetX received: 3
+- GetSEx received: 0
+- GetS-IS misses:  26
+- GetX-SM misses:  2
+- GetX-IM misses:  1
+- GetS hits:  27
+- GetX hits:  3
+- Average updgrade latency:  126 cycles
+- PutS received:  5
+- PutM received:  0
+- PUTM sent due to invalidations:  0
+- PUTE sent due to invalidations:  0
+- PUTX sent due to invalidations:  0
+- PUTS sent due to evictions:  0
+- PUTM sent due to evictions:  0
+- PUTE sent due to evictions:  0
+- Inv received stalled bc atomic lock:  0
+- Total requests received:  64
+- Total requests handled by MSHR (MSHR hits):  29
 Invalidates sent (non-eviction): 0
 Invalidates sent due to evictions: 0
 Simulation is complete, simulated time: 5 us

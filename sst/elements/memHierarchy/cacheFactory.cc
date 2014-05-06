@@ -168,6 +168,8 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     STAT_GetSExReceived_                = 0;
     STAT_InvalidateWaitingForUserLock_  = 0;
     STAT_TotalRequestsRecieved_         = 0;
+    STAT_TotalMSHRHits_                 = 0;
+    totalUpgradeLatency_                = 0;
     mshrHits_                           = 0;
         
     /* Coherence Controllers */
