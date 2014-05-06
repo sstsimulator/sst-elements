@@ -47,11 +47,19 @@ create_testDriver(SST::ComponentId_t id, SST::Params& params)
     return new TestDriver(id, params);
 }
 
+static const ElementInfoParam testDriver_params[] = {
+	{ NULL, NULL, NULL }
+};
+
 static SST::Component*
 create_nicTester(SST::ComponentId_t id, SST::Params& params)
 {
     return new NicTester( id, params );
 }
+
+static const ElementInfoParam nicTester_params[] = {
+	{ NULL, NULL, NULL }
+};
 
 static SST::Component*
 create_nic(SST::ComponentId_t id, SST::Params& params)
@@ -59,11 +67,35 @@ create_nic(SST::ComponentId_t id, SST::Params& params)
     return new Nic( id, params );
 }
 
+
+static const ElementInfoParam nic_params[] = {
+	{ "nid", "node id on network", "-1"},
+	{ "num_vNics", "Sets number of cores", "1"},
+	{ "verboseLevel", "Sets the output verbosity of the component", "1"},
+	{ "debug", "Sets the messaging API of the end point", "0"},
+	{ "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
+	{ "txDelay_ns", "Sets the delay for a send", "100"},
+	{ "topology", "Sets the network topology", "merlin.torus"},
+	{ "fattree:loading", "Sets the number of ports on edge router connected to nodes", "8"},
+	{ "fattree:radix", "Sets the number of ports on the network switches", "16"},
+	{ "num_vcs", "Sets the number of virtual channels", "2"},
+	{ "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
+	{ "buffer_size", "Sets the buffer size of the link connected to the router", "128"},
+	{ "module", "Sets the link control module", "merlin.linkcontrol"},
+	{ NULL, NULL, NULL }
+};
+
+
 static SST::Component*
 create_loopBack(SST::ComponentId_t id, SST::Params& params)
 {
     return new LoopBack( id, params );
 }
+
+static const ElementInfoParam loopBack_params[] = {
+    {"numCores","Sets the number cores to create links to", "1"},
+	{ NULL, NULL, NULL }
+};
 
 static Module*
 load_hades(Component* comp, Params& params)
@@ -71,17 +103,32 @@ load_hades(Component* comp, Params& params)
     return new Hades(comp, params);
 }
 
+static const ElementInfoParam hadesModule_params[] = {
+    {"nidListString","Sets the rank to nid mapping", ""},
+    {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
+	{"verboseLevel", "Sets the output verbosity of the component", "1"},
+	{"debug", "Sets the messaging API of the end point", "0"},
+    {NULL, NULL}
+};
+
 static Module*
 load_VirtNic(Component* comp, Params& params)
 {
     return new VirtNic(comp, params);
 }
 
+static const ElementInfoParam virtNicModule_params[] = {
+	{"debugLevel", "Sets the output verbosity of the component", "1"},
+	{"debug", "Sets the messaging API of the end point", "0"},
+    {NULL, NULL}
+};
+
 static Module*
 load_hermesInitSM(Params& params)
 {
     return new InitFuncSM(params);
 }
+
 
 static Module*
 load_hermesFiniSM(Params& params)
@@ -161,11 +208,39 @@ load_hermesWaitAllSM(Params& params)
     return new WaitAllFuncSM(params);
 }
 
+static const ElementInfoParam funcSMModule_params[] = {
+    {"enterLatency", "Sets the time to enter a function", "30"},
+    {"returnLatency", "Sets the time to leave a function", "30"},
+    {"debug", "Set the debug level", "0"},
+    {"verbose", "Set the verbose level", "1"},
+    {"worldRank", "internal", ""},
+    {"nodeId", "internal", ""},
+    {"name", "internal", ""},
+	
+    {NULL, NULL}
+};
+
 static Module*
 load_ctrlMsgProtocol( Component* comp, Params& params )
 {
     return new CtrlMsg::API( comp, params );
 }
+
+static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
+    {"shortMsgLength","Sets the short to long message transition point", "16000"},
+    {"verboseLevel","Set the verbose level", "1"},
+    {"debug","Set the debug level", "0"},
+    {"memcpyDelay_ps","Sets the time to copy memory", "200"},
+    {"matchDelay_ns","Sets the time to do a match", "100"},
+    {"txDelay_ns","Sets the time to setup a Send", "100"},
+    {"rxDelay_ns", "Sets the time setup a Recv","100"},
+    {"rxNicDelay_ns","", "0"},
+    {"txNicDelay_ns","", "0"},
+    {"regRegionXoverLength","Sets the transition point page pinning", "4096"},
+    {"regRegionPerByteDelay_ps","Sets the time to pin pages", "28"},
+    {"regRegionBaseDelay_ps","Sets the base time to pin pages", "10000000"},
+    {NULL, NULL}
+};
 
 static void init_MerlinFireflyEvent()
 {
@@ -176,21 +251,25 @@ static const ElementInfoComponent components[] = {
       "Firefly test driver ",
       NULL,
       create_testDriver,
+      NULL,//testDriver_params
     },
     { "nicTester",
       "nic tester",
       NULL,
       create_nicTester,
+	  NULL,//nicTester_params
     },
     { "nic",
       "nic",
       NULL,
       create_nic,
+      nic_params
     },
     { "loopBack",
       "loopBack",
       NULL,
       create_loopBack,
+	  loopBack_params
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -201,7 +280,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       NULL,
       load_hades,
-      NULL,
+      hadesModule_params,
       "SST::Hermes::MessageInterface"
     },
     { "VirtNic",
@@ -209,7 +288,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       NULL,
       load_VirtNic,
-      NULL,
+      virtNicModule_params,
       "SST::Module"
     },
     { "Init",
@@ -217,7 +296,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesInitSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Fini",
@@ -225,7 +304,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesFiniSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Rank",
@@ -233,7 +312,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesRankSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Size",
@@ -241,7 +320,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesSizeSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Alltoall",
@@ -249,7 +328,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesAlltoallvSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Barrier",
@@ -257,7 +336,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesBarrierSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::CollectiveTreeFuncSM"
     },
     { "Allreduce",
@@ -265,7 +344,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesAllreduceSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::CollectiveTreeFuncSM"
     },
     { "Reduce",
@@ -273,7 +352,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesAllreduceSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::CollectiveTreeFuncSM"
     },
     { "Allgather",
@@ -281,7 +360,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesAllgatherSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Allgatherv",
@@ -289,7 +368,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesAllgatherSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Gatherv",
@@ -297,7 +376,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesGathervSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Gather",
@@ -305,7 +384,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesGathervSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Alltoallv",
@@ -313,7 +392,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesAlltoallvSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Irecv",
@@ -321,7 +400,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesRecvSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Isend",
@@ -329,7 +408,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesSendSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Recv",
@@ -337,7 +416,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesRecvSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Send",
@@ -345,7 +424,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesSendSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "Wait",
@@ -353,7 +432,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesWaitSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "WaitAny",
@@ -361,7 +440,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesWaitAnySM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "WaitAll",
@@ -369,7 +448,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_hermesWaitAllSM,
       NULL,
-      NULL,
+      funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"
     },
     { "CtrlMsgProto",
@@ -377,7 +456,7 @@ static const ElementInfoModule modules[] = {
       NULL,
       NULL,
       load_ctrlMsgProtocol,
-      NULL,
+	  ctrlMsgProtocolModule_params,
       "SST::Firefly::ProtocolAPI"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL}
