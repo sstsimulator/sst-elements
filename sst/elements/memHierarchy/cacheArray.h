@@ -47,17 +47,13 @@ public:
     virtual void replace(Addr baseAddr, unsigned int candidate_id) = 0;
     
     /** Determine if number is a power of 2 */
-    bool isPowerOfTwo(unsigned int x){
-        return (x & (x - 1)) == 0;
-    }
+    bool isPowerOfTwo(unsigned int x){ return (x & (x - 1)) == 0;}
     
     /** Get line size.  Should not change at runtime */
     Addr getLineSize(){ return lineSize_; }
     
     /** Drop block offset bits (ie. log2(lineSize) */
-    Addr toLineAddr(Addr addr){
-        return (addr >> lineOffset_);
-    }
+    Addr toLineAddr(Addr addr){ return (addr >> lineOffset_); }
     
     /** Destructor - Delete all cache line objects */
     virtual ~CacheArray(){
@@ -180,17 +176,15 @@ protected:
         setMask_ = numSets_ - 1;
         lines_.resize(numLines_);
         lineOffset_ = log2Of(lineSize_);
+        
         for(unsigned int i = 0; i < numLines_; i++){
             lines_[i] = new CacheLine(_dbg, lineSize_);
         }
+        
         pMembers();
         errorChecking();
         sharersAware_ = _sharersAware;
     }
-    
-    
-    
-
 };
 
 /* Set-associative cache array */

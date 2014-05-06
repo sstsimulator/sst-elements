@@ -45,9 +45,8 @@ using namespace SST::MemHierarchy;
 
 MemBackend::MemBackend(Component *comp, Params &params) : Module(){
     ctrl = dynamic_cast<MemController*>(comp);
-    if ( !ctrl ) {
+    if (!ctrl)
         _abort(MemBackend, "MemBackends expect to be loaded into MemControllers.\n");
-    }
 }
 
 
@@ -224,12 +223,11 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
       ctrl->handleMemResponse(ri->second);
       outToCubes.erase(ri);
       delete event;
-    } else {
-      _abort(MemController, "Could not match incoming request from cubes\n");
     }
-  } else {
-    _abort(MemController, "Recived wrong event type from cubes\n");
+    else _abort(MemController, "Could not match incoming request from cubes\n");
   }
+  else _abort(MemController, "Recived wrong event type from cubes\n");
+
 }
 
 
@@ -394,7 +392,6 @@ void MemController::handleEvent(SST::Event *event){
     else _abort(MemController, "Command not supported");
     
     delete event;
-    
     cout << flush;
 }
 
@@ -418,17 +415,10 @@ bool MemController::clock(Cycle_t cycle){
 
     while ( !requestQueue.empty() ) {
         DRAMReq *req = requestQueue.front();
-        if ( req->canceled ) {
-            requestQueue.pop_front();
-            if ( DRAMReq::NEW == req->status ) // Haven't started processing
-                req->status = DRAMReq::DONE;
-            continue;
-        }
-
         req->status = DRAMReq::PROCESSING;
 
         bool issued = backend->issueRequest(req);
-        if ( !issued ) break;
+        if (!issued) break;
 
         req->amt_in_process += requestSize;
 
@@ -436,15 +426,11 @@ bool MemController::clock(Cycle_t cycle){
             dbg.debug(CALL_INFO, 6,0, "Completed issue of request\n");
             performRequest(req);
 #ifdef HAVE_LIBZ
-            if ( traceFP ) {
-                gzprintf(traceFP, "%c %#08llx %"PRIx64"\n",
-                        req->isWrite ? 'w' : 'r', req->addr, cycle);
-            }
+            if(traceFP)
+                gzprintf(traceFP, "%c %#08llx %"PRIx64"\n", req->isWrite ? 'w' : 'r', req->addr, cycle);
 #else
-            if ( traceFP ) {
-                fprintf(traceFP, "%c %#08llx %"PRIx64"\n",
-                        req->isWrite ? 'w' : 'r', req->addr, cycle);
-            }
+            if(traceFP)
+                fprintf(traceFP, "%c %#08llx %"PRIx64"\n", req->isWrite ? 'w' : 'r', req->addr, cycle);
 #endif
             requestQueue.pop_front();
         }
@@ -456,9 +442,8 @@ bool MemController::clock(Cycle_t cycle){
         if ( DRAMReq::DONE == req->status ) {
             requests.pop_front();
             delete req;
-        } else {
-            break;
         }
+        else break;
     }
 
     numReqOutstanding += requests.size();
@@ -472,30 +457,29 @@ bool MemController::isRequestAddressValid(MemEvent *ev){
     Addr addr = ev->getAddr();
 
     if (0 == numPages) return (addr >= rangeStart && addr < (rangeStart + memSize));
-    else {
-        if (addr < rangeStart) return false;
+    if (addr < rangeStart)
+        return false;
+    
+    addr = addr - rangeStart;
+    Addr step = addr / interleaveStep;
+    if (step >= numPages)
+        return false;
 
-        addr = addr - rangeStart;
-        Addr step = addr / interleaveStep;
-        if (step >= numPages) return false;
+    Addr offset = addr % interleaveStep;
+    if (offset >= interleaveSize)
+        return false;
 
-        Addr offset = addr % interleaveStep;
-        if (offset >= interleaveSize) return false;
-
-        return true;
-    }
-
+    return true;
 }
 
 
 Addr MemController::convertAddressToLocalAddress(Addr addr){
     if (0 == numPages) return addr - rangeStart;
-    else {
-        addr = addr - rangeStart;
-        Addr step = addr / interleaveStep;
-        Addr offset = addr % interleaveStep;
-        return (step * interleaveSize) + offset;
-    }
+    
+    addr = addr - rangeStart;
+    Addr step = addr / interleaveStep;
+    Addr offset = addr % interleaveStep;
+    return (step * interleaveSize) + offset;
 }
 
 
@@ -503,29 +487,26 @@ void MemController::performRequest(DRAMReq *req){
 
     Addr localAddr = convertAddressToLocalAddress(req->addr);
 
-    if (req->cmd == PutM) {  /* Write request to memory */
+    if(req->cmd == PutM) {  /* Write request to memory */
         dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
             memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
-	} else {
+	}
+    else {
     	req->respEvent = req->reqEvent->makeResponse(this);
         req->respEvent->setSize(cacheLineSize);
-
     
         dbg.debug(C,0,0,"READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->respEvent->getSize() ; i++ )
             req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
 
-        if(req->reqEvent->getCmd() == GetX){
-             req->respEvent->setGrantedState(M);
-        }
+        if(req->reqEvent->getCmd() == GetX) req->respEvent->setGrantedState(M);
         else{
             if(protocol) req->respEvent->setGrantedState(E);
             else req->respEvent->setGrantedState(S);
         }
 	}
 }
-
 
 
 void MemController::sendResponse(DRAMReq *req){
@@ -546,15 +527,7 @@ void MemController::handleMemResponse(DRAMReq *req){
 
     dbg.debug(CALL_INFO, 6,0, "Finishing processing for req %"PRIx64" %s\n", req->addr, req->status == DRAMReq::RETURNED ? "RETURNED" : "");
 
-    if ( DRAMReq::RETURNED == req->status ) {
-        if (!req->canceled) sendResponse(req);
-        else req->status = DRAMReq::DONE;
-    } else {
-       if (req->canceled) {
-           if (req->amt_processed >= req->amt_in_process) req->status = DRAMReq::DONE;
-       }
-    }
-
+    if(DRAMReq::RETURNED == req->status) sendResponse(req);
 }
 
 void MemController::cancelEvent(MemEvent* ev){}

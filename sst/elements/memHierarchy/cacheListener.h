@@ -35,28 +35,19 @@ namespace MemHierarchy {
 
 class CacheListener : public Module {
 public:
-    enum NotifyAccessType {
-        READ,
-        WRITE
-    };
-
-    enum NotifyResultType {
-        HIT,
-        MISS
-    };
-
+    enum NotifyAccessType{READ, WRITE};
+    enum NotifyResultType{HIT, MISS};
 
     CacheListener() {}
     virtual ~CacheListener() {}
 
     virtual void printStats(Output &out) {}
     virtual void setOwningComponent(const SST::Component* owner) {}
-    virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
+    virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) {}
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 
-}
-}
+}}
 
 #endif
 

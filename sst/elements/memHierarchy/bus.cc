@@ -79,7 +79,6 @@ bool Bus::clockTick(Cycle_t _time) {
 }
 
 
-
 void Bus::broadcastEvent(SST::Event* _ev){
     MemEvent* memEvent = dynamic_cast<MemEvent*>(_ev);
     LinkId_t srcLinkId = lookupNode(memEvent->getSrc());

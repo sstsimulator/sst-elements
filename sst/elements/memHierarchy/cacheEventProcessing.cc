@@ -146,8 +146,8 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case GetXResp:
             processCacheResponse(event, baseAddr);
             break;
-        case PutM:
         case PutS:
+        case PutM:
         case PutE:
         case PutX:
             processCacheRequest(event, cmd, baseAddr, _mshrHit);

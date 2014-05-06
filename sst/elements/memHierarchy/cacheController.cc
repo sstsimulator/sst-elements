@@ -71,10 +71,10 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     CacheLine* cacheLine = getCacheLine(_baseAddr);
     if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
     
-    topCC_->handleInvalidate(cacheLine->index(), _cmd);     /* Invalidate lower levels */
+    topCC_->handleInvalidate(cacheLine->index(), _cmd);                 /* Invalidate lower levels */
     if(invalidatesInProgress(cacheLine->index())) return;
     
-    bottomCC_->handleInvalidate(_event, cacheLine, _cmd);   /* Invalidate this cache line */
+    bottomCC_->handleInvalidate(_event, cacheLine, _cmd);               /* Invalidate this cache line */
     mshr_->removeElement(_baseAddr, _event);
     delete _event;
     return;
@@ -224,6 +224,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
         CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_cacheLine->index()];
         if(ccLine->getState() != V) return false;
     }
+    
     d_->debug(_L1_,"Invalidate request is valid. State: %s\n", BccLineString[_cacheLine->getState()]);
     return true;
 }
@@ -243,7 +244,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
         if((*it).elem.type() == typeid(Addr)){                             /* Pointer Type */
             Addr pointerAddr = boost::get<Addr>((*it).elem);
             d_->debug(_L3_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
-            if(!mshr_->isHit(pointerAddr)){ /* Entry has been already been processed, delete mshr entry */
+            if(!mshr_->isHit(pointerAddr)){                                 /* Entry has been already been processed, delete mshr entry */
                 mshrEntry.erase(it);
                 continue;
             }
@@ -281,7 +282,7 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
 
     _mshrEntry.erase(_it);
     
-    // If the event we just ran 'blocked', then there is not reason to activate other events.
+    /* If the event we just ran 'blocked', then there is not reason to activate other events. */
     if(mshr_->isHit(_addr)){
         mshr_->insertAll(_addr, _mshrEntry);
         return false;
@@ -322,7 +323,7 @@ void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ig
     }
     else if(!L1_){                  /* Check if topCC line is locked */
         CCLine* ccLine = ((MESITopCC*)topCC_)->ccLines_[_cacheLine->index()];
-        if(ccLine->inTransition() && _cmd < 5 && _cmd > 8){  //InTransition && !PutM, !PutX, !PutS, !PutE
+        if(ccLine->inTransition() && _cmd < PutS && _cmd > PutX){  //InTransition && !PutS, !PutM, !PutE, !PutX
             d_->debug(_L1_,"Stalling request: Cache line in transition. TccSt: %s\n", TccLineString[ccLine->getState()]);
             throw ignoreEventException();
         }
@@ -343,8 +344,8 @@ bool Cache::isCacheMiss(int _lineIndex){
 MemEvent* Cache::getOriginalRequest(const vector<mshrType> _mshrEntry){
     assert(_mshrEntry.front().elem.type() == typeid(MemEvent*));
     return boost::get<MemEvent*>(_mshrEntry.front().elem);
-
 }
+
 void Cache::updateUpgradeLatencyAverage(MemEvent* _origMemEvent){
     SimTime_t start = _origMemEvent->getStartTime();
     totalUpgradeLatency_ += (timestamp_ - start);
@@ -401,9 +402,8 @@ bool Cache::isCacheLineAllocated(int _lineIndex){
 
 
 TopCacheController::CCLine* Cache::getCCLine(int _index){
-    if(!L1_) return ((MESITopCC*)topCC_)->ccLines_[_index];
-    else return NULL;
-
+    if(!L1_)    return ((MESITopCC*)topCC_)->ccLines_[_index];
+    else        return NULL;
 }
 
 void Cache::checkRequestValidity(MemEvent* _event) throw(ignoreEventException){
