@@ -6,32 +6,33 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+cpu = sst.Component("cpu", "memHierarchy.streamCPU")
 cpu.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
       "do_write" : """1""",
-      "num_loadstore" : """1000"""
+      "num_loadstore" : """100000"""
 })
 l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
-      "cache_size" : """2 KB""",
+      "cache_size" : """8 KB""",
       "coherence_protocol" : """MSI""",
       "replacement_policy" : """lru""",
       "associativity" : """4""",
-      "access_latency_cycles" : """4""",
+      "access_latency_cycles" : """2""",
       "low_network_links" : """1""",
       "cache_line_size" : """64""",
+      "mshr_num_entries" : """4096""",
       "L1" : """1""",
-      "debug" : """${MEM_DEBUG}""",
-      "statistics" : """1"""
+      "debug" : """0""",
+      "statistics" : """0""",
+      "prefetcher" : """cassini.NextBlockPrefetcher"""
 })
 memory = sst.Component("memory", "memHierarchy.MemController")
 memory.addParams({
       "coherence_protocol" : """MSI""",
-      "debug" : """${MEM_DEBUG}""",
       "access_time" : """1000 ns""",
       "mem_size" : """512""",
       "clock" : """1GHz"""

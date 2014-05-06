@@ -3,7 +3,7 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "0 ns")
+sst.setProgramOption("stopAtCycle", "200000ns")
 
 # Define the simulation components
 cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
@@ -17,7 +17,7 @@ cpu.addParams({
 l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
-      "cache_size" : """2 KB""",
+      "cache_size" : """4 KB""",
       "coherence_protocol" : """MSI""",
       "replacement_policy" : """lru""",
       "associativity" : """4""",
@@ -32,9 +32,13 @@ memory = sst.Component("memory", "memHierarchy.MemController")
 memory.addParams({
       "coherence_protocol" : """MSI""",
       "debug" : """${MEM_DEBUG}""",
-      "access_time" : """1000 ns""",
+      "access_time" : """100 ns""",
+      "request_width" : """64""",
       "mem_size" : """512""",
-      "clock" : """1GHz"""
+      "clock" : """1GHz""",
+      "backend" : """memHierarchy.dramsim""",
+      "device_ini" : """DDR3_micron_32M_8B_x4_sg125.ini""",
+      "system_ini" : """system.ini"""
 })
 
 
