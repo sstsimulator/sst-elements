@@ -98,7 +98,7 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	}
   }
 
-  queue_count_bins = (uint64_t*) malloc( sizeof(uint64_t) * pending_request_limit );
+  queue_count_bins = (uint64_t*) malloc( sizeof(uint64_t) * (pending_request_limit + 1) );
   for(int i = 0; i < pending_request_limit; i++) {
 	queue_count_bins[i] = 0;
   }
@@ -482,7 +482,7 @@ bool prospero::tick( Cycle_t ) {
 		}
 
 
-		queue_count_bins[pending_requests.size()-1]++;
+		queue_count_bins[pending_requests.size()]++;
 		return false;
 	} else {
 		if(pending_requests.size() == 0) {
