@@ -74,7 +74,7 @@ public:
 	std::cout << "TRACE Statistics:" << std::endl;
 	std::cout << "- Cycle/Queue Size Distribution: " << std::endl;
 	std::cout << "- Requests in Flight / Cycles Request Queue Spent in State:" << std::endl;
-	for(int i = 0; i < pending_request_limit; i++) {
+	for(int i = 0; i < (pending_request_limit + 1); i++) {
 		std::cout << "- ";
 
 		const int digits = (i > 0) ? (int) log10( (double) i ) : 1;
