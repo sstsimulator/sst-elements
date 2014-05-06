@@ -21,6 +21,7 @@
 #include "sst/core/params.h"
 
 #include "motifs/emberhalo2d.h"
+#include "motifs/emberhalo2dNBR.h"
 #include "motifs/embersweep2d.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
@@ -68,6 +69,12 @@ static Module*
 load_Halo2D( Component* comp, Params& params ) {
 	return new EmberHalo2DGenerator(comp, params);
 }
+
+static Module*
+load_Halo2DNBR( Component* comp, Params& params ) {
+	return new EmberHalo2DNBRGenerator(comp, params);
+}
+
 
 static Module*
 load_Sweep2D( Component* comp, Params& params ) {
@@ -140,6 +147,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo2D,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo2DNBRMotif",
+	"Performs a 2D halo exchange Motif with non-blocking receives",
+	NULL,
+	NULL,
+	load_Halo2DNBR,
 	NULL,
     "SST::Ember::EmberGenerator"
     },
