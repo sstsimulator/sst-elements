@@ -23,6 +23,7 @@
 #include <sst/core/link.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include "memEvent.h"
+#include <boost/assert.hpp>
 
 namespace SST {
 
@@ -31,12 +32,16 @@ class Event;
 
 namespace MemHierarchy {
 
+/** Class is used to interface a compute mode (CPU, GPU) to MemHierarchy */
 class MemHierarchyInterface : public Interfaces::SimpleMem {
 
 public:
     MemHierarchyInterface(SST::Component *comp, Params &params);
+    
+    /** Initialize the link to be used to connect with MemHierarchy */
     virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);
 
+    /** Link getter */
     virtual SST::Link* getLink(void) const { return link; }
 
     virtual void sendInitData(Request *req);
@@ -46,14 +51,21 @@ public:
 
 private:
 
-    Interfaces::SimpleMem::Request* processIncoming(MemEvent *ev);
+    /** Convert any incoming events to updated Requests, and fire handler */
     void handleIncoming(SST::Event *ev);
+    
+    /** Process MemEvents into updated Requests*/
+    Interfaces::SimpleMem::Request* processIncoming(MemEvent *ev);
+
+    /** Update Request with results of MemEvent */
     void updateRequest(Interfaces::SimpleMem::Request* req, MemEvent *me) const;
+    
+    /** Function used internally to create the memEvent that will be used by MemHierarchy */
     MemEvent* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
-    Component *owner;
-    HandlerBase *recvHandler;
-    SST::Link *link;
+    Component*      owner;
+    HandlerBase*    recvHandler;
+    SST::Link*      link;
     std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests;
 
 };

@@ -58,7 +58,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     if(-1 >= associativity)             _abort(Cache, "Associativity was not specified.\n");
     if(sizeStr.empty())                 _abort(Cache, "Cache size was not specified. \n")
     if(-1 == lineSize)                  _abort(Cache, "Line size was not specified (blocksize).\n");
-    if(mshrSize == -1)                  mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
+    if(-1 == mshrSize)                  mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
     if(L1int != 1 && L1int != 0)        _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
     if(accessLatency == -1 )            _abort(Cache, "Access time not specified\n");
     if(directoryAtNextLevel > 1 ||

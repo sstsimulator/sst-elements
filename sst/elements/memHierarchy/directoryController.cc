@@ -23,6 +23,7 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace std;
 
 
 const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::make_pair((uint64_t)-1, -1);
@@ -36,9 +37,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
 	registerTimeBase("1 ns", true);
 
-	memLink = configureLink("memory", "1 ns",
-			new Event::Handler<DirectoryController>(this,
-				&DirectoryController::handleMemoryResponse));
+	memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
 	assert(memLink);
 
 
@@ -47,35 +46,32 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     int addr = params.find_integer("network_address");
     std::string net_bw = params.find_string("network_bw");
 
-	addrRangeStart = (uint64_t)params.find_integer("addr_range_start", 0);
-	addrRangeEnd = (uint64_t)params.find_integer("addr_range_end", 0);
-	if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
-	interleaveSize = (Addr)params.find_integer("interleave_size", 0);
-    interleaveSize *= 1024;
-	interleaveStep = (Addr)params.find_integer("interleave_step", 0);
-    interleaveStep *= 1024;
+	addrRangeStart  = (uint64_t)params.find_integer("addr_range_start", 0);
+	addrRangeEnd    = (uint64_t)params.find_integer("addr_range_end", 0);
+	interleaveSize  = (Addr)params.find_integer("interleave_size", 0);
+    interleaveSize  *= 1024;
+	interleaveStep  = (Addr)params.find_integer("interleave_step", 0);
+    interleaveStep  *= 1024;
 
+	if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
 
 
     MemNIC::ComponentInfo myInfo;
-    myInfo.link_port = "network";
-    myInfo.link_bandwidth = net_bw;
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
-    myInfo.name = getName();
-    myInfo.network_addr = addr;
-    myInfo.type = MemNIC::TypeDirectoryCtrl;
-    myInfo.typeInfo.dirctrl.rangeStart = addrRangeStart;
-    myInfo.typeInfo.dirctrl.rangeEnd = addrRangeEnd;
-    myInfo.typeInfo.dirctrl.interleaveSize = interleaveSize;
-    myInfo.typeInfo.dirctrl.interleaveStep = interleaveStep;
-    network = new MemNIC(this, myInfo,
-            new Event::Handler<DirectoryController>(this,
-                &DirectoryController::handlePacket));
+    myInfo.link_port                        = "network";
+    myInfo.link_bandwidth                   = net_bw;
+	myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
+    myInfo.name                             = getName();
+    myInfo.network_addr                     = addr;
+    myInfo.type                             = MemNIC::TypeDirectoryCtrl;
+    myInfo.typeInfo.dirctrl.rangeStart      = addrRangeStart;
+    myInfo.typeInfo.dirctrl.rangeEnd        = addrRangeEnd;
+    myInfo.typeInfo.dirctrl.interleaveSize  = interleaveSize;
+    myInfo.typeInfo.dirctrl.interleaveStep  = interleaveStep;
+    network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
 
-	registerClock(params.find_string("clock", "1GHz"),
-			new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
+	registerClock(params.find_string("clock", "1GHz"), new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
 
 
     /*Parameter not needed since cache entries are always stored at address 0.
@@ -106,6 +102,7 @@ DirectoryController::~DirectoryController(){
         delete i->second;
     }
     directory.clear();
+    
     while(workQueue.size()) {
         MemEvent *front = workQueue.front();
         workQueue.pop_front();
@@ -127,8 +124,8 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         sendResponse(resp);
 
         delete origEV;
-
-    } else if(memReqs.find(ev->getResponseToID()) != memReqs.end()) {
+    }
+    else if(memReqs.find(ev->getResponseToID()) != memReqs.end()) {
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
 
@@ -139,12 +136,11 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             entry->inController = true;
             advanceEntry(entry, ev);
         }
-        else {
-            _abort(DirectoryController, "Received unexpected message from Memory!\n");
-        }
-    } else {
-        /* Don't have this req recorded */
-        _abort(DirectoryController, "Unexpected event received\n");
+        else  _abort(DirectoryController, "Received unexpected message from Memory!\n");
+    }
+    else{
+        
+        _abort(DirectoryController, "Unexpected event received\n"); /* Don't have this req recorded */
     }
 
 
@@ -165,59 +161,14 @@ bool DirectoryController::processPacket(MemEvent *ev){
     dbg.output(CALL_INFO, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
     Command cmd = ev->getCmd();
     uint32_t requesting_node;
-
-    std::set<MemEvent::id_type>::iterator ign = ignorableResponses.find(ev->getResponseToID());
-    if(ign != ignorableResponses.end()) {
-        assert(0);
-        dbg.output(CALL_INFO, "Command(%"PRIu64", %d) is a response to(%"PRIu64", %d), which is ignorable.\n",
-                ev->getID().first, ev->getID().second, ev->getResponseToID().first, ev->getResponseToID().second);
-        ignorableResponses.erase(ign);
-        delete ev;
-        return true;
-    }
-
-    if(InvAck == cmd) {
-        dbg.output(CALL_INFO, "InvACK command recieve.  Ignoring");
-        delete ev;
-        return true;
-    }
-
-
-    if(ev->queryFlag(MemEvent::F_UNCACHED) && PutM == cmd) {  //PutM was SupplyData
-        assert(0);
-        MemEvent::id_type sentID = writebackData(ev);
-        uncachedWrites[sentID] = ev;
-        return true;
-    }
-
-
+    pair<bool, bool> ret = make_pair<bool, bool>(false, false);
+    
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
 
-    if(!entry) dbg.output(CALL_INFO, "Entry not found\n");
-
-    if(entry && entry->inProgress()) {
-        dbg.output(CALL_INFO, "Entry found and in progress\n");
-        if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM)) &&
-          ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())) {
-            dbg.output(CALL_INFO, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
-            if(ev->getResponseToID() != entry->lastRequest) {
-                dbg.output(CALL_INFO, "This isn't a response to our request, but it fulfills the need.  Placing(%"PRIu64", %d) into list of ignorable responses.\n", entry->lastRequest.first, entry->lastRequest.second);
-            }
-            advanceEntry(entry, ev);
-            delete ev;
-            return true;
-        } else {
-            dbg.output(CALL_INFO, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
-            return false;
-
-        }
-       
-    }
-    
-
+    if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
+    if(ret.first == true) return ret.second;
 
     /* New Request */
-
     switch(cmd) {
     case PutS:
         PutSReqReceived++;
@@ -282,68 +233,26 @@ bool DirectoryController::processPacket(MemEvent *ev){
 }
 
 
-void DirectoryController::init(unsigned int phase){
-    network->init(phase);
-
-    /* Pass data on to memory */
-    while(MemEvent *ev = network->recvInitData()) {
-        dbg.output(CALL_INFO, "Found Init Info for address 0x%"PRIx64"\n", ev->getAddr());
-        if(isRequestAddressValid(ev)) {
-            ev->setBaseAddr(convertAddressToLocalAddress(ev->getBaseAddr()));
-            ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
-            dbg.output(CALL_INFO, "Sending Init Data for address 0x%"PRIx64" to memory\n", ev->getAddr());
-            memLink->sendInitData(ev);
-        } else {
-            delete ev;
-        }
-    }
-
-}
-
-void DirectoryController::finish(void){
-    network->finish();
-
-    Output out("", 0, 0, printStatsLoc);
-    out.output("\n--------------------------------------------------------------------\n");
-    out.output("--- Directory Controller\n");
-    out.output("--- Name: %s\n", getName().c_str());
-    out.output("--------------------------------------------------------------------\n");
-    out.output("- Total requests received:  %"PRIu64"\n", numReqsProcessed);
-    out.output("- GetS recieved:  %"PRIu64"\n", GetSReqReceived);
-    out.output("- GetX received:  %"PRIu64"\n", GetXReqReceived);
-    out.output("- GetSEx recieved:  %"PRIu64"\n", GetSExReqReceived);
-    out.output("- PutM received:  %"PRIu64"\n", PutMReqReceived);
-    out.output("- PutE received:  %"PRIu64"\n", PutEReqReceived);
-    out.output("- PutS received:  %"PRIu64"\n", PutSReqReceived);
-    out.output("- Entry Data Reads:  %"PRIu64"\n", dirEntryReads);
-    out.output("- Entry Data Writes:  %"PRIu64"\n", dirEntryWrites);
-    out.output("- Avg Req Time:  %"PRIu64" ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
-    out.output("- Entry Cache Hits:  %"PRIu64"\n", numCacheHits);
-}
-
-
-void DirectoryController::setup(void){
-    network->setup();
-
-    const std::vector<MemNIC::ComponentInfo> &ci = network->getPeerInfo();
-    for(std::vector<MemNIC::ComponentInfo>::const_iterator i = ci.begin() ; i != ci.end() ; ++i) {
-        dbg.output(CALL_INFO, "DC found peer %d(%s) of type %d.\n", i->network_addr, i->name.c_str(), i->type);
-        if(MemNIC::TypeCache == i->type) {
-            numTargets++;
-            if(blocksize) {
-                assert(blocksize == i->typeInfo.cache.blocksize);
-            } else {
-                blocksize = i->typeInfo.cache.blocksize;
+pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
+    dbg.output(CALL_INFO, "Entry found and in progress\n");
+        if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM)) &&
+          ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())) {
+            dbg.output(CALL_INFO, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
+            if(ev->getResponseToID() != entry->lastRequest) {
+                dbg.output(CALL_INFO, "This isn't a response to our request, but it fulfills the need.  Placing(%"PRIu64", %d) into list of ignorable responses.\n", entry->lastRequest.first, entry->lastRequest.second);
             }
+            advanceEntry(entry, ev);
+            delete ev;
+            return make_pair<bool, bool>(true, true);
         }
-    }
-    if(0 == numTargets) {
-        _abort(DirectoryController, "Directory Controller %s unable to see any caches.\n", getName().c_str());
-    }
+        else{
+            dbg.output(CALL_INFO, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
+            return make_pair<bool, bool>(true, false);
+        }
+    return make_pair<bool, bool>(false, false);
 
-    network->clearPeerInfo();
-    entrySize = (numTargets+1)/8 +1;
 }
+
 
 
 void DirectoryController::printStatus(Output &out){
@@ -355,12 +264,8 @@ void DirectoryController::printStatus(Output &out){
     }
     out.output("\tRequests in Progress:\n");
     for(std::map<Addr, DirEntry*>::iterator i = directory.begin() ; i != directory.end() ; ++i) {
-        if(i->second->inProgress()) {
-            out.output("\t\t0x%"PRIx64"\t\t(%"PRIu64", %d)\n",
-                    i->first,
-                    i->second->activeReq->getID().first,
-                    i->second->activeReq->getID().second);
-        }
+        if(i->second->inProgress())
+            out.output("\t\t0x%"PRIx64"\t\t(%"PRIu64", %d)\n",i->first, i->second->activeReq->getID().first, i->second->activeReq->getID().second);
     }
 
 }
@@ -400,24 +305,11 @@ DirectoryController::DirEntry* DirectoryController::createDirEntry(Addr baseAddr
 }
 
 
-
-void DirectoryController::handleACK(MemEvent *ev){
-	DirEntry *entry = getDirEntry(ev->getBaseAddr());
-	assert(entry);
-	assert(entry->waitingAcks > 0);
-	entry->waitingAcks--;
-	if(0 == entry->waitingAcks) {
-		advanceEntry(entry);
-	}
-}
-
-
 void DirectoryController::sendInvalidate(int target, DirEntry* entry){
     MemEvent *me = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), Inv, entry->activeReq->getSize());
     me->setDst(nodeid_to_name[target]);
     network->send(me);
 }
-
 
 
 void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
@@ -441,11 +333,10 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
         entry->lastRequest = ev->getID();
 
 		sendResponse(ev);
-        dbg.output(CALL_INFO, "Sending %s to %s to fulfill request for data for 0x%"PRIx64".\n",
-                CommandString[cmd], dest.c_str(), entry->baseAddr);
+        dbg.output(CALL_INFO, "Sending %s to %s to fulfill request for data for 0x%"PRIx64".\n", CommandString[cmd], dest.c_str(), entry->baseAddr);
 
-	} else if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
-
+	}
+    else if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
         bool invSent = false;
         // Must send invalidates
 		assert(0 == entry->waitingAcks);
@@ -454,18 +345,19 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
 			if(entry->sharers[i]) {
 				sendInvalidate(i, entry);
 				invSent = true;
-				//entry->waitingAcks++;
 			}
 		}
         if(invSent) dbg.output(CALL_INFO, "Sending Invalidates\n");
 		
 		getExclusiveDataForRequest(entry, NULL);
 
-	} else if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) {
+	}
+    else if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) {
         // Don't set as a sharer whne dealing with uncached
 		entry->nextFunc = &DirectoryController::sendRequestedData;
 		requestDataFromMemory(entry);
-    } else {
+    }
+    else{
         //Handle GetS requests
 		entry->sharers[requesting_node]= true;
 		entry->nextFunc = &DirectoryController::sendRequestedData;
@@ -477,9 +369,8 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
 	if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
 		entry->dirty = true;
         entry->clearSharers();
-	} else {
-		entry->dirty = false;
 	}
+    else entry->dirty = false;
 
     if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
         entry->sharers[node_id(entry->activeReq->getSrc())] = true;
@@ -501,14 +392,9 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
     dbg.output(CALL_INFO, "Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());
 	sendResponse(ev);
     
-    if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED) &&
-            0 == entry->countRefs()) {
-        //assert(0);
-        // Uncached request, entry not cached anywhere.  Delete
-        directory.erase(entry->baseAddr);
-    } else {
-        updateEntryToMemory(entry);
-    }
+    if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED) && 0 == entry->countRefs()) directory.erase(entry->baseAddr);
+    else updateEntryToMemory(entry);
+
     delete entry->activeReq;
 }
 
@@ -518,8 +404,7 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
     entry->clearSharers();
-    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
-        entry->sharers[target_id] = true;
+    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) entry->sharers[target_id] = true;
 	entry->dirty = true;
 
 	entry->nextFunc = &DirectoryController::sendRequestedData;
@@ -563,9 +448,9 @@ uint32_t DirectoryController::node_id(const std::string &name){
 		node_lookup[name] = id = targetCount++;
         nodeid_to_name.resize(targetCount);
         nodeid_to_name[id] = name;
-	} else {
-		id = i->second;
 	}
+    else id = i->second;
+    
 	return id;
 }
 
@@ -732,11 +617,8 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
     dbg.output(CALL_INFO, "Converted physical address 0x%"PRIx64" to ACTUAL memory address 0x%"PRIx64"\n", addr, res);
     return res;
 }
-/*
-Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
-    return addr;
-}
-*/
+
+
 static char dirEntStatus[1024] = {0};
 const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
     DirEntry *entry = getDirEntry(baseAddr);
@@ -745,15 +627,73 @@ const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
     } else {
         uint32_t refs = entry->countRefs();
 
-        if(0 == refs) {
-            sprintf(dirEntStatus, "[Uncached]");
-        } else if(entry->dirty) {
+        if(0 == refs) sprintf(dirEntStatus, "[Uncached]");
+        else if(entry->dirty) {
             uint32_t owner = entry->findOwner();
             sprintf(dirEntStatus, "[owned by %s]", nodeid_to_name[owner].c_str());
-        } else {
-            sprintf(dirEntStatus, "[Shared by %u]", refs);
         }
+        else sprintf(dirEntStatus, "[Shared by %u]", refs);
+
 
     }
     return dirEntStatus;
 }
+
+
+void DirectoryController::init(unsigned int phase){
+    network->init(phase);
+
+    /* Pass data on to memory */
+    while(MemEvent *ev = network->recvInitData()) {
+        dbg.output(CALL_INFO, "Found Init Info for address 0x%"PRIx64"\n", ev->getAddr());
+        if(isRequestAddressValid(ev)) {
+            ev->setBaseAddr(convertAddressToLocalAddress(ev->getBaseAddr()));
+            ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
+            dbg.output(CALL_INFO, "Sending Init Data for address 0x%"PRIx64" to memory\n", ev->getAddr());
+            memLink->sendInitData(ev);
+        }
+        else delete ev;
+    }
+
+}
+
+void DirectoryController::finish(void){
+    network->finish();
+
+    Output out("", 0, 0, printStatsLoc);
+    out.output("\n--------------------------------------------------------------------\n");
+    out.output("--- Directory Controller\n");
+    out.output("--- Name: %s\n", getName().c_str());
+    out.output("--------------------------------------------------------------------\n");
+    out.output("- Total requests received:  %"PRIu64"\n", numReqsProcessed);
+    out.output("- GetS recieved:  %"PRIu64"\n", GetSReqReceived);
+    out.output("- GetX received:  %"PRIu64"\n", GetXReqReceived);
+    out.output("- GetSEx recieved:  %"PRIu64"\n", GetSExReqReceived);
+    out.output("- PutM received:  %"PRIu64"\n", PutMReqReceived);
+    out.output("- PutE received:  %"PRIu64"\n", PutEReqReceived);
+    out.output("- PutS received:  %"PRIu64"\n", PutSReqReceived);
+    out.output("- Entry Data Reads:  %"PRIu64"\n", dirEntryReads);
+    out.output("- Entry Data Writes:  %"PRIu64"\n", dirEntryWrites);
+    out.output("- Avg Req Time:  %"PRIu64" ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
+    out.output("- Entry Cache Hits:  %"PRIu64"\n", numCacheHits);
+}
+
+
+void DirectoryController::setup(void){
+    network->setup();
+
+    const std::vector<MemNIC::ComponentInfo> &ci = network->getPeerInfo();
+    for(std::vector<MemNIC::ComponentInfo>::const_iterator i = ci.begin() ; i != ci.end() ; ++i) {
+        dbg.output(CALL_INFO, "DC found peer %d(%s) of type %d.\n", i->network_addr, i->name.c_str(), i->type);
+        if(MemNIC::TypeCache == i->type) {
+            numTargets++;
+            if(blocksize)   assert(blocksize == i->typeInfo.cache.blocksize);
+            else            blocksize = i->typeInfo.cache.blocksize;
+        }
+    }
+    if(0 == numTargets) _abort(DirectoryController, "Directory Controller %s unable to see any caches.\n", getName().c_str());
+
+    network->clearPeerInfo();
+    entrySize = (numTargets+1)/8 +1;
+}
+
