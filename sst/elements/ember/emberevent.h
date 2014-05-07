@@ -39,6 +39,8 @@ enum EmberEventType {
 	BARRIER,
 	START,
 	STOP,
+	ALLREDUCE,
+	REDUCE
 };
 
 class EmberEvent : public SST::Event {
