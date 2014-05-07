@@ -41,6 +41,11 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// See if the user requested that we print statistics for this run
 	printStats = ((uint32_t) (params.find_integer("printStats", 0)));
 
+	jobId = params.find_integer("jobId", -1); 
+	if ( -1 == jobId ) {
+		printStats = 0;
+	}
+
 	// Configure the empty buffer ready for use by MPI routines.
 	emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
 	emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
@@ -276,7 +281,8 @@ void EmberEngine::setup() {
 	generator->configureEnvironment(output, thisRank, worldSize);
 
 	char outputPrefix[256];
-	sprintf(outputPrefix, "@t:%d:EmberEngine::@p:@l: ", (int) thisRank);
+	sprintf(outputPrefix, "@t:%d:%d:EmberEngine::@p:@l: ", jobId, 
+													(int) thisRank);
 	string outputPrefixStr = outputPrefix;
 	output->setPrefix(outputPrefixStr);
 
@@ -327,9 +333,11 @@ void EmberEngine::processStopEvent(EmberStopEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Stop Event\n");
 
 	primaryComponentOKToEndSim();
-	output->output("Ember End Point Finalize completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
+	if ( jobId >= 0 ) {
+		output->output("%" PRIi32":Ember End Point Finalize completed at: %"
+							PRIu64 " ns\n", jobId, getCurrentSimTimeNano());
+	}
 }
-
 
 void EmberEngine::processInitEvent(EmberInitEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
@@ -419,7 +427,7 @@ void EmberEngine::completedFinalize(int val) {
 	// Tell the simulator core we are finished and do not need any further
 	// processing to continue
 	primaryComponentOKToEndSim();
-	output->output("Ember End Point Finalize completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
+	output->output("%" PRIi32":Ember End Point Finalize completed at: %" PRIu64 " ns\n", jobId, getCurrentSimTimeNano());
 
 	continueProcessing = false;
 	issueNextEvent(0);
