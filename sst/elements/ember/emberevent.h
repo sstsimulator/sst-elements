@@ -20,12 +20,16 @@
 namespace SST {
 namespace Ember {
 
-enum EmberMessageDataType {
+enum EmberDataType {
 	EMBER_CHAR,
 	EMBER_DOUBLE,
 	EMBER_FLOAT,
 	EMBER_INT32,
 	EMBER_INT64
+};
+
+enum EmberReductionOperation {
+	SUM
 };
 
 enum EmberEventType {
