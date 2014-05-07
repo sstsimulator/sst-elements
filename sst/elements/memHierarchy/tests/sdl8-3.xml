@@ -108,7 +108,9 @@ Topology:
 
 <sst>
 	<component name="cpu0" type="memHierarchy.trivialCPU">
-        <params include=cpuParams />
+        <params include=cpuParams>
+	<rngseed>101</rngseed>
+	</params>
 		<link name=c0_l1cache port=mem_link latency=$lat />
 	</component>
 
@@ -119,7 +121,9 @@ Topology:
 	</component>
     
     <component name="cpu1" type="memHierarchy.trivialCPU">
-        <params include=cpuParams />
+        <params include=cpuParams>
+	<rngseed>301</rngseed>
+	</params>
 		<link name=c1_l1cache port=mem_link latency=$lat />
 	</component>
 
@@ -143,7 +147,9 @@ Topology:
 	</component>
     
     <component name="cpu2" type="memHierarchy.trivialCPU">
-        <params include=cpuParams />
+        <params include=cpuParams>
+	<rngseed>501</rngseed>
+	</params>
 		<link name=c2_l1cache port=mem_link latency=$lat />
 	</component>
 
@@ -154,7 +160,9 @@ Topology:
 	</component>
     
     <component name="cpu3" type="memHierarchy.trivialCPU">
-        <params include=cpuParams />
+        <params include=cpuParams>
+	<rngseed>701</rngseed>
+	</params>
 		<link name=c3_l1cache port=mem_link latency=$lat />
 	</component>
 
