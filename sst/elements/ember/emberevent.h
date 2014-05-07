@@ -29,7 +29,7 @@ enum EmberDataType {
 };
 
 enum EmberReductionOperation {
-	SUM
+	EMBER_SUM
 };
 
 enum EmberEventType {

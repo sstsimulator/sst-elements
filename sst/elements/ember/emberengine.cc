@@ -301,8 +301,24 @@ void EmberEngine::processStartEvent(EmberStartEvent* ev) {
         accumulateTime = histoCompute;
 }
 
+ReductionOperation convertToHermesReductionOp(EmberReductionOperation op) {
+	switch(op) {
+		EMBER_SUM:
+			return SUM;
+		default:
+			return SUM;
+	}
+}
+
 void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an Allreduce Event\n");
+	const uint32_t dataTypeWidth = getDataTypeWidth(ev->getElementType());
+	assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
+
+	msgapi->allreduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
+		ev->getElementCount(), convertToHermesType(ev->getElementType()),
+		convertToHermesReductionOp(ev->getReductionOperation()),
+		ev->getCommunicator(), &allreduceFunctor);
 
 	accumulateTime = histoAllreduce;
 }

@@ -124,6 +124,7 @@ private:
 
 	uint32_t getDataTypeWidth(EmberDataType theType);
 	PayloadDataType convertToHermesType(EmberDataType theType);
+	ReductionOperation convertToHermesReduceOp(EmberReductionOperation theOp);
 
 	Histogram<uint64_t, uint64_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
