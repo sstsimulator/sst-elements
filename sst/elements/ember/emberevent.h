@@ -22,8 +22,8 @@ namespace Ember {
 
 enum EmberDataType {
 	EMBER_CHAR,
-	EMBER_DOUBLE,
-	EMBER_FLOAT,
+	EMBER_F64,
+	EMBER_F32,
 	EMBER_INT32,
 	EMBER_INT64
 };

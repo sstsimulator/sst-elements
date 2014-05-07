@@ -34,3 +34,11 @@ EmberReductionOperation EmberAllreduceEvent::getReductionOperation() {
 Communicator EmberAllreduceEvent::getCommunicator() {
 	return comm;
 }
+
+EmberEventType EmberAllreduceEvent::getEventType() {
+	return ALLREDUCE;
+}
+
+std::string EmberAllreduceEvent::getPrintableString() {
+	return "Allreduce event";
+}

@@ -28,7 +28,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
-	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier))
+	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
+	allreduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedAllreduce))
 {
 	output = new Output();
 
@@ -128,6 +129,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	userBinWidth = (uint64_t) params.find_integer("barrier_bin_width", 5);
 	histoBarrier = new Histogram<uint64_t, uint64_t>(userBinWidth);
 
+	userBinWidth = (uint64_t) params.find_integer("allreduce_bin_width", 5);
+	histoAllreduce = new Histogram<uint64_t, uint64_t>(userBinWidth);
+
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
 
@@ -146,9 +150,34 @@ EmberEngine::~EmberEngine() {
 	delete histoRecv;
 	delete histoSend;
 	delete histoCompute;
+	delete histoAllreduce;
 	delete computeNoiseDistrib;
 	delete output;
 	delete msgapi;
+}
+
+PayloadDataType EmberEngine::convertToHermesType(EmberDataType theType) {
+	switch(theType) {
+		EMBER_F64:
+			return DOUBLE;
+		EMBER_F32:
+			return FLOAT;
+		default:
+			return CHAR;
+			// Error?
+	}
+}
+
+uint32_t EmberEngine::getDataTypeWidth(const EmberDataType theType) {
+	switch(theType) {
+		EMBER_F64:
+			return 8;
+		EMBER_F32:
+			return 4;
+		default:
+			return 1;
+			// error?
+	}
 }
 
 void EmberEngine::init(unsigned int phase) {
@@ -270,6 +299,12 @@ void EmberEngine::processStartEvent(EmberStartEvent* ev) {
 
 	issueNextEvent(0);
         accumulateTime = histoCompute;
+}
+
+void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing an Allreduce Event\n");
+
+	accumulateTime = histoAllreduce;
 }
 
 void EmberEngine::processStopEvent(EmberStopEvent* ev) {
@@ -400,6 +435,11 @@ void EmberEngine::completedSend(int val) {
 
 void EmberEngine::completedRecv(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed Recv, result = %d\n", val);
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedAllreduce(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed Allreduce, result = %d\n", val);
 	issueNextEvent(0);
 }
 
