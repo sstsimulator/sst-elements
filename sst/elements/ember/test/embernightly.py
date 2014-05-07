@@ -96,6 +96,7 @@ nicParams = ({
 driverParams = ({
 		"debug" : debug,
 		"verbose" : 0,
+		"jobId" : 0,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
