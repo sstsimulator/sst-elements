@@ -265,6 +265,17 @@ void EmberEngine::finish() {
 			output->output("- Distribution:\n");
 			printHistogram(histoBarrier);
 		}
+
+		output->output("- Histogram of allreduce times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoAllreduce->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoAllreduce->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
+			histoAllreduce->getItemCount() == 0 ? 0 :
+			(histoAllreduce->getValuesSummed() / histoAllreduce->getItemCount()));
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoAllreduce);
+		}
 	}
 }
 
@@ -527,7 +538,6 @@ void EmberEngine::handleEvent(Event* ev) {
 	case ALLREDUCE:
 		processAllreduceEvent( (EmberAllreduceEvent*) eEv);
 		break;
-
 	case BARRIER:
 		processBarrierEvent( (EmberBarrierEvent*) eEv );
 		break;

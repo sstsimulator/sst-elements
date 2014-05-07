@@ -27,6 +27,7 @@
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
 #include "motifs/emberbarrier.h"
+#include "motifs/emberallreduce.h"
 #include "motifs/emberallpingpong.h"
 #include "motifs/embernull.h"
 
@@ -75,10 +76,14 @@ load_Halo2DNBR( Component* comp, Params& params ) {
 	return new EmberHalo2DNBRGenerator(comp, params);
 }
 
-
 static Module*
 load_Sweep2D( Component* comp, Params& params ) {
 	return new EmberSweep2DGenerator(comp, params);
+}
+
+static Module*
+load_Allreduce( Component* comp, Params& params ) {
+	return new EmberAllreduceGenerator(comp, params);
 }
 
 static Module*
@@ -101,6 +106,7 @@ static const ElementInfoParam component_params[] = {
     { "irecv_bin_width", "Bin width of the irecv time histogram", "5" },
     { "wait_bin_width", "Bin width of the wait time histogram", "5" },
     { "barrier_bin_width", "Bin width of the barrier time histogram", "5" },
+    { "allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
     { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { "jobId", "Sets the job id", "-1"},
     { "noisegen", "Sets the noise generator for the system", "constant" },
@@ -163,6 +169,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Sweep2D,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"AllreduceMotif",
+	"Performs a Allreduce operation with type set to float64 and operation SUM",
+	NULL,
+	NULL,
+	load_Allreduce,
 	NULL,
     "SST::Ember::EmberGenerator"
     },

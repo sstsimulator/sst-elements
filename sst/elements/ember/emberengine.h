@@ -97,7 +97,7 @@ private:
 	char* emptyBuffer;
 	uint32_t emptyBufferSize;
 	uint32_t generationPhase;
-	bool printStats;
+	uint32_t printStats;
 	bool continueProcessing;
 
 	std::queue<EmberEvent*> evQueue;
