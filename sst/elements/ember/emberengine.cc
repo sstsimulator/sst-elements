@@ -158,9 +158,9 @@ EmberEngine::~EmberEngine() {
 
 PayloadDataType EmberEngine::convertToHermesType(EmberDataType theType) {
 	switch(theType) {
-		EMBER_F64:
+		case EMBER_F64:
 			return DOUBLE;
-		EMBER_F32:
+		case EMBER_F32:
 			return FLOAT;
 		default:
 			return CHAR;
@@ -170,9 +170,9 @@ PayloadDataType EmberEngine::convertToHermesType(EmberDataType theType) {
 
 uint32_t EmberEngine::getDataTypeWidth(const EmberDataType theType) {
 	switch(theType) {
-		EMBER_F64:
+		case EMBER_F64:
 			return 8;
-		EMBER_F32:
+		case EMBER_F32:
 			return 4;
 		default:
 			return 1;
@@ -303,7 +303,7 @@ void EmberEngine::processStartEvent(EmberStartEvent* ev) {
 
 ReductionOperation convertToHermesReductionOp(EmberReductionOperation op) {
 	switch(op) {
-		EMBER_SUM:
+		case EMBER_SUM:
 			return SUM;
 		default:
 			return SUM;
@@ -516,6 +516,10 @@ void EmberEngine::handleEvent(Event* ev) {
 	case WAIT:
 		processWaitEvent( (EmberWaitEvent*) eEv);
 		break;
+	case ALLREDUCE:
+		processAllreduceEvent( (EmberAllreduceEvent*) eEv);
+		break;
+
 	case BARRIER:
 		processBarrierEvent( (EmberBarrierEvent*) eEv );
 		break;
