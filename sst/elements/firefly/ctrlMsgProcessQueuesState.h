@@ -416,6 +416,12 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
         delay += obj().txNicDelay();
         size_t length = req->getLength( );
 
+		// try to simulate  the extra time when switching from PIO to sendDMA
+		// which we don't currently do 
+        if ( length >= 16  ) {
+            delay += 200;
+        }
+
         if ( length > obj().shortMsgLength() ) {
             delay += obj().regRegionDelay( length );
         }
@@ -647,9 +653,7 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
     if ( ctx->req ) {
         delay += obj().rxDelay();
         size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
-        if ( length >= 36  ) {
-            delay += 200;
-        }
+		
         if ( ! obj().nic().isLocal( calcNid( ctx->req, ctx->hdr().rank ) ) ) {
             delay += obj().rxNicDelay();
         }
