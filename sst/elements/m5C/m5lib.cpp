@@ -54,6 +54,12 @@ static const ElementInfoParam m5_params[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoPort m5_ports[] = {
+    {"core%d-dcache", "D-Cache ports", NULL},
+    {"core%d-icache", "I-Cache ports", NULL},
+    {"*", "The Everything Else Port", NULL},
+    {NULL, NULL, NULL}
+};
 
 static const ElementInfoParam bounce_params[] = {
     {"debug", "Debug flag for the bounce test component", ""},
@@ -74,7 +80,7 @@ static const ElementInfoComponent components[] = {
       NULL,
       create_M5,
       m5_params,
-      NULL, /* No port declarations - too dynamic to statically list */
+      m5_ports,
       COMPONENT_CATEGORY_PROCESSOR|COMPONENT_CATEGORY_MEMORY|COMPONENT_CATEGORY_NETWORK|COMPONENT_CATEGORY_SYSTEM,
     },
     { "Bounce",
