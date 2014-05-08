@@ -28,6 +28,8 @@ public:
         void finish(const SST::Output* output);
 
 private:
+	bool performReduction;
+
 	uint32_t iterations;
 	uint32_t rank;
 

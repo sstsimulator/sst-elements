@@ -15,6 +15,7 @@
 #include "emberirecvev.h"
 #include "embersendev.h"
 #include "emberwaitev.h"
+#include "emberallredev.h"
 
 using namespace SST::Ember;
 
@@ -30,6 +31,7 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	peZ = (uint32_t) params.find_integer("pez", 0);
 
 	items_per_cell = (uint32_t) params.find_integer("itemspercell", 1);
+	performReduction = (params.find_integer("doreduce", 1) == 1);
 
 	nsCompute  = (uint32_t) params.find_integer("compute", 100);
 	nsCopyTime = (uint32_t) params.find_integer("copytime", 0);
@@ -235,6 +237,10 @@ void EmberHalo3DGenerator::generate(const SST::Output* output, const uint32_t ph
 
 		if(nsCopyTime > 0) {
 			evQ->push( new EmberComputeEvent(nsCopyTime) );
+		}
+
+		if(performReduction) {
+			evQ->push( new EmberAllreduceEvent(1, EMBER_F64, EMBER_SUM, (Communicator) 0) );
 		}
 	} else {
 		// We are done
