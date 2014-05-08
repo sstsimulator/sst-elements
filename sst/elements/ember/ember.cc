@@ -22,6 +22,8 @@
 
 #include "motifs/emberhalo2d.h"
 #include "motifs/emberhalo2dNBR.h"
+//#include "motifs/emberhalo3dnb.h"
+#include "motifs/emberhalo3d.h"
 #include "motifs/embersweep2d.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
@@ -74,6 +76,16 @@ load_Halo2D( Component* comp, Params& params ) {
 static Module*
 load_Halo2DNBR( Component* comp, Params& params ) {
 	return new EmberHalo2DNBRGenerator(comp, params);
+}
+
+//static Module*
+//load_Halo3DNB26( Component* comp, Params& params ) {
+//	return new EmberHalo3DNB26Generator(comp, params);
+//}
+
+static Module*
+load_Halo3D( Component* comp, Params& params ) {
+	return new EmberHalo3DGenerator(comp, params);
 }
 
 static Module*
@@ -161,6 +173,22 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo2DNBR,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+//    { 	"Halo3DNB26Motif",
+//	"Performs a 3D halo exchange Motif with non-blocking receives, over 26-communication neighbors",
+//	NULL,
+//	NULL,
+//	load_Halo3DNB26,
+//	NULL,
+//    "SST::Ember::EmberGenerator"
+//    },
+    { 	"Halo3DMotif",
+	"Performs a 3D blocking motif",
+	NULL,
+	NULL,
+	load_Halo3D,
 	NULL,
     "SST::Ember::EmberGenerator"
     },

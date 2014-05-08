@@ -57,7 +57,12 @@ libember_la_SOURCES = \
 	motifs/emberallpingpong.cc \
 	motifs/emberallpingpong.h \
 	motifs/emberallreduce.cc \
-	motifs/emberallreduce.h
+	motifs/emberallreduce.h \
+	motifs/emberhalo3d.h \
+	motifs/emberhalo3d.cc
+
+#	motifs/emberhalo3dnb.h \
+#	motifs/emberhalo3dnb.cc
 
 
 libember_la_LDFLAGS = -module -avoid-version

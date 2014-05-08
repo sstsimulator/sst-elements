@@ -15,6 +15,7 @@
 
 #include <sst/core/output.h>
 #include <sst/core/module.h>
+#include <sst/core/params.h>
 
 #include <queue>
 
