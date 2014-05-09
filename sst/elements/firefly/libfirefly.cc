@@ -125,6 +125,18 @@ static const ElementInfoParam hadesModule_params[] = {
     {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
 	{"verboseLevel", "Sets the output verbosity of the component", "1"},
 	{"debug", "Sets the messaging API of the end point", "0"},
+	{"loopBackPortName","Sets port name to use when connecting to the loopBack component","loop"},
+	{"defaultVerbose","Sets the default function verbose level","0"},
+	{"defaultDebug","Sets the default function debug level","0"},
+	{"defaultEnterLatency","Sets the default function enter latency","30000"},
+	{"defaultReturnLatency","Sets the default function return latency","30000"},
+	{"defaultModule","Sets the default function module","firefly"},
+	{"enterLatency","internal",""},
+	{"returnLatency","internal",""},
+	{"module","internal",""},
+    {"worldRank", "internal", ""},
+    {"nodeId", "internal", ""},
+    {"name", "internal", ""},
     {NULL, NULL}
 };
 
@@ -231,9 +243,6 @@ static const ElementInfoParam funcSMModule_params[] = {
     {"returnLatency", "Sets the time to leave a function", "30"},
     {"debug", "Set the debug level", "0"},
     {"verbose", "Set the verbose level", "1"},
-    {"worldRank", "internal", ""},
-    {"nodeId", "internal", ""},
-    {"name", "internal", ""},
 	
     {NULL, NULL}
 };
