@@ -94,6 +94,7 @@ void FunctionSM::setup()
     m_smV.resize( NumFunctions );
 
     Params defaultParams;
+    defaultParams.enableVerify(false);
     defaultParams[ "module" ] = m_params.find_string("defaultModule","firefly");
     defaultParams[ "enterLatency" ] = 
                         m_params.find_string("defaultEnterLatency","0");
