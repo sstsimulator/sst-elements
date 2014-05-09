@@ -147,7 +147,7 @@ int Hades::myNodeId()
 
 Group* Hades::initAdjacentMap( std::istream& nidList )
 {
-	int rank = 0;
+	int nid = 0;
     Group* group = new Group( m_virtNic );
 
 	assert( nidList.peek() != EOF );
@@ -168,10 +168,10 @@ Group* Hades::initAdjacentMap( std::istream& nidList )
 				endNid = startNid;
 			}
 			size_t len = (endNid-startNid) + 1;
-    		m_dbg.verbose(CALL_INFO,1,0,"rank=%d startNid=%d endNid=%d\n",
-								rank,startNid,endNid);
-			group->set( rank, startNid, len );
-			rank += len;
+    		m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%d\n",
+								nid,startNid,endNid);
+			group->set( nid, startNid, len );
+			nid += len;
 			tmp.clear();
 		}
 	} while ( nidList.peek() != EOF );
