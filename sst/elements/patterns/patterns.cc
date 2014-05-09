@@ -80,18 +80,46 @@ static SST::Component* create_comm_pattern(SST::ComponentId_t id, SST::Params& p
     return new Comm_pattern(id, params);
 }
 
+static const SST::ElementInfoParam *routermodel_params = NULL;
+static const SST::ElementInfoParam *routermodel_power_params = NULL;
+static const SST::ElementInfoParam *bit_bucket_params = NULL;
+static const SST::ElementInfoParam *allreduce_params = NULL;
+static const SST::ElementInfoParam *fft_params = NULL;
+static const SST::ElementInfoParam *msgrate_params = NULL;
+static const SST::ElementInfoParam *ghost_params = NULL;
+static const SST::ElementInfoParam *alltoall_params = NULL;
+static const SST::ElementInfoParam *pingpong_params = NULL;
+static const SST::ElementInfoParam *comm_params = NULL;
+
+static SST::ElementInfoPort routermodel_ports[] = {
+    {"R%dP%d", "Router Port", NULL},
+    {"L%d", "Router Port", NULL},
+    {NULL, NULL, NULL}
+};
+
+
+static SST::ElementInfoPort pattern_ports[] = {
+    {"NoC", "OnChip Network", NULL},
+    {"Net", "Network", NULL},
+    {"Far", "Far Network", NULL},
+    {"NVRAM", "NVRAM", NULL},
+    {"STORAGE", "Storage", NULL},
+    {NULL, NULL, NULL}
+};
+
+
 // THE LIST OF COMPONENTS CONTAINED WITHIN THE PATTERNS LIBRRY
 static const ElementInfoComponent patterns_components[] = {
-    { "routermodel",       "router model without power",        NULL, create_routermodel       },
-    { "routermodel_power", "router model with power",           NULL, create_routermodel_power },
-    { "bit_bucket",        "Bit bucket",                        NULL, create_bit_bucket        },
-    { "allreduce_pattern", "Allreduce pattern",                 NULL, create_allreduce_pattern },
-    { "fft_pattern",       "FFT pattern",                       NULL, create_fft_pattern       },
-    { "msgrate_pattern",   "Message rate pattern",              NULL, create_msgrate_pattern   },
-    { "ghost_pattern",     "Ghost pattern",                     NULL, create_ghost_pattern     },
-    { "alltoall_pattern",  "Alltoall pattern",                  NULL, create_alltoall_pattern  },
-    { "pingpong_pattern",  "Ping-pong pattern",                 NULL, create_pingpong_pattern  },
-    { "comm_pattern",      "Communication pattern base object", NULL, create_comm_pattern      },
+    { "routermodel",       "router model without power",        NULL, create_routermodel,       routermodel_params,         routermodel_ports,  COMPONENT_CATEGORY_NETWORK},
+    { "routermodel_power", "router model with power",           NULL, create_routermodel_power, routermodel_power_params,   routermodel_ports,  COMPONENT_CATEGORY_NETWORK},
+    { "bit_bucket",        "Bit bucket",                        NULL, create_bit_bucket,        bit_bucket_params,          pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "allreduce_pattern", "Allreduce pattern",                 NULL, create_allreduce_pattern, allreduce_params,           pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "fft_pattern",       "FFT pattern",                       NULL, create_fft_pattern,       fft_params,                 pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "msgrate_pattern",   "Message rate pattern",              NULL, create_msgrate_pattern,   msgrate_params,             pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "ghost_pattern",     "Ghost pattern",                     NULL, create_ghost_pattern,     ghost_params,               pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "alltoall_pattern",  "Alltoall pattern",                  NULL, create_alltoall_pattern,  alltoall_params,            pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "pingpong_pattern",  "Ping-pong pattern",                 NULL, create_pingpong_pattern,  pingpong_params,            pattern_ports,      COMPONENT_CATEGORY_NETWORK},
+    { "comm_pattern",      "Communication pattern base object", NULL, create_comm_pattern,      comm_params,                pattern_ports,      COMPONENT_CATEGORY_NETWORK},
     { NULL, NULL, NULL, NULL }
 };
 
