@@ -29,28 +29,27 @@ class Group
     int getMyRank() { return m_rank; }
 
     size_t size() { 
-		return m_rankMap.rbegin()->first; 
+		return m_nidMap.rbegin()->first * m_virtNic->getNumCores(); 
 	}
 
     void set( int rank, int nid, int num ) {
-		m_rankMap[ rank ] = nid;		
-		m_rankMap[ rank + num ] = -1;
+		m_nidMap[ rank ] = nid;		
+		m_nidMap[ rank + num ] = -1;
     }
 
     void initMyRank() {
-        int numCores = m_virtNic->getNumCores();
-		int coreNum = m_virtNic->getCoreId();
 		int nodeId = m_virtNic->getRealNicId();
-		int nid = numCores * nodeId + coreNum;
 		std::map<int,int>::iterator iter;
 
-		for ( iter = m_rankMap.begin(); iter != m_rankMap.end(); ++iter ) {
+		for ( iter = m_nidMap.begin(); iter != m_nidMap.end(); ++iter ) {
 		
 			std::map<int,int>::iterator next = iter;
 			++next;
 			int len = next->first - iter->first;
-			if ( nid >= iter->second && nid < iter->second + len ) {
-        		m_rank = iter->first + (nid - iter->second);
+			if ( nodeId >= iter->second && nodeId < iter->second + len ) {
+        		m_rank = iter->first + (nodeId - iter->second);
+				m_rank *= m_virtNic->getNumCores();
+				m_rank += m_virtNic->getCoreId();
 				break;
 			}
 		}
@@ -69,24 +68,24 @@ class Group
 
     int getNodeId( int rank ) {
 		int nid = -1;
+		int numCores = m_virtNic->getNumCores();
 		std::map<int,int>::iterator iter;
 		
-		for ( iter = m_rankMap.begin(); iter != m_rankMap.end(); ++iter ) {
+		for ( iter = m_nidMap.begin(); iter != m_nidMap.end(); ++iter ) {
 			std::map<int,int>::iterator next = iter;
 			++next;
-			if ( rank >= iter->first && rank < next->first ) {
-				nid = iter->second + (rank - iter->first); 
+			if ( rank/numCores >= iter->first && rank/numCores < next->first ) {
+				nid = iter->second + (rank/numCores - iter->first); 
 				break;
 			}
 		}
-        int numCores = m_virtNic->getNumCores();
-        return m_virtNic->calcVirtNicId( nid / numCores, nid % numCores );
+        return m_virtNic->calcVirtNicId( nid, rank % numCores );
     }
 
   private:
     VirtNic* m_virtNic;
     int 	m_rank;
-    std::map< int, int> m_rankMap;
+    std::map< int, int> m_nidMap;
 
 };
 }
