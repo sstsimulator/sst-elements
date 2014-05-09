@@ -80,18 +80,30 @@ class LoadInfo:
 	def readCmdLine(self, cmdLine ):
 		print "cmdLine=", repr(cmdLine)
 		cmdList = cmdLine.split()
-		if "ranksPerNode" == cmdList[1].split("=")[0]:
-			ranksPerNode = int(cmdList[1].split("=")[1])
-			cmdList.pop(1);
-		else: 
-		   ranksPerNode = self.numCores
-		print "ranksPerNode", ranksPerNode
+		motifCmd = [] 
+		motifCmd.append( cmdList.pop(0) )
+
+		ranksPerNode = self.numCores 
+		nidList = []
+		while len(cmdList):
+			arg = cmdList.pop(0)
+
+			if "ranksPerNode" == arg.split("=")[0]:
+				ranksPerNode = int(arg.split("=")[1])
+			elif "nidList" == arg.split("=")[0]:
+				nidList = arg.split("=")[1]
+			else:
+				motifCmd.append( arg )
+
+		if 0 == len(nidList):
+			nidList = "0-" + str(self.numNodes-1) 
+			
+		print "nidList", nidList, "ranksPerNode", ranksPerNode
+
 		if  ranksPerNode > self.numCores:
 			sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
 						str(self.numCores) + " coresPerNode")
-		nidList = cmdList[1].split("=")[1]
-		cmdList.pop(1);
-		return ( nidList, ranksPerNode, self.parseCmd("ember.", "Motif", cmdList) ) 
+		return ( nidList, ranksPerNode, self.parseCmd("ember.", "Motif", motifCmd) ) 
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList ):
 		motif = {}
