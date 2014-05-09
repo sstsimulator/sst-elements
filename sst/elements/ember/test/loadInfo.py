@@ -3,7 +3,7 @@ import sst
 from sst.merlin import *
 
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, numCores ):
+    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode ):
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
@@ -43,22 +43,22 @@ class EmberEP( EndPoint ):
 class LoadInfo:
 
 	def __init__(self, nicParams, epParams, numNodes, numCores ):
-		print "numNodes", numNodes
+		print "numNodes", numNodes, "numCores", numCores
 		self.nicParams = nicParams
 		self.epParams = epParams
-		self.numNodes = numNodes
-		self.numCores = numCores
+		self.numNodes = int(numNodes)
+		self.numCores = int(numCores)
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
 		self.nullEP, nidlist = self.foo( -1, self.readCmdLine("Null nidList=") )
 		self.nullEP.prepParams()
 
 	def foo( self, jobId, x ):
-		nidList, numCores, params = x
+		nidList, ranksPerNode, params = x
 
 		params.update( self.epParams )
 		params['hermesParams.nidListString'] = nidList 
-		ep = EmberEP( jobId, params, self.nicParams, numCores )
+		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode )
 
 		ep.prepParams()
 		return (ep, nidList)
@@ -80,11 +80,18 @@ class LoadInfo:
 	def readCmdLine(self, cmdLine ):
 		print "cmdLine=", repr(cmdLine)
 		cmdList = cmdLine.split()
+		if "ranksPerNode" == cmdList[1].split("=")[0]:
+			ranksPerNode = int(cmdList[1].split("=")[1])
+			cmdList.pop(1);
+		else: 
+		   ranksPerNode = self.numCores
+		print "ranksPerNode", ranksPerNode
+		if  ranksPerNode > self.numCores:
+			sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
+						str(self.numCores) + " coresPerNode")
 		nidList = cmdList[1].split("=")[1]
-		#numCores = int(cmdList[2].split("=")[1])
-		numCores = 1
 		cmdList.pop(1);
-		return ( nidList, numCores, self.parseCmd("ember.", "Motif", cmdList) ) 
+		return ( nidList, ranksPerNode, self.parseCmd("ember.", "Motif", cmdList) ) 
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList ):
 		motif = {}
