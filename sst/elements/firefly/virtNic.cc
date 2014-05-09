@@ -31,8 +31,8 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
 
     m_dbg.init("@t:VirtNic::@p():@l ", m_dbg_level, 0, m_dbg_loc );
 
-    m_toNicLink = owner->configureLink("nic", "1 ns", 
-            new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
+    m_toNicLink = owner->configureLink( params.find_string("portName","nic"), 
+			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
 
     assert( m_toNicLink );
 }

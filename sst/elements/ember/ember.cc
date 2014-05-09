@@ -127,6 +127,13 @@ static const ElementInfoParam component_params[] = {
     { NULL, NULL, NULL }
 };
 
+static const ElementInfoPort component_ports[] = {
+    {"nic", "Port connected to the nic", NULL},
+    {"loop", "Port connected to the loopBack", NULL},
+    {NULL, NULL, NULL}
+};
+
+
 static const ElementInfoModule modules[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
@@ -232,7 +239,8 @@ static const ElementInfoComponent components[] = {
       "Base communicator motif engine.",
       NULL,
       create_EmberComponent,
-      component_params
+      component_params,
+      component_ports
     },
     { NULL, NULL, NULL, NULL }
 };

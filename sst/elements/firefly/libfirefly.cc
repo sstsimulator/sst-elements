@@ -67,7 +67,6 @@ create_nic(SST::ComponentId_t id, SST::Params& params)
     return new Nic( id, params );
 }
 
-
 static const ElementInfoParam nic_params[] = {
 	{ "nid", "node id on network", "-1"},
 	{ "num_vNics", "Sets number of cores", "1"},
@@ -85,6 +84,14 @@ static const ElementInfoParam nic_params[] = {
 	{ NULL, NULL, NULL }
 };
 
+static const char * nic_port_events[] = { "MerlinFireflyEvent", NULL };
+static const char * core_port_events[] = { "NicRespEvent", NULL };
+
+static const ElementInfoPort nic_ports[] = {
+    {"rtr", "Port connected to the router", nic_port_events},
+    {"core%(num_vNics)d", "Ports connected to the network driver", core_port_events},
+    {NULL, NULL, NULL}
+};
 
 static SST::Component*
 create_loopBack(SST::ComponentId_t id, SST::Params& params)
@@ -92,10 +99,18 @@ create_loopBack(SST::ComponentId_t id, SST::Params& params)
     return new LoopBack( id, params );
 }
 
+static const char * loopBack_port_events[] = {"LoopBackEvent",NULL};
+
 static const ElementInfoParam loopBack_params[] = {
     {"numCores","Sets the number cores to create links to", "1"},
 	{ NULL, NULL, NULL }
 };
+
+static const ElementInfoPort loopBack_ports[] = {
+    {"core%(num_vNics)d", "Ports connected to the network driver", loopBack_port_events},
+    {NULL, NULL, NULL}
+};
+
 
 static Module*
 load_hades(Component* comp, Params& params)
@@ -120,6 +135,7 @@ load_VirtNic(Component* comp, Params& params)
 static const ElementInfoParam virtNicModule_params[] = {
 	{"debugLevel", "Sets the output verbosity of the component", "1"},
 	{"debug", "Sets the messaging API of the end point", "0"},
+	{"portName", "Sets the name of the port for the link", "nic"},
     {NULL, NULL}
 };
 
@@ -263,13 +279,15 @@ static const ElementInfoComponent components[] = {
       "nic",
       NULL,
       create_nic,
-      nic_params
+      nic_params,
+      nic_ports
     },
     { "loopBack",
       "loopBack",
       NULL,
       create_loopBack,
-	  loopBack_params
+      loopBack_params,
+      loopBack_ports
     },
     { NULL, NULL, NULL, NULL }
 };
