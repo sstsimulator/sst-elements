@@ -652,7 +652,6 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
 
     if ( ctx->req ) {
         delay += obj().rxDelay();
-        size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
 		
         if ( ! obj().nic().isLocal( calcNid( ctx->req, ctx->hdr().rank ) ) ) {
             delay += obj().rxNicDelay();
