@@ -88,8 +88,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
                     params.find_string("module"), params);
     assert( m_linkControl );
 
-    m_linkControl->configureLink(this, "rtr", tc, m_num_vcs,
-                        &buf_size[0], &buf_size[0]);
+    m_linkControl->configureLink(this, 
+						params.find_string("rtrPortName","rtr"),
+						tc, m_num_vcs, &buf_size[0], &buf_size[0]);
 
     m_recvNotifyFunctor =
         new Merlin::LinkControl::Handler<Nic>(this,&Nic::recvNotify );
@@ -111,7 +112,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_num_vNics = params.find_integer("num_vNics", 1 );
     for ( int i = 0; i < m_num_vNics; i++ ) {
-        m_vNicV.push_back( new VirtNic( *this, i ) );
+        m_vNicV.push_back( new VirtNic( *this, i,
+			params.find_string("corePortName","core") ) );
     }
     m_recvM.resize( m_vNicV.size() );
 }
@@ -151,14 +153,14 @@ Nic::~Nic()
     if ( m_currentSend ) delete m_currentSend;
 }
 
-Nic::VirtNic::VirtNic( Nic& nic, int _id ) : 
+Nic::VirtNic::VirtNic( Nic& nic, int _id, std::string portName ) : 
     m_nic( nic ),
     id( _id )
 {
     std::ostringstream tmp;
     tmp <<  id;
 
-    m_toCoreLink = nic.configureLink("core" + tmp.str(), "1 ns", 
+    m_toCoreLink = nic.configureLink( portName + tmp.str(), "1 ns", 
         new Event::Handler<Nic::VirtNic>(
                     this, &Nic::VirtNic::handleCoreEvent ) );
 	assert( m_toCoreLink );

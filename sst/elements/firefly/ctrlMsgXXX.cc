@@ -60,7 +60,8 @@ XXX::XXX( Component* owner, Params& params ) :
     
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 
-    m_loopLink = owner->configureLink("loop", "1 ns",
+    m_loopLink = owner->configureLink(
+			params.find_string("loopBack.portName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
     assert(m_loopLink);
 }

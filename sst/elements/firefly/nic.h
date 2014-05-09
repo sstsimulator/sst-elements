@@ -188,7 +188,7 @@ class Nic : public SST::Component  {
     class VirtNic {
         Nic& m_nic;
       public:
-        VirtNic( Nic&, int id );
+        VirtNic( Nic&, int id, std::string portName );
 		~VirtNic() {}
         void handleCoreEvent( Event* );
         void init( unsigned int phase );

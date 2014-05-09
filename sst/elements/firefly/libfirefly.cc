@@ -69,6 +69,8 @@ create_nic(SST::ComponentId_t id, SST::Params& params)
 
 static const ElementInfoParam nic_params[] = {
 	{ "nid", "node id on network", "-1"},
+	{ "rtrPortName", "Port connected to the router", "rtr"},
+	{ "corePortName", "Port connected to the core", "core"},
 	{ "num_vNics", "Sets number of cores", "1"},
 	{ "verboseLevel", "Sets the output verbosity of the component", "1"},
 	{ "debug", "Sets the messaging API of the end point", "0"},
