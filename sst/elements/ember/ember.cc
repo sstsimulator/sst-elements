@@ -133,6 +133,61 @@ static const ElementInfoPort component_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoParam pingpong_params[] = {
+    	{	"messagesize",		"Sets the message size of the ping pong operation",	"1024"},
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam allpingpong_params[] = {
+    	{	"messagesize",		"Sets the message size of the ping pong operation",	"128"},
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
+	{	"computetime",		"Sets the time spent computing some values",	 	"1000"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam barrier_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam halo1d_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"1000"},
+	{	"messagesize",		"Sets the message size (in bytes)",		 	"128"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam halo2d_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"messagesizex",		"Sets the message size in X-dimension (in bytes)",	"128"},
+	{	"messagesizey",		"Sets the message size in Y-dimension (in bytes)",	"128"},
+	{	"computecopy",		"Sets the time spent copying data between messages",	"5"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam halo3d_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"compute",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"nx",			"Sets the problem size in X-dimension",			"100"},
+	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
+	{	"nz",			"Sets the problem size in Z-dimension",			"100"},
+	{	"pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
+	{	"pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
+	{	"pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
+	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
+	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam fini_params[] = {
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam nullmotif_params[] = {
+	{	NULL,	NULL,	NULL	}
+};
 
 static const ElementInfoModule modules[] = {
     { 	"PingPongMotif",
@@ -140,8 +195,8 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_PingPong,
-	NULL,
-    "SST::Ember::EmberGenerator"
+	pingpong_params,
+    	"SST::Ember::EmberGenerator"
     },
     { 	"RingMotif",
 	"Performs a Ring Motif",
@@ -156,7 +211,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Barrier,
-	NULL,
+	barrier_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"AllPingPongMotif",
@@ -164,7 +219,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_AllPingPong,
-	NULL,
+	allpingpong_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo2DMotif",
@@ -172,7 +227,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo2D,
-	NULL,
+	halo2d_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo2DNBRMotif",
@@ -196,7 +251,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo3D,
-	NULL,
+	halo3d_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"Sweep2DMotif",
@@ -220,15 +275,15 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Fini,
-	NULL,
+	fini_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"NullMotif",
-	"Does bupkis",
+	"Performs an idle on the node, no traffic can be generated.",
 	NULL,
 	NULL,
 	load_Null,
-	NULL,
+	nullmotif_params,
     "SST::Ember::EmberGenerator"
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
