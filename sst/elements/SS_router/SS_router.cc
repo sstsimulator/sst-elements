@@ -26,11 +26,25 @@ create_router(SST::ComponentId_t id,
 }
 
 
+static const ElementInfoPort router_ports[] = {
+    {"nic", "Connection to controlling NIC", NULL},
+    {"xPos", "Port in Positive X direction", NULL},
+    {"xNeg", "Port in Negative X direction", NULL},
+    {"yPos", "Port in Positive Y direction", NULL},
+    {"yNeg", "Port in Negative Y direction", NULL},
+    {"zPos", "Port in Positive Z direction", NULL},
+    {"zNeg", "Port in Negative Z direction", NULL},
+    {NULL, NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "SS_router",
       "Cycle-accurate 3D torus network router",
       NULL,
-      create_router
+      create_router,
+      NULL, /* Params */
+      router_ports,
+      COMPONENT_CATEGORY_NETWORK
     },
     { NULL, NULL, NULL, NULL }
 };

@@ -285,17 +285,32 @@ static void generate(ConfigGraph* graph, string options, int ranks) {
 
 
 
+static const ElementInfoPort tric_cpu_ports[] = {
+    {"nic", "Network Interface port", NULL},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoPort tric_nic_ports[] = {
+    {"cpu", "Connection to controlling CPU port", NULL},
+    {"rtr", "Connection to Router port", NULL},
+    {NULL, NULL, NULL}
+};
+
 
 static const ElementInfoComponent components[] = {
     { "trig_cpu",
       "Triggered CPU for Portals 4 research",
       NULL,
       create_trig_cpu,
+      NULL, /* Params */
+      tric_cpu_ports
     },
     { "trig_nic",
       "Triggered NIC for Portals 4 research",
       NULL,
       create_trig_nic,
+      NULL, /* Params */
+      tric_nic_ports
     },
     { NULL, NULL, NULL, NULL }
 };
