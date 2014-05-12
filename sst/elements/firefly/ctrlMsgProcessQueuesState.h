@@ -270,6 +270,7 @@ class ProcessQueuesState : StateBase< T1 >
 
     void processLoopResp( LoopResp* );
     void processLongAck( AckInfo* );
+    void processPioSendFini( _CommReq* );
 
     bool enterSend( _CommReq* );
     bool enterSendLoop( _CommReq* );
@@ -387,6 +388,7 @@ class ProcessQueuesState : StateBase< T1 >
     std::deque< _CommReq* >         m_longRspQ;
     std::deque< AckInfo* >          m_longAckQ;
     std::deque<_CommReq*>           m_sendDmaFiniQ;
+    std::deque<_CommReq*>           m_sendPioFiniQ;
 
     std::deque< FuncCtxBase* >      m_funcStack; 
     std::deque< FuncCtxBase* >      m_intStack; 
@@ -502,6 +504,12 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
 
     obj().nic().pioSend( nid, ShortMsgQ, vec, functor );
 
+    if ( ! req->isBlocking() ) {
+        exit();
+    } else {
+        enterWait( new WaitReq( req ), clearExit() );
+    }
+
     return true;
 }
 
@@ -595,6 +603,11 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     while ( ! m_sendDmaFiniQ.empty() ) {
         m_sendDmaFiniQ.front()->setDone();
         m_sendDmaFiniQ.pop_front();
+    }
+
+    while ( ! m_sendPioFiniQ.empty() ) {
+		processPioSendFini( m_sendPioFiniQ.front() );	
+        m_sendPioFiniQ.pop_front();
     }
 
     if ( ! m_loopResp.empty() ) {
@@ -936,23 +949,21 @@ bool ProcessQueuesState<T1>::dmaSendFini( _CommReq* req )
 template< class T1 >
 bool ProcessQueuesState<T1>::pioSendFini( _CommReq* req )
 {
+    dbg().verbose(CALL_INFO,1,0,"_CommReq\n");
+    m_sendPioFiniQ.push_back( req );
+    
+    foo();
+
+    return true;
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processPioSendFini( _CommReq* req )
+{
     if ( req->getLength() <= obj().shortMsgLength() ) {
         dbg().verbose(CALL_INFO,1,0,"short message\n");
         req->setDone();
-        if ( req->isMine() ) {
-            delete req;
-        }
-        exit();
-    } else {
-        dbg().verbose(CALL_INFO,1,0,"long message\n");
-        if ( ! req->isBlocking() ) {
-            exit();
-        } else {
-            enterWait( new WaitReq( req ), clearExit() );
-        }
     }
-
-    return true;
 }
 
 template< class T1 >
