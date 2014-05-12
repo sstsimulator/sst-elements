@@ -80,20 +80,22 @@ class LoadInfo:
 	def readCmdLine(self, cmdLine ):
 		print "cmdLine=", repr(cmdLine)
 		cmdList = cmdLine.split()
-		motifCmd = [] 
-		motifCmd.append( cmdList.pop(0) )
 
 		ranksPerNode = self.numCores 
 		nidList = []
-		while len(cmdList):
-			arg = cmdList.pop(0)
 
-			if "ranksPerNode" == arg.split("=")[0]:
-				ranksPerNode = int(arg.split("=")[1])
-			elif "nidList" == arg.split("=")[0]:
-				nidList = arg.split("=")[1]
+		while len(cmdList):
+			if "-" != cmdList[0][0]:
+				break
+
+			o, a = cmdList.pop(0).split("=")
+
+			if "-ranksPerNode" == o:
+				ranksPerNode = int(a)
+			elif "-nidList" == o:
+				nidList = a
 			else:
-				motifCmd.append( arg )
+				sys.exit("bad argument")	
 
 		if 0 == len(nidList):
 			nidList = "0-" + str(self.numNodes-1) 
@@ -103,7 +105,7 @@ class LoadInfo:
 		if  ranksPerNode > self.numCores:
 			sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
 						str(self.numCores) + " coresPerNode")
-		return ( nidList, ranksPerNode, self.parseCmd("ember.", "Motif", motifCmd) ) 
+		return ( nidList, ranksPerNode, self.parseCmd("ember.", "Motif", cmdList) ) 
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList ):
 		motif = {}
