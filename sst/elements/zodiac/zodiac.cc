@@ -59,6 +59,12 @@ static const ElementInfoParam sirius_params[] = {
     	{ NULL, NULL, NULL }
 };
 
+static const ElementInfoPort sirius_ports[] = {
+    {"nic", "Network Interface port", NULL},
+    {"loop", "Firefly Loopback port", NULL},
+    {NULL, NULL, NULL}
+};
+
 #ifdef HAVE_ZODIAC_DUMPI
 static Component*
 create_ZodiacDUMPITraceReader(SST::ComponentId_t id,
@@ -94,7 +100,7 @@ static const ElementInfoComponent components[] = {
 	NULL,
 	create_ZodiacSiriusTraceReader,
 	sirius_params,
-	NULL,
+	sirius_ports,
 	COMPONENT_CATEGORY_NETWORK
     },
 #ifdef HAVE_ZODIAC_DUMPI
