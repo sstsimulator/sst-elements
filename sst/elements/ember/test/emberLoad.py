@@ -74,8 +74,8 @@ else:
 sst.merlin._params["link_lat"] = "40ns"
 sst.merlin._params["link_bw"] = "560Mhz"
 sst.merlin._params["xbar_bw"] = "560Mhz"
-sst.merlin._params["input_latency"] = "25ns"
-sst.merlin._params["output_latency"] = "25ns"
+sst.merlin._params["input_latency"] = "50ns"
+sst.merlin._params["output_latency"] = "50ns"
 sst.merlin._params["input_buf_size"] = 128
 sst.merlin._params["output_buf_size"] = 128
 
@@ -90,16 +90,16 @@ _nicParams = {
 		"link_bw" : "560Mhz",
 		"buffer_size" : 128,
 		"rxMatchDelay_ns" : 100,
-		"txDelay_ns" : 100,
+		"txDelay_ns" : 50,
 	}
 
 _emberParams = {
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
-		"debug" : debug,
+		"debug" : 1,
 		"verbose" : 1,
 		"printStats" : printStats,
-		"buffersize" : 8192,
+		"buffersize" : 60000,
 	}
 
 _hermesParams = {
@@ -109,17 +109,19 @@ _hermesParams = {
 		"hermesParams.nicParams.debug" : debug,
 		"hermesParams.nicParams.debugLevel" : 1 ,
 		"hermesParams.policy" : "adjacent",
+		"hermesParams.functionSM.defaultEnterLatency" : 30000,
+		"hermesParams.functionSM.defaultReturnLatency" : 30000,
 		"hermesParams.functionSM.defaultDebug" : debug,
 		"hermesParams.functionSM.defaultVerbose" : 1,
 		"hermesParams.ctrlMsg.debug" : debug,
 		"hermesParams.ctrlMsg.verboseLevel" : 1,
-		"hermesParams.ctrlMsg.shortMsgLength" : 5000,
-		"hermesParams.ctrlMsg.matchDelay_ps" : 0,
+		"hermesParams.ctrlMsg.shortMsgLength" : 16000,
+		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
 		"hermesParams.ctrlMsg.memcpyDelay_ps" : 200,
-		"hermesParams.ctrlMsg.txDelay_ns" : 130,
-		"hermesParams.ctrlMsg.rxDelay_ns" : 130,
-		"hermesParams.ctrlMsg.txNicDelay_ns" : 200,
-		"hermesParams.ctrlMsg.rxNicDelay_ns" : 200,
+		"hermesParams.ctrlMsg.txDelay_ns" : 100,
+		"hermesParams.ctrlMsg.rxDelay_ns" : 100,
+		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
+		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.regRegionBaseDelay_ps" : 10000000,
 		"hermesParams.ctrlMsg.regRegionPerByteDelay_ps" : 28,
 		"hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
