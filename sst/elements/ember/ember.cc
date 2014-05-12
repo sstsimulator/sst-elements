@@ -151,6 +151,12 @@ static const ElementInfoParam barrier_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam allreduce_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"count",		"Sets the number of elements to reduce",	 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam halo1d_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
 	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"1000"},
@@ -181,6 +187,12 @@ static const ElementInfoParam halo3d_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam ring_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"messagesize",		"Sets the size of the message in bytes",	 	"1024"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam fini_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
@@ -203,7 +215,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Ring,
-	NULL,
+	ring_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"BarrierMotif",
@@ -267,7 +279,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Allreduce,
-	NULL,
+	allreduce_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"FiniMotif",
