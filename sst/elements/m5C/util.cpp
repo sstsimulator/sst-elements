@@ -83,6 +83,7 @@ objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string config
 
         SST::Params tmpParams = params.find_prefix_params( tmp.name + "." );
         tmp.params.insert( tmpParams.begin(), tmpParams.end() );
+        tmp.params.enableVerify(false);
 
         Gem5Object_t* simObject = factory.createObject( 
                         name + "." + tmp.name, tmp.type, tmp.params );
