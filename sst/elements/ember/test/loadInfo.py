@@ -43,14 +43,14 @@ class EmberEP( EndPoint ):
 class LoadInfo:
 
 	def __init__(self, nicParams, epParams, numNodes, numCores ):
-		print "numNodes", numNodes, "numCores", numCores
+		print "system configuration: numNodes={0} coresPerNode={1}".format( numNodes, numCores )
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
-		self.nullEP, nidlist = self.foo( -1, self.readCmdLine("Null nidList=") )
+		self.nullEP, nidlist = self.foo( -1, self.readCmdLine("Null") )
 		self.nullEP.prepParams()
 
 	def foo( self, jobId, x ):
@@ -78,7 +78,6 @@ class LoadInfo:
 		self.verifyLoadInfo()
 
 	def readCmdLine(self, cmdLine ):
-		print "cmdLine=", repr(cmdLine)
 		cmdList = cmdLine.split()
 
 		ranksPerNode = self.numCores 
@@ -100,7 +99,8 @@ class LoadInfo:
 		if 0 == len(nidList):
 			nidList = "0-" + str(self.numNodes-1) 
 			
-		print "nidList", nidList, "ranksPerNode", ranksPerNode
+		if "Null" != cmdList[0]:
+			print "Job: -nidList={0} -ranksPerNode={1} {2}".format( nidList, ranksPerNode, cmdList )
 
 		if  ranksPerNode > self.numCores:
 			sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
