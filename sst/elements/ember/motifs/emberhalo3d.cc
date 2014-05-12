@@ -94,6 +94,8 @@ void EmberHalo3DGenerator::configureEnvironment(const SST::Output* output, uint3
 		}
 	}
 
+	assert( peX * peY * peZ == worldSize );
+
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
 		rank, peX, peY, peZ);
 
