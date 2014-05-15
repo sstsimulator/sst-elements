@@ -2,13 +2,13 @@ dnl -*- Autoconf -*-
 
 AC_DEFUN([SST_gem5_CONFIG], [
 
-  happy="yes"
+  sst_gem5_happy="yes"
 
   AC_ARG_WITH([gem5],
     [AS_HELP_STRING([--with-gem5@<:@=DIR@:>@],
     [Use M5 package installed in optionally specified DIR])])
 
-  AS_IF([test "$with_gem5" = "no"], [happy="no"])
+  AS_IF([test "$with_gem5" = "no"], [sst_gem5_happy="no"])
 
   AC_ARG_WITH([gem5-build],
     [AS_HELP_STRING([--with-gem5-build=TYPE],
@@ -18,7 +18,7 @@ AC_DEFUN([SST_gem5_CONFIG], [
 
 
   SST_CHECK_PYTHON([have_python=1])
-  AS_IF([test "$have_python" = "1"], [$1], [happy="no"])
+  AS_IF([test "$have_python" = "1"], [$1], [sst_gem5_happy="no"])
 
   dnl AX_CXX_COMPILE_STDCXX_0X()
 
@@ -36,13 +36,13 @@ AC_DEFUN([SST_gem5_CONFIG], [
     [])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
+  AC_CHECK_HEADERS([sim/system.hh], [], [sst_gem5_happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
   AC_CHECK_HEADERS([params/X86TLB.hh], [isa=X86], [])
   AC_CHECK_HEADERS([params/DerivO3CPU.hh], [use_gem5_o3=true], [use_gem5_o3=false])
 
-  AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [happy="no"])
+  AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [sst_gem5_happy="no"])
 
   AC_LANG_POP(C++)
 
@@ -58,7 +58,7 @@ AC_DEFUN([SST_gem5_CONFIG], [
     opt)   cpp_extra="-DTRACING_ON=1 -DLIBTYPE=OPT" ;;
     prof)  cpp_extra="-DNDEBUG -DTRACING_ON=0 -DLIBTYPE=PROF" ;;
     fast)  cpp_extra="-DNDEBUG -DTRACING_ON=0 -DLIBTYPE=FAST" ;;
-    *) happy="no" ;;
+    *) sst_gem5_happy="no" ;;
   esac
 
 
@@ -82,12 +82,12 @@ AC_DEFUN([SST_gem5_CONFIG], [
   AM_CONDITIONAL([PERFORM_M5C_STATIC_OBJECT_CONSTRUCTION],
 	[test "$enable_static" = "yes" -a "$enable_shared" = "no"])
 
-  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$happy" = "no"],
+  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$sst_gem5_happy" = "no"],
 	[AC_MSG_ERROR(
 		[Unable to correctly determine requirements for GEM5, configure specifies to build GEM5 but cannot build successfully],
 		[1], 
 	 )],
 	[])
 
-  AS_IF([test "$happy" = "yes"], [$1], [$2])
+  AS_IF([test "$sst_gem5_happy" = "yes"], [$1], [$2])
 ])

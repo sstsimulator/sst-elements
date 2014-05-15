@@ -6,9 +6,9 @@ AC_DEFUN([SST_qsimComponent_CONFIG],[
     [AS_HELP_STRING([--with-qsim@<:@=DIR@:>@],
       [Use QSim installed at optionally-specified prefix DIR])])
 
-  happy="yes"
+  sst_check_qsim_happy="yes"
 
-  AS_IF([test "$with_qsim" = "no"], [happy="no"])
+  AS_IF([test "$with_qsim" = "no"], [sst_check_qsim_happy="no"])
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
@@ -23,9 +23,9 @@ AC_DEFUN([SST_qsimComponent_CONFIG],[
      QSIM_LDFLAGS=])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([qsim.h], [], [happy="no"])
+  AC_CHECK_HEADERS([qsim.h], [], [sst_check_qsim_happy="no"])
   AC_CHECK_LIB([qsim], [qsim_present], 
-    [QSIM_LIBS="-lqsim"], [happy="no"])
+    [QSIM_LIBS="-lqsim"], [sst_check_qsim_happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
@@ -36,5 +36,5 @@ AC_DEFUN([SST_qsimComponent_CONFIG],[
   AC_SUBST([QSIM_LDFLAGS])
   AC_SUBST([QSIM_LIBS])
 
-  AS_IF([test "$happy" = "yes"], [$1], [$2])
+  AS_IF([test "$sst_check_qsim_happy" = "yes"], [$1], [$2])
 ])

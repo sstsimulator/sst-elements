@@ -2,13 +2,13 @@ dnl -*- Autoconf -*-
 
 AC_DEFUN([SST_m5C_CONFIG], [
 
-  happy="yes"
+  sst_gem5_happy="yes"
 
   AC_ARG_WITH([gem5],
     [AS_HELP_STRING([--with-gem5@<:@=DIR@:>@],
     [Use M5 package installed in optionally specified DIR])])
 
-  AS_IF([test "$with_gem5" = "no"], [happy="no"])
+  AS_IF([test "$with_gem5" = "no"], [sst_gem5_happy="no"])
 
   AC_ARG_WITH([gem5-build],
     [AS_HELP_STRING([--with-gem5-build=TYPE],
@@ -37,7 +37,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
 	[AC_MSG_ERROR(["Cannot find Python.h, this is required for M5 component to build."])])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
+  AC_CHECK_HEADERS([sim/system.hh], [], [sst_gem5_happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
   AC_CHECK_HEADERS([params/X86TLB.hh], [isa=X86], [])
@@ -45,7 +45,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
 
   CXX_saved="$CXX"
   AS_IF([test -n "$MPICXX"], [ CXX="$MPICXX" ] )
-  AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [happy="no"])
+  AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [sst_gem5_happy="no"])
   CXX="$CXX_saved"
 
   AC_LANG_POP(C++)
@@ -62,7 +62,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
     opt)   cpp_extra="-DTRACING_ON=1 -DLIBTYPE=OPT" ;;
     prof)  cpp_extra="-DNDEBUG -DTRACING_ON=0 -DLIBTYPE=PROF" ;;
     fast)  cpp_extra="-DNDEBUG -DTRACING_ON=0 -DLIBTYPE=FAST" ;;
-    *) happy="no" ;;
+    *) sst_gem5_happy="no" ;;
   esac
 
 
@@ -93,9 +93,9 @@ AC_DEFUN([SST_m5C_CONFIG], [
       CPPFLAGS="$PHXSIM_CPPFLAGS $CPPFLAGS"
       PHXSIM_LDFLAGS="-L$with_phxsim"	
       LDFLAGS="$PHXSIM_LDFLAGS $LDFLAGS"
-      AC_CHECK_HEADERS([SingleCube.h], [], [happy="no"])
+      AC_CHECK_HEADERS([SingleCube.h], [], [sst_gem5_happy="no"])
       AC_CHECK_LIB([phxsim], [libphxsim_is_present],
-                    [PHXSIM_LIB="-lphxsim"], [happy="no"])
+                    [PHXSIM_LIB="-lphxsim"], [sst_gem5_happy="no"])
     ],
     [PHXSIM_CPPFLAGS=
      PHXSIM_LDFLAGS=]
@@ -122,15 +122,15 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AM_CONDITIONAL([PERFORM_M5C_STATIC_OBJECT_CONSTRUCTION],
 	[test "$enable_static" = "yes" -a "$enable_shared" = "no"])
 
-  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$happy" = "no"],
+  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$sst_gem5_happy" = "no"],
 	[AC_MSG_ERROR(
 		[Unable to correctly determine requirements for GEM5, configure specifies to build GEM5 but cannot build successfully],
 		[1], 
 	 )],
 	[])
 
-  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$happy" = "yes"],
+  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$sst_gem5_happy" = "yes"],
 	[AC_DEFINE_UNQUOTED([HAVE_M5], [1], [Defines whether M5 was found at configure time])])
   AC_DEFINE_UNQUOTED([M5_LIBDIR], ["$M5_LIBDIR"], [Defines the M5 library directory])
-  AS_IF([test "$happy" = "yes"], [$1], [$2])
+  AS_IF([test "$sst_gem5_happy" = "yes"], [$1], [$2])
 ])
