@@ -195,7 +195,7 @@ void EmberEngine::printHistogram(Histogram<uint64_t, uint64_t>* histo) {
         output->output("Histogram Max: %" PRIu64 "\n", histo->getBinEnd());
         output->output("Histogram Bin: %" PRIu64 "\n", histo->getBinWidth());
 	for(uint64_t i = histo->getBinStart(); i <= histo->getBinEnd(); i += histo->getBinWidth()) {
-		if( histo->getBinCountBinStart(i) > 0 ) {
+		if( histo->getBinCountByBinStart(i) > 0 ) {
 			output->output(" [%" PRIu64 ", %" PRIu64 "]   %" PRIu64 "\n",
 				i, (i + histo->getBinWidth()), histo->getBinCountByBinStart(i));
 		}
