@@ -21,6 +21,8 @@ radix    = 0
 printStats = 0
 emberVerbose = 0
 emberBufferSize = 32000
+merlinBW = "560Mhz"
+bytesPerFlit = 8 
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -77,9 +79,11 @@ elif "fattree" == topology:
 else:
 	sys.exit("how did we get here")
 
+print "network: B/W={0} bytesPerFlit{1}".format(merlinBW,bytesPerFlit)
+
 sst.merlin._params["link_lat"] = "40ns"
-sst.merlin._params["link_bw"] = "560Mhz"
-sst.merlin._params["xbar_bw"] = "560Mhz"
+sst.merlin._params["link_bw"] = merlinBW 
+sst.merlin._params["xbar_bw"] = merlinBW 
 sst.merlin._params["input_latency"] = "50ns"
 sst.merlin._params["output_latency"] = "50ns"
 sst.merlin._params["input_buf_size"] = 128
@@ -93,7 +97,8 @@ _nicParams = {
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin." + topology,
 		"num_vcs" : 2,
-		"link_bw" : "560Mhz",
+		"bytesPerFlit" : bytesPerFlit,
+		"link_bw" : merlinBW,
 		"buffer_size" : 128,
 		"rxMatchDelay_ns" : 100,
 		"txDelay_ns" : 50,
