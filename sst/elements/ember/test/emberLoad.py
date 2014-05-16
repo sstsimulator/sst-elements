@@ -19,11 +19,14 @@ shape    = ""
 loading  = 0
 radix    = 0
 printStats = 0
+emberVerbose = 0
+emberBufferSize = 32000
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
 					"radix=","loading=","debug=",
-					"numCores=","loadFile=","cmdLine=","printStats="])
+					"numCores=","loadFile=","cmdLine=","printStats=",
+					"emberVerbose="])
 except getopt.GetopError as err:
     print str(err)
     sys.exit(2)
@@ -47,6 +50,8 @@ for o, a in opts:
         loading = a
     elif o in ("--printStats"):
         printStats = a
+    elif o in ("--emberVerbose"):
+        emberVerbose = a
     else:
         assert False, "unhandle option" 
 
@@ -59,6 +64,7 @@ if "torus" == topology:
 		sys.exit("What torus shape? (e.x. 4, 2x2, 4x4x8")
 	topoInfo = TorusInfo(shape)
 	topo = topoTorus()
+	print "network: topology=torus shape={0}".format(shape)
 
 elif "fattree" == topology:
 	if 0 == radix: 
@@ -96,10 +102,9 @@ _nicParams = {
 _emberParams = {
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
-		"debug" : 1,
-		"verbose" : 1,
+		"verbose" : emberVerbose,
 		"printStats" : printStats,
-		"buffersize" : 60000,
+		"buffersize" : emberBufferSize,
 	}
 
 _hermesParams = {
@@ -115,7 +120,7 @@ _hermesParams = {
 		"hermesParams.functionSM.defaultVerbose" : 1,
 		"hermesParams.ctrlMsg.debug" : debug,
 		"hermesParams.ctrlMsg.verboseLevel" : 1,
-		"hermesParams.ctrlMsg.shortMsgLength" : 16000,
+		"hermesParams.ctrlMsg.shortMsgLength" : 64000,
 		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
 		"hermesParams.ctrlMsg.memcpyDelay_ps" : 200,
 		"hermesParams.ctrlMsg.txDelay_ns" : 100,
