@@ -35,7 +35,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_pendingMerlinEvent( NULL ),
     m_recvNotifyEnabled( false ),
     m_packetId(0),
-    m_ftRadix(0)
+    m_ftRadix(0),
+	m_bytesPerFlit(8)
 {
     m_myNodeId = params.find_integer("nid", -1);
     assert( m_myNodeId != -1 );
@@ -66,6 +67,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     } else {
 		assert(0);
 	}
+    m_bytesPerFlit = params.find_integer("bytesPerFlit",8);
 
     m_num_vcs = params.find_integer("num_vcs",2);
     std::string link_bw = params.find_string("link_bw","2GHz");
@@ -386,7 +388,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
         print(m_dbg, &ev->buf[0], ev->buf.size() );
         ev->setDest( IdToNet( entry->node() ) );
         ev->setSrc( IdToNet( m_myNodeId ) );
-        ev->setNumFlits( ev->buf.size() );
+        ev->setNumFlits( ev->buf.size(), m_bytesPerFlit );
 
         #if 0 
             ev->setTraceType( Merlin::RtrEvent::FULL );

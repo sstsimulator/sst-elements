@@ -19,7 +19,9 @@ namespace Firefly {
 
 class MerlinFireflyEvent : public Merlin::RtrEvent {
 
-    static const int BufLen = 56;
+	static const int PktLen = 64;
+	static const int PktHdrLen = 8;
+    static const int BufLen = PktLen - PktHdrLen;
 
   public:
     uint16_t        seq;
@@ -46,13 +48,12 @@ class MerlinFireflyEvent : public Merlin::RtrEvent {
         return new MerlinFireflyEvent(*this);
     }
 
-    void setNumFlits( size_t len ) {
-        size_in_flits = len / 8;
-        if ( len % 8 )
-        ++size_in_flits;
-
-        // add flit for 8 bytes of packet header info 
-        ++size_in_flits;
+    void setNumFlits( int len, int bytesPerFlit = 8 ) {
+		int pktLen = PktHdrLen + len;
+		assert(pktLen <= PktLen);
+		size_in_flits = pktLen / bytesPerFlit;
+		
+        if ( pktLen % bytesPerFlit ) ++size_in_flits;
     }
 
     void setDest( int _dest ) {

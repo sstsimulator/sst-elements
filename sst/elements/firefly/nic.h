@@ -322,7 +322,7 @@ public:
     int  m_packetId;
     int  m_ftRadix;
     int  m_ftLoading;
-
+	int  m_bytesPerFlit;
 }; 
 
 } // namesapce Firefly 
