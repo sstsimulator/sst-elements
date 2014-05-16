@@ -25,7 +25,9 @@ EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
 void EmberRingGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
     size = worldSize;
-	output->verbose(CALL_INFO, 2, 0,"rank=%d size=%d\n",rank,size);
+    if(0 == rank) {
+        output->output("Ring rank=%d size=%d msgSize=%d iter=%d\n",rank,size,messageSize,iterations);
+	}
 }
 
 

@@ -89,9 +89,16 @@ void EmberHalo3DGenerator::configureEnvironment(const SST::Output* output, uint3
                 	}
         	}
 
-		if(0 == myRank) {
-			output->output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
-		}
+	}
+
+    if(0 == myRank) {
+		output->output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
+		output->output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
+		output->output("Halo3D compute time: %" PRIu32 " ns\n", nsCompute);
+		output->output("Halo3D copy time: %" PRIu32 " ns\n", nsCopyTime);
+		output->output("Halo3D iterations: %" PRIu32 "\n", iterations);
+		output->output("Halo3D iterms/cell: %" PRIu32 "\n", items_per_cell);
+		output->output("Halo3D do reduction: %" PRIu32 "\n", performReduction);
 	}
 
 	assert( peX * peY * peZ == worldSize );
