@@ -175,7 +175,9 @@ static const ElementInfoParam halo2d_params[] = {
 
 static const ElementInfoParam halo3d_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
-	{	"compute",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
+	{	"peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
 	{	"nx",			"Sets the problem size in X-dimension",			"100"},
 	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
 	{	"nz",			"Sets the problem size in Z-dimension",			"100"},

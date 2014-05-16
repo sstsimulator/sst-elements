@@ -33,7 +33,16 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	items_per_cell = (uint32_t) params.find_integer("itemspercell", 1);
 	performReduction = (params.find_integer("doreduce", 1) == 1);
 
-	nsCompute  = (uint32_t) params.find_integer("compute", 100);
+	uint64_t pe_flops = (uint64_t) params.find_integer("peflops", 10000000000);
+	uint64_t flops_per_cell = (uint64_t) params.find_integer("flopspercell", 26);
+
+	const uint64_t total_grid_points = (uint64_t) (nx * ny * nz);
+	const uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
+
+	// Converts FLOP/s into nano seconds of compute
+	const double compute_seconds = ( (double) total_flops / (double) pe_flops );
+	const double compute_nseconds = compute_seconds / 1000000000.0;
+	nsCompute  = (uint64_t) params.find_integer("computetime", (uint64_t) compute_nseconds);
 	nsCopyTime = (uint32_t) params.find_integer("copytime", 0);
 
 	iterations = (uint32_t) params.find_integer("iterations", 1);
