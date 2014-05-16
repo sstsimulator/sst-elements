@@ -40,9 +40,8 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	const uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
 
 	// Converts FLOP/s into nano seconds of compute
-	const double compute_seconds = ( (double) total_flops / (double) pe_flops );
-	const double compute_nseconds = compute_seconds / 1000000000.0;
-	nsCompute  = (uint64_t) params.find_integer("computetime", (uint64_t) compute_nseconds);
+	const double compute_seconds = ( (double) total_flops / ( (double) pe_flops / 1000000000.0 ) );
+	nsCompute  = (uint64_t) params.find_integer("computetime", (uint64_t) compute_seconds);
 	nsCopyTime = (uint32_t) params.find_integer("copytime", 0);
 
 	iterations = (uint32_t) params.find_integer("iterations", 1);
