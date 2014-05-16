@@ -67,7 +67,6 @@ Hades::Hades( Component* owner, Params& params ) :
 
 if ( group ) {
 
-  	m_dbg.verbose(CALL_INFO,1,0,"numRanks %lu\n", group->size());
 
     Params tmpParams;
     m_dbg.verbose(CALL_INFO,1,0,"\n");
@@ -117,6 +116,8 @@ void Hades::_componentSetup()
                         m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	Group* group = m_info.getGroup(Hermes::GroupWorld);
+
+  	m_dbg.verbose(CALL_INFO,1,0,"numRanks %lu\n", group->size());
 
 	// if there is a group we need to setup the message passing stack
 	if ( group ) {

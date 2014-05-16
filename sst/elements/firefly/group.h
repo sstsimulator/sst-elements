@@ -29,6 +29,7 @@ class Group
     int getMyRank() { return m_rank; }
 
     size_t size() { 
+		assert( m_virtNic->getNumCores() > 0 );
 		return m_nidMap.rbegin()->first * m_virtNic->getNumCores(); 
 	}
 
