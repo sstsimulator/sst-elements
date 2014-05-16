@@ -28,7 +28,7 @@ try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
 					"radix=","loading=","debug=",
 					"numCores=","loadFile=","cmdLine=","printStats=",
-					"emberVerbose="])
+					"emberVerbose=","merlinBW=","bytesPerFlit="])
 except getopt.GetopError as err:
     print str(err)
     sys.exit(2)
@@ -54,6 +54,10 @@ for o, a in opts:
         printStats = a
     elif o in ("--emberVerbose"):
         emberVerbose = a
+    elif o in ("--merlinBW"):
+        merlinBW = a
+    elif o in ("--bytesPerFlit"):
+        bytesPerFlit = a
     else:
         assert False, "unhandle option" 
 
@@ -79,7 +83,7 @@ elif "fattree" == topology:
 else:
 	sys.exit("how did we get here")
 
-print "network: B/W={0} bytesPerFlit{1}".format(merlinBW,bytesPerFlit)
+print "network: B/W={0} bytesPerFlit={1}".format(merlinBW,bytesPerFlit)
 
 sst.merlin._params["link_lat"] = "40ns"
 sst.merlin._params["link_bw"] = merlinBW 
