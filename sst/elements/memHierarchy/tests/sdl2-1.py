@@ -6,16 +6,16 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "5000ns")
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
-cpu.addParams({
+comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+comp_cpu.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
       "do_write" : """1""",
       "num_loadstore" : """1000"""
 })
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
-l1cache.addParams({
+comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+comp_l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """2 KB""",
       "coherence_protocol" : """MSI""",
@@ -28,8 +28,8 @@ l1cache.addParams({
       "debug" : """${MEM_DEBUG}""",
       "statistics" : """1"""
 })
-l2cache = sst.Component("l2cache", "memHierarchy.Cache")
-l2cache.addParams({
+comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
+comp_l2cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """16 KB""",
       "coherence_protocol" : """MSI""",
@@ -42,8 +42,8 @@ l2cache.addParams({
       "statistics" : """1""",
       "high_network_links" : """1"""
 })
-memory = sst.Component("memory", "memHierarchy.MemController")
-memory.addParams({
+comp_memory = sst.Component("memory", "memHierarchy.MemController")
+comp_memory.addParams({
       "coherence_protocol" : """MSI""",
       "debug" : """${MEM_DEBUG}""",
       "access_time" : """100 ns""",
@@ -53,10 +53,10 @@ memory.addParams({
 
 
 # Define the simulation links
-cpu_l1cache_link = sst.Link("cpu_l1cache_link")
-cpu_l1cache_link.connect( (cpu, "mem_link", "1000ps"), (l1cache, "high_network_0", "1000ps") )
-l1cache_l2cache_link = sst.Link("l1cache_l2cache_link")
-l1cache_l2cache_link.connect( (l1cache, "low_network_0", "10000ps"), (l2cache, "high_network_0", "10000ps") )
-mem_bus_link = sst.Link("mem_bus_link")
-mem_bus_link.connect( (l2cache, "low_network_0", "10000ps"), (memory, "direct_link", "10000ps") )
+link_cpu_l1cache_link = sst.Link("link_cpu_l1cache_link")
+link_cpu_l1cache_link.connect( (comp_cpu, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_l1cache_l2cache_link = sst.Link("link_l1cache_l2cache_link")
+link_l1cache_l2cache_link.connect( (comp_l1cache, "low_network_0", "10000ps"), (comp_l2cache, "high_network_0", "1000ps") )
+link_mem_bus_link = sst.Link("link_mem_bus_link")
+link_mem_bus_link.connect( (comp_l2cache, "low_network_0", "10000ps"), (comp_memory, "direct_link", "10000ps") )
 # End of generated output.

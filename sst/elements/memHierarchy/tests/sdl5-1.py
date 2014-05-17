@@ -6,16 +6,16 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "300000ns")
 
 # Define the simulation components
-cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
-cpu0.addParams({
+comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
+comp_cpu0.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
       "num_loadstore" : """1000""",
       "do_write" : """1"""
 })
-c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
-c0_l1cache.addParams({
+comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
+comp_c0_l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """4 KB""",
       "coherence_protocol" : """MSI""",
@@ -28,16 +28,16 @@ c0_l1cache.addParams({
       "debug" : """${MEM_DEBUG}""",
       "statistics" : """1"""
 })
-cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
-cpu1.addParams({
+comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
+comp_cpu1.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
       "num_loadstore" : """1000""",
       "do_write" : """1"""
 })
-c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
-c1_l1cache.addParams({
+comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
+comp_c1_l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """4 KB""",
       "coherence_protocol" : """MSI""",
@@ -50,12 +50,12 @@ c1_l1cache.addParams({
       "debug" : """${MEM_DEBUG}""",
       "statistics" : """1"""
 })
-n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
-n0_bus.addParams({
+comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
+comp_n0_bus.addParams({
       "bus_frequency" : """2 Ghz"""
 })
-n0_l2cache = sst.Component("n0.l2cache", "memHierarchy.Cache")
-n0_l2cache.addParams({
+comp_n0_l2cache = sst.Component("n0.l2cache", "memHierarchy.Cache")
+comp_n0_l2cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """32 KB""",
       "coherence_protocol" : """MSI""",
@@ -68,16 +68,16 @@ n0_l2cache.addParams({
       "statistics" : """1""",
       "high_network_links" : """1"""
 })
-cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
-cpu2.addParams({
+comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
+comp_cpu2.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
       "num_loadstore" : """1000""",
       "do_write" : """1"""
 })
-c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
-c2_l1cache.addParams({
+comp_c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
+comp_c2_l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """4 KB""",
       "coherence_protocol" : """MSI""",
@@ -90,16 +90,16 @@ c2_l1cache.addParams({
       "debug" : """${MEM_DEBUG}""",
       "statistics" : """1"""
 })
-cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
-cpu3.addParams({
+comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
+comp_cpu3.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
       "num_loadstore" : """1000""",
       "do_write" : """1"""
 })
-c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
-c3_l1cache.addParams({
+comp_c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
+comp_c3_l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """4 KB""",
       "coherence_protocol" : """MSI""",
@@ -112,12 +112,12 @@ c3_l1cache.addParams({
       "debug" : """${MEM_DEBUG}""",
       "statistics" : """1"""
 })
-n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
-n1_bus.addParams({
+comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
+comp_n1_bus.addParams({
       "bus_frequency" : """2 Ghz"""
 })
-n1_l2cache = sst.Component("n1.l2cache", "memHierarchy.Cache")
-n1_l2cache.addParams({
+comp_n1_l2cache = sst.Component("n1.l2cache", "memHierarchy.Cache")
+comp_n1_l2cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """32 KB""",
       "coherence_protocol" : """MSI""",
@@ -130,12 +130,12 @@ n1_l2cache.addParams({
       "statistics" : """1""",
       "high_network_links" : """1"""
 })
-n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
-n2_bus.addParams({
+comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
+comp_n2_bus.addParams({
       "bus_frequency" : """2 Ghz"""
 })
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-l3cache.addParams({
+comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+comp_l3cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """64 KB""",
       "coherence_protocol" : """MSI""",
@@ -148,8 +148,8 @@ l3cache.addParams({
       "statistics" : """1""",
       "high_network_links" : """1"""
 })
-memory = sst.Component("memory", "memHierarchy.MemController")
-memory.addParams({
+comp_memory = sst.Component("memory", "memHierarchy.MemController")
+comp_memory.addParams({
       "coherence_protocol" : """MSI""",
       "debug" : """${MEM_DEBUG}""",
       "access_time" : """1000 ns""",
@@ -162,32 +162,32 @@ memory.addParams({
 
 
 # Define the simulation links
-bus_l3cache = sst.Link("bus_l3cache")
-bus_l3cache.connect( (n2_bus, "low_network_0", "10000ps"), (l3cache, "high_network_0", "10000ps") )
-c0_l1cache_l2cache_link = sst.Link("c0_l1cache_l2cache_link")
-c0_l1cache_l2cache_link.connect( (c0_l1cache, "low_network_0", "10000ps"), (n0_bus, "high_network_0", "10000ps") )
-c1_l1cache_l2cache_link = sst.Link("c1_l1cache_l2cache_link")
-c1_l1cache_l2cache_link.connect( (c1_l1cache, "low_network_0", "10000ps"), (n0_bus, "high_network_1", "10000ps") )
-c2_l1cache_l2cache_link = sst.Link("c2_l1cache_l2cache_link")
-c2_l1cache_l2cache_link.connect( (c2_l1cache, "low_network_0", "10000ps"), (n1_bus, "high_network_0", "10000ps") )
-c3_l1cache_l2cache_link = sst.Link("c3_l1cache_l2cache_link")
-c3_l1cache_l2cache_link.connect( (c3_l1cache, "low_network_0", "10000ps"), (n1_bus, "high_network_1", "10000ps") )
-cpu0_l1cache_link = sst.Link("cpu0_l1cache_link")
-cpu0_l1cache_link.connect( (cpu0, "mem_link", "1000ps"), (c0_l1cache, "high_network_0", "1000ps") )
-cpu1_l1cache_link = sst.Link("cpu1_l1cache_link")
-cpu1_l1cache_link.connect( (cpu1, "mem_link", "1000ps"), (c1_l1cache, "high_network_0", "1000ps") )
-cpu2_l1cache_link = sst.Link("cpu2_l1cache_link")
-cpu2_l1cache_link.connect( (cpu2, "mem_link", "1000ps"), (c2_l1cache, "high_network_0", "1000ps") )
-cpu3_l1cache_link = sst.Link("cpu3_l1cache_link")
-cpu3_l1cache_link.connect( (cpu3, "mem_link", "1000ps"), (c3_l1cache, "high_network_0", "1000ps") )
-mem_bus_link = sst.Link("mem_bus_link")
-mem_bus_link.connect( (l3cache, "low_network_0", "10000ps"), (memory, "direct_link", "10000ps") )
-n0_bus_l2cache = sst.Link("n0_bus_l2cache")
-n0_bus_l2cache.connect( (n0_bus, "low_network_0", "10000ps"), (n0_l2cache, "high_network_0", "10000ps") )
-n0_l2cache_l3cache = sst.Link("n0_l2cache_l3cache")
-n0_l2cache_l3cache.connect( (n0_l2cache, "low_network_0", "10000ps"), (n2_bus, "high_network_0", "10000ps") )
-n1_bus_l2cache = sst.Link("n1_bus_l2cache")
-n1_bus_l2cache.connect( (n1_bus, "low_network_0", "10000ps"), (n1_l2cache, "high_network_0", "10000ps") )
-n1_l2cache_l3cache = sst.Link("n1_l2cache_l3cache")
-n1_l2cache_l3cache.connect( (n1_l2cache, "low_network_0", "10000ps"), (n2_bus, "high_network_1", "10000ps") )
+link_bus_l3cache = sst.Link("link_bus_l3cache")
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (comp_l3cache, "high_network_0", "10000ps") )
+link_c0_l1cache_l2cache_link = sst.Link("link_c0_l1cache_l2cache_link")
+link_c0_l1cache_l2cache_link.connect( (comp_c0_l1cache, "low_network_0", "10000ps"), (comp_n0_bus, "high_network_0", "10000ps") )
+link_c1_l1cache_l2cache_link = sst.Link("link_c1_l1cache_l2cache_link")
+link_c1_l1cache_l2cache_link.connect( (comp_c1_l1cache, "low_network_0", "10000ps"), (comp_n0_bus, "high_network_1", "10000ps") )
+link_c2_l1cache_l2cache_link = sst.Link("link_c2_l1cache_l2cache_link")
+link_c2_l1cache_l2cache_link.connect( (comp_c2_l1cache, "low_network_0", "10000ps"), (comp_n1_bus, "high_network_0", "10000ps") )
+link_c3_l1cache_l2cache_link = sst.Link("link_c3_l1cache_l2cache_link")
+link_c3_l1cache_l2cache_link.connect( (comp_c3_l1cache, "low_network_0", "10000ps"), (comp_n1_bus, "high_network_1", "10000ps") )
+link_cpu0_l1cache_link = sst.Link("link_cpu0_l1cache_link")
+link_cpu0_l1cache_link.connect( (comp_cpu0, "mem_link", "1000ps"), (comp_c0_l1cache, "high_network_0", "1000ps") )
+link_cpu1_l1cache_link = sst.Link("link_cpu1_l1cache_link")
+link_cpu1_l1cache_link.connect( (comp_cpu1, "mem_link", "1000ps"), (comp_c1_l1cache, "high_network_0", "1000ps") )
+link_cpu2_l1cache_link = sst.Link("link_cpu2_l1cache_link")
+link_cpu2_l1cache_link.connect( (comp_cpu2, "mem_link", "1000ps"), (comp_c2_l1cache, "high_network_0", "1000ps") )
+link_cpu3_l1cache_link = sst.Link("link_cpu3_l1cache_link")
+link_cpu3_l1cache_link.connect( (comp_cpu3, "mem_link", "1000ps"), (comp_c3_l1cache, "high_network_0", "1000ps") )
+link_mem_bus_link = sst.Link("link_mem_bus_link")
+link_mem_bus_link.connect( (comp_l3cache, "low_network_0", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_n0_bus_l2cache = sst.Link("link_n0_bus_l2cache")
+link_n0_bus_l2cache.connect( (comp_n0_bus, "low_network_0", "10000ps"), (comp_n0_l2cache, "high_network_0", "1000ps") )
+link_n0_l2cache_l3cache = sst.Link("link_n0_l2cache_l3cache")
+link_n0_l2cache_l3cache.connect( (comp_n0_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_0", "10000ps") )
+link_n1_bus_l2cache = sst.Link("link_n1_bus_l2cache")
+link_n1_bus_l2cache.connect( (comp_n1_bus, "low_network_0", "10000ps"), (comp_n1_l2cache, "high_network_0", "1000ps") )
+link_n1_l2cache_l3cache = sst.Link("link_n1_l2cache_l3cache")
+link_n1_l2cache_l3cache.connect( (comp_n1_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_1", "10000ps") )
 # End of generated output.

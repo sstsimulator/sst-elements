@@ -6,16 +6,16 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "10000ns")
 
 # Define the simulation components
-cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
-cpu.addParams({
+comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+comp_cpu.addParams({
       "workPerCycle" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x100000""",
       "num_loadstore" : """10000""",
       "do_write" : """1"""
 })
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
-l1cache.addParams({
+comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+comp_l1cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """4 KB""",
       "coherence_protocol" : """MSI""",
@@ -28,8 +28,8 @@ l1cache.addParams({
       "debug" : """${MEM_DEBUG}""",
       "statistics" : """1"""
 })
-l2cache = sst.Component("l2cache", "memHierarchy.Cache")
-l2cache.addParams({
+comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
+comp_l2cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """32 KB""",
       "coherence_protocol" : """MSI""",
@@ -42,8 +42,8 @@ l2cache.addParams({
       "statistics" : """1""",
       "high_network_links" : """1"""
 })
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-l3cache.addParams({
+comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+comp_l3cache.addParams({
       "cache_frequency" : """2 Ghz""",
       "cache_size" : """64 KB""",
       "coherence_protocol" : """MSI""",
@@ -58,8 +58,8 @@ l3cache.addParams({
       "directory_at_next_level" : """1""",
       "network_address" : """1"""
 })
-chiprtr = sst.Component("chiprtr", "merlin.hr_router")
-chiprtr.addParams({
+comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
+comp_chiprtr.addParams({
       "num_ports" : """2""",
       "num_vcs" : """3""",
       "link_bw" : """5GHz""",
@@ -67,8 +67,8 @@ chiprtr.addParams({
       "topology" : """merlin.singlerouter""",
       "id" : """0"""
 })
-dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
-dirctrl.addParams({
+comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+comp_dirctrl.addParams({
       "coherence_protocol" : """MSI""",
       "debug" : """${MEM_DEBUG}""",
       "network_bw" : """1GHz""",
@@ -77,8 +77,8 @@ dirctrl.addParams({
       "entry_cache_size" : """16384""",
       "network_address" : """0"""
 })
-memory = sst.Component("memory", "memHierarchy.MemController")
-memory.addParams({
+comp_memory = sst.Component("memory", "memHierarchy.MemController")
+comp_memory.addParams({
       "coherence_protocol" : """MSI""",
       "debug" : """${MEM_DEBUG}""",
       "access_time" : """100 ns""",
@@ -88,16 +88,16 @@ memory.addParams({
 
 
 # Define the simulation links
-cache_net_0 = sst.Link("cache_net_0")
-cache_net_0.connect( (l3cache, "directory", "10000ps"), (chiprtr, "port1", "10000ps") )
-cpu_l1cache_link = sst.Link("cpu_l1cache_link")
-cpu_l1cache_link.connect( (cpu, "mem_link", "1000ps"), (l1cache, "high_network_0", "1000ps") )
-dir_mem_link = sst.Link("dir_mem_link")
-dir_mem_link.connect( (dirctrl, "memory", "10000ps"), (memory, "direct_link", "10000ps") )
-dir_net_0 = sst.Link("dir_net_0")
-dir_net_0.connect( (chiprtr, "port0", "2000ps"), (dirctrl, "network", "2000ps") )
-l1cache_l2cache_link = sst.Link("l1cache_l2cache_link")
-l1cache_l2cache_link.connect( (l1cache, "low_network_0", "10000ps"), (l2cache, "high_network_0", "10000ps") )
-l2cache_l3cache_link = sst.Link("l2cache_l3cache_link")
-l2cache_l3cache_link.connect( (l2cache, "low_network_0", "10000ps"), (l3cache, "high_network_0", "10000ps") )
+link_cache_net_0 = sst.Link("link_cache_net_0")
+link_cache_net_0.connect( (comp_l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_cpu_l1cache_link = sst.Link("link_cpu_l1cache_link")
+link_cpu_l1cache_link.connect( (comp_cpu, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_dir_mem_link = sst.Link("link_dir_mem_link")
+link_dir_mem_link.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_dir_net_0 = sst.Link("link_dir_net_0")
+link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
+link_l1cache_l2cache_link = sst.Link("link_l1cache_l2cache_link")
+link_l1cache_l2cache_link.connect( (comp_l1cache, "low_network_0", "10000ps"), (comp_l2cache, "high_network_0", "10000ps") )
+link_l2cache_l3cache_link = sst.Link("link_l2cache_l3cache_link")
+link_l2cache_l3cache_link.connect( (comp_l2cache, "low_network_0", "10000ps"), (comp_l3cache, "high_network_0", "10000ps") )
 # End of generated output.
