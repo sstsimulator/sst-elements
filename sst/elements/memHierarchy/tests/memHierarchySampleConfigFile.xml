@@ -63,7 +63,7 @@
 </param_include>
 
 <config>
-    stopAtCycle=200ms
+    stopAtCycle=100ms
     debug-file=outT
 </config>
 

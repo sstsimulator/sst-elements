@@ -3,7 +3,7 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
-sst.setProgramOption("stopAtCycle", "200ms")
+sst.setProgramOption("stopAtCycle", "100ms")
 
 # Define the simulation components
 system = sst.Component("system", "m5C.M5")
