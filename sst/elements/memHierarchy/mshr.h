@@ -31,7 +31,7 @@ Cache::MSHR::MSHR(Cache* _cache, int _maxSize): cache_(_cache), size_(0), maxSiz
 bool Cache::MSHR::exists(Addr _baseAddr){
     cache_->mshrHits_++;
     mshrTable::iterator it = map_.find(_baseAddr);
-    return (it != map_.end());
+    return (it != map_.end() && it->second.front().elem.type() == typeid(MemEvent*));
 }
 
 const vector<mshrType> Cache::MSHR::lookup(Addr _baseAddr){

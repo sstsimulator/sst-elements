@@ -55,7 +55,7 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
     int id = lowNetworkNodeLookupByName(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->index()];
     if(ccLine->inTransition() && !_event->isWriteback()){
-        d_->debug(_L1_,"Stalling request:  TopCC in transition \n");
+        d_->debug(_L1_,"TopCC: Stalling request, ccLine in transition \n");
         return false;
     }
     
@@ -117,7 +117,7 @@ void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
     sendEvictionInvalidates(_lineIndex);
     
     if(ccLine->inTransition()){
-        d_->debug(_L1_,"Stalling request: Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
+        d_->debug(_L1_,"TopCC: Stalling request. Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
                         BccLineString[_state], ccLine->ownerExists() ? "True" : "False");
     }
 }
@@ -125,6 +125,7 @@ void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
 
 int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
     CCLine* ccLine = ccLines_[_lineIndex];
+    
     int sentInvalidates = 0;
     map<string, int>::iterator sharer;
     int requestingId = _requestingNode.empty() ? -1 : lowNetworkNodeLookupByName(_requestingNode);
@@ -150,6 +151,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
             }
         }
     }
+    
     
     if(!acksNeeded) ccLine->removeAllSharers();
     else if(acksNeeded && sentInvalidates > 0) ccLine->setState(Inv_A);
@@ -257,9 +259,9 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
             ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
         }
         else if(cmd == GetSEx){
-            ccLine->acksNeeded_ = true;
-            sendInvalidates(lineIndex, _event->getSrc());
-            return;
+            ccLine->setAcksNeeded();
+            int invSent = sendInvalidates(lineIndex, _event->getSrc());
+            if(invSent > 0) return;
         }
     }
     

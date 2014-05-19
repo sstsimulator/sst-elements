@@ -86,7 +86,6 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     bottomCC_->handleInvalidate(_event, cacheLine, _cmd);               /* Invalidate this cache line */
     if(!L1_) mshr_->removeElement(_baseAddr, _event);
     delete _event;
-    return;
 }
 
 
@@ -106,15 +105,24 @@ void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
 void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
     CacheLine* cacheLine = getCacheLine(_baseAddr);
     Command cmd = _event->getCmd();
-    int lineIndex = cacheLine->index();
 
     if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
 
+    int lineIndex = cacheLine->index();
+
+    if(!L1_){
+        if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
+            d_->debug(_WARNING_,"WARNING!! c3\n");
+            return;
+        }
+    }
     topCC_->handleInvalidate(lineIndex, cmd);
     if(invalidatesInProgress(lineIndex)) return;
     
     bottomCC_->handleFetchInvalidate(_event, cacheLine, cmd, _mshrHit);
-    mshr_->removeElement(_baseAddr, _event);
+    if(!L1_) mshr_->removeElement(_baseAddr, _event);
+
+    delete _event;
 }
 
 
@@ -381,7 +389,8 @@ MemEvent* Cache::getOriginalRequest(const vector<mshrType> _mshrEntry){
         return boost::get<MemEvent*>(_mshrEntry.front().elem);
     else{
         Addr addr = boost::get<Addr>(_mshrEntry.front().elem);
-        d_->debug(_ERROR_, "Not MemEvent type.  Pointer Addr = %"PRIx64"\n", addr); assert(0);
+        d_->debug(_ERROR_, "Not MemEvent type.  Pointer Addr = %"PRIx64"\n", addr);
+        assert(0);
     }
 }
 

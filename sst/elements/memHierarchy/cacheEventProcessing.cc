@@ -162,7 +162,6 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case Inv:
         case InvX:
             processCacheInvalidate(event, cmd, baseAddr, _mshrHit);
-            
             break;
         case NACK:
             origEvent = event->getNACKedEvent();
@@ -173,7 +172,6 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
             break;
         case FetchInv:
         case FetchInvX:
-            mshr_->insert(baseAddr, event);
             processFetch(event, baseAddr, _mshrHit);
             break;
         default:

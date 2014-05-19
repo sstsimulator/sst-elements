@@ -165,9 +165,14 @@ bool DirectoryController::processPacket(MemEvent *ev){
     
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
 
+    if(cmd == FetchResp) assert(entry && entry->inProgress());
+    
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;
 
+    
+    
+    
     /* New Request */
     switch(cmd) {
     case PutS:

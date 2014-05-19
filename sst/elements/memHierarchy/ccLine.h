@@ -67,12 +67,16 @@ public:
         ownerExists_ = true;
         d_->debug(C,L2,0, "Setting Owner..\n");
     }
+    
     void clearOwner() {
         ownerExists_ = false;
         assert(numSharers_ == 0);
         ownerId_ = -1;
         d_->debug(C,L2,0,"Clearing Owner..\n");
     }
+    
+    void setAcksNeeded(){ assert(acksNeeded_ == false); acksNeeded_ = true; }
+    void clearAcksNeeded() { acksNeeded_ = false; }
     
     bool isValid(){ return getState() == V; }
     bool valid() { return state_ == V; }
@@ -129,6 +133,7 @@ public:
         numSharers_ = 0;
         sharers_.reset();            
         ownerExists_ = false;
+        clearAcksNeeded();
         removeAllSharers();
         state_ = V;
         baseAddr_ = 0;
