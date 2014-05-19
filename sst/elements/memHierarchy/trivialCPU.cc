@@ -29,6 +29,11 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 {
     requestsPendingCycle = new Histogram<uint64_t, uint64_t>(2);
 
+    // Restart the RNG to ensure completely consistent results (XML->Python causes
+    // changes in the ComponentId_t ordering which fails to pass tests correctly.
+    uint32_t z_seed = params.find_integer("rngseed", 7);
+    rng.restart(z_seed, 13);
+
     out.init("", 0, 0, Output::STDOUT);
 
 	// get parameters
