@@ -77,7 +77,6 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     if(!L1_){
         if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
             d_->debug(_WARNING_,"WARNING!! c3\n");
-            assert(0);
             return;
         }
     }
@@ -238,7 +237,6 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     if(_cacheLine->isLockedByUser()){        /* If user-locked then wait this lock is released to activate this event. */
         if(!processRequestInMSHR(_baseAddr, _event)) {
             d_->debug(_WARNING_,"WARNING!! c0\n");
-            assert(0);
             return false;
         }
         STAT_InvalidateWaitingForUserLock_++;
@@ -251,7 +249,6 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
     if(ccLine->getState() != V){
         d_->debug(_WARNING_,"WARNING!! c1\n");
-        assert(0);
         processRequestInMSHR(_baseAddr, _event);
         return false;
     }
