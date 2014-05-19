@@ -36,6 +36,7 @@ public:
     
     CCLine(Output* _dbg){
         d_ = _dbg;
+        ownerId_ = -1;
         clear();
     }
 
@@ -75,6 +76,11 @@ public:
         d_->debug(C,L2,0,"Clearing Owner..\n");
     }
     
+    int getOwnerId(){
+        assert(ownerId_ != -1);
+        return ownerId_;
+    }
+    
     void setAcksNeeded(){ assert(acksNeeded_ == false); acksNeeded_ = true; }
     void clearAcksNeeded() { acksNeeded_ = false; }
     
@@ -83,7 +89,10 @@ public:
     bool inTransition() { return !valid(); }
     bool isSharer(int _id) { if(_id == -1) return false; return sharers_[_id]; }
     bool isShareless(){  return numSharers_ == 0; }
-    bool ownerExists(){ return ownerExists_; }
+    bool ownerExists(){
+        if(ownerExists_) assert(ownerId_ != -1);
+        return ownerExists_;
+    }
     TCC_MESIState getState() {return state_; }
 
     void removeAllSharers(){
@@ -130,13 +139,13 @@ public:
     }
 
     void clear() {
-        numSharers_ = 0;
         sharers_.reset();            
-        ownerExists_ = false;
         clearAcksNeeded();
+        ownerExists_  = false;
         removeAllSharers();
-        state_ = V;
-        baseAddr_ = 0;
+        state_        = V;
+        baseAddr_     = 0;
+        numSharers_   = 0;
     }
 };
 

@@ -43,6 +43,7 @@ Topology:
         <cache_line_size> 64 </cache_line_size>
         <L1> 1 </L1>
         <debug> ${MEM_DEBUG} </debug>
+        <debug_level> 8 </debug_level>
         <statistics> 1 </statistics>
     </l1Params>
 
@@ -57,6 +58,7 @@ Topology:
         <low_network_links> 1 </low_network_links>
         <cache_line_size> 64 </cache_line_size>
         <debug> ${MEM_DEBUG} </debug>
+        <debug_level> 8 </debug_level>
         <statistics> 1 </statistics>
     </l2Params>
 
@@ -71,6 +73,7 @@ Topology:
         <low_network_links> 1 </low_network_links>
         <cache_line_size> 64 </cache_line_size>
         <debug> ${MEM_DEBUG} </debug>
+        <debug_level> 8 </debug_level>
         <statistics> 1 </statistics>
     </l3Params>
 

@@ -186,8 +186,10 @@ void MESITopCC::sendCCInvalidates(int _lineIndex, string _requestingNode){
 
 void MESITopCC::sendInvalidateX(int _lineIndex){
     CCLine* ccLine = ccLines_[_lineIndex];
+    if(!ccLine->ownerExists()) return;
+    
     ccLine->setState(InvX_A);
-    string ownerName = lowNetworkNodeLookupById(ccLine->ownerId_);
+    string ownerName = lowNetworkNodeLookupById(ccLine->getOwnerId());
 
     invReqsSent_++;
     
@@ -214,7 +216,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->index();
-    CCLine* l             = ccLines_[_cacheLine->index()];
+    CCLine* l             = ccLines_[lineIndex];
 
     /* Send Data in E state */
     if(protocol_ &&  !l->ownerExists() && l->isShareless() && (state == E || state == M)){
