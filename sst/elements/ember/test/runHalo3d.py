@@ -12,7 +12,8 @@ msgSize = 0
 shape = "2"
 numCores = 1
 debug = 0
-sstRanks=0
+sstRanks=1
+sstNodes=1
 pex = 1 
 pey = 1 
 pez = 1 
@@ -33,12 +34,13 @@ def main():
     global pey
     global pez
     global sstRanks
+    global sstNodes
     global peflops 
     global copyTime
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape=","debug=",
-						"numCores=","pex=","pez=","pey=","sstRanks=","peflops=","copyTime="])
+						"numCores=","pex=","pez=","pey=","sstRanks=","sstNodes=","peflops=","copyTime="])
     except getopt.GetopError as err:
         print str(err)
         sys.exit(2)
@@ -63,6 +65,8 @@ def main():
             pez = a
         elif o in ("--sstRanks"):
             sstRanks = a
+        elif o in ("--sstNodes"):
+            sstNodes = a
         elif o in ("--peflops"):
             peflops = a
         elif o in ("--copyTime"):
@@ -81,6 +85,9 @@ def calcNumNodes( shape ):
     return num
 
 numNodes = calcNumNodes( shape )
+
+if sstNodes > 1:
+	sstRanks = int(sstNodes) * 8
 
 if 0 == sstRanks:
 	sys.exit("how many sst mpi ranks?")
@@ -102,11 +109,11 @@ if motif in ("Halo3D"):
 
 cmdLine="--cmdLine=\\\"" + motif + " iterations=" + str(iterations) + cmdExtra + "\\\"\""
 
-modelOptions="--model-options=\"--printStats=1 --debug=0 " + network + " --numCores=" + str(numCores) + " " + cmdLine
+modelOptions="--model-options=\"--printStats=0 --debug=0 " + network + " --numCores=" + str(numCores) + " " + cmdLine
 
 jobname = motif + "-" + str(numNodes) + "-" + str(numCores) + "-" + str(iterations) + "-" + str(peflops) + ".%j.out"
 
-args = [ "-N 2","--exclusive","--ntasks-per-node=8","--output=" + jobname, "./batch.py",  str(sstRanks), modelOptions ]
+args = [ "-N "+str(sstNodes),"--exclusive","--ntasks-per-node=8","--output=" + jobname, "./batch.py",  str(sstRanks), modelOptions ]
 
 call( ["echo"] + args )
 call( ["sbatch"] + args )
