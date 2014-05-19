@@ -112,11 +112,11 @@ void Cache::processIncomingEvent(SST::Event* _ev){
   
 void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     MemEvent *event = static_cast<MemEvent*>(_ev);
-    
     Command cmd     = event->getCmd();
     Addr baseAddr   = toBaseAddr(event->getAddr());
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
-        
+    MemEvent* origEvent;
+    
     if(!_mshrHit){
         STAT_TotalRequestsRecieved_++;
         d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
@@ -135,9 +135,15 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case GetS:
         case GetX:
         case GetSEx:
+        
+            //TODO: refactor, save isHitAnd.. to bool, and only call processRequestinMSHR once
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
-                mshr_->insert(baseAddr, event);
-                d_->debug(_L1_,"Adding event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                if(processRequestInMSHR(baseAddr, event)) d_->debug(_L0_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                return;
+            }
+            if(mshr_->isFull()){
+                d_->debug(_L0_,"MSHR is full.\n");
+                sendNACK(event);
                 return;
             }
             processCacheRequest(event, cmd, baseAddr, _mshrHit);
@@ -150,16 +156,23 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case PutM:
         case PutE:
         case PutX:
+        case PutXE:
             processCacheRequest(event, cmd, baseAddr, _mshrHit);
             break;
         case Inv:
         case InvX:
-            mshr_->insert(baseAddr, event);
             processCacheInvalidate(event, cmd, baseAddr, _mshrHit);
+            
             break;
-        case Fetch:
-        case FetchInvalidate:
-        case FetchInvalidateX:
+        case NACK:
+            origEvent = event->getNACKedEvent();
+            assert(origEvent);      //TODO: delete
+            d_->debug(_L0_,"Orig Cmd NACKed = %s \n", CommandString[origEvent->getCmd()]);
+            processIncomingNACK(origEvent);
+            //delete event;         //TODO: delete
+            break;
+        case FetchInv:
+        case FetchInvX:
             mshr_->insert(baseAddr, event);
             processFetch(event, baseAddr, _mshrHit);
             break;

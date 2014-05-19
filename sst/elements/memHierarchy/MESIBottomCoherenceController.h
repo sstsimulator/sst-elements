@@ -34,9 +34,10 @@ public:
         GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
         PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
         EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
-        InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = 0;
+        InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = InvalidatePUTSReqSent_ = 0;
         GetSExReqsReceived_ = GetSReqsReceived_ = GetXReqsReceived_ = 0;
-        FetchInvalidateReqSent_ = FetchInvalidateXReqSent_ = 0;
+        NACKsSent_ = 0;
+        FetchInvReqSent_ = FetchInvXReqSent_ = 0;
 
         L1_             = _L1;
         accessLatency_  = _accessLatency;
@@ -108,6 +109,9 @@ public:
         Forward request to lower level caches */
     void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
 
+    /** Send Event.  This version simply forwards/sends the event provided */
+    void sendEvent(MemEvent* _event);
+    
     /** Send response memEvent to lower level caches */
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
 
@@ -120,7 +124,9 @@ public:
     /** Sets the name of the next level cache */
     void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
 
-
+    /** Create MemEvent and send NACK cmd to HgLvl caches */
+    void sendNACK(MemEvent*);
+    
     /* Send andy outgoing messages directed to lower level caches or 
        directory controller (if one exists) */
     void sendOutgoingCommands(){
@@ -158,8 +164,10 @@ private:
             InvalidatePUTMReqSent_,
             InvalidatePUTEReqSent_,
             InvalidatePUTXReqSent_,
-            FetchInvalidateReqSent_,
-            FetchInvalidateXReqSent_;
+            InvalidatePUTSReqSent_,
+            FetchInvReqSent_,
+            FetchInvXReqSent_,
+            NACKsSent_;
     string ownerName_;
     string nextLevelCacheName_;
     

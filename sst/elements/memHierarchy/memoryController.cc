@@ -389,7 +389,7 @@ void MemController::handleEvent(SST::Event *event){
         addRequest(ev);
     }
     else if(cmd == PutS || cmd == PutE) return;
-    else _abort(MemController, "Command not supported");
+    else _abort(MemController, "MemController:  Command not supported, Cmd = %s", CommandString[cmd]);
     
     delete event;
     cout << flush;

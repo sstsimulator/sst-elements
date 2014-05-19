@@ -318,10 +318,10 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
 	uint32_t requesting_node = node_id(entry->activeReq->getSrc());
 	if(entry->dirty) {
 		// Must do a fetch
-		Command cmd = FetchInvalidate;
+		Command cmd = FetchInv;
         
         if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx)
-            cmd = FetchInvalidate;
+            cmd = FetchInv;
 
 		MemEvent *ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), cmd, entry->activeReq->getSize());
         std::string &dest = nodeid_to_name[entry->findOwner()];

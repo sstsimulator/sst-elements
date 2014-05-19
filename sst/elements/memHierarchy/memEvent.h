@@ -27,30 +27,29 @@ typedef uint64_t Addr;
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
 /* DO NOT CHANGE ORDERING!!!!  If ordering needs to change, change code in cacheEventProcessing.cc, cacheController::checkCacheLineIsStable   */
 #define X_TYPES \
-    /* Requests [0-2] */ \
+    X(NULLCMD) \
+    /* Requests */ \
     X(GetS) \
-    X(GetSEx) \
     X(GetX) \
-    /* Request Responses [3-4] */ \
+    X(GetSEx) \
+    /* Request Responses */ \
     X(GetSResp) \
     X(GetXResp) \
-    /* Writebacks [5-8] */ \
+    /* Writebacks */ \
     X(PutS) \
     X(PutM) \
     X(PutE) \
     X(PutX) \
-    /* Invalidates [9-10]*/ \
+    X(PutXE) \
+    /* Invalidates */ \
     X(Inv)  \
     X(InvX) \
-    /* Directory Controller [11-14]*/ \
-    X(Fetch) \
-    X(FetchInvalidate) \
-    X(FetchInvalidateX) \
+    /* Directory Controller*/ \
+    X(FetchInv) \
+    X(FetchInvX) \
     X(FetchResp) \
     /* Others */ \
-    X(NULLCMD) \
     X(InvAck)  \
-    X(Nack) \
     X(NACK) \
     X(PutAck) \
     X(ReadReq) \
@@ -112,10 +111,6 @@ static const char* TccLineString[] __attribute__((unused)) = {
     X(IM) \
     X(S)  \
     X(SI) \
-    X(SI_PutAck) \
-    X(EI_PutAck) \
-    X(MI_PutAck) \
-    X(MS_PutAck) \
     X(EI) \
     X(SM) \
     X(E) \
@@ -141,7 +136,7 @@ static const char* BccLineString[] __attribute__((unused)) = {
 #undef BCCLINE_TYPES
 
 //TODO: Make it more robust
-static const BCC_MESIState nextState[] = {I, S, M, S, I, I, I, I, I, I, M, E, M, I, S};
+static const BCC_MESIState nextState[] = {I, S, M, S, I, I, M, E, M, I, S};
 
 
 
@@ -182,6 +177,8 @@ public:
         size = 0;
         flags = 0;
         prefetch = false;
+        ackNeeded = false;
+        PutX_writeData = false;
     }
 
 
@@ -195,6 +192,8 @@ public:
         dst = BROADCAST_TARGET;
         flags = 0;
         prefetch = false;
+        ackNeeded = false;
+        PutX_writeData = false;
     }
 
     /** Creates a new MemEvent */
@@ -207,6 +206,8 @@ public:
         dst = BROADCAST_TARGET;
         flags = 0;
         prefetch = false;
+        ackNeeded = false;
+        PutX_writeData = false;
     }
 
 
@@ -220,13 +221,16 @@ public:
         setPayload(data);
         flags = 0;
         prefetch = false;
+        ackNeeded = false;
+        PutX_writeData = false;
     }
 
     /** Copy Construtor. */
     MemEvent(const MemEvent &me) :
         SST::Event(), event_id(me.event_id), response_to_id(me.response_to_id),
         addr(me.addr), baseAddr(me.baseAddr), size(me.size), cmd(me.cmd), payload(me.payload),
-        src(me.src), dst(me.dst), flags(me.flags), prefetch(me.prefetch), grantedState(me.grantedState){
+        src(me.src), dst(me.dst), flags(me.flags), prefetch(me.prefetch), grantedState(me.grantedState),
+        NACKedEvent(me.NACKedEvent), NACKedCmd(me.NACKedCmd), ackNeeded(me.ackNeeded), PutX_writeData(me.PutX_writeData){
         setDeliveryLink(me.getLinkId(), NULL);
     }
 
@@ -234,7 +238,8 @@ public:
     MemEvent(const MemEvent *me) :
         SST::Event(), event_id(me->event_id), response_to_id(me->response_to_id),
         addr(me->addr),baseAddr(me->baseAddr), size(me->size), cmd(me->cmd), payload(me->payload),
-        src(me->src), dst(me->dst), flags(me->flags), prefetch(me->prefetch), grantedState(me->grantedState){
+        src(me->src), dst(me->dst), flags(me->flags), prefetch(me->prefetch), grantedState(me->grantedState),
+        NACKedEvent(me->NACKedEvent), NACKedCmd(me->NACKedCmd), ackNeeded(me->ackNeeded), PutX_writeData(me->PutX_writeData){
         setDeliveryLink(me->getLinkId(), NULL);
     }
 
@@ -246,14 +251,19 @@ public:
     /**
      * Create a new MemEvent instance, pre-configured to act as a NACK response
      */
-    MemEvent* makeNackResponse(const Component *source){
-        MemEvent *me = new MemEvent(source, addr, Nack);
+    MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent){
+        MemEvent *me = new MemEvent(source, addr, NACK);
         me->setSize(size);
-        me->nackOrigCmd = cmd;
+        me->baseAddr = baseAddr;
+        assert(NACKedEvent);
         me->response_to_id = event_id;
         me->dst = src;
         me->prefetch = prefetch;
         me->setGrantedState(NULLST);
+        me->NACKedEvent = NACKedEvent;
+        me->NACKedCmd = NACKedEvent->cmd;
+        me->ackNeeded = false;
+        me->PutX_writeData = false;
         return me;
     }
 
@@ -263,8 +273,7 @@ public:
      * @param[in] source    Source Component where the response is being generated.
      * @return              A pointer to a new MemEvent
      */
-    MemEvent* makeResponse(const Component *source)
-    {
+    MemEvent* makeResponse(const Component *source){
         MemEvent *me = new MemEvent(source, addr, commandResponse(cmd));
         me->setSize(size);
         me->response_to_id = event_id;
@@ -273,21 +282,8 @@ public:
         if (queryFlag(F_UNCACHED)) me->setFlag(F_UNCACHED);
         me->prefetch = prefetch;
         me->setGrantedState(NULLST);
-        return me;
-    }
-
-
-    /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(const Component *source, std::vector<uint8_t> &data){
-        MemEvent *me = new MemEvent(source, addr, commandResponse(cmd));
-        me->response_to_id = event_id;
-        me->setSize(size);
-        me->dst = src;
-        me->baseAddr = baseAddr;
-        if (queryFlag(F_UNCACHED)) me->setFlag(F_UNCACHED);
-        me->setPayload(data);
-        me->prefetch = prefetch;
-        me->setGrantedState(NULLST);
+        me->ackNeeded = false;
+        me->PutX_writeData = false;
         return me;
     }
 
@@ -302,24 +298,16 @@ public:
         me->setPayload(data);
         me->setGrantedState(state);
         me->prefetch = prefetch;
+        me->ackNeeded = false;
+        me->PutX_writeData = false;
         return me;
     }
 
-    /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(const Component *source, BCC_MESIState state){
-            MemEvent *me = new MemEvent(source, addr, commandResponse(cmd));
-        me->setSize(0);
-        me->response_to_id = event_id;
-        me->dst = src;
-        me->baseAddr = baseAddr;
-        if (queryFlag(F_UNCACHED)) me->setFlag(F_UNCACHED);
-        me->setGrantedState(state);
-        me->prefetch = prefetch;
-        return me;
-    }
 
     /** return the original command that caused a NACK */
-    Command getNackOrigCmd() { return nackOrigCmd; }
+    MemEvent* getNACKedEvent() { return NACKedEvent; }
+    
+    Command getNACKedCmd() { return NACKedCmd; }
 
     /** @return  Unique ID of this MemEvent */
     id_type getID(void) const { return event_id; }
@@ -341,6 +329,38 @@ public:
     /** Sets the size in bytes that this MemEvent represents */
     void setSize(uint32_t sz) {
         size = sz;
+    }
+    
+    bool isHighNetEvent(){
+        if(cmd == GetS || cmd == GetX || cmd == GetSEx){
+            return true;
+        }
+        return false;
+    }
+    
+   bool isLowNetEvent(){
+        if(cmd == Inv || cmd == InvX ||
+           cmd == FetchInv || cmd == FetchInvX){
+            return true;
+        }
+        return false;
+    }
+    
+    bool isWriteback(){
+        if(cmd == PutS || cmd == PutM ||
+           cmd == PutE || cmd == PutX || cmd == PutXE){
+            return true;
+        }
+        return false;
+    
+    }
+    
+    bool fromHighNetNACK(){
+        return isLowNetEvent();
+    }
+    
+    bool fromLowNetNACK(){
+        return isHighNetEvent();
     }
 
     /** @return  the data payload. */
@@ -394,8 +414,23 @@ public:
 
     /** Returns true if this is a Data Request */
     static bool isDataRequest(Command cmd){
-        return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == Fetch || cmd == FetchInvalidate);
+        return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX);
     }
+    
+    
+    /** Set ackNeeded member variable */
+    void setAckNeeded(){
+        ackNeeded = true;
+    }
+    
+    /** Set PutXWriteData member variable */
+    void setPutXWriteData(){
+        PutX_writeData = true;
+    }
+    
+    
+    /** Getter for ackNeeded member variable */
+    bool getAckNeeded(){ return ackNeeded;}
 
 
     /** @return the source string - who sent this MemEvent */
@@ -449,14 +484,13 @@ public:
     static Command commandResponse(Command c)
     {
         switch(c) {
-        case GetSEx:
         case GetS:
+        case GetSEx:
             return GetSResp;
         case GetX:
             return GetXResp;
-        case Fetch:
-        case FetchInvalidate:
-        case FetchInvalidateX:
+        case FetchInv:
+        case FetchInvX:
             return FetchResp;
             //return SupplyData;
         default:
@@ -479,13 +513,18 @@ private:
     std::string src;
     std::string dst;
     
-    Command nackOrigCmd;
     uint32_t flags; 
     bool prefetch;
     BCC_MESIState grantedState;
     
     uint64_t startTime;
-
+    
+    MemEvent* NACKedEvent;
+    Command NACKedCmd;
+    
+    bool ackNeeded;
+    bool PutX_writeData;
+    
     MemEvent() {} // For serialization only
 
 

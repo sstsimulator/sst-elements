@@ -9,6 +9,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+/*
+ * File:   coherenceControllers.h
+ * Author: Branden Moore / Caesar De la Paz III
+ * Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
+ */
+
+
+
 #include <sst_config.h>
 
 #include "sst/core/serialization.h"
@@ -110,7 +118,6 @@ static const ElementInfoPort cpu_ports[] = {
 
 static const ElementInfoParam cpu_params[] = {
     {"verbose",             "Determine how verbose the output from the CPU is", "1"},
-    {"rngseed",             "Set a seed for the random generation of addresses", "7"},
     {"workPerCycle",        "How much work to do per cycle."},
     {"commFreq",            "How often to do a memory operation."},
     {"memSize",             "Size of physical memory."},

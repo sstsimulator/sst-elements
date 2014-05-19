@@ -29,7 +29,10 @@ protected:
     
     
 public:
-    bool exclusiveSharerExists_;
+    bool ownerExists_;
+    bool acksNeeded_;
+    int  ownerId_;
+
     
     CCLine(Output* _dbg){
         d_ = _dbg;
@@ -57,33 +60,33 @@ public:
     
     Addr getBaseAddr(){ return baseAddr_; }
     
-    void setExclusiveSharer(int _id) {
+    void setOwner(int _id) {
         assert(_id != -1);
-        exclusiveSharerExists_ = true;
-        addSharer(_id);
-        assert(numSharers_ == 1);
-        d_->debug(C,L2,0, "Setting Exclusive Sharer Flag..\n");
+        assert(numSharers_ == 0);
+        ownerId_ = _id;
+        ownerExists_ = true;
+        d_->debug(C,L2,0, "Setting Owner..\n");
     }
-    void clearExclusiveSharer(int _id) {
-        exclusiveSharerExists_ = false;
-        removeSharer(_id);
-        d_->debug(C,L2,0,"Clearing Exclusive Sharer Flag..\n");
+    void clearOwner() {
+        ownerExists_ = false;
+        assert(numSharers_ == 0);
+        ownerId_ = -1;
+        d_->debug(C,L2,0,"Clearing Owner..\n");
     }
     
     bool isValid(){ return getState() == V; }
-    bool getExclusiveSharer() { return exclusiveSharerExists_; }
     bool valid() { return state_ == V; }
     bool inTransition() { return !valid(); }
     bool isSharer(int _id) { if(_id == -1) return false; return sharers_[_id]; }
     bool isShareless(){  return numSharers_ == 0; }
-    bool exclusiveSharerExists(){ return (numSharers_ == 1) && (exclusiveSharerExists_); }
+    bool ownerExists(){ return ownerExists_; }
     TCC_MESIState getState() {return state_; }
 
     void removeAllSharers(){
         for(int i = 0; i < 128; i++){
             sharers_[i] = false;
         }
-        assert(exclusiveSharerExists_ == false);
+        assert(ownerExists_ == false);
         numSharers_ = 0;
     }
     
@@ -98,10 +101,18 @@ public:
     
     void removeSharer(int _id){
         if(_id == -1) return;
+        assert(numSharers_ > 0);
+        assert(sharers_[_id] == true);
+        
         sharers_[_id] = false;
         numSharers_--;
-        if(numSharers_ <= 0 || numSharers_ > 1) assert(exclusiveSharerExists_ == false);
+        
+        if(numSharers_ > 0) assert(ownerExists_ == false);
         d_->debug(C,L2,0, "Removed Sharer: Num Sharers = %u\n", numSharers_);
+        
+        updateState();
+        assertSharers();
+
     }
     
     uint numSharers(){ return numSharers_; }
@@ -111,12 +122,13 @@ public:
         numSharers_++;
         sharers_[_id] = true;
         d_->debug(C,L2,0, "Added Sharer:  Num Sharers = %u\n", numSharers_);
+        assertSharers();
     }
 
     void clear() {
         numSharers_ = 0;
         sharers_.reset();            
-        exclusiveSharerExists_ = false;
+        ownerExists_ = false;
         removeAllSharers();
         state_ = V;
         baseAddr_ = 0;

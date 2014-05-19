@@ -64,22 +64,25 @@ public:
         int         maxSize_;
         
         MSHR(Cache*, int);
+        bool exists(Addr baseAddr);
         void insertFront(Addr baseAddr, MemEvent* event);
         bool insertAll(Addr, vector<mshrType>);
         bool insert(Addr baseAddr, MemEvent* event);
         bool insertPointer(Addr keyAddr, Addr pointerAddr);
         bool insert(Addr baseAddr, Addr pointer);
-        bool insert(Addr baseAddr, mshrType mshrEntry) throw (mshrException);
+        bool insert(Addr baseAddr, mshrType mshrEntry);
         void removeElement(Addr baseAddr, MemEvent* event);
         void removeElement(Addr baseAddr, Addr pointer);
         void removeElement(Addr baseAddr, mshrType mshrEntry);
         vector<mshrType> removeAll(Addr);
         const vector<mshrType> lookup(Addr baseAddr);
+        MemEvent* lookupFront(Addr _baseAddr);
         bool isHit(Addr baseAddr);
         bool isHitAndStallNeeded(Addr baseAddr, Command cmd);
         uint getSize(){ return size_; }
         void printEntry(Addr baseAddr);
         void printEntry2(vector<MemEvent*> events);
+        bool isFull();
     };
     
     virtual void init(unsigned int);
@@ -139,7 +142,7 @@ private:
         Redirects message to Top Controller */
     void processCacheResponse(MemEvent* ackEvent, Addr baseAddr);
 
-    /** Function processes incomming Fetch or FetchInvalidate requests from the Directory Controller
+    /** Function processes incomming Fetch invalidate requests from the Directory Controller
         Fetches send data, while FetchInvalidates evict data to the directory controller */
     void processFetch(MemEvent* event, Addr baseAddr, bool mshrHit);
 
@@ -214,6 +217,21 @@ private:
     /** Check the 'validity' of the request.  Assert expected state */
     inline void checkRequestValidity(MemEvent* event) throw(ignoreEventException);
 
+    /** Insert to MSHR wrapper */
+    inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
+    
+    /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
+    bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
+    
+    /** Determines what CC will send the NACK. */
+    void sendNACK(MemEvent* _event);
+
+    /** In charge of processng incoming NACK.  
+        Currently, it simply retries event */
+    void processIncomingNACK(MemEvent* _origReqEvent);
+    
+    
+    
     /** Verify that input parameters are valid */
     void errorChecking();
     
@@ -276,7 +294,7 @@ private:
         retryQueue_ = retryQueueNext_;
         retryQueueNext_.clear();
         for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
-            d_->debug(_L1_,"Retrying event\n");
+            d_->debug(_L0_,"Retrying event\n");
             processEvent(*it, true);
             retryQueue_.erase(it);
         }

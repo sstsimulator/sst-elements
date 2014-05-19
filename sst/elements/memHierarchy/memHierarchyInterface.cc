@@ -38,6 +38,7 @@ void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
 void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
     MemEvent *me = createMemEvent(req);
     requests[me->getID()] = req;
+    //fprintf(stderr, "Sending request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[me->getCmd()], me->getAddr(), me->getID().first);
     link->send(me);
 }
 
@@ -98,15 +99,22 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
         req = i->second;
         
         if ( NACK == ev->getCmd() ) {                       /* We received a NACK.  Just re-issue it */
-            link->send(createMemEvent(req));
+            MemEvent *me = createMemEvent(req);
+            requests[me->getID()] = req;
+            link->send(me);
             return NULL;
         }
 
         requests.erase(i);
         updateRequest(req, ev);
     }
-    else fprintf(stderr, "Unable to find matching request\n"); //TODO
-    
+    else{
+        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first); //TODO
+        std::cout << std::flush;
+        std::cout << std::flush;
+
+        assert(0);
+    }
     return req;
 }
 

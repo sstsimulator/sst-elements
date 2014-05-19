@@ -90,7 +90,7 @@ public:
 
         void incLock(){
             userLock_++;
-            d_->debug(_L1_,"User Lock set on this cache line\n");
+            d_->debug(_L1_,"User-level lock set on this cache line\n");
         }
         
         void decLock(){

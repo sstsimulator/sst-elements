@@ -40,9 +40,11 @@ public:
                        : CoherencyController(_cache, _dbg, _lineSize){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_ = true;
-        accessLatency_ = _accessLatency;
-        mshrLatency_   = _mshrLatency;
-        highNetPorts_  = _childrenLinks;
+        accessLatency_      = _accessLatency;
+        mshrLatency_        = _mshrLatency;
+        highNetPorts_       = _childrenLinks;
+        NACKsSent_          = 0;
+        dummyCCLine_        = new CCLine(_dbg);
     }
     
     /** Upon a request, this function returns true if a response was sent back.
@@ -50,6 +52,9 @@ public:
         have to align */
     virtual bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
 
+    /** Determines whether the Inv request will ultimately require an MSHR entry (ie. request will stall) */
+    virtual bool willRequestPossiblyStall(int lineIndex, MemEvent* _event){return false;}
+    
     /** Returns the state of the CCLine.
         Dummy TopCC always has all CCLines in V states since there are no sharers */
     virtual TCC_MESIState getState(int lineIndex) { return V; }
@@ -60,13 +65,10 @@ public:
     
     /** Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual bool handleEviction(int lineIndex, BCC_MESIState _state) {return false;}
+    virtual void handleEviction(int lineIndex, BCC_MESIState _state) {}
    
-    /* Incoming Inv received.  TopCC sends invalidates up the hierarchy if necessary */
+    /* Incoming Inv/InvX/FetchInv/FetchInvX received.  TopCC sends invalidates up the hierarchy if necessary */
     virtual void handleInvalidate(int lineIndex, Command cmd){return;}
-   
-    /** Incoming FetchInv received.  TopCC sends FetchInv up the hierarchy if necessary */
-    virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd) {}
 
     /** Create MemEvent and send Response to HgLvl caches */
     bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, bool _mshrHit);
@@ -79,13 +81,19 @@ public:
         }
     }
     
+    virtual CCLine* getCCLine(int index) { return dummyCCLine_; }
+    
     /** Create MemEvent and send NACK cmd to HgLvl caches */
-    void sendNack(MemEvent*);
+    void sendNACK(MemEvent*);
+    
+    /** Send event to Higher level caches */
+    void sendEvent(MemEvent*);
     
     virtual void printStats(int _stats){};
    
-    vector<Link*>* highNetPorts_;
-
+    vector<Link*>*  highNetPorts_;
+    uint            NACKsSent_;
+    CCLine*         dummyCCLine_;
 };
 
 /*--------------------------------------------------------------------------------------------
@@ -102,9 +110,9 @@ public:
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);
         
-        L1_             = false;
-        InvReqsSent_    = 0, EvictionInvReqsSent_ = 0;
-        protocol_       = _protocol;
+        L1_                 = false;
+        invReqsSent_        = 0, evictionInvReqsSent_ = 0;
+        protocol_           = _protocol;
         ccLines_.resize(numLines_);
         
         for(uint i = 0; i < ccLines_.size(); i++)
@@ -115,11 +123,14 @@ public:
         for(unsigned int i = 0; i < ccLines_.size(); i++)
             delete ccLines_[i];
         lowNetworkNameMap_.clear();
+        lowNetworkIdMap_.clear();
     }
     
-    uint            InvReqsSent_;
-    uint            EvictionInvReqsSent_;
-    vector<CCLine*> ccLines_;
+    uint            invReqsSent_;
+    uint            evictionInvReqsSent_;
+    
+    /** Return the specified ccLines array element */
+    virtual CCLine* getCCLine(int _index) { return ccLines_[_index];}
     
     /** Upon a request, this function returns true if a response was sent back. In order for function to
     send response, the state of the cache line and the type of request have to align */
@@ -127,19 +138,22 @@ public:
     
     /* Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual bool handleEviction(int lineIndex, BCC_MESIState _state);
+    virtual void handleEviction(int lineIndex, BCC_MESIState _state);
     
-    /* Incoming Inv received.  TopCC sends invalidates up the hierarchy if necessary */
+    /* Incoming Inv/FetchInv received.  TopCC sends invalidates up the hierarchy if necessary */
     virtual void handleInvalidate(int lineIndex, Command cmd);
     
-    /* Incoming FetchInv received.  TopCC sends FetchInv up the hierarchy if necessary */
-    virtual void handleFetchInvalidate(CacheLine* _cacheLine, Command _cmd);
-    
+    /** Determines whether the Inv request will ultimately require an MSHR entry (ie. request will stall) */
+    virtual bool willRequestPossiblyStall(int lineIndex, MemEvent* _event);
+
     /** Print statistics at end of simulation */
     void printStats(int _stats);
     
     /** Lookup link to lwLvl cache/bus by name */
-    int  lowNetworkNodeLookup(const std::string &name);
+    int  lowNetworkNodeLookupByName(const std::string &name);
+    
+    /** Lookup link to lwLvl cache/bus by ID */
+    std::string lowNetworkNodeLookupById(int id);
     
     /** Handle incoming GetS Request.
         TopCC sends invalidates if needed, and add sharer appropriately */
@@ -160,6 +174,7 @@ public:
     /** Returns the state of the CCLine. */
     TCC_MESIState getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
     
+    
     /** Returns number of sharers. */
     uint numSharers(int lineIndex){return ccLines_[lineIndex]->numSharers();}
 
@@ -167,8 +182,16 @@ private:
     uint                numLines_;
     uint                lowNetworkNodeCount_;
     map<string, int>    lowNetworkNameMap_;
+    map<int, string>    lowNetworkIdMap_;
     int                 protocol_;
-    void sendInvalidates(Command cmd, int lineIndex, bool eviction, string requestingNode, bool acksNeeded);
+    vector<CCLine*>     ccLines_;
+
+    int sendInvalidates(int lineIndex, string requestingNode);
+    void sendInvalidateX(int lineIndex);
+    void sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded);
+    
+    void sendEvictionInvalidates(int _lineIndex);
+    void sendCCInvalidates(int _lineIndex, string _requestingNode);
     };
 
 }}

@@ -9,6 +9,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+/*
+ * File:   coherenceControllers.h
+ * Author: Branden Moore / Caesar De la Paz III
+ * Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
+ */
+
 #ifndef _MEMHIERARCHY_DIRCONTROLLER_H_
 #define _MEMHIERARCHY_DIRCONTROLLER_H_
 

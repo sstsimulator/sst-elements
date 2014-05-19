@@ -28,10 +28,6 @@ namespace SST { namespace MemHierarchy {
 class MOESIBottomCC : public MESIBottomCC{
 private:
 
-
-
-
-
 public:
     MOESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,

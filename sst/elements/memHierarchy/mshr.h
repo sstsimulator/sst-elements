@@ -28,6 +28,11 @@ namespace SST { namespace MemHierarchy {
 
 Cache::MSHR::MSHR(Cache* _cache, int _maxSize): cache_(_cache), size_(0), maxSize_(_maxSize){}
 
+bool Cache::MSHR::exists(Addr _baseAddr){
+    cache_->mshrHits_++;
+    mshrTable::iterator it = map_.find(_baseAddr);
+    return (it != map_.end());
+}
 
 const vector<mshrType> Cache::MSHR::lookup(Addr _baseAddr){
     cache_->mshrHits_++;
@@ -37,28 +42,51 @@ const vector<mshrType> Cache::MSHR::lookup(Addr _baseAddr){
     return res;
 }
 
+
+MemEvent* Cache::MSHR::lookupFront(Addr _baseAddr){
+    cache_->mshrHits_++;
+    mshrTable::iterator it = map_.find(_baseAddr);
+    assert(it != map_.end());
+    vector<mshrType> mshrEntry = it->second;
+    assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
+    return boost::get<MemEvent*>(mshrEntry.front().elem);
+}
+
 bool Cache::MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr){
+    assert(_keyAddr != _pointerAddr);
     return insert(_keyAddr, _pointerAddr);
 }
 
+bool Cache::MSHR::isFull(){
+    if(size_ >= maxSize_) return true;
+    return false;
+}
+
+
 bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
-    cache_->d_->debug(_L6_, "MSHR Event Inserted: Key Addr = %"PRIx64", Event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
     bool ret = insert(_baseAddr, mshrType(_event));
     if(LIKELY(ret)){
+        cache_->d_->debug(_L6_, "MSHR: Event Inserted: Key Addr = %"PRIx64", Event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
         _event->setStartTime(cache_->getTimestamp());
     }
+    else cache_->d_->debug(_L6_, "MSHR: Event could not be inserted.  MSHR Full\n");
     return ret;
 }
 
-bool Cache::MSHR::insert(Addr _baseAddr, Addr _pointer){
-    return insert(_baseAddr, mshrType(_pointer));
+bool Cache::MSHR::insert(Addr _keyAddr, Addr _pointerAddr){
+    bool ret = insert(_keyAddr, mshrType(_pointerAddr));
+    if(LIKELY(ret))
+        cache_->d_->debug(_L6_, "MSHR: Inserted pointer.  Key Addr = %"PRIx64", Pointer Addr = %"PRIx64"\n", _keyAddr, _pointerAddr);
+    else
+        cache_->d_->debug(_L6_, "MSHR: Pointer could not be inserted.  MSHR Full\n");
+
+    return ret;
 }
 
-bool Cache::MSHR::insert(Addr _baseAddr, mshrType _mshrEntry) throw(mshrException){
-    //if(size_ >= maxSize_) throw mshrException();  TODO
-    //if(size_ >= maxSize_) return false;
+bool Cache::MSHR::insert(Addr _baseAddr, mshrType _mshrEntry){
+    if(size_ >= maxSize_) return false;
     map_[_baseAddr].push_back(_mshrEntry);
-    size_++;
+    if(_mshrEntry.elem.type() == typeid(MemEvent*)) size_++;
     return true;
 }
 
@@ -70,8 +98,13 @@ bool Cache::MSHR::insertAll(Addr _baseAddr, vector<mshrType> _events){
     else {
         map_[_baseAddr] = _events;
     }
-
-    size_ = size_ + _events.size();
+    
+    int trueSize = 0;
+    for(vector<mshrType>::iterator it = _events.begin(); it != _events.end(); it++){
+        if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
+    }
+    
+    size_ += trueSize; //_events.size();
     return true;
 }
 
@@ -80,7 +113,13 @@ vector<mshrType> Cache::MSHR::removeAll(Addr _baseAddr){
     assert(it != map_.end());
     vector<mshrType> res = it->second;
     map_.erase(it);
-    size_ = size_ - res.size(); assert(size_ >= 0);
+    
+    int trueSize = 0;
+    for(vector<mshrType>::iterator it = res.begin(); it != res.end(); it++){
+        if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
+    }
+    
+    size_ -= trueSize; assert(size_ >= 0); // res.size();
     return res;
 }
 

@@ -59,6 +59,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     if(sizeStr.empty())                 _abort(Cache, "Cache size was not specified. \n")
     if(-1 == lineSize)                  _abort(Cache, "Line size was not specified (blocksize).\n");
     if(-1 == mshrSize)                  mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
+    if(10 > mshrSize)                   _abort(Cache, "MSHR should be at least of 10 MSHR entries long");
     if(L1int != 1 && L1int != 0)        _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
     if(accessLatency == -1 )            _abort(Cache, "Access time not specified\n");
     if(directoryAtNextLevel > 1 ||
@@ -129,7 +130,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
 
     /* MSHR */
     mshr_               = new MSHR(this, MSHRSize_);
-    mshrUncached_       = new MSHR(this, MSHRSize_);
+    mshrUncached_       = new MSHR(this, 4096);
     
     /* Links */
     lowNetPorts_        = new vector<Link*>();
@@ -188,7 +189,7 @@ void Cache::configureLinks(){
     int highNetCount = 0;
     bool lowNetExists = false;
     sprintf(buf2, "Error:  High network port was not specified correctly on componenent %s.  Please name ports \'high_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
-    sprintf(buf, "Error:  Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
+    sprintf(buf,  "Error:  Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
     sprintf(buf3, "Error:  More than one high network port specified in %s.  Please use a 'Bus' component when connecting more than one higher level cache (eg. 2 L1s, 1 L2)\n", this->getName().c_str());
 
     if(!dirControllerExists_){
