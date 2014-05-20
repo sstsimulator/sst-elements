@@ -54,7 +54,6 @@ public:
 
     struct ComponentInfo {
         std::string link_port;
-        TimeConverter *link_tc;  // Optional, if link_bandwidth specified
 		int num_vcs;
         std::string link_bandwidth;
         std::string name;
@@ -63,7 +62,7 @@ public:
         ComponentTypeInfo typeInfo;
         
         ComponentInfo() :
-            link_port(""), link_tc(NULL), link_bandwidth(""), name(""),
+            link_port(""), link_bandwidth(""), name(""),
             network_addr(0)
         { }
     };

@@ -34,11 +34,11 @@ int MemNIC::addrForDest(const std::string &target) const
   return addrIter->second;
 }
 
-/* Get size in flits for a MemEvent */
+/* Get size in bytes for a MemEvent */
 int MemNIC::getFlitSize(MemEvent *ev)
 {
     /* addr (8B) + cmd (1B) + size */
-    return std::max((unsigned long)((9 + ev->getSize()) / flitSize), 1UL);
+    return 8 + ev->getSize();
 }
 
 
@@ -52,16 +52,10 @@ MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) 
     flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
 
-    if ( ci.link_tc == NULL )
-        ci.link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(ci.link_bandwidth);
-
-
     Params params; // LinkControl doesn't actually use the params
     link_control = (Merlin::LinkControl*)comp->loadModule("merlin.linkcontrol", params);
-    int *buf_size = new int[num_vcs];
-    for ( int i = 0 ; i < num_vcs ; i++ ) buf_size[i] = 100;
-    link_control->configureLink(comp, ci.link_port, ci.link_tc, num_vcs, buf_size, buf_size);
-    delete [] buf_size;
+    UnitAlgebra buf_size("1KB");
+    link_control->configureLink(comp, ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, buf_size, buf_size);
 
 }
 
@@ -167,7 +161,7 @@ bool MemNIC::clock(void)
     if (!empty) {
         dbg.output(CALL_INFO, "SendQueue has %zu elements in it.\n", sendQueue.size());
         MemRtrEvent *head = sendQueue.front();
-        if ( link_control->spaceToSend(0, head->size_in_flits) ) {
+        if ( link_control->spaceToSend(0, head->size_in_bits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
                 dbg.output(CALL_INFO, "Sent message ((%"PRIx64", %d) %s %"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
@@ -211,8 +205,8 @@ void MemNIC::send(MemEvent *ev)
     MemRtrEvent *mre = new MemRtrEvent(ev);
     mre->src = ci.network_addr;
     mre->dest = addrForDest(ev->getDst());
-    mre->size_in_flits = getFlitSize(ev);
-    mre->vc = 0;
+    mre->size_in_bits = 8 * getFlitSize(ev);
+    mre->vn = 0;
 
     sendQueue.push_back(mre);
 }

@@ -146,7 +146,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
         assert(isPortConnected("directory"));
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
-        myInfo.link_bandwidth = "2 ns"; // Time base as registered earlier
+        myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
 		myInfo.num_vcs = params.find_integer("network_num_vc", 3);
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
