@@ -20,6 +20,7 @@ libcassini_la_SOURCES = \
 	pageentry.cc
 
 EXTRA_DIST = \
-	tests/streamcpu.xml
+	tests/streamcpu.xml \
+	tests/streamcpu-sp.xml
 
 libcassini_la_LDFLAGS = -module -avoid-version
