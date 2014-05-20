@@ -175,13 +175,16 @@ void Bus::configureParameters(SST::Params& _params){
     fanout_       = _params.find_integer("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
 
     if(busFrequency_ == "Invalid") _abort(Bus, "Bus Frequency was not specified\n");
-    if(broadcast_ < 0 || broadcast_ > 1) _abort(Bus, "Broadcast feature was not specified correctly\n");
     
-     /* busFrequency_ = busFrequency_ * 2;         Multiply Frequency times two.  This is because an SST Bus components has
-                                                  2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
-                                                  transaction (a real bus should be allowed to have 1 cycle latency).  To overcome
-                                                  this we clock the bus 2x the speed of the cores
-                                                */
+     /* Multiply Frequency times two.  This is because an SST Bus components has
+        2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any
+        transaction (a real bus should be allowed to have 1 cycle latency).  To overcome
+        this we clock the bus 2x the speed of the cores */
+
+    UnitAlgebra uA = UnitAlgebra(busFrequency_);
+    uA = uA * 2;
+    busFrequency_ = uA.toString();
+    
     clockHandler_ = new Clock::Handler<Bus>(this, &Bus::clockTick);
     defaultTimeBase_ = registerClock(busFrequency_, clockHandler_);
 }
