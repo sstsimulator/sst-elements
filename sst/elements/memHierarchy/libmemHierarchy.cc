@@ -88,10 +88,10 @@ static Component* create_Bus(ComponentId_t id, Params& params)
 }
 
 static const ElementInfoParam bus_params[] = {
-    {"bus_frequency",       "Number of Ports on the bus."},
+    {"bus_frequency",       "Bus clock frequency"},
     {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
-    {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports.", "0"},
-    {"bus_latency_cycles",  "Number of ports on the bus.", "0"},
+    {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports", "0"},
+    {"bus_latency_cycles",  "Number of ports on the bus", "0"},
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"high_network_ports",  "Number of high network ports (closer to the CPU)",""},
     {"low_network_ports",   "Number of low network ports (closer to the memory)", ""},
