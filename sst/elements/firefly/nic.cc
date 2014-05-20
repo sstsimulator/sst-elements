@@ -90,9 +90,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
                     params.find_string("module"), params);
     assert( m_linkControl );
 
+#if 0
     m_linkControl->configureLink(this, 
 						params.find_string("rtrPortName","rtr"),
 						tc, m_num_vcs, &buf_size[0], &buf_size[0]);
+#endif
 
     m_recvNotifyFunctor =
         new Merlin::LinkControl::Handler<Nic>(this,&Nic::recvNotify );
@@ -388,7 +390,9 @@ Nic::Entry* Nic::processSend( Entry* entry )
         print(m_dbg, &ev->buf[0], ev->buf.size() );
         ev->setDest( IdToNet( entry->node() ) );
         ev->setSrc( IdToNet( m_myNodeId ) );
+#if 0
         ev->setNumFlits( ev->buf.size(), m_bytesPerFlit );
+#endif
 
         #if 0 
             ev->setTraceType( Merlin::RtrEvent::FULL );

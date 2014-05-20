@@ -48,6 +48,7 @@ class MerlinFireflyEvent : public Merlin::RtrEvent {
         return new MerlinFireflyEvent(*this);
     }
 
+#if 0
     void setNumFlits( int len, int bytesPerFlit = 8 ) {
 		int pktLen = PktHdrLen + len;
 		assert(pktLen <= PktLen);
@@ -55,6 +56,7 @@ class MerlinFireflyEvent : public Merlin::RtrEvent {
 		
         if ( pktLen % bytesPerFlit ) ++size_in_flits;
     }
+#endif
 
     void setDest( int _dest ) {
         dest = _dest;
