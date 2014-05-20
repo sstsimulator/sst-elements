@@ -136,8 +136,9 @@ void StridePrefetcher::DetectStride() {
 	        for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 	            // Create a new read request, we cannot issue a write because the data will get
 	            // overwritten and corrupt memory (even if we really do want to do a write)
-	            MemEvent* newEv = new MemEvent(owner, ev->getAddr(), RequestData);
-	            newEv->setSize(blockSize);
+	            MemEvent* newEv = new MemEvent(owner, ev->getAddr(), GetS);
+            	    newEv->setSize(blockSize);
+            	    newEv->setPrefetchFlag(true);
 
         	    (*(*callbackItr))(newEv);
 	        }
