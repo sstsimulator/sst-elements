@@ -64,10 +64,10 @@ topo_torus::topo_torus(Component* comp, Params& params) :
 
     num_local_ports = params.find_integer("torus:local_ports", 1);
 
-    int n_vc = params.find_integer("num_vcs");
-    if ( n_vc < 2 || (n_vc & 1) ) {
-        _abort(topo_torus, "Number of VC's must be a multiple of two for a torus\n");
-    }
+    // int n_vc = params.find_integer("num_vcs");
+    // if ( n_vc < 2 || (n_vc & 1) ) {
+    //     _abort(topo_torus, "Number of VC's must be a multiple of two for a torus\n");
+    // }
 
     int n_ports = params.find_integer("num_ports");
     if ( n_ports == -1 )
@@ -151,7 +151,8 @@ topo_torus::process_input(RtrEvent* ev)
 {
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-
+    tt_ev->setVC(ev->vn * 2);
+    
     // Need to figure out what the torus address is for easier
     // routing.
     int run_id = get_dest_router(tt_ev->getDest());
@@ -203,6 +204,7 @@ internal_router_event* topo_torus::process_InitData_input(RtrEvent* ev)
 {
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
+    tt_ev->setVC(ev->vn * 2);
     if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
         /* For broadcast, use dest_loc as src_loc */
         for ( int i = 0 ; i < dimensions ; i++ ) {
@@ -276,6 +278,20 @@ topo_torus::choose_multipath(int start_port, int num_ports, int dest_dist)
         return start_port + (dest_dist % num_ports);
     }
 }
+
+int
+topo_torus::computeNumVCs(int vns)
+{
+    return 2*vns;
+}
+
+int
+topo_torus::getEndpointID(int port)
+{
+    if ( !isHostPort(port) ) return -1;
+    return (router_id * num_local_ports) + (port - local_port_start);
+}
+
 
 BOOST_CLASS_EXPORT(topo_torus_event)
 

@@ -31,7 +31,7 @@ public:
     int dimensions;
     int routing_dim;
     int* dest_loc;
-
+    
     topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
     virtual internal_router_event* clone(void)
@@ -41,6 +41,7 @@ public:
         memcpy(tte->dest_loc, dest_loc, dimensions*sizeof(int));
         return tte;
     }
+
 private:
     topo_torus_event() {}
 
@@ -101,6 +102,8 @@ public:
     virtual internal_router_event* process_InitData_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
+    virtual int computeNumVCs(int vns);
+    virtual int getEndpointID(int port);
 
 protected:
     virtual int choose_multipath(int start_port, int num_ports, int dest_dist);

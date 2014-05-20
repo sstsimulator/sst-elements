@@ -30,7 +30,7 @@ topo_fattree::topo_fattree(Component* comp, Params& params) :
     rtr_level = params.find_integer("fattree:level");
     edge_loading = params.find_integer("fattree:loading", -1);
     if ( edge_loading < 0 ) edge_loading = (num_ports/2);
-
+    
     buildRouteTable();
 }
 
@@ -145,7 +145,9 @@ void topo_fattree::route(int port, int vc, internal_router_event* ev)
 
 internal_router_event* topo_fattree::process_input(RtrEvent* ev)
 {
-    return new internal_router_event(ev);
+    internal_router_event* ire = new internal_router_event(ev);
+    ire->setVC(ev->vn);
+    return ire;
 }
 
 void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
@@ -202,6 +204,13 @@ internal_router_event* topo_fattree::process_InitData_input(RtrEvent* ev)
     return new internal_router_event(ev);
 }
 
+int
+topo_fattree::getEndpointID(int port)
+{
+    if ( rtr_level > 1 ) return -2;
+    if ( port >= edge_loading ) return -3;
+    return table[port].value.s;
+}
 
 Topology::PortState topo_fattree::getPortState(int port) const
 {

@@ -41,7 +41,9 @@ topo_singlerouter::route(int port, int vc, internal_router_event* ev)
 internal_router_event*
 topo_singlerouter::process_input(RtrEvent* ev)
 {
-    return new internal_router_event(ev);
+    internal_router_event* ire = new internal_router_event(ev);
+    ire->setVC(ev->vn);
+    return ire;
 }
 
 

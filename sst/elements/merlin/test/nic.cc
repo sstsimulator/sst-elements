@@ -20,6 +20,7 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
+#include <sst/core/unitAlgebra.h>
 
 #include "sst/elements/merlin/linkControl.h"
 
@@ -27,7 +28,7 @@ using namespace SST::Merlin;
 
 nic::nic(ComponentId_t cid, Params& params) :
     Component(cid),
-    last_vc(0),
+    last_vn(0),
     packets_sent(0),
     packets_recd(0),
     stalled_cycles(0),
@@ -44,17 +45,18 @@ nic::nic(ComponentId_t cid, Params& params) :
     }
     std::cout << "num_peers: " << num_peers << "\n";
 
-    num_vcs = params.find_integer("num_vcs");
-    if ( num_vcs == -1 ) {
+    num_vns = params.find_integer("num_vns");
+    if ( num_vns == -1 ) {
     }
-    std::cout << "num_vcs: " << num_vcs << "\n";
+    std::cout << "num_vns: " << num_vns << "\n";
 
-    std::string link_bw = params.find_string("link_bw");
-    if ( link_bw == "" ) {
+    std::string link_bw_s = params.find_string("link_bw");
+    if ( link_bw_s == "" ) {
     }
-    std::cout << "link_bw: " << link_bw << std::endl;
-    TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
-
+    std::cout << "link_bw: " << link_bw_s << std::endl;
+    // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
+    UnitAlgebra link_bw(link_bw_s);
+    
     addressMode = SEQUENTIAL;
 
     if ( !params.find_string("topology").compare("merlin.fattree") ) {
@@ -64,10 +66,11 @@ nic::nic(ComponentId_t cid, Params& params) :
     }
 
     // Create a LinkControl object
-    // NOTE:  This MUST be the same length as 'num_vcs'
-    int buf_size[3] = {100, 100, 100};
+    // NOTE:  This MUST be the same length as 'num_vns'
     link_control = (Merlin::LinkControl*)loadModule("merlin.linkcontrol", params);
-    link_control->configureLink(this, "rtr", tc, num_vcs, buf_size, buf_size);
+
+    UnitAlgebra buf_size("1kB");
+    link_control->configureLink(this, "rtr", link_bw, num_vns, buf_size, buf_size);
 
     last_target = id;
     next_seq = new int[num_peers];
@@ -98,22 +101,30 @@ void nic::finish()
 void nic::setup()
 {
     link_control->setup();
+    if ( link_control->getEndpointID() != id ) {
+        if ( addressMode == FATTREE_IP ) {
+            if ( IP_to_fattree_ID(link_control->getEndpointID()) != id ) {
+                std::cout << "NIC ids don't match: param = " << id << ", LinkControl = "
+                          << link_control->getEndpointID() << std::endl;
+            }
+        }
+    }
 }
 
 void
 nic::init(unsigned int phase) {
     link_control->init(phase);
-    if ( id == 0 && phase == 0 ) {
-        RtrEvent *re = new RtrEvent();
-        re->src = id;
-        re->dest = INIT_BROADCAST_ADDR;
+    // if ( id == 0 && phase == 0 ) {
+    //     RtrEvent *re = new RtrEvent();
+    //     re->src = id;
+    //     re->dest = INIT_BROADCAST_ADDR;
 
-        link_control->sendInitData(re);
-    }
-    while ( Event*ev = link_control->recvInitData() ) {
-        std::cout << "NIC " << id << "Received an init event in phase " << phase << "!" << std::endl;
-        delete ev;
-    }
+    //     link_control->sendInitData(re);
+    // }
+    // while ( Event*ev = link_control->recvInitData() ) {
+    //     std::cout << "NIC " << id << "Received an init event in phase " << phase << "!" << std::endl;
+    //     delete ev;
+    // }
 }
 
 class MyRtrEvent : public RtrEvent {
@@ -146,16 +157,19 @@ bool
 nic::clock_handler(Cycle_t cycle)
 {
     static const int num_msg = 10;
+    static const int send_vc = 0;
+    static const int size_in_bits = 400;
     int expected_recv_count = (num_peers-1)*num_msg;
 
     if ( !done && (packets_recd >= expected_recv_count) ) {
         std::cout << cycle << ": NIC " << id << " received all packets!" << std::endl;
-      primaryComponentOKToEndSim();
+        primaryComponentOKToEndSim();
         done = true;
     }
     // Send packets
     if ( packets_sent < expected_recv_count ) {
-        if ( link_control->spaceToSend(0,5) ) {
+        if ( link_control->spaceToSend(send_vc,size_in_bits) ) {
+            // std::cout << id << " sending packet number: " << packets_sent << std::endl;
             last_target++;
             if ( last_target == id ) last_target++;
             last_target %= num_peers;
@@ -175,9 +189,14 @@ nic::clock_handler(Cycle_t cycle)
                 break;
             }
 
-            ev->vc = 0;
-            ev->size_in_flits = 5;
-            bool sent = link_control->send(ev,0);
+            ev->vn = 0;
+            ev->size_in_bits = size_in_bits;
+            // if ( id == 0 ) {
+            //     ev->setTraceType(RtrEvent::FULL);
+            //     ev->setTraceID(packets_sent);
+            // }
+            
+            bool sent = link_control->send(ev,send_vc);
             assert( sent );
             //std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
             packets_sent++;
@@ -190,14 +209,15 @@ nic::clock_handler(Cycle_t cycle)
         }
     }
 
-    for ( int vc = 0 ; vc < num_vcs ; vc++ ) {
-        last_vc = (last_vc + 1) % num_vcs; // round-robin
-        RtrEvent* rec_ev = link_control->recv(last_vc);
+    for ( int vn = 0 ; vn < num_vns ; vn++ ) {
+        last_vn = (last_vn + 1) % num_vns; // round-robin
+        RtrEvent* rec_ev = link_control->recv(last_vn);
         MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(rec_ev);
         if ( ev == NULL && rec_ev != NULL ) {
             _abort(nic, "Aieeee!\n");
         }
         if ( ev != NULL ) {
+            // std::cout << id << " received a packet on VN" << last_vn << std::endl;
             packets_recd++;
             int src = (addressMode == FATTREE_IP) ? IP_to_fattree_ID(ev->src) : ev->src;
 #if 0
@@ -207,7 +227,7 @@ nic::clock_handler(Cycle_t cycle)
             }
 #endif
             next_seq[src]++;
-            //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
+            //std::cout << cycle << ": " << id << " Received an event on vn " << rec_ev->vn << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             break;
         }

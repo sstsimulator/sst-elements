@@ -9,23 +9,23 @@
 <param_include>
   <rtr_params>
     <num_ports>  3   </num_ports>
-    <num_vcs>    2   </num_vcs>
-    <link_bw>   2GHz </link_bw>
-    <xbar_bw>   2GHz </xbar_bw>
-    <input_latency>   2ns </input_latency>
+    <link_bw>   4GB/s </link_bw>
+    <flit_size> 4B </flit_size>
+    <xbar_bw>   4.5GB/s </xbar_bw>
+    <input_latency>   10ns </input_latency>
     <output_latency>  2ns </output_latency>
     <topology> merlin.torus </topology>
-    <input_buf_size>  100 </input_buf_size>
-    <output_buf_size> 100  </output_buf_size>
+    <input_buf_size>  3200B </input_buf_size>
+    <output_buf_size> 3200B  </output_buf_size>
     <torus:shape> 2 </torus:shape>
   </rtr_params>
 
   <nic_params>
-    <num_vcs>    2   </num_vcs>
-    <link_bw>  2GHz  </link_bw>
-    <packet_size> 10  </packet_size>
-    <packets_to_send> 100 </packets_to_send>
-    <buffer_size> 100 </buffer_size>
+    <num_vns>    2   </num_vns>
+    <link_bw>  4GB/s  </link_bw>
+    <packet_size> 16B  </packet_size>
+    <packets_to_send> 1000 </packets_to_send>
+    <buffer_size> 3200B </buffer_size>
   </nic_params>
 </param_include>
 

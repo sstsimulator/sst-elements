@@ -17,11 +17,13 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
+#include <sst/core/unitAlgebra.h>
 
 #include <sstream>
 
 #include <signal.h>
 
+#include "merlin.h"
 #include "portControl.h"
 #include "xbar_arb_rr.h"
 
@@ -46,24 +48,32 @@ hr_router::~hr_router()
 }
 
 hr_router::hr_router(ComponentId_t cid, Params& params) :
-    Router(cid)
+    Router(cid),
+    requested_vns(0),
+    num_vcs(-1),
+    vcs_initialized(false)
 {
+    // std::cout << "Constructing hr_router" << std::endl;
+    
     // Get the options for the router
     id = params.find_integer("id");
     if ( id == -1 ) {
-        _abort(hr_router, "ERROR: hr_router requires id to be specified");
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires id to be specified\n");
     }
     // std::cout << "id: " << id << std::endl;
 
     num_ports = params.find_integer("num_ports");
     if ( num_ports == -1 ) {
-        _abort(hr_router, "ERROR: hr_router requires num_poorts to be specified");
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires num_poorts to be specified\n");
     }
     // std::cout << "num_ports: " << num_ports << std::endl;
 
     num_vcs = params.find_integer("num_vcs");
-    if ( num_vcs == -1 ) {
-        _abort(hr_router, "ERROR: hr_router requires num_vcs to be specified");
+    if ( num_vcs != -1 ) {
+        // merlin_abort.fatal(CALL_INFO,-1,"ERROR: hr_router requires num_vcs to be specified\n");
+        merlin_abort.output("WARNING: hr_router no longer uses parameter num_vcs,\n"
+                             "the number of VCs is derived from the number of VNs the\n"
+                             "endpoint requests.\n");
     }
     // std::cout << "num_vcs: " << num_vcs << std::endl;
 
@@ -72,23 +82,64 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // std::cout << "Topology: " << topology << std::endl;
 
     if ( topology == "" ) {
-        _abort(hr_router, "ERROR: hr_router requires topology to be specified");
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
     }
 
     topo = dynamic_cast<Topology*>(loadModuleWithComponent(topology,this,params));
-    if ( !topo )
-        _abort(hr_router, "ERROR:  Unable to find topology '%s'\n", topology.c_str());
-
+    if ( !topo ) {
+        merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
+    }
 
     // Parse all the timing parameters
-    std::string link_bw = params.find_string("link_bw");
-    if ( link_bw == "" ) {
-        _abort(hr_router, "ERROR: hr_router requires link_bw to be specified");
+    std::string link_bw_s = params.find_string("link_bw");
+    if ( link_bw_s == "" ) {
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires link_bw to be specified\n");
         abort();
     }
+
+    UnitAlgebra link_bw(link_bw_s);
     // std::cout << "link_bw: " << link_bw << std::endl;
 
-    TimeConverter* link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
+    if ( link_bw.hasUnits("B/s") ) {
+        // Need to convert to bits per second
+        link_bw *= UnitAlgebra("8b/B");
+    }
+    
+    std::string flit_size_s = params.find_string("flit_size");
+    if ( flit_size_s == "" ) {
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires flit_size to be specified\n");
+        abort();
+    }
+    UnitAlgebra flit_size(flit_size_s);
+
+    if ( flit_size.hasUnits("B") ) {
+        // Need to convert to bits per second
+        flit_size *= UnitAlgebra("8b/B");
+    }
+    
+    std::string xbar_bw_s = params.find_string("xbar_bw");
+    if ( xbar_bw_s == "" ) {
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires xbar_bw to be specified\n");
+    }
+    // std::cout << "xbar_bw: " << xbar_bw << std::endl;
+
+    UnitAlgebra xbar_bw_ua(xbar_bw_s);
+    if ( xbar_bw_ua.hasUnits("B/s") ) {
+        // Need to convert to bits per second
+        xbar_bw_ua *= UnitAlgebra("8b/B");
+    }
+
+    // Compute the link bandwidth in flits/sec
+    UnitAlgebra link_clock;
+    link_clock = link_bw / flit_size;
+    // std::cout << "link_clock = " << link_clock.toStringBestSI() << std::endl;
+
+    UnitAlgebra xbar_clock;
+    xbar_clock = xbar_bw_ua / flit_size;
+    // std::cout << "xbar_clock = " << xbar_clock.toStringBestSI() << std::endl;
+    
+    // TimeConverter* link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw_s);
+    // TimeConverter* link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_clock);
 
     std::string input_latency = params.find_string("input_latency", "0ns");
     // std::cout << "input_latency: " << input_latency << std::endl;
@@ -96,71 +147,55 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::string output_latency = params.find_string("output_latency", "0ns");
     // std::cout << "output_latency: " << output_latency << std::endl;
 
-    xbar_bw = params.find_string("xbar_bw");
-    if ( xbar_bw == "" ) {
-        _abort(hr_router, "ERROR: hr_router requires xbar_bw to be specified");
-    }
-    // std::cout << "xbar_bw: " << xbar_bw << std::endl;
 
     // Create all the PortControl blocks
     ports = new PortControl*[num_ports];
 
+    std::string input_buf_size_s = params.find_string("input_buf_size", "0");
+    std::string output_buf_size_s = params.find_string("output_buf_size", "0");
 
-    int input_buf_size = params.find_integer("input_buf_size", 100);
-    int output_buf_size = params.find_integer("output_buf_size", 100);
-
-
-    int in_buf_sizes[num_vcs];
-    int out_buf_sizes[num_vcs];
-
-    for ( int i = 0; i < num_vcs; i++ ) {
-        in_buf_sizes[i] = input_buf_size;
-        out_buf_sizes[i] = output_buf_size;
-    }
-
+    input_buf_size = input_buf_size_s;
+    output_buf_size = output_buf_size_s;
+    
     // Naming convention is from point of view of the xbar.  So,
     // in_port_busy is >0 if someone is writing to that xbar port and
     // out_port_busy is >0 if that xbar port being read.
     in_port_busy = new int[num_ports];
     out_port_busy = new int[num_ports];
-
+    
     progress_vcs = new int[num_ports];
 
-    vc_heads = new internal_router_event*[num_ports*num_vcs];
-    xbar_in_credits = new int[num_ports*num_vcs];
-
-    topo->setOutputBufferCreditArray(xbar_in_credits);
-    
     for ( int i = 0; i < num_ports; i++ ) {
-	in_port_busy[i] = 0;
-	out_port_busy[i] = 0;
-	progress_vcs[i] = -1;
-	
-	std::stringstream port_name;
-	port_name << "port";
-	port_name << i;
-	// std::cout << port_name.str() << std::endl;
+        in_port_busy[i] = 0;
+        out_port_busy[i] = 0;
+        progress_vcs[i] = -1;
+        
+        std::stringstream port_name;
+        port_name << "port";
+        port_name << i;
+        // std::cout << port_name.str() << std::endl;
 
-	ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo, num_vcs,
-				   &vc_heads[i*num_vcs], &xbar_in_credits[i*num_vcs],
-				   in_buf_sizes, out_buf_sizes, 1, input_latency, 1, output_latency);
-
+        // ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo,
+        //                            1, input_latency, 1, output_latency);
+        ports[i] = new PortControl(this, id, port_name.str(), i, link_bw, flit_size, topo,
+                                   1, input_latency, 1, output_latency);
+        
     }
-
+    
     // Get the Xbar arbitration
     // arb = new xbar_arb_rr(num_ports,num_vcs);
     arb = new xbar_arb_rr();
-    arb->setPorts(num_ports,num_vcs);
     
     if ( params.find_integer("debug", 0) ) {
         if ( num_routers == 0 ) {
             signal(SIGUSR2, &hr_router::sigHandler);
         }
-	my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler);
+        my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler);
     } else {
         my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::clock_handler);
     }
-    xbar_tc = registerClock( xbar_bw, my_clock_handler);
+    // xbar_tc = registerClock( xbar_bw, my_clock_handler);
+    xbar_tc = registerClock( xbar_clock, my_clock_handler);
     num_routers++;
 
 #if VERIFY_DECLOCKING
@@ -169,9 +204,11 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     
     // Check to make sure that the xbar BW is equal to or greater than
     // the link BW, otherwise the model runs into problems
-    if ( xbar_tc->getFactor() > link_tc->getFactor() ) {
+    // if ( xbar_tc->getFactor() > link_tc->getFactor() ) {
+    if ( xbar_bw_ua < link_bw  ) {
         std::cout << "ERROR: hr_router requires xbar_bw to be greater than or equal to link_bw" << std::endl;
-        std::cout << "  xbar_bw = " << xbar_bw << ", link_bw = " << link_bw << std::endl;
+        std::cout << "  xbar_bw = " << xbar_bw_ua.toStringBestSI() << ", link_bw = "
+                  << link_bw.toStringBestSI() << std::endl;
         abort();
     }
 }
@@ -224,6 +261,16 @@ hr_router::dumpState(std::ostream& stream)
     
 }
 
+void
+hr_router::printStatus(Output& out)
+{
+    out.output("Router id: %d\n", id);
+    for ( int i = 0; i < num_ports; i++ ) {
+        ports[i]->printStatus(out);
+        out.output("  Output_busy: %u\n", out_port_busy[i]);
+        out.output("  Input_Busy: %u\n",in_port_busy[i]);
+    }
+}
 
 bool
 hr_router::debug_clock_handler(Cycle_t cycle)
@@ -246,15 +293,15 @@ hr_router::clock_handler(Cycle_t cycle)
     // ourselves from the clock queue.
     if ( get_vcs_with_data() == 0 ) {
 #if VERIFY_DECLOCKING
-	if ( clocking ) {
-	    setRequestNotifyOnEvent(true);
-	    unclocked_cycle = cycle;
-	    clocking = false;
-	}
+        if ( clocking ) {
+            setRequestNotifyOnEvent(true);
+            unclocked_cycle = cycle;
+            clocking = false;
+        }
 #else
-	setRequestNotifyOnEvent(true);
-	unclocked_cycle = cycle;
-	return true;
+        setRequestNotifyOnEvent(true);
+        unclocked_cycle = cycle;
+        return true;
 #endif
     }
 
@@ -262,10 +309,12 @@ hr_router::clock_handler(Cycle_t cycle)
     // route
     int index = 0;
     for ( int i = 0; i < num_ports; i++ ) {
-	for ( int j = 0; j < num_vcs; j++ ) {
-	    if ( vc_heads[index] != NULL ) topo->reroute(i,j,vc_heads[index]);
-	    index++;
-	}
+        for ( int j = 0; j < num_vcs; j++ ) {
+            if ( vc_heads[index] != NULL ) {
+                topo->reroute(i,j,vc_heads[index]);
+            }
+            index++;
+        }
     }
     
     // All we need to do is arbitrate the crossbar
@@ -277,29 +326,30 @@ hr_router::clock_handler(Cycle_t cycle)
     
     // Move the events and decrement the busy values
     for ( int i = 0; i < num_ports; i++ ) {
- 	if ( progress_vcs[i] != -1 ) {
-	    internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
-	    ports[ev->getNextPort()]->send(ev,ev->getVC());
-	    // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
-	    // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
+        if ( progress_vcs[i] != -1 ) {
+            internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
+            ports[ev->getNextPort()]->send(ev,ev->getVC());
+            // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
+            // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
+            
+            if ( ev->getTraceType() == RtrEvent::FULL ) {
+                std::cout << "TRACE(" << ev->getTraceID() << "): " << getCurrentSimTimeNano()
+                          << " ns: Copying event (src = " << ev->getSrc() << ","
+                          << " dest = "<< ev->getDest() << ") over crossbar in router " << id
+                          << " (" << getName() << ")"
+                          << " from port " << i << ", VC " << progress_vcs[i] 
+                          << " to port " << ev->getNextPort() << ", VC " << ev->getVC()
+                          << "." << std::endl;
+            }
 
-	    if ( ev->getTraceType() == RtrEvent::FULL ) {
-		std::cout << "TRACE(" << ev->getTraceID() << "): " << getCurrentSimTimeNano()
-			  << " ns: Copying event (src = " << ev->getSrc() << ","
-			  << " dest = "<< ev->getDest() << ") over crossbar in router " << id
-			  << " (" << getName() << ")"
-			  << " from port " << i << ", VC " << progress_vcs[i] 
-			  << " to port " << ev->getNextPort() << ", VC " << ev->getVC()
-			  << "." << std::endl;
-	    }
-	}
-	
-	// Should stop at zero, need to find a clean way to do this
-	// with no branch.  For now it should work.
+        }
+        
+        // Should stop at zero, need to find a clean way to do this
+        // with no branch.  For now it should work.
         if ( in_port_busy[i] != 0 ) in_port_busy[i]--;
-	if ( out_port_busy[i] != 0 ) out_port_busy[i]--;
+        if ( out_port_busy[i] != 0 ) out_port_busy[i]--;
     }
-
+    
     return false;
 }
 
@@ -315,7 +365,8 @@ void
 hr_router::init(unsigned int phase)
 {
     for ( int i = 0; i < num_ports; i++ ) {
-	ports[i]->init(phase);
+        // std::cout << "Calling init on port: " << i << ", in phase " << phase << std::endl;
+        ports[i]->init(phase);
         Event *ev = NULL;
         while ( (ev = ports[i]->recvInitData()) != NULL ) {
             internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
@@ -345,6 +396,22 @@ hr_router::init(unsigned int phase)
             delete ire;
         }
     }
+
+    // Alsways do the above.  A few specific things to do during init
+
+    // After phase 1, all the PortControl blocks will have reported
+    // the requested VNs.  Now we need to translate this to the number
+    // of VCs needed.
+    // if ( phase == 1 ) {
+    //     num_vcs = topo->computeNumVCs(requested_vns);
+    //     init_vcs();
+    // }
+
+    // Once we are ready to initialize VCs, do it, but only once.
+    if ( num_vcs != -1 && !vcs_initialized ) {
+        init_vcs();
+    }
+
 }
 
 void
@@ -357,4 +424,81 @@ void
 hr_router::recvTopologyEvent(int port, TopologyEvent* ev) {
     // Event just get's sent on to topolgy object
     topo->recvTopologyEvent(port,ev);
+
+}
+
+void
+hr_router::reportRequestedVNs(int port, int vns)
+{
+    // if ( vns > requested_vns) requested_vns = vns;
+
+    // For now all the vn requests need to be identical.  Will work on
+    // making it more flexible later.
+    if ( num_vcs == -1 ) {
+        num_vcs = topo->computeNumVCs(vns);
+    }
+}
+
+void
+hr_router::reportSetVCs(int port, int vcs)
+{
+    if ( num_vcs == -1 ) {
+        num_vcs = vcs;
+    }
+}
+
+
+// void
+// hr_router::init_vcs()
+// {
+//     int in_buf_sizes[num_vcs];
+//     int out_buf_sizes[num_vcs];
+
+//     for ( int i = 0; i < num_vcs; i++ ) {
+//         in_buf_sizes[i] = input_buf_size;
+//         out_buf_sizes[i] = output_buf_size;
+//     }
+
+//     vc_heads = new internal_router_event*[num_ports*num_vcs];
+//     for ( int i = 0; i < num_ports*num_vcs; i++ ) vc_heads[i] = NULL;
+//     xbar_in_credits = new int[num_ports*num_vcs];
+
+//     topo->setOutputBufferCreditArray(xbar_in_credits);
+
+//     for ( int i = 0; i < num_ports; i++ ) {
+//         ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],in_buf_sizes,out_buf_sizes);
+//     }    
+
+//     // Now that we have the number of VCs we can finish initializing
+//     // arbitration logic
+//     arb->setPorts(num_ports,num_vcs);
+// }
+
+void
+hr_router::init_vcs()
+{
+    // int in_buf_sizes[num_vcs];
+    // int out_buf_sizes[num_vcs];
+
+    // for ( int i = 0; i < num_vcs; i++ ) {
+    //     in_buf_sizes[i] = input_buf_size;
+    //     out_buf_sizes[i] = output_buf_size;
+    // }
+
+    vc_heads = new internal_router_event*[num_ports*num_vcs];
+    for ( int i = 0; i < num_ports*num_vcs; i++ ) vc_heads[i] = NULL;
+    xbar_in_credits = new int[num_ports*num_vcs];
+
+    topo->setOutputBufferCreditArray(xbar_in_credits);
+
+    for ( int i = 0; i < num_ports; i++ ) {
+        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],input_buf_size,output_buf_size);
+    }    
+
+    // Now that we have the number of VCs we can finish initializing
+    // arbitration logic
+    arb->setPorts(num_ports,num_vcs);
+
+    vcs_initialized = true;
+    
 }

@@ -23,6 +23,7 @@ void* genMerlinPyModule(void)
     // Must return a PyObject
 
     PyObject *code = Py_CompileString(pymerlin, "pymerlin", Py_file_input);
+    printf("code = %p\n",code);
     return PyImport_ExecCodeModule("sst.merlin", code);
 }
 

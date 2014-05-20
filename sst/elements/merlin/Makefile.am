@@ -8,11 +8,13 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmerlin.la
 
 libmerlin_la_SOURCES = \
+	merlin.h \
 	merlin.cc \
 	router.h \
 	linkControl.h \
 	linkControl.cc \
 	portControl.h \
+	portControl.cc \
 	test/nic.h \
 	test/nic.cc \
 	test/pt2pt/pt2pt_test.h \

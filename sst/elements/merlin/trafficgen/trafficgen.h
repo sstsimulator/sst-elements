@@ -179,7 +179,7 @@ private:
     int ft_loading;
     int ft_radix;
     int num_peers;
-    int num_vcs;
+    int num_vns;
     int last_vc;
 
     uint64_t packets_sent;

@@ -119,7 +119,8 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
     topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);
-
+    td_ev->setVC(ev->vn * 3);
+    
     return td_ev;
 }
 
@@ -185,6 +186,12 @@ Topology::PortState topo_dragonfly::getPortState(int port) const
 {
     if ( (uint32_t)port < params.p ) return R2N;
     else return R2R;
+}
+
+int
+topo_dragonfly::getEndpointID(int port)
+{
+    return -1;
 }
 
 

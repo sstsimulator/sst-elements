@@ -20,6 +20,7 @@
 #include <sst/core/link.h>
 #include <sst/core/module.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/unitAlgebra.h>
 
 using namespace SST;
 
@@ -51,9 +52,9 @@ protected:
 public:
 
     Router(ComponentId_t id) :
-	Component(id),
-	requestNotifyOnEvent(false),
-	vcs_with_data(0)
+        Component(id),
+        requestNotifyOnEvent(false),
+        vcs_with_data(0)
     {}
 
     virtual ~Router() {}
@@ -70,6 +71,8 @@ public:
     virtual void sendTopologyEvent(int port, TopologyEvent* ev) = 0;
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) = 0;
 
+    virtual void reportRequestedVNs(int port, int vns) = 0;
+    virtual void reportSetVCs(int port, int vcs) = 0;
 };
 
 #define MERLIN_ENABLE_TRACE
@@ -78,7 +81,7 @@ public:
 class BaseRtrEvent : public Event {
 
 public:
-    enum RtrEventType {CREDIT, PACKET, INTERNAL, TOPOLOGY};
+    enum RtrEventType {CREDIT, PACKET, INTERNAL, TOPOLOGY, INITIALIZATION};
 
     inline RtrEventType getType() const { return type; }
 
@@ -108,9 +111,9 @@ class RtrEvent : public BaseRtrEvent {
 public:
     int dest;
     int src;
-    int vc;
-    int size_in_flits;
-
+    int vn;
+    int size_in_bits;
+    
     enum TraceType {NONE, ROUTE, FULL};
     
     RtrEvent() :
@@ -129,11 +132,14 @@ public:
     inline TraceType getTraceType() const {return trace;}
     inline int getTraceID() const {return traceID;}
 
+    inline void setSizeInFlits(int size ) {size_in_flits = size; }
+    inline int getSizeInFlits() { return size_in_flits; }
     
 private:
     TraceType trace;
     int traceID;
     SimTime_t injectionTime;
+    int size_in_flits;
 
     friend class boost::serialization::access;
     template<class Archive>
@@ -143,7 +149,7 @@ private:
 	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
 	ar & BOOST_SERIALIZATION_NVP(dest);
 	ar & BOOST_SERIALIZATION_NVP(src);
-	ar & BOOST_SERIALIZATION_NVP(vc);
+	ar & BOOST_SERIALIZATION_NVP(vn);
 	ar & BOOST_SERIALIZATION_NVP(size_in_flits);
 	ar & BOOST_SERIALIZATION_NVP(trace);
 	ar & BOOST_SERIALIZATION_NVP(traceID);
@@ -208,22 +214,40 @@ private:
 	}
 };
 
+class RtrInitEvent : public BaseRtrEvent {
+public:
 
+    enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE };
+    
+    // int num_vns;
+    // int id;
+
+    Commands command;
+    int int_value;
+    UnitAlgebra ua_value;
+    
+    RtrInitEvent() :
+        BaseRtrEvent(BaseRtrEvent::INITIALIZATION)
+    {}
+};
+    
 class internal_router_event : public BaseRtrEvent {
     int next_port;
     int next_vc;
+    int vc;
+    int credit_return_vc;
     RtrEvent* encap_ev;
 
 public:
     internal_router_event() :
-	BaseRtrEvent(BaseRtrEvent::INTERNAL)
+        BaseRtrEvent(BaseRtrEvent::INTERNAL)
     {}
     internal_router_event(RtrEvent* ev) :
-	BaseRtrEvent(BaseRtrEvent::INTERNAL)
+        BaseRtrEvent(BaseRtrEvent::INTERNAL)
     {encap_ev = ev;}
 
     virtual ~internal_router_event() {
-	if ( encap_ev != NULL ) delete encap_ev;
+        if ( encap_ev != NULL ) delete encap_ev;
     }
 
     virtual internal_router_event* clone(void)
@@ -231,13 +255,22 @@ public:
         return new internal_router_event(*this);
     };
 
+    inline void setCreditReturnVC(int vc) {credit_return_vc = vc; return;}
+    inline int getCreditReturnVC() {return credit_return_vc;}
+
     inline void setNextPort(int np) {next_port = np; return;}
     inline int getNextPort() {return next_port;}
 
-    inline void setVC(int vc) {encap_ev->vc = vc; return;}
-    inline int getVC() {return encap_ev->vc;}
+    // inline void setNextVC(int vc) {next_vc = vc; return;}
+    // inline int getNextVC() {return next_vc;}
 
-    inline int getFlitCount() {return encap_ev->size_in_flits;}
+    inline void setVC(int vc_in) {vc = vc_in; return;}
+    inline int getVC() {return vc;}
+
+    inline void setVN(int vn) {encap_ev->vn = vn; return;}
+    inline int getVN() {return encap_ev->vn;}
+
+    inline int getFlitCount() {return encap_ev->getSizeInFlits();}
 
     inline void setEncapsulatedEvent(RtrEvent* ev) {encap_ev = ev;}
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
@@ -280,6 +313,11 @@ public:
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts) = 0;
     virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;
 
+    // Method used for autodiscovery of VC/VN
+    virtual int computeNumVCs(int vns) {return vns;}
+    // Method used to set endpoint ID
+    virtual int getEndpointID(int port) {return -1;}
+    
     // Sets the array that holds the credit values for all the output
     // buffers.  Format is:
     // For port=n, VC=x, location in array is n*num_vcs + x.

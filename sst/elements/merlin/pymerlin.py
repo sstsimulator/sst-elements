@@ -50,7 +50,7 @@ class Topo:
 class topoSimple(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Simple"
     def prepParams(self):
@@ -58,9 +58,9 @@ class topoSimple(Topo):
         _params["debug"] = debug
         _params["num_ports"] = int(_params["router_radix"])
         _params["num_peers"] = int(_params["router_radix"])
-        _params["num_vcs"] = 1
+        _params["num_vns"] = 1
 
-    def build(self, endPoint):
+    def build(self):
         rtr = sst.Component("router", "merlin.hr_router")
         _params["topology"] = "merlin.singlerouter"
         _params["debug"] = debug
@@ -70,14 +70,14 @@ class topoSimple(Topo):
         for l in xrange(_params["num_ports"]):
             link = sst.Link("link:%d"%l)
             rtr.addLink(link, "port%d"%l, _params["link_lat"])
-            endPoint.build(l, link, [])
+            self._getEndPoint(l).build(l, link, {})
         
 
 
 class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Torus"
     def prepParams(self):
@@ -115,7 +115,7 @@ class topoTorus(Topo):
         _params["topology"] = _params["topology"] = "merlin.torus"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["num_vcs"] = 2
+        _params["num_vns"] = 2
         _params["torus:local_ports"] = local_ports
 
     def formatShape(self, arr):
@@ -185,7 +185,7 @@ class topoTorus(Topo):
 class topoFatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "fattree:loading","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "fattree:loading","input_latency","output_latency","input_buf_size","output_buf_size"]
         self.nicKeys = ["fattree:addr", "fattree:IP", "fattree:loading", "fattree:radix"]
     def getName(self):
         return "Fat Tree"
@@ -197,7 +197,7 @@ class topoFatTree(Topo):
         _params["fattree:radix"] = _params["router_radix"]
         _params["fattree:hosts_per_edge_rtr"] = int(_params["fattree:hosts_per_edge_rtr"])
         _params["fattree:loading"] = _params["fattree:hosts_per_edge_rtr"]
-        _params["num_vcs"] = 2
+        _params["num_vns"] = 2
         _params["num_peers"] = _params["router_radix"] * (_params["router_radix"]/2) * _params["fattree:hosts_per_edge_rtr"]
 
     def build(self):
@@ -295,14 +295,14 @@ class topoFatTree(Topo):
 class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "num_vcs", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Dragonfly"
 
     def prepParams(self):
         _params["topology"] = "merlin.dragonfly"
         _params["debug"] = debug
-        _params["num_vcs"] = 3
+        _params["num_vns"] = 1
         _params["router_radix"] = int(_params["router_radix"])
         _params["num_ports"] = int(_params["router_radix"])
         _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
@@ -386,7 +386,7 @@ class EndPoint:
 
 class TestEndPoint:
     def __init__(self):
-        self.nicKeys = ["topology", "num_peers", "num_vcs", "link_bw"]
+        self.nicKeys = ["topology", "num_peers", "num_vns", "link_bw"]
 
     def getName(self):
         return "Test End Point"
@@ -409,7 +409,7 @@ class TrafficGenEndPoint:
         for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
             for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
                 self.optionalKeys.append("%s:%s"%(genType, tag))
-        self.nicKeys = ["topology", "num_peers", "num_vcs", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
+        self.nicKeys = ["topology", "num_peers", "num_vns", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
     def getName(self):
         return "Pattern-based traffic generator"
     def prepParams(self):

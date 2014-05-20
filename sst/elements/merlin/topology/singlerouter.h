@@ -41,6 +41,7 @@ public:
 
     virtual PortState getPortState(int port) const;
 
+    virtual int getEndpointID(int port) { return port; }
 };
 
 }

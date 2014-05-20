@@ -38,8 +38,8 @@ private:
     int ft_loading;
     int ft_radix;
     int num_peers;
-    int num_vcs;
-    int last_vc;
+    int num_vns;
+    int last_vn;
 
     int packets_sent;
     int packets_recd;

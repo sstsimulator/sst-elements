@@ -20,6 +20,7 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/unitAlgebra.h>
 
 #include <queue>
 #include <cstring>
@@ -58,52 +59,52 @@ public:
         double getVarianceLatency(void) const { return (m_n>1.0) ? (s_n/(m_n-1.0)) : 0.0; }
         double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
     };
-
-
+    
+    
     // Functor classes for handling callbacks
     class HandlerBase {
     public:
-	virtual bool operator()(int) = 0;
-	virtual ~HandlerBase() {}
+        virtual bool operator()(int) = 0;
+        virtual ~HandlerBase() {}
     };
     
 
     template <typename classT, typename argT = void>
     class Handler : public HandlerBase {
     private:
-	typedef bool (classT::*PtrMember)(int, argT);
-	classT* object;
-	const PtrMember member;
-	argT data;
-	
+        typedef bool (classT::*PtrMember)(int, argT);
+        classT* object;
+        const PtrMember member;
+        argT data;
+        
     public:
-	Handler( classT* const object, PtrMember member, argT data ) :
-	    object(object),
-	    member(member),
-	    data(data)
-	{}
-
-        bool operator()(int vc) {
-	    return (object->*member)(vc,data);
-	}
+        Handler( classT* const object, PtrMember member, argT data ) :
+            object(object),
+            member(member),
+            data(data)
+        {}
+        
+        bool operator()(int vn) {
+            return (object->*member)(vn,data);
+        }
     };
     
     template <typename classT>
     class Handler<classT, void> : public HandlerBase {
     private:
-	typedef bool (classT::*PtrMember)(int);
-	classT* object;
-	const PtrMember member;
-	
+        typedef bool (classT::*PtrMember)(int);
+        classT* object;
+        const PtrMember member;
+        
     public:
-	Handler( classT* const object, PtrMember member ) :
-	    object(object),
-	    member(member)
-	{}
-
-	bool operator()(int vc) {
-	    return (object->*member)(vc);
-	}
+        Handler( classT* const object, PtrMember member ) :
+            object(object),
+            member(member)
+        {}
+        
+        bool operator()(int vn) {
+            return (object->*member)(vn);
+        }
     };
     
     
@@ -114,11 +115,17 @@ private:
     // usage
     Link* output_timing;
 
+    UnitAlgebra link_bw;
+    UnitAlgebra inbuf_size;
+    UnitAlgebra outbuf_size;
+    int flit_size; // in bits
+    
     std::deque<Event*> init_events;
-
+    
     // Number of virtual channels
-    int num_vcs;
-
+    int num_vns;
+    int id;
+    
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual channel abstraction.
     network_queue_t* input_buf;
@@ -135,14 +142,14 @@ private:
 
     // Doing a round robin on the output.  Need to keep track of the
     // current virtual channel.
-    int curr_out_vc;
+    int curr_out_vn;
 
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
     // is: 1 - adding new data to output buffers, or 2 - getting
     // credits back from the router.
     bool waiting;
-
+    
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
@@ -160,26 +167,33 @@ public:
     // Must be called before any other functions to configure the link.
     // Preferably during the owning component's constructor
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    void configureLink(Component* rif, std::string port_name, TimeConverter* time_base, int vcs, int* in_buf_size, int* out_buf_size);
+
+    // void configureLink(Component* rif, std::string port_name, TimeConverter* time_base,
+    //                    int vns, int* in_buf_size, int* out_buf_size)
+    // {std::cout << "Using old configureLink call, fix it!" << std::endl; exit(1);}
+
+    void configureLink(Component* rif, std::string port_name, const UnitAlgebra& link_bw_in,
+                       int vns, const UnitAlgebra& in_buf_size,
+                       const UnitAlgebra& out_buf_size);
     void setup();
     void init(unsigned int phase);
     void finish();
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool send(RtrEvent* ev, int vc);
+    bool send(RtrEvent* ev, int vn);
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool spaceToSend(int vc, int flits);
+    bool spaceToSend(int vn, int flits);
 
-    // Returns NULL if no event in input_buf[vc]. Otherwise, returns
+    // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.
-    RtrEvent* recv(int vc);
+    RtrEvent* recv(int vn);
 
     // Returns true if there is an event in the input buffer and false 
     // otherwise.
-    inline bool eventToReceive( int vc ) { return ! input_buf[vc].empty(); }
+    inline bool eventToReceive( int vn ) { return ! input_buf[vn].empty(); }
 
     void sendInitData(RtrEvent *ev);
     Event* recvInitData();
@@ -189,9 +203,15 @@ public:
     inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
     inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
 
-private:
-    void handle_input(Event* ev);
+    inline bool isNetworkInitialized() const { return network_initialized; }
+    inline int getEndpointID() const { return id; }
+    inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
+    
+private:
+    bool network_initialized;
+
+    void handle_input(Event* ev);
     void handle_output(Event* ev);
 
 };

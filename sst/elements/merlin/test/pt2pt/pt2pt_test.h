@@ -30,7 +30,7 @@ class pt2pt_test : public Component {
 
 private:
     int id;
-    int num_vcs;
+    int num_vns;
     
     int packets_sent;
     int packets_recd;
@@ -38,9 +38,9 @@ private:
     SimTime_t start_time;
     SimTime_t latency;
     
-    int packet_size;
     int packets_to_send;
-    int buffer_size;
+    int packet_size;
+    UnitAlgebra buffer_size;
     
     LinkControl* link_control;
     Link* self_link;

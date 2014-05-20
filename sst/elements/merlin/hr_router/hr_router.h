@@ -17,6 +17,7 @@
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
+#include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
 
 #include <queue>
@@ -38,7 +39,9 @@ private:
     int id;
     int num_ports;
     int num_vcs;
-
+    int requested_vns;
+    bool vcs_initialized;
+        
     Topology* topo;
     XbarArbitration* arb;
     
@@ -49,11 +52,16 @@ private:
 #if VERIFY_DECLOCKING
     bool clocking;
 #endif
-    
+
     int* in_port_busy;
     int* out_port_busy;
     int* progress_vcs;
 
+    /* int input_buf_size; */
+    /* int output_buf_size; */
+    UnitAlgebra input_buf_size;
+    UnitAlgebra output_buf_size;
+    
     Cycle_t unclocked_cycle;
     std::string xbar_bw;
     TimeConverter* xbar_tc;
@@ -63,6 +71,8 @@ private:
     bool debug_clock_handler(Cycle_t cycle);
     static void sigHandler(int signal);
 
+    void init_vcs();
+    
 public:
     hr_router(ComponentId_t cid, Params& params);
     ~hr_router();
@@ -77,8 +87,11 @@ public:
     void sendTopologyEvent(int port, TopologyEvent* ev);
     void recvTopologyEvent(int port, TopologyEvent* ev);
     
+    void reportRequestedVNs(int port, int vns);
+    void reportSetVCs(int port, int vcs);
     
     void dumpState(std::ostream& stream);
+    void printStatus(Output& out);
 };
 
 }

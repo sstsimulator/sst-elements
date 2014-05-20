@@ -48,16 +48,18 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
         _abort(TrafficGen, "num_peers must be set!\n");
     }
 
-    num_vcs = params.find_integer("num_vcs");
-    if ( num_vcs == -1 ) {
-        _abort(TrafficGen, "num_vcs must be set!\n");
+    num_vns = params.find_integer("num_vns");
+    if ( num_vns == -1 ) {
+        _abort(TrafficGen, "num_vns must be set!\n");
     }
 
-    std::string link_bw = params.find_string("link_bw");
-    if ( link_bw == "" ) {
+    std::string link_bw_s = params.find_string("link_bw");
+    if ( link_bw_s == "" ) {
         _abort(TrafficGen, "link_bw must be set!\n");
     }
-    TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
+    // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
+
+    UnitAlgebra link_bw(link_bw_s);
 
     addressMode = SEQUENTIAL;
 
@@ -69,16 +71,18 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     // Create a LinkControl object
 
-    int buf_len = params.find_integer("buffer_length", 100);
-    // NOTE:  This MUST be the same length as 'num_vcs'
-    int *buf_size = new int[num_vcs];
-    for ( int i = 0 ; i < num_vcs ; i++ ) {
-        buf_size[i] = buf_len;
-    }
+    std::string buf_len = params.find_string("buffer_length", "1kB");
+    // NOTE:  This MUST be the same length as 'num_vns'
+    // int *buf_size = new int[num_vns];
+    // for ( int i = 0 ; i < num_vns ; i++ ) {
+    //     buf_size[i] = buf_len;
+    // }
 
+    UnitAlgebra buf_size(buf_len);
+    
     link_control = (Merlin::LinkControl*)loadModule("merlin.linkcontrol", params);
-    link_control->configureLink(this, "rtr", tc, num_vcs, buf_size, buf_size);
-    delete [] buf_size;
+    link_control->configureLink(this, "rtr", link_bw, num_vns, buf_len, buf_len);
+    // delete [] buf_size;
 
     packets_to_send = (uint64_t)params.find_integer("packets_to_send", 1000);
 
@@ -89,17 +93,35 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
 
     /* Packet size */
-    base_packet_size = params.find_integer("packet_size", 5); // In Flits
+    // base_packet_size = params.find_integer("packet_size", 64); // In Bits
     packetSizeGen = buildGenerator("PacketSize", params);
     if ( packetSizeGen ) packetSizeGen->seed(id);
 
+    std::string packet_size_s = params.find_string("packet_size", "8B");
+    UnitAlgebra packet_size(packet_size_s);
+    if ( packet_size.hasUnits("B") ) {
+        packet_size *= UnitAlgebra("8b/B");
+    }
 
-    base_packet_delay = params.find_integer("delay_between_packets", 0);
+    if ( !packet_size.hasUnits("b") ) {
+        _abort(TrafficGen, "packet_size must be specified in units of either B or b!\n");
+    }
+
+    base_packet_size = packet_size.getRoundedValue();
+    
+    
+    // base_packet_delay = params.find_integer("delay_between_packets", 0);
     packetDelayGen = buildGenerator("PacketDelay", params);
     if ( packetDelayGen ) packetDelayGen->seed(id);
 
+    std::string packet_delay_s = params.find_string("delay_between_packets", "0s");
+    UnitAlgebra packet_delay(packet_delay_s);
 
+    if ( !packet_delay.hasUnits("s") ) {
+        _abort(TrafficGen, "packet_delay must be specified in units of s!\n");
+    }
 
+    base_packet_delay = packet_delay.getRoundedValue();
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -206,8 +228,9 @@ TrafficGen::clock_handler(Cycle_t cycle)
                     ev->src = fattree_ID_to_IP(id);
                     break;
                 }
-                ev->vc = 0;
-                ev->size_in_flits = packet_size;
+                ev->vn = 0;
+                // ev->size_in_flits = packet_size;
+                ev->size_in_bits = packet_size;
 
                 bool sent = link_control->send(ev,0);
                 assert( sent );
@@ -218,8 +241,8 @@ TrafficGen::clock_handler(Cycle_t cycle)
         packet_delay = getDelayNextPacket();
     }
 
-    for ( int vc = 0 ; vc < num_vcs ; vc++ ) {
-        last_vc = (last_vc + 1) % num_vcs; // round-robin
+    for ( int vc = 0 ; vc < num_vns ; vc++ ) {
+        last_vc = (last_vc + 1) % num_vns; // round-robin
         RtrEvent* ev = link_control->recv(last_vc);
         if ( ev != NULL ) {
             packets_recd++;
