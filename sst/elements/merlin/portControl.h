@@ -20,7 +20,7 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
-#include <sst/core/unitalgebra.h>
+#include <sst/core/unitAlgebra.h>
 
 #include <queue>
 #include <cstring>
