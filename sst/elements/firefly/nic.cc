@@ -35,8 +35,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_pendingMerlinEvent( NULL ),
     m_recvNotifyEnabled( false ),
     m_packetId(0),
-    m_ftRadix(0),
-	m_bytesPerFlit(8)
+    m_ftRadix(0)
 {
     m_myNodeId = params.find_integer("nid", -1);
     assert( m_myNodeId != -1 );
@@ -67,34 +66,22 @@ Nic::Nic(ComponentId_t id, Params &params) :
     } else {
 		assert(0);
 	}
-    m_bytesPerFlit = params.find_integer("bytesPerFlit",8);
+    m_packetSizeInBytes = params.find_integer("packetSize",64);
+	m_packetSizeInBits = m_packetSizeInBytes * 8;
 
-    m_num_vcs = params.find_integer("num_vcs",2);
-    std::string link_bw = params.find_string("link_bw","2GHz");
-    TimeConverter* tc = Simulation::getSimulation()->
-                            getTimeLord()->getTimeConverter(link_bw);
-    assert( tc );
+	UnitAlgebra buf_size( params.find_string("buffer_size") );
+	UnitAlgebra link_bw( params.find_string("link_bw") );
 
-    int buffer_size = params.find_integer("buffer_size",100);
-
-    m_dbg.verbose(CALL_INFO,1,0,"id=%d num_vcs=%d buffer_size=%d link_bw=%s\n",
-                m_myNodeId, m_num_vcs, buffer_size, link_bw.c_str());
-
-    std::vector<int> buf_size;
-    buf_size.resize(m_num_vcs);
-    for ( unsigned int i = 0; i < buf_size.size(); i++ ) {
-        buf_size[i] = buffer_size;
-    }
+    m_dbg.verbose(CALL_INFO,1,0,"id=%d buffer_size=%s link_bw=%s "
+			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
+			link_bw.toString().c_str(),m_packetSizeInBytes);
 
     m_linkControl = (Merlin::LinkControl*)loadModule(
                     params.find_string("module"), params);
     assert( m_linkControl );
 
-#if 0
-    m_linkControl->configureLink(this, 
-						params.find_string("rtrPortName","rtr"),
-						tc, m_num_vcs, &buf_size[0], &buf_size[0]);
-#endif
+	m_linkControl->configureLink(this, params.find_string("rtrPortName","rtr"),
+								link_bw, 1, buf_size, buf_size);
 
     m_recvNotifyFunctor =
         new Merlin::LinkControl::Handler<Nic>(this,&Nic::recvNotify );
@@ -338,10 +325,10 @@ void Nic::processSend( )
     m_dbg.verbose(CALL_INFO,2,0,"number pending %lu\n", m_sendQ.size() );
 
     if ( m_currentSend ) {
-        if ( m_linkControl->spaceToSend(0,8) ) { 
+        if ( m_linkControl->spaceToSend(0,m_packetSizeInBits) ) { 
             m_currentSend = processSend( m_currentSend );
         }
-        if ( m_currentSend && ! m_linkControl->spaceToSend(0,8) ) { 
+        if ( m_currentSend && ! m_linkControl->spaceToSend(0,m_packetSizeInBits) ) { 
             m_dbg.verbose(CALL_INFO,2,0,"set send notify\n");
             m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
         }
@@ -363,7 +350,7 @@ void Nic::processSend( )
 Nic::Entry* Nic::processSend( Entry* entry )
 {
     bool ret = false;
-    while ( m_linkControl->spaceToSend(0,8) && entry )  
+    while ( m_linkControl->spaceToSend(0,m_packetSizeInBits) && entry )  
     {
         NicCmdEvent* event = entry->event(); 
         MerlinFireflyEvent* ev = new MerlinFireflyEvent;
@@ -390,11 +377,8 @@ Nic::Entry* Nic::processSend( Entry* entry )
         print(m_dbg, &ev->buf[0], ev->buf.size() );
         ev->setDest( IdToNet( entry->node() ) );
         ev->setSrc( IdToNet( m_myNodeId ) );
-#if 0
-        ev->setNumFlits( ev->buf.size(), m_bytesPerFlit );
-#endif
 
-        #if 0 
+        #if 0
             ev->setTraceType( Merlin::RtrEvent::FULL );
             ev->setTraceID( m_packetId++ );
         #endif
@@ -483,9 +467,7 @@ bool Nic::recvNotify(int vc)
 
     event->src = NetToId( event->src ); 
 
-    for ( int i = 0; i < m_num_vcs; i++ ) {
-        assert( ! m_linkControl->eventToReceive( i ) );
-    }
+    assert( ! m_linkControl->eventToReceive( 0 ) );
      
     m_recvNotifyEnabled = processRecvEvent( event );
     if ( ! m_recvNotifyEnabled ) {
@@ -596,10 +578,7 @@ void Nic::moveEvent( MerlinFireflyEvent* event )
         if ( ! m_recvNotifyEnabled ) {
             MerlinFireflyEvent* event = NULL;
             // this is not fair
-            for ( int i = 0; i < m_num_vcs; i++ ) {
-                event = static_cast<MerlinFireflyEvent*>(m_linkControl->recv(i));
-                if ( event ) break;
-            }
+            event = static_cast<MerlinFireflyEvent*>(m_linkControl->recv(0));
             if ( event ) {
                 event->src = NetToId( event->src ); 
                 SelfEvent* tmp = new SelfEvent;
@@ -666,14 +645,14 @@ bool  Nic::copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry )
     dbg.verbose(CALL_INFO,2,0,"ioVec.size()=%lu\n", entry.ioVec().size() );
 
     for ( ; entry.currentVec < entry.ioVec().size() &&
-                event.buf.size() <  event.getMaxLength();
+                event.buf.size() <  m_packetSizeInBytes;
                 entry.currentVec++, entry.currentPos = 0 ) {
 
         dbg.verbose(CALL_INFO,2,0,"vec[%lu].len %lu\n",entry.currentVec,
                     entry.ioVec()[entry.currentVec].len );
 
         if ( entry.ioVec()[entry.currentVec].len ) {
-            size_t toLen = event.getMaxLength() - event.buf.size();
+            size_t toLen = m_packetSizeInBytes - event.buf.size();
             size_t fromLen = entry.ioVec()[entry.currentVec].len -
                                                         entry.currentPos;
 
@@ -688,7 +667,7 @@ bool  Nic::copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry )
 
             event.buf.insert( event.buf.size(), from, len );
             entry.currentPos += len;
-            if ( event.buf.size() == event.getMaxLength() &&
+            if ( event.buf.size() == m_packetSizeInBytes &&
                     entry.currentPos != entry.ioVec()[entry.currentVec].len ) {
                 break;
             }

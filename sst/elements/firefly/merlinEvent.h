@@ -19,10 +19,6 @@ namespace Firefly {
 
 class MerlinFireflyEvent : public Merlin::RtrEvent {
 
-	static const int PktLen = 64;
-	static const int PktHdrLen = 8;
-    static const int BufLen = PktLen - PktHdrLen;
-
   public:
     uint16_t        seq;
     std::string     buf;
@@ -48,26 +44,12 @@ class MerlinFireflyEvent : public Merlin::RtrEvent {
         return new MerlinFireflyEvent(*this);
     }
 
-#if 0
-    void setNumFlits( int len, int bytesPerFlit = 8 ) {
-		int pktLen = PktHdrLen + len;
-		assert(pktLen <= PktLen);
-		size_in_flits = pktLen / bytesPerFlit;
-		
-        if ( pktLen % bytesPerFlit ) ++size_in_flits;
-    }
-#endif
-
     void setDest( int _dest ) {
         dest = _dest;
     }
 
     void setSrc( int _src ) {
         src = _src;
-    }
-
-    size_t getMaxLength(){
-        return BufLen;
     }
 
   private:

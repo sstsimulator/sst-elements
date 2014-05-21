@@ -306,7 +306,6 @@ public:
     int                     m_myNodeId;
     int                     m_num_vNics;
     SST::Link*              m_selfLink;
-    int                     m_num_vcs;
 
     // the interface to to Merlin
     Merlin::LinkControl*                m_linkControl;
@@ -322,7 +321,8 @@ public:
     int  m_packetId;
     int  m_ftRadix;
     int  m_ftLoading;
-	int  m_bytesPerFlit;
+	unsigned int  m_packetSizeInBytes;
+	int  m_packetSizeInBits;
 }; 
 
 } // namesapce Firefly 

@@ -79,7 +79,7 @@ static const ElementInfoParam nic_params[] = {
 	{ "topology", "Sets the network topology", "merlin.torus"},
 	{ "fattree:loading", "Sets the number of ports on edge router connected to nodes", "8"},
 	{ "fattree:radix", "Sets the number of ports on the network switches", "16"},
-	{ "num_vcs", "Sets the number of virtual channels", "2"},
+	{ "packetSize", "Sets the size of the network packet in bytes", "64"},
 	{ "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
 	{ "buffer_size", "Sets the buffer size of the link connected to the router", "128"},
 	{ "module", "Sets the link control module", "merlin.linkcontrol"},

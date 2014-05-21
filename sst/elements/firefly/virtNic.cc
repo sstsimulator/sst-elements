@@ -49,7 +49,7 @@ void VirtNic::init( unsigned int phase )
 {
     m_dbg.verbose(CALL_INFO,1,0,"phase=%d\n",phase);
 
-    if ( 0 < phase ) {
+    if ( 1 == phase ) {
         NicInitEvent* ev = 
                         static_cast<NicInitEvent*>(m_toNicLink->recvInitData());
         assert( ev );
