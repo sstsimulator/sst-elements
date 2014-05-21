@@ -30,6 +30,8 @@ public:
 
 	void getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
 		int32_t* myX, int32_t* myY, int32_t* myZ);
+	void getPosition(const int32_t rank, const int32_t px, const int32_t py,
+		int32_t* myX, int32_t* myY);
 
 protected:
 	~EmberMessagePassingGenerator();
