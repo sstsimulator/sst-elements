@@ -25,6 +25,7 @@
 //#include "motifs/emberhalo3dnb.h"
 #include "motifs/emberhalo3d.h"
 #include "motifs/embersweep2d.h"
+#include "motifs/embersweep3d.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
@@ -91,6 +92,11 @@ load_Halo3D( Component* comp, Params& params ) {
 static Module*
 load_Sweep2D( Component* comp, Params& params ) {
 	return new EmberSweep2DGenerator(comp, params);
+}
+
+static Module*
+load_Sweep3D( Component* comp, Params& params ) {
+	return new EmberSweep3DGenerator(comp, params);
 }
 
 static Module*
@@ -197,6 +203,18 @@ static const ElementInfoParam ring_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam sweep3d_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"px",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
+	{	"py",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
+	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
+	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
+	{	"nz",			"Sets the problem size in the Z-dimension",	"50"},
+	{	"kba",			"Sets the KBA (Nz-K blocking factor, default is 1 (no blocking))", "1"},
+	{	"computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam fini_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
@@ -276,6 +294,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_Sweep2D,
 	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Sweep3DMotif",
+	"Performs a 3D sweep communication motif from all 8 vertices",
+	NULL,
+	NULL,
+	load_Sweep3D,
+	sweep3d_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"AllreduceMotif",
