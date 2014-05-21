@@ -26,7 +26,7 @@ static Module* load_NextBlockPrefetcher(Params& params){
 }
 
 static const ElementInfoParam nextBlockPrefetcher_params[] = {
-    {"prefetcher:cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
+    {"cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
     {NULL, NULL, NULL}
 };
 
