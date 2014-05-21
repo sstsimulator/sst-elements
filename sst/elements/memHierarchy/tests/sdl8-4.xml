@@ -80,17 +80,19 @@ Difference from sld8-3.xml: Directory has entry cache
     <routerParams>
         <num_ports> 2 </num_ports>
         <num_vcs> 3 </num_vcs>
-        <link_bw> 5GHz </link_bw>
-        <xbar_bw> 5GHz </xbar_bw>
+        <link_bw> 1GB/s </link_bw>
+        <xbar_bw> 1GB/s </xbar_bw>
+        <input_buf_size> 1KB </input_buf_size>
+        <output_buf_size> 1KB </output_buf_size>
         <topology> merlin.singlerouter </topology>
         <id> 0 </id>
-        <flit_size> 64B </flit_size>
+        <flit_size> 72B </flit_size>
     </routerParams>
     
     <directoryParams>
         <coherence_protocol> MSI </coherence_protocol>
         <network_address> 0 </network_address>
-        <network_bw> 1GHz </network_bw>
+        <network_bw> 1GB/s </network_bw>
         <addr_range_start> 0x0 </addr_range_start>
         <addr_range_end> 0x1F000000 </addr_range_end> <!-- 512MB - 16MB for backingStoreSize -->
         <backing_store_size> 0x1000000 </backing_store_size> <!-- 16 MB -->
