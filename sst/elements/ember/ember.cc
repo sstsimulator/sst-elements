@@ -176,6 +176,8 @@ static const ElementInfoParam halo2d_params[] = {
 	{	"messagesizex",		"Sets the message size in X-dimension (in bytes)",	"128"},
 	{	"messagesizey",		"Sets the message size in Y-dimension (in bytes)",	"128"},
 	{	"computecopy",		"Sets the time spent copying data between messages",	"5"},
+	{	"sizex",		"Sets the processor decomposition in Y", "0"},
+	{	"sizey",		"Sets the processor decomposition in X", "0"},
 	{	NULL,	NULL,	NULL	}
 };
 
