@@ -94,6 +94,7 @@ print_l2_cache() {
   echo "      <L1>0</L1>"
   echo "      <directory_at_next_level> 1 </directory_at_next_level>"
   echo "      <network_address>$j</network_address>"
+  echo "      <network_bw>$NET_BW</network_bw>"
   echo "      <mode>INCLUSIVE</mode>"
   echo "      <printStats>1</printStats>"
   echo "    </params>"
