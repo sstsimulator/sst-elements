@@ -20,9 +20,9 @@ L2WAYS=${L2WAYS:=16}
 L2SIZE=${L2SIZE:=64}
 L2ATIME=${L2ATIME:=10}
 
-RTR_LINK_BW=${RTR_LINK_BW:=5GHz}
-RTR_XBAR_BW=${RTR_XBAR_BW:=5GHz}
-NET_BW=${NET_BW:=5GHz}
+RTR_LINK_BW=${RTR_LINK_BW:=2GB/s}
+RTR_XBAR_BW=${RTR_XBAR_BW:=2GB/s}
+NET_BW=${NET_BW:=2GB/s}
 
 DRAM_ATIME=${DRAM_ATIME:=50ns}
 DRAM_CLOCK=${DRAM_CLOCK:=1GHz}
@@ -109,9 +109,11 @@ print_network() {
   echo "  <component name=\"chiprtr\" rank=\"0\" type=\"merlin.hr_router\">"
   echo "    <params>"
   echo "      <num_ports>$O</num_ports>"
-  echo "      <num_vcs>3</num_vcs>"
   echo "      <link_bw>$RTR_LINK_BW</link_bw>"
   echo "      <xbar_bw>$RTR_XBAR_BW</xbar_bw>"
+  echo "      <flit_size> 72B </flit_size>"
+  echo "      <input_buf_size> 1KB </input_buf_size>"
+  echo "      <output_buf_size> 1KB </output_buf_size>"
   echo "      <topology>merlin.singlerouter</topology>"
   echo "      <id>0</id>"
   echo "    </params>"
