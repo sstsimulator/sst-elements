@@ -26,3 +26,13 @@ EmberMessagePassingGenerator::~EmberMessagePassingGenerator() {
 
 }
 
+void EmberMessagePassingGenerator::getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
+                int32_t* myX, int32_t* myY, int32_t* myZ) {
+
+	const int32_t my_plane = rank % (px * py);
+        *myY      		= my_plane / px;
+        const int32_t remain   = my_plane % px;
+        *myX      		= remain != 0 ? remain : 0;
+        *myZ      		= rank / (px * py);
+
+}

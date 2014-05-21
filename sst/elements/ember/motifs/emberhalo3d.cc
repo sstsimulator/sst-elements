@@ -115,11 +115,11 @@ void EmberHalo3DGenerator::configureEnvironment(const SST::Output* output, uint3
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
 		rank, peX, peY, peZ);
 
-	const int32_t my_plane = rank % (peX * peY);
-	const int32_t my_Y     = my_plane / peX;
-	const int32_t remain   = my_plane % peX;
-	const int32_t my_X     = remain != 0 ? remain : 0;
-	const int32_t my_Z     = rank / (peX * peY);
+	int32_t my_Z = 0;
+	int32_t my_Y = 0;
+	int32_t my_X = 0;
+
+	getPosition(rank, peX, peY, peZ, &my_X, &my_Y, &my_Z);
 
 	y_up   = (my_Y != 0) ? rank - peX : -1;
 	y_down = (my_Y != (peY - 1)) ? rank + peX : -1;
