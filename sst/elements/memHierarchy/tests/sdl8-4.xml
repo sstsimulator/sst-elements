@@ -84,6 +84,7 @@ Difference from sld8-3.xml: Directory has entry cache
         <xbar_bw> 5GHz </xbar_bw>
         <topology> merlin.singlerouter </topology>
         <id> 0 </id>
+        <flit_size> 64B </flit_size>
     </routerParams>
     
     <directoryParams>
