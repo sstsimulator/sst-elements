@@ -207,8 +207,8 @@ static const ElementInfoParam ring_params[] = {
 
 static const ElementInfoParam sweep3d_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"px",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
-	{	"py",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
+	{	"pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
+	{	"pey",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
 	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
 	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
 	{	"nz",			"Sets the problem size in the Z-dimension",	"50"},
