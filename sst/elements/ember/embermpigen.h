@@ -28,6 +28,9 @@ public:
                 std::queue<EmberEvent*>* evQ) = 0;
         virtual void finish(const SST::Output* output) = 0;
 
+	void getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
+		int32_t* myX, int32_t* myY, int32_t* myZ);
+
 protected:
 	~EmberMessagePassingGenerator();
 };
