@@ -80,7 +80,6 @@ Topology:
     
     <routerParams>
         <num_ports> 2 </num_ports>
-        <num_vcs> 3 </num_vcs>
         <link_bw> 1GB/s </link_bw>
         <xbar_bw> 1GB/s </xbar_bw>
         <input_buf_size> 1KB </input_buf_size>

@@ -65,6 +65,7 @@ static const ElementInfoParam cache_params[] = {
     {"low_network_ports",       "Number of low network ports (closer to the memory)", ""},
     {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1", "0"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
+    {"network_bw",              "Network link bandwidth.", "0"},
     {"network_address",         "When using a directory controller, this parameter represents the network address of this cache.", "0"},
 	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
     {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},

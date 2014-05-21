@@ -53,9 +53,11 @@
 
     <RouterParams>
         <topology>  merlin.singlerouter </topology>
-        <num_vcs>   3 </num_vcs>
-        <link_bw>   1.6GHz </link_bw>
-        <xbar_bw>   1.6GHz </xbar_bw>
+        <link_bw> 1GB/s </link_bw>
+        <xbar_bw> 1GB/s </xbar_bw>
+        <input_buf_size> 1KB </input_buf_size>
+        <output_buf_size> 1KB </output_buf_size>
+        <flit_size> 72B </flit_size>
     </RouterParams>
 
     <busParams>
@@ -65,7 +67,7 @@
     <DirCtrlParams>
         <debug> 0 </debug>
         <coherence_protocol> MSI </coherence_protocol>
-        <network_bw>        1.6GHz </network_bw>
+        <network_bw>        1GB/s </network_bw>
         <interleave_size>    0 </interleave_size>
         <interleave_step>    0 </interleave_step>
         <backing_store_size>  0 </backing_store_size> <!-- 16 MB -->
