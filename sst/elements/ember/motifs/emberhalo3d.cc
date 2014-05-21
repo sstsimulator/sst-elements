@@ -30,9 +30,9 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	peY = (uint32_t) params.find_integer("pey", 0);
 	peZ = (uint32_t) params.find_integer("pez", 0);
 
-	items_per_cell = (uint32_t) params.find_integer("itemspercell", 1);
+	items_per_cell = (uint32_t) params.find_integer("fields_per_cell", 1);
 	performReduction = (params.find_integer("doreduce", 1) == 1);
-	sizeof_cell = (uint32_t) params.find_integer("sizeofcell", 8);
+	sizeof_cell = (uint32_t) params.find_integer("datatype_width", 8);
 
 	uint64_t pe_flops = (uint64_t) params.find_integer("peflops", 10000000000);
 	uint64_t flops_per_cell = (uint64_t) params.find_integer("flopspercell", 26);
