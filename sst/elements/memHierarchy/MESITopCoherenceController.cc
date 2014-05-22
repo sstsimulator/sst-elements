@@ -232,6 +232,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
+        assert(!l->isSharer(_sharerId));
         l->addSharer(_sharerId);
         _ret = sendResponse(_event, S, data, _mshrHit);
     }

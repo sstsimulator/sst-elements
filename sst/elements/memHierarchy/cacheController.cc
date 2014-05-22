@@ -39,6 +39,8 @@ using namespace SST::MemHierarchy;
 
 
 void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
+    bool done;
+    
     try{
         bool updateCacheline = !_mshrHit && MemEvent::isDataRequest(_cmd);
         int lineIndex = cArray_->find(_baseAddr, updateCacheline);      /* Update cacheline only if it's NOT mshrHit */
@@ -56,8 +58,11 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
             upgradeCount_++;
             throw stallException();                                     /* stall request if upgrade is in progress */
         }
-        bool done = topCC_->handleRequest(_event, cacheLine, _mshrHit); /* Invalidate sharers, send respond to requestor if needed */
-        postRequestProcessing(_event, cacheLine, done, _mshrHit);
+        
+        if(!_event->isPrefetch()){                                      /* Don't do anything with TopCC if it is a prefetch request */
+            done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Invalidate sharers, send respond to requestor if needed */
+            postRequestProcessing(_event, cacheLine, done, _mshrHit);
+        }
     
     }
     catch(stallException const& e){

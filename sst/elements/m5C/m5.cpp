@@ -196,7 +196,7 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
     
     
     
-    /*
+    ///*
     if((cycle * m_m5ticksPerSSTclock) % 100000 == 0){
         for ( objectMap_t::iterator i = m_objectMap.begin() ; i != m_objectMap.end() ; ++i ) {
             Gem5Object_t *obj = i->second;
@@ -206,7 +206,7 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
             }
         }
     }
-     */
+    // */
     
     if( exitEvent->getCode() != 256 )  {
         // for fast-forwarding to reache the ROI at a faster speed in real 

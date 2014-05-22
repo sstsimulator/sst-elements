@@ -123,8 +123,8 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     }
     else STAT_TotalMSHRHits_++;
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), baseAddr, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "");
+    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", EventID = %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getID().first, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "");
     
     if(uncached){
         processUncached(event, cmd, baseAddr);
@@ -142,7 +142,6 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
                 return;
             }
             if(mshr_->isFull()){
-                d_->debug(_L0_,"MSHR is full.\n");
                 sendNACK(event);
                 return;
             }

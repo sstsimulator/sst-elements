@@ -58,7 +58,10 @@ bool Cache::MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr){
 }
 
 bool Cache::MSHR::isFull(){
-    if(size_ >= maxSize_) return true;
+    if(size_ >= maxSize_){
+        cache_->d_->debug(_L6_,"MSHR Full. Event could not be inserted\n");
+        return true;
+    }
     return false;
 }
 
@@ -69,7 +72,7 @@ bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
         cache_->d_->debug(_L6_, "MSHR: Event Inserted: Key Addr = %"PRIx64", Event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
         _event->setStartTime(cache_->getTimestamp());
     }
-    else cache_->d_->debug(_L6_, "MSHR: Event could not be inserted.  MSHR Full\n");
+    else cache_->d_->debug(_L6_, "MSHR Full.  Event could not be inserted.\n");
     return ret;
 }
 
@@ -78,7 +81,7 @@ bool Cache::MSHR::insert(Addr _keyAddr, Addr _pointerAddr){
     if(LIKELY(ret))
         cache_->d_->debug(_L6_, "MSHR: Inserted pointer.  Key Addr = %"PRIx64", Pointer Addr = %"PRIx64"\n", _keyAddr, _pointerAddr);
     else
-        cache_->d_->debug(_L6_, "MSHR: Pointer could not be inserted.  MSHR Full\n");
+        cache_->d_->debug(_L6_, "MSHR Full. Pointer could not be inserted.\n");
 
     return ret;
 }

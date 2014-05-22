@@ -109,6 +109,7 @@ public:
             if(sharers_[i]) count++;
         }
         d_->debug(C,L2,0,"Num Sharers = %d, Actual Sharers = %d\n", numSharers_, count);
+        std::cout << std::flush;
         assert(count == numSharers_);
     }
     
