@@ -117,7 +117,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
 
     if(!L1_){
         if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
-            d_->debug(_WARNING_,"WARNING!! c3\n");
+            d_->debug(_WARNING_,"WARNING!! c4\n");
             return;
         }
     }
@@ -233,19 +233,6 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
         d_->debug(_WARNING_,"Warning: Ignoring request. CLine doesn't exists or invalid.\n");
         return false;
     }
-    
-  /*
-    if(mshrEntryNeeded || _cacheLine->isLockedByUser() || ccLine->getState() != V){
-        if(mshr_->isFull()){
-            d_->debug(_L0_,"Inv cannot proceed.  MSHR is full.\n");
-            sendNACK(_event);
-            return false;
-        }
-        else inserted = processRequestInMSHR(_baseAddr, _event);
-        
-        assert(inserted);
-    }
-    */
 
     if(_cacheLine->isLockedByUser()){        /* If user-locked then wait this lock is released to activate this event. */
         if(!processRequestInMSHR(_baseAddr, _event)) {
@@ -513,3 +500,17 @@ bool operator== ( const mshrType& _n1, const mshrType& _n2) {
     if(_n1.elem.type() == typeid(Addr)) return false;
     return(boost::get<MemEvent*>(_n1.elem) == boost::get<MemEvent*>(_n2.elem));
 }
+
+    
+  /*
+    if(mshrEntryNeeded || _cacheLine->isLockedByUser() || ccLine->getState() != V){
+        if(mshr_->isFull()){
+            d_->debug(_L0_,"Inv cannot proceed.  MSHR is full.\n");
+            sendNACK(_event);
+            return false;
+        }
+        else inserted = processRequestInMSHR(_baseAddr, _event);
+        
+        assert(inserted);
+    }
+    */
