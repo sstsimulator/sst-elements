@@ -92,6 +92,7 @@ protected:
     {}
 
 private:
+    BaseRtrEvent()  {} // For Serialization only
     RtrEventType type;
 
     friend class boost::serialization::access;
@@ -150,6 +151,7 @@ private:
 	ar & BOOST_SERIALIZATION_NVP(dest);
 	ar & BOOST_SERIALIZATION_NVP(src);
 	ar & BOOST_SERIALIZATION_NVP(vn);
+	ar & BOOST_SERIALIZATION_NVP(size_in_bits);
 	ar & BOOST_SERIALIZATION_NVP(size_in_flits);
 	ar & BOOST_SERIALIZATION_NVP(trace);
 	ar & BOOST_SERIALIZATION_NVP(traceID);
@@ -218,19 +220,31 @@ class RtrInitEvent : public BaseRtrEvent {
 public:
 
     enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE };
-    
+
     // int num_vns;
     // int id;
 
     Commands command;
     int int_value;
     UnitAlgebra ua_value;
-    
+
     RtrInitEvent() :
         BaseRtrEvent(BaseRtrEvent::INITIALIZATION)
     {}
+
+private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
+		ar & BOOST_SERIALIZATION_NVP(command);
+		ar & BOOST_SERIALIZATION_NVP(int_value);
+		ar & BOOST_SERIALIZATION_NVP(ua_value);
+	}
 };
-    
+
 class internal_router_event : public BaseRtrEvent {
     int next_port;
     int next_vc;
@@ -291,6 +305,8 @@ private:
 		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
 		ar & BOOST_SERIALIZATION_NVP(next_port);
 		ar & BOOST_SERIALIZATION_NVP(next_vc);
+		ar & BOOST_SERIALIZATION_NVP(vc);
+		ar & BOOST_SERIALIZATION_NVP(credit_return_vc);
 		ar & BOOST_SERIALIZATION_NVP(encap_ev);
 	}
 };

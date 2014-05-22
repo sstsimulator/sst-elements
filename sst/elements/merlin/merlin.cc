@@ -335,7 +335,10 @@ extern "C" {
     };
 }
 
+BOOST_CLASS_EXPORT(BaseRtrEvent)
 BOOST_CLASS_EXPORT(RtrEvent)
+BOOST_CLASS_EXPORT(RtrInitEvent)
 BOOST_CLASS_EXPORT(credit_event)
 BOOST_CLASS_EXPORT(internal_router_event)
+BOOST_CLASS_EXPORT(TopologyEvent)
 
