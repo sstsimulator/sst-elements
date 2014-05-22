@@ -66,7 +66,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
     
     }
     catch(stallException const& e){
-        processRequestInMSHR(_baseAddr, _event);                        /* This request needs to wait for another request to finish.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
+        processRequestInMSHR(_baseAddr, _event);                        /* This request needs to stall until another pending request finishes.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
     }
     catch(ignoreEventException const& e){}
 }
@@ -174,8 +174,8 @@ void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requ
 
 
 bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
-    CCLine* wbCCLine = getCCLine(_wbCacheLine->index());
-    if(CacheLine::inTransition(_wbCacheLine->getState()) || (!L1_ && wbCCLine->getState() != V)){
+    CCLine* wbCCLine = topCC_->getCCLine(_wbCacheLine->index());
+    if(wbCCLine->inTransition() || CacheLine::inTransition(_wbCacheLine->getState())){
         d_->debug(_L1_,"Stalling request: Replacement cache line in transition.\n");
         return true;
     }
@@ -186,12 +186,13 @@ bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
 void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
     topCC_->handleEviction(_wbCacheLine->index(), _wbCacheLine->getState());
     CCLine* ccLine = topCC_->getCCLine(_wbCacheLine->index());
-    if(L1_) assert(!ccLine->inTransition()); //TODO: temp, delete this line
+    
     if(ccLine->inTransition()){
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw stallException();
     }
-    if(!L1_) ccLine->clear();
+    
+    ccLine->clear();
 }
 
 
@@ -202,10 +203,9 @@ void Cache::writebackToLowerLevelCaches(MemEvent* _event, CacheLine* _wbCacheLin
 
 
 void Cache::replaceCacheLine(int _replacementCacheLineIndex, int& _newCacheLineIndex, Addr _newBaseAddr){
-    if(!L1_){
-        CCLine* wbCCLine = topCC_->getCCLine(_replacementCacheLineIndex);
-        wbCCLine->setBaseAddr(_newBaseAddr);
-    }
+    CCLine* wbCCLine = topCC_->getCCLine(_replacementCacheLineIndex);
+    wbCCLine->setBaseAddr(_newBaseAddr);
+
     _newCacheLineIndex = _replacementCacheLineIndex;
     cArray_->replace(_newBaseAddr, _newCacheLineIndex);
     d_->debug(_L1_,"Allocated current request in a cache line.\n");
@@ -328,10 +328,11 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
         d_->debug(_L1_,"Request Completed\n");
         if(cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE ||
            (cmd == PutS && mshr_->exists(baseAddr) && getOriginalRequest(mshr_->lookup(baseAddr))->getCmd() == GetSEx)){
-            if(!L1_){                  /* Check if topCC line is locked */
-                CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
-                if(_cacheLine->unlocked() && ccLine->isValid() && !_mshrHit) activatePrevEvents(baseAddr);
-            }
+            /* Check if topCC line is locked */
+            CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
+            if(_cacheLine->unlocked() && ccLine->isValid() && !_mshrHit)
+                activatePrevEvents(baseAddr);
+            
         }
         reActivateEventWaitingForUserLock(_cacheLine, _mshrHit);
         d_->debug(_L1_,"Deleting Event\n");
@@ -395,7 +396,6 @@ void Cache::updateUpgradeLatencyAverage(MemEvent* _origMemEvent){
 
 void Cache::errorChecking(){
     if(MSHRSize_ <= 0)             _abort(Cache, "MSHR size not specified correctly. \n");
-    //if(!isPowerOfTwo(MSHRSize_))   _abort(Cache, "MSHR size is not a power of two. \n");
     if(numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
     if(!isPowerOfTwo(lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");
 }
@@ -458,13 +458,8 @@ bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
 
 
 void Cache::sendNACK(MemEvent* _event){
-    
-    if(_event->isHighNetEvent()){
-        topCC_->sendNACK(_event);
-    }
-    else if(_event->isLowNetEvent()){
-        bottomCC_->sendNACK(_event);
-    }
+    if(_event->isHighNetEvent())        topCC_->sendNACK(_event);
+    else if(_event->isLowNetEvent())    bottomCC_->sendNACK(_event);
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_event->getCmd()]);
 }
@@ -472,18 +467,13 @@ void Cache::sendNACK(MemEvent* _event){
 void Cache::processIncomingNACK(MemEvent* _origReqEvent){
     /* Determine what CC will retry sending the event */
     if(_origReqEvent->fromHighNetNACK()){
-        topCC_->sendEvent(_origReqEvent);                 //TODO: rename 'forwardMessage;
+        topCC_->sendEvent(_origReqEvent);
     }
     else if(_origReqEvent->fromLowNetNACK()){
-        bottomCC_->sendEvent(_origReqEvent);           //TODO: rename 'sendEvent'
+        bottomCC_->sendEvent(_origReqEvent);
     }
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_origReqEvent->getCmd()]);
-}
-
-TopCacheController::CCLine* Cache::getCCLine(int _index){
-    if(!L1_)    return topCC_->getCCLine(_index);
-    else        return NULL;
 }
 
 void Cache::checkRequestValidity(MemEvent* _event) throw(ignoreEventException){
@@ -500,17 +490,3 @@ bool operator== ( const mshrType& _n1, const mshrType& _n2) {
     if(_n1.elem.type() == typeid(Addr)) return false;
     return(boost::get<MemEvent*>(_n1.elem) == boost::get<MemEvent*>(_n2.elem));
 }
-
-    
-  /*
-    if(mshrEntryNeeded || _cacheLine->isLockedByUser() || ccLine->getState() != V){
-        if(mshr_->isFull()){
-            d_->debug(_L0_,"Inv cannot proceed.  MSHR is full.\n");
-            sendNACK(_event);
-            return false;
-        }
-        else inserted = processRequestInMSHR(_baseAddr, _event);
-        
-        assert(inserted);
-    }
-    */
