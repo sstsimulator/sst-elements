@@ -42,7 +42,7 @@ static const ElementInfoParam ariel_params[] = {
     {"arieltool", "Path to the Ariel PIN-tool shared library", NULL},
     {"executable", "Executable to trace", NULL},
     {"appargcount", "Number of arguments to the traced executable", "0"},
-    {"appargs%(appargcount)d", "Arguments for the traced executable", NULL},
+    {"apparg%(appargcount)d", "Arguments for the traced executable", NULL},
     {"arielmode", "PIN tool startup mode", "1"},
     {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
