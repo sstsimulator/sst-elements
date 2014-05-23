@@ -61,6 +61,8 @@ class API : public ProtocolAPI {
 
     void send( void* buf, size_t len, nid_t dest, uint64_t tag, 
                                         FunctorBase_0<bool>* = NULL );
+    void isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq*, 
+                                        FunctorBase_0<bool>* = NULL );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag,
                                         FunctorBase_0<bool>* = NULL );
     void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, CommReq*,

@@ -29,7 +29,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     ++m_seq;
 
-    m_yyy = new YYY( 2, m_info->getGroup(m_event->group)->getMyRank(),
+    m_yyy = new YYY( 8, m_info->getGroup(m_event->group)->getMyRank(),
                 m_info->getGroup(m_event->group)->size(), m_event->root ); 
 
     m_dbg.verbose(CALL_INFO,1,0,"%s group %d, root %d, size %d, rank %d\n",
@@ -43,6 +43,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     }
 
     m_recvReqV.resize( m_yyy->numChildren() + 1);
+    m_sendReqV.resize( m_yyy->numChildren() + 1);
     m_bufV.resize( m_yyy->numChildren() + 1);
 
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
@@ -133,17 +134,35 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
     case SendDown:
         if ( m_event->all && m_yyy->numChildren() ) {
 
-            child = m_sendDownState.count;
-            ++m_sendDownState.count;
-    
-            if ( m_sendDownState.count == m_yyy->numChildren() ) {
-                m_state = Exit;
-            }
+			switch ( m_sendDownState.state ) {
+			  case SendDownState::Sending:
+				child = m_sendDownState.count;
+				++m_sendDownState.count;
 
-            m_dbg.verbose(CALL_INFO,1,0,"send to child %d\n", child );
-            proto()->send( m_event->result, m_bufLen, 
-                    m_yyy->calcChild( child ), genTag() );
-            return;
+                if ( m_sendDownState.count == m_yyy->numChildren() ) {
+                    m_sendDownState.count = 0;
+                    m_sendDownState.state = SendDownState::Waiting;
+                }
+
+                m_dbg.verbose(CALL_INFO,1,0,"isend to child %d\n", child );
+                proto()->isend( m_event->result, m_bufLen,
+                        m_yyy->calcChild( child ), 
+                        genTag(), &m_sendReqV[ child + 1 ] );
+			
+				return;
+			  case SendDownState::Waiting:
+                child = m_sendDownState.count;
+                ++m_sendDownState.count;
+
+                if ( m_sendDownState.count == m_yyy->numChildren() ) {
+					m_state = Exit;
+                    m_waitUpState.state = WaitUpState::DoOp; 
+                }
+
+                m_dbg.verbose(CALL_INFO,1,0,"wait for child %d\n", child );
+                proto()->wait( &m_sendReqV[ child + 1 ] ); 
+				return;
+			}
         }
 
     case Exit:

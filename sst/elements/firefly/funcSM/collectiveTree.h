@@ -118,9 +118,10 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     };
 
     struct SendDownState {
-        SendDownState() : count(0) {}
+        SendDownState() : count(0), state(Sending) {}
         unsigned int count;
-        void init() { count = 0; }
+        enum { Sending, Waiting } state;
+        void init() { state = Sending; count = 0; }
     };
 
   public:
@@ -146,6 +147,7 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
 
     CollectiveStartEvent*   m_event;
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
+    std::vector<CtrlMsg::CommReq>  m_sendReqV;
     std::vector<void*>  m_bufV;
     size_t              m_bufLen;
     YYY*                m_yyy;
