@@ -26,6 +26,7 @@
 #include "motifs/emberhalo3d.h"
 #include "motifs/embersweep2d.h"
 #include "motifs/embersweep3d.h"
+#include "motifs/embernaslu.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
 #include "motifs/emberfini.h"
@@ -97,6 +98,11 @@ load_Sweep2D( Component* comp, Params& params ) {
 static Module*
 load_Sweep3D( Component* comp, Params& params ) {
 	return new EmberSweep3DGenerator(comp, params);
+}
+
+static Module*
+load_NASLU( Component* comp, Params& params ) {
+	return new EmberNASLUGenerator(comp, params);
 }
 
 static Module*
@@ -217,6 +223,18 @@ static const ElementInfoParam sweep3d_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam naslu_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
+	{	"pey",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
+	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
+	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
+	{	"nz",			"Sets the problem size in the Z-dimension",	"50"},
+	{	"nzblock",		"Sets the Z-dimensional block size (Nz % Nzblock == 0, default is 1)", "1"},
+	{	"computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam fini_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
@@ -305,6 +323,14 @@ static const ElementInfoModule modules[] = {
 	load_Sweep3D,
 	sweep3d_params,
     "SST::Ember::EmberGenerator"
+    },
+    { 	"NASLUMotif",
+	"Performs a NAS-LU communication motif from 2 (opposite) vertices",
+	NULL,
+	NULL,
+	load_NASLU,
+	naslu_params,
+        "SST::Ember::EmberGenerator"
     },
     { 	"AllreduceMotif",
 	"Performs a Allreduce operation with type set to float64 and operation SUM",
