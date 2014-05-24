@@ -61,7 +61,9 @@ libember_la_SOURCES = \
 	motifs/emberhalo3d.h \
 	motifs/emberhalo3d.cc \
 	motifs/embersweep3d.h \
-	motifs/embersweep3d.cc
+	motifs/embersweep3d.cc \
+	motifs/embernaslu.h \
+	motifs/embernaslu.cc
 
 #	motifs/emberhalo3dnb.h \
 #	motifs/emberhalo3dnb.cc
