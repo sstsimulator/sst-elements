@@ -73,88 +73,90 @@ void EmberSweep3DGenerator::configureEnvironment(const SST::Output* output, uint
 
 void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
 	if(phase < iterations) {
-		// Sweep from (0, 0) outwards towards (Px, Py)
-		for(uint32_t i = 0; i < nz; i+= kba) {
-			if(x_down >= 0) {
-				evQ->push( new EmberRecvEvent(x_down, (nx * kba), 1000, (Communicator) 0) );
+		for(uint32_t repeat = 0; repeat < 2; ++repeat) {
+			// Sweep from (0, 0) outwards towards (Px, Py)
+			for(uint32_t i = 0; i < nz; i+= kba) {
+				if(x_down >= 0) {
+					evQ->push( new EmberRecvEvent(x_down, (nx * kba), 1000, (Communicator) 0) );
+				}
+
+				if(y_down >= 0) {
+					evQ->push( new EmberRecvEvent(y_down, (ny * kba), 1000, (Communicator) 0) );
+				}
+
+				evQ->push(new EmberComputeEvent(nsCompute));
+
+				if(x_up >= 0) {
+       		                         evQ->push( new EmberSendEvent(x_up, (nx * kba), 1000, (Communicator) 0) );
+               		         }
+
+	                        if(y_up >= 0) {
+       		                         evQ->push( new EmberSendEvent(y_up, (ny * kba), 1000, (Communicator) 0) );
+               		         }
 			}
 
-			if(y_down >= 0) {
-				evQ->push( new EmberRecvEvent(y_down, (ny * kba), 1000, (Communicator) 0) );
+			// Sweep from (Px, 0) outwards towards (0, Py)
+			for(uint32_t i = 0; i < nz; i+= kba) {
+				if(x_up >= 0) {
+					evQ->push( new EmberRecvEvent(x_up, (nx * kba), 2000, (Communicator) 0) );
+				}
+
+				if(y_down >= 0) {
+					evQ->push( new EmberRecvEvent(y_down, (ny * kba), 2000, (Communicator) 0) );
+				}
+
+				evQ->push(new EmberComputeEvent(nsCompute));
+
+				if(x_down >= 0) {
+       		                         evQ->push( new EmberSendEvent(x_down, (nx * kba), 2000, (Communicator) 0) );
+	                        }
+
+	                        if(y_up >= 0) {
+	                                evQ->push( new EmberSendEvent(y_up, (ny * kba), 2000, (Communicator) 0) );
+       		                 }
 			}
 
-			evQ->push(new EmberComputeEvent(nsCompute));
+			// Sweep from (Px,Py) outwards towards (0,0)
+			for(uint32_t i = 0; i < nz; i+= kba) {
+				if(x_up >= 0) {
+					evQ->push( new EmberRecvEvent(x_up, (nx * kba), 3000, (Communicator) 0) );
+				}
 
-			if(x_up >= 0) {
-                                evQ->push( new EmberSendEvent(x_up, (nx * kba), 1000, (Communicator) 0) );
-                        }
+				if(y_up >= 0) {
+					evQ->push( new EmberRecvEvent(y_up, (ny * kba), 3000, (Communicator) 0) );
+				}
 
-                        if(y_up >= 0) {
-                                evQ->push( new EmberSendEvent(y_up, (ny * kba), 1000, (Communicator) 0) );
-                        }
-		}
+				evQ->push(new EmberComputeEvent(nsCompute));
 
-		// Sweep from (Px, 0) outwards towards (0, Py)
-		for(uint32_t i = 0; i < nz; i+= kba) {
-			if(x_up >= 0) {
-				evQ->push( new EmberRecvEvent(x_up, (nx * kba), 2000, (Communicator) 0) );
+				if(x_down >= 0) {
+	                                evQ->push( new EmberSendEvent(x_down, (nx * kba), 3000, (Communicator) 0) );
+	                        }
+
+	                        if(y_down >= 0) {
+	                                evQ->push( new EmberSendEvent(y_down, (ny * kba), 3000, (Communicator) 0) );
+	                        }
 			}
 
-			if(y_down >= 0) {
-				evQ->push( new EmberRecvEvent(y_down, (ny * kba), 2000, (Communicator) 0) );
+			// Sweep from (0, Py) outwards towards (Px, 0)
+			for(uint32_t i = 0; i < nz; i+= kba) {
+				if(x_down >= 0) {
+					evQ->push( new EmberRecvEvent(x_down, (nx * kba), 4000, (Communicator) 0) );
+				}
+
+				if(y_up >= 0) {
+					evQ->push( new EmberRecvEvent(y_up, (ny * kba), 4000, (Communicator) 0) );
+				}
+
+				evQ->push(new EmberComputeEvent(nsCompute));
+
+				if(x_up >= 0) {
+        	                        evQ->push( new EmberSendEvent(x_up, (nx * kba), 4000, (Communicator) 0) );
+	                        }
+
+	                        if(y_down >= 0) {
+	                                evQ->push( new EmberSendEvent(y_down, (ny * kba), 4000, (Communicator) 0) );
+	                        }
 			}
-
-			evQ->push(new EmberComputeEvent(nsCompute));
-
-			if(x_down >= 0) {
-                                evQ->push( new EmberSendEvent(x_down, (nx * kba), 2000, (Communicator) 0) );
-                        }
-
-                        if(y_up >= 0) {
-                                evQ->push( new EmberSendEvent(y_up, (ny * kba), 2000, (Communicator) 0) );
-                        }
-		}
-
-		// Sweep from (Px,Py) outwards towards (0,0)
-		for(uint32_t i = 0; i < nz; i+= kba) {
-			if(x_up >= 0) {
-				evQ->push( new EmberRecvEvent(x_up, (nx * kba), 3000, (Communicator) 0) );
-			}
-
-			if(y_up >= 0) {
-				evQ->push( new EmberRecvEvent(y_up, (ny * kba), 3000, (Communicator) 0) );
-			}
-
-			evQ->push(new EmberComputeEvent(nsCompute));
-
-			if(x_down >= 0) {
-                                evQ->push( new EmberSendEvent(x_down, (nx * kba), 3000, (Communicator) 0) );
-                        }
-
-                        if(y_down >= 0) {
-                                evQ->push( new EmberSendEvent(y_down, (ny * kba), 3000, (Communicator) 0) );
-                        }
-		}
-
-		// Sweep from (0, Py) outwards towards (Px, 0)
-		for(uint32_t i = 0; i < nz; i+= kba) {
-			if(x_down >= 0) {
-				evQ->push( new EmberRecvEvent(x_down, (nx * kba), 4000, (Communicator) 0) );
-			}
-
-			if(y_up >= 0) {
-				evQ->push( new EmberRecvEvent(y_up, (ny * kba), 4000, (Communicator) 0) );
-			}
-
-			evQ->push(new EmberComputeEvent(nsCompute));
-
-			if(x_up >= 0) {
-                                evQ->push( new EmberSendEvent(x_up, (nx * kba), 4000, (Communicator) 0) );
-                        }
-
-                        if(y_down >= 0) {
-                                evQ->push( new EmberSendEvent(y_down, (ny * kba), 4000, (Communicator) 0) );
-                        }
 		}
 	} else {
 		// We are done, tell Ember to finalize the MPI and stop the processing on this motif
