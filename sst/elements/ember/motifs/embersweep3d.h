@@ -43,7 +43,6 @@ private:
 	int32_t  y_down;
 
 	uint32_t nsCompute;
-	uint32_t messageSize;
 	uint32_t iterations;
 
 };
