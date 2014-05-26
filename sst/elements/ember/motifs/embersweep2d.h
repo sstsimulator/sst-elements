@@ -28,15 +28,14 @@ public:
         void finish(const SST::Output* output) { }
 
 private:
-	uint32_t px;
-	uint32_t rank;
-	uint32_t size;
+	int32_t rank;
+	int32_t size;
+	int32_t  x_up;
+	int32_t  x_down;
+
 	uint32_t nx;
 	uint32_t ny;
 	uint32_t y_block;
-
-	int32_t  x_up;
-	int32_t  x_down;
 
 	uint32_t nsCompute;
 	uint32_t iterations;

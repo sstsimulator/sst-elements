@@ -24,9 +24,6 @@ EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& para
 	EmberMessagePassingGenerator(owner, params) {
 
 	nsCompute = (uint64_t) params.find_integer("computetime", 1000);
-
-	px = (uint32_t) params.find_integer("pex", 0);
-
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 
 	nx  = (uint32_t) params.find_integer("nx", 50);
@@ -38,8 +35,8 @@ EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& para
 }
 
 void EmberSweep2DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
-	rank = pRank;
-	size = worldSize;
+	rank = (int32_t) pRank;
+	size = (int32_t) worldSize;
 
 	if(0 == pRank) {
 		output->verbose(CALL_INFO, 1, 0, " 2D Sweep Motif\n");
@@ -47,13 +44,10 @@ void EmberSweep2DGenerator::configureEnvironment(const SST::Output* output, uint
 			nx, ny, y_block, (ny/y_block));
 	}
 
-	if(rank < (worldSize - 1)) {
-		x_up = rank + 1;
-	}
+	x_up   = (rank < (size - 1)) ? rank + 1 : -1;
+	x_down = (rank > 0) ? rank - 1 : -1;
 
-	if(rank > 0) {
-		x_down = rank - 1;
-	}
+	output->verbose(CALL_INFO, 1, 0, "Rank: %" PRId32 ", X+:%" PRId32 ",X-:%" PRId32 "\n", rank, x_up, x_down);
 }
 
 void EmberSweep2DGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
