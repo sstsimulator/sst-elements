@@ -60,6 +60,8 @@ libember_la_SOURCES = \
 	motifs/emberallpingpong.h \
 	motifs/emberallreduce.cc \
 	motifs/emberallreduce.h \
+	motifs/emberreduce.cc \
+	motifs/emberreduce.h \
 	motifs/emberhalo3d.h \
 	motifs/emberhalo3d.cc \
 	motifs/embersweep3d.h \

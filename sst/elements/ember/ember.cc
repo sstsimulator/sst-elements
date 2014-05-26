@@ -32,6 +32,7 @@
 #include "motifs/emberfini.h"
 #include "motifs/emberbarrier.h"
 #include "motifs/emberallreduce.h"
+#include "motifs/emberreduce.h"
 #include "motifs/emberallpingpong.h"
 #include "motifs/embernull.h"
 
@@ -111,6 +112,11 @@ load_Allreduce( Component* comp, Params& params ) {
 }
 
 static Module*
+load_Reduce( Component* comp, Params& params ) {
+	return new EmberReduceGenerator(comp, params);
+}
+
+static Module*
 load_Null( Component* comp, Params& params ) {
 	return new EmberNullGenerator(comp, params);
 }
@@ -166,6 +172,13 @@ static const ElementInfoParam barrier_params[] = {
 static const ElementInfoParam allreduce_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	"count",		"Sets the number of elements to reduce",	 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam reduce_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"root",			"Sets the root of the reduction",		 	"0"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -347,6 +360,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_Allreduce,
 	allreduce_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ReduceMotif",
+	"Performs a reduction operation with type set to float64 and operation SUM from a user-specified reduction-tree root",
+	NULL,
+	NULL,
+	load_Reduce,
+	reduce_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"FiniMotif",
