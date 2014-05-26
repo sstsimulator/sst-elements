@@ -29,7 +29,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
 	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
-	allreduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedAllreduce))
+	allreduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedAllreduce)),
+	reduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedReduce))
 {
 	output = new Output();
 
@@ -137,6 +138,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	userBinWidth = (uint64_t) params.find_integer("allreduce_bin_width", 5);
 	histoAllreduce = new Histogram<uint64_t, uint64_t>(userBinWidth);
 
+	userBinWidth = (uint64_t) params.find_integer("reduce_bin_width", 5);
+	histoReduce = new Histogram<uint64_t, uint64_t>(userBinWidth);
+
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
 
@@ -156,6 +160,7 @@ EmberEngine::~EmberEngine() {
 	delete histoSend;
 	delete histoCompute;
 	delete histoAllreduce;
+	delete histoReduce;
 	delete computeNoiseDistrib;
 	delete output;
 	delete msgapi;
@@ -342,6 +347,20 @@ void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
 	accumulateTime = histoAllreduce;
 }
 
+void EmberEngine::processReduceEvent(EmberReduceEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing an Reduce Event\n");
+	const uint32_t dataTypeWidth = getDataTypeWidth(ev->getElementType());
+	assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
+
+	msgapi->reduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
+		ev->getElementCount(), convertToHermesType(ev->getElementType()),
+		convertToHermesReductionOp(ev->getReductionOperation()),
+		(RankID) ev->getReductionRoot(),
+		ev->getCommunicator(), &reduceFunctor);
+
+	accumulateTime = histoReduce;
+}
+
 void EmberEngine::processStopEvent(EmberStopEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Stop Event\n");
 
@@ -480,6 +499,11 @@ void EmberEngine::completedAllreduce(int val) {
 	issueNextEvent(0);
 }
 
+void EmberEngine::completedReduce(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed Reduce, result = %d\n", val);
+	issueNextEvent(0);
+}
+
 void EmberEngine::refillQueue() {
 	generator->generate(output, generationPhase++, &evQueue);
 	eventCount = evQueue.size();
@@ -539,6 +563,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case ALLREDUCE:
 		processAllreduceEvent( (EmberAllreduceEvent*) eEv);
+		break;
+	case REDUCE:
+		processReduceEvent( (EmberReduceEvent*) eEv);
 		break;
 	case BARRIER:
 		processBarrierEvent( (EmberBarrierEvent*) eEv );

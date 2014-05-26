@@ -47,6 +47,7 @@
 #include "embercomputeev.h"
 #include "emberbarrierev.h"
 #include "emberallredev.h"
+#include "emberredev.h"
 
 using namespace SST::Statistics;
 using namespace SST::Hermes;
@@ -77,6 +78,7 @@ public:
 	void processIRecvEvent(EmberIRecvEvent* ev);
 	void processBarrierEvent(EmberBarrierEvent* ev);
 	void processAllreduceEvent(EmberAllreduceEvent* ev);
+	void processReduceEvent(EmberReduceEvent* ev);
 
 	void completedInit(int val);
 	void completedFinalize(int val);
@@ -86,6 +88,7 @@ public:
 	void completedWait(int val);
 	void completedBarrier(int val);
 	void completedAllreduce(int val);
+	void completedReduce(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistogram(Histogram<uint64_t, uint64_t>* histo);
@@ -119,6 +122,7 @@ private:
 	HermesAPIFunctor irecvFunctor;
 	HermesAPIFunctor barrierFunctor;
 	HermesAPIFunctor allreduceFunctor;
+	HermesAPIFunctor reduceFunctor;
 
 	SSTRandomDistribution* computeNoiseDistrib;
 
@@ -145,6 +149,7 @@ private:
 	Histogram<uint64_t, uint64_t>* histoIRecv;
 	Histogram<uint64_t, uint64_t>* histoBarrier;
 	Histogram<uint64_t, uint64_t>* histoAllreduce;
+	Histogram<uint64_t, uint64_t>* histoReduce;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

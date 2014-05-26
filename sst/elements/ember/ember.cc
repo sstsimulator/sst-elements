@@ -225,7 +225,6 @@ static const ElementInfoParam sweep3d_params[] = {
 
 static const ElementInfoParam sweep2d_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
 	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
 	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
 	{	"y_block",		"Sets the Y-blocking factor (must be Ny % y_block == 0, default is 1 (no blocking))", "1"},

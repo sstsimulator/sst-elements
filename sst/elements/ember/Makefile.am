@@ -36,6 +36,8 @@ libember_la_SOURCES = \
 	emberbarrierev.cc \
 	emberallredev.h \
 	emberallredev.cc \
+	emberredev.h \
+	emberredev.cc \
 	motifs/embernull.h  \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
