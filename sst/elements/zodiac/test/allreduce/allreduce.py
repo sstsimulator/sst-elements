@@ -9,6 +9,9 @@ msgSize = 0;
 shape = "2"
 num_vNics = 1
 
+netPktSizeBytes=64
+netFlitSize="8B"
+
 def main():
     global iterations
     global msgSize
@@ -62,12 +65,13 @@ print numNodes
 print numRanks
 
 sst.merlin._params["link_lat"] = "40ns"
-sst.merlin._params["link_bw"] = "560Mhz"
-sst.merlin._params["xbar_bw"] = "560Mhz"
+sst.merlin._params["link_bw"] = "4GB/s"
+sst.merlin._params["xbar_bw"] = "4GB/s"
 sst.merlin._params["input_latency"] = "25ns"
 sst.merlin._params["output_latency"] = "25ns"
-sst.merlin._params["input_buf_size"] = 128
-sst.merlin._params["output_buf_size"] = 128
+sst.merlin._params["input_buf_size"] = "1Kb"
+sst.merlin._params["output_buf_size"] = "1KB"
+sst.merlin._params["flit_size"] = netFlitSize
 
 sst.merlin._params["num_dims"] = numDim 
 sst.merlin._params["torus:shape"] = shape 
@@ -79,9 +83,9 @@ nicParams = ({
 		"verboseLevel": 2,
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin.torus",
-		"num_vcs" : 2,
-		"link_bw" : "560Mhz",
-		"buffer_size" : 128,
+		"link_bw" : "4GB/s",
+		"buffer_size" : "1KB",
+		"packetSize" : netPktSizeBytes,
 		"rxMatchDelay_ns" : 100,
 		"txDelay_ns" : 100,
         "num_vNics" : num_vNics,
