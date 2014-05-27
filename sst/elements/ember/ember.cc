@@ -137,6 +137,7 @@ static const ElementInfoParam component_params[] = {
     { "wait_bin_width", "Bin width of the wait time histogram", "5" },
     { "barrier_bin_width", "Bin width of the barrier time histogram", "5" },
     { "allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
+    { "reduce_bin_width", "Bin width of the reduce time histogram", "5" },
     { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { "jobId", "Sets the job id", "-1"},
     { "noisegen", "Sets the noise generator for the system", "constant" },
