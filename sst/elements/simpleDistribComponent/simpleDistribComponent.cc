@@ -114,6 +114,7 @@ static const ElementInfoParam component_params[] = {
 	{ "mean", "Mean value to use if we are sampling from the Gaussian/Normal distribution", "1.0"},
 	{ "stddev", "Standard deviation to use for the distribution", "0.2"},
 	{ "lambda", "Lambda value to use for the exponential distribution", "1.0"},
+	{ "binresults", "Print the results, only if value is \"1\"", "1"},
     	{ NULL, NULL, NULL }
 };
 
