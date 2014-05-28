@@ -37,12 +37,35 @@ static const ElementInfoPort router_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoParam SS_router_params[] = {
+    {"info", "Print extra information [yes | no]", "no"},
+    {"debug", "Print debug information [yes | no]", "no"},
+    {"iLCBLat", "Input latency for the LCB"},
+    {"oLCBlat", "Output latency for the LCB"},
+    {"routingLat", "Latency of determining routing"},
+    {"iQLat", "Input queue latency"},
+    {"OutputQSize_flits", "Size of output queue in flits"},
+    {"InputQSize_flits", "Size of input queue in flits"},
+    {"Router2NodeQSize_flits", "Size of queue between router and node in flits"},
+    {"debugInterval", ""},
+    {"dumpTables", "Print routing tables"},
+    {"overheadMult", ""},
+    {"clock", "Clock frequency of router"},
+    {"routing.xDateline", "X dimension dateline"},
+    {"routing.yDateline", "Y dimention dateline"},
+    {"routing.zDateline", "Z dimension dateline"},
+    {"network.xDimSize", "Number of nodes in X dimension"},
+    {"network.yDimSize", "Number of nodes in Y dimension"},
+    {"network.zDimSize", "Number of nodes in Z dimension"},
+    {NULL,NULL,NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "SS_router",
       "Cycle-accurate 3D torus network router",
       NULL,
       create_router,
-      NULL, /* Params */
+      SS_router_params,
       router_ports,
       COMPONENT_CATEGORY_NETWORK
     },
