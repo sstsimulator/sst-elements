@@ -299,11 +299,11 @@ public:
 
     uint getBestCandidate() {
         int bestCandidate = rand() % numWays_;
-        return (uint)bestCandidate;
+        return (uint)candidates[bestCandidate];
     }
 
     void replaced(uint id) { candidates.clear(); }
-    void startReplacement() {}
+    void startReplacement() { candidates.clear(); }
 };
 
 }}
