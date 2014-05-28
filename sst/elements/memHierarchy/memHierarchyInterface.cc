@@ -24,30 +24,30 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
-    SimpleMem(comp, params), owner(comp), recvHandler(NULL), link(NULL)
+MemHierarchyInterface::MemHierarchyInterface(SST::Component *_comp, Params &_params) :
+    SimpleMem(_comp, _params), owner_(_comp), recvHandler_(NULL), link_(NULL)
 { }
 
 
-void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
-    MemEvent *me = createMemEvent(req);
-    link->sendInitData(me);
+void MemHierarchyInterface::sendInitData(SimpleMem::Request *_req){
+    MemEvent *me = createMemEvent(_req);
+    link_->sendInitData(me);
 }
 
 
-void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
-    MemEvent *me = createMemEvent(req);
-    requests[me->getID()] = req;
+void MemHierarchyInterface::sendRequest(SimpleMem::Request *_req){
+    MemEvent *me = createMemEvent(_req);
+    requests_[me->getID()] = _req;
     //fprintf(stderr, "Sending request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[me->getCmd()], me->getAddr(), me->getID().first);
-    link->send(me);
+    link_->send(me);
 }
 
 
 SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
-    SST::Event *ev = link->recv();
+    SST::Event *ev = link_->recv();
     if (NULL != ev) {
         MemEvent *me = static_cast<MemEvent*>(ev);
-        SimpleMem::Request *req = processIncoming(me);
+        Request *req = processIncoming(me);
         delete me;
         return req;
     }
@@ -55,25 +55,25 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
 }
 
 
-MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
+MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
     Command cmd = NULLCMD;
     
-    switch ( req->cmd ) {
-    case SimpleMem::Request::Read:      cmd = GetS;     break;
-    case SimpleMem::Request::Write:     cmd = GetX;     break;
-    case SimpleMem::Request::ReadResp:  cmd = GetXResp; break;
-    case SimpleMem::Request::WriteResp: cmd = GetSResp; break;
+    switch ( _req->cmd ) {
+        case SimpleMem::Request::Read:      cmd = GetS;     break;
+        case SimpleMem::Request::Write:     cmd = GetX;     break;
+        case SimpleMem::Request::ReadResp:  cmd = GetXResp; break;
+        case SimpleMem::Request::WriteResp: cmd = GetSResp; break;
     }
     
-    MemEvent *me = new MemEvent(owner, req->addr, cmd);
-    me->setSize(req->size);
+    MemEvent *me = new MemEvent(owner_, _req->addr, cmd);
+    me->setSize(_req->size);
 
-    if (SimpleMem::Request::Write == req->cmd)  me->setPayload(req->data);
+    if (SimpleMem::Request::Write == _req->cmd)  me->setPayload(_req->data);
 
-    if (req->flags & SimpleMem::Request::F_UNCACHED)     me->setFlag(MemEvent::F_UNCACHED);
-    if (req->flags & SimpleMem::Request::F_LOCKED) {
+    if (_req->flags & SimpleMem::Request::F_UNCACHED)     me->setFlag(MemEvent::F_UNCACHED);
+    if (_req->flags & SimpleMem::Request::F_LOCKED) {
         me->setFlag(MemEvent::F_LOCKED);
-        if (req->cmd == SimpleMem::Request::Read)
+        if (_req->cmd == SimpleMem::Request::Read)
             me->setCmd(GetSEx);
     }
 
@@ -81,65 +81,65 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
 }
 
 
-void MemHierarchyInterface::handleIncoming(SST::Event *ev){
-    MemEvent *me = static_cast<MemEvent*>(ev);
+void MemHierarchyInterface::handleIncoming(SST::Event *_ev){
+    MemEvent *me = static_cast<MemEvent*>(_ev);
     SimpleMem::Request *req = processIncoming(me);
-    if (req) (*recvHandler)(req);
+    if(req) (*recvHandler_)(req);
     delete me;
 }
 
 
-SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
+SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *_ev){
     SimpleMem::Request *req = NULL;
-    MemEvent::id_type origID = ev->getResponseToID();
-    BOOST_ASSERT_MSG(Inv != ev->getCmd(), "Interal Error: Invalidates should not be sent by MemHierarchy to CPU");
+    Command cmd = _ev->getCmd();
+    MemEvent::id_type origID = _ev->getResponseToID();
+    
+    BOOST_ASSERT_MSG(MemEvent::isResponse(cmd), "Interal Error: Invalidates should not be sent by MemHierarchy to CPU");
 
-    std::map<MemEvent::id_type, SimpleMem::Request*>::iterator i = requests.find(origID);
-    if(i != requests.end()){
+    std::map<MemEvent::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
+    if(i != requests_.end()){
         req = i->second;
         
-        if ( NACK == ev->getCmd() ) {                       /* We received a NACK.  Just re-issue it */
+        /*if(NACK == cmd || InV) {                       // We received a NACK.  Just re-issue it
             MemEvent *me = createMemEvent(req);
-            requests[me->getID()] = req;
-            link->send(me);
-            return NULL;
+            requests_[me->getID()] = req;
+            link_->send(me);
+            requests_.erase(i);
+            assert(0); assert(0);
+            //return NULL;
         }
+        */
 
-        requests.erase(i);
-        updateRequest(req, ev);
+        requests_.erase(i);
+        updateRequest(req, _ev);
     }
     else{
-        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first); //TODO
-        std::cout << std::flush;
-        std::cout << std::flush;
-
+        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[_ev->getCmd()], _ev->getAddr(), _ev->getResponseToID().first); //TODO
         assert(0);
     }
     return req;
 }
 
 
-void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const{
-    switch (me->getCmd()) {
+void MemHierarchyInterface::updateRequest(SimpleMem::Request* _req, MemEvent *_me) const{
+    switch (_me->getCmd()) {
     case GetSResp:
-        req->cmd   = SimpleMem::Request::ReadResp;
-        req->data  = me->getPayload();
-        req->size  = me->getPayload().size();
+        _req->cmd   = SimpleMem::Request::ReadResp;
+        _req->data  = _me->getPayload();
+        _req->size  = _me->getPayload().size();
         break;
     case GetXResp:
-        req->cmd   = SimpleMem::Request::WriteResp;
+        _req->cmd   = SimpleMem::Request::WriteResp;
         break;
     default:
-        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[me->getCmd()]);         //TODO
+        fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[_me->getCmd()]);
     }
 }
 
-bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
-    recvHandler = handler;
-    if ( NULL == recvHandler ) {
-        link = owner->configureLink(linkName);
-    } else {
-        link = owner->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
-    }
-    return (link != NULL);
+bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *_handler){
+    recvHandler_ = _handler;
+    if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
+    else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+
+    return (link_ != NULL);
 }

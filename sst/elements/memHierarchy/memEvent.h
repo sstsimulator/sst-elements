@@ -417,6 +417,17 @@ public:
         return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX);
     }
     
+    /** Returns true if this is of cpu type */
+    static bool isCPURequest(Command cmd){
+        return (cmd == GetS || cmd == GetX || cmd == GetSEx);
+    }
+    
+    /** Returns true if this is of response type */
+    static bool isResponse(Command cmd){
+        return (cmd == GetSResp || cmd == GetXResp);
+    }
+    
+    
     
     /** Set ackNeeded member variable */
     void setAckNeeded(){

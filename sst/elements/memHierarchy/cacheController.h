@@ -256,7 +256,7 @@ private:
     void intrapolateMSHRLatency();
 
     /** Add requests to the 'retry queue.'  This event will be reissued at a later time */
-    inline void retryRequestLater(MemEvent* event);
+    void retryRequestLater(MemEvent* event);
 
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
@@ -275,7 +275,7 @@ private:
         if(bottomCCBusy)  bottomCC_->sendOutgoingCommands();
 
         if(cacheBusy) processQueueRequest();
-        else if(UNLIKELY(!retryQueueNext_.empty())) retryEvent();
+        //else if(UNLIKELY(!retryQueueNext_.empty())) retryEvent();
         else if(!topCCBusy && !bottomCCBusy && !dirControllerExists_)
             ret = incIdleCount();
         
@@ -295,6 +295,10 @@ private:
         retryQueueNext_.clear();
         for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
             d_->debug(_L0_,"Retrying event\n");
+            if(mshr_->isFull()){
+                retryQueueNext_ = retryQueue_;
+                return;
+            }
             processEvent(*it, true);
             retryQueue_.erase(it);
         }

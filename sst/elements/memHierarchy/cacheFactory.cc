@@ -67,6 +67,9 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
     uint numLines = cacheSize/lineSize;
     uint protocol;
+    
+    /* NACKing to from L1 to the CPU doesnt really happen */
+    if(L1) mshrSize = 4096;
         
     /* Initialization */
     HashFunction* ht = new PureIdHashFunction;

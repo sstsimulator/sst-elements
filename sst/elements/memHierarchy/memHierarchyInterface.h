@@ -26,6 +26,7 @@
 #include "memEvent.h"
 #include <boost/assert.hpp>
 #include "sst/core/output.h"
+#include "sst/core/debug.h"
 
 namespace SST {
 
@@ -44,7 +45,7 @@ public:
     virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);
 
     /** Link getter */
-    virtual SST::Link* getLink(void) const { return link; }
+    virtual SST::Link* getLink(void) const { return link_; }
 
     virtual void sendInitData(Request *req);
     virtual void sendRequest(Request *req);
@@ -65,10 +66,10 @@ private:
     /** Function used internally to create the memEvent that will be used by MemHierarchy */
     MemEvent* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
-    Component*      owner;
-    HandlerBase*    recvHandler;
-    SST::Link*      link;
-    std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests;
+    Component*      owner_;
+    HandlerBase*    recvHandler_;
+    SST::Link*      link_;
+    std::map<MemEvent::id_type, Interfaces::SimpleMem::Request*> requests_;
 
 };
 

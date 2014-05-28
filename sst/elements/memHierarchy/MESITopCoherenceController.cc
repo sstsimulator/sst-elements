@@ -350,7 +350,7 @@ void TopCacheController::sendNACK(MemEvent *_event){
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
     uint64 latency      = timestamp_ + accessLatency_;
     response resp       = {NACKevent, latency, true};
-    d_->debug(_L1_,"TopCC: Sending NACK: EventID = %"PRIx64", Addr = %"PRIx64", RespToID = %"PRIx64"\n", _event->getID().first, _event->getAddr(), NACKevent->getResponseToID().first);
+    d_->debug(_L1_,"TopCC: Sending NACK: Cmd = %s, EventID = %"PRIx64", Addr = %"PRIx64", RespToID = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getID().first, _event->getAddr(), NACKevent->getResponseToID().first);
     NACKsSent_++;
     outgoingEventQueue_.push(resp);
 

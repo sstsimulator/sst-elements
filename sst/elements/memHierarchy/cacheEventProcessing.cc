@@ -101,6 +101,16 @@ void Cache::finish(){
 }
 
 void Cache::processIncomingEvent(SST::Event* _ev){
+    MemEvent* event = static_cast<MemEvent*>(_ev);
+    /* If this is an L1 and the MSHR is full, NACK asynchronously (dont wait till clock) so that
+       MHInterface doesn't reorder requests */
+    if(L1_ && MemEvent::isCPURequest(event->getCmd()) && (mshr_->isFull() || !retryQueueNext_.empty())){
+        //sendNACK(event);
+        d_->debug(_L0_,"Inserting event in retryQueue.  Name = %s\n", this->getName().c_str());
+        retryRequestLater(event);
+        return;
+    }
+    
     incomingEventQueue_.push(make_pair(_ev, timestamp_));
     if(!clockOn_){
         timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
@@ -131,14 +141,15 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         return;
     }
     
+    
     switch(cmd){
         case GetS:
         case GetX:
         case GetSEx:
-        
-            //TODO: refactor, save isHitAnd.. to bool, and only call processRequestinMSHR once
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
-                if(processRequestInMSHR(baseAddr, event)) d_->debug(_L0_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                if(processRequestInMSHR(baseAddr, event)){
+                    d_->debug(_L0_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                }
                 return;
             }
             if(mshr_->isFull()){
@@ -164,10 +175,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
             break;
         case NACK:
             origEvent = event->getNACKedEvent();
-            assert(origEvent);      //TODO: delete
-            d_->debug(_L0_,"Orig Cmd NACKed = %s \n", CommandString[origEvent->getCmd()]);
             processIncomingNACK(origEvent);
-            //delete event;         //TODO: delete
             break;
         case FetchInv:
         case FetchInvX:

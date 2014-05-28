@@ -162,7 +162,8 @@ void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requ
     
     if(_wbCacheLine->isLockedByUser()){
         d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", _wbCacheLine->getBaseAddr());
-        retryRequestLater(_event);
+        //retryRequestLater(_event);
+        mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw stallException();
     }
     else if(isCandidateInTransition(_wbCacheLine)){
@@ -347,7 +348,6 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine, bool _mshrH
     if(_cacheLine->eventsWaitingForLock_ && !_cacheLine->isLockedByUser() && !_mshrHit){
         d_->debug(_L1_,"Reactivating events:  User-locked cache line is now available\n");
         if(mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);
-        else  d_->debug(_L1_,"No events to reactivate for Addr = %"PRIx64"\n", baseAddr);
         _cacheLine->eventsWaitingForLock_ = false;
     }
 }
@@ -453,27 +453,33 @@ bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
         return false;
     }
     return true;
-
 }
 
 
 void Cache::sendNACK(MemEvent* _event){
-    if(_event->isHighNetEvent())        topCC_->sendNACK(_event);
+    if(_event->isHighNetEvent()){
+        /*if(L1_){
+            retryRequestLater(_event);
+            d_->debug(_L0_,"WARNING, c8\n");
+        }
+        else */
+        topCC_->sendNACK(_event);
+    }
     else if(_event->isLowNetEvent())    bottomCC_->sendNACK(_event);
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_event->getCmd()]);
 }
 
 void Cache::processIncomingNACK(MemEvent* _origReqEvent){
+    
     /* Determine what CC will retry sending the event */
-    if(_origReqEvent->fromHighNetNACK()){
-        topCC_->sendEvent(_origReqEvent);
-    }
-    else if(_origReqEvent->fromLowNetNACK()){
-        bottomCC_->sendEvent(_origReqEvent);
-    }
+    if(_origReqEvent->fromHighNetNACK())       topCC_->sendEvent(_origReqEvent);
+    else if(_origReqEvent->fromLowNetNACK())   bottomCC_->sendEvent(_origReqEvent);
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_origReqEvent->getCmd()]);
+    
+    d_->debug(_L0_,"Orig Cmd NACKed = %s \n", CommandString[_origReqEvent->getCmd()]);
+    delete _origReqEvent;
 }
 
 void Cache::checkRequestValidity(MemEvent* _event) throw(ignoreEventException){
