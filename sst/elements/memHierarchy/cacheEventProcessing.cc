@@ -100,7 +100,9 @@ void Cache::finish(){
     nameMap_.clear();
 }
 
-void Cache::processIncomingEvent(SST::Event* _ev){    
+void Cache::processIncomingEvent(SST::Event* _ev){
+    processEvent(_ev, false);
+    /*
     incomingEventQueue_.push(make_pair(_ev, timestamp_));
     if(!clockOn_){
         timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
@@ -108,6 +110,7 @@ void Cache::processIncomingEvent(SST::Event* _ev){
         memNICIdleCount_ = 0;
         idleCount_ = 0;
     }
+    */
 }
   
 void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {

@@ -337,11 +337,13 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
             _abort(CoherencyController, "Command not valid as a response. \n");
     }
     
-    d_->debug(_L1_,"Sending Response: Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     
     uint64 latency = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     response resp  = {responseEvent, latency, true};
     outgoingEventQueue_.push(resp);
+    
+    d_->debug(_L1_,"Timestamp = %"PRIu64", Delivery Time = %"PRIu64"\n", timestamp_, latency);
+    d_->debug(_L1_,"Sending Response: Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     return true;
 }
 

@@ -263,23 +263,23 @@ private:
          the clock gets deregested from TimeVortx and reregisted only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
-        bool ret = false;
+        //bool ret = false;
         
         if(dirControllerExists_) memNICIdle_ = directoryLink_->clock();
         
         bool topCCBusy      = topCC_->queueBusy();
         bool bottomCCBusy   = bottomCC_->queueBusy();
-        bool cacheBusy      = !incomingEventQueue_.empty();
+        //bool cacheBusy      = !incomingEventQueue_.empty();
         
         if(topCCBusy)     topCC_->sendOutgoingCommands();
         if(bottomCCBusy)  bottomCC_->sendOutgoingCommands();
 
-        if(cacheBusy) processQueueRequest();
-        //else if(UNLIKELY(!retryQueueNext_.empty())) retryEvent();
-        else if(!topCCBusy && !bottomCCBusy && !dirControllerExists_)
-            ret = incIdleCount();
+        //if(cacheBusy) processQueueRequest();
+        //else if(!topCCBusy && !bottomCCBusy && !dirControllerExists_)
+        //    ret = incIdleCount();
         
-        return ret;
+        //return ret;
+        return false;
     }
     
     /** Process the request on the top of the incoming event queue */
