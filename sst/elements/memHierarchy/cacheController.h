@@ -110,7 +110,7 @@ private:
 
     /** Constructor for Cache Component */
     Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, 
-           Output* _d, LRUReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
+           Output* _d, ReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
@@ -326,7 +326,7 @@ private:
     MemNIC*                 directoryLink_;
     Output*                 d_;
     Output*                 d2_;
-    LRUReplacementMgr*      replacementMgr_;
+    ReplacementMgr*         replacementMgr_;
     uint                    numLines_;
     uint                    lineSize_;
     uint                    MSHRSize_;

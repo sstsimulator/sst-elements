@@ -26,6 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define N   200
+#define HUGE_MSHR 10000
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -40,9 +41,9 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
     dbg->debug(C,L1,0,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
-    /* Get Parameters */
+    /* --------------- Get Parameters --------------- */
     string cacheFrequency       = params.find_string("cache_frequency", "" );            //Hertz
-    string replacementProtocol  = params.find_string("replacement_policy", "lru");
+    string replacement          = params.find_string("replacement_policy", "LRU");
     int associativity           = params.find_integer("associativity", -1);
     string sizeStr              = params.find_string("cache_size", "");                  //Bytes
     int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
@@ -52,40 +53,50 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     int L1int                   = params.find_integer("L1", 0);
     int directoryAtNextLevel    = params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = params.find_string("coherence_protocol", "");
+    bool L1 = (L1int == 1);
 
     /* Check user specified all required fields */
-    if(cacheFrequency.empty())          _abort(Cache, "No cache frequency specified (usually frequency = cpu frequency).\n");
-    if(-1 >= associativity)             _abort(Cache, "Associativity was not specified.\n");
-    if(sizeStr.empty())                 _abort(Cache, "Cache size was not specified. \n")
-    if(-1 == lineSize)                  _abort(Cache, "Line size was not specified (blocksize).\n");
-    if(-1 == mshrSize)                  mshrSize = 4096;//_abort(Cache, "MSHR Size not specified correctly\n");
-    if(10 > mshrSize)                   _abort(Cache, "MSHR should be at least of 10 MSHR entries long");
-    if(L1int != 1 && L1int != 0)        _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
-    if(accessLatency == -1 )            _abort(Cache, "Access time not specified\n");
+    if(cacheFrequency.empty())      _abort(Cache, "No cache frequency specified (usually frequency = cpu frequency).\n");
+    if(-1 >= associativity)         _abort(Cache, "Associativity was not specified.\n");
+    if(sizeStr.empty())             _abort(Cache, "Cache size was not specified. \n")
+    if(-1 == lineSize)              _abort(Cache, "Line size was not specified (blocksize).\n");
+    if(L1int != 1 && L1int != 0)    _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
+    if(accessLatency == -1 )        _abort(Cache, "Access time not specified\n");
     if(directoryAtNextLevel > 1 ||
-       directoryAtNextLevel < 0)        _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");
+       directoryAtNextLevel < 0)    _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");
     long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
+    
+    
     uint numLines = cacheSize/lineSize;
     uint protocol;
     
-    /* NACKing to from L1 to the CPU doesnt really happen */
-    if(L1) mshrSize = 4096;
-        
+    /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
+    if(L1 && mshrSize != -1)    _abort(Cache, "The parameter 'mshr_num_entries' is not valid in an L1 since MemHierarchy"
+                                "assumes an L1 MSHR size matches the size of the load/store queue unit of the CPU.  An L1"
+                                "will always be available to the CPU");
+    if(-1 == mshrSize)          mshrSize = HUGE_MSHR;
+    
+    /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
+    if(10 > mshrSize)           _abort(Cache, "MSHR should be at least of 10 MSHR entries long");
+
+    
     /* Initialization */
     HashFunction* ht = new PureIdHashFunction;
+    boost::algorithm::to_lower(coherenceProtocol);
+    boost::algorithm::to_lower(replacement);
     
-    if(coherenceProtocol == "MESI" || coherenceProtocol == "mesi")      protocol = 1;
-    else if(coherenceProtocol == "MSI" || coherenceProtocol == "msi")   protocol = 0;
-    else _abort(Cache, "Not supported protocol\n");
+    if(coherenceProtocol == "mesi")      protocol = 1;
+    else if(coherenceProtocol == "msi")  protocol = 0;
+    else
+        _abort(Cache, "Not supported protocol\n");
 
-    SST::MemHierarchy::LRUReplacementMgr* replacementManager;
-    if (boost::iequals(replacementProtocol, "lru"))         replacementManager = new LRUReplacementMgr(dbg, numLines,true);
-    else if (boost::iequals(replacementProtocol, "lfu"))    replacementManager = new LRUReplacementMgr(dbg, numLines, true);
-   // TODO: else if (boost::iequals(replacementProtocol, "random")) replacementManager = new RandomReplacementMgr(numLines, true);
-    //else if (boost::iequals(replacementProtocol, "mru"))    replacementManager = new MRUReplacementMgr(numLines, true);
+    ReplacementMgr* replacementManager;
+    if (boost::iequals(replacement, "lru"))         replacementManager = new LRUReplacementMgr(dbg, numLines, true);
+    else if (boost::iequals(replacement, "lfu"))    replacementManager = new LFUReplacementMgr(dbg, numLines);
+    else if (boost::iequals(replacement, "random")) replacementManager = new RandomReplacementMgr(dbg, associativity);
+    else if (boost::iequals(replacement, "mru"))    replacementManager = new MRUReplacementMgr(dbg, numLines, true);
     else _abort(Cache, "Replacement policy was not entered correctly or is not supported.\n");
     
-    bool L1 = (L1int == 1) ? true : false;
     CacheArray* array = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replacementManager, ht, !L1);
     Cache* cache = new Cache(id, params, cacheFrequency, array, protocol, dbg,
                              replacementManager, numLines, lineSize, mshrSize, L1, directoryAtNextLevel);
@@ -95,11 +106,11 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
 
 
 Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol,
-             Output* _dbg, LRUReplacementMgr* _rm, uint _numLines, uint _lineSize, uint _MSHRSize,
+             Output* _dbg, ReplacementMgr* _rm, uint _numLines, uint _lineSize, uint _MSHRSize,
              bool _L1, bool _dirControllerExists) :
-               Component(id), cArray_(_cacheArray), protocol_(_protocol), d_(_dbg), replacementMgr_(_rm),
-               numLines_(_numLines), lineSize_(_lineSize), MSHRSize_(_MSHRSize), L1_(_L1),
-               dirControllerExists_(_dirControllerExists){
+             Component(id), cArray_(_cacheArray), protocol_(_protocol), d_(_dbg), replacementMgr_(_rm),
+             numLines_(_numLines), lineSize_(_lineSize), MSHRSize_(_MSHRSize), L1_(_L1),
+             dirControllerExists_(_dirControllerExists){
 
     d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
     pMembers();
@@ -115,7 +126,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     mshrLatency_        = params.find_integer("mshr_latency_cycles", -1);
     
     
-    /* Prefetcher */
+    /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) listener_ = new CacheListener();
     else {
         listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
@@ -125,26 +136,26 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     
-    /* Latency */
+    /* ---------------- Latency ---------------- */
     assert(accessLatency_ >= 1);
     if(mshrLatency_ < 1) intrapolateMSHRLatency();
-
     assert(mshrLatency_   >= 1);
 
-    /* MSHR */
+    /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(this, MSHRSize_);
     mshrUncached_       = new MSHR(this, 4096);
     
-    /* Links */
+    /* ---------------- Links ---------------- */
     lowNetPorts_        = new vector<Link*>();
     highNetPorts_       = new vector<Link*>();
     
-    /* Clock */
+    /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
     defaultTimeBase_    = registerClock(_cacheFrequency, clockHandler_);
     
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
 
+    /* ---------------- Directory Controller --------------- */
     if (dirControllerExists_) {
         assert(isPortConnected("directory"));
         MemNIC::ComponentInfo myInfo;
@@ -176,12 +187,12 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     totalUpgradeLatency_                = 0;
     mshrHits_                           = 0;
         
-    /* Coherence Controllers */
+    /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
     (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
     bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_);
    
-    /* Replacement Manager */
+    /*--------------- Replacement Manager --------------- */
     replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
 
 }

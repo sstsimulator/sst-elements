@@ -44,25 +44,25 @@ class ReplacementMgr{
         MESIBottomCC* bottomCC_;
 };
 
-/*
- * LRU
- */
+/* ------------------------------------------------------------------------------------------
+ *  LRU
+ * ------------------------------------------------------------------------------------------*/
 class LRUReplacementMgr : public ReplacementMgr {
 private:
-    uint64_t timestamp;
-    int32_t bestCandidate;
-    uint64_t* array;
-    uint numLines_;
+    uint64_t    timestamp;
+    int32_t     bestCandidate;
+    uint64_t*   array;
+    uint        numLines_;
 
     struct Rank {
-        uint64_t timestamp;
-        uint sharers;
-        BCC_MESIState state;
+        uint64_t        timestamp;
+        uint            sharers;
+        BCC_MESIState   state;
 
         void reset() {
-            state = I;
-            sharers = 0;
-            timestamp = 0;
+            state       = I;
+            sharers     = 0;
+            timestamp   = 0;
         }
 
         inline bool lessThan(const Rank& other) const {
@@ -117,9 +117,9 @@ public:
 
 };
 
-/* 
+/* ------------------------------------------------------------------------------------------
  *  LFU
- */
+ * ------------------------------------------------------------------------------------------*/
 class LFUReplacementMgr : public ReplacementMgr {
     private:
         uint64_t timestamp;
@@ -200,9 +200,115 @@ class LFUReplacementMgr : public ReplacementMgr {
             bestRank.reset();
             array[id].acc = 0;
         }
+    
+        void startReplacement(){
+            bestCandidate = -1;
+            bestRank.reset();
+        }
      
 };
 
+
+
+/* ------------------------------------------------------------------------------------------
+ *  MRU
+ * ------------------------------------------------------------------------------------------*/
+class MRUReplacementMgr : public ReplacementMgr {
+private:
+    uint64_t    timestamp;
+    int32_t     bestCandidate;
+    uint64_t*   array;
+    uint        numLines_;
+
+    struct Rank {
+        uint64_t      timestamp;
+        uint          sharers;
+        BCC_MESIState state;
+
+        void reset() {
+            state       = I;
+            sharers     = 0;
+            timestamp   = 0;
+        }
+
+        inline bool biggerThan(const Rank& other) const {
+            if(state == I && other.state != I) return true;
+            else{
+                if (sharers == 0 && other.sharers > 0) return true;
+                else if (sharers > 0 && other.sharers == 0) return false;
+                else return timestamp > other.timestamp;
+            }
+        }
+    };
+
+Rank bestRank;
+
+public:
+    MRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines)  {
+        array = (uint64_t*) calloc(numLines_, sizeof(uint64_t));
+        bestRank.reset();
+    }
+
+    virtual ~MRUReplacementMgr() { free(array); }
+
+    void update(uint id) { array[id] = timestamp++; }
+
+    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) {
+        Rank candRank = {array[id], (sharersAware) ? topCC_->numSharers(id) : 0, state};
+        if (bestCandidate == -1 || candRank.biggerThan(bestRank)) {
+            bestRank = candRank;
+            bestCandidate = id;
+        }
+        
+    }
+
+    uint getBestCandidate() {
+        assert(bestCandidate != -1);
+        return (uint)bestCandidate;
+    }
+
+    void replaced(uint id) {
+        bestCandidate = -1;
+        bestRank.reset();
+        array[id] = 0;
+    }
+
+    void startReplacement() {
+        bestCandidate = -1;
+        bestRank.reset();
+    }
+
+};
+
+
+
+/* ------------------------------------------------------------------------------------------
+ *  Random
+ * ------------------------------------------------------------------------------------------*/
+class RandomReplacementMgr : public ReplacementMgr {
+ private:
+    vector<uint64_t> candidates;
+    int numWays_;
+
+public:
+    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays) {}
+    virtual ~RandomReplacementMgr() {}
+
+    void update(uint id){}
+    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) { candidates.push_back(id);}
+
+    uint getBestCandidate() {
+        int bestCandidate = rand() % numWays_;
+        return (uint)bestCandidate;
+    }
+
+    void replaced(uint id) { candidates.clear(); }
+    void startReplacement() {}
+};
+
 }}
+
+
+
 #endif	/* REPLACEMENT_PROTOCOL_H */
 

@@ -55,9 +55,9 @@ static const ElementInfoParam cache_params[] = {
     {"access_latency_cycles",   "Latency (in Cycles) to lookup data in the cache array."},
     {"L1",                      "Parameter specifies whether cache is an L1 --0, or 1--"},
     {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},
-    {"mshr_num_entries",        "Number of MSHR entries"},
+    {"mshr_num_entries",        "Number of MSHR entries.  This parameter is not valid in an L1 since MemHierarchy assumes an L1 MSHR size matches the size of the load/store queue unit of the CPU", "-1"},
     /* Not required */
-    {"mshr_latency_cycles",     "Latency (in Cycles) to lookup data in the MSHR. If not specified, simple intrapolation is used based on the access latency", "-1"},
+    {"mshr_latency_cycles",     "Latency (in Cycles) that takes to processes responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the access latency", "-1"},
     {"idle_max",                "Cache temporarily turns off its clock after this amount of idle cycles", "6"},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"prefetcher",              "Prefetcher Module", ""},
