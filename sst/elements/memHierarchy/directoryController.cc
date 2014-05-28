@@ -170,9 +170,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;
 
-    
-    
-    
+
     /* New Request */
     switch(cmd) {
     case PutS:
@@ -221,10 +219,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
 
         if(entry->inController) {
             ++numCacheHits;
-            handleRequestData(entry, ev);
+            handleDataRequest(entry, ev);
         } else {
             dbg.output(CALL_INFO, "Entry %"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
-            entry->nextFunc = &DirectoryController::handleRequestData;
+            entry->nextFunc = &DirectoryController::handleDataRequest;
             requestDirEntryFromMemory(entry);
         }
         break;
@@ -317,7 +315,7 @@ void DirectoryController::sendInvalidate(int target, DirEntry* entry){
 }
 
 
-void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
+void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     entry->activeReq = new_ev;
     entry->reqSize = new_ev->getSize();
 	uint32_t requesting_node = node_id(entry->activeReq->getSrc());
@@ -359,18 +357,18 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
 	}
     else if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) {
         // Don't set as a sharer whne dealing with uncached
-		entry->nextFunc = &DirectoryController::sendRequestedData;
+		entry->nextFunc = &DirectoryController::processResponse;
 		requestDataFromMemory(entry);
     }
     else{
         //Handle GetS requests
 		entry->sharers[requesting_node]= true;
-		entry->nextFunc = &DirectoryController::sendRequestedData;
+		entry->nextFunc = &DirectoryController::processResponse;
 		requestDataFromMemory(entry);
 	}
 }
 
-void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
+void DirectoryController::finishFetch(DirEntry* entry, MemEvent *_origEvent){
 	if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
 		entry->dirty = true;
         entry->clearSharers();
@@ -380,20 +378,22 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
     if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
         entry->sharers[node_id(entry->activeReq->getSrc())] = true;
 
-	MemEvent *ev = entry->activeReq->makeResponse(this);
-	ev->setPayload(new_ev->getPayload());
-	sendResponse(ev);
-	writebackData(new_ev);
+	MemEvent *resp = entry->activeReq->makeResponse(this);
+	resp->setPayload(_origEvent->getPayload());
+	sendResponse(resp);
+	writebackData(_origEvent);
 
 	updateEntryToMemory(entry);
 }
 
 
 
-void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
+void DirectoryController::processResponse(DirEntry* entry, MemEvent *_origEvent){
 	MemEvent *ev = entry->activeReq->makeResponse(this);
-	//TODO:  only if write should you set the payload
-    ev->setPayload(new_ev->getPayload());
+
+    if(_origEvent->getCmd() == GetS || _origEvent->getCmd() == GetSEx)
+        ev->setPayload(_origEvent->getPayload());
+
     dbg.output(CALL_INFO, "Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());
 	sendResponse(ev);
     
@@ -412,7 +412,7 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
     if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) entry->sharers[target_id] = true;
 	entry->dirty = true;
 
-	entry->nextFunc = &DirectoryController::sendRequestedData;
+	entry->nextFunc = &DirectoryController::processResponse;
 	requestDataFromMemory(entry);
 }
 

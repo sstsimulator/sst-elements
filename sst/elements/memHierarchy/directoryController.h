@@ -103,13 +103,13 @@ class DirectoryController : public Component {
     void sendInvalidate(int target, DirEntry* entry);
 
 	/** Function gets called when the meta data (flags, state) for a particular request is in the directory controller*/
-    void handleRequestData(DirEntry* entry, MemEvent *new_ev);
+    void handleDataRequest(DirEntry* entry, MemEvent *new_ev);
 	
     /** Fetch response received.  Respond to the event that cause the Fetch in the first place */
-    void finishFetch(DirEntry* entry, MemEvent *new_ev);
+    void finishFetch(DirEntry* entry, MemEvent *_origEvent);
 	
     /** Send response to a previously received request */
-    void sendRequestedData(DirEntry* entry, MemEvent *new_ev);
+    void processResponse(DirEntry* entry, MemEvent *_origEvent);
 	
     /** Function changes state of the cache line to indicate the new exclusive sharer */
     void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);

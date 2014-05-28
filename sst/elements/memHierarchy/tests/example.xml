@@ -28,7 +28,6 @@
         <cache_line_size> 64 </cache_line_size>
         <low_network_links> 1 </low_network_links>
         <access_latency_cycles> 2  </access_latency_cycles>
-        <mshr_num_entries> 4096 </mshr_num_entries>
         <L1> 1 </L1>
     </l1CacheParams>
 
