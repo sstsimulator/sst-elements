@@ -457,14 +457,7 @@ bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
 
 
 void Cache::sendNACK(MemEvent* _event){
-    if(_event->isHighNetEvent()){
-        /*if(L1_){
-            retryRequestLater(_event);
-            d_->debug(_L0_,"WARNING, c8\n");
-        }
-        else */
-        topCC_->sendNACK(_event);
-    }
+    if(_event->isHighNetEvent())        topCC_->sendNACK(_event);
     else if(_event->isLowNetEvent())    bottomCC_->sendNACK(_event);
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_event->getCmd()]);

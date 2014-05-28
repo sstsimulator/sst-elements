@@ -100,17 +100,7 @@ void Cache::finish(){
     nameMap_.clear();
 }
 
-void Cache::processIncomingEvent(SST::Event* _ev){
-    MemEvent* event = static_cast<MemEvent*>(_ev);
-    /* If this is an L1 and the MSHR is full, NACK asynchronously (dont wait till clock) so that
-       MHInterface doesn't reorder requests */
-    if(L1_ && MemEvent::isCPURequest(event->getCmd()) && (mshr_->isFull() || !retryQueueNext_.empty())){
-        //sendNACK(event);
-        d_->debug(_L0_,"Inserting event in retryQueue.  Name = %s\n", this->getName().c_str());
-        retryRequestLater(event);
-        return;
-    }
-    
+void Cache::processIncomingEvent(SST::Event* _ev){    
     incomingEventQueue_.push(make_pair(_ev, timestamp_));
     if(!clockOn_){
         timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
@@ -176,6 +166,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case NACK:
             origEvent = event->getNACKedEvent();
             processIncomingNACK(origEvent);
+            delete event;
             break;
         case FetchInv:
         case FetchInvX:
