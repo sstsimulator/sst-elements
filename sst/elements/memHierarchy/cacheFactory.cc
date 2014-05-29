@@ -66,12 +66,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     while(getline(ss, token, ',')) {
         statGroupIds.push_back(atoi(token.c_str()));
     }
-    
-    cout << "Group IDs: " << endl;
-    for(unsigned int i = 0; i < statGroupIds.size(); i++){
-        cout << "id: " << statGroupIds[i] << endl;
-    }
-
 
     /* Check user specified all required fields */
     if(frequency.empty())           _abort(Cache, "No cache frequency specified (usually frequency = cpu frequency).\n");

@@ -131,7 +131,6 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
     Command origCmd = _origRequest->getCmd();
     if(!MemEvent::isDataRequest(origCmd)){
         d_->debug(_L0_,"Error:  Command = %s not of request-type\n", CommandString[origCmd]);
-        cout << flush;
         _abort(MemHierarchy::CacheController, "");
     }
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);

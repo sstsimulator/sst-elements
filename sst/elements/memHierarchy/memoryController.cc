@@ -392,7 +392,6 @@ void MemController::handleEvent(SST::Event *event){
     else _abort(MemController, "MemController:  Command not supported, Cmd = %s", CommandString[cmd]);
     
     delete event;
-    cout << flush;
 }
 
 

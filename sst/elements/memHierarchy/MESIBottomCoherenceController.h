@@ -27,7 +27,7 @@ namespace SST { namespace MemHierarchy {
 class MESIBottomCC : public CoherencyController{
 public:
     /** Constructor for MESIBottomCC. */
-    MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
+    MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
                  uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats) :
                  CoherencyController(_cache, _dbg, _lineSize), lowNetPorts_(_parentLinks),

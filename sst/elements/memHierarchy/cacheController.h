@@ -53,6 +53,8 @@ public:
     typedef unsigned int                    uint;
     typedef long long unsigned int          uint64;
 
+    friend class InstructionStream;
+    
     /** MSHR full exception.  Catch block responsible for sending NACK */
     class mshrException : public exception{ const char* what () const throw (){ return "Memory requests needs to be NACKed. MSHR is full\n"; }};
 

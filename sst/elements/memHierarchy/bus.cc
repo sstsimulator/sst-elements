@@ -48,7 +48,6 @@ Bus::Bus(ComponentId_t _id, Params& _params) : Component(_id){
 void Bus::processIncomingEvent(SST::Event* _ev){
     eventQueue_.push(_ev);
     if(!busOn_){
-        //std::cout << "HEREEEE" << std::endl;
         reregisterClock(defaultTimeBase_, clockHandler_);
         busOn_ = true;
         idleCount_ = 0;
@@ -216,7 +215,6 @@ void Bus::init(unsigned int _phase){
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
                 for(int i = 0; i < numHighNetPorts_; i++) {
                     highNetPorts_[i]->sendInitData(new MemEvent(memEvent));
-                    //cout << "sent memEvent, src: " << temp->getSrc() << " linkID: " << highNetPorts_[i]->getId() << endl;
                 }
             }
             else{/*Ignore responses */}
