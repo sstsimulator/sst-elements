@@ -42,7 +42,7 @@ Topology:
             <L1> 1 </L1>
             <debug> ${MEM_DEBUG} </debug>
             <statistics> 1 </statistics>
-            <stat_group_ids> 1, 7, 140 </stat_group_ids>
+            <!-- <stat_group_ids> 1, 7, 140 </stat_group_ids> -->
     </l1Params>
     <l2Params>
             <cache_frequency> 2 Ghz  </cache_frequency>

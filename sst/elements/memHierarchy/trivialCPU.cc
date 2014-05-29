@@ -92,9 +92,10 @@ void trivialCPU::init(unsigned int phase)
 	if ( !phase ) {
 		memory->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
 	}
-    tempIds[0] = 1;
-    tempIds[1] = 7;
-    tempIds[2] = 140;
+    //TODO: temp
+    //tempIds[0] = 1;
+    //tempIds[1] = 7;
+    //tempIds[2] = 140;
 }
 
 // incoming events are scanned and deleted
