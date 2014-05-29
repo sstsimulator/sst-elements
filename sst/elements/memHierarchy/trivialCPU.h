@@ -76,7 +76,6 @@ private:
 	std::map<uint64_t, SimTime_t> requests;
 
     Interfaces::SimpleMem *memory;
-    //temp:  int tempIds[3];
 
     SST::RNG::MarsagliaRNG rng;
 
