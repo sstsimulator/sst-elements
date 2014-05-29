@@ -87,9 +87,8 @@ void Cache::finish(){
     if(mshrHits_ > 0) averageLatency = totalUpgradeLatency_/mshrHits_;
     else averageLatency = 0;
     
-    bottomCC_->printStats(stats_, STAT_GetSExReceived_, STAT_InvalidateWaitingForUserLock_,
-                          STAT_TotalRequestsRecieved_, STAT_TotalMSHRHits_, averageLatency);
-    topCC_->printStats(stats_);
+    bottomCC_->printStats(statsFile_, statGroupIds_, stats_, averageLatency);
+    topCC_->printStats(statsFile_);
     listener_->printStats(*d_);
     delete cArray_;
     delete replacementMgr_;
@@ -121,10 +120,10 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     MemEvent* origEvent;
     
     if(!_mshrHit){
-        STAT_TotalRequestsRecieved_++;
+        incTotalRequestsReceived(groupId);
         d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
-    else STAT_TotalMSHRHits_++;
+    else incTotalMSHRHits(groupId);
 
     d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", EventID = %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
                    this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getID().first, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "");

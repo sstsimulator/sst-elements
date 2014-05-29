@@ -57,6 +57,7 @@ static const ElementInfoParam cache_params[] = {
     {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},
     {"mshr_num_entries",        "Number of MSHR entries.  This parameter is not valid in an L1 since MemHierarchy assumes an L1 MSHR size matches the size of the load/store queue unit of the CPU", "-1"},
     /* Not required */
+    {"stat_group_ids",          "Stat Grouping.  Instructions with sames IDs will be group for stats. Separated by commas.", ""},
     {"mshr_latency_cycles",     "Latency (in Cycles) that takes to processes responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the access latency", "-1"},
     {"idle_max",                "Cache temporarily turns off its clock after this amount of idle cycles", "6"},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},

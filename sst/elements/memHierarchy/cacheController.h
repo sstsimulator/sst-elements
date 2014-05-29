@@ -105,12 +105,11 @@ public:
     /** Ignore Event Exception.  Exception thrown when the event received is considered to be irrelevant (ie Invalidate received when cacheline was alread invalid (due to eviction) */
     class ignoreEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to be ignored. Request is irrelevant or out-of-date\n"; }};
 
-
 private:
-
+   
     /** Constructor for Cache Component */
-    Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, 
-           Output* _d, ReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists);
+    Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, Output* _d,
+          ReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists, vector<int> _statGroupIds);
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
@@ -258,6 +257,10 @@ private:
     /** Add requests to the 'retry queue.'  This event will be reissued at a later time */
     void retryRequestLater(MemEvent* event);
 
+    void incTotalRequestsReceived(int _groupId);
+    void incTotalMSHRHits(int _groupId);
+    void incInvalidateWaitingForUserLock(int _groupId);
+    int groupId;
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregested from TimeVortx and reregisted only when an event is received */
@@ -343,16 +346,15 @@ private:
     queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
     uint64                  accessLatency_;
     uint64                  mshrLatency_;
-    uint64                  STAT_GetSExReceived_;
-    uint64                  STAT_InvalidateWaitingForUserLock_;
-    uint64                  STAT_TotalRequestsRecieved_;
-    uint64                  STAT_TotalMSHRHits_;
     uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
     uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
     uint64                  mshrHits_;
     uint64                  upgradeCount_;
     uint64                  timestamp_;
-    int                     stats_;
+    int                     statsFile_;
+    bool                    groupStats_;
+    vector<int>             statGroupIds_;
+    map<int,CtrlStats>      stats_;
     int                     idleMax_;
     int                     idleCount_;
     bool                    memNICIdle_;

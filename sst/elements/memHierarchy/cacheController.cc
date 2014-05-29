@@ -198,7 +198,7 @@ void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseA
 
 
 void Cache::writebackToLowerLevelCaches(MemEvent* _event, CacheLine* _wbCacheLine){
-    bottomCC_->handleEviction(_wbCacheLine);
+    bottomCC_->handleEviction(_wbCacheLine, _event->getGroupId());
     d_->debug(_L1_,"Replacement cache line evicted.\n");
 }
 
@@ -240,7 +240,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
             d_->debug(_WARNING_,"WARNING!! c0\n");
             return false;
         }
-        STAT_InvalidateWaitingForUserLock_++;
+        incInvalidateWaitingForUserLock(groupId);
         _cacheLine->eventsWaitingForLock_ = true;
         d_->debug(_WARNING_,"Warning:  CLine is user-locked.\n");
         
@@ -489,3 +489,31 @@ bool operator== ( const mshrType& _n1, const mshrType& _n2) {
     if(_n1.elem.type() == typeid(Addr)) return false;
     return(boost::get<MemEvent*>(_n1.elem) == boost::get<MemEvent*>(_n2.elem));
 }
+
+
+void Cache::incTotalRequestsReceived(int _groupId){
+    stats_[0].TotalRequestsReceived_++;
+    if(groupStats_){
+        assert(_groupId != 0 || _groupId != -1);
+        stats_[_groupId].TotalRequestsReceived_++;
+    }
+}
+
+void Cache::incTotalMSHRHits(int _groupId){
+    stats_[0].TotalMSHRHits_++;
+    if(groupStats_){
+        assert(_groupId != 0 || _groupId != -1);
+        stats_[_groupId].TotalMSHRHits_++;
+    }
+}
+
+void Cache::incInvalidateWaitingForUserLock(int _groupId){
+    stats_[0].InvWaitingForUserLock_++;
+    if(groupStats_){
+        assert(_groupId != 0 || _groupId != -1);
+        stats_[_groupId].InvWaitingForUserLock_++;
+    }
+}
+
+
+

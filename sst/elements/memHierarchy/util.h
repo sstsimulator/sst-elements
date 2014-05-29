@@ -52,6 +52,17 @@ struct mshrType {
     
 };
 
+struct CtrlStats{
+    uint64_t     TotalRequestsReceived_,
+                 TotalMSHRHits_,
+                 InvWaitingForUserLock_,
+                 updgradeLatency_;
+    
+    CtrlStats(){
+        TotalRequestsReceived_ = TotalMSHRHits_ = InvWaitingForUserLock_ = updgradeLatency_ = 0;
+    }
+};
+
 #define MAX_CACHE_CHILDREN (512);
     
 #define C CALL_INFO

@@ -19,6 +19,8 @@
 #define MESIBOTTOMCOHERENCECONTROLLERS_H
 
 #include <iostream>
+#include "coherenceControllers.h"
+
 
 namespace SST { namespace MemHierarchy {
 
@@ -27,28 +29,31 @@ public:
     /** Constructor for MESIBottomCC. */
     MESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
-                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink) :
+                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats) :
                  CoherencyController(_cache, _dbg, _lineSize), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
-        GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
+        
+        /* GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
         PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
         EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
         InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = InvalidatePUTSReqSent_ = 0;
         GetSExReqsReceived_ = GetSReqsReceived_ = GetXReqsReceived_ = 0;
         NACKsSent_ = 0;
-        FetchInvReqSent_ = FetchInvXReqSent_ = 0;
-
+        FetchInvReqSent_ = FetchInvXReqSent_ = 0; */
         L1_             = _L1;
         accessLatency_  = _accessLatency;
         mshrLatency_    = _mshrLatency;
         directoryLink_  = _directoryLink;
+        groupStats_     = _groupStats;
     }
+    
+    
     /** Init funciton */
     void init(const char* name){}
     
     /** Send cache line data to the lower level caches */
-    virtual void handleEviction(CacheLine* _wbCacheLine);
+    virtual void handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId);
 
     /** Process new cache request:  GetX, GetS, GetSEx, PutM, PutS, PutX */
     virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
@@ -119,7 +124,7 @@ public:
     void sendWriteback(Command cmd, CacheLine* cacheLine);
 
     /** Print statistics at the end of simulation */
-    void printStats(int _stats, uint64 _GetSExReceived, uint64 _invalidateWaitingForUserLock, uint64 _totalReqsReceived, uint64 _mshrHits, uint64 _updgradeLatency);
+    void printStats(int _statsFile, vector<int> _statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency);
     
     /** Sets the name of the next level cache */
     void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
@@ -146,37 +151,149 @@ private:
     vector<Link*>* lowNetPorts_;
 
     CacheListener* listener_;
-    uint    GETSMissIS_,
-            GETXMissSM_,
-            GETXMissIM_,
-            GETSHit_,
-            GETXHit_,
-            PUTSReqsReceived_,
-            PUTEReqsReceived_,
-            PUTMReqsReceived_,
-            PUTXReqsReceived_,
-            GetSExReqsReceived_,
-            GetXReqsReceived_,
-            GetSReqsReceived_,
-            EvictionPUTSReqSent_,
-            EvictionPUTMReqSent_,
-            EvictionPUTEReqSent_,
-            InvalidatePUTMReqSent_,
-            InvalidatePUTEReqSent_,
-            InvalidatePUTXReqSent_,
-            InvalidatePUTSReqSent_,
-            FetchInvReqSent_,
-            FetchInvXReqSent_,
-            NACKsSent_;
+    map<uint32_t,Stats> stats_;
+    
     string ownerName_;
     string nextLevelCacheName_;
     
-    void inc_GETXMissSM(Addr addr, bool pf);
-    void inc_GETXMissIM(Addr addr, bool pf);
-    void inc_GETSHit(Addr addr, bool pf);
-    void inc_GETXHit(Addr addr, bool pf);
-    void inc_GETSMissIS(Addr addr, bool pf);
+
+    uint32_t groupId_;
+    uint32_t groupId_timestamp_;
     
+    void setGroupId(uint32_t _groupId){
+        groupId_timestamp_ = timestamp_;
+        groupId_ = _groupId;
+    }
+    
+    uint32_t getGroupId(){
+        assert(timestamp_ == groupId_timestamp_);
+        assert(groupId_ != 0);
+        return groupId_;
+    }
+
+    //TODO move all this functions to its own "stats" class
+
+   void inc_GETXMissSM(Addr _addr, bool _prefetchRequest){
+        if(!_prefetchRequest){
+            stats_[0].GETXMissSM_++;
+            if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
+            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _addr);
+        }
+    }
+
+
+    void inc_GETXMissIM(Addr _addr, bool _prefetchRequest){
+        if(!_prefetchRequest){
+            stats_[0].GETXMissIM_++;
+            if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
+            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _addr);
+        }
+    }
+
+
+    void inc_GETSHit(Addr _addr, bool _prefetchRequest){
+        if(!_prefetchRequest){
+            stats_[0].GETSHit_++;
+            if(groupStats_) stats_[getGroupId()].GETSHit_++;
+            listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _addr);
+        }
+    }
+
+
+    void inc_GETXHit(Addr _addr, bool _prefetchRequest){
+        if(!_prefetchRequest){
+            stats_[0].GETXHit_++;
+            if(groupStats_) stats_[getGroupId()].GETXHit_++;
+            listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _addr);
+        }
+    }
+
+
+    void inc_GETSMissIS(Addr _addr, bool _prefetchRequest){
+        if(!_prefetchRequest){
+            stats_[0].GETSMissIS_++;
+            if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
+            listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _addr);
+        }
+    }
+
+    void inc_GetSExReqsReceived(){
+        stats_[0].GetSExReqsReceived_++;
+        if(groupStats_) stats_[getGroupId()].GetSExReqsReceived_++;
+    }
+
+
+    void inc_PUTSReqsReceived(){
+        stats_[0].PUTSReqsReceived_++;
+        if(groupStats_) stats_[getGroupId()].PUTSReqsReceived_++;
+    }
+
+    void inc_PUTMReqsReceived(){
+        stats_[0].PUTMReqsReceived_++;
+        if(groupStats_) stats_[getGroupId()].PUTMReqsReceived_++;
+    }
+
+    void inc_PUTXReqsReceived(){
+        stats_[0].PUTXReqsReceived_++;
+        if(groupStats_) stats_[getGroupId()].PUTXReqsReceived_++;
+    }
+
+    void inc_PUTEReqsReceived(){
+        stats_[0].PUTEReqsReceived_++;
+        if(groupStats_) stats_[getGroupId()].PUTEReqsReceived_++;
+    }
+
+    void inc_InvalidatePUTMReqSent(){
+        stats_[0].InvalidatePUTMReqSent_++;
+        if(groupStats_) stats_[getGroupId()].InvalidatePUTMReqSent_++;
+    }
+
+    void inc_InvalidatePUTEReqSent(){
+        stats_[0].InvalidatePUTEReqSent_++;
+        if(groupStats_) stats_[getGroupId()].InvalidatePUTEReqSent_++;
+    }
+
+    void inc_InvalidatePUTSReqSent(){
+        stats_[0].InvalidatePUTSReqSent_++;
+        if(groupStats_) stats_[getGroupId()].InvalidatePUTSReqSent_++;
+    }
+
+    void inc_InvalidatePUTXReqSent(){
+        stats_[0].InvalidatePUTXReqSent_++;
+        if(groupStats_) stats_[getGroupId()].InvalidatePUTXReqSent_++;
+    }
+
+    void inc_EvictionPUTSReqSent(){
+        stats_[0].EvictionPUTSReqSent_++;
+        if(groupStats_) stats_[getGroupId()].EvictionPUTSReqSent_++;
+    }
+
+    void inc_EvictionPUTMReqSent(){
+        stats_[0].EvictionPUTMReqSent_++;
+        if(groupStats_) stats_[getGroupId()].EvictionPUTMReqSent_++;
+    }
+
+
+    void inc_EvictionPUTEReqSent(){
+        stats_[0].EvictionPUTEReqSent_++;
+        if(groupStats_) stats_[getGroupId()].EvictionPUTEReqSent_++;
+    }
+
+    void inc_NACKsSent(){
+        stats_[0].NACKsSent_++;
+        if(groupStats_) stats_[getGroupId()].NACKsSent_++;
+    }
+
+    void inc_FetchInvReqSent(){
+        stats_[0].FetchInvReqSent_++;
+        if(groupStats_) stats_[getGroupId()].FetchInvReqSent_++;
+    }
+
+
+    void inc_FetchInvXReqSent(){
+        stats_[0].FetchInvXReqSent_++;
+        if(groupStats_) stats_[getGroupId()].FetchInvXReqSent_++;
+    }
 
 };
 

@@ -178,7 +178,7 @@ public:
         flags = 0;
         prefetch = false;
         ackNeeded = false;
-        PutX_writeData = false;
+        groupId = 0;
     }
 
 
@@ -193,7 +193,7 @@ public:
         flags = 0;
         prefetch = false;
         ackNeeded = false;
-        PutX_writeData = false;
+        groupId = 0;
     }
 
     /** Creates a new MemEvent */
@@ -207,7 +207,7 @@ public:
         flags = 0;
         prefetch = false;
         ackNeeded = false;
-        PutX_writeData = false;
+        groupId = 0;
     }
 
 
@@ -222,7 +222,7 @@ public:
         flags = 0;
         prefetch = false;
         ackNeeded = false;
-        PutX_writeData = false;
+        groupId = 0;
     }
 
     /** Copy Construtor. */
@@ -230,7 +230,7 @@ public:
         SST::Event(), event_id(me.event_id), response_to_id(me.response_to_id),
         addr(me.addr), baseAddr(me.baseAddr), size(me.size), cmd(me.cmd), payload(me.payload),
         src(me.src), dst(me.dst), flags(me.flags), prefetch(me.prefetch), grantedState(me.grantedState),
-        NACKedEvent(me.NACKedEvent), NACKedCmd(me.NACKedCmd), ackNeeded(me.ackNeeded), PutX_writeData(me.PutX_writeData){
+        NACKedEvent(me.NACKedEvent), NACKedCmd(me.NACKedCmd), ackNeeded(me.ackNeeded), groupId(me.groupId){
         setDeliveryLink(me.getLinkId(), NULL);
     }
 
@@ -239,7 +239,7 @@ public:
         SST::Event(), event_id(me->event_id), response_to_id(me->response_to_id),
         addr(me->addr),baseAddr(me->baseAddr), size(me->size), cmd(me->cmd), payload(me->payload),
         src(me->src), dst(me->dst), flags(me->flags), prefetch(me->prefetch), grantedState(me->grantedState),
-        NACKedEvent(me->NACKedEvent), NACKedCmd(me->NACKedCmd), ackNeeded(me->ackNeeded), PutX_writeData(me->PutX_writeData){
+        NACKedEvent(me->NACKedEvent), NACKedCmd(me->NACKedCmd), ackNeeded(me->ackNeeded), groupId(me->groupId){
         setDeliveryLink(me->getLinkId(), NULL);
     }
 
@@ -263,7 +263,7 @@ public:
         me->NACKedEvent = NACKedEvent;
         me->NACKedCmd = NACKedEvent->cmd;
         me->ackNeeded = false;
-        me->PutX_writeData = false;
+        me->groupId = 0;
         return me;
     }
 
@@ -283,7 +283,7 @@ public:
         me->prefetch = prefetch;
         me->setGrantedState(NULLST);
         me->ackNeeded = false;
-        me->PutX_writeData = false;
+        me->groupId = 0;
         return me;
     }
 
@@ -299,7 +299,7 @@ public:
         me->setGrantedState(state);
         me->prefetch = prefetch;
         me->ackNeeded = false;
-        me->PutX_writeData = false;
+        me->groupId = 0;
         return me;
     }
 
@@ -430,15 +430,13 @@ public:
     
     
     /** Set ackNeeded member variable */
-    void setAckNeeded(){
-        ackNeeded = true;
-    }
+    void setAckNeeded(){ ackNeeded = true;}
     
-    /** Set PutXWriteData member variable */
-    void setPutXWriteData(){
-        PutX_writeData = true;
-    }
+    /** Setter for GroupId */
+    void setGroupId(uint32_t _groupId){ groupId = _groupId; }
     
+    /** Getter for GroupId */
+    uint32_t getGroupId() { return groupId; }
     
     /** Getter for ackNeeded member variable */
     bool getAckNeeded(){ return ackNeeded;}
@@ -517,9 +515,11 @@ private:
     Addr baseAddr;  
 
     uint32_t size;
+    
 
     Command cmd;
     dataVec payload;
+    
     
     std::string src;
     std::string dst;
@@ -534,7 +534,8 @@ private:
     Command NACKedCmd;
     
     bool ackNeeded;
-    bool PutX_writeData;
+    uint32_t groupId;
+
     
     MemEvent() {} // For serialization only
 

@@ -66,6 +66,8 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
     }
     
     MemEvent *me = new MemEvent(owner_, _req->addr, cmd);
+    
+    me->setGroupId(_req->groupId);
     me->setSize(_req->size);
 
     if (SimpleMem::Request::Write == _req->cmd)  me->setPayload(_req->data);

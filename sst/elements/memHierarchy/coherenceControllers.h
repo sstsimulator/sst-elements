@@ -50,6 +50,7 @@ public:
     };
     
     MemNIC*    directoryLink_;
+    bool       groupStats_;
     uint64_t   timestamp_;
     uint64_t   accessLatency_;
     uint64_t   mshrLatency_;
@@ -69,6 +70,41 @@ protected:
     uint       lineSize_;
     int        sentEvents_;
     bool       L1_;
+    
+    struct Stats{
+        uint    GETSMissIS_,
+                GETXMissSM_,
+                GETXMissIM_,
+                GETSHit_,
+                GETXHit_,
+                PUTSReqsReceived_,
+                PUTEReqsReceived_,
+                PUTMReqsReceived_,
+                PUTXReqsReceived_,
+                GetSExReqsReceived_,
+                GetXReqsReceived_,
+                GetSReqsReceived_,
+                EvictionPUTSReqSent_,
+                EvictionPUTMReqSent_,
+                EvictionPUTEReqSent_,
+                InvalidatePUTMReqSent_,
+                InvalidatePUTEReqSent_,
+                InvalidatePUTXReqSent_,
+                InvalidatePUTSReqSent_,
+                FetchInvReqSent_,
+                FetchInvXReqSent_,
+                NACKsSent_;
+        
+        Stats(){
+            GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
+            PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
+            EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
+            InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = InvalidatePUTSReqSent_ = 0;
+            GetSExReqsReceived_ = GetSReqsReceived_ = GetXReqsReceived_ = 0;
+            NACKsSent_ = 0;
+            FetchInvReqSent_ = FetchInvXReqSent_ = 0;
+        }
+    };
 };
 
 

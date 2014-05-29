@@ -54,7 +54,23 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     int L1int                   = params.find_integer("L1", 0);
     int dirAtNextLvl            = params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = params.find_string("coherence_protocol", "");
+    string statGroups           = params.find_string("stat_group_ids", "");
     bool L1 = (L1int == 1);
+    vector<int> statGroupIds;
+    
+    istringstream ss(statGroups);
+    string token;
+    
+    statGroupIds.push_back(0);         //Id = 0 prints overall statistics
+
+    while(getline(ss, token, ',')) {
+        statGroupIds.push_back(atoi(token.c_str()));
+    }
+    
+    cout << "Group IDs: " << endl;
+    for(unsigned int i = 0; i < statGroupIds.size(); i++){
+        cout << "id: " << statGroupIds[i] << endl;
+    }
 
 
     /* Check user specified all required fields */
@@ -101,17 +117,17 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     
 
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
-    return new Cache(id, params, frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl);
+    return new Cache(id, params, frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds);
 }
 
 
 
 Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol,
              Output* _dbg, ReplacementMgr* _rm, uint _numLines, uint _lineSize, uint _MSHRSize,
-             bool _L1, bool _dirControllerExists) :
+             bool _L1, bool _dirControllerExists, vector<int> _statGroupIds) :
              Component(id), cArray_(_cacheArray), protocol_(_protocol), d_(_dbg), replacementMgr_(_rm),
              numLines_(_numLines), lineSize_(_lineSize), MSHRSize_(_MSHRSize), L1_(_L1),
-             dirControllerExists_(_dirControllerExists){
+             dirControllerExists_(_dirControllerExists), statGroupIds_(_statGroupIds){
 
     d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
     pMembers();
@@ -120,7 +136,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     d2_ = new Output();
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
 
-    stats_              = params.find_integer("statistics", 0);
+    statsFile_          = params.find_integer("statistics", 0);
     idleMax_            = params.find_integer("idle_max", 10000);
     accessLatency_      = params.find_integer("access_latency_cycles", -1);
     string prefetcher   = params.find_string("prefetcher");
@@ -178,23 +194,23 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     /* ------------- Member variables intialization ------------- */
     
     configureLinks();
-
+    groupStats_                         = (statGroupIds_.size() < 2) ? false : true;
     clockOn_                            = true;
     idleCount_                          = 0;
     memNICIdleCount_                    = 0;
     memNICIdle_                         = false;
     timestamp_                          = 0;
-    STAT_GetSExReceived_                = 0;
-    STAT_InvalidateWaitingForUserLock_  = 0;
-    STAT_TotalRequestsRecieved_         = 0;
+    /*STAT_InvalidateWaitingForUserLock_  = 0;
+    STAT_TotalRequestsReceived_         = 0;
     STAT_TotalMSHRHits_                 = 0;
+    */
     totalUpgradeLatency_                = 0;
     mshrHits_                           = 0;
         
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
     (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_);
    
     /*--------------- Replacement Manager --------------- */
     replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);

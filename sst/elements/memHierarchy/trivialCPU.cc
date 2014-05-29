@@ -92,6 +92,9 @@ void trivialCPU::init(unsigned int phase)
 	if ( !phase ) {
 		memory->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
 	}
+    tempIds[0] = 1;
+    tempIds[1] = 7;
+    tempIds[2] = 140;
 }
 
 // incoming events are scanned and deleted
@@ -152,6 +155,8 @@ bool trivialCPU::clockTic( Cycle_t )
                 req->data[3] = (addr >>  0) & 0xff;
 			}
 
+            //temp:  req->setGroupId(tempIds[rand() % 3]);
+            
             bool uncached = ( addr >= uncachedRangeStart && addr < uncachedRangeEnd );
             if ( uncached ) {
                 req->flags |= Interfaces::SimpleMem::Request::F_UNCACHED;
