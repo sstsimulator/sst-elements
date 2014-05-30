@@ -103,18 +103,6 @@ static const SST::ElementInfoPort fault_ports[] = {
 };
 
 static const SST::ElementInfoPort link_ports[] = {
-    {"Builder",
-     "Link to communicate with parent",
-     link_events
-    },
-    {"Parent0",
-     "Link to communicate with parent",
-     link_events
-    },
-    {"Child0",
-     "Link to communicate with children",
-     link_events
-    },
     {NULL,NULL,NULL}
 };
 
@@ -144,11 +132,11 @@ static const SST::ElementInfoParam sched_params[] = {
       "None"
     },
     { "faultSeed",
-        "PRNG seed for faults",
+        "PRNG seed for node faults",
         "Current time"
     },
     { "seed",
-        "PRNG seed",
+        "general PRNG seed for node faults",
         "Current time"
     },
     { "errorLogSeed",
@@ -179,12 +167,12 @@ static const SST::ElementInfoParam sched_params[] = {
         "Should job log be printed",
         "False"
     },
-    { "errorLatencySeed"
+    { "errorLatencySeed",
         "PRNG seed for error latency for node failure",
         "Current time"
     },
     { "errorCorrectionSeed"
-        "",
+        "PRNG seed for probability an error is corrected",
         "Current time"
     },
     { "jobLogFileName",
@@ -223,11 +211,11 @@ static const SST::ElementInfoParam node_params[] = {
         "error log is written according to this probability",
         "None"
     },
-    { "errorCorrectionProbability"
+    { "errorCorrectionProbability",
         "Probability that a node corrects an error",
         "None"
     },
-    { "jobFailureProbability"
+    { "jobFailureProbability",
         "Probability that a node ends a job when a failure propogates",
         "None"
     } ,
