@@ -171,7 +171,7 @@ static const SST::ElementInfoParam sched_params[] = {
         "PRNG seed for error latency for node failure",
         "Current time"
     },
-    { "errorCorrectionSeed"
+    { "errorCorrectionSeed",
         "PRNG seed for probability an error is corrected",
         "Current time"
     },
