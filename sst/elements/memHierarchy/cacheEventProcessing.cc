@@ -219,6 +219,7 @@ void Cache::handlePrefetchEvent(SST::Event* _event) {
 
 void Cache::handleSelfEvent(SST::Event* _event){
     MemEvent* ev = static_cast<MemEvent*>(_event);
-    processEvent(_event, ev->isPrefetch());
+    if(!mshr_->isFull())
+        processEvent(_event, ev->isPrefetch());
 }
 

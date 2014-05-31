@@ -472,7 +472,7 @@ void Cache::processIncomingNACK(MemEvent* _origReqEvent){
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_origReqEvent->getCmd()]);
     
     d_->debug(_L0_,"Orig Cmd NACKed = %s \n", CommandString[_origReqEvent->getCmd()]);
-    delete _origReqEvent;
+    //delete _origReqEvent;
 }
 
 void Cache::checkRequestValidity(MemEvent* _event) throw(ignoreEventException){
