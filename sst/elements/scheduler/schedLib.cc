@@ -82,11 +82,11 @@ static const SST::ElementInfoPort node_ports[] = {
      "Link to communicate with parent",
      builder_events,
     },
-    {"Parent0",
+    {"Parent%(numparent)d",
      "Link to communicate with parent",
      link_events
     },
-    {"Child0",
+    {"Child%(numchild)d",
      "Link to communicate with children",
      link_events
     },
