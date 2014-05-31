@@ -19,6 +19,19 @@ using namespace std;
 using namespace SST::Statistics;
 using namespace SST::Ember;
 
+const char* FINALIZE_HISTO_NAME = "Finalize Time";
+const char* INIT_HISTO_NAME = "Initialization Time";
+const char* RECV_HISTO_NAME = "Recv Time";
+const char* SEND_HISTO_NAME = "Send Time";
+const char* WAIT_HISTO_NAME = "Wait Time";
+const char* IRECV_HISTO_NAME = "IRecv Time";
+const char* BARRIER_HISTO_NAME = "Barrier Time";
+const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
+const char* REDUCE_HISTO_NAME = "Reduce Time";
+const char* COMPUTE_HISTO_NAME = "Compute Time";
+const char* START_HISTO_NAME = "Start Time";
+const char* STOP_HISTO_NAME = "Stop Time";
+
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
     generationPhase(0),
@@ -109,37 +122,37 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	nanoTimeConverter = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 
 	uint64_t userBinWidth = (uint64_t) params.find_integer("compute_bin_width", 20);
-	histoCompute = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoCompute = new Histogram<uint64_t, uint64_t>(COMPUTE_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("send_bin_width", 5);
-	histoSend = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoSend = new Histogram<uint64_t, uint64_t>(SEND_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("recv_bin_width", 5);
-	histoRecv = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoRecv = new Histogram<uint64_t, uint64_t>(RECV_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("init_bin_width", 5);
-	histoInit = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoInit = new Histogram<uint64_t, uint64_t>(INIT_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("finalize_bin_width", 5);
-	histoFinalize = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoFinalize = new Histogram<uint64_t, uint64_t>(FINALIZE_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("start_bin_width", 5);
-	histoStart = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoStart = new Histogram<uint64_t, uint64_t>(START_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("wait_bin_width", 5);
-	histoWait = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoWait = new Histogram<uint64_t, uint64_t>(WAIT_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("irecv_bin_width", 5);
-	histoIRecv = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoIRecv = new Histogram<uint64_t, uint64_t>(IRECV_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("barrier_bin_width", 5);
-	histoBarrier = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoBarrier = new Histogram<uint64_t, uint64_t>(BARRIER_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("allreduce_bin_width", 5);
-	histoAllreduce = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoAllreduce = new Histogram<uint64_t, uint64_t>(ALLREDUCE_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("reduce_bin_width", 5);
-	histoReduce = new Histogram<uint64_t, uint64_t>(userBinWidth);
+	histoReduce = new Histogram<uint64_t, uint64_t>(REDUCE_HISTO_NAME, userBinWidth);
 
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;

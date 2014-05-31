@@ -27,7 +27,7 @@ using namespace SST::Statistics;
 trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-    requestsPendingCycle = new Histogram<uint64_t, uint64_t>(2);
+    requestsPendingCycle = new Histogram<uint64_t, uint64_t>("Requests Pending Per Cycle", 2);
 
     // Restart the RNG to ensure completely consistent results (XML->Python causes
     // changes in the ComponentId_t ordering which fails to pass tests correctly.
