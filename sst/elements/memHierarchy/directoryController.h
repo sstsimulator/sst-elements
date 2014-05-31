@@ -120,6 +120,9 @@ class DirectoryController : public Component {
 	/** Handles recieved PutS requests */
     void handlePutS(DirEntry *entry, MemEvent *ev);
 
+    /** Retry original request upon receiving a NACK */
+    void processIncomingNACK(MemEvent* _origReqEvent);
+
 
 	/** Advances or transitions an entry to the 'next state' by calling the handler that was previously assigned */
     void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);

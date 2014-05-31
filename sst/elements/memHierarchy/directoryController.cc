@@ -161,17 +161,18 @@ bool DirectoryController::processPacket(MemEvent *ev){
     dbg.output(CALL_INFO, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
     Command cmd = ev->getCmd();
     uint32_t requesting_node;
+    MemEvent* origEvent;
     pair<bool, bool> ret = make_pair<bool, bool>(false, false);
     
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
 
     if(cmd == FetchResp) assert(entry && entry->inProgress());
     
+    
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;
 
-    
-    
+
     
     /* New Request */
     switch(cmd) {
@@ -228,7 +229,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
             requestDirEntryFromMemory(entry);
         }
         break;
-        
+    case NACK:
+            origEvent = ev->getNACKedEvent();
+            processIncomingNACK(origEvent);
+            delete ev;
     default:
         /* Ignore unexpected */
         _abort(DirectoryController, "Cmd not expected, Cmd = %s\n", CommandString[cmd]);
@@ -236,6 +240,13 @@ bool DirectoryController::processPacket(MemEvent *ev){
     }
     return true;
 }
+
+void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent){
+    /* Re-send request */
+    sendResponse(_origReqEvent);
+    dbg.output("Orig Cmd NACKed = %s \n", CommandString[_origReqEvent->getCmd()]);
+}
+
 
 
 pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
