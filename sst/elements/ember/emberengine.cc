@@ -19,18 +19,18 @@ using namespace std;
 using namespace SST::Statistics;
 using namespace SST::Ember;
 
-const char* FINALIZE_HISTO_NAME = "Finalize Time";
-const char* INIT_HISTO_NAME = "Initialization Time";
-const char* RECV_HISTO_NAME = "Recv Time";
-const char* SEND_HISTO_NAME = "Send Time";
-const char* WAIT_HISTO_NAME = "Wait Time";
-const char* IRECV_HISTO_NAME = "IRecv Time";
-const char* BARRIER_HISTO_NAME = "Barrier Time";
-const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
-const char* REDUCE_HISTO_NAME = "Reduce Time";
-const char* COMPUTE_HISTO_NAME = "Compute Time";
-const char* START_HISTO_NAME = "Start Time";
-const char* STOP_HISTO_NAME = "Stop Time";
+static const char* FINALIZE_HISTO_NAME = "Finalize Time";
+static const char* INIT_HISTO_NAME = "Initialization Time";
+static const char* RECV_HISTO_NAME = "Recv Time";
+static const char* SEND_HISTO_NAME = "Send Time";
+static const char* WAIT_HISTO_NAME = "Wait Time";
+static const char* IRECV_HISTO_NAME = "IRecv Time";
+static const char* BARRIER_HISTO_NAME = "Barrier Time";
+static const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
+static const char* REDUCE_HISTO_NAME = "Reduce Time";
+static const char* COMPUTE_HISTO_NAME = "Compute Time";
+static const char* START_HISTO_NAME = "Start Time";
+static const char* STOP_HISTO_NAME = "Stop Time";
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
