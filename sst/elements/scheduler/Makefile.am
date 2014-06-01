@@ -1,10 +1,12 @@
-# -*- Makefile -*-
 #
 #
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_THREAD_LIB) 
+
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
@@ -31,9 +33,16 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc Constr
 	ObjectRetrievalEvent.h \
 	MBSAllocClasses.h \
 	FinalTimeEvent.h \
-faultInjectionComponent.cc	faultInjectionComponent.h
+faultInjectionComponent.cc	faultInjectionComponent.h \
+EnergyAllocator.cc		EnergyAllocator.h \
+EnergyAllocClasses.cc		EnergyAllocClasses.h 
 
 EXTRA_DIST = \
 	simulations/makeSDL.pl
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
+if HAVE_GLPK
+libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS) $(GLPK_LIBDIR)  
+libscheduler_la_LIBADD = $(GLPK_LIB)
+AM_CPPFLAGS += $(GLPK_CPPFLAGS) $(GLPK_LIB)
+endif

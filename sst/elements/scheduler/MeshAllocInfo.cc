@@ -1,7 +1,7 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Copyright 2009-2013 Sandia Corporation. Under the terms // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2014, Sandia Corporation
+// Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -14,7 +14,6 @@
  */
 
 
-#include <sst_config.h>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -44,6 +43,19 @@ MeshLocation::MeshLocation(int X, int Y, int Z)
     y = Y;
     z = Z;
 }
+
+MeshLocation::MeshLocation(int inpos, MachineMesh* m) 
+{
+    //return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
+
+    schedout.init("", 8, 0, Output::STDOUT);
+    z = inpos / (m -> getXDim() * m -> getYDim());
+    inpos -= z * m -> getXDim() * m -> getYDim();
+    y = inpos / m -> getXDim();
+    inpos -= y * m -> getXDim();
+    x = inpos;
+}
+
 
 MeshLocation::MeshLocation(MeshLocation* in)
 {

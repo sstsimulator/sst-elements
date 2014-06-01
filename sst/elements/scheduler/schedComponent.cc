@@ -709,7 +709,7 @@ void schedComponent::startJob(AllocInfo* ai)
 {
     Job* j = ai -> job;
     int* jobNodes = ai -> nodeIndices;
-    unsigned long communicationTime = 0;
+    double communicationTime = 0;
     unsigned long actualRunningTime = j -> getActualTime();
     double randomNumber = 0;
     
@@ -718,16 +718,29 @@ void schedComponent::startJob(AllocInfo* ai)
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
             srand(time(0));
             randomNumber = (rand() % 80000 - 40000)/100000.0;
+            //randomNumber = .5;
 
-            unsigned long averagePairwiseDistance = ((MachineMesh*)(machine)) -> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)/((MeshAllocInfo*)ai) -> processors -> size();
+            int numberOfProcs = ((MeshAllocInfo*)ai) -> processors -> size();
+
+            unsigned long averagePairwiseDistance;
+
+            if (numberOfProcs > 1) { 
+                averagePairwiseDistance = 2 * ((MachineMesh*)(machine)) -> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)/ (numberOfProcs * (numberOfProcs - 1));
+            }else {
+                averagePairwiseDistance = 0;
+            }
 
             double additiveTerm = timePerDistance -> at(4) * averagePairwiseDistance * randomNumber;
 
             communicationTime = timePerDistance -> at(3) * averagePairwiseDistance; 
 
-            actualRunningTime = timePerDistance -> at(0) * actualRunningTime
+/*            actualRunningTime = timePerDistance -> at(0) * actualRunningTime
                 + timePerDistance -> at(1) * (timePerDistance -> at(2) +
-                                  communicationTime) * actualRunningTime;
+                                  communicationTime) * actualRunningTime;*/
+
+            actualRunningTime = timePerDistance -> at(0) * actualRunningTime
+                + timePerDistance -> at(1) * ((double)timePerDistance -> at(2) +
+                                              communicationTime) * actualRunningTime;
 
             if (actualRunningTime >= -additiveTerm) {
                 actualRunningTime += additiveTerm;
@@ -739,8 +752,8 @@ void schedComponent::startJob(AllocInfo* ai)
     //pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
 
     if (actualRunningTime > j -> getEstimatedRunningTime()) {
-        //schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));
-        schedout.output("WARNING: Job %lu has running time %lu, which is longer than estimated running time %lu\nUsing estimated time instead\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); 
+        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));
+        //schedout.output("WARNING: Job %lu has running time %lu, which is longer than estimated running time %lu\nUsing estimated time instead\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); 
         actualRunningTime = j -> getEstimatedRunningTime();
     }
 

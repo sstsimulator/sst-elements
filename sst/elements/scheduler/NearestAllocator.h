@@ -1,8 +1,8 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms
+// Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2014, Sandia Corporation
+// Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -38,7 +38,6 @@
 
 #include "Allocator.h"
 
-
 namespace SST {
     namespace Scheduler {
         class Job;
@@ -47,7 +46,6 @@ namespace SST {
         class PointCollector;
         class Scorer;
         class MachineMesh;
-
 
         class NearestAllocator : public Allocator {
 
@@ -62,6 +60,8 @@ namespace SST {
                 Scorer* scorer;
 
                 std::string configName;
+
+                //bool readnewcenter;
 
             public:
                 NearestAllocator(MachineMesh* m, CenterGenerator* cg,
@@ -85,7 +85,7 @@ namespace SST {
 
                 void MC1x1Allocator(MachineMesh* m); 
 
-                void CoolingAllocator(MachineMesh* m);
+                void HybridAllocator(MachineMesh* m);
         };
 
     }

@@ -1,8 +1,8 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms
+// Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2014, Sandia Corporation
+// Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -77,6 +77,8 @@ namespace SST {
                     BESTFIT = 11,
                     SORTEDFREELIST = 12,
                     CONSTRAINT = 13,
+                    ENERGY = 14,
+                    HYBRID = 15,
                 };
                 enum FSTType{
                     NONE = 0,
@@ -104,7 +106,7 @@ namespace SST {
 
                 static const schedTableEntry schedTable[6];
                 static const machTableEntry machTable[2];
-                static const allocTableEntry allocTable[14];
+                static const allocTableEntry allocTable[16];
                 static const FSTTableEntry FSTTable[3];
 
                 SchedulerType schedulername(std::string inparam);

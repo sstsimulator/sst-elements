@@ -1,13 +1,14 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms
+// Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2014, Sandia Corporation
+// Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+
 /*
  * Class to implement allocation algorithms of the family that
  * includes Gen-Alg, MM, and MC1x1; from each candidate center,
@@ -35,6 +36,10 @@
 #include <limits>
 #include <vector>
 #include <string>
+#include <iostream>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "AllocInfo.h"
 #include "Job.h"
@@ -44,8 +49,11 @@
 #include "misc.h"
 #include "output.h"
 #include "NearestAllocClasses.h"
+#include "EnergyAllocClasses.h"
+
 
 using namespace SST::Scheduler;
+using namespace std;
 
 NearestAllocator::NearestAllocator(MachineMesh* m, CenterGenerator* cg,
                                    PointCollector* pc, Scorer* s, std::string name) 
@@ -67,6 +75,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         schedout.fatal(CALL_INFO, 1, "Nearest allocators require a Mesh machine");
     }
 
+
     if (params -> at(0) == "MM") {
         MMAllocator(m);
     } else if (params -> at(0) == "MC1x1") {
@@ -75,7 +84,13 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         genAlgAllocator(m);
     } else if (params -> at(0) == "OldMC1x1") {
         OldMC1x1Allocator(m);
+    } else if (params -> at(0) == "Hybrid") {
+        HybridAllocator(m);
     } else {
+
+        if (params -> size() < 4) {
+            schedout.fatal(CALL_INFO, 1, "Not enough arguments for custom Nearest Allocator\n");
+        }
         configName = "custom";
         //custom Nearest allocator
         CenterGenerator* cg = NULL;
@@ -163,12 +178,13 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         pointCollector = pc;
         scorer = sc;
     }
-    delete params;
-    params = NULL;
-    if(NULL == centerGenerator || NULL == pointCollector || NULL == scorer) {
+
+    if(params -> at(0) != "Hybrid" && (NULL == centerGenerator || NULL == pointCollector || NULL == scorer)) {
         //error("Nearest input not correctly parsed");
         schedout.fatal(CALL_INFO, 1, "Nearest input not correctly parsed");
     }
+    delete params;
+    params = NULL;
 }
 
 std::string NearestAllocator::getParamHelp()
@@ -182,7 +198,7 @@ std::string NearestAllocator::getParamHelp()
 }
 
 std::string NearestAllocator::getSetupInfo(bool comment)
-{
+{ 
     std::string com;
     if (comment) {
         com="# ";
@@ -190,13 +206,14 @@ std::string NearestAllocator::getSetupInfo(bool comment)
         com="";
     }
     std::stringstream ret;
-    ret <<com<<"Nearest Allocator ("<<configName<<")\n"<<com<<
-        "\tCenterGenerator: "<<centerGenerator -> getSetupInfo(false)<<"\n"<<com<<
+    ret <<com<<"Nearest Allocator ("<<configName<<")\n";
+    if("Hybrid" != configName) {
+        ret << com << "\tCenterGenerator: "<<centerGenerator -> getSetupInfo(false)<<"\n"<<com<<
         "\tPointCollector: "<<pointCollector -> getSetupInfo(false)<<"\n"<<com<<
         "\tScorer: "<<scorer -> getSetupInfo(false);
+    }
     return ret.str();
 }
-
 AllocInfo* NearestAllocator::allocate(Job* job)
 {
     return allocate(job,((MachineMesh*)machine) -> freeProcessors());
@@ -207,6 +224,28 @@ AllocInfo* NearestAllocator::allocate(Job* job)
 //(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
+    /*
+    int lptosst[40] = {0,5,10,15,
+        1,6,11,16, 
+        2,7,12,17,
+        3,8,13,18, 
+        4,9,14,19,
+        20,25,30,35,
+        21,26,31,36,
+        22,27,32,37, 
+        23,28,33,38,
+        24,29,34,39};
+
+    int ssttolp[40] = {0,4,8,12,16,
+        1,5,9,13,17,
+        2,6,10,14,18,
+        3,7,11,15,19,
+        20,24,28,32,36,
+        21,25,29,33,37,
+        22,26,30,34,38,
+        23,27,31,35,39};
+        */
+
     if (!canAllocate(job, available)) {
         return NULL;
     }
@@ -221,20 +260,74 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
             (*retVal -> processors)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt((MachineMesh*)machine);
         }
+        //printf("short return\n");
         return retVal;
     }
+
 
     //score of best value found so far with it tie-break score:
     std::pair<long,long>* bestVal = new std::pair<long,long>(LONG_MAX,LONG_MAX);
 
-    bool recordingTies = false;//Statistics.recordingTies();
+    bool recordingTies = false; //Statistics.recordingTies();
+
     //stores allocations w/ best score (no tiebreaking) if ties being recorded:
     //(actual best value w/ tiebreaking stored in retVal.processors)
     std::vector<std::vector<MeshLocation*>*>* bestAllocs = NULL;
     if (recordingTies) {
         bestAllocs = new std::vector<std::vector<MeshLocation*> *>(); 
     }
-    std::vector<MeshLocation*>* possCenters = centerGenerator -> getCenters(available);
+
+    std::vector<MeshLocation*>* possCenters;
+
+    if ("Hybrid" == configName) {
+        //need to call LP to get possCenters
+        //if done using only energy, just return the LP results by copying possCenters
+        //otherwise, we'll use it as the actual centers
+        possCenters = EnergyHelpers::getEnergyNodes(available, numProcs, (MachineMesh*)machine);
+
+        /*
+        possCenters = new std::vector<MeshLocation*>();
+
+        int* oldx = new int[40];
+        int* newx = new int[40];
+        for(int x= 0; x < 40; x++) {
+            oldx[x] = 1;
+            newx[x] = 0;
+        }
+        for(unsigned int x = 0; x < available -> size(); x++) { 
+            oldx[ssttolp[(*available)[x]->toInt((MachineMesh*)machine)]] = 0;
+        }
+
+        hybridalloc(oldx, newx, 40, numProcs);
+        for(int x = 0; x < 40; x++) {
+            if(newx[x] == 1 && oldx[x] == 0) {
+                possCenters -> push_back(new MeshLocation(lptosst[x],(MachineMesh*)machine));
+            }
+        }
+        */
+    } else { 
+        possCenters = centerGenerator -> getCenters(available);
+    }
+
+    /*
+    if (NEARESTALLOCATOR_TYPE_ENERGY == energyType) {
+        for(unsigned int i = 0; i < possCenters->size(); i++) {
+            (*(retVal -> processors))[i] = possCenters->at(i); 
+            retVal -> nodeIndices[i] = possCenters->at(i)-> toInt((MachineMesh*) machine);
+        }
+        return retVal;
+    }*/
+
+    //with a strictly energy efficient allocation the remainder is never executed
+
+    /*
+       printf("possCenters:");
+       for(unsigned int x = 0; x < possCenters->size(); x++)
+       printf("%d ", possCenters -> at(x)->toInt((MachineMesh*)machine));
+       printf("\n");
+       */
+
+
     for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
         std::vector<MeshLocation*>* nearest = pointCollector -> getNearest(*center, numProcs, available);
 
@@ -263,7 +356,14 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     }
     possCenters -> clear();
     delete possCenters;
+
     delete bestVal;
+    /*
+       printf("Returning retval: ");
+       for (int i = 0; i < numProcs; i++) {
+       printf("%d ", retVal->nodeIndices[i]);
+       }
+       */
     return retVal;
 }
 
@@ -289,6 +389,8 @@ void NearestAllocator::OldMC1x1Allocator(MachineMesh* m) {
     centerGenerator = new FreeCenterGenerator(m);
     pointCollector = new LInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
+    //readnewcenter = false;
+    //srand(time(0));
 }
 
 void NearestAllocator::MC1x1Allocator(MachineMesh* m) {
@@ -297,13 +399,20 @@ void NearestAllocator::MC1x1Allocator(MachineMesh* m) {
     centerGenerator = new FreeCenterGenerator(m);
     pointCollector = new GreedyLInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
+    //readnewcenter = false;
+    //srand(time(0));
 } 
 
-void NearestAllocator::CoolingAllocator(MachineMesh* m) {
-    configName = "cooling";
+void NearestAllocator::HybridAllocator(MachineMesh* m) {
+    configName = "Hybrid";
     machine = m;
-    centerGenerator = new CoolingGenerator(m);
+    centerGenerator = NULL;
     pointCollector = new GreedyLInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
-}
+    //readnewcenter = false;
+    //srand(time(0));
+} 
+
+
+
 

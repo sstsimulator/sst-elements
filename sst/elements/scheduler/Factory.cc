@@ -1,8 +1,8 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms
+// Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2014, Sandia Corporation
+// Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -23,6 +23,7 @@
 #include "BestFitAllocator.h"
 #include "ConstraintAllocator.h"
 #include "EASYScheduler.h"
+#include "EnergyAllocator.h"
 #include "FirstFitAllocator.h"
 #include "GranularMBSAllocator.h"
 #include "LinearAllocator.h"
@@ -78,6 +79,8 @@ const Factory::allocTableEntry Factory::allocTable[] = {
     {BESTFIT, "bestfit"},
     {SORTEDFREELIST, "sortedfreelist"},
     {CONSTRAINT, "constraint"},
+    {ENERGY, "energy"},
+    {HYBRID, "hybrid"},
 };
 
 const Factory::FSTTableEntry Factory::FSTTable[] = {
@@ -87,7 +90,7 @@ const Factory::FSTTableEntry Factory::FSTTable[] = {
 };
 
 const int Factory::numSchedTableEntries = 6;
-const int Factory::numAllocTableEntries = 14;
+const int Factory::numAllocTableEntries = 16;
 const int Factory::numMachTableEntries = 2;
 const int Factory::numFSTTableEntries = 3;
 
@@ -307,6 +310,20 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
             //if(DEBUG) printf("MM Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("MM");
+            return new NearestAllocator(nearestparams, m);
+            break;
+        case ENERGY:
+            schedout.debug(CALL_INFO, 4, 0, "Energy-Aware Allocator\n");
+            //if(DEBUG) printf("MC1x1 Allocator\n");
+            nearestparams = new vector<string>;
+            nearestparams -> push_back("Energy");
+            return new EnergyAllocator(nearestparams, m);
+            break;
+        case HYBRID:
+            schedout.debug(CALL_INFO, 4, 0, "Hybrid Allocator\n");
+            //if(DEBUG) printf("MC1x1 Allocator\n");
+            nearestparams = new vector<string>;
+            nearestparams -> push_back("Hybrid");
             return new NearestAllocator(nearestparams, m);
             break;
         case MC1X1:
