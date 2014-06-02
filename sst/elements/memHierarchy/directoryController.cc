@@ -160,8 +160,13 @@ bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
     dbg.output(CALL_INFO, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
     Command cmd = ev->getCmd();
+    if(cmd == NACK) {
+        MemEvent* origEvent = ev->getNACKedEvent();
+        processIncomingNACK(origEvent);
+        delete ev;
+        return true;
+    }
     uint32_t requesting_node;
-    MemEvent* origEvent;
     pair<bool, bool> ret = make_pair<bool, bool>(false, false);
     
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
@@ -179,7 +184,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     case PutS:
         PutSReqReceived++;
         
-        assert(entry);
+        if(!entry) return true;  //TODO: this is dangerous
         if(entry->dirty) return true;  //ignore request
 
         entry->activeReq = ev;
@@ -229,11 +234,6 @@ bool DirectoryController::processPacket(MemEvent *ev){
             requestDirEntryFromMemory(entry);
         }
         break;
-    case NACK:
-            origEvent = ev->getNACKedEvent();
-            processIncomingNACK(origEvent);
-            delete ev;
-            break;
     default:
         /* Ignore unexpected */
         _abort(DirectoryController, "Cmd not expected, Cmd = %s\n", CommandString[cmd]);
