@@ -160,7 +160,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
     dbg.output(CALL_INFO, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
     Command cmd = ev->getCmd();
-    if(cmd == NACK) {
+    
+    if(NACK == cmd) {
         MemEvent* origEvent = ev->getNACKedEvent();
         processIncomingNACK(origEvent);
         delete ev;
