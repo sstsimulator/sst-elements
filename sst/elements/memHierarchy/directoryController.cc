@@ -233,6 +233,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             origEvent = ev->getNACKedEvent();
             processIncomingNACK(origEvent);
             delete ev;
+            break;
     default:
         /* Ignore unexpected */
         _abort(DirectoryController, "Cmd not expected, Cmd = %s\n", CommandString[cmd]);
