@@ -41,8 +41,9 @@ EXTRA_DIST = \
 	simulations/makeSDL.pl
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
+
 if HAVE_GLPK
-libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS) $(GLPK_LIBDIR)  
-libscheduler_la_LIBADD = $(GLPK_LIB)
-AM_CPPFLAGS += $(GLPK_CPPFLAGS) $(GLPK_LIB)
+libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS)
+libscheduler_la_LIBADD = $(GLPK_LDFLAGS) $(GLPK_LIB)
+AM_CPPFLAGS += $(GLPK_CPPFLAGS)
 endif
