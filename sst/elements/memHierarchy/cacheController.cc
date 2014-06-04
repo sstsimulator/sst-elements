@@ -146,6 +146,8 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
     }
     replaceCacheLine(wbCacheLine->index(), _newCacheLineIndex, _baseAddr); /* OK to change addr of topCC cache line, OK to replace cache line  */
     if(!isCacheLineAllocated(_newCacheLineIndex)) throw stallException();
+    
+    assert(!mshr_->exists(_baseAddr));
 }
 
 
@@ -162,7 +164,7 @@ void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requ
     
     if(_wbCacheLine->isLockedByUser()){
         d_->debug(_WARNING_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", _wbCacheLine->getBaseAddr());
-        //retryRequestLater(_event);
+        _wbCacheLine->eventsWaitingForLock_ = true;
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw stallException();
     }
