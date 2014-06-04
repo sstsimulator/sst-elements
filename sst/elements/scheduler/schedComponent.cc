@@ -716,7 +716,8 @@ void schedComponent::startJob(AllocInfo* ai)
     //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
     if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
-            srand(time(0));
+            srand(0);
+            //srand(time(0));
             randomNumber = (rand() % 80000 - 40000)/100000.0;
             //randomNumber = .5;
 
