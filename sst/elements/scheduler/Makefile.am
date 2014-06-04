@@ -4,8 +4,6 @@
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_THREAD_LIB) 
 
 
 compdir = $(pkglibdir)
@@ -41,9 +39,10 @@ EXTRA_DIST = \
 	simulations/makeSDL.pl
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
+libscheduler_la_LIBADD =
 
 if HAVE_GLPK
 libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS)
-libscheduler_la_LIBADD = $(GLPK_LDFLAGS) $(GLPK_LIB)
+libscheduler_la_LIBADD += $(GLPK_LIB)
 AM_CPPFLAGS += $(GLPK_CPPFLAGS)
 endif
