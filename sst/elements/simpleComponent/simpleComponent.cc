@@ -39,11 +39,8 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
     _abort(event_test,"couldn't find communication frequency\n");
   }
 
-  commSize = params.find_integer("commSize", 0, found);
-  if (!found) {
-    _abort(event_test,"couldn't find communication size\n");
-  }
-  
+  commSize = params.find_integer("commSize", 16);
+
   // init randomness
   srand(1);
   neighbor = rand() % 4;
@@ -175,7 +172,7 @@ create_simpleComponent(SST::ComponentId_t id,
 static const ElementInfoParam component_params[] = {
     { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
     { "commFreq", "Approximate frequency of sending an event during a clock tick.", NULL},
-    { "commSize", "Size of communication to send.", NULL},
+    { "commSize", "Size of communication to send.", "16"},
     { NULL, NULL, NULL}
 };
 
