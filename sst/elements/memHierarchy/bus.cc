@@ -161,8 +161,6 @@ void Bus::configureLinks(){
 
 void Bus::configureParameters(SST::Params& _params){
     dbg_.init("" + getName() + ": ", 0, 0, (Output::output_location_t)_params.find_integer("debug", 0));
-    numLowNetPortsX_  = _params.find_integer("low_network_ports", 0);
-	numHighNetPortsX_ = _params.find_integer("high_network_ports", 0);
     numHighNetPorts_  = 0;
     numLowNetPorts_   = 0;
     maxNumPorts_      = 500;

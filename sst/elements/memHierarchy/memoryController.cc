@@ -492,8 +492,8 @@ void MemController::performRequest(DRAMReq *req){
             memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
 	}
     else{
-        if(req->cmd == GetX && uncached) {
-            dbg.debug(C,L1,0,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localAddr, req->reqEvent->getSize());
+        if(uncached && req->cmd == GetX) {
+            dbg.debug(C,L1,0,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
             for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
                 memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
         }
