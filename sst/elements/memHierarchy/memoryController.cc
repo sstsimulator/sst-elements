@@ -483,15 +483,21 @@ Addr MemController::convertAddressToLocalAddress(Addr addr){
 
 
 void MemController::performRequest(DRAMReq *req){
-
+    bool uncached = req->reqEvent->queryFlag(MemEvent::F_UNCACHED);
     Addr localAddr = convertAddressToLocalAddress(req->addr);
 
-    if(req->cmd == PutM) {  /* Write request to memory */
-        dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
+    if(req->cmd == PutM){  /* Write request to memory */
+        dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localAddr, req->reqEvent->getSize(), uncached ? "true" : "false");
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
             memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
 	}
-    else {
+    else{
+        if(req->cmd == GetX && uncached) {
+            dbg.debug(C,L1,0,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localAddr, req->reqEvent->getSize());
+            for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
+                memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
+        }
+
     	req->respEvent = req->reqEvent->makeResponse(this);
         req->respEvent->setSize(cacheLineSize);
     
