@@ -62,8 +62,6 @@ static const ElementInfoParam cache_params[] = {
     {"idle_max",                "Cache temporarily turns off its clock after this amount of idle cycles", "6"},
     {"cache_line_size",         "Size of a cache line [aka cache block] in bytes.", "64"},
     {"prefetcher",              "Prefetcher Module", ""},
-    {"high_network_ports",      "Number of high network ports (closer to the CPU)",""},
-    {"low_network_ports",       "Number of low network ports (closer to the memory)", ""},
     {"directory_at_next_level", "Parameter specifies if there is a flat directory-controller as the higher level memory: 0, 1", "0"},
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
     {"network_bw",              "Network link bandwidth.", "0"},
@@ -71,6 +69,7 @@ static const ElementInfoParam cache_params[] = {
 	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
     {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "8"},
+    {"uncache_all_request",     "Used for verification purposes.  All requests are 'uncached'", "0"},
     {NULL, NULL, NULL}
 };
 
@@ -95,8 +94,6 @@ static const ElementInfoParam bus_params[] = {
     {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports", "0"},
     {"bus_latency_cycles",  "Number of ports on the bus", "0"},
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
-    {"high_network_ports",  "Number of high network ports (closer to the CPU)",""},
-    {"low_network_ports",   "Number of low network ports (closer to the memory)", ""},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {NULL, NULL}
 };

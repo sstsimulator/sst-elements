@@ -32,29 +32,30 @@ namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
+Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
  
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
-    int debugLevel = params.find_integer("debug_level", 0);
+    int debugLevel = _params.find_integer("debug_level", 0);
     if(debugLevel < 0 || debugLevel > 8)     _abort(Cache, "Debugging level must be betwee 0 and 8. \n");
     
-    dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
+    dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)_params.find_integer("debug", 0));
     dbg->debug(C,L1,0,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
     /* --------------- Get Parameters --------------- */
-    string frequency            = params.find_string("cache_frequency", "" );            //Hertz
-    string replacement          = params.find_string("replacement_policy", "LRU");
-    int associativity           = params.find_integer("associativity", -1);
-    string sizeStr              = params.find_string("cache_size", "");                  //Bytes
-    int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
-    int accessLatency           = params.find_integer("access_latency_cycles", -1);                 //ns
-    int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
-    string preF                 = params.find_string("prefetcher");
-    int L1int                   = params.find_integer("L1", 0);
-    int dirAtNextLvl            = params.find_integer("directory_at_next_level", 0);
-    string coherenceProtocol    = params.find_string("coherence_protocol", "");
-    string statGroups           = params.find_string("stat_group_ids", "");
+    string frequency            = _params.find_string("cache_frequency", "" );            //Hertz
+    string replacement          = _params.find_string("replacement_policy", "LRU");
+    int associativity           = _params.find_integer("associativity", -1);
+    string sizeStr              = _params.find_string("cache_size", "");                  //Bytes
+    int lineSize                = _params.find_integer("cache_line_size", -1);            //Bytes
+    int accessLatency           = _params.find_integer("access_latency_cycles", -1);                 //ns
+    int mshrSize                = _params.find_integer("mshr_num_entries", -1);           //number of entries
+    string preF                 = _params.find_string("prefetcher");
+    int L1int                   = _params.find_integer("L1", 0);
+    int dirAtNextLvl            = _params.find_integer("directory_at_next_level", 0);
+    string coherenceProtocol    = _params.find_string("coherence_protocol", "");
+    string statGroups           = _params.find_string("stat_group_ids", "");
+    int uncachedRequests        = _params.find_integer("uncache_all_request", 0);
     bool L1 = (L1int == 1);
     vector<int> statGroupIds;
     
@@ -108,39 +109,37 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params& params){
     else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, true);
     else _abort(Cache, "Replacement policy was not entered correctly or is not supported.\n");
     
-    
-
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
-    return new Cache(id, params, frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds);
+
+    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds, uncachedRequests};
+    return new Cache(_id, _params, config);
 }
 
 
 
-Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol,
-             Output* _dbg, ReplacementMgr* _rm, uint _numLines, uint _lineSize, uint _MSHRSize,
-             bool _L1, bool _dirControllerExists, vector<int> _statGroupIds) :
-             Component(id), cArray_(_cacheArray), protocol_(_protocol), d_(_dbg), replacementMgr_(_rm),
-             numLines_(_numLines), lineSize_(_lineSize), MSHRSize_(_MSHRSize), L1_(_L1),
-             dirControllerExists_(_dirControllerExists), statGroupIds_(_statGroupIds){
+Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Component(_id){
 
+    cf_ = _config;
+    d_  = cf_.dbg_;
+    L1_ = cf_.L1_;
     d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
     pMembers();
     errorChecking();
     
     d2_ = new Output();
-    d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
+    d2_->init("", _params.find_integer("debug_level", 0), 0,(Output::output_location_t)_params.find_integer("debug", 0));
 
-    statsFile_          = params.find_integer("statistics", 0);
-    idleMax_            = params.find_integer("idle_max", 10000);
-    accessLatency_      = params.find_integer("access_latency_cycles", -1);
-    string prefetcher   = params.find_string("prefetcher");
-    mshrLatency_        = params.find_integer("mshr_latency_cycles", -1);
+    statsFile_          = _params.find_integer("statistics", 0);
+    idleMax_            = _params.find_integer("idle_max", 10000);
+    accessLatency_      = _params.find_integer("access_latency_cycles", -1);
+    string prefetcher   = _params.find_string("prefetcher");
+    mshrLatency_        = _params.find_integer("mshr_latency_cycles", -1);
     
     
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) listener_ = new CacheListener();
     else {
-        listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
+        listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, _params));
         assert(listener_);
     }
     listener_->setOwningComponent(this);
@@ -153,7 +152,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     assert(mshrLatency_   >= 1);
 
     /* ----------------- MSHR ----------------- */
-    mshr_               = new MSHR(this, MSHRSize_);
+    mshr_               = new MSHR(this, cf_.MSHRSize_);
     mshrUncached_       = new MSHR(this, 4096);
     
     /* ---------------- Links ---------------- */
@@ -162,22 +161,22 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
-    defaultTimeBase_    = registerClock(_cacheFrequency, clockHandler_);
+    defaultTimeBase_    = registerClock(cf_.cacheFrequency_, clockHandler_);
     
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
 
     /* ---------------- Directory Controller --------------- */
-    if (dirControllerExists_) {
+    if (cf_.dirControllerExists_) {
         assert(isPortConnected("directory"));
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
-        myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-		myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+        myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
+		myInfo.num_vcs = _params.find_integer("network_num_vc", 3);
         myInfo.name = getName();
-        myInfo.network_addr = params.find_integer("network_address");
+        myInfo.network_addr = _params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache;
-        myInfo.typeInfo.cache.blocksize = lineSize_;
-        myInfo.typeInfo.cache.num_blocks = numLines_;
+        myInfo.typeInfo.cache.blocksize = cf_.lineSize_;
+        myInfo.typeInfo.cache.num_blocks = cf_.numLines_;
 
         directoryLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
     } else {
@@ -188,7 +187,7 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
     /* ------------- Member variables intialization ------------- */
     
     configureLinks();
-    groupStats_                         = (statGroupIds_.size() < 2) ? false : true;
+    groupStats_                         = (cf_.statGroupIds_.size() < 2) ? false : true;
     clockOn_                            = true;
     idleCount_                          = 0;
     memNICIdleCount_                    = 0;
@@ -203,11 +202,11 @@ Cache::Cache(ComponentId_t id, Params& params, string _cacheFrequency, CacheArra
         
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
-    (!L1_) ? topCC_ = new MESITopCC(this, d_, protocol_, numLines_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_);
+    (!L1_) ? topCC_ = new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_);
    
     /*--------------- Replacement Manager --------------- */
-    replacementMgr_->setTopCC(topCC_);  replacementMgr_->setBottomCC(bottomCC_);
+    cf_.rm_->setTopCC(topCC_);  cf_.rm_->setBottomCC(bottomCC_);
 
 }
 
@@ -220,7 +219,7 @@ void Cache::configureLinks(){
     sprintf(buf,  "Error:  Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
     sprintf(buf3, "Error:  More than one high network port specified in %s.  Please use a 'Bus' component when connecting more than one higher level cache (eg. 2 L1s, 1 L2)\n", this->getName().c_str());
 
-    if(!dirControllerExists_){
+    if(!cf_.dirControllerExists_){
         for(uint id = 0 ; id < 200; id++) {
             string linkName = "low_network_" + boost::lexical_cast<std::string>(id);
             SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
@@ -244,7 +243,7 @@ void Cache::configureLinks(){
     }
     
     
-    if(!dirControllerExists_) BOOST_ASSERT_MSG(lowNetExists, buf);
+    if(!cf_.dirControllerExists_) BOOST_ASSERT_MSG(lowNetExists, buf);
     BOOST_ASSERT_MSG(highNetCount > 0,  buf2);
     BOOST_ASSERT_MSG(highNetCount < 2,  buf3);
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));

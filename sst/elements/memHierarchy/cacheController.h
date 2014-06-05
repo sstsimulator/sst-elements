@@ -37,6 +37,7 @@
 #include "memNIC.h"
 #include <boost/assert.hpp>
 
+
 #define assert_msg BOOST_ASSERT_MSG
 
 namespace SST { namespace MemHierarchy {
@@ -73,6 +74,7 @@ public:
         bool insertPointer(Addr keyAddr, Addr pointerAddr);
         bool insert(Addr baseAddr, Addr pointer);
         bool insert(Addr baseAddr, mshrType mshrEntry);
+        MemEvent* removeFront(Addr _baseAddr);
         void removeElement(Addr baseAddr, MemEvent* event);
         void removeElement(Addr baseAddr, Addr pointer);
         void removeElement(Addr baseAddr, mshrType mshrEntry);
@@ -96,7 +98,7 @@ public:
     
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
-        Addr baseAddr = (addr) & ~(cArray_->getLineSize() - 1);  //Remove the block offset bits
+        Addr baseAddr = (addr) & ~(cf_.cacheArray_->getLineSize() - 1);  //Remove the block offset bits
         return baseAddr;
     }
     
@@ -108,10 +110,10 @@ public:
     class ignoreEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to be ignored. Request is irrelevant or out-of-date\n"; }};
 
 private:
-   
+    struct CacheConfig;
+    
     /** Constructor for Cache Component */
-    Cache(SST::ComponentId_t id, SST::Params& params, string _cacheFrequency, CacheArray* _cacheArray, uint _protocol, Output* _d,
-          ReplacementMgr* _rm, uint _numLines, uint lineSize, uint MSHRSize, bool _L1, bool _dirControllerExists, vector<int> _statGroupIds);
+    Cache(ComponentId_t _id, Params &_params, CacheConfig _config);
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
@@ -270,7 +272,7 @@ private:
         timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
         //bool ret = false;
         
-        if(dirControllerExists_) memNICIdle_ = directoryLink_->clock();
+        if(cf_.dirControllerExists_) memNICIdle_ = directoryLink_->clock();
         
         bool topCCBusy      = topCC_->queueBusy();
         bool bottomCCBusy   = bottomCC_->queueBusy();
@@ -313,7 +315,7 @@ private:
     /** Increment idle clock count */
     bool incIdleCount(){
         idleCount_++;
-        if(!dirControllerExists_ && idleCount_ > idleMax_){
+        if(!cf_.dirControllerExists_ && idleCount_ > idleMax_){
             clockOn_ = false;
             idleCount_ = 0;
             return true;
@@ -321,23 +323,32 @@ private:
         return false;
     }
     
+    struct CacheConfig{
+        string cacheFrequency_;
+        CacheArray* cacheArray_;
+        uint protocol_;
+        Output* dbg_;
+        ReplacementMgr* rm_;
+        uint numLines_;
+        uint lineSize_;
+        uint MSHRSize_;
+        bool L1_;
+        bool dirControllerExists_;
+        vector<int> statGroupIds_;
+        bool allUncachedRequests_;
+    };
+    
+    CacheConfig             cf_;
     uint                    ID_;
-    CacheArray*             cArray_;
     CacheListener*          listener_;
-    uint                    protocol_;
     vector<Link*>*          lowNetPorts_;
     vector<Link*>*          highNetPorts_;
     Link*                   selfLink_;
     MemNIC*                 directoryLink_;
     Output*                 d_;
     Output*                 d2_;
-    ReplacementMgr*         replacementMgr_;
-    uint                    numLines_;
-    uint                    lineSize_;
-    uint                    MSHRSize_;
     string                  nextLevelCacheName_;
     bool                    L1_;
-    bool                    dirControllerExists_;
     MSHR*                   mshr_;
     MSHR*                   mshrUncached_;
     TopCacheController*     topCC_;
@@ -355,7 +366,6 @@ private:
     uint64                  timestamp_;
     int                     statsFile_;
     bool                    groupStats_;
-    vector<int>             statGroupIds_;
     map<int,CtrlStats>      stats_;
     int                     idleMax_;
     int                     idleCount_;
@@ -366,6 +376,7 @@ private:
     TimeConverter*          defaultTimeBase_;
  	std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
+
 
 };
 

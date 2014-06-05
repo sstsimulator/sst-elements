@@ -126,6 +126,22 @@ vector<mshrType> Cache::MSHR::removeAll(Addr _baseAddr){
     return res;
 }
 
+MemEvent* Cache::MSHR::removeFront(Addr _baseAddr){
+    mshrTable::iterator it = map_.find(_baseAddr);
+    assert(it != map_.end());
+    vector<mshrType> mshrEntry = it->second;
+    assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
+    
+    map_.erase(it);
+
+    mshrType entry = mshrEntry.front();
+    mshrEntry.erase(mshrEntry.begin());
+    insertAll(_baseAddr, mshrEntry);
+    
+    return boost::get<MemEvent*>(entry.elem);
+}
+
+
 bool Cache::MSHR::isHit(Addr _baseAddr){ return map_.find(_baseAddr) != map_.end(); }
 
 

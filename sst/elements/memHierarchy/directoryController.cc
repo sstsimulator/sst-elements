@@ -168,10 +168,12 @@ bool DirectoryController::processPacket(MemEvent *ev){
         return true;
     }
     
+    
     uint32_t requesting_node;
     pair<bool, bool> ret = make_pair<bool, bool>(false, false);
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
     if(cmd == FetchResp) assert(entry && entry->inProgress());
+    
     
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;

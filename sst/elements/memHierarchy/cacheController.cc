@@ -42,8 +42,8 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
     bool done;
     
     try{
-        bool updateCacheline = !_mshrHit && MemEvent::isDataRequest(_cmd);
-        int lineIndex = cArray_->find(_baseAddr, updateCacheline);      /* Update cacheline only if it's NOT mshrHit */
+        bool updateLine = !_mshrHit && MemEvent::isDataRequest(_cmd);
+        int lineIndex = cf_.cacheArray_->find(_baseAddr, updateLine);   /* Update cacheline only if it's NOT mshrHit */
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
             checkRequestValidity(_event);
@@ -152,8 +152,8 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
 
 
 CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
-    int wbLineIndex = cArray_->preReplace(_baseAddr);        assert(wbLineIndex >= 0);
-    CacheLine* wbCacheLine = cArray_->lines_[wbLineIndex];   assert(wbCacheLine);
+    int wbLineIndex = cf_.cacheArray_->preReplace(_baseAddr); assert(wbLineIndex >= 0);
+    CacheLine* wbCacheLine = cf_.cacheArray_->lines_[wbLineIndex];    assert(wbCacheLine);
     wbCacheLine->setIndex(wbLineIndex);
     return wbCacheLine;
 }
@@ -210,7 +210,7 @@ void Cache::replaceCacheLine(int _replacementCacheLineIndex, int& _newCacheLineI
     wbCCLine->setBaseAddr(_newBaseAddr);
 
     _newCacheLineIndex = _replacementCacheLineIndex;
-    cArray_->replace(_newBaseAddr, _newCacheLineIndex);
+    cf_.cacheArray_->replace(_newBaseAddr, _newCacheLineIndex);
     d_->debug(_L1_,"Allocated current request in a cache line.\n");
 }
 
@@ -355,11 +355,9 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine, bool _mshrH
 }
 
 void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
-    if(_cacheLine->inTransition()){ /* Check if cache line is locked */
-        d_->debug(_L1_,"Stalling request: Cache line in transition. BccSt: %s\n", BccLineString[_cacheLine->getState()]);
-        throw ignoreEventException();
-    }
-    else if(!L1_){                  /* Check if topCC line is locked */
+    assert(!_cacheLine->inTransition());
+    
+    if(!L1_){                  /* Check if topCC line is locked */
         CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
         if(ccLine->inTransition() && _cmd < PutS && _cmd > PutXE){  //InTransition && !PutS, !PutM, !PutE, !PutX
             d_->debug(_L1_,"Stalling request: Cache line in transition. TccSt: %s\n", TccLineString[ccLine->getState()]);
@@ -397,20 +395,20 @@ void Cache::updateUpgradeLatencyAverage(MemEvent* _origMemEvent){
 
 
 void Cache::errorChecking(){
-    if(MSHRSize_ <= 0)             _abort(Cache, "MSHR size not specified correctly. \n");
-    if(numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
-    if(!isPowerOfTwo(lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");
+    if(cf_.MSHRSize_ <= 0)             _abort(Cache, "MSHR size not specified correctly. \n");
+    if(cf_.numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
+    if(!isPowerOfTwo(cf_.lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");
 }
 
 void Cache::pMembers(){
     string protocolStr;
-    if(protocol_) protocolStr = "MESI";
+    if(cf_.protocol_) protocolStr = "MESI";
     else protocolStr = "MSI";
     
     d_->debug(_INFO_,"Coherence Protocol: %s \n", protocolStr.c_str());
-    d_->debug(_INFO_,"Cache lines: %d \n", numLines_);
-    d_->debug(_INFO_,"Cache line size: %d \n", lineSize_);
-    d_->debug(_INFO_,"MSHR entries:  %d \n\n", MSHRSize_);
+    d_->debug(_INFO_,"Cache lines: %d \n", cf_.numLines_);
+    d_->debug(_INFO_,"Cache line size: %d \n", cf_.lineSize_);
+    d_->debug(_INFO_,"MSHR entries:  %d \n\n", cf_.MSHRSize_);
 }
 
 void Cache::retryRequestLater(MemEvent* _event){
@@ -419,10 +417,10 @@ void Cache::retryRequestLater(MemEvent* _event){
 
 
 CacheArray::CacheLine* Cache::getCacheLine(Addr _baseAddr){
-    int lineIndex =  cArray_->find(_baseAddr, false);
+    int lineIndex =  cf_.cacheArray_->find(_baseAddr, false);
     if(lineIndex == -1) return NULL;
     else{
-        CacheLine* cacheLine = cArray_->lines_[lineIndex];
+        CacheLine* cacheLine = cf_.cacheArray_->lines_[lineIndex];
         cacheLine->setIndex(lineIndex);
         return cacheLine;
     }
@@ -431,7 +429,7 @@ CacheArray::CacheLine* Cache::getCacheLine(Addr _baseAddr){
 CacheArray::CacheLine* Cache::getCacheLine(int _lineIndex){
     if(_lineIndex == -1) return NULL;
     else{
-        CacheLine* cacheLine = cArray_->lines_[_lineIndex];
+        CacheLine* cacheLine = cf_.cacheArray_->lines_[_lineIndex];
         cacheLine->setIndex(_lineIndex);
         return cacheLine;
     }
