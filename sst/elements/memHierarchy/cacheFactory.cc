@@ -118,7 +118,6 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
 
 
 Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Component(_id){
-
     cf_ = _config;
     d_  = cf_.dbg_;
     L1_ = cf_.L1_;

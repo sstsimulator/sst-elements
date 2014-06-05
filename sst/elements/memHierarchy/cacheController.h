@@ -200,7 +200,7 @@ private:
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool mshrHit);
 
     /** Check if the cacheline and the 'CCLine' are in a stable state */
-    void checkCacheLineIsStable(CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
+    void checkCacheLineIsStable(MemEvent* _event, CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
 
     /** Check if there a cache miss */
     inline bool isCacheMiss(int lineIndex);

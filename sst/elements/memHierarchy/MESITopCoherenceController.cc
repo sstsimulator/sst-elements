@@ -338,7 +338,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     }
     
     
-    uint64 latency = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    uint64_t latency = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     response resp  = {responseEvent, latency, true};
     outgoingEventQueue_.push(resp);
     

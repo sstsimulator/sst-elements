@@ -51,7 +51,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         }
         
         CacheLine* cacheLine = getCacheLine(lineIndex);
-        checkCacheLineIsStable(cacheLine, _cmd);                        /* If cache line is locked or in transition, wait until it is stable */
+        checkCacheLineIsStable(_event, cacheLine, _cmd);                        /* If cache line is locked or in transition, wait until it is stable */
         
         bottomCC_->handleRequest(_event, cacheLine, _cmd);              /* upgrade or fetch line from higher level caches */
         if(cacheLine->inTransition()){
@@ -354,16 +354,19 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine, bool _mshrH
     }
 }
 
-void Cache::checkCacheLineIsStable(CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
-    assert(!_cacheLine->inTransition());
-    
-    if(!L1_){                  /* Check if topCC line is locked */
-        CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
-        if(ccLine->inTransition() && _cmd < PutS && _cmd > PutXE){  //InTransition && !PutS, !PutM, !PutE, !PutX
-            d_->debug(_L1_,"Stalling request: Cache line in transition. TccSt: %s\n", TccLineString[ccLine->getState()]);
-            throw ignoreEventException();
-        }
+void Cache::checkCacheLineIsStable(MemEvent* _event, CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
+    /* If cache line is in transition, that means this requests is a writeback from a lower level cache.
+       In this case, it has to be a PutS requests because the only possible transition going on is SM.  We can just ignore
+       the request after removing the sharer. */
+    if(_cacheLine->inTransition()){
+        assert(_cmd == PutS);
+        topCC_->handleRequest(_event, _cacheLine, false);
+        d_->debug(_L0_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
+        throw ignoreEventException();
     }
+
+    //CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
+    //assert(!(ccLine->inTransition() && _cmd < PutS && _cmd > PutXE) );//{  //InTransition && !PutS, !PutM, !PutE, !PutX
 }
 
 bool Cache::isCacheMiss(int _lineIndex){

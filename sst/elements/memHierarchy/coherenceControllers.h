@@ -41,7 +41,7 @@ class CoherencyController{
 public:
     typedef CacheArray::CacheLine CacheLine;
     typedef unsigned int uint;
-    typedef long long unsigned int uint64;
+    typedef uint64_t uint64;
 
     struct response {
         MemEvent* event;
