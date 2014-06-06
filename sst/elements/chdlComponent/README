@@ -1,0 +1,68 @@
+CHDL Component for SST
+======================
+
+1. Architecture
+---------------
+
+The CHDL component provides a way to execute gate-level netlists generated with
+the CHDL Hardware Design Libary. This is a C++ structural hardware design
+system notably employed in the implementation of the Harmonica multithreaded
+SIMD soft core.
+
+2. Configuration
+----------------
+
+2.1 HDL Parameters
+------------------
+
+clockFreq - required
+
+  The frequency at which the CHDL clock is advanced
+
+netlist - required
+
+  The CHDL .nand netlist file
+
+2.2 Ports
+---------
+
+mem - required - MemEvent (bidirectional)
+
+  The primary interface to the memory system.
+
+3. Getting Started
+------------------
+
+3.1 Requirements
+----------------
+
+The following software is needed in order to use the QSim component with SST:
+
+  - Relatively recent Linux distribution
+  - QSim 0.2 or later
+
+3.2 Setting up QSim
+-------------------
+
+A detailed set of installation instructions for QSim can be found in the file
+INSTALL in the QSim root directory.
+
+3.3 Setting up SST
+------------------
+
+To run a simple test:
+
+  $ emacs gen_sdl.c
+
+    Change the constant "APP" at the top of the file to the path of a QSim
+    benchmark .tar file (more on which in the QSim documentation).
+
+  $ gcc -o gen_sdl gen_sdl.c
+  $ ./gen_sdl 11 > test_11.xml
+  $ mpirun -np 11 sst.x test_11.xml --stop-at 1ms
+
+
+4. Resources
+------------
+
+  QSim website: http://manifold.gatech.edu/projects/qsim-a-multicore-emulator/
