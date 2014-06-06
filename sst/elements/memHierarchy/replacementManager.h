@@ -294,7 +294,7 @@ class RandomReplacementMgr : public ReplacementMgr {
 
 public:
     RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays) {
-        srand (time(NULL));
+        srand (1);
     }
     virtual ~RandomReplacementMgr() {}
 
