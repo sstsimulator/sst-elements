@@ -22,6 +22,8 @@
 #include "coherenceControllers.h"
 #include "MESIBottomCoherenceController.h"
 #include "MESITopCoherenceController.h"
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 using namespace std;
 namespace SST {
@@ -291,7 +293,9 @@ class RandomReplacementMgr : public ReplacementMgr {
     int numWays_;
 
 public:
-    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays) {}
+    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays) {
+        srand (time(NULL));
+    }
     virtual ~RandomReplacementMgr() {}
 
     void update(uint id){}
