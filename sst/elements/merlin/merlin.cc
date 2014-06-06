@@ -51,7 +51,7 @@ create_hr_router(SST::ComponentId_t id,
 static const ElementInfoParam hr_router_params[] = {
     {"id", "ID of the router."},
     {"num_ports", "Number of ports that the router has"},
-    {"num_vcs", "DEPRECATED"},
+    {"num_vcs", "DEPRECATED", ""},
     {"topology", "Name of the topology module that should be loaded to control routing."},
     {"link_bw", "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
     {"flit_size", "Flit size specified in either b or B (can include SI prefix)."},
