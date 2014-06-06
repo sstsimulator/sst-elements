@@ -19,6 +19,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/rng/sstrand.h>
 
 #include "output.h"
 
@@ -26,6 +27,7 @@ namespace SST {
     class Event;
     class Link;
     class Params;
+    
     namespace Scheduler {
 
         class Job;
@@ -38,7 +40,6 @@ namespace SST {
         class Statistics;
         class AllocInfo;
         class FST;
-
 
         // the maximum length of a job ID.  used primarily for job list parsing.
 #define JobIDlength 16
@@ -127,7 +128,8 @@ namespace SST {
                 int YumYumPollWait;                   // this is the length of time in ms to wait between checks for new jobs
                 time_t LastJobFileModTime;            // Contains the last time that the job file was modified
                 char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
-
+                
+                SST::RNG::SSTRandom* rng;  //random number generator
 
                 friend class boost::serialization::access;
                 template<class Archive>

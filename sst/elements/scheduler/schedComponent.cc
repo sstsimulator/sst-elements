@@ -11,6 +11,7 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "sst/core/rng/mersenne.h"
 #include "schedComponent.h" 
 
 #include <assert.h>
@@ -78,6 +79,7 @@ schedComponent::~schedComponent()
 {
     delete stats;
     delete scheduler;
+    delete rng;
     if (FSTtype > 0) delete calcFST;
 }
 
@@ -116,6 +118,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     yumyumErrorLatencyRand48Seed = readSeed( params, std::string( "errorLatencySeed" ) );
     yumyumErrorCorrectionRand48Seed = readSeed( params, std::string( "errorCorrectionSeed" ) );
     yumyumJobKillRand48Seed = readSeed( params, std::string( "jobKillSeed" ) );
+    rng = new SST::RNG::MersenneRNG( (unsigned int) readSeed(params, std::string("runningTimeSeed")) );
 
     //set up the all-important self-link
     selfLink = configureSelfLink("linkToSelf", new Event::Handler<schedComponent>(this, &schedComponent::handleJobArrivalEvent));
@@ -716,10 +719,11 @@ void schedComponent::startJob(AllocInfo* ai)
     //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
     if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
-            srand(0);
+            //srand(0);
             //srand(time(0));
-            randomNumber = (rand() % 80000 - 40000)/100000.0;
+            //randomNumber = (rand() % 80000 - 40000)/100000.0;
             //randomNumber = .5;
+            randomNumber = rng -> nextUniform() * 0.8 - 0.4;
 
             int numberOfProcs = ((MeshAllocInfo*)ai) -> processors -> size();
 
