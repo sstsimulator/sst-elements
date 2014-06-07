@@ -55,6 +55,7 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
     bool upgrade;
     setGroupId(_event->getGroupId());
     d_->debug(_L0_,"BottomCC State = %s\n", BccLineString[_cacheLine->getState()]);
+    assert(!_cacheLine->inTransition());   //MSHR should catch this..
     
     switch(_cmd){
     case GetS:

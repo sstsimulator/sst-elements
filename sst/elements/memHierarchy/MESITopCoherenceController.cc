@@ -315,7 +315,7 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
     if(_event->isPrefetch()){
-        d_->debug(_WARNING_,"Warning: No Response sent! Thi event is a prefetch or sharerId in -1");
+        d_->debug(_WARNING_,"Warning: No Response sent! This event is a prefetch or sharerId in -1");
         return true;
     }
     

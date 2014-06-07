@@ -194,7 +194,7 @@ void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
         case GetXResp:
             origRequest = mshrUncached_->removeFront(_baseAddr);
             d_->debug(_L0_,"Removed Front\n");
-            topCC_->sendResponse(origRequest, DUMMY, &origRequest->getPayload(), true);
+            topCC_->sendResponse(origRequest, DUMMY, &_event->getPayload(), true);
             delete origRequest;
             break;
         default:
