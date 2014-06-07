@@ -22,6 +22,7 @@
 #include "coherenceControllers.h"
 #include "MESIBottomCoherenceController.h"
 #include "MESITopCoherenceController.h"
+#include "sst/core/rng/marsaglia.h"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 
@@ -289,25 +290,26 @@ public:
  * ------------------------------------------------------------------------------------------*/
 class RandomReplacementMgr : public ReplacementMgr {
  private:
-    vector<uint64_t> candidates;
+    vector<uint64_t> candidates_;
     int numWays_;
+    SST::RNG::MarsagliaRNG randomGenerator_;
 
 public:
-    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays) {
-        srand (1);
+    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays), randomGenerator_(1, 1) {}
+    virtual ~RandomReplacementMgr() {
+        
     }
-    virtual ~RandomReplacementMgr() {}
 
     void update(uint id){}
-    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) { candidates.push_back(id);}
+    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) { candidates_.push_back(id);}
 
     uint getBestCandidate() {
-        int bestCandidate = rand() % numWays_;
-        return (uint)candidates[bestCandidate];
+        int bestCandidate = randomGenerator_.generateNextUInt32() % numWays_;
+        return (uint)candidates_[bestCandidate];
     }
 
-    void replaced(uint id) { candidates.clear(); }
-    void startReplacement() { candidates.clear(); }
+    void replaced(uint id) { candidates_.clear(); }
+    void startReplacement() { candidates_.clear(); }
 };
 
 }}
