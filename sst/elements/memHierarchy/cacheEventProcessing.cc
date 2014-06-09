@@ -182,13 +182,15 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
 void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
     vector<mshrType> mshrEntry;
     MemEvent* origRequest;
+    bool inserted;
     _event->setFlag(MemEvent::F_UNCACHED);
     
     switch(_cmd){
         case GetS:
         case GetX:
         case GetSEx:
-            mshrUncached_->insert(_baseAddr, _event);
+            inserted = mshrUncached_->insert(_baseAddr, _event);
+            assert(inserted);
             if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, NULL);
             else             bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, &_event->getPayload());
             break;
