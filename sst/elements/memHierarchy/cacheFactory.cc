@@ -26,7 +26,7 @@
 #include <boost/lexical_cast.hpp>
 
 #define N   200
-#define HUGE_MSHR 10000
+#define HUGE_MSHR 100000
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -152,7 +152,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(this, cf_.MSHRSize_);
-    mshrUncached_       = new MSHR(this, 4096);
+    mshrUncached_       = new MSHR(this, HUGE_MSHR);
     
     /* ---------------- Links ---------------- */
     lowNetPorts_        = new vector<Link*>();

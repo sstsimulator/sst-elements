@@ -116,7 +116,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     MemEvent *event = static_cast<MemEvent*>(_ev);
     Command cmd     = event->getCmd();
     Addr baseAddr   = toBaseAddr(event->getAddr());
-    bool uncached   = event->queryFlag(MemEvent::F_UNCACHED);
+    bool uncached   = event->queryFlag(MemEvent::F_UNCACHED) || cf_.allUncachedRequests_;
     MemEvent* origEvent;
     
     if(!_mshrHit){
@@ -126,7 +126,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     else incTotalMSHRHits(groupId);
 
     d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", EventID = %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getID().first, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "");
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getID().first, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "cached");
     
     if(uncached || cf_.allUncachedRequests_){
         processUncached(event, cmd, baseAddr);
@@ -182,17 +182,20 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
 void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
     vector<mshrType> mshrEntry;
     MemEvent* origRequest;
+    _event->setFlag(MemEvent::F_UNCACHED);
     
     switch(_cmd){
         case GetS:
         case GetX:
+        case GetSEx:
             mshrUncached_->insert(_baseAddr, _event);
             if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, NULL);
-            else bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, &_event->getPayload());
+            else             bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, &_event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
             origRequest = mshrUncached_->removeFront(_baseAddr);
+            assert(origRequest->getID().second == _event->getResponseToID().second);
             d_->debug(_L0_,"Removed Front\n");
             topCC_->sendResponse(origRequest, DUMMY, &_event->getPayload(), true);
             delete origRequest;

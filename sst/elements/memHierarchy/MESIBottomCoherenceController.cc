@@ -323,6 +323,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
     else            forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
     forwardEvent->setDst(nextLevelCacheName_);
+    forwardEvent->setFlag(_event->getFlags());
     
     /* Determine latency in cycles */
     uint64 deliveryTime;

@@ -59,7 +59,7 @@ bool Cache::MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr){
 
 bool Cache::MSHR::isFull(){
     if(size_ >= maxSize_){
-        cache_->d_->debug(_L6_,"MSHR Full. Event could not be inserted\n");
+        cache_->d_->debug(_L6_,"MSHR Full. Event could not be inserted. Max Size = %u\n", maxSize_);
         return true;
     }
     return false;
@@ -129,16 +129,33 @@ vector<mshrType> Cache::MSHR::removeAll(Addr _baseAddr){
 MemEvent* Cache::MSHR::removeFront(Addr _baseAddr){
     mshrTable::iterator it = map_.find(_baseAddr);
     assert(it != map_.end());
+    assert(!it->second.empty());
+    assert(it->second.front().elem.type() == typeid(MemEvent*));
+    
+    
+    MemEvent* ret = boost::get<MemEvent*>(it->second.front().elem);
+    
+    it->second.erase(it->second.begin());
+    if(it->second.empty()) map_.erase(it);
+    
+    size_--;
+    
+    return ret;
+    
+    
+    /*mshrTable::iterator it = map_.find(_baseAddr);
+    assert(it != map_.end());
     vector<mshrType> mshrEntry = it->second;
     assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
-    
+
     map_.erase(it);
 
     mshrType entry = mshrEntry.front();
     mshrEntry.erase(mshrEntry.begin());
     insertAll(_baseAddr, mshrEntry);
-    
+
     return boost::get<MemEvent*>(entry.elem);
+    */
 }
 
 

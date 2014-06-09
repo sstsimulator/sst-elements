@@ -327,7 +327,8 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
                 base            = (_event->getAddr()) & ~(lineSize_ - 1);
                 offset          = _event->getAddr() - base;
                 responseEvent   = _event->makeResponse((SST::Component*)owner_);
-                if(cmd != GetX) responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+                //if(cmd != GetX)
+                responseEvent->setPayload(_event->getSize(), &_data->at(offset));
             }
             else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
             
