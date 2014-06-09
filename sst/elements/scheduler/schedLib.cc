@@ -179,6 +179,10 @@ static const SST::ElementInfoParam sched_params[] = {
         "Name for file to output job log",
         "REQUIRED if job log used"
     },
+    { "runningTimeSeed",
+        "RNG seed for running time deviation",
+        "Current time"
+    },
     {NULL,NULL,NULL}
 };
 

@@ -17,6 +17,13 @@ else {
     $timeperdistance = $ARGV[6];
 }
 
+if(scalar @ARGV <= 7) {
+    $runningTimeSeed = 'none'; 
+}
+else {
+    $runningTimeSeed = $ARGV[7];
+}
+
 {
     print <<EOT
 <?xml version="1.0"?>
@@ -36,6 +43,7 @@ else {
 	<allocator>$ARGV[4]</allocator>
         <FST>$FST</FST>
         <timeperdistance>$timeperdistance</timeperdistance>
+        <runningTimeSeed>$runningTimeSeed</runningTimeSeed>
     </params>
 EOT
 }
