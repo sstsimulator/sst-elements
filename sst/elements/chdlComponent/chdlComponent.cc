@@ -176,12 +176,12 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   resp[0].wr = req->cmd == SimpleMem::Request::WriteResp;
   if (!resp[0].wr) {
     resp[0].data = 0;
-    for (unsigned i = 0; i < req->size; ++i)
+    for (unsigned i = 0; i < req->data.size(); ++i)
       resp[0].data |= req->data[i] << 8*i;
   }
   resp[0].id = req->id;
 
-  out.output("Response arrived for req %d, wr = %d, data = %lu\n", int(req->id), resp[0].wr, (unsigned long)resp[0].data);
+  out.output("Response arrived for req %d, wr = %d, data = %lu, size = %lu, datasize = %lu\n", int(req->id), resp[0].wr, (unsigned long)resp[0].data, req->size, req->data.size());
 
   delete req;
 }
@@ -208,12 +208,14 @@ bool chdlComponent::clockTick(Cycle_t c) {
       SimpleMem::Request *r;
       if (req[i].wr) {
         vector<uint8_t> dVec;
-        for (unsigned j = 0; i < req[i].size; ++i) {
+        for (unsigned j = 0; j < req[i].size; ++j) {
           dVec.push_back((req[i].data >> 8*j) & 0xff);
         }
         r = new SimpleMem::Request(
           SimpleMem::Request::Write, req[i].addr, req[i].size, dVec, flags
         );
+        out.output("  write size = %d(%d)\n",
+                   (int)req[i].size, (int)dVec.size());
       } else {
         r = new SimpleMem::Request(
           SimpleMem::Request::Read, req[i].addr, req[i].size, flags

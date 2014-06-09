@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+
+<sst>
+  <component name="c0" rank="0" type="chdlComponent">
+    <params>
+      <netlist>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/acpu.nand</netlist>
+    </params>
+    <link name=c0_l1cache_link port=memLink latency=3ns />
+  </component>
+
+  <!--<><><><><><><><><><><><><><>-<><><><><><><><><><><><><><>-->
+
+  <component name="c0.l1cache" rank="0" type="memHierarchy.Cache">
+    <params>
+      <coherence_protocol>MSI</coherence_protocol>
+      <cache_frequency>1GHz</cache_frequency>
+      <replacement_policy> LRU </replacement_policy>
+      <associativity>4</associativity>
+      <cache_size>8 KB</cache_size>
+      <cache_line_size>64</cache_line_size>
+      <access_latency_cycles>1</access_latency_cycles>
+      <low_network_links> 1 </low_network_links>
+      <L1>1</L1>
+    </params>
+    <link name=c0_l1cache_link port=high_network_0 latency=3ns />
+    <link name=c0_l1l2cache_link port=low_network_0 latency=10ns />
+  </component>
+
+  <!--<><><><><><><><><><><><><><>-<><><><><><><><><><><><><><>-->
+
+  <component name="c0.l2cache" rank="0" type="memHierarchy.Cache">
+    <params>
+      <coherence_protocol>MSI</coherence_protocol>
+      <cache_frequency>1GHz</cache_frequency>
+      <replacement_policy> LRU </replacement_policy>
+      <associativity>16</associativity>
+      <cache_size>64 KB</cache_size>
+      <cache_line_size>64</cache_line_size>
+      <access_latency_cycles>10</access_latency_cycles>
+      <high_network_links> 1 </high_network_links>
+      <L1>0</L1>
+      <directory_at_next_level> 1 </directory_at_next_level>
+      <network_address>1</network_address>
+      <network_bw>2GB/s</network_bw>
+      <mode>INCLUSIVE</mode>
+    </params>
+    <link name=c0_l1l2cache_link port=high_network_0 latency=3ns />
+    <link name=cache_net_0 port=directory latency=10ns />
+  </component>
+
+  <!--<><><><><><><><><><><><><><>-<><><><><><><><><><><><><><>-->
+
+  <component name="chiprtr" rank="0" type="merlin.hr_router">
+    <params>
+      <num_ports>2</num_ports>
+      <link_bw>2GB/s</link_bw>
+      <xbar_bw>2GB/s</xbar_bw>
+      <flit_size> 72B </flit_size>
+      <input_buf_size> 1KB </input_buf_size>
+      <output_buf_size> 1KB </output_buf_size>
+      <topology>merlin.singlerouter</topology>
+      <id>0</id>
+    </params>
+    <link name=dir_net_0 port=port0 latency=5ns />
+    <link name=cache_net_0 port=port1 latency=5ns />
+  </component>
+
+  <component name="dirctrl0" rank="0"type="memHierarchy.DirectoryController">
+    <params>
+      <coherence_protocol>MSI</coherence_protocol>
+      <network_bw>2GB/s</network_bw>
+      <network_address>0</network_address>
+      <addr_range_start>0x0</addr_range_start>
+      <addr_range_end>0xe8000000</addr_range_end>
+      <backingStoreSize>0</backingStoreSize>
+    </params>
+    <link name=dir_mem_link_0 port=memory latency=10ns />
+    <link name=dir_net_0 port=network latency=5ns />
+  </component>
+
+  <component name="memory0" rank="0" type="memHierarchy.MemController">
+    <params>
+      <coherence_protocol>MSI</coherence_protocol>
+      <access_time>50ns</access_time>
+      <mem_size>4096</mem_size>
+      <clock>1GHz</clock>
+    </params>
+    <link name=dir_mem_link_0 port=direct_link latency=10ns />
+  </component>
+</sst>
