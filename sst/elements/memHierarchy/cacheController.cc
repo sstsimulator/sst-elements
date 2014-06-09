@@ -364,9 +364,6 @@ void Cache::checkCacheLineIsStable(MemEvent* _event, CacheLine* _cacheLine, Comm
         d_->debug(_L0_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
         throw ignoreEventException();
     }
-
-    //CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
-    //assert(!(ccLine->inTransition() && _cmd < PutS && _cmd > PutXE) );//{  //InTransition && !PutS, !PutM, !PutE, !PutX
 }
 
 bool Cache::isCacheMiss(int _lineIndex){

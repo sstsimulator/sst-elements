@@ -69,7 +69,7 @@ static const ElementInfoParam cache_params[] = {
 	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
     {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "8"},
-    {"uncache_all_request",     "Used for verification purposes.  All requests are 'uncached'", "0"},
+    {"uncache_all_requests",     "Used for verification purposes.  All requests are considered to be 'uncached'", "0"},
     {NULL, NULL, NULL}
 };
 

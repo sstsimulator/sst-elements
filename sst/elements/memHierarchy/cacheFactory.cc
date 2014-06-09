@@ -55,7 +55,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     int dirAtNextLvl            = _params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = _params.find_string("coherence_protocol", "");
     string statGroups           = _params.find_string("stat_group_ids", "");
-    int uncachedRequests        = _params.find_integer("uncache_all_request", 0);
+    int uncachedRequests        = _params.find_integer("uncache_all_requests", 0);
     bool L1 = (L1int == 1);
     vector<int> statGroupIds;
     
