@@ -192,10 +192,6 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     memNICIdleCount_                    = 0;
     memNICIdle_                         = false;
     timestamp_                          = 0;
-    /*STAT_InvalidateWaitingForUserLock_  = 0;
-    STAT_TotalRequestsReceived_         = 0;
-    STAT_TotalMSHRHits_                 = 0;
-    */
     totalUpgradeLatency_                = 0;
     mshrHits_                           = 0;
         

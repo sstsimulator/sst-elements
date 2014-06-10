@@ -199,8 +199,13 @@ private:
         and need to be reactivated */
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool mshrHit);
 
-    /** Check if the cacheline and the 'CCLine' are in a stable state */
-    void checkCacheLineIsStable(MemEvent* _event, CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
+    /** Most requests are stalled in the MSHR if the cache line is 'blocking'.  However, this does not happen for
+        writebacks.  This funciton handles the case where the cache line is 'blocking' and an incomming PutS request is received. */
+    void handleIgnorableRequests(MemEvent* _event, CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
+
+    /** After BCC is executed, this function checks if an upgrade request was sent to LwLv caches.  If so, this request
+        needs to stall */
+    void stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(stallException);
 
     /** Check if there a cache miss */
     inline bool isCacheMiss(int lineIndex);

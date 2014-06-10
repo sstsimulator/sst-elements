@@ -40,6 +40,7 @@ using namespace SST::MemHierarchy;
 
 void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
     bool done;
+    CacheLine* cacheLine;
     
     try{
         bool updateLine = !_mshrHit && MemEvent::isDataRequest(_cmd);
@@ -50,14 +51,11 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
             allocateCacheLine(_event, _baseAddr, lineIndex);
         }
         
-        CacheLine* cacheLine = getCacheLine(lineIndex);
-        checkCacheLineIsStable(_event, cacheLine, _cmd);                        /* If cache line is locked or in transition, wait until it is stable */
+        cacheLine = getCacheLine(lineIndex);
+        handleIgnorableRequests(_event, cacheLine, _cmd);               /* If cache line is locked or in transition, wait until it is stable */
         
         bottomCC_->handleRequest(_event, cacheLine, _cmd);              /* upgrade or fetch line from higher level caches */
-        if(cacheLine->inTransition()){
-            upgradeCount_++;
-            throw stallException();                                     /* stall request if upgrade is in progress */
-        }
+        stallIfUpgradeInProgress(cacheLine);                            /* Stall if upgrade in progress */
         
         if(!_event->isPrefetch()){                                      /* Don't do anything with TopCC if it is a prefetch request */
             done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Invalidate sharers, send respond to requestor if needed */
@@ -144,7 +142,9 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
         evictInHigherLevelCaches(wbCacheLine, _baseAddr);
         writebackToLowerLevelCaches(_event, wbCacheLine);
     }
-    replaceCacheLine(wbCacheLine->index(), _newCacheLineIndex, _baseAddr); /* OK to change addr of topCC cache line, OK to replace cache line  */
+    
+    /* OK to change addr of topCC cache line, OK to replace cache line  */
+    replaceCacheLine(wbCacheLine->index(), _newCacheLineIndex, _baseAddr);
     if(!isCacheLineAllocated(_newCacheLineIndex)) throw stallException();
     
     assert(!mshr_->exists(_baseAddr));
@@ -229,6 +229,7 @@ bool Cache::invalidatesInProgress(int _lineIndex){
     return false;
 }
 
+/* Multiple 'returns' in the function for performance (as opposed to single return) */
 bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Addr _baseAddr, bool _mshrHit){
     /* Scenario where this 'if' occurs:  HiLv$ evicts a shared line (S->I), sends PutS to LowLv$.
        Simultaneously, LowLv$ sends an Inv to HiLv$. Thus, HiLv$ sends an Inv an already invalidated line */
@@ -262,6 +263,14 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
 /* -------------------------------------------------------------------------------------
             Helper Functions
  ------------------------------------------------------------------------------------- */
+
+
+void Cache::stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(stallException){
+    if(_cacheLine->inTransition()){
+        upgradeCount_++;
+        throw stallException();                                         /* stall request if upgrade is in progress */
+    }
+}
 
 void Cache::activatePrevEvents(Addr _baseAddr){
     if(!mshr_->isHit(_baseAddr)) return;
@@ -354,7 +363,7 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine, bool _mshrH
     }
 }
 
-void Cache::checkCacheLineIsStable(MemEvent* _event, CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
+void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
     /* If cache line is in transition, that means this requests is a writeback from a lower level cache.
        In this case, it has to be a PutS requests because the only possible transition going on is SM.  We can just ignore
        the request after removing the sharer. */

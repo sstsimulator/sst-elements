@@ -54,6 +54,7 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
     Command cmd = _event->getCmd();
     int id = lowNetworkNodeLookupByName(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->index()];
+    
     if(ccLine->inTransition() && !_event->isWriteback()){
         d_->debug(_L1_,"TopCC: Stalling request, ccLine in transition \n");
         return false;
@@ -246,33 +247,43 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     int lineIndex         = _cacheLine->index();
     CCLine* ccLine        = ccLines_[lineIndex];
     Command cmd           = _event->getCmd();
-
+    bool respond          = true;
+    int invSent;
+    
+    /* Do we have the appropriate state */
+    if(!(state == M || state == E)) respond = false;
     /* Invalidate any exclusive sharers before responding to GetX request */
-    if(ccLine->ownerExists()){
+    else if(ccLine->ownerExists()){
         d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
         assert(ccLine->isShareless());
         sendCCInvalidates(lineIndex, _event->getSrc());
-        return;
+        respond = false;
     }
     /* Sharers exist */
     else if(ccLine->numSharers() > 0){
         d_->debug(_L5_,"GetX Req:  Sharers 'S' exists \n");
-        if(cmd == GetX){
-            sendCCInvalidates(lineIndex, _event->getSrc());
-            ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
-        }
-        else if(cmd == GetSEx){
-            ccLine->setAcksNeeded();
-            int invSent = sendInvalidates(lineIndex, _event->getSrc());
-            if(invSent > 0) return;
+        switch(cmd){
+            case GetX:
+                sendCCInvalidates(lineIndex, _event->getSrc());
+                ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
+                respond = true;
+                break;
+            case GetSEx:
+                ccLine->setAcksNeeded();
+                invSent = sendInvalidates(lineIndex, _event->getSrc());
+                respond = (invSent > 0) ? false : true;
+                break;
+            default:
+                _abort(MemHierarchy::CacheController, "Unkwown state!");
         }
     }
     
-    if(state == E || state == M){
+    if(respond){
         ccLine->setOwner(_sharerId);
         sendResponse(_event, M, _cacheLine->getData(), _mshrHit);
         _ret = true;
     }
+
 }
 
 void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
