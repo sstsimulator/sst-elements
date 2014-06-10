@@ -54,13 +54,12 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
     Command cmd = _event->getCmd();
     int id = lowNetworkNodeLookupByName(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->index()];
-    
+    bool ret = false;
+
     if(ccLine->inTransition() && !_event->isWriteback()){
         d_->debug(_L1_,"TopCC: Stalling request, ccLine in transition \n");
         return false;
     }
-    
-    bool ret = false;
 
     switch(cmd){
         case GetS:
@@ -107,14 +106,14 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
 }
 
 void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
-
-    if(_state == I) return;
+    CCLine* ccLine = ccLines_[_lineIndex];
     assert(!CacheArray::CacheLine::inTransition(_state));
+    assert(ccLine->valid());
     
-    CCLine* ccLine = ccLines_[_lineIndex]; assert(ccLine->valid());
+    /* if state is invalid OR, there's no shares or owner, then no need to send invalidations */
+    if(_state == I || (ccLine->isShareless() && !ccLine->ownerExists())) return;
     
-    if(ccLine->isShareless() && !ccLine->ownerExists()) return;
-    
+    /* Send invalidates */
     sendEvictionInvalidates(_lineIndex);
     
     if(ccLine->inTransition()){
@@ -276,6 +275,10 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
             default:
                 _abort(MemHierarchy::CacheController, "Unkwown state!");
         }
+    }
+    /* Sharers don't exist */
+    else{
+        respond = true;
     }
     
     if(respond){
