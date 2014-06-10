@@ -64,6 +64,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(clockFreq);
       ar & BOOST_SERIALIZATION_NVP(memLink);
       ar & BOOST_SERIALIZATION_NVP(netlFile);
+      ar & BOOST_SERIALIZATION_NVP(debugLevel);
     }
 
     template <class Archive>
@@ -73,6 +74,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(clockFreq);
       ar & BOOST_SERIALIZATION_NVP(memLink);
       ar & BOOST_SERIALIZATION_NVP(netlFile);
+      ar & BOOST_SERIALIZATION_NVP(debugLevel);
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -89,7 +91,8 @@ namespace ChdlComponent {
 
     std::vector<reqdata> req;
     std::vector<respdata> resp;
-    unsigned test_pc;
+
+    int debugLevel;
 
     Output out;
 };

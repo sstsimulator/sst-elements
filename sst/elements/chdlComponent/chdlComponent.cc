@@ -31,7 +31,9 @@ using namespace SST::ChdlComponent;
 using namespace chdl;
 using namespace std;
 
-// A re-implementation of the CHDL function, using C++ vectors instead of vecs.
+// A re-implementation of the CHDL EgressInt and IngressInt functions using C++
+// vectors instead of vecs, trading run time configurability for compile time
+// error detection.
 template <typename T> void EgressInt(T &x, vector<node> v)
 {
   x = 0;
@@ -56,6 +58,8 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 {
   out.init("", 0, 0, Output::STDOUT);
 
+  debugLevel = p.find_integer("debugLevel", 1);
+
   bool found;
   netlFile = p.find_string("netlist", "", found);
   if (!found) _abort(chdlComponent, "No netlist specified.\n");
@@ -68,7 +72,7 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 
   typedef SimpleMem::Handler<chdlComponent> mh;
   if (!memLink->initialize("memLink",new mh(this, &chdlComponent::handleEvent)))
-      _abort(chdlComponent, "Unable to load Link memLink\n");
+      _abort(chdlComponent, "Unable to initialize Link memLink\n");
 
   typedef Clock::Handler<chdlComponent> ch;
   registerClock(clockFreq, new ch(this, &chdlComponent::clockTick));
@@ -82,6 +86,7 @@ void chdlComponent::setup() {}
 // This is embarrassing, but I'd rather do this than strtok_r.
 static void tok(vector<char*> &out, char* in, const char* sep) {
   char *s(in);
+  out.clear();
   for (unsigned i = 0; in[i]; ++i) {
     for (unsigned j = 0; sep[j]; ++j) {
       if (in[i] == sep[j]) {
@@ -100,14 +105,14 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
   strncpy(s, port.c_str(), 80);
   tok(t, s, "_");
   if (!strncmp(t[0], "simplemem", 80)) {
-    out.output("Found a simplemem io: %s\n", port.c_str());
+    if (debugLevel > 0)
+      out.output("Found a simplemem io: %s\n", port.c_str());
     if (t.size() != 4)
       _abort(chdlComponent, "Malformed IO port name in netlist: %s\n",
              port.c_str());
 
     unsigned id(0); { istringstream iss(t[3]); iss >> id; }
     if (!strncmp(t[2], "req", 80)) {
-      out.output("  req port\n");
       if (id + 1 > req.size()) req.resize(id + 1);
 
       if (!strncmp(t[1], "ready", 80)) v[0] = Lit(1);
@@ -122,7 +127,6 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
       else if (!strncmp(t[1], "uncached", 80)) Egress(req[id].uncached, v[0]);
       else _abort(chdlComponent, "Invalid simplemem req port: %s\n", t[1]);
     } else if (!strncmp(t[2], "resp", 80)) {
-      out.output("  resp port\n");
       if (id + 1 > resp.size()) resp.resize(id + 1);
 
       if (!strncmp(t[1], "ready", 80)) Egress(resp[id].ready, v[0]);
@@ -147,23 +151,23 @@ void chdlComponent::init(unsigned phase) {
 
   ldnetl(outputs, inputs, inout, netlFile);
 
-  out.output("chdlComponent init: loaded design \"%s\"\n", netlFile.c_str());
+  if (debugLevel > 0)
+    out.output("chdlComponent init: loaded design \"%s\"\n", netlFile.c_str());
 
   // Set up egress/ingress nodes for req and res
   for (auto x : inputs) init_io(x.first, x.second);
   for (auto x : outputs) init_io(x.first, x.second);
 
-  EgressInt(test_pc, outputs["pc"]);
-
   optimize();
  
-  out.output("chdlComponent init: finished optimizing.\n");
+  if (debugLevel > 0)
+    out.output("chdlComponent init: finished optimizing.\n");
 }
 
 void chdlComponent::finish() {
   unsigned long simCycle(Simulation::getSimulation()->getCurrentSimCycle());  
 
-  // TODO: counters
+  // TODO: dump CHDL counters as defined in chdl-stl
   out.output("%lu sim cycles\n", simCycle);
 }
 
@@ -181,7 +185,11 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   }
   resp[0].id = req->id;
 
-  out.output("Response arrived for req %d, wr = %d, data = %lu, size = %lu, datasize = %lu\n", int(req->id), resp[0].wr, (unsigned long)resp[0].data, req->size, req->data.size());
+  if (debugLevel > 2) {
+    out.output("Response arrived for req %d, wr = %d, data = %lu, size = %lu, "
+               "datasize = %lu\n", int(req->id), resp[0].wr,
+               (unsigned long)resp[0].data, req->size, req->data.size());
+  }
 
   delete req;
 }
@@ -195,11 +203,13 @@ bool chdlComponent::clockTick(Cycle_t c) {
   // Handle requests
   for (unsigned i = 0; i < req.size(); ++i) {
     if (req[i].valid) {
-      out.output("Req to %08lx: ", req[i].addr);
-      if (req[i].wr)
-        out.output("Write %lu\n", req[i].data); 
-      else
-        out.output("Read\n");
+      if (debugLevel > 0) {
+        out.output("Req to %08lx: ", req[i].addr);
+        if (req[i].wr)
+          out.output("Write %lu\n", req[i].data); 
+        else
+          out.output("Read\n");
+      }
 
       int flags = (req[i].uncached ? SimpleMem::Request::F_UNCACHED : 0) |
                   (req[i].locked ? SimpleMem::Request::F_LOCKED : 0) |
@@ -214,21 +224,15 @@ bool chdlComponent::clockTick(Cycle_t c) {
         r = new SimpleMem::Request(
           SimpleMem::Request::Write, req[i].addr, req[i].size, dVec, flags
         );
-        out.output("  write size = %d(%d)\n",
-                   (int)req[i].size, (int)dVec.size());
       } else {
         r = new SimpleMem::Request(
           SimpleMem::Request::Read, req[i].addr, req[i].size, flags
         );
       }
 
-      out.output("  Req ID: %d\n", int(r->id));
-
       memLink->sendRequest(r);
     }
   }
-
-  out.output("pc: %u\n", test_pc);
 
   return false;
 }
@@ -241,12 +245,13 @@ static Component* create_chdlComponent(ComponentId_t id, Params &p) {
 
 static const ElementInfoParam component_params[] = {
   {"clockFreq", "Clock rate", "1GHz"},
-  {"netlist", "CHDL .nand netlist", ""},
+  {"netlist", "Filename of CHDL .nand netlist", ""},
+  {"debugLevel", "Level of verbosity of output", "1"},
   {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort component_ports[] = {
-    {"mem", "Main Memory Link", NULL},
+    {"memLink", "Main Memory Link", NULL},
     {NULL, NULL, NULL}
 };
 
