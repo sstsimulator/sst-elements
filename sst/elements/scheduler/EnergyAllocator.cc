@@ -36,17 +36,14 @@
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
-//#include "NearestAllocClasses.h"
 
 using namespace SST::Scheduler;
-//using namespace std;
 
 EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     MachineMesh* m = (MachineMesh*) mach;
     if (NULL == m) {
-        //error("Nearest allocators require a Mesh machine");
         schedout.fatal(CALL_INFO, 1, "Energy allocator requires a Mesh machine");
     }
 
@@ -108,46 +105,5 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
         retVal -> nodeIndices[i] = ret -> at(i) -> toInt((MachineMesh*)machine);
     }
     return retVal;
-
-    /*
-    //score of best value found so far with it tie-break score:
-    std::pair<long,long>* bestVal = new std::pair<long,long>(LONG_MAX,LONG_MAX);
-
-    bool recordingTies = false; //Statistics.recordingTies();
-
-    //stores allocations w/ best score (no tiebreaking) if ties being recorded:
-    //(actual best value w/ tiebreaking stored in retVal.processors)
-    std::vector<std::vector<MeshLocation*>*>* bestAllocs = NULL;
-    if (recordingTies) {
-    bestAllocs = new std::vector<std::vector<MeshLocation*> *>(); 
-    }
-
-    std::vector<MeshLocation*>* possCenters;
-
-    possCenters = new std::vector<MeshLocation*>();
-    // call LP to get centers 
-    int* oldx = new int[40];
-    int* newx = new int[40];
-    for(int x= 0; x < 40; x++) {
-    oldx[x] = 1;
-    newx[x] = 0;
-    }
-    for(unsigned int x = 0; x < available -> size(); x++) { 
-    oldx[ssttolp[(*available)[x]->toInt((MachineMesh*)machine)]] = 0;
-    }
-
-    hybridalloc(oldx, newx, 40, numProcs);
-    for(int x = 0; x < 40; x++) {
-    if(newx[x] == 1 && oldx[x] == 0) {
-    possCenters -> push_back(new MeshLocation(lptosst[x],(MachineMesh*)machine));
-    }
-    }
-
-    for(unsigned int i = 0; i < possCenters->size(); i++) {
-    (*(retVal -> processors))[i] = possCenters->at(i); 
-    retVal -> nodeIndices[i] = possCenters->at(i)-> toInt((MachineMesh*) machine);
-    return retVal;
-    }
-    */
 
 } 

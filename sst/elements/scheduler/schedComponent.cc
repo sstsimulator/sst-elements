@@ -75,6 +75,7 @@ Machine* schedComponent::getMachine()
 {
     return machine;
 }
+
 schedComponent::~schedComponent()
 {
     delete stats;
@@ -82,7 +83,6 @@ schedComponent::~schedComponent()
     delete rng;
     if (FSTtype > 0) delete calcFST;
 }
-
 
 int readSeed( Params & params, std::string paramName ){
 	if( params.find( paramName ) != params.end() ){
@@ -118,7 +118,16 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     yumyumErrorLatencyRand48Seed = readSeed( params, std::string( "errorLatencySeed" ) );
     yumyumErrorCorrectionRand48Seed = readSeed( params, std::string( "errorCorrectionSeed" ) );
     yumyumJobKillRand48Seed = readSeed( params, std::string( "jobKillSeed" ) );
-    rng = new SST::RNG::MersenneRNG( (unsigned int) readSeed(params, std::string("runningTimeSeed")) );
+    // get running time RNG seed
+    string runningTimeSeed = "none";
+    if( params.find("runningTimeSeed") != params.end() ){
+        runningTimeSeed = params["runningTimeSeed"];
+    }
+    if( runningTimeSeed.compare("none") != 0 ){
+         rng = new SST::RNG::MersenneRNG( atoi(runningTimeSeed.c_str()) );
+    } else {
+        rng = new SST::RNG::MersenneRNG();
+    }
 
     //set up the all-important self-link
     selfLink = configureSelfLink("linkToSelf", new Event::Handler<schedComponent>(this, &schedComponent::handleJobArrivalEvent));
@@ -145,14 +154,12 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     }
     schedout.output("\n");
 
-
     Factory factory;
     machine = factory.getMachine(params, nodes.size(), this);
     scheduler = factory.getScheduler(params, nodes.size());
     theAllocator = factory.getAllocator(params, machine);
     FSTtype = factory.getFST(params);
     timePerDistance = factory.getTimePerDistance(params);
-    //schedout.output("%f %f %f %f", timePerDistance -> at(0),timePerDistance -> at(1),timePerDistance -> at(2),timePerDistance -> at(3));
     string trace = params["traceName"].c_str();
     if (FSTtype > 0) {
         calcFST = new FST(FSTtype);  //must call calcFST -> setup() once we know the number of jobs (in other words, in setup())
@@ -216,7 +223,6 @@ void schedComponent::setup()
 
     readJobs();
 
-
     if( useYumYumTraceFormat ){
 
         // in case there were no jobs in the joblist
@@ -229,8 +235,9 @@ void schedComponent::setup()
         selfLink->send( CommEvent ); 
     }
 
-    if (FSTtype > 0) calcFST -> setup(jobs.size());
-
+    if (FSTtype > 0){
+        calcFST -> setup(jobs.size());
+    }
 }
 
 
@@ -238,7 +245,6 @@ schedComponent::schedComponent() : Component(-1)
 {
     // for serialization only
 }
-
 
 
 void schedComponent::readJobs()
@@ -284,12 +290,10 @@ bool schedComponent::checkJobFile()
 }
 
 
-
 /*
-   Ensures that j can be scheduled.  Assumes that j is at jobs.back()
-
-   If j can be scheduled, it is scheduled
-   */
+ * Ensures that j can be scheduled.  Assumes that j is at jobs.back()
+ * If j can be scheduled, it is scheduled
+ */
 bool schedComponent::validateJob( Job * j, vector<Job> * jobs, long runningTime )
 {
     bool ok = true;
@@ -317,7 +321,6 @@ bool schedComponent::validateJob( Job * j, vector<Job> * jobs, long runningTime 
             selfLink -> send(j -> getArrivalTime(), ae); 
         }
     }
-
     return ok;
 }
 
@@ -390,7 +393,6 @@ bool schedComponent::newYumYumJobLine(std::string line)
 
     return validateJob(j, &jobs, abs((long)duration));
 }
-
 
 
 bool schedComponent::newJobLine(std::string line)
@@ -700,6 +702,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     schedout.debug(CALL_INFO, 4, 0, "finishing arrival event\n");
 }
 
+
 void schedComponent::finish() 
 {
     scheduler -> done();
@@ -716,13 +719,8 @@ void schedComponent::startJob(AllocInfo* ai)
     unsigned long actualRunningTime = j -> getActualTime();
     double randomNumber = 0;
     
-    //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
     if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
-            //srand(0);
-            //srand(time(0));
-            //randomNumber = (rand() % 80000 - 40000)/100000.0;
-            //randomNumber = .5;
             randomNumber = rng -> nextUniform() * 0.8 - 0.4;
 
             int numberOfProcs = ((MeshAllocInfo*)ai) -> processors -> size();
@@ -752,13 +750,9 @@ void schedComponent::startJob(AllocInfo* ai)
             }
         } 
     }
-    //printf("Job %ld L1Distance %ld\n", j ->
-    //getJobNum(),((MachineMesh*)(machine))->
-    //pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
 
     if (actualRunningTime > j -> getEstimatedRunningTime()) {
-        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));
-        //schedout.output("WARNING: Job %lu has running time %lu, which is longer than estimated running time %lu\nUsing estimated time instead\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); 
+        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime());
         actualRunningTime = j -> getEstimatedRunningTime();
     }
 
@@ -797,7 +791,6 @@ void schedComponent::logJobStart(IAI iai)
             }
             jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
         }
-
         jobLog << endl;
     } else {
         schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
@@ -818,12 +811,8 @@ void schedComponent::logJobFinish(IAI iai)
             }
             jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
         }
-
         jobLog << endl;
     } else {
-        //char errorMessage[ 1024 ];
-        //snprintf( errorMessage, 1023, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
-        //error( errorMessage );
         schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
     } 
 
@@ -856,52 +845,6 @@ void schedComponent::logJobFault(IAI iai, FaultEvent * faultEvent)
         schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), (uint64_t)getCurrentSimTime());
     }
 }
-
-
-
-/*
-   bool schedComponent::clockTic( Cycle_t ) {
-
-// send test jobs
-if (getCurrentSimTime() == 1) {
-// send to node 0
-// create the event
-SWFEvent *e = new SWFEvent;
-e->JobNumber = 1;
-e->RunTime = 10;
-// create the list of target nodes
-targetList_t nodeList;
-nodeList.push_back(0);
-// start the job
-startJob(e, nodeList);
-} else if (getCurrentSimTime() == 12) {
-} else if (getCurrentSimTime() == 13) {
-// send to odd nodes
-// create the event
-SWFEvent *e = new SWFEvent;
-e->JobNumber = 1;
-e->RunTime = 5;
-// create the list of target nodes
-targetList_t nodeList;
-for (int i = 0; i < nodes.size(); ++i) {
-if (i & 0x1) {
-nodeList.push_back(i);
-}
-}
-// start the job
-startJob(e, nodeList);
-}
-
-// end simulation after 1 hour of simulated time
-if (getCurrentSimTime() >= 3600) {
-primaryComponentOKToEndSim();
-
-}
-
-// return false so we keep going
-return false;
-}
-*/
 
 // Element Libarary / Serialization stuff
 

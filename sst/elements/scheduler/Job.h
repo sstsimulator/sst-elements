@@ -20,7 +20,6 @@
 #include "Statistics.h"  //needed for friend declaration
 
 
-
 namespace SST {
     namespace Scheduler {
 
@@ -29,7 +28,6 @@ namespace SST {
 
         class Job {
             public:
-                Job(std::istream& input, bool accurateEsts);
                 Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime,
                     unsigned long estRunningTime);
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
@@ -38,7 +36,10 @@ namespace SST {
 
                 ~Job(){}
 
-                unsigned long getStartTime();
+                unsigned long getStartTime() const
+                {
+                    return startTime;
+                }
                 unsigned long getArrivalTime() const
                 { 
                     return arrivalTime; 
@@ -60,12 +61,11 @@ namespace SST {
                     return & ID;
                 }
 
-                //two versions depending on whether allocation is considered:
+                //assumes that allocation is not considered:
                 unsigned long getEstimatedRunningTime() 
                 { 
                     return estRunningTime; 
                 }
-                unsigned long getEstimatedRunningTime(AllocInfo* allocInfo);
 
                 std::string toString();
 

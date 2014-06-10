@@ -42,8 +42,6 @@ namespace SST {
 
                 MachineMesh(MachineMesh* inmesh);
 
-                //static Mesh Make(std::vector<std::string> params);
-
                 static std::string getParamHelp();
 
                 std::string getSetupInfo(bool comment);
@@ -70,9 +68,7 @@ namespace SST {
 
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num);
 
-				//Jie: start editing Oct2013	
 				double getCoolingPower(std::vector<MeshLocation*>* locs);
-				//Jie: end editing Oct2013	
 
                 //std::string tostd::string();
         };

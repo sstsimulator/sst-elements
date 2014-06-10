@@ -25,24 +25,6 @@ using namespace SST::Scheduler;
 
 static long nextJobNum = 0;  //used setting jobNum
 
-Job::Job(std::istream& input, bool accurateEsts) 
-{
-    schedout.init("", 8, 0, Output::STDOUT);
-    std::string line;  
-    getline(input, line);
-
-    unsigned long arrivalTime;
-    int procsNeeded;
-    unsigned long actualRunningTime;
-    unsigned long estRunningTime;
-    int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime, &procsNeeded,
-                     &actualRunningTime, &estRunningTime);
-    if ((num != 3) && (num != 4)) throw InputFormatException();
-    if (accurateEsts || (num == 3)) estRunningTime = actualRunningTime;
-
-    initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
-}
-
 Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime, unsigned long estRunningTime) 
 {
     schedout.init("", 8, 0, Output::STDOUT);
@@ -93,23 +75,6 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
     started = false;
 }
 
-//void Job::setFST(unsigned long FST) {
-//    jobFST = FST;
-//}
-//unsigned long Job::getFST() {
-//    return jobFST;
-//}
-
-unsigned long Job::getStartTime() 
-{
-    /*
-    if (!started || (unsigned long)-1 == startTime) {
-        throw InternalErrorException();
-    }
-    */
-    return startTime;
-}
-
 std::string Job::toString() 
 {
     char retVal[100];
@@ -124,9 +89,6 @@ void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
 {
     if ((unsigned long)-1 != startTime) {
         schedout.fatal(CALL_INFO, 1, "attempt to start an already-running job: %s\n", toString().c_str());
-        //std::string mesg = "attempt to start an already-running job: ";
-        //mesg += toString();
-        //internal_error(mesg);
     }
     started = true; 
 

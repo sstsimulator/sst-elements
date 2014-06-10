@@ -206,29 +206,16 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
     //returns total pairwise L_1 distance between 1st num members of array
     long retVal = 0;
 
-	//std::cout<<"Allocation decision for a job needs "<<num<<" nodes:"<<std::endl;	
     for (int i = 0; i < num; i++) {
-
-		//Jie: start editing Oct2013	
-		/*
-		std::cout<<"node "<<i<<"; location x:"<<(*locs)[i]->x<<std::endl;	
-		std::cout<<"node "<<i<<"; location y:"<<(*locs)[i]->y<<std::endl;	
-		std::cout<<"node "<<i<<"; location z:"<<(*locs)[i]->z<<std::endl<<std::endl;	
-		*/
-		//Jie: end editing Oct2013	
-
         for (int j = i + 1; j < num; j++) {
             retVal += ((*locs)[i]) -> L1DistanceTo((*locs)[j]);
         }
     }
 
-	//std::cout<<"Hello: IsFree[0][0]="<<isFree[0][0].size()<<"; isFree[0]="<<isFree[0].size()<<"; isFree="<<isFree.size()<<std::endl;
-
 	std::string tempstring= "";
 	for (unsigned int k = 0; k < isFree[0][0].size(); k++) {
 		tempstring= "";
 		for (int j = isFree[0].size() - 1; j >= 0; j--) {
-			//std::cout<<"Hello: k="<<k<<"; j="<<j<<std::endl;
 			for (unsigned int i = 0; i < isFree.size(); i++) {
 				if(isFree[i][j][k]) {
 					tempstring += "0";
@@ -238,14 +225,11 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
                         }
 			tempstring += "\n";
 		}
-    	//std::cout<<tempstring;
 	}
 
   return retVal;
 }
 
-
-//Jie: start editing Oct2013	
 double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs) 
 {
     int Putil=2000;
@@ -490,16 +474,13 @@ double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs)
         for (i = 0; i < (int)allocation_index.size(); i++)
         {
             sum_inlet += DMatrix[j][i] * (Pidle + Putil * allocation_index[i]);
-            //std::cout<<"DMatrix["<<j<<"]["<<i<<"]="<<DMatrix[j][i]<<"; sum_inlet("<<i<<")="<<sum_inlet<<std::endl;
         }
-        //std::cout<<"DP("<<j<<")="<<sum_inlet<<std::endl;
         inlet_temperature.push_back(Tsup+sum_inlet);
         sum_inlet = 0;
     }
 
     for (i = 0; i < (int)allocation_index.size(); i++)
     {
-        //std::cout<<"index="<<i<<"; allocation:"<<allocation_index[i]<<"; inlet_temperature is="<<inlet_temperature[i]<<"C."<<std::endl;
         if (max_inlet < inlet_temperature[i]) {
             max_inlet = inlet_temperature[i];
         }
@@ -521,9 +502,7 @@ double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs)
     Scaling_Factor = 214.649 / 120;
     Pcooling = 0.001 * Pcompute * (1 / COP) / Scaling_Factor;
 
-    //std::cout<<"Maximum Temperature is: "<<max_inlet<<"C."<<std::endl;
     return  Pcooling;
-
 }
 
 
