@@ -27,10 +27,13 @@
 #include "sst/core/element.h"
 #include <sst/core/params.h>
 
-#include "CommunicationEvent.h"
-#include "FaultEvent.h"
-#include "JobKillEvent.h"
-#include "ObjectRetrievalEvent.h"
+#include "events/CommunicationEvent.h"
+#include "events/CompletionEvent.h"
+#include "events/FaultEvent.h"
+#include "events/JobStartEvent.h"
+#include "events/JobKillEvent.h"
+#include "events/ObjectRetrievalEvent.h"
+
 #include "output.h"
 #include "misc.h"
 

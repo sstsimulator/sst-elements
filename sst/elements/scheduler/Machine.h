@@ -16,11 +16,9 @@
 #ifndef SST_SCHEDULER_MACHINE_H__
 #define SST_SCHEDULER_MACHINE_H__
 
-
 namespace SST {
     namespace Scheduler {
         class schedComponent;
-        class AllocInfo;
         class AllocInfo;
 
         class Machine{

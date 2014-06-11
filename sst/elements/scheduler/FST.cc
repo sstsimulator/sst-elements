@@ -9,6 +9,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+
 /*
  * Computes the FST for each job that comes in
  */
@@ -23,8 +24,7 @@
 #include "Job.h"
 #include "output.h"
 #include "Scheduler.h"
-#include "StatefulScheduler.h"
-#include "SimpleAllocator.h"
+#include "allocators/SimpleAllocator.h"
 #include "SimpleMachine.h"
 
 using namespace SST::Scheduler;

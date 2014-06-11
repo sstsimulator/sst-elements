@@ -26,8 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include <QFileSystemWatcher>
-
 #include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
@@ -37,22 +35,23 @@
 
 #include "Allocator.h"
 #include "AllocInfo.h"
-#include "ArrivalEvent.h"
-#include "CompletionEvent.h"
-#include "CommunicationEvent.h"
 #include "Factory.h"
-#include "FaultEvent.h"
-#include "FinalTimeEvent.h"
 #include "FST.h"
 #include "Job.h"
-#include "JobKillEvent.h"
-#include "JobStartEvent.h"
 #include "Machine.h"
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "Scheduler.h"
 #include "Statistics.h"
+
+#include "events/ArrivalEvent.h"
+#include "events/CompletionEvent.h"
+#include "events/CommunicationEvent.h"
+#include "events/FaultEvent.h"
+#include "events/FinalTimeEvent.h"
+#include "events/JobKillEvent.h"
+#include "events/JobStartEvent.h"
 
 using namespace std;
 using namespace SST;

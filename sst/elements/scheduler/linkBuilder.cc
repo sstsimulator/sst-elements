@@ -17,9 +17,9 @@
 
 #include "linkBuilder.h"
 
-#include "CommunicationEvent.h"
+#include "events/CommunicationEvent.h"
 #include "nodeComponent.h"
-#include "ObjectRetrievalEvent.h"
+#include "events/ObjectRetrievalEvent.h"
 #include "misc.h"
 
 using namespace SST::Scheduler;

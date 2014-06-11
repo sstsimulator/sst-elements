@@ -9,31 +9,67 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
 libscheduler_la_SOURCES = \
-Allocator.h \
-AllocInfo.h		ArrivalEvent.h		CompletionEvent.h	exceptions.h \
-AllocInfo.cc		ArrivalEvent.cc \
-Job.h			JobStartEvent.h		Machine.h \
-Job.cc \
-linkBuilder.h		misc.h			nodeComponent.h		EASYScheduler.h 	PQScheduler.h		StatefulScheduler.h 	schedComponent.h \
-linkBuilder.cc		misc.cc			nodeComponent.cc	EASYScheduler.cc 	PQScheduler.cc		StatefulScheduler.cc 	schedComponent.cc \
-Scheduler.h 		SimpleAllocator.h	SimpleMachine.h		Statistics.h 	NearestAllocator.h 	NearestAllocClasses.h 	NearestAllocator.cc \
-schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc		RandomAllocator.cc 	RandomAllocator.h ConstraintAllocator.h\
-MachineMesh.cc		MachineMesh.h		NearestAllocClasses.cc		MBSAllocator.cc		MBSAllocator.h		MBSAllocInfo.h \
-GranularMBSAllocator.cc		GranularMBSAllocator.h		OctetMBSAllocator.h		OctetMBSAllocator.cc		RoundUpMBSAllocator.h \
-RoundUpMBSAllocator.cc		Factory.h		Factory.cc \
-LinearAllocator.cc		LinearAllocator.h		FirstFitAllocator.cc		FirstFitAllocator.h		BestFitAllocator.cc \
-BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc ConstraintAllocator.cc 	MeshAllocInfo.cc \
-	MeshAllocInfo.h		FST.cc		FST.h \
-	output.h \
-	FaultEvent.h \
-	JobKillEvent.h \
-	CommunicationEvent.h \
-	ObjectRetrievalEvent.h \
-	MBSAllocClasses.h \
-	FinalTimeEvent.h \
-faultInjectionComponent.cc	faultInjectionComponent.h \
-EnergyAllocator.cc		EnergyAllocator.h \
-EnergyAllocClasses.cc		EnergyAllocClasses.h 
+    Allocator.h \
+    AllocInfo.h		exceptions.h \
+    AllocInfo.cc \
+    Job.h			JobStartEvent.h		Machine.h \
+    Job.cc \
+    linkBuilder.h		misc.h			nodeComponent.h			schedComponent.h \
+    linkBuilder.cc		misc.cc			nodeComponent.cc	 	schedComponent.cc \
+    Scheduler.h 	SimpleMachine.h		Statistics.h \
+    schedLib.cc		SimpleMachine.cc	Statistics.cc \
+    MachineMesh.cc		MachineMesh.h \
+    MeshAllocInfo.cc \
+    MBSAllocInfo.h \
+    Factory.h		Factory.cc \
+    FST.cc		FST.h \
+    output.h \
+    faultInjectionComponent.cc	faultInjectionComponent.h \
+    allocators/BestFitAllocator.cc \
+    allocators/BestFitAllocator.h \
+    allocators/ConstraintAllocator.cc \
+    allocators/ConstraintAllocator.h \
+    allocators/EnergyAllocator.cc \
+    allocators/EnergyAllocator.h \
+    allocators/EnergyAllocClasses.cc \
+    allocators/EnergyAllocClasses.h \
+    allocators/FirstFitAllocator.cc \
+    allocators/FirstFitAllocator.h \
+    allocators/GranularMBSAllocator.cc \
+    allocators/GranularMBSAllocator.h \
+    allocators/LinearAllocator.cc \
+    allocators/LinearAllocator.h \
+    allocators/MBSAllocator.cc \
+    allocators/MBSAllocator.h \
+    allocators/MBSAllocClasses.h \
+    allocators/NearestAllocator.cc \
+    allocators/NearestAllocator.h \
+    allocators/NearestAllocClasses.cc \
+    allocators/NearestAllocClasses.h \
+    allocators/OctetMBSAllocator.cc \
+    allocators/OctetMBSAllocator.h \
+    allocators/RandomAllocator.cc \
+    allocators/RandomAllocator.h \
+    allocators/RoundUpMBSAllocator.cc \
+    allocators/RoundUpMBSAllocator.h \
+    allocators/SimpleAllocator.cc \
+    allocators/SimpleAllocator.h \
+    allocators/SortedFreeListAllocator.cc \
+    allocators/SortedFreeListAllocator.h \
+    events/ArrivalEvent.cc \
+    events/ArrivalEvent.h \
+    events/CommunicationEvent.h \
+    events/CompletionEvent.h \
+    events/FaultEvent.h \
+    events/FinalTimeEvent.h \
+    events/JobKillEvent.h \
+    events/ObjectRetrievalEvent.h \
+    schedulers/EASYScheduler.cc \
+    schedulers/EASYScheduler.h \
+    schedulers/PQScheduler.cc \
+    schedulers/PQScheduler.h \
+    schedulers/StatefulScheduler.cc \
+    schedulers/StatefulScheduler.h
 
 EXTRA_DIST = \
 	simulations/makeSDL.pl

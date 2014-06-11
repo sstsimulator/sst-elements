@@ -16,31 +16,31 @@
 #include <sstream>
 #include <stdio.h>
 
-//#include <QFileSystemWatcher>
-
 #include <sst/core/params.h>
 
-#include "BestFitAllocator.h"
-#include "ConstraintAllocator.h"
-#include "EASYScheduler.h"
-#include "EnergyAllocator.h"
-#include "FirstFitAllocator.h"
-#include "GranularMBSAllocator.h"
-#include "LinearAllocator.h"
-#include "MBSAllocator.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "NearestAllocator.h"
-#include "OctetMBSAllocator.h"
-#include "PQScheduler.h"
-#include "RandomAllocator.h"
-#include "RoundUpMBSAllocator.h"
-#include "schedComponent.h"
-#include "SimpleAllocator.h"
-#include "SimpleMachine.h"
-#include "SortedFreeListAllocator.h"
-#include "StatefulScheduler.h"
 #include "misc.h"
+#include "schedComponent.h"
+#include "SimpleMachine.h"
+
+#include "allocators/NearestAllocator.h"
+#include "allocators/OctetMBSAllocator.h"
+#include "allocators/BestFitAllocator.h"
+#include "allocators/ConstraintAllocator.h"
+#include "allocators/EnergyAllocator.h"
+#include "allocators/FirstFitAllocator.h"
+#include "allocators/GranularMBSAllocator.h"
+#include "allocators/LinearAllocator.h"
+#include "allocators/MBSAllocator.h"
+#include "allocators/RandomAllocator.h"
+#include "allocators/RoundUpMBSAllocator.h"
+#include "allocators/SimpleAllocator.h"
+#include "allocators/SortedFreeListAllocator.h"
+
+#include "schedulers/EASYScheduler.h"
+#include "schedulers/PQScheduler.h"
+#include "schedulers/StatefulScheduler.h"
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -278,7 +278,6 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
                 return new SimpleAllocator(mach);
                 break;
             }
-
 
             //Random Allocator, allocates procs randomly from a mesh
         case RANDOM:
