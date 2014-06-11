@@ -25,7 +25,7 @@
 
 #include "Job.h"
 #include "MeshAllocInfo.h"
-#include "allocators/MBSAllocClasses.h"
+#include "MBSAllocClasses.h"
 
 namespace SST {
     namespace Scheduler {

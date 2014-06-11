@@ -45,13 +45,13 @@
 #include "Scheduler.h"
 #include "Statistics.h"
 
-#include "events/ArrivalEvent.h"
-#include "events/CompletionEvent.h"
-#include "events/CommunicationEvent.h"
-#include "events/FaultEvent.h"
-#include "events/FinalTimeEvent.h"
-#include "events/JobKillEvent.h"
-#include "events/JobStartEvent.h"
+#include "ArrivalEvent.h"
+#include "CompletionEvent.h"
+#include "CommunicationEvent.h"
+#include "FaultEvent.h"
+#include "FinalTimeEvent.h"
+#include "JobKillEvent.h"
+#include "JobStartEvent.h"
 
 using namespace std;
 using namespace SST;

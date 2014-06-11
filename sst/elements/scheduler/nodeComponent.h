@@ -19,8 +19,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include "events/FaultEvent.h"
-#include "events/JobKillEvent.h"
+#include "FaultEvent.h"
+#include "JobKillEvent.h"
 
 #include "linkBuilder.h"
 

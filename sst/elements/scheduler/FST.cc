@@ -24,7 +24,7 @@
 #include "Job.h"
 #include "output.h"
 #include "Scheduler.h"
-#include "allocators/SimpleAllocator.h"
+#include "SimpleAllocator.h"
 #include "SimpleMachine.h"
 
 using namespace SST::Scheduler;
