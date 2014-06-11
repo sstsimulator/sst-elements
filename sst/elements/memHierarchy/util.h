@@ -59,8 +59,10 @@ struct CtrlStats{
                  updgradeLatency_;
     
     CtrlStats(){
-        TotalRequestsReceived_ = TotalMSHRHits_ = InvWaitingForUserLock_ = updgradeLatency_ = 0;
+        initialize();
     }
+    
+    void initialize(){ TotalRequestsReceived_ = TotalMSHRHits_ = InvWaitingForUserLock_ = updgradeLatency_ = 0; }
 };
 
 #define MAX_CACHE_CHILDREN (512);

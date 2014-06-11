@@ -29,7 +29,7 @@ public:
     /** Constructor for MESIBottomCC. */
     MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
-                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats) :
+                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats, vector<int> _statGroupIds) :
                  CoherencyController(_cache, _dbg, _lineSize), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
@@ -46,6 +46,12 @@ public:
         mshrLatency_    = _mshrLatency;
         directoryLink_  = _directoryLink;
         groupStats_     = _groupStats;
+        statGroupIds_   = _statGroupIds;
+        
+        if(groupStats_){
+            for(unsigned int i = 0; i < statGroupIds_.size(); i++)
+                stats_[statGroupIds_[i]].initialize();
+        }
     }
     
     
@@ -148,17 +154,17 @@ public:
     }
 
 private:
-    vector<Link*>* lowNetPorts_;
+    vector<Link*>*      lowNetPorts_;
 
-    CacheListener* listener_;
+    CacheListener*      listener_;
     map<uint32_t,Stats> stats_;
+    vector<int>         statGroupIds_;
     
-    string ownerName_;
-    string nextLevelCacheName_;
-    
+    string              ownerName_;
+    string              nextLevelCacheName_;
 
-    uint32_t groupId_;
-    uint32_t groupId_timestamp_;
+    uint32_t            groupId_;
+    uint32_t            groupId_timestamp_;
     
     void setGroupId(uint32_t _groupId){
         groupId_timestamp_ = timestamp_;

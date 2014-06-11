@@ -96,6 +96,10 @@ protected:
                 NACKsSent_;
         
         Stats(){
+            initialize();
+        }
+        
+        void initialize(){
             GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
             PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
             EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;

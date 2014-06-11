@@ -194,11 +194,17 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     timestamp_                          = 0;
     totalUpgradeLatency_                = 0;
     mshrHits_                           = 0;
+    
+    if(groupStats_){
+        for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++)
+            stats_[cf_.statGroupIds_[i]].initialize();
+    }
         
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
-    (!L1_) ? topCC_ = new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_) : topCC_ = new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_);
+    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_) :
+                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_, cf_.statGroupIds_);
    
     /*--------------- Replacement Manager --------------- */
     cf_.rm_->setTopCC(topCC_);  cf_.rm_->setBottomCC(bottomCC_);

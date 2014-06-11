@@ -31,9 +31,10 @@ private:
 public:
     MOESIBottomCC(const SST::MemHierarchy::Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
-                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats) :
+                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink,
+                 bool _groupStats, vector<int> _statGroupIds) :
                  MESIBottomCC(_cache, _ownerName, _dbg, _parentLinks, _listener, _lineSize,
-                 _accessLatency, _mshrLatency, _L1, _directoryLink, _groupStats) {}
+                 _accessLatency, _mshrLatency, _L1, _directoryLink, _groupStats, _statGroupIds) {}
 
     virtual void handleEviction(CacheLine* wbCacheLine);
     virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);

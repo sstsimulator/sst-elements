@@ -52,7 +52,7 @@ public:
     typedef TopCacheController::CCLine      CCLine;
     typedef map<Addr, vector<mshrType> >    mshrTable;
     typedef unsigned int                    uint;
-    typedef long long unsigned int          uint64;
+    typedef uint64_t                        uint64;
 
     friend class InstructionStream;
     
@@ -239,7 +239,6 @@ private:
     void processIncomingNACK(MemEvent* _origReqEvent);
     
     
-    
     /** Verify that input parameters are valid */
     void errorChecking();
     
@@ -275,13 +274,11 @@ private:
          the clock gets deregested from TimeVortx and reregisted only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
-        //bool ret = false;
         
         if(cf_.dirControllerExists_) memNICIdle_ = directoryLink_->clock();
         
         bool topCCBusy      = topCC_->queueBusy();
         bool bottomCCBusy   = bottomCC_->queueBusy();
-        //bool cacheBusy      = !incomingEventQueue_.empty();
         
         if(topCCBusy)     topCC_->sendOutgoingCommands();
         if(bottomCCBusy)  bottomCC_->sendOutgoingCommands();

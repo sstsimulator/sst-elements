@@ -210,8 +210,6 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
-
-
 void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
@@ -276,10 +274,8 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
                 _abort(MemHierarchy::CacheController, "Unkwown state!");
         }
     }
-    /* Sharers don't exist */
-    else{
-        respond = true;
-    }
+    /* Sharers don't exist, no need to send invalidates */
+    else respond = true;
     
     if(respond){
         ccLine->setOwner(_sharerId);
@@ -336,13 +332,15 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     MemEvent *responseEvent; Command cmd = _event->getCmd();
     Addr offset = 0, base = 0;
     switch(cmd){
-        case GetS: case GetSEx: case GetX:
+        case GetS:
+        case GetSEx:
+        case GetX:
             if(L1_){
                 base            = (_event->getAddr()) & ~(lineSize_ - 1);
                 offset          = _event->getAddr() - base;
                 responseEvent   = _event->makeResponse((SST::Component*)owner_);
-                //if(cmd != GetX)
-                responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+                if(cmd != GetX)
+                    responseEvent->setPayload(_event->getSize(), &_data->at(offset));
             }
             else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
             
@@ -354,7 +352,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     
     
     uint64_t latency = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
-    response resp  = {responseEvent, latency, true};
+    response resp    = {responseEvent, latency, true};
     outgoingEventQueue_.push(resp);
     
     d_->debug(_L1_,"Timestamp = %"PRIu64", Delivery Time = %"PRIu64"\n", timestamp_, latency);
@@ -367,18 +365,17 @@ void TopCacheController::sendNACK(MemEvent *_event){
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
     uint64 latency      = timestamp_ + accessLatency_;
     response resp       = {NACKevent, latency, true};
-    d_->debug(_L1_,"TopCC: Sending NACK: Cmd = %s, EventID = %"PRIx64", Addr = %"PRIx64", RespToID = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getID().first, _event->getAddr(), NACKevent->getResponseToID().first);
     NACKsSent_++;
     outgoingEventQueue_.push(resp);
-
+    d_->debug(_L1_,"TopCC: Sending NACK: Cmd = %s, EventID = %"PRIx64", Addr = %"PRIx64", RespToID = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getID().first, _event->getAddr(), NACKevent->getResponseToID().first);
 }
 
 
 void TopCacheController::sendEvent(MemEvent *_event){
     uint64 latency      = timestamp_ + accessLatency_;
     response resp       = {_event, latency, true};
-    d_->debug(_L1_,"TopCC: Sending Event To HgLvLCache. Cmd = %s, Src = %s, Addr = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getSrc().c_str(), _event->getAddr());
     outgoingEventQueue_.push(resp);
+    d_->debug(_L1_,"TopCC: Sending Event To HgLvLCache. Cmd = %s, Src = %s, Addr = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getSrc().c_str(), _event->getAddr());
 }
 
 
