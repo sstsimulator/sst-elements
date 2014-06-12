@@ -57,7 +57,7 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
     bool ret = false;
 
     if(ccLine->inTransition() && !_event->isWriteback()){
-        d_->debug(_L1_,"TopCC: Stalling request, ccLine in transition \n");
+        d_->debug(_L7_,"TopCC: Stalling request, ccLine in transition \n");
         return false;
     }
 
@@ -117,7 +117,7 @@ void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
     sendEvictionInvalidates(_lineIndex);
     
     if(ccLine->inTransition()){
-        d_->debug(_L1_,"TopCC: Stalling request. Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
+        d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
                         BccLineString[_state], ccLine->ownerExists() ? "True" : "False");
     }
 }
@@ -158,7 +158,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
     
     ccLine->acksNeeded_ = false;
     
-    d_->debug(_L1_,"Number of invalidates sent: %u, number of sharers = %u\n", sentInvalidates,  ccLine->numSharers());
+    d_->debug(_L7_,"Number of invalidates sent: %u, number of sharers = %u\n", sentInvalidates,  ccLine->numSharers());
     return sentInvalidates;
 }
 
@@ -171,7 +171,7 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNee
     response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
     outgoingEventQueue_.push(resp);
     
-    d_->debug(_L1_,"Invalidate sent: Addr = %"PRIx64", Dst = %s\n", _cLine->getBaseAddr(),  destination.c_str());
+    d_->debug(_L7_,"Invalidate sent: Addr = %"PRIx64", Dst = %s\n", _cLine->getBaseAddr(),  destination.c_str());
 }
 
 void MESITopCC::sendEvictionInvalidates(int _lineIndex){
@@ -200,7 +200,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
     response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
     outgoingEventQueue_.push(resp);
     
-    d_->debug(_L1_,"InvalidateX sent: Addr = %"PRIx64", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
+    d_->debug(_L7_,"InvalidateX sent: Addr = %"PRIx64", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
 }
 
 
@@ -224,7 +224,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->ownerExists()) {
-        d_->debug(_L5_,"GetS Req: Exclusive sharer exists \n");
+        d_->debug(_L7_,"GetS Req but exclusive cache exists \n");
         assert(!l->isSharer(_sharerId));                    /* Cache should not ask for 'S' if its already Exclusive */
         sendInvalidateX(lineIndex);
     }
@@ -251,14 +251,14 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     if(!(state == M || state == E)) respond = false;
     /* Invalidate any exclusive sharers before responding to GetX request */
     else if(ccLine->ownerExists()){
-        d_->debug(_L5_,"GetX Req: Exclusive sharer exists \n");
+        d_->debug(_L7_,"GetX Req recieived but exclusive cache exists \n");
         assert(ccLine->isShareless());
         sendCCInvalidates(lineIndex, _event->getSrc());
         respond = false;
     }
     /* Sharers exist */
     else if(ccLine->numSharers() > 0){
-        d_->debug(_L5_,"GetX Req:  Sharers 'S' exists \n");
+        d_->debug(_L7_,"GetX Req recieved but sharers exists \n");
         switch(cmd){
             case GetX:
                 sendCCInvalidates(lineIndex, _event->getSrc());
@@ -327,7 +327,6 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
     if(_event->isPrefetch()){
-        d_->debug(_WARNING_,"Warning: No Response sent! This event is a prefetch or sharerId in -1");
         return true;
     }
     
@@ -357,8 +356,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     response resp    = {responseEvent, latency, true};
     outgoingEventQueue_.push(resp);
     
-    d_->debug(_L1_,"Timestamp = %"PRIu64", Delivery Time = %"PRIu64"\n", timestamp_, latency);
-    d_->debug(_L1_,"Sending Response: Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    d_->debug(_L3_,"Sending Response at cycle = %"PRIu64". Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", latency, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
     return true;
 }
 
@@ -369,7 +367,7 @@ void TopCacheController::sendNACK(MemEvent *_event){
     response resp       = {NACKevent, latency, true};
     NACKsSent_++;
     outgoingEventQueue_.push(resp);
-    d_->debug(_L1_,"TopCC: Sending NACK: Cmd = %s, EventID = %"PRIx64", Addr = %"PRIx64", RespToID = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getID().first, _event->getAddr(), NACKevent->getResponseToID().first);
+    d_->debug(_L3_,"TopCC: Sending NACK\n");
 }
 
 
@@ -377,7 +375,7 @@ void TopCacheController::sendEvent(MemEvent *_event){
     uint64 latency      = timestamp_ + accessLatency_;
     response resp       = {_event, latency, true};
     outgoingEventQueue_.push(resp);
-    d_->debug(_L1_,"TopCC: Sending Event To HgLvLCache. Cmd = %s, Src = %s, Addr = %"PRIx64"\n", CommandString[_event->getCmd()], _event->getSrc().c_str(), _event->getAddr());
+    d_->debug(_L3_,"TopCC: Sending Event To HgLvLCache at cycle = %"PRIu64". Cmd = %s\n", latency, CommandString[_event->getCmd()]);
 }
 
 

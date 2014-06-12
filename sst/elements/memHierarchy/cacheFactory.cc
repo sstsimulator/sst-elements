@@ -37,10 +37,10 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
     int debugLevel = _params.find_integer("debug_level", 0);
-    if(debugLevel < 0 || debugLevel > 8)     _abort(Cache, "Debugging level must be betwee 0 and 8. \n");
+    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
     
     dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)_params.find_integer("debug", 0));
-    dbg->debug(C,L1,0,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
+    dbg->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
     /* --------------- Get Parameters --------------- */
     string frequency            = _params.find_string("cache_frequency", "" );            //Hertz

@@ -67,7 +67,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event){
 
 bool SimpleMemory::issueRequest(MemController::DRAMReq *req){
     uint64_t addr = req->addr + req->amt_in_process;
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
     self_link->send(1, new MemCtrlEvent(req));
     return true;
 }
@@ -107,7 +107,7 @@ bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
     if ( !ok ) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -125,7 +125,7 @@ void DRAMSimMemory::finish(){
 
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
-    ctrl->dbg.debug(CALL_INFO,6,0, "Memory Request for %"PRIx64" Finished [%zu reqs]\n", (Addr)addr, reqs.size());
+    ctrl->dbg.debug(_L10_, "Memory Request for %"PRIx64" Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
     MemController::DRAMReq *req = reqs.front();
     reqs.pop_front();
@@ -161,7 +161,7 @@ bool HybridSimMemory::issueRequest(MemController::DRAMReq *req){
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
     if ( !ok ) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -177,7 +177,7 @@ void HybridSimMemory::finish(){
 
 void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
-    ctrl->dbg.debug(CALL_INFO,6,0, "Memory Request for %"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
+    ctrl->dbg.debug(_L10_, "Memory Request for %"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
     assert(reqs.size());
     MemController::DRAMReq *req = reqs.front();
     reqs.pop_front();
@@ -200,7 +200,7 @@ VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(com
 
 bool VaultSimMemory::issueRequest(MemController::DRAMReq *req){
     uint64_t addr = req->addr + req->amt_in_process;
-    ctrl->dbg.debug(CALL_INFO,6,0, "Issued transaction to Cube Chain for address %"PRIx64"\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Issued transaction to Cube Chain for address %"PRIx64"\n", (Addr)addr);
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
         req->status = MemController::DRAMReq::NEW;
@@ -234,8 +234,12 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
 
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id){
-    dbg.init("", 7, 0, (Output::output_location_t)params.find_integer("debug", 0));
-    dbg.debug(C,L1,0,"---");
+    int debugLevel = params.find_integer("debug_level", 0);
+    if(debugLevel < 0 || debugLevel > 10)
+        _abort(MemController, "Debugging level must be betwee 0 and 10. \n");
+    
+    dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.debug(_L10_,"---");
     statsOutputTarget = (Output::output_location_t)params.find_integer("statistics", 0);
 
     bool tfFound = false;
@@ -343,7 +347,7 @@ void MemController::init(unsigned int phase){
         }
         else {
             Output out("", 0, 0, Output::STDERR);
-            out.debug(CALL_INFO,6,0,"Memory received unexpected Init Command: %d\n", me->getCmd() );
+            out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd() );
         }
         delete ev;
     }
@@ -376,8 +380,8 @@ void MemController::finish(void){
 
 void MemController::handleEvent(SST::Event *event){
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    dbg.output("\n\n----------------------------------------------------------------------------------------\n");
-    dbg.output("Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
+    dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
+    dbg.debug(_L10_,"Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
     Command cmd = ev->getCmd();
     
     if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM){
@@ -396,13 +400,13 @@ void MemController::handleEvent(SST::Event *event){
 
 
 void MemController::addRequest(MemEvent *ev){
-	dbg.debug(C,6,0, "New Memory Request for %"PRIx64"\n", ev->getAddr());
+	dbg.debug(_L10_,"New Memory Request for %"PRIx64"\n", ev->getAddr());
     Command cmd = ev->getCmd();
     DRAMReq *req;
     assert(isRequestAddressValid(ev));
 
     req = new DRAMReq(ev, requestWidth, cacheLineSize);
-    dbg.debug(C,6,0, "Creating DRAM Request for %"PRIx64", Size: %zu, %s\n", req->addr, req->size, CommandString[cmd]);
+    dbg.debug(_L10_,"Creating DRAM Request for %"PRIx64", Size: %zu, %s\n", req->addr, req->size, CommandString[cmd]);
     requests.push_back(req);
     requestQueue.push_back(req);
 }
@@ -422,7 +426,7 @@ bool MemController::clock(Cycle_t cycle){
         req->amt_in_process += requestSize;
 
         if ( req->amt_in_process >= req->size ) {
-            dbg.debug(CALL_INFO, 6,0, "Completed issue of request\n");
+            dbg.debug(_L10_, "Completed issue of request\n");
             performRequest(req);
 #ifdef HAVE_LIBZ
             if(traceFP)
@@ -487,14 +491,14 @@ void MemController::performRequest(DRAMReq *req){
     Addr localAddr = convertAddressToLocalAddress(req->addr);
 
     if(req->cmd == PutM){  /* Write request to memory */
-        dbg.debug(C,L1,0,"WRITE.  Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localAddr, req->reqEvent->getSize(), uncached ? "true" : "false");
+        dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localAddr, req->reqEvent->getSize(), uncached ? "true" : "false");
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
             memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
 	}
     else{
         if(uncached && req->cmd == GetX) {
             Addr localUncachedAddr = convertAddressToLocalAddress(req->reqEvent->getAddr());
-            dbg.debug(C,L1,0,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i\n", localUncachedAddr, req->reqEvent->getSize());
+            dbg.debug(_L10_,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i\n", localUncachedAddr, req->reqEvent->getSize());
             for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
                 memBuffer[localUncachedAddr + i] = req->reqEvent->getPayload()[i];
         }
@@ -502,7 +506,7 @@ void MemController::performRequest(DRAMReq *req){
     	req->respEvent = req->reqEvent->makeResponse(this);
         req->respEvent->setSize(cacheLineSize);
     
-        dbg.debug(C,0,0,"READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
+        dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->respEvent->getSize() ; i++ )
             req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
 
@@ -523,15 +527,15 @@ void MemController::sendResponse(DRAMReq *req){
 
 
 void MemController::printMemory(DRAMReq *req, Addr localAddr){
-    dbg.debug(C,L1,0,"Resp. Data: ");
-    for(unsigned int i = 0; i < cacheLineSize; i++) dbg.debug(C,L1,0,"%d",(int)memBuffer[localAddr + i]);
+    dbg.debug(_L10_,"Resp. Data: ");
+    for(unsigned int i = 0; i < cacheLineSize; i++) dbg.debug(_L10_,"%d",(int)memBuffer[localAddr + i]);
 }
 
 void MemController::handleMemResponse(DRAMReq *req){
     req->amt_processed += requestSize;
     if (req->amt_processed >= req->size) req->status = DRAMReq::RETURNED;
 
-    dbg.debug(CALL_INFO, 6,0, "Finishing processing for req %"PRIx64" %s\n", req->addr, req->status == DRAMReq::RETURNED ? "RETURNED" : "");
+    dbg.debug(_L10_, "Finishing processing for req %"PRIx64" %s\n", req->addr, req->status == DRAMReq::RETURNED ? "RETURNED" : "");
 
     if(DRAMReq::RETURNED == req->status) sendResponse(req);
 }

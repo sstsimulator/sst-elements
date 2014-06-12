@@ -59,7 +59,7 @@ bool Cache::MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr){
 
 bool Cache::MSHR::isFull(){
     if(size_ >= maxSize_){
-        cache_->d_->debug(_L6_,"MSHR Full. Event could not be inserted. Max Size = %u\n", maxSize_);
+        cache_->d_->debug(_L9_,"MSHR Full. Event could not be inserted. Max Size = %u\n", maxSize_);
         return true;
     }
     return false;
@@ -69,19 +69,19 @@ bool Cache::MSHR::isFull(){
 bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
     bool ret = insert(_baseAddr, mshrType(_event));
     if(LIKELY(ret)){
-        cache_->d_->debug(_L6_, "MSHR: Event Inserted: Key Addr = %"PRIx64", Event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
+        cache_->d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %"PRIx64", event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
         _event->setStartTime(cache_->getTimestamp());
     }
-    else cache_->d_->debug(_L6_, "MSHR Full.  Event could not be inserted.\n");
+    else cache_->d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
     return ret;
 }
 
 bool Cache::MSHR::insert(Addr _keyAddr, Addr _pointerAddr){
     bool ret = insert(_keyAddr, mshrType(_pointerAddr));
     if(LIKELY(ret))
-        cache_->d_->debug(_L6_, "MSHR: Inserted pointer.  Key Addr = %"PRIx64", Pointer Addr = %"PRIx64"\n", _keyAddr, _pointerAddr);
+        cache_->d_->debug(_L9_, "MSHR: Inserted pointer.  Key Addr = %"PRIx64", Pointer Addr = %"PRIx64"\n", _keyAddr, _pointerAddr);
     else
-        cache_->d_->debug(_L6_, "MSHR Full. Pointer could not be inserted.\n");
+        cache_->d_->debug(_L9_, "MSHR Full. Pointer could not be inserted.\n");
 
     return ret;
 }
@@ -140,6 +140,8 @@ MemEvent* Cache::MSHR::removeFront(Addr _baseAddr){
     
     size_--;
     
+    cache_->d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %"PRIx64"\n", _baseAddr);
+
     return ret;
     
     
@@ -175,7 +177,7 @@ bool Cache::MSHR::isHitAndStallNeeded(Addr _baseAddr, Command _cmd){
     MemEvent* frontEvent = boost::get<MemEvent*>(it->second.front().elem);
     if(_cmd == GetX) return (frontEvent->getCmd() != Inv && frontEvent->getCmd() != InvX);  //An Inv is at the front of the queue, wait for Inv Responses from higher network
     else{
-        cache_->d_->debug(_WARNING_, "Blocking Request: MSHR entry exists and waiting to complete. TopOfQueue Request Cmd: %s\n", CommandString[frontEvent->getCmd()]);
+        cache_->d_->debug(_L9_, "Blocking Request: MSHR entry exists and waiting to complete. TopOfQueue Request Cmd: %s\n", CommandString[frontEvent->getCmd()]);
         return true;
     }
 }
@@ -213,7 +215,7 @@ void Cache::MSHR::removeElement(Addr _baseAddr, mshrType _mshrEntry){
 
     mshrTable::iterator it = map_.find(_baseAddr);
     if(it == map_.end()) return;    
-    cache_->d_->debug(_L6_,"MSHR Entry size = %lu\n", it->second.size());
+    cache_->d_->debug(_L9_,"MSHR Entry size = %lu\n", it->second.size());
     vector<mshrType>& res = it->second;
     vector<mshrType>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&_mshrEntry));
     
@@ -222,7 +224,7 @@ void Cache::MSHR::removeElement(Addr _baseAddr, mshrType _mshrEntry){
 
     if(res.empty()) map_.erase(it);
     size_--; assert(size_ >= 0);
-    cache_->d_->debug(_L6_, "MSHR Removed Event\n");
+    cache_->d_->debug(_L9_, "MSHR Removed Event\n");
 }
 /*
 void Cache::MSHR::printEntry(Addr baseAddr){

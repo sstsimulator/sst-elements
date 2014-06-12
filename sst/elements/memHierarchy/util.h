@@ -30,18 +30,18 @@ namespace MemHierarchy {
 //#define N CALL_INFO
 #define Z 0
 
-enum {ERROR, WARNING, INFO, L0, L1, L2, L3, L4, L5, L6};
+enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ C,ERROR,0
 #define _WARNING_ C,WARNING,0
 #define _INFO_ C,INFO,0
-#define _L0_ C,L0,0
-#define _L1_ C,L1,0
-#define _L2_ C,L2,0
-#define _L3_ C,L3,0
-#define _L4_ C,L4,0
-#define _L5_ C,L5,0
-#define _L6_ C,L5,0
-
+#define _L3_ C,L3,0     //Important messages:  incoming requests, state changes, etc
+#define _L4_ C,L4,0     //Importan messages:  send request, forward request, send response
+#define _L5_ C,L5,0     //
+#define _L6_ C,L6,0     //BottomCC messages
+#define _L7_ C,L7,0     //TopCC messages
+#define _L8_ C,L8,0     //Atomics
+#define _L9_ C,L9,0     //MSHR messages
+#define _L10_ C,L10,0   //Directory controller, Bus, Memory Controller
 
 struct mshrType {
     boost::variant<Addr, MemEvent*> elem;
@@ -119,23 +119,23 @@ inline int log2Of(int x){
 }
 
 inline void printData(Output* dbg, string msg, vector<uint8_t>* data){
-    /*dbg->debug(_L5_,"%s: ", msg.c_str()); unsigned int  j = 0;
+    /*dbg->debug(_L8_,"%s: ", msg.c_str()); unsigned int  j = 0;
     for( std::vector<uint8_t>::const_iterator i = data->begin(); i != data->end(); ++i, ++j)
-        dbg->debug(_L5_,"%x", (int)*i);
-    dbg->debug(_L5_, "\n");
+        dbg->debug(_L8_,"%x", (int)*i);
+    dbg->debug(_L8_, "\n");
     */
 
 }
 
 inline void printData(Output* dbg, string msg, vector<uint8_t>* data, Addr offset, unsigned int size){
-    /*dbg->debug(_L5_,"%s: ", msg.c_str()); unsigned int  j = 0;
+    /*dbg->debug(_L8_,"%s: ", msg.c_str()); unsigned int  j = 0;
     for( std::vector<uint8_t>::const_iterator i = data->begin() + offset; i != data->end(); ++i, ++j){
         if(j < size){
-            dbg->debug(_L5_,"%x", (int)*i);
+            dbg->debug(_L8_,"%x", (int)*i);
         }
         else break;
     }
-    dbg->debug(_L5_,"\n");
+    dbg->debug(_L8_,"\n");
     */
 }
 

@@ -222,8 +222,8 @@ private:
     /** Get Cache Coherency line */
     inline TopCacheController::CCLine* getCCLine(int index);
 
-    /** Check the 'validity' of the request.  Assert expected state */
-    inline void checkRequestValidity(MemEvent* event) throw(ignoreEventException);
+    /** Make sure that this request is not a dirty writeback.  Cache miss cannot occur on a dirty writeback  */
+    inline void checkCacheMissValidity(MemEvent* event) throw(ignoreEventException);
 
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
@@ -303,7 +303,7 @@ private:
         retryQueue_ = retryQueueNext_;
         retryQueueNext_.clear();
         for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
-            d_->debug(_L0_,"Retrying event\n");
+            d_->debug(_L3_,"Retrying event\n");
             if(mshr_->isFull()){
                 retryQueueNext_ = retryQueue_;
                 return;

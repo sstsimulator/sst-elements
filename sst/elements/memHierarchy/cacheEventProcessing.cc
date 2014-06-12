@@ -121,11 +121,11 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     
     if(!_mshrHit){
         incTotalRequestsReceived(groupId);
-        d2_->debug(_L0_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+        d2_->debug(_L3_,"\n\n----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
     }
     else incTotalMSHRHits(groupId);
 
-    d_->debug(_L0_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", EventID = %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
+    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", EventID = %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %llu... %s \n",
                    this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getID().first, event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "cached");
     
     if(uncached || cf_.allUncachedRequests_){
@@ -140,7 +140,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         case GetSEx:
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 if(processRequestInMSHR(baseAddr, event)){
-                    d_->debug(_L0_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                    d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                 }
                 return;
             }
@@ -198,7 +198,6 @@ void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
         case GetXResp:
             origRequest = mshrUncached_->removeFront(_baseAddr);
             assert(origRequest->getID().second == _event->getResponseToID().second);
-            d_->debug(_L0_,"Removed Front\n");
             topCC_->sendResponse(origRequest, DUMMY, &_event->getPayload(), true);
             delete origRequest;
             break;

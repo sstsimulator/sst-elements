@@ -41,15 +41,13 @@ public:
     }
 
     void setState(TCC_MESIState _newState) {
-        d_->debug(C,L1,0, "Change States: Base Addr = %"PRIx64", Old State = %s, New State = %s\n",
-                  baseAddr_, TccLineString[state_], TccLineString[_newState]);
+        d_->debug(C,L4,0, "CCLine Changing State. Old State = %s, New State = %s\n", TccLineString[state_], TccLineString[_newState]);
         state_ = _newState;
     }
     
     void updateState() {
         if(numSharers_ == 0){
             setState(V);
-            d_->debug(C,L4,0, "Updated TopCC State.  Sharer vector cleared.\n");
         }
     }
     
@@ -66,14 +64,14 @@ public:
         assert(numSharers_ == 0);
         ownerId_ = _id;
         ownerExists_ = true;
-        d_->debug(C,L2,0, "Setting Owner..\n");
+        d_->debug(C,L4,0, "Owner set.\n");
     }
     
     void clearOwner() {
         ownerExists_ = false;
         assert(numSharers_ == 0);
         ownerId_ = -1;
-        d_->debug(C,L2,0,"Clearing Owner..\n");
+        d_->debug(C,L4,0,"Owner cleared.\n");
     }
     
     int getOwnerId(){
@@ -110,7 +108,6 @@ public:
         for(int i = 0; i < 128; i++){
             if(sharers_[i]) count++;
         }
-        d_->debug(C,L2,0,"Num Sharers = %d, Actual Sharers = %d\n", numSharers_, count);
         assert(count == numSharers_);
     }
     
@@ -123,7 +120,7 @@ public:
         numSharers_--;
         
         if(numSharers_ > 0) assert(ownerExists_ == false);
-        d_->debug(C,L2,0, "Removed Sharer: Num Sharers = %u\n", numSharers_);
+        d_->debug(C,L4,0, "Removed sharer. Number of sharers sharers = %u\n", numSharers_);
         
         updateState();
         assertSharers();
@@ -136,7 +133,7 @@ public:
         if(_id == -1) return;
         numSharers_++;
         sharers_[_id] = true;
-        d_->debug(C,L2,0, "Added Sharer:  Num Sharers = %u\n", numSharers_);
+        d_->debug(C,L4,0, "Added sharer.  Number of sharers = %u\n", numSharers_);
         assertSharers();
     }
 

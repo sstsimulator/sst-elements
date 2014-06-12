@@ -90,12 +90,12 @@ public:
 
         void incLock(){
             userLock_++;
-            d_->debug(_L1_,"User-level lock set on this cache line\n");
+            d_->debug(_L8_,"User-level lock set on this cache line\n");
         }
         
         void decLock(){
             userLock_--;
-            if(userLock_ == 0) d_->debug(_L1_,"User lock cleared on this cache line\n");
+            if(userLock_ == 0) d_->debug(_L8_,"User lock cleared on this cache line\n");
         }
         
         vector<uint8_t>* getData(){ return &data_; }
@@ -104,10 +104,8 @@ public:
             if (ev->getSize() == size_ || ev->getCmd() == GetSEx) {
                 std::copy(_data.begin(), _data.end(), this->data_.begin());
                 data_ = _data;
-                printData(d_, "Cache line write", &_data);
             } else {
                 // Update a portion of the block
-                printData(d_, "Partial cache line write", &ev->getPayload());
                 Addr offset = (ev->getAddr() <= baseAddr_) ? 0 : ev->getAddr() - baseAddr_;
 
                 Addr payloadoffset = (ev->getAddr() >= baseAddr_) ? 0 : baseAddr_ - ev->getAddr();
@@ -121,7 +119,7 @@ public:
         BCC_MESIState getState() const { return state_; }
         void updateState(){ setState(nextState[state_]); }
         void setState(BCC_MESIState _newState){
-            d_->debug(_L1_, "State change: bsAddr = %"PRIx64", oldSt = %s, newSt = %s\n", baseAddr_, BccLineString[state_], BccLineString[_newState]);
+            d_->debug(_L6_, "Changing states: Old state = %s, New State = %s\n", BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
             assert(userLock_ == 0);
         }
