@@ -13,7 +13,7 @@
 #include "sst/core/serialization.h"
 
 #include "faultInjectionComponent.h"
-#include "CommunicationEvent.h"
+#include "events/CommunicationEvent.h"
 #include "output.h"
 #include "misc.h"
 
