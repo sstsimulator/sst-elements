@@ -127,6 +127,8 @@ public:
         }
         
         bool valid() { return state_ != I; }
+        bool inStableState(){ return unlocked();}
+        
         bool inTransition(){ return !unlocked();}
         static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
 

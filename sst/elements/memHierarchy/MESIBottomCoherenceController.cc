@@ -385,9 +385,9 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
     dbg->output(C,"--------------------------------------------------------------------\n");
 
     for(unsigned int i = 0; i < _groupIds.size(); i++){
-        int totalMisses = stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETSMissIS_;
-        int totalHits = stats_[_groupIds[i]].GETSHit_ + stats_[_groupIds[i]].GETXHit_;
-        double hitRatio = (totalHits / ( totalHits + (double)totalMisses)) * 100;
+        uint64_t totalMisses = stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETSMissIS_;
+        uint64_t totalHits = stats_[_groupIds[i]].GETSHit_ + stats_[_groupIds[i]].GETXHit_;
+        double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
         
         if(i != 0){
             dbg->output(C,"--------------------------------------------------------------------\n");
@@ -396,34 +396,34 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
             dbg->output(C,"--- Group Statistics, Group ID = %i\n", _groupIds[i]);
             dbg->output(C,"--------------------------------------------------------------------\n");
         }
-        dbg->output(C,"- Total misses: %i\n", totalMisses);
-        dbg->output(C,"- Total hits: %i\n", totalHits);
+        dbg->output(C,"- Total misses: %"PRIu64"\n", totalMisses);
+        dbg->output(C,"- Total hits: %"PRIu64"\n", totalHits);
         dbg->output(C,"- Hit ratio: %.3f%%\n", hitRatio);
         dbg->output(C,"- Miss ratio: %.3f%%\n", 100 - hitRatio);
-        dbg->output(C,"- Read misses: %i\n", stats_[_groupIds[i]].GETSMissIS_);
-        dbg->output(C,"- Write misses: %i\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_);
-        dbg->output(C,"- GetS received: %i\n", stats_[_groupIds[i]].GETSMissIS_ + stats_[_groupIds[i]].GETSHit_);
-        dbg->output(C,"- GetX received: %i\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXHit_);
-        dbg->output(C,"- GetSEx received: %i\n", stats_[_groupIds[i]].GetSExReqsReceived_);
-        dbg->output(C,"- GetS-IS misses: %i\n", stats_[_groupIds[i]].GETSMissIS_);
-        dbg->output(C,"- GetX-SM misses: %i\n", stats_[_groupIds[i]].GETXMissSM_);
-        dbg->output(C,"- GetX-IM misses: %i\n", stats_[_groupIds[i]].GETXMissIM_);
-        dbg->output(C,"- GetS hits: %i\n", stats_[_groupIds[i]].GETSHit_);
-        dbg->output(C,"- GetX hits: %i\n", stats_[_groupIds[i]].GETXHit_);
+        dbg->output(C,"- Read misses: %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
+        dbg->output(C,"- Write misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_);
+        dbg->output(C,"- GetS received: %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_ + stats_[_groupIds[i]].GETSHit_);
+        dbg->output(C,"- GetX received: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXHit_);
+        dbg->output(C,"- GetSEx received: %"PRIu64"\n", stats_[_groupIds[i]].GetSExReqsReceived_);
+        dbg->output(C,"- GetS-IS misses: %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
+        dbg->output(C,"- GetX-SM misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_);
+        dbg->output(C,"- GetX-IM misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissIM_);
+        dbg->output(C,"- GetS hits: %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
+        dbg->output(C,"- GetX hits: %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
         dbg->output(C,"- Average updgrade latency: %"PRIu64" cycles\n", _updgradeLatency);
-        dbg->output(C,"- PutS received: %i\n", stats_[_groupIds[i]].PUTSReqsReceived_);
-        dbg->output(C,"- PutM received: %i\n", stats_[_groupIds[i]].PUTMReqsReceived_);
-        dbg->output(C,"- PutX received: %i\n", stats_[_groupIds[i]].PUTXReqsReceived_);
-        dbg->output(C,"- PUTM sent due to invalidations: %u\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_);
-        dbg->output(C,"- PUTE sent due to invalidations: %u\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_);
-        dbg->output(C,"- PUTX sent due to invalidations: %u\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_);
-        dbg->output(C,"- PUTS sent due to evictions: %u\n", stats_[_groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(C,"- PUTM sent due to evictions: %u\n", stats_[_groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(C,"- PUTE sent due to evictions: %u\n", stats_[_groupIds[i]].EvictionPUTEReqSent_);
+        dbg->output(C,"- PutS received: %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
+        dbg->output(C,"- PutM received: %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
+        dbg->output(C,"- PutX received: %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
+        dbg->output(C,"- PUTM sent due to invalidations: %"PRIu64"\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_);
+        dbg->output(C,"- PUTE sent due to invalidations: %"PRIu64"\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_);
+        dbg->output(C,"- PUTX sent due to invalidations: %"PRIu64"\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_);
+        dbg->output(C,"- PUTS sent due to evictions: %"PRIu64"\n", stats_[_groupIds[i]].EvictionPUTSReqSent_);
+        dbg->output(C,"- PUTM sent due to evictions: %"PRIu64"\n", stats_[_groupIds[i]].EvictionPUTMReqSent_);
+        dbg->output(C,"- PUTE sent due to evictions: %"PRIu64"\n", stats_[_groupIds[i]].EvictionPUTEReqSent_);
         dbg->output(C,"- Inv received stalled bc atomic lock: %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
         dbg->output(C,"- Total requests received: %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
         dbg->output(C,"- Total requests handled by MSHR (MSHR hits): %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
-        dbg->output(C,"- NACKs sent (MSHR Full, BottomCC): %u\n", stats_[_groupIds[i]].NACKsSent_);
+        dbg->output(C,"- NACKs sent (MSHR Full, BottomCC): %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
     }
 
 }

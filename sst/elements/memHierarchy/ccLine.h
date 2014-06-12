@@ -86,7 +86,9 @@ public:
     
     bool isValid(){ return getState() == V; }
     bool valid() { return state_ == V; }
-    bool inTransition() { return !valid(); }
+    
+    bool inStableState(){ return state_ == V; }
+    bool inTransition(){ return !valid(); }
     bool isSharer(int _id) { if(_id == -1) return false; return sharers_[_id]; }
     bool isShareless(){  return numSharers_ == 0; }
     bool ownerExists(){

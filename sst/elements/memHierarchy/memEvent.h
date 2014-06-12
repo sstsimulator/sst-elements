@@ -427,7 +427,10 @@ public:
         return (cmd == GetSResp || cmd == GetXResp);
     }
     
-    
+    /** Returns true if this is a 'writeback' command type */
+    static bool isWriteback(Command cmd){
+        return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS);
+    }
     
     /** Set ackNeeded member variable */
     void setAckNeeded(){ ackNeeded = true;}

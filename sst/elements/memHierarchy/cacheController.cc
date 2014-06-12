@@ -95,7 +95,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
 void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
     CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
     
-    MemEvent* origRequest = getOriginalRequest(mshr_->lookup(_baseAddr));
+    MemEvent* origRequest = getOrigReq(mshr_->lookup(_baseAddr));
     updateUpgradeLatencyAverage(origRequest);
     
     bottomCC_->handleResponse(_responseEvent, cacheLine, origRequest);
@@ -334,29 +334,41 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
 }
 
 void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(stallException){
-    Command cmd = _event->getCmd();
-    Addr baseAddr = _cacheLine->getBaseAddr();
+    Command cmd    = _event->getCmd();
+    Addr baseAddr  = _cacheLine->getBaseAddr();
+    CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
+
+
     if(_requestCompleted){
-        d_->debug(_L1_,"Request Completed\n");
-        if(cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE ||
-           (cmd == PutS && mshr_->exists(baseAddr) && getOriginalRequest(mshr_->lookup(baseAddr))->getCmd() == GetSEx)){
-            /* Check if topCC line is locked */
-            CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
-            if(_cacheLine->unlocked() && ccLine->isValid() && !_mshrHit)
-                activatePrevEvents(baseAddr);
-            
+        d_->debug(_L1_,"Request completed successfully\n");
+        d_->debug(_L0_,"Bcc State = %s, Tcc State = %s\n", BccLineString[_cacheLine->getState()], TccLineString[ccLine->getState()]);
+        assert(_cacheLine->inStableState() && ccLine->inStableState());
+
+        /* MemHierarchy models a "blocking cache", it is important to 'replay' blocked 
+           events that were waiting for this event to complete */
+        if(!_mshrHit){
+            if(MemEvent::isWriteback(cmd)){
+                if(cmd == PutS && mshr_->exists(baseAddr)){
+                    MemEvent* event = getOrigReq(mshr_->lookup(baseAddr));
+                    bool atomicReq = (event->getCmd() == GetSEx);
+                    if(atomicReq) activatePrevEvents(baseAddr);
+                }
+                else activatePrevEvents(baseAddr);
+            }
         }
-        reActivateEventWaitingForUserLock(_cacheLine, _mshrHit);
-        d_->debug(_L1_,"Deleting Event\n");
+        
+        /* For atomic requests handled by the cache itself, GetX unlocks the cache line.  Therefore,
+           we possibly need to 'replay' events that blocked due to an locked cacheline */
+        reActivateEventWaitingForUserLock(_cacheLine);
         delete _event;
     }
     else throw stallException();
 }
 
 
-void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine, bool _mshrHit){
+void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine){
     Addr baseAddr = _cacheLine->getBaseAddr();
-    if(_cacheLine->eventsWaitingForLock_ && !_cacheLine->isLockedByUser() && !_mshrHit){
+    if(_cacheLine->eventsWaitingForLock_ && !_cacheLine->isLockedByUser()){
         d_->debug(_L1_,"Reactivating events:  User-locked cache line is now available\n");
         if(mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);
         _cacheLine->eventsWaitingForLock_ = false;
@@ -386,7 +398,7 @@ bool Cache::isCacheMiss(int _lineIndex){
 /* ---------------------------------------
    Extras
    --------------------------------------- */
-MemEvent* Cache::getOriginalRequest(const vector<mshrType> _mshrEntry){
+MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
     if(_mshrEntry.front().elem.type() == typeid(MemEvent*))
         return boost::get<MemEvent*>(_mshrEntry.front().elem);
     else{

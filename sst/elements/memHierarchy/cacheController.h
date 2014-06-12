@@ -197,7 +197,7 @@ private:
 
     /** If cache line was user-locked, then events might be waiting for lock to be released
         and need to be reactivated */
-    inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine, bool mshrHit);
+    inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine);
 
     /** Most requests are stalled in the MSHR if the cache line is 'blocking'.  However, this does not happen for
         writebacks.  This funciton handles the case where the cache line is 'blocking' and an incomming PutS request is received. */
@@ -249,7 +249,7 @@ private:
     void updateUpgradeLatencyAverage(MemEvent* origMemEvent);
     
     /** Get the front elevemnt of a MSHR entry */
-    MemEvent* getOriginalRequest(const vector<mshrType> _mshrEntry);
+    MemEvent* getOrigReq(const vector<mshrType> _mshrEntry);
     
     /** Find out if number is a power of 2 */
     bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }

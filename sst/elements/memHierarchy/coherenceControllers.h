@@ -72,7 +72,7 @@ protected:
     bool       L1_;
     
     struct Stats{
-        uint    GETSMissIS_,
+        uint64_t GETSMissIS_,
                 GETXMissSM_,
                 GETXMissIM_,
                 GETSHit_,

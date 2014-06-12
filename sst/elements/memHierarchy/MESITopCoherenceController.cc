@@ -302,8 +302,10 @@ void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _
 }
 
 void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
-    _ret = true;
     if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
+    
+    if(_ccLine->isShareless()) _ret = true;
+    else                       _ret = false;
 }
 
 void MESITopCC::printStats(int _stats){
