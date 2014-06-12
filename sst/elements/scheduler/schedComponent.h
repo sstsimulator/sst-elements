@@ -40,9 +40,9 @@ namespace SST {
         class Statistics;
         class AllocInfo;
         class FST;
+        class InputParser;
 
         // the maximum length of a job ID.  used primarily for job list parsing.
-#define JobIDlength 16
 
         struct IAI {int i; AllocInfo *ai;};
 
@@ -61,14 +61,11 @@ namespace SST {
                     return nodeIDs.at(nodeIndex);
                 }
 
-
             private:
                 unsigned long lastfinaltime;
                 schedComponent();  // for serialization only
                 schedComponent(const schedComponent&); // do not implement
                 void operator=(const schedComponent&); // do not implement
-
-                bool validateJob( Job * j, std::vector<Job> * jobs, long runningTime );
 
                 void registerThis();
                 void unregisterThis();
@@ -79,14 +76,8 @@ namespace SST {
                 std::string trace;
                 std::string jobListFilename;
 
-                void readJobs();
-                bool checkJobFile();
-                bool newJobLine( std::string line );
-                bool newYumYumJobLine( std::string line );
-
                 void handleCompletionEvent(Event *ev, int n);
                 void handleJobArrivalEvent(Event *ev);
-                //virtual bool clockTic( SST::Cycle_t );
 
                 void unregisterYourself();
 
@@ -113,21 +104,18 @@ namespace SST {
                 SST::Link* selfLink;
                 std::map<int, IAI> runningJobs;
                 std::vector<double>* timePerDistance; //used if we want to add time to the jobs proportional to the L1 distance
-
-                std::string jobListFileName;
-                boost::filesystem::path jobListFileNamePath;
+                
                 std::string jobLogFileName;
                 std::ofstream jobLog;
                 bool printJobLog;
                 bool printYumYumJobLog;       // should the Job Log use the YumYum format?
                 bool useYumYumTraceFormat;    // should we expect the incoming job list to use the YumYum format?
-                // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
+                                              // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
+                InputParser* inputParser;
 
                 bool useYumYumSimulationKill;         // should the simulation end on a special job (true), or just when the job list is exhausted (false)?
                 bool YumYumSimulationKillFlag;        // this will signal the schedComponent to unregister itself iff useYumYumSimulationKill == true
                 int YumYumPollWait;                   // this is the length of time in ms to wait between checks for new jobs
-                time_t LastJobFileModTime;            // Contains the last time that the job file was modified
-                char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
                 
                 SST::RNG::SSTRandom* rng;  //random number generator
 

@@ -24,6 +24,7 @@ libscheduler_la_SOURCES = \
     Factory.h		Factory.cc \
     FST.cc		FST.h \
     output.h \
+    InputParser.cc InputParser.h \
     faultInjectionComponent.cc	faultInjectionComponent.h \
     allocators/BestFitAllocator.cc \
     allocators/BestFitAllocator.h \

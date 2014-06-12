@@ -18,25 +18,21 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
-#include <boost/tokenizer.hpp>        // for reading YumYum jobs
 #include <cstdlib>
 #include <cstring>
-#include <ctime>
 #include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
+//#include <stdio.h>
+//#include <stdlib.h>
 
 #include <sst/core/debug.h>
 #include <sst/core/element.h>
-#include <sst/core/event.h>
 #include <sst/core/params.h>
-
-#include "unistd.h"             // for sleep
 
 #include "Allocator.h"
 #include "AllocInfo.h"
 #include "Factory.h"
 #include "FST.h"
+#include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
@@ -188,15 +184,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
     printJobLog = params.find("printJobLog") != params.end();
 
-    char* inputDir = getenv("SIMINPUT");
-    if (inputDir != NULL) {
-        string fullName = inputDir + trace;
-        jobListFileName = fullName;
-    } else {
-        jobListFileName = trace;
-    }
-
-    jobListFileNamePath = boost::filesystem::path( jobListFileName.c_str());
+    inputParser = new InputParser(machine, useYumYumTraceFormat, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
 
     schedout.output("\nScheduler Detects %d nodes\n", (int)nodes.size());
 
@@ -218,17 +206,30 @@ void schedComponent::setup()
 
     // done setting up the links, now read the job list
 
-    lastJobRead[ 0 ] = '\0';
-
-    readJobs();
-
+    jobs = inputParser -> parseJobs(getCurrentSimTime());
+    
+    for(int i = 0; i < (int) jobs.size(); i++)
+    {
+        ArrivalEvent* ae = new ArrivalEvent(jobs[i].getArrivalTime(), i);
+        if (useYumYumTraceFormat) {
+            selfLink -> send(0, ae); 
+        } else {
+            selfLink -> send(jobs[i].getArrivalTime(), ae); 
+        }
+    }
+        
     if( useYumYumTraceFormat ){
-
+        char* inputDir = getenv("SIMINPUT");
+        string jobListFileName;
+        if (inputDir != NULL) {
+            jobListFileName = inputDir + trace;
+        } else {
+            jobListFileName = trace;
+        }
         // in case there were no jobs in the joblist
         if( jobs.empty() ){
             unregisterYourself();
         }
-
         CommunicationEvent * CommEvent = new CommunicationEvent( START_FILE_WATCH );
         CommEvent->payload = & jobListFileName;
         selfLink->send( CommEvent ); 
@@ -243,179 +244,6 @@ void schedComponent::setup()
 schedComponent::schedComponent() : Component(-1)
 {
     // for serialization only
-}
-
-
-void schedComponent::readJobs()
-{
-    ifstream input;
-    input.open( jobListFileName.c_str() );
-
-    if(!input.is_open())
-        input.open(trace.c_str());  //try without directory                     
-    if(!input.is_open()){
-        schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s", jobListFileName.c_str());
-    }
-
-    LastJobFileModTime = boost::filesystem::last_write_time( jobListFileNamePath );
-
-    string line;
-    while (!input.eof()) {
-        getline(input, line);
-        if (useYumYumTraceFormat) {
-            newYumYumJobLine(line);
-        } else {
-            newJobLine(line);
-        }
-    }
-
-    input.close();
-}
-
-
-/*
- * Returns true if the job list file has been modified since the last time it was checked, false otherwise
- */
-bool schedComponent::checkJobFile()
-{
-    if( boost::filesystem::exists( jobListFileNamePath ) ){
-        time_t lastWritten = boost::filesystem::last_write_time( jobListFileNamePath );
-        if( lastWritten > LastJobFileModTime ){
-            LastJobFileModTime = lastWritten;
-            return true;
-        }
-    }
-    return false;
-}
-
-
-/*
- * Ensures that j can be scheduled.  Assumes that j is at jobs.back()
- * If j can be scheduled, it is scheduled
- */
-bool schedComponent::validateJob( Job * j, vector<Job> * jobs, long runningTime )
-{
-    bool ok = true;
-    if (j -> getProcsNeeded() <= 0) {
-        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it",
-                         j -> getJobNum(), j -> getProcsNeeded());
-        jobs->pop_back();
-        ok = false;
-    }
-    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
-        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it",
-                         j -> getJobNum(), runningTime);
-        jobs->pop_back();
-        ok = false;
-    }
-    if (ok && j -> getProcsNeeded() > machine -> getNumFreeProcessors()) {
-        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
-                       j -> getJobNum(), j -> getProcsNeeded(), machine -> getNumFreeProcessors());
-    }
-    if (ok) {
-        ArrivalEvent* ae = new ArrivalEvent(j -> getArrivalTime(), jobs -> size() - 1);
-        if (useYumYumTraceFormat) {
-            selfLink -> send(0, ae); 
-        } else {
-            selfLink -> send(j -> getArrivalTime(), ae); 
-        }
-    }
-    return ok;
-}
-
-
-/*
-   Reads in a joblist in the YumYum format.
-
-   All jobs will have an arrival time of getCurrentSimTime().
-
-   The YumYum format is something like:
-   [Job ID], [Job duration], [Procs needed]
-   */
-bool schedComponent::newYumYumJobLine(std::string line)
-{
-    boost::algorithm::trim(line);
-
-    if (line.compare("YYKILL") == 0) {
-        YumYumSimulationKillFlag = true;
-        useYumYumSimulationKill = false;
-        return false;
-    }
-
-    if (line.find_first_of("1234567890") == string::npos)
-        return false;
-
-    char ID[JobIDlength];
-    uint64_t duration;
-    uint64_t procs;
-
-    boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer(line);
-    vector<string> tokens;
-    tokens.assign(Tokenizer.begin(), Tokenizer.end());
-
-    boost::algorithm::trim(tokens.at(0));
-    boost::algorithm::trim(tokens.at(1));
-    boost::algorithm::trim(tokens.at(2));
-
-    strncpy(ID, tokens.at(0).c_str(), JobIDlength);
-    if (JobIDlength > 0) {
-        ID[JobIDlength - 1] = '\0';
-    }
-
-    uint64_t currentJobID;
-    uint64_t lastJobID;
-
-    sscanf( ID, "%"PRIu64, &currentJobID );
-    sscanf( lastJobRead, "%"PRIu64, &lastJobID );
-
-    if (lastJobRead[ 0 ] != '\0' && currentJobID <= lastJobID ){
-        return false;       // We have read this job before, don't do it again.
-    }
-
-    sscanf( tokens.at( 1 ).c_str(), "%"PRIu64, &duration );
-    sscanf( tokens.at( 2 ).c_str(), "%"PRIu64, &procs );
-
-    strcpy( lastJobRead, ID );
-
-    if (tokens.size() != 3) {
-        schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s", line.c_str());
-    } else {
-        if (useYumYumTraceFormat) {
-            jobs.push_back(Job(getCurrentSimTime() + 1, procs, duration, duration + 1, std::string(ID)));
-        } else {
-            jobs.push_back(Job(getCurrentSimTime(), procs, duration, duration, std::string(ID)));
-        }
-    }
-
-    // validate the job to make sure that the specified machine can actually run it. 
-    Job* j = &jobs.back();
-
-    return validateJob(j, &jobs, abs((long)duration));
-}
-
-
-bool schedComponent::newJobLine(std::string line)
-{
-    if (line.find_first_not_of(" \t\n") == string::npos)
-        return false;
-
-    unsigned long arrivalTime;
-    int procsNeeded;
-    unsigned long runningTime;
-    unsigned long estRunningTime;
-    int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
-                     &procsNeeded, &runningTime, &estRunningTime);
-    if (num < 3) schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s",  line.c_str());
-    if (3 == num) {
-        jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
-    } else { //read all 4                                                        
-        jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
-    }
-
-    //validate                                                                  
-    Job* j = &jobs.back();
-
-    return validateJob(j, &jobs, runningTime);
 }
 
 
@@ -447,8 +275,8 @@ void schedComponent::unregisterYourself()
     if (useYumYumSimulationKill) {
         while( YumYumSimulationKillFlag != true && jobs.empty() ){
             boost::this_thread::sleep( boost::posix_time::milliseconds( YumYumPollWait ) );
-            if (checkJobFile()) {
-                readJobs();
+            if (inputParser -> checkJobFile()) {
+                jobs = inputParser -> parseJobs(getCurrentSimTime());
                 if (!jobs.empty()) {
                     break;
                 }
@@ -464,7 +292,6 @@ void schedComponent::unregisterYourself()
     if (!isRegistered() && jobLog.is_open()) {
         jobLog.close();
     }
-
 }
 
 
