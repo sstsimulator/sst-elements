@@ -37,8 +37,7 @@ namespace SST {
                 std::vector<Job> parseJobs(SimTime_t currSimTime);
                 bool checkJobFile();
                 
-                InputParser(Machine* machine, 
-                            bool useYumYumTraceFormat,
+                InputParser(Machine* machine,
                             SST::Params& params, 
                             bool* useYumYumSimulationKill, 
                             bool* YumYumSimulationKillFlag );

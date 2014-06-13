@@ -184,7 +184,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
     printJobLog = params.find("printJobLog") != params.end();
 
-    inputParser = new InputParser(machine, useYumYumTraceFormat, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
+    inputParser = new InputParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
 
     schedout.output("\nScheduler Detects %d nodes\n", (int)nodes.size());
 

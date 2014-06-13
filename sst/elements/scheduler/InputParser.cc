@@ -28,8 +28,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::Scheduler;
 
-InputParser::InputParser(Machine* machine, 
-                         bool useYumYumTraceFormat, 
+InputParser::InputParser(Machine* machine,
                          SST::Params& params, 
                          bool* useYumYumSimulationKill, 
                          bool* YumYumSimulationKillFlag)
