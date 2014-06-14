@@ -64,6 +64,7 @@ libscheduler_la_SOURCES = \
     events/FaultEvent.h \
     events/FinalTimeEvent.h \
     events/JobKillEvent.h \
+    events/JobStartEvent.h \
     events/ObjectRetrievalEvent.h \
     schedulers/EASYScheduler.cc \
     schedulers/EASYScheduler.h \
