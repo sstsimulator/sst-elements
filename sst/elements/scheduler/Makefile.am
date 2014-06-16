@@ -20,6 +20,7 @@ libscheduler_la_SOURCES = \
     schedLib.cc		SimpleMachine.cc	Statistics.cc \
     MachineMesh.cc		MachineMesh.h \
     MeshAllocInfo.cc \
+    MeshAllocInfo.h \
     MBSAllocInfo.h \
     Factory.h		Factory.cc \
     FST.cc		FST.h \
