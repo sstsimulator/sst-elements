@@ -210,16 +210,9 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
     if( params.find("dMatrixFile") != params.end() ){
         dMatrixFile = params["dMatrixFile"];
     }
-    if (dMatrixFile.compare("none") == 0 ) { //no recuirculation matrix provided
+    if (dMatrixFile.compare("none") == 0 ) { 
+        //default: no recuirculation
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no heat recirculation\n");
-        //fill D matrix with zeros  
-        D_matrix = new double*[numProcs];
-        for(int i=0; i < numProcs; i++){
-            D_matrix[i] = new double[numProcs];
-            for(int j=0; j < numProcs; j++){
-                D_matrix[i][j] = 0;
-            }
-        }
     } else {
         DParser dParser = DParser(numProcs, params);
         D_matrix = dParser.readDMatrix();

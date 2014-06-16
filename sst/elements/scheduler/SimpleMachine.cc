@@ -26,12 +26,11 @@
 using namespace SST::Scheduler;
 
 //takes number of processors
-SimpleMachine::SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine, double** D_matrix) 
+SimpleMachine::SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine, double** D_matrix) : Machine(D_matrix) 
 {  
     schedout.init("", 8, ~0, Output::STDOUT);
     numProcs = procs;
     this->sc = sc;
-    this -> D_matrix = D_matrix;
     simulationmachine = insimulationmachine;
     reset();
 }

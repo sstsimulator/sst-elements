@@ -24,6 +24,21 @@ namespace SST {
         class Machine{
             public:
 
+                Machine(double** D_matrix)
+                {
+                    if(D_matrix == NULL){ //use default: no heat recirculation
+                        this -> D_matrix = new double*[numProcs];
+                        for(int i=0; i < numProcs; i++){
+                            this -> D_matrix[i] = new double[numProcs];
+                            for(int j=0; j < numProcs; j++){
+                                this -> D_matrix[i][j] = 0;
+                            }
+                        } 
+                    } else {
+                        this -> D_matrix = D_matrix;
+                    }
+                }
+
                 virtual ~Machine()
                 {
                     if(D_matrix != NULL){

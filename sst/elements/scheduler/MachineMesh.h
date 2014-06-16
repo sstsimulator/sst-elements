@@ -67,7 +67,7 @@ namespace SST {
 
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num);
 
-				double getCoolingPower(std::vector<MeshLocation*>* locs);
+				double getCoolingPower();
 
                 //std::string tostd::string();
         };

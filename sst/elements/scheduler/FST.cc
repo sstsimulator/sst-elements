@@ -93,16 +93,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     //create copies of the scheduler, machine, and allocator for our simulation
     Scheduler* sched = insched -> copy(running, toRun);
-    double** D_matrix;
-    int numProcs = inmach -> getNumProcs();
-    D_matrix = new double*[numProcs];
-    for(int i=0; i < numProcs; i++){
-        D_matrix[i] = new double[numProcs];
-        for(int j=0; j < numProcs; j++){
-            D_matrix[i][j] = 0;
-        }
-    }
-    Machine* mach = new SimpleMachine(numProcs, NULL, true, D_matrix);
+    Machine* mach = new SimpleMachine(inmach -> getNumProcs(), NULL, true, NULL);
     Allocator* alloc = new SimpleAllocator((SimpleMachine*) mach);
     string nullstr = "";
     char nullcstr[] = "";

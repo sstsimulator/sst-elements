@@ -38,7 +38,7 @@ namespace SST {
     }
 }
 
-MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) 
+MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) : Machine(D_matrix)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
@@ -57,7 +57,6 @@ MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, doubl
         }
     }
     this -> sc = sc;
-    this -> D_matrix = D_matrix;
     reset();
 }
 
@@ -187,25 +186,10 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
         }
     }
 
-	std::string tempstring= "";
-	for (unsigned int k = 0; k < isFree[0][0].size(); k++) {
-		tempstring= "";
-		for (int j = isFree[0].size() - 1; j >= 0; j--) {
-			for (unsigned int i = 0; i < isFree.size(); i++) {
-				if(isFree[i][j][k]) {
-					tempstring += "0";
-                                } else {
-					tempstring += "1";
-                                }
-                        }
-			tempstring += "\n";
-		}
-	}
-
   return retVal;
 }
 
-double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs) 
+double MachineMesh::getCoolingPower() 
 {
     int Putil=2000;
     int Pidle=1000;
