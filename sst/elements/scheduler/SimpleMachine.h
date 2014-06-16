@@ -28,8 +28,8 @@ namespace SST {
 
         class SimpleMachine : public Machine {
 
-            public:
-                SimpleMachine(int procs, schedComponent* sc, bool);  //takes number of processors
+            public:                
+                SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine, double** D_matrix);  //takes number of processors
 
                 virtual ~SimpleMachine() {}
 

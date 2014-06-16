@@ -12,6 +12,7 @@
 #include <ctime>
 #include <fstream>
 #include <string>
+#include <typeinfo>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>        // for reading YumYum jobs
@@ -19,7 +20,7 @@
 
 #include <sst/core/params.h>
 
-#include "InputParser.h" 
+#include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
 #include "output.h"
@@ -28,45 +29,45 @@ using namespace std;
 using namespace SST;
 using namespace SST::Scheduler;
 
-InputParser::InputParser(Machine* machine,
-                         SST::Params& params, 
-                         bool* useYumYumSimulationKill, 
-                         bool* YumYumSimulationKillFlag)
+JobParser::JobParser(Machine* machine,
+          SST::Params& params,
+          bool* useYumYumSimulationKill,
+          bool* YumYumSimulationKillFlag )
 {
     this -> machine = machine;
     this -> useYumYumSimulationKill = useYumYumSimulationKill;
     this -> YumYumSimulationKillFlag = YumYumSimulationKillFlag;
     useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
-    trace = params["traceName"].c_str();
+    jobTrace = params["traceName"].c_str();
 
     lastJobRead[ 0 ] = '\0';
     
     char* inputDir = getenv("SIMINPUT");
     if (inputDir != NULL) {
-        string fullName = inputDir + trace;
-        jobListFileName = fullName;
+        string fullName = inputDir + jobTrace;
+        fileName = fullName;
     } else {
-        jobListFileName = trace;
+        fileName = jobTrace;
     }
 
-    jobListFileNamePath = boost::filesystem::path( jobListFileName.c_str());
+    fileNamePath = boost::filesystem::path( fileName.c_str());
     
 }
 
-std::vector<Job> InputParser::parseJobs(SimTime_t currSimTime)
+std::vector<Job> JobParser::parseJobs(SimTime_t currSimTime)
 {
     ifstream input;
-    input.open( jobListFileName.c_str() );
-    jobs.clear();
-
+    input.open( fileName.c_str() );
     if(!input.is_open()){
-        input.open(trace.c_str());  //try without directory
+        input.open(jobTrace.c_str());  //try without directory
     }                     
     if(!input.is_open()){
-        schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s", jobListFileName.c_str());
+        schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s", fileName.c_str());
     }
+    
+    jobs.clear();
 
-    LastJobFileModTime = boost::filesystem::last_write_time( jobListFileNamePath );
+    LastJobFileModTime = boost::filesystem::last_write_time( fileNamePath );
 
     //read line by line
     string line;
@@ -88,10 +89,10 @@ std::vector<Job> InputParser::parseJobs(SimTime_t currSimTime)
 /*
  * Returns true if the job list file has been modified since the last time it was checked, false otherwise
  */
-bool InputParser::checkJobFile()
+bool JobParser::checkJobFile()
 {
-    if( boost::filesystem::exists( jobListFileNamePath ) ){
-        time_t lastWritten = boost::filesystem::last_write_time( jobListFileNamePath );
+    if( boost::filesystem::exists( fileNamePath ) ){
+        time_t lastWritten = boost::filesystem::last_write_time( fileNamePath );
         if( lastWritten > LastJobFileModTime ){
             LastJobFileModTime = lastWritten;
             return true;
@@ -108,7 +109,7 @@ bool InputParser::checkJobFile()
    The YumYum format is something like:
    [Job ID], [Job duration], [Procs needed]
    */
-bool InputParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
+bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
 {
     boost::algorithm::trim(line);
 
@@ -170,7 +171,7 @@ bool InputParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
 }
 
 
-bool InputParser::newJobLine(std::string line)
+bool JobParser::newJobLine(std::string line)
 {
     if (line.find_first_not_of(" \t\n") == string::npos)
         return false;
@@ -194,7 +195,7 @@ bool InputParser::newJobLine(std::string line)
     return validateJob(j, &jobs, runningTime);
 }
 
-bool InputParser::validateJob( Job* j, vector<Job>* jobs, long runningTime )
+bool JobParser::validateJob( Job* j, vector<Job>* jobs, long runningTime )
 {
     bool ok = true;
     if (j -> getProcsNeeded() <= 0) {
@@ -215,4 +216,133 @@ bool InputParser::validateJob( Job* j, vector<Job>* jobs, long runningTime )
     }
     
     return ok;
+}
+
+DParser::DParser(int numNodes, SST::Params& params)
+{
+    this -> numNodes = numNodes;
+    fileName = params["dMatrixFile"].c_str();
+    
+    char* inputDir = getenv("SIMINPUT");
+    if (inputDir != NULL) {
+        filePath = inputDir + fileName;
+    } else {
+        filePath = fileName;
+    }
+}
+
+double** DParser::readDMatrix()
+{
+    double** dMatrix;
+    
+    //first check file
+    ifstream input;
+    string inFile = fileName.c_str();
+    input.open(inFile.c_str());
+    if(!input.is_open()){
+        input.open(filePath.c_str());  //try without directory
+        inFile = filePath;
+    }                     
+    if(!input.is_open()){
+        schedout.fatal(CALL_INFO, 1, "Unable to open file: %s", fileName.c_str());
+    }
+    input.close();
+
+    //read matrix
+    MatrixMarketReader2D<double> reader = MatrixMarketReader2D<double>();
+    dMatrix = reader.readMatrix(inFile.c_str());
+    
+    //check if x&y sizes and machine size match
+    if(reader.xdim != reader.ydim){
+        schedout.fatal(CALL_INFO, 1, "Given matrix in file %s is not a square matrix\n", inFile.c_str());
+    } else if(reader.xdim != numNodes){
+        schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", inFile.c_str());
+    }
+    
+    return dMatrix;
+}
+
+template <class T>
+T** MatrixMarketReader2D<T>::readMatrix(const char* fileName)
+{
+    //TODO: make this function faster by reading the file all at once
+    
+    T** outMatrix;
+    
+    //open file
+    ifstream inputFile;
+    inputFile.open( fileName, std::fstream::in );
+    if(!inputFile.is_open()){
+        schedout.fatal(CALL_INFO, 1, "Unable to open file: %s", fileName);
+    }
+
+    //read header
+    string fType, object, format, field, symmetry;
+    if( !(inputFile >> fType >> object >> format >> field >> symmetry) ){
+        schedout.fatal(CALL_INFO, 1, "Cannot read matrix market file: %s\n", fileName);
+    }
+    
+    //check compatibility
+    if(fType.compare("%%MatrixMarket") != 0){
+        schedout.fatal(CALL_INFO, 1, "File %s is not a Matrix Market file\n", fileName);
+    }
+    if(object.compare("matrix") != 0){
+        schedout.fatal(CALL_INFO, 1, "Object type in file %s should be a matrix\n", fileName);
+    }
+    if(format.compare("coordinate") != 0){
+        schedout.fatal(CALL_INFO, 1, "Matrix Market in file %s should be given in coordinate format\n", fileName);
+    }
+    if(typeid(int) == typeid(T)){
+        if(field.compare("integer") != 0){
+            schedout.fatal(CALL_INFO, 1, "In file %s : integer input type is expected\n", fileName);
+        }
+    }
+    if(typeid(double) == typeid(T)){
+        if(field.compare("real") != 0 && field.compare("double") != 0){
+            schedout.fatal(CALL_INFO, 1, "In file %s : double input type is expected\n", fileName);
+        }
+    }
+    
+    //ignore comments
+    while (inputFile.peek() == '%' || inputFile.peek() == '\n'){
+    	inputFile.ignore(2048, '\n');
+    }
+    
+    //read the size line
+    int numLines;
+    if( !(inputFile >> xdim >> ydim >> numLines) ){
+        schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
+    }
+    
+    //initialize matrix
+    outMatrix = new T*[xdim];
+    for(int i=0; i < xdim; i++){
+        outMatrix[i] = new T[ydim];
+        for(int j=0; j < ydim; j++){
+            outMatrix[i][j] = 0;
+        }
+    }
+    
+    //read data
+    int x=0, y=0;
+    T data;
+    for(int i = 0; i < numLines; i++){
+        if( !(inputFile >> x >> y >> data) ){
+            schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
+        }
+        outMatrix[x-1][y-1] = data;
+    }    
+    
+    inputFile.close();
+    
+    //apply symmetry if needed
+    if(symmetry.compare("general") != 0){
+        for(int i = 0; i < xdim; i++){
+            for(int j = i; j < ydim; j++){
+                outMatrix[i][j] = outMatrix[j][i];
+            }
+        }
+    }
+    
+    return outMatrix;   
 }

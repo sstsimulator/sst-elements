@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
 /* Factory file helps parse the parameters in the sdl file
  * returns correct type of machine, allocator, and scheduler
  */
@@ -25,7 +24,6 @@
 namespace SST {
     class Params;
     namespace Scheduler {
-
 
         //forward declared classes
         class schedComponent;

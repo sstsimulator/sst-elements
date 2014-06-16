@@ -224,28 +224,6 @@ AllocInfo* NearestAllocator::allocate(Job* job)
 //(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
-    /*
-    int lptosst[40] = {0,5,10,15,
-        1,6,11,16, 
-        2,7,12,17,
-        3,8,13,18, 
-        4,9,14,19,
-        20,25,30,35,
-        21,26,31,36,
-        22,27,32,37, 
-        23,28,33,38,
-        24,29,34,39};
-
-    int ssttolp[40] = {0,4,8,12,16,
-        1,5,9,13,17,
-        2,6,10,14,18,
-        3,7,11,15,19,
-        20,24,28,32,36,
-        21,25,29,33,37,
-        22,26,30,34,38,
-        23,27,31,35,39};
-        */
-
     if (!canAllocate(job, available)) {
         return NULL;
     }
@@ -284,50 +262,10 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         //if done using only energy, just return the LP results by copying possCenters
         //otherwise, we'll use it as the actual centers
         possCenters = EnergyHelpers::getEnergyNodes(available, numProcs, (MachineMesh*)machine);
-
-        /*
-        possCenters = new std::vector<MeshLocation*>();
-
-        int* oldx = new int[40];
-        int* newx = new int[40];
-        for(int x= 0; x < 40; x++) {
-            oldx[x] = 1;
-            newx[x] = 0;
-        }
-        for(unsigned int x = 0; x < available -> size(); x++) { 
-            oldx[ssttolp[(*available)[x]->toInt((MachineMesh*)machine)]] = 0;
-        }
-
-        hybridalloc(oldx, newx, 40, numProcs);
-        for(int x = 0; x < 40; x++) {
-            if(newx[x] == 1 && oldx[x] == 0) {
-                possCenters -> push_back(new MeshLocation(lptosst[x],(MachineMesh*)machine));
-            }
-        }
-        */
     } else { 
         possCenters = centerGenerator -> getCenters(available);
     }
-
-    /*
-    if (NEARESTALLOCATOR_TYPE_ENERGY == energyType) {
-        for(unsigned int i = 0; i < possCenters->size(); i++) {
-            (*(retVal -> processors))[i] = possCenters->at(i); 
-            retVal -> nodeIndices[i] = possCenters->at(i)-> toInt((MachineMesh*) machine);
-        }
-        return retVal;
-    }*/
-
-    //with a strictly energy efficient allocation the remainder is never executed
-
-    /*
-       printf("possCenters:");
-       for(unsigned int x = 0; x < possCenters->size(); x++)
-       printf("%d ", possCenters -> at(x)->toInt((MachineMesh*)machine));
-       printf("\n");
-       */
-
-
+    
     for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
         std::vector<MeshLocation*>* nearest = pointCollector -> getNearest(*center, numProcs, available);
 
@@ -355,15 +293,10 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         }
     }
     possCenters -> clear();
+    
     delete possCenters;
-
     delete bestVal;
-    /*
-       printf("Returning retval: ");
-       for (int i = 0; i < numProcs; i++) {
-       printf("%d ", retVal->nodeIndices[i]);
-       }
-       */
+    
     return retVal;
 }
 
@@ -390,7 +323,6 @@ void NearestAllocator::OldMC1x1Allocator(MachineMesh* m) {
     pointCollector = new LInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
     //readnewcenter = false;
-    //srand(time(0));
 }
 
 void NearestAllocator::MC1x1Allocator(MachineMesh* m) {
@@ -400,7 +332,6 @@ void NearestAllocator::MC1x1Allocator(MachineMesh* m) {
     pointCollector = new GreedyLInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
     //readnewcenter = false;
-    //srand(time(0));
 } 
 
 void NearestAllocator::HybridAllocator(MachineMesh* m) {
@@ -410,7 +341,6 @@ void NearestAllocator::HybridAllocator(MachineMesh* m) {
     pointCollector = new GreedyLInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
     //readnewcenter = false;
-    //srand(time(0));
 } 
 
 

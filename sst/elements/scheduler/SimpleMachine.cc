@@ -26,11 +26,12 @@
 using namespace SST::Scheduler;
 
 //takes number of processors
-SimpleMachine::SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine) 
+SimpleMachine::SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine, double** D_matrix) 
 {  
     schedout.init("", 8, ~0, Output::STDOUT);
     numProcs = procs;
     this->sc = sc;
+    this -> D_matrix = D_matrix;
     simulationmachine = insimulationmachine;
     reset();
 }
@@ -43,19 +44,6 @@ void SimpleMachine::reset()
     for(int i = 0; i < numProcs; i++)
         freeNodes.push_back(i);
 }
-
-/*
-   Machine* SimpleMachine::Make(std::vector<std::string>* params) { //Factory creation method
-   argsAtMost(1, params);
-   argsAtLeast(1, params);
-
-   return new SimpleMachine(atoi((*params)[1].c_str()));
-   }
-
-   std::string SimpleMachine::getParamHelp() {
-   return "[<num procs>]";
-   }
-   */
 
 std::string SimpleMachine::getSetupInfo(bool comment)
 {
@@ -75,21 +63,12 @@ void SimpleMachine::allocate(AllocInfo* allocInfo)
 {  
     int num = allocInfo -> job -> getProcsNeeded();  //number of processors
 
-    /*
-    if(debug)
-        std::cerr << "allocate(" << allocInfo -> job -> toString() << "); "
-            << (numAvail - num) << " processors free" << std::endl;
-            */
-
     if (allocInfo -> job -> hasStarted()) {
         schedout.debug(CALL_INFO, 7, 0, "%lu: allocate(%s) ending at %lu\n", allocInfo -> job -> getStartTime(), allocInfo -> job -> toString().c_str(), allocInfo -> job -> getStartTime() + allocInfo -> job -> getActualTime());
     } else {
         schedout.debug(CALL_INFO, 7, 0, "allocate(%s);\n", allocInfo -> job -> toString().c_str());
     }
     if(num > numAvail) {
-        //char mesg[100];
-        //sprintf(mesg, "Attempt to allocate %d processors when only %d are available", num, numAvail);
-        //internal_error(std::string(mesg));
         schedout.fatal(CALL_INFO, 1, "Attempt to allocate %d processors when only %d are available", num, numAvail);
     }
 
@@ -116,18 +95,10 @@ void SimpleMachine::allocate(AllocInfo* allocInfo)
 void SimpleMachine::deallocate(AllocInfo* allocInfo) 
 {  
     int num = allocInfo ->job -> getProcsNeeded();  //number of processors
-    //if(debug)
-    //    std::cerr << "deallocate(" << allocInfo -> job << "); " 
-    //        << (numAvail + num) << " processors free" << std::endl;
-
     schedout.debug(CALL_INFO, 7, 0, "deallocate(%s); %d processors free\n", allocInfo -> job ->toString().c_str(), numAvail + num);
 
     if(num > (numProcs - numAvail)) {
         schedout.fatal(CALL_INFO, 1, "Attempt to deallocate %d processors when only %d are busy", num, (numProcs-numAvail));
-        //char mesg[100];
-        //sprintf(mesg, "Attempt to deallocate %d processors when only %d are busy",
-        //        num, (numProcs-numAvail));
-        //internal_error(std::string(mesg));
     }
 
     numAvail += num;

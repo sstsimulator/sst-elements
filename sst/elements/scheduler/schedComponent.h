@@ -40,7 +40,7 @@ namespace SST {
         class Statistics;
         class AllocInfo;
         class FST;
-        class InputParser;
+        class JobParser;
 
         // the maximum length of a job ID.  used primarily for job list parsing.
 
@@ -111,7 +111,7 @@ namespace SST {
                 bool printYumYumJobLog;       // should the Job Log use the YumYum format?
                 bool useYumYumTraceFormat;    // should we expect the incoming job list to use the YumYum format?
                                               // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
-                InputParser* inputParser;
+                JobParser* jobParser;
 
                 bool useYumYumSimulationKill;         // should the simulation end on a special job (true), or just when the job list is exhausted (false)?
                 bool YumYumSimulationKillFlag;        // this will signal the schedComponent to unregister itself iff useYumYumSimulationKill == true

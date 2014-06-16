@@ -30,27 +30,24 @@ namespace SST {
         
         // the maximum length of a job ID.  used primarily for job list parsing.
 #define JobIDlength 16
-
-        class InputParser {
+            
+        class JobParser {
             public:
-                
+                JobParser(Machine* machine, 
+                          SST::Params& params, 
+                          bool* useYumYumSimulationKill, 
+                          bool* YumYumSimulationKillFlag ); 
+                ~JobParser() { };
+                        
                 std::vector<Job> parseJobs(SimTime_t currSimTime);
                 bool checkJobFile();
-                
-                InputParser(Machine* machine,
-                            SST::Params& params, 
-                            bool* useYumYumSimulationKill, 
-                            bool* YumYumSimulationKillFlag );
-                            
-                ~InputParser() { };
-
             private:
                 Machine* machine;
                 std::vector<Job> jobs;
 
-                std::string jobListFileName;
-                boost::filesystem::path jobListFileNamePath;
-                std::string trace;
+                std::string fileName;
+                boost::filesystem::path fileNamePath;
+                std::string jobTrace;
                 
                 time_t LastJobFileModTime;            // Contains the last time that the job file was modified
                 char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
@@ -63,6 +60,29 @@ namespace SST {
                 bool newYumYumJobLine(std::string line, SimTime_t currSimTime);
                 bool* useYumYumSimulationKill;
                 bool* YumYumSimulationKillFlag;
+        };
+        
+        class DParser {
+            public:
+                DParser(int numNodes,
+                        SST::Params& params);
+                //reads heat recirculation matrix
+                //@param dMatrix: uninitialized pointer
+                double** readDMatrix();
+            private:
+                int numNodes;
+                std::string fileName;
+                std::string filePath;
+        };
+            
+        //helper class
+        template <class T>
+        class MatrixMarketReader2D {
+            public:
+                MatrixMarketReader2D() { };
+                ~MatrixMarketReader2D() { };
+                T** readMatrix(const char* fileName); //@param outMatrix: uninitialized pointer
+                int xdim, ydim;
         };
     }
 }

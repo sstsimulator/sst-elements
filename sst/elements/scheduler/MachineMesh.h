@@ -36,11 +36,10 @@ namespace SST {
                 schedComponent* sc;
 
                 std::vector<std::vector<std::vector<bool> > > isFree;  //whether each processor is free
+                
             public:
-
-                MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc);
-
-                MachineMesh(MachineMesh* inmesh);
+                
+                MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix);
 
                 static std::string getParamHelp();
 

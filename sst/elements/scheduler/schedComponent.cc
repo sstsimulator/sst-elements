@@ -184,7 +184,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
     printJobLog = params.find("printJobLog") != params.end();
 
-    inputParser = new InputParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
+    jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
 
     schedout.output("\nScheduler Detects %d nodes\n", (int)nodes.size());
 
@@ -206,7 +206,7 @@ void schedComponent::setup()
 
     // done setting up the links, now read the job list
 
-    jobs = inputParser -> parseJobs(getCurrentSimTime());
+    jobs = jobParser -> parseJobs(getCurrentSimTime());
     
     for(int i = 0; i < (int) jobs.size(); i++)
     {
@@ -275,8 +275,8 @@ void schedComponent::unregisterYourself()
     if (useYumYumSimulationKill) {
         while( YumYumSimulationKillFlag != true && jobs.empty() ){
             boost::this_thread::sleep( boost::posix_time::milliseconds( YumYumPollWait ) );
-            if (inputParser -> checkJobFile()) {
-                jobs = inputParser -> parseJobs(getCurrentSimTime());
+            if (jobParser -> checkJobFile()) {
+                jobs = jobParser -> parseJobs(getCurrentSimTime());
                 if (!jobs.empty()) {
                     break;
                 }

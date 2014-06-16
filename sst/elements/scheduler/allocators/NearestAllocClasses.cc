@@ -69,42 +69,6 @@ string FreeCenterGenerator::getSetupInfo(bool comment)
     return com + "FreeCenterGenerator";
 }
 
-/*
-vector<MeshLocation*>* HybridGenerator::getCenters(vector<MeshLocation*>* available)//, MachineMesh* m) 
-{
-    //returns vector containing contents of available (deep copy to match Intersection version)
-    //only returns the ones with smallest cooling cost
-    
-    int lptosst[40] = {0,5,10,15,
-        1,6,11,16, 
-        2,7,12,17,
-        3,8,13,18, 
-        4,9,14,19,
-        20,25,30,35,
-        21,26,31,36,
-        22,27,32,37, 
-        23,28,33,38,
-        24,29,34,39};
-
-    int ssttolp[40] = {0,4,8,12,16,
-        1,5,9,13,17,
-        2,6,10,14,18,
-        3,7,11,15,19,
-        20,24,28,32,36,
-        21,25,29,33,37,
-        22,26,30,34,38,
-        23,27,31,35,39};
-
-
-    vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
-    for (unsigned int x = 0; x < available -> size(); x++) {
-        retVal -> push_back(new MeshLocation((*available)[x]));
-    }
-    return retVal;
-    return NULL;
-}
-*/
-
 bool contains(vector<int>* vec, int i)
 {
     bool ret = false;

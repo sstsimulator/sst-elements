@@ -15,6 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
+#include <string>
 
 #include <sst/core/params.h>
 
@@ -23,7 +24,8 @@
 #include "misc.h"
 #include "schedComponent.h"
 #include "SimpleMachine.h"
-
+#include "InputParser.h"
+ 
 #include "allocators/NearestAllocator.h"
 #include "allocators/OctetMBSAllocator.h"
 #include "allocators/BestFitAllocator.h"
@@ -200,10 +202,34 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
 //returns the correct machine based on the parameters
 Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* sc)
 {
+    Machine* retMachine = NULL;
+    double** D_matrix = NULL;
+    
+    //get the heat recirculation matrix if available
+    string dMatrixFile = "none";
+    if( params.find("dMatrixFile") != params.end() ){
+        dMatrixFile = params["dMatrixFile"];
+    }
+    if (dMatrixFile.compare("none") == 0 ) { //no recuirculation matrix provided
+        schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no heat recirculation\n");
+        //fill D matrix with zeros  
+        D_matrix = new double*[numProcs];
+        for(int i=0; i < numProcs; i++){
+            D_matrix[i] = new double[numProcs];
+            for(int j=0; j < numProcs; j++){
+                D_matrix[i][j] = 0;
+            }
+        }
+    } else {
+        DParser dParser = DParser(numProcs, params);
+        D_matrix = dParser.readDMatrix();
+    }
+    
+    //get machine
     if (params.find("machine") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Machine\n");
-        return new SimpleMachine(numProcs, sc, false);
+        retMachine = new SimpleMachine(numProcs, sc, false, D_matrix);
     }
     else
     {
@@ -213,7 +239,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
             //simple machine
         case SIMPLEMACH:
             schedout.debug(CALL_INFO, 4, 0, "Simple Machine\n");
-            return new SimpleMachine(numProcs, sc, false);
+            retMachine = new SimpleMachine(numProcs, sc, false, D_matrix);
             break;
 
             //Mesh Machine
@@ -236,15 +262,16 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
                 if (x * y * z != numProcs) {
                     schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of processors");
                 }
-                return new MachineMesh(x,y,z,sc);
+                retMachine = new MachineMesh(x, y, z, sc, D_matrix);
                 break;
 
             }
         default:
-            schedout.fatal(CALL_INFO, 1, "Could not parse name of machine");
+            schedout.fatal(CALL_INFO, 1, "Cannot parse name of machine");
         }
     }
-    return NULL; //control never reaches here
+        
+    return retMachine;
 }
 
 

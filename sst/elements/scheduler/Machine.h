@@ -24,7 +24,14 @@ namespace SST {
         class Machine{
             public:
 
-                virtual ~Machine() {}
+                virtual ~Machine()
+                {
+                    if(D_matrix != NULL){
+                        for (int i = 0; i < numProcs; i++)
+	                        delete[] D_matrix[i];
+                        delete[] D_matrix;
+                    }
+                }
 
                 virtual std::string getSetupInfo(bool comment) = 0;
 
@@ -37,12 +44,14 @@ namespace SST {
                 {
                     return numProcs;
                 }
-
+                
                 virtual void reset() = 0;
 
                 virtual void allocate(AllocInfo* allocInfo) = 0;
 
                 virtual void deallocate(AllocInfo* allocInfo) = 0;
+                
+                double** D_matrix;
 
             protected:
                 int numProcs;          //total number of processors

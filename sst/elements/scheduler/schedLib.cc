@@ -183,6 +183,10 @@ static const SST::ElementInfoParam sched_params[] = {
         "RNG seed for running time deviation",
         "Current time"
     },
+    { "dMatrixFile",
+        "D_matrix input file",
+        "none"
+    },
     {NULL,NULL,NULL}
 };
 
