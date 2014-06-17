@@ -24,7 +24,7 @@ namespace SST {
         class Machine{
             public:
 
-                Machine(double** D_matrix)
+                Machine(int numProcs, double** D_matrix)
                 {
                     if(D_matrix == NULL){ //use default: no heat recirculation
                         this -> D_matrix = new double*[numProcs];

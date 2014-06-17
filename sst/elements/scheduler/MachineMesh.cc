@@ -38,7 +38,7 @@ namespace SST {
     }
 }
 
-MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) : Machine(D_matrix)
+MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) : Machine((Xdim*Ydim*Zdim), D_matrix)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
