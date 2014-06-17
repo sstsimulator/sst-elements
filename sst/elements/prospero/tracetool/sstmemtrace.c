@@ -17,10 +17,13 @@
 #include <cstring>
 #include <iostream>
 
+#include <zlib.h>
+
 using namespace std;
 
 FILE * trace;
 
+uint32_t trace_format;
 uint64_t instruction_count;
 
 const char READ_OPERATION_CHAR = 0;
@@ -32,6 +35,8 @@ KNOB<string> KnobInsRoutine(KNOB_MODE_WRITEONCE, "pintool",
     "r", "", "Instrument only a specific routine (if not specified all instructions are instrumented");
 KNOB<string> KnobTraceFile(KNOB_MODE_WRITEONCE, "pintool",
     "o", "pinatrace.out", "Output analysis to trace file.");
+KNOB<string> KnobTraceFormat(KNOB_MODE_WRITEONCE, "pintool",
+    "f", "text", "Output format, \'text\' = Plain text, \'binary\' = Binary, \'compressed\' = zlib compressed");
 
 void copy(VOID* dest, const VOID* source, int destoffset, int count) {
 	char* dest_c = (char*) dest;
@@ -48,17 +53,23 @@ VOID RecordMemRead(VOID * addr, UINT32 size)
 {
     UINT64 ma_addr = (UINT64) addr;
 
-/*    fwrite(&instruction_count, sizeof(instruction_count), 1, trace);
-    fwrite(&READ_OPERATION_CHAR, sizeof(char), 1, trace);
-    fwrite(&ma_addr, sizeof(ma_addr), 1, trace);
-    fwrite(&size, sizeof(UINT32), 1, trace); */
+    if(0 == trace_format) {
 
-    copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
-    copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
-    copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
-    copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
+    } else if (1 == trace_format) {
+	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
+    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-   fwrite( RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace);
+    	fwrite( RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace);
+    } else if (2 == trace_format) {
+	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
+    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
+
+	gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+   }
 }
 
 // Print a memory write record
@@ -71,13 +82,23 @@ VOID RecordMemWrite(VOID * addr, UINT32 size)
     fwrite(&ma_addr, sizeof(ma_addr), 1, trace);
     fwrite(&size, sizeof(UINT32), 1, trace);*/
 
-    copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
-    copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
-    copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
-    copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
+    if(0 == trace_format) {
 
-   fwrite( RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace);
+    } else if(1 == trace_format) {
+    	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
+    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
+   	fwrite( RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace);
+   } else if(2 == trace_format) {
+    	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
+    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
+
+	gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+   }
 }
 
 VOID IncrementInstructionCount() {
@@ -142,7 +163,11 @@ VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
 
 VOID Fini(INT32 code, VOID *v)
 {
-    fclose(trace);
+    if( (0 == trace_format) || (1 == trace_format)) {
+    	fclose(trace);
+    } else if (2 == trace_format) {
+	gzclose(trace);
+    }
 }
 
 /* ===================================================================== */
@@ -165,11 +190,19 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
     PIN_InitSymbols();
 
-#ifdef TRACE_STDOUT
-    trace = stdout;
-#else
-    trace = fopen(KnobTraceFile.Value().c_str(), "wb");
-#endif
+    if(KnobTraceFormat.Value() == "text") {
+	trace_format = 0;
+	trace = fopen(KnobTraceFile.Value().c_str(), "wt");
+    } else if(KnobTraceFormat.Value() == "binary") {
+	trace_format = 1;
+	trace = fopen(KnobTraceFile.Value().c_str(), "wb");
+    } else if(KnobTraceFormat.Value() == "compressed") {
+	trace_format = 2;
+	trace = (FILE*) gzopen(KnobTraceFile.Value().c_str(), "wb");
+    } else {
+	std::cerr << "Error: Unknown trace format: " << KnobTraceFormat.Value() << "." << std::endl;
+        exit(-1);
+    }
 
     instruction_count = 0;
 
