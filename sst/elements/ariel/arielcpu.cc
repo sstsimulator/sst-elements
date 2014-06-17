@@ -11,6 +11,7 @@
 
 
 #include <sst_config.h>
+#include <sst/core/simulation.h>
 #include "arielcpu.h"
 
 #include <sys/types.h>
@@ -243,6 +244,10 @@ void ArielCPU::finish() {
 }
 
 int ArielCPU::forkPINChild(const char* app, char** args) {
+	// If user only wants to init the simulation then we do NOT fork the binary
+	if(Simulation::getSimulation()->getSimulationMode() == Config::INIT)
+		return 0;
+
 	pid_t the_child;
 
 	// Fork this binary, then exec to get around waiting for

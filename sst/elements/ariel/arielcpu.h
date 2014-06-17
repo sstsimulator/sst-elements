@@ -15,6 +15,7 @@
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
+#include <sst/core/simulation.h>
 
 #include <stdint.h>
 
