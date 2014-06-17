@@ -233,8 +233,6 @@ DParser::DParser(int numNodes, SST::Params& params)
 
 double** DParser::readDMatrix()
 {
-    double** dMatrix;
-    
     //first check file
     ifstream input;
     string inFile = fileName.c_str();
@@ -250,7 +248,7 @@ double** DParser::readDMatrix()
 
     //read matrix
     MatrixMarketReader2D<double> reader = MatrixMarketReader2D<double>();
-    dMatrix = reader.readMatrix(inFile.c_str());
+    double** dMatrix = reader.readMatrix(inFile.c_str());
     
     //check if x&y sizes and machine size match
     if(reader.xdim != reader.ydim){

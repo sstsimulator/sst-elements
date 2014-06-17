@@ -66,8 +66,6 @@ namespace SST {
             public:
                 DParser(int numNodes,
                         SST::Params& params);
-                //reads heat recirculation matrix
-                //@param dMatrix: uninitialized pointer
                 double** readDMatrix();
             private:
                 int numNodes;
@@ -81,7 +79,7 @@ namespace SST {
             public:
                 MatrixMarketReader2D() { };
                 ~MatrixMarketReader2D() { };
-                T** readMatrix(const char* fileName); //@param outMatrix: uninitialized pointer
+                T** readMatrix(const char* fileName);
                 int xdim, ydim;
         };
     }
