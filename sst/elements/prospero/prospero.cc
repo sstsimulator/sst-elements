@@ -71,10 +71,17 @@ prospero::prospero(ComponentId_t id, Params& params) :
 		std::cout << "TRACE:  Load trace information from: " << params[ "trace" ] << std::endl;
 	}
 
-	if(trace_format == 0) {
+	if(0 == trace_format) {
 		trace_input = fopen(params["trace"].c_str(), "rb");
-	} else if (trace_format == 1) {
+	} else if (1 == trace_format) {
 		trace_input = fopen(params["trace"].c_str(), "rt");
+	} else if (2 == trace_format) {
+#ifdef HAVE_LIBZ
+		trace_input = (FILE*) gzopen(params["trace"].c_str(), "r");
+#else
+		std::cerr << "Error: Prospero requested a compressed (libz) trace file but libz is not used in the build of SST.\n");
+		exit(-1);
+#endif
 	} else {
 		printf("Unknown trace format? %" PRIu32 "\n", trace_format);
 		exit(-2);
@@ -201,10 +208,20 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		return READ_FAILED_EOF;
 	}
 
-	if(trace_format == 0) {
+	if( (0 == trace_format) || (2 == trace_format) ) {
 		const int record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 		char record_buffer[ record_length ];
-		fread(record_buffer, record_length, 1, trace_input);
+
+		if(0 == trace_format) {
+			fread(record_buffer, record_length, 1, trace_input);
+		} else if (2 == trace_format) {
+#ifdef HAVE_LIBZ
+			gzread( (gzFile) trace_input, record_buffer, record_length);
+#else
+			std::cerr << "Error: Requested trace format 2 but libz unavailable\n");
+			exit(-1);
+#endif
+		}
 
 		char op_type;
 

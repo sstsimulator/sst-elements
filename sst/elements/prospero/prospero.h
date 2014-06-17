@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#ifdef HAVE_LIBZ
+#include <zlib.h>
+#endif
+
 using namespace std;
 using namespace SST::Interfaces;
 
@@ -60,10 +64,19 @@ public:
 
   void setup()  { }
   void finish() {
-	if(output_level > 0) 
+	if(output_level > 0)
 		std::cout << "TRACE:  Closing trace input..." << std::endl;
 
-	fclose(trace_input);
+	if(2 == trace_format) {
+#ifdef HAVE_LIBZ
+		gzclose(trace_input);
+#else
+		std::cerr << "Error: trace format is compressed but libz is not available.\n");
+		exit(-1);
+#endif
+	} else {
+		fclose(trace_input);
+	}
 
 	if(output_level > 0) 
 		std::cout << "TRACE:  Close of trace input complete." << std::endl;
