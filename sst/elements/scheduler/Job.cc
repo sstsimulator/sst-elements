@@ -20,6 +20,7 @@
 #include "misc.h"
 #include "output.h"
 #include "Statistics.h"
+#include "TaskCommInfo.h"
 
 using namespace SST::Scheduler;
 
@@ -52,6 +53,13 @@ Job::Job(Job* j)
     started = j -> started;
 }
 
+Job::~Job()
+{
+	if(taskCommInfo != NULL){
+		delete taskCommInfo;
+	}
+}
+
 //Helper for constructors
 void Job::initialize(unsigned long arrivalTime, int procsNeeded,
                      unsigned long actualRunningTime, unsigned long estRunningTime) 
@@ -73,6 +81,7 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
     nextJobNum++;
     hasRun = false;
     started = false;
+    taskCommInfo = NULL;
 }
 
 std::string Job::toString() 

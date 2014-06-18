@@ -22,11 +22,20 @@ libscheduler_la_SOURCES = \
     MeshAllocInfo.cc \
     MeshAllocInfo.h \
     MBSAllocInfo.h \
-    Factory.h		Factory.cc \
-    FST.cc		FST.h \
+    Factory.cc \
+    Factory.h \
+    faultInjectionComponent.cc \
+    faultInjectionComponent.h \
+    FST.cc \
+    FST.h \
+    InputParser.cc \
+    InputParser.h \
     output.h \
-    InputParser.cc InputParser.h \
-    faultInjectionComponent.cc	faultInjectionComponent.h \
+    TaskCommInfo.cc \
+    TaskCommInfo.h \
+    TaskMapInfo.cc \
+    TaskMapInfo.h \
+    TaskMapper.h \
     allocators/BestFitAllocator.cc \
     allocators/BestFitAllocator.h \
     allocators/ConstraintAllocator.cc \

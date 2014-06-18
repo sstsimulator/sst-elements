@@ -25,6 +25,7 @@ namespace SST {
 
         class AllocInfo;
         class Machine;
+        class TaskCommInfo;
 
         class Job {
             public:
@@ -34,7 +35,7 @@ namespace SST {
                     long estRunningTime, std::string ID );
                 Job(Job* j);
 
-                ~Job(){}
+                ~Job();
 
                 unsigned long getStartTime() const
                 {
@@ -76,6 +77,7 @@ namespace SST {
                 unsigned long getFST();
                 void startsAtTime(unsigned long time);
                 bool hasStarted();
+                TaskCommInfo* taskCommInfo;
 
             private:
                 unsigned long arrivalTime;        //when the job arrived
@@ -112,10 +114,7 @@ namespace SST {
                         ar & BOOST_SERIALIZATION_NVP(jobNum);
                         ar & BOOST_SERIALIZATION_NVP(ID);
                     }
-
         };
-
-
     }
 }
 #endif
