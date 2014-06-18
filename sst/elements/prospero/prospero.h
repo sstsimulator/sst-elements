@@ -69,7 +69,7 @@ public:
 
 	if(2 == trace_format) {
 #ifdef HAVE_LIBZ
-		gzclose(trace_input);
+		gzclose( (gzFile) trace_input );
 #else
 		std::cerr << "Error: trace format is compressed but libz is not available.\n");
 		exit(-1);
