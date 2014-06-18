@@ -21,8 +21,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-//#include <stdio.h>
-//#include <stdlib.h>
+
+//#include <iostream> //debug
 
 #include <sst/core/debug.h>
 #include <sst/core/element.h>
@@ -539,52 +539,52 @@ void schedComponent::finish()
 
 void schedComponent::startJob(AllocInfo* ai) 
 {
-    Job* j = ai -> job;
-    int* jobNodes = ai -> nodeIndices;
+    Job* j = ai->job;
+    int* jobNodes = ai->nodeIndices;
     double communicationTime = 0;
-    unsigned long actualRunningTime = j -> getActualTime();
-    double randomNumber = 0;
+    unsigned long actualRunningTime = j->getActualTime();
     
-    if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
+    //calculate running time with communication overhead
+    if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)machine && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
-            randomNumber = rng -> nextUniform() * 0.8 - 0.4;
-
-            int numberOfProcs = ((MeshAllocInfo*)ai) -> processors -> size();
-
+        
+            long baselineL1Distance = ((MachineMesh*)machine)->baselineL1Distance(j);
+            double randomNumber = rng->nextUniform() * 0.8 - 0.4;
+            int numberOfProcs = ((MeshAllocInfo*)ai)->processors->size();
+                     
+            //running time w/o any communication overhead (baseline):
+            communicationTime = baselineL1Distance; //TODO: timePerDistance->at(3) * baselineL1Distance;
+            unsigned long baselineRunningTime = actualRunningTime / (timePerDistance->at(0) + timePerDistance->at(1) *
+                                                                     communicationTime); //TODO: ((double)timePerDistance->at(2) + communicationTime));
             unsigned long averagePairwiseDistance;
-
+            //allocated hop distance
             if (numberOfProcs > 1) { 
-                averagePairwiseDistance = 2 * ((MachineMesh*)(machine)) -> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)/ (numberOfProcs * (numberOfProcs - 1));
-            }else {
+                averagePairwiseDistance = 2 * ((MachineMesh*)machine)->pairwiseL1Distance( ((MeshAllocInfo*)ai)->processors)/ (numberOfProcs * (numberOfProcs - 1));
+            } else {
                 averagePairwiseDistance = 0;
             }
-
-            double additiveTerm = timePerDistance -> at(4) * averagePairwiseDistance * randomNumber;
-
-            communicationTime = timePerDistance -> at(3) * averagePairwiseDistance; 
-
-/*            actualRunningTime = timePerDistance -> at(0) * actualRunningTime
-                + timePerDistance -> at(1) * (timePerDistance -> at(2) +
-                                  communicationTime) * actualRunningTime;*/
-
-            actualRunningTime = timePerDistance -> at(0) * actualRunningTime
-                + timePerDistance -> at(1) * ((double)timePerDistance -> at(2) +
-                                              communicationTime) * actualRunningTime;
-
+            double additiveTerm = timePerDistance->at(4) * averagePairwiseDistance * randomNumber;
+            communicationTime = timePerDistance->at(3) * averagePairwiseDistance; 
+            //new communication overhead
+            actualRunningTime = timePerDistance->at(0) * baselineRunningTime
+                + timePerDistance->at(1) * 
+                  ((double)timePerDistance->at(2) + communicationTime) * 
+                  baselineRunningTime;
+            //randomization
             if (actualRunningTime >= -additiveTerm) {
                 actualRunningTime += additiveTerm;
             }
         } 
     }
 
-    if (actualRunningTime > j -> getEstimatedRunningTime()) {
-        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime());
-        actualRunningTime = j -> getEstimatedRunningTime();
+    if (actualRunningTime > j->getEstimatedRunningTime()) {
+        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j->getEstimatedRunningTime());
+        actualRunningTime = j->getEstimatedRunningTime();
     }
 
-    // send to each person in the node list
-    for (int i = 0; i < j -> getProcsNeeded(); ++i) {
-        JobStartEvent *ec = new JobStartEvent(actualRunningTime, j -> getJobNum());
+    // send to each job in the node list
+    for (int i = 0; i < j->getProcsNeeded(); ++i) {
+        JobStartEvent *ec = new JobStartEvent(actualRunningTime, j->getJobNum());
         nodes[jobNodes[i]] -> send(ec); 
     }
 

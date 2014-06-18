@@ -12,19 +12,22 @@
 /*
  * Machine based on a mesh structure
  */
-#include "sst_config.h"
-#include "MachineMesh.h"
 
 #include <sst_config.h>
 
+#include <cmath>
 #include <vector>
 #include <string>
 #include <sstream>
+#include <utility>
 
+#include "sst_config.h"
 #include "sst/core/serialization.h"
 
 #include "Allocator.h"
+#include "Job.h"
 #include "Machine.h"
+#include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "schedComponent.h"
@@ -256,6 +259,114 @@ double MachineMesh::getCoolingPower()
     Pcooling = 0.001 * Pcompute * (1 / COP) / Scaling_Factor;
 
     return  Pcooling;
+}
+
+long MachineMesh::baselineL1Distance(Job* job)
+{
+    int numProcs = job -> getProcsNeeded();
+    
+    //baseline communication scheme: minimum-volume rectangular prism that fits into the machine
+    
+    //TODO: currently dummy:
+    return 1;
+    
+    int xSize, ySize, zSize;
+    xSize = (int)ceil( (float)cbrt((float)numProcs) ); //if we fit job in a cube
+    ySize = xSize;
+    zSize = xSize;
+    //restrict dimensions
+    if(xSize > xdim) {
+        xSize = xdim;
+        ySize = (int)ceil( (float)std::sqrt( ((float)numProcs) / xdim ) );
+        zSize = ySize;
+        if( ySize > ydim ) {
+            ySize = ydim;
+            zSize = (int)ceil( ((float)numProcs) / (xdim * ydim) );
+        } else if ( zSize > zdim ) {
+            zSize = zdim;
+            ySize = (int)ceil( ((float)numProcs) / (xdim * zdim) );
+        }
+    } else if(ySize > ydim) {
+        ySize = ydim;
+        xSize = (int)ceil( (float)std::sqrt( ((float)numProcs) / ydim ) );
+        zSize = xSize;
+        if( xSize > xdim ) {
+            xSize = xdim;
+            zSize = (int)ceil( ((float)numProcs) / (xdim * ydim) );
+        } else if ( zSize > zdim ) {
+            zSize = zdim;
+            xSize = (int)ceil( ((float)numProcs) / (ydim * zdim) );
+        }
+    } else if(zSize > zdim) {
+        zSize = zdim;
+        ySize = (int)ceil( (float)std::sqrt( ((float)numProcs) / zdim ) );
+        xSize = ySize;
+        if( ySize > ydim ){
+            ySize = ydim;
+            xSize = (int)ceil( ((float)numProcs) / (zdim * ydim) );
+        } else if ( xSize > xdim ) {
+            xSize = xdim;
+            ySize = (int)ceil( ((float)numProcs) / (xdim * zdim) );
+        }
+    }
+    
+    //order dimensions from shortest to longest
+	int state; //keeps order mapping
+	if(xSize <= ySize && ySize <= zSize) {
+		state = 0;
+	} else if(ySize <= xSize && xSize <= zSize) {
+		state = 1;
+		std::swap(xSize, ySize);
+	} else if(zSize <= ySize && ySize <= xSize) {
+		state = 2;
+		std::swap(xSize, zSize);
+	} else if(xSize <= zSize && zSize <= ySize) {
+		state = 3;
+		std::swap(zSize, ySize);
+	} else if(ySize <= zSize && zSize <= xSize) {
+		state = 4;
+		std::swap(xSize, ySize);
+		std::swap(ySize, zSize);
+	} else if(zSize <= xSize && xSize <= ySize) {
+		state = 5;
+		std::swap(xSize, ySize);
+		std::swap(xSize, zSize);
+	}
+   
+    //Fill given space, use shortest dim first
+    int nodeCount = 0;
+    bool done = false;
+    std::vector<MeshLocation> nodes;
+    for(int k = 0; k < zSize && !done; k++){
+        for(int j = 0; j < ySize && !done; j++){
+            for(int i = 0; i < xSize && !done; i++){
+                //use state not to mix dimension of the actual machine
+                switch(state) {
+                case 0: nodes.push_back(MeshLocation(i,j,k)); break;
+                case 1: nodes.push_back(MeshLocation(j,i,k)); break;
+                case 2: nodes.push_back(MeshLocation(k,j,i)); break;
+                case 3: nodes.push_back(MeshLocation(i,k,j)); break;
+                case 4: nodes.push_back(MeshLocation(k,i,j)); break;
+                case 5: nodes.push_back(MeshLocation(j,k,i)); break;
+                default: schedout.fatal(CALL_INFO, 0, "Unexpected error.");
+                }
+                nodeCount++;
+                if(nodeCount == numProcs){
+                    done = true;
+                }
+            }
+        }
+    }
+    
+    //calculate total distance
+    long distance = 0;
+    for(int i = 0; i < (nodeCount - 1); i++){
+        for(int j = (i + 1); j < nodeCount; j++){
+            distance += nodes[i].L1DistanceTo(&(nodes[j]));
+        }
+    }
+    
+    return distance;
 }
 
 

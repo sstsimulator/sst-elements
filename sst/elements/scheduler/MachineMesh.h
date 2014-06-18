@@ -24,6 +24,7 @@
 namespace SST {
     namespace Scheduler {
 
+        class Job;
         class MeshLocation;
         class schedComponent;
 
@@ -68,6 +69,8 @@ namespace SST {
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num);
 
 				double getCoolingPower();
+				
+				long baselineL1Distance(Job* job); //returns baseline L1 distance of the given job on this machine
 
                 //std::string tostd::string();
         };
