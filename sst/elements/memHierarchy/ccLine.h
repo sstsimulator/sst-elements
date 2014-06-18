@@ -40,6 +40,7 @@ public:
         clear();
     }
 
+
     void setState(TCC_MESIState _newState) {
         d_->debug(C,L4,0, "CCLine Changing State. Old State = %s, New State = %s\n", TccLineString[state_], TccLineString[_newState]);
         state_ = _newState;
@@ -138,7 +139,7 @@ public:
     }
 
     void clear() {
-        sharers_.reset();            
+        sharers_.reset();
         clearAcksNeeded();
         ownerExists_  = false;
         removeAllSharers();

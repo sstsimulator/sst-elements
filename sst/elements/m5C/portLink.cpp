@@ -31,6 +31,7 @@ namespace M5 {
 /* From ${GEM5}/src/mem/request.hh */
 static const uint32_t LOCKED                      = 0x00100000;
 static const uint32_t UNCACHED                    = 0x00001000;
+static const uint32_t LLSC                        = 0x00200000;
 
 PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
     m_comp( comp ),
@@ -167,8 +168,7 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 
 SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
 {
-    SimpleMem::Request *req =
-        new SimpleMem::Request(SimpleMem::Request::Read, pkt->addr, pkt->size);
+    SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, pkt->addr, pkt->size);
     bool readEx = false;
 
     /* From ${GEM5}/src/mem/request.hh */
@@ -180,13 +180,14 @@ SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
         req->flags |= (SimpleMem::Request::F_LOCKED);
         readEx = true;
     }
+    else if (UNLIKELY(pkt->req.flags & LLSC)) {
+        req->flags |= (SimpleMem::Request::F_LLSC);
+    }
 
     switch ( (::MemCmd::Command)pkt->cmd) {
     case ::MemCmd::ReadReq:
         req->cmd = SimpleMem::Request::Read;
         //fprintf(stderr, "Creating Read Req for addr 0x%"PRIx64" of size %zu\n", req->addr, req->size);
-        if(UNLIKELY(readEx))
-            req->flags |= (SimpleMem::Request::F_EXCLUSIVE);
         break;
     case ::MemCmd::WriteReq:
         //fprintf(stderr, "Creating Write Req for addr 0x%"PRIx64" of size %zu [0x%x]\n", req->addr, req->size, *(uint64_t*)&(pkt->data[0]));

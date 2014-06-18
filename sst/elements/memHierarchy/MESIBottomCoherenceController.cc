@@ -98,6 +98,7 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
        transitional state is (SM);  lower level cache knows this state is in S state so it proceeds (weak consistency).  
        This cache eventually gets M state since the requests actually gets store in the MSHR of the lwlvl cache */
     
+    _cacheLine->atomicEnd();
     setGroupId(_event->getGroupId());
     
     if(_cacheLine->inTransition()){
@@ -260,6 +261,8 @@ void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
     Addr addr = _cacheLine->getBaseAddr();
     bool pf = _event->isPrefetch();
 
+    if(_event->isLoadLink()) _cacheLine->atomicStart();
+    
     if(state != I) inc_GETSHit(addr, pf);
     else{
         _cacheLine->setState(IS);

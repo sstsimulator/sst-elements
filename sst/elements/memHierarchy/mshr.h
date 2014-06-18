@@ -67,6 +67,7 @@ bool Cache::MSHR::isFull(){
 
 
 bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
+    assert(_event->getCmd() != PutS);
     bool ret = insert(_baseAddr, mshrType(_event));
     if(LIKELY(ret)){
         cache_->d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %"PRIx64", event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());

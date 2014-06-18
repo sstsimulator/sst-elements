@@ -30,15 +30,19 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
     Command cmd           = _event->getCmd();
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
+    bool atomic           = _cacheLine->isAtomic();
 
     switch(cmd){
         case GetS:
             if(state == S || state == M || state == E)
-                return sendResponse(_event, S, data, _mshrHit);
+                return sendResponse(_event, S, data,  _mshrHit);
             break;
         case GetX:
         case GetSEx:
-            if(state == M) return sendResponse(_event, M, data, _mshrHit);
+            if(state == M){
+                if(_event->isStoreConditional()) return sendResponse(_event, M, data, _mshrHit, atomic);
+                else                             return sendResponse(_event, M, data, _mshrHit);
+            }
             break;
         default:
             _abort(MemHierarchy::CacheController, "Wrong command type!");
@@ -303,6 +307,10 @@ void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _
 
 void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
     if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
+    else{
+        _ret = false;                   /* Corner case example:  L2 sends invalidates and at the same time L1 sends evict.  In the case, it is important to ignore this PutS request */
+        return;
+    }
     
     if(_ccLine->isShareless()) _ret = true;
     else                       _ret = false;
@@ -325,7 +333,13 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
     return false;
 }
 
+
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
+    return sendResponse(_event, _newState, _data, _mshrHit, false);
+}
+
+
+bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool atomic){
     if(_event->isPrefetch()){
         return true;
     }
@@ -346,6 +360,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
             else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
             
             responseEvent->setDst(_event->getSrc());
+            if(atomic) responseEvent->setAtomic();
             break;
         default:
             _abort(CoherencyController, "Command not valid as a response. \n");

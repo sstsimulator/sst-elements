@@ -153,16 +153,12 @@ static const std::string BROADCAST_TARGET = "BROADCAST";
  */
 class MemEvent : public SST::Event {
 public:
-    /** Used to specify that this data should be written back to the backing store */
-    static const uint32_t F_WRITEBACK = (1<<0);
     /** Used in a Read-Lock, Write-Unlock atomicity scheme */
     static const uint32_t F_LOCKED    = (1<<1);
-    /** Used to delay snoops when a block is locked */
-    static const uint32_t F_DELAYED   = (1<<2);
-    /** Used to signify the desire to load a cache block directly in EXCLUSIVE mode */
-    static const uint32_t F_EXCLUSIVE = (1<<3);
     /** Used to specify that this memory event should not be cached */
-    static const uint32_t F_UNCACHED  = (1<<4);
+    static const uint32_t F_UNCACHED  = (1<<2);
+    /* Load Link / Store Conditional */
+    static const uint32_t F_LLSC      = (1<<3);
 
     /** Data Payload type */
     typedef std::vector<uint8_t> dataVec;
@@ -179,6 +175,9 @@ public:
         prefetch = false;
         ackNeeded = false;
         groupId = 0;
+        atomic = false;
+        loadLink = false;
+        storeConditional = false;
     }
 
 
@@ -194,6 +193,9 @@ public:
         prefetch = false;
         ackNeeded = false;
         groupId = 0;
+        atomic = false;
+        loadLink = false;
+        storeConditional = false;
     }
 
     /** Creates a new MemEvent */
@@ -208,6 +210,9 @@ public:
         prefetch = false;
         ackNeeded = false;
         groupId = 0;
+        atomic = false;
+        loadLink = false;
+        storeConditional = false;
     }
 
 
@@ -223,6 +228,9 @@ public:
         prefetch = false;
         ackNeeded = false;
         groupId = 0;
+        atomic = false;
+        loadLink = false;
+        storeConditional = false;
     }
 
     /** Copy Construtor. */
@@ -230,7 +238,8 @@ public:
         SST::Event(), event_id(me.event_id), response_to_id(me.response_to_id),
         addr(me.addr), baseAddr(me.baseAddr), size(me.size), cmd(me.cmd), payload(me.payload),
         src(me.src), dst(me.dst), flags(me.flags), prefetch(me.prefetch), grantedState(me.grantedState),
-        NACKedEvent(me.NACKedEvent), NACKedCmd(me.NACKedCmd), ackNeeded(me.ackNeeded), groupId(me.groupId){
+        NACKedEvent(me.NACKedEvent), NACKedCmd(me.NACKedCmd), ackNeeded(me.ackNeeded), groupId(me.groupId),
+        atomic(me.atomic), loadLink(me.loadLink), storeConditional(me.storeConditional){
         setDeliveryLink(me.getLinkId(), NULL);
     }
 
@@ -239,7 +248,8 @@ public:
         SST::Event(), event_id(me->event_id), response_to_id(me->response_to_id),
         addr(me->addr),baseAddr(me->baseAddr), size(me->size), cmd(me->cmd), payload(me->payload),
         src(me->src), dst(me->dst), flags(me->flags), prefetch(me->prefetch), grantedState(me->grantedState),
-        NACKedEvent(me->NACKedEvent), NACKedCmd(me->NACKedCmd), ackNeeded(me->ackNeeded), groupId(me->groupId){
+        NACKedEvent(me->NACKedEvent), NACKedCmd(me->NACKedCmd), ackNeeded(me->ackNeeded), groupId(me->groupId),
+        atomic(me->atomic), loadLink(me->loadLink), storeConditional(me->storeConditional){
         setDeliveryLink(me->getLinkId(), NULL);
     }
 
@@ -264,6 +274,9 @@ public:
         me->NACKedCmd = NACKedEvent->cmd;
         me->ackNeeded = false;
         me->groupId = 0;
+        me->atomic = false;
+        me->loadLink = false;
+        me->storeConditional = false;
         return me;
     }
 
@@ -284,6 +297,9 @@ public:
         me->setGrantedState(NULLST);
         me->ackNeeded = false;
         me->groupId = 0;
+        me->atomic = false;
+        me->loadLink = false;
+        me->storeConditional = false;
         return me;
     }
 
@@ -300,7 +316,29 @@ public:
         me->prefetch = prefetch;
         me->ackNeeded = false;
         me->groupId = 0;
+        me->atomic = false;
+        me->loadLink = false;
+        me->storeConditional = false;
         return me;
+    }
+    
+    
+    void initialize(){
+        addr = 0;
+        cmd  = NULLCMD;
+        event_id = generateUniqueId();
+        response_to_id = NO_ID;
+        baseAddr = 0;
+        dst = BROADCAST_TARGET;
+        size = 0;
+        flags = 0;
+        prefetch = false;
+        ackNeeded = false;
+        groupId = 0;
+        atomic = false;
+        loadLink = false;
+        storeConditional = false;
+    
     }
 
 
@@ -329,6 +367,21 @@ public:
     /** Sets the size in bytes that this MemEvent represents */
     void setSize(uint32_t sz) {
         size = sz;
+    }
+    
+    
+    void setLoadLink(){ loadLink = true; }
+    bool isLoadLink() { return loadLink; }
+    
+    void setStoreConditional(){ storeConditional = true;}
+    bool isStoreConditional(){ return storeConditional; }
+    
+    void setAtomic(){
+        atomic = true;
+    }
+    
+    bool isAtomic(){
+        return atomic;
     }
     
     bool isHighNetEvent(){
@@ -523,7 +576,6 @@ private:
     Command cmd;
     dataVec payload;
     
-    
     std::string src;
     std::string dst;
     
@@ -538,6 +590,12 @@ private:
     
     bool ackNeeded;
     uint32_t groupId;
+    
+    bool atomic;
+    bool loadLink;
+    bool storeConditional;
+    
+
 
     
     MemEvent() {} // For serialization only

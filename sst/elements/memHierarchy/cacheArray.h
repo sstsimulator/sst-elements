@@ -68,21 +68,35 @@ public:
         Addr            baseAddr_;
         vector<uint8_t> data_;
         unsigned int    size_;
-        unsigned int    userLock_;
         int             index_;
+        
+        unsigned int    userLock_;
+        bool            LLSCAtomic_;
 
     public:
         bool eventsWaitingForLock_;
+            
+        void atomicStart(){
+            LLSCAtomic_ = true;
+        }
+        
+        void atomicEnd(){
+            LLSCAtomic_ = false;
+        }
+        
+        bool isAtomic(){
+            return LLSCAtomic_;
+        }
         
          /** Constructor */
-        CacheLine(Output* _dbg, unsigned int _size) :
-                 d_(_dbg), state_(I), baseAddr_(0), size_(_size){
+        CacheLine(Output* _dbg, unsigned int _size, int _index) :
+                 d_(_dbg), state_(I), baseAddr_(0), size_(_size), index_(_index){
             data_.resize(size_/sizeof(uint8_t));
             for(vector<uint8_t>::iterator it = data_.begin(); it != data_.end(); it++)
                 *it = 0;
             userLock_ = 0;
-            index_ = -1;
             eventsWaitingForLock_ = false;
+            LLSCAtomic_   = false;
         }
         
 
@@ -131,17 +145,29 @@ public:
         static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
 
         Addr getBaseAddr() { return baseAddr_; }
-        void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
+        void setBaseAddr(Addr _baseAddr) {
+            clear();
+            baseAddr_ = _baseAddr;
+        }
         
         bool locked() {return !unlocked();}
         bool unlocked() { return CacheLine::unlocked(state_);}
         static bool unlocked(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
         
         
-        void setIndex(int _index){ index_ = _index; }
+        void setIndex(int _index){
+            assert(index_ == _index);
+            index_ = _index;
+        }
         int  index(){ return index_; }
 
         unsigned int getLineSize(){ return size_; }
+        
+        void clear(){
+            userLock_ = 0;
+            eventsWaitingForLock_ = false;
+            LLSCAtomic_   = false;
+        }
 
     };
     
@@ -178,7 +204,7 @@ protected:
         lineOffset_ = log2Of(lineSize_);
         
         for(unsigned int i = 0; i < numLines_; i++){
-            lines_[i] = new CacheLine(_dbg, lineSize_);
+            lines_[i] = new CacheLine(_dbg, lineSize_, i);
         }
         
         pMembers();

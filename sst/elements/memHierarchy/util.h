@@ -30,6 +30,15 @@ namespace MemHierarchy {
 //#define N CALL_INFO
 #define Z 0
 
+#   define ASSERT_MSG(condition, message) \
+    do { \
+        if (! (condition)) { \
+            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+                      << " line " << __LINE__ << ": " << message << std::endl; \
+            std::exit(EXIT_FAILURE); \
+        } \
+    } while (false)
+
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ C,ERROR,0
 #define _WARNING_ C,WARNING,0

@@ -36,7 +36,8 @@
 #include "cacheListener.h"
 #include "memNIC.h"
 #include <boost/assert.hpp>
-
+#include <string>
+#include <sstream>
 
 #define assert_msg BOOST_ASSERT_MSG
 

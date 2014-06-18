@@ -331,13 +331,21 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
     Command cmd    = _event->getCmd();
     Addr baseAddr  = _cacheLine->getBaseAddr();
     CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
+    char msg[100];
+    sprintf(msg, "Bcc State = %s, Tcc State = %s\n", BccLineString[_cacheLine->getState()], TccLineString[ccLine->getState()]);
     
     if(_requestCompleted){
-        assert(_cacheLine->inStableState() && ccLine->inStableState());
-        
-        /* Upon a PutS, only possible pending request should be a GetSEx request, make sure this is the case */
-        if(cmd == PutS && mshr_->exists(baseAddr)) assert(getOrigReq(mshr_->lookup(baseAddr))->getCmd() == GetSEx);
-        
+        if(cmd != PutS){
+            if(!(_cacheLine->inStableState() && ccLine->inStableState())){
+                cout << msg << endl;
+                BOOST_ASSERT_MSG(0, "Responsed sent and cache line is in transient state.  Could be something wrong\n");
+            }
+        }
+        /* Upon a PutS (due to invalidate, ie mshrEntry exists), only possible pending request should be a GetSEx request, make sure this is the case */
+        if(cmd == PutS && mshr_->exists(baseAddr)){
+            d_->debug(_L3_, "Cmd = %s\n", CommandString[getOrigReq(mshr_->lookup(baseAddr))->getCmd()]);
+            assert(getOrigReq(mshr_->lookup(baseAddr))->getCmd() == GetSEx);
+        }
         /* MemHierarchy models a "blocking cache", it is important to 'replay' blocked
            events that were waiting for this event to complete */
         if(!_mshrHit && MemEvent::isWriteback(cmd)) activatePrevEvents(baseAddr);

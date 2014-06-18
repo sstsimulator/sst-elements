@@ -73,6 +73,8 @@ public:
     /** Create MemEvent and send Response to HgLvl caches */
     bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, bool _mshrHit);
    
+    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic);
+
     /** Look at the outgoing queue buffer to see if we need to send an memEvent through the SST Links */
     void sendOutgoingCommands(){
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
