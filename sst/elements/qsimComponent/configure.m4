@@ -40,6 +40,7 @@ AC_DEFUN([SST_qsimComponent_CONFIG],[
   AC_SUBST([QSIM_LIBDIR])
   AS_IF([test "$sst_check_qsim_happy" = "yes"],
         [AC_DEFINE([HAVE_QSIM], [1], [Set to 1 if QSim was found])])
+  AC_DEFINE_UNQUOTED([QSIM_LIBDIR], ["$QSIM_LIBDIR"], [Path to QSim library])
 
   AS_IF([test "$sst_check_qsim_happy" = "yes"], [$1], [$2])
 ])
