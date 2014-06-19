@@ -108,7 +108,7 @@ bool DMAEngine::clock(Cycle_t cycle)
         /* Process network packet */
         Request* req = findRequest(me->getResponseToID());
         if ( NULL == req ) {
-            dbg.output(CALL_INFO, "Received Packet for which we have no response ID waiting.  ID received: (%"PRIx64", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
+            dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%"PRIx64", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
         }
         processPacket(req, me);
     }
@@ -149,7 +149,7 @@ bool DMAEngine::isIssuable(DMACommand *cmd) const
 
 void DMAEngine::startRequest(Request *req)
 {
-    dbg.output(CALL_INFO, "Received request to transfer from %#"PRIx64" to 0x%"PRIx64"\n",
+    dbg.debug(_L10_, "Received request to transfer from %#"PRIx64" to 0x%"PRIx64"\n",
             req->getSrc(), req->getDst());
     ++numTransfers;
     Addr ptr = req->getSrc();
@@ -187,7 +187,7 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
             // Done with this request.
             activeRequests.erase(req);
             commandLink->send(req->command);
-            dbg.output(CALL_INFO, "Request to transfer 0x%"PRIx64" to 0x%"PRIx64" is complete.\n", req->getSrc(), req->getDst());
+            dbg.debug(_L10_, "Request to transfer 0x%"PRIx64" to 0x%"PRIx64" is complete.\n", req->getSrc(), req->getDst());
             delete req;
         }
     } else {

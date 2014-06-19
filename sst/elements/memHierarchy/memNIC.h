@@ -22,6 +22,7 @@
 #include <sst/core/output.h>
 #include <sst/core/output.h>
 #include "memEvent.h"
+#include "util.h"
 
 #include <sst/elements/merlin/linkControl.h>
 

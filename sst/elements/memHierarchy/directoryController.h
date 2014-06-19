@@ -30,6 +30,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 #include "memEvent.h"
+#include "util.h"
 
 using namespace std;
 

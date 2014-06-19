@@ -30,7 +30,7 @@ int MemNIC::addrForDest(const std::string &target) const
   std::map<std::string, int>::const_iterator addrIter = addrMap.find(target);
   if ( addrIter == addrMap.end() )
     dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
-  dbg.output(CALL_INFO, "Translated address %s to %d\n", target.c_str(), addrIter->second);
+  dbg.debug(_L10_, "Translated address %s to %d\n", target.c_str(), addrIter->second);
   return addrIter->second;
 }
 
@@ -78,12 +78,12 @@ void MemNIC::init(unsigned int phase)
                 ci.network_addr, ci.type, ci.typeInfo);
         ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
         link_control->sendInitData(ev);
-        dbg.output(CALL_INFO, "Sent init data!\n");
+        dbg.debug(_L10_, "Sent init data!\n");
     }
     while ( SST::Event *ev = link_control->recvInitData() ) {
         InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
         if ( imre ) {
-            dbg.output(CALL_INFO, "Creating IMRE for %d (%s)\n", imre->address, imre->name.c_str());
+            dbg.debug(_L10_, "Creating IMRE for %d (%s)\n", imre->address, imre->name.c_str());
             addrMap[imre->name] = imre->address;
             ComponentInfo ci;
             ci.name = imre->name;
@@ -135,7 +135,7 @@ std::string MemNIC::findTargetDirectory(Addr addr)
   for ( std::vector<MemNIC::ComponentInfo>::const_iterator i = directories.begin() ;
 	i != directories.end() ; ++i ) {
     const MemNIC::ComponentTypeInfo &di = i->typeInfo;
-    //dbg.output(CALL_INFO, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
+    //dbg.debug(_L10_, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
     //        addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
     if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
       if ( 0 == di.dirctrl.interleaveSize ) {
@@ -159,12 +159,12 @@ bool MemNIC::clock(void)
     /* If stuff to send, and space to send it, send */
     bool empty = sendQueue.empty();
     if (!empty) {
-        dbg.output(CALL_INFO, "SendQueue has %zu elements in it.\n", sendQueue.size());
+        dbg.debug(_L10_, "SendQueue has %zu elements in it.\n", sendQueue.size());
         MemRtrEvent *head = sendQueue.front();
         if ( link_control->spaceToSend(0, head->size_in_bits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
-                dbg.output(CALL_INFO, "Sent message ((%"PRIx64", %d) %s %"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
+                dbg.debug(_L10_, "Sent message ((%"PRIx64", %d) %s %"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
                 sendQueue.pop_front();
             }
         }
@@ -201,7 +201,7 @@ MemEvent* MemNIC::recv(void)
 
 void MemNIC::send(MemEvent *ev)
 {
-    dbg.output(CALL_INFO, "Adding event (%"PRIx64", %d) to send queue\n", ev->getID().first, ev->getID().second);
+    dbg.debug(_L10_, "Adding event (%"PRIx64", %d) to send queue\n", ev->getID().first, ev->getID().second);
     MemRtrEvent *mre = new MemRtrEvent(ev);
     mre->src = ci.network_addr;
     mre->dest = addrForDest(ev->getDst());
