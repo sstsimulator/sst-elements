@@ -20,7 +20,7 @@ loading  = 0
 radix    = 0
 printStats = 0
 emberVerbose = 0
-emberBufferSize = 32000
+emberBufferSize = 10000000 
 merlinBW = "4GB/s"
 
 netPktSizeBytes=64
