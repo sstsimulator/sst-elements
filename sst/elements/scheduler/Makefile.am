@@ -86,7 +86,8 @@ libscheduler_la_SOURCES = \
     taskMappers/SimpleTaskMapper.h
 
 EXTRA_DIST = \
-	simulations/makeSDL.pl
+	simulations/makeSDL.pl \
+	simulations/sdl-3.py
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
 libscheduler_la_LIBADD =
