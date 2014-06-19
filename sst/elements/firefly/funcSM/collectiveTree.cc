@@ -48,10 +48,16 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
 
+
     m_bufV[0] = m_event->mydata;
+     
     for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
-        m_bufV[i+1] = malloc( m_bufLen );
-        assert( m_bufV[i+1] );
+        if ( m_event->mydata ) {
+            m_bufV[i+1] = malloc( m_bufLen );
+            assert( m_bufV[i+1] );
+        } else {
+            m_bufV[i+1] = NULL;
+        }
     }
 
     m_waitUpState.init();
@@ -100,9 +106,11 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
               case WaitUpState::DoOp:
                 m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
-                    collectiveOp( &m_bufV[0], m_yyy->numChildren() + 1,
-                        m_event->result, m_event->count,
-                        m_event->dtype, m_event->op );  
+                    if ( m_bufV[0] ) {
+                        collectiveOp( &m_bufV[0], m_yyy->numChildren() + 1,
+                            m_event->result, m_event->count,
+                            m_event->dtype, m_event->op );  
+                    }
             }
         } 
         m_state = SendUp;
@@ -169,7 +177,9 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"Exit\n" );
         retval.setExit( 0 );
         for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
-            free( m_bufV[i+1] );
+            if ( m_bufV[i+1] ) {
+                free( m_bufV[i+1] );
+            }
         }
         delete m_yyy;
         delete m_event;
