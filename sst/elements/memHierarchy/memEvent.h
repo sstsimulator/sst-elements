@@ -175,10 +175,9 @@ public:
         MemEvent *me = new MemEvent(*this);
         me->response_to_id = event_id;
         me->dst = src;
-        me->prefetch = prefetch;
-        me->setGrantedState(NULLST);
         me->NACKedEvent = NACKedEvent;
         me->NACKedCmd = NACKedEvent->cmd;
+        me->cmd = NACK;
         return me;
     }
     
