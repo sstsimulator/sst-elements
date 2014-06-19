@@ -108,9 +108,9 @@ void Bus::sendSingleEvent(SST::Event* _ev){
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
     MemEvent* forwardEvent = new MemEvent(*event);
-    dbg_.debug(_L3_,"Cmd = %s \n", CommandString[forwardEvent->getCmd()]);
-    dbg_.debug(_L3_,"Dst = %s \n", forwardEvent->getDst().c_str());
-    dbg_.debug(_L3_,"Src = %s \n", forwardEvent->getSrc().c_str());
+    dbg_.debug(_L3_,"BCmd = %s \n", CommandString[forwardEvent->getCmd()]);
+    dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
+    dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
 
     dstLink->send(forwardEvent);
     

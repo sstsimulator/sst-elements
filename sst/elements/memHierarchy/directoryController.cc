@@ -410,7 +410,7 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
 	MemEvent *ev = entry->activeReq->makeResponse();
 	//TODO:  only if write should you set the payload
     ev->setPayload(new_ev->getPayload());
-    dbg.debug(_L10_, "Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());
+    dbg.debug(_L10_, "Sending requested data for 0x%"PRIx64" to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
 	sendResponse(ev);
     
     if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED) && 0 == entry->countRefs()) directory.erase(entry->baseAddr);

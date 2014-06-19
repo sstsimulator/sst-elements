@@ -241,6 +241,7 @@ public:
         atomic_           = false;
         loadLink_         = false;
         storeConditional_ = false;
+        grantedState_     = NULLST;
     }
 
 
