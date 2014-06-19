@@ -133,7 +133,11 @@ void Cache::handlePrefetchEvent(SST::Event* _event) {
 
 void Cache::handleSelfEvent(SST::Event* _event){
     MemEvent* ev = static_cast<MemEvent*>(_event);
-    if(!mshr_->isFull())
+    d_->debug(_L3_,"Cmd = %s \n", CommandString[ev->getCmd()]);
+    d_->debug(_L3_,"Dst = %s \n", ev->getDst().c_str());
+    d_->debug(_L3_,"Src = %s \n", ev->getSrc().c_str());
+
+    if(ev->getCmd() != NULLCMD && !mshr_->isFull())
         processEvent(_event, ev->isPrefetch());
 }
 

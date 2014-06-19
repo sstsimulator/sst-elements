@@ -51,6 +51,10 @@ void NextBlockPrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResult
             newEv->setSrc("Prefetcher");
             newEv->setSize(blockSize);
             newEv->setPrefetchFlag(true);
+            std::cout << "Pr Cmd = " << CommandString[newEv->getCmd()] << endl;
+            std::cout << "Pr Dst = " << newEv->getDst().c_str() << endl;
+            std::cout << "Pr Src = " << newEv->getSrc().c_str() << endl;
+
 			(*(*callbackItr))(newEv);
 		}
 	} else {
