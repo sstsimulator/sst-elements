@@ -172,8 +172,10 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNee
     MemEvent* invalidateEvent = new MemEvent((Component*)owner_, _cLine->getBaseAddr(), Inv);
     if(_acksNeeded) invalidateEvent->setAckNeeded();            //TODO: add comment as to why this is needed (ie weak vs strong consistency)
     invalidateEvent->setDst(destination);
-    response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
-    outgoingEventQueue_.push(resp);
+    
+    uint64 deliveryTime = timestamp_ + accessLatency_;
+    Response resp = {invalidateEvent, deliveryTime, false};
+    addToOutgoingQueue(resp);
     
     d_->debug(_L7_,"Invalidate sent: Addr = %"PRIx64", Dst = %s\n", _cLine->getBaseAddr(),  destination.c_str());
 }
@@ -201,8 +203,9 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
     invalidateEvent->setAckNeeded();
     invalidateEvent->setDst(ownerName);
     
-    response resp = {invalidateEvent, timestamp_ + accessLatency_, false};
-    outgoingEventQueue_.push(resp);
+    uint64 deliveryTime = timestamp_ + accessLatency_;
+    Response resp = {invalidateEvent, deliveryTime, false};
+    addToOutgoingQueue(resp);
     
     d_->debug(_L7_,"InvalidateX sent: Addr = %"PRIx64", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
 }
@@ -340,57 +343,57 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
 
 
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool atomic){
-    if(_event->isPrefetch()){
-        return true;
-    }
+    if(_event->isPrefetch()) return true;
     
-    MemEvent *responseEvent; Command cmd = _event->getCmd();
+    MemEvent *responseEvent;
+    Command cmd = _event->getCmd();
+    assert(cmd == GetS || cmd == GetX || cmd == GetSEx);
     Addr offset = 0, base = 0;
-    switch(cmd){
-        case GetS:
-        case GetSEx:
-        case GetX:
-            if(L1_){
-                base            = (_event->getAddr()) & ~(lineSize_ - 1);
-                offset          = _event->getAddr() - base;
-                responseEvent   = _event->makeResponse((SST::Component*)owner_);
-                if(cmd != GetX)
-                    responseEvent->setPayload(_event->getSize(), &_data->at(offset));
-            }
-            else responseEvent = _event->makeResponse((SST::Component*)owner_, *_data, _newState);
-            
-            responseEvent->setDst(_event->getSrc());
-            if(atomic) responseEvent->setAtomic();
-            break;
-        default:
-            _abort(CoherencyController, "Command not valid as a response. \n");
+    
+    if(L1_){
+        base            = (_event->getAddr()) & ~(lineSize_ - 1);
+        offset          = _event->getAddr() - base;
+        responseEvent   = _event->makeResponse((SST::Component*)owner_);
+        if(cmd != GetX)
+            responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+    }
+    else{
+        responseEvent = _event->makeResponse((SST::Component*)owner_, _newState);
+        responseEvent->setPayload(*_data);
     }
     
+    responseEvent->setDst(_event->getSrc());
+    if(atomic) responseEvent->setAtomic();
     
-    uint64_t latency = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
-    response resp    = {responseEvent, latency, true};
-    outgoingEventQueue_.push(resp);
+    uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    Response resp = {responseEvent, deliveryTime, true};
+    addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"Sending Response at cycle = %"PRIu64". Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", latency, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    d_->debug(_L3_,"Sending Response at cycle = %"PRIu64". Current Time = %"PRIu64", Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+        
+
     return true;
 }
 
 
 void TopCacheController::sendNACK(MemEvent *_event){
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
-    uint64 latency      = timestamp_ + accessLatency_;
-    response resp       = {NACKevent, latency, true};
+    
+    uint64 deliveryTime      = timestamp_ + accessLatency_;
+    Response resp       = {NACKevent, deliveryTime, true};
+    addToOutgoingQueue(resp);
+    
     NACKsSent_++;
-    outgoingEventQueue_.push(resp);
     d_->debug(_L3_,"TopCC: Sending NACK\n");
 }
 
 
 void TopCacheController::sendEvent(MemEvent *_event){
-    uint64 latency      = timestamp_ + accessLatency_;
-    response resp       = {_event, latency, true};
-    outgoingEventQueue_.push(resp);
-    d_->debug(_L3_,"TopCC: Sending Event To HgLvLCache at cycle = %"PRIu64". Cmd = %s\n", latency, CommandString[_event->getCmd()]);
+    uint64 deliveryTime = timestamp_ + accessLatency_;
+    Response resp       = {_event, deliveryTime, true};
+    addToOutgoingQueue(resp);
+    
+    d_->debug(_L3_,"TopCC: Sending Event To HgLvLCache at cycle = %"PRIu64". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
 }
 
 

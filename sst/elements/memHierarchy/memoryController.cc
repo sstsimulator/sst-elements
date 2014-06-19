@@ -209,7 +209,7 @@ bool VaultSimMemory::issueRequest(MemController::DRAMReq *req){
     MemEvent::id_type reqID = req->reqEvent->getID();
     assert(outToCubes.find(reqID) == outToCubes.end());
     outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
-    MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
+    MemEvent *outgoingEvent = new MemEvent(*req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
     cube_link->send(outgoingEvent); // send the event off
     return true;
 }

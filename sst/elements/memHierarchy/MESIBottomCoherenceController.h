@@ -30,20 +30,10 @@ public:
     MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
                  uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats, vector<int> _statGroupIds) :
-                 CoherencyController(_cache, _dbg, _lineSize), lowNetPorts_(_parentLinks),
+                 CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
-        
-        /* GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
-        PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
-        EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
-        InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = InvalidatePUTSReqSent_ = 0;
-        GetSExReqsReceived_ = GetSReqsReceived_ = GetXReqsReceived_ = 0;
-        NACKsSent_ = 0;
-        FetchInvReqSent_ = FetchInvXReqSent_ = 0; */
         L1_             = _L1;
-        accessLatency_  = _accessLatency;
-        mshrLatency_    = _mshrLatency;
         directoryLink_  = _directoryLink;
         groupStats_     = _groupStats;
         statGroupIds_   = _statGroupIds;
@@ -141,6 +131,8 @@ public:
     /* Send andy outgoing messages directed to lower level caches or 
        directory controller (if one exists) */
     void sendOutgoingCommands(){
+        timestamp_++;
+        
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
             if(directoryLink_) {
@@ -149,8 +141,9 @@ public:
             } else {
                 lowNetPorts_->at(0)->send(outgoingEvent);
             }
-            outgoingEventQueue_.pop();
+            outgoingEventQueue_.pop_front();
         }
+        
     }
 
 private:

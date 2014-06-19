@@ -309,8 +309,8 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine, vecto
 
 void MESIBottomCC::sendEvent(MemEvent* _event){
     uint64 deliveryTime =  timestamp_ + accessLatency_;
-    response resp = {_event, deliveryTime, false};
-    outgoingEventQueue_.push(resp);
+    Response resp = {_event, deliveryTime, false};
+    addToOutgoingQueue(resp);
     
     d_->debug(_L3_,"Sending Request: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s\n",
              _event->getAddr(), _event->getBaseAddr(), CommandString[_event->getCmd()]);
@@ -330,12 +330,12 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     uint64 deliveryTime;
     if(_event->queryFlag(MemEvent::F_UNCACHED)){
         forwardEvent->setFlag(MemEvent::F_UNCACHED);
-        deliveryTime = timestamp_;
+        deliveryTime = timestamp_ + 1;
     }
     else deliveryTime = timestamp_ + accessLatency_;
     
-    response resp = {forwardEvent, deliveryTime, false};
-    outgoingEventQueue_.push(resp);    
+    Response resp = {forwardEvent, deliveryTime, false};
+    addToOutgoingQueue(resp);
     d_->debug(_L3_,"Forwarding Request at cycle = %"PRIu64"\n", deliveryTime);
 }
 
@@ -345,8 +345,8 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
     responseEvent->setPayload(*_cacheLine->getData());
 
     uint64 deliveryTime = _mshrHit ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
-    response resp  = {responseEvent, deliveryTime, true};
-    outgoingEventQueue_.push(resp);
+    Response resp  = {responseEvent, deliveryTime, true};
+    addToOutgoingQueue(resp);
     
     d_->debug(_L3_,"Sending Response at cycle = %"PRIu64". \n", deliveryTime);
 }
@@ -356,20 +356,22 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine){
     vector<uint8_t>* data = _cacheLine->getData();
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, _cacheLine->getBaseAddr(), _cacheLine->getBaseAddr(), _cmd, *data);
     newCommandEvent->setDst(nextLevelCacheName_);
+    
     uint64 deliveryTime = timestamp_ + accessLatency_;
-    response resp = {newCommandEvent, deliveryTime, false};
-    outgoingEventQueue_.push(resp);
+    Response resp = {newCommandEvent, deliveryTime, false};
+    addToOutgoingQueue(resp);
     d_->debug(_L3_,"Sending Writeback at cycle = %"PRIu64", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
 }
 
 void MESIBottomCC::sendNACK(MemEvent* _event){
     setGroupId(_event->getGroupId());
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
-    uint64 latency      = timestamp_ + accessLatency_;
-    response resp       = {NACKevent, latency, true};
+    uint64 deliveryTime      = timestamp_ + accessLatency_;
+    
+    Response resp = {NACKevent, deliveryTime, true};
     inc_NACKsSent();
-    outgoingEventQueue_.push(resp);
-    d_->debug(_L3_,"BottomCC: Sending NACK at cycle = %"PRIu64"\n", latency);
+    addToOutgoingQueue(resp);
+    d_->debug(_L3_,"BottomCC: Sending NACK at cycle = %"PRIu64"\n", deliveryTime);
 }
 
 

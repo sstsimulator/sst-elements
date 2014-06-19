@@ -37,11 +37,9 @@ public:
     
     TopCacheController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency,
                        uint64_t _mshrLatency, vector<Link*>* _childrenLinks)
-                       : CoherencyController(_cache, _dbg, _lineSize){
+                       : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_ = true;
-        accessLatency_      = _accessLatency;
-        mshrLatency_        = _mshrLatency;
         highNetPorts_       = _childrenLinks;
         NACKsSent_          = 0;
         dummyCCLine_        = new CCLine(_dbg);
@@ -77,9 +75,12 @@ public:
 
     /** Look at the outgoing queue buffer to see if we need to send an memEvent through the SST Links */
     void sendOutgoingCommands(){
+        timestamp_++;
+
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
+            assert( outgoingEventQueue_.front().deliveryTime == timestamp_);
             highNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
-            outgoingEventQueue_.pop();
+            outgoingEventQueue_.pop_front();
         }
     }
     

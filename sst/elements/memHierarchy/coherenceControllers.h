@@ -27,7 +27,7 @@
 #include "sst/core/output.h"
 #include "cacheListener.h"
 #include <boost/assert.hpp>
-#include <queue>
+#include <list>
 #include "memNIC.h"
 
 using namespace std;
@@ -43,7 +43,7 @@ public:
     typedef unsigned int uint;
     typedef uint64_t uint64;
 
-    struct response {
+    struct Response {
         MemEvent* event;
         uint64_t deliveryTime;
         bool cpuResponse;
@@ -54,16 +54,33 @@ public:
     uint64_t   timestamp_;
     uint64_t   accessLatency_;
     uint64_t   mshrLatency_;
+    string     name_;
     virtual void sendOutgoingCommands() = 0;
-    queue<response> outgoingEventQueue_;
+    list<Response> outgoingEventQueue_;
     
     bool queueBusy(){
         return (!outgoingEventQueue_.empty());
     }
     
+    
+    void addToOutgoingQueue(Response& resp){
+        list<Response>::iterator it;
+        for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
+            if(resp.deliveryTime < (*it).deliveryTime){
+                break;
+            }
+        }
+        outgoingEventQueue_.insert(it, resp);
+    }
+    
+    void setName(string _name){ name_ = _name; }
+    
 protected:
-    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize): timestamp_(0), accessLatency_(1),
-                        owner_(_cache), d_(_dbg), lineSize_(_lineSize), sentEvents_(0){}
+    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency):
+                        timestamp_(0), accessLatency_(1), owner_(_cache), d_(_dbg), lineSize_(_lineSize), sentEvents_(0){
+        accessLatency_ = _accessLatency;
+        mshrLatency_   = _mshrLatency;
+    }
     ~CoherencyController(){}
     const Cache* owner_;
     Output*    d_;

@@ -80,7 +80,7 @@ public:
 
         virtual RtrEvent* clone(void) {
             MemRtrEvent *mre = new MemRtrEvent(*this);
-            mre->event = new MemEvent(event);
+            mre->event = new MemEvent(*event);
             return mre;
         }
         friend class boost::serialization::access;

@@ -38,7 +38,6 @@ void MemHierarchyInterface::sendInitData(SimpleMem::Request *_req){
 void MemHierarchyInterface::sendRequest(SimpleMem::Request *_req){
     MemEvent *me = createMemEvent(_req);
     requests_[me->getID()] = _req;
-    //fprintf(stderr, "Sending request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[me->getCmd()], me->getAddr(), me->getID().first);
     link_->send(me);
 }
 

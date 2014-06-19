@@ -31,87 +31,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::init(unsigned int _phase){
-    
-    SST::Event *ev;
-    if(directoryLink_) directoryLink_->init(_phase);
-    
-    if(!_phase){
-        if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-        else{
-            for(uint i = 0; i < highNetPorts_->size(); i++)
-                highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));
-        }
-        if(!cf_.dirControllerExists_){
-            for(uint i = 0; i < lowNetPorts_->size(); i++)
-                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
-        }
-        
-    }
-
-    for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
-        while ((ev = (highNetPorts_->at(idc))->recvInitData())){
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if(!memEvent) delete memEvent;
-            else{
-                if(cf_.dirControllerExists_) directoryLink_->sendInitData(new MemEvent(memEvent));
-                else{
-                    for(uint idp = 0; idp < lowNetPorts_->size(); idp++)
-                        lowNetPorts_->at(idp)->sendInitData(new MemEvent(memEvent));
-                }
-            }
-            delete memEvent;
-        }
-    }
-    
-    if(!cf_.dirControllerExists_){
-        for(uint i = 0; i < lowNetPorts_->size(); i++) {
-            while ((ev = lowNetPorts_->at(i)->recvInitData())){
-                MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-                if(!memEvent) delete memEvent;
-                else if(memEvent->getCmd() == NULLCMD) nextLevelCacheName_ = memEvent->getSrc();
-                delete memEvent;
-            }
-        }
-    }
-}
-
-
-void Cache::setup(){
-    bottomCC_->setNextLevelCache(nextLevelCacheName_);
-}
-
-
-void Cache::finish(){
-    uint64_t averageLatency;
-    if(mshrHits_ > 0) averageLatency = totalUpgradeLatency_/mshrHits_;
-    else averageLatency = 0;
-    
-    bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency);
-    topCC_->printStats(statsFile_);
-    listener_->printStats(*d_);
-    delete cf_.cacheArray_;
-    delete cf_.rm_;
-    delete d_;
-    retryQueue_.clear();
-    retryQueueNext_.clear();
-    linkIdMap_.clear();
-    nameMap_.clear();
-}
-
-void Cache::processIncomingEvent(SST::Event* _ev){
-    processEvent(_ev, false);
-    /*
-    incomingEventQueue_.push(make_pair(_ev, timestamp_));
-    if(!clockOn_){
-        timestamp_ = reregisterClock(defaultTimeBase_, clockHandler_);
-        clockOn_ = true;
-        memNICIdleCount_ = 0;
-        idleCount_ = 0;
-    }
-    */
-}
-  
 void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     MemEvent *event = static_cast<MemEvent*>(_ev);
     Command cmd     = event->getCmd();
@@ -133,7 +52,6 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
         return;
     }
     
-    
     switch(cmd){
         case GetS:
         case GetX:
@@ -142,11 +60,11 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
                 if(processRequestInMSHR(baseAddr, event)){
                     d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                 }
-                return;
+                break;
             }
             if(mshr_->isFull()){
                 sendNACK(event);
-                return;
+                break;
             }
             processCacheRequest(event, cmd, baseAddr, _mshrHit);
             break;
@@ -218,3 +136,77 @@ void Cache::handleSelfEvent(SST::Event* _event){
         processEvent(_event, ev->isPrefetch());
 }
 
+
+
+void Cache::init(unsigned int _phase){
+    
+    SST::Event *ev;
+    if(directoryLink_) directoryLink_->init(_phase);
+    
+    if(!_phase){
+        if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        else{
+            for(uint i = 0; i < highNetPorts_->size(); i++)
+                highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));
+        }
+        if(!cf_.dirControllerExists_){
+            for(uint i = 0; i < lowNetPorts_->size(); i++)
+                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
+        }
+        
+    }
+
+    for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
+        while ((ev = (highNetPorts_->at(idc))->recvInitData())){
+            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+            if(!memEvent) delete memEvent;
+            else{
+                if(cf_.dirControllerExists_) directoryLink_->sendInitData(new MemEvent(*memEvent));
+                else{
+                    for(uint idp = 0; idp < lowNetPorts_->size(); idp++)
+                        lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
+                }
+            }
+            delete memEvent;
+        }
+    }
+    
+    if(!cf_.dirControllerExists_){
+        for(uint i = 0; i < lowNetPorts_->size(); i++) {
+            while ((ev = lowNetPorts_->at(i)->recvInitData())){
+                MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+                if(!memEvent) delete memEvent;
+                else if(memEvent->getCmd() == NULLCMD) nextLevelCacheName_ = memEvent->getSrc();
+                delete memEvent;
+            }
+        }
+    }
+}
+
+
+void Cache::setup(){
+    bottomCC_->setNextLevelCache(nextLevelCacheName_);
+}
+
+
+void Cache::finish(){
+    uint64_t averageLatency;
+    if(mshrHits_ > 0) averageLatency = totalUpgradeLatency_/mshrHits_;
+    else averageLatency = 0;
+    
+    bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency);
+    topCC_->printStats(statsFile_);
+    listener_->printStats(*d_);
+    delete cf_.cacheArray_;
+    delete cf_.rm_;
+    delete d_;
+    retryQueue_.clear();
+    retryQueueNext_.clear();
+    linkIdMap_.clear();
+    nameMap_.clear();
+}
+
+
+void Cache::processIncomingEvent(SST::Event* _ev){
+    processEvent(_ev, false);
+}

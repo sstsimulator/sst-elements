@@ -17,12 +17,9 @@
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 
-namespace SST {
-
-namespace MemHierarchy {
+namespace SST { namespace MemHierarchy {
 
 typedef uint64_t Addr;
-
 
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
 /* DO NOT CHANGE ORDERING!!!!  If ordering needs to change, change code in cacheEventProcessing.cc, cacheController::checkCacheLineIsStable   */
@@ -137,10 +134,7 @@ static const char* BccLineString[] __attribute__((unused)) = {
 
 //TODO: Make it more robust
 static const BCC_MESIState nextState[] = {I, S, M, S, I, I, M, E, M, I, S};
-
-
-
-static const std::string BROADCAST_TARGET = "BROADCAST";
+static const std::string NONE = "None";
 
 /**
  * Interface Event used to represent Memory-based communication.
@@ -153,192 +147,99 @@ static const std::string BROADCAST_TARGET = "BROADCAST";
  */
 class MemEvent : public SST::Event {
 public:
-    /** Used in a Read-Lock, Write-Unlock atomicity scheme */
-    static const uint32_t F_LOCKED    = (1<<1);
-    /** Used to specify that this memory event should not be cached */
-    static const uint32_t F_UNCACHED  = (1<<2);
-    /* Load Link / Store Conditional */
-    static const uint32_t F_LLSC      = (1<<3);
+    static const uint32_t F_LOCKED    = (1<<1);  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
+    static const uint32_t F_UNCACHED  = (1<<2);  /* Used to specify that this memory event should not be cached */
+    static const uint32_t F_LLSC      = (1<<3);  /* Load Link / Store Conditional */
 
-    /** Data Payload type */
-    typedef std::vector<uint8_t> dataVec;
 
-    /** Creates a new MemEvent */
-    MemEvent(const Component *_src, Addr _addr, Command _cmd) :
-        SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()){
-        event_id = generateUniqueId();
-        response_to_id = NO_ID;
-        baseAddr = _addr;
-        dst = BROADCAST_TARGET;
-        size = 0;
-        flags = 0;
-        prefetch = false;
-        ackNeeded = false;
-        groupId = 0;
-        atomic = false;
-        loadLink = false;
-        storeConditional = false;
+    
+    typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
+
+    /** Creates a new MemEvent - Genetic */
+    MemEvent(const Component *_src, Addr _addr, Command _cmd) : SST::Event(){
+        initialize(_src, _addr, _cmd);
     }
 
-
-    /** Creates a new MemEvent */
-    MemEvent(const Component *_src, Addr _addr, Command _cmd, id_type id) :
-        SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()) {
-        event_id = id;
-        response_to_id = NO_ID;
-        baseAddr = _addr;
-        size = 0;
-        dst = BROADCAST_TARGET;
-        flags = 0;
-        prefetch = false;
-        ackNeeded = false;
-        groupId = 0;
-        atomic = false;
-        loadLink = false;
-        storeConditional = false;
+    /** MemEvent constructor - Reads */
+    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size) : SST::Event() {
+        initialize(_src, _addr, _baseAddr, _cmd, _size);
     }
 
-    /** Creates a new MemEvent */
-    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size) :                //READS
-        SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()){
-        event_id = generateUniqueId();
-        response_to_id = NO_ID;
-        baseAddr = _baseAddr;
-        size = _size;
-        dst = BROADCAST_TARGET;
-        flags = 0;
-        prefetch = false;
-        ackNeeded = false;
-        groupId = 0;
-        atomic = false;
-        loadLink = false;
-        storeConditional = false;
+    /** MemEvent constructor - Writes */
+    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data) : SST::Event() {
+        initialize(_src, _addr, _baseAddr, _cmd, _data);
     }
 
-
-    /** Creates a new MemEvent */
-    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& data) :    //WRITES
-        SST::Event(), addr(_addr), cmd(_cmd), src(_src->getName()){
-        event_id = generateUniqueId();
-        response_to_id = NO_ID;
-        baseAddr = _baseAddr;
-        dst = BROADCAST_TARGET;
-        setPayload(data);
-        flags = 0;
-        prefetch = false;
-        ackNeeded = false;
-        groupId = 0;
-        atomic = false;
-        loadLink = false;
-        storeConditional = false;
-    }
-
-    /** Copy Construtor. */
-    MemEvent(const MemEvent &me) :
-        SST::Event(), event_id(me.event_id), response_to_id(me.response_to_id),
-        addr(me.addr), baseAddr(me.baseAddr), size(me.size), cmd(me.cmd), payload(me.payload),
-        src(me.src), dst(me.dst), flags(me.flags), prefetch(me.prefetch), grantedState(me.grantedState),
-        NACKedEvent(me.NACKedEvent), NACKedCmd(me.NACKedCmd), ackNeeded(me.ackNeeded), groupId(me.groupId),
-        atomic(me.atomic), loadLink(me.loadLink), storeConditional(me.storeConditional){
-        setDeliveryLink(me.getLinkId(), NULL);
-    }
-
-    /** Copy Construtor. */
-    MemEvent(const MemEvent *me) :
-        SST::Event(), event_id(me->event_id), response_to_id(me->response_to_id),
-        addr(me->addr),baseAddr(me->baseAddr), size(me->size), cmd(me->cmd), payload(me->payload),
-        src(me->src), dst(me->dst), flags(me->flags), prefetch(me->prefetch), grantedState(me->grantedState),
-        NACKedEvent(me->NACKedEvent), NACKedCmd(me->NACKedCmd), ackNeeded(me->ackNeeded), groupId(me->groupId),
-        atomic(me->atomic), loadLink(me->loadLink), storeConditional(me->storeConditional){
-        setDeliveryLink(me->getLinkId(), NULL);
-    }
-
-    virtual void print(const std::string& header, Output &out) const {
-        out.output("%s Mem Event (id: (%" PRIu64 ", %d)) to be delivered at %" PRIu64 " \n",
-                header.c_str(), event_id.first, event_id.second, getDeliveryTime());
-    }
-
-    /**
-     * Create a new MemEvent instance, pre-configured to act as a NACK response
-     */
+    /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent){
-        MemEvent *me = new MemEvent(source, addr, NACK);
-        me->setSize(size);
-        me->baseAddr = baseAddr;
-        assert(NACKedEvent);
+        MemEvent *me = new MemEvent(*this);
         me->response_to_id = event_id;
         me->dst = src;
         me->prefetch = prefetch;
         me->setGrantedState(NULLST);
         me->NACKedEvent = NACKedEvent;
         me->NACKedCmd = NACKedEvent->cmd;
-        me->ackNeeded = false;
-        me->groupId = 0;
-        me->atomic = false;
-        me->loadLink = false;
-        me->storeConditional = false;
         return me;
     }
-
-    /**
-     * Creates a new MemEvent instance, pre-configured to act as a response
-     * to this MemEvent.
-     * @param[in] source    Source Component where the response is being generated.
-     * @return              A pointer to a new MemEvent
-     */
+    
+    /** Generate a new MemEvent, pre-populated as a response */
     MemEvent* makeResponse(const Component *source){
-        MemEvent *me = new MemEvent(source, addr, commandResponse(cmd));
-        me->setSize(size);
+        MemEvent *me = new MemEvent(*this);
+        me->cmd = commandResponse(cmd);
         me->response_to_id = event_id;
         me->dst = src;
-        me->baseAddr = baseAddr;
-        if (queryFlag(F_UNCACHED)) me->setFlag(F_UNCACHED);
-        me->prefetch = prefetch;
-        me->setGrantedState(NULLST);
-        me->ackNeeded = false;
-        me->groupId = 0;
-        me->atomic = false;
-        me->loadLink = false;
-        me->storeConditional = false;
         return me;
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(const Component *source, std::vector<uint8_t> &data, BCC_MESIState state){
-        MemEvent *me = new MemEvent(source, addr, commandResponse(cmd));
-        me->setSize(size);
-        me->response_to_id = event_id;
-        me->dst = src;
-        me->baseAddr = baseAddr;
-        if (queryFlag(F_UNCACHED)) me->setFlag(F_UNCACHED);
-        me->setPayload(data);
+    MemEvent* makeResponse(const Component *source, BCC_MESIState state){
+        MemEvent *me = makeResponse(source);
         me->setGrantedState(state);
-        me->prefetch = prefetch;
-        me->ackNeeded = false;
-        me->groupId = 0;
-        me->atomic = false;
-        me->loadLink = false;
-        me->storeConditional = false;
         return me;
     }
     
     
-    void initialize(){
-        addr = 0;
-        cmd  = NULLCMD;
-        event_id = generateUniqueId();
-        response_to_id = NO_ID;
-        baseAddr = 0;
-        dst = BROADCAST_TARGET;
-        size = 0;
-        flags = 0;
-        prefetch = false;
-        ackNeeded = false;
-        groupId = 0;
-        atomic = false;
-        loadLink = false;
-        storeConditional = false;
+    void initialize(const Component *_src, Addr _addr, Command _cmd){
+        initialize();
+        src  = _src->getName();
+        addr = _addr;
+        cmd  = _cmd;
+     }
     
+     void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size){
+        initialize();
+        src      = _src->getName();
+        addr     = _addr;
+        baseAddr = _baseAddr;
+        cmd      = _cmd;
+        size     = _size;
+     
+     }
+    
+    void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data){
+        initialize();
+        src         = _src->getName();
+        addr        = _addr;
+        baseAddr    = _baseAddr;
+        cmd         = _cmd;
+        setPayload(_data);
+    }
+    
+    void initialize(){
+        addr             = 0;
+        cmd              = NULLCMD;
+        event_id         = generateUniqueId();
+        response_to_id   = NO_ID;
+        baseAddr         = 0;
+        dst              = NONE;
+        size             = 0;
+        flags            = 0;
+        groupId          = 0;
+        prefetch         = false;
+        ackNeeded        = false;
+        atomic           = false;
+        loadLink         = false;
+        storeConditional = false;
     }
 
 
@@ -376,13 +277,8 @@ public:
     void setStoreConditional(){ storeConditional = true;}
     bool isStoreConditional(){ return storeConditional; }
     
-    void setAtomic(){
-        atomic = true;
-    }
-    
-    bool isAtomic(){
-        return atomic;
-    }
+    void setAtomic(){ atomic = true; }
+    bool isAtomic(){ return atomic; }
     
     bool isHighNetEvent(){
         if(cmd == GetS || cmd == GetX || cmd == GetSEx){
@@ -408,20 +304,14 @@ public:
     
     }
     
-    bool fromHighNetNACK(){
-        return isLowNetEvent();
-    }
-    
-    bool fromLowNetNACK(){
-        return isHighNetEvent();
-    }
+    bool fromHighNetNACK(){ return isLowNetEvent();}
+    bool fromLowNetNACK(){return isHighNetEvent();}
 
     /** @return  the data payload. */
     dataVec& getPayload(void)
     {
         /* Lazily allocate space for payload */
-        if ( payload.size() < size )
-            payload.resize(size);
+        if ( payload.size() < size )  payload.resize(size);
         return payload;
     }
     
@@ -459,7 +349,6 @@ public:
 
     /** Returns true if this is a prefetch command */
     bool isPrefetch(){ return prefetch; }
-
 
     /** Return the Granted State */
     BCC_MESIState getGrantedState(){ return grantedState; }
@@ -506,9 +395,6 @@ public:
     const std::string& getDst(void) const { return dst; }
     /** Sets the destination string - who received this MemEvent */
     void setDst(const std::string &d) { dst = d; }
-
-    /** @return TRUE if this packet is targeted as a BROADCAST */
-    bool isBroadcast(void) const { return (dst == BROADCAST_TARGET); }
 
     /** @returns the state of all flags for this MemEvent */
     uint32_t getFlags(void) const { return flags; }
@@ -563,37 +449,33 @@ public:
         }
     }
 private:
-    id_type event_id;
-    id_type response_to_id;
-    uint64_t lockid; 
-    
-    Addr addr;
-    Addr baseAddr;  
-
-    uint32_t size;
-    
-
-    Command cmd;
-    dataVec payload;
+    id_type     event_id;
+    id_type     response_to_id;
+    uint64_t    lockid;
+    Addr        addr;
+    Addr        baseAddr;
+    uint32_t    size;
+    Command     cmd;
+    dataVec     payload;
     
     std::string src;
     std::string dst;
     
-    uint32_t flags; 
-    bool prefetch;
+    uint32_t    flags;
+    bool        prefetch;
     BCC_MESIState grantedState;
     
-    uint64_t startTime;
+    uint64_t    startTime;
     
-    MemEvent* NACKedEvent;
-    Command NACKedCmd;
+    MemEvent*   NACKedEvent;
+    Command     NACKedCmd;
     
-    bool ackNeeded;
-    uint32_t groupId;
+    bool        ackNeeded;
+    uint32_t    groupId;
     
-    bool atomic;
-    bool loadLink;
-    bool storeConditional;
+    bool        atomic;
+    bool        loadLink;
+    bool        storeConditional;
     
 
 

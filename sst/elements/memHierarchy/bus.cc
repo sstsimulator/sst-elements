@@ -85,12 +85,12 @@ void Bus::broadcastEvent(SST::Event* _ev){
 
     for(int i = 0; i < numHighNetPorts_; i++) {
         if(highNetPorts_[i] == srcLink) continue;
-        highNetPorts_[i]->send(new MemEvent(memEvent));
+        highNetPorts_[i]->send(new MemEvent(*memEvent));
     }
     
     for(int i = 0; i < numLowNetPorts_; i++) {
         if(lowNetPorts_[i] == srcLink) continue;
-        lowNetPorts_[i]->send( new MemEvent(memEvent));
+        lowNetPorts_[i]->send( new MemEvent(*memEvent));
     }
     
     delete memEvent;
@@ -107,7 +107,7 @@ void Bus::sendSingleEvent(SST::Event* _ev){
 
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
-    dstLink->send(new MemEvent(event));
+    dstLink->send(new MemEvent(*event));
     
     delete event;
 }
@@ -199,7 +199,7 @@ void Bus::init(unsigned int _phase){
             }
             else{
                 for(int k = 0; k < numLowNetPorts_; k++)
-                    lowNetPorts_[k]->sendInitData(new MemEvent(memEvent));
+                    lowNetPorts_[k]->sendInitData(new MemEvent(*memEvent));
             }
             delete memEvent;
         }
@@ -212,7 +212,7 @@ void Bus::init(unsigned int _phase){
             else if(memEvent->getCmd() == NULLCMD){
                 mapNodeEntry(memEvent->getSrc(), lowNetPorts_[i]->getId());
                 for(int i = 0; i < numHighNetPorts_; i++) {
-                    highNetPorts_[i]->sendInitData(new MemEvent(memEvent));
+                    highNetPorts_[i]->sendInitData(new MemEvent(*memEvent));
                 }
             }
             else{/*Ignore responses */}

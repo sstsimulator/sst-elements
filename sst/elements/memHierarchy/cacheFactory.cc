@@ -132,7 +132,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     idleMax_            = _params.find_integer("idle_max", 10000);
     accessLatency_      = _params.find_integer("access_latency_cycles", -1);
     string prefetcher   = _params.find_string("prefetcher");
-    mshrLatency_        = _params.find_integer("mshr_latency_cycles", -1);
+    mshrLatency_        = _params.find_integer("mshr_latency_cycles", 0);
     
     
     /* --------------- Prefetcher ---------------*/
@@ -148,7 +148,10 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     /* ---------------- Latency ---------------- */
     assert(accessLatency_ >= 1);
     if(mshrLatency_ < 1) intrapolateMSHRLatency();
-    assert(mshrLatency_   >= 1);
+    
+    assert(mshrLatency_ >= 1 && mshrLatency_ <= 200);
+
+
 
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(this, cf_.MSHRSize_);
@@ -206,9 +209,11 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
                       new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
     bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_, cf_.statGroupIds_);
    
-    /*--------------- Replacement Manager --------------- */
+    /*---------------  Misc --------------- */
     cf_.rm_->setTopCC(topCC_);  cf_.rm_->setBottomCC(bottomCC_);
-
+    
+    bottomCC_->setName(this->getName());
+    topCC_->setName(this->getName());
 }
 
 
@@ -276,7 +281,11 @@ void Cache::intrapolateMSHRLatency(){
     
     assert_msg(accessLatency_ > 4, "Cache access latencies greater than 200 cycles not supported.");
 
+    assert(accessLatency_ >= 0 && accessLatency_ <= N);
     mshrLatency_ = y[accessLatency_];
+        assert(mshrLatency_   >= 1 && mshrLatency_ <= 200);
+
+
 
 }
 

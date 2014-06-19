@@ -274,21 +274,10 @@ private:
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregested from TimeVortx and reregisted only when an event is received */
     bool clockTick(Cycle_t time) {
-        timestamp_++; topCC_->timestamp_++; bottomCC_->timestamp_++;
-        
+        timestamp_++; 
         if(cf_.dirControllerExists_) memNICIdle_ = directoryLink_->clock();
-        
-        bool topCCBusy      = topCC_->queueBusy();
-        bool bottomCCBusy   = bottomCC_->queueBusy();
-        
-        if(topCCBusy)     topCC_->sendOutgoingCommands();
-        if(bottomCCBusy)  bottomCC_->sendOutgoingCommands();
-
-        //if(cacheBusy) processQueueRequest();
-        //else if(!topCCBusy && !bottomCCBusy && !dirControllerExists_)
-        //    ret = incIdleCount();
-        
-        //return ret;
+        topCC_->sendOutgoingCommands();
+        bottomCC_->sendOutgoingCommands();
         return false;
     }
     

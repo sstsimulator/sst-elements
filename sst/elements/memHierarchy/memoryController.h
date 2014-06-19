@@ -96,7 +96,7 @@ public:
         uint32_t num_req;
 
         DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize) :
-            reqEvent(new MemEvent(ev)), respEvent(NULL),
+            reqEvent(new MemEvent(*ev)), respEvent(NULL),
             canceled(false), isACK(false), responseNeeded(false), amt_in_process(0), amt_processed(0), status(NEW){
             
             cmd = ev->getCmd();

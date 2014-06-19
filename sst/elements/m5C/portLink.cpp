@@ -122,28 +122,25 @@ MemPkt* PortLink::findMatchingEvent(SimpleMem::Request *e)
 
 MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 {
-	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
 	MemPkt* pkt = findMatchingEvent(e);
 	if ( !pkt ) {
 		_abort(Gem5Converter, "Trying to convert SST even for which no matching GEM5 event is found.\n");
 	}
 
 	switch ( e->cmd ) {
-    case SimpleMem::Request::ReadResp:
-        //fprintf(stderr, "Found a ReadResp of size %zu [asked for %zu]\n", e->size, pkt->size);
-		pkt->cmd = ::MemCmd::ReadResp;
-		pkt->isResponse = true;
-	    pkt->size = e->size;
-	    memcpy(pkt->data, &(e->data[0]), pkt->size);
-		break;
-    case SimpleMem::Request::WriteResp:
-        //fprintf(stderr, "Found a WriteResp\n");
-		pkt->cmd = ::MemCmd::WriteResp;
-		pkt->isResponse = true;
-		break;
-	default:
-		_abort(Gem5Converter, "Trying to map SST cmd %d to GEM5\n", e->cmd);
-		break;
+        case SimpleMem::Request::ReadResp:
+            pkt->cmd = ::MemCmd::ReadResp;
+            pkt->isResponse = true;
+            pkt->size = e->size;
+            memcpy(pkt->data, &(e->data[0]), pkt->size);
+            break;
+        case SimpleMem::Request::WriteResp:
+            pkt->cmd = ::MemCmd::WriteResp;
+            pkt->isResponse = true;
+            break;
+        default:
+            _abort(Gem5Converter, "Trying to map SST cmd %d to GEM5\n", e->cmd);
+            break;
 	}
 
 	assert(pkt->size <= (unsigned)MemPkt::DataSize);
@@ -160,8 +157,6 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 	int tmp = pkt->src;
 	pkt->src = pkt->dest;
 	pkt->dest = tmp;
-
-	/* TODO:  finishTime ?   firstWordTime ?  pktId ? */
 	return pkt;
 }
 
@@ -169,33 +164,23 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
 {
     SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, pkt->addr, pkt->size);
-    bool readEx = false;
 
     /* From ${GEM5}/src/mem/request.hh */
 
-    if ( pkt->req.flags & UNCACHED ) {
-        req->flags |=(SimpleMem::Request::F_UNCACHED);
-    }
-    else if (UNLIKELY(pkt->req.flags & LOCKED)) {
-        req->flags |= (SimpleMem::Request::F_LOCKED);
-        readEx = true;
-    }
-    else if (UNLIKELY(pkt->req.flags & LLSC)) {
-        req->flags |= (SimpleMem::Request::F_LLSC);
-    }
+    if ( pkt->req.flags & UNCACHED )            req->flags |=(SimpleMem::Request::F_UNCACHED);
+    else if (UNLIKELY(pkt->req.flags & LOCKED)) req->flags |= (SimpleMem::Request::F_LOCKED);
+    else if (UNLIKELY(pkt->req.flags & LLSC))   req->flags |= (SimpleMem::Request::F_LLSC);
 
     switch ( (::MemCmd::Command)pkt->cmd) {
-    case ::MemCmd::ReadReq:
-        req->cmd = SimpleMem::Request::Read;
-        //fprintf(stderr, "Creating Read Req for addr 0x%"PRIx64" of size %zu\n", req->addr, req->size);
-        break;
-    case ::MemCmd::WriteReq:
-        //fprintf(stderr, "Creating Write Req for addr 0x%"PRIx64" of size %zu [0x%x]\n", req->addr, req->size, *(uint64_t*)&(pkt->data[0]));
-        req->cmd = SimpleMem::Request::Write;
-        req->setPayload(pkt->data, pkt->size);
-        break;
-    default:
-        _abort(Gem5Converter, "Don't know how to convert command %d to SST\n", pkt->cmd);
+        case ::MemCmd::ReadReq:
+            req->cmd = SimpleMem::Request::Read;
+            break;
+        case ::MemCmd::WriteReq:
+            req->cmd = SimpleMem::Request::Write;
+            req->setPayload(pkt->data, pkt->size);
+            break;
+        default:
+            _abort(Gem5Converter, "Don't know how to convert command %d to SST\n", pkt->cmd);
     }
     m_g5events[req->id] = pkt;
 
