@@ -47,12 +47,13 @@ private:
     
 public:
     xbar_arb_rr() :
-	XbarArbitration()
+        XbarArbitration(),
+        rr_vcs(NULL)
     {
     }
 
     ~xbar_arb_rr() {
-        delete [] rr_vcs;
+        if ( rr_vcs != NULL ) delete [] rr_vcs;
     }
 
     void setPorts(int num_ports_s, int num_vcs_s) {
