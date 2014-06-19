@@ -40,6 +40,7 @@
 #include "misc.h"
 #include "Scheduler.h"
 #include "Statistics.h"
+#include "TaskMapper.h"
 
 #include "events/ArrivalEvent.h"
 #include "events/CompletionEvent.h"
@@ -153,6 +154,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     machine = factory.getMachine(params, nodes.size(), this);
     scheduler = factory.getScheduler(params, nodes.size());
     theAllocator = factory.getAllocator(params, machine);
+    theTaskMapper = factory.getTaskMapper(params, machine);
     FSTtype = factory.getFST(params);
     timePerDistance = factory.getTimePerDistance(params);
     string trace = params["traceName"].c_str();
@@ -312,10 +314,10 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
 {
     if (dynamic_cast<CommunicationEvent *>(ev)) {
         CommunicationEvent * CommEvent = dynamic_cast<CommunicationEvent *> (ev);
-	if( CommEvent->CommType == RETRIEVE_ID &&
-	    CommEvent->reply == true ){
-        	nodeIDs.insert(nodeIDs.begin() + node, *(std::string*)CommEvent->payload);
-	}
+	    if( CommEvent->CommType == RETRIEVE_ID &&
+	        CommEvent->reply == true ){
+            	nodeIDs.insert(nodeIDs.begin() + node, *(std::string*)CommEvent->payload);
+	    }
         delete ev;
     } else if (dynamic_cast<CompletionEvent*>(ev)) {
         CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);

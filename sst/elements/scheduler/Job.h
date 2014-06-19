@@ -33,7 +33,8 @@ namespace SST {
                     unsigned long estRunningTime);
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
                     long estRunningTime, std::string ID );
-                Job(Job* j);
+                Job(const Job &job);
+                
 
                 ~Job();
 

@@ -20,16 +20,14 @@ namespace SST {
         class Job;
 
         class TaskCommInfo {
-	        private:
-                Job* job;
-
-            public:
+	        public:
                 //defaults to all-to-all communication
-                TaskCommInfo(Job* job, int ** commMatrix = NULL);
+                TaskCommInfo(Job* job, int ** inCommMatrix = NULL);
 
                 ~TaskCommInfo();
 
                 int** commMatrix;
+                Job* job;
         };
     }
 }

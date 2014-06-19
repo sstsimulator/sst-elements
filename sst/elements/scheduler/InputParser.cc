@@ -24,6 +24,7 @@
 #include "Job.h"
 #include "Machine.h"
 #include "output.h"
+#include "TaskCommInfo.h"
 
 using namespace std;
 using namespace SST;
@@ -34,9 +35,9 @@ JobParser::JobParser(Machine* machine,
           bool* useYumYumSimulationKill,
           bool* YumYumSimulationKillFlag )
 {
-    this -> machine = machine;
-    this -> useYumYumSimulationKill = useYumYumSimulationKill;
-    this -> YumYumSimulationKillFlag = YumYumSimulationKillFlag;
+    this->machine = machine;
+    this->useYumYumSimulationKill = useYumYumSimulationKill;
+    this->YumYumSimulationKillFlag = YumYumSimulationKillFlag;
     useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
     jobTrace = params["traceName"].c_str();
 
@@ -176,43 +177,79 @@ bool JobParser::newJobLine(std::string line)
     if (line.find_first_not_of(" \t\n") == string::npos)
         return false;
 
-    unsigned long arrivalTime;
-    int procsNeeded;
-    unsigned long runningTime;
-    unsigned long estRunningTime;
-    int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
-                     &procsNeeded, &runningTime, &estRunningTime);
-    if (num < 3) schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s",  line.c_str());
-    if (3 == num) {
-        jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
-    } else { //read all 4                                                        
-        jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
+    unsigned long arrivalTime = -1;
+    int procsNeeded = -1;
+    unsigned long runningTime = 0;
+    unsigned long estRunningTime = 0;
+    string communicationFile = "";
+       
+    std::stringstream is(line);
+    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile;
+    
+    if(procsNeeded < 0 || runningTime < 0) {
+        schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s\n",  line.c_str());
+    }
+    
+    if(estRunningTime <= 0){
+        estRunningTime = runningTime;
+    }
+    
+    Job temp_job = Job(arrivalTime, procsNeeded, runningTime, estRunningTime);
+    jobs.push_back(temp_job);
+    Job* j = &jobs.back();
+    
+    //get communication info
+    TaskCommInfo* tci;
+    if(communicationFile.empty()){
+        tci = new TaskCommInfo(j);
+    } else {
+        //get file name as a path
+        unsigned found = fileName.find_last_of("/");
+        if(found != string::npos){
+            communicationFile = fileName.substr(found+1) + communicationFile;
+        }
+        tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
+    }
+    
+    //validate
+    return validateJob(j, &jobs, runningTime);
+}
+
+int** JobParser::readCommFile(std::string fileName, int procsNeeded)
+{
+    //read matrix
+	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
+	int** matrix = reader.readMatrix(fileName.c_str());
+
+	//check size
+	if(reader.xdim != reader.ydim){
+		schedout.fatal(CALL_INFO, 1, "Given matrix in file %s is not a square matrix\n", fileName.c_str());
+	} else if(reader.xdim != procsNeeded){
+    	schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", fileName.c_str());
     }
 
-    //validate                                                                  
-    Job* j = &jobs.back();
-
-    return validateJob(j, &jobs, runningTime);
+	return matrix;
 }
 
 bool JobParser::validateJob( Job* j, vector<Job>* jobs, long runningTime )
 {
     bool ok = true;
-    if (j -> getProcsNeeded() <= 0) {
+    if (j->getProcsNeeded() <= 0) {
         schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it",
-                         j -> getJobNum(), j -> getProcsNeeded());
+                         j->getJobNum(), j->getProcsNeeded());
         jobs->pop_back();
         ok = false;
     }
     if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
         schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it",
-                         j -> getJobNum(), runningTime);
+                         j->getJobNum(), runningTime);
         jobs->pop_back();
         ok = false;
     }
-    if (ok && j -> getProcsNeeded() > machine -> getNumProcs()) {
+    if (ok && j->getProcsNeeded() > machine->getNumProcs()) {
         schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
-                       j -> getJobNum(), j -> getProcsNeeded(), machine -> getNumFreeProcessors());
+                       j->getJobNum(), j->getProcsNeeded(), machine->getNumFreeProcessors());
+        ok = false;
     }
     
     return ok;
@@ -220,7 +257,7 @@ bool JobParser::validateJob( Job* j, vector<Job>* jobs, long runningTime )
 
 DParser::DParser(int numNodes, SST::Params& params)
 {
-    this -> numNodes = numNodes;
+    this->numNodes = numNodes;
     fileName = params["dMatrixFile"].c_str();
     
     char* inputDir = getenv("SIMINPUT");

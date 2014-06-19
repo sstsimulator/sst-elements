@@ -37,6 +37,7 @@ namespace SST {
         class Machine;
         class Scheduler;
         class Allocator;
+        class TaskMapper;
         class Statistics;
         class AllocInfo;
         class FST;
@@ -96,6 +97,7 @@ namespace SST {
                 Scheduler* scheduler;
                 Scheduler* FSTscheduler;
                 Allocator* theAllocator;
+                TaskMapper* theTaskMapper;
                 Statistics* stats;
                 int FSTtype;
                 FST* calcFST;

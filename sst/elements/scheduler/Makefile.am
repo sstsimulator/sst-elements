@@ -81,7 +81,9 @@ libscheduler_la_SOURCES = \
     schedulers/PQScheduler.cc \
     schedulers/PQScheduler.h \
     schedulers/StatefulScheduler.cc \
-    schedulers/StatefulScheduler.h
+    schedulers/StatefulScheduler.h \
+    taskMappers/SimpleTaskMapper.cc \
+    taskMappers/SimpleTaskMapper.h
 
 EXTRA_DIST = \
 	simulations/makeSDL.pl

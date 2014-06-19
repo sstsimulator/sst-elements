@@ -15,6 +15,7 @@ scheduler.addParams({
                               # granularmbs, hybrid, mbs, mc1x1, mm, nearest,
                               # octetmbs, oldmc1x1,random, simple, sortedfreelist.
                               # (default: simple)
+      "taskMapper" : "simple", # simple (default: simple)
       "FST" : "none", # none, relaxed, strict. (default: none)
       "timeperdistance" : ".7[.3,0.9875,0.0962,.2]", # communication overhead params (default: none)
       "runningTimeSeed" : "42", # communication overhead randomization seed (default: none)

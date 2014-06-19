@@ -35,7 +35,7 @@ namespace SST {
 		        Job* job;
 		        AllocInfo* allocInfo;
 
-		        TaskMapInfo(AllocInfo* ai, TaskCommInfo* tci);
+		        TaskMapInfo(AllocInfo* ai);
 
 		        ~TaskMapInfo() { };
 

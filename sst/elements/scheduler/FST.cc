@@ -69,7 +69,8 @@ bool compevents(Job* j1, Job* j2) {
 void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 { 
     schedout.debug(CALL_INFO, 7, 0, "%s arriving to FST\n", inj -> toString().c_str());
-    Job *j = new Job(inj); //must copy the job because they keep track of when they each start
+    
+    Job *j = new Job(*inj); //must copy the job because they keep track of when they each start
 
     //if the schedule is not relaxed the job has already been added; otherwise
     //we want to add it later (but only once)
@@ -164,14 +165,14 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
         for (unsigned int x = 0; !found && x < running -> size(); x++) {
             if (running -> at(x) == endtimes -> begin() -> first) {
                 running -> erase(running -> begin() + x);
-                readdtorunning -> push_back(new Job(endtimes -> begin() -> first));
+                readdtorunning -> push_back(new Job(*(endtimes -> begin() -> first)));
                 found = true;
             }
         }
         for (unsigned int x = 0; !found && x < toRun -> size(); x++) {
             if (toRun -> at(x) == endtimes -> begin() -> first) {
                 toRun -> erase(toRun -> begin() + x);
-                readdtorun-> push_back(new Job(endtimes -> begin() -> first));
+                readdtorun-> push_back(new Job(*(endtimes -> begin() -> first)));
                 found = true;
             }
         } 

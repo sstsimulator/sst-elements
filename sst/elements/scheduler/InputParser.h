@@ -43,7 +43,7 @@ namespace SST {
                 bool checkJobFile();
             private:
                 Machine* machine;
-                std::vector<Job> jobs;
+                std::vector<Job> jobs;   //TODO: make this a pointer vector to prevent unnecessary copying
 
                 std::string fileName;
                 boost::filesystem::path fileNamePath;
@@ -53,6 +53,7 @@ namespace SST {
                 char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
                 
                 bool newJobLine(std::string line);
+                int** readCommFile(std::string fileName, int procsNeeded);
                 bool validateJob( Job * j, std::vector<Job> * jobs, long runningTime );
                 
                 //yumyum

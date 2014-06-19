@@ -29,17 +29,15 @@ namespace SST {
         class TaskMapper {
 
             public:
-		        TaskMapper(Job *job) { this -> job = job; }
+		        TaskMapper(Machine* machine) { this -> machine = machine; }
 
 		        virtual ~TaskMapper() {};
 
 		        //returns task mapping info of a single job; does not map the tasks
-		        virtual TaskMapInfo* mapTasks(Machine* mach, AllocInfo* allocInfo, TaskCommInfo* tci) = 0;
-
-		        Job* job;
+		        virtual TaskMapInfo* mapTasks(AllocInfo* allocInfo) = 0;
 
 	        protected:
-		        //Machine* machine;
+		        Machine* machine;
         };
     }
 }

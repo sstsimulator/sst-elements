@@ -123,6 +123,10 @@ static const SST::ElementInfoParam sched_params[] = {
       "Assigns available nodes to each job",
       "Simple allocator"
     },
+    { "taskMapper",
+        "Assigns job tasks to allocated nodes",
+        "Simple task mapper"
+    },
     { "FST",
       "Metric to analyze scheduler in terms of social justice",
       "None"

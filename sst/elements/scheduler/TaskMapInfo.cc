@@ -18,11 +18,11 @@
 
 using namespace SST::Scheduler;
 
-TaskMapInfo::TaskMapInfo(AllocInfo* ai, TaskCommInfo* tci)
+TaskMapInfo::TaskMapInfo(AllocInfo* ai)
 {
     allocInfo = ai;
     job = ai -> job;
-    taskCommInfo = tci;
+    taskCommInfo = ai->job->taskCommInfo;
 }
 
 void TaskMapInfo::insert(int taskInd, int nodeInd)

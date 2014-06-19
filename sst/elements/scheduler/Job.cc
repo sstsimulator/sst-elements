@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <string>
 
+#include <iostream> //debug
+
 #include "exceptions.h"
 #include "Machine.h"
 #include "misc.h"
@@ -40,38 +42,50 @@ Job::Job(long arrivalTime, int procsNeeded, long actualRunningTime,
 }
 
 //copy constructor
-Job::Job(Job* j)
+Job::Job(const Job &job)
 {
-    arrivalTime = j -> arrivalTime;
-    procsNeeded = j -> procsNeeded;
-    actualRunningTime = j -> actualRunningTime;
-    estRunningTime = j -> estRunningTime;
-    jobNum = j -> jobNum;
-    ID = j -> ID;
-    startTime = j -> startTime;
-    hasRun = j -> hasRun;
-    started = j -> started;
+    arrivalTime = job.arrivalTime;
+    procsNeeded = job.procsNeeded;
+    actualRunningTime = job.actualRunningTime;
+    estRunningTime = job.estRunningTime;
+    jobNum = job.jobNum;
+    ID = job.ID;
+    startTime = job.startTime;
+    hasRun = job.hasRun;
+    started = job.started;
+    if(job.taskCommInfo == NULL){
+        taskCommInfo = NULL;
+    } else {
+        int ** commMatrix = new int*[procsNeeded];
+        for(int i = 0; i < procsNeeded; i++)
+        {
+            commMatrix[i] = new int[procsNeeded];
+            for(int j = 0; j < procsNeeded; j++){
+                commMatrix[i][j] = job.taskCommInfo->commMatrix[i][j];
+            }
+        }
+        taskCommInfo = new TaskCommInfo(this, commMatrix);
+    }
 }
 
 Job::~Job()
 {
-	if(taskCommInfo != NULL){
-		delete taskCommInfo;
-	}
+    if(taskCommInfo != NULL){
+        delete taskCommInfo;
+    }
 }
 
 //Helper for constructors
 void Job::initialize(unsigned long arrivalTime, int procsNeeded,
                      unsigned long actualRunningTime, unsigned long estRunningTime) 
 {
-
     //make sure estimate is valid; workload log uses -1 for "no estimate"
     if (estRunningTime < actualRunningTime || (unsigned long)-1 == estRunningTime) {
         estRunningTime = actualRunningTime;
     }
 
     this -> arrivalTime = arrivalTime;
-    this ->  procsNeeded = procsNeeded;
+    this -> procsNeeded = procsNeeded;
     this -> actualRunningTime = actualRunningTime;
     this -> estRunningTime = estRunningTime;
 

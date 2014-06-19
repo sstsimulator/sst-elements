@@ -13,15 +13,17 @@
 
 #include "TaskCommInfo.h"
 
+#include <iostream> //debug
+
 using namespace SST::Scheduler;
 
-TaskCommInfo::TaskCommInfo( Job* job, int ** commMatrix)
+TaskCommInfo::TaskCommInfo( Job* job, int ** inCommMatrix)
 {
-	this -> job = job;
-	job -> taskCommInfo = this;
-	if(commMatrix == NULL){
+	this->job = job;
+	job->taskCommInfo = this;
+	if(inCommMatrix == NULL){
 		//init commMatrix
-		int size = job -> getProcsNeeded();
+		int size = job->getProcsNeeded();
 		commMatrix = new int*[size];
 		for(int i=0; i<size; i++){
 			commMatrix[i] = new int[size];
@@ -33,7 +35,7 @@ TaskCommInfo::TaskCommInfo( Job* job, int ** commMatrix)
 			}
 		}
 	} else {
-		this -> commMatrix = commMatrix;
+		this->commMatrix = inCommMatrix;
 	}
 }
 

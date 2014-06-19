@@ -30,6 +30,7 @@ namespace SST {
         class Machine;
         class Scheduler;
         class Allocator;
+        class TaskMapper;
         class FST;
 
         class Factory{
@@ -38,6 +39,7 @@ namespace SST {
                 Scheduler* getScheduler(SST::Params& params, int numProcs);
                 Machine* getMachine(SST::Params& params, int numProcs, schedComponent* sc);
                 Allocator* getAllocator(SST::Params& params, Machine* m);
+                TaskMapper* getTaskMapper(SST::Params& params, Machine* mach);
                 int getFST(SST::Params& params);
                 std::vector<double>* getTimePerDistance(SST::Params& params);
             private:
@@ -78,6 +80,10 @@ namespace SST {
                     ENERGY = 14,
                     HYBRID = 15,
                 };
+                enum TaskMapperType{
+                    SIMPLEMAP = 0,
+                };
+                
                 enum FSTType{
                     NONE = 0,
                     STRICT = 1,
@@ -96,6 +102,10 @@ namespace SST {
                     AllocatorType val;
                     std::string name;
                 };
+                struct taskMapTableEntry{
+                    TaskMapperType val;
+                    std::string name;
+                };
 
                 struct FSTTableEntry{
                     FSTType val;
@@ -105,14 +115,18 @@ namespace SST {
                 static const schedTableEntry schedTable[6];
                 static const machTableEntry machTable[2];
                 static const allocTableEntry allocTable[16];
+                static const taskMapTableEntry taskMapTable[1];
                 static const FSTTableEntry FSTTable[3];
 
                 SchedulerType schedulername(std::string inparam);
                 MachineType machinename(std::string inparam);
                 AllocatorType allocatorname(std::string inparam);
+                TaskMapperType taskmappername(std::string inparam);
                 FSTType FSTname(std::string inparam);
+                
                 static const int numSchedTableEntries;
                 static const int numAllocTableEntries;
+                static const int numTaskMapTableEntries;
                 static const int numMachTableEntries;
                 static const int numFSTTableEntries;
         };

@@ -44,6 +44,8 @@
 #include "schedulers/PQScheduler.h"
 #include "schedulers/StatefulScheduler.h"
 
+#include "taskMappers/SimpleTaskMapper.h"
+
 using namespace SST::Scheduler;
 using namespace std;
 
@@ -85,6 +87,10 @@ const Factory::allocTableEntry Factory::allocTable[] = {
     {HYBRID, "hybrid"},
 };
 
+const Factory::taskMapTableEntry Factory::taskMapTable[] = {
+    {SIMPLEMAP, "simple"},
+};
+
 const Factory::FSTTableEntry Factory::FSTTable[] = {
     {NONE, "none"},
     {RELAXED, "relaxed"},
@@ -93,6 +99,7 @@ const Factory::FSTTableEntry Factory::FSTTable[] = {
 
 const int Factory::numSchedTableEntries = 6;
 const int Factory::numAllocTableEntries = 16;
+const int Factory::numTaskMapTableEntries = 1;
 const int Factory::numMachTableEntries = 2;
 const int Factory::numFSTTableEntries = 3;
 
@@ -422,6 +429,27 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
     return NULL; //control never reaches here
 }
 
+TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
+{
+    TaskMapper* taskMapper;
+    if(params.find("taskMapper") == params.end()){
+        taskMapper = new SimpleTaskMapper(mach);
+        schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Task Mapper\n");
+    } else {
+        vector<string>* taskmapparams = parseparams(params["taskMapper"]);
+        switch (taskmappername( taskmapparams->at(0) )){
+        case SIMPLEMAP:
+            taskMapper = new SimpleTaskMapper(mach);
+            break;
+        default: 
+            taskMapper = NULL;
+            schedout.fatal(CALL_INFO, 1, "Could not parse name of task mapper");
+        }
+    }
+    return taskMapper;
+}
+
+
 int Factory::getFST(SST::Params& params)
 {
     if(params.find("FST") == params.end()){
@@ -515,6 +543,15 @@ Factory::AllocatorType Factory::allocatorname(string inparam)
         if (inparam == allocTable[i].name) return allocTable[i].val;
     }
     schedout.fatal(CALL_INFO, 1, "Allocator name not found:%s", inparam.c_str());
+    exit(0);
+}
+
+Factory::TaskMapperType Factory::taskmappername(string inparam)
+{
+    for(int i = 0; i < numTaskMapTableEntries; i++) {
+        if (inparam == taskMapTable[i].name) return taskMapTable[i].val;
+    }
+    schedout.fatal(CALL_INFO, 1, "Task Mapper name not found:%s", inparam.c_str());
     exit(0);
 }
 
