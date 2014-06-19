@@ -1081,7 +1081,9 @@ int ProcessQueuesState<T1>::copyIoVec(
 
             assert( rP < dst[rV].len );
 
-            ((char*)dst[rV].ptr)[rP] = ((char*)src[i].ptr)[j];
+            if ( dst[rV].ptr && src[i].ptr ) {
+                ((char*)dst[rV].ptr)[rP] = ((char*)src[i].ptr)[j];
+            }
             ++copied;
             ++rP;
             if ( rP == dst[rV].len ) {

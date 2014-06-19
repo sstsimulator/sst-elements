@@ -619,11 +619,13 @@ size_t Nic::copyIn( Output& dbg, Nic::Entry& entry, MerlinFireflyEvent& event )
             dbg.verbose(CALL_INFO,2,0,"toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
-
             entry.currentLen += len;
-            memcpy( toPtr, &event.buf[0], len );
+            if ( entry.ioVec()[entry.currentVec].ptr ) {
+                memcpy( toPtr, &event.buf[0], len );
+                print( dbg, toPtr, len );
+            }
+
             event.buf.erase(0,len);
-            print( dbg, toPtr, len );
 
             entry.currentPos += len;
             if ( 0 == event.buf.size() &&
@@ -665,7 +667,12 @@ bool  Nic::copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry )
                     (const char*) entry.ioVec()[entry.currentVec].ptr + 
                                                         entry.currentPos;
 
-            event.buf.insert( event.buf.size(), from, len );
+            if ( entry.ioVec()[entry.currentVec].ptr ) {
+                event.buf.insert( event.buf.size(), from, len );
+            } else {
+                event.buf.insert( event.buf.size(), len, 0 );
+            }
+
             entry.currentPos += len;
             if ( event.buf.size() == m_packetSizeInBytes &&
                     entry.currentPos != entry.ioVec()[entry.currentVec].len ) {
