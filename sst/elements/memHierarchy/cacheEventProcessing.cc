@@ -41,6 +41,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     if(!_mshrHit){
         incTotalRequestsReceived(groupId);
         d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+        cout << flush;
     }
     else incTotalMSHRHits(groupId);
 

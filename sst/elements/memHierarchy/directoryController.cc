@@ -30,7 +30,10 @@ const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::ma
 
 DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Component(id), blocksize(0){
-    dbg.init("", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    int debugLevel = params.find_integer("debug_level", 0);
+    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
+    
+    dbg.init("", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     printStatsLoc = (Output::output_location_t)params.find_integer("statistics", 0);
 
     targetCount = 0;
@@ -113,14 +116,14 @@ DirectoryController::~DirectoryController(){
 
 void DirectoryController::handleMemoryResponse(SST::Event *event){
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    dbg.output("\n\n----------------------------------------------------------------------------------------\n");
+    dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller - %s - Memory response. Cmd = %s for address %"PRIx64"(Response to(%"PRIx64", %d))\n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getResponseToID().first, ev->getResponseToID().second);
 
     if(uncachedWrites.find(ev->getResponseToID()) != uncachedWrites.end()) {
         MemEvent *origEV = uncachedWrites[ev->getResponseToID()];
         uncachedWrites.erase(ev->getResponseToID());
 
-        MemEvent *resp = origEV->makeResponse(this);
+        MemEvent *resp = origEV->makeResponse();
         sendResponse(resp);
 
         delete origEV;
@@ -151,14 +154,14 @@ void DirectoryController::handlePacket(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
     workQueue.push_back(ev);
-    dbg.output("\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller - %s - Received(%"PRIx64", %d) %s Cmd = %s %"PRIx64" from %s.  Position %zu in queue.\n", getName().c_str(), ev->getID().first, ev->getID().second,  ev->queryFlag(MemEvent::F_UNCACHED) ? "Uncached " : "", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), workQueue.size());
 }
 
 
 bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
-    dbg.debug(_L10_, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
+    dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
+    dbg.debug(_L10_, "Directory Controller: %s, %s req, Cmd = %s, BsAddr = %"PRIx64", Src = %s\n", getName().c_str(), ev->queryFlag(MemEvent::F_UNCACHED) ? "un$" : "$", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str());
+    //dbg.debug(_L10_, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
     Command cmd = ev->getCmd();
     
     if(NACK == cmd) {
@@ -393,7 +396,7 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
     if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
         entry->sharers[node_id(entry->activeReq->getSrc())] = true;
 
-	MemEvent *ev = entry->activeReq->makeResponse(this);
+	MemEvent *ev = entry->activeReq->makeResponse();
 	ev->setPayload(new_ev->getPayload());
 	sendResponse(ev);
 	writebackData(new_ev);
@@ -404,7 +407,7 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
 
 
 void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
-	MemEvent *ev = entry->activeReq->makeResponse(this);
+	MemEvent *ev = entry->activeReq->makeResponse();
 	//TODO:  only if write should you set the payload
     ev->setPayload(new_ev->getPayload());
     dbg.debug(_L10_, "Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());

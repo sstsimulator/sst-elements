@@ -100,14 +100,19 @@ void Bus::broadcastEvent(SST::Event* _ev){
 
 void Bus::sendSingleEvent(SST::Event* _ev){
     MemEvent *event = static_cast<MemEvent*>(_ev);
-    dbg_.debug(_L10_,"\n\n");
-    dbg_.debug(_L10_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-    dbg_.debug(_L10_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n",
+    dbg_.debug(_L3_,"\n\n");
+    dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n",
                    this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
 
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
-    dstLink->send(new MemEvent(*event));
+    MemEvent* forwardEvent = new MemEvent(*event);
+    dbg_.debug(_L3_,"Cmd = %s \n", CommandString[forwardEvent->getCmd()]);
+    dbg_.debug(_L3_,"Dst = %s \n", forwardEvent->getDst().c_str());
+    dbg_.debug(_L3_,"Src = %s \n", forwardEvent->getSrc().c_str());
+
+    dstLink->send(forwardEvent);
     
     delete event;
 }
@@ -160,7 +165,10 @@ void Bus::configureLinks(){
 }
 
 void Bus::configureParameters(SST::Params& _params){
-    dbg_.init("" + getName() + ": ", 0, 0, (Output::output_location_t)_params.find_integer("debug", 0));
+    int debugLevel = _params.find_integer("debug_level", 0);
+    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
+    
+    dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)_params.find_integer("debug", 0));
     numHighNetPorts_  = 0;
     numLowNetPorts_   = 0;
     maxNumPorts_      = 500;

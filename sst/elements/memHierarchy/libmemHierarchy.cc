@@ -95,6 +95,7 @@ static const ElementInfoParam bus_params[] = {
     {"bus_latency_cycles",  "Number of ports on the bus", "0"},
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
+    {"debug_level",             "Debugging level: 0 to 10", "8"},
     {NULL, NULL}
 };
 
@@ -151,6 +152,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"request_width",       "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
     {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",             "Debugging level: 0 to 10", "8"},
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
@@ -234,6 +236,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"clock",               "Clock rate of controller.", "1GHz"},
     {"entry_cache_size",    "Size (in # of entries) the controller will cache.", "0"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",             "Debugging level: 0 to 10", "8"},
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };
@@ -252,6 +255,7 @@ static Component* create_DMAEngine(ComponentId_t id, Params& params){
 
 static const ElementInfoParam dmaengine_params[] = {
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_level",             "Debugging level: 0 to 10", "8"},
     {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
     {"netAddr",         "Network address of component.", NULL},
 	{"network_num_vc",  "The number of VCS on the on-chip network.", "3"},

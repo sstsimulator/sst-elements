@@ -503,7 +503,7 @@ void MemController::performRequest(DRAMReq *req){
                 memBuffer[localUncachedAddr + i] = req->reqEvent->getPayload()[i];
         }
 
-    	req->respEvent = req->reqEvent->makeResponse(this);
+    	req->respEvent = req->reqEvent->makeResponse();
         req->respEvent->setSize(cacheLineSize);
     
         dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());

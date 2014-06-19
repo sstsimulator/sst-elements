@@ -312,7 +312,7 @@ void MESIBottomCC::sendEvent(MemEvent* _event){
     Response resp = {_event, deliveryTime, false};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"Sending Request: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s\n",
+    d_->debug(_L3_,"BCC - Sending Request: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s\n",
              _event->getAddr(), _event->getBaseAddr(), CommandString[_event->getCmd()]);
 }
 
@@ -336,19 +336,19 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     
     Response resp = {forwardEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"Forwarding Request at cycle = %"PRIu64"\n", deliveryTime);
+    d_->debug(_L3_,"BCC - Forwarding Request at cycle = %"PRIu64"\n", deliveryTime);
 }
 
 
 void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
-    MemEvent *responseEvent = _event->makeResponse((SST::Component*)owner_);
+    MemEvent *responseEvent = _event->makeResponse();
     responseEvent->setPayload(*_cacheLine->getData());
 
     uint64 deliveryTime = _mshrHit ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     Response resp  = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"Sending Response at cycle = %"PRIu64". \n", deliveryTime);
+    d_->debug(_L3_,"BCC - Sending Response at cycle = %"PRIu64", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
 }
 
 
@@ -360,7 +360,7 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine){
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"Sending Writeback at cycle = %"PRIu64", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
+    d_->debug(_L3_,"BCC - Sending Writeback at cycle = %"PRIu64", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
 }
 
 void MESIBottomCC::sendNACK(MemEvent* _event){
@@ -371,7 +371,7 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
     Response resp = {NACKevent, deliveryTime, true};
     inc_NACKsSent();
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"BottomCC: Sending NACK at cycle = %"PRIu64"\n", deliveryTime);
+    d_->debug(_L3_,"BCC - Sending NACK at cycle = %"PRIu64"\n", deliveryTime);
 }
 
 

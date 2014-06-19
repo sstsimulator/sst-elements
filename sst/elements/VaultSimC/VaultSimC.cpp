@@ -129,7 +129,7 @@ void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
     _abort(VaultSimC::readData, "can't find transaction\n");
   }
   MemEvent *parentEvent = mi->second;
-  MemEvent *event = parentEvent->makeResponse(this);
+  MemEvent *event = parentEvent->makeResponse();
   //printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
   //assert(bp.burstLength == parentEvent->getSize());
   
@@ -160,7 +160,7 @@ void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
     _abort(VaultSimC::writeData, "can't find transaction\n");
   }
   MemEvent *parentEvent = mi->second;
-  MemEvent *event = parentEvent->makeResponse(this);
+  MemEvent *event = parentEvent->makeResponse();
   //printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
   //assert(bp.burstLength == parentEvent->getSize());
 

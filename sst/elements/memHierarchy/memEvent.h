@@ -19,6 +19,7 @@
 
 namespace SST { namespace MemHierarchy {
 
+using namespace std;
 typedef uint64_t Addr;
 
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
@@ -147,9 +148,9 @@ static const std::string NONE = "None";
  */
 class MemEvent : public SST::Event {
 public:
-    static const uint32_t F_LOCKED    = (1<<1);  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
-    static const uint32_t F_UNCACHED  = (1<<2);  /* Used to specify that this memory event should not be cached */
-    static const uint32_t F_LLSC      = (1<<3);  /* Load Link / Store Conditional */
+    static const uint32_t F_LOCKED    = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
+    static const uint32_t F_UNCACHED  = 0x00000010;  /* Used to specify that this memory event should not be cached */
+    static const uint32_t F_LLSC      = 0x00000100;  /* Load Link / Store Conditional */
 
 
     
@@ -172,27 +173,28 @@ public:
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent){
-        MemEvent *me = new MemEvent(*this);
-        me->response_to_id = event_id;
-        me->dst = src;
-        me->NACKedEvent = NACKedEvent;
-        me->NACKedCmd = NACKedEvent->cmd;
-        me->cmd = NACK;
+        MemEvent *me      = new MemEvent(*this);
+        me->responseToID_ = eventID_;
+        me->dst_          = src_;
+        me->NACKedEvent_  = NACKedEvent;
+        me->NACKedCmd_    = NACKedEvent->cmd_;
+        me->cmd_          = NACK;
         return me;
     }
     
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(const Component *source){
-        MemEvent *me = new MemEvent(*this);
-        me->cmd = commandResponse(cmd);
-        me->response_to_id = event_id;
-        me->dst = src;
+    MemEvent* makeResponse(){
+        MemEvent *me      = new MemEvent(*this);
+        me->cmd_          = commandResponse(cmd_);
+        me->responseToID_ = eventID_;
+        me->dst_          = src_;
+        me->src_          = dst_;
         return me;
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(const Component *source, BCC_MESIState state){
-        MemEvent *me = makeResponse(source);
+    MemEvent* makeResponse(BCC_MESIState state){
+        MemEvent *me = makeResponse();
         me->setGrantedState(state);
         return me;
     }
@@ -200,103 +202,102 @@ public:
     
     void initialize(const Component *_src, Addr _addr, Command _cmd){
         initialize();
-        src  = _src->getName();
-        addr = _addr;
-        cmd  = _cmd;
+        src_  = _src->getName();
+        addr_ = _addr;
+        cmd_  = _cmd;
      }
     
      void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size){
         initialize();
-        src      = _src->getName();
-        addr     = _addr;
-        baseAddr = _baseAddr;
-        cmd      = _cmd;
-        size     = _size;
+        src_      = _src->getName();
+        addr_     = _addr;
+        baseAddr_ = _baseAddr;
+        cmd_      = _cmd;
+        size_     = _size;
      
      }
     
     void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data){
         initialize();
-        src         = _src->getName();
-        addr        = _addr;
-        baseAddr    = _baseAddr;
-        cmd         = _cmd;
+        src_         = _src->getName();
+        addr_        = _addr;
+        baseAddr_    = _baseAddr;
+        cmd_         = _cmd;
         setPayload(_data);
     }
     
     void initialize(){
-        addr             = 0;
-        cmd              = NULLCMD;
-        event_id         = generateUniqueId();
-        response_to_id   = NO_ID;
-        baseAddr         = 0;
-        dst              = NONE;
-        size             = 0;
-        flags            = 0;
-        groupId          = 0;
-        prefetch         = false;
-        ackNeeded        = false;
-        atomic           = false;
-        loadLink         = false;
-        storeConditional = false;
+        addr_             = 0;
+        cmd_              = NULLCMD;
+        eventID_          = generateUniqueId();
+        responseToID_     = NO_ID;
+        baseAddr_         = 0;
+        dst_              = NONE;
+        size_             = 0;
+        flags_            = 0;
+        groupID_          = 0;
+        prefetch_         = false;
+        ackNeeded_        = false;
+        atomic_           = false;
+        loadLink_         = false;
+        storeConditional_ = false;
     }
 
 
-    /** return the original command that caused a NACK */
-    MemEvent* getNACKedEvent() { return NACKedEvent; }
-    
-    Command getNACKedCmd() { return NACKedCmd; }
-
+    /** return the original event that caused a NACK */
+    MemEvent* getNACKedEvent() { return NACKedEvent_; }
+    /** return the original command type that caused a NACK */
+    Command getNACKedCmd() { return NACKedCmd_; }
     /** @return  Unique ID of this MemEvent */
-    id_type getID(void) const { return event_id; }
+    id_type getID(void) const { return eventID_; }
     /** @return  Unique ID of the MemEvent that this is a response to */
-    id_type getResponseToID(void) const { return response_to_id; }
+    id_type getResponseToID(void) const { return responseToID_; }
     /** @return  Command of this MemEvent */
-    Command getCmd(void) const { return cmd; }
+    Command getCmd(void) const { return cmd_; }
     /** Sets the Command of this MemEvent */
-    void setCmd(Command newcmd) { cmd = newcmd; }
+    void setCmd(Command _newcmd) { cmd_ = _newcmd; }
     /** @return  the target Address of this MemEvent */
-    Addr getAddr(void) const { return addr; }
+    Addr getAddr(void) const { return addr_; }
     /** Sets the target Address of this MemEvent */
-    void setAddr(Addr newAddr) { addr = newAddr; }
+    void setAddr(Addr _addr) { addr_ = _addr; }
     /** Sets the Base Address of this MemEvent */
-    void setBaseAddr(Addr newBaseAddr) { baseAddr = newBaseAddr; }
+    void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
 
     /** @return  the size in bytes that this MemEvent represents */
-    uint32_t getSize(void) const { return size; }
+    uint32_t getSize(void) const { return size_; }
     /** Sets the size in bytes that this MemEvent represents */
-    void setSize(uint32_t sz) {
-        size = sz;
+    void setSize(uint32_t _size) {
+        size_ = _size;
     }
     
     
-    void setLoadLink(){ loadLink = true; }
-    bool isLoadLink() { return loadLink; }
+    void setLoadLink(){ loadLink_ = true; }
+    bool isLoadLink() { return loadLink_; }
     
-    void setStoreConditional(){ storeConditional = true;}
-    bool isStoreConditional(){ return storeConditional; }
+    void setStoreConditional(){ storeConditional_ = true;}
+    bool isStoreConditional(){ return storeConditional_; }
     
-    void setAtomic(){ atomic = true; }
-    bool isAtomic(){ return atomic; }
+    void setAtomic(){ atomic_ = true; }
+    bool isAtomic(){ return atomic_; }
     
     bool isHighNetEvent(){
-        if(cmd == GetS || cmd == GetX || cmd == GetSEx){
+        if(cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx){
             return true;
         }
         return false;
     }
     
    bool isLowNetEvent(){
-        if(cmd == Inv || cmd == InvX ||
-           cmd == FetchInv || cmd == FetchInvX){
+        if(cmd_ == Inv || cmd_ == InvX ||
+           cmd_ == FetchInv || cmd_ == FetchInvX){
             return true;
         }
         return false;
     }
     
     bool isWriteback(){
-        if(cmd == PutS || cmd == PutM ||
-           cmd == PutE || cmd == PutX || cmd == PutXE){
+        if(cmd_ == PutS || cmd_ == PutM ||
+           cmd_ == PutE || cmd_ == PutX || cmd_ == PutXE){
             return true;
         }
         return false;
@@ -310,125 +311,99 @@ public:
     dataVec& getPayload(void)
     {
         /* Lazily allocate space for payload */
-        if ( payload.size() < size )  payload.resize(size);
-        return payload;
+        if ( payload_.size() < size_ )  payload_.resize(size_);
+        return payload_;
     }
     
 
     /** Sets the data payload and payload size.
      * @param[in] data  Vector from which to copy data
      */
-    void setPayload(std::vector<uint8_t>& data) {
-        setSize(data.size());
-        payload = data;
+    void setPayload(std::vector<uint8_t>& _data) {
+        setSize(_data.size());
+        payload_ = _data;
     }
     
     /** Sets the data payload and payload size.
      * @param[in] size  How many bytes to copy from data
      * @param[in] data  Data array to set as payload
      */
-    void setPayload(uint32_t size, uint8_t *data)
+    void setPayload(uint32_t _size, uint8_t* _data)
     {
-        setSize(size);
-        payload.resize(size);
-        for ( uint32_t i = 0 ; i < size ; i++ ) {
-            payload[i] = data[i];
+        setSize(_size);
+        payload_.resize(_size);
+        for ( uint32_t i = 0 ; i < _size ; i++ ) {
+            payload_[i] = _data[i];
         }
     }
 
     /** Sets the Granted State */
-    void setGrantedState(BCC_MESIState _state){
-        grantedState = _state;
-    }
+    void setGrantedState(BCC_MESIState _state){ grantedState_ = _state;}
+    /** Return the Granted State */
+    BCC_MESIState getGrantedState(){ return grantedState_; }
 
     /** Sets that this is a prefetch command */
-    void setPrefetchFlag(bool _prefetch){
-        prefetch = _prefetch;
-    }
-
+    void setPrefetchFlag(bool _prefetch){ prefetch_ = _prefetch;}
     /** Returns true if this is a prefetch command */
-    bool isPrefetch(){ return prefetch; }
-
-    /** Return the Granted State */
-    BCC_MESIState getGrantedState(){ return grantedState; }
-
-
+    bool isPrefetch(){ return prefetch_; }
+    
     /** Returns true if this is a Data Request */
-    static bool isDataRequest(Command cmd){
-        return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX);
-    }
-    
+    static bool isDataRequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX); }
     /** Returns true if this is of cpu type */
-    static bool isCPURequest(Command cmd){
-        return (cmd == GetS || cmd == GetX || cmd == GetSEx);
-    }
-    
+    static bool isCPURequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
     /** Returns true if this is of response type */
-    static bool isResponse(Command cmd){
-        return (cmd == GetSResp || cmd == GetXResp);
-    }
-    
+    static bool isResponse(Command cmd){ return (cmd == GetSResp || cmd == GetXResp);}
     /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd){
-        return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS);
-    }
+    static bool isWriteback(Command cmd){ return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
     
-    /** Set ackNeeded member variable */
-    void setAckNeeded(){ ackNeeded = true;}
+
     
     /** Setter for GroupId */
-    void setGroupId(uint32_t _groupId){ groupId = _groupId; }
-    
+    void setGroupId(uint32_t _groupID){ groupID_ = _groupID; }
     /** Getter for GroupId */
-    uint32_t getGroupId() { return groupId; }
+    uint32_t getGroupId() { return groupID_; }
     
-    /** Getter for ackNeeded member variable */
-    bool getAckNeeded(){ return ackNeeded;}
+    /** Set ackNeeded member variable */
+    void setAckNeeded(){ ackNeeded_ = true;}
+     /** Getter for ackNeeded member variable */
+    bool getAckNeeded(){ return ackNeeded_;}
 
 
     /** @return the source string - who sent this MemEvent */
-    const std::string& getSrc(void) const { return src; }
+    const std::string& getSrc(void) const { return src_; }
     /** Sets the source string - who sent this MemEvent */
-    void setSrc(const std::string &s) { src = s; }
+    void setSrc(const std::string& _src) { src_ = _src; }
     /** @return the destination string - who receives this MemEvent */
-    const std::string& getDst(void) const { return dst; }
+    const std::string& getDst(void) const { return dst_; }
     /** Sets the destination string - who received this MemEvent */
-    void setDst(const std::string &d) { dst = d; }
+    void setDst(const std::string& _d) { dst_ = _d; }
 
     /** @returns the state of all flags for this MemEvent */
-    uint32_t getFlags(void) const { return flags; }
+    uint32_t getFlags(void) const { return flags_; }
     /** Sets the specified flag.
      * @param[in] flag  Should be one of the flags beginning with F_,
      *                  defined in MemEvent */
-    void setFlag(uint32_t flag) { flags = flags | flag; }
+    void setFlag(uint32_t _flag) { flags_ = flags_ | _flag; }
     /** Clears the speficied flag.
      * @param[in] flag  Should be one of the flags beginning with F_,
      *                  defined in MemEvent */
-    void clearFlag(uint32_t flag) { flags = flags & (~flag); }
+    void clearFlag(uint32_t _flag) { flags_ = flags_ & (~_flag); }
     /** Clears all flags */
-    void clearFlags(void) { flags = 0; }
+    void clearFlags(void) { flags_ = 0; }
     /** Check to see if a flag is set.
      * @param[in] flag  Should be one of the flags beginning with F_,
      *                  defined in MemEvent
      * @returns TRUE if the flag is set, FALSE otherwise
      */
-    bool queryFlag(uint32_t flag) const { return flags & flag; };
+    bool queryFlag(uint32_t _flag) const { return flags_ & _flag; };
     /** Sets the entire flag state */
-    void setFlags(uint32_t _flags) { flags = _flags; }
-
-    /** @returns the (optional) ID associated with the flag F_LOCKED */
-    uint64_t getLockID(void) const { return lockid; }
-    /** sets the (optional) ID associated with the flag F_LOCKED */
-    void setLockID(uint64_t id) { lockid = id; }
+    void setFlags(uint32_t _flags) { flags_ = _flags; }
 
     /** Return the BaseAddr */
-    Addr getBaseAddr(){ return baseAddr; }
+    Addr getBaseAddr(){ return baseAddr_; }
     
-    void setStartTime(uint64_t sTime) { startTime = sTime; }
-    
-    uint64_t getStartTime(){
-        return startTime;
-    }
+    void setStartTime(uint64_t _startTime) { startTime_ = _startTime; }
+    uint64_t getStartTime(){return startTime_;}
 
     /** Return the command that is the Response to the input command */
     static Command commandResponse(Command c)
@@ -448,33 +423,32 @@ public:
         }
     }
 private:
-    id_type     event_id;
-    id_type     response_to_id;
-    uint64_t    lockid;
-    Addr        addr;
-    Addr        baseAddr;
-    uint32_t    size;
-    Command     cmd;
-    dataVec     payload;
+    id_type     eventID_;
+    id_type     responseToID_;
+    Addr        addr_;
+    Addr        baseAddr_;
+    uint32_t    size_;
+    Command     cmd_;
+    dataVec     payload_;
     
-    std::string src;
-    std::string dst;
+    string      src_;
+    string      dst_;
     
-    uint32_t    flags;
-    bool        prefetch;
-    BCC_MESIState grantedState;
+    uint32_t    flags_;
+    bool        prefetch_;
+    BCC_MESIState grantedState_;
     
-    uint64_t    startTime;
+    uint64_t    startTime_;
     
-    MemEvent*   NACKedEvent;
-    Command     NACKedCmd;
+    MemEvent*   NACKedEvent_;
+    Command     NACKedCmd_;
     
-    bool        ackNeeded;
-    uint32_t    groupId;
+    bool        ackNeeded_;
+    uint32_t    groupID_;
     
-    bool        atomic;
-    bool        loadLink;
-    bool        storeConditional;
+    bool        atomic_;
+    bool        loadLink_;
+    bool        storeConditional_;
     
 
 
@@ -489,15 +463,15 @@ private:
     serialize(Archive & ar, const unsigned int version )
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(event_id);
-        ar & BOOST_SERIALIZATION_NVP(response_to_id);
-        ar & BOOST_SERIALIZATION_NVP(addr);
-        ar & BOOST_SERIALIZATION_NVP(size);
-        ar & BOOST_SERIALIZATION_NVP(cmd);
-        ar & BOOST_SERIALIZATION_NVP(payload);
-        ar & BOOST_SERIALIZATION_NVP(src);
-        ar & BOOST_SERIALIZATION_NVP(dst);
-        ar & BOOST_SERIALIZATION_NVP(flags);
+        ar & BOOST_SERIALIZATION_NVP(eventID_);
+        ar & BOOST_SERIALIZATION_NVP(responseToID_);
+        ar & BOOST_SERIALIZATION_NVP(addr_);
+        ar & BOOST_SERIALIZATION_NVP(size_);
+        ar & BOOST_SERIALIZATION_NVP(cmd_);
+        ar & BOOST_SERIALIZATION_NVP(payload_);
+        ar & BOOST_SERIALIZATION_NVP(src_);
+        ar & BOOST_SERIALIZATION_NVP(dst_);
+        ar & BOOST_SERIALIZATION_NVP(flags_);
     }
 };
 
