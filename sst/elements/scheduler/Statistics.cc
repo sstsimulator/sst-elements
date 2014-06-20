@@ -22,7 +22,7 @@
 #include "FST.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -122,7 +122,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
                 if (logName == supportedLogs[i].logName) {
                     found = true;
 
-                    if ((NULL == (MachineMesh*)machine) && ((ALLOC == i) || (VISUAL == i))) {
+                    if ((NULL == (MeshMachine*)machine) && ((ALLOC == i) || (VISUAL == i))) {
                         //error(string(logName) + " log only implemented for meshes");
                         schedout.fatal(CALL_INFO, 1, "%s log only implemented for meshes", string(logName).c_str());
                     }
@@ -145,7 +145,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
                 if (logName == supportedLogsFST[i].logName) {
                     found = true;
 
-                    if ((NULL == (MachineMesh*)machine) && ((ALLOC == i) || (VISUAL == i))) {
+                    if ((NULL == (MeshMachine*)machine) && ((ALLOC == i) || (VISUAL == i))) {
                         //error(string(logName) + " log only implemented for meshes");
                         schedout.fatal(CALL_INFO, 1, "%s log only implemented for meshes", string(logName).c_str());
                     }
@@ -295,7 +295,7 @@ void Statistics::writeAlloc(AllocInfo* allocInfo)
     sprintf(mesg, "%d\t%lu\t%ld\n",
             num,
             mai -> job -> getActualTime(),
-            ((MachineMesh*)(machine))-> pairwiseL1Distance(mai -> processors));
+            ((MeshMachine*)(machine))-> pairwiseL1Distance(mai -> processors));
     appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
 

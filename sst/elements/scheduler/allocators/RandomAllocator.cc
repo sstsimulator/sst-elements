@@ -15,7 +15,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -26,7 +26,7 @@ using namespace SST::Scheduler;
 RandomAllocator::RandomAllocator(Machine* mesh) 
 {
     schedout.init("", 8, ~0, Output::STDOUT);
-    machine = dynamic_cast<MachineMesh*>(mesh);
+    machine = dynamic_cast<MeshMachine*>(mesh);
     if (machine == NULL) {
         schedout.fatal(CALL_INFO, 1, "Random Allocator requires Mesh");
     }
@@ -38,7 +38,7 @@ RandomAllocator::RandomAllocator(Machine* mesh)
    Factory.argsAtLeast(0,params);
    Factory.argsAtMost(0,params);
 
-   MachineMesh* m = (MachineMesh) Main->getMachine();
+   MeshMachine* m = (MeshMachine) Main->getMachine();
    if(m == NULL)
    error("Random allocator requires a Mesh machine");
    return new RandomAllocator(m);
@@ -73,11 +73,11 @@ AllocInfo* RandomAllocator::allocate(Job* job){
 
     //figure out which processors to use
     int numProcs = job -> getProcsNeeded();
-    std::vector<MeshLocation*>* available = ((MachineMesh*)machine) -> freeProcessors();
+    std::vector<MeshLocation*>* available = ((MeshMachine*)machine) -> freeProcessors();
     for (int i = 0; i < numProcs; i++) {
         int num = rand() % available -> size();
         (*retVal -> processors)[i] = (*available)[num];
-        retVal -> nodeIndices[i] = (*available)[num] -> toInt((MachineMesh*)machine);
+        retVal -> nodeIndices[i] = (*available)[num] -> toInt((MeshMachine*)machine);
         available -> erase(available -> begin() + num);
     }
     for (int i = 0; i < (int)available -> size(); i++) {

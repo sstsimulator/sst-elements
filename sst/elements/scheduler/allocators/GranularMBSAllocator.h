@@ -25,14 +25,14 @@
 
 namespace SST {
     namespace Scheduler {
-        class MachineMesh;
+        class MeshMachine;
         class Machine;
         class MeshLocation;
         class Block;
 
         class GranularMBSAllocator : public MBSAllocator {
             public: 
-                GranularMBSAllocator(MachineMesh* m, int x, int y, int z);
+                GranularMBSAllocator(MeshMachine* m, int x, int y, int z);
 
                 std::string getSetupInfo(bool comment);
 

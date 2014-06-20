@@ -25,7 +25,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -41,7 +41,7 @@ using namespace SST::Scheduler;
 MBSAllocator::MBSAllocator(Machine* mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
+    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
     if (NULL == m) {
         schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
     }
@@ -51,7 +51,7 @@ MBSAllocator::MBSAllocator(Machine* mach)
     ordering = new std::vector<int>();
 }
 
-MBSAllocator::MBSAllocator(MachineMesh* m, int x, int y, int z)
+MBSAllocator::MBSAllocator(MeshMachine* m, int x, int y, int z)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     meshMachine = m; //make us happy
@@ -67,7 +67,7 @@ MBSAllocator::MBSAllocator(MachineMesh* m, int x, int y, int z)
 
 MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
 { 
-    MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
+    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
     if (NULL == m) {
         schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
     }
@@ -268,7 +268,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
             //processors() is sorted by MeshLocation comparator
             for (int i = allocated; it != newBlockprocs -> end();i++){
                 retVal -> processors -> at(i) = *(it);
-                retVal -> nodeIndices[i] = (*it) -> toInt((MachineMesh*)machine);
+                retVal -> nodeIndices[i] = (*it) -> toInt((MeshMachine*)machine);
                 it++;
                 allocated++;
             }

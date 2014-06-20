@@ -16,6 +16,8 @@
 #include "output.h"
 #include "TaskCommInfo.h"
 
+#include <iostream> //debug
+
 using namespace SST::Scheduler;
 
 TaskMapInfo::TaskMapInfo(AllocInfo* ai)
@@ -78,14 +80,19 @@ unsigned long TaskMapInfo::getTotalHopDist(Machine* machine)
     }
 
     //iterate through all tasks
-    MeshLocation* curLoc;
-    for(int taskIter = 0; taskIter < (job->getProcsNeeded() - 1); taskIter++){
-        int currentNode = taskMap.left.at(taskIter);
-        curLoc = new MeshLocation(currentNode, (MachineMesh*) machine);
+    int currentNode;
+    int otherLoc;
+    for(int taskIter = 0; taskIter < job->getProcsNeeded(); taskIter++){
+        currentNode = taskMap.left.at(taskIter);
+        MeshLocation curLoc = MeshLocation(currentNode, (MeshMachine*) machine);
+        
         //iterate through other tasks and add distance for communication
-        for(int otherIter = (taskIter + 1) ; otherIter < job->getProcsNeeded(); otherIter++){
-            if( (taskCommInfo->commMatrix[taskIter][otherIter] != 0) || (taskCommInfo->commMatrix[otherIter][taskIter] != 0) ){
-                totalDist += curLoc->L1DistanceTo(new MeshLocation(otherIter, (MachineMesh*) machine));
+        for(int otherTaskIter = 0 ; otherTaskIter < job->getProcsNeeded(); otherTaskIter++){
+            if(   (taskCommInfo->commMatrix[taskIter][otherTaskIter] != 0) 
+               || (taskCommInfo->commMatrix[otherTaskIter][taskIter] != 0) ){
+                otherLoc = allocInfo->nodeIndices[otherTaskIter];
+                MeshLocation otherNode = MeshLocation(otherLoc, (MeshMachine*) machine);
+                totalDist += curLoc.L1DistanceTo(&otherNode);
             }
         }
     }

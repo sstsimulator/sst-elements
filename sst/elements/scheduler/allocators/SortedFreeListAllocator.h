@@ -23,14 +23,14 @@
 
 namespace SST {
     namespace Scheduler {
-        class MachineMesh;
+        class MeshMachine;
         class Machine;
         class Job;
         class AllocInfo;
 
         class SortedFreeListAllocator : public LinearAllocator {
             public:
-                SortedFreeListAllocator(MachineMesh* m, std::string filename);
+                SortedFreeListAllocator(MeshMachine* m, std::string filename);
 
                 SortedFreeListAllocator(std::vector<std::string>* params, Machine* mach);
 

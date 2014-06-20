@@ -33,7 +33,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -245,7 +245,7 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
 
 LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool SORT = false, bool hilbert = true) 
 {
-    MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
+    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
     //if (NULL == m) error("Linear Allocators Require Mesh Machine");
     if (NULL == m) schedout.fatal(CALL_INFO, 1, "Linear Allocators Require Mesh Machine");
 
@@ -729,10 +729,10 @@ return new MeshLocation(x, y, z);
 LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach) 
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
+    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
     if (NULL == m) {
-        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MachineMesh* machine");
-        //error("Linear allocators require a MachineMesh* machine");
+        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MeshMachine* machine");
+        //error("Linear allocators require a MeshMachine* machine");
     }
 
     machine = m;
@@ -782,7 +782,7 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
 {
     set<MeshLocation*, MeshLocationOrdering>* avail = new set<MeshLocation*,MeshLocationOrdering>(*ordering);
     //add all from machine->freeProcessors() to avail
-    vector<MeshLocation*>* machfree = ((MachineMesh*)machine) -> freeProcessors();
+    vector<MeshLocation*>* machfree = ((MeshMachine*)machine) -> freeProcessors();
 
     avail -> insert(machfree -> begin(), machfree -> end());
 
@@ -842,7 +842,7 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
 
 //Version of allocate that just minimizes the span.
 AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
-    vector<MeshLocation*>* avail = ((MachineMesh*)machine) -> freeProcessors();
+    vector<MeshLocation*>* avail = ((MeshMachine*)machine) -> freeProcessors();
     sort(avail -> begin(), avail -> end(), *ordering);
     int num = job -> getProcsNeeded();
 
@@ -862,7 +862,7 @@ AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
     for (int i = 0; i< (int)avail -> size(); i++) {
         if (i >= bestStart && i < bestStart + num) {
             retVal -> processors -> at(i  - bestStart) = avail-> at(i);
-            retVal -> nodeIndices[i  - bestStart] = avail-> at(i)->toInt((MachineMesh*)machine);
+            retVal -> nodeIndices[i  - bestStart] = avail-> at(i)->toInt((MeshMachine*)machine);
         } else {
             delete avail -> at(i); //have to delete any not being used
         }

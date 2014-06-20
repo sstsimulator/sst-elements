@@ -18,7 +18,6 @@ libscheduler_la_SOURCES = \
     linkBuilder.cc		misc.cc			nodeComponent.cc	 	schedComponent.cc \
     Scheduler.h 	SimpleMachine.h		Statistics.h \
     schedLib.cc		SimpleMachine.cc	Statistics.cc \
-    MachineMesh.cc		MachineMesh.h \
     MeshAllocInfo.cc \
     MeshAllocInfo.h \
     MBSAllocInfo.h \
@@ -30,6 +29,8 @@ libscheduler_la_SOURCES = \
     FST.h \
     InputParser.cc \
     InputParser.h \
+    MeshMachine.cc \
+    MeshMachine.h \
     output.h \
     TaskCommInfo.cc \
     TaskCommInfo.h \

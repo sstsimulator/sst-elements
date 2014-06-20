@@ -24,7 +24,7 @@
 #include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -38,7 +38,7 @@ SortedFreeListAllocator::SortedFreeListAllocator(std::vector<std::string>* param
     //    printf("Constructing SortedFreeListAllocator\n");
     //}
     schedout.debug(CALL_INFO, 1, 0, "Constructing SortedFreeListAllocator\n");
-    if (NULL == dynamic_cast<MachineMesh*>(mach)) {
+    if (NULL == dynamic_cast<MeshMachine*>(mach)) {
         schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
     }
 }
@@ -69,7 +69,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
         return NULL;
     }
 
-    std::vector<MeshLocation*>* freeprocs = ((MachineMesh*)machine) -> freeProcessors();
+    std::vector<MeshLocation*>* freeprocs = ((MeshMachine*)machine) -> freeProcessors();
     stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);
 
     int num = job -> getProcsNeeded();  //number of processors for job
@@ -78,7 +78,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
     for (int i = 0; i < (int)freeprocs -> size(); i++) {
         if (i < num) {
             retVal -> processors -> at(i) = freeprocs->at(i);
-            retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt((MachineMesh*)machine);
+            retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt((MeshMachine*)machine);
         } else {
             delete freeprocs -> at(i);
         }

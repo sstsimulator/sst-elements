@@ -27,7 +27,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -38,7 +38,7 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-OctetMBSAllocator::OctetMBSAllocator(MachineMesh* m, int x, int y, int z) : MBSAllocator(m)
+OctetMBSAllocator::OctetMBSAllocator(MeshMachine* m, int x, int y, int z) : MBSAllocator(m)
 {
     //we don't do anything special in construction
 

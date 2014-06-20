@@ -17,7 +17,7 @@
 #include "sst_config.h"
 #include <vector>
 
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 
 
@@ -27,13 +27,13 @@
 namespace SST {
     namespace Scheduler {
         class MeshLocation;
-        class MachineMesh;
+        class MeshMachine;
         namespace EnergyHelpers {
             void roundallocarray(double * x, int processors, int numneeded, int* newx);
 
-            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, MachineMesh * machine);
+            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, MeshMachine * machine);
 
-            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, MachineMesh * machine);
+            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, MeshMachine * machine);
         }
     }
 }

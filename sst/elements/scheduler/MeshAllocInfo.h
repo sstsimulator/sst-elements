@@ -27,7 +27,7 @@
 namespace SST {
     namespace Scheduler {
 
-        class MachineMesh;
+        class MeshMachine;
 
 
         /**
@@ -43,7 +43,7 @@ namespace SST {
                 int z;
 
                 MeshLocation(int X, int Y, int Z);
-                MeshLocation(int inpos, MachineMesh* m);
+                MeshLocation(int inpos, MeshMachine* m);
 
                 MeshLocation(MeshLocation* in);
 
@@ -57,7 +57,7 @@ namespace SST {
 
                 void print();
 
-                int toInt(MachineMesh* m);
+                int toInt(MeshMachine* m);
 
                 std::string toString();
 

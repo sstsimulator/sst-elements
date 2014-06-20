@@ -32,7 +32,7 @@
 namespace SST {
     namespace Scheduler {
         class Block;
-        class MachineMesh;
+        class MeshMachine;
         class MBSMeshAllocInfo;
         class MeshLocation;
         class Job;
@@ -44,12 +44,12 @@ namespace SST {
                 std::vector<int>* ordering;
 
                 //We know it must be a mesh, so make it one so we can access the goods.
-                MachineMesh* meshMachine;
+                MeshMachine* meshMachine;
 
 
             public:
                 MBSAllocator(Machine* mach);
-                MBSAllocator(MachineMesh* m, int x, int y, int z);
+                MBSAllocator(MeshMachine* m, int x, int y, int z);
 
                 MBSAllocator(std::vector<std::string>* params, Machine* mach);
 

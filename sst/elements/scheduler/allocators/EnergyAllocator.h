@@ -32,7 +32,7 @@ namespace SST {
     namespace Scheduler {
         class Job;
         class Machine;
-        class MachineMesh;
+        class MeshMachine;
 
         class EnergyAllocator : public Allocator {
 

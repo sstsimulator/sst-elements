@@ -20,7 +20,7 @@
 #include <sst/core/params.h>
 
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "misc.h"
 #include "schedComponent.h"
 #include "SimpleMachine.h"
@@ -262,7 +262,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
                 if (x * y * z != numProcs) {
                     schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of processors");
                 }
-                retMachine = new MachineMesh(x, y, z, sc, D_matrix);
+                retMachine = new MeshMachine(x, y, z, sc, D_matrix);
                 break;
 
             }

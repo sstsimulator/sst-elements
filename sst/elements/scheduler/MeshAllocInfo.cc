@@ -21,7 +21,7 @@
 
 #include "AllocInfo.h"
 #include "Job.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -44,7 +44,7 @@ MeshLocation::MeshLocation(int X, int Y, int Z)
     z = Z;
 }
 
-MeshLocation::MeshLocation(int inpos, MachineMesh* m) 
+MeshLocation::MeshLocation(int inpos, MeshMachine* m) 
 {
     //return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
 
@@ -97,7 +97,7 @@ void MeshLocation::print() {
 }
 
 
-int MeshLocation::toInt(MachineMesh* m){
+int MeshLocation::toInt(MeshMachine* m){
     return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
 }
 
@@ -140,7 +140,7 @@ MeshAllocInfo::~MeshAllocInfo()
 std::string MeshAllocInfo::getProcList(Machine* m)
 {
     std::string ret="";
-    MachineMesh* mesh = (MachineMesh*) m;
+    MeshMachine* mesh = (MeshMachine*) m;
     //if (NULL == m) {
     //    error("MeshAllocInfo requires Mesh machine");
     //}

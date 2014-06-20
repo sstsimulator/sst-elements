@@ -34,7 +34,7 @@
 #include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -47,9 +47,9 @@ FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* 
     //if (DEBUG) printf("Constructing FirstFitAllocator\n");
     schedout.debug(CALL_INFO, 1, 0, "Constructing FirstFitAllocator\n");
 
-    if (dynamic_cast<MachineMesh*>(mach) == NULL) {
-        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MachineMesh* machine");
-        //error("Linear allocators require a MachineMesh* machine");
+    if (dynamic_cast<MeshMachine*>(mach) == NULL) {
+        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MeshMachine* machine");
+        //error("Linear allocators require a MeshMachine* machine");
     }
 }
 
@@ -89,11 +89,11 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
             int j;
             for (j = 0; j<num; j++) {
                 //if (DEBUG) {
-                //    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine));
+                //    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine));
                 //}
-                schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine));
+                schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine));
                 retVal -> processors -> at(j) = intervals -> at(i) -> at(j);
-                retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine);
+                retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine);
             }
             j++;
             while (j < (int)intervals -> at(i) -> size()) {

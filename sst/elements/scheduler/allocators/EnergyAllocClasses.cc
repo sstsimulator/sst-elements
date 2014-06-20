@@ -25,7 +25,7 @@
 
 #include "Job.h" 
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "output.h"
 
@@ -56,7 +56,7 @@ namespace SST {
                 }
             }
 
-            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, MachineMesh* machine)
+            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, MeshMachine* machine)
             {     
 
 #ifdef HAVE_GLPK
@@ -192,7 +192,7 @@ namespace SST {
 #endif
             }
 
-            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, MachineMesh * machine)
+            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, MeshMachine * machine)
             { 
                 std::vector<MeshLocation*>* ret = new std::vector<MeshLocation*>();
 

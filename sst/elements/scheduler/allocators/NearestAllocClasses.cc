@@ -39,7 +39,7 @@
 #include <set>
 #include <algorithm>  //for std::stable_sort
 
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 
 using namespace std;
@@ -322,7 +322,7 @@ string PairwiseL1DistScorer::getSetupInfo(bool comment)
 
 //Takes mesh center, available processors sorted by correct comparator,
 //and number of processors needed and returns tiebreak value.
-long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail, int num, MachineMesh* mesh)
+long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail, int num, MeshMachine* mesh)
 {
     long ret = 0;
 
@@ -441,7 +441,7 @@ string Tiebreaker::getInfo()
 }
 
 
-pair<long,long>* LInfDistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MachineMesh* mach) {
+pair<long,long>* LInfDistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MeshMachine* mach) {
     //returns the sum of the LInf distances of the num closest processors
 
     long retVal = 0;
@@ -472,7 +472,7 @@ string  LInfDistFromCenterScorer::getSetupInfo(bool comment)
     return ret.str();
 }
 
-pair<long,long>* L1DistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MachineMesh* mach) 
+pair<long,long>* L1DistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MeshMachine* mach) 
 {
     //returns sum of L1 distances from center
     long retVal = 0;

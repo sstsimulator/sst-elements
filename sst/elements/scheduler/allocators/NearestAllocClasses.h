@@ -39,7 +39,7 @@
 
 //#include "sst/core/serialization.h"
 
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 
 namespace SST {
@@ -109,8 +109,8 @@ namespace SST {
             //a way to generate possible center points
 
             protected:
-                MachineMesh* machine;  //the machine we're generating for
-                CenterGenerator(MachineMesh* m) 
+                MeshMachine* machine;  //the machine we're generating for
+                CenterGenerator(MeshMachine* m) 
                 {
                     machine = m;
                 }
@@ -125,7 +125,7 @@ namespace SST {
             //generated list is all free locations
 
             public:
-                FreeCenterGenerator(MachineMesh* m) : CenterGenerator(m) { }
+                FreeCenterGenerator(MeshMachine* m) : CenterGenerator(m) { }
 
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available); 
 
@@ -137,8 +137,8 @@ namespace SST {
             //find the free nodes with best cooling properties
 
             public:
-                CoolingGenerator(MachineMesh* m) : CenterGenerator(m) { } 
-                std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);//, MachineMesh* m); 
+                CoolingGenerator(MeshMachine* m) : CenterGenerator(m) { } 
+                std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);//, MeshMachine* m); 
                 std::string getSetupInfo(bool comment); 
         };
 
@@ -149,7 +149,7 @@ namespace SST {
             //(including the free locations themselves)
 
             public:
-                IntersectionCenterGen(MachineMesh* m) : CenterGenerator(m)
+                IntersectionCenterGen(MeshMachine* m) : CenterGenerator(m)
             {
             }
 
@@ -163,7 +163,7 @@ namespace SST {
             //generated list is all locations 
             public:
 
-                AllCenterGenerator(MachineMesh* m) : CenterGenerator(m)
+                AllCenterGenerator(MeshMachine* m) : CenterGenerator(m)
             {
             }
 
@@ -273,7 +273,7 @@ namespace SST {
         class Scorer {
             //a way to evaluate a possible allocation; low is better
             public:
-                virtual std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs,int num, MachineMesh* mach) = 0;
+                virtual std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs,int num, MeshMachine* mach) = 0;
                 virtual std::string getSetupInfo(bool comment) = 0;
                 //returns score associated with first num members of procs
                 //center is the center point used to select these
@@ -284,7 +284,7 @@ namespace SST {
             //evaluates by sum of pairwise L1 distances
 
             public:
-                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MachineMesh* mach) 
+                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach) 
                 {
                     //returns pairwise L1 dist between first num members of procs
                     return new std::pair<long,long>(mach -> pairwiseL1Distance(procs, num),0);
@@ -310,7 +310,7 @@ namespace SST {
 
                 //Takes mesh center, available processors sorted by correct comparator,
                 //and number of processors needed and returns tiebreak value.
-                long getTiebreak(MeshLocation* center, std::vector<MeshLocation*>* avail, int num, MachineMesh* mesh);
+                long getTiebreak(MeshLocation* center, std::vector<MeshLocation*>* avail, int num, MeshMachine* mesh);
 
                 Tiebreaker(long ms, long af, long wf, long bf) ;
 
@@ -339,7 +339,7 @@ namespace SST {
                 Tiebreaker* tiebreaker;
 
             public:
-                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MachineMesh* mach) ;
+                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach) ;
 
                 LInfDistFromCenterScorer(Tiebreaker* tb);
 
@@ -359,7 +359,7 @@ namespace SST {
                 {
                 }
 
-                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MachineMesh* mach);
+                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach);
 
                 std::string getSetupInfo(bool comment)
                 {

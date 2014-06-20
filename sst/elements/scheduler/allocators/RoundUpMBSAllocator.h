@@ -29,7 +29,7 @@
 
 namespace SST {
     namespace Scheduler {
-        class MachineMesh;
+        class MeshMachine;
         class Job;
         class MBSMeshAllocInfo;
         class Block;
@@ -44,11 +44,11 @@ namespace SST {
         class RoundUpMBSAllocator : public GranularMBSAllocator {
             public:
 
-                RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z);
+                RoundUpMBSAllocator(MeshMachine* m, int x, int y, int z);
 
                 std::string getSetupInfo(bool comment);
 
-                RoundUpMBSAllocator(std::vector<std::string>* params, MachineMesh* mach);
+                RoundUpMBSAllocator(std::vector<std::string>* params, MeshMachine* mach);
 
                 MBSMeshAllocInfo* allocate(Job* job);
 

@@ -22,7 +22,7 @@
 #include <cstring>
 #include <fstream>
 
-//#include <iostream> //debug
+#include <iostream> //debug
 
 #include <sst/core/debug.h>
 #include <sst/core/element.h>
@@ -35,12 +35,13 @@
 #include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
 #include "MeshAllocInfo.h"
+#include "MeshMachine.h"
 #include "misc.h"
 #include "Scheduler.h"
 #include "Statistics.h"
 #include "TaskMapper.h"
+#include "TaskMapInfo.h"
 
 #include "events/ArrivalEvent.h"
 #include "events/CompletionEvent.h"
@@ -164,7 +165,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         calcFST = NULL;
     }
 
-    if (NULL == dynamic_cast<MachineMesh*>(machine)) {
+    if (NULL == dynamic_cast<MeshMachine*>(machine)) {
         char timestring[] = "time";
         stats = new Statistics(machine, scheduler, theAllocator, trace, timestring, false, calcFST);
     } else {
@@ -549,21 +550,30 @@ void schedComponent::startJob(AllocInfo* ai)
     unsigned long actualRunningTime = j->getActualTime();
     
     //calculate running time with communication overhead
-    if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)machine && NULL != (MeshAllocInfo*) ai) { 
+    if (timePerDistance -> at(0) != 0 && NULL != (MeshMachine*)machine && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
         
-            long baselineL1Distance = ((MachineMesh*)machine)->baselineL1Distance(j);
+            long baselineL1Distance = ((MeshMachine*)machine)->baselineL1Distance(j);
             double randomNumber = rng->nextUniform() * 0.8 - 0.4;
             int numberOfProcs = ((MeshAllocInfo*)ai)->processors->size();
-                     
-            //running time w/o any communication overhead (baseline):
+            
+            //calculate running time w/o any communication overhead:
             communicationTime = baselineL1Distance; //TODO: timePerDistance->at(3) * baselineL1Distance;
             unsigned long baselineRunningTime = actualRunningTime / (timePerDistance->at(0) + timePerDistance->at(1) *
                                                                      communicationTime); //TODO: ((double)timePerDistance->at(2) + communicationTime));
+            
             unsigned long averagePairwiseDistance;
+            
             //allocated hop distance
             if (numberOfProcs > 1) { 
-                averagePairwiseDistance = 2 * ((MachineMesh*)machine)->pairwiseL1Distance( ((MeshAllocInfo*)ai)->processors)/ (numberOfProcs * (numberOfProcs - 1));
+                
+                //Apply task mapping
+                TaskMapInfo* tmi = theTaskMapper->mapTasks(ai);
+                
+                //get communication distance
+                //averagePairwiseDistance = tmi->getTotalHopDist(machine) / numberOfProcs ;//TODO replace below with this
+                averagePairwiseDistance = 2 * tmi->getTotalHopDist(machine) / (numberOfProcs * (numberOfProcs - 1));
+                delete tmi; //we don't currently use it after whit point
             } else {
                 averagePairwiseDistance = 0;
             }

@@ -29,7 +29,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -38,7 +38,7 @@
 
 using namespace SST::Scheduler;
 
-GranularMBSAllocator::GranularMBSAllocator(MachineMesh* m, int x, int y, int z) : MBSAllocator(m)
+GranularMBSAllocator::GranularMBSAllocator(MeshMachine* m, int x, int y, int z) : MBSAllocator(m)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     //create the starting blocks

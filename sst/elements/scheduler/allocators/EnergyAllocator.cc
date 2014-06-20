@@ -32,7 +32,7 @@
 #include "EnergyAllocClasses.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -42,7 +42,7 @@ using namespace SST::Scheduler;
 EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    MachineMesh* m = (MachineMesh*) mach;
+    MeshMachine* m = (MeshMachine*) mach;
     if (NULL == m) {
         schedout.fatal(CALL_INFO, 1, "Energy allocator requires a Mesh machine");
     }
@@ -72,7 +72,7 @@ std::string EnergyAllocator::getSetupInfo(bool comment)
 
 AllocInfo* EnergyAllocator::allocate(Job* job)
 {
-    return allocate(job,((MachineMesh*)machine) -> freeProcessors());
+    return allocate(job,((MeshMachine*)machine) -> freeProcessors());
 }
 
 //Allocates job if possible.
@@ -93,16 +93,16 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
     if ((unsigned int) numProcs == available -> size()) {
         for (int i = 0; i < numProcs; i++) {
             (*retVal -> processors)[i] = (*available)[i];
-            retVal -> nodeIndices[i] = (*available)[i] -> toInt((MachineMesh*)machine);
+            retVal -> nodeIndices[i] = (*available)[i] -> toInt((MeshMachine*)machine);
         }
         //printf("short return\n");
         return retVal;
     }
 
-    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, job -> getProcsNeeded(), (MachineMesh*)machine);
+    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, job -> getProcsNeeded(), (MeshMachine*)machine);
     for (int i = 0; i < numProcs; i++) {
         (*retVal -> processors)[i] = ret -> at(i);
-        retVal -> nodeIndices[i] = ret -> at(i) -> toInt((MachineMesh*)machine);
+        retVal -> nodeIndices[i] = ret -> at(i) -> toInt((MeshMachine*)machine);
     }
     return retVal;
 

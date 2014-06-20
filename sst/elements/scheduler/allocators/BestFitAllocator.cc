@@ -28,7 +28,7 @@
 #include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "output.h"
@@ -43,7 +43,7 @@ BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): Linea
 {
     schedout.init("", 8, 0, Output::STDOUT);
     schedout.debug(CALL_INFO, 0, 0, "Constructing BestFitAllocator\n");
-    if (NULL == dynamic_cast<MachineMesh*>(mach)) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
+    if (NULL == dynamic_cast<MeshMachine*>(mach)) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
 }
 
 string BestFitAllocator::getSetupInfo(bool comment)
@@ -107,7 +107,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         for (j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
             if (j < num) {
                 retVal -> processors -> at(j) = intervals -> at(bestInterval) -> at(j);
-                retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt((MachineMesh*)machine);
+                retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt((MeshMachine*)machine);
             } else {
                 delete intervals -> at(bestInterval) -> at(j);
             }

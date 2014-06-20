@@ -25,7 +25,7 @@
 namespace SST {
     namespace Scheduler {
 
-        class MachineMesh;
+        class MeshMachine;
         class Machine;
         class Job;
         class AllocInfo;
@@ -33,7 +33,7 @@ namespace SST {
         class BestFitAllocator : public LinearAllocator {
             public:
 
-                BestFitAllocator(MachineMesh* m, std::string filename) ;
+                BestFitAllocator(MeshMachine* m, std::string filename) ;
 
                 BestFitAllocator(std::vector<std::string>* params, Machine* mach) ;
 
