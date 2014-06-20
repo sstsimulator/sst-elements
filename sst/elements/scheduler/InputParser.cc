@@ -55,7 +55,7 @@ JobParser::JobParser(Machine* machine,
     
 }
 
-std::vector<Job> JobParser::parseJobs(SimTime_t currSimTime)
+std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
 {
     ifstream input;
     input.open( fileName.c_str() );
@@ -159,14 +159,14 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
         schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s", line.c_str());
     } else {
         if (useYumYumTraceFormat) {
-            jobs.push_back(Job(currSimTime + 1, procs, duration, duration + 1, std::string(ID)));
+            jobs.push_back(new Job(currSimTime + 1, procs, duration, duration + 1, std::string(ID)));
         } else {
-            jobs.push_back(Job(currSimTime, procs, duration, duration, std::string(ID)));
+            jobs.push_back(new Job(currSimTime, procs, duration, duration, std::string(ID)));
         }
     }
 
     // validate the job to make sure that the specified machine can actually run it. 
-    Job* j = &jobs.back();
+    Job* j = jobs.back();
 
     return validateJob(j, &jobs, abs((long)duration));
 }
@@ -186,17 +186,12 @@ bool JobParser::newJobLine(std::string line)
     std::stringstream is(line);
     is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile;
     
-    if(procsNeeded < 0 || runningTime < 0) {
-        schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s\n",  line.c_str());
-    }
-    
     if(estRunningTime <= 0){
         estRunningTime = runningTime;
     }
     
-    Job temp_job = Job(arrivalTime, procsNeeded, runningTime, estRunningTime);
-    jobs.push_back(temp_job);
-    Job* j = &jobs.back();
+    jobs.push_back(new Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
+    Job* j = jobs.back();
     
     //get communication info
     TaskCommInfo* tci;
@@ -231,18 +226,20 @@ int** JobParser::readCommFile(std::string fileName, int procsNeeded)
 	return matrix;
 }
 
-bool JobParser::validateJob( Job* j, vector<Job>* jobs, long runningTime )
+bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
 {
     bool ok = true;
     if (j->getProcsNeeded() <= 0) {
         schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it",
                          j->getJobNum(), j->getProcsNeeded());
+        delete jobs->back();
         jobs->pop_back();
         ok = false;
     }
     if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
         schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it",
                          j->getJobNum(), runningTime);
+        delete jobs->back();
         jobs->pop_back();
         ok = false;
     }

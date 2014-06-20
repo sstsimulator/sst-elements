@@ -90,7 +90,7 @@ namespace SST {
 
                 typedef std::vector<int> targetList_t;
 
-                std::vector<Job> jobs;
+                std::vector<Job*> jobs;
                 std::list<CompletionEvent*> finishingcomp;
                 std::list<ArrivalEvent*> finishingarr;
                 Machine* machine;

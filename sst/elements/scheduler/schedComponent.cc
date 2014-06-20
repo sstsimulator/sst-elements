@@ -212,11 +212,11 @@ void schedComponent::setup()
     
     for(int i = 0; i < (int) jobs.size(); i++)
     {
-        ArrivalEvent* ae = new ArrivalEvent(jobs[i].getArrivalTime(), i);
+        ArrivalEvent* ae = new ArrivalEvent(jobs[i]->getArrivalTime(), i);
         if (useYumYumTraceFormat) {
             selfLink -> send(0, ae); 
         } else {
-            selfLink -> send(jobs[i].getArrivalTime(), ae); 
+            selfLink -> send(jobs[i]->getArrivalTime(), ae); 
         }
     }
         
@@ -339,7 +339,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
                 fte->forceExecute = true;
             selfLink->send(0, fte); //send back an event at the same time so we know it finished 
         }
-        if (jobNum == jobs.back().jobNum) {
+        if (jobNum == jobs.back()->jobNum) {
             if (jobs.empty()) {
                 unregisterYourself();
             }
@@ -399,10 +399,11 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
 
             startNextJob();
 
-            if (jobNum == jobs.back().jobNum) {
+            if (jobNum == jobs.back()->jobNum) {
                 while (!jobs.empty() && 
-                       runningJobs.find(jobs.back().jobNum) == runningJobs.end() && 
-                       jobs.back().hasRun == true) {
+                       runningJobs.find(jobs.back()->jobNum) == runningJobs.end() && 
+                       jobs.back()->hasRun == true) {
+                    delete jobs.back();
                     jobs.pop_back();
                 }
                 if (jobs.empty()) {
@@ -483,10 +484,11 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                 }
                 delete ai;
 
-                if (finishedJobNum == jobs.back().jobNum) {
+                if (finishedJobNum == jobs.back()->jobNum) {
                     while (!jobs.empty() && 
-                           runningJobs.find(jobs.back().jobNum) == runningJobs.end() && 
-                           jobs.back().hasRun == true) {
+                           runningJobs.find(jobs.back()->jobNum) == runningJobs.end() && 
+                           jobs.back()->hasRun == true) {
+                        delete jobs.back();
                         jobs.pop_back();
                     }
 
@@ -503,7 +505,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             //events not at the same time step, and they should already be sorted
             //by number because they are given to SST (and therefore come back) that way.
             while (!finishingarr.empty()) {
-                Job* arrivingjob = &jobs[finishingarr.front() -> getJobIndex()];
+                Job* arrivingjob = jobs[finishingarr.front() -> getJobIndex()];
                 if (FSTtype == 2) { 
                     //relaxed, so do FST before we tell the scheduler about the job
                     calcFST -> jobArrives(arrivingjob, scheduler, machine);

@@ -39,11 +39,11 @@ namespace SST {
                           bool* YumYumSimulationKillFlag ); 
                 ~JobParser() { };
                         
-                std::vector<Job> parseJobs(SimTime_t currSimTime);
+                std::vector<Job*> parseJobs(SimTime_t currSimTime);
                 bool checkJobFile();
             private:
                 Machine* machine;
-                std::vector<Job> jobs;   //TODO: make this a pointer vector to prevent unnecessary copying
+                std::vector<Job*> jobs;
 
                 std::string fileName;
                 boost::filesystem::path fileNamePath;
@@ -54,7 +54,7 @@ namespace SST {
                 
                 bool newJobLine(std::string line);
                 int** readCommFile(std::string fileName, int procsNeeded);
-                bool validateJob( Job * j, std::vector<Job> * jobs, long runningTime );
+                bool validateJob( Job * j, std::vector<Job*> * jobs, long runningTime );
                 
                 //yumyum
                 bool useYumYumTraceFormat;
