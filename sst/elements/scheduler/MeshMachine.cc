@@ -27,7 +27,7 @@
 #include "Allocator.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MachineMesh.h"
+#include "MeshMachine.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "schedComponent.h"
@@ -41,7 +41,7 @@ namespace SST {
     }
 }
 
-MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) : Machine((Xdim*Ydim*Zdim), D_matrix)
+MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) : Machine((Xdim*Ydim*Zdim), D_matrix)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
@@ -63,12 +63,12 @@ MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, doubl
     reset();
 }
 
-std::string MachineMesh::getParamHelp() 
+std::string MeshMachine::getParamHelp() 
 {
     return "[<x dim>,<y dim>,<z dim>]\n\t3D Mesh with specified dimensions";
 }
 
-std::string MachineMesh::getSetupInfo(bool comment)
+std::string MeshMachine::getSetupInfo(bool comment)
 {
     std::string com;
     if (comment) com="# ";
@@ -78,27 +78,27 @@ std::string MachineMesh::getSetupInfo(bool comment)
     return ret.str();
 }
 
-int MachineMesh::getXDim() 
+int MeshMachine::getXDim() 
 {
     return xdim;
 }
 
-int MachineMesh::getYDim() 
+int MeshMachine::getYDim() 
 {
     return ydim;
 }
 
-int MachineMesh::getZDim() 
+int MeshMachine::getZDim() 
 {
     return zdim;
 }
 
-int MachineMesh::getMachSize() 
+int MeshMachine::getMachSize() 
 {
     return xdim*ydim*zdim;
 }
 
-void MachineMesh::reset() 
+void MeshMachine::reset() 
 {
     numAvail = xdim * ydim * zdim;
     for (int i = 0; i < xdim; i++) {
@@ -111,7 +111,7 @@ void MachineMesh::reset()
 }
 
 //returns list of free processors
-std::vector<MeshLocation*>* MachineMesh::freeProcessors() 
+std::vector<MeshLocation*>* MeshMachine::freeProcessors() 
 {
     std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
@@ -127,7 +127,7 @@ std::vector<MeshLocation*>* MachineMesh::freeProcessors()
 }
 
 //returns list of used processors
-std::vector<MeshLocation*>* MachineMesh::usedProcessors() 
+std::vector<MeshLocation*>* MeshMachine::usedProcessors() 
 {
     std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
@@ -143,10 +143,10 @@ std::vector<MeshLocation*>* MachineMesh::usedProcessors()
 }
 
 //allocate list of processors in allocInfo
-void MachineMesh::allocate(AllocInfo* allocInfo) 
+void MeshMachine::allocate(AllocInfo* allocInfo) 
 {
     std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
-    //machinemesh (unlike simplemachine) is not responsible for setting
+    //MeshMachine (unlike simplemachine) is not responsible for setting
     //which processors are used in allocInfo as it's been set by the
     //allocator already
 
@@ -160,7 +160,7 @@ void MachineMesh::allocate(AllocInfo* allocInfo)
     sc -> startJob(allocInfo);
 }
 
-void MachineMesh::deallocate(AllocInfo* allocInfo) {
+void MeshMachine::deallocate(AllocInfo* allocInfo) {
     //deallocate list of processors in allocInfo
 
     std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
@@ -174,12 +174,12 @@ void MachineMesh::deallocate(AllocInfo* allocInfo) {
     numAvail += procs -> size();
 }
 
-long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs) {
+long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) {
     //returns total pairwise L_1 distance between all array members
     return pairwiseL1Distance(locs, locs -> size());
 }
 
-long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) {
+long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) {
     //returns total pairwise L_1 distance between 1st num members of array
     long retVal = 0;
 
@@ -192,7 +192,7 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
   return retVal;
 }
 
-double MachineMesh::getCoolingPower() 
+double MeshMachine::getCoolingPower() 
 {
     int Putil=2000;
     int Pidle=1000;
@@ -261,7 +261,7 @@ double MachineMesh::getCoolingPower()
     return  Pcooling;
 }
 
-long MachineMesh::baselineL1Distance(Job* job)
+long MeshMachine::baselineL1Distance(Job* job)
 {
     int numProcs = job -> getProcsNeeded();
     
@@ -373,7 +373,7 @@ long MachineMesh::baselineL1Distance(Job* job)
 
 
 /*
-   std::string MachineMesh::tostd::string(){
+   std::string MeshMachine::tostd::string(){
 //returns human readable view of which processors are free
 //presented in layers by z-coordinate (0 first), with the
 //  (0,0) position of each layer in the bottom left

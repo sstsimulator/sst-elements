@@ -28,7 +28,7 @@ namespace SST {
         class MeshLocation;
         class schedComponent;
 
-        class MachineMesh : public Machine {
+        class MeshMachine : public Machine {
 
             private:
                 int xdim;              //size of mesh in each dimension
@@ -40,7 +40,7 @@ namespace SST {
                 
             public:
                 
-                MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix);
+                MeshMachine(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix);
 
                 static std::string getParamHelp();
 
