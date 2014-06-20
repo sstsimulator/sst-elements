@@ -15,11 +15,12 @@
 #include <vector>
 #include <string>
 
+#include "Job.h"
+#include "Machine.h"
+
 namespace SST {
     namespace Scheduler {
 
-        class Machine;
-        class Job;
         class AllocInfo;
         class MeshLocation;
 
@@ -29,8 +30,14 @@ namespace SST {
 
                 virtual std::string getSetupInfo(bool comment) = 0;
 
-                virtual bool canAllocate(Job* j);
-                virtual bool canAllocate(Job* j, std::vector<MeshLocation*>* available);
+                bool canAllocate(Job* j)
+                {  
+                    return (machine -> getNumFreeProcessors() >= j -> getProcsNeeded());
+                }
+                bool canAllocate(Job* j, std::vector<MeshLocation*>* available)
+                {  
+                    return (available -> size() >= (unsigned int)j -> getProcsNeeded());
+                }
 
                 //allocates job if possible
                 //returns information on the allocation or NULL if it wasn't possible

@@ -58,7 +58,8 @@ namespace SST {
                 void startJob(AllocInfo* ai);
 
                 //ConstraintAllocator needs this
-                std::string getNodeID(int nodeIndex){
+                std::string getNodeID(int nodeIndex) const
+                {
                     return nodeIDs.at(nodeIndex);
                 }
 

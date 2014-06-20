@@ -20,7 +20,6 @@
 #include "events/CommunicationEvent.h"
 #include "nodeComponent.h"
 #include "events/ObjectRetrievalEvent.h"
-#include "misc.h"
 
 using namespace SST::Scheduler;
 

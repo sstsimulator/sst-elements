@@ -276,7 +276,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
 
 
 //returns the correct allocator based on the parameters
-Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
+Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
@@ -418,7 +418,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
                     schedout.fatal(CALL_INFO, 1, "ConstraintAllocator requires SimpleMachine");
                 }
                 // will get these file names from schedparams eventually
-                return new ConstraintAllocator(mach, params.find("ConstraintAllocatorDependencies") -> second, params.find("ConstraintAllocatorConstraints") -> second );
+                return new ConstraintAllocator(mach, params.find("ConstraintAllocatorDependencies") -> second, params.find("ConstraintAllocatorConstraints") -> second, sc);
                 break;
             }
 

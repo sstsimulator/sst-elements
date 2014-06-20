@@ -19,8 +19,6 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "misc.h"
-#include "output.h"
 #include "SimpleMachine.h"
 
 using namespace SST::Scheduler;

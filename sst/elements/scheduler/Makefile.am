@@ -15,7 +15,7 @@ libscheduler_la_SOURCES = \
     Job.h	Machine.h \
     Job.cc \
     linkBuilder.h		misc.h			nodeComponent.h			schedComponent.h \
-    linkBuilder.cc		misc.cc			nodeComponent.cc	 	schedComponent.cc \
+    linkBuilder.cc		nodeComponent.cc	 	schedComponent.cc \
     Scheduler.h 	SimpleMachine.h		Statistics.h \
     schedLib.cc		SimpleMachine.cc	Statistics.cc \
     MeshAllocInfo.cc \

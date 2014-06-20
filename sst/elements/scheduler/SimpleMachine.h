@@ -45,7 +45,6 @@ namespace SST {
 
                 //ConstraintAllocator needs these
                 std::vector<int>* freeProcessors();
-                std::string getNodeID(int i);
 
             private:
                 static const int debug = 0;  //whether to include debugging printouts

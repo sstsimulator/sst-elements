@@ -29,7 +29,6 @@
 #include "Machine.h"
 #include "MeshMachine.h"
 #include "MeshAllocInfo.h"
-#include "misc.h"
 #include "schedComponent.h"
 
 using namespace SST::Scheduler;

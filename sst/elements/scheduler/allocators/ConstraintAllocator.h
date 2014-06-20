@@ -30,23 +30,24 @@
 namespace SST {
     namespace Scheduler {
 
+        class schedComponent;
         class SimpleMachine;
         class Job;
 
 
-	class ConstrainedAllocation{
-		public:
-			Job * job;
-			std::set<int> constrained_nodes;
-			std::set<int> unconstrained_nodes;
-	};
+	    class ConstrainedAllocation{
+		    public:
+			    Job * job;
+			    std::set<int> constrained_nodes;
+			    std::set<int> unconstrained_nodes;
+	    };
 
 
 
         class ConstraintAllocator : public Allocator {
 
             public:
-                ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile);
+                ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile, schedComponent* sc);
 
                 //ConstraintAllocator Make(vector<string*>* params);
 
@@ -63,22 +64,23 @@ namespace SST {
                 //check file for updates to parameter estimates and set constraints accordingly
                 void GetConstraints();
 
-		AllocInfo * generate_RandomAllocInfo( Job * job );
-		AllocInfo * generate_AllocInfo( ConstrainedAllocation * constrained_alloc );
-		std::set< std::string > * get_constrained_leaves( std::vector<std::string> * constraint );
-		std::set< std::string > * get_constrained_leaves( std::string constraint );
-		bool try_to_remove_constraint_set( unsigned int num_constrained_needed, std::list<std::vector<int> *> * constrained_compute_nodes );
-		bool constraints_changed();
-		void read_constraints();
+		        AllocInfo * generate_RandomAllocInfo( Job * job );
+		        AllocInfo * generate_AllocInfo( ConstrainedAllocation * constrained_alloc );
+		        std::set< std::string > * get_constrained_leaves( std::vector<std::string> * constraint );
+		        std::set< std::string > * get_constrained_leaves( std::string constraint );
+		        bool try_to_remove_constraint_set( unsigned int num_constrained_needed, std::list<std::vector<int> *> * constrained_compute_nodes );
+		        bool constraints_changed();
+		        void read_constraints();
 
                 //map from internal node u to  set of dependent compute nodes D[u]
                 std::map< std::string, std::set<std::string> > D;
                 std::string ConstraintsFileName;
 
-		std::list< std::set< std::string > * > constraint_leaves;
-		std::list< std::vector< std::string > * > constraints;
+		        std::list< std::set< std::string > * > constraint_leaves;
+		        std::list< std::vector< std::string > * > constraints;
 
-		unsigned short * allocPRNGstate;
+		        unsigned short * allocPRNGstate;
+		        schedComponent* sc;
         };
 
 #endif

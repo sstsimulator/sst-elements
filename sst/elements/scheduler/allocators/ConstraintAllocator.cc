@@ -27,19 +27,20 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "misc.h"
 #include "output.h"
 #include "SimpleMachine.h"
+#include "schedComponent.h"
 
 #define DEBUG false
 
 using namespace SST::Scheduler;
 
-ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile) 
+ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile, schedComponent* sc) 
 {
     schedout.init("", 8, 0, Output::STDOUT);
     machine = m;
     ConstraintsFileName = ConstFile;
+    this->sc = sc;
     // read Dependencies
     // if file does not exist or is empty, D will be an empty mapping
     // and in effect we default to simple allocator
@@ -286,7 +287,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		
 		for( std::vector<int>::iterator comp_node_iter = all_available_compute_nodes->begin();
 		     comp_node_iter != all_available_compute_nodes->end(); ++ comp_node_iter ){
-			if( dependent_compute_node_IDs->find( ((SimpleMachine*)machine)->getNodeID( *comp_node_iter ) ) !=
+			if( dependent_compute_node_IDs->find( sc->getNodeID( *comp_node_iter ) ) !=
 			    dependent_compute_node_IDs->end() ){
 				dependent_compute_nodes->push_back( *comp_node_iter );
 				

@@ -20,7 +20,6 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "misc.h"
 #include "schedComponent.h"
 
 using namespace SST::Scheduler;
@@ -112,9 +111,4 @@ std::vector<int>* SimpleMachine::freeProcessors(){
         retVal->push_back(freeNodes[i]);
     return retVal;
 }
-
-std::string SimpleMachine::getNodeID(int i){
-    return sc->getNodeID(i);
-}
-
 

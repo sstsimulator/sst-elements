@@ -38,7 +38,7 @@ namespace SST {
                 Factory(); //only sets up the output class
                 Scheduler* getScheduler(SST::Params& params, int numProcs);
                 Machine* getMachine(SST::Params& params, int numProcs, schedComponent* sc);
-                Allocator* getAllocator(SST::Params& params, Machine* m);
+                Allocator* getAllocator(SST::Params& params, Machine* m, schedComponent* sc);
                 TaskMapper* getTaskMapper(SST::Params& params, Machine* mach);
                 int getFST(SST::Params& params);
                 std::vector<double>* getTimePerDistance(SST::Params& params);
