@@ -157,8 +157,8 @@ public:
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
     /** Creates a new MemEvent - Genetic */
-    MemEvent(const Component *_src, Addr _addr, Command _cmd) : SST::Event(){
-        initialize(_src, _addr, _cmd);
+    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd) : SST::Event(){
+        initialize(_src, _addr, _baseAddr, _cmd);
     }
 
     /** MemEvent constructor - Reads */
@@ -200,10 +200,11 @@ public:
     }
     
     
-    void initialize(const Component *_src, Addr _addr, Command _cmd){
+    void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd){
         initialize();
         src_  = _src->getName();
         addr_ = _addr;
+        baseAddr_ = _baseAddr;
         cmd_  = _cmd;
      }
     
@@ -233,6 +234,7 @@ public:
         responseToID_     = NO_ID;
         baseAddr_         = 0;
         dst_              = NONE;
+        src_              = NONE;
         size_             = 0;
         flags_            = 0;
         groupID_          = 0;
@@ -242,6 +244,10 @@ public:
         loadLink_         = false;
         storeConditional_ = false;
         grantedState_     = NULLST;
+        startTime_        = 0;
+        NACKedCmd_        = NULLCMD;
+        NACKedEvent_      = NULL;
+        payload_.clear();
     }
 
 
@@ -306,11 +312,10 @@ public:
     }
     
     bool fromHighNetNACK(){ return isLowNetEvent();}
-    bool fromLowNetNACK(){return isHighNetEvent();}
+    bool fromLowNetNACK(){ return isHighNetEvent();}
 
     /** @return  the data payload. */
-    dataVec& getPayload(void)
-    {
+    dataVec& getPayload(void){
         /* Lazily allocate space for payload */
         if ( payload_.size() < size_ )  payload_.resize(size_);
         return payload_;
@@ -329,8 +334,7 @@ public:
      * @param[in] size  How many bytes to copy from data
      * @param[in] data  Data array to set as payload
      */
-    void setPayload(uint32_t _size, uint8_t* _data)
-    {
+    void setPayload(uint32_t _size, uint8_t* _data){
         setSize(_size);
         payload_.resize(_size);
         for ( uint32_t i = 0 ; i < _size ; i++ ) {
@@ -407,56 +411,44 @@ public:
     uint64_t getStartTime(){return startTime_;}
 
     /** Return the command that is the Response to the input command */
-    static Command commandResponse(Command c)
-    {
-        switch(c) {
-        case GetS:
-        case GetSEx:
-            return GetSResp;
-        case GetX:
-            return GetXResp;
-        case FetchInv:
-        case FetchInvX:
-            return FetchResp;
-            //return SupplyData;
-        default:
-            return NULLCMD;
+    static Command commandResponse(Command _c){
+        switch(_c) {
+            case GetS:
+            case GetSEx:
+                return GetSResp;
+            case GetX:
+                return GetXResp;
+            case FetchInv:
+            case FetchInvX:
+                return FetchResp;
+            default:
+                return NULLCMD;
         }
     }
 private:
-    id_type     eventID_;
-    id_type     responseToID_;
-    Addr        addr_;
-    Addr        baseAddr_;
-    uint32_t    size_;
-    Command     cmd_;
-    dataVec     payload_;
-    
-    string      src_;
-    string      dst_;
-    
-    uint32_t    flags_;
-    bool        prefetch_;
-    BCC_MESIState grantedState_;
-    
-    uint64_t    startTime_;
-    
-    MemEvent*   NACKedEvent_;
-    Command     NACKedCmd_;
-    
-    bool        ackNeeded_;
-    uint32_t    groupID_;
-    
-    bool        atomic_;
-    bool        loadLink_;
-    bool        storeConditional_;
-    
-
+    id_type         eventID_;
+    id_type         responseToID_;
+    uint32_t        flags_;
+    uint32_t        size_;
+    uint32_t        groupID_;
+    Addr            addr_;
+    Addr            baseAddr_;
+    string          src_;
+    string          dst_;
+    Command         cmd_;
+    Command         NACKedCmd_;
+    MemEvent*       NACKedEvent_;
+    dataVec         payload_;
+    BCC_MESIState   grantedState_;
+    bool            ackNeeded_;
+    bool            prefetch_;
+    bool            atomic_;
+    bool            loadLink_;
+    bool            storeConditional_;
+    uint64_t        startTime_;
 
     
     MemEvent() {} // For serialization only
-
-
 
     friend class boost::serialization::access;
     template<class Archive>

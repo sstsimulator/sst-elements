@@ -34,7 +34,8 @@ using namespace SST::MemHierarchy;
 void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     MemEvent *event = static_cast<MemEvent*>(_ev);
     Command cmd     = event->getCmd();
-    Addr baseAddr   = toBaseAddr(event->getAddr());
+    if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
+    Addr baseAddr = event->getBaseAddr();
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED) || cf_.allUncachedRequests_;
     MemEvent* origEvent;
     
@@ -133,6 +134,11 @@ void Cache::handlePrefetchEvent(SST::Event* _event) {
 
 void Cache::handleSelfEvent(SST::Event* _event){
     MemEvent* ev = static_cast<MemEvent*>(_event);
+    assert(ev->getBaseAddr() == toBaseAddr(ev->getBaseAddr()));
+    d_->debug(_L3_,"Cmd = %s \n", CommandString[ev->getCmd()]);
+    d_->debug(_L3_,"Dst = %s \n", ev->getDst().c_str());
+    d_->debug(_L3_,"Src = %s \n", ev->getSrc().c_str());
+
     if(ev->getCmd() != NULLCMD && !mshr_->isFull())
         processEvent(_event, ev->isPrefetch());
 }
@@ -148,11 +154,11 @@ void Cache::init(unsigned int _phase){
         if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
         else{
             for(uint i = 0; i < highNetPorts_->size(); i++)
-                highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, NULLCMD));
+                highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
         }
         if(!cf_.dirControllerExists_){
             for(uint i = 0; i < lowNetPorts_->size(); i++)
-                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, NULLCMD));
+                lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
         }
         
     }

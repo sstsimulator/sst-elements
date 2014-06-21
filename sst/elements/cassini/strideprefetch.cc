@@ -71,7 +71,7 @@ void StridePrefetcher::DetectStride() {
 						(strideReach * stride), stride);
  
 					prefetchOpportunities++;
-					ev = new MemEvent(owner, targetAddress + (strideReach * stride), RequestData);
+					ev = new MemEvent(owner, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), RequestData);
 				} else {
 					const Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
 					const Addr targetAddressPhysPage = targetAddress / pageSize;
@@ -84,7 +84,7 @@ void StridePrefetcher::DetectStride() {
 					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
 
-						ev = new MemEvent(owner, targetPrefetchAddress, RequestData);
+						ev = new MemEvent(owner, targetPrefetchAddress, targetPrefetchAddress, RequestData);
 						prefetchOpportunities++;
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
@@ -136,7 +136,7 @@ void StridePrefetcher::DetectStride() {
 	        for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 	            // Create a new read request, we cannot issue a write because the data will get
 	            // overwritten and corrupt memory (even if we really do want to do a write)
-	            MemEvent* newEv = new MemEvent(owner, ev->getAddr(), GetS);
+	            MemEvent* newEv = new MemEvent(owner, ev->getAddr(), ev->getAddr(), GetS);
             	    newEv->setSize(blockSize);
             	    newEv->setPrefetchFlag(true);
 

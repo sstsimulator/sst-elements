@@ -60,6 +60,7 @@ unsigned int SetAssociativeArray::preReplace(const Addr baseAddr){
 
 void SetAssociativeArray::replace(const Addr baseAddr, unsigned int candidate_id){
     replacementMgr_->replaced(candidate_id);
+    lines_[candidate_id]->clear();
     lines_[candidate_id]->setBaseAddr(baseAddr);
     replacementMgr_->update(candidate_id);
 }

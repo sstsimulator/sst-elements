@@ -169,7 +169,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
 
 
 void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded){
-    MemEvent* invalidateEvent = new MemEvent((Component*)owner_, _cLine->getBaseAddr(), Inv);
+    MemEvent* invalidateEvent = new MemEvent((Component*)owner_, _cLine->getBaseAddr(), _cLine->getBaseAddr(), Inv);
     if(_acksNeeded) invalidateEvent->setAckNeeded();            //TODO: add comment as to why this is needed (ie weak vs strong consistency)
     invalidateEvent->setDst(destination);
     
@@ -199,7 +199,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
 
     invReqsSent_++;
     
-    MemEvent* invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), InvX);
+    MemEvent* invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), ccLine->getBaseAddr(), InvX);
     invalidateEvent->setAckNeeded();
     invalidateEvent->setDst(ownerName);
     

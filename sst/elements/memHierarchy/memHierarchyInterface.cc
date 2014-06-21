@@ -64,7 +64,7 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
         case SimpleMem::Request::WriteResp: cmd = GetSResp; break;
     }
     
-    MemEvent *me = new MemEvent(owner_, _req->addr, cmd);
+    MemEvent *me = new MemEvent(owner_, _req->addr, _req->addr, cmd);
     
     me->setGroupId(_req->groupId);
     me->setSize(_req->size);

@@ -486,7 +486,7 @@ uint32_t DirectoryController::node_name_to_id(const std::string &name){
 
 void DirectoryController::requestDirEntryFromMemory(DirEntry *entry){
 	Addr entryAddr = 0; /*  Offset into our buffer? */
-	MemEvent *me = new MemEvent(this, entryAddr, GetS);
+	MemEvent *me = new MemEvent(this, entryAddr, entryAddr, GetS);
 	me->setSize(entrySize);
     memReqs[me->getID()] = entry->baseAddr;
     entry->nextCommand = MemEvent::commandResponse(entry->activeReq->getCmd());
@@ -558,7 +558,7 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry){
 
 void DirectoryController::sendEntryToMemory(DirEntry *entry){
 	Addr entryAddr = 0; /*  Offset into our buffer? */
-	MemEvent *me = new MemEvent(this, entryAddr, PutM); //PutM?
+	MemEvent *me = new MemEvent(this, entryAddr, entryAddr, PutM); //PutM?
     dbg.debug(_L10_, "Updating entry for 0x%"PRIx64" to memory(%"PRIu64", %d)\n", entry->baseAddr, me->getID().first, me->getID().second);
 	me->setSize(entrySize);
     memReqs[me->getID()] = entry->baseAddr;

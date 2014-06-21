@@ -152,7 +152,6 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
 CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
     int wbLineIndex = cf_.cacheArray_->preReplace(_baseAddr); assert(wbLineIndex >= 0);
     CacheLine* wbCacheLine = cf_.cacheArray_->lines_[wbLineIndex];    assert(wbCacheLine);
-    wbCacheLine->setIndex(wbLineIndex);
     return wbCacheLine;
 }
 
@@ -204,6 +203,7 @@ void Cache::writebackToLowerLevelCaches(MemEvent* _event, CacheLine* _wbCacheLin
 
 void Cache::replaceCacheLine(int _replacementCacheLineIndex, int& _newCacheLineIndex, Addr _newBaseAddr){
     CCLine* wbCCLine = topCC_->getCCLine(_replacementCacheLineIndex);
+    wbCCLine->clear();
     wbCCLine->setBaseAddr(_newBaseAddr);
 
     _newCacheLineIndex = _replacementCacheLineIndex;
@@ -432,20 +432,12 @@ void Cache::retryRequestLater(MemEvent* _event){
 CacheArray::CacheLine* Cache::getCacheLine(Addr _baseAddr){
     int lineIndex =  cf_.cacheArray_->find(_baseAddr, false);
     if(lineIndex == -1) return NULL;
-    else{
-        CacheLine* cacheLine = cf_.cacheArray_->lines_[lineIndex];
-        cacheLine->setIndex(lineIndex);
-        return cacheLine;
-    }
+    else return cf_.cacheArray_->lines_[lineIndex];
 }
 
 CacheArray::CacheLine* Cache::getCacheLine(int _lineIndex){
     if(_lineIndex == -1) return NULL;
-    else{
-        CacheLine* cacheLine = cf_.cacheArray_->lines_[_lineIndex];
-        cacheLine->setIndex(_lineIndex);
-        return cacheLine;
-    }
+    else return cf_.cacheArray_->lines_[_lineIndex];
 }
 
 

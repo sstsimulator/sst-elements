@@ -137,7 +137,7 @@ bool streamCPU::clockTic( Cycle_t )
 
 			bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
 
-			MemEvent *e = new MemEvent(this, nextAddr, doWrite ? GetX : GetS);
+			MemEvent *e = new MemEvent(this, nextAddr, nextAddr, doWrite ? GetX : GetS);
 			e->setSize(4); // Load 4 bytes
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&nextAddr);

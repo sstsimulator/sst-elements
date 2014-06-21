@@ -36,7 +36,6 @@ public:
     
     CCLine(Output* _dbg){
         d_ = _dbg;
-        ownerId_ = -1;
         clear();
     }
 
@@ -54,8 +53,7 @@ public:
     
     void setBaseAddr(Addr _baseAddr){
         baseAddr_ = _baseAddr;
-        assert(numSharers() == 0);
-        assert(state_ == V);
+        assert(numSharers() == 0 && !ownerExists_ && state_ == V);
     }
     
     Addr getBaseAddr(){ return baseAddr_; }
@@ -146,6 +144,7 @@ public:
         state_        = V;
         baseAddr_     = 0;
         numSharers_   = 0;
+        ownerId_      = -1;
     }
 };
 
