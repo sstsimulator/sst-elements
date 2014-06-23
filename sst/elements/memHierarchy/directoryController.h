@@ -177,23 +177,21 @@ class DirectoryController : public Component {
     /** Internal struct to keep track of directory requests to main memory */
     struct DirEntry {
 		/* These items are bookkeeping for in-progress commands */
-		MemEvent    *activeReq;
-		ProcessFunc nextFunc;
-        std::string waitingOn; // waiting to hear from this source
-        Command     nextCommand;  // Command which we're waiting for
-        MemEvent::id_type lastRequest;  // ID of message we're wanting a response to
-        static const MemEvent::id_type NO_LAST_REQUEST;
-		uint32_t    waitingAcks;
-        bool        inController; // Whether this is present in the controller, or needs to be fetched
-
-		Addr baseAddr;
-        Addr addr;
-        unsigned int reqSize;
+		MemEvent        *activeReq;
+		ProcessFunc     nextFunc;
+        std::string     waitingOn; // waiting to hear from this source
+        Command         nextCommand;  // Command which we're waiting for
+        static const    MemEvent::id_type NO_LAST_REQUEST;
+		uint32_t        waitingAcks;
+        bool            inController; // Whether this is present in the controller, or needs to be fetched
+		Addr            baseAddr;
+        Addr            addr;
+        unsigned int    reqSize;
 
 		/* Standard directory data */
-		bool dirty;
-		std::vector<bool> sharers;
-
+		bool                dirty;
+		std::vector<bool>   sharers;
+        MemEvent::id_type   lastRequest;  // ID of message we're wanting a response to
         std::list<DirEntry*>::iterator cacheIter;
 
         DirEntry(Addr baseAddress, Addr _address, unsigned int _reqSize, uint32_t _bitlength){
@@ -207,6 +205,7 @@ class DirectoryController : public Component {
             reqSize      = _reqSize;
             dirty        = false;
             sharers.resize(_bitlength);
+            clearSharers();
         }
 
 		uint32_t countRefs(void){
