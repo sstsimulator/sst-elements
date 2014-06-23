@@ -205,7 +205,7 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(cmd == GetX){
         _cacheLine->setData(_event->getPayload(), _event);
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
-            assert(_cacheLine->isLockedByUser());
+            assert(_cacheLine->isLocked());
             _cacheLine->decLock();
         }
     }

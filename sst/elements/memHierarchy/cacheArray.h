@@ -67,28 +67,26 @@ public:
         BCC_MESIState   state_;
         Addr            baseAddr_;
         vector<uint8_t> data_;
-        unsigned int    size_;      //todo: const final
-        int             index_;     //todo: const final
+        const uint32_t  size_;
+        const int       index_;
         
         unsigned int    userLock_;
         bool            LLSCAtomic_;
-
+        bool            eventsWaitingForLock_;
+    
     public:
-        bool eventsWaitingForLock_;
-            
-        void atomicStart(){ LLSCAtomic_ = true; }
-        void atomicEnd(){ LLSCAtomic_ = false; }
-        bool isAtomic(){ return LLSCAtomic_; }
-        
-         /** Constructor */
+        /** Constructor */
         CacheLine(Output* _dbg, unsigned int _size, int _index) :
                  d_(_dbg), state_(I), baseAddr_(0), size_(_size), index_(_index){
             data_.resize(size_/sizeof(uint8_t));
             clear();
         }
         
-
-        bool isLockedByUser(){ return (userLock_ > 0) ? true : false; }
+        void atomicStart(){ LLSCAtomic_ = true; }
+        void atomicEnd(){ LLSCAtomic_ = false; }
+        bool isAtomic(){ return LLSCAtomic_; }
+        
+        bool isLocked(){ return (userLock_ > 0) ? true : false; }
 
         void incLock(){
             userLock_++;
@@ -103,23 +101,23 @@ public:
         vector<uint8_t>* getData(){ return &data_; }
         
         void setData(vector<uint8_t> _data, MemEvent* ev){
+            /* Update whole cache line */
             if (ev->getSize() == size_ || ev->getCmd() == GetSEx) {
                 std::copy(_data.begin(), _data.end(), this->data_.begin());
                 data_ = _data;
-            } else {
-                // Update a portion of the block
+            }
+            /* Update a portion of the block */
+            else {
                 Addr offset = (ev->getAddr() <= baseAddr_) ? 0 : ev->getAddr() - baseAddr_;
-
-                Addr payloadoffset = (ev->getAddr() >= baseAddr_) ? 0 : baseAddr_ - ev->getAddr();
-                assert(payloadoffset == 0);
-                for ( uint32_t i = 0 ; i < std::min(size_,ev->getSize()) ; i++ ) {
-                    data_[offset + i] = ev->getPayload()[payloadoffset + i];
+                for(uint32_t i = 0 ; i < std::min(size_,ev->getSize()) ; i++ ) {
+                    data_[offset + i] = ev->getPayload()[i];
                 }
             }
         }
         
         BCC_MESIState getState() const { return state_; }
         void updateState(){ setState(nextState[state_]); }
+        
         void setState(BCC_MESIState _newState){
             d_->debug(_L6_, "Changing states: Old state = %s, New State = %s\n", BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
@@ -127,25 +125,20 @@ public:
         }
         
         bool valid() { return state_ != I; }
-        bool inStableState(){ return unlocked();}
+        bool inStableState(){ return inStableState(state_);}
+        bool inTransition(){ return !inStableState();}
         
-        bool inTransition(){ return !unlocked();}
-        static bool inTransition(BCC_MESIState _state){ return !unlocked(_state);}
-
         Addr getBaseAddr() { return baseAddr_; }
         void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
         
-        bool locked() {return !unlocked();}
-        bool unlocked() { return CacheLine::unlocked(state_);}
-        static bool unlocked(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
-        
-        
-        //void setIndex(int _index){
-        //    assert(index_ == _index);
-        //    index_ = _index;
-        //}
-        int index(){ return index_; }
+        static bool inStableState(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
+        static bool inTransition(BCC_MESIState _state){ return !inStableState(_state);}
 
+        
+        bool getEventsWaitingForLock(){ return eventsWaitingForLock_; }
+        void setEventsWaitingForLock(bool _eventsWaiting){ eventsWaitingForLock_ = _eventsWaiting; }
+
+        int getIndex(){ return index_; }
         unsigned int getLineSize(){ return size_; }
         
         void clear(){
@@ -186,11 +179,11 @@ protected:
                numLines_(_numLines), associativity_(_associativity), lineSize_(_lineSize),
                replacementMgr_(_replacementMgr), hash_(_hash) {
         d_->debug(_INFO_,"--------------------------- Initializing [Set Associative Cache Array]... \n");
-        numSets_ = numLines_ / associativity_;
-        setMask_ = numSets_ - 1;
-        lines_.resize(numLines_);
+        numSets_    = numLines_ / associativity_;
+        setMask_    = numSets_ - 1;
         lineOffset_ = log2Of(lineSize_);
-        
+        lines_.resize(numLines_);
+
         for(unsigned int i = 0; i < numLines_; i++){
             lines_[i] = new CacheLine(_dbg, lineSize_, i);
         }

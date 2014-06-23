@@ -57,7 +57,7 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
 bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit) {
     Command cmd = _event->getCmd();
     int id = lowNetworkNodeLookupByName(_event->getSrc());
-    CCLine* ccLine = ccLines_[_cacheLine->index()];
+    CCLine* ccLine = ccLines_[_cacheLine->getIndex()];
     bool ret = false;
 
     if(ccLine->inTransition() && !_event->isWriteback()){
@@ -220,7 +220,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
 void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     vector<uint8_t>* data = _cacheLine->getData();
     BCC_MESIState state   = _cacheLine->getState();
-    int lineIndex         = _cacheLine->index();
+    int lineIndex         = _cacheLine->getIndex();
     CCLine* l             = ccLines_[lineIndex];
 
     /* Send Data in E state */
@@ -248,7 +248,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
 
 void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     BCC_MESIState state   = _cacheLine->getState();
-    int lineIndex         = _cacheLine->index();
+    int lineIndex         = _cacheLine->getIndex();
     CCLine* ccLine        = ccLines_[lineIndex];
     Command cmd           = _event->getCmd();
     bool respond          = true;

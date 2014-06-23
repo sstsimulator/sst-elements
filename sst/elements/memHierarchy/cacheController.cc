@@ -75,7 +75,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     
     if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
 
-    int lineIndex = cacheLine->index();
+    int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
         if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
@@ -110,7 +110,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
 
     if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
 
-    int lineIndex = cacheLine->index();
+    int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
         if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
@@ -142,7 +142,7 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
     }
     
     /* OK to change addr of topCC cache line, OK to replace cache line  */
-    replaceCacheLine(wbCacheLine->index(), _newCacheLineIndex, _baseAddr);
+    replaceCacheLine(wbCacheLine->getIndex(), _newCacheLineIndex, _baseAddr);
     if(!isCacheLineAllocated(_newCacheLineIndex)) throw stallException();
     
     assert(!mshr_->exists(_baseAddr));
@@ -159,9 +159,9 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
 void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
     d_->debug(_L10_,"Replacement cache needs to be evicted. WbAddr: %"PRIx64", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
     
-    if(_wbCacheLine->isLockedByUser()){
+    if(_wbCacheLine->isLocked()){
         d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", _wbCacheLine->getBaseAddr());
-        _wbCacheLine->eventsWaitingForLock_ = true;
+        _wbCacheLine->setEventsWaitingForLock(true);
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw stallException();
     }
@@ -174,7 +174,7 @@ void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requ
 
 
 bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
-    CCLine* wbCCLine = topCC_->getCCLine(_wbCacheLine->index());
+    CCLine* wbCCLine = topCC_->getCCLine(_wbCacheLine->getIndex());
     if(wbCCLine->inTransition() || CacheLine::inTransition(_wbCacheLine->getState())){
         d_->debug(_L3_,"Stalling request: Replacement cache line in transition.\n");
         return true;
@@ -184,8 +184,8 @@ bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
 
 
 void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
-    topCC_->handleEviction(_wbCacheLine->index(), _wbCacheLine->getState());
-    CCLine* ccLine = topCC_->getCCLine(_wbCacheLine->index());
+    topCC_->handleEviction(_wbCacheLine->getIndex(), _wbCacheLine->getState());
+    CCLine* ccLine = topCC_->getCCLine(_wbCacheLine->getIndex());
     
     if(ccLine->inTransition()){
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
@@ -234,18 +234,18 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
         return false;
     }
 
-    if(_cacheLine->isLockedByUser()){             /* If user-locked then wait this lock is released to activate this event. */
+    if(_cacheLine->isLocked()){                   /* If user-locked then wait this lock is released to activate this event. */
         if(!processRequestInMSHR(_baseAddr, _event)) {
             return false;
         }
         incInvalidateWaitingForUserLock(groupId); /* Requests is in MSHR.  Stall and wait for the atomic modet to be 'cleared' */
-        _cacheLine->eventsWaitingForLock_ = true;
+        _cacheLine->setEventsWaitingForLock(true);
         d_->debug(_L8_,"Stalling request:  Cache line is in atomic mode.\n");
         
         return false;
     }
     
-    CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
+    CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
     if(ccLine->getState() != V){                  /* Check if invalidates are already in progress (A writeback is going on?) */
         processRequestInMSHR(_baseAddr, _event);  /* Whether a NACK was sent or not, request needs to stall */
         return false;
@@ -330,7 +330,7 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
 void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(stallException){
     Command cmd    = _event->getCmd();
     Addr baseAddr  = _cacheLine->getBaseAddr();
-    CCLine* ccLine = topCC_->getCCLine(_cacheLine->index());
+    CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
     char msg[100];
     sprintf(msg, "Bcc State = %s, Tcc State = %s\n", BccLineString[_cacheLine->getState()], TccLineString[ccLine->getState()]);
     
@@ -361,9 +361,9 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
 
 void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine){
     Addr baseAddr = _cacheLine->getBaseAddr();
-    if(_cacheLine->eventsWaitingForLock_ && !_cacheLine->isLockedByUser()){
+    if(_cacheLine->getEventsWaitingForLock() && !_cacheLine->isLocked()){
         if(mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);
-        _cacheLine->eventsWaitingForLock_ = false;
+        _cacheLine->setEventsWaitingForLock(false);
     }
 }
 
