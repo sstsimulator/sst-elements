@@ -434,16 +434,12 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             while (startingNewJob) {
                 AllocInfo* newai = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine);
                 if(newai != NULL){
-                    stats -> jobStarts(newai, getCurrentSimTime());
-                    startingNewJob = true;
-                    //if(machine->allocate(newai)){
-                        startJob(newai);
-                    //}
+                    startJob(newai);
+                    if (FSTtype > 0) {
+                        calcFST -> jobStarts(newai -> job, getCurrentSimTime());
+                    }
                 } else {
                     startingNewJob = false;
-                }
-                if (FSTtype > 0 && startingNewJob) {
-                    calcFST -> jobStarts(newai -> job, getCurrentSimTime());
                 }
             }
         }
@@ -557,6 +553,8 @@ void schedComponent::startJob(AllocInfo* ai)
     double communicationTime = 0;
     unsigned long actualRunningTime = j->getActualTime();
     
+    stats->jobStarts(ai, getCurrentSimTime());
+    
     //calculate running time with communication overhead
     if (timePerDistance -> at(0) != 0 && NULL != (MeshMachine*)machine && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
@@ -581,7 +579,7 @@ void schedComponent::startJob(AllocInfo* ai)
                 //get communication distance
                 //averagePairwiseDistance = tmi->getTotalHopDist(machine) / numberOfProcs ;//TODO replace below with this
                 averagePairwiseDistance = 2 * tmi->getTotalHopDist(machine) / (numberOfProcs * (numberOfProcs - 1));
-                delete tmi; //we don't currently use it after whit point
+                delete tmi; //we don't currently use it after this point
             } else {
                 averagePairwiseDistance = 0;
             }

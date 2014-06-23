@@ -18,7 +18,6 @@
 #include <iostream> //debug
 
 #include "exceptions.h"
-#include "Machine.h"
 #include "output.h"
 #include "TaskCommInfo.h"
 
@@ -96,7 +95,7 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
     taskCommInfo = NULL;
 }
 
-std::string Job::toString() 
+std::string Job::toString()
 {
     char retVal[100];
     snprintf(retVal, 100, "Job #%ld (%ld, %d, %ld, %ld, null)", jobNum,
@@ -105,16 +104,13 @@ std::string Job::toString()
 }
 
 //starts a job
-void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo) 
+void Job::start(unsigned long time) 
 {
     if ((unsigned long)-1 != startTime) {
         schedout.fatal(CALL_INFO, 1, "attempt to start an already-running job: %s\n", toString().c_str());
     }
     started = true; 
-
     startTime = time;
-    machine -> allocate(allocInfo);
-    //stats -> jobStarts(allocInfo, time);
 }
 
 void Job::reset()
@@ -130,8 +126,3 @@ void Job::startsAtTime(unsigned long time)
     hasRun = true; 
     started = true; 
 }
-
-bool Job::hasStarted() {
-    return started;
-}
-

@@ -35,25 +35,17 @@ namespace SST {
                     long estRunningTime, std::string ID );
                 Job(const Job &job);
                 
-
                 ~Job();
 
-                unsigned long getStartTime() const
-                {
-                    return startTime;
-                }
-                unsigned long getArrivalTime() const
-                { 
-                    return arrivalTime; 
-                }
-                unsigned long getActualTime() const
-                { 
-                    return actualRunningTime; 
-                }
+                unsigned long getStartTime() const { return startTime; }
+                unsigned long getArrivalTime() const { return arrivalTime; }
+                unsigned long getActualTime() const { return actualRunningTime; }
                 int getProcsNeeded() const { return procsNeeded; }
                 long getJobNum() const { return jobNum; }
-                void reset();
-
+                bool hasStarted() const { return started; }
+                //assumes that allocation is not considered:
+                unsigned long getEstimatedRunningTime() const { return estRunningTime; }
+                
                 std::string * getID() {
                     if (0 == ID.length()) {
                         std::ostringstream jobNumStr;
@@ -62,21 +54,15 @@ namespace SST {
                     }
                     return & ID;
                 }
-
-                //assumes that allocation is not considered:
-                unsigned long getEstimatedRunningTime() 
-                { 
-                    return estRunningTime; 
-                }
-
+                
+                void reset();
+                
                 std::string toString();
 
-                void start(unsigned long time, Machine* machine, AllocInfo* allocInfo);
-
+                void start(unsigned long time);
                 void setFST(unsigned long FST);
                 unsigned long getFST();
                 void startsAtTime(unsigned long time);
-                bool hasStarted();
                 TaskCommInfo* taskCommInfo;
 
             private:
@@ -92,7 +78,6 @@ namespace SST {
                 long jobNum;             //ID number unique to this job
 
                 std::string ID;       // alternate ID not used by SST
-
 
                 //helper for constructors:
                 void initialize(unsigned long arrivalTime, int procsNeeded,

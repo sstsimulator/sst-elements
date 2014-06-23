@@ -152,7 +152,8 @@ AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
 
     if (NULL != allocInfo) {
         toRun -> pop();  //remove the job we just allocated
-        job -> start(time, mach, allocInfo);
+        job -> start(time);
+        mach -> allocate(allocInfo);
     }
     return allocInfo;
 }

@@ -55,7 +55,6 @@ namespace SST {
                 void setup();
                 void finish();
                 Machine* getMachine();
-                void startJob(AllocInfo* ai);
 
                 //ConstraintAllocator needs this
                 std::string getNodeID(int nodeIndex) const
@@ -84,6 +83,7 @@ namespace SST {
                 void unregisterYourself();
 
                 void startNextJob();
+                void startJob(AllocInfo* ai);
 
                 void logJobStart(IAI iai);
                 void logJobFinish(IAI iai);

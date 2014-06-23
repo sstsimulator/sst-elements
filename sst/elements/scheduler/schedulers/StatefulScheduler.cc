@@ -608,7 +608,8 @@ AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, unsigned long time, M
             jobToEvents -> erase(sc -> j);
             heart -> start(sc -> j, time);
             schedout.debug(CALL_INFO, 7, 0, "starting %s\n", sc -> j -> toString().c_str());
-            sc -> j -> start(time, mach, allocInfo); //necessary for SST (and the allocator/machine) to actually get the job
+            sc -> j -> start(time);
+            mach -> allocate(allocInfo);
             sc -> print();
             delete sc; //once a job is started we don't need its schedchange anymore
             return allocInfo;

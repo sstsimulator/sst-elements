@@ -171,7 +171,8 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
         Job* temp = *job;
         toRun -> erase(job); //remove the job from toRun list
         running -> insert(started); //add to running list       
-        temp -> start(time, mach, allocInfo);
+        temp -> start(time);
+        mach -> allocate(allocInfo);
 
         if (first) { //update the guarantee if starting the first job
             giveGuarantee(time, mach);      
@@ -184,9 +185,13 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
             ++dit;
         }
         schedout.debug(CALL_INFO, 10, 0, "\n");
-        return allocInfo;
     }
-    return NULL;
+    
+    if(succeeded){        
+        return allocInfo;
+    } else {
+        return NULL;
+    }
 }
 
 void EASYScheduler::reset() 
