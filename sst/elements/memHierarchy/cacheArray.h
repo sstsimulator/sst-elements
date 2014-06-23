@@ -79,7 +79,7 @@ public:
         CacheLine(Output* _dbg, unsigned int _size, int _index) :
                  d_(_dbg), state_(I), baseAddr_(0), size_(_size), index_(_index){
             data_.resize(size_/sizeof(uint8_t));
-            clear();
+            reset();
         }
         
         void atomicStart(){ LLSCAtomic_ = true; }
@@ -144,6 +144,15 @@ public:
         unsigned int getLineSize(){ return size_; }
         
         void clear(){
+            vector<uint8_t>::iterator it;
+            //for(it = data_.begin(); it != data_.end(); it++){ *it = 0; }
+            assert(state_ == I);
+            assert(userLock_ == 0);
+            assert(userLock_ == false);
+            LLSCAtomic_             = false;
+        }
+        
+        void reset(){
             vector<uint8_t>::iterator it;
             for(it = data_.begin(); it != data_.end(); it++){ *it = 0; }
             state_                  = I;
