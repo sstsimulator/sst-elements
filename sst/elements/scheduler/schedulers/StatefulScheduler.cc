@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <string>
 
-#include "Allocator.h"
 #include "Job.h"
 #include "Machine.h"
 #include "misc.h"
