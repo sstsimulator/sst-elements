@@ -142,7 +142,7 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
     
     /* OK to change addr of topCC cache line, OK to replace cache line  */
     replaceCacheLine(wbCacheLine->getIndex(), _newCacheLineIndex, _baseAddr);
-    if(!isCacheLineAllocated(_newCacheLineIndex)) throw stallException();
+    if(!isCacheLineAllocated(_newCacheLineIndex)) assert(0);
     
     assert(!mshr_->exists(_baseAddr));
 }
@@ -300,7 +300,8 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
             else{
-                updateUpgradeLatencyAverage(origRequest);
+                totalUpgradeLatency_ += (timestamp_ - start);
+                upgradeCount_++;
                 mshrHits_++;
             }
         }

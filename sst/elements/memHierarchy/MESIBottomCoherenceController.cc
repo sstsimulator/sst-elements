@@ -132,6 +132,7 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
         d_->debug(_L3_,"Error:  Request waiting in MSHR has invalid command type.  Internal error. InvalidCommand = %s.\n", CommandString[origCmd]);
         _abort(MemHierarchy::CacheController, "");
     }
+    assert(_responseEvent->getSize() == _cacheLine->getLineSize());
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
     if(_cacheLine->getState() == S && _responseEvent->getGrantedState() == E){
         _cacheLine->setState(E);
@@ -287,6 +288,7 @@ void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cach
     assert(state == M || state == E);
     if(state == E) _cacheLine->setState(M);
     if(_event->getCmd() != PutXE){
+        assert(_event->getSize() == _cacheLine->getLineSize());
         _cacheLine->setData(_event->getPayload(), _event);   //Only PutM/PutX write data in the cache line
         d_->debug(_L6_,"Data written to cache line\n");
     }

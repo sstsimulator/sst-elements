@@ -291,7 +291,7 @@ public:
 class RandomReplacementMgr : public ReplacementMgr {
  private:
     vector<uint64_t> candidates_;
-    int numWays_;
+    unsigned int numWays_;
     SST::RNG::MarsagliaRNG randomGenerator_;
 
 public:
@@ -306,6 +306,7 @@ public:
     void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) { candidates_.push_back(id);}
 
     uint getBestCandidate() {
+        assert(candidates_.size() == numWays_);
         int bestCandidate = randomGenerator_.generateNextUInt32() % numWays_;
         return (uint)candidates_[bestCandidate];
     }

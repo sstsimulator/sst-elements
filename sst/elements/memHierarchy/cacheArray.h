@@ -108,8 +108,10 @@ public:
             }
             /* Update a portion of the block */
             else {
+                Addr max    = baseAddr_ + size_;
                 Addr offset = (ev->getAddr() <= baseAddr_) ? 0 : ev->getAddr() - baseAddr_;
                 for(uint32_t i = 0 ; i < std::min(size_,ev->getSize()) ; i++ ) {
+                    assert((offset + i) < max);
                     data_[offset + i] = ev->getPayload()[i];
                 }
             }
