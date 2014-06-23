@@ -41,8 +41,9 @@ namespace SST {
                 void jobCompletes(Job* j);
                 void jobStarts(Job* j, unsigned long time);
                 FST(int inrelaxed); 
-                bool FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes, std::map<Job*, AllocInfo*>* jobToAi, Job* j, 
-                              Scheduler* sched, Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time);
+                bool FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes, 
+                              std::map<Job*, AllocInfo*>* jobToAi, Job* j, Scheduler* sched,
+                              Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time);
                 void setup(int numjobs);
                 unsigned long getFST(int num);
         };

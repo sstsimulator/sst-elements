@@ -29,7 +29,7 @@
 #include "Machine.h"
 #include "MeshMachine.h"
 #include "MeshAllocInfo.h"
-#include "schedComponent.h"
+#include "output.h"
 
 using namespace SST::Scheduler;
 
@@ -40,7 +40,7 @@ namespace SST {
     }
 }
 
-MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix) : Machine((Xdim*Ydim*Zdim), D_matrix)
+MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, double** D_matrix) : Machine((Xdim*Ydim*Zdim), D_matrix)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
@@ -58,7 +58,6 @@ MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, schedComponent* sc, doubl
             }
         }
     }
-    this -> sc = sc;
     reset();
 }
 
@@ -97,7 +96,7 @@ int MeshMachine::getMachSize()
     return xdim*ydim*zdim;
 }
 
-void MeshMachine::reset() 
+void MeshMachine::reset()
 {
     numAvail = xdim * ydim * zdim;
     for (int i = 0; i < xdim; i++) {
@@ -142,7 +141,7 @@ std::vector<MeshLocation*>* MeshMachine::usedProcessors()
 }
 
 //allocate list of processors in allocInfo
-void MeshMachine::allocate(AllocInfo* allocInfo) 
+void MeshMachine::allocate(AllocInfo* allocInfo)
 {
     std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
     //MeshMachine (unlike simplemachine) is not responsible for setting
@@ -156,7 +155,6 @@ void MeshMachine::allocate(AllocInfo* allocInfo)
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = false;
     }
     numAvail  -= procs-> size();
-    sc -> startJob(allocInfo);
 }
 
 void MeshMachine::deallocate(AllocInfo* allocInfo) {

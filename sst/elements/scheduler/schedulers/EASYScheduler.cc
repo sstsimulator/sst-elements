@@ -24,6 +24,8 @@
 #include <vector>
 #include <stdio.h>
 
+#include <iostream> //debug
+
 #include "Allocator.h"
 #include "Job.h"
 #include "Machine.h"
@@ -123,8 +125,7 @@ void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
 AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
-                                     Machine* mach,
-                                     Statistics* stats) 
+                                     Machine* mach) 
 {
     schedout.debug(CALL_INFO, 10, 0, "trying to start at %lu\n", time);
     if (!running -> empty() && (*(running -> begin())) -> estComp == time) {
@@ -170,7 +171,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
         Job* temp = *job;
         toRun -> erase(job); //remove the job from toRun list
         running -> insert(started); //add to running list       
-        temp -> start(time, mach, allocInfo, stats);
+        temp -> start(time, mach, allocInfo);
 
         if (first) { //update the guarantee if starting the first job
             giveGuarantee(time, mach);      

@@ -18,7 +18,6 @@
 
 namespace SST {
     namespace Scheduler {
-        class schedComponent;
         class AllocInfo;
 
         class Machine{
@@ -71,8 +70,6 @@ namespace SST {
             protected:
                 int numProcs;          //total number of processors
                 int numAvail;          //number of available processors
-
-                schedComponent* sc;    //interface to rest of simulator
         };
 
         Machine* getMachine();     //defined in Main.cc

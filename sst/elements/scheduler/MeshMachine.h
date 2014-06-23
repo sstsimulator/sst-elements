@@ -26,21 +26,19 @@ namespace SST {
 
         class Job;
         class MeshLocation;
-        class schedComponent;
 
         class MeshMachine : public Machine {
 
             private:
                 int xdim;              //size of mesh in each dimension
                 int ydim;
-                int zdim;  
-                schedComponent* sc;
+                int zdim;
 
                 std::vector<std::vector<std::vector<bool> > > isFree;  //whether each processor is free
                 
             public:
                 
-                MeshMachine(int Xdim, int Ydim, int Zdim, schedComponent* sc, double** D_matrix);
+                MeshMachine(int Xdim, int Ydim, int Zdim, double** D_matrix);
 
                 static std::string getParamHelp();
 

@@ -20,7 +20,6 @@
 #include "exceptions.h"
 #include "Machine.h"
 #include "output.h"
-#include "Statistics.h"
 #include "TaskCommInfo.h"
 
 using namespace SST::Scheduler;
@@ -106,8 +105,7 @@ std::string Job::toString()
 }
 
 //starts a job
-void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
-                Statistics* stats) 
+void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo) 
 {
     if ((unsigned long)-1 != startTime) {
         schedout.fatal(CALL_INFO, 1, "attempt to start an already-running job: %s\n", toString().c_str());
@@ -116,7 +114,7 @@ void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
 
     startTime = time;
     machine -> allocate(allocInfo);
-    stats -> jobStarts(allocInfo, time);
+    //stats -> jobStarts(allocInfo, time);
 }
 
 void Job::reset()

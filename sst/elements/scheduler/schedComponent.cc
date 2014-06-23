@@ -152,7 +152,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     schedout.output("\n");
 
     Factory factory;
-    machine = factory.getMachine(params, nodes.size(), this);
+    machine = factory.getMachine(params, nodes.size());
     scheduler = factory.getScheduler(params, nodes.size());
     theAllocator = factory.getAllocator(params, machine, this);
     theTaskMapper = factory.getTaskMapper(params, machine);
@@ -431,9 +431,17 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         } else if (CommEvent -> CommType == START_FILE_WATCH) {
         } else if (CommEvent -> CommType == START_NEXT_JOB) {
             bool startingNewJob = true;
-                while (startingNewJob) {
-                AllocInfo* newai = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
-                startingNewJob = (NULL != newai);
+            while (startingNewJob) {
+                AllocInfo* newai = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine);
+                if(newai != NULL){
+                    stats -> jobStarts(newai, getCurrentSimTime());
+                    startingNewJob = true;
+                    //if(machine->allocate(newai)){
+                        startJob(newai);
+                    //}
+                } else {
+                    startingNewJob = false;
+                }
                 if (FSTtype > 0 && startingNewJob) {
                     calcFST -> jobStarts(newai -> job, getCurrentSimTime());
                 }

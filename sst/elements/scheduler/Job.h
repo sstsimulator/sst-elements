@@ -71,8 +71,7 @@ namespace SST {
 
                 std::string toString();
 
-                void start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
-                           Statistics* stats);
+                void start(unsigned long time, Machine* machine, AllocInfo* allocInfo);
 
                 void setFST(unsigned long FST);
                 unsigned long getFST();

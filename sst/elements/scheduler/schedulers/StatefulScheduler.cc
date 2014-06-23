@@ -580,7 +580,7 @@ void StatefulScheduler::removeJob(Job* j, unsigned long time)
 //(either after each call or after each call occuring at same time)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
-AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, unsigned long time, Machine* mach, Statistics* stats) 
+AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, unsigned long time, Machine* mach) 
 {
     schedout.debug(CALL_INFO, 7, 0, "trying to start at %lu\n", time);
     //printPlan();
@@ -608,7 +608,7 @@ AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, unsigned long time, M
             jobToEvents -> erase(sc -> j);
             heart -> start(sc -> j, time);
             schedout.debug(CALL_INFO, 7, 0, "starting %s\n", sc -> j -> toString().c_str());
-            sc -> j -> start(time, mach, allocInfo, stats); //necessary for SST (and the allocator/machine) to actually get the job
+            sc -> j -> start(time, mach, allocInfo); //necessary for SST (and the allocator/machine) to actually get the job
             sc -> print();
             delete sc; //once a job is started we don't need its schedchange anymore
             return allocInfo;

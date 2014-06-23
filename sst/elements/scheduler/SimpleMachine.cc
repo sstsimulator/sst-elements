@@ -20,16 +20,15 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "schedComponent.h"
+#include "output.h"
 
 using namespace SST::Scheduler;
 
 //takes number of processors
-SimpleMachine::SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine, double** D_matrix) : Machine(procs, D_matrix) 
+SimpleMachine::SimpleMachine(int procs, bool insimulationmachine, double** D_matrix) : Machine(procs, D_matrix) 
 {  
     schedout.init("", 8, ~0, Output::STDOUT);
     numProcs = procs;
-    this->sc = sc;
     simulationmachine = insimulationmachine;
     reset();
 }
@@ -82,11 +81,6 @@ void SimpleMachine::allocate(AllocInfo* allocInfo)
             freeNodes.erase( remove(freeNodes.begin(), freeNodes.end(), allocInfo->nodeIndices[i]) , freeNodes.end() );
         }
     }
-
-    //we don't want to tell schedComponent about the job
-    //if this machine is only simulating the job
-    //(such as for calculating FST)
-    if (!simulationmachine) sc -> startJob(allocInfo);
 }
 
 //Deallocates processors

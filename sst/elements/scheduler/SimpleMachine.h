@@ -23,13 +23,12 @@
 
 namespace SST {
     namespace Scheduler {
-        class SchedComponent;
         class AllocInfo;
 
         class SimpleMachine : public Machine {
 
             public:                
-                SimpleMachine(int procs, schedComponent* sc, bool insimulationmachine, double** D_matrix);  //takes number of processors
+                SimpleMachine(int procs, bool insimulationmachine, double** D_matrix);  //takes number of processors
 
                 virtual ~SimpleMachine() {}
 

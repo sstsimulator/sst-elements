@@ -48,7 +48,7 @@ namespace SST {
                 //returns information on job it started or NULL if none
                 //(if not NULL, tryToStart will be called again)
                 virtual AllocInfo* tryToStart(Allocator* alloc, unsigned long time, 
-                                              Machine* mach, Statistics* stats) = 0;
+                                              Machine* mach) = 0;
 
                 //delete stored state so scheduler can be run on new input
                 virtual void reset() {}

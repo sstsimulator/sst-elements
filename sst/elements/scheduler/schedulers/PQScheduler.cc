@@ -138,7 +138,7 @@ void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
 AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
-                                   Machine* mach, Statistics* stats) 
+                                   Machine* mach) 
 {
 
     if (0 == toRun -> size()) return NULL;
@@ -152,7 +152,7 @@ AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
 
     if (NULL != allocInfo) {
         toRun -> pop();  //remove the job we just allocated
-        job -> start(time, mach, allocInfo, stats);
+        job -> start(time, mach, allocInfo);
     }
     return allocInfo;
 }

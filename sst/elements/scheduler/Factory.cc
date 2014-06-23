@@ -207,7 +207,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
 }
 
 //returns the correct machine based on the parameters
-Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* sc)
+Machine* Factory::getMachine(SST::Params& params, int numProcs)
 {
     Machine* retMachine = NULL;
     double** D_matrix = NULL;
@@ -229,7 +229,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
     if (params.find("machine") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Machine\n");
-        retMachine = new SimpleMachine(numProcs, sc, false, D_matrix);
+        retMachine = new SimpleMachine(numProcs, false, D_matrix);
     }
     else
     {
@@ -239,7 +239,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
             //simple machine
         case SIMPLEMACH:
             schedout.debug(CALL_INFO, 4, 0, "Simple Machine\n");
-            retMachine = new SimpleMachine(numProcs, sc, false, D_matrix);
+            retMachine = new SimpleMachine(numProcs, false, D_matrix);
             break;
 
             //Mesh Machine
@@ -262,7 +262,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
                 if (x * y * z != numProcs) {
                     schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of processors");
                 }
-                retMachine = new MeshMachine(x, y, z, sc, D_matrix);
+                retMachine = new MeshMachine(x, y, z, D_matrix);
                 break;
 
             }

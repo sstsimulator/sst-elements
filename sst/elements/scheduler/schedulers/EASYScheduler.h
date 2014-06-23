@@ -107,8 +107,7 @@ namespace SST {
                 void jobArrives(Job* j, unsigned long time, Machine* mach);
                 void jobFinishes(Job* j, unsigned long time, Machine* mach);
 
-                AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach,
-                                      Statistics* stats);
+                AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach);
 
                 void reset();
 

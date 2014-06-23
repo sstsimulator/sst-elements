@@ -94,7 +94,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     //create copies of the scheduler, machine, and allocator for our simulation
     Scheduler* sched = insched -> copy(running, toRun);
-    Machine* mach = new SimpleMachine(inmach -> getNumProcs(), NULL, true, NULL);
+    Machine* mach = new SimpleMachine(inmach -> getNumProcs(), true, NULL);
     Allocator* alloc = new SimpleAllocator((SimpleMachine*) mach);
     string nullstr = "";
     char nullcstr[] = "";
@@ -244,7 +244,7 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
 {
     AllocInfo* ai;
     do {
-        ai = sched -> tryToStart(alloc, time, mach, stats);
+        ai = sched -> tryToStart(alloc, time, mach);
         if (ai != NULL) {
             if (ai -> job == j) {
                 //our job has been scheduled!  record the time
@@ -258,6 +258,7 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
                 endtimes -> insert(pair<Job*, unsigned long>(ai -> job, time + ai -> job -> getActualTime()));
                 jobToAi -> insert(pair<Job*, AllocInfo*>(ai -> job, ai));
             }
+            stats -> jobStarts(ai, time);
         }
     } while (ai != NULL); 
     return false; 
