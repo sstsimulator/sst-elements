@@ -432,11 +432,11 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         } else if (CommEvent -> CommType == START_NEXT_JOB) {
             bool startingNewJob = true;
             while (startingNewJob) {
-                AllocInfo* newai = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine);
-                if(newai != NULL){
-                    startJob(newai);
+                Job* nextJob =  scheduler->tryToStart(getCurrentSimTime(), machine);
+                if(nextJob != NULL){
+                    startJob(nextJob);
                     if (FSTtype > 0) {
-                        calcFST -> jobStarts(newai -> job, getCurrentSimTime());
+                        calcFST -> jobStarts(nextJob, getCurrentSimTime());
                     }
                 } else {
                     startingNewJob = false;
@@ -546,20 +546,23 @@ void schedComponent::finish()
 }
 
 
-void schedComponent::startJob(AllocInfo* ai) 
+void schedComponent::startJob(Job* job) 
 {
-    Job* j = ai->job;
-    int* jobNodes = ai->nodeIndices;
-    double communicationTime = 0;
-    unsigned long actualRunningTime = j->getActualTime();
-    
-    stats->jobStarts(ai, getCurrentSimTime());
+    //allocate & update machine
+    job->start( getCurrentSimTime() );
+    AllocInfo* ai = theAllocator->allocate(job);
+    machine->allocate(ai);
+    scheduler->startNext( getCurrentSimTime(), machine );
+    stats->jobStarts( ai, getCurrentSimTime() );
     
     //calculate running time with communication overhead
+    int* jobNodes = ai->nodeIndices;
+    double communicationTime = 0;
+    unsigned long actualRunningTime = job->getActualTime();    
     if (timePerDistance -> at(0) != 0 && NULL != (MeshMachine*)machine && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
         
-            long baselineL1Distance = ((MeshMachine*)machine)->baselineL1Distance(j);
+            long baselineL1Distance = ((MeshMachine*)machine)->baselineL1Distance(job);
             double randomNumber = rng->nextUniform() * 0.8 - 0.4;
             int numberOfProcs = ((MeshAllocInfo*)ai)->processors->size();
             
@@ -597,21 +600,21 @@ void schedComponent::startJob(AllocInfo* ai)
         } 
     }
 
-    if (actualRunningTime > j->getEstimatedRunningTime()) {
-        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j->getEstimatedRunningTime());
-        actualRunningTime = j->getEstimatedRunningTime();
+    if (actualRunningTime > job->getEstimatedRunningTime()) {
+        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", job -> getJobNum(), actualRunningTime, job->getEstimatedRunningTime());
+        actualRunningTime = job->getEstimatedRunningTime();
     }
 
     // send to each job in the node list
-    for (int i = 0; i < j->getProcsNeeded(); ++i) {
-        JobStartEvent *ec = new JobStartEvent(actualRunningTime, j->getJobNum());
+    for (int i = 0; i < job->getProcsNeeded(); ++i) {
+        JobStartEvent *ec = new JobStartEvent(actualRunningTime, job->getJobNum());
         nodes[jobNodes[i]] -> send(ec); 
     }
 
     IAI iai;
-    iai.i = j -> getProcsNeeded();
+    iai.i = job -> getProcsNeeded();
     iai.ai = ai;
-    runningJobs[j -> getJobNum()] = iai;
+    runningJobs[job -> getJobNum()] = iai;
 
     if (printJobLog) {
         logJobStart(iai);

@@ -26,7 +26,6 @@
 
 #include <iostream> //debug
 
-#include "Allocator.h"
 #include "Job.h"
 #include "Machine.h"
 #include "misc.h"
@@ -119,79 +118,102 @@ void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
     giveGuarantee(time, mach);
 }
 
-//allows the scheduler to start a job if desired; time is current time
-//called after calls to jobArrives and jobFinishes
-//(either after each call or after each call occuring at same time)
-//returns first job to start, NULL if none
-//(if not NULL, should call tryToStart again)
-AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
-                                     Machine* mach) 
+Job* EASYScheduler::tryToStart(unsigned long time, Machine* mach)
 {
     schedout.debug(CALL_INFO, 10, 0, "trying to start at %lu\n", time);
-    if (!running -> empty() && (*(running -> begin())) -> estComp == time) {
+    if (!running->empty() && (*(running->begin()))->estComp == time) {
         return NULL;  //don't backfill if another job is about to finish
     }
-
     if (toRun -> empty()) return NULL;
 
-    bool succeeded = false;  //whether we found a job to allocate
-    bool first = false; //whether it was the first job
-
-    AllocInfo* allocInfo = NULL;
     set<Job*, JobComparator>::iterator job = toRun -> begin();
     if (time > guaranteedStart) {
         schedout.fatal(CALL_INFO, 1, "Failed to start job #%ld at guaranteed time \nTime: %lu Guarantee: %lu\n", (*job)->getJobNum(), time, guaranteedStart);
     }
-    if (alloc -> canAllocate(*job)) {
+    
+    bool succeeded = false;  //whether we found a job to allocate
+    int availProcs = mach->getNumFreeProcessors();
+    
+    if (availProcs >= (*job)->getProcsNeeded()) {
         succeeded = true;
-        first = true;
     } else {
         job++; 
     }
-
+    
     while (!succeeded && job != toRun->end()) {
-        if (alloc -> canAllocate(*job)) {
-            //need to make sure first job can still start at guaranteed time
-            allocInfo = doesntDisturbFirst(alloc,*job,mach,time);
-            if (allocInfo != NULL) {
+        if (availProcs >= (*job)->getProcsNeeded()) {
+            // check if j would delay the first job if it started now
+            if (time + (*job)->getEstimatedRunningTime() <= guaranteedStart){
                 succeeded = true;
+            } else {
+                int avail = availProcs;
+                multiset<RunningInfo*, RunningInfo>::iterator it  = running->begin();
+                while (it != running->end() && (*it)->estComp <= guaranteedStart) {
+                    avail += (*it)->numProcs;
+                    it++;
+                }
+                set<Job*, JobComparator>::iterator tempit = toRun->begin();
+                if (avail  - (*job)->getProcsNeeded() >= (*tempit)->getProcsNeeded()){
+                    succeeded = true;
+                }
             }
         }
         if (!succeeded) job++;
     }
-
-    //allocate job if found
-    if (succeeded) {
-        schedout.debug(CALL_INFO, 7, 0, "%ld: %s starts\n", time, (*job) -> toString().c_str());
-        if (allocInfo == NULL) allocInfo = alloc -> allocate(*job);
-        RunningInfo* started = new RunningInfo();
-        started -> jobNum = (*job) -> getJobNum();
-        started -> numProcs = (*job) -> getProcsNeeded();
-        started -> estComp = time + (*job) -> getEstimatedRunningTime();
-        Job* temp = *job;
-        toRun -> erase(job); //remove the job from toRun list
-        running -> insert(started); //add to running list       
-        temp -> start(time);
-        mach -> allocate(allocInfo);
-
-        if (first) { //update the guarantee if starting the first job
-            giveGuarantee(time, mach);      
-        }
-
-        multiset<RunningInfo*, RunningInfo>::iterator dit = running -> begin();
-        schedout.debug(CALL_INFO, 10, 0, "Currently running jobs: ");
-        while(dit != running -> end()) {
-            schedout.debug(CALL_INFO, 10, 0, "%ld (%ld)", (*dit) -> jobNum, (*dit) -> estComp);
-            ++dit;
-        }
-        schedout.debug(CALL_INFO, 10, 0, "\n");
+    
+    if(succeeded) {
+        nextToStart = *job;
+        nextToStartTime = time;
+    } else {
+        nextToStart = NULL;
     }
     
-    if(succeeded){        
-        return allocInfo;
-    } else {
-        return NULL;
+    return nextToStart;
+}
+    
+void EASYScheduler::startNext(unsigned long time, Machine* mach)
+{
+    if(nextToStart == NULL){
+        schedout.fatal(CALL_INFO, 1, "Called startNext() job from scheduler when there is no available Job at time %lu",
+                                      time);
+    } else if(nextToStartTime != time){
+        schedout.fatal(CALL_INFO, 1, "startNext() and tryToStart() are called at different times for Job #%ld",
+                                      nextToStart->getJobNum());
     }
+    set<Job*, JobComparator>::iterator jobIt = toRun->begin();
+    //whether it is the first job
+    bool first = nextToStart->getJobNum() == (*jobIt)->getJobNum();
+    
+    //find job iterator
+    while (jobIt != toRun->end() && (*jobIt)->getJobNum() != nextToStart->getJobNum()) {
+        jobIt++;
+    }
+    if(jobIt == toRun->end()){
+        schedout.fatal(CALL_INFO, 1, "Job #%ld is not on toRun list.", nextToStart->getJobNum());
+    }
+    
+    //allocate job
+    schedout.debug(CALL_INFO, 7, 0, "%ld: %s starts\n", time, nextToStart->toString().c_str()); 
+    RunningInfo* started = new RunningInfo();
+    started -> jobNum = nextToStart->getJobNum();
+    started -> numProcs = nextToStart->getProcsNeeded();
+    started -> estComp = time + nextToStart->getEstimatedRunningTime();
+    toRun -> erase(jobIt); //remove the job from toRun list
+    running -> insert(started); //add to running list       
+
+    if (first) { //update the guarantee if starting the first job
+        giveGuarantee(time, mach);      
+    }
+
+    multiset<RunningInfo*, RunningInfo>::iterator dit = running -> begin();
+    schedout.debug(CALL_INFO, 10, 0, "Currently running jobs: ");
+    while(dit != running -> end()) {
+        schedout.debug(CALL_INFO, 10, 0, "%ld (%ld)", (*dit) -> jobNum, (*dit) -> estComp);
+        ++dit;
+    }
+    schedout.debug(CALL_INFO, 10, 0, "\n");
+    
+    nextToStart = NULL;
 }
 
 void EASYScheduler::reset() 
@@ -220,7 +242,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
     bool succeeded = false;
 
     int size = (*firstJob) -> getProcsNeeded();
-    int free = mach -> getNumFreeProcessors();
+    int free = mach->getNumFreeProcessors();
 
     if (free >= size) {
         guaranteedStart = time;
@@ -260,29 +282,6 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
     } else {
         schedout.fatal(CALL_INFO, 1, "EASY unable to make reservation for first job (%ld)\n", (*firstJob)->getJobNum());
     }
-}
-
-//returns if j would delay the first job if it started now
-AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, unsigned long time)
-{ 
-    if (!alloc->canAllocate(j)) return NULL;
-
-    if (time + j -> getEstimatedRunningTime() <= guaranteedStart)
-        return alloc -> allocate (j);
-
-    int avail = mach -> getNumFreeProcessors();
-    multiset<RunningInfo*, RunningInfo>::iterator it  = running -> begin();
-    while (it != running -> end() && (*it) -> estComp <= guaranteedStart) {
-        avail += (*it) -> numProcs;
-        it++;
-    }
-    set<Job*, JobComparator>::iterator tempit = toRun -> begin();
-    if (avail  - j -> getProcsNeeded() >= (*tempit) -> getProcsNeeded()) {
-        return alloc -> allocate (j);
-    }
-
-    //if we made it this far it disturbs the first job
-    return NULL; 
 }
 
 EASYScheduler::JobComparator::JobComparator(ComparatorType type) 

@@ -31,6 +31,8 @@ namespace SST {
 
         class Scheduler {
             public:
+                Scheduler() { nextToStart = NULL; }
+            
                 virtual ~Scheduler() {}
 
                 virtual std::string getSetupInfo(bool comment) = 0;
@@ -45,10 +47,13 @@ namespace SST {
 
                 //allows the scheduler to start a job if desired; time is current time
                 //called after calls to jobArrives and jobFinishes
-                //returns information on job it started or NULL if none
-                //(if not NULL, tryToStart will be called again)
-                virtual AllocInfo* tryToStart(Allocator* alloc, unsigned long time, 
-                                              Machine* mach) = 0;
+                //returns the job that can be started or NULL if none
+                //(if not NULL, tryToStart should be called again)
+                virtual Job* tryToStart(unsigned long time, Machine* mach) = 0;
+                
+                //starts the next available job
+                //should be called after tryToStart at the same simulation time
+                virtual void startNext(unsigned long time, Machine* mach) = 0;
 
                 //delete stored state so scheduler can be run on new input
                 virtual void reset() {}
@@ -58,6 +63,10 @@ namespace SST {
 
                 //used for FST, returns an exact copy of the current schedule
                 virtual Scheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun) = 0;
+            
+            protected:
+                Job* nextToStart; //next ready job - used to give feedback to schedComponent
+                unsigned long nextToStartTime; //used to validate tryToStart and startNext are called at the same time
         };
 
     }

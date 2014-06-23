@@ -49,7 +49,6 @@ namespace SST {
                 unsigned long lastGuarantee;
                 unsigned long guaranteedStart;
                 long prevFirstJobNum;
-                AllocInfo* doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, unsigned long time);
 
             public:
 
@@ -107,13 +106,12 @@ namespace SST {
                 void jobArrives(Job* j, unsigned long time, Machine* mach);
                 void jobFinishes(Job* j, unsigned long time, Machine* mach);
 
-                AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach);
+                Job* tryToStart(unsigned long time, Machine* mach);
+                void startNext(unsigned long time, Machine* mach);
 
                 void reset();
 
                 EASYScheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun);
-
-                
 
             protected:
                 //need to use a set instead of a priority queue to suppport iteration
@@ -124,10 +122,7 @@ namespace SST {
                 //completion time.  Must use multi in case jobs end at same
                 //time (careful not to erase jobs by key = finishing time)
                 std::multiset<RunningInfo*, RunningInfo>* running; 
-
-
         };
-
     }
 }
 #endif

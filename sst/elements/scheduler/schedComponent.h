@@ -83,7 +83,7 @@ namespace SST {
                 void unregisterYourself();
 
                 void startNextJob();
-                void startJob(AllocInfo* ai);
+                void startJob(Job* job);
 
                 void logJobStart(IAI iai);
                 void logJobFinish(IAI iai);

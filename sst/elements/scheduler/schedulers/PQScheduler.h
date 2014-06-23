@@ -75,11 +75,10 @@ namespace SST {
 
                 void jobArrives(Job* j, unsigned long time, Machine* mach);
 
-                void jobFinishes(Job* j, unsigned long time, Machine* mach)
-                {
-                }
+                void jobFinishes(Job* j, unsigned long time, Machine* mach){ }
 
-                AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach);
+                Job* tryToStart(unsigned long time, Machine* mach);
+                void startNext(unsigned long time, Machine* mach);
 
                 void reset();
 

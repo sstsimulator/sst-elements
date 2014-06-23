@@ -80,6 +80,7 @@ namespace SST {
 
                 int numProcs;
                 int freeProcs;
+                SchedChange* sc;
 
             public:
                 void jobArrives(Job* j, unsigned long time, Machine* mach);
@@ -89,7 +90,8 @@ namespace SST {
                 void reset();
                 unsigned long scheduleJob(Job* job, unsigned long time);
                 unsigned long zeroCase(std::set<SchedChange*, SCComparator> *sched, Job* filler, unsigned long time);
-                AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach);
+                Job* tryToStart(unsigned long time, Machine* mach);
+                void startNext(unsigned long time, Machine* mach);
                 std::string getSetupInfo(bool comment);
                 void printPlan();
                 void done()

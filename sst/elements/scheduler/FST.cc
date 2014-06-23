@@ -243,8 +243,11 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes, std::map<Job*, AllocInfo*>* jobToAi, Job* j, Scheduler* sched, Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time) 
 {
     AllocInfo* ai;
+    Job* newJob;
     do {
-        ai = sched -> tryToStart(alloc, time, mach);
+        newJob = sched->tryToStart(time, mach);
+        sched->startNext(time, mach);
+        ai = alloc->allocate(newJob);
         if (ai != NULL) {
             if (ai -> job == j) {
                 //our job has been scheduled!  record the time

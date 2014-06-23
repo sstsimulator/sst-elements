@@ -137,25 +137,30 @@ void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach)
 //(either after each call or after each call occuring at same time)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
-AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
-                                   Machine* mach) 
+Job* PQScheduler::tryToStart(unsigned long time, Machine* mach) 
 {
-
-    if (0 == toRun -> size()) return NULL;
-
-    AllocInfo* allocInfo = NULL;
-    Job* job = toRun -> top();
-
-    if (alloc -> canAllocate(job))  {
-        allocInfo = alloc -> allocate(job);
+    if (0 == toRun->size()) return NULL;
+    Job* job = toRun->top();
+    if (mach->getNumFreeProcessors() >= job->getProcsNeeded()) {
+        nextToStart = job;
+        nextToStartTime = time;
+    } else {
+        nextToStart = NULL;
     }
+    return nextToStart;
+}
 
-    if (NULL != allocInfo) {
-        toRun -> pop();  //remove the job we just allocated
-        job -> start(time);
-        mach -> allocate(allocInfo);
+void PQScheduler::startNext(unsigned long time, Machine* mach)
+{
+    if(nextToStart == NULL){
+        schedout.fatal(CALL_INFO, 1, "Called startNext() job from scheduler when there is no available Job at time %lu",
+                                      time);
+    } else if(nextToStartTime != time){
+        schedout.fatal(CALL_INFO, 1, "startNext() and tryToStart() are called at different times for Job #%ld",
+                                      nextToStart->getJobNum());
     }
-    return allocInfo;
+    toRun->pop(); //remove the job
+    return;
 }
 
 void PQScheduler::reset() 
