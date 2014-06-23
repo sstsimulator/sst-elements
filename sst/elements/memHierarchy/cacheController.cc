@@ -95,7 +95,6 @@ void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
     CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
     
     MemEvent* origRequest = getOrigReq(mshr_->lookup(_baseAddr));
-    updateUpgradeLatencyAverage(origRequest);
     
     bottomCC_->handleResponse(_responseEvent, cacheLine, origRequest);
     activatePrevEvents(_baseAddr);
@@ -301,7 +300,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
             else{
-                totalLatency_ += (timestamp_ - start);
+                updateUpgradeLatencyAverage(origRequest);
                 mshrHits_++;
             }
         }
@@ -407,7 +406,7 @@ void Cache::updateUpgradeLatencyAverage(MemEvent* _origMemEvent){
 }
 
 
-void Cache::errorChecking(){
+void Cache::errorChecking(){    
     if(cf_.MSHRSize_ <= 0)             _abort(Cache, "MSHR size not specified correctly. \n");
     if(cf_.numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
     if(!isPowerOfTwo(cf_.lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");

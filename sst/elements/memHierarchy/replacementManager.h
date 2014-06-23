@@ -295,7 +295,9 @@ class RandomReplacementMgr : public ReplacementMgr {
     SST::RNG::MarsagliaRNG randomGenerator_;
 
 public:
-    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays), randomGenerator_(1, 1) {}
+    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays), randomGenerator_(1, 1) {
+        candidates_.clear();
+    }
     virtual ~RandomReplacementMgr() {
         
     }

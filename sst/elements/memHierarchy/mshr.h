@@ -29,13 +29,11 @@ namespace SST { namespace MemHierarchy {
 Cache::MSHR::MSHR(Cache* _cache, int _maxSize): cache_(_cache), size_(0), maxSize_(_maxSize){}
 
 bool Cache::MSHR::exists(Addr _baseAddr){
-    cache_->mshrHits_++;
     mshrTable::iterator it = map_.find(_baseAddr);
     return (it != map_.end() && it->second.front().elem.type() == typeid(MemEvent*));
 }
 
 const vector<mshrType> Cache::MSHR::lookup(Addr _baseAddr){
-    cache_->mshrHits_++;
     mshrTable::iterator it = map_.find(_baseAddr);
     assert(it != map_.end());
     vector<mshrType> res = it->second;
@@ -44,7 +42,6 @@ const vector<mshrType> Cache::MSHR::lookup(Addr _baseAddr){
 
 
 MemEvent* Cache::MSHR::lookupFront(Addr _baseAddr){
-    cache_->mshrHits_++;
     mshrTable::iterator it = map_.find(_baseAddr);
     assert(it != map_.end());
     vector<mshrType> mshrEntry = it->second;
