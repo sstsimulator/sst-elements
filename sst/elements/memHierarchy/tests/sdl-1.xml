@@ -39,7 +39,6 @@ Topology:
             <replacement_policy> lru </replacement_policy> 
             <associativity> 4 </associativity>
             <access_latency_cycles> 4  </access_latency_cycles>
-            <low_network_links> 1 </low_network_links>
             <cache_line_size> 64 </cache_line_size>
             <L1> 1 </L1>
             <debug> ${MEM_DEBUG} </debug>

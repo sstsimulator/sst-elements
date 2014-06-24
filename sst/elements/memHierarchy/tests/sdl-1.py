@@ -22,7 +22,6 @@ comp_l1cache.addParams({
       "replacement_policy" : """lru""",
       "associativity" : """4""",
       "access_latency_cycles" : """4""",
-      "low_network_links" : """1""",
       "cache_line_size" : """64""",
       "L1" : """1""",
       "debug" : """${MEM_DEBUG}""",

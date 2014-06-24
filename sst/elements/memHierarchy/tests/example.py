@@ -26,7 +26,6 @@ c0_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -40,7 +39,6 @@ c0_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -54,7 +52,6 @@ c1_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -68,7 +65,6 @@ c1_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -82,7 +78,6 @@ c2_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -96,7 +91,6 @@ c2_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -110,7 +104,6 @@ c3_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -124,7 +117,6 @@ c3_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -138,7 +130,6 @@ c4_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -152,7 +143,6 @@ c4_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -166,7 +156,6 @@ c5_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -180,7 +169,6 @@ c5_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -194,7 +182,6 @@ c6_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -208,7 +195,6 @@ c6_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -222,7 +208,6 @@ c7_l1Dcache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -236,7 +221,6 @@ c7_l1Icache.addParams({
       "associativity" : """1""",
       "cache_size" : """8 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """2""",
       "mshr_num_entries" : """4096""",
       "L1" : """1"""
@@ -254,11 +238,9 @@ l2cache.addParams({
       "associativity" : """4""",
       "cache_size" : """64 KB""",
       "cache_line_size" : """64""",
-      "low_network_links" : """1""",
       "access_latency_cycles" : """6""",
       "mshr_num_entries" : """4096""",
-      "L1" : """0""",
-      "high_network_links" : """1"""
+      "L1" : """0"""
 })
 memory = sst.Component("memory", "memHierarchy.MemController")
 memory.addParams({
