@@ -96,11 +96,11 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
     SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, pkt->getAddr(), pkt->getSize());
     req->setPayload(pkt->getPtr<uint8_t>(), pkt->getSize());
 
-    if ( pkt->req->isLocked() ) {
+    if(pkt->req->isLocked()) {
         req->flags |= (SimpleMem::Request::F_LOCKED);
     }
 
-    if ( pkt->req->isUncacheable() ) {
+    if(pkt->req->isUncacheable()) {
         req->flags |= (SimpleMem::Request::F_UNCACHED);
     }
 
@@ -112,6 +112,15 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
 	case ::MemCmd::WriteReq:
 		req->cmd = SimpleMem::Request::Write;
 		break;
+    case ::MemCmd::LoadLockedReq:
+        req->cmd = SimpleMem::Request::Read;
+        req->flags |= SimpleMem::Request::F_LLSC;
+        break;
+    case ::MemCmd::StoreCondReq:
+        req->cmd = SimpleMem::Request::Write;
+        req->flags |= SimpleMem::Request::F_LLSC;
+        break;
+        
     default:
         out.fatal(CALL_INFO, 1, "Don't know how to convert GEM5 command %s to SST\n", pkt->cmd.toString().c_str());
     }
@@ -143,6 +152,12 @@ void Gem5Connector::handleRecvFromSST(SimpleMem::Request *event)
     pkt->makeResponse();  // Convert to a response packet
     pkt->setData(event->data.data());
 
+    // Did it succeed?
+    if (pkt->isLLSC() && pkt->isWrite()){
+        pkt->req->setExtraData(event->flags & SimpleMem::Request::F_LLSC_RESP);
+    }
+    
+        
     // Clear out bus delay notifications
     pkt->busFirstWordDelay = pkt->busLastWordDelay = 0;
 

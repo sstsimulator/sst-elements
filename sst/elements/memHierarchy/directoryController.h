@@ -182,12 +182,13 @@ class DirectoryController : public Component {
 		ProcessFunc     nextFunc;
         std::string     waitingOn; // waiting to hear from this source
         Command         nextCommand;  // Command which we're waiting for
-        static const    MemEvent::id_type NO_LAST_REQUEST;
 		uint32_t        waitingAcks;
+        uint32_t        reqSize;
         bool            inController; // Whether this is present in the controller, or needs to be fetched
 		Addr            baseAddr;
         Addr            addr;
-        unsigned int    reqSize;
+
+        static const    MemEvent::id_type NO_LAST_REQUEST;
 
 		/* Standard directory data */
 		bool                dirty;
@@ -195,20 +196,36 @@ class DirectoryController : public Component {
         MemEvent::id_type   lastRequest;  // ID of message we're wanting a response to
         std::list<DirEntry*>::iterator cacheIter;
 
-        DirEntry(Addr baseAddress, Addr _address, unsigned int _reqSize, uint32_t _bitlength){
-            activeReq    = NULL;
-            nextFunc     = NULL;
-            lastRequest  = NO_LAST_REQUEST;
-            waitingAcks  = 0;
-            inController = true;
-            baseAddr     = baseAddress;
+        DirEntry(Addr _baseAddress, Addr _address, uint32_t _reqSize, uint32_t _bitlength){
+            clearEntry();
+            baseAddr     = _baseAddress;
             addr         = _address;
             reqSize      = _reqSize;
-            dirty        = false;
             sharers.resize(_bitlength);
-            clearSharers();
+            activeReq    = NULL;
+
         }
 
+        void clearEntry(){
+            setToSteadyState();
+            waitingAcks  = 0;
+            inController = true;
+            dirty        = false;
+            baseAddr     = 0;
+            addr         = 0;
+            reqSize      = 0;
+            sharers.clear();
+            clearSharers();
+        }
+        
+        void setToSteadyState(){
+            activeReq   = NULL;
+            nextFunc    = NULL;
+            nextCommand = NULLCMD;
+            lastRequest = DirEntry::NO_LAST_REQUEST;
+            waitingOn   = "N/A";
+        }
+        
 		uint32_t countRefs(void){
 			uint32_t count = 0;
 			for ( std::vector<bool>::iterator i = sharers.begin() ; i != sharers.end() ; ++i ) {

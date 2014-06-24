@@ -445,14 +445,6 @@ void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
 	updateEntryToMemory(entry);
 }
 
-void DirectoryController::handlePutS(DirEntry *entry, MemEvent *ev){
-    entry->activeReq = ev;
-    dbg.debug(_L10_, "\n\nDC PutS - %s - Request Received\n", getName().c_str());
-    uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
-    entry->sharers[requesting_node]= false;
-    resetEntry(entry);
-}
-
 
 
 /* Advance the processing of this directory entry */
@@ -594,11 +586,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
         delete entry->activeReq;
     }
-	entry->activeReq = NULL;
-	entry->nextFunc = NULL;
-    entry->nextCommand = NULLCMD;
-    entry->lastRequest = DirEntry::NO_LAST_REQUEST;
-    entry->waitingOn = "N/A";
+	entry->setToSteadyState();
 }
 
 

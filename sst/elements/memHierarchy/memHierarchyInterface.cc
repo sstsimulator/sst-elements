@@ -127,7 +127,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* _req, MemEvent *_m
         break;
     case GetXResp:
         _req->cmd   = SimpleMem::Request::WriteResp;
-        if(_me->isAtomic()) _req->flags |= (SimpleMem::Request::F_LLSC);
+        if(_me->isAtomic()) _req->flags |= (SimpleMem::Request::F_LLSC_RESP);
         break;
     default:
         fprintf(stderr, "Don't know how to deal with command %s\n", CommandString[_me->getCmd()]);
