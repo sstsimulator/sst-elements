@@ -68,11 +68,6 @@ bool compareCEPointers(CompletionEvent* ev1, CompletionEvent* ev2)
     return ev1 -> jobNum < ev2 -> jobNum; 
 }
 
-Machine* schedComponent::getMachine() 
-{
-    return machine;
-}
-
 schedComponent::~schedComponent()
 {
     delete stats;
@@ -388,10 +383,10 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
             theAllocator -> deallocate(ai);
             if (useYumYumTraceFormat) {
                 stats->jobFinishes(ai, getCurrentSimTime() + 1);
-                scheduler->jobFinishes(ai->job, getCurrentSimTime() + 1, machine);
+                scheduler->jobFinishes(ai->job, getCurrentSimTime() + 1, *machine);
             } else {
                 stats->jobFinishes(ai, getCurrentSimTime() );
-                scheduler->jobFinishes(ai->job, getCurrentSimTime() , machine);
+                scheduler->jobFinishes(ai->job, getCurrentSimTime() , *machine);
             }
             //the job is done and deleted from our records; don't need
             delete runningJobs.find( jobNum )->second.ai; 
@@ -432,7 +427,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         } else if (CommEvent -> CommType == START_NEXT_JOB) {
             bool startingNewJob = true;
             while (startingNewJob) {
-                Job* nextJob =  scheduler->tryToStart(getCurrentSimTime(), machine);
+                Job* nextJob =  scheduler->tryToStart(getCurrentSimTime(), *machine);
                 if(nextJob != NULL){
                     startJob(nextJob);
                     if (FSTtype > 0) {
@@ -481,11 +476,11 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                 theAllocator -> deallocate(ai);
                 if (useYumYumTraceFormat) {
                     stats -> jobFinishes(ai, getCurrentSimTime() + 1);
-                    scheduler -> jobFinishes(ai -> job, getCurrentSimTime() + 1, machine);
+                    scheduler -> jobFinishes(ai -> job, getCurrentSimTime() + 1, *machine);
                 } else {
                     if (FSTtype > 0) calcFST -> jobCompletes(ai -> job);
                     stats -> jobFinishes(ai, getCurrentSimTime());
-                    scheduler -> jobFinishes(ai -> job, getCurrentSimTime(), machine);
+                    scheduler -> jobFinishes(ai -> job, getCurrentSimTime(), *machine);
                 }
                 delete ai;
 
@@ -514,14 +509,14 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                 if (FSTtype == 2) { 
                     //relaxed, so do FST before we tell the scheduler about the job
                     calcFST -> jobArrives(arrivingjob, scheduler, machine);
-                    finishingarr.front() -> happen(machine, theAllocator, 
+                    finishingarr.front() -> happen(*machine, theAllocator, 
                                                    scheduler, stats, arrivingjob);
                 } else if (FSTtype == 1){
-                    finishingarr.front() -> happen(machine, theAllocator, 
+                    finishingarr.front() -> happen(*machine, theAllocator, 
                                                    scheduler, stats, arrivingjob);
                     calcFST -> jobArrives(arrivingjob, scheduler, machine);
                 } else {
-                    finishingarr.front() -> happen(machine, theAllocator, 
+                    finishingarr.front() -> happen(*machine, theAllocator, 
                                                    scheduler, stats, arrivingjob);
                 }
                 delete finishingarr.front();
@@ -552,7 +547,7 @@ void schedComponent::startJob(Job* job)
     job->start( getCurrentSimTime() );
     AllocInfo* ai = theAllocator->allocate(job);
     machine->allocate(ai);
-    scheduler->startNext( getCurrentSimTime(), machine );
+    scheduler->startNext( getCurrentSimTime(), *machine );
     stats->jobStarts( ai, getCurrentSimTime() );
     
     //calculate running time with communication overhead

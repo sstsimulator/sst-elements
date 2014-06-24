@@ -73,7 +73,7 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
     //}
     schedout.fatal(CALL_INFO, 1, "Allocating %s procs: ", job -> toString().c_str());
 
-    if (!canAllocate(job)) {  //check if we have enough free processors
+    if (!canAllocate(*job)) {  //check if we have enough free processors
         return NULL;
     }
 

@@ -223,7 +223,7 @@ AllocInfo* NearestAllocator::allocate(Job* job)
 //(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
-    if (!canAllocate(job, available)) {
+    if (!canAllocate(*job, available)) {
         return NULL;
     }
 
@@ -237,7 +237,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
             (*retVal -> processors)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt((MeshMachine*)machine);
         }
-        //printf("short return\n");
+        delete available;
         return retVal;
     }
 
@@ -249,11 +249,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
 
     //stores allocations w/ best score (no tiebreaking) if ties being recorded:
     //(actual best value w/ tiebreaking stored in retVal.processors)
-    std::vector<std::vector<MeshLocation*>*>* bestAllocs = NULL;
-    if (recordingTies) {
-        bestAllocs = new std::vector<std::vector<MeshLocation*> *>(); 
-    }
-
+    std::vector<std::vector<MeshLocation*>*>* bestAllocs = new std::vector<std::vector<MeshLocation*> *>(); 
     std::vector<MeshLocation*>* possCenters;
 
     if ("Hybrid" == configName) {
@@ -265,8 +261,10 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         possCenters = centerGenerator -> getCenters(available);
     }
     
+    std::vector<MeshLocation*>* nearest = NULL;
+    std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
     for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
-        std::vector<MeshLocation*>* nearest = pointCollector -> getNearest(*center, numProcs, available);
+        nearest = pointCollector -> getNearest(*center, numProcs, available);
 
         std::pair<long,long>* val = scorer -> valueOf(*center, nearest, numProcs, (MeshMachine*) machine); 
         if (val -> first < bestVal -> first || 
@@ -285,14 +283,18 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         *center = NULL;
 
         if (recordingTies && val -> first == bestVal -> first) {
-            std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
+            delete alloc;
+            alloc = new std::vector<MeshLocation*>();
             for (int i = 0; i < numProcs; i++)
                 alloc -> push_back((*nearest)[i]);
             bestAllocs -> push_back(alloc);
         }
     }
+    //clear memory
+    delete nearest;
+    delete alloc;
+    delete bestAllocs;
     possCenters -> clear();
-    
     delete possCenters;
     delete bestVal;
     

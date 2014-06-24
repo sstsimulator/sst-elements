@@ -54,8 +54,7 @@ namespace SST {
                 ~schedComponent(); 
                 void setup();
                 void finish();
-                Machine* getMachine();
-
+                
                 //ConstraintAllocator needs this
                 std::string getNodeID(int nodeIndex) const
                 {

@@ -31,7 +31,7 @@ int ArrivalEvent::getJobIndex() const
     return jobIndex;
 }
 
-void ArrivalEvent::happen(Machine* mach, Allocator* alloc, Scheduler* sched,
+void ArrivalEvent::happen(const Machine & mach, Allocator* alloc, Scheduler* sched,
                           Statistics* stats, Job* arrivingJob) 
 {
     sched -> jobArrives(arrivingJob, time, mach);

@@ -64,7 +64,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
 
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s \n", job -> toString().c_str());
 
-    if (!canAllocate(job)) {
+    if (!canAllocate(*job)) {
         return NULL;
     }
 

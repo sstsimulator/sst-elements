@@ -20,49 +20,13 @@
 #include <vector>
 #include <string>
 
-//#include "sst/core/serialization.h"
-
 #include "AllocInfo.h"
 
 namespace SST {
     namespace Scheduler {
 
+        class MeshLocation;
         class MeshMachine;
-
-
-        /**
-         * The default ordering for MeshLocations is by the component: x, y, then z.
-         * Comparator used to order free blocks in MBSAllocator.
-         */
-
-        class MeshLocation : public std::binary_function<SST::Scheduler::MeshLocation*, SST::Scheduler::MeshLocation*,bool>{
-
-            public:
-                int x;
-                int y;
-                int z;
-
-                MeshLocation(int X, int Y, int Z);
-                MeshLocation(int inpos, MeshMachine* m);
-
-                MeshLocation(MeshLocation* in);
-
-                int L1DistanceTo(MeshLocation* other);
-
-                int LInfDistanceTo(MeshLocation* other);
-
-                bool operator()(MeshLocation* loc1, MeshLocation* loc2);
-
-                bool equals(MeshLocation* other);
-
-                void print();
-
-                int toInt(MeshMachine* m);
-
-                std::string toString();
-
-                int hashCode();
-        };
 
         class MeshAllocInfo : public AllocInfo {
             public:

@@ -31,6 +31,9 @@
 #include "MeshAllocInfo.h"
 #include "output.h"
 
+#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
+#define ABS(X) ((X) >= 0 ? (X) : (-(X)))
+
 using namespace SST::Scheduler;
 
 namespace SST {
@@ -366,9 +369,6 @@ long MeshMachine::baselineL1Distance(Job* job)
     return distance;
 }
 
-
-
-
 /*
    std::string MeshMachine::tostd::string(){
 //returns human readable view of which processors are free
@@ -393,4 +393,79 @@ retVal += "\n";
 return retVal;
 }
 */
+
+MeshLocation::MeshLocation(int X, int Y, int Z) 
+{
+    schedout.init("", 8, 0, Output::STDOUT);
+    x = X;
+    y = Y;
+    z = Z;
+}
+
+MeshLocation::MeshLocation(int inpos, MeshMachine* m) 
+{
+    //return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
+
+    schedout.init("", 8, 0, Output::STDOUT);
+    z = inpos / (m -> getXDim() * m -> getYDim());
+    inpos -= z * m -> getXDim() * m -> getYDim();
+    y = inpos / m -> getXDim();
+    inpos -= y * m -> getXDim();
+    x = inpos;
+}
+
+
+MeshLocation::MeshLocation(MeshLocation* in)
+{
+    schedout.init("", 8, 0, Output::STDOUT);
+    //copy constructor
+    x = in -> x;
+    y = in -> y;
+    z = in -> z;
+}
+
+int MeshLocation::L1DistanceTo(MeshLocation* other) 
+{
+    return ABS(x - other -> x) + ABS(y - other -> y) + ABS(z - other -> z);
+}
+
+int MeshLocation::LInfDistanceTo(MeshLocation* other) 
+{
+    return MAX(ABS(x - other -> x), MAX(ABS(y - other -> y), ABS(z - other -> z)));
+}
+
+bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2)
+{
+    if (loc1 -> x == loc2 -> x){
+        if (loc1 -> y == loc2 -> y) {
+            return loc1 -> z < loc2 -> z;
+        }
+        return loc1 -> y < loc2 -> y;
+    }
+    return loc1 -> x < loc2 -> x;
+}
+
+bool MeshLocation::equals(MeshLocation* other) {
+    return x == other -> x && y == other -> y && z == other -> z;
+}
+
+void MeshLocation::print() {
+    //printf("(%d,%d,%d)\n",x,y,z);
+    schedout.output("(%d,%d,%d)\n", x, y, z);
+}
+
+
+int MeshLocation::toInt(MeshMachine* m){
+    return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
+}
+
+std::string MeshLocation::toString(){
+    std::stringstream ret;
+    ret << "(" << x <<  ", " << y  << ", " << z << ")";
+    return ret.str();
+}
+
+int MeshLocation::hashCode() {
+    return x + 31 * y + 961 * z;
+}
 

@@ -38,7 +38,7 @@ namespace SST {
 
                 virtual ~ArrivalEvent() {}
 
-                virtual void happen(Machine* mach, Allocator* alloc, Scheduler* sched,
+                virtual void happen(const Machine & mach, Allocator* alloc, Scheduler* sched,
                                     Statistics* stats, Job* arrivingJob);
 
                 unsigned long getTime() const;

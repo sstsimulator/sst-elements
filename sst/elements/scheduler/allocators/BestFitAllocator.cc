@@ -65,7 +65,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s procs: \n", job -> toString().c_str());
 
     //check if we have enough free processors
-    if (!canAllocate(job)) return NULL;
+    if (!canAllocate(*job)) return NULL;
 
     vector<vector<MeshLocation*>*>* intervals = getIntervals();
 

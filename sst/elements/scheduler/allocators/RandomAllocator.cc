@@ -66,7 +66,7 @@ std::string RandomAllocator::getSetupInfo(bool comment)
 //returns information on the allocation or null if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* RandomAllocator::allocate(Job* job){
-    if(!canAllocate(job)) return NULL;
+    if(!canAllocate(*job)) return NULL;
 
     MeshAllocInfo* retVal = new MeshAllocInfo(job);
 

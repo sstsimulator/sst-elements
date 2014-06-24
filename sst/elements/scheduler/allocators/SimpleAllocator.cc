@@ -46,7 +46,7 @@ std::string SimpleAllocator::getSetupInfo(bool comment)
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* SimpleAllocator::allocate(Job* j) 
 {  
-    if (canAllocate(j)) {
+    if (canAllocate(*j)) {
         return new AllocInfo(j);
     }
     return NULL;

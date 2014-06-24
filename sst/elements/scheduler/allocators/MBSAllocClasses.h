@@ -36,11 +36,10 @@
 #include <set>
 #include <sstream>
 
-//#include "sst/core/serialization.h"
+#include "MeshMachine.h"
 
 namespace SST {
     namespace Scheduler {
-        class MeshLocation;
 
         class Block : public std::binary_function<Block*,Block*,bool>{
             public:

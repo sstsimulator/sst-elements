@@ -205,7 +205,7 @@ namespace SST {
                 for (unsigned int x = 0; x < available -> size(); x++) { 
                     oldx[(*available)[x]->toInt(machine)] = 0;
                 }
-
+                
                 hybridalloc(oldx, newx, 40, numProcs, machine);
                 for (int x = 0; x < 40; x++) {
                     if (newx[x] == 1 && oldx[x] == 0) {

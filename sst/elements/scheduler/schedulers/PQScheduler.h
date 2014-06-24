@@ -73,12 +73,12 @@ namespace SST {
 
                 std::string getSetupInfo(bool comment);
 
-                void jobArrives(Job* j, unsigned long time, Machine* mach);
+                void jobArrives(Job* j, unsigned long time, const Machine & mach);
 
-                void jobFinishes(Job* j, unsigned long time, Machine* mach){ }
+                void jobFinishes(Job* j, unsigned long time, const Machine & mach){ }
 
-                Job* tryToStart(unsigned long time, Machine* mach);
-                void startNext(unsigned long time, Machine* mach);
+                Job* tryToStart(unsigned long time, const Machine & mach);
+                void startNext(unsigned long time, const Machine & mach);
 
                 void reset();
 

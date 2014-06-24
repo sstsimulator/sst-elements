@@ -79,8 +79,7 @@ AllocInfo* EnergyAllocator::allocate(Job* job)
 //(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
-
-    if (!canAllocate(job, available)) {
+    if (!canAllocate(*job, available)) {
         return NULL;
     }
 
@@ -94,15 +93,16 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
             (*retVal -> processors)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt((MeshMachine*)machine);
         }
-        //printf("short return\n");
+        delete available;
         return retVal;
     }
 
     std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, job -> getProcsNeeded(), (MeshMachine*)machine);
     for (int i = 0; i < numProcs; i++) {
-        (*retVal -> processors)[i] = ret -> at(i);
-        retVal -> nodeIndices[i] = ret -> at(i) -> toInt((MeshMachine*)machine);
+        (*retVal->processors)[i] = ret->at(i);
+        retVal->nodeIndices[i] = ret->at(i)->toInt((MeshMachine*)machine);
+        delete (*available)[i];
     }
+    delete available;
     return retVal;
-
 } 

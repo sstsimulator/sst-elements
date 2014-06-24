@@ -83,15 +83,15 @@ namespace SST {
                 SchedChange* sc;
 
             public:
-                void jobArrives(Job* j, unsigned long time, Machine* mach);
-                void jobFinishes(Job* j, unsigned long time, Machine* mach);
+                void jobArrives(Job* j, unsigned long time, const Machine & mach);
+                void jobFinishes(Job* j, unsigned long time, const Machine & mach);
 
                 //Make????
                 void reset();
                 unsigned long scheduleJob(Job* job, unsigned long time);
                 unsigned long zeroCase(std::set<SchedChange*, SCComparator> *sched, Job* filler, unsigned long time);
-                Job* tryToStart(unsigned long time, Machine* mach);
-                void startNext(unsigned long time, Machine* mach);
+                Job* tryToStart(unsigned long time, const Machine & mach);
+                void startNext(unsigned long time, const Machine & mach);
                 std::string getSetupInfo(bool comment);
                 void printPlan();
                 void done()

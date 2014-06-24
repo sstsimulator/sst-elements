@@ -126,7 +126,7 @@ string PQScheduler::getSetupInfo(bool comment)
 
 //called when j arrives; time is current time
 //tryToStart should be called after each job arrives
-void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) 
+void PQScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach) 
 {
     toRun -> push(j);
     schedout.debug(CALL_INFO, 7, 0, "%s arrives\n", j -> toString().c_str());
@@ -137,11 +137,11 @@ void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach)
 //(either after each call or after each call occuring at same time)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
-Job* PQScheduler::tryToStart(unsigned long time, Machine* mach) 
+Job* PQScheduler::tryToStart(unsigned long time, const Machine & mach) 
 {
     if (0 == toRun->size()) return NULL;
     Job* job = toRun->top();
-    if (mach->getNumFreeProcessors() >= job->getProcsNeeded()) {
+    if (mach.getNumFreeProcessors() >= job->getProcsNeeded()) {
         nextToStart = job;
         nextToStartTime = time;
     } else {
@@ -150,7 +150,7 @@ Job* PQScheduler::tryToStart(unsigned long time, Machine* mach)
     return nextToStart;
 }
 
-void PQScheduler::startNext(unsigned long time, Machine* mach)
+void PQScheduler::startNext(unsigned long time, const Machine & mach)
 {
     if(nextToStart == NULL){
         schedout.fatal(CALL_INFO, 1, "Called startNext() job from scheduler when there is no available Job at time %lu",

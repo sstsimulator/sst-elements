@@ -49,12 +49,12 @@ namespace SST {
 
                 virtual std::string getSetupInfo(bool comment) = 0;
 
-                int getNumFreeProcessors() 
+                int getNumFreeProcessors() const
                 {
                     return numAvail;
                 }
 
-                int getNumProcs() 
+                int getNumProcs() const
                 {
                     return numProcs;
                 }

@@ -131,7 +131,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     //see if we can start now
     if (toRun -> empty() && !alreadyadded) {
         toRun -> push_back(j);
-        sched -> jobArrives(j, j -> getArrivalTime(), mach);
+        sched -> jobArrives(j, j -> getArrivalTime(), *mach);
         alreadyadded = true;
     } 
     success = FSTstart(endtimes, jobToAi, j, sched, alloc, mach, stats, time);
@@ -145,7 +145,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
         }
         if (allothersstarted) {
             toRun -> push_back(j);
-            sched -> jobArrives(j, time, mach);
+            sched -> jobArrives(j, time, *mach);
             stats -> jobArrives(time);
             alreadyadded = true;
             //try to start again in case we can start the job right away
@@ -183,7 +183,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
         //tell our simulated scheduler etc that the job completed
         mach -> deallocate(jobToAi -> find(endtimes -> begin() -> first) -> second);
         alloc -> deallocate(jobToAi -> find(endtimes -> begin() -> first) -> second);
-        sched -> jobFinishes(endtimes -> begin() -> first, time, mach);
+        sched -> jobFinishes(endtimes -> begin() -> first, time, *mach);
         endtimes -> erase(endtimes -> begin());
 
         //this check is because we don't want to start until all jobs that have completed at the same time to finish
@@ -201,7 +201,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
                 }
                 if (allothersstarted) {
                     toRun -> push_back(j);
-                    sched -> jobArrives(j, time, mach);
+                    sched -> jobArrives(j, time, *mach);
                     stats -> jobArrives(time);
                     alreadyadded = true;
                     //try to start again in case we can start the job right away
@@ -245,8 +245,8 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
     AllocInfo* ai;
     Job* newJob;
     do {
-        newJob = sched->tryToStart(time, mach);
-        sched->startNext(time, mach);
+        newJob = sched->tryToStart(time, *mach);
+        sched->startNext(time, *mach);
         ai = alloc->allocate(newJob);
         if (ai != NULL) {
             if (ai -> job == j) {

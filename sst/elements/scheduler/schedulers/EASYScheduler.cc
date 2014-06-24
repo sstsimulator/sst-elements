@@ -86,7 +86,7 @@ string EASYScheduler::getSetupInfo(bool comment)
 
 //This is called when j arrives; time is current time.
 //tryToStart should be called after each job arrives.
-void EASYScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) 
+void EASYScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach) 
 {
     schedout.debug(CALL_INFO, 7, 0, "%ld: Job #%ld arrives\n", time, j -> getJobNum());
     toRun -> insert(j);
@@ -100,7 +100,7 @@ void EASYScheduler::jobArrives(Job* j, unsigned long time, Machine* mach)
 }
 
 //Remove j from the list of running jobs and update start.
-void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
+void EASYScheduler::jobFinishes(Job* j, unsigned long time, const Machine & mach)
 {
     schedout.debug(CALL_INFO, 7, 0, "%ld: Job #%ld completes\n", time, j -> getJobNum());
     multiset<RunningInfo*, RunningInfo>::iterator it = running -> begin();
@@ -118,7 +118,7 @@ void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
     giveGuarantee(time, mach);
 }
 
-Job* EASYScheduler::tryToStart(unsigned long time, Machine* mach)
+Job* EASYScheduler::tryToStart(unsigned long time, const Machine & mach)
 {
     schedout.debug(CALL_INFO, 10, 0, "trying to start at %lu\n", time);
     if (!running->empty() && (*(running->begin()))->estComp == time) {
@@ -132,7 +132,7 @@ Job* EASYScheduler::tryToStart(unsigned long time, Machine* mach)
     }
     
     bool succeeded = false;  //whether we found a job to allocate
-    int availProcs = mach->getNumFreeProcessors();
+    int availProcs = mach.getNumFreeProcessors();
     
     if (availProcs >= (*job)->getProcsNeeded()) {
         succeeded = true;
@@ -171,7 +171,7 @@ Job* EASYScheduler::tryToStart(unsigned long time, Machine* mach)
     return nextToStart;
 }
     
-void EASYScheduler::startNext(unsigned long time, Machine* mach)
+void EASYScheduler::startNext(unsigned long time, const Machine & mach)
 {
     if(nextToStart == NULL){
         schedout.fatal(CALL_INFO, 1, "Called startNext() job from scheduler when there is no available Job at time %lu",
@@ -224,7 +224,7 @@ void EASYScheduler::reset()
 
 //gives a guaranteed start time for a job.  The first job in the queue cannot
 //be delayed past this guarantee
-void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
+void EASYScheduler::giveGuarantee(unsigned long time, const Machine & mach)
 {
     schedout.debug(CALL_INFO, 10, 0, "%ld: giveGuarantee ( ", time);
     set<Job*, JobComparator>::iterator it2 = toRun -> begin();
@@ -242,7 +242,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
     bool succeeded = false;
 
     int size = (*firstJob) -> getProcsNeeded();
-    int free = mach->getNumFreeProcessors();
+    int free = mach.getNumFreeProcessors();
 
     if (free >= size) {
         guaranteedStart = time;

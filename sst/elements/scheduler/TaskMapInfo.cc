@@ -12,7 +12,8 @@
 #include "TaskMapInfo.h"
 
 #include "Job.h"
-#include "MeshAllocInfo.h"
+#include "MeshAllocInfo.h" 
+#include "MeshMachine.h"
 #include "output.h"
 #include "TaskCommInfo.h"
 

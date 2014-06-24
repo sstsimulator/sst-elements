@@ -20,7 +20,6 @@ libscheduler_la_SOURCES = \
     schedLib.cc		SimpleMachine.cc	Statistics.cc \
     MeshAllocInfo.cc \
     MeshAllocInfo.h \
-    MBSAllocInfo.h \
     Factory.cc \
     Factory.h \
     faultInjectionComponent.cc \
@@ -54,6 +53,7 @@ libscheduler_la_SOURCES = \
     allocators/MBSAllocator.cc \
     allocators/MBSAllocator.h \
     allocators/MBSAllocClasses.h \
+    allocators/MBSAllocInfo.h \
     allocators/NearestAllocator.cc \
     allocators/NearestAllocator.h \
     allocators/NearestAllocClasses.cc \

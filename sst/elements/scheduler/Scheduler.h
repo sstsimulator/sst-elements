@@ -39,21 +39,21 @@ namespace SST {
 
                 //called when j arrives; time is current time
                 //tryToStart will be called after announcing all arriving jobs
-                virtual void jobArrives(Job* j, unsigned long time, Machine* mach) = 0;
+                virtual void jobArrives(Job* j, unsigned long time, const Machine & mach) = 0;
 
                 //called when j finishes; time is current time
                 //tryToStart will be called after announcing all arriving jobs
-                virtual void jobFinishes(Job* j, unsigned long time, Machine* mach) = 0;
+                virtual void jobFinishes(Job* j, unsigned long time, const Machine & mach) = 0;
 
                 //allows the scheduler to start a job if desired; time is current time
                 //called after calls to jobArrives and jobFinishes
                 //returns the job that can be started or NULL if none
                 //(if not NULL, tryToStart should be called again)
-                virtual Job* tryToStart(unsigned long time, Machine* mach) = 0;
+                virtual Job* tryToStart(unsigned long time, const Machine & mach) = 0;
                 
                 //starts the next available job
                 //should be called after tryToStart at the same simulation time
-                virtual void startNext(unsigned long time, Machine* mach) = 0;
+                virtual void startNext(unsigned long time, const Machine & mach) = 0;
 
                 //delete stored state so scheduler can be run on new input
                 virtual void reset() {}

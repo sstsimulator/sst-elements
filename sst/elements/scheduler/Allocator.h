@@ -30,13 +30,13 @@ namespace SST {
 
                 virtual std::string getSetupInfo(bool comment) = 0;
 
-                bool canAllocate(Job* j)
+                bool canAllocate(const Job & j)
                 {  
-                    return (machine -> getNumFreeProcessors() >= j -> getProcsNeeded());
+                    return (machine -> getNumFreeProcessors() >= j.getProcsNeeded());
                 }
-                bool canAllocate(Job* j, std::vector<MeshLocation*>* available)
+                bool canAllocate(const Job & j, std::vector<MeshLocation*>* available)
                 {  
-                    return (available -> size() >= (unsigned int)j -> getProcsNeeded());
+                    return (available -> size() >= (unsigned int)j.getProcsNeeded());
                 }
 
                 //allocates job if possible

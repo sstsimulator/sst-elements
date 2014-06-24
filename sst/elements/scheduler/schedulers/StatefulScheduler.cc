@@ -324,7 +324,7 @@ string StatefulScheduler::EvenLessManager::getString()
     return "Even Less Conservative Scheduler\n"; 
 }
 
-void StatefulScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) 
+void StatefulScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach) 
 {
     schedout.debug(CALL_INFO, 7, 0, "%ld: Job #%ld arrives\n", time, j -> getJobNum());
     scheduleJob(j, time);
@@ -516,7 +516,7 @@ unsigned long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched
 }
 
 //Removes j from the list of running jobs and update start
-void StatefulScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
+void StatefulScheduler::jobFinishes(Job* j, unsigned long time, const Machine & mach)
 { 
     schedout.debug(CALL_INFO, 7, 0, "%s finishing at %lu\n", j -> toString().c_str(), time);
     set<SchedChange*, SCComparator>::reverse_iterator it = estSched -> rend();
@@ -584,7 +584,7 @@ void StatefulScheduler::removeJob(Job* j, unsigned long time)
 //(either after each call or after each call occuring at same time)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
-Job* StatefulScheduler::tryToStart(unsigned long time, Machine* mach) 
+Job* StatefulScheduler::tryToStart(unsigned long time, const Machine & mach) 
 {
     heart -> tryToStart(time);
     set<SchedChange*, SCComparator>::iterator it = estSched -> begin();
@@ -601,7 +601,7 @@ Job* StatefulScheduler::tryToStart(unsigned long time, Machine* mach)
         }
 
         if (!sc -> isEnd) {
-            if (mach->getNumFreeProcessors() < sc->j->getProcsNeeded()) {
+            if (mach.getNumFreeProcessors() < sc->j->getProcsNeeded()) {
                 nextToStart = NULL;
             } else {
                 nextToStartTime = time;
@@ -614,7 +614,7 @@ Job* StatefulScheduler::tryToStart(unsigned long time, Machine* mach)
     return NULL;
 }
 
-void StatefulScheduler::startNext(unsigned long time, Machine* mach)
+void StatefulScheduler::startNext(unsigned long time, const Machine & mach)
 {
     if(nextToStart == NULL){
         schedout.fatal(CALL_INFO, 1, "Called startNext() job from scheduler when there is no available Job at time %lu",
