@@ -120,7 +120,7 @@ class DirectoryController : public Component {
     void handlePutM(DirEntry *entry, MemEvent *ev);
 	
 	/** Handles recieved PutS requests */
-    void handlePutS(DirEntry *entry, MemEvent *ev);
+    void handlePutS(MemEvent *ev);
 
     /** Retry original request upon receiving a NACK */
     void processIncomingNACK(MemEvent* _origReqEvent);
@@ -239,9 +239,27 @@ class DirectoryController : public Component {
 				*i = false;
 			}
         }
+        
+        void setDirty(){
+            dirty = true;
+            assert(countRefs() == 0);
+        }
+        
+        bool isDirty(){
+            if(dirty){
+                assert(countRefs() == 1);
+                return true;
+            }
+            return false;
+        }
+        
+        void clearDirty(){
+            dirty = false;
+            assert(countRefs() == 0);
+        }
 
         uint32_t findOwner(void){
-            assert(dirty);
+            assert(dirty && countRefs() == 1);
             for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
                 if ( sharers[i] ) return i;
             }
