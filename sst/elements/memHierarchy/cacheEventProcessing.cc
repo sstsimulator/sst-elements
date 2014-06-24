@@ -46,8 +46,8 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     }
     else incTotalMSHRHits(groupId);
 
-    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, time: %"PRIu64", %s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", timestamp_, uncached ? "un$" : "cached");
+    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, Size = %u, time: %"PRIu64", %s \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, uncached ? "un$" : "cached");
     
     if(uncached || cf_.allUncachedRequests_){
         processUncached(event, cmd, baseAddr);

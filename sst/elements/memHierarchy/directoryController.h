@@ -49,6 +49,7 @@ class DirectoryController : public Component {
 	uint32_t    numTargets;
     uint32_t    blocksize;
 	uint32_t    targetCount;
+    uint32_t    cacheLineSize;
 
 	/* Range of addresses supported by this directory */
 	uint64_t    lookupBaseAddr;
