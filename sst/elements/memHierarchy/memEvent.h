@@ -326,7 +326,6 @@ public:
      * @param[in] data  Vector from which to copy data
      */
     void setPayload(std::vector<uint8_t>& _data) {
-        setSize(_data.size());
         payload_ = _data;
     }
     

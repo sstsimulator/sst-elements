@@ -356,6 +356,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
         responseEvent   = _event->makeResponse();
         if(cmd != GetX)
             responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+        printData(d_, "Response Data", &responseEvent->getPayload(), offset, _event->getSize());
     }
     else{
         responseEvent = _event->makeResponse(_newState);
@@ -370,7 +371,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
     addToOutgoingQueue(resp);
     
     d_->debug(_L3_,"TCC - Sending Response at cycle = %"PRIu64". Current Time = %"PRIu64", Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
-        
+    
 
     return true;
 }

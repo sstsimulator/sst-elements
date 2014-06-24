@@ -102,16 +102,13 @@ public:
         
         void setData(vector<uint8_t> _data, MemEvent* ev){
             /* Update whole cache line */
-            if (ev->getSize() == size_ || ev->getCmd() == GetSEx) {
-                std::copy(_data.begin(), _data.end(), this->data_.begin());
-                data_ = _data;
-            }
+            if (ev->getSize() == size_) data_ = _data;
+        
             /* Update a portion of the block */
             else {
-                Addr max    = baseAddr_ + size_;
-                Addr offset = (ev->getAddr() <= baseAddr_) ? 0 : ev->getAddr() - baseAddr_;
-                for(uint32_t i = 0 ; i < std::min(size_,ev->getSize()) ; i++ ) {
-                    assert((offset + i) < max);
+                assert(ev->getAddr() >= baseAddr_);
+                Addr offset = ev->getAddr() - baseAddr_;
+                for(uint32_t i = 0; i < ev->getSize() ; i++ ) {
                     data_[offset + i] = ev->getPayload()[i];
                 }
             }
@@ -123,7 +120,7 @@ public:
         void setState(BCC_MESIState _newState){
             d_->debug(_L6_, "Changing states: Old state = %s, New State = %s\n", BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
-            assert(userLock_ == 0);
+            if(state_ == I) clear();
         }
         
         bool valid() { return state_ != I; }
@@ -145,11 +142,12 @@ public:
         
         void clear(){
             vector<uint8_t>::iterator it;
-            //for(it = data_.begin(); it != data_.end(); it++){ *it = 0; }
+            for(it = data_.begin(); it != data_.end(); it++){ *it = 0; }
             assert(state_ == I);
             assert(userLock_ == 0);
-            assert(userLock_ == false);
-            LLSCAtomic_             = false;
+            assert(eventsWaitingForLock_ == false);
+            assert(data_.size() == size_);
+            LLSCAtomic_  = false;
         }
         
         void reset(){

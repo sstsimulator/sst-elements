@@ -65,12 +65,13 @@ public:
     
     void addToOutgoingQueue(Response& resp){
         list<Response>::iterator it;
-        for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
+        /*for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
             if(resp.deliveryTime < (*it).deliveryTime){
                 break;
             }
         }
-        outgoingEventQueue_.insert(it, resp);
+        outgoingEventQueue_.insert(it, resp);*/
+        outgoingEventQueue_.push_back(resp);
     }
     
     void setName(string _name){ name_ = _name; }

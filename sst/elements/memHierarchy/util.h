@@ -128,23 +128,24 @@ inline int log2Of(int x){
 }
 
 inline void printData(Output* dbg, string msg, vector<uint8_t>* data){
-    /*dbg->debug(_L8_,"%s: ", msg.c_str()); unsigned int  j = 0;
+    /*dbg->debug(_L10_,"%s: ", msg.c_str());
+    unsigned int  j = 0;
     for( std::vector<uint8_t>::const_iterator i = data->begin(); i != data->end(); ++i, ++j)
-        dbg->debug(_L8_,"%x", (int)*i);
-    dbg->debug(_L8_, "\n");
+        dbg->debug(_L10_,"%x", (int)*i);
+    dbg->debug(_L10_, "\n");
     */
-
 }
 
 inline void printData(Output* dbg, string msg, vector<uint8_t>* data, Addr offset, unsigned int size){
-    /*dbg->debug(_L8_,"%s: ", msg.c_str()); unsigned int  j = 0;
+    /*dbg->debug(_L10_,"%s: ", msg.c_str()); unsigned int  j = 0;
+    dbg->debug(_L10_,"size: %lu", data->size());
     for( std::vector<uint8_t>::const_iterator i = data->begin() + offset; i != data->end(); ++i, ++j){
         if(j < size){
-            dbg->debug(_L8_,"%x", (int)*i);
+            dbg->debug(_L10_,"%x", (int)*i);
         }
         else break;
     }
-    dbg->debug(_L8_,"\n");
+    dbg->debug(_L10_,"\n");
     */
 }
 

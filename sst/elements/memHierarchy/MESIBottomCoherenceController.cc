@@ -32,18 +32,19 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId){
     switch(state){
 	case S:
         inc_EvictionPUTSReqSent();
-		_wbCacheLine->setState(I);
         sendWriteback(PutS, _wbCacheLine);
+        _wbCacheLine->setState(I);
+
 		break;
 	case M:
         inc_EvictionPUTMReqSent();
-        _wbCacheLine->setState(I);
 		sendWriteback(PutM, _wbCacheLine);
+        _wbCacheLine->setState(I);
 		break;
     case E:
         inc_EvictionPUTEReqSent();
-		_wbCacheLine->setState(I);
         sendWriteback(PutE, _wbCacheLine);
+		_wbCacheLine->setState(I);
         break;
 	default:
 		_abort(MemHierarchy::CacheController, "Eviction: Not a valid state: %s \n", BccLineString[state]);
@@ -146,7 +147,8 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
     if(_cacheLine->inTransition()) return;  //TODO:  test this case, might need a response (ack)
     
     Command cmd = _event->getCmd();
-
+    sendResponse(_event, _cacheLine, _parentId, _mshrHit);
+    
     switch(cmd){
         case FetchInv:
             _cacheLine->setState(I);
@@ -160,7 +162,6 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
             _abort(MemHierarchy::CacheController, "Command not supported.\n");
 	}
     
-    sendResponse(_event, _cacheLine, _parentId, _mshrHit);
 }
 
 
@@ -204,7 +205,7 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
     assert(_cacheLine->getState() == M);
     
     if(cmd == GetX){
-        _cacheLine->setData(_event->getPayload(), _event);
+        if(L1_) _cacheLine->setData(_event->getPayload(), _event);
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
             assert(_cacheLine->isLocked());
             _cacheLine->decLock();
@@ -222,7 +223,6 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     
     if(state == M || state == E){
-        _cacheLine->setState(I);
         if(state == M){
             inc_InvalidatePUTMReqSent();
             sendWriteback(PutM, _cacheLine);
@@ -231,10 +231,11 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
             inc_InvalidatePUTEReqSent();
             sendWriteback(PutE, _cacheLine);
         }
+        _cacheLine->setState(I);
     }
     else if(state == S){
-        _cacheLine->setState(I);
         if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine);
+        _cacheLine->setState(I);
     }
     else _abort(MemHierarchy::CacheController, "BottomCC Invalidate: Not a valid state: %s \n", BccLineString[state]);
 }
@@ -250,8 +251,8 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
         else           sendWriteback(PutX, _cacheLine);
     }
     else if(state == S){
-        _cacheLine->setState(I);
         if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine);
+        _cacheLine->setState(I);
     }
     else _abort(MemHierarchy::CacheController, "Not a valid state: %s", BccLineString[state]);
 }
@@ -319,14 +320,12 @@ void MESIBottomCC::sendEvent(MemEvent* _event){
 }
 
 void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data){
-    Command cmd = _event->getCmd();
-    
     /* Create event to be forwarded */
     MemEvent* forwardEvent;
-    if(cmd == GetX) forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, *_data);
-    else            forwardEvent = new MemEvent((SST::Component*)owner_, _event->getAddr(), _baseAddr, cmd, _lineSize);
+    forwardEvent = new MemEvent(*_event);
+    forwardEvent->setSrc(((Component*)owner_)->getName());
     forwardEvent->setDst(nextLevelCacheName_);
-    forwardEvent->setFlag(_event->getFlags());
+    forwardEvent->setSize(_lineSize);
     
     /* Determine latency in cycles */
     uint64 deliveryTime;
@@ -355,9 +354,12 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
 
 
 void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine){
-    vector<uint8_t>* data = _cacheLine->getData();
-    MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, _cacheLine->getBaseAddr(), _cacheLine->getBaseAddr(), _cmd, *data);
+    MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, _cacheLine->getBaseAddr(), _cacheLine->getBaseAddr(), _cmd);
     newCommandEvent->setDst(nextLevelCacheName_);
+    if(_cmd == PutM || _cmd == PutX){
+        newCommandEvent->setSize(_cacheLine->getLineSize());
+        newCommandEvent->setPayload(*_cacheLine->getData());
+    }
     
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};

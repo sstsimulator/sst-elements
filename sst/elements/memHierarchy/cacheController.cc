@@ -39,7 +39,7 @@ using namespace SST::MemHierarchy;
 
 
 void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
-    bool done;
+    bool done = false;
     CacheLine* cacheLine;
     
     try{
@@ -61,7 +61,8 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
             done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Invalidate sharers, send respond to requestor if needed */
             postRequestProcessing(_event, cacheLine, done, _mshrHit);
         }
-    
+        if(cacheLine->isLocked()) assert(!cacheLine->getEventsWaitingForLock());
+
     }
     catch(stallException const& e){
         processRequestInMSHR(_baseAddr, _event);                        /* This request needs to stall until another pending request finishes.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
@@ -74,7 +75,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     CacheLine* cacheLine = getCacheLine(_baseAddr);
     
     if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
-
+    assert(!cacheLine->getEventsWaitingForLock());
     int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
@@ -362,8 +363,8 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
 void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine){
     Addr baseAddr = _cacheLine->getBaseAddr();
     if(_cacheLine->getEventsWaitingForLock() && !_cacheLine->isLocked()){
-        if(mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);
         _cacheLine->setEventsWaitingForLock(false);
+        if(mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);
     }
 }
 

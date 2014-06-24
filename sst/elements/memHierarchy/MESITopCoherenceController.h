@@ -78,7 +78,6 @@ public:
         timestamp_++;
 
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
-            assert( outgoingEventQueue_.front().deliveryTime == timestamp_);
             highNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
             outgoingEventQueue_.pop_front();
         }
