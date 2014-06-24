@@ -11,6 +11,7 @@
 
 #include <ctime>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <typeinfo>
 
@@ -25,6 +26,8 @@
 #include "Machine.h"
 #include "output.h"
 #include "TaskCommInfo.h"
+
+#include <iostream> //debug
 
 using namespace std;
 using namespace SST;
@@ -185,7 +188,7 @@ bool JobParser::newJobLine(std::string line)
        
     std::stringstream is(line);
     is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile;
-    
+
     if(estRunningTime <= 0){
         estRunningTime = runningTime;
     }
@@ -222,7 +225,7 @@ int** JobParser::readCommFile(std::string fileName, int procsNeeded)
 	} else if(reader.xdim != procsNeeded){
     	schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", fileName.c_str());
     }
-
+    
 	return matrix;
 }
 

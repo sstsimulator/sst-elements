@@ -67,8 +67,6 @@ namespace SST {
 				double getCoolingPower();
 				
 				long baselineL1Distance(Job* job); //returns baseline L1 distance of the given job on this machine
-
-                //std::string tostd::string();
         };
         
         /**

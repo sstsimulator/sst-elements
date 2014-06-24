@@ -23,19 +23,10 @@ namespace SST {
         class Machine{
             public:
 
-                Machine(int numProcs, double** D_matrix)
+                Machine(int numProcs, double** D_matrix = NULL)
                 {
-                    if(D_matrix == NULL){ //use default: no heat recirculation
-                        this -> D_matrix = new double*[numProcs];
-                        for(int i=0; i < numProcs; i++){
-                            this -> D_matrix[i] = new double[numProcs];
-                            for(int j=0; j < numProcs; j++){
-                                this -> D_matrix[i][j] = 0;
-                            }
-                        } 
-                    } else {
-                        this -> D_matrix = D_matrix;
-                    }
+                    this->D_matrix = D_matrix;
+                    this->numProcs = numProcs;
                 }
 
                 virtual ~Machine()
@@ -71,8 +62,6 @@ namespace SST {
                 int numProcs;          //total number of processors
                 int numAvail;          //number of available processors
         };
-
-        Machine* getMachine();     //defined in Main.cc
 
     }
 }

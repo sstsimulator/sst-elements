@@ -49,8 +49,6 @@ MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, double** D_matrix) : Mach
     xdim = Xdim;
     ydim = Ydim;
     zdim = Zdim;
-    numProcs = Xdim * Ydim;
-    numProcs *= Zdim;
     isFree.resize(xdim);
     for (int i = 0; i < xdim; i++) {
         isFree[i].resize(ydim);
@@ -186,7 +184,7 @@ double MeshMachine::getCoolingPower()
 
     double Tsup=15;
     double Tred=30;
-    double sum_inlet=0;
+    double sum_inlet;
     double max_inlet=0;
 
     double COP;
@@ -209,15 +207,18 @@ double MeshMachine::getCoolingPower()
         }
     }
 
-
-    for (j = 0; j < (int)allocation_index.size(); j++)
-    {
-        for (i = 0; i < (int)allocation_index.size(); i++)
+    if(D_matrix != NULL){
+        for (j = 0; j < (int)allocation_index.size(); j++)
         {
-            sum_inlet += D_matrix[j][i] * (Pidle + Putil * allocation_index[i]);
+            sum_inlet = 0;
+            for (i = 0; i < (int)allocation_index.size(); i++)
+            {
+                sum_inlet += D_matrix[j][i] * (Pidle + Putil * allocation_index[i]);
+            }
+            inlet_temperature.push_back(Tsup+sum_inlet);
         }
-        inlet_temperature.push_back(Tsup+sum_inlet);
-        sum_inlet = 0;
+    } else {
+        inlet_temperature.push_back(Tsup);
     }
 
     for (i = 0; i < (int)allocation_index.size(); i++)
@@ -353,31 +354,6 @@ long MeshMachine::baselineL1Distance(Job* job)
     
     return distance;
 }
-
-/*
-   std::string MeshMachine::tostd::string(){
-//returns human readable view of which processors are free
-//presented in layers by z-coordinate (0 first), with the
-//  (0,0) position of each layer in the bottom left
-//uses "X" and "." to denote free and busy processors respectively
-
-std::string retVal = "";
-for(int k=0; k<isFree[0][0].size(); k++) {
-for(int j=isFree[0].length-1; j>=0; j--) {
-for(int i=0; i<isFree.length; i++)
-if(isFree[i][j][k]) retVal += "X";
-else
-retVal += ".";
-retVal += "\n";
-}
-
-if(k != isFree[0][0].length-1)  //add blank line between layers
-retVal += "\n";
-}
-
-return retVal;
-}
-*/
 
 MeshLocation::MeshLocation(int X, int Y, int Z) 
 {

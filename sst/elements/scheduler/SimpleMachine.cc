@@ -28,7 +28,6 @@ using namespace SST::Scheduler;
 SimpleMachine::SimpleMachine(int procs, bool insimulationmachine, double** D_matrix) : Machine(procs, D_matrix) 
 {  
     schedout.init("", 8, ~0, Output::STDOUT);
-    numProcs = procs;
     simulationmachine = insimulationmachine;
     reset();
 }
