@@ -87,6 +87,7 @@ libscheduler_la_SOURCES = \
     taskMappers/SimpleTaskMapper.h
 
 EXTRA_DIST = \
+	simulations/DMatrix4_5_2 \
 	simulations/makeSDL.pl \
 	simulations/sdl-3.py
 
