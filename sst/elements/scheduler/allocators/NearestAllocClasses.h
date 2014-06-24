@@ -67,7 +67,7 @@ namespace SST {
 
                 bool operator()(MeshLocation* L1, MeshLocation* L2) 
                 {
-                    return pt -> L1DistanceTo(L1) < pt -> L1DistanceTo(L2);
+                    return pt -> L1DistanceTo(*L1) < pt -> L1DistanceTo(*L2);
                 }
                 std::string toString()
                 {
@@ -92,7 +92,7 @@ namespace SST {
 
                 bool operator()(MeshLocation* L1, MeshLocation* L2) 
                 {
-                    return pt -> LInfDistanceTo(L1) < pt -> LInfDistanceTo(L2);
+                    return pt -> LInfDistanceTo(*L1) < pt -> LInfDistanceTo(*L2);
                 }
 
                 //bool operator==(LInfComparator* other); 

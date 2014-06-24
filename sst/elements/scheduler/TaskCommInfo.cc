@@ -21,28 +21,15 @@ TaskCommInfo::TaskCommInfo( Job* job, int ** inCommMatrix)
 {
 	this->job = job;
 	job->taskCommInfo = this;
-	if(inCommMatrix == NULL){
-		//init commMatrix
-		int size = job->getProcsNeeded();
-		commMatrix = new int*[size];
-		for(int i=0; i<size; i++){
-			commMatrix[i] = new int[size];
-		}
-		//fill with all-to-all
-		for(int i=0; i<size; i++){
-			for(int j=i+1; j<size; j++){
-				commMatrix[j][i] = 1;
-			}
-		}
-	} else {
-		this->commMatrix = inCommMatrix;
-	}
+	this->commMatrix = inCommMatrix;
 }
 
 TaskCommInfo::~TaskCommInfo()
 {
-    for(int i = 0; i < job -> getProcsNeeded(); ++i) {
-        delete [] commMatrix[i];
+    if(commMatrix != NULL){
+        for(int i = 0; i < job -> getProcsNeeded(); ++i) {
+            delete [] commMatrix[i];
+        }
+        delete [] commMatrix;
     }
-    delete [] commMatrix;
 }

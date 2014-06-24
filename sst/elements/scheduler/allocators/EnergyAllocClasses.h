@@ -31,9 +31,9 @@ namespace SST {
         namespace EnergyHelpers {
             void roundallocarray(double * x, int processors, int numneeded, int* newx);
 
-            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, MeshMachine * machine);
+            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, const MeshMachine & machine);
 
-            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, MeshMachine * machine);
+            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, const MeshMachine & machine);
         }
     }
 }

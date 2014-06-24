@@ -39,13 +39,13 @@ namespace SST {
         class Allocator;
         class TaskMapper;
         class Statistics;
-        class AllocInfo;
+        class TaskMapInfo;
         class FST;
         class JobParser;
 
         // the maximum length of a job ID.  used primarily for job list parsing.
 
-        struct IAI {int i; AllocInfo *ai;};
+        struct ITMI {int i; TaskMapInfo *tmi;};
 
         class schedComponent : public SST::Component {
             public:
@@ -84,9 +84,9 @@ namespace SST {
                 void startNextJob();
                 void startJob(Job* job);
 
-                void logJobStart(IAI iai);
-                void logJobFinish(IAI iai);
-                void logJobFault(IAI iai, FaultEvent * faultEvent );
+                void logJobStart(ITMI itmi);
+                void logJobFinish(ITMI itmi);
+                void logJobFault(ITMI itmi, FaultEvent * faultEvent );
 
                 typedef std::vector<int> targetList_t;
 
@@ -104,7 +104,7 @@ namespace SST {
                 std::vector<SST::Link*> nodes;
                 std::vector<std::string> nodeIDs;
                 SST::Link* selfLink;
-                std::map<int, IAI> runningJobs;
+                std::map<int, ITMI> runningJobs;
                 std::vector<double>* timePerDistance; //used if we want to add time to the jobs proportional to the L1 distance
                 
                 std::string jobLogFileName;

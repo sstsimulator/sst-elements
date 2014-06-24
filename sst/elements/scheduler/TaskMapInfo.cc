@@ -28,6 +28,11 @@ TaskMapInfo::TaskMapInfo(AllocInfo* ai)
     taskCommInfo = ai->job->taskCommInfo;
 }
 
+TaskMapInfo::~TaskMapInfo()
+{
+    delete allocInfo;
+}
+
 void TaskMapInfo::insert(int taskInd, int nodeInd)
 {
     //check if taskInd is valid
@@ -60,18 +65,18 @@ void TaskMapInfo::insert(int taskInd, int nodeInd)
     taskMap.insert(taskMapType::value_type(taskInd, nodeInd));
 }
 
-taskMapType TaskMapInfo::getTaskMap()
+taskMapType* TaskMapInfo::getTaskMap()
 {
     //check if every task is mapped
     if((unsigned int) job->getProcsNeeded() != taskMap.size()){
-    	schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
+    	return NULL;
+    } else {
+        return &taskMap;
     }
-
-    return taskMap;
 }
 
 //Current version only checks if there is communication
-unsigned long TaskMapInfo::getTotalHopDist(Machine* machine)
+unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
 {
     unsigned long totalDist = 0;
 
@@ -80,24 +85,45 @@ unsigned long TaskMapInfo::getTotalHopDist(Machine* machine)
     	schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
     }
 
+    int** commMatrix = taskCommInfo->commMatrix;
+    //assume all-to-all communication if no commMatrix given
+    bool deleteCommMatrix = false;
+    if(commMatrix == NULL){
+        commMatrix = new int*[job->getProcsNeeded()];
+        for(int i = 0; i < job->getProcsNeeded(); i++){
+            commMatrix[i] = new int[job->getProcsNeeded()];
+            for(int j = 0; j < job->getProcsNeeded(); j++){
+                commMatrix[i][j] = 1;
+            }
+        }   
+        deleteCommMatrix = true; 
+    }    
+
     //iterate through all tasks
     int currentNode;
     int otherLoc;
     for(int taskIter = 0; taskIter < job->getProcsNeeded(); taskIter++){
         currentNode = taskMap.left.at(taskIter);
-        MeshLocation curLoc = MeshLocation(currentNode, (MeshMachine*) machine);
+        MeshLocation curLoc = MeshLocation(currentNode, machine);
         
         //iterate through other tasks and add distance for communication
         for(int otherTaskIter = 0 ; otherTaskIter < job->getProcsNeeded(); otherTaskIter++){
-            if(   (taskCommInfo->commMatrix[taskIter][otherTaskIter] != 0) 
-               || (taskCommInfo->commMatrix[otherTaskIter][taskIter] != 0) ){
+            if( commMatrix[taskIter][otherTaskIter] != 0 || 
+                commMatrix[otherTaskIter][taskIter] != 0 ){
                 otherLoc = allocInfo->nodeIndices[otherTaskIter];
-                MeshLocation otherNode = MeshLocation(otherLoc, (MeshMachine*) machine);
-                totalDist += curLoc.L1DistanceTo(&otherNode);
+                MeshLocation otherNode = MeshLocation(otherLoc, machine);
+                totalDist += curLoc.L1DistanceTo(otherNode);
             }
         }
     }
     totalDist = totalDist / 2; //remove duplicates
+    
+    if(deleteCommMatrix){
+        for(int i = 0; i < job->getProcsNeeded(); i++){
+            delete commMatrix[i];
+        } 
+        delete commMatrix;
+    }
 
     return totalDist;
 }

@@ -265,9 +265,10 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
             std::set<MeshLocation*, MeshLocation>* newBlockprocs = newBlock -> processors();
             std::set<MeshLocation*, MeshLocation>::iterator it = newBlockprocs -> begin();
             //processors() is sorted by MeshLocation comparator
+            MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
             for (int i = allocated; it != newBlockprocs -> end();i++){
                 retVal -> processors -> at(i) = *(it);
-                retVal -> nodeIndices[i] = (*it) -> toInt((MeshMachine*)machine);
+                retVal -> nodeIndices[i] = (*it) -> toInt(*mMachine);
                 it++;
                 allocated++;
             }

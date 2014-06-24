@@ -38,22 +38,17 @@
 
 using namespace SST::Scheduler;
 
-EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach)
+EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, MeshMachine* mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    MeshMachine* m = (MeshMachine*) mach;
-    if (NULL == m) {
-        schedout.fatal(CALL_INFO, 1, "Energy allocator requires a Mesh machine");
-    }
-
     configName = "Energy";
-    machine = m;
+    machine = mach;
 }
 
 
 std::string EnergyAllocator::getParamHelp()
 {
-    return "This allocator is currently only supported with a 4x5x2 mesh.\nThe energy constants must be changed in EnergyAllocator.cc";
+    return "This allocator requires d_matrix input.";
 }
 
 std::string EnergyAllocator::getSetupInfo(bool comment)
@@ -79,6 +74,8 @@ AllocInfo* EnergyAllocator::allocate(Job* job)
 //(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
+    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
+
     if (!canAllocate(*job, available)) {
         return NULL;
     }
@@ -86,21 +83,21 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
     MeshAllocInfo* retVal = new MeshAllocInfo(job);
 
     int numProcs = job -> getProcsNeeded();
-
+    
     //optimization: if exactly enough procs are free, just return them
     if ((unsigned int) numProcs == available -> size()) {
         for (int i = 0; i < numProcs; i++) {
             (*retVal -> processors)[i] = (*available)[i];
-            retVal -> nodeIndices[i] = (*available)[i] -> toInt((MeshMachine*)machine);
+            retVal -> nodeIndices[i] = (*available)[i] -> toInt(*mMachine);
         }
         delete available;
         return retVal;
     }
 
-    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, job -> getProcsNeeded(), (MeshMachine*)machine);
+    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, job -> getProcsNeeded(), *mMachine);
     for (int i = 0; i < numProcs; i++) {
         (*retVal->processors)[i] = ret->at(i);
-        retVal->nodeIndices[i] = ret->at(i)->toInt((MeshMachine*)machine);
+        retVal->nodeIndices[i] = ret->at(i)->toInt(*mMachine);
         delete (*available)[i];
     }
     delete available;

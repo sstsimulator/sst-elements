@@ -21,7 +21,7 @@ namespace SST {
 
         class AllocInfo;
         class Job;
-        class Machine;
+        class MeshMachine;
         class TaskCommInfo;
 
         class TaskMapInfo {
@@ -37,15 +37,15 @@ namespace SST {
 
 		        TaskMapInfo(AllocInfo* ai);
 
-		        ~TaskMapInfo() { };
+		        ~TaskMapInfo();
 
 		        //does not do the mapping; only assigns the given task
 		        //assumes no task migration, i.e., a task is mapped only once at the start of execution
 		        void insert(int taskInd, int nodeInd);
 
-		        taskMapType getTaskMap();
+		        taskMapType* getTaskMap();
 
-		        unsigned long getTotalHopDist(Machine* machine);
+		        unsigned long getTotalHopDist(const MeshMachine & machine) const;
         };
     }
 }

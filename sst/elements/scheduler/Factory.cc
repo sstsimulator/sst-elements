@@ -278,6 +278,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs)
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
+    MeshMachine* meshMach = dynamic_cast<MeshMachine*>(m);
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
@@ -340,10 +341,13 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             break;
         case ENERGY:
             schedout.debug(CALL_INFO, 4, 0, "Energy-Aware Allocator\n");
+            if(meshMach == NULL){
+                schedout.fatal(CALL_INFO, 1, "EnergyAllocator requires MeshMachine");
+            }
             //if(DEBUG) printf("MC1x1 Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("Energy");
-            return new EnergyAllocator(nearestparams, m);
+            return new EnergyAllocator(nearestparams, meshMach);
             break;
         case HYBRID:
             schedout.debug(CALL_INFO, 4, 0, "Hybrid Allocator\n");

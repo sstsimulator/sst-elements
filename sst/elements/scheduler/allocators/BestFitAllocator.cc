@@ -102,11 +102,15 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         return minSpanAllocate(job);
     } else {
         MeshAllocInfo* retVal = new MeshAllocInfo(job);
+        MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine); 
+        if(mMachine == NULL){
+            schedout.fatal(CALL_INFO, 1, "Best Fit Allocator requires MeshMachine");
+        }
         int j;
         for (j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
             if (j < num) {
                 retVal -> processors -> at(j) = intervals -> at(bestInterval) -> at(j);
-                retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt((MeshMachine*)machine);
+                retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt(*mMachine);
             } else {
                 delete intervals -> at(bestInterval) -> at(j);
             }

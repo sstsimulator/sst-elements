@@ -58,9 +58,7 @@ std::string SortedFreeListAllocator::getSetupInfo(bool comment)
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* SortedFreeListAllocator::allocate(Job* job) 
 {
-    //if (DEBUG) {
-    //    printf("Allocating %s \n", job -> toString().c_str());
-    //}
+    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s \n", job -> toString().c_str());
 
@@ -77,7 +75,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
     for (int i = 0; i < (int)freeprocs -> size(); i++) {
         if (i < num) {
             retVal -> processors -> at(i) = freeprocs->at(i);
-            retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt((MeshMachine*)machine);
+            retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt(*mMachine);
         } else {
             delete freeprocs -> at(i);
         }

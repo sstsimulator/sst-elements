@@ -67,6 +67,8 @@ std::string RandomAllocator::getSetupInfo(bool comment)
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* RandomAllocator::allocate(Job* job){
     if(!canAllocate(*job)) return NULL;
+    
+    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
     MeshAllocInfo* retVal = new MeshAllocInfo(job);
 
@@ -76,7 +78,7 @@ AllocInfo* RandomAllocator::allocate(Job* job){
     for (int i = 0; i < numProcs; i++) {
         int num = rand() % available -> size();
         (*retVal -> processors)[i] = (*available)[num];
-        retVal -> nodeIndices[i] = (*available)[num] -> toInt((MeshMachine*)machine);
+        retVal -> nodeIndices[i] = (*available)[num] -> toInt(*mMachine);
         available -> erase(available -> begin() + num);
     }
     for (int i = 0; i < (int)available -> size(); i++) {

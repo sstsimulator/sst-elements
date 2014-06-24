@@ -44,11 +44,9 @@ namespace SST {
 
                 std::string getSetupInfo(bool comment);
 
-                int getXDim();
-
-                int getYDim();
-
-                int getZDim();
+                int getXDim() const { return xdim; }
+                int getYDim() const { return ydim; }
+                int getZDim() const { return zdim; }
 
                 int getMachSize();
 
@@ -86,21 +84,21 @@ namespace SST {
                 int z;
 
                 MeshLocation(int X, int Y, int Z);
-                MeshLocation(int inpos, MeshMachine* m);
+                MeshLocation(int inpos, const MeshMachine & m);
 
-                MeshLocation(MeshLocation* in);
+                MeshLocation(const MeshLocation & in);
 
-                int L1DistanceTo(MeshLocation* other);
+                int L1DistanceTo(const MeshLocation & other) const;
 
-                int LInfDistanceTo(MeshLocation* other);
+                int LInfDistanceTo(const MeshLocation & other) const;
 
                 bool operator()(MeshLocation* loc1, MeshLocation* loc2);
 
-                bool equals(MeshLocation* other);
+                bool equals(const MeshLocation & other) const;
 
                 void print();
 
-                int toInt(MeshMachine* m);
+                int toInt(const MeshMachine & m);
 
                 std::string toString();
 

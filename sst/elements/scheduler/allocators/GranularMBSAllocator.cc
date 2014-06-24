@@ -235,7 +235,7 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
 //Merges two blocks
 Block* GranularMBSAllocator::mergeBlocks(Block* first, Block* second)
 {
-    if (first -> equals(second) || !first -> dimension -> equals(second -> dimension)){
+    if (first -> equals(second) || !first -> dimension -> equals(*(second -> dimension))){
         //error("merging two idential blocks, or blocks of different sizes");
         schedout.fatal(CALL_INFO, 1, "merging two idential blocks, or blocks of different sizes");
     }

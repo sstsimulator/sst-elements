@@ -40,7 +40,7 @@ namespace SST {
                 std::string configName;
 
             public:
-                EnergyAllocator(std::vector<std::string>* params, Machine* mach);
+                EnergyAllocator(std::vector<std::string>* params, MeshMachine* mach);
 
                 std::string getParamHelp();
 

@@ -72,6 +72,7 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
     //    printf("Allocating %s procs: ", job -> toString().c_str());
     //}
     schedout.fatal(CALL_INFO, 1, "Allocating %s procs: ", job -> toString().c_str());
+    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
     if (!canAllocate(*job)) {  //check if we have enough free processors
         return NULL;
@@ -90,9 +91,9 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
                 //if (DEBUG) {
                 //    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine));
                 //}
-                schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine));
+                schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt(*mMachine));
                 retVal -> processors -> at(j) = intervals -> at(i) -> at(j);
-                retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine);
+                retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt(*mMachine);
             }
             j++;
             while (j < (int)intervals -> at(i) -> size()) {

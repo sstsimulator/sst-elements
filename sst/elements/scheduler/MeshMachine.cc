@@ -79,21 +79,6 @@ std::string MeshMachine::getSetupInfo(bool comment)
     return ret.str();
 }
 
-int MeshMachine::getXDim() 
-{
-    return xdim;
-}
-
-int MeshMachine::getYDim() 
-{
-    return ydim;
-}
-
-int MeshMachine::getZDim() 
-{
-    return zdim;
-}
-
 int MeshMachine::getMachSize() 
 {
     return xdim*ydim*zdim;
@@ -185,7 +170,7 @@ long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
 
     for (int i = 0; i < num; i++) {
         for (int j = i + 1; j < num; j++) {
-            retVal += ((*locs)[i]) -> L1DistanceTo((*locs)[j]);
+            retVal += ((*locs)[i])->L1DistanceTo(*((*locs)[j]));
         }
     }
 
@@ -362,7 +347,7 @@ long MeshMachine::baselineL1Distance(Job* job)
     long distance = 0;
     for(int i = 0; i < (nodeCount - 1); i++){
         for(int j = (i + 1); j < nodeCount; j++){
-            distance += nodes[i].L1DistanceTo(&(nodes[j]));
+            distance += nodes[i].L1DistanceTo(nodes[j]);
         }
     }
     
@@ -402,36 +387,36 @@ MeshLocation::MeshLocation(int X, int Y, int Z)
     z = Z;
 }
 
-MeshLocation::MeshLocation(int inpos, MeshMachine* m) 
+MeshLocation::MeshLocation(int inpos, const MeshMachine & m) 
 {
     //return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
 
     schedout.init("", 8, 0, Output::STDOUT);
-    z = inpos / (m -> getXDim() * m -> getYDim());
-    inpos -= z * m -> getXDim() * m -> getYDim();
-    y = inpos / m -> getXDim();
-    inpos -= y * m -> getXDim();
+    z = inpos / (m.getXDim() * m.getYDim());
+    inpos -= z * m.getXDim() * m.getYDim();
+    y = inpos / m.getXDim();
+    inpos -= y * m.getXDim();
     x = inpos;
 }
 
 
-MeshLocation::MeshLocation(MeshLocation* in)
+MeshLocation::MeshLocation(const MeshLocation & in)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     //copy constructor
-    x = in -> x;
-    y = in -> y;
-    z = in -> z;
+    x = in.x;
+    y = in.y;
+    z = in.z;
 }
 
-int MeshLocation::L1DistanceTo(MeshLocation* other) 
+int MeshLocation::L1DistanceTo(const MeshLocation & other) const
 {
-    return ABS(x - other -> x) + ABS(y - other -> y) + ABS(z - other -> z);
+    return ABS(x - other.x) + ABS(y - other.y) + ABS(z - other.z);
 }
 
-int MeshLocation::LInfDistanceTo(MeshLocation* other) 
+int MeshLocation::LInfDistanceTo(const MeshLocation & other) const
 {
-    return MAX(ABS(x - other -> x), MAX(ABS(y - other -> y), ABS(z - other -> z)));
+    return MAX(ABS(x - other.x), MAX(ABS(y - other.y), ABS(z - other.z)));
 }
 
 bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2)
@@ -445,8 +430,9 @@ bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2)
     return loc1 -> x < loc2 -> x;
 }
 
-bool MeshLocation::equals(MeshLocation* other) {
-    return x == other -> x && y == other -> y && z == other -> z;
+bool MeshLocation::equals(const MeshLocation & other) const 
+{
+    return x == other.x && y == other.y && z == other.z;
 }
 
 void MeshLocation::print() {
@@ -455,8 +441,8 @@ void MeshLocation::print() {
 }
 
 
-int MeshLocation::toInt(MeshMachine* m){
-    return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
+int MeshLocation::toInt(const MeshMachine & m){
+    return x + m.getXDim() * y + m.getXDim() * m.getYDim() * z; 
 }
 
 std::string MeshLocation::toString(){

@@ -114,7 +114,7 @@ namespace SST {
                 bool operator()(Block*  b1, Block*  b2) const
                 {
                     if (b1 -> size() == b2 -> size()){
-                        if (b1 -> location -> equals(b2 -> location)){
+                        if (b1 -> location -> equals(*(b2->location))){
                             return (*b1 -> dimension)(b1 -> dimension, b2 -> dimension);
                         }
                         return (*b1 -> location)(b1 -> location, b2 -> location);
@@ -131,7 +131,7 @@ namespace SST {
                  */
                 bool equals (Block* b)
                 {
-                    return dimension -> equals(b -> dimension) && location -> equals(b -> location);
+                    return dimension -> equals(*(b->dimension)) && location -> equals(*(b->location));
                 }
 
                 std::string toString()

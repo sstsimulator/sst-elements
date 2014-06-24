@@ -53,7 +53,7 @@ vector<MeshLocation*>* FreeCenterGenerator::getCenters(vector<MeshLocation*>* av
     //returns vector containing contents of available (deep copy to match Intersection version)
     vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
     for (unsigned int x = 0; x < available -> size(); x++) {
-        retVal -> push_back(new MeshLocation((*available)[x]));
+        retVal -> push_back(new MeshLocation(*((*available)[x])));
     }
     return retVal;
 }
@@ -222,10 +222,10 @@ vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center
 
     //Skip to the outer shell
     int outerIndex = 0;	//The index of the first MeshLocation of the Outermost Shell
-    int outerShell = (*tempavail)[0] -> LInfDistanceTo(center);	// This gives us the shell number for a MeshLocation
+    int outerShell = (*tempavail)[0] -> LInfDistanceTo(*center);	// This gives us the shell number for a MeshLocation
     // one past the last one we would normally use
     for (int i=1; i < num; ++i){
-        int newOuterShell = (*tempavail)[i] -> LInfDistanceTo(center);
+        int newOuterShell = (*tempavail)[i]->LInfDistanceTo(*center);
         if (newOuterShell > outerShell){
             outerShell = newOuterShell;
             outerIndex = i;
@@ -243,7 +243,7 @@ vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center
     set<PointInfo*, PointInfo >* newouterProcs = new set<PointInfo*, PointInfo>(PIComp); //helps change the values within a set as this cannot be done directly
     for (unsigned int i = outerIndex;i < tempavail -> size();i++) {
         PointInfo* outerPoint = new PointInfo((*tempavail)[i], L1toInner((*tempavail)[i],innerProcs));
-        outerPoint -> tieBreaker = outerPoint -> point -> L1DistanceTo(center);
+        outerPoint -> tieBreaker = outerPoint->point->L1DistanceTo(*center);
         outerProcs -> insert(outerPoint);
     }
 
@@ -265,7 +265,7 @@ vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center
                 //instead of recalculating the whole thing, we just need to add another length to the total distance
                 //sets cannot have values changed so must erase and reinsert the pointinfo, using newouterProcs as an intermediary so the iterator isn't invalidated
                 PointInfo* iter = *info;
-                (iter) -> L1toGroup +=  (iter) -> point -> L1DistanceTo(first -> point);
+                (iter) -> L1toGroup +=  (iter)->point->L1DistanceTo(*(first->point));
                 newouterProcs -> insert(iter);
             }
             outerProcs -> clear();
@@ -292,7 +292,7 @@ int GreedyLInfPointCollector::L1toInner(MeshLocation* outer, vector<MeshLocation
 {
     int distance = 0;
     for ( vector<MeshLocation*>::iterator inner = innerProcs -> begin(); inner != innerProcs -> end(); ++inner)
-        distance += outer -> L1DistanceTo(*inner);
+        distance += outer -> L1DistanceTo(**inner);
     return distance;
 }
 
@@ -343,7 +343,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
     long wscore = 0;
     long bscore = 0;
 
-    long lastshell=center -> LInfDistanceTo((*avail)[num-1]);
+    long lastshell=center -> LInfDistanceTo(*((*avail)[num-1]));
     long lastlook=lastshell + maxshells;
     lastTieInfo="";
     long ydim = mesh -> getYDim();
@@ -351,7 +351,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
     //Add to score for nearby available processors.
     if(availFactor != 0) {
         for (unsigned int i = num; i < avail -> size(); i++) {
-            long dist = center -> LInfDistanceTo((*avail)[i]);
+            long dist = center -> LInfDistanceTo(*((*avail)[i]));
             if (dist > lastlook) {
                 break;
             } else {
@@ -366,7 +366,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
         long xdim = mesh -> getXDim();
         long zdim = mesh -> getZDim();
         for (int i = 0; i < num; i++) {
-            long dist = center -> LInfDistanceTo((*avail)[i]);
+            long dist = center -> LInfDistanceTo(*((*avail)[i]));
             //if(dist == lastshell)
             if( (((*avail)[i] -> x == 0 || (*avail)[i] -> x == xdim-1) && xdim > 2) || 
                 (((*avail)[i] -> y == 0 || (*avail)[i] -> y == ydim-1) && ydim > 2) || 
@@ -386,7 +386,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
         delete lc;
         for (vector<MeshLocation*>::iterator it = used -> begin(); it != used -> end(); ++it){
             MeshLocation* ml = *it;
-            long dist = center -> LInfDistanceTo(ml);
+            long dist = center -> LInfDistanceTo(*ml);
             if(dist > lastlook) {
                 break;
             } else if(dist == lastshell+1) {
@@ -446,7 +446,7 @@ pair<long,long>* LInfDistFromCenterScorer::valueOf(MeshLocation* center, vector<
 
     long retVal = 0;
     for (int i = 0; i < num; i++) 
-        retVal += center -> LInfDistanceTo((*procs)[i]);
+        retVal += center -> LInfDistanceTo(*((*procs)[i]));
 
     long tiebreak = tiebreaker -> getTiebreak(center,procs,num, mach);
 
@@ -477,7 +477,7 @@ pair<long,long>* L1DistFromCenterScorer::valueOf(MeshLocation* center, vector<Me
     //returns sum of L1 distances from center
     long retVal = 0;
     for (int i = 0; i < num; i++)
-        retVal += center -> L1DistanceTo(procs -> at(i));
+        retVal += center -> L1DistanceTo(*(procs->at(i)));
     return new pair<long,long>(retVal,0);
 }
 

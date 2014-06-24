@@ -56,7 +56,7 @@ namespace SST {
                 }
             }
 
-            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, MeshMachine* machine)
+            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, const MeshMachine & machine)
             {     
 
 #ifdef HAVE_GLPK
@@ -72,7 +72,7 @@ namespace SST {
                 int d_counter = 0;
                 for(int i=0;i<40;i++){
                     for(int j=0;j<40;j++){
-                        D[d_counter] = machine -> D_matrix[i][j];
+                        D[d_counter] = machine.D_matrix[i][j];
                         d_counter++;
                     }
                 }
@@ -192,7 +192,7 @@ namespace SST {
 #endif
             }
 
-            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, MeshMachine * machine)
+            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, const MeshMachine & machine)
             { 
                 std::vector<MeshLocation*>* ret = new std::vector<MeshLocation*>();
 

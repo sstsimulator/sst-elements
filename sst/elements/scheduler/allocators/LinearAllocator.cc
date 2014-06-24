@@ -858,10 +858,11 @@ AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
 
     //return the best allocation found
     MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
     for (int i = 0; i< (int)avail -> size(); i++) {
         if (i >= bestStart && i < bestStart + num) {
             retVal -> processors -> at(i  - bestStart) = avail-> at(i);
-            retVal -> nodeIndices[i  - bestStart] = avail-> at(i)->toInt((MeshMachine*)machine);
+            retVal -> nodeIndices[i  - bestStart] = avail-> at(i)->toInt(*mMachine);
         } else {
             delete avail -> at(i); //have to delete any not being used
         }
