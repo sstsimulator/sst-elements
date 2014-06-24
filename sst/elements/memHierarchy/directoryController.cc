@@ -162,7 +162,6 @@ bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BsAddr = x%"PRIx64", Src = %s\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str());
-    //dbg.debug(_L10_, "Processing(%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
     Command cmd = ev->getCmd();
     
     if(NACK == cmd) {
@@ -387,7 +386,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
 }
 
 void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
-    dbg.debug(_L10_, "Finishing Fetch. Writing data to memory");
+    dbg.debug(_L10_, "Finishing Fetch. Writing data to memory. \n");
 
     if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
 		entry->dirty = true;
@@ -437,7 +436,6 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 
 
 void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
-    dbg.debug(_L10_, "Entry 0x%"PRIx64" loaded.  Performing writeback of 0x%"PRIx64" for %s\n", entry->baseAddr, entry->activeReq->getAddr(), entry->activeReq->getSrc().c_str());
     assert(entry->dirty);
     assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
     entry->dirty = false;
@@ -508,7 +506,7 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
     entry->nextCommand = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn = "memory";
     entry->lastRequest = ev->getID();
-    dbg.debug(_L10_, "Requesting data from memory at 0x%"PRIx64"(%"PRIu64", %d)\n", entry->baseAddr, ev->getID().first, ev->getID().second);
+    dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%"PRIx64", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     memLink->send(ev);
     ++dataReads;
 }
@@ -571,12 +569,11 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
 
 MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     Addr localBaseAddr = convertAddressToLocalAddress(data_event->getBaseAddr());
-    assert(data_event->getPayload().size() == 64);
 	MemEvent *ev = new MemEvent(this, localBaseAddr, localBaseAddr, PutM, cacheLineSize);
     assert(data_event->getPayload().size() == 64);
     ev->setSize(data_event->getPayload().size());
     ev->setPayload(data_event->getPayload());
-    dbg.debug(_L10_, "Writing back data to 0x%"PRIx64"(%"PRIu64", %d)\n", data_event->getAddr(), ev->getID().first, ev->getID().second);
+    dbg.debug(_L10_, "Writing back data. Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u\n", CommandString[data_event->getCmd()], data_event->getBaseAddr(), ev->getSize());
 
 	memLink->send(ev);
     ++dataWrites;
@@ -606,7 +603,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
 
 void DirectoryController::sendResponse(MemEvent *ev){
-    dbg.debug(_L10_, "Sending %s 0x%"PRIx64" to %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getDst().c_str());
+    dbg.debug(_L10_, "Sending Response. Cmd = %s, BaseAddr = 0x%"PRIx64", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
 	network->send(ev);
 }
 
