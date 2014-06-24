@@ -137,6 +137,8 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
         case SimpleMem::Request::WriteResp:
             pkt->cmd = ::MemCmd::WriteResp;
             pkt->isResponse = true;
+            pkt->req.flags |= LLSC;
+            if(e)
             break;
         default:
             _abort(Gem5Converter, "Trying to map SST cmd %d to GEM5\n", e->cmd);

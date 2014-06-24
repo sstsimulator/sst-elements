@@ -284,8 +284,8 @@ public:
     void setStoreConditional(){ storeConditional_ = true;}
     bool isStoreConditional(){ return storeConditional_; }
     
-    void setAtomic(){ atomic_ = true; }
-    bool isAtomic(){ return atomic_; }
+    void setAtomic(bool b){ b ? setFlag(MemEvent::F_LLSC) : clearFlag(MemEvent::F_LLSC); }
+    bool isAtomic(){ return queryFlag(MemEvent::F_LLSC); }
     
     bool isHighNetEvent(){
         if(cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx){

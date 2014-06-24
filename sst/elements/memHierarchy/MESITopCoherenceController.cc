@@ -342,37 +342,31 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
 }
 
 
-bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool atomic){
+bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
     if(_event->isPrefetch()) return true;
     
-    MemEvent *responseEvent;
-    Command cmd = _event->getCmd();
-    assert(cmd == GetS || cmd == GetX || cmd == GetSEx);
-    Addr offset = 0, base = 0;
-    
-    if(L1_){
-        base            = (_event->getAddr()) & ~(lineSize_ - 1);
-        offset          = _event->getAddr() - base;
-        responseEvent   = _event->makeResponse();
-        if(cmd != GetX)
-            responseEvent->setPayload(_event->getSize(), &_data->at(offset));
-        printData(d_, "Response Data", &responseEvent->getPayload(), offset, _event->getSize());
-    }
-    else{
-        responseEvent = _event->makeResponse(_newState);
-        responseEvent->setPayload(*_data);
-    }
-    
+    Command cmd = _event->getCmd();        assert(cmd == GetS || cmd == GetX || cmd == GetSEx);
+    MemEvent * responseEvent = _event->makeResponse(_newState);
     responseEvent->setDst(_event->getSrc());
-    if(atomic) responseEvent->setAtomic();
+
+    if(L1_){
+        /* Only return the desire word */
+        Addr base    = (_event->getAddr()) & ~(lineSize_ - 1);
+        Addr offset  = _event->getAddr() - base;
+        if(cmd != GetX) responseEvent->setPayload(_event->getSize(), &_data->at(offset));
+        else{
+            /* If write (GetX) and LLSC set, then check if operation was Atomic */
+            if(_event->isAtomic() && _finishedAtomically) responseEvent->setAtomic(true);
+            else responseEvent->setAtomic(false);
+        }
+    }
+    else responseEvent->setPayload(*_data);
     
     uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
     d_->debug(_L3_,"TCC - Sending Response at cycle = %"PRIu64". Current Time = %"PRIu64", Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
-    
-
     return true;
 }
 
