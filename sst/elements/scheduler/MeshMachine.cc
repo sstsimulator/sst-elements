@@ -77,7 +77,7 @@ std::string MeshMachine::getSetupInfo(bool comment)
     return ret.str();
 }
 
-int MeshMachine::getMachSize() 
+int MeshMachine::getMachSize() const
 {
     return xdim*ydim*zdim;
 }
@@ -95,7 +95,7 @@ void MeshMachine::reset()
 }
 
 //returns list of free processors
-std::vector<MeshLocation*>* MeshMachine::freeProcessors() 
+std::vector<MeshLocation*>* MeshMachine::freeProcessors() const
 {
     std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
@@ -111,7 +111,7 @@ std::vector<MeshLocation*>* MeshMachine::freeProcessors()
 }
 
 //returns list of used processors
-std::vector<MeshLocation*>* MeshMachine::usedProcessors() 
+std::vector<MeshLocation*>* MeshMachine::usedProcessors() const
 {
     std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
@@ -157,12 +157,14 @@ void MeshMachine::deallocate(AllocInfo* allocInfo) {
     numAvail += procs -> size();
 }
 
-long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) {
+long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
+{
     //returns total pairwise L_1 distance between all array members
     return pairwiseL1Distance(locs, locs -> size());
 }
 
-long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) {
+long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) const
+{
     //returns total pairwise L_1 distance between 1st num members of array
     long retVal = 0;
 
@@ -175,79 +177,58 @@ long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
   return retVal;
 }
 
-double MeshMachine::getCoolingPower() 
+double MeshMachine::getCoolingPower() const
 {
     int Putil=2000;
     int Pidle=1000;
-    int busynodes=0;
-    int i, j, k;
 
-    double Tsup=15;
-    double Tred=30;
-    double sum_inlet;
-    double max_inlet=0;
+    double Tred=30;  
 
-    double COP;
-    double Pcompute;
-    double Pcooling;
-    double Scaling_Factor;
+    MeshLocation* tempLoc = NULL;
+    int busynodes = 0;
+    double max_inlet = 0;
+    double sum_inlet = 0;
 
-    std::vector<bool> allocation_index;
-    std::vector<double> inlet_temperature;
-
-    for (k = 0; k < (int)isFree[0][0].size(); k++) {
-        for (i = (int)isFree.size() - 1; i >= 0; i--) {
-            for (j = (int)isFree[0].size() - 1; j >= 0; j--) {
-                if (isFree[i][j][k]) {
-                    allocation_index.push_back(0);
-                } else {
-                    allocation_index.push_back(1);
-                }
-            }
+    //max inlet temp and number of busy nodes
+    for (int i = 0; i < getNumProcs(); i++) {
+        tempLoc = new MeshLocation(i, *this);
+        if( !isFree[tempLoc->x][tempLoc->y][tempLoc->z] ){
+            busynodes++;
         }
-    }
-
-    if(D_matrix != NULL){
-        for (j = 0; j < (int)allocation_index.size(); j++)
-        {
+        if(D_matrix != NULL){
             sum_inlet = 0;
-            for (i = 0; i < (int)allocation_index.size(); i++)
+            for (int j = 0; j < getNumProcs(); j++)
             {
-                sum_inlet += D_matrix[j][i] * (Pidle + Putil * allocation_index[i]);
+                sum_inlet += D_matrix[i][j] * (Pidle + Putil * (!isFree[tempLoc->x][tempLoc->y][tempLoc->z]));
             }
-            inlet_temperature.push_back(Tsup+sum_inlet);
+            if(sum_inlet > max_inlet){
+                max_inlet = sum_inlet;
+            }
         }
-    } else {
-        inlet_temperature.push_back(Tsup);
-    }
-
-    for (i = 0; i < (int)allocation_index.size(); i++)
-    {
-        if (max_inlet < inlet_temperature[i]) {
-            max_inlet = inlet_temperature[i];
-        }
-        if (allocation_index[i]) {
-            busynodes++;	
-        }
+        delete tempLoc;
     }
 
     // Total power of data center
-    Pcompute = busynodes * Putil + allocation_index.size() * Pidle;
+    double Pcompute = busynodes * Putil + getNumProcs() * Pidle;
 
     // Supply temperature
-    Tsup = Tsup + Tred-max_inlet;
+    double Tsup;
+    if(D_matrix != NULL){
+        Tsup = Tred - max_inlet;
+    } else {
+        Tsup = Tred;
+    }
 
     // Coefficient of performance
-    COP = 0.0068 * Tsup * Tsup + 0.0008 * Tsup + 0.458;
+    double COP = 0.0068 * Tsup * Tsup + 0.0008 * Tsup + 0.458;
 
     // Cooling power in kW
-    Scaling_Factor = 214.649 / 120;
-    Pcooling = 0.001 * Pcompute * (1 / COP) / Scaling_Factor;
+    double Pcooling = 0.001 * Pcompute * (1 / COP);
 
     return  Pcooling;
 }
 
-long MeshMachine::baselineL1Distance(Job* job)
+long MeshMachine::baselineL1Distance(Job* job) const
 {
     int numProcs = job -> getProcsNeeded();
     

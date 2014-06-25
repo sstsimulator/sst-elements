@@ -48,25 +48,25 @@ namespace SST {
                 int getYDim() const { return ydim; }
                 int getZDim() const { return zdim; }
 
-                int getMachSize();
+                int getMachSize() const;
 
                 void reset();
 
-                std::vector<MeshLocation*>* freeProcessors();
+                std::vector<MeshLocation*>* freeProcessors() const;
 
-                std::vector<MeshLocation*>* usedProcessors();
+                std::vector<MeshLocation*>* usedProcessors() const;
 
                 void allocate(AllocInfo* allocInfo);
 
                 void deallocate(AllocInfo* allocInfo);
 
-                long pairwiseL1Distance(std::vector<MeshLocation*>* locs);
+                long pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
 
-                long pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num);
+                long pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) const;
 
-				double getCoolingPower();
+				double getCoolingPower() const;
 				
-				long baselineL1Distance(Job* job); //returns baseline L1 distance of the given job on this machine
+				long baselineL1Distance(Job* job) constz; //returns baseline L1 distance of the given job on this machine
         };
         
         /**
