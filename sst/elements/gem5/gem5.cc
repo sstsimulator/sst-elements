@@ -78,7 +78,7 @@ Gem5Comp::Gem5Comp(ComponentId_t id, Params &params) :
     splitCommandArgs(gem5DbgFlags, flags);
     for ( size_t i = 0 ; i < flags.size() ; i++ ) {
         dbg.output(CALL_INFO, "  Setting Debug Flag [%s]\n", flags[i]);
-        setDebugFlag(flags[i]);
+        //setDebugFlag(flags[i]);
     }
 
     initPython(args.size(), &args[0]);
