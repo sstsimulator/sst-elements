@@ -66,7 +66,7 @@ namespace SST {
 
 				double getCoolingPower() const;
 				
-				long baselineL1Distance(Job* job) constz; //returns baseline L1 distance of the given job on this machine
+				long baselineL1Distance(Job* job) const; //returns baseline L1 distance of the given job on this machine
         };
         
         /**
