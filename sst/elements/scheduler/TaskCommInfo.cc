@@ -17,11 +17,14 @@
 
 using namespace SST::Scheduler;
 
-TaskCommInfo::TaskCommInfo( Job* job, int ** inCommMatrix)
+TaskCommInfo::TaskCommInfo( Job* job, int ** inCommMatrix, int xdim, int ydim, int zdim)
 {
 	this->job = job;
 	job->taskCommInfo = this;
 	this->commMatrix = inCommMatrix;
+    this->xdim = xdim;
+	this->ydim = ydim;
+	this->zdim = zdim;
 }
 
 TaskCommInfo::~TaskCommInfo()

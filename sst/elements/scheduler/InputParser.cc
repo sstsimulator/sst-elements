@@ -185,9 +185,10 @@ bool JobParser::newJobLine(std::string line)
     unsigned long runningTime = 0;
     unsigned long estRunningTime = 0;
     string communicationFile = "";
-       
+    int x = 0, y = 0, z = 0;
+
     std::stringstream is(line);
-    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile;
+    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile >> x >> y >> z;
 
     if(estRunningTime <= 0){
         estRunningTime = runningTime;
@@ -200,9 +201,16 @@ bool JobParser::newJobLine(std::string line)
     TaskCommInfo* tci;
     if(communicationFile.empty()){
         tci = new TaskCommInfo(j);
+    } else if(communicationFile.compare("mesh") == 0) {
+    	if(x*y*z != procsNeeded) {
+    		schedout.fatal(CALL_INFO, 1, "The communication mesh structure does not match the number of processors in line:\n%s\n",
+    		                              line.c_str());
+    	} else {
+    		tci = new TaskCommInfo(j, buildMeshComm(x, y, z), x, y, z);
+    	}
     } else {
-    	communicationFile = fileNamePath.remove_leaf().string() + communicationFile;//get file name as a path
-        tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
+    	//communicationFile = fileNamePath.remove_leaf().string() + communicationFile;//get file name as a path
+    	tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
     }
     
     //validate
@@ -222,6 +230,48 @@ int** JobParser::readCommFile(std::string fileName, int procsNeeded)
     	schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", fileName.c_str());
     }    
 	return matrix;
+}
+
+int** JobParser::buildMeshComm(int xdim, int ydim, int zdim)
+{
+	int ** outMatrix;
+	//initialize matrix
+	int size = xdim * ydim * zdim;
+	outMatrix = new int*[size];
+	for(int i=0; i < size; i++){
+		outMatrix[i] = new int[size];
+		for(int j=0; j < size; j++){
+			outMatrix[i][j] = 0;
+		}
+	}
+	//index dimensions of matrix elements
+	int x_ind[size];
+	int y_ind[size];
+	int z_ind[size];
+	for(int i=0; i<size; i++){
+		x_ind[i] = i % xdim;
+		y_ind[i] = (i / xdim) % ydim;
+		z_ind[i] = i / (xdim*ydim);
+	}
+	//set neighbor communication
+	for(int i=0; i<size; i++){
+		//x_dim
+		if(x_ind[i] != 0)
+			outMatrix[i][i-1] = 1;
+		if((x_ind[i] + 1) != xdim)
+			outMatrix[i+1][i] = 1;
+		//y_dim
+		if(y_ind[i] != 0)
+			outMatrix[i][i-xdim] = 1;
+		if((y_ind[i] + 1) != ydim)
+			outMatrix[i+xdim][i] = 1;
+		//z_dim
+		if(z_ind[i] != 0)
+			outMatrix[i][i-(xdim*ydim)] = 1;
+		if((z_ind[i] + 1) != zdim)
+			outMatrix[i+(xdim*ydim)][i] = 1;
+	}
+	return outMatrix;
 }
 
 bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )

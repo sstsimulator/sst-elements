@@ -22,12 +22,13 @@ namespace SST {
         class TaskCommInfo {
 	        public:
                 //defaults to all-to-all communication
-                TaskCommInfo(Job* job, int ** inCommMatrix = NULL);
+                TaskCommInfo(Job* job, int ** inCommMatrix = NULL, int xdim = 0, int ydim = 0, int zdim = 0);
 
                 ~TaskCommInfo();
 
                 int** commMatrix;
                 Job* job;
+                int xdim, ydim, zdim;
         };
     }
 }
