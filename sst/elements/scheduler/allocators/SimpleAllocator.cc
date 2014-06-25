@@ -12,8 +12,6 @@
 #include "sst_config.h"
 #include "SimpleAllocator.h"
 
-#include <string> 
-
 #include "sst/core/serialization.h"
 
 #include "AllocInfo.h"

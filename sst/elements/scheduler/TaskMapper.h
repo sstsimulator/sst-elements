@@ -32,6 +32,8 @@ namespace SST {
 		        TaskMapper(Machine* machine) { this -> machine = machine; }
 
 		        virtual ~TaskMapper() {};
+		        
+		        virtual std::string getSetupInfo(bool comment) const = 0;
 
 		        //returns task mapping info of a single job; does not map the tasks
 		        virtual TaskMapInfo* mapTasks(AllocInfo* allocInfo) = 0;

@@ -25,6 +25,7 @@
 #include "Scheduler.h"
 #include "allocators/SimpleAllocator.h"
 #include "SimpleMachine.h"
+#include "taskMappers/SimpleTaskMapper.h"
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -96,6 +97,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     Scheduler* sched = insched -> copy(running, toRun);
     Machine* mach = new SimpleMachine(inmach -> getNumProcs(), true, NULL);
     Allocator* alloc = new SimpleAllocator((SimpleMachine*) mach);
+    TaskMapper* taskMap = new SimpleTaskMapper(mach);
     string nullstr = "";
     char nullcstr[] = "";
     map<Job*, AllocInfo*>* jobToAi = new map<Job*, AllocInfo*>();
@@ -107,7 +109,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
         jobToAi -> insert(pair<Job*, AllocInfo*>(running -> at(x), ai));
     }
 
-    Statistics* stats = new Statistics(mach, sched, alloc, nullstr.c_str(), nullcstr, true, this);
+    Statistics* stats = new Statistics(mach, sched, alloc, taskMap, nullstr.c_str(), nullcstr, true, this);
 
     //have to keep track of each job's end time
     bool(*compeventsptr)(Job*, Job*) = compevents;
@@ -216,6 +218,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     delete sched;
     delete mach;
     delete alloc;
+    delete taskMap;
     delete stats;
     delete endtimes;
     for (map<Job*, AllocInfo*>::iterator it = jobToAi->begin(); it != jobToAi -> end(); it++) {

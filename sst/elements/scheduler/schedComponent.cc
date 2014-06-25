@@ -162,11 +162,11 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
     if (NULL == dynamic_cast<MeshMachine*>(machine)) {
         char timestring[] = "time";
-        stats = new Statistics(machine, scheduler, theAllocator, trace, timestring, false, calcFST);
+        stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
     } else {
         //the alloc output only works on a mesh because it calculates L1 distances
         char timestring[] = "time,alloc";
-        stats = new Statistics(machine, scheduler, theAllocator, trace, timestring, false, calcFST);
+        stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
     }
 
     useYumYumSimulationKill = params.find("useYumYumSimulationKill") != params.end();

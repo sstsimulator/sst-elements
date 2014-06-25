@@ -60,7 +60,7 @@ std::string EnergyAllocator::getSetupInfo(bool comment)
         com="";
     }
     std::stringstream ret;
-    ret <<com<<"Energy Allocator ("<<configName<<")\n";
+    ret <<com<<"Energy Allocator ("<<configName<<")";
     return ret.str();
 }
 

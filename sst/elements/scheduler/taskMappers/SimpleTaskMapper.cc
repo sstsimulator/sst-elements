@@ -18,6 +18,17 @@
 
 using namespace SST::Scheduler;
 
+std::string SimpleTaskMapper::getSetupInfo(bool comment) const
+{
+    std::string com;
+    if (comment) {
+        com="# ";
+    } else  {
+        com="";
+    }
+    return com + "Simple Task Mapper";
+}
+
 TaskMapInfo* SimpleTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);

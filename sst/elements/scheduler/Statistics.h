@@ -31,10 +31,11 @@ namespace SST {
         class FST;
         class Machine;
         class Scheduler;
+        class TaskMapper;
 
         class Statistics {
             public:
-                Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
+                Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, TaskMapper* taskMap,
                            std::string baseName, char* logList, bool simulation, FST* incalcFST);
 
                 virtual ~Statistics();

@@ -201,11 +201,7 @@ bool JobParser::newJobLine(std::string line)
     if(communicationFile.empty()){
         tci = new TaskCommInfo(j);
     } else {
-        //get file name as a path
-        unsigned found = fileName.find_last_of("/");
-        if(found != string::npos){
-            communicationFile = fileName.substr(found+1) + communicationFile;
-        }
+    	communicationFile = fileNamePath.remove_leaf().string() + communicationFile;//get file name as a path
         tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
     }
     
@@ -224,8 +220,7 @@ int** JobParser::readCommFile(std::string fileName, int procsNeeded)
 		schedout.fatal(CALL_INFO, 1, "Given matrix in file %s is not a square matrix\n", fileName.c_str());
 	} else if(reader.xdim != procsNeeded){
     	schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", fileName.c_str());
-    }
-    
+    }    
 	return matrix;
 }
 

@@ -14,6 +14,8 @@
 
 #include "TaskMapper.h"
 
+#include <string>
+
 namespace SST {
     namespace Scheduler {
 
@@ -23,10 +25,13 @@ namespace SST {
         class TaskCommInfo;
 
         class SimpleTaskMapper : public TaskMapper {
+        
 	        public:
+	        
 		        SimpleTaskMapper(Machine* mach) : TaskMapper(mach) { };
+		        
+		        std::string getSetupInfo(bool comment) const;
 
-		        //mach is discarded
 		        TaskMapInfo* mapTasks(AllocInfo* allocInfo);
         };
     }

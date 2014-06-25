@@ -27,6 +27,7 @@
 #include "misc.h"
 #include "output.h"
 #include "Scheduler.h"
+#include "TaskMapper.h"
 
 using namespace std;
 using namespace SST::Scheduler;
@@ -74,7 +75,7 @@ void Statistics::printLogList(ostream& out)
     }
 }
 
-Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
+Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, TaskMapper* taskMap,
                        string baseName, char* logList, bool simulation, FST* incalcFST) 
 {
     this -> simulation = simulation;
@@ -107,7 +108,8 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
         " started " + asctime(structured) + "# [Machine] \n" +
         machine -> getSetupInfo(true) + "\n# [Scheduler] \n" +
         sched -> getSetupInfo(true) + "\n# [Allocator] \n" +
-        alloc -> getSetupInfo(true) + "\n";
+        alloc -> getSetupInfo(true) + "\n# [TaskMapper] \n" +
+        taskMap -> getSetupInfo(true) + "\n";
 
     record = new bool[numSupportedLogs];
     for (int i = 0; i < numSupportedLogs; i++) {
