@@ -50,6 +50,8 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
     return false;
 }
 
+
+
 /*-------------------------------------------------------------------------------------
  * MESI Top Coherence Controller Implementation
  *-------------------------------------------------------------------------------------*/
@@ -91,6 +93,7 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
 }
 
 
+
 void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(ccLine->isShareless() && !ccLine->ownerExists()) return;
@@ -109,6 +112,8 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
     }
 }
 
+
+
 void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
     CCLine* ccLine = ccLines_[_lineIndex];
     assert(!CacheArray::CacheLine::inTransition(_state));
@@ -125,6 +130,7 @@ void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
                         BccLineString[_state], ccLine->ownerExists() ? "True" : "False");
     }
 }
+
 
 
 int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
@@ -185,10 +191,14 @@ void MESITopCC::sendEvictionInvalidates(int _lineIndex){
     evictionInvReqsSent_ += invalidatesSent;
 }
 
+
+
 void MESITopCC::sendCCInvalidates(int _lineIndex, string _requestingNode){
     int invalidatesSent = sendInvalidates(_lineIndex, _requestingNode);
     invReqsSent_ += invalidatesSent;
 }
+
+
 
 void MESITopCC::sendInvalidateX(int _lineIndex){
     CCLine* ccLine = ccLines_[_lineIndex];
@@ -246,6 +256,8 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     }
 }
 
+
+
 void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     BCC_MESIState state   = _cacheLine->getState();
     int lineIndex         = _cacheLine->getIndex();
@@ -292,6 +304,8 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
 
 }
 
+
+
 void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
@@ -308,6 +322,8 @@ void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _
 
 }
 
+
+
 void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
     if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
     else{
@@ -319,6 +335,8 @@ void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
     else                       _ret = false;
 }
 
+
+
 void MESITopCC::printStats(int _stats){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
@@ -326,6 +344,7 @@ void MESITopCC::printStats(int _stats){
     dbg->output(C,"- Invalidates sent (non-eviction): %u\n", invReqsSent_);
     dbg->output(C,"- Invalidates sent due to evictions: %u\n", evictionInvReqsSent_);
 }
+
 
 
 bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
@@ -337,9 +356,11 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 }
 
 
+
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
     return sendResponse(_event, _newState, _data, _mshrHit, false);
 }
+
 
 
 bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
@@ -371,6 +392,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState,
 }
 
 
+
 void TopCacheController::sendNACK(MemEvent *_event){
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
     
@@ -381,6 +403,7 @@ void TopCacheController::sendNACK(MemEvent *_event){
     NACKsSent_++;
     d_->debug(_L3_,"TCC - Sending NACK\n");
 }
+
 
 
 void TopCacheController::sendEvent(MemEvent *_event){
@@ -405,6 +428,8 @@ int MESITopCC::lowNetworkNodeLookupByName(const std::string& _name){
 	}
 	return id;
 }
+
+
 
 std::string MESITopCC::lowNetworkNodeLookupById(int _id){
     std::map<int, string>::iterator it = lowNetworkIdMap_.find(_id);

@@ -74,12 +74,12 @@ Gem5Comp::Gem5Comp(ComponentId_t id, Params &params) :
     }
 
     std::vector<char*> flags;
-    //std::string gem5DbgFlags = params.find_string("gem5DebugFlags", "");
-    //splitCommandArgs(gem5DbgFlags, flags);
-    //for ( size_t i = 0 ; i < flags.size() ; i++ ) {
-    //    dbg.output(CALL_INFO, "  Setting Debug Flag [%s]\n", flags[i]);
-    //    setDebugFlag(flags[i]);
-    //}
+    std::string gem5DbgFlags = params.find_string("gem5DebugFlags", "");
+    splitCommandArgs(gem5DbgFlags, flags);
+    for ( size_t i = 0 ; i < flags.size() ; i++ ) {
+        dbg.output(CALL_INFO, "  Setting Debug Flag [%s]\n", flags[i]);
+        setDebugFlag(flags[i]);
+    }
 
     initPython(args.size(), &args[0]);
 

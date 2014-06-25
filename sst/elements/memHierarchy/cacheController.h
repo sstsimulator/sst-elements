@@ -217,9 +217,6 @@ private:
     /** Find cache line by line index */
     inline CacheLine* getCacheLine(int lineIndex);
 
-    /** Simply checks if line index equals -1 */
-    inline bool isCacheLineAllocated(int lineIndex);
-
     /** Get Cache Coherency line */
     inline TopCacheController::CCLine* getCCLine(int index);
 
@@ -247,7 +244,7 @@ private:
     void pMembers();
     
     /** Udpate the upgrade latency stats */
-    void updateUpgradeLatencyAverage(MemEvent* origMemEvent);
+    void updateUpgradeLatencyAverage(SimTime_t start);
     
     /** Get the front elevemnt of a MSHR entry */
     MemEvent* getOrigReq(const vector<mshrType> _mshrEntry);

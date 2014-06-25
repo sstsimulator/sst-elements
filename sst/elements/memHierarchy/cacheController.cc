@@ -71,6 +71,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
 }
 
 
+
 void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
     CacheLine* cacheLine = getCacheLine(_baseAddr);
     
@@ -92,6 +93,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
 }
 
 
+
 void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
     CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
     
@@ -102,6 +104,7 @@ void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
 
     delete _responseEvent;
 }
+
 
 
 void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
@@ -142,11 +145,10 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
     }
     
     /* OK to change addr of topCC cache line, OK to replace cache line  */
-    replaceCacheLine(wbCacheLine->getIndex(), _newCacheLineIndex, _baseAddr);
-    if(!isCacheLineAllocated(_newCacheLineIndex)) assert(0);
-    
+    replaceCacheLine(wbCacheLine->getIndex(), _newCacheLineIndex, _baseAddr);    
     assert(!mshr_->exists(_baseAddr));
 }
+
 
 
 CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
@@ -154,6 +156,7 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
     CacheLine* wbCacheLine = cf_.cacheArray_->lines_[wbLineIndex];    assert(wbCacheLine);
     return wbCacheLine;
 }
+
 
 
 void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
@@ -173,6 +176,7 @@ void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requ
 }
 
 
+
 bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
     CCLine* wbCCLine = topCC_->getCCLine(_wbCacheLine->getIndex());
     if(wbCCLine->inTransition() || CacheLine::inTransition(_wbCacheLine->getState())){
@@ -181,6 +185,7 @@ bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
     }
     return false;
 }
+
 
 
 void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
@@ -196,9 +201,11 @@ void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseA
 }
 
 
+
 void Cache::writebackToLowerLevelCaches(MemEvent* _event, CacheLine* _wbCacheLine){
     bottomCC_->handleEviction(_wbCacheLine, _event->getGroupId());
 }
+
 
 
 void Cache::replaceCacheLine(int _replacementCacheLineIndex, int& _newCacheLineIndex, Addr _newBaseAddr){
@@ -224,6 +231,8 @@ bool Cache::invalidatesInProgress(int _lineIndex){
     }
     return false;
 }
+
+
 
 /* Multiple 'returns' in the function for performance (as opposed to single return) */
 bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Addr _baseAddr, bool _mshrHit){
@@ -266,11 +275,14 @@ void Cache::stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(stallException
     }
 }
 
+
+
 void Cache::activatePrevEvents(Addr _baseAddr){
     if(!mshr_->isHit(_baseAddr)) return;
     
     vector<mshrType> mshrEntry = mshr_->removeAll(_baseAddr);
-    bool cont;    int i = 0;
+    bool cont;
+    int i = 0;
     d_->debug(_L3_,"---------Replaying Events--------- Size: %lu\n", mshrEntry.size());
     
     for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
@@ -301,14 +313,16 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
             else{
-                totalUpgradeLatency_ += (timestamp_ - start);
-                upgradeCount_++;
+                /* only update upgrade latency on first replayed event. Other "MSHR hits" 
+                   are not really upgrades, they are just blocked events */
+                if(i == 0) updateUpgradeLatencyAverage(start);
                 mshrHits_++;
             }
         }
     }
     d_->debug(_L3_,"---------end---------\n");
 }
+
 
 
 bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Addr _addr, vector<mshrType>::iterator _it, int _i){
@@ -327,6 +341,8 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
     }
     return true;
 }
+
+
 
 void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(stallException){
     Command cmd    = _event->getCmd();
@@ -368,6 +384,8 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine){
     }
 }
 
+
+
 void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
     /* If cache line is in transition, that means this requests is a writeback from a lower level cache.
        In this case, it has to be a PutS requests because the only possible transition going on is SM.  We can just ignore
@@ -380,6 +398,8 @@ void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Com
     }
 }
 
+
+
 bool Cache::isCacheMiss(int _lineIndex){
     if(_lineIndex == -1){
         d_->debug(_L3_,"-- Cache Miss --\n");
@@ -387,6 +407,7 @@ bool Cache::isCacheMiss(int _lineIndex){
     }
     else return false;
 }
+
 
 /* ---------------------------------------
    Extras
@@ -401,9 +422,12 @@ MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
     }
 }
 
-void Cache::updateUpgradeLatencyAverage(MemEvent* _origMemEvent){
-    SimTime_t start = _origMemEvent->getStartTime();
-    totalUpgradeLatency_ += (timestamp_ - start);
+
+
+void Cache::updateUpgradeLatencyAverage(SimTime_t start){
+    uint64_t latency = timestamp_ - start;
+    d_->debug(_INFO_,"Latency = %"PRIu64"\n", latency);
+    totalUpgradeLatency_ += latency;
     upgradeCount_++;
 }
 
@@ -413,6 +437,8 @@ void Cache::errorChecking(){
     if(cf_.numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
     if(!isPowerOfTwo(cf_.lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");
 }
+
+
 
 void Cache::pMembers(){
     string protocolStr;
@@ -425,9 +451,12 @@ void Cache::pMembers(){
     d_->debug(_INFO_,"MSHR entries:  %d \n\n", cf_.MSHRSize_);
 }
 
+
+
 void Cache::retryRequestLater(MemEvent* _event){
     retryQueueNext_.push_back(_event);
 }
+
 
 
 CacheArray::CacheLine* Cache::getCacheLine(Addr _baseAddr){
@@ -436,20 +465,19 @@ CacheArray::CacheLine* Cache::getCacheLine(Addr _baseAddr){
     else return cf_.cacheArray_->lines_[lineIndex];
 }
 
+
+
 CacheArray::CacheLine* Cache::getCacheLine(int _lineIndex){
     if(_lineIndex == -1) return NULL;
     else return cf_.cacheArray_->lines_[_lineIndex];
 }
 
 
-bool Cache::isCacheLineAllocated(int _lineIndex){
-    return (_lineIndex == -1) ? false : true;
-}
-
 
 bool Cache::insertToMSHR(Addr _baseAddr, MemEvent* _event){
     return mshr_->insert(_baseAddr, _event);
 }
+
 
 
 bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
@@ -462,12 +490,15 @@ bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
 }
 
 
+
 void Cache::sendNACK(MemEvent* _event){
     if(_event->isHighNetEvent())        topCC_->sendNACK(_event);
     else if(_event->isLowNetEvent())    bottomCC_->sendNACK(_event);
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_event->getCmd()]);
 }
+
+
 
 void Cache::processIncomingNACK(MemEvent* _origReqEvent){
     d_->debug(_L3_,"NACK recieved.\n");
@@ -481,6 +512,8 @@ void Cache::processIncomingNACK(MemEvent* _origReqEvent){
     //delete _origReqEvent; TODO:  why does adding this line make some test fail?
 }
 
+
+
 void Cache::checkCacheMissValidity(MemEvent* _event) throw(ignoreEventException){
     Command cmd = _event->getCmd();
     assert(cmd != PutM && cmd != PutE && cmd != PutX && cmd != PutXE);
@@ -488,10 +521,12 @@ void Cache::checkCacheMissValidity(MemEvent* _event) throw(ignoreEventException)
 }
 
 
+
 bool operator== ( const mshrType& _n1, const mshrType& _n2) {
     if(_n1.elem.type() == typeid(Addr)) return false;
     return(boost::get<MemEvent*>(_n1.elem) == boost::get<MemEvent*>(_n2.elem));
 }
+
 
 
 void Cache::incTotalRequestsReceived(int _groupId){
@@ -501,6 +536,8 @@ void Cache::incTotalRequestsReceived(int _groupId){
         stats_[_groupId].TotalRequestsReceived_++;
     }
 }
+
+
 
 void Cache::incTotalMSHRHits(int _groupId){
     stats_[0].TotalMSHRHits_++;

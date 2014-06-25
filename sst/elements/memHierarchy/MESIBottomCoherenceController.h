@@ -72,9 +72,6 @@ public:
         lower level cache */
     bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine);
 
-    /** Determine if can process an invalidate request.  Prevents possible deadlocks */
-    bool canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks);
-
     /** Handle GetX request.  Cache line is already in the correct state
         and/or has been upgraded */
     void handleGetXRequest(MemEvent* _event, CacheLine* cacheLine);

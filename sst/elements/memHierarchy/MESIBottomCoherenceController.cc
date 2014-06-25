@@ -52,6 +52,7 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId){
 }
 
 
+
 void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
     bool upgrade;
     setGroupId(_event->getGroupId());
@@ -86,6 +87,7 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
         _abort(MemHierarchy::CacheController, "Wrong command type!");
     }
 }
+
 
 
 void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
@@ -124,6 +126,8 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
 
 }
 
+
+
 void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLine, MemEvent* _origRequest){
     _cacheLine->updateState();
     //printData(d_, "Response Data", &_responseEvent->getPayload());
@@ -139,6 +143,7 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
         _cacheLine->setState(E);
     }
 }
+
 
 
 void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
@@ -189,10 +194,6 @@ bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cache
 }
 
 
-bool MESIBottomCC::canInvalidateRequestProceed(MemEvent* _event, CacheLine* _cacheLine, bool _sendAcks){
-    return true;
-}
-
 
 void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
@@ -219,6 +220,7 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
 }
 
 
+
 void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     
@@ -241,6 +243,7 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
 }
 
 
+
 void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
     
@@ -256,6 +259,7 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     }
     else _abort(MemHierarchy::CacheController, "Not a valid state: %s", BccLineString[state]);
 }
+
 
 
 void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
@@ -274,15 +278,20 @@ void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
 }
 
 
+
 void MESIBottomCC::handlePutMRequest(MemEvent* _event, CacheLine* _cacheLine){
     updateCacheLineRxWriteback(_event, _cacheLine);
     inc_PUTMReqsReceived();
 }
 
+
+
 void MESIBottomCC::handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine){
     updateCacheLineRxWriteback(_event, _cacheLine);
     inc_PUTXReqsReceived();
 }
+
+
 
 void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
@@ -294,6 +303,8 @@ void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cach
         d_->debug(_L6_,"Data written to cache line\n");
     }
 }
+
+
 
 void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
     BCC_MESIState state = _cacheLine->getState();
@@ -319,6 +330,8 @@ void MESIBottomCC::sendEvent(MemEvent* _event){
              _event->getAddr(), _event->getBaseAddr(), CommandString[_event->getCmd()]);
 }
 
+
+
 void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data){
     /* Create event to be forwarded */
     MemEvent* forwardEvent;
@@ -341,6 +354,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
 }
 
 
+
 void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     MemEvent *responseEvent = _event->makeResponse();
     responseEvent->setPayload(*_cacheLine->getData());
@@ -351,6 +365,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
     
     d_->debug(_L3_,"BCC - Sending Response at cycle = %"PRIu64", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
 }
+
 
 
 void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine){
@@ -367,6 +382,8 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine){
     d_->debug(_L3_,"BCC - Sending Writeback at cycle = %"PRIu64", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
 }
 
+
+
 void MESIBottomCC::sendNACK(MemEvent* _event){
     setGroupId(_event->getGroupId());
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
@@ -377,6 +394,7 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
     addToOutgoingQueue(resp);
     d_->debug(_L3_,"BCC - Sending NACK at cycle = %"PRIu64"\n", deliveryTime);
 }
+
 
 
 void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency){
@@ -414,7 +432,7 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
         dbg->output(C,"- GetX-IM misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissIM_);
         dbg->output(C,"- GetS hits: %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
         dbg->output(C,"- GetX hits: %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
-        dbg->output(C,"- Average updgrade latency: %"PRIu64" cycles\n", _updgradeLatency);
+        dbg->output(C,"- Average updgrade latency (cycles): %"PRIu64"\n", _updgradeLatency);
         dbg->output(C,"- PutS received: %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
         dbg->output(C,"- PutM received: %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
         dbg->output(C,"- PutX received: %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
