@@ -116,7 +116,6 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
             }
         }
     }
-    totalDist = totalDist / 2; //remove duplicates
     
     if(deleteCommMatrix){
         for(int i = 0; i < job->getProcsNeeded(); i++){

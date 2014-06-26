@@ -232,11 +232,9 @@ long MeshMachine::baselineL1Distance(Job* job) const
 {
     int numProcs = job -> getProcsNeeded();
     
-    //baseline communication scheme: minimum-volume rectangular prism that fits into the machine
-    
-    //TODO: currently dummy:
-    return 1;
-    
+    //baseline communication scheme: 
+    //all-to-all comm with minimum-volume rectangular prism that fits into the machine
+        
     int xSize, ySize, zSize;
     xSize = (int)ceil( (float)cbrt((float)numProcs) ); //if we fit job in a cube
     ySize = xSize;
@@ -278,7 +276,7 @@ long MeshMachine::baselineL1Distance(Job* job) const
     }
     
     //order dimensions from shortest to longest
-	int state; //keeps order mapping
+	int state = 0; //keeps order mapping
 	if(xSize <= ySize && ySize <= zSize) {
 		state = 0;
 	} else if(ySize <= xSize && xSize <= zSize) {
@@ -332,6 +330,7 @@ long MeshMachine::baselineL1Distance(Job* job) const
             distance += nodes[i].L1DistanceTo(nodes[j]);
         }
     }
+    distance *= 2; //add duplicates
     
     return distance;
 }
