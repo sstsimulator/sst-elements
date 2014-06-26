@@ -105,7 +105,7 @@ public:
     
     /** Stall Exception.  Exception thrown when an events needs to stall due 
         to an upgrade needed, cache line being locked, etc */
-    class stallException : public exception{ const char* what () const throw (){ return "Memory requests needs to 'stall'. Request will be processed at a later time\n"; } };
+    class blockedEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to 'stall'. Request will be processed at a later time\n"; } };
     
     /** Ignore Event Exception.  Exception thrown when the event received is considered to be irrelevant (ie Invalidate received when cacheline was alread invalid (due to eviction) */
     class ignoreEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to be ignored. Request is irrelevant or out-of-date\n"; }};
@@ -153,7 +153,7 @@ private:
     /** Find replacement for the current request.  If the replacement candidate is
         valid then a writeback is needed.  If replacemenent candidate is transitioning, we 
         need to wait (stall) until the replacement is in a 'stable' state */
-    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(stallException);
+    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(blockedEventException);
 
     /** Depending on the replacement policy and cache array type, this function appropriately
         searches for the replacement candidate */
@@ -161,11 +161,11 @@ private:
 
     /** Check that the selected replacement candidate can actually be replaced.
         The cacheline could be 'user-locked' for atomicity or the cacheline could be in transition */
-    inline void candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(stallException);
+    inline void candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(blockedEventException);
 
     /** Evict replacement cache line in higher level caches (if necessary).
         TopCC sends invalidates to lower level caches; stall if invalidates were sent */
-    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (stallException);
+    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (blockedEventException);
 
     /** Writeback cache line to lower level caches */
     inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine);
@@ -194,7 +194,7 @@ private:
         array and tag.  In SST, we just rerun the request to avoid complexity */
     inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr addr, vector<mshrType>::iterator it, int i);
 
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool mshrHit) throw(stallException);
+    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool mshrHit) throw(blockedEventException);
 
     /** If cache line was user-locked, then events might be waiting for lock to be released
         and need to be reactivated */
@@ -206,7 +206,7 @@ private:
 
     /** After BCC is executed, this function checks if an upgrade request was sent to LwLv caches.  If so, this request
         needs to stall */
-    void stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(stallException);
+    void stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(blockedEventException);
 
     /** Check if there a cache miss */
     inline bool isCacheMiss(int lineIndex);

@@ -64,7 +64,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         if(cacheLine->isLocked()) assert(!cacheLine->getEventsWaitingForLock());
 
     }
-    catch(stallException const& e){
+    catch(blockedEventException const& e){
         processRequestInMSHR(_baseAddr, _event);                        /* This request needs to stall until another pending request finishes.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
     }
     catch(ignoreEventException const& e){}
@@ -134,7 +134,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
    Writeback Related Functions
    --------------------------------- */
 
-void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLineIndex) throw(stallException){
+void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLineIndex) throw(blockedEventException){
     CacheLine* wbCacheLine = findReplacementCacheLine(_baseAddr);
     
     /* Is writeback candidate invalid and not in transition? */
@@ -159,18 +159,18 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
 
 
 
-void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
+void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(blockedEventException){
     d_->debug(_L10_,"Replacement cache needs to be evicted. WbAddr: %"PRIx64", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
     
     if(_wbCacheLine->isLocked()){
         d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", _wbCacheLine->getBaseAddr());
         _wbCacheLine->setEventsWaitingForLock(true);
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
-        throw stallException();
+        throw blockedEventException();
     }
     else if(isCandidateInTransition(_wbCacheLine)){
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
-        throw stallException();
+        throw blockedEventException();
     }
     return;
 }
@@ -188,13 +188,13 @@ bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
 
 
 
-void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(stallException){
+void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(blockedEventException){
     topCC_->handleEviction(_wbCacheLine->getIndex(), _wbCacheLine->getState());
     CCLine* ccLine = topCC_->getCCLine(_wbCacheLine->getIndex());
     
     if(ccLine->inTransition()){
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
-        throw stallException();
+        throw blockedEventException();
     }
     
     ccLine->clear();
@@ -268,10 +268,10 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
  ------------------------------------------------------------------------------------- */
 
 
-void Cache::stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(stallException){
+void Cache::stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(blockedEventException){
     if(_cacheLine->inTransition()){
         upgradeCount_++;
-        throw stallException();                                            /* stall request if upgrade is in progress */
+        throw blockedEventException();                                            /* stall request if upgrade is in progress */
     }
 }
 
@@ -344,7 +344,7 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
 
 
 
-void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(stallException){
+void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(blockedEventException){
     Command cmd    = _event->getCmd();
     Addr baseAddr  = _cacheLine->getBaseAddr();
     CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
@@ -372,7 +372,7 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
         reActivateEventWaitingForUserLock(_cacheLine);
         delete _event;
     }
-    else if(cmd != PutS) throw stallException();  //writeback requests should not be stored in the MSHR
+    else if(cmd != PutS) throw blockedEventException();  //writeback requests should not be stored in the MSHR
 }
 
 
