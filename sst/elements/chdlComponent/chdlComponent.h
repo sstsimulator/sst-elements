@@ -12,11 +12,15 @@
 #ifndef CHDL_COMPONENT_H
 #define CHDL_COMPONENT_H
 
+#include <string>
+#include <map>
+
 // TODO: perhaps CHDL shouldn't have things with names that conflict with C
 // standard library macros. "assert" causes a problem here if the inclusion
 // order isn't just so.
 #undef assert
 #include <chdl/chdl.h>
+#undef assert
 
 #include <sst/core/sst_types.h>
 //#include <sst/core/serialization/element.h>
@@ -31,15 +35,13 @@
 
 #include <sst/core/interfaces/simpleMem.h>
 
-#include <string>
-
 namespace SST {
 class Params;
 
 namespace ChdlComponent {
   struct reqdata {
     uint64_t addr, data, id, size;
-    bool valid, wr, exclusive, locked, uncached;
+    bool valid, wr, llsc, locked, uncached;
   };
 
   struct respdata {
@@ -65,6 +67,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(memLink);
       ar & BOOST_SERIALIZATION_NVP(netlFile);
       ar & BOOST_SERIALIZATION_NVP(debugLevel);
+      ar & BOOST_SERIALIZATION_NVP(idMap);
     }
 
     template <class Archive>
@@ -75,6 +78,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(memLink);
       ar & BOOST_SERIALIZATION_NVP(netlFile);
       ar & BOOST_SERIALIZATION_NVP(debugLevel);
+      ar & BOOST_SERIALIZATION_NVP(idMap);
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -91,6 +95,7 @@ namespace ChdlComponent {
 
     std::vector<reqdata> req;
     std::vector<respdata> resp;
+    std::map<unsigned long, unsigned long> idMap;
 
     int debugLevel;
 

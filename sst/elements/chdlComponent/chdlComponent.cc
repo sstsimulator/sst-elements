@@ -52,7 +52,6 @@ template <typename T> void IngressInt(vector<node> &v, T &x) {
     v[i] = IngressFunc(GetBit(i, x));
 }
 
-
 chdlComponent::chdlComponent(ComponentId_t id, Params &p):
   Component(id)
 {
@@ -122,7 +121,7 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
       else if (!strncmp(t[1], "data", 80)) EgressInt(req[id].data, v);
       else if (!strncmp(t[1], "size", 80)) EgressInt(req[id].size, v);
       else if (!strncmp(t[1], "id", 80)) EgressInt(req[id].id, v);
-      else if (!strncmp(t[1], "exclusive", 80)) Egress(req[id].exclusive, v[0]);
+      else if (!strncmp(t[1], "llsc", 80)) Egress(req[id].llsc, v[0]);
       else if (!strncmp(t[1], "locked", 80)) Egress(req[id].locked, v[0]);
       else if (!strncmp(t[1], "uncached", 80)) Egress(req[id].uncached, v[0]);
       else _abort(chdlComponent, "Invalid simplemem req port: %s\n", t[1]);
@@ -173,7 +172,7 @@ void chdlComponent::finish() {
 
 
 void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
-  // TODO: support multiple responses
+  // TODO: support queuing responses
   if (resp[0].ready) resp[0].valid = true;
   else _abort(chdlComponent, "response arrived when receiver not ready");
 
@@ -183,7 +182,7 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
     for (unsigned i = 0; i < req->data.size(); ++i)
       resp[0].data |= req->data[i] << 8*i;
   }
-  resp[0].id = req->id;
+  resp[0].id = idMap[req->id];
 
   if (debugLevel > 2) {
     out.output("Response arrived for req %d, wr = %d, data = %lu, size = %lu, "
@@ -213,7 +212,7 @@ bool chdlComponent::clockTick(Cycle_t c) {
 
       int flags = (req[i].uncached ? SimpleMem::Request::F_UNCACHED : 0) |
                   (req[i].locked ? SimpleMem::Request::F_LOCKED : 0) |
-                  (req[i].exclusive ? SimpleMem::Request::F_EXCLUSIVE : 0);
+                  (req[i].llsc ? SimpleMem::Request::F_LLSC : 0);
 
       SimpleMem::Request *r;
       if (req[i].wr) {
@@ -229,6 +228,10 @@ bool chdlComponent::clockTick(Cycle_t c) {
           SimpleMem::Request::Read, req[i].addr, req[i].size, flags
         );
       }
+
+      if (debugLevel > 3)
+        out.output("SimpleMem %d = CHDL ID %d\n", (int)r->id, (int)req[i].id);
+      idMap[r->id] = req[i].id;
 
       memLink->sendRequest(r);
     }

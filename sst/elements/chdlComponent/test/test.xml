@@ -5,6 +5,7 @@
   <component name="c0" rank="0" type="chdlComponent">
     <params>
       <netlist>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/acpu.nand</netlist>
+      <debugLevel>4</debugLevel>
     </params>
     <link name=c0_l1cache_link port=memLink latency=3ns />
   </component>
