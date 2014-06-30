@@ -36,7 +36,7 @@ class ReplacementMgr{
         typedef unsigned int uint;
         virtual void update(uint id) = 0;
         virtual void startReplacement()= 0; //many policies don't need it
-        virtual void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) = 0;
+        virtual void recordCandidate(uint id, bool sharersAware, State state) = 0;
         virtual uint getBestCandidate() = 0;
         virtual void replaced(uint id) = 0;
         void setTopCC(TopCacheController* cc) {topCC_ = cc;}
@@ -58,9 +58,9 @@ private:
     uint        numLines_;
 
     struct Rank {
-        uint64_t        timestamp;
-        uint            sharers;
-        BCC_MESIState   state;
+        uint64_t   timestamp;
+        uint       sharers;
+        State      state;
 
         void reset() {
             state       = I;
@@ -93,7 +93,7 @@ public:
 
     void update(uint id) { array[id] = timestamp++; }
 
-    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) {
+    void recordCandidate(uint id, bool sharersAware, State state) {
         Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, state};
         if (bestCandidate == -1 || candRank.lessThan(bestRank)) {
             bestRank = candRank;
@@ -137,7 +137,7 @@ class LFUReplacementMgr : public ReplacementMgr {
         struct Rank {
             LFUInfo lfuInfo;
             uint sharers;
-            BCC_MESIState state;
+            State state;
 
             void reset() {
                 state = I;
@@ -184,7 +184,7 @@ class LFUReplacementMgr : public ReplacementMgr {
             timestamp += 1000;
         }
 
-        void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) {
+        void recordCandidate(uint id, bool sharersAware, State state) {
             Rank candRank = {array[id], 0, state};
 
             if (bestCandidate == -1 || candRank.lessThan(bestRank, timestamp)) {
@@ -224,9 +224,9 @@ private:
     uint        numLines_;
 
     struct Rank {
-        uint64_t      timestamp;
-        uint          sharers;
-        BCC_MESIState state;
+        uint64_t  timestamp;
+        uint      sharers;
+        State     state;
 
         void reset() {
             state       = I;
@@ -256,7 +256,7 @@ public:
 
     void update(uint id) { array[id] = timestamp++; }
 
-    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) {
+    void recordCandidate(uint id, bool sharersAware, State state) {
         Rank candRank = {array[id], (sharersAware) ? topCC_->numSharers(id) : 0, state};
         if (bestCandidate == -1 || candRank.biggerThan(bestRank)) {
             bestRank = candRank;
@@ -303,7 +303,7 @@ public:
     }
 
     void update(uint id){}
-    void recordCandidate(uint id, bool sharersAware, BCC_MESIState state) { candidates_.push_back(id);}
+    void recordCandidate(uint id, bool sharersAware, State state) { candidates_.push_back(id);}
 
     uint getBestCandidate() {
         assert(candidates_.size() == numWays_);

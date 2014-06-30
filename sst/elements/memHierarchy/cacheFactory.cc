@@ -189,14 +189,14 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     /* ------------- Member variables intialization ------------- */
     
     configureLinks();
-    groupStats_                         = (cf_.statGroupIds_.size() < 2) ? false : true;
-    clockOn_                            = true;
-    idleCount_                          = 0;
-    memNICIdleCount_                    = 0;
-    memNICIdle_                         = false;
-    timestamp_                          = 0;
-    totalUpgradeLatency_                = 0;
-    mshrHits_                           = 0;
+    groupStats_            = (cf_.statGroupIds_.size() < 2) ? false : true;
+    clockOn_               = true;
+    idleCount_             = 0;
+    memNICIdleCount_       = 0;
+    memNICIdle_            = false;
+    timestamp_             = 0;
+    totalUpgradeLatency_   = 0;
+    mshrHits_              = 0;
     
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++)
@@ -284,8 +284,6 @@ void Cache::intrapolateMSHRLatency(){
     assert(accessLatency_ >= 0 && accessLatency_ <= N);
     mshrLatency_ = y[accessLatency_];
         assert(mshrLatency_   >= 1 && mshrLatency_ <= 200);
-
-
 
 }
 

@@ -63,15 +63,15 @@ public:
     
     /** Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual void handleEviction(int lineIndex, BCC_MESIState _state) {}
+    virtual void handleEviction(int lineIndex, State _state) {}
    
     /* Incoming Inv/InvX/FetchInv/FetchInvX received.  TopCC sends invalidates up the hierarchy if necessary */
     virtual void handleInvalidate(int lineIndex, Command cmd){return;}
 
     /** Create MemEvent and send Response to HgLvl caches */
-    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, bool _mshrHit);
+    bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit);
    
-    bool sendResponse(MemEvent* _event, BCC_MESIState _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic);
+    bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic);
 
     /** Look at the outgoing queue buffer to see if we need to send an memEvent through the SST Links */
     void sendOutgoingCommands(){
@@ -140,7 +140,7 @@ public:
     
     /* Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual void handleEviction(int lineIndex, BCC_MESIState _state);
+    virtual void handleEviction(int lineIndex, State _state);
     
     /* Incoming Inv/FetchInv received.  TopCC sends invalidates up the hierarchy if necessary */
     virtual void handleInvalidate(int lineIndex, Command cmd);
@@ -167,7 +167,7 @@ public:
    
     /** Handle incoming PutM Request.
         Clear exclusive sharer */
-    void handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _childId, bool& _ret);
+    void handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _childId, bool& _ret);
     
     /** Handle incoming GetS Request.
         Clear sharer */

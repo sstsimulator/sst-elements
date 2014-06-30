@@ -45,11 +45,7 @@ public:
         state_ = _newState;
     }
     
-    void updateState() {
-        if(numSharers_ == 0){
-            setState(V);
-        }
-    }
+    void updateState(){ if(numSharers_ == 0)setState(V); }
     
     void setBaseAddr(Addr _baseAddr){
         baseAddr_ = _baseAddr;

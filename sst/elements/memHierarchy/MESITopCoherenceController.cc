@@ -29,7 +29,7 @@ using namespace SST::MemHierarchy;
 bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd           = _event->getCmd();
     vector<uint8_t>* data = _cacheLine->getData();
-    BCC_MESIState state   = _cacheLine->getState();
+    State state           = _cacheLine->getState();
     bool atomic           = _cacheLine->isAtomic();
 
     switch(cmd){
@@ -57,10 +57,10 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
  *-------------------------------------------------------------------------------------*/
 
 bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit) {
-    Command cmd = _event->getCmd();
-    int id = lowNetworkNodeLookupByName(_event->getSrc());
+    Command cmd    = _event->getCmd();
+    int id         = lowNetworkNodeLookupByName(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->getIndex()];
-    bool ret = false;
+    bool ret       = false;
 
     if(ccLine->inTransition() && !_event->isWriteback()){
         d_->debug(_L7_,"TopCC: Stalling request, ccLine in transition \n");
@@ -114,7 +114,7 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
 
 
 
-void MESITopCC::handleEviction(int _lineIndex,  BCC_MESIState _state){
+void MESITopCC::handleEviction(int _lineIndex, State _state){
     CCLine* ccLine = ccLines_[_lineIndex];
     assert(!CacheArray::CacheLine::inTransition(_state));
     assert(ccLine->valid());
@@ -186,6 +186,8 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNee
     d_->debug(_L7_,"Invalidate sent: Addr = %"PRIx64", Dst = %s\n", _cLine->getBaseAddr(),  destination.c_str());
 }
 
+
+
 void MESITopCC::sendEvictionInvalidates(int _lineIndex){
     int invalidatesSent = sendInvalidates(_lineIndex, "");
     evictionInvReqsSent_ += invalidatesSent;
@@ -229,7 +231,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
 
 void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     vector<uint8_t>* data = _cacheLine->getData();
-    BCC_MESIState state   = _cacheLine->getState();
+    State state           = _cacheLine->getState();
     int lineIndex         = _cacheLine->getIndex();
     CCLine* l             = ccLines_[lineIndex];
 
@@ -259,11 +261,11 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
 
 
 void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
-    BCC_MESIState state   = _cacheLine->getState();
-    int lineIndex         = _cacheLine->getIndex();
-    CCLine* ccLine        = ccLines_[lineIndex];
-    Command cmd           = _event->getCmd();
-    bool respond          = true;
+    State state     = _cacheLine->getState();
+    int lineIndex   = _cacheLine->getIndex();
+    CCLine* ccLine  = ccLines_[lineIndex];
+    Command cmd     = _event->getCmd();
+    bool respond    = true;
     int invSent;
     
     /* Do we have the appropriate state */
@@ -306,7 +308,7 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
 
 
 
-void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, BCC_MESIState _state, int _sharerId, bool& _ret){
+void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _sharerId, bool& _ret){
     _ret = true;
     assert(_state == M || _state == E);
 
@@ -357,13 +359,13 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 
 
 
-bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit){
+bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit){
     return sendResponse(_event, _newState, _data, _mshrHit, false);
 }
 
 
 
-bool TopCacheController::sendResponse(MemEvent *_event, BCC_MESIState _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
+bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
     if(_event->isPrefetch()) return true;
     
     Command cmd = _event->getCmd();        assert(cmd == GetS || cmd == GetX || cmd == GetSEx);

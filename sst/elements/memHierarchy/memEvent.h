@@ -122,7 +122,7 @@ typedef enum {
 #define X(x) x,
     BCCLINE_TYPES
 #undef X
-} BCC_MESIState;
+} State;
 
 /** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
 static const char* BccLineString[] __attribute__((unused)) = {
@@ -134,7 +134,7 @@ static const char* BccLineString[] __attribute__((unused)) = {
 #undef BCCLINE_TYPES
 
 //TODO: Make it more robust
-static const BCC_MESIState nextState[] = {I, S, M, S, I, I, M, E, M, I, S};
+static const State nextState[] = {I, S, M, S, I, I, M, E, M, I, S};
 static const std::string NONE = "None";
 
 /**
@@ -193,7 +193,7 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(BCC_MESIState state){
+    MemEvent* makeResponse(State state){
         MemEvent *me = makeResponse();
         me->setGrantedState(state);
         return me;
@@ -342,9 +342,9 @@ public:
     }
 
     /** Sets the Granted State */
-    void setGrantedState(BCC_MESIState _state){ grantedState_ = _state;}
+    void setGrantedState(State _state){ grantedState_ = _state;}
     /** Return the Granted State */
-    BCC_MESIState getGrantedState(){ return grantedState_; }
+    State getGrantedState(){ return grantedState_; }
 
     /** Sets that this is a prefetch command */
     void setPrefetchFlag(bool _prefetch){ prefetch_ = _prefetch;}
@@ -438,7 +438,7 @@ private:
     Command         NACKedCmd_;
     MemEvent*       NACKedEvent_;
     dataVec         payload_;
-    BCC_MESIState   grantedState_;
+    State           grantedState_;
     bool            ackNeeded_;
     bool            prefetch_;
     bool            atomic_;

@@ -41,7 +41,7 @@ public:
                uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks) :
                MESITopCC(_cache, _dbg, _protocol, _numLines, _lineSize, _accessLatency, _mshrLatency,  _childrenLinks){}
     
-    void handleEviction(int lineIndex, BCC_MESIState _state);
+    void handleEviction(int lineIndex, State _state);
     bool handleRequest(MemEvent* event, CacheLine* cacheLine);
     void handleInvalidate(int lineIndex, Command cmd);
     void handleInvAck(MemEvent* event, CCLine* ccLine);

@@ -26,7 +26,7 @@ using namespace SST::MemHierarchy;
  *---------------------------------------------------------------------------------------------------------------------*/
 	    
 void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId){
-	BCC_MESIState state = _wbCacheLine->getState();
+	State state = _wbCacheLine->getState();
     setGroupId(_groupId);
 
     switch(state){
@@ -57,7 +57,7 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
     bool upgrade;
     setGroupId(_event->getGroupId());
     d_->debug(_L6_,"BottomCC State = %s\n", BccLineString[_cacheLine->getState()]);
-    assert(!_cacheLine->inTransition());   //MSHR should catch this..
+    assert(!_cacheLine->inTransition());   //MSHR should catch this.. but just to make sure
     
     switch(_cmd){
     case GetS:
@@ -91,21 +91,28 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
 
 
 void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
-    /* Important note: If cache line is in transition, ignore request (remove from MSHR and drop this event)
-       Since this cache line is in transition, any other requests will not proceed. This makes the cache line 
-       behave as if it was in Invalid state.  Atomiticy is maintained because this request in transition wont proceed 
-       till AFTER the request that ignited the INV finishes.
+    /* Important note: 
+       If cache line is in transition, ignore INV request (or send ack in needed) but keep state "in transition".
+       Since this cache line is in transition, any other requests will be blocked in the MSHR. This makes the cache line
+       behave as if it was in Invalid state.  Coherency is maintained because the request in transition wont proceed
+       until AFTER the request that ignited the INV finishes.
+       
+       For SM transitions, this cache eventually gets M state since the requests is actually saved in the MSHR
+       of the lwlvl cache
        
        Because of this, the lower level cache can proceed even though this cache line
        is not actually invalidated.  No need for an ack sent to lower level cache since only possible 
-       transitional state is (SM);  lower level cache knows this state is in S state so it proceeds (weak consistency).  
-       This cache eventually gets M state since the requests actually gets store in the MSHR of the lwlvl cache */
+       transitional state is (SM);  lower level cache knows this state is in S state so it proceeds without the PutS(weak consistency).
+       Alternatively, if it the request is marked with 'acksNeeded' (a lock request is in progress in the hgLvl cache),
+       then a PutS is actually sent to maintain the locking mechanism
+       
+    */
     
     _cacheLine->atomicEnd();
     setGroupId(_event->getGroupId());
     
     if(_cacheLine->inTransition()){
-        d_->debug(_L6_,"Cache line in transition. Invalidating anyway. \n");
+        d_->debug(_L6_,"Cache line in transition.\n");
         if(_event->getAckNeeded()){
             inc_InvalidatePUTSReqSent();
             sendWriteback(PutS, _cacheLine);
@@ -149,7 +156,7 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
 void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     setGroupId(_event->getGroupId());
     if(!_cacheLine) return;
-    if(_cacheLine->inTransition()) return;  //TODO:  test this case, might need a response (ack)
+    if(_cacheLine->inTransition() && !_event->getAckNeeded()) return;
     
     Command cmd = _event->getCmd();
     sendResponse(_event, _cacheLine, _parentId, _mshrHit);
@@ -175,9 +182,9 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  *--------------------------------------------------------------------------------------------------*/
 
 bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine){
-    bool pf   = _event->isPrefetch();
-    Addr addr = _cacheLine->getBaseAddr();
-    BCC_MESIState state = _cacheLine->getState();
+    bool pf     = _event->isPrefetch();
+    Addr addr   = _cacheLine->getBaseAddr();
+    State state = _cacheLine->getState();
 
     if(state == S || state == I){
         if(state == S){
@@ -196,8 +203,8 @@ bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cache
 
 
 void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
-    BCC_MESIState state = _cacheLine->getState();
-    Command cmd         = _event->getCmd();
+    State state = _cacheLine->getState();
+    Command cmd = _event->getCmd();
     
     Addr addr = _cacheLine->getBaseAddr();
     bool pf   = _event->isPrefetch();
@@ -222,7 +229,7 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 
 void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
-    BCC_MESIState state = _cacheLine->getState();
+    State state = _cacheLine->getState();
     
     if(state == M || state == E){
         if(state == M){
@@ -245,7 +252,7 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 
 void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
-    BCC_MESIState state = _cacheLine->getState();
+    State state = _cacheLine->getState();
     
     if(state == M || state == E){
         _cacheLine->setState(S);
@@ -263,9 +270,9 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 
 void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
-    BCC_MESIState state = _cacheLine->getState();
-    Addr addr = _cacheLine->getBaseAddr();
-    bool pf = _event->isPrefetch();
+    State state = _cacheLine->getState();
+    Addr addr   = _cacheLine->getBaseAddr();
+    bool pf     = _event->isPrefetch();
 
     if(_event->isLoadLink()) _cacheLine->atomicStart();
     
@@ -294,7 +301,7 @@ void MESIBottomCC::handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 
 void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine){
-    BCC_MESIState state = _cacheLine->getState();
+    State state = _cacheLine->getState();
     assert(state == M || state == E);
     if(state == E) _cacheLine->setState(M);
     if(_event->getCmd() != PutXE){
@@ -307,7 +314,7 @@ void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cach
 
 
 void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
-    BCC_MESIState state = _cacheLine->getState();
+    State state = _cacheLine->getState();
     assert(state == E || state == M);
     inc_PUTEReqsReceived();
     

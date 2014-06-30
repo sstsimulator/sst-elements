@@ -64,7 +64,7 @@ public:
     class CacheLine {
     private:
         Output*         d_;
-        BCC_MESIState   state_;
+        State           state_;
         Addr            baseAddr_;
         vector<uint8_t> data_;
         const uint32_t  size_;
@@ -114,10 +114,10 @@ public:
             }
         }
         
-        BCC_MESIState getState() const { return state_; }
+        State getState() const { return state_; }
         void updateState(){ setState(nextState[state_]); }
         
-        void setState(BCC_MESIState _newState){
+        void setState(State _newState){
             d_->debug(_L6_, "Changing states: Old state = %s, New State = %s\n", BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
             if(state_ == I) clear();
@@ -130,8 +130,8 @@ public:
         Addr getBaseAddr() { return baseAddr_; }
         void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
         
-        static bool inStableState(BCC_MESIState _state) { return _state == M || _state == S || _state == I || _state == E;}
-        static bool inTransition(BCC_MESIState _state){ return !inStableState(_state);}
+        static bool inStableState(State _state) { return _state == M || _state == S || _state == I || _state == E;}
+        static bool inTransition(State _state){ return !inStableState(_state);}
 
         
         bool getEventsWaitingForLock(){ return eventsWaitingForLock_; }

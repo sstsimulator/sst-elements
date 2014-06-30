@@ -105,7 +105,7 @@ bool Cache::MSHR::insertAll(Addr _baseAddr, vector<mshrType> _events){
         if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
     }
     
-    size_ += trueSize; //_events.size();
+    size_ += trueSize;
     return true;
 }
 
@@ -120,7 +120,7 @@ vector<mshrType> Cache::MSHR::removeAll(Addr _baseAddr){
         if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
     }
     
-    size_ -= trueSize; assert(size_ >= 0); // res.size();
+    size_ -= trueSize; assert(size_ >= 0);
     return res;
 }
 
@@ -130,7 +130,6 @@ MemEvent* Cache::MSHR::removeFront(Addr _baseAddr){
     assert(!it->second.empty());
     assert(it->second.front().elem.type() == typeid(MemEvent*));
     
-    
     MemEvent* ret = boost::get<MemEvent*>(it->second.front().elem);
     
     it->second.erase(it->second.begin());
@@ -139,23 +138,7 @@ MemEvent* Cache::MSHR::removeFront(Addr _baseAddr){
     size_--;
     
     cache_->d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %"PRIx64"\n", _baseAddr);
-
     return ret;
-    
-    
-    /*mshrTable::iterator it = map_.find(_baseAddr);
-    assert(it != map_.end());
-    vector<mshrType> mshrEntry = it->second;
-    assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
-
-    map_.erase(it);
-
-    mshrType entry = mshrEntry.front();
-    mshrEntry.erase(mshrEntry.begin());
-    insertAll(_baseAddr, mshrEntry);
-
-    return boost::get<MemEvent*>(entry.elem);
-    */
 }
 
 
@@ -167,7 +150,7 @@ bool Cache::MSHR::isHit(Addr _baseAddr){ return map_.find(_baseAddr) != map_.end
  * the this requests finishes */
 bool Cache::MSHR::isHitAndStallNeeded(Addr _baseAddr, Command _cmd){
     mshrTable::iterator it = map_.find(_baseAddr);
-    /*GetX does not stall if there is there is an Inv at the front of MSHR queue 
+    /* GetX does not stall if there is there is an Inv at the front of MSHR queue
      * since cache line can be user-locked.  If user-locked, Invalidates can pile up in the MSHR
      * but GetX still needs to continue since Inv won't get re-activated until user-lock is released */
     if(it == map_.end()) return false;
@@ -224,6 +207,7 @@ void Cache::MSHR::removeElement(Addr _baseAddr, mshrType _mshrEntry){
     size_--; assert(size_ >= 0);
     cache_->d_->debug(_L9_, "MSHR Removed Event\n");
 }
+
 /*
 void Cache::MSHR::printEntry(Addr baseAddr){
     mshrTable::iterator it = map_.find(baseAddr);
