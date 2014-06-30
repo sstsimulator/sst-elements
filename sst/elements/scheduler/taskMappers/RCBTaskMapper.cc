@@ -17,6 +17,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "MeshMachine.h"
+#include "SimpleTaskMapper.h"
 #include "TaskCommInfo.h"
 #include "TaskMapInfo.h"
 #include "output.h"
@@ -49,6 +50,13 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     job = allocInfo->job;
     int jobSize = job->getProcsNeeded();
     tci = job->taskCommInfo;
+
+    //Call SimpleTaskMapper if the job does not have proper commuunication info
+    if(tci->taskCommType != TaskCommInfo::MESH &&
+       tci->taskCommType != TaskCommInfo::COORDINATE) {
+        SimpleTaskMapper simpleMapper = SimpleTaskMapper(machine);
+        return simpleMapper.mapTasks(allocInfo);
+    }
 
     //get node locations
     vector<MeshLocation>* nodes = new vector<MeshLocation>();;
@@ -122,8 +130,7 @@ void RCBTaskMapper::getDims(int* x, int* y, int* z, T t) const
 
 void RCBTaskMapper::getDims(int* x, int* y, int* z, int taskID) const
 {
-    if(tci->taskCommType == TaskCommInfo::MESH ||
-       tci->taskCommType == TaskCommInfo::ALLTOALL   ) {
+    if(tci->taskCommType == TaskCommInfo::MESH) {
         *x = taskID % tci->xdim;
         *y = (taskID % (tci->xdim * tci->ydim)) / tci->xdim;
         *z = taskID / (tci->xdim * tci->ydim);
@@ -131,8 +138,6 @@ void RCBTaskMapper::getDims(int* x, int* y, int* z, int taskID) const
         *x = tci->coords->at(taskID)[0];
         *y = tci->coords->at(taskID)[1];
         *z = tci->coords->at(taskID)[2];
-    } else if(tci->taskCommType == TaskCommInfo::CUSTOM) {
-        schedout.fatal(CALL_INFO, 1, "RCB task mapper does not support custom task communication.\n");
     } else {
         schedout.fatal(CALL_INFO, 1, "Unknown communication type for Job %d\n", job->getJobNum());
     }
