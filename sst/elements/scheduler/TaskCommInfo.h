@@ -27,7 +27,7 @@ namespace SST {
                 ~TaskCommInfo();
 
                 int** commMatrix;
-                Job* job;
+                int size;
                 int xdim, ydim, zdim;
         };
     }

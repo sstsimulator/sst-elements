@@ -22,7 +22,6 @@ namespace SST {
         class AllocInfo;
         class Machine;
         class TaskMapInfo;
-        class TaskCommInfo;
 
         class SimpleTaskMapper : public TaskMapper {
         

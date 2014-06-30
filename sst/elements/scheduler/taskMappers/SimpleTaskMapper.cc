@@ -13,7 +13,6 @@
 
 #include "AllocInfo.h"
 #include "Job.h"
-#include "TaskCommInfo.h"
 #include "TaskMapInfo.h"
 
 using namespace SST::Scheduler;

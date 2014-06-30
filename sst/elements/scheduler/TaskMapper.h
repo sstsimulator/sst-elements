@@ -12,10 +12,10 @@
 #ifndef SST_SCHEDULER_TASKMAPPER_H__
 #define SST_SCHEDULER_TASKMAPPER_H__
 
-#include "AllocInfo.h"
-#include "Job.h"
-#include "TaskCommInfo.h"
-#include "TaskMapInfo.h"
+#include <string>
+#include <boost/bimap/bimap.hpp>
+
+#include "Machine.h"
 
 typedef boost::bimaps::bimap< int, int > taskMapType;
 
@@ -24,7 +24,6 @@ namespace SST {
 
         class AllocInfo;
         class TaskMapInfo;
-        class TaskCommInfo;
 
         class TaskMapper {
 

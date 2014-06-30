@@ -17,8 +17,6 @@
 #include "output.h"
 #include "TaskCommInfo.h"
 
-#include <iostream> //debug
-
 using namespace SST::Scheduler;
 
 TaskMapInfo::TaskMapInfo(AllocInfo* ai)
@@ -26,6 +24,7 @@ TaskMapInfo::TaskMapInfo(AllocInfo* ai)
     allocInfo = ai;
     job = ai -> job;
     taskCommInfo = ai->job->taskCommInfo;
+    taskMap = new TaskMapType();
 }
 
 TaskMapInfo::~TaskMapInfo()
@@ -38,11 +37,13 @@ void TaskMapInfo::insert(int taskInd, int nodeInd)
     //check if taskInd is valid
     //check if exists
     if(taskInd >= job->getProcsNeeded() || taskInd < 0) {
-    	schedout.fatal(CALL_INFO, 1, "in TaskMapInfo: Could not map inexistent task %d of job %ld to node %d\n", taskInd, job->getJobNum(), nodeInd);
+    	schedout.fatal(CALL_INFO, 1, "in TaskMapInfo: Could not map inexistent task %d of job %ld to node %d\n",
+    	                              taskInd, job->getJobNum(), nodeInd);
     }
     //check if already mapped
-    if(taskMap.left.count(taskInd) != 0) {
-    	schedout.fatal(CALL_INFO, 1, "in TaskMapInfo: Task %d of job %ld is already mapped to node %d\n", taskInd, job->getJobNum(), taskMap.left.at(taskInd));
+    if(taskMap->left.count(taskInd) != 0) {
+    	schedout.fatal(CALL_INFO, 1, "in TaskMapInfo: Task %d of job %ld is already mapped to node %d\n",
+    	                              taskInd, job->getJobNum(), taskMap->left.at(taskInd));
     }
 
     //check if nodeInd is valid
@@ -54,25 +55,17 @@ void TaskMapInfo::insert(int taskInd, int nodeInd)
         }
     }
     if(!found){
-    	schedout.fatal(CALL_INFO, 1, "Could not map task %d of job %ld is to the unallocated node %d\n", taskInd, job->getJobNum(), nodeInd);
+    	schedout.fatal(CALL_INFO, 1, "Could not map task %d of job %ld is to the unallocated node %d\n",
+    	                              taskInd, job->getJobNum(), nodeInd);
     }
     //check if already mapped
-    if(taskMap.right.count(nodeInd) != 0) {
-    	schedout.fatal(CALL_INFO, 1, "Node %d is already allocated by task %d of job %ld", nodeInd, taskMap.right.at(nodeInd), job->getJobNum());
+    if(taskMap->right.count(nodeInd) != 0) {
+    	schedout.fatal(CALL_INFO, 1, "Node %d is already allocated by task %d of job %ld",
+    	                              nodeInd, taskMap->right.at(nodeInd), job->getJobNum());
     }
 
     //add mapping
-    taskMap.insert(taskMapType::value_type(taskInd, nodeInd));
-}
-
-taskMapType* TaskMapInfo::getTaskMap()
-{
-    //check if every task is mapped
-    if((unsigned int) job->getProcsNeeded() != taskMap.size()){
-    	return NULL;
-    } else {
-        return &taskMap;
-    }
+    taskMap->insert(TaskMapType::value_type(taskInd, nodeInd));
 }
 
 //Current version only checks if there is communication
@@ -81,7 +74,7 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
     unsigned long totalDist = 0;
 
     //check if every task is mapped
-    if((unsigned int) job->getProcsNeeded() != taskMap.size()){
+    if((unsigned int) job->getProcsNeeded() != taskMap->size()){
     	schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
     }
 
@@ -95,32 +88,32 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
             for(int j = 0; j < job->getProcsNeeded(); j++){
                 commMatrix[i][j] = 1;
             }
-        }   
-        deleteCommMatrix = true; 
-    }    
+        }
+        deleteCommMatrix = true;
+    }
 
     //iterate through all tasks
     int currentNode;
     int otherLoc;
     for(int taskIter = 0; taskIter < job->getProcsNeeded(); taskIter++){
-        currentNode = taskMap.left.at(taskIter);
+        currentNode = taskMap->left.at(taskIter);
         MeshLocation curLoc = MeshLocation(currentNode, machine);
-        
+
         //iterate through other tasks and add distance for communication
         for(int otherTaskIter = 0 ; otherTaskIter < job->getProcsNeeded(); otherTaskIter++){
-            if( commMatrix[taskIter][otherTaskIter] != 0 || 
+            if( commMatrix[taskIter][otherTaskIter] != 0 ||
                 commMatrix[otherTaskIter][taskIter] != 0 ){
-                otherLoc = allocInfo->nodeIndices[otherTaskIter];
+                otherLoc = taskMap->left.at(otherTaskIter);
                 MeshLocation otherNode = MeshLocation(otherLoc, machine);
                 totalDist += curLoc.L1DistanceTo(otherNode);
             }
         }
     }
-    
+
     if(deleteCommMatrix){
         for(int i = 0; i < job->getProcsNeeded(); i++){
             delete commMatrix[i];
-        } 
+        }
         delete commMatrix;
     }
 

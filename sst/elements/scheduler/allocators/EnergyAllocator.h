@@ -38,9 +38,10 @@ namespace SST {
 
             private:
                 std::string configName;
+                MeshMachine* mMachine;
 
             public:
-                EnergyAllocator(std::vector<std::string>* params, MeshMachine* mach);
+                EnergyAllocator(std::vector<std::string>* params, Machine* mach);
 
                 std::string getParamHelp();
 

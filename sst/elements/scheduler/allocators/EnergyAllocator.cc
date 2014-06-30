@@ -38,11 +38,16 @@
 
 using namespace SST::Scheduler;
 
-EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, MeshMachine* mach)
+EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     configName = "Energy";
     machine = mach;
+    
+    mMachine = dynamic_cast<MeshMachine*>(mach);
+    if(mMachine == NULL){
+        std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
+    }
 }
 
 
@@ -74,8 +79,6 @@ AllocInfo* EnergyAllocator::allocate(Job* job)
 //(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
-    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
-
     if (!canAllocate(*job, available)) {
         return NULL;
     }

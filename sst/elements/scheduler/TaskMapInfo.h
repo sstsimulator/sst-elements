@@ -14,7 +14,7 @@
 
 #include <boost/bimap/bimap.hpp>
 
-typedef boost::bimaps::bimap< int, int > taskMapType;
+typedef boost::bimaps::bimap< int, int > TaskMapType;
 
 namespace SST {
     namespace Scheduler {
@@ -27,13 +27,12 @@ namespace SST {
         class TaskMapInfo {
 
 	        private:
-		        taskMapType taskMap; //leftKey: task index, rightKey: node index
-
 		        TaskCommInfo* taskCommInfo;
 
 	        public:
 		        Job* job;
 		        AllocInfo* allocInfo;
+		        TaskMapType* taskMap; //leftKey: task index, rightKey: node index
 
 		        TaskMapInfo(AllocInfo* ai);
 
@@ -42,8 +41,6 @@ namespace SST {
 		        //does not do the mapping; only assigns the given task
 		        //assumes no task migration, i.e., a task is mapped only once at the start of execution
 		        void insert(int taskInd, int nodeInd);
-
-		        taskMapType* getTaskMap();
 
 		        unsigned long getTotalHopDist(const MeshMachine & machine) const;
         };

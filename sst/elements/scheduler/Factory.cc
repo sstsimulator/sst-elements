@@ -44,6 +44,7 @@
 #include "schedulers/PQScheduler.h"
 #include "schedulers/StatefulScheduler.h"
 
+#include "taskMappers/RCBTaskMapper.h"
 #include "taskMappers/SimpleTaskMapper.h"
 
 using namespace SST::Scheduler;
@@ -89,6 +90,7 @@ const Factory::allocTableEntry Factory::allocTable[] = {
 
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
     {SIMPLEMAP, "simple"},
+    {RCBMAP, "rcb"},
 };
 
 const Factory::FSTTableEntry Factory::FSTTable[] = {
@@ -96,12 +98,6 @@ const Factory::FSTTableEntry Factory::FSTTable[] = {
     {RELAXED, "relaxed"},
     {STRICT, "strict"},
 };
-
-const int Factory::numSchedTableEntries = 6;
-const int Factory::numAllocTableEntries = 16;
-const int Factory::numTaskMapTableEntries = 1;
-const int Factory::numMachTableEntries = 2;
-const int Factory::numFSTTableEntries = 3;
 
 Factory::Factory() 
 {
@@ -278,7 +274,6 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs)
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
-    MeshMachine* meshMach = dynamic_cast<MeshMachine*>(m);
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
@@ -341,13 +336,10 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             break;
         case ENERGY:
             schedout.debug(CALL_INFO, 4, 0, "Energy-Aware Allocator\n");
-            if(meshMach == NULL){
-                schedout.fatal(CALL_INFO, 1, "EnergyAllocator requires MeshMachine");
-            }
             //if(DEBUG) printf("MC1x1 Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("Energy");
-            return new EnergyAllocator(nearestparams, meshMach);
+            return new EnergyAllocator(nearestparams, m);
             break;
         case HYBRID:
             schedout.debug(CALL_INFO, 4, 0, "Hybrid Allocator\n");
@@ -444,6 +436,9 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
         switch (taskmappername( taskmapparams->at(0) )){
         case SIMPLEMAP:
             taskMapper = new SimpleTaskMapper(mach);
+            break;
+        case RCBMAP:
+            taskMapper = new RCBTaskMapper(mach);
             break;
         default: 
             taskMapper = NULL;
