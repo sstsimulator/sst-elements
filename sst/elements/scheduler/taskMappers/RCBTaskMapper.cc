@@ -14,10 +14,12 @@
 #include <iostream> //debug
 #include <iterator>
 
+#include "AllocInfo.h"
 #include "Job.h"
 #include "MeshMachine.h"
 #include "TaskCommInfo.h"
 #include "TaskMapInfo.h"
+#include "output.h"
 
 using namespace SST::Scheduler;
 using namespace std;
