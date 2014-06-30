@@ -107,6 +107,12 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     topo(topo),
     port_number(port_number),
     remote_rdy_for_credits(false),
+    input_buf(NULL),
+    output_buf(NULL),
+    input_buf_count(NULL),
+    output_buf_count(NULL),
+    port_ret_credits(NULL),
+    port_out_credits(NULL),
     waiting(true),
     parent(rif)
 {
@@ -261,13 +267,13 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
 }
 
 PortControl::~PortControl() {
-    delete [] input_buf;
-    delete [] output_buf;
-    delete [] input_buf_count;
-    delete [] output_buf_count;
-    // delete [] xbar_in_credits;
-    delete [] port_ret_credits;
-    delete [] port_out_credits;
+    if ( input_buf != NULL ) delete [] input_buf;
+    if ( output_buf != NULL ) delete [] output_buf;
+    if ( input_buf_count != NULL ) delete [] input_buf_count;
+    if ( output_buf_count != NULL ) delete [] output_buf_count;
+    //if ( xbar_in_credits != NULL ) delete [] xbar_in_credits;
+    if ( port_ret_credits != NULL ) delete [] port_ret_credits;
+    if ( port_out_credits != NULL ) delete [] port_out_credits;
 }
 
 void
