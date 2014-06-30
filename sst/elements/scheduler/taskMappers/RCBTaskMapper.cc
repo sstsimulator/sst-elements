@@ -68,9 +68,9 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     mapTaskHelper(&nodeGroup, &jobGroup, tmi);
 
     //DEBUG
-    for(int i = 0; i<jobSize; i++){
-        cout << "task:" << i << " <-> node:" << tmi->taskMap->left.at(i) << endl;
-    }
+    //for(int i = 0; i<jobSize; i++){
+    //    cout << "task:" << i << " <-> node:" << tmi->taskMap->left.at(i) << endl;
+    //}
     ///////
 
     return tmi;

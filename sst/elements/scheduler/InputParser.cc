@@ -210,10 +210,11 @@ bool JobParser::newJobLine(std::string line)
     	}
     } else if(communicationFile.compare("coord") == 0){
         is >> communicationFile;
-        //communicationFile = fileNamePath.remove_leaf().string() + communicationFile;//get file name as a path
+        communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
         tci = new TaskCommInfo( j, readCoordFile(communicationFile, procsNeeded) );
     } else {
-        //communicationFile = fileNamePath.remove_leaf().string() + communicationFile;//get file name as a path
+        communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
+        schedout.fatal(CALL_INFO, 1, "new FileName:\n%s\n", communicationFile.c_str());
     	tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
     }
 
