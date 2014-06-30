@@ -59,8 +59,8 @@ main(int argc, char **argv)
     if ( args.new_format ) fprintf(output, "\n<sdl version=\"2.0\"/>\n");
     fprintf(output, "\n");
 
-    fprintf(output,"<|-- Command Line: -->\n ");
-    fprintf(output,"<|-- ");
+    fprintf(output,"<!-- Command Line: -->\n ");
+    fprintf(output,"<!-- ");
     for (i= 0; i < argc; i++)   {
         fprintf(output,"%s", argv[i]);
         if (i < (argc - 1))   {
