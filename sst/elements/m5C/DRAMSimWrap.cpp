@@ -139,7 +139,7 @@ Port * DRAMSimWrap::getPort(const std::string &if_name, int idx )
 void DRAMSimWrap::init()
 {
     if ( ! m_port ) {
-        fatal("DRAMSimWrap object %s is unconnected!", name());
+        panic("DRAMSimWrap object %s is unconnected!", name());
     }
 
     m_port->sendStatusChange(Port::RangeChange);

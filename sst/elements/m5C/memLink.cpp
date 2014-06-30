@@ -14,6 +14,9 @@
 
 #include <memLink.h>
 #include <debug.h>
+#ifdef fatal
+#undef fatal
+#endif
 #include <m5.h>
 #include <memEvent.h>
 #include <paramHelp.h>

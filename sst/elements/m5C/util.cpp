@@ -10,12 +10,18 @@
 // distribution.
 
 
+#define XML 0
+
 #include <sst_config.h>
 #include <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/configGraph.h>
+#if XML
 #include <sst/core/model/sdlmodel.h>
+#else
+#include <sst/core/model/pymodel.h>
+#endif
 
 #include <dll/gem5dll.hh>
 
@@ -47,7 +53,14 @@ objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string config
 
     DBGC( 2, "name=`%s` file=`%s`\n", name.c_str(), configFile.c_str() );
 
+#if XML
     SST::SSTSDLModelDefinition sdl = SST::SSTSDLModelDefinition( configFile );
+#else
+    Config cfg(0,1);
+    cfg.model_options = configFile;
+    SST::SSTPythonModelDefinition sdl = SST::SSTPythonModelDefinition(SST_INSTALL_PREFIX "/libexec/xmlToPython.py", 0, &cfg);
+#endif
+
     SST::ConfigGraph& graph = *sdl.createConfigGraph();
 
     Factory factory( comp );

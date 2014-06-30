@@ -20,6 +20,10 @@
 #include <deque>
 #include <map>
 
+#ifdef fatal
+#undef fatal
+#endif
+
 #include <sst/core/params.h>
 #include <sst/core/timeConverter.h>
 

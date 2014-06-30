@@ -15,6 +15,9 @@
 #include <physicalPlus.h>
 #include <memLink.h>
 #include <paramHelp.h>
+#ifdef fatal
+#undef fatal
+#endif
 #include <loadMemory.h>
 
 
