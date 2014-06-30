@@ -238,6 +238,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
     {NULL, NULL, NULL}
 };
 
