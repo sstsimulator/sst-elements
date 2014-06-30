@@ -126,7 +126,7 @@ print_network() {
 }
 
 print_dirmem() {
-  echo -n "  <component name=\"dirctrl0\" rank=\"0\""
+  echo -n "  <component name=\"dirctrl0\" rank=\"0\" "
   echo       "type=\"memHierarchy.DirectoryController\">"
   echo "    <params>"
   echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"
