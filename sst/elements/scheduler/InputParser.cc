@@ -214,7 +214,6 @@ bool JobParser::newJobLine(std::string line)
         tci = new TaskCommInfo( j, readCoordFile(communicationFile, procsNeeded) );
     } else {
         communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
-        schedout.fatal(CALL_INFO, 1, "new FileName:\n%s\n", communicationFile.c_str());
     	tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
     }
 
