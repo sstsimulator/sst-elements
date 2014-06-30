@@ -13,6 +13,7 @@
 #define SST_SCHEDULER_TASKCOMMINFO_H__
 
 #include <cstddef>
+#include <vector>
 
 namespace SST {
     namespace Scheduler {
@@ -20,15 +21,31 @@ namespace SST {
         class Job;
 
         class TaskCommInfo {
+        
 	        public:
-                //defaults to all-to-all communication
-                TaskCommInfo(Job* job, int ** inCommMatrix = NULL, int xdim = 0, int ydim = 0, int zdim = 0);
+		        TaskCommInfo(Job* job); //default: all-to-all communication
+	            TaskCommInfo(Job* job, int ** inCommMatrix); // communication matrix input
+	            TaskCommInfo(Job* job, int xdim, int ydim, int zdim); // mesh dimension input
+	            TaskCommInfo(Job* job, std::vector<double*>* inCoords); //coordinate input
 
                 ~TaskCommInfo();
 
-                int** commMatrix;
-                int size;
-                int xdim, ydim, zdim;
+		        enum commType{
+		            ALLTOALL = 0,
+		            CUSTOM = 1,
+		            MESH = 2,
+		            COORDINATE = 3,
+		        };
+
+		        commType taskCommType;
+		        int** commMatrix;
+		        std::vector<double*> *coords;
+		        int size;
+		        int xdim, ydim, zdim;
+
+	        private:
+		        void init(Job* job);
+		        int** buildMeshComm(int xdim, int ydim, int zdim) const; //builds mesh structured communication matrix
         };
     }
 }

@@ -21,9 +21,10 @@ namespace SST {
     namespace Scheduler {
 
         class AllocInfo;
-        class Machine;
+        class Job;
         class MeshMachine;
         class MeshLocation;
+        class TaskCommInfo;
         class TaskMapInfo;
 
         class RCBTaskMapper : public TaskMapper {
@@ -42,11 +43,8 @@ namespace SST {
 
                 MeshMachine* mMachine;
                 std::vector<MeshLocation> nodeLocs;
-
-                //job dimensions
-                int jxdim;
-                int jydim;
-                int jzdim;
+                TaskCommInfo *tci;
+                Job* job;
 
                 //holds vector of locations along with the dimensions
                 template <typename T>

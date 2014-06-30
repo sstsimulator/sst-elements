@@ -54,7 +54,7 @@ namespace SST {
                 
                 bool newJobLine(std::string line);
                 int** readCommFile(std::string fileName, int procsNeeded);
-                int** buildMeshComm(int xdim, int ydim, int zdim); //builds mesh structured communication matrix
+                std::vector<double*>* readCoordFile(std::string fileName, int procsNeeded);
                 bool validateJob( Job * j, std::vector<Job*> * jobs, long runningTime );
                 
                 //yumyum

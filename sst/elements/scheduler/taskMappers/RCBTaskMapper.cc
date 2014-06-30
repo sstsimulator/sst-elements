@@ -46,8 +46,9 @@ std::string RCBTaskMapper::getSetupInfo(bool comment) const
 TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
-    int jobSize = allocInfo->job->getProcsNeeded();
-    TaskCommInfo* tci = allocInfo->job->taskCommInfo;
+    job = allocInfo->job;
+    int jobSize = job->getProcsNeeded();
+    tci = job->taskCommInfo;
 
     //get node locations
     vector<MeshLocation>* nodes = new vector<MeshLocation>();;
@@ -57,14 +58,6 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     }
     Grouper<MeshLocation> nodeGroup = Grouper<MeshLocation>(nodes, *this);
 
-    //get job dimensions
-    if(tci->xdim == 0){
-        schedout.fatal(CALL_INFO, 1, "RCB task mapper is called with non-mesh job with ID:%ld", allocInfo->job->getJobNum());
-        return NULL;
-    }
-    jxdim = tci->xdim;
-    jydim = tci->ydim;
-    jzdim = tci->zdim;
     vector<int>* jobs = new vector<int>();
     for(int i = 0; i < jobSize; i++){
         jobs->push_back(i);
@@ -129,9 +122,20 @@ void RCBTaskMapper::getDims(int* x, int* y, int* z, T t) const
 
 void RCBTaskMapper::getDims(int* x, int* y, int* z, int taskID) const
 {
-    *x = taskID % jxdim;
-    *y = (taskID % (jxdim * jydim)) / jxdim;
-    *z = taskID / (jxdim * jydim);
+    if(tci->taskCommType == TaskCommInfo::MESH ||
+       tci->taskCommType == TaskCommInfo::ALLTOALL   ) {
+        *x = taskID % tci->xdim;
+        *y = (taskID % (tci->xdim * tci->ydim)) / tci->xdim;
+        *z = taskID / (tci->xdim * tci->ydim);
+    } else if (tci->taskCommType == TaskCommInfo::COORDINATE) {
+        *x = tci->coords->at(taskID)[0];
+        *y = tci->coords->at(taskID)[1];
+        *z = tci->coords->at(taskID)[2];
+    } else if(tci->taskCommType == TaskCommInfo::CUSTOM) {
+        schedout.fatal(CALL_INFO, 1, "RCB task mapper does not support custom task communication.\n");
+    } else {
+        schedout.fatal(CALL_INFO, 1, "Unknown communication type for Job %d\n", job->getJobNum());
+    }
 }
 
 void RCBTaskMapper::getDims(int* x, int* y, int* z, MeshLocation loc) const
