@@ -44,6 +44,7 @@
 #include "schedulers/PQScheduler.h"
 #include "schedulers/StatefulScheduler.h"
 
+#include "taskMappers/RandomTaskMapper.h"
 #include "taskMappers/RCBTaskMapper.h"
 #include "taskMappers/SimpleTaskMapper.h"
 
@@ -91,6 +92,7 @@ const Factory::allocTableEntry Factory::allocTable[] = {
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
     {SIMPLEMAP, "simple"},
     {RCBMAP, "rcb"},
+    {RANDOMMAP, "random"}
 };
 
 const Factory::FSTTableEntry Factory::FSTTable[] = {
@@ -439,6 +441,9 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             break;
         case RCBMAP:
             taskMapper = new RCBTaskMapper(mach);
+            break;
+        case RANDOMMAP:
+            taskMapper = new RandomTaskMapper(mach);
             break;
         default: 
             taskMapper = NULL;

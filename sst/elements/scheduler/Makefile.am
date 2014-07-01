@@ -83,6 +83,8 @@ libscheduler_la_SOURCES = \
     schedulers/PQScheduler.h \
     schedulers/StatefulScheduler.cc \
     schedulers/StatefulScheduler.h \
+    taskMappers/RandomTaskMapper.cc \
+    taskMappers/RandomTaskMapper.h \
     taskMappers/RCBTaskMapper.cc \
     taskMappers/RCBTaskMapper.h \
     taskMappers/SimpleTaskMapper.cc \

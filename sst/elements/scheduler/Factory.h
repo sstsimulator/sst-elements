@@ -83,6 +83,7 @@ namespace SST {
                 enum TaskMapperType{
                     SIMPLEMAP = 0,
                     RCBMAP = 1,
+                    RANDOMMAP = 2,
                 };
                 
                 enum FSTType{
@@ -117,13 +118,13 @@ namespace SST {
                 static const int numSchedTableEntries = 6;
                 static const int numFSTTableEntries = 3;
                 static const int numAllocTableEntries = 16;
-                static const int numTaskMapTableEntries = 2;
+                static const int numTaskMapTableEntries = 3;
                 
                 static const machTableEntry machTable[2];
                 static const schedTableEntry schedTable[6];
                 static const FSTTableEntry FSTTable[3];
                 static const allocTableEntry allocTable[16];
-                static const taskMapTableEntry taskMapTable[2];
+                static const taskMapTableEntry taskMapTable[3];
 
                 SchedulerType schedulername(std::string inparam);
                 MachineType machinename(std::string inparam);
