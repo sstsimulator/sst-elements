@@ -24,7 +24,7 @@ protected:
     uint          numSharers_;
     bitset<128>   sharers_;
     Addr          baseAddr_;
-    TCC_MESIState state_;
+    TCC_State     state_;
     Output*       d_;
     
     
@@ -40,7 +40,7 @@ public:
     }
 
 
-    void setState(TCC_MESIState _newState) {
+    void setState(TCC_State _newState) {
         d_->debug(C,L4,0, "CCLine Changing State. Old State = %s, New State = %s\n", TccLineString[state_], TccLineString[_newState]);
         state_ = _newState;
     }
@@ -88,7 +88,7 @@ public:
         if(ownerExists_) assert(ownerId_ != -1);
         return ownerExists_;
     }
-    TCC_MESIState getState() {return state_; }
+    TCC_State getState() {return state_; }
 
     void removeAllSharers(){
         for(int i = 0; i < 128; i++){

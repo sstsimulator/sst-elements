@@ -149,6 +149,7 @@ bool DMAEngine::isIssuable(DMACommand *cmd) const
 
 void DMAEngine::startRequest(Request *req)
 {
+    /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
     dbg.debug(_L10_, "Received request to transfer from %#"PRIx64" to 0x%"PRIx64"\n",
             req->getSrc(), req->getDst());
     ++numTransfers;
@@ -163,11 +164,13 @@ void DMAEngine::startRequest(Request *req)
         ptr += blocksize;
     }
     activeRequests.insert(req);
+    */
 }
 
 
 void DMAEngine::processPacket(Request *req, MemEvent *ev)
 {
+    /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
     if ( ev->getCmd() == SupplyData ) {
         if ( !req->loadKeys.count(ev->getResponseToID()) ) {
             dbg.fatal(CALL_INFO, 1, "Received Response of SupplyData, but that wasn't in our LoadKeys!\n");
@@ -193,6 +196,7 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
     } else {
 	dbg.fatal(CALL_INFO, 1, "Received unexpected message %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
     }
+    */
 }
 
 

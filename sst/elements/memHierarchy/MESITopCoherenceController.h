@@ -55,7 +55,7 @@ public:
     
     /** Returns the state of the CCLine.
         Dummy TopCC always has all CCLines in V states since there are no sharers */
-    virtual TCC_MESIState getState(int lineIndex) { return V; }
+    virtual TCC_State getState(int lineIndex) { return V; }
     
     /** Returns number of sharers.
         Dummy TopCC always returns 0 */
@@ -63,10 +63,10 @@ public:
     
     /** Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual void handleEviction(int lineIndex, State _state) {}
+    virtual void handleEviction(int lineIndex, State _state) {return;}
    
     /* Incoming Inv/InvX/FetchInv/FetchInvX received.  TopCC sends invalidates up the hierarchy if necessary */
-    virtual void handleInvalidate(int lineIndex, Command cmd){return;}
+    virtual void handleInvalidate(int lineIndex, Command cmd, bool _mshrHit){return;}
 
     /** Create MemEvent and send Response to HgLvl caches */
     bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit);
@@ -136,17 +136,17 @@ public:
     
     /** Upon a request, this function returns true if a response was sent back. In order for function to
     send response, the state of the cache line and the type of request have to align */
-    virtual bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
+    virtual bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool mshrHit);
     
     /* Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual void handleEviction(int lineIndex, State _state);
+    virtual void handleEviction(int lineIndex, State state);
     
     /* Incoming Inv/FetchInv received.  TopCC sends invalidates up the hierarchy if necessary */
-    virtual void handleInvalidate(int lineIndex, Command cmd);
+    virtual void handleInvalidate(int lineIndex, Command cmd, bool mshrHit);
     
     /** Determines whether the Inv request will ultimately require an MSHR entry (ie. request will stall) */
-    virtual bool willRequestPossiblyStall(int lineIndex, MemEvent* _event);
+    virtual bool willRequestPossiblyStall(int lineIndex, MemEvent* event);
 
     /** Print statistics at end of simulation */
     void printStats(int _stats);
@@ -174,7 +174,7 @@ public:
     void handlePutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
     
     /** Returns the state of the CCLine. */
-    TCC_MESIState getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
+    TCC_State getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
     
     
     /** Returns number of sharers. */
@@ -188,12 +188,12 @@ private:
     int                 protocol_;
     vector<CCLine*>     ccLines_;
 
-    int sendInvalidates(int lineIndex, string requestingNode);
-    void sendInvalidateX(int lineIndex);
-    void sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded);
+    int sendInvalidates(int lineIndex, string requestingNode, bool _mshrHit);
+    void sendInvalidateX(int lineIndex, bool _mshrHit);
+    void sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded, bool _mshrHit);
     
-    void sendEvictionInvalidates(int _lineIndex);
-    void sendCCInvalidates(int _lineIndex, string _requestingNode);
+    void sendEvictionInvalidates(int _lineIndex, bool _mshrHit);
+    void sendCCInvalidates(int _lineIndex, string _requestingNode, bool _mshrHit);
     };
 
 }}

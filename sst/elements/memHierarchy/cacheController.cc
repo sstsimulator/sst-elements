@@ -48,7 +48,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
             checkCacheMissValidity(_event);
-            allocateCacheLine(_event, _baseAddr, lineIndex);
+            allocateCacheLine(_event, _baseAddr, lineIndex, _mshrHit);
         }
         
         cacheLine = getCacheLine(lineIndex);
@@ -84,7 +84,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
             return;
         }
     }
-    topCC_->handleInvalidate(lineIndex, _cmd);                          /* Invalidate lower levels */
+    topCC_->handleInvalidate(lineIndex, _cmd, _mshrHit);                /* Invalidate lower levels */
     if(invalidatesInProgress(lineIndex)) return;
     
     bottomCC_->handleInvalidate(_event, cacheLine, _cmd);               /* Invalidate this cache line */
@@ -120,7 +120,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
             return;
         }
     }
-    topCC_->handleInvalidate(lineIndex, cmd);
+    topCC_->handleInvalidate(lineIndex, cmd, _mshrHit);
     if(invalidatesInProgress(lineIndex)) return;
     
     bottomCC_->handleFetchInvalidate(_event, cacheLine, cmd, _mshrHit);
@@ -134,13 +134,13 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
    Writeback Related Functions
    --------------------------------- */
 
-void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLineIndex) throw(blockedEventException){
+void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLineIndex, bool _mshrHit) throw(blockedEventException){
     CacheLine* wbCacheLine = findReplacementCacheLine(_baseAddr);
     
     /* Is writeback candidate invalid and not in transition? */
     if(wbCacheLine->valid()){
         candidacyCheck(_event, wbCacheLine, _baseAddr);
-        evictInHigherLevelCaches(wbCacheLine, _baseAddr);
+        evictInHigherLevelCaches(wbCacheLine, _baseAddr, _mshrHit);
         writebackToLowerLevelCaches(_event, wbCacheLine);
     }
     
@@ -188,7 +188,7 @@ bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
 
 
 
-void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(blockedEventException){
+void Cache::evictInHigherLevelCaches(CacheLine* _wbCacheLine, Addr _requestBaseAddr, bool _mshrHit) throw(blockedEventException){
     topCC_->handleEviction(_wbCacheLine->getIndex(), _wbCacheLine->getState());
     CCLine* ccLine = topCC_->getCCLine(_wbCacheLine->getIndex());
     

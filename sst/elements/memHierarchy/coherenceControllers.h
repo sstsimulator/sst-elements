@@ -64,17 +64,31 @@ public:
     
     
     void addToOutgoingQueue(Response& resp){
-        list<Response>::iterator it;
+        list<Response>::iterator it, it2;
         /* if the request is an MSHR hit, the response time will be shorter.  Therefore
            the out event queue needs to be maintained in delivery time order */
-       /* for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
+        for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
             if(resp.deliveryTime < (*it).deliveryTime){
                 break;
             }
         }
-        outgoingEventQueue_.insert(it, resp);
+        
+        /*
+        Addr bsAddr = resp.event->getBaseAddr();
+        
+        for(it2 = it; it2 != outgoingEventQueue_.end(); it2++){
+            if((*it2).event->getBaseAddr() == bsAddr){
+                cout << "Inserting before own event" << endl;
+                cout << hex << bsAddr << " - " << hex << (*it2).event->getBaseAddr() << endl;
+                cout << "Event Cmd: " << CommandString[(*it2).event->getCmd()] << endl;
+                cout << "delivery time: " << (*it2).deliveryTime << endl;
+                break;
+            }
+        }
         */
-        outgoingEventQueue_.push_back(resp);
+        outgoingEventQueue_.insert(it, resp);
+        
+        //outgoingEventQueue_.push_back(resp);
     }
     
     void setName(string _name){ name_ = _name; }

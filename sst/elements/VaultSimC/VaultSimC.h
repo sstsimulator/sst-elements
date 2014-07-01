@@ -73,7 +73,8 @@ class VaultSimC : public IntrospectedComponent {
 
 inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Command type )
 {
-    switch( type ) 
+    /*  Needs to be updated with current MemHierarchy Commands/States
+    switch( type )
       {
       case SST::MemHierarchy::ReadReq:
       case SST::MemHierarchy::RequestData:
@@ -85,6 +86,7 @@ inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Comman
 	_abort(VaultSimC,"Tried to convert unknown memEvent request type (%d) to PHXSim transaction type \n", type);
     }
     return (PHXSim::TransactionType)-1;
+    */
 }
 
 #endif

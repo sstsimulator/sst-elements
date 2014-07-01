@@ -48,20 +48,7 @@ typedef uint64_t Addr;
     X(FetchResp) \
     /* Others */ \
     X(InvAck)  \
-    X(NACK) \
-    X(PutAck) \
-    X(ReadReq) \
-    X(ReadReqEx) \
-    X(ReadResp) \
-    X(WriteReq) \
-    X(WriteResp) \
-    /* Cache <-> Cache/MemControl/DirCtrl */ \
-    X(RequestData) \
-    X(SupplyData) \
-    X(Invalidate) \
-    X(ACK) \
-    /* Directory Controller */ \
-    X(Evicted)
+    X(NACK)
 
 /** Valid commands for the MemEvent */
 typedef enum {
@@ -92,7 +79,7 @@ typedef enum {
 #define X(x) x,
     TCCLINE_TYPES
 #undef X
-} TCC_MESIState;
+} TCC_State;
 
 /** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
 static const char* TccLineString[] __attribute__((unused)) = {

@@ -94,18 +94,18 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
 
 
 
-void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd){
+void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(ccLine->isShareless() && !ccLine->ownerExists()) return;
     
     switch(_cmd){
         case Inv:
         case FetchInv:
-            sendInvalidates(_lineIndex, "");
+            sendInvalidates(_lineIndex, "", _mshrHit);
             break;
         case InvX:
         case FetchInvX:
-            sendInvalidateX(_lineIndex);
+            sendInvalidateX(_lineIndex, _mshrHit);
             break;
         default:
             _abort(MemHierarchy::CacheController, "Command not supported, Cmd = %s", CommandString[_cmd]);
@@ -123,7 +123,7 @@ void MESITopCC::handleEviction(int _lineIndex, State _state){
     if(_state == I || (ccLine->isShareless() && !ccLine->ownerExists())) return;
     
     /* Send invalidates */
-    sendEvictionInvalidates(_lineIndex);
+    sendEvictionInvalidates(_lineIndex, false);
     
     if(ccLine->inTransition()){
         d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
@@ -133,7 +133,7 @@ void MESITopCC::handleEviction(int _lineIndex, State _state){
 
 
 
-int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
+int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     
     int sentInvalidates = 0;
@@ -146,7 +146,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
         assert(ccLine->isShareless());
         sentInvalidates = 1;
         string onwerName = lowNetworkNodeLookupById(ccLine->ownerId_);
-        sendInvalidate(ccLine, onwerName, acksNeeded);
+        sendInvalidate(ccLine, onwerName, acksNeeded, _mshrHit);
     }
     else{
         for(sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++){
@@ -157,7 +157,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
             }
             if(ccLine->isSharer(sharerId)){
                 sentInvalidates++;
-                sendInvalidate(ccLine, sharer->first, acksNeeded);
+                sendInvalidate(ccLine, sharer->first, acksNeeded, _mshrHit);
             }
         }
     }
@@ -174,35 +174,35 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode){
 
 
 
-void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded){
+void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded, bool _mshrHit){
     MemEvent* invalidateEvent = new MemEvent((Component*)owner_, _cLine->getBaseAddr(), _cLine->getBaseAddr(), Inv);
     if(_acksNeeded) invalidateEvent->setAckNeeded();            //TODO: add comment as to why this is needed (ie weak vs strong consistency)
     invalidateEvent->setDst(destination);
     
-    uint64 deliveryTime = timestamp_ + accessLatency_;
+    uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L7_,"Invalidate sent: Addr = %"PRIx64", Dst = %s\n", _cLine->getBaseAddr(),  destination.c_str());
+    d_->debug(_L7_,"TCC - Invalidate sent: Delivery = %"PRIu64", Current = %"PRIu64", Addr = %"PRIx64", Dst = %s\n", deliveryTime, timestamp_, _cLine->getBaseAddr(),  destination.c_str());
 }
 
 
 
-void MESITopCC::sendEvictionInvalidates(int _lineIndex){
-    int invalidatesSent = sendInvalidates(_lineIndex, "");
+void MESITopCC::sendEvictionInvalidates(int _lineIndex, bool _mshrHit){
+    int invalidatesSent = sendInvalidates(_lineIndex, "", _mshrHit);
     evictionInvReqsSent_ += invalidatesSent;
 }
 
 
 
-void MESITopCC::sendCCInvalidates(int _lineIndex, string _requestingNode){
-    int invalidatesSent = sendInvalidates(_lineIndex, _requestingNode);
+void MESITopCC::sendCCInvalidates(int _lineIndex, string _requestingNode, bool _mshrHit){
+    int invalidatesSent = sendInvalidates(_lineIndex, _requestingNode, _mshrHit);
     invReqsSent_ += invalidatesSent;
 }
 
 
 
-void MESITopCC::sendInvalidateX(int _lineIndex){
+void MESITopCC::sendInvalidateX(int _lineIndex, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(!ccLine->ownerExists()) return;
     
@@ -215,7 +215,8 @@ void MESITopCC::sendInvalidateX(int _lineIndex){
     invalidateEvent->setAckNeeded();
     invalidateEvent->setDst(ownerName);
     
-    uint64 deliveryTime = timestamp_ + accessLatency_;
+    uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
@@ -245,7 +246,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     else if(l->ownerExists()) {
         d_->debug(_L7_,"GetS Req but exclusive cache exists \n");
         assert(!l->isSharer(_sharerId));                    /* Cache should not ask for 'S' if its already Exclusive */
-        sendInvalidateX(lineIndex);
+        sendInvalidateX(lineIndex, _mshrHit);
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
@@ -274,7 +275,7 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     else if(ccLine->ownerExists()){
         d_->debug(_L7_,"GetX Req recieived but exclusive cache exists \n");
         assert(ccLine->isShareless());
-        sendCCInvalidates(lineIndex, _event->getSrc());
+        sendCCInvalidates(lineIndex, _event->getSrc(), _mshrHit);
         respond = false;
     }
     /* Sharers exist */
@@ -282,13 +283,13 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
         d_->debug(_L7_,"GetX Req recieved but sharers exists \n");
         switch(cmd){
             case GetX:
-                sendCCInvalidates(lineIndex, _event->getSrc());
+                sendCCInvalidates(lineIndex, _event->getSrc(), _mshrHit);
                 ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
                 respond = true;
                 break;
             case GetSEx:
                 ccLine->setAcksNeeded();
-                invSent = sendInvalidates(lineIndex, _event->getSrc());
+                invSent = sendInvalidates(lineIndex, _event->getSrc(), _mshrHit);
                 respond = (invSent > 0) ? false : true;
                 break;
             default:

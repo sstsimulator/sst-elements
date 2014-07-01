@@ -153,7 +153,7 @@ private:
     /** Find replacement for the current request.  If the replacement candidate is
         valid then a writeback is needed.  If replacemenent candidate is transitioning, we 
         need to wait (stall) until the replacement is in a 'stable' state */
-    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(blockedEventException);
+    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex, bool _mshrHit) throw(blockedEventException);
 
     /** Depending on the replacement policy and cache array type, this function appropriately
         searches for the replacement candidate */
@@ -165,7 +165,7 @@ private:
 
     /** Evict replacement cache line in higher level caches (if necessary).
         TopCC sends invalidates to lower level caches; stall if invalidates were sent */
-    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (blockedEventException);
+    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr, bool _mshrHit) throw (blockedEventException);
 
     /** Writeback cache line to lower level caches */
     inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine);
