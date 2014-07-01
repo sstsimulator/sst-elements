@@ -88,7 +88,7 @@ namespace SST {
                         int* xlocs;
                         int* ylocs;
                         int* zlocs;
-                        int machDims[3];
+                        int numTasksNorm; //normalization factor for coordinate input
                         int* indMap; // the mesh locations may not be ordered. This saves the loc indexes
                 };
 

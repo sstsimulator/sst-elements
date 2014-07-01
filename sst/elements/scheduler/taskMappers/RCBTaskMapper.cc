@@ -13,6 +13,7 @@
 
 #include <iostream> //debug
 #include <iterator>
+#include <math.h>
 
 #include "AllocInfo.h"
 #include "Job.h"
@@ -258,9 +259,7 @@ RCBTaskMapper::Rotator::Rotator(const RCBTaskMapper & rcb,
     xlocs = NULL;
     ylocs = NULL;
     zlocs = NULL;
-    machDims[0] = mach.getXDim();
-    machDims[1] = mach.getYDim();
-    machDims[2] = mach.getZDim();
+    numTasksNorm = sqrt(rcb.job->getProcsNeeded());
 }
 
 RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
@@ -283,24 +282,19 @@ RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
         ylocs[i] = meshLocs->elements->at(i).y;
         zlocs[i] = meshLocs->elements->at(i).z;
     }
-    machDims[0] = mach.getXDim();
-    machDims[1] = mach.getYDim();
-    machDims[2] = mach.getZDim();
+    numTasksNorm = sqrt(rcb.job->getProcsNeeded());
     //apply rotation where needed
     if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){
         swap(xlocs, ylocs);
         swap(meshLocs->dims[0], meshLocs->dims[1]);
-        swap(machDims[0], machDims[1]);
     }
     if(meshLocs->dims[0] < meshLocs->dims[2] && jobLocs->dims[0] >= jobLocs->dims[2]){
         swap(xlocs, zlocs);
         swap(meshLocs->dims[0], meshLocs->dims[2]);
-        swap(machDims[0], machDims[2]);
     }
     if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){
         swap(xlocs, ylocs);
         swap(meshLocs->dims[0], meshLocs->dims[1]);
-        swap(machDims[0], machDims[1]);
     }
 }
 
@@ -328,9 +322,9 @@ void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, int taskID) const
         *z = taskID / (rcb.tci->xdim * rcb.tci->ydim);
     } else if (rcb.tci->taskCommType == TaskCommInfo::COORDINATE) {
         //return coordinates normalized by rotated machine dimensions
-        *x = rcb.tci->coords->at(taskID)[0] * machDims[0];
-        *y = rcb.tci->coords->at(taskID)[1] * machDims[1];
-        *z = rcb.tci->coords->at(taskID)[2] * machDims[2];
+        *x = rcb.tci->coords->at(taskID)[0] * numTasksNorm;
+        *y = rcb.tci->coords->at(taskID)[1] * numTasksNorm;
+        *z = rcb.tci->coords->at(taskID)[2] * numTasksNorm;
     } else {
         std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Unknown communication type for Job %d\n", job->getJobNum());
     }
