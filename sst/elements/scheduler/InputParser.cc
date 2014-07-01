@@ -257,7 +257,11 @@ vector<double*>* JobParser::readCoordFile(std::string fileName, int procsNeeded)
         tempVec = new double[3];
         tempVec[0] = matrix[i][0];
         tempVec[1] = matrix[i][1];
-        tempVec[2] = matrix[i][2];
+        if(reader.ydim == 2){
+            tempVec[2] = 0; //dummy 3rd dimension
+        } else {
+            tempVec[2] = matrix[i][2];
+        }
         retVec->push_back(tempVec);
     }
 

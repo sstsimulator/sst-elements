@@ -29,6 +29,8 @@ namespace SST {
 
         class RCBTaskMapper : public TaskMapper {
 
+            class Rotator;
+
             public:
 
                 RCBTaskMapper(Machine* mach);
@@ -41,40 +43,62 @@ namespace SST {
 
             private:
 
+                //holds vector of locations along with the dimensions
+                template <typename T>
+                class Grouper {
+                    public:
+                        std::vector<T>* elements;
+                        Grouper(std::vector<T>* elements, Rotator *rotator);
+                        ~Grouper();
+                        int getLongestDim(int* result) const; //returns the length of the dimension
+                        void divideBy(int dim, Grouper<T>** first, Grouper<T>** second);
+                   private:
+                        int dims[3];
+                        Rotator *rotator;
+                        void sort_buildMaxHeap(std::vector<T> & v, int dim);
+                        void sort_maxHeapify(std::vector<T> & v, int i, int dim);
+                        int sort_compByDim(T first, T second, int dim); //returns >= 0 if first >= second
+
+                   friend class Rotator;
+                };
+
+                //helps for rotations of the nodes
+                class Rotator {
+                    public:
+                        Rotator(const RCBTaskMapper & rcb, const MeshMachine & mach); //dummy rotator for Grouper initialization
+                        Rotator(Grouper<MeshLocation> *meshLocs, 
+                                Grouper<int> *jobLocs,
+                                const RCBTaskMapper & rcb,
+                                const MeshMachine & mach );
+                        ~Rotator();
+
+                        template <typename T>
+                        void getDims(int* x, int* y, int* z, T t) const; //template specialization workaround
+                        void getDims(int* x, int* y, int* z, int taskID) const;
+                        void getDims(int* x, int* y, int* z, MeshLocation loc) const;
+                        //debug functions:
+                        template <typename T>
+                        int getTaskNum(T t) const; //template specialization workaround
+                        int getTaskNum(int taskID) const;
+                        int getLocNum(MeshLocation loc) const;
+
+                    private:
+                        const RCBTaskMapper & rcb;
+                        const MeshMachine & mach;
+                        int* xlocs;
+                        int* ylocs;
+                        int* zlocs;
+                        int machDims[3];
+                        int* indMap; // the mesh locations may not be ordered. This saves the loc indexes
+                };
+
                 MeshMachine* mMachine;
                 std::vector<MeshLocation> nodeLocs;
                 TaskCommInfo *tci;
                 Job* job;
 
-                //holds vector of locations along with the dimensions
-                template <typename T>
-                class Grouper {
-                   public:
-                       int dims[3];
-                       std::vector<T>* elements;
-                       Grouper(std::vector<T>* elements, const RCBTaskMapper & rcb);
-                       ~Grouper();
-                       int getLongestDim(int* result) const; //returns the length of the dimension
-                       void divideBy(int dim, Grouper<T>** first, Grouper<T>** second);
-                   private:
-                       const RCBTaskMapper & rcb;
-                       void sort_buildMaxHeap(std::vector<T> & v, int dim);
-                       void sort_maxHeapify(std::vector<T> & v, int i, int dim);
-                       int sort_compByDim(T first, T second, int dim); //returns >= 0 if first >= second
-                };
-
                 //recursive helper function
                 void mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* jobs, TaskMapInfo* tmi);
-
-                template <typename T>
-                void getDims(int* x, int* y, int* z, T t) const; //template specialization workaround
-                void getDims(int* x, int* y, int* z, int taskID) const;
-                void getDims(int* x, int* y, int* z, MeshLocation loc) const;
-                //debug functions:
-                template <typename T>
-                int getTaskNum(T t) const; //template specialization workaround
-                int getTaskNum(int taskID) const;
-                int getLocNum(MeshLocation loc) const;
         };
     }
 }

@@ -29,7 +29,7 @@ RCBTaskMapper::RCBTaskMapper(Machine* mach) : TaskMapper(mach)
 {
     mMachine = dynamic_cast<MeshMachine*>(machine);
     if(mMachine == NULL){
-        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
+        std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
     }
 }
 
@@ -51,26 +51,32 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     int jobSize = job->getProcsNeeded();
     tci = job->taskCommInfo;
 
-    //Call SimpleTaskMapper if the job does not have proper commuunication info
+    //Call SimpleTaskMapper if the job does not have proper communication info
     if(tci->taskCommType != TaskCommInfo::MESH &&
        tci->taskCommType != TaskCommInfo::COORDINATE) {
         SimpleTaskMapper simpleMapper = SimpleTaskMapper(machine);
         return simpleMapper.mapTasks(allocInfo);
     }
 
+    //dummy rotator for initialization
+    Rotator dummyRotator = Rotator(*this, *mMachine);
+
     //get node locations
-    vector<MeshLocation>* nodes = new vector<MeshLocation>();;
+    vector<MeshLocation>* nodes = new vector<MeshLocation>();
     for(int i = 0; i < jobSize; i++){
         MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], *mMachine);
         nodes->push_back(loc);
     }
-    Grouper<MeshLocation> nodeGroup = Grouper<MeshLocation>(nodes, *this);
+    Grouper<MeshLocation> nodeGroup = Grouper<MeshLocation>(nodes, &dummyRotator);
 
     vector<int>* jobs = new vector<int>();
     for(int i = 0; i < jobSize; i++){
         jobs->push_back(i);
     }
-    Grouper<int> jobGroup = Grouper<int>(jobs, *this);
+    Grouper<int> jobGroup = Grouper<int>(jobs, &dummyRotator);
+
+    //apply rotation
+    Rotator rotator = Rotator(&nodeGroup, &jobGroup, *this, *mMachine);
 
     //map
     mapTaskHelper(&nodeGroup, &jobGroup, tmi);
@@ -122,57 +128,11 @@ void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* i
     }
 }
 
-template <typename T>
-void RCBTaskMapper::getDims(int* x, int* y, int* z, T t) const
-{
-    schedout.fatal(CALL_INFO, 1, "Template function getDims should have been overloaded\n");
-}
-
-void RCBTaskMapper::getDims(int* x, int* y, int* z, int taskID) const
-{
-    if(tci->taskCommType == TaskCommInfo::MESH) {
-        *x = taskID % tci->xdim;
-        *y = (taskID % (tci->xdim * tci->ydim)) / tci->xdim;
-        *z = taskID / (tci->xdim * tci->ydim);
-    } else if (tci->taskCommType == TaskCommInfo::COORDINATE) {
-        *x = tci->coords->at(taskID)[0];
-        *y = tci->coords->at(taskID)[1];
-        *z = tci->coords->at(taskID)[2];
-    } else {
-        schedout.fatal(CALL_INFO, 1, "Unknown communication type for Job %d\n", job->getJobNum());
-    }
-}
-
-void RCBTaskMapper::getDims(int* x, int* y, int* z, MeshLocation loc) const
-{
-    *x = loc.x;
-    *y = loc.y;
-    *z = loc.z;
-}
-
-//debug functions:
-template <typename T>
-int RCBTaskMapper::getTaskNum(T t) const
-{
-    schedout.fatal(CALL_INFO, 1, "Template function getNum should have been overloaded\n");
-    return -1;
-}
-
-int RCBTaskMapper::getTaskNum(int taskID) const
-{
-    return taskID;
-}
-
-int RCBTaskMapper::getLocNum(MeshLocation loc) const
-{
-    return loc.toInt(*mMachine);
-}
-
 template <class T>
-RCBTaskMapper::Grouper<T>::Grouper(std::vector<T>* elements,
-                                     const RCBTaskMapper & rcb) : rcb(rcb)
+RCBTaskMapper::Grouper<T>::Grouper(std::vector<T>* elements, Rotator *rotator)
 {
     this->elements = elements;
+    this->rotator = rotator;
     //get dimensions
     int xmin = elements->size();
     int ymin = elements->size();
@@ -182,7 +142,7 @@ RCBTaskMapper::Grouper<T>::Grouper(std::vector<T>* elements,
     int zmax = 0;
     int x, y, z;
     for(unsigned int i = 0; i < elements->size(); i++){
-        rcb.getDims(&x, &y, &z, elements->at(i));
+        rotator->getDims(&x, &y, &z, elements->at(i));
         if(x > xmax) xmax = x;
         if(x < xmin) xmin = x;
         if(y > ymax) ymax = y;
@@ -230,8 +190,8 @@ void RCBTaskMapper::Grouper<T>::divideBy(int dim, Grouper<T>** first, Grouper<T>
     }
     //divide
     int halfSize = elements->size() / 2;
-    *first = new Grouper<T>(new vector<T>(elements->begin(), elements->begin() + halfSize), rcb);
-    *second = new Grouper<T>(new vector<T>(elements->begin() + halfSize, elements->end()), rcb);
+    *first = new Grouper<T>(new vector<T>(elements->begin(), elements->begin() + halfSize), rotator);
+    *second = new Grouper<T>(new vector<T>(elements->begin() + halfSize, elements->end()), rotator);
 }
 
 template <class T>
@@ -271,8 +231,8 @@ int RCBTaskMapper::Grouper<T>::sort_compByDim(T first, T second, int dim)
     int x1, y1, z1;
     int x2, y2, z2;
 
-    rcb.getDims(&x1, &y1, &z1, first);
-    rcb.getDims(&x2, &y2, &z2, second);
+    rotator->getDims(&x1, &y1, &z1, first);
+    rotator->getDims(&x2, &y2, &z2, second);
 
     if(dim == 0) { //ties broken by y, then z
         if(x1 != x2) return (x1 - x2);
@@ -289,5 +249,121 @@ int RCBTaskMapper::Grouper<T>::sort_compByDim(T first, T second, int dim)
     }
 
     return false;
+}
+
+RCBTaskMapper::Rotator::Rotator(const RCBTaskMapper & rcb,
+                                const MeshMachine & mach) : rcb(rcb), mach(mach)
+{
+    indMap = NULL;
+    xlocs = NULL;
+    ylocs = NULL;
+    zlocs = NULL;
+    machDims[0] = mach.getXDim();
+    machDims[1] = mach.getYDim();
+    machDims[2] = mach.getZDim();
+}
+
+RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
+                                Grouper<int> *jobLocs,
+                                const RCBTaskMapper & rcb,
+                                const MeshMachine & mach) : rcb(rcb), mach(mach)
+{
+    //register yourself
+    meshLocs->rotator = this;
+    jobLocs->rotator = this;
+    //save the dimensions
+    int size = rcb.job->getProcsNeeded();
+    xlocs = new int[size];
+    ylocs = new int[size];
+    zlocs = new int[size];
+    indMap = new int[mach.getNumProcs()];
+    for(int i = 0; i < size; i++){
+        indMap[meshLocs->elements->at(i).toInt(mach)] = i;
+        xlocs[i] = meshLocs->elements->at(i).x;
+        ylocs[i] = meshLocs->elements->at(i).y;
+        zlocs[i] = meshLocs->elements->at(i).z;
+    }
+    machDims[0] = mach.getXDim();
+    machDims[1] = mach.getYDim();
+    machDims[2] = mach.getZDim();
+    //apply rotation where needed
+    if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){
+        swap(xlocs, ylocs);
+        swap(meshLocs->dims[0], meshLocs->dims[1]);
+        swap(machDims[0], machDims[1]);
+    }
+    if(meshLocs->dims[0] < meshLocs->dims[2] && jobLocs->dims[0] >= jobLocs->dims[2]){
+        swap(xlocs, zlocs);
+        swap(meshLocs->dims[0], meshLocs->dims[2]);
+        swap(machDims[0], machDims[2]);
+    }
+    if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){
+        swap(xlocs, ylocs);
+        swap(meshLocs->dims[0], meshLocs->dims[1]);
+        swap(machDims[0], machDims[1]);
+    }
+}
+
+RCBTaskMapper::Rotator::~Rotator()
+{
+    if(indMap != NULL) {
+        delete [] indMap;
+        delete [] xlocs;
+        delete [] ylocs;
+        delete [] zlocs;
+    }
+}
+
+template <typename T>
+void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, T t) const
+{
+    std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Template function getDims should have been overloaded\n");
+}
+
+void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, int taskID) const
+{
+    if(rcb.tci->taskCommType == TaskCommInfo::MESH) {
+        *x = taskID % rcb.tci->xdim;
+        *y = (taskID % (rcb.tci->xdim * rcb.tci->ydim)) / rcb.tci->xdim;
+        *z = taskID / (rcb.tci->xdim * rcb.tci->ydim);
+    } else if (rcb.tci->taskCommType == TaskCommInfo::COORDINATE) {
+        //return coordinates normalized by rotated machine dimensions
+        *x = rcb.tci->coords->at(taskID)[0] * machDims[0];
+        *y = rcb.tci->coords->at(taskID)[1] * machDims[1];
+        *z = rcb.tci->coords->at(taskID)[2] * machDims[2];
+    } else {
+        std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Unknown communication type for Job %d\n", job->getJobNum());
+    }
+}
+
+void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, MeshLocation loc) const
+{
+    if(indMap == NULL){ //support for Grouper initialization
+        *x = loc.x;
+        *y = loc.y;
+        *z = loc.z;
+    } else {
+        *x = xlocs[indMap[loc.toInt(mach)]];
+        *y = ylocs[indMap[loc.toInt(mach)]];
+        *z = zlocs[indMap[loc.toInt(mach)]];
+    }
+}
+
+//debug functions:
+template <typename T>
+int RCBTaskMapper::Rotator::getTaskNum(T t) const
+{
+    std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Template function getNum should have been overloaded\n");
+    return -1;
+}
+
+int RCBTaskMapper::Rotator::getTaskNum(int taskID) const
+{
+    return taskID;
+}
+
+int RCBTaskMapper::Rotator::getLocNum(MeshLocation loc) const
+{
+    return loc.toInt(*(rcb.mMachine));
 }
 
