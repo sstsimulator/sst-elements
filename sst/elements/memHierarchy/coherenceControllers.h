@@ -67,13 +67,14 @@ public:
         list<Response>::iterator it;
         /* if the request is an MSHR hit, the response time will be shorter.  Therefore
            the out event queue needs to be maintained in delivery time order */
-        for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
+       /* for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
             if(resp.deliveryTime < (*it).deliveryTime){
                 break;
             }
         }
         outgoingEventQueue_.insert(it, resp);
-        //outgoingEventQueue_.push_back(resp);
+        */
+        outgoingEventQueue_.push_back(resp);
     }
     
     void setName(string _name){ name_ = _name; }
