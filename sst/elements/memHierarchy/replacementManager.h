@@ -102,10 +102,7 @@ public:
         
     }
 
-    uint getBestCandidate() {
-        assert(bestCandidate != -1);
-        return (uint)bestCandidate;
-    }
+    uint getBestCandidate() { return (uint)bestCandidate;}
 
     void replaced(uint id) {
         bestCandidate = -1;
@@ -193,10 +190,7 @@ class LFUReplacementMgr : public ReplacementMgr {
             }
         }
 
-        uint getBestCandidate() {
-            assert(bestCandidate != -1);
-            return (uint)bestCandidate;
-        }
+        uint getBestCandidate() { return (uint)bestCandidate; }
 
         void replaced(uint id) {
             bestCandidate = -1;
@@ -265,10 +259,7 @@ public:
         
     }
 
-    uint getBestCandidate() {
-        assert(bestCandidate != -1);
-        return (uint)bestCandidate;
-    }
+    uint getBestCandidate() { return (uint)bestCandidate;}
 
     void replaced(uint id) {
         bestCandidate = -1;
@@ -306,7 +297,6 @@ public:
     void recordCandidate(uint id, bool sharersAware, State state) { candidates_.push_back(id);}
 
     uint getBestCandidate() {
-        assert(candidates_.size() == numWays_);
         int bestCandidate = randomGenerator_.generateNextUInt32() % numWays_;
         return (uint)candidates_[bestCandidate];
     }

@@ -55,7 +55,6 @@ public:
     Addr getBaseAddr(){ return baseAddr_; }
     
     void setOwner(int _id) {
-        assert(_id != -1);
         assert(numSharers_ == 0);
         ownerId_ = _id;
         ownerExists_ = true;
@@ -83,11 +82,9 @@ public:
     bool inStableState(){ return state_ == V; }
     bool inTransition(){ return !valid(); }
     bool isSharer(int _id) { if(_id == -1) return false; return sharers_[_id]; }
-    bool isShareless(){  return numSharers_ == 0; }
-    bool ownerExists(){
-        if(ownerExists_) assert(ownerId_ != -1);
-        return ownerExists_;
-    }
+    bool isShareless(){ return numSharers_ == 0; }
+    bool ownerExists(){ return ownerExists_; }
+ 
     TCC_State getState() {return state_; }
 
     void removeAllSharers(){
@@ -114,11 +111,10 @@ public:
         sharers_[_id] = false;
         numSharers_--;
         
-        if(numSharers_ > 0) assert(ownerExists_ == false);
         d_->debug(C,L4,0, "Removed sharer. Number of sharers sharers = %u\n", numSharers_);
         
         updateState();
-        assertSharers();
+        //assertSharers();
 
     }
     
@@ -129,7 +125,9 @@ public:
         numSharers_++;
         sharers_[_id] = true;
         d_->debug(C,L4,0, "Added sharer.  Number of sharers = %u\n", numSharers_);
-        assertSharers();
+        assert(ownerExists_ == false);
+
+        //assertSharers();
     }
 
     void clear() {

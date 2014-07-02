@@ -143,7 +143,6 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode, bool _msh
     bool acksNeeded = (ccLine->ownerExists() || ccLine->acksNeeded_);
     
     if(ccLine->ownerExists()){
-        assert(ccLine->isShareless());
         sentInvalidates = 1;
         string onwerName = lowNetworkNodeLookupById(ccLine->ownerId_);
         sendInvalidate(ccLine, onwerName, acksNeeded, _mshrHit);
@@ -245,7 +244,6 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->ownerExists()) {
         d_->debug(_L7_,"GetS Req but exclusive cache exists \n");
-        assert(!l->isSharer(_sharerId));                    /* Cache should not ask for 'S' if its already Exclusive */
         sendInvalidateX(lineIndex, _mshrHit);
     }
     /* Send Data in S state */
@@ -369,7 +367,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
 bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
     if(_event->isPrefetch()) return true;
     
-    Command cmd = _event->getCmd();        assert(cmd == GetS || cmd == GetX || cmd == GetSEx);
+    Command cmd = _event->getCmd();
     MemEvent * responseEvent = _event->makeResponse(_newState);
     responseEvent->setDst(_event->getSrc());
 

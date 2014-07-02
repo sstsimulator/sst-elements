@@ -161,7 +161,7 @@ void DirectoryController::handlePacket(SST::Event *event){
 bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BsAddr = x%"PRIx64", Src = %s\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str());
+    dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BsAddr = %"PRIx64", Src = %s\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str());
     Command cmd = ev->getCmd();
     
     if(NACK == cmd) {
@@ -267,7 +267,8 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
         }
         else{
             dbg.debug(_L10_, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
-            return make_pair<bool, bool>(true, false);
+            if(cmd == PutS && entry->nextCommand == FetchResp) return make_pair<bool, bool>(true, true);
+            else return make_pair<bool, bool>(true, false);
         }
     return make_pair<bool, bool>(false, false);
 
@@ -355,7 +356,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
         entry->lastRequest = ev->getID();
 
 		sendResponse(ev);
-        dbg.debug(_L10_, "Sending FetchInv.  Cmd = %s, Dest = %s, BsAddr = x%"PRIx64".\n", CommandString[cmd], dest.c_str(), entry->baseAddr);
+        dbg.debug(_L10_, "Sending FetchInv.  Cmd = %s, Dest = %s, BsAddr = %"PRIx64".\n", CommandString[cmd], dest.c_str(), entry->baseAddr);
 
 	}
     else if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
@@ -373,7 +374,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
              entry->nextCommand = PutS;
              entry->waitingOn = "N/A";
              entry->lastRequest = DirEntry::NO_LAST_REQUEST;
-             dbg.output(CALL_INFO, "Sending Invalidates to fulfill request for exclusive, BsAddr = 0x%"PRIx64".\n", entry->baseAddr);
+             dbg.output(CALL_INFO, "Sending Invalidates to fulfill request for exclusive, BsAddr = %"PRIx64".\n", entry->baseAddr);
         
         }
         else getExclusiveDataForRequest(entry, NULL);

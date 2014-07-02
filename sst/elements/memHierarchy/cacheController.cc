@@ -61,8 +61,6 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
             done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Invalidate sharers, send respond to requestor if needed */
             postRequestProcessing(_event, cacheLine, done, _mshrHit);
         }
-        if(cacheLine->isLocked()) assert(!cacheLine->getEventsWaitingForLock());
-
     }
     catch(blockedEventException const& e){
         processRequestInMSHR(_baseAddr, _event);                        /* This request needs to stall until another pending request finishes.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
@@ -152,8 +150,8 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
 
 
 CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
-    int wbLineIndex = cf_.cacheArray_->preReplace(_baseAddr); assert(wbLineIndex >= 0);
-    CacheLine* wbCacheLine = cf_.cacheArray_->lines_[wbLineIndex];    assert(wbCacheLine);
+    int wbLineIndex = cf_.cacheArray_->preReplace(_baseAddr);
+    CacheLine* wbCacheLine = cf_.cacheArray_->lines_[wbLineIndex];
     return wbCacheLine;
 }
 
@@ -413,13 +411,9 @@ bool Cache::isCacheMiss(int _lineIndex){
    Extras
    --------------------------------------- */
 MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
-    if(_mshrEntry.front().elem.type() == typeid(MemEvent*))
-        return boost::get<MemEvent*>(_mshrEntry.front().elem);
-    else{
-        Addr addr = boost::get<Addr>(_mshrEntry.front().elem);
-        d_->debug(_ERROR_, "Not MemEvent type.  Pointer Addr = %"PRIx64"\n", addr);
-        assert(0);
-    }
+    assert(_mshrEntry.front().elem.type() == typeid(MemEvent*));
+
+    return boost::get<MemEvent*>(_mshrEntry.front().elem);
 }
 
 

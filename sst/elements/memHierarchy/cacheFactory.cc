@@ -137,10 +137,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) listener_ = new CacheListener();
-    else {
-        listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, _params));
-        assert(listener_);
-    }
+    else listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, _params));
+
     listener_->setOwningComponent(this);
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 

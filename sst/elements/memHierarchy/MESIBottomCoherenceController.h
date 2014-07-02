@@ -162,7 +162,6 @@ private:
     }
     
     uint32_t getGroupId(){
-        assert(timestamp_ == groupId_timestamp_);
         assert(groupId_ != 0);
         return groupId_;
     }

@@ -64,7 +64,6 @@ bool Cache::MSHR::isFull(){
 
 
 bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
-    assert(_event->getCmd() != PutS);
     bool ret = insert(_baseAddr, mshrType(_event));
     if(LIKELY(ret)){
         cache_->d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %"PRIx64", event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
@@ -127,8 +126,7 @@ vector<mshrType> Cache::MSHR::removeAll(Addr _baseAddr){
 MemEvent* Cache::MSHR::removeFront(Addr _baseAddr){
     mshrTable::iterator it = map_.find(_baseAddr);
     assert(it != map_.end());
-    assert(!it->second.empty());
-    assert(it->second.front().elem.type() == typeid(MemEvent*));
+    //assert(!it->second.empty()); assert(it->second.front().elem.type() == typeid(MemEvent*));
     
     MemEvent* ret = boost::get<MemEvent*>(it->second.front().elem);
     

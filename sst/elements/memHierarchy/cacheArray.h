@@ -146,7 +146,6 @@ public:
             assert(state_ == I);
             assert(userLock_ == 0);
             assert(eventsWaitingForLock_ == false);
-            assert(data_.size() == size_);
             atomicEnd();
         }
         
