@@ -38,6 +38,7 @@ enum EmberEventType {
 	SEND,
 	RECV,
 	IRECV,
+	ISEND,
 	WAIT,
 	COMPUTE,
 	BARRIER,

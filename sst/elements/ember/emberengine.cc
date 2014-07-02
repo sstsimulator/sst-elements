@@ -25,6 +25,7 @@ static const char* RECV_HISTO_NAME = "Recv Time";
 static const char* SEND_HISTO_NAME = "Send Time";
 static const char* WAIT_HISTO_NAME = "Wait Time";
 static const char* IRECV_HISTO_NAME = "IRecv Time";
+static const char* ISEND_HISTO_NAME = "ISend Time";
 static const char* BARRIER_HISTO_NAME = "Barrier Time";
 static const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
 static const char* REDUCE_HISTO_NAME = "Reduce Time";
@@ -41,6 +42,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
+	isendFunctor(HermesAPIFunctor(this, &EmberEngine::completedISend)),
 	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
 	allreduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedAllreduce)),
 	reduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedReduce))
@@ -144,6 +146,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	userBinWidth = (uint64_t) params.find_integer("irecv_bin_width", 5);
 	histoIRecv = new Histogram<uint64_t, uint64_t>(IRECV_HISTO_NAME, userBinWidth);
+
+	userBinWidth = (uint64_t) params.find_integer("isend_bin_width", 5);
+	histoISend = new Histogram<uint64_t, uint64_t>(ISEND_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("barrier_bin_width", 5);
 	histoBarrier = new Histogram<uint64_t, uint64_t>(BARRIER_HISTO_NAME, userBinWidth);
@@ -251,6 +256,17 @@ void EmberEngine::finish() {
 		if(printStats > 1) {
 			output->output("- Distribution:\n");
 			printHistogram(histoIRecv);
+		}
+
+		output->output("- Histogram of isend times:\n");
+		output->output("--> Total time:     %" PRIu64 "\n", histoISend->getValuesSummed());
+		output->output("--> Item count:     %" PRIu64 "\n", histoISend->getItemCount());
+		output->output("--> Average:        %" PRIu64 "\n",
+			histoISend->getItemCount() == 0 ? 0 :
+			(histoISend->getValuesSummed() / histoISend->getItemCount()));
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoISend);
 		}
 
 		output->output("- Histogram of recv times:\n");
@@ -438,6 +454,18 @@ void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 	accumulateTime = histoIRecv;
 }
 
+void EmberEngine::processISendEvent(EmberISendEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing an ISend Event (%s)\n", ev->getPrintableString().c_str());
+
+    assert( emptyBufferSize >= ev->getMessageSize() );
+	msgapi->isend((Addr) emptyBuffer, ev->getMessageSize(),
+		CHAR, (RankID) ev->getSendToRank(),
+		ev->getTag(), ev->getCommunicator(),
+		ev->getMessageRequestHandle(), &isendFunctor);
+
+	accumulateTime = histoISend;
+}
+
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
 
@@ -499,6 +527,11 @@ void EmberEngine::completedWait(int val) {
 
 void EmberEngine::completedIRecv(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result = %d\n", val);
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedISend(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed ISend, result = %d\n", val);
 	issueNextEvent(0);
 }
 
@@ -575,6 +608,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case IRECV:
 		processIRecvEvent( (EmberIRecvEvent*) eEv);
+		break;
+	case ISEND:
+		processISendEvent( (EmberISendEvent*) eEv);
 		break;
 	case WAIT:
 		processWaitEvent( (EmberWaitEvent*) eEv);

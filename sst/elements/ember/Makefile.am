@@ -32,6 +32,8 @@ libember_la_SOURCES = \
 	emberwaitev.h \
 	emberirecvev.cc \
 	emberirecvev.h \
+	emberisendev.cc \
+	emberisendev.h \
 	emberbarrierev.h \
 	emberbarrierev.cc \
 	emberallredev.h \

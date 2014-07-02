@@ -41,6 +41,7 @@
 #include "embersendev.h"
 #include "emberrecvev.h"
 #include "emberirecvev.h"
+#include "emberisendev.h"
 #include "emberwaitev.h"
 #include "emberstartev.h"
 #include "emberstopev.h"
@@ -77,6 +78,7 @@ public:
 	void processStopEvent(EmberStopEvent* ev);
 	void processWaitEvent(EmberWaitEvent* ev);
 	void processIRecvEvent(EmberIRecvEvent* ev);
+	void processISendEvent(EmberISendEvent* ev);
 	void processBarrierEvent(EmberBarrierEvent* ev);
 	void processAllreduceEvent(EmberAllreduceEvent* ev);
 	void processReduceEvent(EmberReduceEvent* ev);
@@ -87,6 +89,7 @@ public:
 	void completedSend(int val);
 	void completedRecv(int val);
 	void completedIRecv(int val);
+	void completedISend(int val);
 	void completedWait(int val);
 	void completedBarrier(int val);
 	void completedAllreduce(int val);
@@ -122,6 +125,7 @@ private:
 	HermesAPIFunctor sendFunctor;
 	HermesAPIFunctor waitFunctor;
 	HermesAPIFunctor irecvFunctor;
+	HermesAPIFunctor isendFunctor;
 	HermesAPIFunctor barrierFunctor;
 	HermesAPIFunctor allreduceFunctor;
 	HermesAPIFunctor reduceFunctor;
@@ -149,6 +153,7 @@ private:
 	Histogram<uint64_t, uint64_t>* histoCompute;
 	Histogram<uint64_t, uint64_t>* histoWait;
 	Histogram<uint64_t, uint64_t>* histoIRecv;
+	Histogram<uint64_t, uint64_t>* histoISend;
 	Histogram<uint64_t, uint64_t>* histoBarrier;
 	Histogram<uint64_t, uint64_t>* histoAllreduce;
 	Histogram<uint64_t, uint64_t>* histoReduce;
