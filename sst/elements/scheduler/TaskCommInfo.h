@@ -26,7 +26,7 @@ namespace SST {
 		        TaskCommInfo(Job* job); //default: all-to-all communication
 	            TaskCommInfo(Job* job, int ** inCommMatrix); // communication matrix input
 	            TaskCommInfo(Job* job, int xdim, int ydim, int zdim); // mesh dimension input
-	            TaskCommInfo(Job* job, std::vector<double*>* inCoords); //coordinate input
+	            TaskCommInfo(Job* job, int ** inCommMatrix, std::vector<double*>* inCoords); //coordinate input
 
                 ~TaskCommInfo();
 

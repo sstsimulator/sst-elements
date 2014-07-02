@@ -48,11 +48,11 @@ TaskCommInfo::TaskCommInfo(Job* job, int xdim, int ydim, int zdim)
     this->zdim = zdim;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, std::vector<double*> * inCoords)
+TaskCommInfo::TaskCommInfo(Job* job, int ** inCommMatrix, std::vector<double*> * inCoords)
 {
     init(job);
     taskCommType = TaskCommInfo::COORDINATE;
-    commMatrix = NULL;
+    commMatrix = inCommMatrix;
     coords = inCoords;
     this->xdim = xdim;
     this->ydim = ydim;

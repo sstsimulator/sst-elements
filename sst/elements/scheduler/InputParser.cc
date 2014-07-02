@@ -209,9 +209,14 @@ bool JobParser::newJobLine(std::string line)
     		tci = new TaskCommInfo(j, x, y, z);
     	}
     } else if(communicationFile.compare("coord") == 0){
+        //read task communication
         is >> communicationFile;
         communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
-        tci = new TaskCommInfo( j, readCoordFile(communicationFile, procsNeeded) );
+        int ** commMatrix = readCommFile(communicationFile, procsNeeded);
+        //read coordinates
+        is >> communicationFile;        
+        communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
+        tci = new TaskCommInfo( j, commMatrix, readCoordFile(communicationFile, procsNeeded) );
     } else {
         communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
     	tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );

@@ -79,7 +79,7 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
     }
 
     int** commMatrix = taskCommInfo->commMatrix;
-    //assume all-to-all communication if no commMatrix given
+    //assume all-to-all communication if no communication matrix given
     bool deleteCommMatrix = false;
     if(commMatrix == NULL){
         commMatrix = new int*[job->getProcsNeeded()];
@@ -100,6 +100,7 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
         MeshLocation curLoc = MeshLocation(currentNode, machine);
 
         //iterate through other tasks and add distance for communication
+        //assume two-way communication
         for(int otherTaskIter = 0 ; otherTaskIter < job->getProcsNeeded(); otherTaskIter++){
             if( commMatrix[taskIter][otherTaskIter] != 0 ||
                 commMatrix[otherTaskIter][taskIter] != 0 ){
