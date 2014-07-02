@@ -312,13 +312,9 @@ void EmberEngine::setup() {
 	generator->configureEnvironment(output, thisRank, worldSize);
 
 	char outputPrefix[256];
-	sprintf(outputPrefix, "@t:%d:%d:EmberEngine::@p:@l: ", jobId, 
-													(int) thisRank);
+	sprintf(outputPrefix, "@t:%d:%d:EmberEngine::@p:@l: ", jobId, (int) thisRank);
 	string outputPrefixStr = outputPrefix;
 	output->setPrefix(outputPrefixStr);
-
-	// Update event count to ensure we are not correctly sync'd
-	eventCount = (uint32_t) evQueue.size();
 
 	// Send an start event to this rank, this starts up the component
 	EmberStartEvent* startEv = new EmberStartEvent();
@@ -329,6 +325,9 @@ void EmberEngine::setup() {
                 EmberInitEvent* initEv = new EmberInitEvent();
                 evQueue.push(initEv);
         }
+
+	// Update event count to ensure we are not correctly sync'd
+	eventCount = (uint32_t) evQueue.size();
 }
 
 void EmberEngine::processStartEvent(EmberStartEvent* ev) {
