@@ -44,7 +44,8 @@ enum EmberEventType {
 	START,
 	STOP,
 	ALLREDUCE,
-	REDUCE
+	REDUCE,
+	GETTIME
 };
 
 class EmberEvent : public SST::Event {

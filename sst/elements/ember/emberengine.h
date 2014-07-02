@@ -48,6 +48,7 @@
 #include "emberbarrierev.h"
 #include "emberallredev.h"
 #include "emberredev.h"
+#include "embergettimeev.h"
 
 using namespace SST::Statistics;
 using namespace SST::Hermes;
@@ -79,6 +80,7 @@ public:
 	void processBarrierEvent(EmberBarrierEvent* ev);
 	void processAllreduceEvent(EmberAllreduceEvent* ev);
 	void processReduceEvent(EmberReduceEvent* ev);
+	void processGetTimeEvent(EmberGetTimeEvent* ev);
 
 	void completedInit(int val);
 	void completedFinalize(int val);

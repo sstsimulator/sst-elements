@@ -421,6 +421,12 @@ void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 	accumulateTime = histoWait;
 }
 
+void EmberEngine::processGetTimeEvent(EmberGetTimeEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a Get Time Event\n");
+	ev->setTime((uint64_t) getCurrentSimTimeNano());
+	issueNextEvent(0);	
+}
+
 void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
 
@@ -591,6 +597,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case COMPUTE:
 		processComputeEvent(dynamic_cast<EmberComputeEvent*>(eEv));
+		break;
+	case GETTIME:
+		processGetTimeEvent(dynamic_cast<EmberGetTimeEvent*>(eEv));
 		break;
 	case START:
 		processStartEvent(dynamic_cast<EmberStartEvent*>(eEv));
