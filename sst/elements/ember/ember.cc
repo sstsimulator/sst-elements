@@ -134,6 +134,7 @@ static const ElementInfoParam component_params[] = {
     { "finalize_bin_width", "Bin width of the finalize time histogram", "5"},
     { "recv_bin_width", "Bin width of the recv time histogram", "5" },
     { "irecv_bin_width", "Bin width of the irecv time histogram", "5" },
+    { "isend_bin_width", "Bin width of the isend time histogram", "5" },
     { "wait_bin_width", "Bin width of the wait time histogram", "5" },
     { "barrier_bin_width", "Bin width of the barrier time histogram", "5" },
     { "allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
