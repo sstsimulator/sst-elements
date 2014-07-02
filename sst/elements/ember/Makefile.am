@@ -38,6 +38,8 @@ libember_la_SOURCES = \
 	emberallredev.cc \
 	emberredev.h \
 	emberredev.cc \
+	embergettimeev.h \
+	embergettimeev.cc \
 	motifs/embernull.h  \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
