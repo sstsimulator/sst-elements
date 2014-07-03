@@ -155,7 +155,7 @@ HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : MemBackend(c
 
 
 bool HybridSimMemory::issueRequest(MemController::DRAMReq *req){
-    uint64_t addr = req->addr + req->amt_in_process;
+    uint64_t addr = req->baseAddr + req->amt_in_process;
 
     bool ok = memSystem->WillAcceptTransaction();
     if ( !ok ) return false;
