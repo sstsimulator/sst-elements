@@ -11,7 +11,7 @@ iterations = 1
 shape = "2"
 numCores = 1
 debug = 0
-sstRanks=1
+sstRanksPerNode=1
 sstNodes=1
 pex = 1 
 pey = 1 
@@ -28,7 +28,7 @@ def main():
     global pex
     global pey
     global pez
-    global sstRanks
+    global sstRanksPerNode
     global sstNodes
     global peflops 
     global copyTime
@@ -36,7 +36,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "", ["iter=","motif=",
                 "shape=","debug=","numCores=","pex=","pez=","pey=",
-                "sstRanks=","sstNodes=","peflops=","copyTime="])
+                "sstRanksPerNode=","sstNodes=","peflops=","copyTime="])
 
     except getopt.GetopError as err:
         print str(err)
@@ -58,8 +58,8 @@ def main():
             pey = a
         elif o in ("--pez"):
             pez = a
-        elif o in ("--sstRanks"):
-            sstRanks = a
+        elif o in ("--sstRanksPerNode"):
+            sstRanksPerNode = a
         elif o in ("--sstNodes"):
             sstNodes = a
         elif o in ("--peflops"):
@@ -81,11 +81,13 @@ def calcNumNodes( shape ):
 
 numNodes = calcNumNodes( shape )
 
-if sstNodes > 1:
-	sstRanks = int(sstNodes) * 8
+sstRanks = int(int(sstNodes) * int(sstRanksPerNode)) 
 
 if 0 == sstRanks:
 	sys.exit("how many sst mpi ranks?")
+
+print "MPI: numNodes={0} ranksPerNode={1} totalRanks={2}".format(
+                                sstNodes,sstRanksPerNode,sstRanks) 
 
 print "numNodes", numNodes, ", numCores", numCores, ", iterations", iterations
 
@@ -106,7 +108,7 @@ modelOptions="--model-options=\"--printStats=0 --debug=0 " + network + " --numCo
 
 jobname = motif + "-" + str(numNodes) + "-" + str(numCores) + "-" + str(iterations) + "-" + str(peflops) + ".%j.out"
 
-args = [ "-N "+str(sstNodes),"--exclusive","--ntasks-per-node=8","--output=" + jobname, "./batch.py",  str(sstRanks), modelOptions ]
+args = [ "-N " + str(sstNodes),"--exclusive","--ntasks-per-node="+str(sstRanksPerNode),"--output=" + jobname, "./batch.py",  str(sstRanks), modelOptions ]
 
 call( ["echo"] + args )
 call( ["sbatch"] + args )
