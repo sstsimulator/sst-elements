@@ -8,7 +8,6 @@ motif="Halo3D"
 path = os.getcwd()
 
 iterations = 1
-msgSize = 0
 shape = "2"
 numCores = 1
 debug = 0
@@ -20,12 +19,8 @@ pez = 1
 peflops=0
 copyTime=0
 
-merlinBW = "500Mhz"
-bytesPerFlit = 32 
-
 def main():
     global iterations
-    global msgSize
     global motif 
     global shape
     global numCores
@@ -39,16 +34,16 @@ def main():
     global copyTime
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","motif=","shape=","debug=",
-						"numCores=","pex=","pez=","pey=","sstRanks=","sstNodes=","peflops=","copyTime="])
+        opts, args = getopt.getopt(sys.argv[1:], "", ["iter=","motif=",
+                "shape=","debug=","numCores=","pex=","pez=","pey=",
+                "sstRanks=","sstNodes=","peflops=","copyTime="])
+
     except getopt.GetopError as err:
         print str(err)
         sys.exit(2)
     for o, a in opts:
         if o in ("--iter"):
             iterations = a
-        elif o in ("--msgSize"):
-            msgSize = a
         elif o in ("--motif"):
             motif = a
         elif o in ("--numCores"):
@@ -92,11 +87,9 @@ if sstNodes > 1:
 if 0 == sstRanks:
 	sys.exit("how many sst mpi ranks?")
 
-print "numNodes", numNodes, ", numCores", numCores, ", msgSize", msgSize, ", iterations", iterations
+print "numNodes", numNodes, ", numCores", numCores, ", iterations", iterations
 
 network = "--topo=torus --shape=" + shape  
-network += " --merlinBW=" + merlinBW
-network += " --bytesPerFlit=" + str(bytesPerFlit)
 
 cmdExtra=""
 
