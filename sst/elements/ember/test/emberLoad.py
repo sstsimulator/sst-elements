@@ -20,10 +20,10 @@ loading  = 0
 radix    = 0
 printStats = 0
 emberVerbose = 0
-emberBufferSize = 10000000 
-merlinBW = "4GB/s"
+emberBufferSize = 1000
 
-netPktSizeBytes=64
+netBW = "4GB/s"
+netPktSize="64B"
 netFlitSize="8B"
 netBufSize="1KB"
 
@@ -31,7 +31,8 @@ try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
 					"radix=","loading=","debug=",
 					"numCores=","loadFile=","cmdLine=","printStats=",
-					"emberVerbose=","merlinBW="])
+					"emberVerbose=","netBW=","netPktSize=","netFlitSize="])
+
 except getopt.GetopError as err:
     print str(err)
     sys.exit(2)
@@ -57,8 +58,12 @@ for o, a in opts:
         printStats = a
     elif o in ("--emberVerbose"):
         emberVerbose = a
-    elif o in ("--merlinBW"):
-        merlinBW = a
+    elif o in ("--netBW"):
+        netBW = a
+    elif o in ("--netFlitSize"):
+        netFlitSize = a
+    elif o in ("--netPktSize"):
+        netPktSize = a
     else:
         assert False, "unhandle option" 
 
@@ -84,11 +89,11 @@ elif "fattree" == topology:
 else:
 	sys.exit("how did we get here")
 
-print "network: B/W={0} pktSize={1} flitSize={2}".format(merlinBW,netPktSizeBytes,netFlitSize)
+print "network: BW={0} pktSize={1} flitSize={2}".format(netBW,netPktSize,netFlitSize)
 
 sst.merlin._params["link_lat"] = "40ns"
-sst.merlin._params["link_bw"] = merlinBW 
-sst.merlin._params["xbar_bw"] = merlinBW 
+sst.merlin._params["link_bw"] = netBW 
+sst.merlin._params["xbar_bw"] = netBW 
 sst.merlin._params["flit_size"] = netFlitSize
 sst.merlin._params["input_latency"] = "50ns"
 sst.merlin._params["output_latency"] = "50ns"
@@ -102,8 +107,8 @@ _nicParams = {
 		"verboseLevel": 1,
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin." + topology,
-		"packetSize" : netPktSizeBytes,
-		"link_bw" : merlinBW,
+		"packetSize" : netPktSize,
+		"link_bw" : netBW,
 		"buffer_size" : netBufSize,
 		"rxMatchDelay_ns" : 100,
 		"txDelay_ns" : 50,
