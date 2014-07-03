@@ -377,6 +377,7 @@ Nic::Entry* Nic::processSend( Entry* entry )
         print(m_dbg, &ev->buf[0], ev->buf.size() );
         ev->setDest( IdToNet( entry->node() ) );
         ev->setSrc( IdToNet( m_myNodeId ) );
+        ev->setPktSize();
 
         #if 0
             ev->setTraceType( Merlin::RtrEvent::FULL );

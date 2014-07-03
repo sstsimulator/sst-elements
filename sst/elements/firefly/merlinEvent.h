@@ -51,6 +51,9 @@ class MerlinFireflyEvent : public Merlin::RtrEvent {
     void setSrc( int _src ) {
         src = _src;
     }
+    void setPktSize() {
+        size_in_bits = buf.size() * 8; 
+    }
 
   private:
 
