@@ -49,19 +49,11 @@ Job::Job(const Job &job)
     ID = job.ID;
     startTime = job.startTime;
     hasRun = job.hasRun;
-    started = job.started;
+    started = job.started;  
     if(job.taskCommInfo == NULL){
         taskCommInfo = NULL;
     } else {
-        int ** commMatrix = new int*[procsNeeded];
-        for(int i = 0; i < procsNeeded; i++)
-        {
-            commMatrix[i] = new int[procsNeeded];
-            for(int j = 0; j < procsNeeded; j++){
-                commMatrix[i][j] = job.taskCommInfo->commMatrix[i][j];
-            }
-        }
-        taskCommInfo = new TaskCommInfo(this, commMatrix);
+        taskCommInfo = new TaskCommInfo(*(job.taskCommInfo));
     }
 }
 
@@ -93,6 +85,7 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
     hasRun = false;
     started = false;
     taskCommInfo = NULL;
+    commType = TaskCommInfo::ALLTOALL;
 }
 
 std::string Job::toString()

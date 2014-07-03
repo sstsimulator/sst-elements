@@ -54,8 +54,9 @@ JobParser::JobParser(Machine* machine,
         fileName = jobTrace;
     }
 
-    fileNamePath = boost::filesystem::path( fileName.c_str());
-    
+    fileNamePath = boost::filesystem::path(fileName.c_str());
+    folderPath = boost::filesystem::path(fileNamePath);
+    folderPath.remove_leaf();
 }
 
 std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
@@ -188,7 +189,7 @@ bool JobParser::newJobLine(std::string line)
     int x = 0, y = 0, z = 0;
 
     std::stringstream is(line);
-    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile >> x >> y >> z;
+    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile;
 
     if(estRunningTime <= 0){
         estRunningTime = runningTime;
@@ -198,35 +199,93 @@ bool JobParser::newJobLine(std::string line)
     Job* j = jobs.back();
     
     //get communication info
-    TaskCommInfo* tci;
     if(communicationFile.empty()){
-        tci = new TaskCommInfo(j);
+        j->commType = TaskCommInfo::ALLTOALL;
     } else if(communicationFile.compare("mesh") == 0) {
         is >> x >> y >> z;
     	if(x*y*z != procsNeeded) {
     		schedout.fatal(CALL_INFO, 1, "The communication mesh structure does not match the number of processors in line:\n%s\n", line.c_str());
     	} else {
-    		tci = new TaskCommInfo(j, x, y, z);
+    		j->commType = TaskCommInfo::MESH;
+    		j->meshx = x;
+    		j->meshy = y;
+    		j->meshz = z;
     	}
     } else if(communicationFile.compare("coord") == 0){
-        //read task communication
+        //read task communication file name
         is >> communicationFile;
-        communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
-        int ** commMatrix = readCommFile(communicationFile, procsNeeded);
-        //read coordinates
+        communicationFile = folderPath.string() + '/' + communicationFile;//get file name as a path
+        j->commFile = communicationFile;
+        //read coordinates file name
         is >> communicationFile;        
-        communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
-        tci = new TaskCommInfo( j, commMatrix, readCoordFile(communicationFile, procsNeeded) );
+        communicationFile = folderPath.string() + '/' + communicationFile;//get file name as a path
+        j->coordFile = communicationFile;
+        
+        j->commType = TaskCommInfo::COORDINATE;
     } else {
-        communicationFile = fileNamePath.remove_leaf().string() + '/' + communicationFile;//get file name as a path
-    	tci = new TaskCommInfo( j, readCommFile(communicationFile, procsNeeded) );
+        communicationFile = folderPath.string() + '/' + communicationFile;//get file name as a path
+    	j->commFile = communicationFile;
+    	
+    	j->commType = TaskCommInfo::CUSTOM;
     }
 
     //validate
     return validateJob(j, &jobs, runningTime);
 }
 
-int** JobParser::readCommFile(std::string fileName, int procsNeeded)
+bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
+{
+    bool ok = true;
+    if (j->getProcsNeeded() <= 0) {
+        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it",
+                         j->getJobNum(), j->getProcsNeeded());
+        delete jobs->back();
+        jobs->pop_back();
+        ok = false;
+    }
+    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
+        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it",
+                         j->getJobNum(), runningTime);
+        delete jobs->back();
+        jobs->pop_back();
+        ok = false;
+    }
+    if (ok && j->getProcsNeeded() > machine->getNumProcs()) {
+        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
+                       j->getJobNum(), j->getProcsNeeded(), machine->getNumFreeProcessors());
+        ok = false;
+    }
+    
+    return ok;
+}
+
+void CommParser::parseComm(Job * job)
+{
+    //std::cout << job->getJobNum();
+    TaskCommInfo* tci;
+    switch(job->commType){
+    case TaskCommInfo::ALLTOALL:
+        tci = new TaskCommInfo(job);
+        break;
+    case TaskCommInfo::CUSTOM:
+        tci = new TaskCommInfo(job, readCommFile(job->commFile, job->getProcsNeeded()) );
+        break;
+    case TaskCommInfo::MESH:
+        tci = new TaskCommInfo(job, job->meshx, job->meshy, job->meshz);
+        break;
+    case TaskCommInfo::COORDINATE:
+        tci = new TaskCommInfo(job, 
+                               readCommFile(job->commFile, job->getProcsNeeded()),
+                               readCoordFile(job->coordFile, job->getProcsNeeded())
+                               );
+        break;
+    default:
+        schedout.fatal(CALL_INFO, 1, "Unknown Communication type at Job %ld", 
+                                      job->getJobNum() );
+    }
+}
+
+int** CommParser::readCommFile(std::string fileName, int procsNeeded)
 {
     //read matrix
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
@@ -241,7 +300,7 @@ int** JobParser::readCommFile(std::string fileName, int procsNeeded)
 	return matrix;
 }
 
-vector<double*>* JobParser::readCoordFile(std::string fileName, int procsNeeded)
+vector<double*>* CommParser::readCoordFile(std::string fileName, int procsNeeded)
 {
     //read matrix
     MatrixMarketReader2D<double> reader = MatrixMarketReader2D<double>();
@@ -277,32 +336,6 @@ vector<double*>* JobParser::readCoordFile(std::string fileName, int procsNeeded)
     delete [] matrix;
 
     return retVec;
-}
-
-bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
-{
-    bool ok = true;
-    if (j->getProcsNeeded() <= 0) {
-        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it",
-                         j->getJobNum(), j->getProcsNeeded());
-        delete jobs->back();
-        jobs->pop_back();
-        ok = false;
-    }
-    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
-        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it",
-                         j->getJobNum(), runningTime);
-        delete jobs->back();
-        jobs->pop_back();
-        ok = false;
-    }
-    if (ok && j->getProcsNeeded() > machine->getNumProcs()) {
-        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
-                       j->getJobNum(), j->getProcsNeeded(), machine->getNumFreeProcessors());
-        ok = false;
-    }
-    
-    return ok;
 }
 
 DParser::DParser(int numNodes, SST::Params& params)

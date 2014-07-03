@@ -47,14 +47,13 @@ namespace SST {
 
                 std::string fileName;
                 boost::filesystem::path fileNamePath;
+                boost::filesystem::path folderPath;
                 std::string jobTrace;
                 
                 time_t LastJobFileModTime;            // Contains the last time that the job file was modified
                 char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
                 
                 bool newJobLine(std::string line);
-                int** readCommFile(std::string fileName, int procsNeeded);
-                std::vector<double*>* readCoordFile(std::string fileName, int procsNeeded);
                 bool validateJob( Job * j, std::vector<Job*> * jobs, long runningTime );
                 
                 //yumyum
@@ -62,6 +61,16 @@ namespace SST {
                 bool newYumYumJobLine(std::string line, SimTime_t currSimTime);
                 bool* useYumYumSimulationKill;
                 bool* YumYumSimulationKillFlag;
+        };
+        
+        class CommParser {
+            public:
+                CommParser() { }
+                ~CommParser() { }
+                void parseComm(Job *job);
+            private:
+                int** readCommFile(std::string fileName, int procsNeeded);
+                std::vector<double*>* readCoordFile(std::string fileName, int procsNeeded);
         };
         
         class DParser {

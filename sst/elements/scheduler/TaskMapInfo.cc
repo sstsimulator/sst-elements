@@ -78,19 +78,7 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
     	schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
     }
 
-    int** commMatrix = taskCommInfo->commMatrix;
-    //assume all-to-all communication if no communication matrix given
-    bool deleteCommMatrix = false;
-    if(commMatrix == NULL){
-        commMatrix = new int*[job->getProcsNeeded()];
-        for(int i = 0; i < job->getProcsNeeded(); i++){
-            commMatrix[i] = new int[job->getProcsNeeded()];
-            for(int j = 0; j < job->getProcsNeeded(); j++){
-                commMatrix[i][j] = 1;
-            }
-        }
-        deleteCommMatrix = true;
-    }
+    int** commMatrix = taskCommInfo->getCommMatrix();
 
     //iterate through all tasks
     int currentNode;
@@ -110,13 +98,5 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
             }
         }
     }
-
-    if(deleteCommMatrix){
-        for(int i = 0; i < job->getProcsNeeded(); i++){
-            delete commMatrix[i];
-        }
-        delete commMatrix;
-    }
-
     return totalDist;
 }

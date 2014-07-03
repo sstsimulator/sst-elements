@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include "Statistics.h"  //needed for friend declaration
+#include "TaskCommInfo.h"
 
 
 namespace SST {
@@ -25,7 +26,6 @@ namespace SST {
 
         class AllocInfo;
         class Machine;
-        class TaskCommInfo;
 
         class Job {
             public:
@@ -64,6 +64,13 @@ namespace SST {
                 unsigned long getFST();
                 void startsAtTime(unsigned long time);
                 TaskCommInfo* taskCommInfo;
+                
+                //these are used to prevent high memory usage:
+                //the communication files are read only when the job starts
+                TaskCommInfo::commType commType;
+                std::string commFile;
+                std::string coordFile;
+                int meshx, meshy, meshz;
 
             private:
                 unsigned long arrivalTime;        //when the job arrived

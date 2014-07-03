@@ -544,6 +544,8 @@ void schedComponent::finish()
 void schedComponent::startJob(Job* job) 
 {
     //allocate & update machine
+    CommParser commParser = CommParser();
+    commParser.parseComm(job); //read communication files
     job->start( getCurrentSimTime() ); //job started flag
     AllocInfo* ai = theAllocator->allocate(job); //get allocation
     machine->allocate(ai); //allocate
