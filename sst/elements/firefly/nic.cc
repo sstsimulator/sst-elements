@@ -66,7 +66,15 @@ Nic::Nic(ComponentId_t id, Params &params) :
     } else {
 		assert(0);
 	}
-    m_packetSizeInBytes = params.find_integer("packetSize",64);
+
+    UnitAlgebra xxx( params.find_string( "packetSize" ) );
+    if ( xxx.hasUnits( "B" ) ) {
+        m_packetSizeInBytes = xxx.getRoundedValue(); 
+    } else if ( xxx.hasUnits( "b" ) ) {
+        m_packetSizeInBytes = xxx.getRoundedValue() / 8; 
+    } else {
+        assert(0);
+    }
 	m_packetSizeInBits = m_packetSizeInBytes * 8;
 
 	UnitAlgebra buf_size( params.find_string("buffer_size") );
