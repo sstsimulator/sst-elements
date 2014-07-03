@@ -154,7 +154,7 @@ void Gem5Connector::handleRecvFromSST(SimpleMem::Request *event)
 
     // Did it succeed?
     if (pkt->isLLSC() && pkt->isWrite()){
-        pkt->req->setExtraData(event->flags & SimpleMem::Request::F_LLSC_RESP);
+        pkt->req->setExtraData(!(event->flags & SimpleMem::Request::F_LLSC_RESP));
     }
     
         

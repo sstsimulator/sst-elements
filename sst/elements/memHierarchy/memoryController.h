@@ -73,7 +73,7 @@ public:
     struct DRAMReq {
         void setIsWrite(bool write){ isWrite = write; }
         void setSize(size_t _size){ size = _size; }
-        void setAddr(Addr _addr){ addr = _addr; }
+        void setAddr(Addr _baseAddr){ baseAddr = _baseAddr; }
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
         MemEvent *reqEvent;
@@ -92,7 +92,7 @@ public:
         size_t amt_processed;
         Status_t status;
 
-        Addr addr;
+        Addr baseAddr;
         uint32_t num_req;
 
         DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize) :
@@ -106,7 +106,7 @@ public:
             if(cmd == GetS || cmd == GetSEx || cmd == GetX) responseNeeded = true;
 
             setSize(cacheLineSize);
-            addr = ev->getBaseAddr();
+            baseAddr = ev->getBaseAddr();
             
 #if 0
             printf(

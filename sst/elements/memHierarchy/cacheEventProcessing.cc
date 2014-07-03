@@ -111,8 +111,8 @@ void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
         case GetSEx:
             inserted = mshrUncached_->insert(_baseAddr, _event);
             assert(inserted);
-            if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, NULL);
-            else             bottomCC_->forwardMessage(_event, _baseAddr, cf_.lineSize_, &_event->getPayload());
+            if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
+            else             bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
             break;
         case GetSResp:
         case GetXResp:

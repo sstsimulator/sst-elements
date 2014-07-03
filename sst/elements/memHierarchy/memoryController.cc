@@ -66,7 +66,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event){
 
 
 bool SimpleMemory::issueRequest(MemController::DRAMReq *req){
-    uint64_t addr = req->addr + req->amt_in_process;
+    uint64_t addr = req->baseAddr + req->amt_in_process;
     ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
     self_link->send(1, new MemCtrlEvent(req));
     return true;
@@ -102,7 +102,7 @@ DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp,
 
 
 bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
-    uint64_t addr = req->addr + req->amt_in_process;
+    uint64_t addr = req->baseAddr + req->amt_in_process;
     bool ok = memSystem->willAcceptTransaction(addr);
     if ( !ok ) return false;
     ok = memSystem->addTransaction(req->isWrite, addr);
@@ -199,7 +199,7 @@ VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(com
 
 
 bool VaultSimMemory::issueRequest(MemController::DRAMReq *req){
-    uint64_t addr = req->addr + req->amt_in_process;
+    uint64_t addr = req->baseAddr + req->amt_in_process;
     ctrl->dbg.debug(_L10_, "Issued transaction to Cube Chain for address %"PRIx64"\n", (Addr)addr);
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
@@ -400,13 +400,13 @@ void MemController::handleEvent(SST::Event *event){
 
 
 void MemController::addRequest(MemEvent *ev){
-	dbg.debug(_L10_,"New Memory Request for %"PRIx64"\n", ev->getAddr());
+	dbg.debug(_L10_,"New Memory Request.  BsAddr = %"PRIx64", Addr = %"PRIx64"\n", ev->getBaseAddr(), ev->getAddr());
     Command cmd = ev->getCmd();
     DRAMReq *req;
     assert(isRequestAddressValid(ev));
 
     req = new DRAMReq(ev, requestWidth, cacheLineSize);
-    dbg.debug(_L10_,"Creating DRAM Request for %"PRIx64", Size: %zu, %s\n", req->addr, req->size, CommandString[cmd]);
+    dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %"PRIx64", Size: %zu, %s\n", req->baseAddr, req->size, CommandString[cmd]);
     requests.push_back(req);
     requestQueue.push_back(req);
 }
@@ -430,10 +430,10 @@ bool MemController::clock(Cycle_t cycle){
             performRequest(req);
 #ifdef HAVE_LIBZ
             if(traceFP)
-                gzprintf(traceFP, "%c %#08llx %"PRIx64"\n", req->isWrite ? 'w' : 'r', req->addr, cycle);
+                gzprintf(traceFP, "%c %#08llx %"PRIx64"\n", req->isWrite ? 'w' : 'r', req->baseAddr, cycle);
 #else
             if(traceFP)
-                fprintf(traceFP, "%c %#08llx %"PRIx64"\n", req->isWrite ? 'w' : 'r', req->addr, cycle);
+                fprintf(traceFP, "%c %#08llx %"PRIx64"\n", req->isWrite ? 'w' : 'r', req->baseAddr, cycle);
 #endif
             requestQueue.pop_front();
         }
@@ -488,25 +488,33 @@ Addr MemController::convertAddressToLocalAddress(Addr addr){
 
 void MemController::performRequest(DRAMReq *req){
     bool uncached = req->reqEvent->queryFlag(MemEvent::F_UNCACHED);
-    Addr localAddr = convertAddressToLocalAddress(req->addr);
+    Addr localBaseAddr = convertAddressToLocalAddress(req->baseAddr);
+    Addr localAddr;
 
     if(req->cmd == PutM){  /* Write request to memory */
-        dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localAddr, req->reqEvent->getSize(), uncached ? "true" : "false");
+        dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localBaseAddr, req->reqEvent->getSize(), uncached ? "true" : "false");
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
-            memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
+            memBuffer[localBaseAddr + i] = req->reqEvent->getPayload()[i];
 	}
     else{
+        Addr localAbsAddr = convertAddressToLocalAddress(req->reqEvent->getAddr());
+        
         if(uncached && req->cmd == GetX) {
-            Addr localUncachedAddr = convertAddressToLocalAddress(req->reqEvent->getAddr());
-            dbg.debug(_L10_,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i\n", localUncachedAddr, req->reqEvent->getSize());
+            dbg.debug(_L10_,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i\n", localAbsAddr, req->reqEvent->getSize());
             for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ )
-                memBuffer[localUncachedAddr + i] = req->reqEvent->getPayload()[i];
+                memBuffer[localAbsAddr + i] = req->reqEvent->getPayload()[i];
         }
 
+        if(uncached) localAddr = localAbsAddr;
+        else         localAddr = localBaseAddr;
+        
     	req->respEvent = req->reqEvent->makeResponse();
-        req->respEvent->setSize(cacheLineSize);
+        
+        //if(uncached) req->respEvent->setSize(req->reqEvent->getSize());
+        //else         req->respEvent->setSize(cacheLineSize);
+        assert(req->respEvent->getSize() == req->reqEvent->getSize());
     
-        dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n",localAddr, req->reqEvent->getSize());
+        dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n", localAddr, req->reqEvent->getSize());
 		for ( size_t i = 0 ; i < req->respEvent->getSize() ; i++ )
             req->respEvent->getPayload()[i] = memBuffer[localAddr + i];
 
@@ -535,7 +543,7 @@ void MemController::handleMemResponse(DRAMReq *req){
     req->amt_processed += requestSize;
     if (req->amt_processed >= req->size) req->status = DRAMReq::RETURNED;
 
-    dbg.debug(_L10_, "Finishing processing for req %"PRIx64" %s\n", req->addr, req->status == DRAMReq::RETURNED ? "RETURNED" : "");
+    dbg.debug(_L10_, "Finishing processing.  BaseAddr = %"PRIx64" %s\n", req->baseAddr, req->status == DRAMReq::RETURNED ? "RETURNED" : "");
 
     if(DRAMReq::RETURNED == req->status) sendResponse(req);
 }
