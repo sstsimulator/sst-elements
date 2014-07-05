@@ -8,9 +8,9 @@
   <component name="cpu" type=VaultSimC.cpu rank=0>
     <params>
       <clock>500Mhz</clock>
-      <threads>16</threads>
+      <threads>2</threads>
       <app>0</app>
-      <bwlimit>32</bwlimit>
+      <bwlimit>4</bwlimit>
       <seed>100</seed>
     </params>
     <link name="chain_c_0" port="toMem" latency="5 ns" />

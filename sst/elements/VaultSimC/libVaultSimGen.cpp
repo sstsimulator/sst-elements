@@ -20,13 +20,25 @@ extern "C" {
   Component* create_cpu( SST::ComponentId_t id,  SST::Params& params );
 }
 
+const char *memEventList[] = {
+  "MemEvent",
+  NULL
+};
 
 static const ElementInfoParam VaultSimC_params[] = {
-  {"clock",              "Vault Clock Rate."},
-  {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
-  {"VaultID",            "Vault Unique ID (Unique to cube)."},
-  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"clock",              "Vault Clock Rate.", "1.0 Ghz"},
+    {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
+    {"VaultID",            "Vault Unique ID (Unique to cube)."},
+    {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+#if !(HAVE_LIBPHX == 1)
+    {"delay", "Static vault delay", "40ns"},
+#endif /* HAVE_LIBPHX */
   { NULL, NULL }
+};
+
+static const ElementInfoPort VaultSimC_ports[] = {
+    {"bus", "Link to the logic layer", memEventList},
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoParam logicLayer_params[] = {
@@ -40,6 +52,13 @@ static const ElementInfoParam logicLayer_params[] = {
   { NULL, NULL }
 };
 
+static const ElementInfoPort logicLayer_ports[] = {
+    {"bus_%(vaults)d", "Link to the individual memory vaults", memEventList},
+    {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", memEventList},    
+    {"toMem", "If 'terminal' is 0 (i.e. this is not the last cube in the chain) then this port connects to the next cube.", memEventList},
+    {NULL, NULL, NULL}
+};
+
 static const ElementInfoParam cpu_params[] = {
   {"clock",              "Simple CPU Clock Rate."},
   {"threads",            "Number of simulated threads in cpu."},
@@ -49,24 +68,35 @@ static const ElementInfoParam cpu_params[] = {
   { NULL, NULL }
 };
 
+static const ElementInfoPort cpu_ports[] = {
+    {"toMem", "Link to the memory system", memEventList},
+    {NULL, NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "VaultSimC",
       "Vault Component",
       NULL,
       VaultSimCAllocComponent,
-      VaultSimC_params
+      VaultSimC_params,
+      VaultSimC_ports,
+      COMPONENT_CATEGORY_MEMORY
     },
     { "logicLayer",
       "Logic Layer Component",
       NULL,
       create_logicLayer,
-      logicLayer_params
+      logicLayer_params,
+      logicLayer_ports,
+      COMPONENT_CATEGORY_MEMORY
     },
     { "cpu",
       "simple CPU",
       NULL,
       create_cpu,
-      cpu_params
+      cpu_params,
+      cpu_ports,
+      COMPONENT_CATEGORY_PROCESSOR
     },
     { NULL, NULL, NULL, NULL }
 };

@@ -19,46 +19,64 @@
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
+/* If we have a PHX library to link to, we use that. Otherwise, we use
+   a greatly simplifed timing model */
+#if HAVE_LIBPHX == 1
 #include <Vault.h>
 #include <BusPacket.h>
+#endif  /* HAVE_LIBPHX */
+
 #include "vaultGlobals.h"
 
 
 using namespace std;
 using namespace SST;
+#if HAVE_LIBPHX == 1
 using namespace PHXSim; 
+#endif  /* HAVE_LIBPHX */
 
 //#define STUPID_DEBUG 
 
 class VaultSimC : public IntrospectedComponent {
 
-    public: // functions
+public: // functions
 
-        VaultSimC( ComponentId_t id, Params& params );
-        int Finish();
-	void init(unsigned int phase);
+    VaultSimC( ComponentId_t id, Params& params );
+    int Finish();
+    void init(unsigned int phase);
+    
+private: // types
+    
+    typedef SST::Link memChan_t;
+    typedef map<unsigned, MemHierarchy::MemEvent*> t2MEMap_t;
+    
+private: // functions
+    
+    VaultSimC( const VaultSimC& c );
+    
+#if HAVE_LIBPHX == 1
+    bool clock_phx( Cycle_t );
+    
+    inline PHXSim::TransactionType convertType( SST::MemHierarchy::Command type );
+    
+    void readData(BusPacket bp, unsigned clockcycle);
+    void writeData(BusPacket bp, unsigned clockcycle);
+    
+    std::deque<Transaction> m_transQ;
+    t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
+    Vault* m_memorySystem;
+#else
+    // if not have PHX Lib...
 
-    private: // types
+    bool clock( Cycle_t );
+    Link *delayLine;
+    
+#endif /* HAVE_LIBPHX */
+    
 
-        typedef SST::Link memChan_t;
-	typedef map<unsigned, MemHierarchy::MemEvent*> t2MEMap_t;
-
-    private: // functions
-
-        VaultSimC( const VaultSimC& c );
-        bool clock( Cycle_t );
-
-        inline PHXSim::TransactionType convertType( SST::MemHierarchy::Command type );
-
-        void readData(BusPacket bp, unsigned clockcycle);
-        void writeData(BusPacket bp, unsigned clockcycle);
-
-        std::deque<Transaction> m_transQ;
-	t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
         uint8_t *memBuffer;
-	Vault* m_memorySystem;
         memChan_t* m_memChan;
-	size_t numVaults2;
+        size_t numVaults2;  // not clear if used
         Output dbg;
 
 	unsigned vaultID;
@@ -71,6 +89,7 @@ class VaultSimC : public IntrospectedComponent {
 	}
 };
 
+#if HAVE_LIBPHX == 1
 inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Command type )
 {
     /*  Needs to be updated with current MemHierarchy Commands/States
@@ -88,5 +107,6 @@ inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Comman
     return (PHXSim::TransactionType)-1;
     */
 }
+#endif /* HAVE_LIBPHX */
 
 #endif

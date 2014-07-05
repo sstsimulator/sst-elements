@@ -113,7 +113,7 @@ bool cpu::clock( Cycle_t current )
 	    toMem->send( event );
 	    outstanding++;
 	    Missued++;
-	    if (event->getCmd() == SST::MemHierarchy::ReadReq) {
+	    if (event->getCmd() == SST::MemHierarchy::GetS) {
 	      thrOutstanding[c].insert(event->getAddr());
 	    }
 	  }

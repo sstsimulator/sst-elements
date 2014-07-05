@@ -95,70 +95,72 @@ int logicLayer::Finish()
 }
 
 void logicLayer::init(unsigned int phase) {
-  // tell the bus (or whaterver) that we are here. only the first one
-  // in the chain should report, so every one sends towards the cpu,
-  // but only the first one will arrive.
-  if ( !phase ) {
-    toCPU->sendInitData(new SST::Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-  }
-
-  // rec data events from the direction of the cpu
-  SST::Event *ev = NULL;
-  while ( (ev = toCPU->recvInitData()) != NULL ) {
-    MemEvent *me = dynamic_cast<MemEvent*>(ev);
-    if ( me ) {
-      /* Push data to memory */
-      if ( me->getCmd() == WriteReq ) {
-	//printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
-	uint32_t chunkSize = (1 << VAULT_SHIFT);
-	if (me->getSize() > chunkSize) {
-	  // may need to break request up in to 256 byte chunks (minimal
-	  // vault width)
-	  int numNewEv = (me->getSize() / chunkSize) + 1;
-	  uint8_t *inData = &(me->getPayload()[0]);
-	  SST::Interfaces::Addr addr = me->getAddr();
-	  for (int i = 0; i < numNewEv; ++i) {
-	    // make new event
-	    MemEvent *newEv = new MemEvent(this, addr, me->getCmd());
-	    // set size and payload
-	    if (i != (numNewEv - 1)) {
-	      newEv->setSize(chunkSize);
-	      newEv->setPayload(chunkSize, inData);
-	      inData += chunkSize;
-	      addr += chunkSize;
-	    } else {
-	      uint32_t remain = me->getSize() - (chunkSize * (numNewEv - 1));
-	      newEv->setSize(remain);
-	      newEv->setPayload(remain, inData);
-	    }
-	    // sent to where it needs to go
-	    if (isOurs(newEv->getAddr())) {
-	      // send to the vault
-	      unsigned int vaultID = 
-		(newEv->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-	      m_memChans[vaultID]->sendInitData(newEv);      
-	    } else {
-	      // send down the chain
-	      toMem->sendInitData(newEv);
-	    }
-	  }
-	  delete ev;
-	} else {
-	  if (isOurs(me->getAddr())) {
-	    // send to the vault
-	    unsigned int vaultID = (me->getAddr() >> 8) % m_memChans.size();
-	    m_memChans[vaultID]->sendInitData(me);      
-	  } else {
-	    // send down the chain
-	    toMem->sendInitData(ev);
-	  }
-	}
-      } else {
-	printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
-      }
+    // tell the bus (or whaterver) that we are here. only the first one
+    // in the chain should report, so every one sends towards the cpu,
+    // but only the first one will arrive.
+    if ( !phase ) {
+        toCPU->sendInitData(new SST::Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
     }
-  }
-
+    
+    // rec data events from the direction of the cpu
+    SST::Event *ev = NULL;
+    while ( (ev = toCPU->recvInitData()) != NULL ) {
+        MemEvent *me = dynamic_cast<MemEvent*>(ev);
+        if ( me ) {
+            /* Push data to memory */
+            if ( me->isWriteback() ) {
+                //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
+                uint32_t chunkSize = (1 << VAULT_SHIFT);
+                if (me->getSize() > chunkSize) {
+                    // may need to break request up in to 256 byte chunks (minimal
+                    // vault width)
+                    int numNewEv = (me->getSize() / chunkSize) + 1;
+                    uint8_t *inData = &(me->getPayload()[0]);
+                    SST::MemHierarchy::Addr addr = me->getAddr();
+                    for (int i = 0; i < numNewEv; ++i) {
+                        // make new event
+                        MemEvent *newEv = new MemEvent(this, addr, 
+                                                       me->getBaseAddr(), 
+                                                       me->getCmd());
+                        // set size and payload
+                        if (i != (numNewEv - 1)) {
+                            newEv->setSize(chunkSize);
+                            newEv->setPayload(chunkSize, inData);
+                            inData += chunkSize;
+                            addr += chunkSize;
+                        } else {
+                            uint32_t remain = me->getSize() - (chunkSize * (numNewEv - 1));
+                            newEv->setSize(remain);
+                            newEv->setPayload(remain, inData);
+                        }
+                        // sent to where it needs to go
+                        if (isOurs(newEv->getAddr())) {
+                            // send to the vault
+                            unsigned int vaultID = 
+                                (newEv->getAddr() >> VAULT_SHIFT) % m_memChans.size();
+                            m_memChans[vaultID]->sendInitData(newEv);      
+                        } else {
+                            // send down the chain
+                            toMem->sendInitData(newEv);
+                        }
+                    }
+                    delete ev;
+                } else {
+                    if (isOurs(me->getAddr())) {
+                        // send to the vault
+                        unsigned int vaultID = (me->getAddr() >> 8) % m_memChans.size();
+                        m_memChans[vaultID]->sendInitData(me);      
+                    } else {
+                        // send down the chain
+                        toMem->sendInitData(ev);
+                    }
+                }
+            } else {
+                printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+            }
+        }
+    }
+    
 }
 
 

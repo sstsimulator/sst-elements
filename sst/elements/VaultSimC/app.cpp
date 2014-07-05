@@ -22,7 +22,7 @@ static unsigned int missRate[][3] = {{0,51,32},   //app 0
 				     {0,18,15}};  //app 1
 static unsigned int isLoad[] = {3,32}; // out of 64
 
-using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 
 MemEvent *cpu::getInst(int cacheLevel, int app, int core) {
   /*
@@ -51,11 +51,11 @@ L2 miss/inst	32	15
     }
     coreAddr[core] = addr;
     if (memRoll <= isLoad[app]) {
-      command = SST::Interfaces::ReadReq;
+        command = SST::MemHierarchy::GetS;
     } else {
-      command = SST::Interfaces::WriteReq;
+        command = SST::MemHierarchy::GetX;
     }
-    MemEvent *event = new MemEvent(this, addr, command);
+    MemEvent *event = new MemEvent(this, addr, addr, command);
 
     return event;
   } else {

@@ -3,12 +3,13 @@
 #
 
 
-EXTRA_DIST = 
+EXTRA_DIST = tests/sdl1.xml \
+	tests/sdl2.xml \
+	tests/sdl3.xml \
+	tests/stream-8coreVault_1.6GHz-M5.xml
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libVaultSimC.la
-
-if HAVE_LIBPHX
 
 libVaultSimC_la_SOURCES = \
 	libVaultSimGen.cpp \
@@ -20,11 +21,6 @@ libVaultSimC_la_SOURCES = \
 	VaultSimC.cpp \
 	VaultSimC.h \
 	vaultGlobals.h
-else
-
-libVaultSimC_la_SOURCES = 
-
-endif
 
 libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
 	$(LIBPHX_CPPFLAGS)
