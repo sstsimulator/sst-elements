@@ -3,7 +3,7 @@ import math
 
 # globals
 CPUQuads = 2  # "Quads" per CPU
-PIMQuads = 0  # "Quads per PIM
+PIMQuads = 1  # "Quads per PIM
 PIMs = 2      # number of PIMs
 ccLat = "5ns" # cube to cube latency i.e. PIM to PIM
 
@@ -17,7 +17,7 @@ flit_size = "72B"
 coherence_protocol = "MESI"
 busLat = "50ps"
 netLat = "3ns"
-useAriel = 0
+useAriel = 1
 useVaultSim = 1
 baseclock = 1500  # in MHz
 clock = "%g MHz"%(baseclock)
@@ -28,6 +28,16 @@ memDebugLevel = 6
 
 rank_size = 512 / PIMs
 interleave_size = 1024*4
+corecount = (CPUQuads + (PIMQuads * PIMs)) * 4
+
+class corePorts:
+    def __init__(self):
+        self._next = 0 
+    def nextPort(self):
+        res = self._next
+        self._next = self._next + 1
+        return res
+coreCtr = corePorts()
 
 # common
 memParams = {
@@ -69,6 +79,22 @@ routerParams = {"topology": "merlin.torus",
                 "torus:local_ports": localPorts ,
                 "num_ports" : localPorts + 2}
 
+def makeAriel():
+    ariel = sst.Component("a0", "ariel.ariel")
+    ariel.addParams({
+            "verbose" : 0,
+            "clock" : clock,
+            "maxcorequeue" : 256,
+            "maxissuepercycle" : 2,
+            "pipetimeout" : 0,
+            "executable" : "/home/afrodri/tlvlstream/ministream",
+            "corecount" : corecount,
+            "arielmode" : 1,
+            "arieltool": "/home/afrodri/sst-simulator/tools/ariel/fesimple/fesimple.so"
+            })
+    coreCounter = 0
+    return ariel
+
 def doQuad(quad, cores, rtr, rtrPort, netAddr):
     sst.pushNamePrefix("q%d"%quad)
 
@@ -104,7 +130,9 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
         #connect L1 & Core
         if useAriel:
             arielL1Link = sst.Link("core_cache_link_%d"%core)
-            arielL1Link.connect((ariel, "cache_link_%d"%core, busLat), 
+            portName = "cache_link_" + str(coreCtr.nextPort())
+            arielL1Link.connect((ariel, portName,
+                                 busLat), 
                                 (l1id, "high_network_0", busLat))
         else:
             coreL1Link = sst.Link("core_cache_link_%d"%core)
@@ -314,6 +342,10 @@ def doPIM(pimNum, prevRtr):
 # Define SST core options
 sst.setProgramOption("partitioner", "self")
 sst.setProgramOption("stopAtCycle", "50 us")
+
+#if needed, create the ariel component
+if useAriel:
+    ariel = makeAriel()
 
 #make the CPU
 cpuRtr = doCPU()
