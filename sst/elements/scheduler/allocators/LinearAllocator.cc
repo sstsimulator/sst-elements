@@ -482,13 +482,14 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             delete [] rankh;
 
             //print rank
+            /*
             schedout.debug(CALL_INFO, 4, 0, "\n");
             for(int y = ydim - 1; y >= 0; y--) {
                 for(int x = 0; x < xdim; x++) {
                     schedout.debug(CALL_INFO, 4, 0, "%3d ", rank[x + y * xdim]);
                 }
                 schedout.debug(CALL_INFO, 4, 0, "\n");
-            }
+            }*/
         } else { 
 
             //a 3D Hilbert curve. There are many ways to extend a Hilbert curve
@@ -822,6 +823,7 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
     //        printf("\n");
     //    }
     //}
+    /*
     schedout.debug(CALL_INFO, 7, 0, "getIntervals:");
     for (vector<vector<MeshLocation*>*>::iterator ar = retVal -> begin(); ar != retVal -> end(); ar++) {
         schedout.debug(CALL_INFO, 7, 0, "Interval: ");
@@ -830,7 +832,7 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
             schedout.debug(CALL_INFO, 7, 0, " ");
         }
         schedout.debug(CALL_INFO, 7, 0, "\n");
-    }
+    }*/
     avail -> clear();
     machfree -> clear();
     delete avail;

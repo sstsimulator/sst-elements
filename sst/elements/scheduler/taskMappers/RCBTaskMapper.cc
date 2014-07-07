@@ -142,6 +142,7 @@ RCBTaskMapper::Grouper<T>::Grouper(std::vector<T>* elements, Rotator *rotator)
     int ymax = 0;
     int zmax = 0;
     int x, y, z;
+    //TODO: optimization - calculate size before creating the object using known info
     for(unsigned int i = 0; i < elements->size(); i++){
         rotator->getDims(&x, &y, &z, elements->at(i));
         if(x > xmax) xmax = x;

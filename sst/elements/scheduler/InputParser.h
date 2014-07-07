@@ -90,7 +90,8 @@ namespace SST {
             public:
                 MatrixMarketReader2D() { };
                 ~MatrixMarketReader2D() { };
-                std::vector<T*>* readMatrix(const char* fileName);
+		        //@ignoreValues: Ignores matrix cell values for coordinate input
+		        std::vector<T*>* readMatrix(const char* fileName, bool ignoreValues = false);
                 int xdim, ydim;
         };
     }

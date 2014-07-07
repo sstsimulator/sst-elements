@@ -62,7 +62,7 @@ string BestFitAllocator::getSetupInfo(bool comment)
 //allocation)
 AllocInfo* BestFitAllocator::allocate(Job* job) 
 {
-    schedout.debug(CALL_INFO, 7, 0, "Allocating %s procs: \n", job -> toString().c_str());
+    //schedout.debug(CALL_INFO, 7, 0, "Allocating %s procs: \n", job -> toString().c_str());
 
     //check if we have enough free processors
     if (!canAllocate(*job)) return NULL;
@@ -96,6 +96,8 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
             delete intervals -> at(i);
         }
     }
+    
+    
 
     if (bestInterval == -1) {
         //no single interval is big enough; minimize the span

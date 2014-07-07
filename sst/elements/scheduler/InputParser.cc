@@ -289,7 +289,7 @@ vector<int*>* CommParser::readCommFile(std::string fileName, int procsNeeded)
 {
     //read matrix
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
-	vector<int*>* dataVec = reader.readMatrix(fileName.c_str());
+	vector<int*>* dataVec = reader.readMatrix(fileName.c_str(), true); //current version ignores edge weights
 
 	//check size
 	if(reader.xdim != reader.ydim){
@@ -400,7 +400,7 @@ double** DParser::readDMatrix()
 }
 
 template <class T>
-vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName)
+vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignoreValues)
 {
     //TODO: make this function faster by reading the file all at once
 
@@ -424,13 +424,15 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName)
     if(object.compare("matrix") != 0){
         schedout.fatal(CALL_INFO, 1, "Object type in file %s should be a matrix\n", fileName);
     }
-    if(typeid(int) == typeid(T)){
-        if(field.compare("integer") != 0){
-            schedout.fatal(CALL_INFO, 1, "In file %s : integer input type is expected\n", fileName);
-        }
-    } else if(typeid(double) == typeid(T)) {
-        if(field.compare("real") != 0 && field.compare("double") != 0){
-            schedout.fatal(CALL_INFO, 1, "In file %s : double input type is expected\n", fileName);
+    if(!ignoreValues){
+        if(typeid(int) == typeid(T)){
+            if(field.compare("integer") != 0){
+                schedout.fatal(CALL_INFO, 1, "In file %s : integer input type is expected\n", fileName);
+            }
+        } else if(typeid(double) == typeid(T)) {
+            if(field.compare("real") != 0 && field.compare("double") != 0){
+                schedout.fatal(CALL_INFO, 1, "In file %s : double input type is expected\n", fileName);
+            }
         }
     }
 
@@ -448,13 +450,23 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName)
     //read data
     vector<T*>* outVector = new vector<T*>();
     T* tempData;
+    double ignoredDummy;
+    string line;
 
     if(format.compare("coordinate") == 0){
         inputFile >> numLines;
+        inputFile.ignore(2048, '\n');
         for(int i = 0; i < numLines; i++){
             tempData = new T[3];
-            if( !(inputFile >> tempData[0] >> tempData[1] >> tempData[2]) ){
-                schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
+            if(ignoreValues){
+                getline(inputFile, line);
+                stringstream is(line);
+                is >> tempData[0] >> tempData[1] >> ignoredDummy;
+                tempData[2] = 1;
+            } else {
+                if( !(inputFile >> tempData[0] >> tempData[1] >> tempData[2]) ){
+                    schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
+                }
             }
             //convert numbering convention
             tempData[0] -= 1;

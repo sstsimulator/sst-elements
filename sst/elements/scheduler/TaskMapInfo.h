@@ -12,10 +12,6 @@
 #ifndef SST_SCHEDULER_TASKMAPINFO_H__
 #define SST_SCHEDULER_TASKMAPINFO_H__
 
-#include <boost/bimap/bimap.hpp>
-
-typedef boost::bimaps::bimap< int, int > TaskMapType;
-
 namespace SST {
     namespace Scheduler {
 
@@ -28,21 +24,25 @@ namespace SST {
 
 	        private:
 		        TaskCommInfo* taskCommInfo;
+		        int size;
+		        int mappedCount;
+		        unsigned long totalHopDist;
 
 	        public:
-		        Job* job;
 		        AllocInfo* allocInfo;
-		        TaskMapType* taskMap; //leftKey: task index, rightKey: node index
+		        Job* job;
+		        int* taskToNode;
 
 		        TaskMapInfo(AllocInfo* ai);
 
 		        ~TaskMapInfo();
 
 		        //does not do the mapping; only assigns the given task
-		        //assumes no task migration, i.e., a task is mapped only once at the start of execution
+		        //does not check if given node or task is already mapped
 		        void insert(int taskInd, int nodeInd);
-
-		        unsigned long getTotalHopDist(const MeshMachine & machine) const;
+                
+                //assumes no migration, i.e., it calculates the hop distance only once
+		        unsigned long getTotalHopDist(const MeshMachine & machine);
         };
     }
 }

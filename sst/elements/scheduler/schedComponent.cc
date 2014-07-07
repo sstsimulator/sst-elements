@@ -543,6 +543,9 @@ void schedComponent::finish()
 
 void schedComponent::startJob(Job* job) 
 {
+    //if(job->getJobNum() % 130 == 0){
+    //    std::cout << job->getJobNum() / 130 << " percent of the jobs have been started\n";
+    //}
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job); //read communication files
@@ -574,8 +577,6 @@ void schedComponent::startJob(Job* job)
                                        ( timePerDistance->at(0) + timePerDistance->at(1) *
                                         ( timePerDistance->at(2) + averagePairwiseDistance *
                                          ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
-        //map the tasks        
-        TaskMapInfo* tmi = theTaskMapper->mapTasks(ai);
         
         //calculate new hop distance with allocation & task mapping
         averagePairwiseDistance = tmi->getTotalHopDist(*mMachine) / numberOfProcs;
