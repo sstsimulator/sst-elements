@@ -25,6 +25,7 @@
 #include "Scheduler.h"
 #include "allocators/SimpleAllocator.h"
 #include "SimpleMachine.h"
+#include "TaskMapInfo.h"
 #include "taskMappers/SimpleTaskMapper.h"
 
 using namespace SST::Scheduler;
@@ -247,11 +248,14 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
 {
     AllocInfo* ai;
     Job* newJob;
+    SimpleTaskMapper taskMapper = SimpleTaskMapper(mach);
+    TaskMapInfo* tmi;
     do {
         newJob = sched->tryToStart(time, *mach);
         sched->startNext(time, *mach);
         ai = alloc->allocate(newJob);
         if (ai != NULL) {
+            tmi = taskMapper.mapTasks(ai);
             if (ai -> job == j) {
                 //our job has been scheduled!  record the time
                 jobFST[j -> getJobNum()] = time;
@@ -264,7 +268,7 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
                 endtimes -> insert(pair<Job*, unsigned long>(ai -> job, time + ai -> job -> getActualTime()));
                 jobToAi -> insert(pair<Job*, AllocInfo*>(ai -> job, ai));
             }
-            stats -> jobStarts(ai, time);
+            stats -> jobStarts(tmi, time);
         }
     } while (ai != NULL); 
     return false; 

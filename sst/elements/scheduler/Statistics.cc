@@ -27,6 +27,7 @@
 #include "misc.h"
 #include "output.h"
 #include "Scheduler.h"
+#include "TaskMapInfo.h"
 #include "TaskMapper.h"
 
 using namespace std;
@@ -199,10 +200,10 @@ void Statistics::jobArrives(unsigned long time)
 }
 
 //called every time a job starts
-void Statistics::jobStarts(AllocInfo* allocInfo, unsigned long time) 
+void Statistics::jobStarts(TaskMapInfo* tmi, unsigned long time) 
 {
     if (record[ALLOC]) {
-        writeAlloc(allocInfo);
+        writeAlloc(tmi);
     }
     /*
        if(record[VISUAL]) {
@@ -212,7 +213,7 @@ void Statistics::jobStarts(AllocInfo* allocInfo, unsigned long time)
        }
        */
 
-    procsUsed += allocInfo -> job -> getProcsNeeded();
+    procsUsed += tmi -> job -> getProcsNeeded();
     if (record[UTIL]) {
         writeUtil(time);
     }
@@ -226,7 +227,7 @@ void Statistics::jobStarts(AllocInfo* allocInfo, unsigned long time)
 }
 
 //called every time a job completes
-void Statistics::jobFinishes(AllocInfo* allocInfo, unsigned long time) 
+void Statistics::jobFinishes(TaskMapInfo* tmi, unsigned long time) 
 { 
     /*
        if(record[VISUAL]) {
@@ -237,10 +238,10 @@ void Statistics::jobFinishes(AllocInfo* allocInfo, unsigned long time)
        */
 
     if (record[TIME]) {
-        writeTime(allocInfo, time);
+        writeTime(tmi->allocInfo, time);
     }
 
-    procsUsed -= allocInfo -> job -> getProcsNeeded();
+    procsUsed -= tmi -> job -> getProcsNeeded();
 
     if (record[UTIL]) {
         writeUtil(time);
@@ -289,15 +290,15 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
 
 
 //Write allocation information to the log.
-void Statistics::writeAlloc(AllocInfo* allocInfo) 
+void Statistics::writeAlloc(TaskMapInfo* tmi) 
 {
-    MeshAllocInfo* mai = static_cast<MeshAllocInfo*>(allocInfo);
+    MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine);
     char mesg[100];
-    int num = mai -> job -> getProcsNeeded();
+    int num = tmi -> job -> getProcsNeeded();
     sprintf(mesg, "%d\t%lu\t%ld\n",
             num,
-            mai -> job -> getActualTime(),
-            ((MeshMachine*)(machine))-> pairwiseL1Distance(mai -> processors));
+            tmi -> job -> getActualTime(),
+            (tmi -> getTotalHopDist(*mMachine)) / 2);
     appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
 

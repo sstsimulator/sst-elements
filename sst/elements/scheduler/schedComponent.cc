@@ -381,10 +381,10 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
             machine -> deallocate(tmi->allocInfo);
             theAllocator -> deallocate(tmi->allocInfo);
             if (useYumYumTraceFormat) {
-                stats->jobFinishes(tmi->allocInfo, getCurrentSimTime() + 1);
+                stats->jobFinishes(tmi, getCurrentSimTime() + 1);
                 scheduler->jobFinishes(tmi->job, getCurrentSimTime() + 1, *machine);
             } else {
-                stats->jobFinishes(tmi->allocInfo, getCurrentSimTime() );
+                stats->jobFinishes(tmi, getCurrentSimTime() );
                 scheduler->jobFinishes(tmi->job, getCurrentSimTime() , *machine);
             }
             //the job is done and deleted from our records; don't need
@@ -474,13 +474,13 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             theAllocator->deallocate(tmi->allocInfo);
             
             if (useYumYumTraceFormat) {
-                stats -> jobFinishes(tmi->allocInfo, getCurrentSimTime() + 1);
+                stats -> jobFinishes(tmi, getCurrentSimTime() + 1);
                 scheduler -> jobFinishes(tmi->job, getCurrentSimTime() + 1, *machine);
             } else {
                 if (FSTtype > 0){
                     calcFST -> jobCompletes(tmi->job);
                 }
-                stats -> jobFinishes(tmi->allocInfo, getCurrentSimTime());
+                stats -> jobFinishes(tmi, getCurrentSimTime());
                 scheduler -> jobFinishes(tmi->job, getCurrentSimTime(), *machine);
             }
             delete tmi;
@@ -554,7 +554,7 @@ void schedComponent::startJob(Job* job)
     machine->allocate(ai); //allocate
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
     scheduler->startNext( getCurrentSimTime(), *machine ); //start in scheduler
-    stats->jobStarts( ai, getCurrentSimTime() ); //record stats
+    stats->jobStarts(tmi, getCurrentSimTime() ); //record stats
     
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;

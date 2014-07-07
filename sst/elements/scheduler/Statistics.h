@@ -31,6 +31,7 @@ namespace SST {
         class FST;
         class Machine;
         class Scheduler;
+        class TaskMapInfo;
         class TaskMapper;
 
         class Statistics {
@@ -44,10 +45,10 @@ namespace SST {
 
                 void jobArrives(unsigned long time);  //called when a job has arrived
 
-                void jobStarts(AllocInfo* allocInfo, unsigned long time);
+                void jobStarts(TaskMapInfo* tmi, unsigned long time);
                 //called every time a job starts
 
-                void jobFinishes(AllocInfo* allocInfo, unsigned long time);
+                void jobFinishes(TaskMapInfo* tmi, unsigned long time);
                 //called every time a job completes
 
                 void done();  //called after all events have occurred
@@ -57,7 +58,7 @@ namespace SST {
                 //write time statistics to file
 
 
-                void writeAlloc(AllocInfo* allocInfo);
+                void writeAlloc(TaskMapInfo* tmi);
                 //write allocation information to file
 
                 void writeVisual(std::string mesg);
