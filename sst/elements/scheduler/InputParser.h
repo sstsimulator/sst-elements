@@ -69,8 +69,8 @@ namespace SST {
                 ~CommParser() { }
                 void parseComm(Job *job);
             private:
-                int** readCommFile(std::string fileName, int procsNeeded);
-                std::vector<double*>* readCoordFile(std::string fileName, int procsNeeded);
+                std::vector<int*>* readCommFile(std::string fileName, int procsNeeded);
+                double** readCoordFile(std::string fileName, int procsNeeded);
         };
         
         class DParser {
@@ -90,7 +90,7 @@ namespace SST {
             public:
                 MatrixMarketReader2D() { };
                 ~MatrixMarketReader2D() { };
-                T** readMatrix(const char* fileName);
+                std::vector<T*>* readMatrix(const char* fileName);
                 int xdim, ydim;
         };
     }

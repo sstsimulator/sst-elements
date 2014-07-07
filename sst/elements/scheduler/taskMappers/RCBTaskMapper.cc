@@ -30,7 +30,7 @@ RCBTaskMapper::RCBTaskMapper(Machine* mach) : TaskMapper(mach)
 {
     mMachine = dynamic_cast<MeshMachine*>(machine);
     if(mMachine == NULL){
-        std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
+        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
     }
 }
 
@@ -311,7 +311,7 @@ RCBTaskMapper::Rotator::~Rotator()
 template <typename T>
 void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, T t) const
 {
-    std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Template function getDims should have been overloaded\n");
+    schedout.fatal(CALL_INFO, 1, "Template function getDims should have been overloaded\n");
 }
 
 void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, int taskID) const
@@ -322,11 +322,11 @@ void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, int taskID) const
         *z = taskID / (rcb.tci->xdim * rcb.tci->ydim);
     } else if (rcb.tci->taskCommType == TaskCommInfo::COORDINATE) {
         //return coordinates normalized by rotated machine dimensions
-        *x = rcb.tci->coords->at(taskID)[0] * numTasksNorm;
-        *y = rcb.tci->coords->at(taskID)[1] * numTasksNorm;
-        *z = rcb.tci->coords->at(taskID)[2] * numTasksNorm;
+        *x = rcb.tci->coordMatrix[taskID][0] * numTasksNorm;
+        *y = rcb.tci->coordMatrix[taskID][1] * numTasksNorm;
+        *z = rcb.tci->coordMatrix[taskID][2] * numTasksNorm;
     } else {
-        std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Unknown communication type for Job %d\n", job->getJobNum());
+        schedout.fatal(CALL_INFO, 1, "Unknown communication type");
     }
 }
 
@@ -347,7 +347,7 @@ void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, MeshLocation loc) c
 template <typename T>
 int RCBTaskMapper::Rotator::getTaskNum(T t) const
 {
-    std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "Template function getNum should have been overloaded\n");
+    schedout.fatal(CALL_INFO, 1, "Template function getNum should have been overloaded\n");
     return -1;
 }
 

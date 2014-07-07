@@ -285,26 +285,27 @@ void CommParser::parseComm(Job * job)
     }
 }
 
-int** CommParser::readCommFile(std::string fileName, int procsNeeded)
+vector<int*>* CommParser::readCommFile(std::string fileName, int procsNeeded)
 {
     //read matrix
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
-	int** matrix = reader.readMatrix(fileName.c_str());
+	vector<int*>* dataVec = reader.readMatrix(fileName.c_str());
 
 	//check size
 	if(reader.xdim != reader.ydim){
 		schedout.fatal(CALL_INFO, 1, "Given matrix in file %s is not a square matrix\n", fileName.c_str());
 	} else if(reader.xdim != procsNeeded){
     	schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", fileName.c_str());
-    }    
-	return matrix;
+    }
+    
+	return dataVec;
 }
 
-vector<double*>* CommParser::readCoordFile(std::string fileName, int procsNeeded)
+double** CommParser::readCoordFile(std::string fileName, int procsNeeded)
 {
     //read matrix
     MatrixMarketReader2D<double> reader = MatrixMarketReader2D<double>();
-    double** matrix = reader.readMatrix(fileName.c_str());
+    vector<double*>* dataVec = reader.readMatrix(fileName.c_str());
 
     //check size
     if(reader.xdim != procsNeeded){
@@ -313,29 +314,29 @@ vector<double*>* CommParser::readCoordFile(std::string fileName, int procsNeeded
     if(reader.ydim != 2 && reader.ydim != 3){
         schedout.fatal(CALL_INFO, 1, "Coordinates matrix in file %s has a dimension other than 2 or 3.\n", fileName.c_str());
     }
+    
+    //init matrix
+    double** matrix = new double*[procsNeeded];
+    for(int i=0; i < procsNeeded; i++){
+        matrix[i] = new double[3];
+    }
 
-    //create return vector
-    vector<double*> *retVec = new vector<double*>();
-    double* tempVec;
-    for(int i = 0; i < reader.xdim; i++){
-        tempVec = new double[3];
-        tempVec[0] = matrix[i][0];
-        tempVec[1] = matrix[i][1];
-        if(reader.ydim == 2){
-            tempVec[2] = 0; //dummy 3rd dimension
-        } else {
-            tempVec[2] = matrix[i][2];
+    //fill with data
+    double* data;
+    for(unsigned int i = 0; i < dataVec->size(); i++){
+        data = dataVec->at(i);
+        for(int j = 0; j < reader.ydim; j++){
+            matrix[i][j] = data[j];
         }
-        retVec->push_back(tempVec);
+        //fill 3rd dimension with dummy value
+        if(reader.ydim == 2){
+            matrix[i][2] = 0;
+        }
+        delete [] data;
     }
+    delete dataVec;
 
-    //delete matrix
-    for(int i = 0; i < reader.xdim; i++){
-        delete [] matrix[i];
-    }
-    delete [] matrix;
-
-    return retVec;
+    return matrix;
 }
 
 DParser::DParser(int numNodes, SST::Params& params)
@@ -368,7 +369,7 @@ double** DParser::readDMatrix()
 
     //read matrix
     MatrixMarketReader2D<double> reader = MatrixMarketReader2D<double>();
-    double** dMatrix = reader.readMatrix(inFile.c_str());
+    vector<double*>* dataVec = reader.readMatrix(inFile.c_str());
     
     //check if x&y sizes and machine size match
     if(reader.xdim != reader.ydim){
@@ -377,16 +378,32 @@ double** DParser::readDMatrix()
         schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", inFile.c_str());
     }
     
-    return dMatrix;
+    //init matrix
+    double** matrix = new double*[numNodes];
+    for(int i = 0; i < numNodes; i++){
+        matrix[i] = new double[numNodes]; 
+        for(int j = 0; j < numNodes; j++){
+            matrix[i][j] = 0;
+        }
+    }
+
+    //fill with data
+    double* data;
+    for(unsigned int i = 0; i < dataVec->size(); i++){
+        data = dataVec->at(i);
+        matrix[ (int)data[0] ][ (int)data[1] ] = data[2];
+        delete [] data;
+    }
+    delete dataVec;
+    
+    return matrix;
 }
 
 template <class T>
-T** MatrixMarketReader2D<T>::readMatrix(const char* fileName)
+vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName)
 {
     //TODO: make this function faster by reading the file all at once
-    
-    T** outMatrix;
-    
+
     //open file
     ifstream inputFile;
     inputFile.open( fileName, std::fstream::in );
@@ -399,7 +416,7 @@ T** MatrixMarketReader2D<T>::readMatrix(const char* fileName)
     if( !(inputFile >> fType >> object >> format >> field >> symmetry) ){
         schedout.fatal(CALL_INFO, 1, "Cannot read matrix market file: %s\n", fileName);
     }
-    
+
     //check compatibility
     if(fType.compare("%%MatrixMarket") != 0){
         schedout.fatal(CALL_INFO, 1, "File %s is not a Matrix Market file\n", fileName);
@@ -411,48 +428,49 @@ T** MatrixMarketReader2D<T>::readMatrix(const char* fileName)
         if(field.compare("integer") != 0){
             schedout.fatal(CALL_INFO, 1, "In file %s : integer input type is expected\n", fileName);
         }
-    }
-    if(typeid(double) == typeid(T)){
+    } else if(typeid(double) == typeid(T)) {
         if(field.compare("real") != 0 && field.compare("double") != 0){
             schedout.fatal(CALL_INFO, 1, "In file %s : double input type is expected\n", fileName);
         }
     }
-    
+
     //ignore comments
     while (inputFile.peek() == '%' || inputFile.peek() == '\n'){
-    	inputFile.ignore(2048, '\n');
+        inputFile.ignore(2048, '\n');
     }
-    
+
     //read the size line
     int numLines;
     if( !(inputFile >> xdim >> ydim) ) {
-    	schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
-    }
-
-    //initialize matrix
-    outMatrix = new T*[xdim];
-    for(int i=0; i < xdim; i++){
-        outMatrix[i] = new T[ydim];
-        for(int j=0; j < ydim; j++){
-            outMatrix[i][j] = 0;
-        }
+        schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
     }
 
     //read data
-    int x=0, y=0;
+    vector<T*>* outVector = new vector<T*>();
+    T* tempData;
+
     if(format.compare("coordinate") == 0){
-        T data;
         inputFile >> numLines;
         for(int i = 0; i < numLines; i++){
-            if( !(inputFile >> x >> y >> data) ){
+            tempData = new T[3];
+            if( !(inputFile >> tempData[0] >> tempData[1] >> tempData[2]) ){
                 schedout.fatal(CALL_INFO, 1, "Could not read matrix market input %s\n", fileName);
             }
-            outMatrix[x-1][y-1] = data;
+            //convert numbering convention
+            tempData[0] -= 1;
+            tempData[1] -= 1;
+            outVector->push_back(tempData);
         }
     } else if(format.compare("array") == 0) {
+        //init outVector
+        for(int i = 0; i < xdim; i++){
+            outVector->push_back(new T[ydim]);
+        }
+        //fill outVector
         for(int j = 0; j < ydim; j++){
             for(int i = 0; i < xdim; i++){
-                if( !(inputFile >> outMatrix[i][j]) ){
+                tempData = outVector->at(i);
+                if( !(inputFile >> tempData[j]) ){
                     schedout.fatal(CALL_INFO, 1, "Number of lines in file %s does not match with the matrix.\n", fileName);
                 }
             }
@@ -465,12 +483,19 @@ T** MatrixMarketReader2D<T>::readMatrix(const char* fileName)
 
     //apply symmetry if needed
     if(symmetry.compare("general") != 0){
-        for(int i = 0; i < xdim; i++){
-            for(int j = i; j < ydim; j++){
-                outMatrix[i][j] = outMatrix[j][i];
+        T* tempDataSym;
+        int size = outVector->size();
+        for(int i = 0; i < size; i++){
+            tempData = outVector->at(i);
+            if(tempData[0] != tempData[1]){
+                tempDataSym = new T[3];
+                tempDataSym[0] = tempData[1];
+                tempDataSym[1] = tempData[0];
+                tempDataSym[2] = tempData[2];
+                outVector->push_back(tempDataSym);
             }
         }
     }
 
-    return outMatrix;
+    return outVector;
 }

@@ -38,12 +38,12 @@ void TaskMapInfo::insert(int taskInd, int nodeInd)
     //check if exists
     if(taskInd >= job->getProcsNeeded() || taskInd < 0) {
     	schedout.fatal(CALL_INFO, 1, "in TaskMapInfo: Could not map inexistent task %d of job %ld to node %d\n",
-    	                              taskInd, job->getJobNum(), nodeInd);
+    	                               taskInd, job->getJobNum(), nodeInd);
     }
     //check if already mapped
     if(taskMap->left.count(taskInd) != 0) {
     	schedout.fatal(CALL_INFO, 1, "in TaskMapInfo: Task %d of job %ld is already mapped to node %d\n",
-    	                              taskInd, job->getJobNum(), taskMap->left.at(taskInd));
+    	                               taskInd, job->getJobNum(), taskMap->left.at(taskInd));
     }
 
     //check if nodeInd is valid
@@ -56,12 +56,12 @@ void TaskMapInfo::insert(int taskInd, int nodeInd)
     }
     if(!found){
     	schedout.fatal(CALL_INFO, 1, "Could not map task %d of job %ld is to the unallocated node %d\n",
-    	                              taskInd, job->getJobNum(), nodeInd);
+    	                               taskInd, job->getJobNum(), nodeInd);
     }
     //check if already mapped
     if(taskMap->right.count(nodeInd) != 0) {
     	schedout.fatal(CALL_INFO, 1, "Node %d is already allocated by task %d of job %ld",
-    	                              nodeInd, taskMap->right.at(nodeInd), job->getJobNum());
+    	                               nodeInd, taskMap->right.at(nodeInd), job->getJobNum());
     }
 
     //add mapping
@@ -75,7 +75,7 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
 
     //check if every task is mapped
     if((unsigned int) job->getProcsNeeded() != taskMap->size()){
-    	schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
+        schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
     }
 
     int** commMatrix = taskCommInfo->getCommMatrix();
@@ -98,5 +98,13 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine) const
             }
         }
     }
+    
+    //delete comm matrix
+    for(int i = 0 ; i < job->getProcsNeeded(); i++){
+        delete [] commMatrix[i];
+    }
+    delete [] commMatrix;
+    
     return totalDist;
 }
+

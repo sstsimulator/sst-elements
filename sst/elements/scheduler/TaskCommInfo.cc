@@ -20,19 +20,19 @@ TaskCommInfo::TaskCommInfo(Job* job)
 {
     init(job);
     taskCommType = TaskCommInfo::ALLTOALL;
-    commMatrix = NULL;
-    coords = new std::vector<double*>();
+    commInfo = NULL;
+    coordMatrix = NULL;
     xdim = 0;
     ydim = 0;
     zdim = 0;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, int ** inCommMatrix)
+TaskCommInfo::TaskCommInfo(Job* job, std::vector<int*>* inCommInfo)
 {
     init(job);
     taskCommType = TaskCommInfo::CUSTOM;
-    commMatrix = inCommMatrix;
-    coords = new std::vector<double*>();
+    commInfo = inCommInfo;
+    coordMatrix = NULL;
     xdim = 0;
     ydim = 0;
     zdim = 0;
@@ -42,19 +42,19 @@ TaskCommInfo::TaskCommInfo(Job* job, int xdim, int ydim, int zdim)
 {
     init(job);
     taskCommType = TaskCommInfo::MESH;
-    commMatrix = NULL;
-    coords = new std::vector<double*>();
+    commInfo = NULL;
+    coordMatrix = NULL;
     this->xdim = xdim;
     this->ydim = ydim;
     this->zdim = zdim;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, int ** inCommMatrix, std::vector<double*> * inCoords)
+TaskCommInfo::TaskCommInfo(Job* job, std::vector<int*>* inCommInfo, double** inCoords)
 {
     init(job);
     taskCommType = TaskCommInfo::COORDINATE;
-    commMatrix = inCommMatrix;
-    coords = inCoords;
+    commInfo = inCommInfo;
+    coordMatrix = inCoords;
     this->xdim = 0;
     this->ydim = 0;
     this->zdim = 0;
@@ -69,21 +69,21 @@ TaskCommInfo::TaskCommInfo(const TaskCommInfo& tci)
     zdim = tci.zdim;
     
     if(taskCommType == CUSTOM || taskCommType == COORDINATE){
-        int ** commMatrix = new int*[size];
+        commInfo = new std::vector<int*>(*(tci.commInfo));
+    } else {
+        commInfo = NULL;
+    }
+    
+    if(taskCommType == COORDINATE){
+        double ** coordMatrix = new double*[size];
         for(int i = 0; i < size; i++){
-            commMatrix[i] = new int[size];
-            for(int j = 0; j < size; j++){
-                commMatrix[i][j] = tci.commMatrix[i][j];
+            coordMatrix[i] = new double[3];
+            for(int j = 0; j < 3; j++){
+                coordMatrix[i][j] = tci.coordMatrix[i][j];
             }
         }
     } else {
-        commMatrix = NULL;
-    }
-    
-    if(taskCommType == COORDINATE) {
-        coords = new std::vector<double*>(*(tci.coords));
-    } else {
-        coords = new std::vector<double*>();
+        coordMatrix = NULL;
     }
 }
 
@@ -95,18 +95,18 @@ void TaskCommInfo::init(Job* job)
 
 TaskCommInfo::~TaskCommInfo()
 {
-    if(commMatrix != NULL){
+    if(commInfo != NULL){
+        for(unsigned int i = 0; i < commInfo->size(); ++i) {
+            delete [] commInfo->at(i);
+        }
+    }
+    delete commInfo;
+    if(coordMatrix != NULL){
         for(int i = 0; i < size; ++i) {
-            delete [] commMatrix[i];
+            delete [] coordMatrix[i];
         }
-        delete [] commMatrix;
+        delete [] coordMatrix;
     }
-    if(!coords->empty()){
-        for(unsigned int i = 0; i < coords->size(); ++i) {
-            delete [] coords->at(i);
-        }
-    }
-    delete coords;
 }
 
 int** TaskCommInfo::getCommMatrix() const
@@ -121,7 +121,7 @@ int** TaskCommInfo::getCommMatrix() const
         break;
     case CUSTOM:
     case COORDINATE:
-        outMatrix = commMatrix;
+        outMatrix = commInfoToMatrix();
         break;
     default:
         schedout.fatal(CALL_INFO, 1, "Unknown Communication type");
@@ -183,3 +183,24 @@ int** TaskCommInfo::buildMeshComm(int xdim, int ydim, int zdim) const
     }
     return outMatrix;
 }
+
+int** TaskCommInfo::commInfoToMatrix() const
+{
+    //init matrix
+    int** outMatrix = new int*[size];
+    for(int i = 0; i < size; i++){
+        outMatrix[i] = new int[size];
+        for(int j = 0; j < size; j++){
+            outMatrix[i][j] = 0;
+        }
+    }
+    
+    //write data
+    int* data;
+    for(unsigned int i = 0; i < commInfo->size(); ++i) {
+        data = commInfo->at(i);
+        outMatrix[data[0]][data[1]] = data[2];
+    }
+    return outMatrix;
+}
+
