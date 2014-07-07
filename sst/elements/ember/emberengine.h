@@ -96,7 +96,7 @@ public:
 	void completedReduce(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
-	void printHistogram(Histogram<uint64_t, uint64_t>* histo);
+	void printHistogram(Histogram<uint32_t, uint32_t>* histo);
 
 private:
 	int jobId;
@@ -136,7 +136,7 @@ private:
 	PayloadDataType convertToHermesType(EmberDataType theType);
 	ReductionOperation convertToHermesReduceOp(EmberReductionOperation theOp);
 
-	Histogram<uint64_t, uint64_t>* accumulateTime;
+	Histogram<uint32_t, uint32_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
 
 	//uint64_t nanoInit;
@@ -145,18 +145,18 @@ private:
 	//uint64_t nanoRecv;
 	//uint64_t nanoCompute;
 
-	Histogram<uint64_t, uint64_t>* histoStart;
-	Histogram<uint64_t, uint64_t>* histoInit;
-	Histogram<uint64_t, uint64_t>* histoFinalize;
-	Histogram<uint64_t, uint64_t>* histoRecv;
-	Histogram<uint64_t, uint64_t>* histoSend;
-	Histogram<uint64_t, uint64_t>* histoCompute;
-	Histogram<uint64_t, uint64_t>* histoWait;
-	Histogram<uint64_t, uint64_t>* histoIRecv;
-	Histogram<uint64_t, uint64_t>* histoISend;
-	Histogram<uint64_t, uint64_t>* histoBarrier;
-	Histogram<uint64_t, uint64_t>* histoAllreduce;
-	Histogram<uint64_t, uint64_t>* histoReduce;
+	Histogram<uint32_t, uint32_t>* histoStart;
+	Histogram<uint32_t, uint32_t>* histoInit;
+	Histogram<uint32_t, uint32_t>* histoFinalize;
+	Histogram<uint32_t, uint32_t>* histoRecv;
+	Histogram<uint32_t, uint32_t>* histoSend;
+	Histogram<uint32_t, uint32_t>* histoCompute;
+	Histogram<uint32_t, uint32_t>* histoWait;
+	Histogram<uint32_t, uint32_t>* histoIRecv;
+	Histogram<uint32_t, uint32_t>* histoISend;
+	Histogram<uint32_t, uint32_t>* histoBarrier;
+	Histogram<uint32_t, uint32_t>* histoAllreduce;
+	Histogram<uint32_t, uint32_t>* histoReduce;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

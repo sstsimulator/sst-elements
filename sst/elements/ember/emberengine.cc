@@ -124,40 +124,40 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	nanoTimeConverter = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 
 	uint64_t userBinWidth = (uint64_t) params.find_integer("compute_bin_width", 20);
-	histoCompute = new Histogram<uint64_t, uint64_t>(COMPUTE_HISTO_NAME, userBinWidth);
+	histoCompute = new Histogram<uint32_t, uint32_t>(COMPUTE_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("send_bin_width", 5);
-	histoSend = new Histogram<uint64_t, uint64_t>(SEND_HISTO_NAME, userBinWidth);
+	histoSend = new Histogram<uint32_t, uint32_t>(SEND_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("recv_bin_width", 5);
-	histoRecv = new Histogram<uint64_t, uint64_t>(RECV_HISTO_NAME, userBinWidth);
+	histoRecv = new Histogram<uint32_t, uint32_t>(RECV_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("init_bin_width", 5);
-	histoInit = new Histogram<uint64_t, uint64_t>(INIT_HISTO_NAME, userBinWidth);
+	histoInit = new Histogram<uint32_t, uint32_t>(INIT_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("finalize_bin_width", 5);
-	histoFinalize = new Histogram<uint64_t, uint64_t>(FINALIZE_HISTO_NAME, userBinWidth);
+	histoFinalize = new Histogram<uint32_t, uint32_t>(FINALIZE_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("start_bin_width", 5);
-	histoStart = new Histogram<uint64_t, uint64_t>(START_HISTO_NAME, userBinWidth);
+	histoStart = new Histogram<uint32_t, uint32_t>(START_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("wait_bin_width", 5);
-	histoWait = new Histogram<uint64_t, uint64_t>(WAIT_HISTO_NAME, userBinWidth);
+	histoWait = new Histogram<uint32_t, uint32_t>(WAIT_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("irecv_bin_width", 5);
-	histoIRecv = new Histogram<uint64_t, uint64_t>(IRECV_HISTO_NAME, userBinWidth);
+	histoIRecv = new Histogram<uint32_t, uint32_t>(IRECV_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("isend_bin_width", 5);
-	histoISend = new Histogram<uint64_t, uint64_t>(ISEND_HISTO_NAME, userBinWidth);
+	histoISend = new Histogram<uint32_t, uint32_t>(ISEND_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("barrier_bin_width", 5);
-	histoBarrier = new Histogram<uint64_t, uint64_t>(BARRIER_HISTO_NAME, userBinWidth);
+	histoBarrier = new Histogram<uint32_t, uint32_t>(BARRIER_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("allreduce_bin_width", 5);
-	histoAllreduce = new Histogram<uint64_t, uint64_t>(ALLREDUCE_HISTO_NAME, userBinWidth);
+	histoAllreduce = new Histogram<uint32_t, uint32_t>(ALLREDUCE_HISTO_NAME, userBinWidth);
 
 	userBinWidth = (uint64_t) params.find_integer("reduce_bin_width", 5);
-	histoReduce = new Histogram<uint64_t, uint64_t>(REDUCE_HISTO_NAME, userBinWidth);
+	histoReduce = new Histogram<uint32_t, uint32_t>(REDUCE_HISTO_NAME, userBinWidth);
 
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
@@ -213,13 +213,13 @@ void EmberEngine::init(unsigned int phase) {
 	msgapi->_componentInit(phase);
 }
 
-void EmberEngine::printHistogram(Histogram<uint64_t, uint64_t>* histo) {
-        output->output("Histogram Min: %" PRIu64 "\n", histo->getBinStart());
-        output->output("Histogram Max: %" PRIu64 "\n", histo->getBinEnd());
-        output->output("Histogram Bin: %" PRIu64 "\n", histo->getBinWidth());
-	for(uint64_t i = histo->getBinStart(); i <= histo->getBinEnd(); i += histo->getBinWidth()) {
+void EmberEngine::printHistogram(Histogram<uint32_t, uint32_t>* histo) {
+        output->output("Histogram Min: %" PRIu32 "\n", histo->getBinStart());
+        output->output("Histogram Max: %" PRIu32 "\n", histo->getBinEnd());
+        output->output("Histogram Bin: %" PRIu32 "\n", histo->getBinWidth());
+	for(uint32_t i = histo->getBinStart(); i <= histo->getBinEnd(); i += histo->getBinWidth()) {
 		if( histo->getBinCountByBinStart(i) > 0 ) {
-			output->output(" [%" PRIu64 ", %" PRIu64 "]   %" PRIu64 "\n",
+			output->output(" [%" PRIu32 ", %" PRIu32 "]   %" PRIu32 "\n",
 				i, (i + histo->getBinWidth()), histo->getBinCountByBinStart(i));
 		}
 	}
@@ -237,9 +237,9 @@ void EmberEngine::finish() {
 		printHistogram(histoCompute);
 
 		output->output("- Histogram of send times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoSend->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoSend->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoSend->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoSend->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoSend->getItemCount() == 0 ? 0 :
 			(histoSend->getValuesSummed() / histoSend->getItemCount()));
 		if(printStats > 1) {
@@ -248,9 +248,9 @@ void EmberEngine::finish() {
 		}
 
 		output->output("- Histogram of irecv times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoIRecv->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoIRecv->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoIRecv->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoIRecv->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoIRecv->getItemCount() == 0 ? 0 :
 			(histoIRecv->getValuesSummed() / histoIRecv->getItemCount()));
 		if(printStats > 1) {
@@ -259,9 +259,9 @@ void EmberEngine::finish() {
 		}
 
 		output->output("- Histogram of isend times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoISend->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoISend->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoISend->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoISend->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoISend->getItemCount() == 0 ? 0 :
 			(histoISend->getValuesSummed() / histoISend->getItemCount()));
 		if(printStats > 1) {
@@ -270,9 +270,9 @@ void EmberEngine::finish() {
 		}
 
 		output->output("- Histogram of recv times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoRecv->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoRecv->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoRecv->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoRecv->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoRecv->getItemCount() == 0 ? 0 :
 			(histoRecv->getValuesSummed() / histoRecv->getItemCount()));
 		if(printStats > 1) {
@@ -281,9 +281,9 @@ void EmberEngine::finish() {
 		}
 
 		output->output("- Histogram of wait times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoWait->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoWait->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoWait->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoWait->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoWait->getItemCount() == 0 ? 0 :
 			(histoWait->getValuesSummed() / histoWait->getItemCount()));
 		if(printStats > 1) {
@@ -292,9 +292,9 @@ void EmberEngine::finish() {
 		}
 
 		output->output("- Histogram of barrier times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoBarrier->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoBarrier->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoBarrier->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoBarrier->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoBarrier->getItemCount() == 0 ? 0 :
 			(histoBarrier->getValuesSummed() / histoBarrier->getItemCount()));
 		if(printStats > 1) {
@@ -303,9 +303,9 @@ void EmberEngine::finish() {
 		}
 
 		output->output("- Histogram of allreduce times:\n");
-		output->output("--> Total time:     %" PRIu64 "\n", histoAllreduce->getValuesSummed());
-		output->output("--> Item count:     %" PRIu64 "\n", histoAllreduce->getItemCount());
-		output->output("--> Average:        %" PRIu64 "\n",
+		output->output("--> Total time:     %" PRIu32 "\n", histoAllreduce->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoAllreduce->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
 			histoAllreduce->getItemCount() == 0 ? 0 :
 			(histoAllreduce->getValuesSummed() / histoAllreduce->getItemCount()));
 		if(printStats > 1) {
