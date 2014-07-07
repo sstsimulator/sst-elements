@@ -70,7 +70,7 @@ objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string config
     for ( lmIter = graph.getLinkMap().begin(); 
                 lmIter != graph.getLinkMap().end(); ++lmIter ) {
         SST::ConfigLink& tmp = (*lmIter);
-        DBGC(2,"key=%s name=%s\n",tmp.key().c_str(), tmp.name.c_str());
+        DBGC(2,"key=%ld name=%s\n",tmp.key(), tmp.name.c_str());
 
         LinkInfo l0,l1;
         l0.compName = graph.getComponentMap()[ tmp.component[0] ].name.c_str();
