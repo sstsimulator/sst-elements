@@ -141,6 +141,7 @@ static const ElementInfoParam component_params[] = {
     { "reduce_bin_width", "Bin width of the reduce time histogram", "5" },
     { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { "jobId", "Sets the job id", "-1"},
+    { "datamode", "Sets the data mode (i.e. should Ember back data for simulation, 0=No backing, 1=Back with zeros, default is 0", "0"},
     { "noisegen", "Sets the noise generator for the system", "constant" },
     { "noisemean", "Sets the mean of a Gaussian noise generator", "1.0" },
     { "noisestddev", "Sets the standard deviation of a noise generator", "0.1" },

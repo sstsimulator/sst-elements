@@ -57,16 +57,33 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// See if the user requested that we print statistics for this run
 	printStats = ((uint32_t) (params.find_integer("printStats", 0)));
 
-	jobId = params.find_integer("jobId", -1); 
+	jobId = params.find_integer("jobId", -1);
 	if ( -1 == jobId ) {
 		printStats = 0;
 	}
 
-	// Configure the empty buffer ready for use by MPI routines.
-	emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
-	emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
-	for(uint32_t i = 0; i < emptyBufferSize; ++i) {
-		emptyBuffer[i] = 0;
+	// Decide if we should back simulated data movement with real data
+	// data mode 0 indicates no data at all, 1 indicates backed with zeros
+	uint32_t paramDataMode = (uint32_t) params.find_integer("datamode", 0);
+	switch(paramDataMode) {
+	case 0:
+		dataMode = NOBACKING;
+		break;
+	case 1:
+		dataMode = BACKZEROS;
+		break;
+	default:
+		output->fatal(CALL_INFO, -1, "Unknown backing mode: %" PRIu32 " (see \"datamode\" parameter)\n",
+			paramDataMode);
+	}
+
+	if(dataMode != NOBACKING) {
+		// Configure the empty buffer ready for use by MPI routines.
+		emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
+		emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
+		for(uint32_t i = 0; i < emptyBufferSize; ++i) {
+			emptyBuffer[i] = 0;
+		}
 	}
 
 	// Create the messaging interface we are going to use
@@ -166,8 +183,13 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 }
 
 EmberEngine::~EmberEngine() {
-	// Free the big buffer we have been using
-	free(emptyBuffer);
+	switch(dataMode) {
+	case BACKZEROS:
+		// Free the big buffer we have been using
+		free(emptyBuffer);
+		break;
+	}
+
 	delete histoBarrier;
 	delete histoIRecv;
 	delete histoWait;
@@ -365,12 +387,24 @@ ReductionOperation convertToHermesReductionOp(EmberReductionOperation op) {
 void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an Allreduce Event\n");
 	const uint32_t dataTypeWidth = getDataTypeWidth(ev->getElementType());
-	assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
 
-	msgapi->allreduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
-		ev->getElementCount(), convertToHermesType(ev->getElementType()),
-		convertToHermesReductionOp(ev->getReductionOperation()),
-		ev->getCommunicator(), &allreduceFunctor);
+	switch(dataMode) {
+
+	case NOBACKING:
+		msgapi->allreduce(NULL, NULL,
+			ev->getElementCount(), convertToHermesType(ev->getElementType()),
+			convertToHermesReductionOp(ev->getReductionOperation()),
+			ev->getCommunicator(), &allreduceFunctor);
+		break;
+
+	case BACKZEROS:
+		assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
+		msgapi->allreduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
+			ev->getElementCount(), convertToHermesType(ev->getElementType()),
+			convertToHermesReductionOp(ev->getReductionOperation()),
+			ev->getCommunicator(), &allreduceFunctor);
+		break;
+	}
 
 	accumulateTime = histoAllreduce;
 }
@@ -378,13 +412,26 @@ void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
 void EmberEngine::processReduceEvent(EmberReduceEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an Reduce Event\n");
 	const uint32_t dataTypeWidth = getDataTypeWidth(ev->getElementType());
-	assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
 
-	msgapi->reduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
-		ev->getElementCount(), convertToHermesType(ev->getElementType()),
-		convertToHermesReductionOp(ev->getReductionOperation()),
-		(RankID) ev->getReductionRoot(),
-		ev->getCommunicator(), &reduceFunctor);
+	switch(dataMode) {
+	case NOBACKING:
+		msgapi->reduce(NULL, NULL,
+			ev->getElementCount(), convertToHermesType(ev->getElementType()),
+			convertToHermesReductionOp(ev->getReductionOperation()),
+			(RankID) ev->getReductionRoot(),
+			ev->getCommunicator(), &reduceFunctor);
+		break;
+
+	case BACKZEROS:
+		assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
+
+		msgapi->reduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
+			ev->getElementCount(), convertToHermesType(ev->getElementType()),
+			convertToHermesReductionOp(ev->getReductionOperation()),
+			(RankID) ev->getReductionRoot(),
+			ev->getCommunicator(), &reduceFunctor);
+		break;
+	}
 
 	accumulateTime = histoReduce;
 }
@@ -415,11 +462,23 @@ void EmberEngine::processBarrierEvent(EmberBarrierEvent* ev) {
 
 void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Send Event (%s)\n", ev->getPrintableString().c_str());
-    assert( emptyBufferSize >= ev->getMessageSize() );
-	msgapi->send((Addr) emptyBuffer, ev->getMessageSize(),
-		CHAR, (RankID) ev->getSendToRank(),
-		ev->getTag(), ev->getCommunicator(),
-		&sendFunctor);
+
+	switch(dataMode) {
+	case NOBACKING:
+		msgapi->send(NULL, ev->getMessageSize(),
+			CHAR, (RankID) ev->getSendToRank(),
+			ev->getTag(), ev->getCommunicator(),
+			&sendFunctor);
+		break;
+
+	case BACKZEROS:
+		assert( emptyBufferSize >= ev->getMessageSize() );
+		msgapi->send((Addr) emptyBuffer, ev->getMessageSize(),
+			CHAR, (RankID) ev->getSendToRank(),
+			ev->getTag(), ev->getCommunicator(),
+			&sendFunctor);
+		break;
+	}
 
 	accumulateTime = histoSend;
 }
@@ -439,43 +498,73 @@ void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 void EmberEngine::processGetTimeEvent(EmberGetTimeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Get Time Event\n");
 	ev->setTime((uint64_t) getCurrentSimTimeNano());
-	issueNextEvent(0);	
+	issueNextEvent(0);
 }
 
 void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
 
-    assert( emptyBufferSize >= ev->getMessageSize() );
-	msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
-		CHAR, (RankID) ev->getRecvFromRank(),
-		ev->getTag(), ev->getCommunicator(),
-		ev->getMessageRequestHandle(), &irecvFunctor);
+	switch(dataMode) {
+	case NOBACKING:
+		msgapi->irecv(NULL, ev->getMessageSize(),
+			CHAR, (RankID) ev->getRecvFromRank(),
+			ev->getTag(), ev->getCommunicator(),
+			ev->getMessageRequestHandle(), &irecvFunctor);
+		break;
 
+	case BACKZEROS:
+		assert( emptyBufferSize >= ev->getMessageSize() );
+		msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
+			CHAR, (RankID) ev->getRecvFromRank(),
+			ev->getTag(), ev->getCommunicator(),
+			ev->getMessageRequestHandle(), &irecvFunctor);
+		break;
+	}
 	accumulateTime = histoIRecv;
 }
 
 void EmberEngine::processISendEvent(EmberISendEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing an ISend Event (%s)\n", ev->getPrintableString().c_str());
 
-    assert( emptyBufferSize >= ev->getMessageSize() );
-	msgapi->isend((Addr) emptyBuffer, ev->getMessageSize(),
-		CHAR, (RankID) ev->getSendToRank(),
-		ev->getTag(), ev->getCommunicator(),
-		ev->getMessageRequestHandle(), &isendFunctor);
+	switch(dataMode) {
+	case NOBACKING:
+		msgapi->isend(NULL, ev->getMessageSize(),
+			CHAR, (RankID) ev->getSendToRank(),
+			ev->getTag(), ev->getCommunicator(),
+			ev->getMessageRequestHandle(), &isendFunctor);
+		break;
 
+	case BACKZEROS:
+	        assert( emptyBufferSize >= ev->getMessageSize() );
+		msgapi->isend((Addr) emptyBuffer, ev->getMessageSize(),
+			CHAR, (RankID) ev->getSendToRank(),
+			ev->getTag(), ev->getCommunicator(),
+			ev->getMessageRequestHandle(), &isendFunctor);
+		break;
+	}
 	accumulateTime = histoISend;
 }
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
-
 	memset(&currentRecv, 0, sizeof(MessageResponse));
-    assert( emptyBufferSize >= ev->getMessageSize() );
-	msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
-		CHAR, (RankID) ev->getRecvFromRank(),
-		ev->getTag(), ev->getCommunicator(),
-		&currentRecv, &recvFunctor);
 
+	switch(dataMode) {
+	case NOBACKING:
+		msgapi->recv(NULL, ev->getMessageSize(),
+			CHAR, (RankID) ev->getRecvFromRank(),
+			ev->getTag(), ev->getCommunicator(),
+			&currentRecv, &recvFunctor);
+		break;
+
+	case BACKZEROS:
+	        assert( emptyBufferSize >= ev->getMessageSize() );
+		msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
+			CHAR, (RankID) ev->getRecvFromRank(),
+			ev->getTag(), ev->getCommunicator(),
+			&currentRecv, &recvFunctor);
+		break;
+	}
 	accumulateTime = histoRecv;
 }
 

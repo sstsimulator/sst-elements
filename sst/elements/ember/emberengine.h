@@ -57,6 +57,11 @@ using namespace SST::Hermes;
 namespace SST {
 namespace Ember {
 
+enum EmberDataMode {
+	NOBACKING,
+	BACKZEROS
+};
+
 class EmberEngine : public SST::Component {
 public:
 	EmberEngine(SST::ComponentId_t id, SST::Params& params);
@@ -107,6 +112,7 @@ private:
 	uint32_t generationPhase;
 	uint32_t printStats;
 	bool continueProcessing;
+	EmberDataMode dataMode;
 
 	std::queue<EmberEvent*> evQueue;
 	EmberGenerator* generator;
@@ -138,12 +144,6 @@ private:
 
 	Histogram<uint32_t, uint32_t>* accumulateTime;
 	uint64_t nextEventStartTimeNanoSec;
-
-	//uint64_t nanoInit;
-	//uint64_t nanoFinalize;
-	//uint64_t nanoSend;
-	//uint64_t nanoRecv;
-	//uint64_t nanoCompute;
 
 	Histogram<uint32_t, uint32_t>* histoStart;
 	Histogram<uint32_t, uint32_t>* histoInit;
