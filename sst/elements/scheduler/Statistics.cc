@@ -41,7 +41,7 @@ struct logInfo {  //information about one type of log that can be created
 
 const logInfo supportedLogs[] = {
     {"time", "\n# Job \tArrival\tStart\tEnd\tRun\tWait\tResp.\tProcs\n"},
-    {"alloc", "\n# Procs Needed\tActual Time\t Pairwise L1 Distance\n"},
+    {"alloc", "\n# Job\tProcs\tActual Time\t Pairwise L1 Distance\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"}
@@ -295,7 +295,8 @@ void Statistics::writeAlloc(TaskMapInfo* tmi)
     MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine);
     char mesg[100];
     int num = tmi -> job -> getProcsNeeded();
-    sprintf(mesg, "%d\t%lu\t%ld\n",
+    sprintf(mesg, "%d\t%d\t%lu\t%ld\n",
+            tmi -> job -> getJobNum(),
             num,
             tmi -> job -> getActualTime(),
             (tmi -> getTotalHopDist(*mMachine)) / 2);
