@@ -25,13 +25,16 @@ class EmberWaitEvent : public EmberEvent {
 
 	public:
 		EmberWaitEvent(MessageRequest* req);
+		EmberWaitEvent(MessageRequest* req, bool delRequest);
 		~EmberWaitEvent();
 		MessageRequest* getMessageRequestHandle();
 		EmberEventType getEventType();
 		std::string getPrintableString();
+		bool deleteRequestPointer();
 
 	private:
 		MessageRequest* request;
+		bool delReq;
 
 };
 

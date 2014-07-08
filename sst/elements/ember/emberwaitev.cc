@@ -14,8 +14,14 @@
 
 using namespace SST::Ember;
 
-EmberWaitEvent::EmberWaitEvent(MessageRequest* req) {
+EmberWaitEvent::EmberWaitEvent(MessageRequest* req, bool delRequest) :
+	delReq(delRequest) {
+
 	request = req;
+}
+
+EmberWaitEvent::EmberWaitEvent(MessageRequest* req) {
+	EmberWaitEvent(req, true);
 }
 
 EmberWaitEvent::~EmberWaitEvent() {
@@ -37,3 +43,6 @@ std::string EmberWaitEvent::getPrintableString() {
         return bufferStr;
 }
 
+bool EmberWaitEvent::deleteRequestPointer() {
+	return delReq;
+}

@@ -41,6 +41,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
+	waitNoDelFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitWithoutDelete)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
 	isendFunctor(HermesAPIFunctor(this, &EmberEngine::completedISend)),
 	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
@@ -487,7 +488,12 @@ void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
 
 	memset(&currentRecv, 0, sizeof(MessageResponse));
-	msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitFunctor);
+
+	if(ev->deleteRequestPointer()) {
+		msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitFunctor);
+	} else {
+		msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitNoDelFunctor);
+	}
 
 	// Keep track of the current request handle, we will free this auto(magically).
 	currentReq = ev->getMessageRequestHandle();
@@ -610,6 +616,11 @@ void EmberEngine::completedWait(int val) {
 	// Delete the previous MessageRequest
 	delete currentReq;
 
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedWaitWithoutDelete(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d (no delete of message request)\n", val);
 	issueNextEvent(0);
 }
 

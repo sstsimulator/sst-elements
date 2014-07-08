@@ -96,6 +96,7 @@ public:
 	void completedIRecv(int val);
 	void completedISend(int val);
 	void completedWait(int val);
+	void completedWaitWithoutDelete(int val);
 	void completedBarrier(int val);
 	void completedAllreduce(int val);
 	void completedReduce(int val);
@@ -130,6 +131,7 @@ private:
 	HermesAPIFunctor recvFunctor;
 	HermesAPIFunctor sendFunctor;
 	HermesAPIFunctor waitFunctor;
+	HermesAPIFunctor waitNoDelFunctor;
 	HermesAPIFunctor irecvFunctor;
 	HermesAPIFunctor isendFunctor;
 	HermesAPIFunctor barrierFunctor;
