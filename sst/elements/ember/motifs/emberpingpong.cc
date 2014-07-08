@@ -24,6 +24,11 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, Params& pa
 
 void EmberPingPongGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
 	rank = pRank;
+    if(0 == rank) {
+        output->output("PingPong, rank=%d size=%d msgSize=%d iter=%d\n",
+                                rank,worldSize,messageSize,iterations);
+    }
+
 }
 
 void EmberPingPongGenerator::generate(const SST::Output* output, const uint32_t phase,

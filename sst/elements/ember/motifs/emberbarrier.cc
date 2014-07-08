@@ -22,7 +22,13 @@ EmberBarrierGenerator::EmberBarrierGenerator(SST::Component* owner, Params& para
 }
 
 void EmberBarrierGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
+    if(0 == pRank) {
+        output->output("Barrier, rank=%d size=%d iter=%d\n",pRank,worldSize,
+                    iterations);
+    }
+
 }
+
 
 void EmberBarrierGenerator::generate(const SST::Output* output, const uint32_t phase,
 	std::queue<EmberEvent*>* evQ) {
