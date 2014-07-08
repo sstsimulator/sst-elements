@@ -37,7 +37,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-
 void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
     bool done = false;
     CacheLine* cacheLine;
@@ -54,7 +53,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         cacheLine = getCacheLine(lineIndex);
         handleIgnorableRequests(_event, cacheLine, _cmd);               /* If cache line is locked or in transition, wait until it is stable */
         
-        bottomCC_->handleRequest(_event, cacheLine, _cmd);              /* upgrade or fetch line from higher level caches */
+        bottomCC_->handleRequest(_event, cacheLine, _cmd, _mshrHit);    /* upgrade or fetch line from higher level caches */
         stallIfUpgradeInProgress(cacheLine);                            /* Stall if upgrade in progress */
         
         if(!_event->isPrefetch()){                                      /* Don't do anything with TopCC if it is a prefetch request */
@@ -549,5 +548,5 @@ void Cache::incInvalidateWaitingForUserLock(int _groupId){
     }
 }
 
-
+//HOOK'em Horns!
 

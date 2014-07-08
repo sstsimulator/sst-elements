@@ -195,6 +195,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     timestamp_             = 0;
     totalUpgradeLatency_   = 0;
     mshrHits_              = 0;
+    upgradeCount_          = 0;
     
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++)

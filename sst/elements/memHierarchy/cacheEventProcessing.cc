@@ -35,7 +35,7 @@ void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
     MemEvent *event = static_cast<MemEvent*>(_ev);
     Command cmd     = event->getCmd();
     if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
-    Addr baseAddr = event->getBaseAddr();
+    Addr baseAddr   = event->getBaseAddr();
     bool uncached   = event->queryFlag(MemEvent::F_UNCACHED) || cf_.allUncachedRequests_;
     MemEvent* origEvent;
     
@@ -195,7 +195,7 @@ void Cache::setup(){
 
 void Cache::finish(){
     uint64_t averageLatency;
-    if(mshrHits_ > 0) averageLatency = totalUpgradeLatency_/mshrHits_;
+    if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
     else averageLatency = 0;
     
     bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency);

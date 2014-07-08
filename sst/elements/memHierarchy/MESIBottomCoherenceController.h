@@ -52,7 +52,7 @@ public:
     virtual void handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId);
 
     /** Process new cache request:  GetX, GetS, GetSEx, PutM, PutS, PutX */
-    virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
+    virtual void handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd, bool _mshrHit);
     
     /** Process Inv/InvX request.  -----Arguably the most important function within MemHierarchy.-----
        Most errors come from deadlocks due to invalidation/evicitons/upgrades all happening simultaneously
@@ -70,15 +70,15 @@ public:
     /** Function serves three purposes:  1) check if we need to to upgrade the cache line
         and 2) change to transition state if upgrade needed, and 3) forward request to
         lower level cache */
-    bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine);
+    bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit);
 
     /** Handle GetX request.  Cache line is already in the correct state
         and/or has been upgraded */
-    void handleGetXRequest(MemEvent* _event, CacheLine* cacheLine);
+    void handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit);
 
     /** Handle GetS request.  Cache line is already in the correct state
         and/or has been upgraded */
-    void handleGetSRequest(MemEvent* event, CacheLine* cacheLine);
+    void handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrH);
     
     /** Handle PutM request.  Write data to cache line.  Update E->M state if necessary */
     void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
@@ -168,52 +168,52 @@ private:
 
     //TODO move all this functions to its own "stats" class
 
-   void inc_GETXMissSM(Addr _addr, bool _prefetchRequest){
+   void inc_GETXMissSM(Addr _addr, bool _prefetchRequest, bool _mshrH){
+        if(!_mshrH) stats_[0].GETXMissSM_++;
         if(!_prefetchRequest){
-            stats_[0].GETXMissSM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
             listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _addr);
         }
     }
 
 
-    void inc_GETXMissIM(Addr _addr, bool _prefetchRequest){
+    void inc_GETXMissIM(Addr _addr, bool _prefetchRequest, bool _mshrH){
+        if(!_mshrH) stats_[0].GETXMissIM_++;
         if(!_prefetchRequest){
-            stats_[0].GETXMissIM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
             listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _addr);
         }
     }
 
 
-    void inc_GETSHit(Addr _addr, bool _prefetchRequest){
+    void inc_GETSHit(Addr _addr, bool _prefetchRequest, bool _mshrH){
+        if(!_mshrH) stats_[0].GETSHit_++;
         if(!_prefetchRequest){
-            stats_[0].GETSHit_++;
             if(groupStats_) stats_[getGroupId()].GETSHit_++;
             listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _addr);
         }
     }
 
 
-    void inc_GETXHit(Addr _addr, bool _prefetchRequest){
+    void inc_GETXHit(Addr _addr, bool _prefetchRequest, bool _mshrH){
+        if(!_mshrH) stats_[0].GETXHit_++;
         if(!_prefetchRequest){
-            stats_[0].GETXHit_++;
             if(groupStats_) stats_[getGroupId()].GETXHit_++;
             listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _addr);
         }
     }
 
 
-    void inc_GETSMissIS(Addr _addr, bool _prefetchRequest){
+    void inc_GETSMissIS(Addr _addr, bool _prefetchRequest, bool _mshrH){
+        if(!_mshrH) stats_[0].GETSMissIS_++;
         if(!_prefetchRequest){
-            stats_[0].GETSMissIS_++;
             if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
             listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _addr);
         }
     }
 
-    void inc_GetSExReqsReceived(){
-        stats_[0].GetSExReqsReceived_++;
+    void inc_GetSExReqsReceived(bool _mshrH){
+        if(!_mshrH) stats_[0].GetSExReqsReceived_++;
         if(groupStats_) stats_[getGroupId()].GetSExReqsReceived_++;
     }
 

@@ -39,7 +39,7 @@ public:
                        uint64_t _mshrLatency, vector<Link*>* _childrenLinks)
                        : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
-        L1_ = true;
+        L1_                 = true;
         highNetPorts_       = _childrenLinks;
         NACKsSent_          = 0;
         dummyCCLine_        = new CCLine(_dbg);

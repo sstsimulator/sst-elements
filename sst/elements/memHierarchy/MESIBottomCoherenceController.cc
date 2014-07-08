@@ -53,7 +53,7 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId){
 
 
 
-void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd){
+void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd, bool _mshrH){
     bool upgrade;
     setGroupId(_event->getGroupId());
     d_->debug(_L6_,"BottomCC State = %s\n", BccLineString[_cacheLine->getState()]);
@@ -61,16 +61,16 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
     
     switch(_cmd){
     case GetS:
-        handleGetSRequest(_event, _cacheLine);
+        handleGetSRequest(_event, _cacheLine, _mshrH);
         break;
     case GetX:
     case GetSEx:
-        upgrade = isUpgradeToModifiedNeeded(_event, _cacheLine);
+        upgrade = isUpgradeToModifiedNeeded(_event, _cacheLine, _mshrH);
         if(upgrade){
             forwardMessage(_event, _cacheLine, &_event->getPayload());
             return;
         }
-        handleGetXRequest(_event, _cacheLine);
+        handleGetXRequest(_event, _cacheLine, _mshrH);
         break;
     case PutS:
         inc_PUTSReqsReceived();
@@ -181,18 +181,18 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
-bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine){
+bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
     bool pf     = _event->isPrefetch();
     Addr addr   = _cacheLine->getBaseAddr();
     State state = _cacheLine->getState();
 
     if(state == S || state == I){
         if(state == S){
-            inc_GETXMissSM(addr, pf);
+            inc_GETXMissSM(addr, pf, _mshrH);
             _cacheLine->setState(SM);
         }
         else{
-            inc_GETXMissIM(addr, pf);
+            inc_GETXMissIM(addr, pf, _mshrH);
             _cacheLine->setState(IM);
         }
         return true;
@@ -202,7 +202,7 @@ bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cache
 
 
 
-void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
+void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
     State state = _cacheLine->getState();
     Command cmd = _event->getCmd();
     
@@ -220,10 +220,10 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine){
         }
     }
     else{
-        inc_GetSExReqsReceived();
+        inc_GetSExReqsReceived(_mshrH);
         if(L1_) _cacheLine->incLock();
     }
-    inc_GETXHit(addr, pf);
+    inc_GETXHit(addr, pf, _mshrH);
 }
 
 
@@ -269,18 +269,18 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 
 
-void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine){
+void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
     State state = _cacheLine->getState();
     Addr addr   = _cacheLine->getBaseAddr();
     bool pf     = _event->isPrefetch();
 
     if(_event->isLoadLink()) _cacheLine->atomicStart();
     
-    if(state != I) inc_GETSHit(addr, pf);
+    if(state != I) inc_GETSHit(addr, pf, _mshrH);
     else{
         _cacheLine->setState(IS);
         forwardMessage(_event, _cacheLine, NULL);
-        inc_GETSMissIS(addr, pf);
+        inc_GETSMissIS(addr, pf, _mshrH);
     }
 }
 
@@ -439,19 +439,24 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
         dbg->output(C,"- GetS hits: %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
         dbg->output(C,"- GetX hits: %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
         dbg->output(C,"- Average updgrade latency (cycles): %"PRIu64"\n", _updgradeLatency);
-        dbg->output(C,"- PutS received: %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
-        dbg->output(C,"- PutM received: %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
-        dbg->output(C,"- PutX received: %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
-        dbg->output(C,"- PUTM sent due to invalidations: %"PRIu64"\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_);
-        dbg->output(C,"- PUTE sent due to invalidations: %"PRIu64"\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_);
-        dbg->output(C,"- PUTX sent due to invalidations: %"PRIu64"\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_);
-        dbg->output(C,"- PUTS sent due to evictions: %"PRIu64"\n", stats_[_groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(C,"- PUTM sent due to evictions: %"PRIu64"\n", stats_[_groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(C,"- PUTE sent due to evictions: %"PRIu64"\n", stats_[_groupIds[i]].EvictionPUTEReqSent_);
+        if(!L1_){
+            dbg->output(C,"- PutS received: %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
+            dbg->output(C,"- PutM received: %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
+            dbg->output(C,"- PutX received: %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
+        }
+        else{
+            assert(stats_[_groupIds[i]].PUTSReqsReceived_ == 0);
+            assert(stats_[_groupIds[i]].PUTMReqsReceived_ == 0);
+            assert(stats_[_groupIds[i]].PUTXReqsReceived_ == 0);
+        }
+        dbg->output(C,"- PUTM sent due to [invalidations, evictions]: [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
+        dbg->output(C,"- PUTE sent due to [invalidations, evictions]: [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
+        dbg->output(C,"- PUTX sent due to [invalidations, evictions]: [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
         dbg->output(C,"- Inv received stalled bc atomic lock: %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
-        dbg->output(C,"- Total requests received: %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
+        dbg->output(C,"- Total requests received (including coherence traffic): %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
         dbg->output(C,"- Total requests handled by MSHR (MSHR hits): %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
-        dbg->output(C,"- NACKs sent (MSHR Full, BottomCC): %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
+        if(!L1_) dbg->output(C,"- NACKs sent (MSHR Full, BottomCC): %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
+        else    assert(stats_[_groupIds[i]].NACKsSent_ == 0);
     }
 
 }
