@@ -11,7 +11,7 @@ shape = "8x8"
 num_vNics = 1
 debug = 0
 
-netPktSizeBytes=64
+netPktSizeBytes="64B"
 netFlitSize="8B"
 
 def main():
