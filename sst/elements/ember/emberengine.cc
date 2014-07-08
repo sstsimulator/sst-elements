@@ -42,6 +42,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
 	waitNoDelFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitWithoutDelete)),
+	waitallFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitall)),
+	waitallNoDelFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitallWithoutDelete)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
 	isendFunctor(HermesAPIFunctor(this, &EmberEngine::completedISend)),
 	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
@@ -489,12 +491,32 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
 
-	memset(&currentRecv, 0, sizeof(MessageResponse));
+    currentRecv.resize(1);
 
 	if(ev->deleteRequestPointer()) {
-		msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitFunctor);
+		msgapi->wait(**(ev->getMessageRequestHandle()), &currentRecv[0], &waitFunctor);
 	} else {
-		msgapi->wait(*(ev->getMessageRequestHandle()), &currentRecv, &waitNoDelFunctor);
+		msgapi->wait(**(ev->getMessageRequestHandle()), &currentRecv[0], &waitNoDelFunctor);
+	}
+
+	// Keep track of the current request handle, we will free this auto(magically).
+	currentReq = ev->getMessageRequestHandle();
+
+	accumulateTime = histoWait;
+}
+
+void EmberEngine::processWaitallEvent(EmberWaitallEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a Waitall Event (%s)\n", ev->getPrintableString().c_str());
+
+    int numReq = ev->getNumMessageRequests();
+	currentRecv.resize(numReq);
+
+	if(ev->deleteRequestPointer()) {
+		msgapi->waitall(numReq, *(ev->getMessageRequestHandle()),
+                    (MessageResponse**)&currentRecv[0], &waitFunctor);
+	} else {
+		msgapi->waitall(numReq, *(ev->getMessageRequestHandle()),
+                    (MessageResponse**)&currentRecv[0], &waitFunctor);
 	}
 
 	// Keep track of the current request handle, we will free this auto(magically).
@@ -555,14 +577,14 @@ void EmberEngine::processISendEvent(EmberISendEvent* ev) {
 
 void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
-	memset(&currentRecv, 0, sizeof(MessageResponse));
+	currentRecv.resize(1);
 
 	switch(dataMode) {
 	case NOBACKING:
 		msgapi->recv(NULL, ev->getMessageSize(),
 			CHAR, (RankID) ev->getRecvFromRank(),
 			ev->getTag(), ev->getCommunicator(),
-			&currentRecv, &recvFunctor);
+			&currentRecv[0], &recvFunctor);
 		break;
 
 	case BACKZEROS:
@@ -570,7 +592,7 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 		msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
 			CHAR, (RankID) ev->getRecvFromRank(),
 			ev->getTag(), ev->getCommunicator(),
-			&currentRecv, &recvFunctor);
+			&currentRecv[0], &recvFunctor);
 		break;
 	}
 	accumulateTime = histoRecv;
@@ -616,6 +638,20 @@ void EmberEngine::completedWait(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
 
 	// Delete the previous MessageRequest
+	delete *currentReq;
+
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedWaitallWithoutDelete(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d (no delete of message request)\n", val);
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedWaitall(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
+
+	// Delete the previous MessageRequest
 	delete currentReq;
 
 	issueNextEvent(0);
@@ -625,6 +661,7 @@ void EmberEngine::completedWaitWithoutDelete(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d (no delete of message request)\n", val);
 	issueNextEvent(0);
 }
+
 
 void EmberEngine::completedIRecv(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result = %d\n", val);
@@ -715,6 +752,9 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case WAIT:
 		processWaitEvent( (EmberWaitEvent*) eEv);
+		break;
+	case WAITALL:
+		processWaitallEvent( (EmberWaitallEvent*) eEv);
 		break;
 	case ALLREDUCE:
 		processAllreduceEvent( (EmberAllreduceEvent*) eEv);

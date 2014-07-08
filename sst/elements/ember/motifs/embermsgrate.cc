@@ -17,6 +17,7 @@
 #include "emberisendev.h"
 #include "emberirecvev.h"
 #include "emberwaitev.h"
+#include "emberwaitallev.h"
 
 using namespace SST::Ember;
 
@@ -66,9 +67,9 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
 		        evQ->push( new EmberISendEvent((uint32_t) 1, msgSize, 0,
                                     (Communicator) 0, &reqs[i]) );
             }
-            for ( unsigned int i = 0; i < numMsgs; i++ ) {
-                evQ->push( new EmberWaitEvent(  &reqs[i], false ) ); 
-            }
+
+            evQ->push( new EmberWaitallEvent( numMsgs, 
+                                    (MessageRequest**)&reqs[0], false ) ); 
             evQ->push( new EmberGetTimeEvent( &m_stopTime ) );
         } else {
 
@@ -80,9 +81,8 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
             evQ->push( new EmberBarrierEvent((Communicator)0) );
             evQ->push( new EmberGetTimeEvent( &m_startTime ) );
 
-            for ( unsigned int i = 0; i < numMsgs; i++ ) {
-                evQ->push( new EmberWaitEvent(  &reqs[i], false ) ); 
-            }
+            evQ->push( new EmberWaitallEvent( numMsgs, 
+                                    (MessageRequest**)&reqs[0], false ) ); 
             evQ->push( new EmberGetTimeEvent( &m_stopTime ) );
         }
     } else {

@@ -10,35 +10,35 @@
 // distribution.
 
 #include <sst_config.h>
-#include "emberwaitev.h"
+#include "emberwaitallev.h"
 
 using namespace SST::Ember;
 
-EmberWaitEvent::EmberWaitEvent(MessageRequest* req, bool delRequest) :
+EmberWaitallEvent::EmberWaitallEvent(int cnt, MessageRequest** req, bool delRequest) :
 	delReq(delRequest) {
 
 	request = req;
 }
 
-EmberWaitEvent::~EmberWaitEvent() {
+EmberWaitallEvent::~EmberWaitallEvent() {
 
 }
 
-MessageRequest** EmberWaitEvent::getMessageRequestHandle() {
-	return &request;
+MessageRequest** EmberWaitallEvent::getMessageRequestHandle() {
+	return request;
 }
 
-EmberEventType EmberWaitEvent::getEventType() {
+EmberEventType EmberWaitallEvent::getEventType() {
 	return WAIT;
 }
 
-std::string EmberWaitEvent::getPrintableString() {
+std::string EmberWaitallEvent::getPrintableString() {
 	char buffer[128];
-        sprintf(buffer, "Wait Event");
+        sprintf(buffer, "Waitall Event");
         std::string bufferStr = buffer;
         return bufferStr;
 }
 
-bool EmberWaitEvent::deleteRequestPointer() {
+bool EmberWaitallEvent::deleteRequestPointer() {
 	return delReq;
 }

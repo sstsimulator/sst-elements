@@ -43,6 +43,7 @@
 #include "emberirecvev.h"
 #include "emberisendev.h"
 #include "emberwaitev.h"
+#include "emberwaitallev.h"
 #include "emberstartev.h"
 #include "emberstopev.h"
 #include "embercomputeev.h"
@@ -82,6 +83,7 @@ public:
 	void processStartEvent(EmberStartEvent* ev);
 	void processStopEvent(EmberStopEvent* ev);
 	void processWaitEvent(EmberWaitEvent* ev);
+	void processWaitallEvent(EmberWaitallEvent* ev);
 	void processIRecvEvent(EmberIRecvEvent* ev);
 	void processISendEvent(EmberISendEvent* ev);
 	void processBarrierEvent(EmberBarrierEvent* ev);
@@ -97,6 +99,8 @@ public:
 	void completedISend(int val);
 	void completedWait(int val);
 	void completedWaitWithoutDelete(int val);
+	void completedWaitall(int val);
+	void completedWaitallWithoutDelete(int val);
 	void completedBarrier(int val);
 	void completedAllreduce(int val);
 	void completedReduce(int val);
@@ -121,8 +125,8 @@ private:
 	MessageInterface* msgapi;
 	Output* output;
 	SST::TimeConverter* nanoTimeConverter;
-	MessageResponse currentRecv;
-	MessageRequest* currentReq;
+	std::vector<MessageResponse> currentRecv;
+	MessageRequest** currentReq;
 
 	typedef Arg_Functor<EmberEngine, int> HermesAPIFunctor;
 
@@ -132,6 +136,8 @@ private:
 	HermesAPIFunctor sendFunctor;
 	HermesAPIFunctor waitFunctor;
 	HermesAPIFunctor waitNoDelFunctor;
+	HermesAPIFunctor waitallFunctor;
+	HermesAPIFunctor waitallNoDelFunctor;
 	HermesAPIFunctor irecvFunctor;
 	HermesAPIFunctor isendFunctor;
 	HermesAPIFunctor barrierFunctor;

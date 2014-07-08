@@ -10,8 +10,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_WAIT_EV
-#define _H_EMBER_WAIT_EV
+#ifndef _H_EMBER_WAITALL_EV
+#define _H_EMBER_WAITALL_EV
 
 #include <sst/elements/hermes/msgapi.h>
 #include "emberevent.h"
@@ -21,18 +21,19 @@ using namespace SST::Hermes;
 namespace SST {
 namespace Ember {
 
-class EmberWaitEvent : public EmberEvent {
+class EmberWaitallEvent : public EmberEvent {
 
 	public:
-		EmberWaitEvent(MessageRequest* req, bool delRequest = true);
-		~EmberWaitEvent();
+		EmberWaitallEvent( int, MessageRequest** req, bool delRequest = true);
+		~EmberWaitallEvent();
 		MessageRequest** getMessageRequestHandle();
+        int getNumMessageRequests();
 		EmberEventType getEventType();
 		std::string getPrintableString();
 		bool deleteRequestPointer();
 
 	private:
-		MessageRequest* request;
+		MessageRequest** request;
 		bool delReq;
 
 };
