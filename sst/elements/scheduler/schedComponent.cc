@@ -41,6 +41,7 @@
 #include "Scheduler.h"
 #include "Statistics.h"
 #include "TaskMapper.h"
+#include "taskMappers/SimpleTaskMapper.h"
 #include "TaskMapInfo.h"
 
 #include "events/ArrivalEvent.h"
@@ -568,8 +569,14 @@ void schedComponent::startJob(Job* job)
           && NULL != ((MeshAllocInfo*)ai) -> processors) { 
         
         double randomNumber = rng->nextUniform() * 0.8 - 0.4;
-        long baselineL1Distance = mMachine->baselineL1Distance(job);
         int numberOfProcs = ((MeshAllocInfo*)ai)->processors->size();
+        //calculate baseline L1 pairwise distance
+        AllocInfo* baselineAlloc = MeshAllocInfo::getBaselineAllocation(*mMachine, job);
+        SimpleTaskMapper baselineMapper = SimpleTaskMapper(mMachine);
+        TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
+        unsigned long baselineL1Distance = baselineMap->getTotalHopDist(*mMachine);
+        
+        //delete baselineMap;
         double averagePairwiseDistance = baselineL1Distance / numberOfProcs;
                 
         //calculate running time w/o any communication overhead:

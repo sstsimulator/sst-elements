@@ -21,12 +21,12 @@
 #include <string>
 
 #include "AllocInfo.h"
+#include "MeshMachine.h"
 
 namespace SST {
     namespace Scheduler {
 
-        class MeshLocation;
-        class MeshMachine;
+        class Job;
 
         class MeshAllocInfo : public AllocInfo {
             public:
@@ -35,6 +35,9 @@ namespace SST {
                 ~MeshAllocInfo();
 
                 std::string getProcList(Machine* m);
+                
+                //baseline allocation: minimum-volume rectangular prism that fits into the machine
+                static AllocInfo* getBaselineAllocation(const MeshMachine & mach, Job* job);
         };
 
     }

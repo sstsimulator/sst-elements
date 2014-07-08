@@ -295,7 +295,7 @@ void Statistics::writeAlloc(TaskMapInfo* tmi)
     MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine);
     char mesg[100];
     int num = tmi -> job -> getProcsNeeded();
-    sprintf(mesg, "%d\t%d\t%lu\t%ld\n",
+    sprintf(mesg, "%ld\t%d\t%lu\t%lu\n",
             tmi -> job -> getJobNum(),
             num,
             tmi -> job -> getActualTime(),
