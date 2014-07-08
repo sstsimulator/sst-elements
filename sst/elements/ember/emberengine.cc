@@ -594,7 +594,6 @@ void EmberEngine::completedFinalize(int val) {
 	// Tell the simulator core we are finished and do not need any further
 	// processing to continue
 	primaryComponentOKToEndSim();
-	output->output("%" PRIi32":Ember End Point Finalize completed at: %" PRIu64 " ns\n", jobId, getCurrentSimTimeNano());
 
 	continueProcessing = false;
 	issueNextEvent(0);
