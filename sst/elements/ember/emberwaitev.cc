@@ -20,10 +20,6 @@ EmberWaitEvent::EmberWaitEvent(MessageRequest* req, bool delRequest) :
 	request = req;
 }
 
-EmberWaitEvent::EmberWaitEvent(MessageRequest* req) {
-	EmberWaitEvent(req, true);
-}
-
 EmberWaitEvent::~EmberWaitEvent() {
 
 }

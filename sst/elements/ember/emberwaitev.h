@@ -24,8 +24,7 @@ namespace Ember {
 class EmberWaitEvent : public EmberEvent {
 
 	public:
-		EmberWaitEvent(MessageRequest* req);
-		EmberWaitEvent(MessageRequest* req, bool delRequest);
+		EmberWaitEvent(MessageRequest* req, bool delRequest = true);
 		~EmberWaitEvent();
 		MessageRequest* getMessageRequestHandle();
 		EmberEventType getEventType();

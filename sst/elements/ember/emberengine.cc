@@ -189,6 +189,8 @@ EmberEngine::~EmberEngine() {
 		// Free the big buffer we have been using
 		free(emptyBuffer);
 		break;
+    default:
+        break;
 	}
 
 	delete histoBarrier;

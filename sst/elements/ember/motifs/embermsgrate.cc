@@ -67,7 +67,7 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
                                     (Communicator) 0, &reqs[i]) );
             }
             for ( unsigned int i = 0; i < numMsgs; i++ ) {
-                evQ->push( new EmberWaitEvent(  &reqs[i] ) ); 
+                evQ->push( new EmberWaitEvent(  &reqs[i], false ) ); 
             }
             evQ->push( new EmberGetTimeEvent( &m_stopTime ) );
         } else {
@@ -81,7 +81,7 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
             evQ->push( new EmberGetTimeEvent( &m_startTime ) );
 
             for ( unsigned int i = 0; i < numMsgs; i++ ) {
-                evQ->push( new EmberWaitEvent(  &reqs[i] ) ); 
+                evQ->push( new EmberWaitEvent(  &reqs[i], false ) ); 
             }
             evQ->push( new EmberGetTimeEvent( &m_stopTime ) );
         }
