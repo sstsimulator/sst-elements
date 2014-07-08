@@ -35,6 +35,7 @@
 #include "motifs/emberreduce.h"
 #include "motifs/emberallpingpong.h"
 #include "motifs/embernull.h"
+#include "motifs/embermsgrate.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -120,6 +121,12 @@ static Module*
 load_Null( Component* comp, Params& params ) {
 	return new EmberNullGenerator(comp, params);
 }
+
+static Module*
+load_MsgRate( Component* comp, Params& params ) {
+	return new EmberMsgRateGenerator(comp, params);
+}
+
 
 
 static const ElementInfoParam component_params[] = {
@@ -268,6 +275,13 @@ static const ElementInfoParam nullmotif_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam msgrate_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"msgSize",		"Sets the size of the message in bytes",	 	"0"},
+	{	"numMsgs",		"Sets the size of the message in bytes",	 	"128"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoModule modules[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
@@ -387,6 +401,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_Null,
 	nullmotif_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"MsgRateMotif",
+	"Performs a message rate test.",
+	NULL,
+	NULL,
+	load_MsgRate,
+	msgrate_params,
     "SST::Ember::EmberGenerator"
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
