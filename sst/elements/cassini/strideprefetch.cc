@@ -43,7 +43,7 @@ Addr StridePrefetcher::getAddressByIndex(uint32_t index) {
 }
 
 void StridePrefetcher::DetectStride() {
-    assert(0);     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface */
+        /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface */
 	MemEvent* ev = NULL;
 	uint32_t stride;
 	bool foundStride = true;
@@ -70,10 +70,9 @@ void StridePrefetcher::DetectStride() {
 					output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 						targetAddress, targetAddress + (strideReach * stride),
 						(strideReach * stride), stride);
- 
+
 					prefetchOpportunities++;
-                    //TODO: Fix state
-					//ev = new MemEvent(owner, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), RequestData);
+					ev = new MemEvent(owner, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), GetS);
 				} else {
 					const Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
 					const Addr targetAddressPhysPage = targetAddress / pageSize;
@@ -85,8 +84,7 @@ void StridePrefetcher::DetectStride() {
 					if(targetAddressPhysPage == targetPrefetchAddressPage) {
 					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
-                        //TODO: Fix state
-						//ev = new MemEvent(owner, targetPrefetchAddress, targetPrefetchAddress, RequestData);
+						ev = new MemEvent(owner, targetPrefetchAddress, targetPrefetchAddress, GetS);
 						prefetchOpportunities++;
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
