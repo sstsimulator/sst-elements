@@ -121,18 +121,20 @@ void EmberHalo3DGenerator::configureEnvironment(const SST::Output* output, uint3
 
 	getPosition(rank, peX, peY, peZ, &my_X, &my_Y, &my_Z);
 
-	y_up   = (my_Y != 0) ? rank - peX : -1;
-	y_down = (my_Y != (peY - 1)) ? rank + peX : -1;
+	y_up    = convertPositionToRank(peX, peY, peZ, my_X, my_Y + 1, my_Z);
+	y_down  = convertPositionToRank(peX, peY, peZ, my_X, my_Y - 1, my_Z);
+	x_up    = convertPositionToRank(peX, peY, peZ, my_X + 1, my_Y, my_Z);
+	x_down  = convertPositionToRank(peX, peY, peZ, my_X - 1, my_Y, my_Z);
+	z_up    = convertPositionToRank(peX, peY, peZ, my_X, my_Y, my_Z + 1);
+	z_down  = convertPositionToRank(peX, peY, peZ, my_X, my_Y, my_Z - 1);
 
-	x_up   = (my_X != (peX - 1)) ? rank + 1 : -1;
-	x_down = (my_X != 0) ? rank - 1 : -1;
-
-	z_up   = (my_Z != peZ - 1) ? rank + (peX*peY) : -1;
-	z_down = (my_Z != 0) ? rank - (peX*peY) : -1;
-
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
+		rank, worldSize, my_X, my_Y, my_Z, peX, peY, peZ);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank, x_up, x_down);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank, y_up, y_down);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank, z_up, z_down);
+
+//	assert( (x_up < worldSize) && (y_up < worldSize) && (z_up < worldSize) );
 }
 
 void EmberHalo3DGenerator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
