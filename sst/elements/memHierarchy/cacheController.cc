@@ -18,16 +18,15 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "cacheController.h"
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include <csignal>
 #include <boost/variant.hpp>
 
-#include <sst/core/params.h>
-#include <sst/core/simulation.h>
-#include <sst/core/interfaces/stringEvent.h>
+#include "cacheController.h"
 #include "memEvent.h"
-
 #include "mshr.h"
 #include "coherenceControllers.h"
 #include "hash.h"
@@ -326,9 +325,10 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
     d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %"PRIx64", addr: %"PRIx64", dst: %s\n",
                   _i, CommandString[_event->getCmd()], toBaseAddr(_event->getAddr()), _event->getAddr(), _event->getDst().c_str());
     d_->debug(_L3_,"--------------------------------------\n");
+    
     this->processEvent(_event, true);
+    
     d_->debug(_L3_,"--------------------------------------\n");
-
     _mshrEntry.erase(_it);
     
     /* If the event we just ran 'blocked', then there is not reason to activate other events. */

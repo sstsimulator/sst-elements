@@ -20,7 +20,6 @@
 #include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
-#include <sst/core/output.h>
 #include "memEvent.h"
 #include "util.h"
 

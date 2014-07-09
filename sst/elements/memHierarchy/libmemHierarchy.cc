@@ -31,6 +31,7 @@
 #include "directoryController.h"
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
+#include "memBackend.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
