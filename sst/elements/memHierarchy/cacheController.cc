@@ -230,7 +230,7 @@ bool Cache::invalidatesInProgress(int _lineIndex){
 
 
 
-/* Multiple 'returns' in the function for performance (as opposed to single return) */
+/* Multiple 'returns' in the function used for performance (as opposed to single return) */
 bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Addr _baseAddr, bool _mshrHit){
     /* Scenario where this 'if' occurs:  HiLv$ evicts a shared line (S->I), sends PutS to LowLv$.
        Simultaneously, LowLv$ sends an Inv to HiLv$. Thus, HiLv$ sends an Inv an already invalidated line */

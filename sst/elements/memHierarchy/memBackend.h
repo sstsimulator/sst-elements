@@ -92,6 +92,9 @@ private:
     Link *self_link;
 };
 
+
+
+
 #if defined(HAVE_LIBDRAMSIM)
 class DRAMSimMemory : public MemBackend {
 public:
@@ -108,6 +111,9 @@ private:
 };
 #endif
 
+
+
+
 #if defined(HAVE_LIBHYBRIDSIM)
 class HybridSimMemory : public MemBackend {
 public:
@@ -122,6 +128,9 @@ private:
     std::map<uint64_t, std::deque<MemController::DRAMReq*> > dramReqs;
 };
 #endif
+
+
+
 
 class VaultSimMemory : public MemBackend {
 public:

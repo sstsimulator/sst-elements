@@ -35,6 +35,7 @@
 
 #define NO_STRING_DEFINED "N/A"
 
+using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -48,23 +49,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
     
     dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     dbg.debug(_L10_,"---");
-    statsOutputTarget = (Output::output_location_t)params.find_integer("statistics", 0);
-
-    bool tfFound = false;
-    std::string traceFile = params.find_string("trace_file", "", tfFound);
-	if(tfFound) {
-#ifdef HAVE_LIBZ
-		traceFP = gzopen(traceFile.c_str(), "w");
-		gzsetparams(traceFP, 9, Z_DEFAULT_STRATEGY);
-#else
-		traceFP = fopen(traceFile.c_str(), "w+");
-#endif
-    } else  traceFP = NULL;
-
-
-    unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
-	if(0 == ramSize) _abort(MemController, "Must specify RAM size (mem_size) in MB\n");
-	
+    
+    statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
+    unsigned int ramSize    = (unsigned int)params.find_integer("mem_size", 0);
     memSize_                = ramSize * (1024*1024ul);
 	rangeStart_             = (Addr)params.find_integer("range_start", 0);
 	interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
@@ -72,55 +59,41 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 	interleaveStep_         = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep_         *= 1024;
 
-
-	std::string memoryFile  = params.find_string("memory_file", NO_STRING_DEFINED);
-	std::string clock_freq  = params.find_string("clock", "");
+	string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
+	string clock_freq       = params.find_string("clock", "");
     cacheLineSize_          = params.find_integer("request_width", 64);
     divertDCLookups_        = params.find_integer("divert_DC_lookups", 0);
-    std::string backendName = params.find_string("backend", "memHierarchy.simpleMem");
-
-    if(interleaveStep_ > 0 && interleaveSize_ > 0) numPages_ = memSize_ / interleaveSize_;
-    else numPages_ = 0;
-
+    string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
+    string protocolStr      = params.find_string("coherence_protocol");
+    string link_lat         = params.find_string("direct_link_latency", "100 ns");
+    
     requestWidth_           = cacheLineSize_;
     requestSize_            = cacheLineSize_;
+    numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
+    protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
 
+    int mmap_flags          = setBackingFile(memoryFile);
+    backend                 = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
+	memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
+    lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+
+    if (!backend)           _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
+	if(!memBuffer_)         _abort(MemController, "Unable to MMAP backing store for Memory\n");
+    if(0 == memSize_)       _abort(MemController, "Memory size must be bigger than zero and specified in MB\n");
+
+    GetSReqReceived_        = 0;
+    GetXReqReceived_        = 0;
+    PutMReqReceived_        = 0;
+    GetSExReqReceived_      = 0;
+    numReqOutstanding_      = 0;
+    numCycles_              = 0;
+    
+    assert(!protocolStr.empty());
+
+    /* Clock Handler */
     registerClock(clock_freq, new Clock::Handler<MemController>(this, &MemController::clock));
     registerTimeBase("1 ns", true);
-
-
-    backend = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
-    if (!backend)  _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
-
-	int mmap_flags = MAP_PRIVATE;
-	if(NO_STRING_DEFINED != memoryFile) {
-		backingFd_ = open(memoryFile.c_str(), O_RDWR);
-		if(backingFd_ < 0) _abort(MemController, "Unable to open backing file!\n");
-	} else {
-		backingFd_  = -1;
-		mmap_flags  |= MAP_ANON;
-	}
-
-	memBuffer_ = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
-	if(!memBuffer_) _abort(MemController, "Unable to MMAP backing store for Memory\n");
-
-    std::string link_lat = params.find_string("direct_link_latency", "100 ns");
-    lowNetworkLink_ = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
-
-    std::string protocolStr = params.find_string("coherence_protocol");
-    assert(!protocolStr.empty());
-    
-    if(protocolStr == "mesi" || protocolStr == "MESI") protocol_ = 1;
-    else protocol_ = 0;
-
-    GetSReqReceived_     = 0;
-    GetXReqReceived_     = 0;
-    PutMReqReceived_     = 0;
-    GetSExReqReceived_   = 0;
-    numReqOutstanding_   = 0;
-    numCycles_           = 0;
 }
-
 
 
 
@@ -143,6 +116,7 @@ void MemController::handleEvent(SST::Event* _event){
     
     delete _event;
 }
+
 
 
 void MemController::addRequest(MemEvent* _ev){
@@ -240,10 +214,13 @@ void MemController::sendResponse(DRAMReq* _req){
 }
 
 
+
 void MemController::printMemory(DRAMReq* _req, Addr localAddr){
     dbg.debug(_L10_,"Resp. Data: ");
     for(unsigned int i = 0; i < cacheLineSize_; i++) dbg.debug(_L10_,"%d",(int)memBuffer_[localAddr + i]);
 }
+
+
 
 void MemController::handleMemResponse(DRAMReq* _req){
     _req->amtProcessed_ += requestSize_;
@@ -295,9 +272,12 @@ void MemController::init(unsigned int _phase){
 
 }
 
+
+
 void MemController::setup(void){
     backend->setup();
 }
+
 
 
 void MemController::finish(void){
@@ -306,7 +286,7 @@ void MemController::finish(void){
 
     backend->finish();
 
-    Output out("", 0, 0, statsOutputTarget);
+    Output out("", 0, 0, statsOutputTarget_);
     out.output("\n--------------------------------------------------------------------\n");
     out.output("--- Main Memory Stats\n");
     out.output("--- Name: %s\n", getName().c_str());
@@ -316,6 +296,22 @@ void MemController::finish(void){
     out.output("- GetSEx received (read):  %"PRIu64"\n", GetSExReqReceived_);
     out.output("- PutM received (write):  %"PRIu64"\n", PutMReqReceived_);
     out.output("- Avg. Requests out: %.3f\n",float(numReqOutstanding_)/float(numCycles_));
+
+}
+
+
+
+int MemController::setBackingFile(string memoryFile){
+	int mmap_flags = MAP_PRIVATE;
+	if(NO_STRING_DEFINED != memoryFile) {
+		backingFd_ = open(memoryFile.c_str(), O_RDWR);
+		if(backingFd_ < 0) _abort(MemController, "Unable to open backing file!\n");
+	} else {
+		backingFd_  = -1;
+		mmap_flags  |= MAP_ANON;
+	}
+    
+    return mmap_flags;
 
 }
 

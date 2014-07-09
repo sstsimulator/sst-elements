@@ -97,7 +97,8 @@ private:
     void performRequest(DRAMReq* _req);
     void sendResponse(DRAMReq* _req);
     void printMemory(DRAMReq* _req, Addr _localAddr);
-    
+    int setBackingFile(string memoryFile);
+
     bool isRequestAddressValid(MemEvent *ev){
         Addr addr = ev->getAddr();
         Addr step;
@@ -129,7 +130,7 @@ private:
     void sendBusPacket(Bus::key_t key){}
     void sendBusCancel(Bus::key_t key){}
     void handleBusEvent(SST::Event *event){}
-
+    
     typedef deque<DRAMReq*> dramReq_t;
     
     bool        divertDCLookups_;
@@ -155,7 +156,7 @@ private:
     uint64_t    numReqOutstanding_;
     uint64_t    numCycles_;
     
-    Output::output_location_t statsOutputTarget;
+    Output::output_location_t statsOutputTarget_;
 #ifdef HAVE_LIBZ
     gzFile traceFP;
 #else

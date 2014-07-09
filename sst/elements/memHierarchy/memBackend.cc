@@ -27,12 +27,14 @@ MemBackend::MemBackend(Component *comp, Params &params) : Module(){
 }
 
 
-/*************************** Simple Backend ********************/
+/*------------------------------- Simple Backend ------------------------------- */
 SimpleMemory::SimpleMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string access_time = params.find_string("access_time", "100 ns");
     self_link = ctrl->configureSelfLink("Self", access_time,
             new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
 }
+
+
 
 void SimpleMemory::handleSelfEvent(SST::Event *event){
     MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
@@ -40,6 +42,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event){
     ctrl->handleMemResponse(req);
     delete event;
 }
+
 
 
 bool SimpleMemory::issueRequest(MemController::DRAMReq *req){
@@ -52,7 +55,7 @@ bool SimpleMemory::issueRequest(MemController::DRAMReq *req){
 
 
 #if defined(HAVE_LIBDRAMSIM)
-/*************************** DRAMSim Backend ********************/
+/*------------------------------- DRAMSim Backend -------------------------------*/
 DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
@@ -78,6 +81,7 @@ DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp,
 }
 
 
+
 bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     bool ok = memSystem->willAcceptTransaction(addr);
@@ -90,14 +94,17 @@ bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
 }
 
 
+
 void DRAMSimMemory::clock(){
     memSystem->update();
 }
 
 
+
 void DRAMSimMemory::finish(){
     memSystem->printStats(true);
 }
+
 
 
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
@@ -116,7 +123,7 @@ void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
 
 
 #if defined(HAVE_LIBHYBRIDSIM)
-/*************************** HybridSim Backend ********************/
+/*------------------------------- HybridSim Backend -------------------------------*/
 HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string hybridIniFilename = params.find_string("system_ini", NO_STRING_DEFINED);
     if(hybridIniFilename == NO_STRING_DEFINED)
@@ -129,6 +136,7 @@ HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : MemBackend(c
     HybridSim::TransactionCompleteCB *write_cb = new hybridsim_callback_t(this, &HybridSimMemory::hybridSimDone);
     memSystem->RegisterCallbacks(read_cb, write_cb);
 }
+
 
 
 bool HybridSimMemory::issueRequest(MemController::DRAMReq *req){
@@ -144,13 +152,18 @@ bool HybridSimMemory::issueRequest(MemController::DRAMReq *req){
 }
 
 
+
 void HybridSimMemory::clock(){
     memSystem->update();
 }
 
+
+
 void HybridSimMemory::finish(){
     memSystem->printLogfile();
 }
+
+
 
 void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
@@ -167,12 +180,13 @@ void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clo
 #endif
 
 
-/*************************** VaultSim Backend ********************/
+/*------------------------------- VaultSim Backend -------------------------------*/
 VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string access_time = params.find_string("access_time", "100 ns");
     cube_link = ctrl->configureLink( "cube_link", access_time,
             new Event::Handler<VaultSimMemory>(this, &VaultSimMemory::handleCubeEvent));
 }
+
 
 
 bool VaultSimMemory::issueRequest(MemController::DRAMReq *req){
