@@ -39,3 +39,14 @@ void EmberGenerator::getPosition(const int32_t rank, const int32_t px, const int
         *myX = rank % px;
         *myY = rank / px;
 }
+
+int32_t EmberGenerator::convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
+	const int32_t posX, const int32_t posY, const int32_t posZ) {
+
+	std::cout << "posX=" << posX << ",posY=" << posY << ",posZ=" << posZ << std::endl;
+	if( (posX < 0) || (posY < 0) || (posZ < 0) || (posX >= peX) || (posY >= peY) || (posZ >= peZ) ) {
+		return -1;
+	} else {
+		return (posZ * (peX * peY)) + (posY * peX) + posX;
+	}
+}
