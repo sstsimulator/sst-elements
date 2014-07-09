@@ -10,13 +10,13 @@ ccLat = "5ns" # cube to cube latency i.e. PIM to PIM
 vaultsPerCube = 8 
 fakeCPU_DC = 0
 fakePIM_DC = 0
-coreNetBW = "72 GB/s"
+coreNetBW = "36GB/s"
 memNetBW = "36GB/s"
 xbarBW = coreNetBW
 flit_size = "72B"
 coherence_protocol = "MESI"
 busLat = "50ps"
-netLat = "3ns"
+netLat = "6ns"
 useAriel = 1
 useVaultSim = 1
 baseclock = 1500  # in MHz
@@ -87,10 +87,10 @@ def makeAriel():
             "maxcorequeue" : 256,
             "maxissuepercycle" : 2,
             "pipetimeout" : 0,
-            "executable" : "/home/afrodri/tlvlstream/ministream",
+            "executable" : "/home/student/tlvlstream/ministream",
             "corecount" : corecount,
-            "arielmode" : 1,
-            "arieltool": "/home/afrodri/sst-simulator/tools/ariel/fesimple/fesimple.so"
+            "arielmode" : 0,
+            "arieltool": "/home/student/sst-simulator/tools/ariel/fesimple/fesimple.so"
             })
     coreCounter = 0
     return ariel
@@ -116,7 +116,7 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
             "coherence_protocol": coherence_protocol,
             "cache_frequency": clock,
             "replacement_policy": "lru",
-            "cache_size": "16KB",
+            "cache_size": "8KB",
             "associativity": 8,
             "cache_line_size": 64,
             "low_network_links": 1,
@@ -147,7 +147,7 @@ def doQuad(quad, cores, rtr, rtrPort, netAddr):
         "coherence_protocol": coherence_protocol,
         "cache_frequency": l2clock,
         "replacement_policy": "lru",
-        "cache_size": "512KB",
+        "cache_size": "128KB",
         "associativity": 16,
         "cache_line_size": 64,
         "access_latency_cycles": 23,
@@ -341,7 +341,7 @@ def doPIM(pimNum, prevRtr):
 
 # Define SST core options
 sst.setProgramOption("partitioner", "self")
-sst.setProgramOption("stopAtCycle", "50 us")
+#sst.setProgramOption("stopAtCycle", "2000 us")
 
 #if needed, create the ariel component
 if useAriel:
