@@ -385,22 +385,30 @@ class WaitReq {
 
     bool isDone() {
         std::deque<X>::iterator iter = reqQ.begin();
-        for ( ; iter != reqQ.end(); ++ iter) {
+
+        while ( iter != reqQ.end() ) {
             if ( iter->req->isDone() ) {
                 if ( iter->resp ) {
                     iter->req->getResp( iter->resp );
                 }
-                if ( indexPtr ) { 
-                    *indexPtr = iter->pos;
-                    reqQ.clear();
-                } else {
-                    reqQ.erase( iter );
-                }
+
                 if ( iter->req->isMine() ) {
                     delete iter->req;
                 }
-                break;
-            } 
+
+                // a waitany will have an valid indexPtr
+                if ( indexPtr ) { 
+                    *indexPtr = iter->pos;
+                    reqQ.clear();
+                    iter = reqQ.end();
+                } else {
+                    iter = reqQ.erase( iter );
+                }
+
+
+            } else {
+                ++iter;
+            }
         } 
         return reqQ.empty();
     }
