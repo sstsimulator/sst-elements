@@ -15,6 +15,8 @@
 #include "memoryController.h"
 #include "util.h"
 
+#define NO_STRING_DEFINED "N/A"
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -80,7 +82,7 @@ bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     bool ok = memSystem->willAcceptTransaction(addr);
     if(!ok) return false;
-    ok = memSystem->addTransaction(req->isWrite, addr);
+    ok = memSystem->addTransaction(req->isWrite_, addr);
     if(!ok) return false;  // This *SHOULD* always be ok
     ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
     dramReqs[addr].push_back(req);
@@ -134,7 +136,7 @@ bool HybridSimMemory::issueRequest(MemController::DRAMReq *req){
 
     bool ok = memSystem->WillAcceptTransaction();
     if(!ok) return false;
-    ok = memSystem->addTransaction(req->isWrite, addr);
+    ok = memSystem->addTransaction(req->isWrite_, addr);
     if(!ok) return false;  // This *SHOULD* always be ok
     ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
     dramReqs[addr].push_back(req);
