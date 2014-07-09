@@ -102,12 +102,12 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
 
 DirectoryController::~DirectoryController(){
-    for(std::map<Addr, DirEntry*>::iterator i = directory.begin(); i != directory.end() ; ++i) {
+    for(std::map<Addr, DirEntry*>::iterator i = directory.begin(); i != directory.end() ; ++i){
         delete i->second;
     }
     directory.clear();
     
-    while(workQueue.size()) {
+    while(workQueue.size()){
         MemEvent *front = workQueue.front();
         workQueue.pop_front();
         delete front;
@@ -120,7 +120,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BaseAddr = x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
 
-    if(uncachedWrites.find(ev->getResponseToID()) != uncachedWrites.end()) {
+    if(uncachedWrites.find(ev->getResponseToID()) != uncachedWrites.end()){
         MemEvent *origEV = uncachedWrites[ev->getResponseToID()];
         uncachedWrites.erase(ev->getResponseToID());
 
@@ -129,11 +129,11 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 
         delete origEV;
     }
-    else if(memReqs.find(ev->getResponseToID()) != memReqs.end()) {
+    else if(memReqs.find(ev->getResponseToID()) != memReqs.end()){
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
 
-        if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()) {
+        if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()){
             // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
             assert(entry);
@@ -164,7 +164,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BsAddr = %"PRIx64", Src = %s\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str());
     Command cmd = ev->getCmd();
     
-    if(NACK == cmd) {
+    if(NACK == cmd){
         MemEvent* origEvent = ev->getNACKedEvent();
         processIncomingNACK(origEvent);
         delete ev;
@@ -176,19 +176,26 @@ bool DirectoryController::processPacket(MemEvent *ev){
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
     if(cmd == FetchResp) assert(entry && entry->inProgress());
     
+        
+    
     if(entry && entry->waitingAcks > 0 && PutS == ev->getCmd()){
         handlePutS(ev);
         delete ev;
         return true;
     }
     
+    if(entry && entry->waitingAcks == 0 && PutS == ev->getCmd()){
+        delete ev;
+        return true;
+    }
+
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;
 
 
-    
+
     /* New Request */
-    switch(cmd) {
+    switch(cmd){
         case PutS:
             PutSReqReceived++;
             entry->activeReq = ev;
@@ -205,7 +212,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             assert(entry);
             dbg.debug(_L10_, "\n\nDC PutM - %s - Request Received\n", getName().c_str());
             entry->activeReq = ev;
-            if(entry->inController) {
+            if(entry->inController){
                 ++numCacheHits;
                 handlePutM(entry, ev);
             } else {
@@ -223,12 +230,12 @@ bool DirectoryController::processPacket(MemEvent *ev){
             else if(cmd == GetSEx)  GetSExReqReceived++;
             
             dbg.debug(_L10_, "\n\nDC GetS/GetX - %s - Request Received\n", getName().c_str());
-            if(!entry) {
+            if(!entry){
                 entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
                 entry->inController = true;
             }
 
-            if(entry->inController) {
+            if(entry->inController){
                 ++numCacheHits;
                 handleRequestData(entry, ev);
             } else {
@@ -256,9 +263,9 @@ void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent){
 pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
     dbg.debug(_L10_, "Entry found and in progress\n");
         if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM)) &&
-          ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())) {
+          ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())){
             dbg.debug(_L10_, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
-            if(ev->getResponseToID() != entry->lastRequest) {
+            if(ev->getResponseToID() != entry->lastRequest){
                 dbg.debug(_L10_, "This isn't a response to our request, but it fulfills the need.  Placing(%"PRIu64", %d) into list of ignorable responses.\n", entry->lastRequest.first, entry->lastRequest.second);
             }
             advanceEntry(entry, ev);
@@ -280,11 +287,11 @@ void DirectoryController::printStatus(Output &out){
     out.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
     out.output("\t# Entries in cache:  %zu\n", entryCacheSize);
     out.output("\t# Requests in queue:  %zu\n", workQueue.size());
-    for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i) {
+    for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
         out.output("\t\t(%"PRIu64", %d)\n", (*i)->getID().first, (*i)->getID().second);
     }
     out.output("\tRequests in Progress:\n");
-    for(std::map<Addr, DirEntry*>::iterator i = directory.begin() ; i != directory.end() ; ++i) {
+    for(std::map<Addr, DirEntry*>::iterator i = directory.begin() ; i != directory.end() ; ++i){
         if(i->second->inProgress())
             out.output("\t\t0x%"PRIx64"\t\t(%"PRIu64", %d)\n",i->first, i->second->activeReq->getID().first, i->second->activeReq->getID().second);
     }
@@ -339,7 +346,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
     entry->activeReq = new_ev;
     entry->reqSize = new_ev->getSize();
 	uint32_t requesting_node = node_id(entry->activeReq->getSrc());
-	if(entry->isDirty()) {
+	if(entry->isDirty()){
 		// Must do a fetch
 		Command cmd = FetchInv;
         
@@ -359,14 +366,14 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
         dbg.debug(_L10_, "Sending FetchInv.  Cmd = %s, Dest = %s, BsAddr = %"PRIx64".\n", CommandString[cmd], dest.c_str(), entry->baseAddr);
 
 	}
-    else if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
+    else if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx){
         // Must send invalidates
 		assert(0 == entry->waitingAcks);
-		for(uint32_t i = 0 ; i < numTargets ; i++) {
+		for(uint32_t i = 0 ; i < numTargets ; i++){
 			if(i == requesting_node) continue;
 			if(entry->sharers[i]){
                 sendInvalidate(i, entry);
-                 entry->waitingAcks++;
+                entry->waitingAcks++;
             }
 		}
         if( entry->waitingAcks > 0){
@@ -380,7 +387,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
         else getExclusiveDataForRequest(entry, NULL);
 
 	}
-    else if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) {
+    else if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED)){
         // Don't set as a sharer whne dealing with uncached
 		entry->nextFunc = &DirectoryController::sendRequestedData;
 		requestDataFromMemory(entry);
@@ -398,7 +405,7 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
     entry->sharers[node_id(new_ev->getSrc())] = false;
     entry->clearDirty();
     
-    if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx) {
+    if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx){
 		entry->setDirty();
 	}
 
@@ -430,14 +437,17 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
 
 
 void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev){
+    uint32_t requesting_node = node_id(entry->activeReq->getSrc());
+
 	assert(0 == entry->waitingAcks);
+    assert(entry->countRefs() <= 1);
+    if(entry->countRefs() == 1)
+        assert(entry->sharers[requesting_node]);
+
     entry->clearSharers();
-
-	uint32_t target_id = node_id(entry->activeReq->getSrc());
     entry->setDirty();
-    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) entry->sharers[target_id] = true;
+    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) entry->sharers[requesting_node] = true;
     
-
 	entry->nextFunc = &DirectoryController::sendRequestedData;
 	requestDataFromMemory(entry);
 }
@@ -446,8 +456,10 @@ void DirectoryController::handlePutS(MemEvent* ev){
     DirEntry *entry = getDirEntry(ev->getAddr());
     assert(entry);
     assert(entry->waitingAcks > 0);
+    int requesting_node = node_name_to_id(ev->getSrc());
+    entry->sharers[requesting_node]= false;
     entry->waitingAcks--;
-    if ( 0 == entry->waitingAcks ) advanceEntry(entry);
+    if(0 == entry->waitingAcks ) advanceEntry(entry);
 }
 
 
@@ -475,7 +487,7 @@ void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev){
 uint32_t DirectoryController::node_id(const std::string &name){
 	uint32_t id;
 	std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
-	if(node_lookup.end() == i) {
+	if(node_lookup.end() == i){
 		node_lookup[name] = id = targetCount++;
         nodeid_to_name.resize(targetCount);
         nodeid_to_name[id] = name;
@@ -522,18 +534,18 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
 }
 
 void DirectoryController::updateCacheEntry(DirEntry *entry){
-    if(0 == entryCacheMaxSize) {
+    if(0 == entryCacheMaxSize){
         sendEntryToMemory(entry);
     } else {
         /* Find if we're in the cache */
-        if(entry->cacheIter != entryCache.end()) {
+        if(entry->cacheIter != entryCache.end()){
             entryCache.erase(entry->cacheIter);
             --entryCacheSize;
             entry->cacheIter = entryCache.end();
         }
 
         /* Find out if we're no longer cached, and just remove */
-        if((!entry->activeReq) &&(0 == entry->countRefs())) {
+        if((!entry->activeReq) &&(0 == entry->countRefs())){
             dbg.debug(_L10_, "Entry for 0x%"PRIx64" has no referenes - purging\n", entry->baseAddr);
             directory.erase(entry->baseAddr);
             delete entry;
@@ -544,7 +556,7 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
             entry->cacheIter = entryCache.begin();
             ++entryCacheSize;
 
-            while(entryCacheSize > entryCacheMaxSize) {
+            while(entryCacheSize > entryCacheMaxSize){
                 DirEntry *oldEntry = entryCache.back();
                 // If the oldest entry is still in progress, everything is in progress
                 if(oldEntry->inProgress()) break;
@@ -593,7 +605,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
 
 
 void DirectoryController::resetEntry(DirEntry *entry){
-	if(entry->activeReq) {
+	if(entry->activeReq){
         ++numReqsProcessed;
         totalReqProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
 
@@ -612,7 +624,7 @@ void DirectoryController::sendResponse(MemEvent *ev){
 bool DirectoryController::isRequestAddressValid(MemEvent *ev){
     Addr addr = ev->getBaseAddr();
 
-    if(0 == interleaveSize) {
+    if(0 == interleaveSize){
         return(addr >= addrRangeStart && addr < addrRangeEnd);
     } else {
         if(addr < addrRangeStart) return false;
@@ -631,7 +643,7 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev){
 
 Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
     Addr res = 0;
-    if(0 == interleaveSize) {
+    if(0 == interleaveSize){
         res = lookupBaseAddr + addr - addrRangeStart;
     } else {
         addr = addr - addrRangeStart;
@@ -647,13 +659,13 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
 static char dirEntStatus[1024] = {0};
 const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
     DirEntry *entry = getDirEntry(baseAddr);
-    if(!entry) {
+    if(!entry){
         sprintf(dirEntStatus, "[Not Created]");
     } else {
         uint32_t refs = entry->countRefs();
 
         if(0 == refs) sprintf(dirEntStatus, "[Uncached]");
-        else if(entry->isDirty()) {
+        else if(entry->isDirty()){
             uint32_t owner = entry->findOwner();
             sprintf(dirEntStatus, "[owned by %s]", nodeid_to_name[owner].c_str());
         }
@@ -669,9 +681,9 @@ void DirectoryController::init(unsigned int phase){
     network->init(phase);
 
     /* Pass data on to memory */
-    while(MemEvent *ev = network->recvInitData()) {
+    while(MemEvent *ev = network->recvInitData()){
         dbg.debug(_L10_, "Found Init Info for address 0x%"PRIx64"\n", ev->getAddr());
-        if(isRequestAddressValid(ev)) {
+        if(isRequestAddressValid(ev)){
             ev->setBaseAddr(convertAddressToLocalAddress(ev->getBaseAddr()));
             ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
             dbg.debug(_L10_, "Sending Init Data for address 0x%"PRIx64" to memory\n", ev->getAddr());
@@ -708,9 +720,9 @@ void DirectoryController::setup(void){
     network->setup();
 
     const std::vector<MemNIC::ComponentInfo> &ci = network->getPeerInfo();
-    for(std::vector<MemNIC::ComponentInfo>::const_iterator i = ci.begin() ; i != ci.end() ; ++i) {
+    for(std::vector<MemNIC::ComponentInfo>::const_iterator i = ci.begin() ; i != ci.end() ; ++i){
         dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->network_addr, i->name.c_str(), i->type);
-        if(MemNIC::TypeCache == i->type) {
+        if(MemNIC::TypeCache == i->type){
             numTargets++;
             if(blocksize)   assert(blocksize == i->typeInfo.cache.blocksize);
             else            blocksize = i->typeInfo.cache.blocksize;

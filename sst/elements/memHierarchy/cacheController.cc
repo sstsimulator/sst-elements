@@ -239,11 +239,11 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
         return false;
     }
 
-    if(_cacheLine->isLocked()){                   /* If user-locked then wait this lock is released to activate this event. */
+    if(_cacheLine->isLocked()){                                 /* If user-locked then wait this lock is released to activate this event. */
         if(!processRequestInMSHR(_baseAddr, _event)) {
             return false;
         }
-        incInvalidateWaitingForUserLock(groupId); /* Requests is in MSHR.  Stall and wait for the atomic modet to be 'cleared' */
+        incInvalidateWaitingForUserLock(groupId);               /* Requests is in MSHR.  Stall and wait for the atomic modet to be 'cleared' */
         _cacheLine->setEventsWaitingForLock(true);
         d_->debug(_L8_,"Stalling request:  Cache line is in atomic mode.\n");
         
@@ -251,8 +251,8 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     }
     
     CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
-    if(ccLine->getState() != V){                  /* Check if invalidates are already in progress (A writeback is going on?) */
-        processRequestInMSHR(_baseAddr, _event);  /* Whether a NACK was sent or not, request needs to stall */
+    if(ccLine->getState() != V){                                /* Check if invalidates are already in progress (A writeback is going on?) */
+        processRequestInMSHR(_baseAddr, _event);                /* Whether a NACK was sent or not, request needs to stall */
         return false;
     }
     
@@ -267,7 +267,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
 void Cache::stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(blockedEventException){
     if(_cacheLine->inTransition()){
         upgradeCount_++;
-        throw blockedEventException();                                            /* stall request if upgrade is in progress */
+        throw blockedEventException();                          /* stall request if upgrade is in progress */
     }
 }
 
@@ -282,10 +282,10 @@ void Cache::activatePrevEvents(Addr _baseAddr){
     d_->debug(_L3_,"---------Replaying Events--------- Size: %lu\n", mshrEntry.size());
     
     for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
-        if((*it).elem.type() == typeid(Addr)){                              /* Pointer Type */
+        if((*it).elem.type() == typeid(Addr)){                          /* Pointer Type */
             Addr pointerAddr = boost::get<Addr>((*it).elem);
             d_->debug(_L6_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
-            if(!mshr_->isHit(pointerAddr)){                                 /* Entry has been already been processed, delete mshr entry */
+            if(!mshr_->isHit(pointerAddr)){                             /* Entry has been already been processed, delete mshr entry */
                 mshrEntry.erase(it);
                 continue;
             }
@@ -304,7 +304,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
                 break;
             }
         }
-        else{                                                               /* MemEvent Type */
+        else{                                                           /* MemEvent Type */
             SimTime_t start = boost::get<MemEvent*>((*it).elem)->getStartTime();
             cont = activatePrevEvent(boost::get<MemEvent*>((*it).elem), mshrEntry, _baseAddr, it, i);
             if(!cont) break;
