@@ -23,8 +23,6 @@ using namespace SST::Ember;
 EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params) {
 
-	nsCompute = (uint64_t) params.find_integer("computetime", 1000);
-
 	px = (uint32_t) params.find_integer("pex", 0);
 	py = (uint32_t) params.find_integer("pey", 0);
 
@@ -37,6 +35,9 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % kba == 0);
+
+	uint64_t compTime = (uint64_t) params.find_integer("computetime", 1000);
+	nsCompute = (uint64_t) (nx * ny * compTime);
 }
 
 void EmberSweep3DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
@@ -84,7 +85,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_down, (ny * kba), 1000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute));
+				evQ->push(new EmberComputeEvent(nsCompute * kba));
 
 				if(x_up >= 0) {
        		                         evQ->push( new EmberSendEvent(x_up, (nx * kba), 1000, (Communicator) 0) );
@@ -105,7 +106,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_down, (ny * kba), 2000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute));
+				evQ->push(new EmberComputeEvent(nsCompute * kba));
 
 				if(x_down >= 0) {
        		                         evQ->push( new EmberSendEvent(x_down, (nx * kba), 2000, (Communicator) 0) );
@@ -126,7 +127,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_up, (ny * kba), 3000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute));
+				evQ->push(new EmberComputeEvent(nsCompute * kba));
 
 				if(x_down >= 0) {
 	                                evQ->push( new EmberSendEvent(x_down, (nx * kba), 3000, (Communicator) 0) );
@@ -147,7 +148,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_up, (ny * kba), 4000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute));
+				evQ->push(new EmberComputeEvent(nsCompute * kba));
 
 				if(x_up >= 0) {
         	                        evQ->push( new EmberSendEvent(x_up, (nx * kba), 4000, (Communicator) 0) );
