@@ -23,31 +23,30 @@ using namespace std;
 typedef uint64_t Addr;
 
 /* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
-/* DO NOT CHANGE ORDERING!!!!  If ordering needs to change, change code in cacheEventProcessing.cc, cacheController::checkCacheLineIsStable   */
 #define X_TYPES \
     X(NULLCMD) \
     /* Requests */ \
-    X(GetS) \
-    X(GetX) \
-    X(GetSEx) \
+    X(GetS)            /* Request to get cache line in S state */                                       \
+    X(GetX)            /* Request to get cache line in M state  (ie. exclusive write access) */         \
+    X(GetSEx)          /* Request to get cache line in M state, with a LOCK flag.  Invalidates will block until LOCK flag is lifted */ \
+                       /* GetSEx sets the LOCK, GetX removes the LOCK  */ \
     /* Request Responses */ \
-    X(GetSResp) \
-    X(GetXResp) \
-    /* Writebacks */ \
-    X(PutS) \
-    X(PutM) \
-    X(PutE) \
-    X(PutX) \
-    X(PutXE) \
+    X(GetSResp)        /* Respond to a GetS request */ \
+    X(GetXResp)        /* Respond to a GetX request */ \
+    /* Writebacks, These commands also serve as Invalidate Acknowledgments (ie they are piggybacks) */ \
+    X(PutS)            /* Remove sharer from sharer's list in the lower level cache */\
+    X(PutM)            /* Remove owner and write new data to cache line */\
+    X(PutE)            /* Remove owner but don't write data to cache line since it is 'clean' */\
+    X(PutX)            /* Remove owner and add as a sharer (M->S), write data to cache line */\
+    X(PutXE)           /* Remove owner and add as a sharer (M->S), don't write data to cache line */\
     /* Invalidates */ \
-    X(Inv)  \
-    X(InvX) \
+    X(Inv)             /* Invalidate cache line request */\
+    X(InvX)            /* Invalidate cache line exclusivity but keep as sharer (M->S). */\
     /* Directory Controller*/ \
-    X(FetchInv) \
-    X(FetchInvX) \
-    X(FetchResp) \
+    X(FetchInv)        /* Invalidate cache line and send back data to directory controller */\
+    X(FetchInvX)       /* Remove exclusivity from cache line, keep cache line in S state, and send back updated data to directory controller */\
+    X(FetchResp)       /* response to a FetchInv or FetchInvX request */\
     /* Others */ \
-    X(InvAck)  \
     X(NACK)
 
 /** Valid commands for the MemEvent */
@@ -90,6 +89,7 @@ static const char* TccLineString[] __attribute__((unused)) = {
 
 #undef TCCLINE_TYPES
 
+//Stable and transient states.  Example:  IS means cache line is in transition from Invalid to Share state
 #define BCCLINE_TYPES \
     X(I) \
     X(IS) \
