@@ -126,7 +126,7 @@ private:
 	Output* output;
 	SST::TimeConverter* nanoTimeConverter;
 	std::vector<MessageResponse> currentRecv;
-	MessageRequest** currentReq;
+	MessageRequest* currentReq;
 
 	typedef Arg_Functor<EmberEngine, int> HermesAPIFunctor;
 

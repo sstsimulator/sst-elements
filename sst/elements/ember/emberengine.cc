@@ -494,9 +494,9 @@ void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
     currentRecv.resize(1);
 
 	if(ev->deleteRequestPointer()) {
-		msgapi->wait(**(ev->getMessageRequestHandle()), &currentRecv[0], &waitFunctor);
+		msgapi->wait( *ev->getMessageRequestHandle(), &currentRecv[0], &waitFunctor);
 	} else {
-		msgapi->wait(**(ev->getMessageRequestHandle()), &currentRecv[0], &waitNoDelFunctor);
+		msgapi->wait( *ev->getMessageRequestHandle(), &currentRecv[0], &waitNoDelFunctor);
 	}
 
 	// Keep track of the current request handle, we will free this auto(magically).
@@ -512,11 +512,11 @@ void EmberEngine::processWaitallEvent(EmberWaitallEvent* ev) {
 	currentRecv.resize(numReq);
 
 	if(ev->deleteRequestPointer()) {
-		msgapi->waitall(numReq, *(ev->getMessageRequestHandle()),
-                    (MessageResponse**)&currentRecv[0], &waitFunctor);
+		msgapi->waitall(numReq, ev->getMessageRequestHandle(),
+                    (MessageResponse**)&currentRecv[0], &waitallFunctor);
 	} else {
-		msgapi->waitall(numReq, *(ev->getMessageRequestHandle()),
-                    (MessageResponse**)&currentRecv[0], &waitFunctor);
+		msgapi->waitall(numReq, ev->getMessageRequestHandle(),
+                    (MessageResponse**)&currentRecv[0], &waitallNoDelFunctor);
 	}
 
 	// Keep track of the current request handle, we will free this auto(magically).

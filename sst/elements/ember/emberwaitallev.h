@@ -24,17 +24,18 @@ namespace Ember {
 class EmberWaitallEvent : public EmberEvent {
 
 	public:
-		EmberWaitallEvent( int, MessageRequest** req, bool delRequest = true);
+		EmberWaitallEvent( int, MessageRequest reqs[], bool delRequest = true);
 		~EmberWaitallEvent();
-		MessageRequest** getMessageRequestHandle();
+		MessageRequest* getMessageRequestHandle();
         int getNumMessageRequests();
 		EmberEventType getEventType();
 		std::string getPrintableString();
 		bool deleteRequestPointer();
 
 	private:
-		MessageRequest** request;
+		MessageRequest* reqs;
 		bool delReq;
+        int  numMessageRequests;
 
 };
 

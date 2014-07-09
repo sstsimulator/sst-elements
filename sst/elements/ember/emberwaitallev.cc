@@ -14,22 +14,29 @@
 
 using namespace SST::Ember;
 
-EmberWaitallEvent::EmberWaitallEvent(int cnt, MessageRequest** req, bool delRequest) :
-	delReq(delRequest) {
-
-	request = req;
+EmberWaitallEvent::EmberWaitallEvent(int cnt, MessageRequest reqs_p[],
+                                                    bool delRequest) :
+    reqs(reqs_p),
+    delReq(delRequest),
+    numMessageRequests(cnt) 
+{
 }
 
 EmberWaitallEvent::~EmberWaitallEvent() {
 
 }
 
-MessageRequest** EmberWaitallEvent::getMessageRequestHandle() {
-	return request;
+MessageRequest* EmberWaitallEvent::getMessageRequestHandle() {
+	return reqs;
+}
+
+int EmberWaitallEvent::getNumMessageRequests()
+{
+    return numMessageRequests;
 }
 
 EmberEventType EmberWaitallEvent::getEventType() {
-	return WAIT;
+	return WAITALL;
 }
 
 std::string EmberWaitallEvent::getPrintableString() {

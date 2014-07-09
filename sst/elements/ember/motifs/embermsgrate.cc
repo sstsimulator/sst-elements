@@ -68,8 +68,7 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
                                     (Communicator) 0, &reqs[i]) );
             }
 
-            evQ->push( new EmberWaitallEvent( numMsgs, 
-                                    (MessageRequest**)&reqs[0], false ) ); 
+            evQ->push( new EmberWaitallEvent( numMsgs, &reqs[0], false ) ); 
             evQ->push( new EmberGetTimeEvent( &m_stopTime ) );
         } else {
 
@@ -80,9 +79,7 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
 
             evQ->push( new EmberBarrierEvent((Communicator)0) );
             evQ->push( new EmberGetTimeEvent( &m_startTime ) );
-
-            evQ->push( new EmberWaitallEvent( numMsgs, 
-                                    (MessageRequest**)&reqs[0], false ) ); 
+            evQ->push( new EmberWaitallEvent( numMsgs, &reqs[0], false ) ); 
             evQ->push( new EmberGetTimeEvent( &m_stopTime ) );
         }
     } else {

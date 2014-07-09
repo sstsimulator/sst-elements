@@ -24,8 +24,8 @@ EmberWaitEvent::~EmberWaitEvent() {
 
 }
 
-MessageRequest** EmberWaitEvent::getMessageRequestHandle() {
-	return &request;
+MessageRequest* EmberWaitEvent::getMessageRequestHandle() {
+	return request;
 }
 
 EmberEventType EmberWaitEvent::getEventType() {

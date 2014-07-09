@@ -56,6 +56,12 @@ void EmberHalo2DNBRGenerator::configureEnvironment(const SST::Output* output, ui
 	rank = pRank;
 	//size = worldSize;
 
+    if(0 == rank) {
+        output->output("PingPong, size=%d msgSizeX=%d msgSizeY=%d"
+            " iter=%d nsCompute=%d\n", 
+            worldSize,messageSizeX,messageSizeY,iterations,nsCompute);
+    }
+
 	// Do we need to auto-size the 2DNBR processor array?
 	if(0 == sizeX || 0 == sizeY) {
 		uint32_t localX = SST::Math::square_root(worldSize);
