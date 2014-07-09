@@ -609,7 +609,9 @@ void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
 
 	// Issue the next event with a delay (essentially the time we computed something)
-	issueNextEvent((uint64_t) (computeNoiseDistrib->getNextDouble() * ev->getNanoSecondDelay()));
+	const uint64_t noiseAdjustedTime = (computeNoiseDistrib->getNextDouble() * ev->getNanoSecondDelay());
+	output->verbose(CALL_INFO, 2, 0, "Adjust time by noise distribution to give: %" PRIu64 "ns\n", noiseAdjustedTime);
+	issueNextEvent(noiseAdjustedTime);
 	accumulateTime = histoCompute;
 }
 
