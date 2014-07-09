@@ -149,6 +149,7 @@ bool DMAEngine::isIssuable(DMACommand *cmd) const
 
 void DMAEngine::startRequest(Request *req)
 {
+    assert(0);
     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
     dbg.debug(_L10_, "Received request to transfer from %#"PRIx64" to 0x%"PRIx64"\n",
             req->getSrc(), req->getDst());
@@ -170,6 +171,7 @@ void DMAEngine::startRequest(Request *req)
 
 void DMAEngine::processPacket(Request *req, MemEvent *ev)
 {
+    assert(0);
     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
     if ( ev->getCmd() == SupplyData ) {
         if ( !req->loadKeys.count(ev->getResponseToID()) ) {
