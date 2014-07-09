@@ -370,14 +370,14 @@ private:
 };
 
 /*  Implementation Details
-    The coherence implemented by this component is a directory-based intra-node MESI/MSI coherency
-    similar to modern processors like Intel sandy bridge and ARM CCI.  Directory-based in the common
-    norm nowadays given that fact that snoopy-based systems are not scalable beyond 3-4 cores.
+    The coherency implemented by MemHierarchy's 'Cache' component is a directory-based intra-node MESI/MSI coherency
+    similar to modern processors like Intel sandy bridge and ARM CCI.  Intra-node Directory-based coherency
+    in the common norm nowadays given that fact that snoopy-based systems do not scale well beyond 3-4 cores.
     The class "Directory Controller" implements a directory-based inter-node coherency and needs to 
     be used along "Merlin", our interconnet network simulator (Contact Scott Hemmert about Merlin).
  
     The Cache class serves as the main cache controller.  It is in charge or handling incoming
-    SST-based events (cacheEventProcessing.cc) and forwarding the requests to the system's 
+    SST-based events (cacheEventProcessing.cc) and forwarding the requests to the other system's
     subcomponents:
         - Cache Array:  Class in charge keeping track of all the cache lines in the cache.  The 
         Cache Line inner class stores the data and state related to a particular cache line.
@@ -413,7 +413,7 @@ private:
  
  
     
-    The cache itself is a "blocking" cache, which is the most often type found in hardware.  A blocking
+    The cache itself is a "blocking" cache, which is the  type most often found in hardware.  A blocking
     cache does not respond to requests if the cache line is in transition.  Instead, it stores
     pending requests in the MSHR.  The MSHR is in charge of "replaying" pending requests once
     the cache line is in a stable state. 
