@@ -29,10 +29,6 @@ AC_DEFUN([SST_m5C_CONFIG], [
       LDFLAGS="-L$with_gem5 $LDFLAGS "],
     [])
 
-  SST_CHECK_PYTHON([have_python=1],
-	[have_python=0],
-	[AC_MSG_ERROR([Python is needed for GEM5])])
-
   AS_IF([test ! -z "$with_gem5" -a "$with_gem5" != "no" -a "$have_python" = "no"],
 	[AC_MSG_ERROR(["Cannot find Python.h, this is required for M5 component to build."])])
 
