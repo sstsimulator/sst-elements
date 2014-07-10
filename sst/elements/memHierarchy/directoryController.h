@@ -245,15 +245,27 @@ class DirectoryController : public Component {
             assert(countRefs() == 0);
         }
         
+        void setDirty(int id){
+            dirty       = true;
+            sharers[id] = true;
+            assert(countRefs() == 1);
+        }
+        
         bool isDirty(){
             return dirty ? true : false;
         }
         
         void clearDirty(){
             dirty = false;
+        }
+        
+        
+        void clearDirty(int id){
+            dirty       = false;
+            sharers[id] = false;
             assert(countRefs() == 0);
         }
-
+        
         uint32_t findOwner(void){
             //assert(dirty);
             //assert(countRefs() == 1);

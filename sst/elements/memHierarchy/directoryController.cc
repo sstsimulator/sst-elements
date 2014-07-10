@@ -192,10 +192,12 @@ bool DirectoryController::processPacket(MemEvent *ev){
     /* New Request */
     switch(cmd){
         case PutS:
-            PutSReqReceived++;
+            //if(!entry) break;
             dbg.output(CALL_INFO, "\n\nDC PutS - %s - Request Received\n", getName().c_str());
+            PutSReqReceived++;
             requesting_node = node_name_to_id(ev->getSrc());
-            entry->sharers[requesting_node]= false;
+            entry->sharers[requesting_node] = false;
+            assert(!entry->isDirty());
             if(entry->countRefs() == 0) resetEntry(entry);
             break;
             
@@ -203,9 +205,9 @@ bool DirectoryController::processPacket(MemEvent *ev){
             if(cmd == PutM)         PutMReqReceived++;
             else if(cmd == PutE)    PutEReqReceived++;
             
+            entry->activeReq = ev;  //todo: delete
             assert(entry);
             dbg.debug(_L10_, "\n\nDC PutM - %s - Request Received\n", getName().c_str());
-            entry->activeReq = ev;
             if(entry->inController){
                 ++numCacheHits;
                 handlePutM(entry, ev);
@@ -398,15 +400,22 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
 
 void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
     dbg.debug(_L10_, "Finishing Fetch. Writing data to memory. \n");
-    entry->sharers[node_id(new_ev->getSrc())] = false;
-    entry->clearDirty();
+    bool uncached = entry->activeReq->queryFlag(MemEvent::F_UNCACHED);
+    int writeback_node_id  = node_id(new_ev->getSrc());
+    int requesting_node_id = node_id(entry->activeReq->getSrc());
+    Command cmd = entry->activeReq->getCmd();
+    //entry->sharers[node_id(new_ev->getSrc())] = false;
+    //entry->clearDirty();
+    entry->clearDirty(writeback_node_id);
     
-    if(entry->activeReq->getCmd() == GetX || entry->activeReq->getCmd() == GetSEx){
-		entry->setDirty();
-	}
+    if(!uncached){
+        if(cmd == GetX || cmd == GetSEx) entry->setDirty(requesting_node_id);
+        else entry->sharers[requesting_node_id] = true;
+    }
+    
+    //if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
+         //entry->sharers[node_id(entry->activeReq->getSrc())] = true;
 
-    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
-        entry->sharers[node_id(entry->activeReq->getSrc())] = true;
 
 	MemEvent *ev = entry->activeReq->makeResponse();
 	ev->setPayload(new_ev->getPayload());
@@ -434,16 +443,17 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
 
 void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev){
     uint32_t requesting_node = node_id(entry->activeReq->getSrc());
-
-	assert(0 == entry->waitingAcks);
+    bool uncached = entry->activeReq->queryFlag(MemEvent::F_UNCACHED);
+	
+    assert(0 == entry->waitingAcks);
     assert(entry->countRefs() <= 1);
     if(entry->countRefs() == 1)
         assert(entry->sharers[requesting_node]);
 
     entry->clearSharers();
-    entry->setDirty();
-    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED)) entry->sharers[requesting_node] = true;
     
+    if(!uncached) entry->setDirty(requesting_node);
+
 	entry->nextFunc = &DirectoryController::sendRequestedData;
 	requestDataFromMemory(entry);
 }
@@ -455,19 +465,25 @@ void DirectoryController::handlePutS(MemEvent* ev){
     int requesting_node = node_name_to_id(ev->getSrc());
     entry->sharers[requesting_node]= false;
     entry->waitingAcks--;
+    assert(!entry->isDirty());
     if(0 == entry->waitingAcks ) advanceEntry(entry);
 }
 
 
 void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
     assert(entry->isDirty());
-    assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
-    if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
-        entry->sharers[node_id(entry->activeReq->getSrc())] = false; //or true?
+    assert(entry->findOwner() == node_lookup[ev->getSrc()]);
+    int id = node_id(ev->getSrc());
     
-    entry->clearDirty();
+    //if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
+    //    entry->sharers[node_id(entry->activeReq->getSrc())] = false; //or true?
+    
+    //entry->clearDirty();
 
-    if(ev->getCmd() == PutM) writebackData(entry->activeReq);
+    entry->clearDirty(id);
+
+    
+    if(ev->getCmd() == PutM) writebackData(ev);
 	updateEntryToMemory(entry);
 }
 
