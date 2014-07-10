@@ -182,7 +182,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
         delete ev;
         return true;
     }
-
+    
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;
 

@@ -228,16 +228,15 @@ class DirectoryController : public Component {
         
 		uint32_t countRefs(void){
 			uint32_t count = 0;
-			for ( std::vector<bool>::iterator i = sharers.begin() ; i != sharers.end() ; ++i ) {
-				if ( *i ) count++;
-			}
+            for (uint32_t i = 0; i < sharers.size(); i++)
+                if (sharers[i]) count++;
+            
 			return count;
 		}
 
         void clearSharers(void){
-			for ( std::vector<bool>::iterator i = sharers.begin() ; i != sharers.end() ; ++i ) {
-				*i = false;
-			}
+            for (uint32_t i = 0; i < sharers.size(); i++)
+                sharers[i] = false;
         }
         
         
@@ -270,8 +269,8 @@ class DirectoryController : public Component {
         uint32_t findOwner(void){
             assert(dirty);
             assert(countRefs() == 1);
-            for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
-                if ( sharers[i] ) return i;
+            for (uint32_t i = 0; i < sharers.size(); i++) {
+                if (sharers[i]) return i;
             }
             assert(0);   /* Should never be here */
             return 0;
