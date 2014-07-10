@@ -12,9 +12,9 @@
 /**
  * Allocator that uses tbe best-fit linear allocation strategy
  * (according to the order specified when the allocator is created)->
- * Uses the smallest interval of free processors that is big enough->  If
+ * Uses the smallest interval of free nodes that is big enough->  If
  * none are big enough, chooses the one that minimizes the span
- * (maximum distance along linear order between assigned processors)->
+ * (maximum distance along linear order between assigned nodes)->
  */
 
 #include "sst_config.h"
@@ -62,14 +62,14 @@ string BestFitAllocator::getSetupInfo(bool comment)
 //allocation)
 AllocInfo* BestFitAllocator::allocate(Job* job) 
 {
-    //schedout.debug(CALL_INFO, 7, 0, "Allocating %s procs: \n", job -> toString().c_str());
+    //schedout.debug(CALL_INFO, 7, 0, "Allocating %s nodes: \n", job -> toString().c_str());
 
-    //check if we have enough free processors
+    //check if we have enough free nodes
     if (!canAllocate(*job)) return NULL;
 
     vector<vector<MeshLocation*>*>* intervals = getIntervals();
 
-    int num = job -> getProcsNeeded();  //number of processors for job
+    int num = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
 
     int bestInterval = -1;  //index of best interval found so far
     //(-1 = none)
@@ -103,7 +103,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         //no single interval is big enough; minimize the span
         return minSpanAllocate(job);
     } else {
-        MeshAllocInfo* retVal = new MeshAllocInfo(job);
+        MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
         MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine); 
         if(mMachine == NULL){
             schedout.fatal(CALL_INFO, 1, "Best Fit Allocator requires MeshMachine");
@@ -111,7 +111,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         int j;
         for (j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
             if (j < num) {
-                retVal -> processors -> at(j) = intervals -> at(bestInterval) -> at(j);
+                retVal -> nodes -> at(j) = intervals -> at(bestInterval) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt(*mMachine);
             } else {
                 delete intervals -> at(bestInterval) -> at(j);

@@ -105,9 +105,9 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 	static int count = 0;
 
-	std::vector<int> * freeProcs = ((SimpleMachine*)machine)->freeProcessors();
+	std::vector<int> * freeNodes = ((SimpleMachine*)machine)->getFreeNodes();
 
-	if( (unsigned) job->getProcsNeeded() <= freeProcs->size() ){
+	if( (unsigned) ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode()) <= freeNodes->size() ){
 		if( constraints_changed() ){
 			read_constraints();
 		}
@@ -147,17 +147,19 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 	}
 
-	delete freeProcs;
+	delete freeNodes;
 
 	return allocation;
 }
 
 
 AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
-	AllocInfo * alloc = new AllocInfo( job );
-	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->freeProcessors();
+	AllocInfo * alloc = new AllocInfo( job, *machine );
+	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->getFreeNodes();
+    
+    int numNodes = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
 
-	for( int node_counter = 0; node_counter < job->getProcsNeeded(); node_counter ++ ){
+	for( int node_counter = 0; node_counter < numNodes; node_counter ++ ){
 #define LINEAR_FROM_TOP true
 #ifdef LINEAR_FROM_TOP
                 // mimic the simple allocator by selecting nodes linearly, from the top
@@ -179,7 +181,7 @@ AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 
 
 AllocInfo * ConstraintAllocator::generate_AllocInfo( ConstrainedAllocation * constrained_alloc ){
-	AllocInfo * alloc = new AllocInfo( constrained_alloc->job );
+	AllocInfo * alloc = new AllocInfo( constrained_alloc->job, *machine );
 
 	int node_counter = 0;
 
@@ -272,8 +274,8 @@ std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::stri
 // returns an allocation satisifying the given constraint, or NULL if it can not be satisifed 
 // satisfied means: at least one constrained node used and one constraint node avoided
 ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::vector<std::string> * nodes_on_constraint_line ){
-	std::vector<int> * all_available_compute_nodes = ((SimpleMachine *)machine)->freeProcessors();
-	std::vector<int> * unconstrained_compute_nodes = ((SimpleMachine *)machine)->freeProcessors();
+	std::vector<int> * all_available_compute_nodes = ((SimpleMachine *)machine)->getFreeNodes();
+	std::vector<int> * unconstrained_compute_nodes = ((SimpleMachine *)machine)->getFreeNodes();
 	std::list<std::vector<int> *> * constrained_compute_nodes = new std::list<std::vector<int> *>(); 
 
 	std::sort( all_available_compute_nodes->begin(), all_available_compute_nodes->end() );
@@ -309,11 +311,13 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
 	}
 	
+	unsigned numNodes = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+	
 	int num_constrained_needed = 0;
-	if( unconstrained_compute_nodes->size() >= (unsigned) job->getProcsNeeded() ){
+	if( unconstrained_compute_nodes->size() >= numNodes ){
 		num_constrained_needed = 1;
 	}else{
-		num_constrained_needed = job->getProcsNeeded() - unconstrained_compute_nodes->size();
+		num_constrained_needed = numNodes - unconstrained_compute_nodes->size();
 	}
 
         // try to remove at least one constraint node (including those with no available compute nodes)
@@ -332,7 +336,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
 	     constraint_node != constrained_compute_nodes->end(); ++constraint_node ){
 		for( std::vector<int>::reverse_iterator constrained_node = (*constraint_node)->rbegin();
-		     (constrained_node != (*constraint_node)->rend()) && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < (unsigned) job->getProcsNeeded()); ++constrained_node ){
+		     (constrained_node != (*constraint_node)->rend()) && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < numNodes); ++constrained_node ){
 			if (DEBUG) std::cout << " Adding constrained node: " << *constrained_node << std::endl;
 			new_allocation->constrained_nodes.insert( *constrained_node );
 		}
@@ -341,7 +345,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 
         // and fill the balance with unconstrained nodes
 	for( std::vector<int>::reverse_iterator unconstrained_node = unconstrained_compute_nodes->rbegin();
-	     unconstrained_node != unconstrained_compute_nodes->rend() && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < (unsigned) job->getProcsNeeded()); ++unconstrained_node ){
+	     unconstrained_node != unconstrained_compute_nodes->rend() && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < numNodes); ++unconstrained_node ){
 		if (DEBUG) std::cout << " Adding unconstrained node: " << *unconstrained_node << std::endl;
 		new_allocation->unconstrained_nodes.insert( *unconstrained_node );
 	}

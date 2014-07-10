@@ -34,11 +34,11 @@ namespace SST {
                 int ydim;
                 int zdim;
 
-                std::vector<std::vector<std::vector<bool> > > isFree;  //whether each processor is free
+                std::vector<std::vector<std::vector<bool> > > isFree;  //whether each node is free
                 
             public:
                 
-                MeshMachine(int Xdim, int Ydim, int Zdim, double** D_matrix);
+                MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, double** D_matrix);
 
                 static std::string getParamHelp();
 
@@ -52,9 +52,9 @@ namespace SST {
 
                 void reset();
 
-                std::vector<MeshLocation*>* freeProcessors() const;
+                std::vector<MeshLocation*>* freeNodes() const;
 
-                std::vector<MeshLocation*>* usedProcessors() const;
+                std::vector<MeshLocation*>* usedNodes() const;
 
                 void allocate(AllocInfo* allocInfo);
 

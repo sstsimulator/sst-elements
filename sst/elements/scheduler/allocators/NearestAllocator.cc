@@ -215,7 +215,7 @@ std::string NearestAllocator::getSetupInfo(bool comment)
 }
 AllocInfo* NearestAllocator::allocate(Job* job)
 {
-    return allocate(job,((MeshMachine*)machine) -> freeProcessors());
+    return allocate(job,((MeshMachine*)machine) -> freeNodes());
 }
 
 //Allocates job if possible.
@@ -229,14 +229,14 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     
     MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
 
-    int numProcs = job -> getProcsNeeded();
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
 
     //optimization: if exactly enough procs are free, just return them
-    if ((unsigned int) numProcs == available -> size()) {
-        for (int i = 0; i < numProcs; i++) {
-            (*retVal -> processors)[i] = (*available)[i];
+    if ((unsigned int) nodesNeeded == available -> size()) {
+        for (int i = 0; i < nodesNeeded; i++) {
+            (*retVal -> nodes)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt(*mMachine);
         }
         delete available;
@@ -258,7 +258,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         //need to call LP to get possCenters
         //if done using only energy, just return the LP results by copying possCenters
         //otherwise, we'll use it as the actual centers
-        possCenters = EnergyHelpers::getEnergyNodes(available, numProcs, *mMachine);
+        possCenters = EnergyHelpers::getEnergyNodes(available, nodesNeeded, *mMachine);
     } else { 
         possCenters = centerGenerator -> getCenters(available);
     }
@@ -266,15 +266,15 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     std::vector<MeshLocation*>* nearest = NULL;
     std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
     for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
-        nearest = pointCollector -> getNearest(*center, numProcs, available);
+        nearest = pointCollector -> getNearest(*center, nodesNeeded, available);
 
-        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, numProcs, (MeshMachine*) machine); 
+        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, nodesNeeded, (MeshMachine*) machine); 
         if (val -> first < bestVal -> first || 
             (val -> first == bestVal -> first && val -> second < bestVal -> second) ) {
             delete bestVal;
             bestVal = val;
-            for (int i = 0; i < numProcs; i++) {
-                (*(retVal -> processors))[i] = (*nearest)[i];
+            for (int i = 0; i < nodesNeeded; i++) {
+                (*(retVal -> nodes))[i] = (*nearest)[i];
                 retVal -> nodeIndices[i] = (*nearest)[i] -> toInt(*mMachine);
             }
             if (recordingTies) {
@@ -287,7 +287,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         if (recordingTies && val -> first == bestVal -> first) {
             delete alloc;
             alloc = new std::vector<MeshLocation*>();
-            for (int i = 0; i < numProcs; i++)
+            for (int i = 0; i < nodesNeeded; i++)
                 alloc -> push_back((*nearest)[i]);
             bestAllocs -> push_back(alloc);
         }

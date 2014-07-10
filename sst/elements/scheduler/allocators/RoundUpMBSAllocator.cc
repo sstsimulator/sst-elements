@@ -71,7 +71,8 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job)
     schedout.debug(CALL_INFO, 1, 0, "Allocating %s\n",job -> toString().c_str());
 
     //a map of dimensions to numbers
-    map<int,int>* RBR = generateIdealRequest(job -> getProcsNeeded());
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    map<int,int>* RBR = generateIdealRequest(nodesNeeded);
     //if (DEBUG) printRBR(RBR);
     printRBR(RBR);
 
@@ -125,7 +126,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
 {
     //construct what we will eventually return
     //TreeMap<int,int> retVal = new TreeMap<int,int>();
-    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job);
+    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job, *machine);
 
     int procs = 0;
 
@@ -185,10 +186,11 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
             } else {
                 toAssign = value;
             }
+            int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
             //add if necessary
             for (int assigned = 0; assigned < toAssign && value > 0; assigned++)
             {
-                vector<Block*>* toAllocate = makeBlockAllocation(*(FBR -> at(key) -> begin()), job -> getProcsNeeded() - procs);
+                vector<Block*>* toAllocate = makeBlockAllocation(*(FBR -> at(key) -> begin()), nodesNeeded - procs);
 
                 retVal = allocateBlocks(retVal, toAllocate, procs);
 
@@ -198,7 +200,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
                 value--;
 
                 //end the entire loop if we have not allocated enough blocks
-                if (procs >= job -> getProcsNeeded()){
+                if (procs >= nodesNeeded){
                     RBR -> clear();
                     value = 0;
                 }
@@ -302,7 +304,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocateBlocks(MBSMeshAllocInfo* retVal, 
         set<MeshLocation*, MeshLocation>* blockprocs = (*block) -> processors();
         set<MeshLocation*, MeshLocation>::iterator procs = blockprocs -> begin();
         for (int i = allocated;procs != blockprocs -> end(); i++) {
-            retVal -> processors -> at(i) = *procs;
+            retVal -> nodes -> at(i) = *procs;
             ++procs;
             allocated++;
         }

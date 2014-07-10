@@ -32,7 +32,7 @@ namespace SST {
 
                 bool canAllocate(const Job & j)
                 {  
-                    return (machine -> getNumFreeProcessors() >= j.getProcsNeeded());
+                    return (machine -> getNumFreeNodes() >= j.getProcsNeeded());
                 }
                 bool canAllocate(const Job & j, std::vector<MeshLocation*>* available)
                 {  

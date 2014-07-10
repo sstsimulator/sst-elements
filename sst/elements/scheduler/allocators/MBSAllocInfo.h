@@ -35,7 +35,7 @@ namespace SST {
             public:
                 std::set<Block*, Block>* blocks;
 
-                MBSMeshAllocInfo(Job* j) : MeshAllocInfo(j){
+                MBSMeshAllocInfo(Job* j, const Machine & mach) : MeshAllocInfo(j, mach){
                     //Keep track of the blocks allocated
                     Block* BComp = new Block(NULL,NULL);
                     blocks = new std::set<Block*, Block>(*BComp);

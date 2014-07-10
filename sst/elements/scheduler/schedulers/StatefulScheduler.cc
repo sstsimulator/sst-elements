@@ -601,7 +601,7 @@ Job* StatefulScheduler::tryToStart(unsigned long time, const Machine & mach)
         }
 
         if (!sc -> isEnd) {
-            if (mach.getNumFreeProcessors() < sc->j->getProcsNeeded()) {
+            if (mach.getNumFreeNodes() < sc->j->getProcsNeeded()) {
                 nextToStart = NULL;
             } else {
                 nextToStartTime = time;

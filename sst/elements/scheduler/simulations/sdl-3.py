@@ -19,7 +19,8 @@ scheduler.addParams({
       "FST" : "none", # none, relaxed, strict. (default: none)
       "timeperdistance" : ".7[.3,0.9875,0.0962,.2]", # communication overhead params (default: none)
       "runningTimeSeed" : "42", # communication overhead randomization seed (default: none)
-      "dMatrixFile" : "DMatrix4_5_2" # heat recirculation matrix path (default: none)
+      "dMatrixFile" : "DMatrix4_5_2", # heat recirculation matrix path (default: none)
+      "coresPerNode" : "1" # default: 1
 })
 
 # nodes

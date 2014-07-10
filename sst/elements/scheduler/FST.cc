@@ -96,7 +96,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     //create copies of the scheduler, machine, and allocator for our simulation
     Scheduler* sched = insched -> copy(running, toRun);
-    Machine* mach = new SimpleMachine(inmach -> getNumProcs(), true, NULL);
+    Machine* mach = new SimpleMachine(inmach->getNumNodes(), true, inmach->getNumCoresPerNode(), NULL);
     Allocator* alloc = new SimpleAllocator((SimpleMachine*) mach);
     TaskMapper* taskMap = new SimpleTaskMapper(mach);
     string nullstr = "";
@@ -105,7 +105,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     for (unsigned int x = 0; x < running -> size(); x++) {
         AllocInfo* ai = alloc -> allocate(running -> at(x));
-        if (NULL == ai) schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %d processors for %s", mach -> getNumFreeProcessors(), running -> at(x) -> toString().c_str());
+        if (NULL == ai) schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %d processors for %s", mach -> getNumFreeNodes(), running -> at(x) -> toString().c_str());
         mach -> allocate(ai);
         jobToAi -> insert(pair<Job*, AllocInfo*>(running -> at(x), ai));
     }
@@ -434,7 +434,7 @@ for(std::multimap<unsigned long, AllocInfo*>::iterator it = endtimes -> begin();
 schedout.output("\n");
 
 while (!endtimes -> empty()) { 
-    if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("popping %s off endtimes at %lu\nstart time:%lu\nfreeprocs left:%d\n", endtimes -> begin() -> second -> job -> toString().c_str(), endtimes->begin()->first, endtimes ->begin()->second -> job ->getStartTime(), mach->getNumFreeProcessors()); 
+    if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("popping %s off endtimes at %lu\nstart time:%lu\nfreeprocs left:%d\n", endtimes -> begin() -> second -> job -> toString().c_str(), endtimes->begin()->first, endtimes ->begin()->second -> job ->getStartTime(), mach->getNumFreeNodes()); 
     if (!jinserted && endtimes -> begin() -> first > j -> getArrivalTime()) {
         //schedout.output("found time for job %s\n", j ->
         //toString().c_str()); tell scheduler about our job 
@@ -474,11 +474,11 @@ while (!endtimes -> empty()) {
     //see if we can start any jobs
     //schedout.output("before trying to start loop\n");
     do {
-        schedout.output("fp before TTS: %d", mach->getNumFreeProcessors());
+        schedout.output("fp before TTS: %d", mach->getNumFreeNodes());
         ai = sched -> tryToStart(alloc, time, mach, stats);
         if (ai != NULL) {
             if (ai -> job == j) {
-                if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("scheduling in last loop at %lu, fp: %d\n", time, mach->getNumFreeProcessors());
+                if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("scheduling in last loop at %lu, fp: %d\n", time, mach->getNumFreeNodes());
                 schedout.output("Running when sched in last loop: ");
                 for(int x = 0; x < running -> size(); x++)
                     schedout.output(" %s", running -> at(x) -> toString().c_str());

@@ -411,14 +411,10 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 curx = nextpoint % xdimh;
                 cury = nextpoint / xdimh;
 
-                //printf("1: %d|%d|%d 2: %d|%d|%d 3: %d|%d|%d 4: %d|%d|%d\n", point1,rotate[point1],mirror[point1],point2,rotate[point2],mirror[point2],point3,rotate[point3],mirror[point3],point4,rotate[point4],mirror[point4]);
-
                 if (nextpoint == 0) {
                     curxd /= 2;
                     curyd /= 2;
 
-                    //print (debug) the current rankhings
-                    //printf("\n");
                     schedout.debug(CALL_INFO, 4, 0, "\n");
                     for(int y = ydimh - 1; y >= 0; y--) {
                         for(int x = 0; x < xdimh; x++) {
@@ -433,23 +429,6 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                             schedout.debug(CALL_INFO, 4, 0, "\n");
                         }
                     }
-                    //if (DEBUG) {
-                    //    //print the current rankhings
-                    //    printf("\n");
-                    //    for(int y = ydimh - 1; y >= 0; y--) {
-                    //        for(int x = 0; x < xdimh; x++) {
-                    //            printf("%3d ", rankh[x + y * xdimh]);
-                    //            if((x+1) % curxd == 0)
-                    //                printf("|");
-                    //        }
-                    //        printf("\n");
-                    //        if(y % curyd == 0) {
-                    //            for(int z = 0; z < 4 * xdimh + xdimh / curxd; z++)
-                    //                printf("-");
-                    //            printf("\n");
-                    //        }
-                    //    }
-                    //}
                 }
             }
             delete [] rotate;
@@ -481,15 +460,6 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             delete [] exists;
             delete [] rankh;
 
-            //print rank
-            /*
-            schedout.debug(CALL_INFO, 4, 0, "\n");
-            for(int y = ydim - 1; y >= 0; y--) {
-                for(int x = 0; x < xdim; x++) {
-                    schedout.debug(CALL_INFO, 4, 0, "%3d ", rank[x + y * xdim]);
-                }
-                schedout.debug(CALL_INFO, 4, 0, "\n");
-            }*/
         } else { 
 
             //a 3D Hilbert curve. There are many ways to extend a Hilbert curve
@@ -594,33 +564,6 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             ydim = realydim;
             zdim = realzdim;
 
-            //if (DEBUG) {
-            //    //print out the points we assigned by rank
-            //    //(can't really print out a 3D map like we did for 2D)
-            //    printf("resulting indices, in order:\n");
-            //    bool flag;
-            //    for (int rankin = 0; rankin < xdim * ydim * zdim; rankin++) {
-            //        //find the point
-            //        flag = false;
-            //        for (int index = 0; index < xdim * ydim * zdim; index++) {
-            //            if(rank[index] == rankin) {
-            //                if (flag) {
-            //                    printf("error: double");
-            //                    exit(1);
-            //                }
-            //                printf("(%d,%d,%d),  ", index % xdim, (index % (xdim * ydim)) / xdim, index / (xdim * ydim));
-            //                if ((rankin + 1) % xdim == 0) printf("\n");
-
-            //                flag = true;
-            //            }
-            //        }
-            //        if (!flag) {
-            //            printf("error: %d not found", rankin);
-            //            exit(1);
-            //        }
-            //    } 
-            //}
-
             //print out the points we assigned by rank
             //(can't really print out a 3D map like we did for 2D)
             schedout.debug(CALL_INFO, 4, 0, "resulting indices, in order:\n");
@@ -644,16 +587,6 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 }
             } 
 
-            //int* exists = new int[xdim * ydim * zdim];
-            //for(int x = 0; x < xdim * ydim * zdim; x++)
-            //    exists[x] = 0;
-            //for(int x = 0; x < xdim * ydim * zdim; x++)
-            //    exists[rank[x]]++;
-            //for(int x = 0; x < xdim * ydim * zdim; x++)
-            //    if(exists[x] != 1)
-            //        printf("ERROR: %d %d", x, exists[x]);
-            //printf("Done listing errors\n");
-            //exit(1);
             delete [] exists;
             delete [] rot;
             delete [] next;
@@ -697,32 +630,6 @@ int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L)
     coordinates[zpos] = L->z;
     return rank[coordinates[0] + coordinates[1] * xdim + coordinates[2] * xdim * ydim];
 }
-
-/*
-   currently unused (and doesn't work with dimordering)
-   MeshLocation* LinearAllocator::MeshLocationOrdering::locationOf(int Rank) {
-//return MeshLocation having given rank
-//raises exception if Rank is out of range
-
-int pos = -1;   //ordinal value of position having rank
-int x, y, z;    //coordinate values
-
-//find Rank in array with ordering
-int i=0;
-while(pos == -1) {
-if(rank[i] == Rank)
-pos = i;
-i++;
-}
-
-//translate position in ordering into coordinates
-x = pos % xdim;
-pos = pos / xdim;
-y = pos % ydim;
-z = pos / ydim;
-return new MeshLocation(x, y, z);
-}
-*/
 
 //Takes in a set of parameters and passes them on to MeshLocationOrdering,
 //which will give us an ordering on the mesh.  This ordering is the returned.
@@ -781,8 +688,8 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
 vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals() 
 {
     set<MeshLocation*, MeshLocationOrdering>* avail = new set<MeshLocation*,MeshLocationOrdering>(*ordering);
-    //add all from machine->freeProcessors() to avail
-    vector<MeshLocation*>* machfree = ((MeshMachine*)machine) -> freeProcessors();
+    //add all from machine->freeNodes() to avail
+    vector<MeshLocation*>* machfree = ((MeshMachine*)machine) -> freeNodes();
 
     avail -> insert(machfree -> begin(), machfree -> end());
 
@@ -812,27 +719,6 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
         delete curr;
     }
 
-    //if (DEBUG) {
-    //    printf("getIntervals:");
-    //    for (vector<vector<MeshLocation*>*>::iterator ar = retVal -> begin(); ar != retVal -> end(); ar++) {
-    //        printf("Interval: ");
-    //        for (int x = 0; x < (int)(*ar) -> size(); x++) {
-    //            (*ar) -> at(x) -> print();
-    //            printf(" ");
-    //        }
-    //        printf("\n");
-    //    }
-    //}
-    /*
-    schedout.debug(CALL_INFO, 7, 0, "getIntervals:");
-    for (vector<vector<MeshLocation*>*>::iterator ar = retVal -> begin(); ar != retVal -> end(); ar++) {
-        schedout.debug(CALL_INFO, 7, 0, "Interval: ");
-        for (int x = 0; x < (int)(*ar) -> size(); x++) {
-            (*ar) -> at(x) -> print();
-            schedout.debug(CALL_INFO, 7, 0, " ");
-        }
-        schedout.debug(CALL_INFO, 7, 0, "\n");
-    }*/
     avail -> clear();
     machfree -> clear();
     delete avail;
@@ -843,9 +729,9 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
 
 //Version of allocate that just minimizes the span.
 AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
-    vector<MeshLocation*>* avail = ((MeshMachine*)machine) -> freeProcessors();
+    vector<MeshLocation*>* avail = ((MeshMachine*)machine) -> freeNodes();
     sort(avail -> begin(), avail -> end(), *ordering);
-    int num = job -> getProcsNeeded();
+    int num = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());;
 
     //scan through possible starting locations to find best one
     int bestStart = 0;   //index of best starting location so far
@@ -859,11 +745,11 @@ AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
     }
 
     //return the best allocation found
-    MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
     MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
     for (int i = 0; i< (int)avail -> size(); i++) {
         if (i >= bestStart && i < bestStart + num) {
-            retVal -> processors -> at(i  - bestStart) = avail-> at(i);
+            retVal -> nodes -> at(i  - bestStart) = avail-> at(i);
             retVal -> nodeIndices[i  - bestStart] = avail-> at(i)->toInt(*mMachine);
         } else {
             delete avail -> at(i); //have to delete any not being used

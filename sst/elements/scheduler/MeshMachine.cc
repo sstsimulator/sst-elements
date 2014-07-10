@@ -43,7 +43,8 @@ namespace SST {
     }
 }
 
-MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, double** D_matrix) : Machine((Xdim*Ydim*Zdim), D_matrix)
+MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, double** D_matrix)
+                         : Machine((Xdim*Ydim*Zdim), numCoresPerNode, D_matrix)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
@@ -74,6 +75,7 @@ std::string MeshMachine::getSetupInfo(bool comment)
     else com="";
     std::stringstream ret;
     ret << com<<xdim<<"x"<<ydim<<"x"<<zdim<<" Mesh";
+    ret << ", " << coresPerNode << " cores per node";
     return ret.str();
 }
 
@@ -94,8 +96,8 @@ void MeshMachine::reset()
     }
 }
 
-//returns list of free processors
-std::vector<MeshLocation*>* MeshMachine::freeProcessors() const
+//returns list of free nodes
+std::vector<MeshLocation*>* MeshMachine::freeNodes() const
 {
     std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
@@ -110,8 +112,8 @@ std::vector<MeshLocation*>* MeshMachine::freeProcessors() const
     return retVal;
 }
 
-//returns list of used processors
-std::vector<MeshLocation*>* MeshMachine::usedProcessors() const
+//returns list of used nodes
+std::vector<MeshLocation*>* MeshMachine::usedNodes() const
 {
     std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
@@ -126,35 +128,35 @@ std::vector<MeshLocation*>* MeshMachine::usedProcessors() const
     return retVal;
 }
 
-//allocate list of processors in allocInfo
+//allocate list of nodes in allocInfo
 void MeshMachine::allocate(AllocInfo* allocInfo)
 {
-    std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
+    std::vector<MeshLocation*>* nodes = ((MeshAllocInfo*)allocInfo) -> nodes;
     //MeshMachine (unlike simplemachine) is not responsible for setting
-    //which processors are used in allocInfo as it's been set by the
+    //which nodes are used in allocInfo as it's been set by the
     //allocator already
 
-    for (unsigned int i = 0; i < procs -> size(); i++) {
-        if (!isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy processor: " );
+    for (unsigned int i = 0; i < nodes -> size(); i++) {
+        if (!isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z]) {
+            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy node: " );
         }
-        isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = false;
+        isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z] = false;
     }
-    numAvail  -= procs-> size();
+    numAvail  -= nodes-> size();
 }
 
 void MeshMachine::deallocate(AllocInfo* allocInfo) {
-    //deallocate list of processors in allocInfo
+    //deallocate list of nodes in allocInfo
 
-    std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
+    std::vector<MeshLocation*>* nodes = ((MeshAllocInfo*)allocInfo) -> nodes;
 
-    for (unsigned int i = 0; i < procs -> size(); i++) {
-        if (isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy processor: " );
+    for (unsigned int i = 0; i < nodes -> size(); i++) {
+        if (isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z]) {
+            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy node: " );
         }
-        isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = true;
+        isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z] = true;
     }
-    numAvail += procs -> size();
+    numAvail += nodes -> size();
 }
 
 long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
@@ -190,14 +192,14 @@ double MeshMachine::getCoolingPower() const
     double sum_inlet = 0;
 
     //max inlet temp and number of busy nodes
-    for (int i = 0; i < getNumProcs(); i++) {
+    for (int i = 0; i < getNumNodes(); i++) {
         tempLoc = new MeshLocation(i, *this);
         if( !isFree[tempLoc->x][tempLoc->y][tempLoc->z] ){
             busynodes++;
         }
         if(D_matrix != NULL){
             sum_inlet = 0;
-            for (int j = 0; j < getNumProcs(); j++)
+            for (int j = 0; j < getNumNodes(); j++)
             {
                 sum_inlet += D_matrix[i][j] * (Pidle + Putil * (!isFree[tempLoc->x][tempLoc->y][tempLoc->z]));
             }
@@ -209,7 +211,7 @@ double MeshMachine::getCoolingPower() const
     }
 
     // Total power of data center
-    double Pcompute = busynodes * Putil + getNumProcs() * Pidle;
+    double Pcompute = busynodes * Putil + getNumNodes() * Pidle;
 
     // Supply temperature
     double Tsup;

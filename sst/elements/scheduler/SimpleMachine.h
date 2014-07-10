@@ -28,8 +28,7 @@ namespace SST {
         class SimpleMachine : public Machine {
 
             public:                
-                SimpleMachine(int procs, bool insimulationmachine, double** D_matrix);  //takes number of processors
-
+                SimpleMachine(int numNodes, bool insimulationmachine, int numCoresPerNode, double** D_matrix);
                 virtual ~SimpleMachine() {}
 
                 //static Machine* Make(vector<string>* params); //Factory creation method
@@ -43,7 +42,7 @@ namespace SST {
                 void deallocate(AllocInfo* allocInfo);  //deallocate processors
 
                 //ConstraintAllocator needs these
-                std::vector<int>* freeProcessors();
+                std::vector<int>* getFreeNodes();
 
             private:
                 static const int debug = 0;  //whether to include debugging printouts

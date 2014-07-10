@@ -71,7 +71,7 @@ std::string EnergyAllocator::getSetupInfo(bool comment)
 
 AllocInfo* EnergyAllocator::allocate(Job* job)
 {
-    return allocate(job,((MeshMachine*)machine) -> freeProcessors());
+    return allocate(job,((MeshMachine*)machine) -> freeNodes());
 }
 
 //Allocates job if possible.
@@ -83,23 +83,23 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
         return NULL;
     }
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
 
-    int numProcs = job -> getProcsNeeded();
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
     
     //optimization: if exactly enough procs are free, just return them
-    if ((unsigned int) numProcs == available -> size()) {
-        for (int i = 0; i < numProcs; i++) {
-            (*retVal -> processors)[i] = (*available)[i];
+    if ((unsigned int) nodesNeeded == available -> size()) {
+        for (int i = 0; i < nodesNeeded; i++) {
+            (*retVal -> nodes)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt(*mMachine);
         }
         delete available;
         return retVal;
     }
 
-    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, job -> getProcsNeeded(), *mMachine);
-    for (int i = 0; i < numProcs; i++) {
-        (*retVal->processors)[i] = ret->at(i);
+    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, nodesNeeded, *mMachine);
+    for (int i = 0; i < nodesNeeded; i++) {
+        (*retVal->nodes)[i] = ret->at(i);
         retVal->nodeIndices[i] = ret->at(i)->toInt(*mMachine);
         delete (*available)[i];
     }

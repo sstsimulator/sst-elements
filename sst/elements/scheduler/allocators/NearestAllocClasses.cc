@@ -380,7 +380,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
 
     //Subtract from score for bordering allocated processors
     if (borderFactor != 0){
-        vector<MeshLocation*>* used = mesh -> usedProcessors();
+        vector<MeshLocation*>* used = mesh -> usedNodes();
         LInfComparator* lc = new LInfComparator(center -> x,center -> y,center -> z);
         stable_sort(used -> begin(), used -> end(),*lc);
         delete lc;

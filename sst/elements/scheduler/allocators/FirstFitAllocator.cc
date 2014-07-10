@@ -17,12 +17,6 @@
  * (maximum distance along linear order between assigned processors)->
  */
 
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <sstream>
-//#include <time.h>
-//#include <math.h>
-
 #include "sst_config.h"
 #include "FirstFitAllocator.h"
 
@@ -43,12 +37,10 @@ using namespace SST::Scheduler;
 FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* mach): LinearAllocator(params, mach) 
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    //if (DEBUG) printf("Constructing FirstFitAllocator\n");
     schedout.debug(CALL_INFO, 1, 0, "Constructing FirstFitAllocator\n");
 
     if (dynamic_cast<MeshMachine*>(mach) == NULL) {
         schedout.fatal(CALL_INFO, 1, "Linear allocators require a MeshMachine* machine");
-        //error("Linear allocators require a MeshMachine* machine");
     }
 }
 
@@ -68,9 +60,6 @@ std::string FirstFitAllocator::getSetupInfo(bool comment)
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* FirstFitAllocator::allocate(Job* job) 
 {
-    //if (DEBUG) {
-    //    printf("Allocating %s procs: ", job -> toString().c_str());
-    //}
     schedout.fatal(CALL_INFO, 1, "Allocating %s procs: ", job -> toString().c_str());
     MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
@@ -80,19 +69,16 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
 
     std::vector<std::vector<MeshLocation*>*>* intervals = getIntervals();
 
-    int num = job -> getProcsNeeded();  //number of processors for job
+    int numNodes = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
 
     //find an interval to use if one exists
     for (int i = 0; i < (int)intervals -> size(); i++) {
-        if ((int)intervals -> at(i) -> size() >= num) {
-            MeshAllocInfo* retVal = new MeshAllocInfo(job);
+        if ((int)intervals -> at(i) -> size() >= numNodes) {
+            MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
             int j;
-            for (j = 0; j<num; j++) {
-                //if (DEBUG) {
-                //    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MeshMachine*)machine));
-                //}
+            for (j = 0; j<numNodes; j++) {
                 schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt(*mMachine));
-                retVal -> processors -> at(j) = intervals -> at(i) -> at(j);
+                retVal -> nodes -> at(j) = intervals -> at(i) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt(*mMachine);
             }
             j++;
@@ -101,9 +87,7 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
             }
             intervals -> at(i) -> clear();
             delete intervals -> at(i);
-            //if (DEBUG) {
-            //    printf("\n");
-            //}
+
             schedout.debug(CALL_INFO, 7, 0, "\n");
             i++;
             while (i < (int)intervals -> size()) {

@@ -66,15 +66,15 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
         return NULL;
     }
 
-    std::vector<MeshLocation*>* freeprocs = ((MeshMachine*)machine) -> freeProcessors();
+    std::vector<MeshLocation*>* freeprocs = ((MeshMachine*)machine) -> freeNodes();
     stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);
 
-    int num = job -> getProcsNeeded();  //number of processors for job
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
     for (int i = 0; i < (int)freeprocs -> size(); i++) {
-        if (i < num) {
-            retVal -> processors -> at(i) = freeprocs->at(i);
+        if (i < nodesNeeded) {
+            retVal -> nodes -> at(i) = freeprocs->at(i);
             retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt(*mMachine);
         } else {
             delete freeprocs -> at(i);

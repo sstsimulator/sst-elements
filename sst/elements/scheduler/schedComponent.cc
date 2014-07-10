@@ -117,7 +117,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         runningTimeSeed = params["runningTimeSeed"];
     }
     if( runningTimeSeed.compare("none") != 0 ){
-         rng = new SST::RNG::MersenneRNG( atoi(runningTimeSeed.c_str()) );
+         rng = new SST::RNG::MersenneRNG( strtol(runningTimeSeed.c_str(), NULL, 0) );
     } else {
         rng = new SST::RNG::MersenneRNG();
     }
@@ -146,6 +146,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         }
     }
     schedout.output("\n");
+    schedout.output("Scheduler Detects %d nodes\n", (int)nodes.size());
 
     Factory factory;
     machine = factory.getMachine(params, nodes.size());
@@ -185,12 +186,12 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
     jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
 
-    schedout.output("\nScheduler Detects %d nodes\n", (int)nodes.size());
-
     machine -> reset();
     scheduler -> reset();
 
     jobLogFileName = params["jobLogFileName"];
+    
+    schedout.output("\n");
 }
 
 
@@ -566,7 +567,7 @@ void schedComponent::startJob(Job* job)
     if (timePerDistance -> at(0) != 0
           && NULL != mMachine
           && NULL != (MeshAllocInfo*) ai
-          && NULL != ((MeshAllocInfo*)ai) -> processors) {
+          && NULL != ((MeshAllocInfo*)ai) -> nodes) {
         
         double randomNumber = rng->nextUniform() * 0.8 - 0.4;
         //calculate baseline L1 pairwise distance

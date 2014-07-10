@@ -23,16 +23,17 @@ namespace SST {
         class Machine{
             public:
 
-                Machine(int numProcs, double** D_matrix = NULL)
+                Machine(int numNodes, int numCoresPerNode, double** D_matrix)
                 {
                     this->D_matrix = D_matrix;
-                    this->numProcs = numProcs;
+                    this->numNodes = numNodes;
+                    this->coresPerNode = numCoresPerNode;
                 }
 
                 virtual ~Machine()
                 {
                     if(D_matrix != NULL){
-                        for (int i = 0; i < numProcs; i++)
+                        for (int i = 0; i < numNodes; i++)
 	                        delete[] D_matrix[i];
                         delete[] D_matrix;
                     }
@@ -40,15 +41,9 @@ namespace SST {
 
                 virtual std::string getSetupInfo(bool comment) = 0;
 
-                int getNumFreeProcessors() const
-                {
-                    return numAvail;
-                }
-
-                int getNumProcs() const
-                {
-                    return numProcs;
-                }
+                int getNumFreeNodes() const { return numAvail; }
+                int getNumNodes() const { return numNodes; }
+                int getNumCoresPerNode() const { return coresPerNode; }
                 
                 virtual void reset() = 0;
 
@@ -59,8 +54,9 @@ namespace SST {
                 double** D_matrix;
 
             protected:
-                int numProcs;          //total number of processors
-                int numAvail;          //number of available processors
+                int numNodes;          //total number of nodes
+                int numAvail;          //number of available nodes
+                int coresPerNode;
         };
 
     }

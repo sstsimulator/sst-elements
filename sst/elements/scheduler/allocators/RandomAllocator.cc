@@ -32,20 +32,6 @@ RandomAllocator::RandomAllocator(Machine* mesh)
     srand(0);
 }
 
-/*
-   RandomAllocator RandomAllocator::Make(std::vector<std::string*>* params){
-   Factory.argsAtLeast(0,params);
-   Factory.argsAtMost(0,params);
-
-   MeshMachine* m = (MeshMachine) Main->getMachine();
-   if(m == NULL)
-   error("Random allocator requires a Mesh machine");
-   return new RandomAllocator(m);
-   return null;
-
-   }
-   */
-
 std::string RandomAllocator::getParamHelp()
 {
     return "";
@@ -70,14 +56,14 @@ AllocInfo* RandomAllocator::allocate(Job* job){
     
     MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
 
     //figure out which processors to use
-    int numProcs = job -> getProcsNeeded();
-    std::vector<MeshLocation*>* available = ((MeshMachine*)machine) -> freeProcessors();
-    for (int i = 0; i < numProcs; i++) {
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    std::vector<MeshLocation*>* available = ((MeshMachine*)machine) -> freeNodes();
+    for (int i = 0; i < nodesNeeded; i++) {
         int num = rand() % available -> size();
-        (*retVal -> processors)[i] = (*available)[num];
+        (*retVal -> nodes)[i] = (*available)[num];
         retVal -> nodeIndices[i] = (*available)[num] -> toInt(*mMachine);
         available -> erase(available -> begin() + num);
     }

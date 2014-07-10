@@ -132,7 +132,7 @@ Job* EASYScheduler::tryToStart(unsigned long time, const Machine & mach)
     }
     
     bool succeeded = false;  //whether we found a job to allocate
-    int availProcs = mach.getNumFreeProcessors();
+    int availProcs = mach.getNumFreeNodes();
     
     if (availProcs >= (*job)->getProcsNeeded()) {
         succeeded = true;
@@ -242,7 +242,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, const Machine & mach)
     bool succeeded = false;
 
     int size = (*firstJob) -> getProcsNeeded();
-    int free = mach.getNumFreeProcessors();
+    int free = mach.getNumFreeNodes();
 
     if (free >= size) {
         guaranteedStart = time;

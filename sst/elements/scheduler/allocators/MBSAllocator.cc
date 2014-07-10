@@ -240,13 +240,15 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
     //if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s\n",job -> toString().c_str());
 
-    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job);
+    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job, *machine);
     int allocated = 0;
 
     //a map of dimensions to numbers
     std::map<int,int>* RBR = factorRequest(job);
 
-    while (allocated < job -> getProcsNeeded()){
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+
+    while (allocated < nodesNeeded){
         //Start trying allocate the largest blocks
         if (RBR -> empty()) {
             schedout.fatal(CALL_INFO, 1, "RBR empty in allocate()");
@@ -267,7 +269,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
             //processors() is sorted by MeshLocation comparator
             MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
             for (int i = allocated; it != newBlockprocs -> end();i++){
-                retVal -> processors -> at(i) = *(it);
+                retVal -> nodes -> at(i) = *(it);
                 retVal -> nodeIndices[i] = (*it) -> toInt(*mMachine);
                 it++;
                 allocated++;
@@ -312,7 +314,9 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
     std::map<int,int>* retVal = new std::map<int,int>();
     int procs = 0;
 
-    while (procs < j -> getProcsNeeded()){
+    int nodesNeeded = ceil((double) j->getProcsNeeded() / machine->getNumCoresPerNode());
+
+    while (procs < nodesNeeded){
         //begin our search
         std::vector<int>::iterator sizes = ordering -> begin();
 
@@ -323,7 +327,7 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
             prevSize = size;
             size = *(sizes);
             sizes++;
-            if (size > (j -> getProcsNeeded() - procs)){
+            if (size > (nodesNeeded - procs)){
                 //cancel the progress made with this run through the loop
                 size = prevSize;
                 break;
@@ -352,10 +356,6 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
         procs += ordering -> at(rank);
     }
 
-    //if (DEBUG) {
-    //    printf("Factored request: \n");
-    //    printRBR(retVal);
-    //}
     schedout.debug(CALL_INFO, 7, 0, "Factored request: \n");
     printRBR(retVal);
     return retVal;
@@ -389,11 +389,6 @@ void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
         RBR -> insert(std::pair<int,int>(rank - 1,count));
     }
 
-
-    //if (DEBUG) {
-    //    printf("Split a request up\n");
-    //    printRBR(RBR);
-    //}
     schedout.debug(CALL_INFO, 7, 0, "Split a request up\n");
     printRBR(RBR);
 }
@@ -404,7 +399,6 @@ void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
  */
 bool MBSAllocator::splitLarger(int rank)
 {
-    //if (DEBUG) printf("Splitting a block at rank %d\n",rank);
     schedout.debug(CALL_INFO, 7, 0, "Splitting a block at rank %d\n",rank);
 
     //make sure that we can search in rank+1
@@ -439,8 +433,6 @@ bool MBSAllocator::splitLarger(int rank)
 
 void MBSAllocator::deallocate(AllocInfo* alloc)
 {
-    //if (DEBUG) printf("Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
-    schedout.debug(CALL_INFO, 7, 0, "Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
     //check to make sure it is a MBSMeshAllocInfo->->->                        
     if (NULL == dynamic_cast<MBSMeshAllocInfo*>(alloc)) {
         schedout.fatal(CALL_INFO, 1, "MBS allocator can only deallocate instances of MBSMeshAllocInfo");

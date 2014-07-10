@@ -46,15 +46,19 @@ TaskMapInfo* RandomTaskMapper::mapTasks(AllocInfo* allocInfo)
     int jobSize = allocInfo->job->getProcsNeeded();
     
     std::vector<int> available = std::vector<int>();
+    std::vector<int> availableCores = std::vector<int>();
     
     for(int i = 0; i <= jobSize; i++){
         available.push_back(allocInfo->nodeIndices[i]);
+        availableCores.push_back(machine->getNumCoresPerNode());
     }
     
     for(int i = jobSize; i > 0; i--){
-        int num = rng->generateNextUInt32() % i;
+        int num = rng->generateNextUInt32() % available.size();
         tmi->insert((i - 1), available.at(num));
-        available.erase( available.begin() + num );
+        availableCores.at(num) = availableCores.at(num) - 1;
+        if(availableCores.at(num) == 0)
+            available.erase( available.begin() + num );
     }
     
     return tmi;

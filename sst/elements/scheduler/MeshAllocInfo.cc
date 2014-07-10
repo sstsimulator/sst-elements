@@ -21,14 +21,14 @@
 
 using namespace SST::Scheduler;
 
-MeshAllocInfo::MeshAllocInfo(Job* j) : AllocInfo(j) 
+MeshAllocInfo::MeshAllocInfo(Job* j, const Machine & mach) : AllocInfo(j, mach) 
 {
-    processors = new std::vector<MeshLocation*>();
+    nodes = new std::vector<MeshLocation*>();
     for (int x = 0; x < j -> getProcsNeeded(); x++) {
         nodeIndices[x] = -1;
     }
     for (int x = 0; x < j -> getProcsNeeded(); x++) {
-        processors -> push_back(NULL);
+        nodes -> push_back(NULL);
     }
 }
 
@@ -37,21 +37,21 @@ MeshAllocInfo::~MeshAllocInfo()
     /*
      *note that the MeshLocations in MeshAllocInfo are assumed to be unique!
      *in other words, they were created solely for the purpose of storing a
-     *location of a processor in this MAI.  All current allocators except MBS
-     *use machine->getprocessors() to get these processors; this function 
+     *location of a node in this MAI.  All current allocators except MBS
+     *use machine->getNodes() to get these nodes; this function 
      *  creates new MeshLocations so it works
      */
-    for (int x = 0; x < (int)processors -> size(); x++) {
-        delete processors -> at (x);
+    for (int x = 0; x < (int)nodes -> size(); x++) {
+        delete nodes -> at (x);
     }
-    processors -> clear();
+    nodes -> clear();
 }
 
-std::string MeshAllocInfo::getProcList(Machine* m)
+std::string MeshAllocInfo::getNodeList(Machine* m)
 {
     std::string ret="";
     MeshMachine* mesh = (MeshMachine*) m;
-    for (std::vector<MeshLocation*>::iterator ml = processors -> begin(); ml != processors->end(); ++ml) {
+    for (std::vector<MeshLocation*>::iterator ml = nodes -> begin(); ml != nodes->end(); ++ml) {
         ret += (*ml) -> x + mesh -> getXDim() * (*ml) -> y + mesh -> getXDim() * mesh -> getYDim()*(*ml) -> z + ",";
     }
     return ret;	
@@ -62,46 +62,46 @@ AllocInfo* MeshAllocInfo::getBaselineAllocation(const MeshMachine & mach, Job* j
     int xdim = mach.getXDim();
     int ydim = mach.getYDim();
     int zdim = mach.getZDim();
-    int numProcs = job->getProcsNeeded();
+    int numNodes = ceil( (double) job->getProcsNeeded() / mach.getNumCoresPerNode());
     
     int xSize, ySize, zSize;
     //dimensions if we fit job in a cube
-    xSize = (int)ceil( (float)cbrt((float)numProcs) ); 
+    xSize = (int)ceil( (float)cbrt((float)numNodes) ); 
     ySize = xSize;
     zSize = xSize;
     //restrict dimensions
     if(xSize > xdim) {
         xSize = xdim;
-        ySize = (int)ceil( (float)std::sqrt( ((float)numProcs) / xdim ) );
+        ySize = (int)ceil( (float)std::sqrt( ((float)numNodes) / xdim ) );
         zSize = ySize;
         if( ySize > ydim ) {
             ySize = ydim;
-            zSize = (int)ceil( ((float)numProcs) / (xdim * ydim) );
+            zSize = (int)ceil( ((float)numNodes) / (xdim * ydim) );
         } else if ( zSize > zdim ) {
             zSize = zdim;
-            ySize = (int)ceil( ((float)numProcs) / (xdim * zdim) );
+            ySize = (int)ceil( ((float)numNodes) / (xdim * zdim) );
         }
     } else if(ySize > ydim) {
         ySize = ydim;
-        xSize = (int)ceil( (float)std::sqrt( ((float)numProcs) / ydim ) );
+        xSize = (int)ceil( (float)std::sqrt( ((float)numNodes) / ydim ) );
         zSize = xSize;
         if( xSize > xdim ) {
             xSize = xdim;
-            zSize = (int)ceil( ((float)numProcs) / (xdim * ydim) );
+            zSize = (int)ceil( ((float)numNodes) / (xdim * ydim) );
         } else if ( zSize > zdim ) {
             zSize = zdim;
-            xSize = (int)ceil( ((float)numProcs) / (ydim * zdim) );
+            xSize = (int)ceil( ((float)numNodes) / (ydim * zdim) );
         }
     } else if(zSize > zdim) {
         zSize = zdim;
-        ySize = (int)ceil( (float)std::sqrt( ((float)numProcs) / zdim ) );
+        ySize = (int)ceil( (float)std::sqrt( ((float)numNodes) / zdim ) );
         xSize = ySize;
         if( ySize > ydim ){
             ySize = ydim;
-            xSize = (int)ceil( ((float)numProcs) / (zdim * ydim) );
+            xSize = (int)ceil( ((float)numNodes) / (zdim * ydim) );
         } else if ( xSize > xdim ) {
             xSize = xdim;
-            ySize = (int)ceil( ((float)numProcs) / (xdim * zdim) );
+            ySize = (int)ceil( ((float)numNodes) / (xdim * zdim) );
         }
     }
     
@@ -146,7 +146,7 @@ AllocInfo* MeshAllocInfo::getBaselineAllocation(const MeshMachine & mach, Job* j
                 default: schedout.fatal(CALL_INFO, 0, "Unexpected error.");
                 }
                 nodeCount++;
-                if(nodeCount == numProcs){
+                if(nodeCount == numNodes){
                     done = true;
                 }
             }
@@ -154,8 +154,8 @@ AllocInfo* MeshAllocInfo::getBaselineAllocation(const MeshMachine & mach, Job* j
     }
     
     //create allocInfo
-    AllocInfo* allocInfo = new AllocInfo(job);
-    for(int i = 0; i < numProcs; i++){
+    AllocInfo* allocInfo = new AllocInfo(job, mach);
+    for(int i = 0; i < numNodes; i++){
         allocInfo->nodeIndices[i] = nodes.at(i).toInt(mach);
     }
     return allocInfo;

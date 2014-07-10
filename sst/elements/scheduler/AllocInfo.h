@@ -29,7 +29,7 @@ namespace SST {
                 Job* job;
                 int* nodeIndices;
 
-                AllocInfo(Job* job);
+                AllocInfo(Job* job, const Machine & mach);
 
                 virtual ~AllocInfo();
 

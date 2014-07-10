@@ -106,7 +106,7 @@ Factory::Factory()
     schedout.init("", 8, 0, Output::STDOUT);
 }
 
-Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
+Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
 {
     if(params.find("scheduler") == params.end()){
         schedout.verbose(CALL_INFO, 1, 0, "Defaulting to Priority Scheduler with FIFO queue\n");
@@ -149,9 +149,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
         case CONS:
             schedout.debug(CALL_INFO, 4, 0, "Conservative Scheduler\n");
             if (schedparams -> size() == 1) {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make("fifo"), true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"), true);
             } else {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make(schedparams->at(1)), true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams->at(1)), true);
             }
             break;
 
@@ -163,9 +163,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
             }
             filltimes = strtol(schedparams->at(1).c_str(),NULL,0);
             if (2 == schedparams -> size()) {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make("fifo"),filltimes);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"),filltimes);
             } else {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make(schedparams->at(2)), filltimes);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams->at(2)), filltimes);
             }
             break;
 
@@ -174,9 +174,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
             //if(DEBUG) printf("Delayed Compression Scheduler\n");
             schedout.debug(CALL_INFO, 4, 0, "Delayed Compression Scheduler\n");
             if (schedparams -> size() == 1) {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make("fifo"));
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"));
             } else {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make(schedparams -> at(1)));
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams -> at(1)));
             }
             break;
 
@@ -189,9 +189,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
             }
             filltimes = strtol(schedparams->at(1).c_str(),NULL,0);
             if (schedparams -> size() == 2) {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make("fifo"),filltimes, true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"),filltimes, true);
             } else {
-                return new StatefulScheduler(numProcs, StatefulScheduler::JobComparator::Make(schedparams -> at(2)), filltimes, true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams -> at(2)), filltimes, true);
             }
             break;
 
@@ -205,7 +205,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
 }
 
 //returns the correct machine based on the parameters
-Machine* Factory::getMachine(SST::Params& params, int numProcs)
+Machine* Factory::getMachine(SST::Params& params, int numNodes)
 {
     Machine* retMachine = NULL;
     double** D_matrix = NULL;
@@ -219,15 +219,20 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs)
         //default: no recuirculation
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no heat recirculation\n");
     } else {
-        DParser dParser = DParser(numProcs, params);
+        DParser dParser = DParser(numNodes, params);
         D_matrix = dParser.readDMatrix();
+    }
+    
+    int coresPerNode = 1;
+    if( params.find("coresPerNode") != params.end() ){
+        coresPerNode = strtol(params["coresPerNode"].c_str(), NULL, 0);
     }
     
     //get machine
     if (params.find("machine") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Machine\n");
-        retMachine = new SimpleMachine(numProcs, false, D_matrix);
+        retMachine = new SimpleMachine(numNodes, false, coresPerNode, D_matrix);
     }
     else
     {
@@ -237,7 +242,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs)
             //simple machine
         case SIMPLEMACH:
             schedout.debug(CALL_INFO, 4, 0, "Simple Machine\n");
-            retMachine = new SimpleMachine(numProcs, false, D_matrix);
+            retMachine = new SimpleMachine(numNodes, false, coresPerNode, D_matrix);
             break;
 
             //Mesh Machine
@@ -257,10 +262,10 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs)
                 } else {
                     z = 1;
                 }
-                if (x * y * z != numProcs) {
-                    schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of processors");
+                if (x * y * z != numNodes) {
+                    schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of nodes");
                 }
-                retMachine = new MeshMachine(x, y, z, D_matrix);
+                retMachine = new MeshMachine(x, y, z, coresPerNode, D_matrix);
                 break;
 
             }
@@ -304,14 +309,14 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 break;
             }
 
-            //Random Allocator, allocates procs randomly from a mesh
+            //Random Allocator, allocates nodes randomly from a mesh
         case RANDOM:
             schedout.debug(CALL_INFO, 4, 0, "Random Allocator\n");
             //if(DEBUG) printf("Random Allocator\n");
             return new RandomAllocator(m);
             break;
 
-            //Nearest Allocators try to minimize distance between processors
+            //Nearest Allocators try to minimize distance between nodes
             //according to various metrics
         case NEAREST:
             schedout.debug(CALL_INFO, 4, 0, "Nearest Allocator\n");

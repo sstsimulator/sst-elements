@@ -141,7 +141,7 @@ Job* PQScheduler::tryToStart(unsigned long time, const Machine & mach)
 {
     if (0 == toRun->size()) return NULL;
     Job* job = toRun->top();
-    if (mach.getNumFreeProcessors() >= job->getProcsNeeded()) {
+    if (mach.getNumFreeNodes() >= job->getProcsNeeded()) {
         nextToStart = job;
         nextToStartTime = time;
     } else {

@@ -45,7 +45,7 @@ std::string SimpleAllocator::getSetupInfo(bool comment)
 AllocInfo* SimpleAllocator::allocate(Job* j) 
 {  
     if (canAllocate(*j)) {
-        return new AllocInfo(j);
+        return new AllocInfo(j, *machine);
     }
     return NULL;
 }

@@ -250,9 +250,9 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
         jobs->pop_back();
         ok = false;
     }
-    if (ok && j->getProcsNeeded() > machine->getNumProcs()) {
+    if (ok && j->getProcsNeeded() > machine->getNumNodes()) {
         schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
-                       j->getJobNum(), j->getProcsNeeded(), machine->getNumFreeProcessors());
+                       j->getJobNum(), j->getProcsNeeded(), machine->getNumNodes());
         ok = false;
     }
     

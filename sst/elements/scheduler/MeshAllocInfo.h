@@ -30,11 +30,11 @@ namespace SST {
 
         class MeshAllocInfo : public AllocInfo {
             public:
-                std::vector<MeshLocation*>* processors;
-                MeshAllocInfo(Job* j);
+                std::vector<MeshLocation*>* nodes;
+                MeshAllocInfo(Job* j, const Machine & mach);
                 ~MeshAllocInfo();
 
-                std::string getProcList(Machine* m);
+                std::string getNodeList(Machine* m);
                 
                 //baseline allocation: minimum-volume rectangular prism that fits into the machine
                 static AllocInfo* getBaselineAllocation(const MeshMachine & mach, Job* job);

@@ -191,6 +191,10 @@ static const SST::ElementInfoParam sched_params[] = {
         "D_matrix input file",
         "none"
     },
+    { "coresPerNode",
+        "Number of cores per Node",
+        "1"
+    },
     {NULL,NULL,NULL}
 };
 

@@ -65,8 +65,11 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     //get node locations
     vector<MeshLocation>* nodes = new vector<MeshLocation>();
     for(int i = 0; i < jobSize; i++){
-        MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], *mMachine);
-        nodes->push_back(loc);
+        //put the same node location for each core
+        for(int j = 0; j < machine->getNumCoresPerNode(); j++){
+            MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], *mMachine);
+            nodes->push_back(loc);
+        }
     }
     Grouper<MeshLocation> nodeGroup = Grouper<MeshLocation>(nodes, &dummyRotator);
 
@@ -82,18 +85,18 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     //map
     mapTaskHelper(&nodeGroup, &jobGroup, tmi);
 
-    //DEBUG
-    //for(int i = 0; i<jobSize; i++){
-    //    cout << "task:" << i << " <-> node:" << tmi->taskMap->left.at(i) << endl;
-    //}
-    ///////
+    /*//DEBUG
+    for(int i = 0; i<jobSize; i++){
+        cout << "task:" << i << " <-> node:" << tmi->taskMap->left.at(i) << endl;
+    }
+    *///////
 
     return tmi;
 }
 
 void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* inJobs, TaskMapInfo* tmi)
 {
-    if(inLocs->elements->size() == 1){
+    if(inJobs->elements->size() == 1){
         //map node to task
         tmi->insert(inJobs->elements->at(0), inLocs->elements->at(0).toInt(*mMachine));
     } else {
@@ -271,18 +274,20 @@ RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
     //register yourself
     meshLocs->rotator = this;
     jobLocs->rotator = this;
-    //save the dimensions
-    int size = rcb.job->getProcsNeeded();
+    //save the dimension info of node locations
+    int size = meshLocs->elements->size();
     xlocs = new int[size];
     ylocs = new int[size];
     zlocs = new int[size];
-    indMap = new int[mach.getNumProcs()];
+    indMap = new int[mach.getNumNodes()];//maps real node indexed to node vector (elements) indexes
     for(int i = 0; i < size; i++){
-        indMap[meshLocs->elements->at(i).toInt(mach)] = i;
-        xlocs[i] = meshLocs->elements->at(i).x;
-        ylocs[i] = meshLocs->elements->at(i).y;
-        zlocs[i] = meshLocs->elements->at(i).z;
+        MeshLocation curLoc = meshLocs->elements->at(i);
+        indMap[curLoc.toInt(mach)] = i; //overwriting the same location is fine
+        xlocs[i] = curLoc.x;
+        ylocs[i] = curLoc.y;
+        zlocs[i] = curLoc.z;
     }
+    //normalized job dimension factor for coordinate input
     numTasksNorm = sqrt(rcb.job->getProcsNeeded());
     //apply rotation where needed
     if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){

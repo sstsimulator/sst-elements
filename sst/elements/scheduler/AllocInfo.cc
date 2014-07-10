@@ -15,13 +15,15 @@
 #include <string>
 
 #include "Job.h"
+#include "Machine.h"
 
 using namespace SST::Scheduler;
 
-AllocInfo::AllocInfo(Job* job) 
+AllocInfo::AllocInfo(Job* job, const Machine & mach) 
 {
     this -> job = job;
-    nodeIndices = new int[job -> getProcsNeeded()];
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / mach.getNumCoresPerNode());
+    nodeIndices = new int[nodesNeeded];
     nodeIndices[0] = -1; // ConstraintAllocator puts allocation here
 }
 
