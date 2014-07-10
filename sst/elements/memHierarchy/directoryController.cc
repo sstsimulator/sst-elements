@@ -183,11 +183,6 @@ bool DirectoryController::processPacket(MemEvent *ev){
         delete ev;
         return true;
     }
-    
-    if(entry && entry->waitingAcks == 0 && PutS == ev->getCmd()){
-        delete ev;
-        return true;
-    }
 
     if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
     if(ret.first == true) return ret.second;
@@ -198,11 +193,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
     switch(cmd){
         case PutS:
             PutSReqReceived++;
-            entry->activeReq = ev;
             dbg.output(CALL_INFO, "\n\nDC PutS - %s - Request Received\n", getName().c_str());
-            requesting_node = node_name_to_id(entry->activeReq->getSrc());
+            requesting_node = node_name_to_id(ev->getSrc());
             entry->sharers[requesting_node]= false;
-            resetEntry(entry);
+            if(entry->countRefs() == 0) resetEntry(entry);
             break;
             
         case PutM:
@@ -249,6 +243,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             _abort(DirectoryController, "Cmd not expected, Cmd = %s\n", CommandString[cmd]);
             break;
     }
+
     return true;
 }
 
@@ -274,6 +269,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
         }
         else{
             dbg.debug(_L10_, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
+            assert(entry->nextCommand != NULLCMD);
             if(cmd == PutS && entry->nextCommand == FetchResp) return make_pair<bool, bool>(true, true);
             else return make_pair<bool, bool>(true, false);
         }
