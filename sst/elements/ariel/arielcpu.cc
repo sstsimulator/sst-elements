@@ -248,6 +248,10 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 	if(Simulation::getSimulation()->getSimulationMode() == Config::INIT)
 		return 0;
 
+	// Set the process group to be the equal to this process (kills child on this
+	// process dying)
+	setpgid(0, 0);
+
 	pid_t the_child;
 
 	// Fork this binary, then exec to get around waiting for
