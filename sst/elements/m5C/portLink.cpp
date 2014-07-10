@@ -193,7 +193,7 @@ SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
     }
     dbg->debug(CALL_INFO,0,0,"<----\n");
     received++;
-    std::cout << "TotalRequests: " << received << std::endl;
+    //std::cout << "TotalRequests: " << received << std::endl;
 	return req;
 }
 
