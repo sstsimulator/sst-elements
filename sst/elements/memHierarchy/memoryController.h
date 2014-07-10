@@ -135,7 +135,7 @@ private:
     
     bool        divertDCLookups_;
     SST::Link*  lowNetworkLink_;
-    MemBackend* backend;
+    MemBackend* backend_;
     int         protocol_;
     dramReq_t   requestQueue_;
     dramReq_t   requests_;

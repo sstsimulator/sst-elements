@@ -59,6 +59,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 	interleaveStep_         = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep_         *= 1024;
 
+    if(0 == memSize_)       _abort(MemController, "Memory size must be bigger than zero and specified in MB\n");
+
 	string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
 	string clock_freq       = params.find_string("clock", "");
     cacheLineSize_          = params.find_integer("request_width", 64);
@@ -73,13 +75,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
     protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
 
     int mmap_flags          = setBackingFile(memoryFile);
-    backend                 = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
-	memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
+    backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
     lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+	memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
 
-    if (!backend)           _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
 	if(!memBuffer_)         _abort(MemController, "Unable to MMAP backing store for Memory\n");
-    if(0 == memSize_)       _abort(MemController, "Memory size must be bigger than zero and specified in MB\n");
+    if (!backend_)          _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
 
     GetSReqReceived_        = 0;
     GetXReqReceived_        = 0;
