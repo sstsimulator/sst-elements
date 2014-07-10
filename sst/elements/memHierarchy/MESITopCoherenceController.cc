@@ -367,7 +367,6 @@ bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
 bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
     if(_event->isPrefetch()) return true;
     
-    assert(_event->statsUpdated());
     Command cmd = _event->getCmd();
     MemEvent * responseEvent = _event->makeResponse(_newState);
     responseEvent->setDst(_event->getSrc());
