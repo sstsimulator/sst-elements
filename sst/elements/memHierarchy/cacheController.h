@@ -123,7 +123,7 @@ private:
     void processUncached(MemEvent* event, Command cmd, Addr baseAddr);
     
     /** Process the oldest incoming event */
-    void processEvent(SST::Event* ev, bool mshrHit);
+    void processEvent(MemEvent* event, bool mshrHit);
     
     /** Configure this component's links */
     void configureLinks();
@@ -280,7 +280,8 @@ private:
     
     /** Process the request on the top of the incoming event queue */
     void processQueueRequest(){
-        processEvent(incomingEventQueue_.front().first, false);
+        MemEvent* memEvent = static_cast<MemEvent*>(incomingEventQueue_.front().first);
+        processEvent(memEvent, false);
         incomingEventQueue_.pop();
         idleCount_ = 0;
     }

@@ -182,17 +182,15 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  *--------------------------------------------------------------------------------------------------*/
 
 bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
-    bool pf     = _event->isPrefetch();
-    Addr addr   = _cacheLine->getBaseAddr();
     State state = _cacheLine->getState();
 
     if(state == S || state == I){
         if(state == S){
-            inc_GETXMissSM(addr, pf, _mshrH);
+            inc_GETXMissSM(_event);
             _cacheLine->setState(SM);
         }
         else{
-            inc_GETXMissIM(addr, pf, _mshrH);
+            inc_GETXMissIM(_event);
             _cacheLine->setState(IM);
         }
         return true;
@@ -205,10 +203,7 @@ bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cache
 void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
     State state = _cacheLine->getState();
     Command cmd = _event->getCmd();
-    
-    Addr addr = _cacheLine->getBaseAddr();
-    bool pf   = _event->isPrefetch();
-  
+
     if(state == E) _cacheLine->setState(M);    /* upgrade */
     assert(_cacheLine->getState() == M);
     
@@ -223,7 +218,7 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
         inc_GetSExReqsReceived(_mshrH);
         if(L1_) _cacheLine->incLock();
     }
-    inc_GETXHit(addr, pf, _mshrH);
+    inc_GETXHit(_event);
 }
 
 
@@ -271,16 +266,14 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 void MESIBottomCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
     State state = _cacheLine->getState();
-    Addr addr   = _cacheLine->getBaseAddr();
-    bool pf     = _event->isPrefetch();
 
     if(_event->isLoadLink()) _cacheLine->atomicStart();
     
-    if(state != I) inc_GETSHit(addr, pf, _mshrH);
+    if(state != I) inc_GETSHit(_event);
     else{
         _cacheLine->setState(IS);
         forwardMessage(_event, _cacheLine, NULL);
-        inc_GETSMissIS(addr, pf, _mshrH);
+        inc_GETSMissIS(_event);
     }
 }
 
@@ -406,56 +399,61 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
 void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
-    dbg->output(C,"\n--------------------------------------------------------------------\n");
+    dbg->output(C,"\n------------------------------------------------------------------------\n");
     dbg->output(C,"--- Cache Stats\n");
     dbg->output(C,"--- Name: %s\n", ownerName_.c_str());
     dbg->output(C,"--- Overall Statistics\n");
-    dbg->output(C,"--------------------------------------------------------------------\n");
+    dbg->output(C,"------------------------------------------------------------------------\n");
 
     for(unsigned int i = 0; i < _groupIds.size(); i++){
-        uint64_t totalMisses = stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETSMissIS_;
+        uint64_t totalMisses = stats_[_groupIds[i]].GETXMissIM_      + stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETSMissIS_ +
+                               stats_[_groupIds[i]].GETSMissBlocked_ + stats_[_groupIds[i]].GETXMissBlocked_;
         uint64_t totalHits = stats_[_groupIds[i]].GETSHit_ + stats_[_groupIds[i]].GETXHit_;
+        uint64_t totalRequests = totalHits + totalMisses;
         double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
         
         if(i != 0){
-            dbg->output(C,"--------------------------------------------------------------------\n");
+            dbg->output(C,"------------------------------------------------------------------------\n");
             dbg->output(C,"--- Cache Stats\n");
             dbg->output(C,"--- Name: %s\n", ownerName_.c_str());
             dbg->output(C,"--- Group Statistics, Group ID = %i\n", _groupIds[i]);
-            dbg->output(C,"--------------------------------------------------------------------\n");
+            dbg->output(C,"------------------------------------------------------------------------\n");
         }
-        dbg->output(C,"- Total misses: %"PRIu64"\n", totalMisses);
-        dbg->output(C,"- Total hits: %"PRIu64"\n", totalHits);
-        dbg->output(C,"- Hit ratio: %.3f%%\n", hitRatio);
-        dbg->output(C,"- Miss ratio: %.3f%%\n", 100 - hitRatio);
-        dbg->output(C,"- Read misses: %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
-        dbg->output(C,"- Write misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_);
-        dbg->output(C,"- GetS received: %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_ + stats_[_groupIds[i]].GETSHit_);
-        dbg->output(C,"- GetX received: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXHit_);
-        dbg->output(C,"- GetSEx received: %"PRIu64"\n", stats_[_groupIds[i]].GetSExReqsReceived_);
-        dbg->output(C,"- GetS-IS misses: %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
-        dbg->output(C,"- GetX-SM misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_);
-        dbg->output(C,"- GetX-IM misses: %"PRIu64"\n", stats_[_groupIds[i]].GETXMissIM_);
-        dbg->output(C,"- GetS hits: %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
-        dbg->output(C,"- GetX hits: %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
-        dbg->output(C,"- Average updgrade latency (cycles): %"PRIu64"\n", _updgradeLatency);
+        dbg->output(C,"- Total data requests:                            %"PRIu64"\n", totalRequests);
+        dbg->output(C,"- Total misses:                                   %"PRIu64"\n", totalMisses);
+        dbg->output(C,"- Total hits:                                     %"PRIu64"\n", totalHits);
+        dbg->output(C,"- Hit ratio:                                      %.3f%%\n", hitRatio);
+        dbg->output(C,"- Miss ratio:                                     %.3f%%\n", 100 - hitRatio);
+        dbg->output(C,"- Read misses:                                    %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
+        dbg->output(C,"- Write misses:                                   %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_);
+        dbg->output(C,"- GetS received:                                  %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_ + stats_[_groupIds[i]].GETSHit_);
+        dbg->output(C,"- GetX received:                                  %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXHit_);
+        dbg->output(C,"- GetSEx received:                                %"PRIu64"\n", stats_[_groupIds[i]].GetSExReqsReceived_);
+        dbg->output(C,"- GetS-IS misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
+        dbg->output(C,"- GetS-Blocked misses:                            %"PRIu64"\n", stats_[_groupIds[i]].GETSMissBlocked_);
+        dbg->output(C,"- GetX-SM misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_);
+        dbg->output(C,"- GetX-IM misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETXMissIM_);
+        dbg->output(C,"- GetX-Blocked misses:                            %"PRIu64"\n", stats_[_groupIds[i]].GETXMissBlocked_);
+        dbg->output(C,"- GetS hits:                                      %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
+        dbg->output(C,"- GetX hits:                                      %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
+        dbg->output(C,"- Avg Updgrade Latency (cyc):                     %"PRIu64"\n", _updgradeLatency);
         if(!L1_){
-            dbg->output(C,"- PutS received: %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
-            dbg->output(C,"- PutM received: %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
-            dbg->output(C,"- PutX received: %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
+            dbg->output(C,"- PutS received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
+            dbg->output(C,"- PutM received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
+            dbg->output(C,"- PutX received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
         }
         else{
             assert(stats_[_groupIds[i]].PUTSReqsReceived_ == 0);
             assert(stats_[_groupIds[i]].PUTMReqsReceived_ == 0);
             assert(stats_[_groupIds[i]].PUTXReqsReceived_ == 0);
         }
-        dbg->output(C,"- PUTM sent due to [invalidations, evictions]: [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(C,"- PUTE sent due to [invalidations, evictions]: [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(C,"- PUTX sent due to [invalidations, evictions]: [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
-        dbg->output(C,"- Inv received stalled bc atomic lock: %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
-        dbg->output(C,"- Total requests received (including coherence traffic): %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
-        dbg->output(C,"- Total requests handled by MSHR (MSHR hits): %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
-        if(!L1_) dbg->output(C,"- NACKs sent (MSHR Full, BottomCC): %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
+        dbg->output(C,"- PUTM sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
+        dbg->output(C,"- PUTE sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
+        dbg->output(C,"- PUTX sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
+        dbg->output(C,"- Inv stalled because LOCK held:                  %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
+        dbg->output(C,"- Requests received (incl coherence traffic):     %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
+        dbg->output(C,"- Requests handled by MSHR (MSHR hits):           %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
+        if(!L1_) dbg->output(C,"- NACKs sent (MSHR Full, BottomCC):               %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
         else    assert(stats_[_groupIds[i]].NACKsSent_ == 0);
     }
 

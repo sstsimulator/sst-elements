@@ -83,7 +83,9 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
         else if(_req->cmd == SimpleMem::Request::Write)
             me->setStoreConditional();
     }
-
+    
+    //totalRequests_++;
+    //std::cout << "TotalRequests: " << totalRequests_ << std::endl;
     return me;
 }
 

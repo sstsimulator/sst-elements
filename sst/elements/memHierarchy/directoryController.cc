@@ -176,7 +176,6 @@ bool DirectoryController::processPacket(MemEvent *ev){
     DirEntry *entry = getDirEntry(ev->getBaseAddr());
     if(cmd == FetchResp) assert(entry && entry->inProgress());
     
-        
     
     if(entry && entry->waitingAcks > 0 && PutS == ev->getCmd()){
         handlePutS(ev);
@@ -192,11 +191,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
     /* New Request */
     switch(cmd){
         case PutS:
-            //if(!entry) break;
             dbg.output(CALL_INFO, "\n\nDC PutS - %s - Request Received\n", getName().c_str());
             PutSReqReceived++;
             requesting_node = node_name_to_id(ev->getSrc());
-            entry->sharers[requesting_node] = false;
+            entry->removeSharer(requesting_node);
             assert(!entry->isDirty());
             if(entry->countRefs() == 0) resetEntry(entry);
             break;
@@ -233,10 +231,11 @@ bool DirectoryController::processPacket(MemEvent *ev){
 
             if(entry->inController){
                 ++numCacheHits;
-                handleRequestData(entry, ev);
-            } else {
+                handleDataRequest(entry, ev);
+            }
+            else{
                 dbg.debug(_L10_, "Entry %"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
-                entry->nextFunc = &DirectoryController::handleRequestData;
+                entry->nextFunc = &DirectoryController::handleDataRequest;
                 requestDirEntryFromMemory(entry);
             }
             break;
@@ -340,7 +339,7 @@ void DirectoryController::sendInvalidate(int target, DirEntry* entry){
 }
 
 
-void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
+void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     entry->activeReq = new_ev;
     entry->reqSize = new_ev->getSize();
 	uint32_t requesting_node = node_id(entry->activeReq->getSrc());
@@ -387,13 +386,13 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev){
 	}
     else if(entry->activeReq->queryFlag(MemEvent::F_UNCACHED)){
         // Don't set as a sharer whne dealing with uncached
-		entry->nextFunc = &DirectoryController::sendRequestedData;
+		entry->nextFunc = &DirectoryController::sendResponse;
 		requestDataFromMemory(entry);
     }
     else{
         //Handle GetS requests
-		entry->sharers[requesting_node]= true;
-		entry->nextFunc = &DirectoryController::sendRequestedData;
+		entry->addSharer(requesting_node);
+		entry->nextFunc = &DirectoryController::sendResponse;
 		requestDataFromMemory(entry);
 	}
 }
@@ -404,18 +403,13 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
     int writeback_node_id  = node_id(new_ev->getSrc());
     int requesting_node_id = node_id(entry->activeReq->getSrc());
     Command cmd = entry->activeReq->getCmd();
-    //entry->sharers[node_id(new_ev->getSrc())] = false;
-    //entry->clearDirty();
+
     entry->clearDirty(writeback_node_id);
     
     if(!uncached){
         if(cmd == GetX || cmd == GetSEx) entry->setDirty(requesting_node_id);
-        else entry->sharers[requesting_node_id] = true;
+        else entry->addSharer(requesting_node_id);
     }
-    
-    //if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
-         //entry->sharers[node_id(entry->activeReq->getSrc())] = true;
-
 
 	MemEvent *ev = entry->activeReq->makeResponse();
 	ev->setPayload(new_ev->getPayload());
@@ -427,7 +421,7 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
 
 
 
-void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev){
+void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
 	MemEvent *ev = entry->activeReq->makeResponse();
     ev->setSize(cacheLineSize);
     ev->setPayload(new_ev->getPayload());
@@ -454,7 +448,7 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
     
     if(!uncached) entry->setDirty(requesting_node);
 
-	entry->nextFunc = &DirectoryController::sendRequestedData;
+	entry->nextFunc = &DirectoryController::sendResponse;
 	requestDataFromMemory(entry);
 }
 
@@ -463,7 +457,7 @@ void DirectoryController::handlePutS(MemEvent* ev){
     assert(entry);
     assert(entry->waitingAcks > 0);
     int requesting_node = node_name_to_id(ev->getSrc());
-    entry->sharers[requesting_node]= false;
+    entry->removeSharer(requesting_node);
     entry->waitingAcks--;
     assert(!entry->isDirty());
     if(0 == entry->waitingAcks ) advanceEntry(entry);
@@ -474,15 +468,9 @@ void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
     assert(entry->isDirty());
     assert(entry->findOwner() == node_lookup[ev->getSrc()]);
     int id = node_id(ev->getSrc());
-    
-    //if(!entry->activeReq->queryFlag(MemEvent::F_UNCACHED))
-    //    entry->sharers[node_id(entry->activeReq->getSrc())] = false; //or true?
-    
-    //entry->clearDirty();
 
     entry->clearDirty(id);
 
-    
     if(ev->getCmd() == PutM) writebackData(ev);
 	updateEntryToMemory(entry);
 }

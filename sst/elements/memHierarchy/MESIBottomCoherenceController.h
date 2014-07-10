@@ -162,54 +162,79 @@ private:
     }
     
     uint32_t getGroupId(){
-        assert(groupId_ != 0);
+        //assert(groupId_ != 0);
         return groupId_;
     }
 
-    //TODO move all this functions to its own "stats" class
-
-   void inc_GETXMissSM(Addr _addr, bool _prefetchRequest, bool _mshrH){
-        if(!_mshrH) stats_[0].GETXMissSM_++;
-        if(!_prefetchRequest){
+   void inc_GETXMissSM(MemEvent* _event){
+        if(!_event->statsUpdated()){
+            stats_[0].GETXMissSM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
-            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _addr);
         }
+        if(_event->isPrefetch())
+            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
+       
+        _event->setStatsUpdated(true);
     }
 
 
-    void inc_GETXMissIM(Addr _addr, bool _prefetchRequest, bool _mshrH){
-        if(!_mshrH) stats_[0].GETXMissIM_++;
-        if(!_prefetchRequest){
+    void inc_GETXMissIM(MemEvent* _event){
+        if(!_event->statsUpdated()){
+            stats_[0].GETXMissIM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
-            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _addr);
         }
+        if(_event->isPrefetch())
+            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
+        
+        _event->setStatsUpdated(true);
     }
 
 
-    void inc_GETSHit(Addr _addr, bool _prefetchRequest, bool _mshrH){
-        if(!_mshrH) stats_[0].GETSHit_++;
-        if(!_prefetchRequest){
-            if(groupStats_) stats_[getGroupId()].GETSHit_++;
-            listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _addr);
+    void inc_GETSHit(MemEvent* _event){
+        if(!_event->statsUpdated()){
+            if(!_event->inMSHR()){
+                stats_[0].GETSHit_++;
+                if(groupStats_) stats_[getGroupId()].GETSHit_++;
+            }
+            else{
+                stats_[0].GETSMissBlocked_++;
+                if(groupStats_) stats_[getGroupId()].GETSMissBlocked_++;
+            }
         }
+        if(_event->isPrefetch())
+            listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _event->getBaseAddr());
+        
+        _event->setStatsUpdated(true);
     }
 
 
-    void inc_GETXHit(Addr _addr, bool _prefetchRequest, bool _mshrH){
-        if(!_mshrH) stats_[0].GETXHit_++;
-        if(!_prefetchRequest){
-            if(groupStats_) stats_[getGroupId()].GETXHit_++;
-            listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _addr);
+    void inc_GETXHit(MemEvent* _event){
+        if(!_event->statsUpdated()){
+            if(!_event->inMSHR()){
+                stats_[0].GETXHit_++;
+                if(groupStats_) stats_[getGroupId()].GETXHit_++;
+            }
+            else{
+                stats_[0].GETXMissBlocked_++;
+                if(groupStats_) stats_[getGroupId()].GETXMissBlocked_++;
+            }
         }
+        if(_event->isPrefetch())
+            listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _event->getBaseAddr());
+        
+        _event->setStatsUpdated(true);
     }
 
 
-    void inc_GETSMissIS(Addr _addr, bool _prefetchRequest, bool _mshrH){
-        if(!_mshrH) stats_[0].GETSMissIS_++;
-        if(!_prefetchRequest){
-            if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
-            listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _addr);
+    void inc_GETSMissIS(MemEvent* _event){
+        if(!_event->statsUpdated()){
+            stats_[0].GETSMissIS_++;
+            stats_[getGroupId()].GETSMissIS_++;
         }
+        if(_event->isPrefetch())
+            listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr());
+        
+        _event->setStatsUpdated(true);
     }
 
     void inc_GetSExReqsReceived(bool _mshrH){

@@ -234,6 +234,8 @@ public:
         startTime_        = 0;
         NACKedCmd_        = NULLCMD;
         NACKedEvent_      = NULL;
+        inMSHR_           = false;
+        statsUpdated_     = false;
         payload_.clear();
     }
 
@@ -260,10 +262,13 @@ public:
     /** @return  the size in bytes that this MemEvent represents */
     uint32_t getSize(void) const { return size_; }
     /** Sets the size in bytes that this MemEvent represents */
-    void setSize(uint32_t _size) {
-        size_ = _size;
-    }
+    void setSize(uint32_t _size) { size_ = _size; }
     
+    bool inMSHR(){ return inMSHR_; }
+    void setInMSHR(bool _value){ inMSHR_ = _value; }
+    
+    bool statsUpdated(){ return statsUpdated_; }
+    void setStatsUpdated(bool _value) { statsUpdated_ = _value; }
     
     void setLoadLink(){ loadLink_ = true; }
     bool isLoadLink() { return loadLink_; }
@@ -432,6 +437,8 @@ private:
     bool            loadLink_;
     bool            storeConditional_;
     uint64_t        startTime_;
+    bool            inMSHR_;
+    bool            statsUpdated_;
 
     
     MemEvent() {} // For serialization only

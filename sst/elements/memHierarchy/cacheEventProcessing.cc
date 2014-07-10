@@ -31,8 +31,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::processEvent(SST::Event* _ev, bool _mshrHit) {
-    MemEvent *event = static_cast<MemEvent*>(_ev);
+void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     Command cmd     = event->getCmd();
     if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
@@ -135,9 +134,11 @@ void Cache::handlePrefetchEvent(SST::Event* _event) {
 void Cache::handleSelfEvent(SST::Event* _event){
     MemEvent* ev = static_cast<MemEvent*>(_event);
     ev->setBaseAddr(toBaseAddr(ev->getAddr()));
+    ev->setInMSHR(false);
+    ev->setStatsUpdated(false);
 
     if(ev->getCmd() != NULLCMD && !mshr_->isFull())
-        processEvent(_event, ev->isPrefetch());
+        processEvent(ev, ev->isPrefetch());
 }
 
 
@@ -212,5 +213,10 @@ void Cache::finish(){
 
 
 void Cache::processIncomingEvent(SST::Event* _ev){
-    processEvent(_ev, false);
+    MemEvent* event = static_cast<MemEvent*>(_ev);
+    //assert(!event->inMSHR());
+    //assert(!event->statsUpdated());
+    event->setInMSHR(false);
+    event->setStatsUpdated(false);
+    processEvent(event, false);
 }

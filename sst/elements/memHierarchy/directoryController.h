@@ -105,13 +105,13 @@ class DirectoryController : public Component {
     void sendInvalidate(int target, DirEntry* entry);
 
 	/** Function gets called when the meta data (flags, state) for a particular request is in the directory controller*/
-    void handleRequestData(DirEntry* entry, MemEvent *new_ev);
+    void handleDataRequest(DirEntry* entry, MemEvent *new_ev);
 	
     /** Fetch response received.  Respond to the event that cause the Fetch in the first place */
     void finishFetch(DirEntry* entry, MemEvent *new_ev);
 	
     /** Send response to a previously received request */
-    void sendRequestedData(DirEntry* entry, MemEvent *new_ev);
+    void sendResponse(DirEntry* entry, MemEvent *new_ev);
 	
     /** Function changes state of the cache line to indicate the new exclusive sharer */
     void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);
@@ -240,10 +240,6 @@ class DirectoryController : public Component {
 			}
         }
         
-        void setDirty(){
-            dirty = true;
-            assert(countRefs() == 0);
-        }
         
         void setDirty(int id){
             dirty       = true;
@@ -255,24 +251,29 @@ class DirectoryController : public Component {
             return dirty ? true : false;
         }
         
-        void clearDirty(){
-            dirty = false;
-        }
-        
-        
         void clearDirty(int id){
             dirty       = false;
             sharers[id] = false;
             assert(countRefs() == 0);
         }
         
+        void addSharer(int _id){
+            sharers[_id]= true;
+            assert(!dirty);
+        }
+        
+        void removeSharer(int _id){
+            sharers[_id]= false;
+            assert(!dirty);
+        }
+        
         uint32_t findOwner(void){
-            //assert(dirty);
-            //assert(countRefs() == 1);
+            assert(dirty);
+            assert(countRefs() == 1);
             for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
                 if ( sharers[i] ) return i;
             }
-            assert(false);   /* Should never be here */
+            assert(0);   /* Should never be here */
             return 0;
         }
 

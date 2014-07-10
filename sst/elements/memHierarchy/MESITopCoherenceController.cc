@@ -341,9 +341,9 @@ void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
 void MESITopCC::printStats(int _stats){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
-    dbg->output(C,"- NACKs sent (MSHR Full, TopCC): %u\n", NACKsSent_);
-    dbg->output(C,"- Invalidates sent (non-eviction): %u\n", invReqsSent_);
-    dbg->output(C,"- Invalidates sent due to evictions: %u\n", evictionInvReqsSent_);
+    dbg->output(C,"- NACKs sent (MSHR Full, TopCC):                  %u\n", NACKsSent_);
+    dbg->output(C,"- Invalidates sent (non-eviction):                %u\n", invReqsSent_);
+    dbg->output(C,"- Invalidates sent due to evictions:              %u\n", evictionInvReqsSent_);
 }
 
 

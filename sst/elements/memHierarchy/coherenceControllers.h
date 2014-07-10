@@ -108,8 +108,10 @@ protected:
     
     struct Stats{
         uint64_t GETSMissIS_,
+                GETSMissBlocked_,
                 GETXMissSM_,
                 GETXMissIM_,
+                GETXMissBlocked_,
                 GETSHit_,
                 GETXHit_,
                 PUTSReqsReceived_,
@@ -135,7 +137,7 @@ protected:
         }
         
         void initialize(){
-            GETSMissIS_ = GETXMissSM_ = GETXMissIM_ = GETSHit_ = GETXHit_ = 0;
+            GETSMissIS_ = GETSMissBlocked_ = GETXMissSM_ = GETXMissIM_ = GETXMissBlocked_ = GETSHit_ = GETXHit_ = 0;
             PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
             EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
             InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = InvalidatePUTSReqSent_ = 0;
