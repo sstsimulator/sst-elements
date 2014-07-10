@@ -235,11 +235,6 @@ void MemController::handleMemResponse(DRAMReq* _req){
 
 
 MemController::~MemController(){
-#ifdef HAVE_LIBZ
-   if(traceFP) gzclose(traceFP);
-#else
-    if(traceFP) fclose(traceFP);
-#endif
     while ( requests_.size()) {
         DRAMReq *req = requests_.front();
         requests_.pop_front();
