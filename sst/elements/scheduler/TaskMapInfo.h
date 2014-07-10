@@ -22,27 +22,28 @@ namespace SST {
 
         class TaskMapInfo {
 
-	        private:
-		        TaskCommInfo* taskCommInfo;
-		        int size;
-		        int mappedCount;
-		        unsigned long totalHopDist;
+            private:
+                TaskCommInfo* taskCommInfo;
+                int size;
+                int mappedCount;
+                double avgHopDist;
 
-	        public:
-		        AllocInfo* allocInfo;
-		        Job* job;
-		        int* taskToNode;
+            public:
+                AllocInfo* allocInfo;
+                Job* job;
+                int* taskToNode;
 
-		        TaskMapInfo(AllocInfo* ai);
+                TaskMapInfo(AllocInfo* ai);
 
-		        ~TaskMapInfo();
+                ~TaskMapInfo();
 
-		        //does not do the mapping; only assigns the given task
-		        //does not check if given node or task is already mapped
-		        void insert(int taskInd, int nodeInd);
-                
+                //does not do the mapping; only assigns the given task
+                //does not check if given node or task is already mapped
+                void insert(int taskInd, int nodeInd);
+
+                //returns average per-neighbor hop distance
                 //assumes no migration, i.e., it calculates the hop distance only once
-		        unsigned long getTotalHopDist(const MeshMachine & machine);
+                double getAvgHopDist(const MeshMachine & machine);
         };
     }
 }

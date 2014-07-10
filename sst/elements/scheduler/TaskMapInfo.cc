@@ -27,7 +27,7 @@ TaskMapInfo::TaskMapInfo(AllocInfo* ai)
     size = job->getProcsNeeded();
     taskToNode = new int[size];
     mappedCount = 0;
-    totalHopDist = 0;
+    avgHopDist = 0;
 }
 
 TaskMapInfo::~TaskMapInfo()
@@ -42,33 +42,38 @@ void TaskMapInfo::insert(int taskInd, int nodeInd)
     mappedCount++;
 }
 
-//Current version only checks if there is communication
-unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine)
+//Current version is not weighted and only checks if there is communication
+double TaskMapInfo::getAvgHopDist(const MeshMachine & machine)
 {
-    if(totalHopDist == 0) {
-
+    if(avgHopDist == 0) {
         //check if every task is mapped
         if(size > mappedCount){
             schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
         }
 
         int** commMatrix = taskCommInfo->getCommMatrix();
+        unsigned long totalHopDist = 0;
+        int neighborCount = 0;
         //iterate through all tasks
         for(int taskIter = 0; taskIter < size; taskIter++){
             MeshLocation curLoc = MeshLocation(taskToNode[taskIter], machine);
             //iterate through other tasks and add distance for communication
-            //assume two-way communication
             for(int otherTaskIter = taskIter + 1 ; otherTaskIter < size; otherTaskIter++){
                 if( commMatrix[taskIter][otherTaskIter] != 0 ||
                     commMatrix[otherTaskIter][taskIter] != 0 ){
                     MeshLocation otherNode = MeshLocation(taskToNode[otherTaskIter], machine);
                     totalHopDist += curLoc.L1DistanceTo(otherNode);
+                    neighborCount++;
                 }
             }
         }
-        //add duplicates
-        totalHopDist *= 2;
-
+        //distance per neighbor
+        //two-way distances and uncounted neighbors cancel each other
+        avgHopDist = totalHopDist;
+        if(neighborCount != 0){
+            avgHopDist /= neighborCount;
+        }
+        
         //delete comm matrix
         for(int i = 0 ; i < size; i++){
             delete [] commMatrix[i];
@@ -76,6 +81,6 @@ unsigned long TaskMapInfo::getTotalHopDist(const MeshMachine & machine)
         delete [] commMatrix;
     }
 
-    return totalHopDist;
-}    
+    return avgHopDist;
+}
 

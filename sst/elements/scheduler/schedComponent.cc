@@ -566,48 +566,45 @@ void schedComponent::startJob(Job* job)
     if (timePerDistance -> at(0) != 0
           && NULL != mMachine
           && NULL != (MeshAllocInfo*) ai
-          && NULL != ((MeshAllocInfo*)ai) -> processors) { 
+          && NULL != ((MeshAllocInfo*)ai) -> processors) {
         
         double randomNumber = rng->nextUniform() * 0.8 - 0.4;
-        int numberOfProcs = ((MeshAllocInfo*)ai)->processors->size();
         //calculate baseline L1 pairwise distance
         AllocInfo* baselineAlloc = MeshAllocInfo::getBaselineAllocation(*mMachine, job);
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
-        unsigned long baselineL1Distance = baselineMap->getTotalHopDist(*mMachine);
-        
-        //delete baselineMap;
-        double averagePairwiseDistance = baselineL1Distance / numberOfProcs;
+        double baselineAvgL1Distance = baselineMap->getAvgHopDist(*mMachine);
+        delete baselineMap;
                 
         //calculate running time w/o any communication overhead:
-        double baselineRunningTime = (double) actualRunningTime / 
-                                       ( timePerDistance->at(0) + timePerDistance->at(1) *
-                                        ( timePerDistance->at(2) + averagePairwiseDistance *
-                                         ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
+        double baselineRunningTime = actualRunningTime / 
+                                      ( timePerDistance->at(0) + timePerDistance->at(1) *
+                                       ( timePerDistance->at(2) + baselineAvgL1Distance *
+                                        ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
         
         //calculate new hop distance with allocation & task mapping
-        averagePairwiseDistance = tmi->getTotalHopDist(*mMachine) / numberOfProcs;
+        double avgL1Distance = tmi->getAvgHopDist(*mMachine);
         //new running time with overhead        
         double timeWithComm = baselineRunningTime *
                                ( timePerDistance->at(0) + timePerDistance->at(1) *
-                                ( timePerDistance->at(2) + averagePairwiseDistance *
+                                ( timePerDistance->at(2) + avgL1Distance *
                                  ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
         
         //overestimate the fraction to be safe
-        timeWithComm = ceil(timeWithComm);
+        //timeWithComm = ceil(timeWithComm);
         
-        /* DEBUG
-        if(actualRunningTime != 0)
-            std::cout << "Nodes:" << numberOfProcs 
+        //DEBUG
+        /*if(actualRunningTime != 0)
+            std::cout << "Nodes:" << job->getProcsNeeded()
+                      << ",\tbaseHop:" << baselineAvgL1Distance
                       << ",\tactual:" << actualRunningTime 
-                      << ",\tbase:" << (int) baselineRunningTime 
-                      << ",\tbaseHop:" << baselineL1Distance/numberOfProcs
-                      << ",\tcommHop:" << averagePairwiseDistance
-                      << ",\twithComm:" << (int) timeWithComm
-                      << ",\testimated:" << job->getEstimatedRunningTime()
-                      << ",\ttimeWithComm/actual:\t" << (double) timeWithComm/actualRunningTime
-                      << ",\testimated/timeWithComm:\t" << (double) job->getEstimatedRunningTime()/timeWithComm
+                      << ",\tbaseRun:" << (int) baselineRunningTime
+                      << ",\tcommHop:" << avgL1Distance
+                      << ",\twithCommRun:" << (int) timeWithComm
+                      << ",\twithComm/actual:\t" << timeWithComm/actualRunningTime
                       << "\n";*/
+        //if(actualRunningTime != 0)
+        //    std::cout << timeWithComm/actualRunningTime << "\n";
                       
         actualRunningTime = timeWithComm;
     }
