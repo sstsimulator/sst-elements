@@ -246,11 +246,7 @@ class DirectoryController : public Component {
         }
         
         bool isDirty(){
-            if(dirty){
-                assert(countRefs() == 1);
-                return true;
-            }
-            return false;
+            return dirty ? true : false;
         }
         
         void clearDirty(){
