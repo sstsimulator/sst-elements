@@ -55,7 +55,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         bottomCC_->handleRequest(_event, cacheLine, _cmd, _mshrHit);    /* upgrade or fetch line from higher level caches */
         stallIfUpgradeInProgress(cacheLine);                            /* Stall if upgrade in progress */
         
-        if(!_event->isPrefetch()){                                      /* Don't do anything with TopCC if it is a prefetch request */
+        if(!_event->isPrefetch()){                                      /* Don't send responses (through TopCC) if it is a prefetch request */
             done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Invalidate sharers, send respond to requestor if needed */
             postRequestProcessing(_event, cacheLine, done, _mshrHit);
         }
@@ -266,7 +266,6 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
 
 void Cache::stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(blockedEventException){
     if(_cacheLine->inTransition()){
-        upgradeCount_++;
         throw blockedEventException();                          /* stall request if upgrade is in progress */
     }
 }

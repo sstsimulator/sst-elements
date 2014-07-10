@@ -153,16 +153,16 @@ private:
     string              ownerName_;
     string              nextLevelCacheName_;
 
-    uint32_t            groupId_;
+    int                 groupId_;
     uint32_t            groupId_timestamp_;
     
-    void setGroupId(uint32_t _groupId){
+    void setGroupId(int _groupId){
         groupId_timestamp_ = timestamp_;
         groupId_ = _groupId;
     }
     
     uint32_t getGroupId(){
-        //assert(groupId_ != 0);
+        assert(groupId_ >= 1);
         return groupId_;
     }
 
@@ -229,7 +229,7 @@ private:
     void inc_GETSMissIS(MemEvent* _event){
         if(!_event->statsUpdated()){
             stats_[0].GETSMissIS_++;
-            stats_[getGroupId()].GETSMissIS_++;
+            if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
         }
         if(_event->isPrefetch())
             listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr());

@@ -459,7 +459,6 @@ void DirectoryController::handlePutS(MemEvent* ev){
     int requesting_node = node_name_to_id(ev->getSrc());
     entry->removeSharer(requesting_node);
     entry->waitingAcks--;
-    assert(!entry->isDirty());
     if(0 == entry->waitingAcks ) advanceEntry(entry);
 }
 

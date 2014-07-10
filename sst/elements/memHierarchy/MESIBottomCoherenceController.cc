@@ -313,11 +313,13 @@ void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
 }
 
 
+
 void MESIBottomCC::forwardMessage(MemEvent* _event, CacheLine* _cacheLine, vector<uint8_t>* _data){
     Addr baseAddr = _cacheLine->getBaseAddr();
     unsigned int lineSize = _cacheLine->getLineSize();
     forwardMessage(_event, baseAddr, lineSize, _data);
 }
+
 
 
 void MESIBottomCC::sendEvent(MemEvent* _event){

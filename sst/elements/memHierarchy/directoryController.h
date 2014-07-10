@@ -42,7 +42,7 @@ class DirectoryController : public Component {
 
     Output dbg;
 	struct DirEntry;
-
+    
 	/* Total number of cache blocks we are responsible for */
 	/* ie, sum of all caches we talk to */
     uint32_t    entrySize;
@@ -57,9 +57,6 @@ class DirectoryController : public Component {
 	Addr        addrRangeEnd;
     Addr        interleaveSize;
     Addr        interleaveStep;
-
-	SST::Link*  memLink;
-    MemNIC*     network;
 
     size_t      entryCacheMaxSize;
     size_t      entryCacheSize;
@@ -92,6 +89,10 @@ class DirectoryController : public Component {
     std::map<MemEvent::id_type, MemEvent*>  uncachedWrites;
     Output::output_location_t               printStatsLoc;
 
+	SST::Link*  memLink;
+    MemNIC*     network;
+    
+    
     /** Find directory entry by base address */
 	DirEntry* getDirEntry(Addr target);
 	
@@ -177,24 +178,22 @@ class DirectoryController : public Component {
 
     /** Internal struct to keep track of directory requests to main memory */
     struct DirEntry {
-		/* These items are bookkeeping for in-progress commands */
-		MemEvent        *activeReq;
-		ProcessFunc     nextFunc;
-        std::string     waitingOn; // waiting to hear from this source
-        Command         nextCommand;  // Command which we're waiting for
-		uint32_t        waitingAcks;
-        uint32_t        reqSize;
-        bool            inController; // Whether this is present in the controller, or needs to be fetched
-		Addr            baseAddr;
-        Addr            addr;
+		static const        MemEvent::id_type NO_LAST_REQUEST;
 
-        static const    MemEvent::id_type NO_LAST_REQUEST;
-
-		/* Standard directory data */
+        /* These items are bookkeeping for in-progress commands */
+		ProcessFunc         nextFunc;
+        std::string         waitingOn; // waiting to hear from this source
+        Command             nextCommand;  // Command which we're waiting for
+		uint32_t            waitingAcks;
+        uint32_t            reqSize;
+        bool                inController; // Whether this is present in the controller, or needs to be fetched
 		bool                dirty;
-		std::vector<bool>   sharers;
+        Addr                baseAddr;
+        Addr                addr;
         MemEvent::id_type   lastRequest;  // ID of message we're wanting a response to
+		MemEvent            *activeReq;
         std::list<DirEntry*>::iterator cacheIter;
+		std::vector<bool>   sharers;
 
         DirEntry(Addr _baseAddress, Addr _address, uint32_t _reqSize, uint32_t _bitlength){
             clearEntry();
@@ -304,8 +303,6 @@ public:
     /** Clock handler */
     bool clock(SST::Cycle_t cycle);
 
-
-	
 };
 
 }
