@@ -134,13 +134,13 @@ void MemController::addRequest(MemEvent* _ev){
 
 
 bool MemController::clock(Cycle_t _cycle){
-    backend->clock();
+    backend_->clock();
 
     while ( !requestQueue_.empty()) {
         DRAMReq *req = requestQueue_.front();
         req->status_ = DRAMReq::PROCESSING;
 
-        bool issued = backend->issueRequest(req);
+        bool issued = backend_->issueRequest(req);
         if (!issued) break;
 
         req->amtInProcess_ += requestSize_;
@@ -276,7 +276,7 @@ void MemController::init(unsigned int _phase){
 
 
 void MemController::setup(void){
-    backend->setup();
+    backend_->setup();
 }
 
 
@@ -285,7 +285,7 @@ void MemController::finish(void){
 	munmap(memBuffer_, memSize_);
 	if(-1 != backingFd_) close(backingFd_);
 
-    backend->finish();
+    backend_->finish();
 
     Output out("", 0, 0, statsOutputTarget_);
     out.output("\n--------------------------------------------------------------------\n");
