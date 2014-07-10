@@ -255,7 +255,8 @@ class DirectoryController : public Component {
         }
 
         uint32_t findOwner(void){
-            assert(dirty && countRefs() == 1);
+            //assert(dirty);
+            //assert(countRefs() == 1);
             for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
                 if ( sharers[i] ) return i;
             }
