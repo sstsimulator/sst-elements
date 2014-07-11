@@ -508,21 +508,27 @@ void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 void EmberEngine::processWaitallEvent(EmberWaitallEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Waitall Event (%s)\n", ev->getPrintableString().c_str());
 
-    int numReq = ev->getNumMessageRequests();
-	currentRecv.resize(numReq);
+        const int numReq = ev->getNumMessageRequests();
 
-	if(ev->deleteRequestPointer()) {
-		msgapi->waitall(numReq, ev->getMessageRequestHandle(),
-                    (MessageResponse**)&currentRecv[0], &waitallFunctor);
+	if(numReq > 0) {
+		currentRecv.resize(numReq);
+
+		if(ev->deleteRequestPointer()) {
+			msgapi->waitall(numReq, ev->getMessageRequestHandle(),
+	                    (MessageResponse**)&currentRecv[0], &waitallFunctor);
+		} else {
+			msgapi->waitall(numReq, ev->getMessageRequestHandle(),
+	                    (MessageResponse**)&currentRecv[0], &waitallNoDelFunctor);
+		}
+
+		// Keep track of the current request handle, we will free this auto(magically).
+		currentReq = ev->getMessageRequestHandle();
+
+		accumulateTime = histoWait;
 	} else {
-		msgapi->waitall(numReq, ev->getMessageRequestHandle(),
-                    (MessageResponse**)&currentRecv[0], &waitallNoDelFunctor);
+		output->verbose(CALL_INFO, 2, 0, "No events in waitall, continuing to next event.\n");
+		issueNextEvent(0);
 	}
-
-	// Keep track of the current request handle, we will free this auto(magically).
-	currentReq = ev->getMessageRequestHandle();
-
-	accumulateTime = histoWait;
 }
 
 void EmberEngine::processGetTimeEvent(EmberGetTimeEvent* ev) {
