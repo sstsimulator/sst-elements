@@ -28,6 +28,7 @@ public:
         void finish(const SST::Output* output);
 
 private:
+	MessageRequest* requests;
 	bool performReduction;
 
 	uint32_t iterations;

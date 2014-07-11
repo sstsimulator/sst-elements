@@ -82,7 +82,9 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
 }
 
 EmberHalo3D26Generator::~EmberHalo3D26Generator() {
-
+	if(requests != NULL) {
+		free(requests);
+	}
 }
 
 void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uint32_t myRank, uint32_t worldSize) {
@@ -178,8 +180,41 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
         corner_g = convertPositionToRank(peX, peY, peZ, my_X - 1, my_Y + 1, my_Z - 1);
 	corner_h = convertPositionToRank(peX, peY, peZ, my_X + 1, my_Y + 1, my_Z - 1);
 
+	// Count up the requests which could be posted (this is a high water mark)
+	char requestLength = 0;
+
+	requestLength = (xface_down > -1) ? 1 : 0;
+	requestLength = (xface_up > -1) ? 1 + requestLength : requestLength;
+	requestLength = (yface_down > -1) ? 1 + requestLength : requestLength;
+	requestLength = (yface_up > -1) ? 1 + requestLength : requestLength;
+	requestLength = (zface_up > -1) ? 1 + requestLength : requestLength;
+	requestLength = (zface_down > -1) ? 1 + requestLength : requestLength;
+
+	requestLength = (line_a > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_b > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_c > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_d > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_e > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_f > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_g > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_h > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_i > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_j > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_k > -1) ? 1 + requestLength : requestLength;
+	requestLength = (line_l > -1) ? 1 + requestLength : requestLength;
+
+	requestLength = (corner_a > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_b > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_c > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_d > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_e > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_f > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_g > -1) ? 1 + requestLength : requestLength;
+	requestLength = (corner_h > -1) ? 1 + requestLength : requestLength;
+
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
 		rank, worldSize, my_X, my_Y, my_Z, peX, peY, peZ);
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Total communication partners: %d\n", rank, (int) requestLength);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank, xface_up, xface_down);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank, yface_up, yface_down);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank, zface_up, zface_down);
@@ -190,6 +225,9 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
 		corner_a, corner_b, corner_c, corner_d);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CE: %" PRId32 ", CF: %" PRId32 ", CG: %" PRId32 ", CH: %" PRId32 "\n", rank,
 		corner_e, corner_f, corner_g, corner_h);
+
+	output->verbose(CALL_INFO, 4, 0, "Allocating request entries...\n");
+	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * requestLength);
 }
 
 void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
@@ -197,107 +235,95 @@ void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t 
 		EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
 		evQ->push(compute);
 
-		std::vector<MessageRequest*> requests;
+		int nextRequest = 0;
 
 		if(xface_down > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberIRecvEvent* recv = new EmberIRecvEvent(xface_down, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(xface_down, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(recv);
 		}
 
 		if(xface_up > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberIRecvEvent* recv = new EmberIRecvEvent(xface_up, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(xface_up, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(recv);
 		}
 
 		if(yface_down > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberIRecvEvent* recv = new EmberIRecvEvent(yface_down, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(yface_down, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(recv);
 		}
 
 		if(yface_up > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberIRecvEvent* recv = new EmberIRecvEvent(yface_up, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(yface_up, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(recv);
 		}
 
 		if(zface_down > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberIRecvEvent* recv = new EmberIRecvEvent(zface_down, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(zface_down, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(recv);
 		}
 
 		if(zface_up > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberIRecvEvent* recv = new EmberIRecvEvent(zface_up, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(zface_up, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(recv);
 		}
 
 		// Enqueue the sends
 		if(xface_down > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberISendEvent* send = new EmberISendEvent(xface_down, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberISendEvent* send = new EmberISendEvent(xface_down, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(send);
 		}
 
 		if(xface_up > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberISendEvent* send = new EmberISendEvent(xface_up, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberISendEvent* send = new EmberISendEvent(xface_up, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(send);
 		}
 
 		if(yface_down > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberISendEvent* send = new EmberISendEvent(yface_down, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberISendEvent* send = new EmberISendEvent(yface_down, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(send);
 		}
 
 		if(yface_up > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberISendEvent* send = new EmberISendEvent(yface_up, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberISendEvent* send = new EmberISendEvent(yface_up, items_per_cell * sizeof_cell * nx * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(send);
 		}
 
 		if(zface_down > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberISendEvent* send = new EmberISendEvent(zface_down, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberISendEvent* send = new EmberISendEvent(zface_down, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(send);
 		}
 
 		if(zface_up > -1) {
-			MessageRequest*  req  = new MessageRequest();
-                       	EmberISendEvent* send = new EmberISendEvent(zface_up, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, req);
-			requests.push_back(req);
+                       	EmberISendEvent* send = new EmberISendEvent(zface_up, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
 
 			evQ->push(send);
 		}
 
 		// Enqueue a wait all for all the communications we have set up
-		evQ->push( new EmberWaitallEvent( requests.size(), requests[0], true ) );
+		evQ->push( new EmberWaitallEvent( nextRequest, requests, true ) );
 	} else {
 		// We are done
 		EmberFinalizeEvent* finalize = new EmberFinalizeEvent();
