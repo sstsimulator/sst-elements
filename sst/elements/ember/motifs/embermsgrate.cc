@@ -85,12 +85,12 @@ void EmberMsgRateGenerator::generate(const SST::Output* output, const uint32_t p
     } else {
         int totalMsgs = numMsgs * iterations;
         double tmp = (double) m_totalTime / 1000000000.0;
-        output->output("%s: totalTime %.6f sec, %.3f msg/sec, %.3f MB/s\n",
+        output->output("%s: msgSize %lu, totalTime %.6f sec, %.3f msg/sec, %.3f MB/s\n",
                         0 == rank ? "Send" : "Recv",
+                        msgSize,
                         tmp,
                         totalMsgs / tmp,
-                        (totalMsgs*msgSize/1000000)/tmp );
-        output->output("schedule FinalizeEvent\n");
+                        ((double)totalMsgs*msgSize/1000000.0)/tmp );
         evQ->push(new EmberFinalizeEvent() );
     }
 }
