@@ -227,7 +227,8 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
 		corner_e, corner_f, corner_g, corner_h);
 
 	output->verbose(CALL_INFO, 4, 0, "Allocating request entries...\n");
-	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * requestLength);
+	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * requestLength * 2 );
+    printf("%d: %d\n",rank,requestLength);	
 }
 
 void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
@@ -323,7 +324,7 @@ void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t 
 		}
 
 		// Enqueue a wait all for all the communications we have set up
-		evQ->push( new EmberWaitallEvent( nextRequest, requests, true ) );
+		evQ->push( new EmberWaitallEvent( nextRequest, requests, false ) );
 	} else {
 		// We are done
 		EmberFinalizeEvent* finalize = new EmberFinalizeEvent();
