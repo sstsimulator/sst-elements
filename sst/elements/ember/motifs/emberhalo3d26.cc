@@ -232,6 +232,8 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
 
 void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
 	if(phase < iterations) {
+		output->verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 "\n", rank);
+
 		EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
 		evQ->push(compute);
 
@@ -605,6 +607,9 @@ void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t 
 
 		// Enqueue a wait all for all the communications we have set up
 		evQ->push( new EmberWaitallEvent( nextRequest, requests, false ) );
+
+		output->verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 " completed generation, %d events in queue\n",
+			rank, (int)evQ->size());
 	} else {
 		// We are done
 		EmberFinalizeEvent* finalize = new EmberFinalizeEvent();
