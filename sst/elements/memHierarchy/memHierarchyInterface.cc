@@ -85,7 +85,6 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
     }
     
     //totalRequests_++;
-    //std::cout << "TotalRequests: " << totalRequests_ << std::endl;
     return me;
 }
 

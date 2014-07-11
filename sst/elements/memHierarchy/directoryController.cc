@@ -197,13 +197,14 @@ bool DirectoryController::processPacket(MemEvent *ev){
             entry->removeSharer(requesting_node);
             assert(!entry->isDirty());
             if(entry->countRefs() == 0) resetEntry(entry);
+            delete ev;
             break;
             
         case PutM:
             if(cmd == PutM)         PutMReqReceived++;
             else if(cmd == PutE)    PutEReqReceived++;
             
-            entry->activeReq = ev;  //todo: delete
+            entry->activeReq = ev;
             assert(entry);
             dbg.debug(_L10_, "\n\nDC PutM - %s - Request Received\n", getName().c_str());
             if(entry->inController){
@@ -400,8 +401,8 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
     dbg.debug(_L10_, "Finishing Fetch. Writing data to memory. \n");
     bool uncached = entry->activeReq->queryFlag(MemEvent::F_UNCACHED);
-    int writeback_node_id  = node_id(new_ev->getSrc());
-    int requesting_node_id = node_id(entry->activeReq->getSrc());
+    int writeback_node_id  = node_name_to_id(new_ev->getSrc());
+    int requesting_node_id = node_name_to_id(entry->activeReq->getSrc());
     Command cmd = entry->activeReq->getCmd();
 
     entry->clearDirty(writeback_node_id);
@@ -436,7 +437,7 @@ void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
 
 
 void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev){
-    uint32_t requesting_node = node_id(entry->activeReq->getSrc());
+    uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
     bool uncached = entry->activeReq->queryFlag(MemEvent::F_UNCACHED);
 	
     assert(0 == entry->waitingAcks);
@@ -465,13 +466,15 @@ void DirectoryController::handlePutS(MemEvent* ev){
 
 void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
     assert(entry->isDirty());
-    assert(entry->findOwner() == node_lookup[ev->getSrc()]);
-    int id = node_id(ev->getSrc());
+    assert(entry->findOwner() == node_name_to_id(entry->activeReq->getSrc()));
+    int id = node_name_to_id(entry->activeReq->getSrc());
 
     entry->clearDirty(id);
 
-    if(ev->getCmd() == PutM) writebackData(ev);
+    if(ev->getCmd() == PutM) writebackData(entry->activeReq);
 	updateEntryToMemory(entry);
+    
+    delete entry->activeReq;
 }
 
 
