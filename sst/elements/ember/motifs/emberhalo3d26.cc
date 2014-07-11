@@ -183,6 +183,13 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank, xface_up, xface_down);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank, yface_up, yface_down);
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank, zface_up, zface_down);
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LA: %" PRId32 ", LB: %" PRId32 ", LC: %" PRId32 ", LD: %" PRId32 "\n", rank, line_a, line_b, line_c, line_d);
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LE: %" PRId32 ", LF: %" PRId32 ", LG: %" PRId32 ", LH: %" PRId32 "\n", rank, line_e, line_f, line_g, line_h);
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LI: %" PRId32 ", LJ: %" PRId32 ", LK: %" PRId32 ", LL: %" PRId32 "\n", rank, line_i, line_j, line_k, line_l);
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CA: %" PRId32 ", CB: %" PRId32 ", CC: %" PRId32 ", CD: %" PRId32 "\n", rank,
+		corner_a, corner_b, corner_c, corner_d);
+	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CE: %" PRId32 ", CF: %" PRId32 ", CG: %" PRId32 ", CH: %" PRId32 "\n", rank,
+		corner_e, corner_f, corner_g, corner_h);
 }
 
 void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
