@@ -183,34 +183,34 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
 	// Count up the requests which could be posted (this is a high water mark)
 	char requestLength = 0;
 
-	requestLength = (xface_down > -1) ? 1 : 0;
-	requestLength = (xface_up > -1) ? 1 + requestLength : requestLength;
-	requestLength = (yface_down > -1) ? 1 + requestLength : requestLength;
-	requestLength = (yface_up > -1) ? 1 + requestLength : requestLength;
-	requestLength = (zface_up > -1) ? 1 + requestLength : requestLength;
-	requestLength = (zface_down > -1) ? 1 + requestLength : requestLength;
+	requestLength =  (xface_down > -1) ? 1 : 0;
+	requestLength += (xface_up > -1) ? 1 : 0;
+	requestLength += (yface_down > -1) ? 1 : 0;
+	requestLength += (yface_up > -1) ? 1 : 0;
+	requestLength += (zface_up > -1) ? 1 : 0;
+	requestLength += (zface_down > -1) ? 1 : 0;
 
-	requestLength = (line_a > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_b > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_c > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_d > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_e > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_f > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_g > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_h > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_i > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_j > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_k > -1) ? 1 + requestLength : requestLength;
-	requestLength = (line_l > -1) ? 1 + requestLength : requestLength;
+	requestLength += (line_a > -1) ? 1 : 0;
+	requestLength += (line_b > -1) ? 1 : 0;
+	requestLength += (line_c > -1) ? 1 : 0;
+	requestLength += (line_d > -1) ? 1 : 0;
+	requestLength += (line_e > -1) ? 1 : 0;
+	requestLength += (line_f > -1) ? 1 : 0;
+	requestLength += (line_g > -1) ? 1 : 0;
+	requestLength += (line_h > -1) ? 1 : 0;
+	requestLength += (line_i > -1) ? 1 : 0;
+	requestLength += (line_j > -1) ? 1 : 0;
+	requestLength += (line_k > -1) ? 1 : 0;
+	requestLength += (line_l > -1) ? 1 : 0;
 
-	requestLength = (corner_a > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_b > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_c > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_d > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_e > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_f > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_g > -1) ? 1 + requestLength : requestLength;
-	requestLength = (corner_h > -1) ? 1 + requestLength : requestLength;
+	requestLength += (corner_a > -1) ? 1 : 0;
+	requestLength += (corner_b > -1) ? 1 : 0;
+	requestLength += (corner_c > -1) ? 1 : 0;
+	requestLength += (corner_d > -1) ? 1 : 0;
+	requestLength += (corner_e > -1) ? 1 : 0;
+	requestLength += (corner_f > -1) ? 1 : 0;
+	requestLength += (corner_g > -1) ? 1 : 0;
+	requestLength += (corner_h > -1) ? 1 : 0;
 
 	output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
 		rank, worldSize, my_X, my_Y, my_Z, peX, peY, peZ);
@@ -227,8 +227,7 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
 		corner_e, corner_f, corner_g, corner_h);
 
 	output->verbose(CALL_INFO, 4, 0, "Allocating request entries...\n");
-	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * requestLength * 2 );
-    printf("%d: %d\n",rank,requestLength);	
+	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * (((size_t) requestLength) * 2));
 }
 
 void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ) {
@@ -280,6 +279,147 @@ void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t 
 			evQ->push(recv);
 		}
 
+		if(line_a > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_a, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_b > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_b, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_c > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_c, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_d > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_d, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_e > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_e, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_f > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_f, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_g > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_g, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_h > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_h, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_i > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_i, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_j > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_j, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_k > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_k, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(line_l > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(line_l, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_a > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_a, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_b > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_b, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_c > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_c, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_d > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_d, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_e > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_e, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_f > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_f, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_g > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_g, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+		if(corner_h > -1) {
+                       	EmberIRecvEvent* recv = new EmberIRecvEvent(corner_h, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(recv);
+		}
+
+
 		// Enqueue the sends
 		if(xface_down > -1) {
                        	EmberISendEvent* send = new EmberISendEvent(xface_down, items_per_cell * sizeof_cell * ny * nz, 0, (Communicator) 0, &requests[nextRequest]);
@@ -318,6 +458,146 @@ void EmberHalo3D26Generator::generate(const SST::Output* output, const uint32_t 
 
 		if(zface_up > -1) {
                        	EmberISendEvent* send = new EmberISendEvent(zface_up, items_per_cell * sizeof_cell * ny * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_a > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_a, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_b > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_b, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_c > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_c, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_d > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_d, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_e > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_e, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_f > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_f, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_g > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_g, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_h > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_h, items_per_cell * sizeof_cell * ny, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_i > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_i, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_j > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_j, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_k > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_k, items_per_cell * sizeof_cell * nz, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(line_l > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(line_l, items_per_cell * sizeof_cell * nx, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_a > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_a, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_b > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_b, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_c > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_c, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_d > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_d, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_e > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_e, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_f > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_f, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_g > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_g, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
+			nextRequest++;
+
+			evQ->push(send);
+		}
+
+		if(corner_h > -1) {
+                       	EmberISendEvent* send = new EmberISendEvent(corner_h, items_per_cell * sizeof_cell * 1, 0, (Communicator) 0, &requests[nextRequest]);
 			nextRequest++;
 
 			evQ->push(send);
