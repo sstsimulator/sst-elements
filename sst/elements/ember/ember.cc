@@ -36,6 +36,7 @@
 #include "motifs/emberallpingpong.h"
 #include "motifs/embernull.h"
 #include "motifs/embermsgrate.h"
+#include "motifs/emberhalo3d26.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -82,10 +83,10 @@ load_Halo2DNBR( Component* comp, Params& params ) {
 	return new EmberHalo2DNBRGenerator(comp, params);
 }
 
-//static Module*
-//load_Halo3DNB26( Component* comp, Params& params ) {
-//	return new EmberHalo3DNB26Generator(comp, params);
-//}
+static Module*
+load_Halo3D26( Component* comp, Params& params ) {
+	return new EmberHalo3D26Generator(comp, params);
+}
 
 static Module*
 load_Halo3D( Component* comp, Params& params ) {
@@ -228,6 +229,24 @@ static const ElementInfoParam halo3d_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam halo3d26_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
+	{	"peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+	{	"nx",			"Sets the problem size in X-dimension",			"100"},
+	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
+	{	"nz",			"Sets the problem size in Z-dimension",			"100"},
+	{	"pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
+	{	"pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
+	{	"pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
+	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
+	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
+	{	"fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam ring_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	"messagesize",		"Sets the size of the message in bytes",	 	"1024"},
@@ -347,13 +366,21 @@ static const ElementInfoModule modules[] = {
 	halo3d_params,
     "SST::Ember::EmberGenerator"
     },
+    { 	"Halo3D26Motif",
+	"Performs a 3D 26-non-blocking motif",
+	NULL,
+	NULL,
+	load_Halo3D26,
+	halo3d26_params,
+        "SST::Ember::EmberGenerator"
+    },
     { 	"Sweep2DMotif",
 	"Performs a 2D sweep exchange Motif with multiple vertex communication ordering",
 	NULL,
 	NULL,
 	load_Sweep2D,
 	sweep2d_params,
-    "SST::Ember::EmberGenerator"
+        "SST::Ember::EmberGenerator"
     },
     { 	"Sweep3DMotif",
 	"Performs a 3D sweep communication motif from all 8 vertices",
@@ -361,7 +388,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_Sweep3D,
 	sweep3d_params,
-    "SST::Ember::EmberGenerator"
+        "SST::Ember::EmberGenerator"
     },
     { 	"NASLUMotif",
 	"Performs a NAS-LU communication motif from 2 (opposite) vertices",
