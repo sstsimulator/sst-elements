@@ -13,18 +13,29 @@
 #include "AllocInfo.h"
 
 #include <string>
+#include <cmath>
 
 #include "Job.h"
 #include "Machine.h"
 
 using namespace SST::Scheduler;
 
-AllocInfo::AllocInfo(Job* job, const Machine & mach) 
+AllocInfo::AllocInfo(Job* job, const Machine & mach)
 {
     this -> job = job;
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / mach.getNumCoresPerNode());
+    nodesNeeded = ceil((double) job->getProcsNeeded() / mach.getNumCoresPerNode());
     nodeIndices = new int[nodesNeeded];
     nodeIndices[0] = -1; // ConstraintAllocator puts allocation here
+}
+
+AllocInfo::AllocInfo(const AllocInfo & ai)
+{
+    job = ai.job;
+    nodesNeeded = ai.nodesNeeded;
+    nodeIndices = new int[nodesNeeded];
+    for(int i = 0; i < nodesNeeded; i++){
+        nodeIndices[i] = ai.nodeIndices[i];
+    }
 }
 
 AllocInfo::~AllocInfo() 

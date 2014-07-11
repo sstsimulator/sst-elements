@@ -30,10 +30,16 @@ namespace SST {
                 int* nodeIndices;
 
                 AllocInfo(Job* job, const Machine & mach);
+                AllocInfo(const AllocInfo & ai);
 
                 virtual ~AllocInfo();
 
                 virtual std::string getProcList();
+                
+                int getNodesNeeded() const { return nodesNeeded; }
+                
+            private:
+                int nodesNeeded;
         };
 
 

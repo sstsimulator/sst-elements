@@ -64,7 +64,7 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
 
     //get node locations
     vector<MeshLocation>* nodes = new vector<MeshLocation>();
-    for(int i = 0; i < jobSize; i++){
+    for(int i = 0; i < allocInfo->getNodesNeeded(); i++){
         //put the same node location for each core
         for(int j = 0; j < machine->getNumCoresPerNode(); j++){
             MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], *mMachine);
@@ -73,62 +73,64 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     }
     Grouper<MeshLocation> nodeGroup = Grouper<MeshLocation>(nodes, &dummyRotator);
 
-    vector<int>* jobs = new vector<int>();
+    vector<int>* tasks = new vector<int>();
     for(int i = 0; i < jobSize; i++){
-        jobs->push_back(i);
+        tasks->push_back(i);
     }
-    Grouper<int> jobGroup = Grouper<int>(jobs, &dummyRotator);
+    Grouper<int> taskGroup = Grouper<int>(tasks, &dummyRotator);
 
     //apply rotation
-    Rotator rotator = Rotator(&nodeGroup, &jobGroup, *this, *mMachine);
+    Rotator rotator = Rotator(&nodeGroup, &taskGroup, *this, *mMachine);
 
     //map
-    mapTaskHelper(&nodeGroup, &jobGroup, tmi);
+    mapTaskHelper(&nodeGroup, &taskGroup, tmi);
 
-    /*//DEBUG
-    for(int i = 0; i<jobSize; i++){
-        cout << "task:" << i << " <-> node:" << tmi->taskMap->left.at(i) << endl;
-    }
-    *///////
+    //DEBUG
+    //for(int i = 0; i<jobSize; i++){
+    //    std::cout << "task:" << i << " <-> node:" << tmi->taskToNode[i] << endl;
+    //}
+    ///////
 
     return tmi;
 }
 
-void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* inJobs, TaskMapInfo* tmi)
+void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* inTasks, TaskMapInfo* tmi)
 {
-    if(inJobs->elements->size() == 1){
+    if(inTasks->elements->size() == 1){
         //map node to task
-        tmi->insert(inJobs->elements->at(0), inLocs->elements->at(0).toInt(*mMachine));
+        tmi->insert(inTasks->elements->at(0), inLocs->elements->at(0).toInt(*mMachine));
+        //DEBUG
+        //std::cout << "Task " << inTasks->elements->at(0) << " is mapped to Node " << inLocs->elements->at(0).toInt(*mMachine) << "\n";
     } else {
         Grouper<MeshLocation>** firstLocs = new Grouper<MeshLocation>*();
         Grouper<MeshLocation>** secondLocs = new Grouper<MeshLocation>*();
-        Grouper<int>** firstJobs = new Grouper<int>*();
-        Grouper<int>** secondJobs = new Grouper<int>*();
+        Grouper<int>** firstTasks = new Grouper<int>*();
+        Grouper<int>** secondTasks = new Grouper<int>*();
 
         int locLongest;
         int jobLongest;
         int dimToCut;
 
-        if(inJobs->getLongestDim(&jobLongest) >= inLocs->getLongestDim(&locLongest)){
+        if(inTasks->getLongestDim(&jobLongest) >= inLocs->getLongestDim(&locLongest)){
             dimToCut = jobLongest;
         } else {
             dimToCut = locLongest;
         }
 
         inLocs->divideBy(dimToCut, firstLocs, secondLocs);
-        inJobs->divideBy(dimToCut, firstJobs, secondJobs);
+        inTasks->divideBy(dimToCut, firstTasks, secondTasks);
 
-        mapTaskHelper(*firstLocs, *firstJobs, tmi);
-        mapTaskHelper(*secondLocs, *secondJobs, tmi);
+        mapTaskHelper(*firstLocs, *firstTasks, tmi);
+        mapTaskHelper(*secondLocs, *secondTasks, tmi);
 
         delete *firstLocs;
         delete *secondLocs;
-        delete *firstJobs;
-        delete *secondJobs;
+        delete *firstTasks;
+        delete *secondTasks;
         delete firstLocs;
         delete secondLocs;
-        delete firstJobs;
-        delete secondJobs;
+        delete firstTasks;
+        delete secondTasks;
     }
 }
 
@@ -197,6 +199,18 @@ void RCBTaskMapper::Grouper<T>::divideBy(int dim, Grouper<T>** first, Grouper<T>
     int halfSize = elements->size() / 2;
     *first = new Grouper<T>(new vector<T>(elements->begin(), elements->begin() + halfSize), rotator);
     *second = new Grouper<T>(new vector<T>(elements->begin() + halfSize, elements->end()), rotator);
+
+    /*//DEBUG
+    std::cout << "first:\n";
+    for(unsigned i = 0; i< (*first)->elements->size(); i++){
+        std::cout << rotator->getTaskNum((*first)->elements->at(i)) << ",";
+    }
+    std::cout << endl;
+    std::cout << "second:\n";
+    for(unsigned i = 0; i< (*second)->elements->size(); i++){
+        std::cout << rotator->getTaskNum((*second)->elements->at(i)) << ",";
+    }
+    std::cout << endl;*/
 }
 
 template <class T>
@@ -362,8 +376,7 @@ int RCBTaskMapper::Rotator::getTaskNum(int taskID) const
     return taskID;
 }
 
-int RCBTaskMapper::Rotator::getLocNum(MeshLocation loc) const
+int RCBTaskMapper::Rotator::getTaskNum(MeshLocation loc) const
 {
     return loc.toInt(*(rcb.mMachine));
 }
-

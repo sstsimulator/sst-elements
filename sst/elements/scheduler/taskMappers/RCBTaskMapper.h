@@ -80,7 +80,7 @@ namespace SST {
                         template <typename T>
                         int getTaskNum(T t) const; //template specialization workaround
                         int getTaskNum(int taskID) const;
-                        int getLocNum(MeshLocation loc) const;
+                        int getTaskNum(MeshLocation loc) const;
 
                     private:
                         const RCBTaskMapper & rcb;
@@ -103,3 +103,4 @@ namespace SST {
     }
 }
 #endif /* SST_SCHEDULER_RCBTASKMAPPER_H__ */
+
