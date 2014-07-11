@@ -41,7 +41,7 @@ EmberEventType EmberWaitallEvent::getEventType() {
 
 std::string EmberWaitallEvent::getPrintableString() {
 	char buffer[128];
-        sprintf(buffer, "Waitall Event");
+        sprintf(buffer, "Waitall Event (contains: %d requests)", getNumMessageRequests());
         std::string bufferStr = buffer;
         return bufferStr;
 }
