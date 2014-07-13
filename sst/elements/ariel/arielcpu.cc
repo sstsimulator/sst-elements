@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
+
+#include <time.h>
 
 #include <string.h>
 
@@ -30,7 +33,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	int verbosity = params.find_integer("verbose", 0);
 	output = new SST::Output("ArielComponent[@f:@l:@p] ",
 		verbosity, 0, SST::Output::STDOUT);
-		
+
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
 	core_count = (uint32_t) params.find_integer("corecount", 1);
@@ -41,54 +44,73 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	memory_levels = (uint32_t) params.find_integer("memorylevels", 1);
 	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " memory levels.\n", memory_levels);
-	
+
 	page_sizes = (uint64_t*) malloc( sizeof(uint64_t) * memory_levels );
 	page_counts = (uint64_t*) malloc( sizeof(uint64_t) * memory_levels );
-	
+
 	char* level_buffer = (char*) malloc(sizeof(char) * 256);
 	for(uint32_t i = 0; i < memory_levels; ++i) {
 		sprintf(level_buffer, "pagesize%" PRIu32, i);
 		page_sizes[i] = (uint64_t) params.find_integer(level_buffer, 4096);
-		
+
 		sprintf(level_buffer, "pagecount%" PRIu32, i);
 		page_counts[i] = (uint64_t) params.find_integer(level_buffer, 131072);
 	}
 	free(level_buffer);
-	
+
 	uint32_t default_level = (uint32_t) params.find_integer("defaultlevel", 0);
-	
+
 	output->verbose(CALL_INFO, 1, 0, "Creating memory manager, default allocation from %" PRIu32 " memory pool.\n", default_level);
 	memmgr = new ArielMemoryManager(memory_levels, 
 		page_sizes, page_counts, output, default_level);
-		
+
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find_integer("maxissuepercycle", 1);
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find_integer("maxcorequeue", 64);
 	uint32_t maxPendingTransCore = (uint32_t) params.find_integer("maxtranscore", 16);
 	int      pipeReadTimeOut     = (int)      params.find_integer("pipetimeout", 10);
 	uint64_t cacheLineSize       = (uint64_t) params.find_integer("cachelinesize", 64);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
-	
+
 	named_pipe_base = (char*) malloc(sizeof(char) * 256);
-	tmpnam(named_pipe_base);
-	
+	time_t t = time(NULL);
+	struct tm* time_now = localtime(&t);
+
+	char* system_temp = getenv("TMPDIR");
+
+	// If there is a system temp then we can use that as a base for our temporary
+	// files, if not we will assume /tmp (Fileystem standard in Linux and UNIX
+	// says that /tmp MUST be made available for applications to deploy
+	// temporary files
+	if(NULL == system_temp) {
+		sprintf(named_pipe_base, "/tmp/sstariel_%d_%d_%d_%d_%d_%d_%d_",
+			time_now->tm_year, time_now->tm_mon, time_now->tm_mday,
+			time_now->tm_hour, time_now->tm_min, time_now->tm_sec,
+			(int) getpid());
+	} else {
+		sprintf(named_pipe_base, "%s/sstariel_%d_%d_%d_%d_%d_%d_%d_",
+			system_temp, time_now->tm_year, time_now->tm_mon, time_now->tm_mday,
+			time_now->tm_hour, time_now->tm_min, time_now->tm_sec,
+			(int) getpid());
+	}
+
 	output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", named_pipe_base);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
-	
+
 	std::string ariel_tool = params.find_string("arieltool", "");
 	if("" == ariel_tool) {
 		output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
 	}
-	
+
 	std::string executable = params.find_string("executable", "");
 	if("" == executable) {
 		output->fatal(CALL_INFO, -1, "The input deck did not specify an executable to be run against PIN\n");
 	}
-	
+
 	uint32_t app_argc = (uint32_t) params.find_integer("appargcount", 0);
 	output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
-	
+
 	uint32_t pin_startup_mode = (uint32_t) params.find_integer("arielmode", 1);
 	uint32_t intercept_multilev_mem = (uint32_t) params.find_integer("arielinterceptcalls", 1);
 
@@ -107,40 +129,40 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
-    execute_args[0] = const_cast<char*>("pintool");
-    execute_args[1] = const_cast<char*>("-t");
-    execute_args[2] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
-    strcpy(execute_args[2], ariel_tool.c_str());
-    execute_args[3] = const_cast<char*>("-p");
-    execute_args[4] = (char*) malloc(sizeof(char) * (strlen(named_pipe_base) + 1));
-    strcpy(execute_args[4], named_pipe_base);
-    execute_args[5] = const_cast<char*>("-v");
-    execute_args[6] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[6], "%d", verbosity);
-    execute_args[7] = const_cast<char*>("-i");
-    execute_args[8] = (char*) malloc(sizeof(char) * 30);
-    sprintf(execute_args[8], "%" PRIu64, (uint64_t) 1000000000);
-    execute_args[9] = const_cast<char*>("-c");
-    execute_args[10] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[10], "%" PRIu32, core_count);
-    execute_args[11] = const_cast<char*>("-s");
-    execute_args[12] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[12], "%" PRIu32, pin_startup_mode);
-    execute_args[13] = const_cast<char*>("-m");
-    execute_args[14] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[14], "%" PRIu32, intercept_multilev_mem);
-    execute_args[15] = const_cast<char*>("-d");
-    execute_args[16] = (char*) malloc(sizeof(char) * 8);
-    sprintf(execute_args[16], "%" PRIu32, default_level);
-    execute_args[17] = const_cast<char*>("--");
-    execute_args[18] = (char*) malloc(sizeof(char) * (executable.size() + 1));
-    strcpy(execute_args[18], executable.c_str());
+    	execute_args[0] = const_cast<char*>("pintool");
+    	execute_args[1] = const_cast<char*>("-t");
+    	execute_args[2] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
+    	strcpy(execute_args[2], ariel_tool.c_str());
+    	execute_args[3] = const_cast<char*>("-p");
+    	execute_args[4] = (char*) malloc(sizeof(char) * (strlen(named_pipe_base) + 1));
+    	strcpy(execute_args[4], named_pipe_base);
+    	execute_args[5] = const_cast<char*>("-v");
+    	execute_args[6] = (char*) malloc(sizeof(char) * 8);
+    	sprintf(execute_args[6], "%d", verbosity);
+    	execute_args[7] = const_cast<char*>("-i");
+    	execute_args[8] = (char*) malloc(sizeof(char) * 30);
+    	sprintf(execute_args[8], "%" PRIu64, (uint64_t) 1000000000);
+    	execute_args[9] = const_cast<char*>("-c");
+    	execute_args[10] = (char*) malloc(sizeof(char) * 8);
+    	sprintf(execute_args[10], "%" PRIu32, core_count);
+    	execute_args[11] = const_cast<char*>("-s");
+    	execute_args[12] = (char*) malloc(sizeof(char) * 8);
+    	sprintf(execute_args[12], "%" PRIu32, pin_startup_mode);
+    	execute_args[13] = const_cast<char*>("-m");
+    	execute_args[14] = (char*) malloc(sizeof(char) * 8);
+    	sprintf(execute_args[14], "%" PRIu32, intercept_multilev_mem);
+    	execute_args[15] = const_cast<char*>("-d");
+    	execute_args[16] = (char*) malloc(sizeof(char) * 8);
+    	sprintf(execute_args[16], "%" PRIu32, default_level);
+    	execute_args[17] = const_cast<char*>("--");
+    	execute_args[18] = (char*) malloc(sizeof(char) * (executable.size() + 1));
+    	strcpy(execute_args[18], executable.c_str());
 
 	char* argv_buffer = (char*) malloc(sizeof(char) * 256);
 	for(uint32_t i = (pin_arg_count - 1); i < (pin_arg_count - 1) + app_argc; ++i) {
 		sprintf(argv_buffer, "apparg%" PRIu32, i - (pin_arg_count - 1));
 		std::string argv_i = params.find_string(argv_buffer, "");
-		
+
 		output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n", 
 			i - (pin_arg_count - 1), argv_buffer, argv_i.c_str());
 		execute_args[i] = (char*) malloc(sizeof(char) * (argv_i.size() + 1));
