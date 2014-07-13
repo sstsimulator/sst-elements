@@ -657,12 +657,18 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 		// Reset the phase generator for this motif
 		generationPhase = 0;
 
+		// Clear any pending events in the queue (from the old motif, when you issue finalize, you mean it).
+		while(! evQueue.empty()) {
+			evQueue.pop();
+		}
+
 		// Configure the motif environment
 		generator->configureEnvironment(output, thisRank, worldSize);
 
         	// Update event count to ensure we are not correctly sync'd
         	eventCount = (uint32_t) evQueue.size();
 
+		// Begin to issue events from the new motif
 		issueNextEvent(0);
 	} else {
 		output->verbose(CALL_INFO, 2, 0, "Last motif in this simulation, calling finalize in the messaging API.\n");
