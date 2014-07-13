@@ -368,6 +368,8 @@ void EmberEngine::setup() {
 	string outputPrefixStr = outputPrefix;
 	output->setPrefix(outputPrefixStr);
 
+	output->verbose(CALL_INFO, 2, 0, "Identified %" PRIu32 " motifs to be simulated.", motifCount);
+
 	// Send an start event to this rank, this starts up the component
 	EmberStartEvent* startEv = new EmberStartEvent();
 	selfEventLink->send(startEv);
@@ -620,7 +622,7 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 		char nameBuffer[64];
 		currentMotif++;
 
-		output->verbose(CALL_INFO, 2, 0, "Loading the next motif %" PRIu32 "...\n", currentMotif);
+		output->verbose(CALL_INFO, 2, 0, "Loading the next motif (motif%" PRIu32 ")...\n", currentMotif);
 
 		// Delete the existing motif (call destructor)
 		delete generator;
@@ -643,6 +645,9 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
                 } else {
 			output->verbose(CALL_INFO, 2, 0, "Motif laoded correctly, beginning processing.\n");
 		}
+
+		// Reset the phase generator for this motif
+		generationPhase = 0;
 
 		// Configure the motif environment
 		generator->configureEnvironment(output, thisRank, worldSize);
