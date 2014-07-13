@@ -132,6 +132,8 @@ void StridePrefetcher::DetectStride() {
 		// Put the cache line at the back of the queue
 		prefetchHistory->push_back(prefetchCacheLineBase);
 
+		assert((ev->getAddr() % blockSize) == 0);
+
 	        // Cycle over each registered call back and notify them that we want to issue a prefet$
 	        for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 	            // Create a new read request, we cannot issue a write because the data will get
