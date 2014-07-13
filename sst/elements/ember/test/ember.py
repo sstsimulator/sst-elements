@@ -6,8 +6,8 @@ import sys,getopt
 
 iterations = 1;
 msgSize = 1024;
-motif = "NASLU"
-shape = "4x4"
+motif = "Halo2D"
+shape = "8x8"
 num_vNics = 1
 debug = 0
 
@@ -110,9 +110,6 @@ driverParams = ({
 		"motifParams0.messagesize" : msgSize,
 		"motifParams0.messagesizex" : msgSize,
 		"motifParams0.messagesizey" : msgSize,
-		"motifParams0.pex" : 4,
-		"motifParams0.pey" : 4,
-		"motifParams0.pez" : 1,
 		"motifParams0.iterations" : iterations,
 		"hermesParams.debug" : debug,
 		"hermesParams.verboseLevel" : 1,
