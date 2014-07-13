@@ -265,7 +265,7 @@ void EmberEngine::finish() {
 	// Tell the generator we are finishing the simulation
 	generator->finish(output);
 
-	if(printStats > 0) {
+	if(printStats & (uint32_t) 1) {
 		output->output("Ember End Point Completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
 		output->output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
 
@@ -620,8 +620,16 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 
 	if(currentMotif < (motifCount - 1)) {
 		char nameBuffer[64];
-		currentMotif++;
 
+		if(printStats & ((uint32_t) 2)) {
+			char motifCompleteBuffer[64];
+			sprintf(motifCompleteBuffer, "%" PRIu64 "ns", (uint64_t) getCurrentSimTimeNano());
+        		const UnitAlgebra ua_motifComplete(motifCompleteBuffer);
+
+			output->output("Motif %" PRIu32 " completed at %s.\n", currentMotif, ua_motifComplete.toStringBestSI().c_str());
+		}
+
+		currentMotif++;
 		output->verbose(CALL_INFO, 2, 0, "Loading the next motif (motif%" PRIu32 ")...\n", currentMotif);
 
 		// Delete the existing motif (call destructor)

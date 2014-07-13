@@ -131,7 +131,7 @@ load_MsgRate( Component* comp, Params& params ) {
 
 
 static const ElementInfoParam component_params[] = {
-    { "printStats", "Prints the statistics from the component", "0"},
+    { "printStats", "Prints the statistics from the component, used as a bit field, 1 = print end of run statisitics, 2 = print end of motif runs in multi motif runs, default 0 = print nothing.", "0"},
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "msgapi", "Sets the messaging API of the end point" },
     { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
