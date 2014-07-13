@@ -109,13 +109,17 @@ public:
 	void printHistogram(Histogram<uint32_t, uint32_t>* histo);
 
 private:
+	SST::Params* engineParams;
 	int jobId;
 	int thisRank;
+	int worldSize;
 	uint32_t eventCount;
 	char* emptyBuffer;
 	uint32_t emptyBufferSize;
 	uint32_t generationPhase;
 	uint32_t printStats;
+	uint32_t motifCount;
+	uint32_t currentMotif;
 	bool continueProcessing;
 	EmberDataMode dataMode;
 

@@ -46,7 +46,6 @@ public:
 	int32_t convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
         	const int32_t posX, const int32_t posY, const int32_t posZ);
 
-protected:
 	~EmberGenerator();
 
 };

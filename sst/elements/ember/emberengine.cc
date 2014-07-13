@@ -119,11 +119,20 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	}
 
 	// Create the generator
-	string gentype = params.find_string("motif");
+	string gentype = params.find_string("motif0");
+	motifCount = (uint32_t) params.find_integer("motif_count", 1);
+
+	if(motifCount > 1) {
+		// If we have other motifs after this zero, we need to keep a copy of the parameters
+		// so we can instantiate the motif as needed.
+		engineParams = new SST::Params(params);
+		currentMotif = 0;
+	}
+
 	if( gentype == "" ) {
-		output->fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'generator\')\n");
+		output->fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'motif0\')\n");
 	} else {
-		Params generatorParams = params.find_prefix_params("motifParams.");
+		Params generatorParams = params.find_prefix_params("motifParams0.");
 
 		generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
 
@@ -350,7 +359,7 @@ void EmberEngine::setup() {
 	// Get my rank from the communication layer, we will
 	// need to pass this to the generator
 	thisRank = (uint32_t) msgapi->myWorldRank();
-	uint32_t worldSize = (uint32_t) msgapi->myWorldSize();
+	worldSize = (uint32_t) msgapi->myWorldSize();
 
 	generator->configureEnvironment(output, thisRank, worldSize);
 
@@ -606,9 +615,48 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 
 void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Finalize Event\n");
-	msgapi->fini(&finalizeFunctor);
 
-	accumulateTime = histoFinalize;
+	if(currentMotif < (motifCount - 1)) {
+		char nameBuffer[64];
+		currentMotif++;
+
+		output->verbose(CALL_INFO, 2, 0, "Loading the next motif %" PRIu32 "...\n", currentMotif);
+
+		// Delete the existing motif (call destructor)
+		delete generator;
+
+		// Get the type of the next motif
+		sprintf(nameBuffer, "motif%" PRIu32, currentMotif);
+		const std::string nameBufferStr(nameBuffer);
+		const string gentype = engineParams->find_string(nameBufferStr);
+
+		output->verbose(CALL_INFO, 2, 0, "Motif type is %s, loading parameters...\n", gentype.c_str());
+
+		sprintf(nameBuffer, "motifParams%" PRIu32 ".", currentMotif);
+		Params generatorParams = engineParams->find_prefix_params(nameBuffer);
+
+		// Load the next motif in the sequence
+                generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
+
+                if(NULL == generator) {
+                        output->fatal(CALL_INFO, -1, "Error: Could not load the generator %s for motif %" PRIu32 "\n", gentype.c_str(), currentMotif);
+                } else {
+			output->verbose(CALL_INFO, 2, 0, "Motif laoded correctly, beginning processing.\n");
+		}
+
+		// Configure the motif environment
+		generator->configureEnvironment(output, thisRank, worldSize);
+
+        	// Update event count to ensure we are not correctly sync'd
+        	eventCount = (uint32_t) evQueue.size();
+
+		issueNextEvent(0);
+	} else {
+		output->verbose(CALL_INFO, 2, 0, "Last motif in this simulation, calling finalize in the messaging API.\n");
+
+		msgapi->fini(&finalizeFunctor);
+		accumulateTime = histoFinalize;
+	}
 }
 
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
