@@ -35,7 +35,7 @@ class ArielEvent {
 
 	public:
 		ArielEvent();
-		~ArielEvent();
+		virtual ~ArielEvent();
 		virtual ArielEventType getEventType() = 0;
 
 };

@@ -23,6 +23,7 @@
 
 #include "arielmemmgr.h"
 #include "arielcore.h"
+#include "ariel_shmem.h"
 
 namespace SST {
 namespace ArielComponent {
@@ -32,24 +33,24 @@ class ArielCPU : public SST::Component {
 	public:
 		ArielCPU(ComponentId_t id, Params& params);
 		~ArielCPU();
-		virtual void setup() {}
-	        virtual void finish();
-       	 	virtual bool tick( SST::Cycle_t );
-        	int forkPINChild(const char* app, char** args);
+        virtual void setup() {}
+        virtual void finish();
+        virtual bool tick( SST::Cycle_t );
+        int forkPINChild(const char* app, char** args);
 
     private:
-    	SST::Output* output;
-    	ArielMemoryManager* memmgr;
-    	ArielCore** cpu_cores;
+        SST::Output* output;
+        ArielMemoryManager* memmgr;
+        ArielCore** cpu_cores;
         Interfaces::SimpleMem** cpu_to_cache_links;
 
-    	uint32_t core_count;
-		uint32_t memory_levels;
-		uint64_t* page_sizes;
-		uint64_t* page_counts;
-		char* named_pipe_base;
-		int* pipe_fds;
-		bool stopTicking;
+        uint32_t core_count;
+        uint32_t memory_levels;
+        uint64_t* page_sizes;
+        uint64_t* page_counts;
+        char* shmem_region_name;
+        ArielTunnel* tunnel;
+        bool stopTicking;
 
 };
 

@@ -43,6 +43,8 @@
 #include "arielnoop.h"
 #include "arielswitchpool.h"
 
+#include "ariel_shmem.h"
+
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::ArielComponent;
@@ -50,29 +52,18 @@ using namespace SST::ArielComponent;
 namespace SST {
 namespace ArielComponent {
 
-#define ARIEL_PERFORM_EXIT 1
-#define ARIEL_PERFORM_READ 2
-#define ARIEL_PERFORM_WRITE 4
-#define ARIEL_START_DMA 8
-#define ARIEL_WAIT_DMA 16
-#define ARIEL_ISSUE_TLM_MAP 80
-#define ARIEL_ISSUE_TLM_FREE 100
-#define ARIEL_START_INSTRUCTION 32
-#define ARIEL_END_INSTRUCTION 64
-#define ARIEL_NOOP 128
-#define ARIEL_SWITCH_POOL 110
 
 class ArielCore {
 
 	public:
-		ArielCore(int fd_in, SimpleMem *coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans,
-			Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen, int pipeTimeO,
-			uint64_t cacheLineSz, SST::Component* owner,
+		ArielCore(ArielTunnel *tunnel, SimpleMem *coreToCacheLink,
+                uint32_t thisCoreID, uint32_t maxPendTans,
+                Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen,
+                uint64_t cacheLineSz, SST::Component* owner,
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string tracePrefix);
 		~ArielCore();
 		bool isCoreHalted();
 		void tick();
-		void closeInput();
 		void halt();
 		void finishCore();
 		void createReadEvent(uint64_t addr, uint32_t size);
@@ -106,11 +97,10 @@ class ArielCore {
 		std::queue<ArielEvent*>* coreQ;
 		bool isHalted;
 		SimpleMem* cacheLink;
-		int fd_input;
+		ArielTunnel *tunnel;
 		std::map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;
 		uint32_t maxQLength;
-		int readPipeTimeOut;
 		uint64_t cacheLineSize;
 		SST::Component* owner;
 		ArielMemoryManager* memmgr;

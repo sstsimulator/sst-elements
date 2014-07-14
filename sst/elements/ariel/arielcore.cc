@@ -13,24 +13,23 @@
 
 #include "arielcore.h"
 
-ArielCore::ArielCore(int fd_in, SimpleMem* coreToCacheLink, uint32_t thisCoreID,
-	uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc,
-	uint32_t maxQLen, int pipeTO, uint64_t cacheLineSz, SST::Component* own,
-			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string traceFilePrefix) :
-		perform_checks(perform_address_checks),
-		enableTracing((traceFilePrefix != "")) {
-
-	output = out;
+ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
+        uint32_t thisCoreID, uint32_t maxPendTrans,
+        Output* out, uint32_t maxIssuePerCyc,
+        uint32_t maxQLen, uint64_t cacheLineSz, SST::Component* own,
+        ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string traceFilePrefix) :
+    tunnel(tunnel), perform_checks(perform_address_checks),
+    enableTracing((traceFilePrefix != ""))
+{
+    output = out;
 	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
-	fd_input = fd_in;
 	cacheLink = coreToCacheLink;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
 	isHalted = false;
 	maxIssuePerCycle = maxIssuePerCyc;
 	maxQLength = maxQLen;
-	readPipeTimeOut = pipeTO;
 	cacheLineSize = cacheLineSz;
 	owner = own;
 	memmgr = memMgr;
@@ -45,20 +44,6 @@ ArielCore::ArielCore(int fd_in, SimpleMem* coreToCacheLink, uint32_t thisCoreID,
 	split_write_requests = 0;
 	noop_count = 0;
 
-	if(0 == thisCoreID) {
-		output->verbose(CALL_INFO, 1, 0, "Waiting for core 0 to poll for initial data (means application will have launched and attached)\n");
-
-		struct pollfd poll_input;
-	        poll_input.fd = fd_in;
-       		poll_input.events = POLLIN;
-
-		// Configure for an infinite timeout waiting for core 0 to begin.
-		int poll_result = poll(&poll_input, (unsigned int) 1, (int) -1);
-
-		if(poll_result == -1) {
-                        output->fatal(CALL_INFO, -2, "Attempt to poll failed.\n");
-                }
-	}
 
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
@@ -153,9 +138,6 @@ void ArielCore::halt() {
 	isHalted = true;
 }
 
-void ArielCore::closeInput() {
-	close(fd_input);
-}
 
 void ArielCore::handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE) {
 	output->verbose(CALL_INFO, 2, 0, "Core: %" PRIu32 " set default memory pool to: %" PRIu32 "\n", coreID, aSPE->getPool());
@@ -219,109 +201,72 @@ bool ArielCore::isCoreHalted() {
 bool ArielCore::refillQueue() {
 	output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 "...\n", coreID);
 
-	struct pollfd poll_input;
-	poll_input.fd = fd_input;
-	poll_input.events = POLLIN;
-	bool added_data = false;
+    while(coreQ->size() < maxQLength) {
+        output->verbose(CALL_INFO, 16, 0, "Attempting to fill events for core: %" PRIu32 " current queue size=%" PRIu32 ", max length=%" PRIu32 "\n",
+                coreID, (uint32_t) coreQ->size(), (uint32_t) maxQLength);
 
-	while(coreQ->size() < maxQLength) {
-		output->verbose(CALL_INFO, 16, 0, "Attempting to fill events for core: %" PRIu32 " current queue size=%" PRIu32 ", max length=%" PRIu32 "\n",
-			coreID, (uint32_t) coreQ->size(), (uint32_t) maxQLength);
+        ArielCommand ac;
+        bool avail = tunnel->readMessageNB(coreID, &ac);
+        if ( !avail ) {
+            output->verbose(CALL_INFO, 32, 0, "Tunnel claims no data on core: %" PRIu32 "\n", coreID);
+            return false;
+        }
+        output->verbose(CALL_INFO, 32, 0, "Tunnel reads data on core: %" PRIu32 "\n", coreID);
+        // There is data on the pipe
 
-		int poll_result = poll(&poll_input, (unsigned int) 1, (int) readPipeTimeOut);
-		if(poll_result == -1) {
-			output->fatal(CALL_INFO, -2, "Attempt to poll failed.\n");
-			break;
-		}
+        switch(ac.command) {
+        case ARIEL_START_INSTRUCTION:
+            while(ac.command != ARIEL_END_INSTRUCTION) {
+                ac = tunnel->readMessage(coreID);
 
-		if(poll_input.revents & POLLIN) {
-			output->verbose(CALL_INFO, 32, 0, "Pipe poll reads data on core: %" PRIu32 "\n", coreID);
-			// There is data on the pipe
-			added_data = true;
+                switch(ac.command) {
+                case ARIEL_PERFORM_READ:
+                    createReadEvent(ac.inst.addr, ac.inst.size);
+                    break;
 
-			uint8_t command = 0;
-			read(fd_input, &command, sizeof(command));
+                case ARIEL_PERFORM_WRITE:
+                    createWriteEvent(ac.inst.addr, ac.inst.size);
+                    break;
 
-			switch(command) {
-			case ARIEL_START_INSTRUCTION:
-				uint64_t op_addr;
-				uint32_t op_size;
+                case ARIEL_END_INSTRUCTION:
+                    break;
 
-				while(command != ARIEL_END_INSTRUCTION) {
-					read(fd_input, &command, sizeof(command));
+                default:
+                    // Not sure what this is
+                    assert(0);
+                    break;
+                }
+            }
+            break;
 
-					switch(command) {
-					case ARIEL_PERFORM_READ:
-						read(fd_input, &op_addr, sizeof(op_addr));
-						read(fd_input, &op_size, sizeof(op_size));
+        case ARIEL_NOOP:
+            createNoOpEvent();
+            break;
 
-						createReadEvent(op_addr, op_size);
-						break;
+        case ARIEL_ISSUE_TLM_MAP:
+            createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level);
+            break;
 
-					case ARIEL_PERFORM_WRITE:
-						read(fd_input, &op_addr, sizeof(op_addr));
-						read(fd_input, &op_size, sizeof(op_size));
+        case ARIEL_ISSUE_TLM_FREE:
+            createFreeEvent(ac.mlm_free.vaddr);
+            break;
 
-						createWriteEvent(op_addr, op_size);
-						break;
+        case ARIEL_SWITCH_POOL:
+            createSwitchPoolEvent(ac.switchPool.pool);
+            break;
 
-					case ARIEL_END_INSTRUCTION:
-						break;
+        case ARIEL_PERFORM_EXIT:
+            createExitEvent();
+            break;
+        default:
+            // Not sure what this is
+            assert(0);
+            break;
+        }
+    }
 
-					default:
-						// Not sure what this is
-						assert(0);
-						break;
-					}
-				}
-				break;
-
-			case ARIEL_NOOP:
-				createNoOpEvent();
-				break;
-
-			case ARIEL_ISSUE_TLM_MAP:
-				uint64_t tlm_map_vaddr;
-				uint64_t tlm_alloc_len;
-				uint32_t tlm_alloc_level;
-
-				read(fd_input, &tlm_map_vaddr, sizeof(tlm_map_vaddr));
-				read(fd_input, &tlm_alloc_len, sizeof(tlm_alloc_len));
-				read(fd_input, &tlm_alloc_level, sizeof(tlm_alloc_level));
-
-				createAllocateEvent(tlm_map_vaddr, tlm_alloc_len, tlm_alloc_level);
-
-				break;
-
-			case ARIEL_ISSUE_TLM_FREE:
-				uint64_t tlm_free_vaddr;
-
-				read(fd_input, &tlm_free_vaddr, sizeof(tlm_free_vaddr));
-
-				createFreeEvent(tlm_free_vaddr);
-
-				break;
-
-			case ARIEL_SWITCH_POOL:
-				uint32_t new_pool;
-
-				read(fd_input, &new_pool, sizeof(new_pool));
-				createSwitchPoolEvent(new_pool);
-
-				break;
-
-			case ARIEL_PERFORM_EXIT:
-				createExitEvent();
-				break;
-			}
-		} else {
-			return added_data;
-		}
-	}
-
-	output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 " is complete, added data? %s\n", coreID,
-		(added_data ? "yes" : "no"));
-	return added_data;
+	output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 " is complete\n", coreID);
+	return true;
 }
 
 void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {

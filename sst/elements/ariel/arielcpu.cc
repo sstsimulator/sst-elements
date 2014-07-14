@@ -32,7 +32,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	int verbosity = params.find_integer("verbose", 0);
 	output = new SST::Output("ArielComponent[@f:@l:@p] ",
-		verbosity, 0, SST::Output::STDOUT);
+		verbosity, 0, SST::Output::STDERR);
 
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
@@ -67,34 +67,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find_integer("maxissuepercycle", 1);
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find_integer("maxcorequeue", 64);
 	uint32_t maxPendingTransCore = (uint32_t) params.find_integer("maxtranscore", 16);
-	int      pipeReadTimeOut     = (int)      params.find_integer("pipetimeout", 10);
 	uint64_t cacheLineSize       = (uint64_t) params.find_integer("cachelinesize", 64);
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	named_pipe_base = (char*) malloc(sizeof(char) * 256);
-	time_t t = time(NULL);
-	struct tm* time_now = localtime(&t);
+	shmem_region_name = (char*) malloc(sizeof(char) * 256);
+    sprintf(shmem_region_name, "ariel_shmem_%u_%lu", getpid(), id);
 
-	char* system_temp = getenv("TMPDIR");
-
-	// If there is a system temp then we can use that as a base for our temporary
-	// files, if not we will assume /tmp (Fileystem standard in Linux and UNIX
-	// says that /tmp MUST be made available for applications to deploy
-	// temporary files
-	if(NULL == system_temp) {
-		sprintf(named_pipe_base, "/tmp/sstariel_%d_%d_%d_%d_%d_%d_%d_",
-			time_now->tm_year, time_now->tm_mon, time_now->tm_mday,
-			time_now->tm_hour, time_now->tm_min, time_now->tm_sec,
-			(int) getpid());
-	} else {
-		sprintf(named_pipe_base, "%s/sstariel_%d_%d_%d_%d_%d_%d_%d_",
-			system_temp, time_now->tm_year, time_now->tm_mon, time_now->tm_mday,
-			time_now->tm_hour, time_now->tm_min, time_now->tm_sec,
-			(int) getpid());
-	}
-
-	output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", named_pipe_base);
+	output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name);
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,6 +103,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		break;
 	}
 
+    tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen, 0.0);
+
 	const char* execute_binary = PINTOOL_EXECUTABLE;
 	const uint32_t pin_arg_count = 20;
   	char ** execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
@@ -134,8 +116,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     	execute_args[2] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     	strcpy(execute_args[2], ariel_tool.c_str());
     	execute_args[3] = const_cast<char*>("-p");
-    	execute_args[4] = (char*) malloc(sizeof(char) * (strlen(named_pipe_base) + 1));
-    	strcpy(execute_args[4], named_pipe_base);
+    	execute_args[4] = (char*) malloc(sizeof(char) * (strlen(shmem_region_name) + 1));
+    	strcpy(execute_args[4], shmem_region_name);
     	execute_args[5] = const_cast<char*>("-v");
     	execute_args[6] = (char*) malloc(sizeof(char) * 8);
     	sprintf(execute_args[6], "%d", verbosity);
@@ -169,44 +151,18 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		strcpy(execute_args[i], argv_i.c_str());
 	}
 	free(argv_buffer);
-	
+
 	output->verbose(CALL_INFO, 1, 0, "Completed processing application arguments.\n");
-	
+
 	// Remember that the list of arguments must be NULL terminated for execution
 	execute_args[(pin_arg_count - 1) + app_argc] = NULL;
-	
-	char* pipe_buffer = (char*) malloc(sizeof(char) * 256);
-	pipe_fds = (int*) malloc(sizeof(int) * core_count);
-	for(uint32_t i = 0; i < core_count; ++i) {
-		sprintf(pipe_buffer, "%s-%" PRIu32, named_pipe_base, i);
-		output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", pipe_buffer);
-		
-		mkfifo(pipe_buffer, 0666);
-	}
-	
+
+
 	output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
 	forkPINChild(execute_binary, execute_args);
 	output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.\n");
-	
+
 	sleep(2);
-	
-	/////////////////////////////////////////////////////////////////////////////////////
-	
-	pipe_fds = (int*) malloc(sizeof(int) * core_count);
-	for(uint32_t i = 0; i < core_count; ++i) {
-		sprintf(pipe_buffer, "%s-%" PRIu32, named_pipe_base, i);
-		output->verbose(CALL_INFO, 1, 0, "Connecting to (read) pipe: %s ...\n", pipe_buffer);
-
-		pipe_fds[i] = open(pipe_buffer, O_RDONLY | O_NONBLOCK);
-
-		if(-1 == pipe_fds[i]) {
-			output->fatal(CALL_INFO, -1, "Creation of pipe %s failed.\n", pipe_buffer);
-		} else {
-			output->verbose(CALL_INFO, 2, 0, "Created successfully.\n");
-		}
-	}
-	free(pipe_buffer);
-	
 	/////////////////////////////////////////////////////////////////////////////////////
 
 	const std::string tracePrefix = params.find_string("tracePrefix", "");
@@ -227,8 +183,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	for(uint32_t i = 0; i < core_count; ++i) {
 		sprintf(link_buffer, "cache_link_%" PRIu32, i);
 
-		cpu_cores[i] = new ArielCore(pipe_fds[i], NULL, i, maxPendingTransCore, output, 
-			maxIssuesPerCycle, maxCoreQueueLen, pipeReadTimeOut, cacheLineSize, this,
+		cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output, 
+			maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
 			memmgr, perform_checks, tracePrefix);
         cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
@@ -238,16 +194,17 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	std::string cpu_clock = params.find_string("clock", "1GHz");
 	output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
-	registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
+	TimeConverter *clockConv = registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
+    // TODO: tunnel.setTimeConversion(clockConv);
 
 	output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
 	// Register us as an important component
 	registerAsPrimaryComponent();
-  	primaryComponentDoNotEndSim();
+    primaryComponentDoNotEndSim();
 
 	stopTicking = true;
-	
+
 	output->verbose(CALL_INFO, 1, 0, "Completed initialization of the Ariel CPU.\n");
 	fflush(stdout);
 }
@@ -326,17 +283,9 @@ bool ArielCPU::tick( SST::Cycle_t ) {
 
 ArielCPU::~ArielCPU() {
 	delete memmgr;
-	
+	delete tunnel;
 	free(page_sizes);
 	free(page_counts);
-	
-	char* pipe_buffer = (char*) malloc(sizeof(char) * 256);
-	for(uint32_t i = 0; i < core_count; ++i) {
-		close(pipe_fds[i]);
-		
-		sprintf(pipe_buffer, "%s-%" PRIu32, named_pipe_base, i);
-		remove(pipe_buffer);
-	}
-	free(pipe_buffer);
+
 }
 
