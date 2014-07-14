@@ -168,7 +168,7 @@ void EmberHalo3D26Generator::configureEnvironment(const SST::Output* output, uin
         line_h = convertPositionToRank(peX, peY, peZ, my_X + 1, my_Y, my_Z - 1);
         line_i = convertPositionToRank(peX, peY, peZ, my_X - 1, my_Y + 1, my_Z);
         line_j = convertPositionToRank(peX, peY, peZ, my_X, my_Y + 1, my_Z + 1);
-        line_k = convertPositionToRank(peX, peY, peZ, my_X - 1, my_Y + 1, my_Z);
+        line_k = convertPositionToRank(peX, peY, peZ, my_X + 1, my_Y + 1, my_Z);
         line_l = convertPositionToRank(peX, peY, peZ, my_X, my_Y + 1, my_Z - 1);
 
         corner_a = convertPositionToRank(peX, peY, peZ, my_X - 1, my_Y - 1, my_Z + 1);

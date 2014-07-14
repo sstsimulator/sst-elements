@@ -24,6 +24,7 @@
 #include "motifs/emberhalo2dNBR.h"
 //#include "motifs/emberhalo3dnb.h"
 #include "motifs/emberhalo3d.h"
+#include "motifs/emberhalo3dsv.h"
 #include "motifs/embersweep2d.h"
 #include "motifs/embersweep3d.h"
 #include "motifs/embernaslu.h"
@@ -86,6 +87,11 @@ load_Halo2DNBR( Component* comp, Params& params ) {
 static Module*
 load_Halo3D26( Component* comp, Params& params ) {
 	return new EmberHalo3D26Generator(comp, params);
+}
+
+static Module*
+load_Halo3DSV( Component* comp, Params& params ) {
+        return new EmberHalo3DSVGenerator(comp, params);
 }
 
 static Module*
@@ -364,6 +370,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo3D,
+	halo3d_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo3DSVMotif",
+	"Performs a 3D blocking motif with single variable commmunication",
+	NULL,
+	NULL,
+	load_Halo3DSV,
 	halo3d_params,
     "SST::Ember::EmberGenerator"
     },
