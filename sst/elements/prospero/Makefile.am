@@ -14,3 +14,7 @@ EXTRA_DIST = \
 	xml/trace-withdramsim.xml
 
 libprospero_la_LDFLAGS = -module -avoid-version
+
+if USE_LIBZ
+libprospero_la_LIBADD = -lz
+endif
