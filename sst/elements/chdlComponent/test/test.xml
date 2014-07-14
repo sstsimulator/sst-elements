@@ -4,7 +4,7 @@
 <sst>
   <component name="c0" rank="0" type="chdlComponent">
     <params>
-      <netlist>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/acpu.nand</netlist>
+      <netlist>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/score.nand</netlist>
       <debugLevel>4</debugLevel>
     </params>
     <link name=c0_l1cache_link port=memLink latency=3ns />
@@ -67,7 +67,7 @@
     <link name=cache_net_0 port=port1 latency=5ns />
   </component>
 
-  <component name="dirctrl0" rank="0"type="memHierarchy.DirectoryController">
+  <component name="dirctrl0" rank="0" type="memHierarchy.DirectoryController">
     <params>
       <coherence_protocol>MSI</coherence_protocol>
       <network_bw>2GB/s</network_bw>

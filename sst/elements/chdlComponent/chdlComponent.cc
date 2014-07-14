@@ -148,6 +148,7 @@ void chdlComponent::init(unsigned phase) {
   map<string, vector<node> > inputs;
   map<string, vector<tristatenode> > inout;
 
+  cd = push_clock_domain();
   ldnetl(outputs, inputs, inout, netlFile);
 
   if (debugLevel > 0)
@@ -157,7 +158,11 @@ void chdlComponent::init(unsigned phase) {
   for (auto x : inputs) init_io(x.first, x.second);
   for (auto x : outputs) init_io(x.first, x.second);
 
+  pop_clock_domain();
+
   optimize();
+
+  out.output("chdlComponent init: initialized clock domain %u\n", cd);
  
   if (debugLevel > 0)
     out.output("chdlComponent init: finished optimizing.\n");
@@ -167,13 +172,14 @@ void chdlComponent::finish() {
   unsigned long simCycle(Simulation::getSimulation()->getCurrentSimCycle());  
 
   // TODO: dump CHDL counters as defined in chdl-stl
+
   out.output("%lu sim cycles\n", simCycle);
 }
 
 
 void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   // TODO: support queuing responses
-  if (resp[0].ready) resp[0].valid = true;
+  if (/*sp[0].ready*/1) resp[0].valid = true;
   else _abort(chdlComponent, "response arrived when receiver not ready");
 
   resp[0].wr = req->cmd == SimpleMem::Request::WriteResp;
@@ -195,7 +201,8 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
 
 
 bool chdlComponent::clockTick(Cycle_t c) {
-  advance();
+  // for (auto &t : tickables()[0]) t->pre_tick();
+  advance(1, cd);
 
   resp[0].valid = 0;
 
@@ -210,7 +217,7 @@ bool chdlComponent::clockTick(Cycle_t c) {
           out.output("Read\n");
       }
 
-      int flags = (req[i].uncached ? SimpleMem::Request::F_UNCACHED : 0) |
+      int flags = (req[i].uncached ? SimpleMem::Request::F_NONCACHEABLE : 0) |
                   (req[i].locked ? SimpleMem::Request::F_LOCKED : 0) |
                   (req[i].llsc ? SimpleMem::Request::F_LLSC : 0);
 
@@ -236,6 +243,11 @@ bool chdlComponent::clockTick(Cycle_t c) {
       memLink->sendRequest(r);
     }
   }
+
+  // for (auto &t : tickables()[0]) t->tick();
+  // for (auto &t : tickables()[0]) t->tock();
+  // for (auto &t : tickables()[0]) t->post_tock();
+  if (cd == 1) ++now;
 
   return false;
 }

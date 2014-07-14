@@ -68,6 +68,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(netlFile);
       ar & BOOST_SERIALIZATION_NVP(debugLevel);
       ar & BOOST_SERIALIZATION_NVP(idMap);
+      ar & BOOST_SERIALIZATION_NVP(cd);
     }
 
     template <class Archive>
@@ -79,6 +80,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(netlFile);
       ar & BOOST_SERIALIZATION_NVP(debugLevel);
       ar & BOOST_SERIALIZATION_NVP(idMap);
+      ar & BOOST_SERIALIZATION_NVP(cd);
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -96,6 +98,8 @@ namespace ChdlComponent {
     std::vector<reqdata> req;
     std::vector<respdata> resp;
     std::map<unsigned long, unsigned long> idMap;
+
+    chdl::cdomain_handle_t cd;
 
     int debugLevel;
 
