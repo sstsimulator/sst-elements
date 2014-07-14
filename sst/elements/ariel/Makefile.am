@@ -28,8 +28,14 @@ libariel_la_SOURCES = \
 	arielfreeev.h \
 	arielfreeev.cc \
 	arielswitchpool.cc \
-	arielswitchpool.h
+	arielswitchpool.h \
+	ariel_shmem.h
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_CPPFLAGS = -DARIEL_TRACE_LIB=$(libdir)/sst \
 	$(CPPFLAGS) $(AM_CPPFLAGS)
+
+
+sstdir = $(includedir)/sst/elements/ariel
+nobase_sst_HEADERS = \
+	ariel_shmem.h 
