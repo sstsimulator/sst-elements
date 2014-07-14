@@ -113,7 +113,7 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
     
     if(_cacheLine->inTransition()){
         d_->debug(_L6_,"Cache line in transition.\n");
-        if(_event->getAckNeeded()){
+        if(_event->getAckNeeded() && _cacheLine->getState() == SM){  //no need to send ACK if state = IM
             inc_InvalidatePUTSReqSent();
             sendWriteback(PutS, _cacheLine);
         }

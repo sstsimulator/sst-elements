@@ -368,8 +368,6 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
         entry->lastRequest = ev->getID();
 
 		sendResponse(ev);
-        dbg.debug(_L10_, "Sending FetchInv.  Cmd = %s, Dest = %s, BsAddr = %"PRIx64".\n", CommandString[cmd], dest.c_str(), entry->baseAddr);
-
 	}
     else if(cmd == GetX || cmd == GetSEx){
 		assert(0 == entry->waitingAcks);
@@ -630,7 +628,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
 
 void DirectoryController::sendResponse(MemEvent *ev){
-    dbg.debug(_L10_, "Sending Response. Cmd = %s, BaseAddr = 0x%"PRIx64", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
+    dbg.debug(_L10_, "Sending Event. Cmd = %s, BaseAddr = 0x%"PRIx64", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
 	network->send(ev);
 }
 
