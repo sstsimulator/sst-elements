@@ -52,7 +52,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc src/arch/alpha/
 --- /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc	2010-10-20 13:51:48.000000000 -0600
 +++ src/arch/alpha/tlb.cc	2011-09-01 12:50:20.000000000 -0600
 @@ -233,6 +233,12 @@
-             return new UnimpFault("CPU trying to fetch from uncached I/O");
+             return new UnimpFault("CPU trying to fetch from noncacheabled I/O");
  
      }
 +#if 1 

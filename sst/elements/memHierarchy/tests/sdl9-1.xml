@@ -6,7 +6,7 @@ Topology:
              L3
         SimpleMemory
  
-Uncached Requests
+Noncacheable Requests
 -->
 
 <?xml version="1.0"?>
@@ -29,8 +29,8 @@ Uncached Requests
         <memSize> 0x100000 </memSize>
         <do_write> 1 </do_write>
         <num_loadstore> 10000 </num_loadstore>
-        <uncacheRangeStart> 0  </uncacheRangeStart>
-        <uncacheRangeEnd> 0x100  </uncacheRangeEnd>
+        <noncacheableRangeStart> 0  </noncacheableRangeStart>
+        <noncacheableRangeEnd> 0x100  </noncacheableRangeEnd>
     </cpuParams>
     <l1Params>
         <cache_frequency> 2 Ghz  </cache_frequency>
@@ -119,8 +119,8 @@ Uncached Requests
         <memSize> 0x1000 </memSize>
         <do_write> 1 </do_write>
         <num_loadstore> 1000 </num_loadstore>
-        <uncachedRangeStart> 0x0000 </uncachedRangeStart>
-        <uncachedRangeEnd> 0x0100 </uncachedRangeEnd>
+        <noncacheableRangeStart> 0x0000 </noncacheableRangeStart>
+        <noncacheableRangeEnd> 0x0100 </noncacheableRangeEnd>
     </cpuParams>
     <l1Params>
         <cache_frequency> 2 Ghz  </cache_frequency>

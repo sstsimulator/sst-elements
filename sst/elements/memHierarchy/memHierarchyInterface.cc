@@ -71,12 +71,15 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
 
     if (SimpleMem::Request::Write == _req->cmd)  me->setPayload(_req->data);
 
-    if(_req->flags & SimpleMem::Request::F_UNCACHED)     me->setFlag(MemEvent::F_UNCACHED);
+    if(_req->flags & SimpleMem::Request::F_NONCACHEABLE)
+        me->setFlag(MemEvent::F_NONCACHEABLE);
+    
     if(_req->flags & SimpleMem::Request::F_LOCKED) {
         me->setFlag(MemEvent::F_LOCKED);
         if (_req->cmd == SimpleMem::Request::Read)
             me->setCmd(GetSEx);
     }
+    
     if(_req->flags & SimpleMem::Request::F_LLSC){
         if (_req->cmd == SimpleMem::Request::Read)
             me->setLoadLink();

@@ -171,26 +171,26 @@ bool MemController::clock(Cycle_t _cycle){
 
 
 void MemController::performRequest(DRAMReq* _req){
-    bool uncached = _req->reqEvent_->queryFlag(MemEvent::F_UNCACHED);
+    bool noncacheable  = _req->reqEvent_->queryFlag(MemEvent::F_NONCACHEABLE);
     Addr localBaseAddr = convertAddressToLocalAddress(_req->baseAddr_);
     Addr localAddr;
 
     if(_req->cmd_ == PutM){  /* Write request to memory */
-        dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Uncached Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), uncached ? "true" : "false");
+        dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), noncacheable ? "true" : "false");
 		for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
             memBuffer_[localBaseAddr + i] = _req->reqEvent_->getPayload()[i];
 	}
     else{
         Addr localAbsAddr = convertAddressToLocalAddress(_req->reqEvent_->getAddr());
         
-        if(uncached && _req->cmd_ == GetX) {
-            dbg.debug(_L10_,"WRITE. Uncached request, Addr = %"PRIx64", Request size = %i\n", localAbsAddr, _req->reqEvent_->getSize());
+        if(noncacheable && _req->cmd_ == GetX) {
+            dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %"PRIx64", Request size = %i\n", localAbsAddr, _req->reqEvent_->getSize());
             for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
                 memBuffer_[localAbsAddr + i] = _req->reqEvent_->getPayload()[i];
         }
 
-        if(uncached) localAddr = localAbsAddr;
-        else         localAddr = localBaseAddr;
+        if(noncacheable) localAddr = localAbsAddr;
+        else             localAddr = localBaseAddr;
         
     	_req->respEvent_ = _req->reqEvent_->makeResponse();
         assert(_req->respEvent_->getSize() == _req->reqEvent_->getSize());

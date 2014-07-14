@@ -9,7 +9,7 @@ Topology:
                      Router
                DirectoryController
  
-Uncached Requests
+Noncacheable Requests
 -->
 
 <?xml version="1.0"?>
@@ -34,8 +34,8 @@ Uncached Requests
         <memSize> 0x1000 </memSize>
         <num_loadstore> 1000 </num_loadstore>
         <do_write> 1 </do_write>
-        <uncacheRangeStart> 0  </uncacheRangeStart>
-        <uncacheRangeEnd> 0x100  </uncacheRangeEnd>
+        <noncacheableRangeStart> 0  </noncacheableRangeStart>
+        <noncacheableRangeEnd> 0x100  </noncacheableRangeEnd>
     </cpuParams>
 
     <l1Params>

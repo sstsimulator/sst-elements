@@ -86,7 +86,7 @@ class DirectoryController : public Component {
 	std::list<MemEvent*>                    workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
 
-    std::map<MemEvent::id_type, MemEvent*>  uncachedWrites;
+    std::map<MemEvent::id_type, MemEvent*>  noncacheableWrites;
     Output::output_location_t               printStatsLoc;
 
 	SST::Link*  memLink;
@@ -261,8 +261,9 @@ class DirectoryController : public Component {
         }
         
         void removeSharer(int _id){
-            sharers[_id]= false;
+            assert(sharers[_id]);
             assert(!dirty);
+            sharers[_id]= false;
         }
         
         uint32_t findOwner(void){

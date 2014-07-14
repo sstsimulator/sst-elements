@@ -70,7 +70,7 @@ static const ElementInfoParam cache_params[] = {
 	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
     {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "0"},
-    {"uncache_all_requests",     "Used for verification purposes.  All requests are considered to be 'uncached'", "0"},
+    {"force_noncacheable_reqs", "Used for verification purposes.  All requests are considered to be 'noncacheable'", "0"},
     {NULL, NULL, NULL}
 };
 
@@ -118,15 +118,15 @@ static const ElementInfoPort cpu_ports[] = {
 };
 
 static const ElementInfoParam cpu_params[] = {
-    {"verbose",             "Determine how verbose the output from the CPU is", "1"},
-    {"rngseed",             "Set a seed for the random generation of addresses", "7"},
-    {"workPerCycle",        "How much work to do per cycle."},
-    {"commFreq",            "How often to do a memory operation."},
-    {"memSize",             "Size of physical memory."},
-    {"do_write",            "Enable writes to memory (versus just reads).", "1"},
-    {"num_loadstore",       "Stop after this many reads and writes.", "-1"},
-    {"uncachedRangeStart",  "Beginning of range of addresses that are uncacheable.", "0x0"},
-    {"uncachedRangeEnd",    "End of range of addresses that are uncacheable.", "0x0"},
+    {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
+    {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
+    {"workPerCycle",            "How much work to do per cycle."},
+    {"commFreq",                "How often to do a memory operation."},
+    {"memSize",                 "Size of physical memory."},
+    {"do_write",                "Enable writes to memory (versus just reads).", "1"},
+    {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
+    {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
+    {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
     {NULL, NULL, NULL}
 };
 

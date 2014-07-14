@@ -370,9 +370,9 @@ bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
     Command cmd = _event->getCmd();
     MemEvent * responseEvent = _event->makeResponse(_newState);
     responseEvent->setDst(_event->getSrc());
-    bool uncached = _event->queryFlag(MemEvent::F_UNCACHED);
+    bool noncacheable = _event->queryFlag(MemEvent::F_NONCACHEABLE);
     
-    if(L1_ && !uncached){
+    if(L1_ && !noncacheable){
         /* Only return the desire word */
         Addr base    = (_event->getAddr()) & ~(lineSize_ - 1);
         Addr offset  = _event->getAddr() - base;

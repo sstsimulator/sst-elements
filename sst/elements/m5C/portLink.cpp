@@ -169,7 +169,7 @@ SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
 
     /* From ${GEM5}/src/mem/request.hh */
 
-    if ( pkt->req.flags & UNCACHED )            req->flags |=(SimpleMem::Request::F_UNCACHED);
+    if ( pkt->req.flags & UNCACHED )            req->flags |= (SimpleMem::Request::F_NONCACHEABLE);
     else if (UNLIKELY(pkt->req.flags & LOCKED)) req->flags |= (SimpleMem::Request::F_LOCKED);
     else if (UNLIKELY(pkt->req.flags & LLSC))   req->flags |= (SimpleMem::Request::F_LLSC);
 

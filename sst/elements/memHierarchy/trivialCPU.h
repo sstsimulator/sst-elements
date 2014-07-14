@@ -42,8 +42,8 @@ public:
 	void finish() {
 		out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
 				getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
-        	if ( uncachedReads || uncachedWrites )
-            		out.output("\t%zu Uncached Reads\n\t%zu Uncached Writes\n", uncachedReads, uncachedWrites);
+        	if ( noncacheableReads || noncacheableWrites )
+            		out.output("\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
 
 		out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
 		for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
@@ -68,9 +68,9 @@ private:
 	bool do_write;
 	uint32_t maxAddr;
 	uint64_t num_reads_issued, num_reads_returned;
-    uint64_t uncachedRangeStart, uncachedRangeEnd;
+    uint64_t noncacheableRangeStart, noncacheableRangeEnd;
     uint64_t clock_ticks;
-    size_t uncachedReads, uncachedWrites;
+    size_t noncacheableReads, noncacheableWrites;
     Histogram<uint64_t, uint64_t>* requestsPendingCycle;
 
 	std::map<uint64_t, SimTime_t> requests;

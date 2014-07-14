@@ -135,9 +135,9 @@ static const std::string NONE = "None";
  */
 class MemEvent : public SST::Event {
 public:
-    static const uint32_t F_LOCKED    = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
-    static const uint32_t F_UNCACHED  = 0x00000010;  /* Used to specify that this memory event should not be cached */
-    static const uint32_t F_LLSC      = 0x00000100;  /* Load Link / Store Conditional */
+    static const uint32_t F_LOCKED        = 0x00000001;  /* Used in a Read-Lock, Write-Unlock atomicity scheme */
+    static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
+    static const uint32_t F_LLSC          = 0x00000100;  /* Load Link / Store Conditional */
 
 
     

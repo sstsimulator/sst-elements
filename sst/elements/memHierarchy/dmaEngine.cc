@@ -158,7 +158,7 @@ void DMAEngine::startRequest(Request *req)
     while ( ptr < (req->getSrc() + req->getSize()) ) {
         MemEvent *ev = new MemEvent(this, ptr, ptr, RequestData);
         ev->setSize(blocksize);
-        ev->setFlag(MemEvent::F_UNCACHED);
+        ev->setFlag(MemEvent::F_NONCACHEABLE);
         ev->setDst(networkLink->findTargetDirectory(ptr));
         req->loadKeys.insert(ev->getID());
         networkLink->send(ev);
@@ -180,7 +180,7 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
         size_t offset = ev->getAddr() - req->getSrc();
         req->loadKeys.erase(ev->getResponseToID());
         MemEvent *storeEV = new MemEvent(this, (req->getDst() + offset), (req->getDst() + offset), SupplyData);
-        storeEV->setFlag(MemEvent::F_UNCACHED);
+        storeEV->setFlag(MemEvent::F_NONCACHEABLE);
         storeEV->setPayload(ev->getPayload());
         storeEV->setDst(networkLink->findTargetDirectory(req->getDst() + offset));
         req->storeKeys.insert(storeEV->getID());

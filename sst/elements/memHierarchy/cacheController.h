@@ -119,8 +119,8 @@ private:
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
     
-    /** Process the oldest incoming 'uncached' event */
-    void processUncached(MemEvent* event, Command cmd, Addr baseAddr);
+    /** Process the oldest incoming 'noncacheable' event */
+    void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
     
     /** Process the oldest incoming event */
     void processEvent(MemEvent* event, bool mshrHit);
@@ -325,7 +325,7 @@ private:
         bool L1_;
         bool dirControllerExists_;
         vector<int> statGroupIds_;
-        bool allUncachedRequests_;
+        bool allNoncacheableRequests_;
     };
     
     CacheConfig             cf_;
@@ -340,7 +340,7 @@ private:
     string                  nextLevelCacheName_;
     bool                    L1_;
     MSHR*                   mshr_;
-    MSHR*                   mshrUncached_;
+    MSHR*                   mshrNoncacheable_;
     TopCacheController*     topCC_;
     MESIBottomCC*           bottomCC_;
     bool                    sharersAware_;
@@ -393,7 +393,7 @@ private:
         skewed associate and ZCaches use more advanced hashing functions.
  
         - MSHR:  Inner class that represents a hardware Miss Status Handling Register (or Miss Status Holding
-        Register, depending on where you learned caches).  Uncached requests used a separate MSHR
+        Register, depending on where you learned caches).  Noncacheable requests used a separate MSHR
         for simplicity.
         The MSHR is a map of <addr, vector<UNION(event, addr pointer)> >.  
         Why a UNION(event, addr pointer)?  Upon receiving a miss request, all cache line replacement candidates 

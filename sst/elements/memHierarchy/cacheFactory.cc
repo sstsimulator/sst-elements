@@ -55,7 +55,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     int dirAtNextLvl            = _params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = _params.find_string("coherence_protocol", "");
     string statGroups           = _params.find_string("stat_group_ids", "");
-    int uncachedRequests        = _params.find_integer("uncache_all_requests", 0);
+    int noncacheableRequests    = _params.find_integer("force_noncacheable_reqs", 0);
     bool L1 = (L1int == 1);
     vector<int> statGroupIds;
     
@@ -111,7 +111,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
 
-    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds, uncachedRequests};
+    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds, noncacheableRequests};
     return new Cache(_id, _params, config);
 }
 
@@ -153,7 +153,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(this, cf_.MSHRSize_);
-    mshrUncached_       = new MSHR(this, HUGE_MSHR);
+    mshrNoncacheable_       = new MSHR(this, HUGE_MSHR);
     
     /* ---------------- Links ---------------- */
     lowNetPorts_        = new vector<Link*>();

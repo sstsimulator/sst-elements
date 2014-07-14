@@ -56,8 +56,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     numLS = params.find_integer("num_loadstore", -1);
 
-    uncachedRangeStart = (uint64_t)params.find_integer("uncachedRangeStart", 0);
-    uncachedRangeEnd = (uint64_t)params.find_integer("uncachedRangeEnd", 0);
+    noncacheableRangeStart = (uint64_t)params.find_integer("noncacheableRangeStart", 0);
+    noncacheableRangeEnd = (uint64_t)params.find_integer("noncacheableRangeEnd", 0);
 
 
 	// tell the simulator not to end without us
@@ -77,7 +77,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 	clockTC = registerClock( "1GHz", clockHandler );
 	num_reads_issued = num_reads_returned = 0;
     clock_ticks = 0;
-    uncachedReads = uncachedWrites = 0;
+    noncacheableReads = noncacheableWrites = 0;
 }
 
 trivialCPU::trivialCPU() :
@@ -152,17 +152,17 @@ bool trivialCPU::clockTic( Cycle_t )
                 req->data[3] = (addr >>  0) & 0xff;
 			}
             
-            bool uncached = ( addr >= uncachedRangeStart && addr < uncachedRangeEnd );
-            if ( uncached ) {
-                req->flags |= Interfaces::SimpleMem::Request::F_UNCACHED;
-                if ( doWrite ) { ++uncachedWrites; } else { ++uncachedReads; }
+            bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
+            if ( noncacheable ) {
+                req->flags |= Interfaces::SimpleMem::Request::F_NONCACHEABLE;
+                if ( doWrite ) { ++noncacheableWrites; } else { ++noncacheableReads; }
             }
 
 			memory->sendRequest(req);
 			requests[req->id] =  getCurrentSimTime();
 
 			out.output("%s: %d Issued %s%s (%"PRIu64") for address 0x%"PRIx64"\n",
-					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", req->id, addr);
+					getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , doWrite ? "Write" : "Read", req->id, addr);
 			num_reads_issued++;
 
             numLS--;

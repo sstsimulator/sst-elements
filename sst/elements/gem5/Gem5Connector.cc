@@ -101,7 +101,7 @@ void Gem5Connector::handleRecvFromG5(::PacketPtr pkt)
     }
 
     if(pkt->req->isUncacheable()) {
-        req->flags |= (SimpleMem::Request::F_UNCACHED);
+        req->flags |= (SimpleMem::Request::F_NONCACHEABLE);
     }
 
     switch ( (::MemCmd::Command)pkt->cmd.toInt() ) {

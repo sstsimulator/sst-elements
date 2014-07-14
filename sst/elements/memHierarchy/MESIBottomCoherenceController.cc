@@ -343,8 +343,8 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     
     /* Determine latency in cycles */
     uint64 deliveryTime;
-    if(_event->queryFlag(MemEvent::F_UNCACHED)){
-        forwardEvent->setFlag(MemEvent::F_UNCACHED);
+    if(_event->queryFlag(MemEvent::F_NONCACHEABLE)){
+        forwardEvent->setFlag(MemEvent::F_NONCACHEABLE);
         deliveryTime = timestamp_ + 1;
     }
     else deliveryTime = timestamp_ + accessLatency_;

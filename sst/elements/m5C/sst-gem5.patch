@@ -39,7 +39,7 @@ diff -r -x '*.pyc' -u sandbox-2/src/arch/alpha/tlb.cc sandbox-1/src/arch/alpha/t
 --- sandbox-2/src/arch/alpha/tlb.cc	2011-09-20 09:21:52.000000000 -0600
 +++ sandbox-1/src/arch/alpha/tlb.cc	2011-09-22 13:20:04.000000000 -0600
 @@ -234,6 +234,13 @@
-             return new UnimpFault("CPU trying to fetch from uncached I/O");
+             return new UnimpFault("CPU trying to fetch from noncacheabled I/O");
  
      }
 +#if 1 

@@ -35,7 +35,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     Command cmd     = event->getCmd();
     if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
-    bool uncached   = event->queryFlag(MemEvent::F_UNCACHED) || cf_.allUncachedRequests_;
+    bool noncacheable   = event->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
     MemEvent* origEvent;
     
     if(!_mshrHit){
@@ -46,10 +46,10 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     else incTotalMSHRHits(groupId);
 
     d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Src: %s, Dst: %s, PreF:%s, Size = %u, time: %"PRIu64", %s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, uncached ? "un$" : "cached");
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
     
-    if(uncached || cf_.allUncachedRequests_){
-        processUncached(event, cmd, baseAddr);
+    if(noncacheable || cf_.allNoncacheableRequests_){
+        processNoncacheable(event, cmd, baseAddr);
         return;
     }
     
@@ -98,24 +98,24 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     }
 }
 
-void Cache::processUncached(MemEvent* _event, Command _cmd, Addr _baseAddr){
+void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
     vector<mshrType> mshrEntry;
     MemEvent* origRequest;
     bool inserted;
-    _event->setFlag(MemEvent::F_UNCACHED);
+    _event->setFlag(MemEvent::F_NONCACHEABLE);
     
     switch(_cmd){
         case GetS:
         case GetX:
         case GetSEx:
-            inserted = mshrUncached_->insert(_baseAddr, _event);
+            inserted = mshrNoncacheable_->insert(_baseAddr, _event);
             assert(inserted);
             if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
             else             bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
-            origRequest = mshrUncached_->removeFront(_baseAddr);
+            origRequest = mshrNoncacheable_->removeFront(_baseAddr);
             assert(origRequest->getID().second == _event->getResponseToID().second);
             topCC_->sendResponse(origRequest, DUMMY, &_event->getPayload(), true);
             delete origRequest;

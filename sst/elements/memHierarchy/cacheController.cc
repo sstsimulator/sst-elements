@@ -76,9 +76,8 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
-        if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
+        if(!processRequestInMSHR(_baseAddr, _event))                    /* L1s wont stall because they don't have any sharers */
             return;
-        }
     }
     topCC_->handleInvalidate(lineIndex, _cmd, _mshrHit);                /* Invalidate lower levels */
     if(invalidatesInProgress(lineIndex)) return;
@@ -112,9 +111,8 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
     int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
-        if(!processRequestInMSHR(_baseAddr, _event)){                   /* L1s wont stall because they don't have any sharers */
+        if(!processRequestInMSHR(_baseAddr, _event))                    /* L1s wont stall because they don't have any sharers */
             return;
-        }
     }
     topCC_->handleInvalidate(lineIndex, cmd, _mshrHit);
     if(invalidatesInProgress(lineIndex)) return;
@@ -501,7 +499,6 @@ void Cache::processIncomingNACK(MemEvent* _origReqEvent){
     else
         _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_origReqEvent->getCmd()]);
     
-    //delete _origReqEvent; TODO:  why does adding this line make some test fail?
 }
 
 
