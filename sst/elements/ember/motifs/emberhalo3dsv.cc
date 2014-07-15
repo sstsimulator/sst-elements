@@ -22,8 +22,6 @@ using namespace SST::Ember;
 EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params) {
 
-	std::cout << "RUNNING SINGLE VARIABLE MOTIF" << std::endl;
-
 	nx  = (uint32_t) params.find_integer("nx", 100);
 	ny  = (uint32_t) params.find_integer("ny", 100);
 	nz  = (uint32_t) params.find_integer("nz", 100);
