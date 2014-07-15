@@ -43,17 +43,25 @@ namespace SST {
 
             private:
 
+                typedef struct Dims
+                {
+                    double val[3];
+                } Dims;
+
                 //holds vector of locations along with the dimensions
                 template <typename T>
                 class Grouper {
                     public:
                         std::vector<T>* elements;
+
                         Grouper(std::vector<T>* elements, Rotator *rotator);
                         ~Grouper();
-                        int getLongestDim(int* result) const; //returns the length of the dimension
+
+                        double sortDims(int sortedDims[3]) const; //sorts max to min. Returns the ratio of max/min ratio
                         void divideBy(int dim, Grouper<T>** first, Grouper<T>** second);
+                        Dims dims; //TODO: make private
                    private:
-                        int dims[3];
+
                         Rotator *rotator;
                         void sort_buildMaxHeap(std::vector<T> & v, int dim);
                         void sort_maxHeapify(std::vector<T> & v, int i, int dim);
@@ -72,10 +80,14 @@ namespace SST {
                                 const MeshMachine & mach );
                         ~Rotator();
 
+                        //returns the dimensions (size) of the structure
                         template <typename T>
-                        void getDims(int* x, int* y, int* z, T t) const; //template specialization workaround
-                        void getDims(int* x, int* y, int* z, int taskID) const;
-                        void getDims(int* x, int* y, int* z, MeshLocation loc) const;
+                        Dims getStrDims(const std::vector<T> & elements) const;
+                        //returns the dimensions of an element:
+                        template <typename T>
+                        Dims getDims(T t) const; //template specialization workaround
+                        Dims getDims(int taskID) const;
+                        Dims getDims(MeshLocation loc) const;
                         //debug functions:
                         template <typename T>
                         int getTaskNum(T t) const; //template specialization workaround
@@ -85,10 +97,7 @@ namespace SST {
                     private:
                         const RCBTaskMapper & rcb;
                         const MeshMachine & mach;
-                        int* xlocs;
-                        int* ylocs;
-                        int* zlocs;
-                        int numTasksNorm; //normalization factor for coordinate input
+                        int** locs;
                         int* indMap; // the mesh locations may not be ordered. This saves the loc indexes
                 };
 

@@ -12,8 +12,8 @@
 #include "RCBTaskMapper.h"
 
 #include <iostream> //debug
-#include <iterator>
-#include <math.h>
+#include <cmath>
+#include <cfloat>
 
 #include "AllocInfo.h"
 #include "Job.h"
@@ -82,6 +82,8 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     //apply rotation
     Rotator rotator = Rotator(&nodeGroup, &taskGroup, *this, *mMachine);
 
+    std::cout << nodeGroup.dims.val[0] + 1 << "x" << nodeGroup.dims.val[1] + 1 << "x" << nodeGroup.dims.val[2] + 1 << "\n";
+
     //map
     mapTaskHelper(&nodeGroup, &taskGroup, tmi);
 
@@ -89,7 +91,7 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     //for(int i = 0; i<jobSize; i++){
     //    std::cout << "task:" << i << " <-> node:" << tmi->taskToNode[i] << endl;
     //}
-    ///////
+    //////
 
     return tmi;
 }
@@ -99,22 +101,20 @@ void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* i
     if(inTasks->elements->size() == 1){
         //map node to task
         tmi->insert(inTasks->elements->at(0), inLocs->elements->at(0).toInt(*mMachine));
-        //DEBUG
-        //std::cout << "Task " << inTasks->elements->at(0) << " is mapped to Node " << inLocs->elements->at(0).toInt(*mMachine) << "\n";
     } else {
         Grouper<MeshLocation>** firstLocs = new Grouper<MeshLocation>*();
         Grouper<MeshLocation>** secondLocs = new Grouper<MeshLocation>*();
         Grouper<int>** firstTasks = new Grouper<int>*();
         Grouper<int>** secondTasks = new Grouper<int>*();
 
-        int locLongest;
-        int jobLongest;
+        int locLongest[3];
+        int jobLongest[3];
         int dimToCut;
-
-        if(inTasks->getLongestDim(&jobLongest) >= inLocs->getLongestDim(&locLongest)){
-            dimToCut = jobLongest;
+        //prioritize the geometry with larger max/min dimension ratio
+        if(inTasks->sortDims(jobLongest) >= inLocs->sortDims(locLongest)){
+            dimToCut = jobLongest[0];
         } else {
-            dimToCut = locLongest;
+            dimToCut = locLongest[0];
         }
 
         inLocs->divideBy(dimToCut, firstLocs, secondLocs);
@@ -139,27 +139,7 @@ RCBTaskMapper::Grouper<T>::Grouper(std::vector<T>* elements, Rotator *rotator)
 {
     this->elements = elements;
     this->rotator = rotator;
-    //get dimensions
-    int xmin = elements->size();
-    int ymin = elements->size();
-    int zmin = elements->size();
-    int xmax = 0;
-    int ymax = 0;
-    int zmax = 0;
-    int x, y, z;
-    //TODO: optimization - calculate size before creating the object using known info
-    for(unsigned int i = 0; i < elements->size(); i++){
-        rotator->getDims(&x, &y, &z, elements->at(i));
-        if(x > xmax) xmax = x;
-        if(x < xmin) xmin = x;
-        if(y > ymax) ymax = y;
-        if(y < ymin) ymin = y;
-        if(z > zmax) zmax = z;
-        if(z < zmin) zmin = z;
-    }
-    dims[0] = xmax - xmin + 1;
-    dims[1] = ymax - ymin + 1;
-    dims[2] = zmax - zmin + 1;
+    dims = rotator->getStrDims<T>(*elements);
 }
 
 template <class T>
@@ -169,18 +149,18 @@ RCBTaskMapper::Grouper<T>::~Grouper()
 }
 
 template <class T>
-int RCBTaskMapper::Grouper<T>::getLongestDim(int* result) const
+double RCBTaskMapper::Grouper<T>::sortDims(int sortedDims[3]) const
 {
-    if(dims[0] >= dims[1] && dims[0] >= dims[2]){
-        *result = 0;
-        return dims[0];
-    } else if (dims[1] >= dims[0] && dims[1] >= dims[2]){
-        *result = 1;
-        return dims[1];
-    } else {
-        *result = 2;
-        return dims[2];
-    }
+    sortedDims[0] = 0;
+    sortedDims[1] = 1;
+    sortedDims[2] = 2;
+    if(dims.val[sortedDims[0]] < dims.val[sortedDims[1]])
+        swap(sortedDims[0], sortedDims[1]);
+    if(dims.val[sortedDims[0]] < dims.val[sortedDims[2]])
+        swap(sortedDims[0], sortedDims[2]);
+    if(dims.val[sortedDims[1]] < dims.val[sortedDims[2]])
+        swap(sortedDims[1], sortedDims[2]);
+    return dims.val[sortedDims[0]] / dims.val[sortedDims[0]];
 }
 
 template <class T>
@@ -195,22 +175,10 @@ void RCBTaskMapper::Grouper<T>::divideBy(int dim, Grouper<T>** first, Grouper<T>
         x++;
         i--;
     }
-    //divide
-    int halfSize = elements->size() / 2;
+    //divide into two Grouper objects
+    int halfSize = ceil(elements->size() / 2);
     *first = new Grouper<T>(new vector<T>(elements->begin(), elements->begin() + halfSize), rotator);
     *second = new Grouper<T>(new vector<T>(elements->begin() + halfSize, elements->end()), rotator);
-
-    /*//DEBUG
-    std::cout << "first:\n";
-    for(unsigned i = 0; i< (*first)->elements->size(); i++){
-        std::cout << rotator->getTaskNum((*first)->elements->at(i)) << ",";
-    }
-    std::cout << endl;
-    std::cout << "second:\n";
-    for(unsigned i = 0; i< (*second)->elements->size(); i++){
-        std::cout << rotator->getTaskNum((*second)->elements->at(i)) << ",";
-    }
-    std::cout << endl;*/
 }
 
 template <class T>
@@ -247,37 +215,46 @@ void RCBTaskMapper::Grouper<T>::sort_maxHeapify(std::vector<T> & v, int i, int d
 template <class T>
 int RCBTaskMapper::Grouper<T>::sort_compByDim(T first, T second, int dim)
 {
-    int x1, y1, z1;
-    int x2, y2, z2;
+    Dims firstDims = rotator->getDims(first);
+    Dims secondDims = rotator->getDims(second);
 
-    rotator->getDims(&x1, &y1, &z1, first);
-    rotator->getDims(&x2, &y2, &z2, second);
+    //give priority to longer dimension
+    int sortedDims[3];
+    sortDims(sortedDims);
+    vector<int> nextLongest;
+    if(dim != sortedDims[0]) nextLongest.push_back(sortedDims[0]);
+    if(dim != sortedDims[1]) nextLongest.push_back(sortedDims[1]);
+    if(dim != sortedDims[2]) nextLongest.push_back(sortedDims[2]);
 
-    if(dim == 0) { //ties broken by y, then z
-        if(x1 != x2) return (x1 - x2);
-        if(y1 != y2) return (y1 - y2);
-        return (z1 - z2);
-    } else if(dim == 1) { //ties broken by x, then z
-        if(y1 != y2) return (y1 - y2);
-        if(x1 != x2) return (x1 - x2);
-        return (z1 - z2);
-    } else { //ties broken by x, then y
-        if(z1 != z2) return (z1 - z2);
-        if(x1 != x2) return (x1 - x2);
-        return (y1 - y2);
+    //brake ties using the longest dimension
+    if(firstDims.val[dim] != secondDims.val[dim]){
+        return (firstDims.val[dim] - secondDims.val[dim]);
+    } else if(firstDims.val[nextLongest[0]] != secondDims.val[nextLongest[0]]){
+        return (firstDims.val[nextLongest[0]] - secondDims.val[nextLongest[0]]);
+    } else {
+        return (firstDims.val[nextLongest[1]] - secondDims.val[nextLongest[1]]);
     }
-
-    return false;
+    /*
+    if(dim == 0) { //ties broken by y, then z
+        if(firstDims.val[0] != secondDims.val[0]) return (firstDims.val[0] - secondDims.val[0]);
+        if(firstDims.val[1] != secondDims.val[1]) return (firstDims.val[1] - secondDims.val[1]);
+        return (firstDims.val[2] - secondDims.val[2]);
+    } else if(dim == 1) { //ties broken by x, then z
+        if(firstDims.val[1] != secondDims.val[1]) return (firstDims.val[1] - secondDims.val[1]);
+        if(firstDims.val[0] != secondDims.val[0]) return (firstDims.val[0] - secondDims.val[0]);
+        return (firstDims.val[2] - secondDims.val[2]);
+    } else { //ties broken by x, then y
+        if(firstDims.val[2] != secondDims.val[2]) return (firstDims.val[2] - secondDims.val[2]);
+        if(firstDims.val[0] != secondDims.val[0]) return (firstDims.val[0] - secondDims.val[0]);
+        return (firstDims.val[1] - secondDims.val[1]);
+    }*/
 }
 
 RCBTaskMapper::Rotator::Rotator(const RCBTaskMapper & rcb,
                                 const MeshMachine & mach) : rcb(rcb), mach(mach)
 {
     indMap = NULL;
-    xlocs = NULL;
-    ylocs = NULL;
-    zlocs = NULL;
-    numTasksNorm = sqrt(rcb.job->getProcsNeeded());
+    locs = NULL;
 }
 
 RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
@@ -290,77 +267,116 @@ RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
     jobLocs->rotator = this;
     //save the dimension info of node locations
     int size = meshLocs->elements->size();
-    xlocs = new int[size];
-    ylocs = new int[size];
-    zlocs = new int[size];
+    locs = new int*[3];
+    locs[0] = new int[size];
+    locs[1] = new int[size];
+    locs[2] = new int[size];
     indMap = new int[mach.getNumNodes()];//maps real node indexed to node vector (elements) indexes
     for(int i = 0; i < size; i++){
         MeshLocation curLoc = meshLocs->elements->at(i);
         indMap[curLoc.toInt(mach)] = i; //overwriting the same location is fine
-        xlocs[i] = curLoc.x;
-        ylocs[i] = curLoc.y;
-        zlocs[i] = curLoc.z;
+        locs[0][i] = curLoc.x;
+        locs[1][i] = curLoc.y;
+        locs[2][i] = curLoc.z;
     }
-    //normalized job dimension factor for coordinate input
-    numTasksNorm = sqrt(rcb.job->getProcsNeeded());
+
     //apply rotation where needed
-    if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){
-        swap(xlocs, ylocs);
-        swap(meshLocs->dims[0], meshLocs->dims[1]);
+    int meshSorted[3];
+    int jobSorted[3];
+    meshLocs->sortDims(meshSorted);
+    jobLocs->sortDims(jobSorted);
+
+    if(jobSorted[0] != meshSorted[0]){
+        swap(meshSorted[0],meshSorted[1]);
+        swap(locs[meshSorted[0]], locs[meshSorted[1]]);
+        swap(meshLocs->dims.val[meshSorted[0]], meshLocs->dims.val[meshSorted[1]]);
     }
-    if(meshLocs->dims[0] < meshLocs->dims[2] && jobLocs->dims[0] >= jobLocs->dims[2]){
-        swap(xlocs, zlocs);
-        swap(meshLocs->dims[0], meshLocs->dims[2]);
+    if(jobSorted[0] != meshSorted[0]){
+        swap(meshSorted[0],meshSorted[2]);
+        swap(locs[meshSorted[0]], locs[meshSorted[2]]);
+        swap(meshLocs->dims.val[meshSorted[0]], meshLocs->dims.val[meshSorted[2]]);
     }
-    if(meshLocs->dims[0] < meshLocs->dims[1] && jobLocs->dims[0] >= jobLocs->dims[1]){
-        swap(xlocs, ylocs);
-        swap(meshLocs->dims[0], meshLocs->dims[1]);
+    if(jobSorted[1] != meshSorted[1]){
+        swap(locs[meshSorted[1]], locs[meshSorted[2]]);
+        swap(meshLocs->dims.val[meshSorted[1]], meshLocs->dims.val[meshSorted[2]]);
     }
+
 }
 
 RCBTaskMapper::Rotator::~Rotator()
 {
     if(indMap != NULL) {
         delete [] indMap;
-        delete [] xlocs;
-        delete [] ylocs;
-        delete [] zlocs;
+        delete [] locs[0];
+        delete [] locs[1];
+        delete [] locs[2];
+        delete [] locs;
     }
 }
 
 template <typename T>
-void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, T t) const
+RCBTaskMapper::Dims RCBTaskMapper::Rotator::getStrDims(const vector<T> & elements) const
 {
-    schedout.fatal(CALL_INFO, 1, "Template function getDims should have been overloaded\n");
+    double mins[3];
+    double maxs[3];
+    for(int j = 0; j < 3; j++){
+        mins[j] = DBL_MAX;
+        maxs[j] = 0;
+    }
+    Dims dims;
+    for(unsigned int i = 0; i < elements.size(); i++){
+        dims = getDims(elements[i]);
+        for(int j = 0; j < 3; j++){
+            if(dims.val[j] > maxs[j]) maxs[j] = dims.val[j];
+            if(dims.val[j] < mins[j]) mins[j] = dims.val[j];
+        }
+    }
+    Dims outDims;
+    outDims.val[0] = maxs[0] - mins[0];
+    outDims.val[1] = maxs[1] - mins[1];
+    outDims.val[2] = maxs[2] - mins[2];
+    return outDims;
 }
 
-void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, int taskID) const
+template <typename T>
+RCBTaskMapper::Dims RCBTaskMapper::Rotator::getDims(T t) const
 {
+    Dims outDims;
+    schedout.fatal(CALL_INFO, 1, "Template function getDims should have been overloaded\n");
+    return outDims;
+}
+
+RCBTaskMapper::Dims RCBTaskMapper::Rotator::getDims(int taskID) const
+{
+    Dims outDims;
     if(rcb.tci->taskCommType == TaskCommInfo::MESH) {
-        *x = taskID % rcb.tci->xdim;
-        *y = (taskID % (rcb.tci->xdim * rcb.tci->ydim)) / rcb.tci->xdim;
-        *z = taskID / (rcb.tci->xdim * rcb.tci->ydim);
+        outDims.val[0] = taskID % rcb.tci->xdim;
+        outDims.val[1] = (taskID % (rcb.tci->xdim * rcb.tci->ydim)) / rcb.tci->xdim;
+        outDims.val[2] = taskID / (rcb.tci->xdim * rcb.tci->ydim);
     } else if (rcb.tci->taskCommType == TaskCommInfo::COORDINATE) {
         //return coordinates normalized by rotated machine dimensions
-        *x = rcb.tci->coordMatrix[taskID][0] * numTasksNorm;
-        *y = rcb.tci->coordMatrix[taskID][1] * numTasksNorm;
-        *z = rcb.tci->coordMatrix[taskID][2] * numTasksNorm;
+        outDims.val[0] = rcb.tci->coordMatrix[taskID][0];
+        outDims.val[1] = rcb.tci->coordMatrix[taskID][1];
+        outDims.val[2] = rcb.tci->coordMatrix[taskID][2];
     } else {
         schedout.fatal(CALL_INFO, 1, "Unknown communication type");
     }
+    return outDims;
 }
 
-void RCBTaskMapper::Rotator::getDims(int* x, int* y, int* z, MeshLocation loc) const
+RCBTaskMapper::Dims RCBTaskMapper::Rotator::getDims(MeshLocation loc) const
 {
+    Dims outDims;
     if(indMap == NULL){ //support for Grouper initialization
-        *x = loc.x;
-        *y = loc.y;
-        *z = loc.z;
+        outDims.val[0] = loc.x;
+        outDims.val[1] = loc.y;
+        outDims.val[2] = loc.z;
     } else {
-        *x = xlocs[indMap[loc.toInt(mach)]];
-        *y = ylocs[indMap[loc.toInt(mach)]];
-        *z = zlocs[indMap[loc.toInt(mach)]];
+        outDims.val[0] = locs[0][indMap[loc.toInt(mach)]];
+        outDims.val[1] = locs[1][indMap[loc.toInt(mach)]];
+        outDims.val[2] = locs[2][indMap[loc.toInt(mach)]];
     }
+    return outDims;
 }
 
 //debug functions:
@@ -380,3 +396,4 @@ int RCBTaskMapper::Rotator::getTaskNum(MeshLocation loc) const
 {
     return loc.toInt(*(rcb.mMachine));
 }
+

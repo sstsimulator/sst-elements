@@ -12,6 +12,7 @@
 #include "RandomTaskMapper.h"
 
 #include <vector>
+#include <cmath>
 
 #include "AllocInfo.h"
 #include "Job.h"
@@ -21,12 +22,10 @@ using namespace SST::Scheduler;
 
 RandomTaskMapper::RandomTaskMapper(Machine* mach) : TaskMapper(mach)
 {
-    rng = new SST::RNG::MarsagliaRNG();
 }
 
 RandomTaskMapper::~RandomTaskMapper()
 {
-    delete rng;
 }
 
 std::string RandomTaskMapper::getSetupInfo(bool comment) const
@@ -47,18 +46,20 @@ TaskMapInfo* RandomTaskMapper::mapTasks(AllocInfo* allocInfo)
     
     std::vector<int> available = std::vector<int>();
     std::vector<int> availableCores = std::vector<int>();
-    
-    for(int i = 0; i <= jobSize; i++){
-        available.push_back(allocInfo->nodeIndices[i]);
+
+    for(int i = 0; i < allocInfo->getNodesNeeded(); i++){
         availableCores.push_back(machine->getNumCoresPerNode());
+        available.push_back(allocInfo->nodeIndices[i]);
     }
     
-    for(int i = jobSize; i > 0; i--){
-        int num = rng->generateNextUInt32() % available.size();
-        tmi->insert((i - 1), available.at(num));
+    for(int i = 0; i < jobSize; i++){
+        int num = rand() % available.size();
+        tmi->insert(i, available.at(num));
         availableCores.at(num) = availableCores.at(num) - 1;
-        if(availableCores.at(num) == 0)
-            available.erase( available.begin() + num );
+        if(availableCores.at(num) == 0){
+            available.erase(available.begin() + num );
+            availableCores.erase(availableCores.begin() + num);
+        }
     }
     
     return tmi;
