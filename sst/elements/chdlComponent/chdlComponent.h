@@ -86,6 +86,7 @@ namespace ChdlComponent {
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 
   private:
+    void init_io_pre(const std::string &port);
     void init_io(const std::string &port, std::vector<chdl::node> &v);
 
     void handleEvent(Interfaces::SimpleMem::Request *);
@@ -98,6 +99,8 @@ namespace ChdlComponent {
     std::vector<reqdata> req;
     std::vector<respdata> resp;
     std::map<unsigned long, unsigned long> idMap;
+    std::map<std::string, unsigned> ports;
+    std::map<std::string, unsigned long *> counters;
 
     chdl::cdomain_handle_t cd;
 

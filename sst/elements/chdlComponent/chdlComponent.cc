@@ -98,22 +98,33 @@ static void tok(vector<char*> &out, char* in, const char* sep) {
   out.push_back(s);
 }
 
-void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
+void chdlComponent::init_io_pre(const string &port) {
   char s[80];
   vector<char*> t;
   strncpy(s, port.c_str(), 80);
   tok(t, s, "_");
   if (!strncmp(t[0], "simplemem", 80)) {
-    if (debugLevel > 0)
-      out.output("Found a simplemem io: %s\n", port.c_str());
     if (t.size() != 4)
       _abort(chdlComponent, "Malformed IO port name in netlist: %s\n",
              port.c_str());
 
-    unsigned id(0); { istringstream iss(t[3]); iss >> id; }
-    if (!strncmp(t[2], "req", 80)) {
-      if (id + 1 > req.size()) req.resize(id + 1);
+    unsigned id;
+    if (ports.find(t[3]) != ports.end()) id = ports[t[3]];
+    else { id = ports.size(); ports[t[3]] = id; }
+  }
+}
 
+void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
+  char s[80];
+  vector<char*> t;
+  strncpy(s, port.c_str(), 80);
+  tok(t, s, "_");
+
+  if (!strncmp(t[0], "simplemem", 80)) {
+    unsigned id(ports[t[3]]);
+    if (debugLevel > 0)
+      out.output("Found a simplemem io: %s\n", port.c_str());
+    if (!strncmp(t[2], "req", 80)) {
       if (!strncmp(t[1], "ready", 80)) v[0] = Lit(1);
       else if (!strncmp(t[1], "valid", 80)) Egress(req[id].valid, v[0]);
       else if (!strncmp(t[1], "addr", 80)) EgressInt(req[id].addr, v);
@@ -138,6 +149,9 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
       _abort(chdlComponent, "Malformed IO port name in netlist: %s\n",
              port.c_str());
     }
+  } else if (!strncmp(t[0], "counter", 80)) {
+    counters[port] = new unsigned long();
+    EgressInt(*counters[port], v);
   }
 }
 
@@ -154,7 +168,17 @@ void chdlComponent::init(unsigned phase) {
   if (debugLevel > 0)
     out.output("chdlComponent init: loaded design \"%s\"\n", netlFile.c_str());
 
-  // Set up egress/ingress nodes for req and res
+  // Set up egress/ingress nodes for req and resp
+  for (auto x : inputs) init_io_pre(x.first);
+  for (auto x : outputs) init_io_pre(x.first);
+
+  for (auto &p : ports)
+    out.output("chdlComponent init: port \"%s\" id=%u\n",
+               p.first.c_str(), p.second);
+
+  req.resize(ports.size());
+  resp.resize(ports.size());
+
   for (auto x : inputs) init_io(x.first, x.second);
   for (auto x : outputs) init_io(x.first, x.second);
 
@@ -171,7 +195,8 @@ void chdlComponent::init(unsigned phase) {
 void chdlComponent::finish() {
   unsigned long simCycle(Simulation::getSimulation()->getCurrentSimCycle());  
 
-  // TODO: dump CHDL counters as defined in chdl-stl
+  for (auto &x : counters)
+    out.output("CHDL counter \"%s\": %lu\n", x.first.c_str(), *x.second);
 
   out.output("%lu sim cycles\n", simCycle);
 }
