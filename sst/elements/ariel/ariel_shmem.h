@@ -64,7 +64,7 @@ struct ArielSharedData {
     size_t numCores;
     uint64_t simTime;
     double timeConversion;
-    uint8_t __pad[ 256 - sizeof(numCores) - sizeof(simTime) - sizeof(timeConversion)];
+    uint8_t __pad[ 256 - sizeof(size_t) - sizeof(uint64_t) - sizeof(double)];
 };
 
 
