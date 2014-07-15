@@ -82,15 +82,17 @@ routerParams = {"topology": "merlin.torus",
 def makeAriel():
     ariel = sst.Component("a0", "ariel.ariel")
     ariel.addParams({
-            "verbose" : 0,
-            "clock" : clock,
-            "maxcorequeue" : 256,
-            "maxissuepercycle" : 2,
-            "pipetimeout" : 0,
-            "executable" : "/home/student/tlvlstream/ministream",
-            "corecount" : corecount,
-            "arielmode" : 0,
-            "arieltool": "/home/student/sst-simulator/tools/ariel/fesimple/fesimple.so"
+        "verbose" : 0,
+        "clock" : clock,
+        "maxcorequeue" : 256,
+        "maxissuepercycle" : 2,
+        "pipetimeout" : 0,
+        #"executable" : "/home/student/tlvlstream/sstgups",
+        #"executable" : "/home/student/tlvlstream/ministream",
+        "executable" : "/home/student/tlvlstream/miniFE_openmp_opt/miniFE.x",
+        "corecount" : corecount,
+        "arielmode" : 0,
+        "arieltool": "/home/student/sst-simulator/tools/ariel/fesimple/fesimple_r.so"
             })
     coreCounter = 0
     return ariel
@@ -217,7 +219,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
             "coherence_protocol": coherence_protocol,
             "network_bw": memNetBW,
             "addr_range_start": 0,
-            "addr_range_end":  0,
+            "addr_range_end":  1,
             "interleave_size": 0/1024,    # in KB
             "interleave_step": 0,         # in KB
             "entry_cache_size": 128*1024, #Entry cache size of mem/blocksize
