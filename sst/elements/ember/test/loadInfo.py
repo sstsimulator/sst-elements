@@ -109,11 +109,11 @@ class LoadInfo:
 
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList ):
 		motif = {}
-		motif['motif'] = motifPrefix + cmdList[0] + motifSuffix
+		motif['motif0'] = motifPrefix + cmdList[0] + motifSuffix
 		cmdList.pop(0)
 		for x in cmdList:
 			y = x.split("=")
-			motif['motifParams.' + y[0]] = y[1]
+			motif['motifParams0.' + y[0]] = y[1]
 		return motif
 
 	def verifyLoadInfo(self):
