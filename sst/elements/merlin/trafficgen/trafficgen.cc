@@ -125,10 +125,12 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    registerClock( params.find_string("message_rate", "1GHz"),
-            new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler), false);
+    clock_functor = new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler);
+    clock_tc = registerClock( params.find_string("message_rate", "1GHz"), clock_functor, false);
 
-
+    // Register a receive handler which will simply strip the events as they arrive
+    link_control->setNotifyOnReceive(new LinkControl::Handler<TrafficGen>(this,&TrafficGen::handle_receives));
+    send_notify_functor = new LinkControl::Handler<TrafficGen>(this,&TrafficGen::send_notify);
 }
 
 
@@ -200,7 +202,8 @@ TrafficGen::init(unsigned int phase) {
 bool
 TrafficGen::clock_handler(Cycle_t cycle)
 {
-    if ( !done && (packets_sent >= packets_to_send) ) {
+    if ( done ) return true;
+    else if (packets_sent >= packets_to_send) {
         out.output("Node %d done sending.\n", id);
         primaryComponentOKToEndSim();
         done = true;
@@ -237,19 +240,14 @@ TrafficGen::clock_handler(Cycle_t cycle)
 
                 ++packets_sent;
             }
+            else {
+                link_control->setNotifyOnSend(send_notify_functor);
+                return true;
+            }
         }
         packet_delay = getDelayNextPacket();
     }
 
-    for ( int vc = 0 ; vc < num_vns ; vc++ ) {
-        last_vc = (last_vc + 1) % num_vns; // round-robin
-        RtrEvent* ev = link_control->recv(last_vc);
-        if ( ev != NULL ) {
-            packets_recd++;
-            delete ev;
-            break;
-        }
-    }
 
     return false;
 }
@@ -299,6 +297,24 @@ int TrafficGen::IP_to_fattree_ID(int ip)
     return id;
 }
 
+bool
+TrafficGen::handle_receives(int vn)
+{
+    RtrEvent* ev = link_control->recv(vn);
+    if ( ev != NULL ) {
+        packets_recd++;
+        delete ev;
+    }
+    return true;
+}
+
+
+bool
+TrafficGen::send_notify(int vn)
+{
+    reregisterClock(clock_tc, clock_functor);
+    return false;
+}
 
 
 int TrafficGen::getPacketDest(void)

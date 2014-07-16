@@ -28,6 +28,8 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
+#include "sst/elements/merlin/linkControl.h"
+
 
 namespace SST {
 namespace Merlin {
@@ -188,7 +190,10 @@ private:
     bool done;
 
     LinkControl* link_control;
-
+    LinkControl::Handler<TrafficGen>* send_notify_functor;
+    Clock::Handler<TrafficGen>* clock_functor;
+    TimeConverter* clock_tc;
+    
     int base_packet_size;
     uint64_t packets_to_send;
 
@@ -213,7 +218,9 @@ private:
     bool clock_handler(Cycle_t cycle);
     int fattree_ID_to_IP(int id);
     int IP_to_fattree_ID(int id);
-
+    bool handle_receives(int vn);
+    bool send_notify(int vn);
+    
 protected:
     int getPacketDest(void);
     int getPacketSize(void);
