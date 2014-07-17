@@ -287,7 +287,7 @@ namespace SST {
                 std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach) 
                 {
                     //returns pairwise L1 dist between first num members of procs
-                    return new std::pair<long,long>(mach -> pairwiseL1Distance(procs, num),0);
+                    return new std::pair<long,long>(mach -> pairwiseL1Distance(procs),0);
                 }
                 std::string getSetupInfo(bool comment);
         };

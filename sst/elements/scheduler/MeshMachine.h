@@ -59,10 +59,10 @@ namespace SST {
                 void allocate(AllocInfo* allocInfo);
 
                 void deallocate(AllocInfo* allocInfo);
+                
+                long getNodeDistance(int node1, int node2) const;
 
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
-
-                long pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) const;
 
 				double getCoolingPower() const;
         };

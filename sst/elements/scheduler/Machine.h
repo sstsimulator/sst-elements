@@ -51,6 +51,8 @@ namespace SST {
 
                 virtual void deallocate(AllocInfo* allocInfo) = 0;
                 
+                virtual long getNodeDistance(int node1, int node2) const = 0;
+                
                 double** D_matrix;
 
             protected:

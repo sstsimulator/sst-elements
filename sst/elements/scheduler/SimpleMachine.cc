@@ -99,6 +99,11 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo)
     }
 }
 
+long SimpleMachine::getNodeDistance(int node1, int node2) const
+{
+    schedout.fatal(CALL_INFO, 1, "Attempt to read node distance from Simple Machine");
+}
+
 std::vector<int>* SimpleMachine::getFreeNodes(){
     std::vector<int>* retVal = new std::vector<int>();
     for (unsigned int i = 0; i < freeNodes.size(); i++)

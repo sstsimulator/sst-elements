@@ -159,14 +159,21 @@ void MeshMachine::deallocate(AllocInfo* allocInfo) {
     numAvail += nodes -> size();
 }
 
-long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
+long MeshMachine::getNodeDistance(int node1, int node2) const
 {
-    //returns total pairwise L_1 distance between all array members
-    return pairwiseL1Distance(locs, locs -> size());
+    MeshLocation loc1 = MeshLocation(node1, *this);
+    MeshLocation loc2 = MeshLocation(node2, *this);
+    std::vector<MeshLocation*>* locs = new std::vector<MeshLocation*>();
+    locs->push_back(&loc1);
+    locs->push_back(&loc2);
+    long dist = pairwiseL1Distance(locs);
+    delete locs;
+    return dist;
 }
 
-long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) const
+long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
 {
+    int num = locs -> size();
     //returns total pairwise L_1 distance between 1st num members of array
     long retVal = 0;
 
@@ -176,7 +183,7 @@ long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
         }
     }
 
-  return retVal;
+    return retVal;
 }
 
 double MeshMachine::getCoolingPower() const

@@ -40,6 +40,8 @@ namespace SST {
                 void allocate(AllocInfo* allocInfo);
 
                 void deallocate(AllocInfo* allocInfo);  //deallocate processors
+                
+                long getNodeDistance(int node1, int node2) const;
 
                 //ConstraintAllocator needs these
                 std::vector<int>* getFreeNodes();

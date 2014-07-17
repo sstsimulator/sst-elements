@@ -166,20 +166,32 @@ int** TaskCommInfo::buildMeshComm(int xdim, int ydim, int zdim) const
     //set neighbor communication
     for(int i = 0; i < size; i++){
         //x_dim
-        if(x_ind[i] != 0)
+        if(x_ind[i] != 0){
             outMatrix[i][i-1] = 1;
-        if((x_ind[i] + 1) != xdim)
+            outMatrix[i-1][i] = 1;
+        }
+        if((x_ind[i] + 1) != xdim){
             outMatrix[i+1][i] = 1;
+            outMatrix[i][i+1] = 1;
+        }
         //y_dim
-        if(y_ind[i] != 0)
+        if(y_ind[i] != 0){
             outMatrix[i][i-xdim] = 1;
-        if((y_ind[i] + 1) != ydim)
+            outMatrix[i-xdim][i] = 1;
+        }
+        if((y_ind[i] + 1) != ydim){
             outMatrix[i+xdim][i] = 1;
+            outMatrix[i][i+xdim] = 1;
+        }
         //z_dim
-        if(z_ind[i] != 0)
+        if(z_ind[i] != 0){
             outMatrix[i][i-(xdim*ydim)] = 1;
-        if((z_ind[i] + 1) != zdim)
+            outMatrix[i-(xdim*ydim)][i] = 1;
+        }
+        if((z_ind[i] + 1) != zdim){
             outMatrix[i+(xdim*ydim)][i] = 1;
+            outMatrix[i][i+(xdim*ydim)] = 1;
+        }
     }
     return outMatrix;
 }
