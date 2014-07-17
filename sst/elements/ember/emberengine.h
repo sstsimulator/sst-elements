@@ -67,6 +67,21 @@ const uint32_t EMBER_SPYPLOT_NONE = 0;
 const uint32_t EMBER_SPYPLOT_SEND_COUNT = 1;
 const uint32_t EMBER_SPYPLOT_SEND_BYTES = 2;
 
+class EmberSpyInfo {
+	public:
+		EmberSpyInfo(const int32_t rank);
+		void incrementSendCount();
+		void addSendBytes(uint64_t sendBytes);
+		int32_t getRemoteRank();
+		uint32_t getSendCount();
+		uint64_t getBytesSent();
+
+	private:
+		const int32_t rank;
+		uint64_t bytesSent;
+		uint32_t sendsPerformed;
+};
+
 class EmberEngine : public SST::Component {
 public:
 	EmberEngine(SST::ComponentId_t id, SST::Params& params);
@@ -112,8 +127,6 @@ public:
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistogram(Histogram<uint32_t, uint32_t>* histo);
 
-	void updateMap(std::map<int32_t, uint32_t>* map, const int32_t rank, const uint32_t value);
-	void updateMap(std::map<int32_t, uint64_t>* map, const int32_t rank, const uint64_t value);
 	void updateSpyplot(const int32_t rank, const uint64_t bytesSent);
 	void generateSpyplotRank(const char* filename);
 
@@ -133,8 +146,7 @@ private:
 	EmberDataMode dataMode;
 
 	std::queue<EmberEvent*> evQueue;
-	std::map<int32_t, uint32_t>* spyplotSends;
-	std::map<int32_t, uint64_t>* spyplotSendBytes;
+	std::map<int32_t, EmberSpyInfo*>* spyinfo;
 	uint32_t spyplotMode;
 
 	EmberGenerator* generator;
