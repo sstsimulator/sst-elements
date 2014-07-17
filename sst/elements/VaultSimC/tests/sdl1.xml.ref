@@ -1,29 +1,30 @@
 making cpu
  Connected 8 Vaults
-Inserting stop event at cycle 50us
-1024: out:128 ops/cycle:0.50
-2048: out:128 ops/cycle:0.50
-3072: out:128 ops/cycle:0.50
-4096: out:128 ops/cycle:0.50
-5120: out:128 ops/cycle:0.49
-6144: out:128 ops/cycle:0.49
-7168: out:128 ops/cycle:0.49
-8192: out:128 ops/cycle:0.49
-9216: out:128 ops/cycle:0.48
-10240: out:128 ops/cycle:0.48
-11264: out:128 ops/cycle:0.49
-12288: out:128 ops/cycle:0.49
-13312: out:128 ops/cycle:0.49
-14336: out:128 ops/cycle:0.49
-15360: out:128 ops/cycle:0.49
-16384: out:128 ops/cycle:0.49
-17408: out:128 ops/cycle:0.49
-18432: out:128 ops/cycle:0.49
-19456: out:128 ops/cycle:0.49
-20480: out:127 ops/cycle:0.49
-21504: out:128 ops/cycle:0.49
-22528: out:128 ops/cycle:0.49
-23552: out:128 ops/cycle:0.49
-24576: out:128 ops/cycle:0.49
-CPU completed 12195 memOps
-CPU issued 240706 inst
+Inserting stop event at cycle 50us, 50000000
+1024: out:6 ops/cycle:0.38
+2048: out:9 ops/cycle:0.38
+3072: out:11 ops/cycle:0.38
+4096: out:13 ops/cycle:0.39
+5120: out:9 ops/cycle:0.39
+6144: out:13 ops/cycle:0.39
+7168: out:13 ops/cycle:0.38
+8192: out:14 ops/cycle:0.38
+9216: out:9 ops/cycle:0.38
+10240: out:13 ops/cycle:0.39
+11264: out:9 ops/cycle:0.38
+12288: out:7 ops/cycle:0.38
+13312: out:9 ops/cycle:0.38
+14336: out:8 ops/cycle:0.38
+15360: out:16 ops/cycle:0.38
+16384: out:11 ops/cycle:0.39
+17408: out:14 ops/cycle:0.39
+18432: out:16 ops/cycle:0.39
+19456: out:13 ops/cycle:0.39
+20480: out:14 ops/cycle:0.39
+21504: out:11 ops/cycle:0.39
+22528: out:5 ops/cycle:0.39
+23552: out:12 ops/cycle:0.39
+24576: out:13 ops/cycle:0.39
+CPU completed 9755 memOps
+CPU issued 189721 inst
+Simulation is complete, simulated time: 50 us
