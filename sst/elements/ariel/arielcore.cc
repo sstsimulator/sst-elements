@@ -116,7 +116,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     std::map<SimpleMem::Request::id_t, SimpleMem::Request*>::iterator find_entry = pendingTransactions->find(mev_id);
 
     if(find_entry != pendingTransactions->end()) {
-        output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list leaving: %" PRIu32 " transactions\n",
+        output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
                 (uint32_t) pendingTransactions->size());
 
         pendingTransactions->erase(find_entry);
