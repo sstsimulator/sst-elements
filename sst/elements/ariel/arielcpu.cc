@@ -113,7 +113,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
-    	execute_args[0] = const_cast<char*>("pintool");
+    	execute_args[0] = const_cast<char*>(PINTOOL_EXECUTABLE);
     	execute_args[1] = const_cast<char*>("-t");
     	execute_args[2] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     	strcpy(execute_args[2], ariel_tool.c_str());
@@ -246,6 +246,15 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 		output->verbose(CALL_INFO, 1, 0,
 			"Launching executable: %s...\n", app);
 
+
+#if defined(SST_COMPILE_MACOSX)
+        char *dyldpath = getenv("DYLD_LIBRARY_PATH");
+        if ( dyldpath ) {
+            setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
+            setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
+            unsetenv("DYLD_LIBRARY_PATH");
+        }
+#endif
 		int ret_code = execvp(app, args);
 		perror("execve");
 
