@@ -84,6 +84,9 @@ libember_la_SOURCES = \
 #	motifs/emberhalo3dnb.h \
 #	motifs/emberhalo3dnb.cc
 
+bin_PROGRAMS = sstspygen
+
+sstspygen_SOURCES = tools/spygen/spygen.cc
 
 libember_la_LDFLAGS = -module -avoid-version
 

@@ -379,7 +379,7 @@ void EmberEngine::finish() {
 	}
 
 	char* baseSpyName = (char*) malloc(sizeof(char) * 64);
-	sprintf(baseSpyName, "sim-%" PRId32 ".spy", thisRank);
+	sprintf(baseSpyName, "ember-%" PRId32 ".spy", thisRank);
 	generateSpyplotRank(baseSpyName);
 	free(baseSpyName);
 }
@@ -447,14 +447,14 @@ void EmberEngine::generateSpyplotRank(const char* filename) {
 	output->verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots completed (Rank %" PRId32 "\n", thisRank);
 }
 
-void EmberEngine::updateSpyplot(const int32_t rank, const uint64_t bytesSent) {
+void EmberEngine::updateSpyplot(const int32_t remoteRank, const uint64_t bytesSent) {
 	if(spyplotMode > EMBER_SPYPLOT_NONE) {
-		std::map<int32_t, EmberSpyInfo*>::iterator spy_itr = spyinfo->find(rank);
+		std::map<int32_t, EmberSpyInfo*>::iterator spy_itr = spyinfo->find(remoteRank);
 		EmberSpyInfo* info = NULL;
 
 		if(spy_itr == spyinfo->end()) {
-			info = new EmberSpyInfo(rank);
-			spyinfo->insert(std::pair<int32_t, EmberSpyInfo*>(rank, info));
+			info = new EmberSpyInfo(remoteRank);
+			spyinfo->insert(std::pair<int32_t, EmberSpyInfo*>(remoteRank, info));
 		} else {
 			info = spy_itr->second;
 		}
@@ -579,7 +579,7 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 
 	// Update the Spyplot, this will detect if we want to output
 	// at the end of simulation
-	updateSpyplot(ev->getSendToRank(), (uint64_t) ev->getMessageSize());
+	updateSpyplot((int32_t) ev->getSendToRank(), (uint64_t) ev->getMessageSize());
 
 	accumulateTime = histoSend;
 }
@@ -677,7 +677,7 @@ void EmberEngine::processISendEvent(EmberISendEvent* ev) {
 
 	// Update the Spyplot, this will detect if we want to output
 	// at the end of simulation
-	updateSpyplot(ev->getSendToRank(), (uint64_t) ev->getMessageSize());
+	updateSpyplot((int32_t) ev->getSendToRank(), (uint64_t) ev->getMessageSize());
 
 	accumulateTime = histoISend;
 }
