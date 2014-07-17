@@ -72,7 +72,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	/////////////////////////////////////////////////////////////////////////////////////
 
 	shmem_region_name = (char*) malloc(sizeof(char) * 256);
-    sprintf(shmem_region_name, "ariel_shmem_%u_%lu", getpid(), id);
+    sprintf(shmem_region_name, "ariel_shmem_%u_%lu_XXXXXX", getpid(), id);
+    int fd = mkstemp(shmem_region_name);
+    close(fd);
 
 	output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name);
 
@@ -284,6 +286,7 @@ bool ArielCPU::tick( SST::Cycle_t ) {
 ArielCPU::~ArielCPU() {
 	delete memmgr;
 	delete tunnel;
+    unlink(shmem_region_name);
 	free(page_sizes);
 	free(page_counts);
 
