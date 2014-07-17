@@ -141,6 +141,7 @@ static const ElementInfoParam component_params[] = {
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "msgapi", "Sets the messaging API of the end point" },
     { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
+    { "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = count sends, 2 = count bytes (this is bit field so 3 = both)", "0" },
     { "motif_count", "Sets the number of motifs to run in this instance of the component", "1" },
     { "start_bin_width", "Bin width of the start time histogram", "5" },
     { "send_bin_width", "Bin width of the send time histogram", "5" },

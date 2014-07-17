@@ -12,7 +12,6 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-
 #include "emberengine.h"
 
 using namespace std;
@@ -31,7 +30,6 @@ static const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
 static const char* REDUCE_HISTO_NAME = "Reduce Time";
 static const char* COMPUTE_HISTO_NAME = "Compute Time";
 static const char* START_HISTO_NAME = "Start Time";
-static const char* STOP_HISTO_NAME = "Stop Time";
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
@@ -109,6 +107,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	double compNoiseMean = (double) params.find_floating("noisemean", 1.0);
 	double compNoiseStdDev = (double) params.find_floating("noisestddev", 0.1);
 	string noiseType = params.find_string("noisegen", "constant");
+
+	// Get the Spyplot mode
+	spyplotMode = (uint32_t) params.find_integer("spyplotmode", 0);
 
 	if("gaussian" == noiseType) {
 		computeNoiseDistrib = new SSTGaussianDistribution(compNoiseMean, compNoiseStdDev);
@@ -349,6 +350,11 @@ void EmberEngine::finish() {
 			printHistogram(histoAllreduce);
 		}
 	}
+
+	char* baseSpyName = (char*) malloc(sizeof(char) * 64);
+	sprintf(baseSpyName, "sim-%" PRId32, thisRank);
+	generateSpyplotRank(baseSpyName);
+	free(baseSpyName);
 }
 
 void EmberEngine::setup() {
@@ -382,6 +388,98 @@ void EmberEngine::setup() {
 
 	// Update event count to ensure we are not correctly sync'd
 	eventCount = (uint32_t) evQueue.size();
+
+	if(spyplotMode & EMBER_SPYPLOT_SEND_COUNT) {
+		spyplotSends = new std::map<int32_t, uint32_t>();
+	}
+
+	if(spyplotMode & EMBER_SPYPLOT_SEND_BYTES) {
+		spyplotSendBytes = new std::map<int32_t, uint64_t>();
+	}
+}
+
+void EmberEngine::updateMap(std::map<int32_t, uint32_t>* map, const int32_t rank, const uint32_t value) {
+	std::map<int32_t, uint32_t>::iterator found = map->find(rank);
+
+	if(found == map->end()) {
+		map->insert(std::pair<int32_t, uint32_t>(rank, value));
+	} else {
+		map->insert(std::pair<int32_t, uint32_t>(rank, value + found->second));
+	}
+}
+
+void EmberEngine::updateMap(std::map<int32_t, uint64_t>* map, const int32_t rank, const uint64_t value) {
+	std::map<int32_t, uint64_t>::iterator found = map->find(rank);
+
+	if(found == map->end()) {
+		map->insert(std::pair<int32_t, uint64_t>(rank, value));
+	} else {
+		map->insert(std::pair<int32_t, uint64_t>(rank, value + found->second));
+	}
+}
+
+void EmberEngine::generateSpyplotRank(const char* filename) {
+	// if we are told not to generate spyplot then exit
+	if(EMBER_SPYPLOT_NONE == spyplotMode) {
+		return;
+	}
+
+	output->verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots (Rank %" PRId32 "\n", thisRank);
+
+	char* specialNameBuffer = (char*) malloc(sizeof(char) * 256);
+
+	///////////////////////////////////////////////////////////
+
+	sprintf(specialNameBuffer, "%s-send-count.spy", filename);
+
+	FILE* spyplotFile = fopen(specialNameBuffer, "wt");
+	assert(NULL != spyplotFile);
+
+	if(EMBER_SPYPLOT_SEND_COUNT & spyplotMode) {
+		std::map<int32_t, uint32_t>::iterator sendCountItr;
+
+		for(sendCountItr = spyplotSends->begin(); sendCountItr != spyplotSends->end(); sendCountItr++) {
+			fprintf(spyplotFile, "%" PRId32 ", %" PRIu32 "\n", sendCountItr->first, sendCountItr->second);
+		}
+	}
+
+	fclose(spyplotFile);
+
+	///////////////////////////////////////////////////////////
+
+	sprintf(specialNameBuffer, "%s-send-bytes.spy", filename);
+
+	spyplotFile = fopen(specialNameBuffer, "wt");
+	assert(NULL != spyplotFile);
+
+	if(EMBER_SPYPLOT_SEND_BYTES & spyplotMode) {
+		std::map<int32_t, uint64_t>::iterator sendBytesItr;
+
+		for(sendBytesItr = spyplotSendBytes->begin(); sendBytesItr != spyplotSendBytes->end(); sendBytesItr++) {
+			fprintf(spyplotFile, "%" PRId32 ", %" PRIu64 "\n", sendBytesItr->first, sendBytesItr->second);
+		}
+	}
+
+	fclose(spyplotFile);
+
+	///////////////////////////////////////////////////////////
+
+	output->verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots completed (Rank %" PRId32 "\n", thisRank);
+
+	// Free up the name buffer
+	free(specialNameBuffer);
+}
+
+void EmberEngine::updateSpyplot(const int32_t rank, const uint64_t bytesSent) {
+	if(spyplotMode > EMBER_SPYPLOT_NONE) {
+		if(spyplotMode & EMBER_SPYPLOT_SEND_COUNT) {
+			updateMap(spyplotSends, rank, (uint32_t) 1);
+		}
+
+		if(spyplotMode & EMBER_SPYPLOT_SEND_BYTES) {
+			updateMap(spyplotSendBytes, rank, bytesSent);
+		}
+	}
 }
 
 void EmberEngine::processStartEvent(EmberStartEvent* ev) {
@@ -496,6 +594,10 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 		break;
 	}
 
+	// Update the Spyplot, this will detect if we want to output
+	// at the end of simulation
+	updateSpyplot(ev->getSendToRank(), (uint64_t) ev->getMessageSize());
+
 	accumulateTime = histoSend;
 }
 
@@ -589,6 +691,11 @@ void EmberEngine::processISendEvent(EmberISendEvent* ev) {
 			ev->getMessageRequestHandle(), &isendFunctor);
 		break;
 	}
+
+	// Update the Spyplot, this will detect if we want to output
+	// at the end of simulation
+	updateSpyplot(ev->getSendToRank(), (uint64_t) ev->getMessageSize());
+
 	accumulateTime = histoISend;
 }
 
