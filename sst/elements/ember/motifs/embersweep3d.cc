@@ -23,8 +23,8 @@ using namespace SST::Ember;
 EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params) {
 
-	px = (uint32_t) params.find_integer("pex", 0);
-	py = (uint32_t) params.find_integer("pey", 0);
+	px = (int32_t) params.find_integer("pex", 0);
+	py = (int32_t) params.find_integer("pey", 0);
 
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 
