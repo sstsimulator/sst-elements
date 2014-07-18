@@ -32,6 +32,9 @@ private:
 	uint32_t rank;
 	uint32_t messageSize;
 	uint32_t iterations;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
+
 
 };
 
