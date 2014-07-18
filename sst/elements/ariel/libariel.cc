@@ -30,6 +30,7 @@ static const ElementInfoParam ariel_params[] = {
     {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
     {"corecount", "Number of CPU cores to emulate", "1"},
     {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},
+    {"translatecacheentries", "Keep a translation cache of this many entries to improve emulated core performance", "4096"},
     {"memorylevels", "Number of memory levels in the system", "1"},
     {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},
     {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},

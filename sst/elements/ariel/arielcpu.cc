@@ -59,10 +59,11 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	free(level_buffer);
 
 	uint32_t default_level = (uint32_t) params.find_integer("defaultlevel", 0);
+	uint32_t translateCacheSize = (uint32_t) params.find_integer("translatecacheentries", 4096);
 
 	output->verbose(CALL_INFO, 1, 0, "Creating memory manager, default allocation from %" PRIu32 " memory pool.\n", default_level);
 	memmgr = new ArielMemoryManager(memory_levels, 
-		page_sizes, page_counts, output, default_level);
+		page_sizes, page_counts, output, default_level, translateCacheSize);
 
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find_integer("maxissuepercycle", 1);
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find_integer("maxcorequeue", 64);
@@ -225,6 +226,8 @@ void ArielCPU::finish() {
 	for(uint32_t i = 0; i < core_count; ++i) {
 		cpu_cores[i]->printCoreStatistics();
 	}
+
+	memmgr->printStats();
 }
 
 int ArielCPU::forkPINChild(const char* app, char** args) {
