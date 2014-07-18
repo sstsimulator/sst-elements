@@ -108,7 +108,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		break;
 	}
 
-    tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen, 0.0);
+    tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
 	const char* execute_binary = PINTOOL_EXECUTABLE;
 	const uint32_t pin_arg_count = 20;
@@ -201,8 +201,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	std::string cpu_clock = params.find_string("clock", "1GHz");
 	output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
 
-	/*TimeConverter *clockConv = */registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
-    // TODO: tunnel.setTimeConversion(clockConv);
+	registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
 
 	output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
@@ -276,10 +275,11 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 	return 0;
 }
 
-bool ArielCPU::tick( SST::Cycle_t ) {
+bool ArielCPU::tick( SST::Cycle_t cycle) {
 	stopTicking = false;
-	
 	output->verbose(CALL_INFO, 16, 0, "Main processor tick, will issue to individual cores...\n");
+
+    tunnel->updateTime(getCurrentSimTimeMicro());
 
 	// Keep ticking unless one of the cores says it is time to stop.
 	for(uint32_t i = 0; i < core_count; ++i) {

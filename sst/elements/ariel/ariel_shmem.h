@@ -63,9 +63,8 @@ struct ArielCommand {
 struct ArielSharedData {
     size_t numCores;
     uint64_t simTime;
-    double timeConversion;
     volatile uint32_t child_attached;
-    uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t) - sizeof(double)];
+    uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t)];
 };
 
 
@@ -77,13 +76,11 @@ public:
     /**
      * Create a new Ariel Tunnel
      */
-    ArielTunnel(const std::string &region_name, size_t numCores,
-            size_t bufferSize, double timeConversion) :
+    ArielTunnel(const std::string &region_name, size_t numCores, size_t bufferSize) :
         SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(region_name, numCores, bufferSize)
     {
         sharedData->numCores = numCores;
         sharedData->simTime = 0;
-        sharedData->timeConversion = timeConversion;
         sharedData->child_attached = 0;
     }
 
@@ -110,14 +107,12 @@ public:
     }
 
     /** Return the current time (in seconds) of the simulation */
-    double getTime(void) {
-        return sharedData->simTime * sharedData->timeConversion;
+    void getTime(struct timeval *tp) {
+        uint64_t cTime = sharedData->simTime;
+        tp->tv_sec = cTime / 1e6;
+        tp->tv_usec = cTime - (tp->tv_sec * 1e6);
     }
 
-    /** Set time conversion */
-    void setTimeConversion(double x) {
-        sharedData->timeConversion = x;
-    }
 };
 
 
