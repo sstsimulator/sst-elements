@@ -32,7 +32,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	int verbosity = params.find_integer("verbose", 0);
 	output = new SST::Output("ArielComponent[@f:@l:@p] ",
-		verbosity, 0, SST::Output::STDERR);
+		verbosity, 0, SST::Output::STDOUT);
 
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
