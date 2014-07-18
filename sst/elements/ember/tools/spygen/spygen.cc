@@ -13,6 +13,7 @@ int dimY;
 int ranks;
 uint32_t* commData;
 uint64_t* bytesData;
+int outputMode;
 
 void printOptions() {
 	printf("SST Spyplot Generator\n");
@@ -78,9 +79,8 @@ void parseOptions(int argc, char* argv[]) {
 	}
 
 	if(NULL == imageFile) {
-		printOptions();
-		printf("\n\nYou did not specify a file location!\n\n");
-		exit(-1);
+		imageFile = (char*) malloc(sizeof(char) * 2);
+		strcpy(imageFile, "-");
 	}
 }
 
@@ -118,7 +118,6 @@ int main(int argc, char* argv[]) {
 	// Initialize everything to zero
 	for(int i = 0; i < ranks; ++i) {
 		for(int j = 0; j < ranks; ++j) {
-			printf("%d x %d...\n", i, j);
 			setCommData(i, j, (uint32_t) 0);
 			setBytesData(i, j, (uint64_t) 0);
 		}
@@ -198,14 +197,16 @@ int main(int argc, char* argv[]) {
 
 	////////////////////////////////////////////////////////////////////////////////
 
-	for(int i = 0; i < ranks; ++i) {
-		printf("%4d ", i);
+	if(strcmp(imageFile, "-") == 0) {
+		for(int i = 0; i < ranks; ++i) {
+			printf("%8d |  ", i);
 
-		for(int j = 0; j < ranks; ++j) {
-			printf("%3" PRIu32 , getCommData(i, j));
+			for(int j = 0; j < ranks; ++j) {
+				printf("%3" PRIu32 , getCommData(i, j));
+			}
+
+			printf("\n");
 		}
-
-		printf("\n");
 	}
 
 	////////////////////////////////////////////////////////////////////////////////

@@ -32,14 +32,13 @@ static const char* COMPUTE_HISTO_NAME = "Compute Time";
 static const char* START_HISTO_NAME = "Start Time";
 
 EmberSpyInfo::EmberSpyInfo(int32_t r) :
-	rank(rank),
+	rank(r),
 	bytesSent(0),
 	sendsPerformed(0) {
-
 }
 
 void EmberSpyInfo::incrementSendCount() {
-	sendsPerformed++;
+	sendsPerformed = sendsPerformed + 1;
 }
 
 void EmberSpyInfo::addSendBytes(uint64_t sendBytes) {
