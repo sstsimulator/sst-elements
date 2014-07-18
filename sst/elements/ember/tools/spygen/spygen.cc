@@ -21,6 +21,7 @@ void printOptions() {
 	printf("-f <imagefile>     Generate image in <imagefile>\n");
 	printf("-v                 Use verbose output\n");
 	printf("-h                 Print options\n");
+	printf("-m                 0 = output sends, 1 = output bytes\n");
 }
 
 void autoCalculateRanks() {
@@ -53,7 +54,7 @@ void setBytesData(const int x, const int y, const uint64_t value) {
 	bytesData[x * ranks + y] = value;
 }
 
-uint64_t getBytesData(const int x, const int y, const uint64_t value) {
+uint64_t getBytesData(const int x, const int y) {
 	return bytesData[x * ranks + y];
 }
 
@@ -64,17 +65,28 @@ void parseOptions(int argc, char* argv[]) {
 	dimX = 15;
 	dimY = 15;
 	ranks = 0;
+	outputMode = 0;
 
 	for(int i = 0; i < argc; ++i) {
 		if(strcmp(argv[i], "-f") == 0) {
 			imageFile = (char*) malloc(sizeof(char) * (strlen(argv[i] + 1)));
-			strcpy(imageFile, argv[i]);
+			strcpy(imageFile, argv[i + 1]);
 			i++;
 		} else if(strcmp(argv[i], "-v") == 0) {
 			verbose++;
 		} else if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0) {
 			printOptions();
 			exit(0);
+		} else if(strcmp(argv[i], "-m") == 0) {
+			if(strcmp(argv[i+2], "0") == 0) {
+				outputMode = 0;
+			} else if(strcmp(argv[i+1], "1") == 0) {
+				outputMode = 1;
+			} else {
+				outputMode = 0;
+			}
+
+			i++;
 		}
 	}
 
@@ -207,6 +219,53 @@ int main(int argc, char* argv[]) {
 
 			printf("\n");
 		}
+	} else {
+		// Generate a PPM file
+		FILE* imagePPM = fopen(imageFile, "wt");
+		// Magic number
+		fprintf(imagePPM, "P3\n");
+		// Image dimensions
+		fprintf(imagePPM, "%" PRIu32 " %" PRIu32 "\n", (ranks * dimX), (ranks * dimY));
+		// Max colour value
+		fprintf(imagePPM, "255\n");
+
+		uint32_t max_send_count = 0;
+		uint64_t max_bytes_count = 0;
+
+		for(int i = 0; i < ranks; ++i) {
+			for(int j = 0; j < ranks; ++j) {
+				max_send_count = getCommData(i, j) > max_send_count ? getCommData(i, j) : max_send_count;
+				max_bytes_count = getBytesData(i, j) > max_bytes_count ? getBytesData(i, j) : max_bytes_count;
+			}
+		}
+
+		for(int i = 0; i < ranks; ++i) {
+			for(int m = 0; m < dimY; ++m) {
+				for(int j = 0; j < ranks; ++j) {
+					for(int k = 0; k < dimX; ++k) {
+						if(outputMode == 0) {
+							if(getCommData(i, j) == 0) {
+								fprintf(imagePPM, "255 255 255 ");
+							} else {
+								fprintf(imagePPM, "%d %d %d ", 0,
+									(int) (255.0 * (getCommData(i, j) / ((double) max_send_count))), 0);
+							}
+						} else if(outputMode == 1) {
+							if(getBytesData(i, j) == 0) {
+								fprintf(imagePPM, "255 255 255 ");
+							} else {
+								fprintf(imagePPM, "%d %d %d ", 0,
+									(int) (255.0 * (getBytesData(i, j) / ((double) max_bytes_count))), 0);
+							}
+						}
+					}
+				}
+
+				fprintf(imagePPM, "\n");
+			}
+		}
+
+		fclose(imagePPM);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
