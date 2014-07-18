@@ -15,11 +15,14 @@
 
 using namespace SST::ArielComponent;
 
-ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out, uint32_t defLevel) {
+ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out,
+		uint32_t defLevel, uint32_t translateCacheEntryCount) :
+	translationCacheEntries(translateCacheEntryCount) {
+
 	output = out;
 	memoryLevels = mLevels;
 	defaultLevel = defLevel;
-	
+
 	output->verbose(CALL_INFO, 2, 0, "Creating a memory hierarchy of %" PRIu32 " levels.\n", mLevels);
 
 	pageSizes = (uint64_t*) malloc(sizeof(uint64_t) * memoryLevels);
@@ -51,6 +54,13 @@ ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint6
 	for(uint32_t i = 0; i < mLevels; ++i) {
 		pageTables[i] = new std::map<uint64_t, uint64_t>();
 	}
+
+	translationCache = new std::map<uint64_t, uint64_t>();
+	translationCacheHits = 0;
+	translationCacheEvicts = 0;
+	translationQueries = 0;
+	translationShootdown = 0;
+	pageAllocationCount = 0;
 }
 
 // Set the new default level for continuing allocations.
@@ -62,6 +72,17 @@ ArielMemoryManager::~ArielMemoryManager() {
 
 }
 
+void ArielMemoryManager::cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
+	// Remove the oldest entry if we do not have enough slots
+	if(translationCache->size() == translationCacheEntries) {
+		translationCacheEvicts++;
+		translationCache->erase(translationCache->begin());
+	}
+
+	// Insert the translated entry into the cache
+	translationCache->insert(std::pair<uint64_t, uint64_t>(virtualA, physicalA));
+}
+
 void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
 	if(level >= memoryLevels) {
 		output->fatal(CALL_INFO, -1, "Requested memory allocation of %" PRIu64 " bytes, in level: %" PRIu32 ", but only have: %" PRIu32 " levels.\n",
@@ -70,6 +91,7 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 
 	output->verbose(CALL_INFO, 4, 0, "Requesting a memory allocation of %" PRIu64 " bytes, in level: %" PRIu32 ", Virtual mapping=%" PRIu64 "\n",
 		size, level, virtualAddress);
+	pageAllocationCount++;
 
 	const uint64_t pageSize = pageSizes[level];
 
@@ -146,33 +168,47 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 		output->fatal(CALL_INFO, -1, "Error: asked to free virtual address: %" PRIu64 " but entry was not found in allocation map.\n",
 			virtAddress);
 	}
+
+	// Invalidate the cached entries
+	translationCache->clear();
+	translationShootdown++;
 }
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
+	// Keep track of how many translations we are performing
+	translationQueries++;
+
 	uint64_t physAddr = (uint64_t) -1;
 	bool found = false;
-	
+
 	output->verbose(CALL_INFO, 4, 0, "Page Table: translate virtual address %" PRIu64 "\n", virtAddr);
-	
+
+	// Check the translation cache otherwise carry on
+	std::map<uint64_t, uint64_t>::iterator checkCache = translationCache->find(virtAddr);
+	if(checkCache != translationCache->end()) {
+		translationCacheHits++;
+		return checkCache->second;
+	}
+
 	// We will have to search every memory level to find where the address lies
 	for(uint32_t i = 0; i < memoryLevels; ++i) {
 		if(! found) {
 			std::map<uint64_t, uint64_t>::iterator page_itr;
 			const uint64_t pageSize = pageSizes[i];
 			const uint64_t page_offset = virtAddr % pageSize;
+			const uint64_t page_start = virtAddr - page_offset;
 
-			for(page_itr = pageTables[i]->begin(); page_itr != pageTables[i]->end(); page_itr++) {
-				if((virtAddr >= page_itr->first) &&
-					(virtAddr < (page_itr->first + pageSize))) {
-					
-					physAddr = page_itr->second + page_offset;
+			page_itr = pageTables[i]->find(page_start);
 
-					output->verbose(CALL_INFO, 4, 0, "Page table hit: virtual address=%" PRIu64 " hit in level: %" PRIu32 ", virtual page start=%" PRIu64 ", virtual end=%" PRIu64 ", translates to phys page start=%" PRIu64 " translates to: phys address: %" PRIu64 " (offset added to phys start=%" PRIu64 ")\n",
-						virtAddr, i, page_itr->first, page_itr->first + pageSize, page_itr->second, physAddr, page_offset);
+			if(page_itr != pageTables[i]->end()) {
+				// Located
+				physAddr = page_itr->second + page_offset;
 
-					found = true;
-					break;
-				}
+				output->verbose(CALL_INFO, 4, 0, "Page table hit: virtual address=%" PRIu64 " hit in level: %" PRIu32 ", virtual page start=%" PRIu64 ", virtual end=%" PRIu64 ", translates to phys page start=%" PRIu64 " translates to: phys address: %" PRIu64 " (offset added to phys start=%" PRIu64 ")\n",
+					virtAddr, i, page_itr->first, page_itr->first + pageSize, page_itr->second, physAddr, page_offset);
+
+				found = true;
+				break;
 			}
 		} else {
 			break;
@@ -180,24 +216,36 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	}
 
 	if(found) {
+		cacheTranslation(virtAddr, physAddr);
 		return physAddr;
 	} else {
 		output->verbose(CALL_INFO, 4, 0, "Page table miss for virtual address: %" PRIu64 "\n", virtAddr);
-		
+
 		// We did not find the address in memory, that means we should allocate it one from our default pool
 		uint64_t offset = virtAddr % pageSizes[defaultLevel];
-		
+
 		output->verbose(CALL_INFO, 4, 0, "Page offset calculation (generating a new page allocation request) for address %" PRIu64 ", offset=%" PRIu64 ", requesting virtual map to address: %" PRIu64 "\n", 
 			virtAddr, offset, (virtAddr - offset));
-		
+
 		// Perform an allocation so we can then re-find the address
 		allocate(8, defaultLevel, virtAddr - offset);
 
 		// Now attempt to refind it
 		const uint64_t newPhysAddr = translateAddress(virtAddr);
-		
+
 		output->verbose(CALL_INFO, 4, 0, "Page allocation routine mapped to address: %" PRIu64 "\n", newPhysAddr );
 
 		return newPhysAddr;
 	}
+}
+
+void ArielMemoryManager::printStats() {
+	output->output("\n");
+	output->output("Ariel Memory Management Statistics:\n");
+	output->output("---------------------------------------------------------------------\n");
+	output->output("Translation Cache Queries:        %" PRIu64 "\n", translationQueries);
+	output->output("Translation Cache Hits:           %" PRIu64 "\n", translationCacheHits);
+	output->output("Translation Cache Evicts:         %" PRIu64 "\n", translationCacheEvicts);
+	output->output("Translation Cache Shoot down:     %" PRIu64 "\n", translationShootdown);
+	output->output("Total Page Allocations Performed: %" PRIu64 "\n", pageAllocationCount);
 }
