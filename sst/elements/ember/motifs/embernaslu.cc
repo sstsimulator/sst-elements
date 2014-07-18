@@ -25,8 +25,8 @@ EmberNASLUGenerator::EmberNASLUGenerator(SST::Component* owner, Params& params) 
 
 	nsCompute = (uint64_t) params.find_integer("computetime", 1000);
 
-	px = (uint32_t) params.find_integer("pex", 0);
-	py = (uint32_t) params.find_integer("pey", 0);
+	px = (int32_t) params.find_integer("pex", 0);
+	py = (int32_t) params.find_integer("pey", 0);
 
 	iterations = (uint32_t) params.find_integer("iterations", 1);
 

@@ -28,8 +28,8 @@ public:
         void finish(const SST::Output* output) { }
 
 private:
-	uint32_t px;
-	uint32_t py;
+	int32_t px;
+	int32_t py;
 	uint32_t rank;
 	uint32_t size;
 	uint32_t nx;
