@@ -71,8 +71,10 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	shmem_region_name = (char*) malloc(sizeof(char) * 256);
-    sprintf(shmem_region_name, "ariel_shmem_%u_%lu_XXXXXX", getpid(), id);
+	shmem_region_name = (char*) malloc(sizeof(char) * 1024);
+    const char *tmpdir = getenv("TMPDIR");
+    if ( !tmpdir ) tmpdir = "/tmp";
+    sprintf(shmem_region_name, "%s/ariel_shmem_%u_%lu_XXXXXX", tmpdir, getpid(), id);
     int fd = mkstemp(shmem_region_name);
     close(fd);
 
