@@ -99,6 +99,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	case 1:
 		dataMode = BACKZEROS;
 		break;
+    case 2:
+		dataMode = BACKUNINIT;
+		break;
 	default:
 		output->fatal(CALL_INFO, -1, "Unknown backing mode: %" PRIu32 " (see \"datamode\" parameter)\n",
 			paramDataMode);
@@ -108,9 +111,11 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 		// Configure the empty buffer ready for use by MPI routines.
 		emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
 		emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
-		for(uint32_t i = 0; i < emptyBufferSize; ++i) {
-			emptyBuffer[i] = 0;
-		}
+        if ( dataMode == BACKZEROS ) { 
+		    for(uint32_t i = 0; i < emptyBufferSize; ++i) {
+			    emptyBuffer[i] = 0;
+		    }
+        }
 	}
 
 	// Create the messaging interface we are going to use
@@ -224,6 +229,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 EmberEngine::~EmberEngine() {
 	switch(dataMode) {
 	case BACKZEROS:
+	case BACKUNINIT:
 		// Free the big buffer we have been using
 		free(emptyBuffer);
 		break;
@@ -494,6 +500,7 @@ void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
 		break;
 
 	case BACKZEROS:
+	case BACKUNINIT:
 		assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
 		msgapi->allreduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
 			ev->getElementCount(), convertToHermesType(ev->getElementType()),
@@ -519,6 +526,7 @@ void EmberEngine::processReduceEvent(EmberReduceEvent* ev) {
 		break;
 
 	case BACKZEROS:
+	case BACKUNINIT:
 		assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
 
 		msgapi->reduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
@@ -568,6 +576,7 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 		break;
 
 	case BACKZEROS:
+	case BACKUNINIT:
 		assert( emptyBufferSize >= ev->getMessageSize() );
 		msgapi->send((Addr) emptyBuffer, ev->getMessageSize(),
 			CHAR, (RankID) ev->getSendToRank(),
@@ -644,6 +653,7 @@ void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 		break;
 
 	case BACKZEROS:
+	case BACKUNINIT:
 		assert( emptyBufferSize >= ev->getMessageSize() );
 		msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
 			CHAR, (RankID) ev->getRecvFromRank(),
@@ -666,6 +676,7 @@ void EmberEngine::processISendEvent(EmberISendEvent* ev) {
 		break;
 
 	case BACKZEROS:
+	case BACKUNINIT:
 	        assert( emptyBufferSize >= ev->getMessageSize() );
 		msgapi->isend((Addr) emptyBuffer, ev->getMessageSize(),
 			CHAR, (RankID) ev->getSendToRank(),
@@ -694,6 +705,7 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 		break;
 
 	case BACKZEROS:
+	case BACKUNINIT:
 	        assert( emptyBufferSize >= ev->getMessageSize() );
 		msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
 			CHAR, (RankID) ev->getRecvFromRank(),

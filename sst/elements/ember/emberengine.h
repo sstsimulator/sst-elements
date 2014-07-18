@@ -60,7 +60,8 @@ namespace Ember {
 
 enum EmberDataMode {
 	NOBACKING,
-	BACKZEROS
+	BACKZEROS,
+    BACKUNINIT,
 };
 
 const uint32_t EMBER_SPYPLOT_NONE = 0;
