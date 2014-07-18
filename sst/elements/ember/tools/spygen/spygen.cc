@@ -22,6 +22,8 @@ void printOptions() {
 	printf("-v                 Use verbose output\n");
 	printf("-h                 Print options\n");
 	printf("-m                 0 = output sends, 1 = output bytes\n");
+	printf("-x                 Pixels in X for each rank\n");
+        printf("-y                 Pixels in Y for each rank\n");
 }
 
 void autoCalculateRanks() {
@@ -86,6 +88,12 @@ void parseOptions(int argc, char* argv[]) {
 				outputMode = 0;
 			}
 
+			i++;
+		} else if(strcmp(argv[i], "-x") == 0) {
+			dimX = atoi(argv[i+1]);
+			i++;
+		} else if(strcmp(argv[i], "-y") == 0) {
+			dimY = atoi(argv[i+1]);
 			i++;
 		}
 	}
