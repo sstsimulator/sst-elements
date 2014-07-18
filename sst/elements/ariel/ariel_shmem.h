@@ -64,7 +64,8 @@ struct ArielSharedData {
     size_t numCores;
     uint64_t simTime;
     double timeConversion;
-    uint8_t __pad[ 256 - sizeof(size_t) - sizeof(uint64_t) - sizeof(double)];
+    volatile uint32_t child_attached;
+    uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t) - sizeof(double)];
 };
 
 
@@ -83,6 +84,7 @@ public:
         sharedData->numCores = numCores;
         sharedData->simTime = 0;
         sharedData->timeConversion = timeConversion;
+        sharedData->child_attached = 0;
     }
 
 
@@ -91,10 +93,19 @@ public:
      */
     ArielTunnel(const std::string &region_name) :
         SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(region_name)
-    { }
+    {
+        /* Ideally, this would be done atomically, but we'll only have 1 child */
+        sharedData->child_attached++;
+    }
+
+    void waitForChild(void)
+    {
+        while ( sharedData->child_attached == 0 ) ;
+    }
 
     /** Update the current simulation cycle count in the SharedData region */
-    void updateTime(uint64_t newTime) {
+    void updateTime(uint64_t newTime)
+    {
         sharedData->simTime = newTime;
     }
 

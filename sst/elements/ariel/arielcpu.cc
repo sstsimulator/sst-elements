@@ -164,9 +164,10 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
 	forkPINChild(execute_binary, execute_args);
-	output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.\n");
+	output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
-	sleep(2);
+    tunnel->waitForChild();
+	output->verbose(CALL_INFO, 1, 0, "Child has attached!\n");
 	/////////////////////////////////////////////////////////////////////////////////////
 
 	const std::string tracePrefix = params.find_string("tracePrefix", "");
