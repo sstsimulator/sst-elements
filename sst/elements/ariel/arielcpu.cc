@@ -200,8 +200,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	std::string cpu_clock = params.find_string("clock", "1GHz");
 	output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
-	TimeConverter *clockConv = registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
-    // TODO: tunnel.setTimeConversion(clockConv);
+
+        // TODO: tunnel.setTimeConversion(clockConv);
+	//TimeConverter *clockConv = registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
 
 	output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
