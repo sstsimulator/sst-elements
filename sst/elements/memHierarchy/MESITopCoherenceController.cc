@@ -374,7 +374,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
     
     if(L1_ && !noncacheable){
         /* Only return the desire word */
-        Addr base    = (_event->getAddr()) & ~(lineSize_ - 1);
+        Addr base    = (_event->getAddr()) & ~(((Addr)lineSize_) - 1);
         Addr offset  = _event->getAddr() - base;
         if(cmd != GetX) responseEvent->setPayload(_event->getSize(), &_data->at(offset));
         else{
