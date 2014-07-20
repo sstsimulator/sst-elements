@@ -26,6 +26,7 @@
 #include "merlin.h"
 #include "portControl.h"
 #include "xbar_arb_rr.h"
+#include "xbar_arb_lru.h"
 
 using namespace SST::Merlin;
 
@@ -184,7 +185,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     
     // Get the Xbar arbitration
     // arb = new xbar_arb_rr(num_ports,num_vcs);
-    arb = new xbar_arb_rr();
+    // arb = new xbar_arb_rr();
+    arb = new xbar_arb_lru();
     
     if ( params.find_integer("debug", 0) ) {
         if ( num_routers == 0 ) {
