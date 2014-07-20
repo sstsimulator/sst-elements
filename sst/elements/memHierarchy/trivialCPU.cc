@@ -47,7 +47,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 	}
 	commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
 
-	maxAddr = (uint32_t)params.find_integer("memSize", -1) -1;
+	maxAddr = (uint64_t)params.find_integer("memSize", -1) -1;
 	if ( !maxAddr ) {
 		_abort(trivialCPU, "Must set memSize\n");
 	}

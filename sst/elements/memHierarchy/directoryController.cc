@@ -134,7 +134,25 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         if(ret) workQueue.erase(workQueue.begin());
         else {
             workQueue.pop_front();
-            workQueue.push_back(event);
+            /* Need to put back in the queue, but ahead of any request
+             * coming from this client for this address */
+            std::list<MemEvent*> tempList;
+            tempList.push_back(event);
+            std::list<MemEvent*>::iterator i = workQueue.begin();
+            while ( i != workQueue.end() ) {
+                if ( ((*i)->getBaseAddr() == event->getBaseAddr()) &&
+                        ((*i)->getSrc() == event->getSrc()) &&
+                        ((*i)->isDataRequest()) ) {
+                    std::list<MemEvent*>::iterator j = i;
+                    ++i; /* Need to increment before moving */
+                    dbg.debug(_L10_, "Moving ev [(%" PRIu64 ",%d), Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s] to back\n",
+                            (*j)->getID().first, (*j)->getID().second, CommandString[(*j)->getCmd()], (*j)->getBaseAddr(), (*j)->getSrc().c_str());
+                    tempList.splice(tempList.end(), workQueue, j);
+                } else {
+                    ++i;
+                }
+            }
+            workQueue.splice(workQueue.end(), tempList);
         }
 	}
 
@@ -146,7 +164,9 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BsAddr = %"PRIx64", Src = %s\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str());
+    dbg.debug(_L10_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%"PRIx64", Src = %s\n",
+            getName().c_str(), ev->getID().first, ev->getID().second, CommandString[ev->getCmd()],
+            ev->getBaseAddr(), ev->getSrc().c_str());
     Command cmd = ev->getCmd();
     
     if(NACK == cmd){
@@ -236,7 +256,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
 void DirectoryController::handleMemoryResponse(SST::Event *event){
 	MemEvent *ev = static_cast<MemEvent*>(event);
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, Cmd = %s, BaseAddr = x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
+    dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
 
     if(noncacheableWrites.find(ev->getResponseToID()) != noncacheableWrites.end()){
         MemEvent *origEV = noncacheableWrites[ev->getResponseToID()];

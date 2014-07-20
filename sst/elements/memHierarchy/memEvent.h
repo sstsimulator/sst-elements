@@ -345,12 +345,16 @@ public:
     
     /** Returns true if this is a Data Request */
     static bool isDataRequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX); }
+    bool isDataRequest(void) const { return MemEvent::isDataRequest(cmd_); }
     /** Returns true if this is of cpu type */
     static bool isCPURequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
+    bool isCPURequest(void) const { return MemEvent::isCPURequest(cmd_); }
     /** Returns true if this is of response type */
     static bool isResponse(Command cmd){ return (cmd == GetSResp || cmd == GetXResp);}
+    bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
     /** Returns true if this is a 'writeback' command type */
     static bool isWriteback(Command cmd){ return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
+    bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
     
 
     
