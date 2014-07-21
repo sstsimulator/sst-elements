@@ -23,6 +23,7 @@
 #include "sst/core/element.h"
 #include "sst/core/component.h"
 
+#include "memEvent.h"
 #include "cacheController.h"
 #include "bus.h"
 #include "trivialCPU.h"
@@ -406,3 +407,6 @@ extern "C" {
 BOOST_CLASS_EXPORT(MemEvent)
 BOOST_CLASS_EXPORT(DMACommand)
 
+
+BOOST_CLASS_EXPORT(MemNIC::MemRtrEvent)
+BOOST_CLASS_EXPORT(MemNIC::InitMemRtrEvent)

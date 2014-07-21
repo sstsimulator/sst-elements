@@ -444,7 +444,7 @@ private:
     bool            inMSHR_;
     bool            statsUpdated_;
 
-    
+
     MemEvent() {} // For serialization only
 
     friend class boost::serialization::access;
@@ -455,13 +455,25 @@ private:
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(eventID_);
         ar & BOOST_SERIALIZATION_NVP(responseToID_);
-        ar & BOOST_SERIALIZATION_NVP(addr_);
+        ar & BOOST_SERIALIZATION_NVP(flags_);
         ar & BOOST_SERIALIZATION_NVP(size_);
-        ar & BOOST_SERIALIZATION_NVP(cmd_);
-        ar & BOOST_SERIALIZATION_NVP(payload_);
+        ar & BOOST_SERIALIZATION_NVP(groupID_);
+        ar & BOOST_SERIALIZATION_NVP(addr_);
+        ar & BOOST_SERIALIZATION_NVP(baseAddr_);
         ar & BOOST_SERIALIZATION_NVP(src_);
         ar & BOOST_SERIALIZATION_NVP(dst_);
-        ar & BOOST_SERIALIZATION_NVP(flags_);
+        ar & BOOST_SERIALIZATION_NVP(cmd_);
+        ar & BOOST_SERIALIZATION_NVP(NACKedEvent_);
+        ar & BOOST_SERIALIZATION_NVP(payload_);
+        ar & BOOST_SERIALIZATION_NVP(grantedState_);
+        ar & BOOST_SERIALIZATION_NVP(ackNeeded_);
+        ar & BOOST_SERIALIZATION_NVP(prefetch_);
+        ar & BOOST_SERIALIZATION_NVP(atomic_);
+        ar & BOOST_SERIALIZATION_NVP(loadLink_);
+        ar & BOOST_SERIALIZATION_NVP(storeConditional_);
+        ar & BOOST_SERIALIZATION_NVP(startTime_);
+        ar & BOOST_SERIALIZATION_NVP(inMSHR_);
+        ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
     }
 };
 

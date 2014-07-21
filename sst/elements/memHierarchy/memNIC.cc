@@ -212,6 +212,3 @@ void MemNIC::send(MemEvent *ev)
 }
 
 
-BOOST_CLASS_EXPORT(MemNIC::MemRtrEvent)
-BOOST_CLASS_EXPORT(MemNIC::InitMemRtrEvent)
-
