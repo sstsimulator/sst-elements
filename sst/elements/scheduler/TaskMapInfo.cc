@@ -51,34 +51,39 @@ double TaskMapInfo::getAvgHopDist(const MeshMachine & machine)
             schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
         }
 
-        int** commMatrix = taskCommInfo->getCommMatrix();
+        //below calculation is currently optimized for memory
+        //optimization for speed is commented out
+
+        //int** commMatrix = taskCommInfo->getCommMatrix();
         unsigned long totalHopDist = 0;
         int neighborCount = 0;
+    
         //iterate through all tasks
         for(int taskIter = 0; taskIter < size; taskIter++){
             MeshLocation curLoc = MeshLocation(taskToNode[taskIter], machine);
             //iterate through other tasks and add distance for communication
             for(int otherTaskIter = taskIter + 1 ; otherTaskIter < size; otherTaskIter++){
-                if( commMatrix[taskIter][otherTaskIter] != 0 ||
-                    commMatrix[otherTaskIter][taskIter] != 0 ){
+                //if( commMatrix[taskIter][otherTaskIter] != 0 ||
+                //    commMatrix[otherTaskIter][taskIter] != 0 ){
+                if(taskCommInfo->getCommWeight(taskIter, otherTaskIter) != 0){
                     MeshLocation otherNode = MeshLocation(taskToNode[otherTaskIter], machine);
                     totalHopDist += curLoc.L1DistanceTo(otherNode);
                     neighborCount++;
                 }
             }
         }
+        //delete comm matrix
+        //for(int i = 0 ; i < size; i++){
+        //    delete [] commMatrix[i];
+        //}
+        //delete [] commMatrix;
+
         //distance per neighbor
         //two-way distances and uncounted neighbors cancel each other
         avgHopDist = totalHopDist;
         if(neighborCount != 0){
             avgHopDist /= neighborCount;
         }
-        
-        //delete comm matrix
-        for(int i = 0 ; i < size; i++){
-            delete [] commMatrix[i];
-        }
-        delete [] commMatrix;
     }
 
     return avgHopDist;

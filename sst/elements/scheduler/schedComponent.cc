@@ -545,9 +545,6 @@ void schedComponent::finish()
 
 void schedComponent::startJob(Job* job) 
 {
-    //if(job->getJobNum() % 130 == 0){
-    //    std::cout << job->getJobNum() / 130 << " percent of the jobs have been started\n";
-    //}
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job); //read communication files
@@ -574,6 +571,7 @@ void schedComponent::startJob(Job* job)
         AllocInfo* baselineAlloc = MeshAllocInfo::getBaselineAllocation(*mMachine, job);
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
+         
         double baselineAvgL1Distance = baselineMap->getAvgHopDist(*mMachine);
         delete baselineMap;
                 

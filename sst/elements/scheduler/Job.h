@@ -65,7 +65,7 @@ namespace SST {
                 void startsAtTime(unsigned long time);
                 TaskCommInfo* taskCommInfo;
                 
-                //these are used to prevent high memory usage:
+                //these are used to prevent large memory usage:
                 //the communication files are read only when the job starts
                 TaskCommInfo::commType commType;
                 std::string commFile;

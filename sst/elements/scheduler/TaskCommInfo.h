@@ -33,6 +33,8 @@ namespace SST {
                 ~TaskCommInfo();
                 
                 int** getCommMatrix() const;
+                int getCommWeight(int task1, int task2) const;
+                int getSize() const { return size; }
 
 		        enum commType{
 		            ALLTOALL = 0,
@@ -50,10 +52,12 @@ namespace SST {
 		        int size;
 		        
 		        void init(Job* job);
-		        int** buildMeshComm(int xdim, int ydim, int zdim) const; //builds mesh structured communication matrix
+		        int** buildMeshComm() const; //builds mesh structured communication matrix
 		        int** buildAllToAllComm(int size) const;
 		        int** commInfoToMatrix() const;
+		        void getTaskDim(int taskNo, int outDims[3]) const; //returns task position for mesh structure
         };
     }
 }
 #endif
+

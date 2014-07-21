@@ -57,13 +57,13 @@ namespace SST {
                         Grouper(std::vector<T>* elements, Rotator *rotator);
                         ~Grouper();
 
-                        double sortDims(int sortedDims[3]) const; //sorts max to min. Returns the ratio of max/min ratio
+                        void sortDims(int sortedDims[3]) const; //sorts max to min.
                         void divideBy(int dim, Grouper<T>** first, Grouper<T>** second);
-                        Dims dims; //TODO: make private
-                   private:
+                        double getDim(int dim) { return dims.val[dim]; }
 
+                   private:
+                        Dims dims;
                         Rotator *rotator;
-                        void sort_buildMaxHeap(std::vector<T> & v, int dim);
                         void sort_maxHeapify(std::vector<T> & v, int i, int dim);
                         int sort_compByDim(T first, T second, int dim); //returns >= 0 if first >= second
 

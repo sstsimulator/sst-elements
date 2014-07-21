@@ -250,7 +250,7 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
         jobs->pop_back();
         ok = false;
     }
-    if (ok && j->getProcsNeeded() > machine->getNumNodes()) {
+    if (ok && j->getProcsNeeded() > (machine->getNumNodes() * machine->getNumCoresPerNode())) {
         schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
                        j->getJobNum(), j->getProcsNeeded(), machine->getNumNodes());
         ok = false;
@@ -261,7 +261,6 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
 
 void CommParser::parseComm(Job * job)
 {
-    //std::cout << job->getJobNum();
     TaskCommInfo* tci;
     switch(job->commType){
     case TaskCommInfo::ALLTOALL:

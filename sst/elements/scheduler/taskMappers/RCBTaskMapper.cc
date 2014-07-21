@@ -82,8 +82,6 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     //apply rotation
     Rotator rotator = Rotator(&nodeGroup, &taskGroup, *this, *mMachine);
 
-    std::cout << nodeGroup.dims.val[0] + 1 << "x" << nodeGroup.dims.val[1] + 1 << "x" << nodeGroup.dims.val[2] + 1 << "\n";
-
     //map
     mapTaskHelper(&nodeGroup, &taskGroup, tmi);
 
@@ -110,8 +108,12 @@ void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* i
         int locLongest[3];
         int jobLongest[3];
         int dimToCut;
+        inTasks->sortDims(jobLongest);
+        inLocs->sortDims(locLongest);
         //prioritize the geometry with larger max/min dimension ratio
-        if(inTasks->sortDims(jobLongest) >= inLocs->sortDims(locLongest)){
+        double locRatio = inLocs->getDim(locLongest[0]) / inLocs->getDim(locLongest[2]);
+        double jobRatio = inTasks->getDim(jobLongest[0]) / inTasks->getDim(jobLongest[2]);
+        if( jobRatio >= locRatio ){
             dimToCut = jobLongest[0];
         } else {
             dimToCut = locLongest[0];
@@ -149,7 +151,7 @@ RCBTaskMapper::Grouper<T>::~Grouper()
 }
 
 template <class T>
-double RCBTaskMapper::Grouper<T>::sortDims(int sortedDims[3]) const
+void RCBTaskMapper::Grouper<T>::sortDims(int sortedDims[3]) const
 {
     sortedDims[0] = 0;
     sortedDims[1] = 1;
@@ -160,14 +162,15 @@ double RCBTaskMapper::Grouper<T>::sortDims(int sortedDims[3]) const
         swap(sortedDims[0], sortedDims[2]);
     if(dims.val[sortedDims[1]] < dims.val[sortedDims[2]])
         swap(sortedDims[1], sortedDims[2]);
-    return dims.val[sortedDims[0]] / dims.val[sortedDims[0]];
 }
 
 template <class T>
 void RCBTaskMapper::Grouper<T>::divideBy(int dim, Grouper<T>** first, Grouper<T>** second)
 {
     //sort elements using heap sort
-    sort_buildMaxHeap(*elements, dim);
+    for( int i = elements->size() - 2; i >= 0; --i){
+        sort_maxHeapify(*elements, i, dim);
+    }
     int x = 0;
     int i = elements->size() - 1;
     while(i > x){
@@ -179,14 +182,6 @@ void RCBTaskMapper::Grouper<T>::divideBy(int dim, Grouper<T>** first, Grouper<T>
     int halfSize = ceil(elements->size() / 2);
     *first = new Grouper<T>(new vector<T>(elements->begin(), elements->begin() + halfSize), rotator);
     *second = new Grouper<T>(new vector<T>(elements->begin() + halfSize, elements->end()), rotator);
-}
-
-template <class T>
-void RCBTaskMapper::Grouper<T>::sort_buildMaxHeap(vector<T> & v, int dim)
-{
-    for( int i = v.size() - 2; i >= 0; --i){
-        sort_maxHeapify(v, i, dim);
-    }
 }
 
 template <class T>
@@ -218,23 +213,6 @@ int RCBTaskMapper::Grouper<T>::sort_compByDim(T first, T second, int dim)
     Dims firstDims = rotator->getDims(first);
     Dims secondDims = rotator->getDims(second);
 
-    //give priority to longer dimension
-    int sortedDims[3];
-    sortDims(sortedDims);
-    vector<int> nextLongest;
-    if(dim != sortedDims[0]) nextLongest.push_back(sortedDims[0]);
-    if(dim != sortedDims[1]) nextLongest.push_back(sortedDims[1]);
-    if(dim != sortedDims[2]) nextLongest.push_back(sortedDims[2]);
-
-    //brake ties using the longest dimension
-    if(firstDims.val[dim] != secondDims.val[dim]){
-        return (firstDims.val[dim] - secondDims.val[dim]);
-    } else if(firstDims.val[nextLongest[0]] != secondDims.val[nextLongest[0]]){
-        return (firstDims.val[nextLongest[0]] - secondDims.val[nextLongest[0]]);
-    } else {
-        return (firstDims.val[nextLongest[1]] - secondDims.val[nextLongest[1]]);
-    }
-    /*
     if(dim == 0) { //ties broken by y, then z
         if(firstDims.val[0] != secondDims.val[0]) return (firstDims.val[0] - secondDims.val[0]);
         if(firstDims.val[1] != secondDims.val[1]) return (firstDims.val[1] - secondDims.val[1]);
@@ -247,7 +225,7 @@ int RCBTaskMapper::Grouper<T>::sort_compByDim(T first, T second, int dim)
         if(firstDims.val[2] != secondDims.val[2]) return (firstDims.val[2] - secondDims.val[2]);
         if(firstDims.val[0] != secondDims.val[0]) return (firstDims.val[0] - secondDims.val[0]);
         return (firstDims.val[1] - secondDims.val[1]);
-    }*/
+    }
 }
 
 RCBTaskMapper::Rotator::Rotator(const RCBTaskMapper & rcb,

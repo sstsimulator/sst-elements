@@ -11,6 +11,8 @@
 
 #include "TaskCommInfo.h"
 
+#include <stdlib.h>
+
 #include "Job.h"
 #include "output.h"
 
@@ -117,7 +119,7 @@ int** TaskCommInfo::getCommMatrix() const
         outMatrix = buildAllToAllComm(size);
         break;
     case MESH:
-        outMatrix = buildMeshComm(xdim, ydim, zdim);
+        outMatrix = buildMeshComm();
         break;
     case CUSTOM:
     case COORDINATE:
@@ -128,6 +130,34 @@ int** TaskCommInfo::getCommMatrix() const
         outMatrix = NULL;
     }
     return outMatrix;
+}
+
+int TaskCommInfo::getCommWeight(int task0, int task1) const
+{
+    int dist = 0;
+    if(taskCommType == TaskCommInfo::MESH){
+        int task0Dims[3];
+        getTaskDim(task0, task0Dims);
+        int task1Dims[3];
+        getTaskDim(task1, task1Dims);
+        int tempDist = 0;
+        for(int i = 0; i < 3; i++){
+            tempDist += abs(task0Dims[i] - task1Dims[i]);
+        }
+        if(tempDist == 1){
+            dist = 1;
+        }
+    } else if (taskCommType == TaskCommInfo::ALLTOALL) {
+        dist = 1;
+    } else {
+        for(unsigned int i = 0; i < commInfo->size(); i++){
+            if(commInfo->at(i)[0] == task0 && commInfo->at(i)[1] == task1){
+                dist = commInfo->at(i)[2];
+                break;
+            }
+        }
+    }
+    return dist;
 }
 
 int** TaskCommInfo::buildAllToAllComm(int size) const
@@ -142,7 +172,7 @@ int** TaskCommInfo::buildAllToAllComm(int size) const
     return outMatrix;
 }
 
-int** TaskCommInfo::buildMeshComm(int xdim, int ydim, int zdim) const
+int** TaskCommInfo::buildMeshComm() const
 {
     int ** outMatrix;
     //initialize matrix
@@ -159,9 +189,11 @@ int** TaskCommInfo::buildMeshComm(int xdim, int ydim, int zdim) const
     int y_ind[size];
     int z_ind[size];
     for(int i = 0; i < size; i++){
-        x_ind[i] = i % xdim;
-        y_ind[i] = (i / xdim) % ydim;
-        z_ind[i] = i / (xdim*ydim);
+        int dims[3];
+        getTaskDim(i, dims);
+        x_ind[i] = dims[0];
+        y_ind[i] = dims[1];
+        z_ind[i] = dims[2];
     }
     //set neighbor communication
     for(int i = 0; i < size; i++){
@@ -214,5 +246,12 @@ int** TaskCommInfo::commInfoToMatrix() const
         outMatrix[data[0]][data[1]] = data[2];
     }
     return outMatrix;
+}
+
+void TaskCommInfo::getTaskDim(int taskNo, int outDims[3]) const
+{
+    outDims[0] = taskNo % xdim;
+    outDims[1] = (taskNo / xdim) % ydim;
+    outDims[2] = taskNo / (xdim*ydim);
 }
 
