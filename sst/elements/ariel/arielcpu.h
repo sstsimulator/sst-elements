@@ -18,6 +18,7 @@
 #include <sst/core/simulation.h>
 
 #include <stdint.h>
+#include <unistd.h>
 
 #include <string>
 
@@ -33,6 +34,7 @@ class ArielCPU : public SST::Component {
 	public:
 		ArielCPU(ComponentId_t id, Params& params);
 		~ArielCPU();
+        virtual void emergencyShutdown();
         virtual void setup() {}
         virtual void finish();
         virtual bool tick( SST::Cycle_t );
@@ -43,6 +45,7 @@ class ArielCPU : public SST::Component {
         ArielMemoryManager* memmgr;
         ArielCore** cpu_cores;
         Interfaces::SimpleMem** cpu_to_cache_links;
+        pid_t child_pid;
 
         uint32_t core_count;
         uint32_t memory_levels;

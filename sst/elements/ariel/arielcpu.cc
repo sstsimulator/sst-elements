@@ -14,6 +14,7 @@
 #include <sst/core/simulation.h>
 #include "arielcpu.h"
 
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -171,7 +172,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 
 	output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
-	forkPINChild(execute_binary, execute_args);
+	child_pid = forkPINChild(execute_binary, execute_args);
 	output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
     tunnel->waitForChild();
@@ -315,3 +316,8 @@ ArielCPU::~ArielCPU() {
 
 }
 
+void ArielCPU::emergencyShutdown() {
+    tunnel->shutdown();
+    unlink(shmem_region_name);
+    kill(child_pid, SIGKILL);
+}
