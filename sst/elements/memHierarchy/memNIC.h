@@ -116,6 +116,9 @@ public:
         serialize(Archive & ar, const unsigned int version )
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
+            ar & BOOST_SERIALIZATION_NVP(compType);
+            ar & BOOST_SERIALIZATION_NVP(address);
+            ar & BOOST_SERIALIZATION_NVP(name);
             switch ( compType ) {
             case TypeCache:
                 ar & BOOST_SERIALIZATION_NVP(compInfo.cache.blocksize);
@@ -128,11 +131,8 @@ public:
                 ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveStep);
                 break;
             default:
-                _abort(MemNIC, "Don't know how to serialize this type.\n");
+                _abort(MemNIC, "Don't know how to serialize this type [%d].\n", compType);
             }
-            ar & BOOST_SERIALIZATION_NVP(compType);
-            ar & BOOST_SERIALIZATION_NVP(address);
-            ar & BOOST_SERIALIZATION_NVP(name);
         }
     };
 

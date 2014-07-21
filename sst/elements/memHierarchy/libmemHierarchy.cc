@@ -24,6 +24,7 @@
 #include "sst/core/component.h"
 
 #include "memEvent.h"
+#include "memNIC.h"
 #include "cacheController.h"
 #include "bus.h"
 #include "trivialCPU.h"
