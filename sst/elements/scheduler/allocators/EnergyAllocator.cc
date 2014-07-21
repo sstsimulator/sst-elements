@@ -46,7 +46,7 @@ EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach
     
     mMachine = dynamic_cast<MeshMachine*>(mach);
     if(mMachine == NULL){
-        std::cout<<"error\n";//schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
+        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
     }
 }
 

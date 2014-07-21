@@ -17,7 +17,6 @@
 
 #include "TaskMapper.h"
 
-#include "metis.h"
 #include <vector>
 
 namespace SST {
@@ -31,7 +30,7 @@ namespace SST {
             public:
 
                 enum AlgorithmType{
-                    RCM = 0, //reverse Cuthill Mckee algorithm
+                    //RCM = 0, //reverse Cuthill Mckee algorithm //disabled
                     RECURSIVE = 1,
                     //GREEDY = 2, //not implemented
                 };
@@ -57,9 +56,8 @@ namespace SST {
                 std::vector<int> mapping;
 
                 void setup(AllocInfo* allocInfo);
-                int mapRCM(std::vector<std::vector<int> > *commGraph_ref,
-                           std::vector<int> *mapping_ref
-                           );
+                //int mapRCM(std::vector<std::vector<int> > *commGraph_ref,
+                //           std::vector<int> *mapping_ref );
 
                 int mapRecursive(std::vector<std::vector<int> > *nodeGraph_ref,
                                  std::vector<std::vector<int> > *networkWeights_ref,
@@ -68,8 +66,7 @@ namespace SST {
                                  std::vector<std::vector<int> > *weights_ref,
                                  std::vector<int> *mapping_ref,
                                  std::vector<int> commGraph_map,
-                                 std::vector<int> *nodeGraph_map_ref
-                                 );
+                                 std::vector<int> *nodeGraph_map_ref );
 
         };
     }

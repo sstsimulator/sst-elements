@@ -11,7 +11,10 @@
 
 #include "TopoMapper.h"
 
+#ifdef HAVE_METIS
 #include "metis.h"
+#endif
+
 #include "LibTopoMapFiles/rcm.h"
 
 #include <climits>
@@ -63,13 +66,17 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     setup(allocInfo); //convert network & job info into required formats
 
     mapping = vector<int>(numTasks);
-
+#ifdef HAVE_METIS
+    vector<idx_t> part(numTasks); //partition vector: part[task] = partition #
+#else
+    vector<int> part(numTasks); //partition vector: part[task] = partition #
+#endif
     //Partition task if nodes have homogeneous multiple processors
     //Current code does not support heterogeneous case
-    idx_t objval; //objective function result
-    vector<idx_t> part(numTasks); //partition vector: part[task] = partition #
-
     if( machine->getNumCoresPerNode() > 1){
+#ifdef HAVE_METIS
+        idx_t objval; //objective function result
+
         idx_t nvtxs = numTasks;
         idx_t ncon = 1; //number of balancing constraints
         idx_t nparts = ceil((double) numTasks / machine->getNumCoresPerNode()); //number of parts to partition
@@ -90,8 +97,10 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
         //partition
         METIS_PartGraphKway(&nvtxs, &ncon, &xadj[0], &adjncy[0], NULL, NULL,
                             &adjwgt[0], &nparts, NULL, NULL, NULL, &objval, &part[0]);
+#else
+        schedout.fatal(CALL_INFO, 1, "Topo Mapper requires METIS library for multi-core nodes");
+#endif
     } else {
-        objval = -1;
         for(unsigned int i = 0; i < part.size(); i++){
             part[i] = i;
         }
@@ -110,7 +119,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
             if(sourceNode != targetNode) {
                 int found = 0;
                 int pos = 0;
-                for(unsigned k = 0; k < nodeTopGraph[sourceNode].size(); ++k, ++pos){
+                for(unsigned int k = 0; k < nodeTopGraph[sourceNode].size(); ++k, ++pos){
                     if(nodeTopGraph[sourceNode][pos] == targetNode){
                         found = 1;
                         break;
@@ -139,30 +148,29 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
         mapRCM(&nodeTopGraph, &nodeTopGraphMap);
 
     } else if (algorithmType == RECURSIVE){
-
         // copy nodeGraph and networkWeights graphs
         vector<vector<int> > pyhTopGraph = vector<vector<int> >(phyGraph);
         vector<vector<int> > phyTopGraphWeights = vector<vector<int> >(networkWeights);
         vector<int> pmap; //physical mapping
-        for(unsigned i = 0; i < phyGraph.size(); ++i){
+        for(unsigned int i = 0; i < phyGraph.size(); ++i){
             pmap.push_back(i);
         }
         vector<int> lmap; //logical mapping
-        for(unsigned i = 0; i < nodeTopGraph.size(); ++i){
+        for(unsigned int i = 0; i < nodeTopGraph.size(); ++i){
             lmap.push_back(i);
         }
         mapRecursive(&pyhTopGraph, &phyTopGraphWeights, &numCores, &nodeTopGraph, &nodeTopGraphWeights, &nodeTopGraphMap, lmap, &pmap);
     }
 
     // inflate mapping back to logical topology size
-    for(unsigned i = 0; i < commGraph.size(); ++i) {
+    for(unsigned int i = 0; i < commGraph.size(); ++i) {
       int pos_in_nodeTopGraph = part[i];
       mapping[i] = nodeTopGraphMap[pos_in_nodeTopGraph];
     }
 
     // convert to SST's task map info
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
-    for(unsigned i = 0; i < mapping.size(); i++){
+    for(unsigned int i = 0; i < mapping.size(); i++){
         tmi->insert(i, mapping[i]);
     }
     return tmi;
@@ -270,12 +278,12 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
     if(use_rtg) {
         rcm_nodeGraph_map.resize(rtg.size());
         int rtgn = 0;
-        for(unsigned i = 0; i < rtg.size(); ++i){
+        for(unsigned int i = 0; i < rtg.size(); ++i){
             rtgn += rtg[i].size();
         }
-        vector<idx_t> xadj(rtg.size()+1); // CSR index
-        vector<idx_t> adjncy(rtgn); // CSR list
-        for(unsigned i = 0; i < (rtg.size()+1); i++){
+        vector<int> xadj(rtg.size()+1); // CSR index
+        vector<int> adjncy(rtgn); // CSR list
+        for(unsigned int i = 0; i < (rtg.size()+1); i++){
             if(i == 0) {
                 xadj[i] = 0;
             } else {
@@ -283,8 +291,8 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
             }
         }
         int pos = 0;
-        for(unsigned i = 0; i < rtg.size(); i++){
-            for(unsigned j = 0; j < rtg[i].size(); ++j){
+        for(unsigned int i = 0; i < rtg.size(); i++){
+            for(unsigned int j = 0; j < rtg[i].size(); ++j){
                 adjncy[pos++] = rtg[i][j];
             }
         }
@@ -294,12 +302,12 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
     } else {
         rcm_nodeGraph_map.resize(phyGraph.size());
         int ptgn = 0;
-        for(unsigned i = 0; i < phyGraph.size(); ++i){
+        for(unsigned int i = 0; i < phyGraph.size(); ++i){
             ptgn += phyGraph[i].size();
         }
-        vector<idx_t> xadj(phyGraph.size()+1); // CSR index
-        vector<idx_t> adjncy(ptgn); // CSR list
-        for(unsigned i=0; i < (phyGraph.size()+1); i++){
+        vector<int> xadj(phyGraph.size()+1); // CSR index
+        vector<int> adjncy(ptgn); // CSR list
+        for(unsigned int i=0; i < (phyGraph.size()+1); i++){
             if(i==0){
                 xadj[i]=0;
             } else {
@@ -307,8 +315,8 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
             }
         }
         int pos=0;
-        for(unsigned i=0; i<phyGraph.size(); i++){
-            for(unsigned j=0; j<phyGraph[i].size(); ++j){
+        for(unsigned int i=0; i<phyGraph.size(); i++){
+            for(unsigned int j=0; j<phyGraph[i].size(); ++j){
                 adjncy[pos++] = phyGraph[i][j];
             }
         }
@@ -320,12 +328,12 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
     vector<int> rcm_commGraph_map(commGraph.size());
     {
         int ltgn=0;
-        for(unsigned i=0; i<commGraph.size(); ++i){
+        for(unsigned int i=0; i<commGraph.size(); ++i){
             ltgn+=commGraph[i].size();
         }
-        vector<idx_t> xadj(commGraph.size()+1); // CSR index
-        vector<idx_t> adjncy(ltgn); // CSR list
-        for(unsigned i=0; i<(commGraph.size()+1); i++){
+        vector<int> xadj(commGraph.size()+1); // CSR index
+        vector<int> adjncy(ltgn); // CSR list
+        for(unsigned int i=0; i<(commGraph.size()+1); i++){
             if(i==0){
                 xadj[i]=0;
             } else {
@@ -333,8 +341,8 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
             }
         }
         int pos=0;
-        for(unsigned i=0; i<commGraph.size(); i++) {
-            for(unsigned j=0; j<commGraph[i].size(); ++j) {
+        for(unsigned int i=0; i<commGraph.size(); i++) {
+            for(unsigned int j=0; j<commGraph[i].size(); ++j) {
                 adjncy[pos++] = commGraph[i][j];
             }
         }
@@ -346,11 +354,11 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
 
     // translate mappings
     if(use_rtg) {
-        for(unsigned i=0; i<commGraph.size(); ++i){
+        for(unsigned int i=0; i<commGraph.size(); ++i){
             mapping[rcm_commGraph_map[i]] = rtg2ptgmap[rcm_nodeGraph_map[i]]; // not 100% sure that this is right
         }
     } else {
-        for(unsigned i=0; i<commGraph.size(); ++i) {
+        for(unsigned int i=0; i<commGraph.size(); ++i) {
             mapping[rcm_commGraph_map[i]] = rcm_nodeGraph_map[i]; // not sure either
         }
     }
@@ -362,6 +370,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
         vector<int> *numCores_ref, vector<vector<int> > *commGraph_ref, vector<vector<int> > *weights_ref,
         vector<int> *mapping_ref, vector<int> commGraph_map, vector<int> *nodeGraph_map_ref)
 {
+#ifdef HAVE_METIS
     // turn refs into normal objects
     vector<vector<int> >& phyTopGraph = *nodeGraph_ref;
     vector<vector<int> >& networkWeights = *networkWeights_ref; // nodeGraph edge capacities!
@@ -377,7 +386,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
         vector<idx_t> adjncy;
         vector<idx_t> adjwgt;
         vector<idx_t> vwgt;
-        for(unsigned i = 0; i < networkWeights.size(); i++){
+        for(unsigned int i = 0; i < networkWeights.size(); i++){
             xadj.push_back(adjncy.size());
             vwgt.push_back(numCores[i]);
             for(unsigned int j = 0; j < networkWeights[i].size(); j++){
@@ -413,7 +422,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
                 if(group0 > group1) { // reset one 0 to a 1 in part: pick the least connected one!
                     min=std::numeric_limits<int>::max();
                     min_vert=-1;
-                    for(unsigned i=0; i<part.size(); ++i) {
+                    for(unsigned int i=0; i<part.size(); ++i) {
                         if(part[i] == 0 && numCores[i] <= diff) {
                             int outweight = std::accumulate(phyTopGraph[i].begin(), phyTopGraph[i].end(), 0);
                             if(min > outweight) {
@@ -428,7 +437,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
                 if(group1 > group0) { // reset one 1 to a 0 in part: pick the least connected one!
                     min=std::numeric_limits<int>::max();
                     min_vert=-1;
-                    for(unsigned i=0; i<part.size(); ++i) {
+                    for(unsigned int i=0; i<part.size(); ++i) {
                         if(part[i] == 1 && numCores[i] <= diff) {
                             int outweight = std::accumulate(phyTopGraph[i].begin(), phyTopGraph[i].end(), 0);
                             if(min > outweight) {
@@ -451,18 +460,18 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
 
         vector<int> newverts(phyTopGraph.size()); // translation table from old vertices to index in two new graphs
         int idx0=0, idx1=0;
-        for(unsigned i=0; i<phyTopGraph.size(); ++i) {
+        for(unsigned int i=0; i<phyTopGraph.size(); ++i) {
             if(part[i] == 0) { newverts[i] = idx0++; }
             if(part[i] == 1) { newverts[i] = idx1++; }
         }
 
-        for(unsigned i=0; i<part.size(); ++i) {
+        for(unsigned int i=0; i<part.size(); ++i) {
             if(part[i] == 0) {
                 ptg0.resize(ptg0.size()+1);
                 ptgc0.resize(ptgc0.size()+1);
                 nprocs0.push_back(numCores[i]);
                 pmap0.push_back(pmap[i]);
-                for(unsigned j=0; j<phyTopGraph[i].size(); ++j) {
+                for(unsigned int j=0; j<phyTopGraph[i].size(); ++j) {
                     // only add edges that are leading to a vertex in the same partition
                     if(part[i] == part[ phyTopGraph[i][j] ]) {
                         ptg0[ptg0.size()-1].push_back(newverts[phyTopGraph[i][j]]);
@@ -475,7 +484,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
                 ptgc1.resize(ptgc1.size()+1);
                 nprocs1.push_back(numCores[i]);
                 pmap1.push_back(pmap[i]);
-                for(unsigned j=0; j<phyTopGraph[i].size(); ++j) {
+                for(unsigned int j=0; j<phyTopGraph[i].size(); ++j) {
                     // only add edges that are leading to a vertex in the same partition
                     if(part[i] == part[ phyTopGraph[i][j] ]) {
                         ptg1[ptg1.size()-1].push_back(newverts[phyTopGraph[i][j]]);
@@ -488,7 +497,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
 
         // partition logical topology graph //
         nvtxs = commGraph_map.size();
-        idx_t nedges=0; for(unsigned i=0; i<commGraph_map.size(); ++i) nedges += commGraph[ commGraph_map[i] ].size();
+        idx_t nedges=0; for(unsigned int i=0; i<commGraph_map.size(); ++i) nedges += commGraph[ commGraph_map[i] ].size();
 
         // invert nodeGraph_map (nodeGraph graph) to translate adjacency lists to new graph
         int max = *std::max_element(commGraph_map.begin(),commGraph_map.end());
@@ -510,11 +519,11 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
         for(int i=0; i<nvtxs; ++i) {
             xadj[i] = offset;
             // compute the right offset (only including edges in our group)
-            for(unsigned j=0; j<commGraph[ commGraph_map[i] ].size(); ++j) if(commGraph[ commGraph_map[i] ][j] <= max && invmap[ commGraph[ commGraph_map[i] ][j] ] != -1) offset++;
+            for(unsigned int j=0; j<commGraph[ commGraph_map[i] ].size(); ++j) if(commGraph[ commGraph_map[i] ][j] <= max && invmap[ commGraph[ commGraph_map[i] ][j] ] != -1) offset++;
 
             vwgt[i] = 1;
 
-            for(unsigned j=0; j<commGraph[ commGraph_map[i] ].size(); ++j) {
+            for(unsigned int j=0; j<commGraph[ commGraph_map[i] ].size(); ++j) {
                 // see phyTopGraph for comments about datastructures
                 int dst = -1;
                 if(commGraph[ commGraph_map[i] ][j] <= max) { // if the destination is > max then it's not in our set!
@@ -544,7 +553,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
                 if(group0 > group1) { // reset one 0 to a 1 in part: pick the least connected one!
                     min=std::numeric_limits<int>::max();
                     min_vert=-1;
-                    for(unsigned i=0; i<part.size(); ++i) {
+                    for(unsigned int i=0; i<part.size(); ++i) {
                         if(part[i] == 0) {
                             int outweight = std::accumulate(commWeights[ commGraph_map[i] ].begin(), commWeights[ commGraph_map[i] ].end(), 0);
                             if(min > outweight) {
@@ -558,7 +567,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
                 if(group1 > group0) { // reset one 0 to a 1 in part: pick the least connected one!
                     min=std::numeric_limits<int>::max();
                     min_vert=-1;
-                    for(unsigned i=0; i<part.size(); ++i) {
+                    for(unsigned int i=0; i<part.size(); ++i) {
                         if(part[i] == 1) {
                             int outweight = std::accumulate(commWeights[ commGraph_map[i] ].begin(), commWeights[ commGraph_map[i] ].end(), 0);
                             if(min > outweight) {
@@ -574,7 +583,7 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
 
         vector<int> lmap1, lmap2;
         // fill new Mapping vectors
-        for(unsigned i=0; i<part.size(); ++i) {
+        for(unsigned int i=0; i<part.size(); ++i) {
             // the i-th entry in part is the i-th entry in nodeGraph_map
             if(part[i] == 0) {
                 lmap1.push_back( commGraph_map[i] );
@@ -593,8 +602,8 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
 
         // call recursively (two subtrees)
         // check which pmap fits which lmap size (might be two different if uneven group size)
-        unsigned nprocs0_size = std::accumulate(nprocs0.begin(), nprocs0.end(), 0);
-        unsigned nprocs1_size = std::accumulate(nprocs1.begin(), nprocs1.end(), 0);
+        unsigned int nprocs0_size = std::accumulate(nprocs0.begin(), nprocs0.end(), 0);
+        unsigned int nprocs1_size = std::accumulate(nprocs1.begin(), nprocs1.end(), 0);
 
         if(lmap1.size() == nprocs0_size && lmap2.size() == nprocs1_size) {
             mapRecursive(&ptg0, &ptgc0, &nprocs0, commGraph_ref, weights_ref, mapping_ref, lmap1, &pmap0);
@@ -611,6 +620,9 @@ int TopoMapper::mapRecursive(vector<vector<int> > *nodeGraph_ref, vector<vector<
         int index = 0; while(numCores[index] == 0) index++;
         mapping[ commGraph_map[0] ] = pmap[index];
     }
+#else
+    schedout.fatal(CALL_INFO, 1, "TopoMap recursive requires METIS library.");
+#endif
     return 0;
 }
 
