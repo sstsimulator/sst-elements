@@ -94,19 +94,22 @@ namespace ChdlComponent {
 
     Interfaces::SimpleMem *memLink;
 
-    std::string clockFreq, netlFile;
+    std::string clockFreq, netlFile, memFile;
 
     std::vector<reqdata> req;
     std::vector<respdata> resp;
-    std::map<unsigned long, unsigned long> idMap;
+    std::map<unsigned long, unsigned long> idMap, portMap;
     std::map<std::string, unsigned> ports;
     std::map<std::string, unsigned long *> counters;
 
     chdl::cdomain_handle_t cd;
 
-    int debugLevel;
+    int debugLevel, tog;
 
     Output out;
+    std::ofstream vcd;
+
+    std::vector<unsigned> responses_this_cycle;
 };
 
 }}

@@ -109,6 +109,7 @@ void read_taps(istream &in, map<string, vector<node> > &outputs) {
       nodeid_t n;
       in >> n;
       outputs[tapname].push_back(gna[n]);
+      tap(tapname, gna[n]);
     }
     in.get();
   }
@@ -122,6 +123,7 @@ void read_inputs(istream &in, map<string, vector<node> > &inputs) {
       nodeid_t n;
       in >> n;
       inputs[name].push_back(gna[n]);
+      tap(name, gna[n]);
     }
     in.get();
   }
@@ -135,6 +137,7 @@ void read_inout(istream &in, map<string, vector<tristatenode> > &inout) {
       nodeid_t n;
       in >> n;
       inout[name].push_back(tristatenode(gna[n]));
+      tap(name, gna[n]);
     }
     in.get();
   }

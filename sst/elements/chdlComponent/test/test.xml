@@ -5,9 +5,11 @@
   <component name="c0" rank="0" type="chdlComponent">
     <params>
       <netlist>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/score.nand</netlist>
+      <memInit>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/triesort.bin</memInit>
       <debugLevel>4</debugLevel>
+      <clockFreq>2GHz</clockFreq>
     </params>
-    <link name=c0_l1cache_link port=memLink latency=3ns />
+    <link name=c0_l1cache_link port=memLink latency=0ns />
   </component>
 
   <!--<><><><><><><><><><><><><><>-<><><><><><><><><><><><><><>-->
@@ -15,7 +17,7 @@
   <component name="c0.l1cache" rank="0" type="memHierarchy.Cache">
     <params>
       <coherence_protocol>MSI</coherence_protocol>
-      <cache_frequency>1GHz</cache_frequency>
+      <cache_frequency>2GHz</cache_frequency>
       <replacement_policy> LRU </replacement_policy>
       <associativity>4</associativity>
       <cache_size>8 KB</cache_size>
@@ -24,7 +26,7 @@
       <low_network_links> 1 </low_network_links>
       <L1>1</L1>
     </params>
-    <link name=c0_l1cache_link port=high_network_0 latency=3ns />
+    <link name=c0_l1cache_link port=high_network_0 latency=0ns />
     <link name=c0_l1l2cache_link port=low_network_0 latency=10ns />
   </component>
 
@@ -86,6 +88,8 @@
       <access_time>50ns</access_time>
       <mem_size>4096</mem_size>
       <clock>1GHz</clock>
+      <!-- <memory_file>/home/cdkerse/src/sst-simulator/sst/elements/chdlComponent/test/sieve-byte.bin</memory_file> -->
+      <debug_level>10</debug_level>
     </params>
     <link name=dir_mem_link_0 port=direct_link latency=10ns />
   </component>
