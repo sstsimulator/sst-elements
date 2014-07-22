@@ -28,6 +28,8 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
   Component(id) {
   bool found;
 
+  rng = new SST::RNG::MarsagliaRNG(11, 272727);
+
   // get parameters
   workPerCycle = params.find_integer("workPerCycle", 0, found);
   if (!found) {
@@ -43,7 +45,7 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
 
   // init randomness
   srand(1);
-  neighbor = rand() % 4;
+  neighbor = rng->generateNextInt32() % 4;
 
   // tell the simulator not to end without us
   registerAsPrimaryComponent();
@@ -75,6 +77,10 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
   registerClock( "1GHz", 
 		 new Clock::Handler<simpleComponent>(this, 
 						     &simpleComponent::clockTic ) );
+}
+
+simpleComponent::~simpleComponent() {
+	delete rng;
 }
 
 simpleComponent::simpleComponent() :
@@ -122,7 +128,7 @@ bool simpleComponent::clockTic( Cycle_t ) {
   }
 
   // communicate?
-  if ((rand() % commFreq) == 0) {
+  if ((rng->generateNextInt32() % commFreq) == 0) {
     // yes, communicate
     // create event
     simpleEvent *e = new simpleEvent();

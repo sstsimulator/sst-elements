@@ -17,6 +17,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/rng/marsaglia.h>
 
 namespace SST {
 namespace SimpleComponent {
@@ -25,6 +26,8 @@ class simpleComponent : public SST::Component {
 public:
 
   simpleComponent(SST::ComponentId_t id, SST::Params& params);
+  ~simpleComponent();
+
   void setup() { }
   void finish() {
     static int n = 0;
@@ -52,6 +55,7 @@ private:
   int commSize;
   int neighbor;
 
+  SST::RNG::MarsagliaRNG* rng;
   SST::Link* N;
   SST::Link* S;
   SST::Link* E;
