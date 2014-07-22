@@ -149,7 +149,7 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 		std::vector<MessageRequest*> requests;
 
 		for(uint32_t var_count = 0; var_count < items_per_cell; var_count += item_chunk) {
-			EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
+			EmberComputeEvent* compute = new EmberComputeEvent(nsCompute * (double) item_chunk);
 			evQ->push(compute);
 
 			if(x_down > -1) {
