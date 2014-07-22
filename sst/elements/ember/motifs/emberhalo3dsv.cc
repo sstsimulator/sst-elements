@@ -31,6 +31,11 @@ EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::Component* owner, Params& pa
 	peZ = (uint32_t) params.find_integer("pez", 0);
 
 	items_per_cell = (uint32_t) params.find_integer("fields_per_cell", 1);
+	item_chunk = (uint32_t) params.find_integer("field_chunk", 1);
+
+	// Ensure the number of fields in a chunk is evenly divisible
+	assert(items_per_cell % item_chunk == 0);
+
 	performReduction = (uint32_t) (params.find_integer("doreduce", 1));
 	sizeof_cell = (uint32_t) params.find_integer("datatype_width", 8);
 
@@ -104,9 +109,10 @@ void EmberHalo3DSVGenerator::configureEnvironment(const SST::Output* output, uin
 		output->output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
 		output->output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
 		output->output("Halo3D compute time: %" PRIu32 " ns\n", nsCompute);
-		output->output("Halo3D copy time: %" PRIu32 " ns\n", nsCopyTime);
-		output->output("Halo3D iterations: %" PRIu32 "\n", iterations);
-		output->output("Halo3D iterms/cell: %" PRIu32 "\n", items_per_cell);
+		output->output("Halo3D copy time:    %" PRIu32 " ns\n", nsCopyTime);
+		output->output("Halo3D iterations:   %" PRIu32 "\n", iterations);
+		output->output("Halo3D items/cell:   %" PRIu32 "\n", items_per_cell);
+		output->output("Halo3D items/chunk:  %" PRIu32 "\n", item_chunk);
 		output->output("Halo3D do reduction: %" PRIu32 "\n", performReduction);
 	}
 
@@ -142,13 +148,13 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 
 		std::vector<MessageRequest*> requests;
 
-		for(uint32_t var_count = 0; var_count < items_per_cell; ++var_count) {
+		for(uint32_t var_count = 0; var_count < items_per_cell; var_count += item_chunk) {
 			EmberComputeEvent* compute = new EmberComputeEvent(nsCompute);
 			evQ->push(compute);
 
 			if(x_down > -1) {
 				MessageRequest*  req  = new MessageRequest();
-	                       	EmberIRecvEvent* recv = new EmberIRecvEvent(x_down, sizeof_cell * ny * nz, 0, (Communicator) 0, req);
+	                       	EmberIRecvEvent* recv = new EmberIRecvEvent(x_down, sizeof_cell * ny * nz * item_chunk, 0, (Communicator) 0, req);
 				requests.push_back(req);
 
 				evQ->push(recv);
@@ -156,19 +162,19 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 
 			if(x_up > -1) {
 				MessageRequest*  req  = new MessageRequest();
-	                       	EmberIRecvEvent* recv = new EmberIRecvEvent(x_up, sizeof_cell * ny * nz, 0, (Communicator) 0, req);
+	                       	EmberIRecvEvent* recv = new EmberIRecvEvent(x_up, sizeof_cell * ny * nz * item_chunk, 0, (Communicator) 0, req);
 				requests.push_back(req);
 
 				evQ->push(recv);
 			}
 
 			if(x_down > -1) {
-	                       	EmberSendEvent* send = new EmberSendEvent(x_down, sizeof_cell * ny * nz, 0, (Communicator) 0);
+	                       	EmberSendEvent* send = new EmberSendEvent(x_down, sizeof_cell * ny * nz * item_chunk, 0, (Communicator) 0);
 				evQ->push(send);
 			}
 
 			if(x_up > -1) {
-	                       	EmberSendEvent* send = new EmberSendEvent(x_up, sizeof_cell * ny * nz, 0, (Communicator) 0);
+	                       	EmberSendEvent* send = new EmberSendEvent(x_up, sizeof_cell * ny * nz * item_chunk, 0, (Communicator) 0);
 				evQ->push(send);
 			}
 
@@ -185,7 +191,7 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 
 			if(y_down > -1) {
 				MessageRequest*  req  = new MessageRequest();
-       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(y_down, sizeof_cell * nx * nz, 0, (Communicator) 0, req);
+       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(y_down, sizeof_cell * nx * nz * item_chunk, 0, (Communicator) 0, req);
 				requests.push_back(req);
 
 				evQ->push(recv);
@@ -193,19 +199,19 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 
 			if(y_up > -1) {
 				MessageRequest*  req  = new MessageRequest();
-       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(y_up, sizeof_cell * nx * nz, 0, (Communicator) 0, req);
+       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(y_up, sizeof_cell * nx * nz * item_chunk, 0, (Communicator) 0, req);
 				requests.push_back(req);
 
 				evQ->push(recv);
 			}
 
 			if(y_down > -1) {
-       	                	EmberSendEvent* send = new EmberSendEvent(y_down, sizeof_cell * nx * nz, 0, (Communicator) 0);
+       	                	EmberSendEvent* send = new EmberSendEvent(y_down, sizeof_cell * nx * nz * item_chunk, 0, (Communicator) 0);
 				evQ->push(send);
 			}
 
 			if(y_up > -1) {
-       	                	EmberSendEvent* send = new EmberSendEvent(y_up, sizeof_cell * nx * nz, 0, (Communicator) 0);
+       	                	EmberSendEvent* send = new EmberSendEvent(y_up, sizeof_cell * nx * nz * item_chunk, 0, (Communicator) 0);
 				evQ->push(send);
 			}
 
@@ -222,7 +228,7 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 
 			if(z_down > -1) {
 				MessageRequest*  req  = new MessageRequest();
-       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(z_down, sizeof_cell * ny * nx, 0, (Communicator) 0, req);
+       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(z_down, sizeof_cell * ny * nx * item_chunk, 0, (Communicator) 0, req);
 				requests.push_back(req);
 
 				evQ->push(recv);
@@ -230,19 +236,19 @@ void EmberHalo3DSVGenerator::generate(const SST::Output* output, const uint32_t 
 
 			if(z_up > -1) {
 				MessageRequest*  req  = new MessageRequest();
-       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(z_up, sizeof_cell * ny * nx, 0, (Communicator) 0, req);
+       	                	EmberIRecvEvent* recv = new EmberIRecvEvent(z_up, sizeof_cell * ny * nx * item_chunk, 0, (Communicator) 0, req);
 				requests.push_back(req);
 
 				evQ->push(recv);
 			}
 
 			if(z_down > -1) {
-       	                	EmberSendEvent* send = new EmberSendEvent(z_down, sizeof_cell * ny * nx, 0, (Communicator) 0);
+       	                	EmberSendEvent* send = new EmberSendEvent(z_down, sizeof_cell * ny * nx * item_chunk, 0, (Communicator) 0);
 				evQ->push(send);
 			}
 
 			if(z_up > -1) {
-       	                	EmberSendEvent* send = new EmberSendEvent(z_up, sizeof_cell * ny * nx, 0, (Communicator) 0);
+       	                	EmberSendEvent* send = new EmberSendEvent(z_up, sizeof_cell * ny * nx * item_chunk, 0, (Communicator) 0);
 				evQ->push(send);
 			}
 

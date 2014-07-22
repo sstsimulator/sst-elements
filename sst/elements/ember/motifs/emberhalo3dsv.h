@@ -45,6 +45,7 @@ private:
 	uint32_t ny;
 	uint32_t nz;
 	uint32_t items_per_cell;
+	uint32_t item_chunk;
 	uint32_t sizeof_cell;
 
 	int32_t  x_down;

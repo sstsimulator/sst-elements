@@ -233,6 +233,26 @@ static const ElementInfoParam halo3d_params[] = {
 	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
 	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
 	{	"fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"field_chunk",	        "Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam halo3dsv_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
+	{	"peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+	{	"nx",			"Sets the problem size in X-dimension",			"100"},
+	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
+	{	"nz",			"Sets the problem size in Z-dimension",			"100"},
+	{	"pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
+	{	"pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
+	{	"pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
+	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
+	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
+	{	"fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"field_chunk",	        "Specify how many variables are being computed per field chunk. Default is 1", "1"},
 	{	"datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
 	{	NULL,	NULL,	NULL	}
 };
