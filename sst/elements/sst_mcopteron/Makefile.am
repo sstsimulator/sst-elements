@@ -42,6 +42,8 @@ libsst_mcopteron_la_SOURCES = \
 EXTRA_DIST = \
 	test1.xml \
         test2.xml \
+	test1.py \
+        test2.py \
         cpuconfig.ini \
         appconfig.ini \
         mcopteron/agner-insn.txt \

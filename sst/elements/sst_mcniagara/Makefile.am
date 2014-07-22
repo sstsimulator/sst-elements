@@ -33,6 +33,8 @@ libsst_mcniagara_la_SOURCES = \
 EXTRA_DIST = \
 	test1.xml \
         test2.xml \
+	test1.py \
+        test2.py \
 	mcniagara/inst_prob.data \
 	mcniagara/perf_cnt.data \
 	mcniagara/INPUT \
