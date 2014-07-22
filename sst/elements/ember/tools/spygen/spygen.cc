@@ -237,8 +237,8 @@ int main(int argc, char* argv[]) {
 		// Max colour value
 		fprintf(imagePPM, "255\n");
 
-		uint32_t max_send_count = 0;
-		uint64_t max_bytes_count = 0;
+		uint32_t max_send_count = 1;
+		uint64_t max_bytes_count = 1;
 
 		for(int i = 0; i < ranks; ++i) {
 			for(int j = 0; j < ranks; ++j) {
