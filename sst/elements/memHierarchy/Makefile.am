@@ -54,6 +54,7 @@ libmemHierarchy_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/example.xml \
+	tests/example.py \
 	tests/exampleM5.xml \
 	tests/sdl-1.xml \
 	tests/sdl2-1.xml \

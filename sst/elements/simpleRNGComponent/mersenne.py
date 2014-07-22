@@ -6,11 +6,11 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "10000s")
 
 # Define the simulation components
-clocker0 = sst.Component("clocker0", "simpleRNGComponent.simpleRNGComponent")
-clocker0.addParams({
-      "rng" : """mersenne""",
+comp_clocker0 = sst.Component("clocker0", "simpleRNGComponent.simpleRNGComponent")
+comp_clocker0.addParams({
       "count" : """100000""",
-      "seed" : """1447"""
+      "seed" : """1447""",
+      "rng" : """mersenne"""
 })
 
 
