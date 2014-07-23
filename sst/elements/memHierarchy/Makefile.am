@@ -71,6 +71,21 @@ EXTRA_DIST = \
 	tests/sdl8-4.xml \
 	tests/sdl9-1.xml \
 	tests/sdl9-2.xml \
+	tests/sdl-1.py \
+	tests/sdl2-1.py \
+	tests/sdl-2.py \
+	tests/sdl3-1.py \
+	tests/sdl3-2.py \
+	tests/sdl3-3.py \
+	tests/sdl-3.py \
+	tests/sdl4-1.py \
+	tests/sdl4-2.py \
+	tests/sdl5-1.py \
+	tests/sdl8-1.py \
+	tests/sdl8-3.py \
+	tests/sdl8-4.py \
+	tests/sdl9-1.py \
+	tests/sdl9-2.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
