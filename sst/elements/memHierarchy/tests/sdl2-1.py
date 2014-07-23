@@ -2,53 +2,50 @@
 import sst
 
 # Define SST core options
-sst.setProgramOption("timebase", "1 ps")
+sst.setProgramOption("timebase", "1ns")
 sst.setProgramOption("stopAtCycle", "5000ns")
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
-      "workPerCycle" : """1000""",
-      "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "do_write" : """1""",
-      "num_loadstore" : """1000"""
+      "workPerCycle" : """1000""",
+      "num_loadstore" : """1000""",
+      "commFreq" : """100""",
+      "do_write" : """1"""
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
-      "cache_frequency" : """2 Ghz""",
-      "cache_size" : """2 KB""",
-      "coherence_protocol" : """MSI""",
-      "replacement_policy" : """lru""",
-      "associativity" : """4""",
       "access_latency_cycles" : """4""",
-      "low_network_links" : """1""",
+      "cache_frequency" : """2 Ghz""",
+      "replacement_policy" : """lru""",
+      "coherence_protocol" : """MSI""",
+      "associativity" : """4""",
       "cache_line_size" : """64""",
+      "cache_size" : """2 KB""",
+      "statistics" : """1""",
       "L1" : """1""",
-      "debug" : """${MEM_DEBUG}""",
-      "statistics" : """1"""
+      "debug" : """"""
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
-      "cache_frequency" : """2 Ghz""",
-      "cache_size" : """16 KB""",
-      "coherence_protocol" : """MSI""",
-      "replacement_policy" : """lru""",
-      "associativity" : """8""",
       "access_latency_cycles" : """10""",
-      "low_network_links" : """1""",
+      "cache_frequency" : """2 Ghz""",
+      "replacement_policy" : """lru""",
+      "coherence_protocol" : """MSI""",
+      "associativity" : """8""",
       "cache_line_size" : """64""",
-      "debug" : """${MEM_DEBUG}""",
+      "cache_size" : """16 KB""",
       "statistics" : """1""",
-      "high_network_links" : """1"""
+      "debug" : """"""
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : """MSI""",
-      "debug" : """${MEM_DEBUG}""",
+      "debug" : """""",
       "access_time" : """100 ns""",
-      "mem_size" : """512""",
-      "clock" : """1GHz"""
+      "clock" : """1GHz""",
+      "mem_size" : """512"""
 })
 
 
