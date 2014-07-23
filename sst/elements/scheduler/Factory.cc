@@ -47,6 +47,7 @@
 #include "taskMappers/RandomTaskMapper.h"
 #include "taskMappers/RCBTaskMapper.h"
 #include "taskMappers/SimpleTaskMapper.h"
+#include "taskMappers/TopoMapper.h"
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -92,7 +93,9 @@ const Factory::allocTableEntry Factory::allocTable[] = {
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
     {SIMPLEMAP, "simple"},
     {RCBMAP, "rcb"},
-    {RANDOMMAP, "random"}
+    {RANDOMMAP, "random"},
+    {TOPOMAP, "topo"},
+    {RCMMAP, "rcm"},
 };
 
 const Factory::FSTTableEntry Factory::FSTTable[] = {
@@ -450,6 +453,12 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
         case RANDOMMAP:
             taskMapper = new RandomTaskMapper(mach);
             break;
+        case TOPOMAP:
+            taskMapper = new TopoMapper(mach, TopoMapper::RECURSIVE);
+            break;
+        case RCMMAP:
+            taskMapper = new TopoMapper(mach, TopoMapper::RCM);
+            break;            
         default: 
             taskMapper = NULL;
             schedout.fatal(CALL_INFO, 1, "Could not parse name of task mapper");

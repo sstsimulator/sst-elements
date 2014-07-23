@@ -12,8 +12,8 @@
 // TopoMapper code is partially taken from LibTopoMap version 0.9b
 // http://spcl.inf.ethz.ch/Research/Parallel_Programming/MPI_Topologies/LibTopoMap/
 
-#ifndef TOPOMAPPER_H_
-#define TOPOMAPPER_H_
+#ifndef SST_SCHEDULER_TOPOMAPPER_H_
+#define SST_SCHEDULER_TOPOMAPPER_H_
 
 #include "TaskMapper.h"
 
@@ -30,7 +30,7 @@ namespace SST {
             public:
 
                 enum AlgorithmType{
-                    //RCM = 0, //reverse Cuthill Mckee algorithm //disabled
+                    RCM = 0, //reverse Cuthill Mckee algorithm //disabled
                     RECURSIVE = 1,
                     //GREEDY = 2, //not implemented
                 };
@@ -45,7 +45,6 @@ namespace SST {
             private:
 
                 AlgorithmType algorithmType;
-                std::vector<int> nodeIDs;
                 int numNodes;
                 int numTasks;
                 std::vector<std::vector<int> > commGraph; //adjacency list
@@ -56,8 +55,8 @@ namespace SST {
                 std::vector<int> mapping;
 
                 void setup(AllocInfo* allocInfo);
-                //int mapRCM(std::vector<std::vector<int> > *commGraph_ref,
-                //           std::vector<int> *mapping_ref );
+                int mapRCM(std::vector<std::vector<int> > *commGraph_ref,
+                           std::vector<int> *mapping_ref );
 
                 int mapRecursive(std::vector<std::vector<int> > *nodeGraph_ref,
                                  std::vector<std::vector<int> > *networkWeights_ref,
@@ -72,4 +71,4 @@ namespace SST {
     }
 }
 
-#endif /* TOPOMAPPER_H_ */
+#endif /* SST_SCHEDULER_TOPOMAPPER_H_ */

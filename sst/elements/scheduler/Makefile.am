@@ -88,9 +88,11 @@ libscheduler_la_SOURCES = \
     taskMappers/RCBTaskMapper.cc \
     taskMappers/RCBTaskMapper.h \
     taskMappers/SimpleTaskMapper.cc \
-    taskMappers/SimpleTaskMapper.h# \
-    #taskMappers/TopoMapper.cc \
-    #taskMappers/TopoMapper.h 
+    taskMappers/SimpleTaskMapper.h \
+    taskMappers/TopoMapper.cc \
+    taskMappers/TopoMapper.h \
+    taskMappers/rcm.c \
+    taskMappers/rcm.h
 
 EXTRA_DIST = \
 	simulations/DMatrix4_5_2 \

@@ -32,23 +32,24 @@ namespace SST {
                 
                 ~TaskCommInfo();
                 
+                enum commType{
+                    ALLTOALL = 0,
+                    CUSTOM = 1,
+                    MESH = 2,
+                    COORDINATE = 3,
+                };
+
                 int** getCommMatrix() const;
                 int getCommWeight(int task1, int task2) const;
                 int getSize() const { return size; }
+                commType getCommType() const { return taskCommType; }
 
-		        enum commType{
-		            ALLTOALL = 0,
-		            CUSTOM = 1,
-		            MESH = 2,
-		            COORDINATE = 3,
-		        };
-
-		        commType taskCommType;
 		        double** coordMatrix;
 		        int xdim, ydim, zdim;
 
 	        private:
 		        std::vector<int*>* commInfo;
+		        commType taskCommType;
 		        int size;
 		        
 		        void init(Job* job);

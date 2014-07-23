@@ -554,6 +554,11 @@ void schedComponent::startJob(Job* job)
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
     scheduler->startNext( getCurrentSimTime(), *machine ); //start in scheduler
     stats->jobStarts(tmi, getCurrentSimTime() ); //record stats
+
+    //DEBUG
+    //for(int i = 0; i < job->getProcsNeeded(); i++){
+    //    std::cout << i << "<->" << tmi->taskToNode[i] << ",";
+    //}std::cout << "\n";
     
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;

@@ -15,7 +15,7 @@
 #include "metis.h"
 #endif
 
-#include "LibTopoMapFiles/rcm.h"
+#include "rcm.h"
 
 #include <climits>
 #include <numeric>
@@ -49,7 +49,11 @@ std::string TopoMapper::getSetupInfo(bool comment) const
     } else  {
         com="";
     }
-    return com + "LibTopoMap Task Mapper";
+    if(algorithmType == RECURSIVE){
+        return com + "TopoMapper";
+    } else {
+        return com + "RCM (Reverse Cuthill Mckee) Mapper";
+    }
 }
 
 TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
@@ -171,22 +175,23 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     // convert to SST's task map info
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
     for(unsigned int i = 0; i < mapping.size(); i++){
-        tmi->insert(i, mapping[i]);
+        tmi->insert(i, allocInfo->nodeIndices[mapping[i]]);
     }
+
+    //free memory
+    commGraph.clear();
+    commWeights.clear();
+    numCores.clear();
+    phyGraph.clear();
+    networkWeights.clear();
+    mapping.clear();
+
     return tmi;
 }
 
 void TopoMapper::setup(AllocInfo* allocInfo)
 {
-    //set node IDs
-    nodeIDs.clear();
-    for(int i = 0; i < numNodes; i++){
-        nodeIDs.push_back(allocInfo->nodeIndices[i]);
-    }
-
     //create communication graph
-    commGraph.clear();
-    commWeights.clear();
     for(int i = 0; i < numTasks; i++){
         commGraph.push_back(vector<int>());
         commWeights.push_back(vector<int>());
@@ -212,21 +217,19 @@ void TopoMapper::setup(AllocInfo* allocInfo)
     }
 
     //add node weights
-    numCores.clear();
     numCores = vector<int>(numNodes);
 
     std::fill(numCores.begin(), numCores.end(), machine->getNumCoresPerNode());
 
     //create node graph
-    phyGraph.clear();
-    networkWeights.clear();
     for(int i = 0; i < numNodes; i++){
         phyGraph.push_back(vector<int>());
         networkWeights.push_back(vector<int>());
     }
     for(int i = 0; i < numNodes; i++){
         for(int j = 0; j < numNodes; j++){ //make the graph symmetric
-            if(machine->getNodeDistance(i, j) == 1){ //assuming neighbors have distance of 1
+            //assuming neighbors have distance of 1
+            if(machine->getNodeDistance(allocInfo->nodeIndices[i], allocInfo->nodeIndices[j]) == 1){
                 phyGraph[i].push_back(j);
                 networkWeights[i].push_back(1);
             }

@@ -47,17 +47,17 @@ std::string RCBTaskMapper::getSetupInfo(bool comment) const
 
 TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
     job = allocInfo->job;
-    int jobSize = job->getProcsNeeded();
     tci = job->taskCommInfo;
 
-    //Call SimpleTaskMapper if the job does not have proper communication info
-    if(tci->taskCommType != TaskCommInfo::MESH &&
-       tci->taskCommType != TaskCommInfo::COORDINATE) {
-        SimpleTaskMapper simpleMapper = SimpleTaskMapper(machine);
-        return simpleMapper.mapTasks(allocInfo);
+    //check job compatibility
+    if(tci->getCommType() != TaskCommInfo::MESH &&
+       tci->getCommType() != TaskCommInfo::COORDINATE) {
+        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires coordinate input");
     }
+
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    int jobSize = job->getProcsNeeded();
 
     //dummy rotator for initialization
     Rotator dummyRotator = Rotator(*this, *mMachine);
@@ -327,11 +327,11 @@ RCBTaskMapper::Dims RCBTaskMapper::Rotator::getDims(T t) const
 RCBTaskMapper::Dims RCBTaskMapper::Rotator::getDims(int taskID) const
 {
     Dims outDims;
-    if(rcb.tci->taskCommType == TaskCommInfo::MESH) {
+    if(rcb.tci->getCommType() == TaskCommInfo::MESH) {
         outDims.val[0] = taskID % rcb.tci->xdim;
         outDims.val[1] = (taskID % (rcb.tci->xdim * rcb.tci->ydim)) / rcb.tci->xdim;
         outDims.val[2] = taskID / (rcb.tci->xdim * rcb.tci->ydim);
-    } else if (rcb.tci->taskCommType == TaskCommInfo::COORDINATE) {
+    } else if (rcb.tci->getCommType() == TaskCommInfo::COORDINATE) {
         //return coordinates normalized by rotated machine dimensions
         outDims.val[0] = rcb.tci->coordMatrix[taskID][0];
         outDims.val[1] = rcb.tci->coordMatrix[taskID][1];
