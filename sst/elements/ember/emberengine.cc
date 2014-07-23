@@ -303,7 +303,14 @@ void EmberEngine::finish() {
 		output->output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
 
 		output->output("- Histogram of compute times:\n");
-		printHistogram(histoCompute);
+		output->output("--> Total time:     %" PRIu32 "\n", histoCompute->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoCompute->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
+			histoCompute->getItemCount() == 0 ? 0 :
+			(histoCompute->getValuesSummed() / histoCompute->getItemCount()));
+		if(printStats > 1) {
+			printHistogram(histoCompute);
+		}
 
 		output->output("- Histogram of send times:\n");
 		output->output("--> Total time:     %" PRIu32 "\n", histoSend->getValuesSummed());
