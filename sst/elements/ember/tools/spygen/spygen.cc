@@ -6,6 +6,9 @@
 #include <string.h>
 #include <inttypes.h>
 
+#define IMAGE_BINARY 0
+#define IMAGE_TEXT   1
+
 int verbose;
 char* imageFile;
 int dimX;
@@ -14,14 +17,16 @@ int ranks;
 uint32_t* commData;
 uint64_t* bytesData;
 int outputMode;
+int outputType;
 
 void printOptions() {
 	printf("SST Spyplot Generator\n");
 	printf("============================================================\n\n");
 	printf("-f <imagefile>     Generate image in <imagefile>\n");
+	printf("-m                 0 = output in binary mode\n");
 	printf("-v                 Use verbose output\n");
 	printf("-h                 Print options\n");
-	printf("-m                 0 = output sends, 1 = output bytes\n");
+	printf("-s                 0 = output sends, 1 = output bytes\n");
 	printf("-x                 Pixels in X for each rank\n");
         printf("-y                 Pixels in Y for each rank\n");
 }
@@ -68,6 +73,7 @@ void parseOptions(int argc, char* argv[]) {
 	dimY = 15;
 	ranks = 0;
 	outputMode = 0;
+	outputType = IMAGE_BINARY;
 
 	for(int i = 0; i < argc; ++i) {
 		if(strcmp(argv[i], "-f") == 0) {
@@ -80,6 +86,18 @@ void parseOptions(int argc, char* argv[]) {
 			printOptions();
 			exit(0);
 		} else if(strcmp(argv[i], "-m") == 0) {
+			// Choose the output type of file (binary or text)
+			if(strcmp(argv[i+1], "b" )== 0) {
+				outputType = IMAGE_BINARY;
+			} else if(strcmp(argv[i+1], "t") == 0) {
+				outputType = IMAGE_TEXT;
+			} else {
+				printOptions();
+				exit(-1);
+			}
+
+			i++;
+		} else if(strcmp(argv[i], "-s") == 0) {
 			if(strcmp(argv[i+2], "0") == 0) {
 				outputMode = 0;
 			} else if(strcmp(argv[i+1], "1") == 0) {
@@ -101,6 +119,12 @@ void parseOptions(int argc, char* argv[]) {
 	if(NULL == imageFile) {
 		imageFile = (char*) malloc(sizeof(char) * 2);
 		strcpy(imageFile, "-");
+	}
+}
+
+void copy(char* dest, const char* source, int count) {
+	for(int i = 0; i < count; ++i) {
+		dest[i] = source[i];
 	}
 }
 
@@ -229,9 +253,21 @@ int main(int argc, char* argv[]) {
 		}
 	} else {
 		// Generate a PPM file
-		FILE* imagePPM = fopen(imageFile, "wt");
-		// Magic number
-		fprintf(imagePPM, "P3\n");
+		FILE* imagePPM = NULL;
+
+		switch(outputType) {
+		case IMAGE_BINARY:
+			imagePPM = fopen(imageFile, "wb");
+			// Magic number
+			fprintf(imagePPM, "P6\n");
+			break;
+		case IMAGE_TEXT:
+			imagePPM = fopen(imageFile, "wt");
+			// Magic number
+			fprintf(imagePPM, "P3\n");
+			break;
+		}
+
 		// Image dimensions
 		fprintf(imagePPM, "%" PRIu32 " %" PRIu32 "\n", (ranks * dimX), (ranks * dimY));
 		// Max colour value
@@ -247,29 +283,74 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		char whiteBlock[3];
+		whiteBlock[0] = 255;
+		whiteBlock[1] = 255;
+		whiteBlock[2] = 255;
+
+		char commBlock[3];
+
 		for(int i = 0; i < ranks; ++i) {
 			for(int m = 0; m < dimY; ++m) {
 				for(int j = 0; j < ranks; ++j) {
 					for(int k = 0; k < dimX; ++k) {
 						if(outputMode == 0) {
 							if(getCommData(i, j) == 0) {
-								fprintf(imagePPM, "255 255 255 ");
+								switch(outputType) {
+								case IMAGE_BINARY:
+									fwrite(whiteBlock, sizeof(char), 3, imagePPM);
+									break;
+								case IMAGE_TEXT:
+									fprintf(imagePPM, "255 255 255 ");
+									break;
+								}
 							} else {
-								fprintf(imagePPM, "%d %d %d ", 0,
-									(int) (255.0 * (getCommData(i, j) / ((double) max_send_count))), 0);
+								switch(outputType) {
+								case IMAGE_BINARY:
+									commBlock[0] = 0;
+									commBlock[1] = (char) (255.0 * (getCommData(i, j) / ((double) max_send_count)));
+									commBlock[2] = 0;
+
+									fwrite(commBlock, sizeof(char), 3, imagePPM);
+									break;
+								case IMAGE_TEXT:
+									fprintf(imagePPM, "%d %d %d ", 0,
+										(int) (255.0 * (getCommData(i, j) / ((double) max_send_count))), 0);
+									break;
+								}
 							}
 						} else if(outputMode == 1) {
 							if(getBytesData(i, j) == 0) {
-								fprintf(imagePPM, "255 255 255 ");
+								switch(outputType) {
+								case IMAGE_BINARY:
+									fwrite(whiteBlock, sizeof(char), 3, imagePPM);
+									break;
+								case IMAGE_TEXT:
+									fprintf(imagePPM, "255 255 255 ");
+									break;
+								}
 							} else {
-								fprintf(imagePPM, "%d %d %d ", 0,
-									(int) (255.0 * (getBytesData(i, j) / ((double) max_bytes_count))), 0);
+								switch(outputType) {
+								case IMAGE_BINARY:
+									commBlock[0] = 0;
+									commBlock[1] = (char) (255.0 * (getBytesData(i, j) / ((double) max_bytes_count)));
+									commBlock[2] = 0;
+
+									fwrite(commBlock, sizeof(char), 3, imagePPM);
+									break;
+								case IMAGE_TEXT:
+									fprintf(imagePPM, "%d %d %d ", 0,
+										(int) (255.0 * (getBytesData(i, j) / ((double) max_bytes_count))), 0);
+									break;
+								}
 							}
 						}
 					}
 				}
 
-				fprintf(imagePPM, "\n");
+				if(outputType == IMAGE_TEXT) {
+					fprintf(imagePPM, "\n");
+				}
 			}
 		}
 
