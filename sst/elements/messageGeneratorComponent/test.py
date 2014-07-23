@@ -6,21 +6,21 @@ sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "10000s")
 
 # Define the simulation components
-msgGen0 = sst.Component("msgGen0", "messageGeneratorComponent.messageGeneratorComponent")
-msgGen0.addParams({
-      "clock" : """1MHz""",
+comp_msgGen0 = sst.Component("msgGen0", "messageGeneratorComponent.messageGeneratorComponent")
+comp_msgGen0.addParams({
+      "outputinfo" : """0""",
       "sendcount" : """100000""",
-      "outputinfo" : """0"""
+      "clock" : """1MHz"""
 })
-msgGen1 = sst.Component("msgGen1", "messageGeneratorComponent.messageGeneratorComponent")
-msgGen1.addParams({
-      "clock" : """1MHz""",
+comp_msgGen1 = sst.Component("msgGen1", "messageGeneratorComponent.messageGeneratorComponent")
+comp_msgGen1.addParams({
+      "outputinfo" : """0""",
       "sendcount" : """100000""",
-      "outputinfo" : """0"""
+      "clock" : """1MHz"""
 })
 
 
 # Define the simulation links
-s_0_1 = sst.Link("s_0_1")
-s_0_1.connect( (msgGen0, "remoteComponent", "1000000ps"), (msgGen1, "remoteComponent", "1000000ps") )
+link_s_0_1 = sst.Link("link_s_0_1")
+link_s_0_1.connect( (comp_msgGen0, "remoteComponent", "1000000ps"), (comp_msgGen1, "remoteComponent", "1000000ps") )
 # End of generated output.

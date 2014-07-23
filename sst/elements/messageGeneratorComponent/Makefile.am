@@ -14,6 +14,7 @@ libmessageGeneratorComponent_la_SOURCES = \
 	simpleMessage.h 
 
 EXTRA_DIST = \
-	test.xml
+	test.xml \
+	test.py
 
 libmessageGeneratorComponent_la_LDFLAGS = -module -avoid-version
