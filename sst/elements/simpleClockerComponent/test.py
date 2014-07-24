@@ -1,17 +1,17 @@
+# Automatically generated SST Python input
 import sst
 
-def sstcreatemodel():
+# Define SST core options
+sst.setProgramOption("timebase", "1 ps")
+sst.setProgramOption("stopAtCycle", "10000s")
 
-    sst.creategraph()
+# Define the simulation components
+comp_clocker0 = sst.Component("clocker0", "simpleClockerComponent.simpleClockerComponent")
+comp_clocker0.addParams({
+      "clockcount" : """100000000""",
+      "clock" : """1MHz"""
+})
 
-    if sst.verbose():
-        print "Verbose Model"
 
-    for x in range(0, 8):
-      id = sst.createcomponent("a" + str(x), "simpleClockerComponent.simpleClockerComponent")
-      sst.addcompparam(id, "clock", "1MHz")
-      sst.addcompparam(id, "clockcount", "100")
-      sst.setcompweight(id, x * 1.5)
-
-    return 0
-
+# Define the simulation links
+# End of generated output.
