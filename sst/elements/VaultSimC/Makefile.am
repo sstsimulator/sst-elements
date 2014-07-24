@@ -3,9 +3,13 @@
 #
 
 
-EXTRA_DIST = tests/sdl1.xml \
+EXTRA_DIST = \
+	tests/sdl1.xml \
 	tests/sdl2.xml \
 	tests/sdl3.xml \
+	tests/sdl1.py \
+	tests/sdl2.py \
+	tests/sdl3.py \
 	tests/stream-8coreVault_1.6GHz-M5.xml
 
 compdir = $(pkglibdir)
