@@ -292,14 +292,13 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
 //Write allocation information to the log.
 void Statistics::writeAlloc(TaskMapInfo* tmi) 
 {
-    MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine);
     char mesg[100];
     int num = tmi -> job -> getProcsNeeded();
     sprintf(mesg, "%ld\t%d\t%lu\t%f\n",
             tmi -> job -> getJobNum(),
             num,
             tmi -> job -> getActualTime(),
-            (tmi -> getAvgHopDist(*mMachine)));
+            (tmi -> getAvgHopDist()));
     appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
 

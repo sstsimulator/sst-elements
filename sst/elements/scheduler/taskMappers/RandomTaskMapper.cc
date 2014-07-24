@@ -41,7 +41,7 @@ std::string RandomTaskMapper::getSetupInfo(bool comment) const
 
 TaskMapInfo* RandomTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, *machine);
     int jobSize = allocInfo->job->getProcsNeeded();
     
     std::vector<int> available = std::vector<int>();

@@ -577,7 +577,7 @@ void schedComponent::startJob(Job* job)
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
          
-        double baselineAvgL1Distance = baselineMap->getAvgHopDist(*mMachine);
+        double baselineAvgL1Distance = baselineMap->getAvgHopDist();
         delete baselineMap;
                 
         //calculate running time w/o any communication overhead:
@@ -587,7 +587,7 @@ void schedComponent::startJob(Job* job)
                                         ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
         
         //calculate new hop distance with allocation & task mapping
-        double avgL1Distance = tmi->getAvgHopDist(*mMachine);
+        double avgL1Distance = tmi->getAvgHopDist();
         //new running time with overhead        
         double timeWithComm = baselineRunningTime *
                                ( timePerDistance->at(0) + timePerDistance->at(1) *

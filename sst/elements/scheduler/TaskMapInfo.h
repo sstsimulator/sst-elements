@@ -17,7 +17,7 @@ namespace SST {
 
         class AllocInfo;
         class Job;
-        class MeshMachine;
+        class Machine;
         class TaskCommInfo;
 
         class TaskMapInfo {
@@ -26,14 +26,16 @@ namespace SST {
                 TaskCommInfo* taskCommInfo;
                 int size;
                 int mappedCount;
+                int* nodes;
                 double avgHopDist;
+                const Machine & machine;
 
             public:
                 AllocInfo* allocInfo;
                 Job* job;
                 int* taskToNode;
 
-                TaskMapInfo(AllocInfo* ai);
+                TaskMapInfo(AllocInfo* ai, const Machine & mach);
 
                 ~TaskMapInfo();
 
@@ -43,7 +45,7 @@ namespace SST {
 
                 //returns average per-neighbor hop distance
                 //assumes no migration, i.e., it calculates the hop distance only once
-                double getAvgHopDist(const MeshMachine & machine);
+                double getAvgHopDist();
         };
     }
 }

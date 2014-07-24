@@ -56,7 +56,7 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
         schedout.fatal(CALL_INFO, 1, "RCB task mapper requires coordinate input");
     }
 
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, *machine);
     int jobSize = job->getProcsNeeded();
 
     //dummy rotator for initialization

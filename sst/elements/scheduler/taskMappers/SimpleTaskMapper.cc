@@ -30,7 +30,7 @@ std::string SimpleTaskMapper::getSetupInfo(bool comment) const
 
 TaskMapInfo* SimpleTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, *machine);
     int jobSize = allocInfo->job->getProcsNeeded();
     int coresPerNode = machine->getNumCoresPerNode();
     for(int i = 0; i < jobSize; i++){
