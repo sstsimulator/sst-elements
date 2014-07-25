@@ -81,7 +81,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /*Parameter not needed since cache entries are always stored at address 0.
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
-    lookupBaseAddr      = 128;
+    lookupBaseAddr      = 0;  /* Use to offset into main memory from where DirEntries are stored */
     numReqsProcessed    = 0;
     totalReqProcessTime = 0;
     numCacheHits        = 0;
