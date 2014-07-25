@@ -31,6 +31,20 @@ using namespace SST::ChdlComponent;
 using namespace chdl;
 using namespace std;
 
+// Debugging level macros similar to ones used in memHierarchy
+#define _L0_ CALL_INFO,0,0
+#define _L1_ CALL_INFO,1,0
+#define _L2_ CALL_INFO,2,0
+#define _L3_ CALL_INFO,3,0
+#define _L4_ CALL_INFO,4,0
+#define _L5_ CALL_INFO,5,0
+#define _L6_ CALL_INFO,6,0
+#define _L7_ CALL_INFO,7,0
+#define _L8_ CALL_INFO,8,0
+#define _L9_ CALL_INFO,9,0
+#define _L10_ CALL_INFO,10,0
+
+
 // A re-implementation of the CHDL EgressInt and IngressInt functions using C++
 // vectors instead of vecs, trading run time configurability for compile time
 // error detection.
@@ -53,18 +67,22 @@ template <typename T> void IngressInt(vector<node> &v, T &x) {
 }
 
 chdlComponent::chdlComponent(ComponentId_t id, Params &p):
-  Component(id), tog(0), vcd("chdl.vcd")
+  Component(id), tog(0)
 {
-  out.init("", 0, 0, Output::STDOUT);
-
   debugLevel = p.find_integer("debugLevel", 1);
+  int debug(p.find_integer("debug", 0));
+  out.init("", debugLevel, 0, Output::output_location_t(debug));
 
   bool found;
   netlFile = p.find_string("netlist", "", found);
   if (!found) _abort(chdlComponent, "No netlist specified.\n");
 
-  clockFreq = p.find_string("clockFreq", "2GHz", found);
-  memFile = p.find_string("memInit", "", found);
+  clockFreq = p.find_string("clockFreq", "2GHz");
+  memFile = p.find_string("memInit", "");
+  core_id = p.find_integer("id", 0);
+
+  string vcdFilename = p.find_string("vcd", "", dumpVcd);
+  if (dumpVcd) vcd.open(vcdFilename);
 
   memLink = dynamic_cast<SimpleMem*>(
     loadModuleWithComponent("memHierarchy.memInterface", this, p)
@@ -123,8 +141,7 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
 
   if (!strncmp(t[0], "simplemem", 80)) {
     unsigned id(ports[t[3]]);
-    if (debugLevel > 0)
-      out.output("Found a simplemem io: %s\n", port.c_str());
+    out.debug(_L0_, "Found a simplemem io: %s\n", port.c_str());
     if (!strncmp(t[2], "req", 80)) {
       if (!strncmp(t[1], "ready", 80)) v[0] = Lit(1);
       else if (!strncmp(t[1], "valid", 80)) Egress(req[id].valid, v[0]);
@@ -154,6 +171,11 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
   } else if (!strncmp(t[0], "counter", 80)) {
     counters[port] = new unsigned long();
     EgressInt(*counters[port], v);
+  } else if (!strncmp(t[0], "id", 80) && t.size() == 1) {
+    for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1) {
+      v[i] = Lit((core_id & mask) != 0);
+      out.output("Core id %u: %u\n", i, (core_id & mask) != 0);
+    }
   }
 }
 
@@ -164,18 +186,17 @@ void chdlComponent::init(unsigned phase) {
     map<string, vector<tristatenode> > inout;
 
     cd = push_clock_domain();
-    ldnetl(outputs, inputs, inout, netlFile);
+    ldnetl(outputs, inputs, inout, netlFile, dumpVcd);
 
-    if (debugLevel > 0)
-      out.output("chdlComponent init: loaded design \"%s\"\n",
-                 netlFile.c_str());
+    out.debug(_L0_, "chdlComponent init: loaded design \"%s\"\n",
+              netlFile.c_str());
 
     // Set up egress/ingress nodes for req and resp
     for (auto x : inputs) init_io_pre(x.first);
     for (auto x : outputs) init_io_pre(x.first);
 
     for (auto &p : ports)
-      out.output("chdlComponent init: port \"%s\" id=%u\n",
+      out.debug(_L0_, "chdlComponent init: port \"%s\" id=%u\n",
                  p.first.c_str(), p.second);
 
     req.resize(ports.size());
@@ -187,19 +208,24 @@ void chdlComponent::init(unsigned phase) {
 
     pop_clock_domain();
 
-    optimize();
+    out.debug(_L0_, "chdlComponent init: initialized clock domain %u\n", cd);
+    out.debug(_L0_, "chdlComponent init: finished optimizing.\n");
 
-    out.output("chdlComponent init: initialized clock domain %u\n", cd);
- 
-    if (debugLevel > 0)
-      out.output("chdlComponent init: finished optimizing.\n");
-  } else if (phase == 1 && cd == 1) {
-    print_vcd_header(vcd);
-    print_time(vcd);
+  } else if (phase == 1) {
+    if (dumpVcd) {
+      print_vcd_header(vcd);
+      print_time(vcd);
+    }
+    if (cd == 1) {
+      optimize();
+      for (unsigned i = 0; i < tickables().size(); ++i) {
+        out.output("cdomain %u: %lu\n", i, tickables()[i].size());
+      }
+    }
   } else if (phase == 2 && memFile != "") {
     ifstream m(memFile);
 
-    unsigned limit(128*1024), addr(0);
+    unsigned limit(16*1024), addr(0);
     while (!!m && --limit) {
       char buf[1024];
       m.read(buf, 1024);
@@ -216,14 +242,14 @@ void chdlComponent::finish() {
   unsigned long simCycle(Simulation::getSimulation()->getCurrentSimCycle());  
 
   for (auto &x : counters)
-    out.output("CHDL counter \"%s\": %lu\n", x.first.c_str(), *x.second);
+    out.debug(_L2_, "CHDL counter \"%s\": %lu\n", x.first.c_str(), *x.second);
 
-  out.output("%lu sim cycles\n", simCycle);
+  out.debug(_L2_, "%lu sim cycles\n", simCycle);
 }
 
 
 void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
-  // TODO: support queuing responses
+  // TODO: support queuing of responses
   unsigned port = portMap[req->id];
 
   // This is a temporary hack. We should be queueing up responses when they
@@ -242,26 +268,34 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   }
   resp[port].id = idMap[req->id];
 
-  if (debugLevel > 2) {
-    out.output("Response arrived on port %d for req %d, wr = %d, data = %lu, "
-               "size = %lu, datasize = %lu\n",
+  out.debug(_L1_, "Response arrived on port %d for req %d, wr = %d, "
+                  "data = %u, size = %lu, datasize = %lu\n",
                int(port), int(req->id), resp[port].wr,
-               (unsigned long)resp[port].data, req->size, req->data.size());
-  }
+               (unsigned)resp[port].data, req->size, req->data.size());
 
   delete req;
 
   ++responses_this_cycle[port];
 }
 
+void chdlComponent::consoleOutput(char c) {
+ if (c == '\n') {
+   out.output("%u OUTPUT> %s\n", core_id, outputBuffer.c_str());
+   outputBuffer.clear();
+ } else {
+   outputBuffer = outputBuffer + c;
+ }
+}
 
 bool chdlComponent::clockTick(Cycle_t c) {
   if (tog) {
     tog = !tog;
-    for (auto &t : tickables()[cd]) t->tick();
-    for (auto &t : tickables()[cd]) t->tock();
-    for (auto &t : tickables()[cd]) t->post_tock();
-    if (cd == 1) ++now;
+    for (auto &t : tickables()[cd]) t->tick(cd);
+    for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
+    for (auto &t : tickables()[cd]) t->tock(cd);
+    for (auto &t : tickables()[cd]) t->post_tock(cd);
+    ++now[cd];
+    if (cd == 1) ++now[0];
   } else {
     tog = !tog;
     for (unsigned i = 0; i < req.size(); ++i) {
@@ -271,22 +305,18 @@ bool chdlComponent::clockTick(Cycle_t c) {
       responses_this_cycle[i] = 0;
     }
 
-    print_taps(vcd);
+    if (dumpVcd) print_taps(vcd, cd);
 
-    for (auto &t : tickables()[cd]) t->pre_tick();
-
-    for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
+    for (auto &t : tickables()[cd]) t->pre_tick(cd);
 
     // Handle requests
     for (unsigned i = 0; i < req.size(); ++i) {
       if (req[i].valid) {
-        if (debugLevel > 0) {
-          out.output("Req on port %u to %08lx: ", i, req[i].addr);
-          if (req[i].wr)
-            out.output("Write %lu\n", req[i].data); 
-          else
-            out.output("Read\n");
-        }
+        out.debug(_L0_, "Req on port %u to %08lx: ", i, req[i].addr);
+        if (req[i].wr)
+          out.debug(_L0_, "Write %lu\n", req[i].data); 
+        else
+          out.debug(_L0_, "Read\n");
 
         int flags = (req[i].uncached ? SimpleMem::Request::F_NONCACHEABLE : 0) |
                     (req[i].locked ? SimpleMem::Request::F_LOCKED : 0) |
@@ -307,8 +337,10 @@ bool chdlComponent::clockTick(Cycle_t c) {
           );
         }
 
-        if (debugLevel > 3)
-          out.output("SimpleMem %d = CHDL ID %d\n", (int)r->id, (int)req[i].id);
+        if (req[i].wr && req[i].addr == 0x80000008) consoleOutput(req[i].data);
+
+        out.debug(_L3_, "SimpleMem %d = CHDL ID %d\n",
+                  (int)r->id, (int)req[i].id);
         idMap[r->id] = req[i].id;
 
         portMap[r->id] = i;
@@ -317,12 +349,7 @@ bool chdlComponent::clockTick(Cycle_t c) {
       }
     }
 
-    // for (auto &t : tickables()[cd]) t->tick();
-    // for (auto &t : tickables()[cd]) t->tock();
-    // for (auto &t : tickables()[cd]) t->post_tock();
-    // if (cd == 1) ++now;
-
-    print_time(vcd);
+    if (dumpVcd) print_time(vcd);
   }
 
   return false;
@@ -337,8 +364,11 @@ static Component* create_chdlComponent(ComponentId_t id, Params &p) {
 static const ElementInfoParam component_params[] = {
   {"clockFreq", "Clock rate", "2GHz"},
   {"netlist", "Filename of CHDL .nand netlist", ""},
+  {"debug", "Destination for debugging output", "0"},
   {"debugLevel", "Level of verbosity of output", "1"},
-  {"memInit", "File containing initial memory contents.", ""},
+  {"memInit", "File containing initial memory contents", ""},
+  {"id", "Device ID passed to \"id\" input, if present", "0"},
+  {"vcd", "Filename of .vcd waveform file for this component's taps", ""},
   {NULL, NULL, NULL}
 };
 

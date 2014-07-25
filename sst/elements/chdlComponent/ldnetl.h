@@ -10,6 +10,6 @@
 void ldnetl(std::map<std::string, std::vector<chdl::node> > &outputs,
             std::map<std::string, std::vector<chdl::node> > &inputs,
             std::map<std::string, std::vector<chdl::tristatenode> > &inout, 
-            std::string filename);
+            std::string filename, bool tap_io);
 
 #endif

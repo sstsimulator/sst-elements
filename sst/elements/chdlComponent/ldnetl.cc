@@ -101,7 +101,7 @@ void read_design_line(istream &in) {
   gen(dev, params, nv);
 }
 
-void read_taps(istream &in, map<string, vector<node> > &outputs) {
+void read_taps(istream &in, map<string, vector<node> > &outputs, bool tap_io) {
   while (in.peek() == ' ') {
     string tapname;
     in >> tapname;
@@ -109,13 +109,13 @@ void read_taps(istream &in, map<string, vector<node> > &outputs) {
       nodeid_t n;
       in >> n;
       outputs[tapname].push_back(gna[n]);
-      tap(tapname, gna[n]);
+      if (tap_io) tap(tapname, gna[n]);
     }
     in.get();
   }
 }
 
-void read_inputs(istream &in, map<string, vector<node> > &inputs) {
+void read_inputs(istream &in, map<string, vector<node> > &inputs, bool tap_io) {
   while (in.peek() == ' ') {
     string name;
     in >> name;
@@ -123,13 +123,15 @@ void read_inputs(istream &in, map<string, vector<node> > &inputs) {
       nodeid_t n;
       in >> n;
       inputs[name].push_back(gna[n]);
-      tap(name, gna[n]);
+      if (tap_io) tap(name, gna[n]);
     }
     in.get();
   }
 }
 
-void read_inout(istream &in, map<string, vector<tristatenode> > &inout) {
+void read_inout(istream &in, map<string, vector<tristatenode> > &inout,
+                bool tap_io)
+{
   while (in.peek() == ' ') {
     string name;
     in >> name;    
@@ -137,7 +139,7 @@ void read_inout(istream &in, map<string, vector<tristatenode> > &inout) {
       nodeid_t n;
       in >> n;
       inout[name].push_back(tristatenode(gna[n]));
-      tap(name, gna[n]);
+      if (tap_io) tap(name, gna[n]);
     }
     in.get();
   }
@@ -150,23 +152,24 @@ void read_design(istream &in) {
 void read_netlist(istream &in,
                   map<string, vector<node> > &outputs,
                   map<string, vector<node> > &inputs,
-                  map<string, vector<tristatenode> > &inout)
+                  map<string, vector<tristatenode> > &inout,
+                  bool tap_io)
 {
   string eat;
   in >> eat; in.get();
   if (eat != "inputs") { cerr << "'inputs' expected.\n"; return; }
 
-  read_inputs(in, inputs);
+  read_inputs(in, inputs, tap_io);
 
   in >> eat; in.get();
   if (eat != "outputs") { cerr << "'outputs' expected.\n"; return; }
 
-  read_taps(in, outputs);
+  read_taps(in, outputs, tap_io);
 
   in >> eat; in.get();
   if (eat != "inout") { cerr << "'inout' expected.\n"; return; }
 
-  read_inout(in, inout);
+  read_inout(in, inout, tap_io);
 
   in >> eat;
   if (eat != "design") { cerr << "'design' expected.\n"; return; }
@@ -177,8 +180,10 @@ void read_netlist(istream &in,
 void ldnetl(map<string, vector<node> > &outputs,
             map<string, vector<node> > &inputs,
             map<string, vector<tristatenode> > &inout, 
-            string filename)
+            string filename, bool tap_io)
 {
   ifstream infile(filename);
-  read_netlist(infile, outputs, inputs, inout);
+  read_netlist(infile, outputs, inputs, inout, tap_io);
+
+  gna.clear();
 }

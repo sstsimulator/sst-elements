@@ -1,7 +1,7 @@
 #!/bin/bash
 
 N=${N:=1}
-NETLIST=${APP:=$HOME/src/sst-simulator/sst/elements/chdlComponent/test/acpu.nand}
+NETLIST=${APP:=$HOME/src/sst-simulator/sst/elements/chdlComponent/test/score.nand}
 L1LAT=3ns
 IPILAT=10ns
 BUSLAT=10ns
@@ -34,6 +34,8 @@ print_chdl_cpu() {
   echo "  <component name=\"c$i\" rank=\"$i\" type=\"chdlComponent\">"
   echo "    <params>"
   echo "      <netlist>${NETLIST}</netlist>"
+  echo "      <id>${i}</id>"
+  echo "      <vcd>dump${i}</vcd>"
   echo "    </params>"
   echo "    <link name=c${i}_l1cache_link port=memLink latency=$L1LAT />"
   echo "  </component>"
@@ -124,7 +126,7 @@ print_network() {
 }
 
 print_dirmem() {
-  echo -n "  <component name=\"dirctrl0\" rank=\"0\""
+  echo -n "  <component name=\"dirctrl0\" rank=\"0\" "
   echo       "type=\"memHierarchy.DirectoryController\">"
   echo "    <params>"
   echo "      <coherence_protocol>$COHERENCEPROTO</coherence_protocol>"

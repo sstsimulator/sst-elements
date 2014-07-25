@@ -89,12 +89,14 @@ namespace ChdlComponent {
     void init_io_pre(const std::string &port);
     void init_io(const std::string &port, std::vector<chdl::node> &v);
 
+    void consoleOutput(char c);
+
     void handleEvent(Interfaces::SimpleMem::Request *);
     bool clockTick(Cycle_t);
 
     Interfaces::SimpleMem *memLink;
 
-    std::string clockFreq, netlFile, memFile;
+    std::string clockFreq, netlFile, memFile, outputBuffer;
 
     std::vector<reqdata> req;
     std::vector<respdata> resp;
@@ -104,10 +106,11 @@ namespace ChdlComponent {
 
     chdl::cdomain_handle_t cd;
 
-    int debugLevel, tog;
+    int debugLevel, tog, core_id;
 
     Output out;
     std::ofstream vcd;
+    bool dumpVcd;
 
     std::vector<unsigned> responses_this_cycle;
 };

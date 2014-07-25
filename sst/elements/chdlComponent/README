@@ -1,6 +1,14 @@
 CHDL Component for SST
 ======================
 
+0. To-do
+--------
+
+  - Build remaining option for console output:
+    - character value and strobe
+  - Do complete multiple-CPU tests for large numbers of CPUs.
+  - Make it possible to dump more than a single core's taps to VCD.
+
 1. Architecture
 ---------------
 
