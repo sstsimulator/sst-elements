@@ -121,7 +121,18 @@ void MemController::handleEvent(SST::Event* _event){
 
 
 void MemController::addRequest(MemEvent* _ev){
-    assert(isRequestAddressValid(_ev));
+    if ( !isRequestAddressValid(_ev) ) {
+        dbg.fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
+                "\t\tRequested Address:   0x%" PRIx64 "\n"
+                "\t\tMC Range Start:      0x%" PRIx64 "\n"
+                "\t\tMC Range End:        0x%" PRIx64 "\n"
+                "\t\tMC Interleave Step:  0x%" PRIx64 "\n"
+                "\t\tMC Interleave Size:  0x%" PRIx64 "\n",
+                getName().c_str(),
+                _ev->getSrc().c_str(), _ev->getAddr(),
+                rangeStart_, (rangeStart_ + memSize_),
+                interleaveStep_, interleaveSize_);
+    }
     Command cmd   = _ev->getCmd();
     DRAMReq* req = new DRAMReq(_ev, requestWidth_, cacheLineSize_);
     
