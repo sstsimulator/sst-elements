@@ -1,5 +1,5 @@
 
-CC=gcc
+CC=clang
 CFLAGS=-fPIC -O3
 LDFLAGS=-shared -O3
 
