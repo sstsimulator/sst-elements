@@ -12,9 +12,10 @@
 // Uses PIN Tool Memory Trace as a basis for provide SST Memory Tracing output
 // directly to the tracing framework.
 
+#include "pin.H"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include "pin.H"
 #include <cstring>
 #include <iostream>
 #include <inttypes.h>
@@ -92,7 +93,7 @@ VOID PerformInstrumentCountCheck(THREADID id) {
 	}
 
 	if(thread_instr_id[id].threadInit == 0) {
-		printf("PROSPERO: Thread %" PRIu32 " starts at instruction %" PRIu64 "\n", id, thread_instr_id[0].insCount);
+		std::cout << "PROSPERO: Thread " << id << " starts at instruction " << thread_instr_id[0].insCount << std::endl;
 		// Copy over instructions from thread zero and mark started;
 		thread_instr_id[id].insCount = thread_instr_id[0].insCount;
 		thread_instr_id[id].threadInit = 1;
@@ -260,7 +261,7 @@ VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
 VOID Fini(INT32 code, VOID *v)
 {
     printf("PROSPERO: Tracing is complete, closing trace files...\n");
-    printf("PROPSERO: Main thread exits with %" PRIu64 " instructions.\n", (uint64_t) thread_instr_id[0].insCount);
+    std::cout << "PROSPERO: Main thread exists with " << thread_instr_id[0].insCount << " instructions" << std::endl;
 
     if( (0 == trace_format) || (1 == trace_format)) {
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
@@ -300,9 +301,14 @@ int main(int argc, char *argv[])
     traceEnabled = KnobTraceEnabled.Value();
 
     max_thread_count = KnobMaxThreadCount.Value();
-    printf("PROSPERO: User requests that a maximum of %" PRIu32 " threads are instrumented.\n", max_thread_count);
-    printf("PROSPERO: File buffer per thread is %" PRIu32 " bytes.\n", (uint32_t) KnobFileBufferSize.Value());
-    printf("PROSPERO: Trace is %s from startup.\n", (traceEnabled == 0) ? "disabled" : "enabled");
+    std::cout << "PROSPERO: User requests that a maximum of " << max_thread_count << " threads are instrumented" << std::endl;
+    std::cout << "PROSPERO: File buffer per thread is " << KnobFileBufferSize.Value() << " bytes" << std::endl;
+
+    if(traceEnabled == 0) {
+    	std::cout << "PROSPERO: Trace is disabled from startup" << std::endl;
+    } else {
+    	std::cout << "PROSPERO: Trace is enabled from startup" << std::endl;
+    }
 
     trace = (FILEPTR*) malloc(sizeof(FILEPTR) * max_thread_count);
     fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
@@ -313,7 +319,7 @@ int main(int argc, char *argv[])
 	trace_format = 0;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%" PRIu32 ".trace", KnobTraceFile.Value().c_str(), i);
+		sprintf(nameBuffer, "%s-%lu.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
 		trace[i] = fopen(nameBuffer, "wt");
 	}
 
@@ -325,7 +331,7 @@ int main(int argc, char *argv[])
 	trace_format = 1;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%" PRIu32 ".trace", KnobTraceFile.Value().c_str(), i);
+		sprintf(nameBuffer, "%s-%lu.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
 		trace[i] = fopen(nameBuffer, "wb");
 	}
 
@@ -338,7 +344,7 @@ int main(int argc, char *argv[])
 	trace_format = 2;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%" PRIu32 "-gz.trace", KnobTraceFile.Value().c_str(), i);
+		sprintf(nameBuffer, "%s-%lu-gz.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
 		trace[i] = (FILE*) gzopen(nameBuffer, "wb");
 	}
 #endif
