@@ -66,6 +66,16 @@ KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<UINT32> KnobTraceEnabled(KNOB_MODE_WRITEONCE, "pintool",
     "d", "1", "Disable until application says that tracing can start, 0=disable until app, 1=start enabled, default=1");
 
+void prospero_enable() {
+	printf("PROSPERO: Tracing enabled\n");
+	traceEnabled = 1;
+}
+
+void prospero_disable() {
+	printf("PROSPERO: Tracing disabled.\n");
+	traceEnabled = 0;
+}
+
 void copy(VOID* dest, const VOID* source, int destoffset, int count) {
 	char* dest_c = (char*) dest;
 	char* source_c = (char*) source;
@@ -107,7 +117,7 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	if(thr < max_thread_count) {
+	if(thr < max_thread_count && (traceEnabled > 0)) {
     		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
 	}
 #ifdef PROSPERO_LIBZ
@@ -117,7 +127,7 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	if(thr < max_thread_count) {
+	if(thr < max_thread_count && (traceEnabled > 0)) {
 		gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
 	}
 #endif
@@ -148,7 +158,7 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	if(thr < max_thread_count) {
+	if(thr < max_thread_count && (traceEnabled > 0)) {
    		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
 	}
 #ifdef PROSPERO_LIBZ
@@ -158,7 +168,7 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	if(thr < max_thread_count) {
+	if(thr < max_thread_count && (traceEnabled > 0)) {
 		gzwrite((gzFile) trace[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
 	}
 #endif
@@ -218,7 +228,21 @@ VOID Instruction(INS ins, VOID *v)
 }
 
 VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
-	if(RTN_Name(rtn) == KnobInsRoutine.Value()) {
+	if(RTN_Name(rtn) == "_prospero_enable_tracing") {
+		RTN_Replace(rtn, (AFUNPTR) prospero_enable);
+	} else if(RTN_Name(rtn) == "_prospero_disable_tracing") {
+		RTN_Replace(rtn, (AFUNPTR) prospero_disable);
+	} else if(KnobInsRoutine.Value() == "") {
+		// User wants us to instrument every routine in the application do it instruction at a time
+                RTN_Open(rtn);
+
+                for(INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
+                        Instruction(ins, v);
+                }
+
+                RTN_Close(rtn);
+	} else if(RTN_Name(rtn) == KnobInsRoutine.Value()) {
+		// User wants only a specific routine to be instrumented
 		std::cout << "PROSPERO: Found routine: " << RTN_Name(rtn) << ", instrumenting for tracing..." << std::endl;
 
 		RTN_Open(rtn);
@@ -331,15 +355,15 @@ int main(int argc, char *argv[])
     // Thread zero is always started
     thread_instr_id[0].threadInit = 1;
 
-    std::cout << "PROSPERO: Checking for specific routine instrumentation...";
+    //std::cout << "PROSPERO: Checking for specific routine instrumentation...";
 
-    if(KnobInsRoutine.Value() == "") {
-	std::cout << "not found, instrument all routines." << std::endl;
-    	INS_AddInstrumentFunction(Instruction, 0);
-    } else {
-	std::cout << "found, instrumenting: " << KnobInsRoutine.Value() << std::endl;
+    //if(KnobInsRoutine.Value() == "") {
+//	std::cout << "not found, instrument all routines." << std::endl;
+ //   	INS_AddInstrumentFunction(Instruction, 0);
+  //  } else {
+//	std::cout << "found, instrumenting: " << KnobInsRoutine.Value() << std::endl;
 	RTN_AddInstrumentFunction(InstrumentSpecificRoutine, 0);
-    }
+ //   }
 
     PIN_AddFiniFunction(Fini, 0);
 
