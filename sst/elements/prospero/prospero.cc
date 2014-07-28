@@ -31,7 +31,15 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	output_level = params.find_integer("outputlevel", 0);
   }
 
-  trace_format = (uint32_t) params.find_integer("traceformat", 0);
+  if(params.find_string("traceformat") == "compressed") {
+	trace_format = PROSPERO_TRACE_COMPRESSED;
+  } else if(params.find_string("traceformat") == "binary" ) {
+	trace_format = PROSPERO_TRACE_BINARY;
+  } else if(params.find_string("traceformat") == "text") {
+	trace_format = PROSPERO_TRACE_TEXT;
+  } else {
+	trace_format = PROSPERO_TRACE_TEXT;
+  }
 
   if( params.find("maximum_items") == params.end() ) {
   	max_trace_count = 4611686018427390000;
@@ -71,11 +79,11 @@ prospero::prospero(ComponentId_t id, Params& params) :
 		std::cout << "TRACE:  Load trace information from: " << params[ "trace" ] << std::endl;
 	}
 
-	if(0 == trace_format) {
+	if(PROSPERO_TRACE_BINARY == trace_format) {
 		trace_input = fopen(params["trace"].c_str(), "rb");
-	} else if (1 == trace_format) {
+	} else if (PROSPERO_TRACE_TEXT == trace_format) {
 		trace_input = fopen(params["trace"].c_str(), "rt");
-	} else if (2 == trace_format) {
+	} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
 		trace_input = (FILE*) gzopen(params["trace"].c_str(), "r");
 #else
@@ -208,13 +216,13 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		return READ_FAILED_EOF;
 	}
 
-	if( (0 == trace_format) || (2 == trace_format) ) {
+	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_COMPRESSED == trace_format) ) {
 		const int record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 		char record_buffer[ record_length ];
 
-		if(0 == trace_format) {
+		if(PROSPERO_TRACE_BINARY == trace_format) {
 			fread(record_buffer, record_length, 1, trace_input);
-		} else if (2 == trace_format) {
+		} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
 			gzread( (gzFile) trace_input, record_buffer, record_length);
 #else
@@ -241,7 +249,7 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 			std::cerr << "TRACE:  Unknown memory operation type (setting to read), request number: " << requests_generated << std::endl;
 			req->memory_op_type = READ;
 		}
-	} else if (trace_format == 1) {
+	} else if (trace_format == PROSPERO_TRACE_TEXT) {
 		uint64_t tmp_addr;
 		uint64_t tmp_cycle;
 		char tmp_op_type;
@@ -532,7 +540,7 @@ static const ElementInfoParam component_params[] = {
     { "max_ticks", "Maximum number of ticks the Prospero CPU can execute for", "4611686018427390000" },
     { "cache_line", "Size of the first level cache block in bytes (Prospero does non-aligned address splits)", "64"},
     { "timemultiplier", "Dilate time in trace file based on this value, >1.0 = take longer, <1.0 take shorter, default=1.0","1.0" },
-    { "traceformat", "Trace file format: 0: rb,  1: rt", "0"},
+    { "traceformat", "Trace file format: \"text\", \"binary\" or \"compressed\", default is \"text\"", "text"},
     { NULL, NULL, NULL }
 };
 

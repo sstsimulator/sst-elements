@@ -34,6 +34,10 @@
 #include <zlib.h>
 #endif
 
+#define PROSPERO_TRACE_TEXT 0
+#define PROSPERO_TRACE_BINARY 1
+#define PROSPERO_TRACE_COMPRESSED 2
+
 using namespace std;
 using namespace SST::Interfaces;
 
