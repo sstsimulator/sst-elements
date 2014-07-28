@@ -28,6 +28,7 @@ using namespace std;
 uint32_t max_thread_count;
 uint32_t trace_format;
 uint64_t instruction_count;
+uint32_t traceEnabled __attribute__((aligned(64)));
 
 const char READ_OPERATION_CHAR = 0;
 const char WRITE_OPERATION_CHAR = 1;
@@ -62,6 +63,8 @@ KNOB<UINT32> KnobMaxThreadCount(KNOB_MODE_WRITEONCE, "pintool",
     "t", "1", "Maximum number of threads to record memory patterns");
 KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
     "b", "32768", "Size in bytes for each trace buffer");
+KNOB<UINT32> KnobTraceEnabled(KNOB_MODE_WRITEONCE, "pintool",
+    "d", "1", "Disable until application says that tracing can start, 0=disable until app, 1=start enabled, default=1");
 
 void copy(VOID* dest, const VOID* source, int destoffset, int count) {
 	char* dest_c = (char*) dest;
@@ -269,9 +272,12 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
     PIN_InitSymbols();
 
+    traceEnabled = KnobTraceEnabled.Value();
+
     max_thread_count = KnobMaxThreadCount.Value();
     printf("PROSPERO: User requests that a maximum of %" PRIu32 " threads are instrumented.\n", max_thread_count);
     printf("PROSPERO: File buffer per thread is %" PRIu32 " bytes.\n", (uint32_t) KnobFileBufferSize.Value());
+    printf("PROSPERO: Trace is %s from startup.\n", (traceEnabled == 0) ? "disabled" : "enabled");
 
     trace = (FILEPTR*) malloc(sizeof(FILEPTR) * max_thread_count);
     fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
