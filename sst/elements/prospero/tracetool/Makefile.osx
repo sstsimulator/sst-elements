@@ -2,28 +2,28 @@
 
 PINDIR=/Users/si/Documents/PIN/2.13
 CXX=clang++
-PREPROC=-DBIGARRAY_MULTIPLIER=1 -DUSING_XED -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC
-#-DTARGET_LINUX
 LD=clang++
 CC=clang
+PREPROC=-DBIGARRAY_MULTIPLIER=1 -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC
+CXXFLAGS=-stdlib=libstdc++ -O3 -g -fomit-frame-pointer -fno-strict-aliasing
 
-all: sstmemtrace.so
+all: sstmemtrace.dylib
 
-sstmemtrace.so: sstmemtrace.o
+sstmemtrace.dylib: sstmemtrace.o
 	$(LD) -shared \
+		-w -Wl,-exported_symbols_list \
+		-Wl,$(PINDIR)/source/include/pin/pintool.exp \
+		-stdlib=libstdc++ \
 		-L$(PINDIR)/extras/xed2-intel64/lib \
 		-L$(PINDIR)/intel64/lib \
 		-L$(PINDIR)/intel64/lib-ext \
 		-o $@ $< \
 		-L$(PINDIR)/extras/xed2-intel64/lib \
 		-L$(PINDIR)/intel64/lib \
-		-L$(PINDIR)/intel64/lib-ext -lpin  -lxed 
-		-lelf -ldl -lsapin -lz -lgz
-
-#-ldwarf \
+		-L$(PINDIR)/intel64/lib-ext -lpin -lxed -lpindwarf
 
 sstmemtrace.o: sstmemtrace.cc
-	$(CXX) -g -c -O3 -fomit-frame-pointer \
+	$(CXX) $(CXXFLAGS) -c \
 	-I $(PINDIR)/source/include/pin \
 	-I $(PINDIR)/source/include/pin/gen \
 	-I $(PINDIR)/extras/xed2-intel64/include \
@@ -33,4 +33,4 @@ sstmemtrace.o: sstmemtrace.cc
 	$<
 
 clean:
-	rm *.o sstmemtrace.so sstmemtrace.dylib
+	rm *.o sstmemtrace.so

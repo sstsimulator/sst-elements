@@ -13,16 +13,19 @@
 // directly to the tracing framework.
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "pin.H"
 #include <cstring>
 #include <iostream>
+#include <inttypes.h>
 
+#ifdef PROSPERO_LIBZ
 #include <zlib.h>
+#endif
 
 using namespace std;
 
-FILE * trace;
-
+uint32_t max_thread_count;
 uint32_t trace_format;
 uint64_t instruction_count;
 
@@ -31,12 +34,34 @@ const char WRITE_OPERATION_CHAR = 1;
 
 char RECORD_BUFFER[ sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char) ];
 
+typedef FILE* FILEPTR;
+
+FILEPTR* trace;
+
+typedef struct {
+	UINT64 threadInit;
+	UINT64 insCount;
+	UINT64 padA;
+	UINT64 padB;
+	UINT64 padC;
+	UINT64 padD;
+	UINT64 padE;
+	UINT64 padF;
+} threadRecord;
+
+char** fileBuffers;
+threadRecord* thread_instr_id;
+
 KNOB<string> KnobInsRoutine(KNOB_MODE_WRITEONCE, "pintool",
     "r", "", "Instrument only a specific routine (if not specified all instructions are instrumented");
 KNOB<string> KnobTraceFile(KNOB_MODE_WRITEONCE, "pintool",
-    "o", "pinatrace.out", "Output analysis to trace file.");
+    "o", "sstprospero", "Output analysis to trace file.");
 KNOB<string> KnobTraceFormat(KNOB_MODE_WRITEONCE, "pintool",
     "f", "text", "Output format, \'text\' = Plain text, \'binary\' = Binary, \'compressed\' = zlib compressed");
+KNOB<UINT32> KnobMaxThreadCount(KNOB_MODE_WRITEONCE, "pintool",
+    "t", "1", "Maximum number of threads to record memory patterns");
+KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
+    "b", "32768", "Size in bytes for each trace buffer");
 
 void copy(VOID* dest, const VOID* source, int destoffset, int count) {
 	char* dest_c = (char*) dest;
@@ -48,10 +73,28 @@ void copy(VOID* dest, const VOID* source, int destoffset, int count) {
 	}
 }
 
+VOID PerformInstrumentCountCheck(THREADID id) {
+	if(id >= max_thread_count) {
+		return;
+	}
+
+	if(thread_instr_id[id].threadInit == 0) {
+		// Copy over instructions from thread zero and mark started;
+		thread_instr_id[id].insCount = thread_instr_id[0].insCount;
+		thread_instr_id[id].threadInit = 1;
+	}
+}
+
 // Print a memory read record
-VOID RecordMemRead(VOID * addr, UINT32 size)
+VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
 {
+#ifdef PROSPERO_DEBUG
+     printf("PROSPERO: Calling into RecordMemRead...\n");
+#endif
+
     UINT64 ma_addr = (UINT64) addr;
+
+    PerformInstrumentCountCheck(thr);
 
     if(0 == trace_format) {
 
@@ -61,26 +104,38 @@ VOID RecordMemRead(VOID * addr, UINT32 size)
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-    	fwrite( RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace);
+	if(thr < max_thread_count) {
+    		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+	}
+#ifdef PROSPERO_LIBZ
     } else if (2 == trace_format) {
 	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+	if(thr < max_thread_count) {
+		gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+	}
+#endif
    }
+
+#ifdef PROSPERO_DEBUG
+     printf("PROSPERO: Completed into RecordMemRead...\n");
+#endif
+
 }
 
 // Print a memory write record
-VOID RecordMemWrite(VOID * addr, UINT32 size)
+VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
 {
-    UINT64 ma_addr = (UINT64) addr;
+#ifdef PROSPERO_DEBUG
+     printf("PROSPERO: Calling into RecordMemWrite...\n");
+#endif
 
-    /*fwrite(&instruction_count, sizeof(instruction_count), 1, trace);
-    fwrite(&WRITE_OPERATION_CHAR, sizeof(char), 1, trace);
-    fwrite(&ma_addr, sizeof(ma_addr), 1, trace);
-    fwrite(&size, sizeof(UINT32), 1, trace);*/
+    PerformInstrumentCountCheck(thr);
+
+    UINT64 ma_addr = (UINT64) addr;
 
     if(0 == trace_format) {
 
@@ -90,19 +145,30 @@ VOID RecordMemWrite(VOID * addr, UINT32 size)
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-   	fwrite( RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace);
+	if(thr < max_thread_count) {
+   		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+	}
+#ifdef PROSPERO_LIBZ
    } else if(2 == trace_format) {
     	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+	if(thr < max_thread_count) {
+		gzwrite((gzFile) trace[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+	}
+#endif
    }
+
+#ifdef PROSPERO_DEBUG
+     printf("PROSPERO: Completed into RecordMemWrite...\n");
+#endif
+
 }
 
-VOID IncrementInstructionCount() {
-    instruction_count++;
+VOID IncrementInstructionCount(THREADID id) {
+	thread_instr_id[id].insCount++;
 }
 
 // Is called for every instruction and instruments reads and writes
@@ -127,6 +193,7 @@ VOID Instruction(INS ins, VOID *v)
                 ins, IPOINT_BEFORE, (AFUNPTR)RecordMemRead,
                 IARG_MEMORYOP_EA, memOp,
 		IARG_UINT32, (UINT32) mem_size,
+		IARG_THREAD_ID,
                 IARG_END);
         }
         // Note that in some architectures a single memory operand can be 
@@ -138,17 +205,18 @@ VOID Instruction(INS ins, VOID *v)
                 ins, IPOINT_BEFORE, (AFUNPTR)RecordMemWrite,
                 IARG_MEMORYOP_EA, memOp,
 		IARG_UINT32, (UINT32) mem_size,
+		IARG_THREAD_ID,
                 IARG_END);
         }
     }
 
     INS_InsertPredicatedCall(
-	ins, IPOINT_BEFORE, (AFUNPTR) IncrementInstructionCount, IARG_END);
+	ins, IPOINT_BEFORE, (AFUNPTR) IncrementInstructionCount, IARG_THREAD_ID, IARG_END);
 }
 
 VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
 	if(RTN_Name(rtn) == KnobInsRoutine.Value()) {
-		std::cout << "TRACE: Found routine: " << RTN_Name(rtn) << ", instrumenting for tracing..." << std::endl;
+		std::cout << "PROSPERO: Found routine: " << RTN_Name(rtn) << ", instrumenting for tracing..." << std::endl;
 
 		RTN_Open(rtn);
 
@@ -156,18 +224,29 @@ VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
 			Instruction(ins, v);
 		}
 
-		std::cout << "TRACE: Instrumentation completed." << std::endl;
+		std::cout << "PROSPERO: Instrumentation completed." << std::endl;
 		RTN_Close(rtn);
 	}
 }
 
 VOID Fini(INT32 code, VOID *v)
 {
+    printf("PROSPERO: Tracing is complete, closing trace files...\n");
+    printf("PROPSERO: Main thread exits with %" PRIu64 " instructions.\n", (uint64_t) thread_instr_id[0].insCount);
+
     if( (0 == trace_format) || (1 == trace_format)) {
-    	fclose(trace);
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+    		fclose(trace[i]);
+	}
+#ifdef PROSPERO_LIBZ
     } else if (2 == trace_format) {
-	gzclose(trace);
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+		gzclose(trace[i]);
+	}
+#endif
     }
+
+    printf("PROSPERO: Done.\n");
 }
 
 /* ===================================================================== */
@@ -190,23 +269,63 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
     PIN_InitSymbols();
 
+    max_thread_count = KnobMaxThreadCount.Value();
+    printf("PROSPERO: User requests that a maximum of %" PRIu32 " threads are instrumented.\n", max_thread_count);
+    printf("PROSPERO: File buffer per thread is %" PRIu32 " bytes.\n", (uint32_t) KnobFileBufferSize.Value());
+
+    trace = (FILEPTR*) malloc(sizeof(FILEPTR) * max_thread_count);
+    fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
+
+    char nameBuffer[256];
+
     if(KnobTraceFormat.Value() == "text") {
 	trace_format = 0;
-	trace = fopen(KnobTraceFile.Value().c_str(), "wt");
+
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+		sprintf(nameBuffer, "%s-%" PRIu32 ".trace", KnobTraceFile.Value().c_str(), i);
+		trace[i] = fopen(nameBuffer, "wt");
+	}
+
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+		fileBuffers[i] = (char*) malloc(sizeof(char) * KnobFileBufferSize.Value());
+		setvbuf(trace[i], fileBuffers[i], _IOFBF, (size_t) KnobFileBufferSize.Value());
+	}
     } else if(KnobTraceFormat.Value() == "binary") {
 	trace_format = 1;
-	trace = fopen(KnobTraceFile.Value().c_str(), "wb");
+
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+		sprintf(nameBuffer, "%s-%" PRIu32 ".trace", KnobTraceFile.Value().c_str(), i);
+		trace[i] = fopen(nameBuffer, "wb");
+	}
+
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+		fileBuffers[i] = (char*) malloc(sizeof(char) * KnobFileBufferSize.Value());
+		setvbuf(trace[i], fileBuffers[i], _IOFBF, (size_t) KnobFileBufferSize.Value());
+	}
+#ifdef PROSPERO_LIBZ
     } else if(KnobTraceFormat.Value() == "compressed") {
 	trace_format = 2;
-	trace = (FILE*) gzopen(KnobTraceFile.Value().c_str(), "wb");
+
+	for(UINT32 i = 0; i < max_thread_count; ++i) {
+		sprintf(nameBuffer, "%s-%" PRIu32 "-gz.trace", KnobTraceFile.Value().c_str(), i);
+		trace[i] = (FILE*) gzopen(nameBuffer, "wb");
+	}
+#endif
     } else {
 	std::cerr << "Error: Unknown trace format: " << KnobTraceFormat.Value() << "." << std::endl;
         exit(-1);
     }
 
-    instruction_count = 0;
+    posix_memalign((void**) &thread_instr_id, 64, sizeof(threadRecord) * max_thread_count);
+    for(UINT32 i = 0; i < max_thread_count; ++i) {
+	thread_instr_id[i].insCount = 0;
+	thread_instr_id[i].threadInit = 0;
+    }
 
-    std::cout << "TRACE: Checking for specific routine instrumentation...";
+    // Thread zero is always started
+    thread_instr_id[0].threadInit = 1;
+
+    std::cout << "PROSPERO: Checking for specific routine instrumentation...";
 
     if(KnobInsRoutine.Value() == "") {
 	std::cout << "not found, instrument all routines." << std::endl;
