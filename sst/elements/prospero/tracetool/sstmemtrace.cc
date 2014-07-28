@@ -230,7 +230,11 @@ VOID Instruction(INS ins, VOID *v)
 }
 
 VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
-	if(RTN_Name(rtn) == "_prospero_enable_tracing") {
+	if(RTN_Name(rtn) == "prospero_enable_tracing") {
+		RTN_Replace(rtn, (AFUNPTR) prospero_enable);
+	} else if(RTN_Name(rtn) == "prospero_disable_tracing") {
+		RTN_Replace(rtn, (AFUNPTR) prospero_disable);
+	} else if(RTN_Name(rtn) == "_prospero_enable_tracing") {
 		RTN_Replace(rtn, (AFUNPTR) prospero_enable);
 	} else if(RTN_Name(rtn) == "_prospero_disable_tracing") {
 		RTN_Replace(rtn, (AFUNPTR) prospero_disable);
