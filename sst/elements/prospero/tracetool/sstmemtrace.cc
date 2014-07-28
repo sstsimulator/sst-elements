@@ -92,6 +92,7 @@ VOID PerformInstrumentCountCheck(THREADID id) {
 	}
 
 	if(thread_instr_id[id].threadInit == 0) {
+		printf("PROSPERO: Thread %" PRIu32 " starts at instruction %" PRIu64 "\n", id, thread_instr_id[0].insCount);
 		// Copy over instructions from thread zero and mark started;
 		thread_instr_id[id].insCount = thread_instr_id[0].insCount;
 		thread_instr_id[id].threadInit = 1;
