@@ -177,8 +177,14 @@ void copy(void* dest, void* source, int source_offset, int length) {
 read_trace_return prospero::readNextRequest(memory_request* req) {
 	assert(NULL != trace_input);
 
-	if(feof(trace_input)) {
-		return READ_FAILED_EOF;
+	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_TEXT == trace_format) ) {
+		if( feof(trace_input) ) {
+			return READ_FAILED_EOF;
+		}
+	} else if( PROSPERO_TRACE_COMPRESSED == trace_format ) {
+		if( gzeof((gzFile) trace_input) ) {
+			return READ_FAILED_EOF;
+		}
 	}
 
   	output->verbose(CALL_INFO, 2, 0, "Processing next memory request...\n");

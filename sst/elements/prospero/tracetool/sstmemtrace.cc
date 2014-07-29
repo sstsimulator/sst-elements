@@ -43,8 +43,8 @@ FILEPTR* trace;
 typedef struct {
 	UINT64 threadInit;
 	UINT64 insCount;
-	UINT64 padA;
-	UINT64 padB;
+	UINT64 readCount;
+	UINT64 writeCount;
 	UINT64 padC;
 	UINT64 padD;
 	UINT64 padE;
@@ -114,23 +114,25 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
     if(0 == trace_format) {
 
     } else if (1 == trace_format) {
-	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
 	if(thr < max_thread_count && (traceEnabled > 0)) {
     		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+		thread_instr_id[thr].readCount++;
 	}
 #ifdef PROSPERO_LIBZ
     } else if (2 == trace_format) {
-	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
 	if(thr < max_thread_count && (traceEnabled > 0)) {
-		gzwrite((gzFile) trace, RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+		gzwrite((gzFile) trace[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+		thread_instr_id[thr].readCount++;
 	}
 #endif
    }
@@ -155,23 +157,25 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
     if(0 == trace_format) {
 
     } else if(1 == trace_format) {
-    	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
 	if(thr < max_thread_count && (traceEnabled > 0)) {
    		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+		thread_instr_id[thr].writeCount++;
 	}
 #ifdef PROSPERO_LIBZ
    } else if(2 == trace_format) {
-    	copy(RECORD_BUFFER, &instruction_count, 0, sizeof(uint64_t) );
+    	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
 	if(thr < max_thread_count && (traceEnabled > 0)) {
 		gzwrite((gzFile) trace[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+		thread_instr_id[thr].writeCount++;
 	}
 #endif
    }
@@ -279,6 +283,8 @@ VOID Fini(INT32 code, VOID *v)
 #endif
     }
 
+    printf("PROSPERO: Thread read entries:     %llu\n", thread_instr_id[0].readCount);
+    printf("PROSPERO: Thread write entries:    %llu\n", thread_instr_id[0].writeCount);
     printf("PROSPERO: Done.\n");
 }
 
