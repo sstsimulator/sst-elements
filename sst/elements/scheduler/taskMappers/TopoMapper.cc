@@ -173,7 +173,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     }
 
     // convert to SST's task map info
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, *machine);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
     for(unsigned int i = 0; i < mapping.size(); i++){
         tmi->insert(i, allocInfo->nodeIndices[mapping[i]]);
     }

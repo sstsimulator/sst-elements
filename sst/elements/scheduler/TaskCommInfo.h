@@ -24,9 +24,9 @@ namespace SST {
         
 	        public:
 		        TaskCommInfo(Job* job); //default: all-to-all communication
-	            TaskCommInfo(Job* job, std::vector<int*>* inCommInfo); // communication matrix input
+	            TaskCommInfo(Job* job, std::vector<std::vector<std::vector<int>*> >* inCommInfo); // communication matrix input
 	            TaskCommInfo(Job* job, int xdim, int ydim, int zdim); // mesh dimension input
-	            TaskCommInfo(Job* job, std::vector<int*>* inCommInfo, double** inCoords); //coordinate input
+	            TaskCommInfo(Job* job, std::vector<std::vector<std::vector<int>*> >* inCommInfo, double** inCoords); //coordinate input
 
                 TaskCommInfo(const TaskCommInfo& tci);
                 
@@ -40,6 +40,10 @@ namespace SST {
                 };
 
                 int** getCommMatrix() const;
+                //return the communication info of a single task
+                //first vector: 0:communication info, 1: corresponding weights
+                //second vector: neighbor indices
+                std::vector<std::vector<int> >* getCommOfTask(unsigned int taskNo) const;
                 int getCommWeight(int task1, int task2) const;
                 int getSize() const { return size; }
                 commType getCommType() const { return taskCommType; }
@@ -48,15 +52,18 @@ namespace SST {
 		        int xdim, ydim, zdim;
 
 	        private:
-		        std::vector<int*>* commInfo;
-		        commType taskCommType;
-		        int size;
+                commType taskCommType;
+                //first vector: 0:communication info, 1: corresponding weights
+                //second & third vectors: adjacency list of tasks
+                std::vector<std::vector<std::vector<int>*> >* commInfo;
+
+		        unsigned int size;
 		        
 		        void init(Job* job);
-		        int** buildMeshComm() const; //builds mesh structured communication matrix
-		        int** buildAllToAllComm(int size) const;
-		        int** commInfoToMatrix() const;
-		        void getTaskDim(int taskNo, int outDims[3]) const; //returns task position for mesh structure
+		        int** buildMeshMatrix() const; //builds mesh structured communication matrix
+		        int** buildAllToAllMatrix(int size) const;
+		        int** buildCustomMatrix() const;
+		        void getTaskDims(int taskNo, int outDims[3]) const; //returns task position for mesh structure
         };
     }
 }

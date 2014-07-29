@@ -284,7 +284,7 @@ void CommParser::parseComm(Job * job)
     }
 }
 
-vector<int*>* CommParser::readCommFile(std::string fileName, int procsNeeded)
+vector<vector<vector<int>*> >* CommParser::readCommFile(std::string fileName, int procsNeeded)
 {
     //read matrix
 	MatrixMarketReader2D<int> reader = MatrixMarketReader2D<int>();
@@ -296,8 +296,25 @@ vector<int*>* CommParser::readCommFile(std::string fileName, int procsNeeded)
 	} else if(reader.xdim != procsNeeded){
     	schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", fileName.c_str());
     }
-    
-	return dataVec;
+
+	//convert matrix to adjacency list & weight list
+	//init vectors
+	vector<vector<vector<int>*> > *retVec = new vector<vector<vector<int>*> >(2); //0: adjacency, 1: weights
+	retVec->at(0).resize(procsNeeded);
+	retVec->at(1).resize(procsNeeded);
+	for(int i = 0; i < procsNeeded; i++){
+	    retVec->at(0)[i] = new vector<int>(0);
+        retVec->at(1)[i] = new vector<int>(0);
+	}
+	//fill with data
+	for(unsigned int i = 0; i < dataVec->size(); i++){
+	    retVec->at(0)[dataVec->at(i)[0]]->push_back(dataVec->at(i)[1]); //adjacency
+        retVec->at(1)[dataVec->at(i)[0]]->push_back(dataVec->at(i)[2]); //weight
+	    delete [] dataVec->at(i);
+	}
+	delete dataVec;
+
+	return retVec;
 }
 
 double** CommParser::readCoordFile(std::string fileName, int procsNeeded)

@@ -69,7 +69,9 @@ namespace SST {
                 ~CommParser() { }
                 void parseComm(Job *job);
             private:
-                std::vector<int*>* readCommFile(std::string fileName, int procsNeeded);
+                //first vector: 0:communication info, 1: corresponding weights
+                //second & third vectors: adjacency list of tasks
+                std::vector<std::vector<std::vector<int>*> >* readCommFile(std::string fileName, int procsNeeded);
                 double** readCoordFile(std::string fileName, int procsNeeded);
         };
         
