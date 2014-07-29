@@ -69,9 +69,7 @@ public:
     virtual void handleInvalidate(int lineIndex, Command cmd, bool _mshrHit){return;}
 
     /** Create MemEvent and send Response to HgLvl caches */
-    bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit);
-   
-    bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic);
+    bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic = false);
 
     /** Look at the outgoing queue buffer to see if we need to send an memEvent through the SST Links */
     void sendOutgoingCommands(){

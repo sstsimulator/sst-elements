@@ -358,12 +358,6 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 
 
 
-bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit){
-    return sendResponse(_event, _newState, _data, _mshrHit, false);
-}
-
-
-
 bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
     if(_event->isPrefetch()) return true;
     
@@ -379,7 +373,7 @@ bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
         if(cmd != GetX) responseEvent->setPayload(_event->getSize(), &_data->at(offset));
         else{
             /* If write (GetX) and LLSC set, then check if operation was Atomic */
-            if(_event->isAtomic() && _finishedAtomically) responseEvent->setAtomic(true);
+  	    if(_finishedAtomically) responseEvent->setAtomic(true);
             else responseEvent->setAtomic(false);
         }
     }
