@@ -143,61 +143,46 @@ int** TaskCommInfo::getCommMatrix() const
     return outMatrix;
 }
 
-std::vector<std::vector<int> >* TaskCommInfo::getCommOfTask(unsigned int taskNo) const
+std::vector<std::vector<std::vector<int>*> >* TaskCommInfo::getCommInfo() const
 {
-    std::vector<std::vector<int> >* retVec = new std::vector<std::vector<int> >(2);
+    std::vector<std::vector<std::vector<int>*> >* retVec = new std::vector<std::vector<std::vector<int>*> >(2);
+    retVec->at(0).resize(size);
+    retVec->at(1).resize(size);
     unsigned int cnt;
+
     switch(taskCommType){
     case ALLTOALL:
-        retVec->at(0).resize(size - 1);
-        retVec->at(1).resize(size - 1);
-        cnt = 0;
-        for(unsigned int i = 0; i < size; i++){
-            if(i != taskNo){
-                retVec->at(0)[cnt] = i;
-                retVec->at(1)[cnt] = 1;
-                cnt++;
+        for(unsigned int taskIt = 0; taskIt < size; taskIt++){
+            retVec->at(0)[taskIt] = new std::vector<int>(size - 1);
+            retVec->at(1)[taskIt] = new std::vector<int>(size - 1);
+            cnt = 0;
+            for(unsigned int otherIt = 0; otherIt < size; otherIt++){
+                if(otherIt != taskIt){
+                    retVec->at(0)[taskIt]->at(cnt) = otherIt;
+                    retVec->at(1)[taskIt]->at(cnt) = 1;
+                    cnt++;
+                }
             }
         }
         break;
     case MESH:
-        int taskDims[3];
-        getTaskDims(taskNo, taskDims);
-        //x-neighbors
-        if(taskDims[0] != 0){
-            retVec->at(0).push_back(taskNo - 1);
-            retVec->at(1).push_back(1);
-        }
-        if(taskDims[0] != xdim - 1){
-            retVec->at(0).push_back(taskNo + 1);
-            retVec->at(1).push_back(1);
-        }
-        //y-neighbors
-        if(taskDims[1] != 0){
-            retVec->at(0).push_back(taskNo - xdim);
-            retVec->at(1).push_back(1);
-        }
-        if(taskDims[1] != ydim - 1){
-            retVec->at(0).push_back(taskNo + xdim);
-            retVec->at(1).push_back(1);
-        }
-        //z-neighbors
-        if(taskDims[2] != 0){
-            retVec->at(0).push_back(taskNo - (xdim * ydim));
-            retVec->at(1).push_back(1);
-        }
-        if(taskDims[1] != zdim - 1){
-            retVec->at(0).push_back(taskNo + (xdim * ydim));
-            retVec->at(1).push_back(1);
+        for(unsigned int taskIt = 0; taskIt < size; taskIt++){
+            retVec->at(0)[taskIt] = new std::vector<int>();
+            retVec->at(1)[taskIt] = new std::vector<int>();
+            for(unsigned int otherIt = 0; otherIt < size; otherIt++){
+                int weight = getCommWeight(taskIt, otherIt);
+                if(weight != 0){
+                    retVec->at(0)[taskIt]->push_back(otherIt);
+                    retVec->at(1)[taskIt]->push_back(weight);
+                }
+            }
         }
         break;
     case CUSTOM:
     case COORDINATE:
-        retVec->at(0).resize(commInfo->at(0)[taskNo]->size());
-        retVec->at(1).resize(commInfo->at(0)[taskNo]->size());
-        for(unsigned int i = 0; i < commInfo->at(0)[taskNo]->size(); i++){
-            retVec->at(0)[i] = commInfo->at(0)[taskNo]->at(i);
-            retVec->at(1)[i] = commInfo->at(1)[taskNo]->at(i);
+        for(unsigned int taskIt = 0; taskIt < size; taskIt++){
+            retVec->at(0)[taskIt] = new std::vector<int>(*(commInfo->at(0)[taskIt]));
+            retVec->at(1)[taskIt] = new std::vector<int>(*(commInfo->at(1)[taskIt]));
         }
         break;
     default:

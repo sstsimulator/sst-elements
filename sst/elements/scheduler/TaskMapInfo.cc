@@ -54,16 +54,20 @@ double TaskMapInfo::getAvgHopDist(const MeshMachine & machine)
         int neighborCount = 0;
 
         //iterate through all tasks
+        std::vector<std::vector<std::vector<int>*> >* commInfo = taskCommInfo->getCommInfo();
         for(int taskIter = 0; taskIter < size; taskIter++){
-            std::vector<std::vector<int> >* commVec = taskCommInfo->getCommOfTask(taskIter);
             //iterate through communicating tasks and add distance for communication
-            for(unsigned int otherTaskIter = 0; otherTaskIter < commVec->at(0).size(); otherTaskIter++){
-                totalHopDist += machine.getNodeDistance(taskToNode[taskIter], taskToNode[commVec->at(0)[otherTaskIter]])
-                                * commVec->at(1)[otherTaskIter]; // multiply hop distance with communication weight
+            for(unsigned int otherTaskIter = 0; otherTaskIter < commInfo->at(0)[taskIter]->size(); otherTaskIter++){
+                totalHopDist += machine.getNodeDistance(taskToNode[taskIter], taskToNode[commInfo->at(0)[taskIter]->at(otherTaskIter)])
+                                * commInfo->at(1)[taskIter]->at(otherTaskIter); // multiply hop distance with communication weight
                 neighborCount++;
             }
-            delete commVec;
+            delete commInfo->at(0)[taskIter];
+            delete commInfo->at(1)[taskIter];
         }
+        delete commInfo;
+
+        //delete commVec
 
         //distance per neighbor
         //two-way distances and uncounted neighbors cancel each other

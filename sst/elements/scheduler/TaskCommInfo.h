@@ -39,11 +39,10 @@ namespace SST {
                     COORDINATE = 3,
                 };
 
-                int** getCommMatrix() const;
-                //return the communication info of a single task
                 //first vector: 0:communication info, 1: corresponding weights
-                //second vector: neighbor indices
-                std::vector<std::vector<int> >* getCommOfTask(unsigned int taskNo) const;
+                //second & third vectors: adjacency list of tasks
+                std::vector<std::vector<std::vector<int>*> >* getCommInfo() const;
+                int** getCommMatrix() const;
                 int getCommWeight(int task1, int task2) const;
                 int getSize() const { return size; }
                 commType getCommType() const { return taskCommType; }
