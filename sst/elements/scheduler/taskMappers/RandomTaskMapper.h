@@ -14,8 +14,6 @@
 
 #include "TaskMapper.h"
 
-#include "sst/core/rng/marsaglia.h"
-
 #include <string>
 
 namespace SST {
@@ -29,18 +27,15 @@ namespace SST {
         
 	        public:
 	        
-		        RandomTaskMapper(Machine* mach);
+		        RandomTaskMapper(const Machine & mach);
 		        
 		        ~RandomTaskMapper();
 		        
 		        std::string getSetupInfo(bool comment) const;
 
 		        TaskMapInfo* mapTasks(AllocInfo* allocInfo);
-		    
-		    private:
-		    
-		        SST::RNG::MarsagliaRNG* rng;
         };
     }
 }
 #endif /* SST_SCHEDULER_RANDOMTASKMAPPER_H__ */
+

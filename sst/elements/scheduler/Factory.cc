@@ -439,25 +439,31 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
 {
     TaskMapper* taskMapper;
     if(params.find("taskMapper") == params.end()){
-        taskMapper = new SimpleTaskMapper(mach);
+        taskMapper = new SimpleTaskMapper(*mach);
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Task Mapper\n");
     } else {
+        MeshMachine *mMachine = dynamic_cast<MeshMachine*>(mach);
         vector<string>* taskmapparams = parseparams(params["taskMapper"]);
         switch (taskmappername( taskmapparams->at(0) )){
         case SIMPLEMAP:
-            taskMapper = new SimpleTaskMapper(mach);
+            taskMapper = new SimpleTaskMapper(*mach);
             break;
         case RCBMAP:
-            taskMapper = new RCBTaskMapper(mach);
+            if(mMachine == NULL){
+                schedout.fatal(CALL_INFO, 1, "RCB Mapper requires mesh machine");
+                taskMapper = NULL;
+            } else { 
+                taskMapper = new RCBTaskMapper(*mMachine);
+            }
             break;
         case RANDOMMAP:
-            taskMapper = new RandomTaskMapper(mach);
+            taskMapper = new RandomTaskMapper(*mach);
             break;
         case TOPOMAP:
-            taskMapper = new TopoMapper(mach, TopoMapper::RECURSIVE);
+            taskMapper = new TopoMapper(*mach, TopoMapper::RECURSIVE);
             break;
         case RCMMAP:
-            taskMapper = new TopoMapper(mach, TopoMapper::RCM);
+            taskMapper = new TopoMapper(*mach, TopoMapper::RCM);
             break;            
         default: 
             taskMapper = NULL;

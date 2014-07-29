@@ -32,9 +32,10 @@ TaskMapInfo* SimpleTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
     int jobSize = allocInfo->job->getProcsNeeded();
-    int coresPerNode = machine->getNumCoresPerNode();
+    int coresPerNode = mach.getNumCoresPerNode();
     for(int i = 0; i < jobSize; i++){
         tmi->insert(i, allocInfo->nodeIndices[i/coresPerNode]);
     }
     return tmi;
 }
+

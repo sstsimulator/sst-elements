@@ -11,7 +11,6 @@
 
 #include "RCBTaskMapper.h"
 
-#include <iostream> //debug
 #include <cmath>
 #include <cfloat>
 
@@ -26,12 +25,9 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-RCBTaskMapper::RCBTaskMapper(Machine* mach) : TaskMapper(mach)
+RCBTaskMapper::RCBTaskMapper(const MeshMachine & inMach) : TaskMapper(mach), mMachine(inMach)
 {
-    mMachine = dynamic_cast<MeshMachine*>(machine);
-    if(mMachine == NULL){
-        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
-    }
+
 }
 
 std::string RCBTaskMapper::getSetupInfo(bool comment) const
@@ -60,14 +56,14 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     int jobSize = job->getProcsNeeded();
 
     //dummy rotator for initialization
-    Rotator dummyRotator = Rotator(*this, *mMachine);
+    Rotator dummyRotator = Rotator(*this, mMachine);
 
     //get node locations
     vector<MeshLocation>* nodes = new vector<MeshLocation>();
     for(int i = 0; i < allocInfo->getNodesNeeded(); i++){
         //put the same node location for each core
-        for(int j = 0; j < machine->getNumCoresPerNode(); j++){
-            MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], *mMachine);
+        for(int j = 0; j < mMachine.getNumCoresPerNode(); j++){
+            MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], mMachine);
             nodes->push_back(loc);
         }
     }
@@ -80,7 +76,7 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     Grouper<int> taskGroup = Grouper<int>(tasks, &dummyRotator);
 
     //apply rotation
-    Rotator rotator = Rotator(&nodeGroup, &taskGroup, *this, *mMachine);
+    Rotator rotator = Rotator(&nodeGroup, &taskGroup, *this, mMachine);
 
     //map
     mapTaskHelper(&nodeGroup, &taskGroup, tmi);
@@ -98,7 +94,7 @@ void RCBTaskMapper::mapTaskHelper(Grouper<MeshLocation>* inLocs, Grouper<int>* i
 {
     if(inTasks->elements->size() == 1){
         //map node to task
-        tmi->insert(inTasks->elements->at(0), inLocs->elements->at(0).toInt(*mMachine));
+        tmi->insert(inTasks->elements->at(0), inLocs->elements->at(0).toInt(mMachine));
     } else {
         Grouper<MeshLocation>** firstLocs = new Grouper<MeshLocation>*();
         Grouper<MeshLocation>** secondLocs = new Grouper<MeshLocation>*();
@@ -372,6 +368,6 @@ int RCBTaskMapper::Rotator::getTaskNum(int taskID) const
 
 int RCBTaskMapper::Rotator::getTaskNum(MeshLocation loc) const
 {
-    return loc.toInt(*(rcb.mMachine));
+    return loc.toInt(rcb.mMachine);
 }
 

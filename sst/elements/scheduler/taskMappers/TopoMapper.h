@@ -30,12 +30,12 @@ namespace SST {
             public:
 
                 enum AlgorithmType{
-                    RCM = 0, //reverse Cuthill Mckee algorithm //disabled
+                    RCM = 0, //reverse Cuthill Mckee algorithm
                     RECURSIVE = 1,
                     //GREEDY = 2, //not implemented
                 };
 
-                TopoMapper(Machine* mach, AlgorithmType mode);
+                TopoMapper(const Machine & mach, AlgorithmType mode);
                 ~TopoMapper();
 
                 std::string getSetupInfo(bool comment) const;
@@ -56,7 +56,8 @@ namespace SST {
 
                 void setup(AllocInfo* allocInfo);
                 int mapRCM(std::vector<std::vector<int> > *commGraph_ref,
-                           std::vector<int> *mapping_ref );
+                           std::vector<int> *mapping_ref
+                           );
 
                 int mapRecursive(std::vector<std::vector<int> > *nodeGraph_ref,
                                  std::vector<std::vector<int> > *networkWeights_ref,
@@ -65,10 +66,12 @@ namespace SST {
                                  std::vector<std::vector<int> > *weights_ref,
                                  std::vector<int> *mapping_ref,
                                  std::vector<int> commGraph_map,
-                                 std::vector<int> *nodeGraph_map_ref );
+                                 std::vector<int> *nodeGraph_map_ref
+                                 );
 
         };
     }
 }
 
 #endif /* SST_SCHEDULER_TOPOMAPPER_H_ */
+

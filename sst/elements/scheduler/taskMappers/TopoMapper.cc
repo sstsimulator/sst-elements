@@ -31,7 +31,7 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-TopoMapper::TopoMapper(Machine* mach, AlgorithmType mode) : TaskMapper(mach)
+TopoMapper::TopoMapper(const Machine & mach, AlgorithmType mode) : TaskMapper(mach)
 {
     algorithmType = mode;
 }
@@ -63,7 +63,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
 
     //Call SimpleTaskMapper if <= 2 tasks are provided
     if(numTasks <= 2 || numNodes == 1){
-        SimpleTaskMapper simpleMapper = SimpleTaskMapper(machine);
+        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mach);
         return simpleMapper.mapTasks(allocInfo);
     }
 
@@ -77,13 +77,13 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
 #endif
     //Partition task if nodes have homogeneous multiple processors
     //Current code does not support heterogeneous case
-    if( machine->getNumCoresPerNode() > 1){
+    if( mach.getNumCoresPerNode() > 1){
 #ifdef HAVE_METIS
         idx_t objval; //objective function result
 
         idx_t nvtxs = numTasks;
         idx_t ncon = 1; //number of balancing constraints
-        idx_t nparts = ceil((double) numTasks / machine->getNumCoresPerNode()); //number of parts to partition
+        idx_t nparts = ceil((double) numTasks / mach.getNumCoresPerNode()); //number of parts to partition
 
         //create graph info in CSR format
         vector<idx_t> xadj;
@@ -111,7 +111,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     }
 
     //build node topology graph for new task distribution
-    vector<vector<int> > nodeTopGraph(ceil((double) numTasks / machine->getNumCoresPerNode()));
+    vector<vector<int> > nodeTopGraph(ceil((double) numTasks / mach.getNumCoresPerNode()));
     vector<vector<int> > nodeTopGraphWeights(nodeTopGraph.size()); // edge weights
     for(unsigned int source = 0; source < commGraph.size(); ++source) {
         for(unsigned int j = 0; j < commGraph[source].size(); ++j) {
@@ -219,7 +219,7 @@ void TopoMapper::setup(AllocInfo* allocInfo)
     //add node weights
     numCores = vector<int>(numNodes);
 
-    std::fill(numCores.begin(), numCores.end(), machine->getNumCoresPerNode());
+    std::fill(numCores.begin(), numCores.end(), mach.getNumCoresPerNode());
 
     //create node graph
     for(int i = 0; i < numNodes; i++){
@@ -229,7 +229,7 @@ void TopoMapper::setup(AllocInfo* allocInfo)
     for(int i = 0; i < numNodes; i++){
         for(int j = 0; j < numNodes; j++){ //make the graph symmetric
             //assuming neighbors have distance of 1
-            if(machine->getNodeDistance(allocInfo->nodeIndices[i], allocInfo->nodeIndices[j]) == 1){
+            if(mach.getNodeDistance(allocInfo->nodeIndices[i], allocInfo->nodeIndices[j]) == 1){
                 phyGraph[i].push_back(j);
                 networkWeights[i].push_back(1);
             }

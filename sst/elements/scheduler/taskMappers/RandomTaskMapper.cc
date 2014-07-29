@@ -20,7 +20,7 @@
 
 using namespace SST::Scheduler;
 
-RandomTaskMapper::RandomTaskMapper(Machine* mach) : TaskMapper(mach)
+RandomTaskMapper::RandomTaskMapper(const Machine & mach) : TaskMapper(mach)
 {
 }
 
@@ -48,7 +48,7 @@ TaskMapInfo* RandomTaskMapper::mapTasks(AllocInfo* allocInfo)
     std::vector<int> availableCores = std::vector<int>();
 
     for(int i = 0; i < allocInfo->getNodesNeeded(); i++){
-        availableCores.push_back(machine->getNumCoresPerNode());
+        availableCores.push_back(mach.getNumCoresPerNode());
         available.push_back(allocInfo->nodeIndices[i]);
     }
     

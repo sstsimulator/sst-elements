@@ -33,7 +33,7 @@ namespace SST {
 
             public:
 
-                RCBTaskMapper(Machine* mach);
+                RCBTaskMapper(const MeshMachine & inMach);
 
                 ~RCBTaskMapper() { };
 
@@ -101,7 +101,7 @@ namespace SST {
                         int* indMap; // the mesh locations may not be ordered. This saves the loc indexes
                 };
 
-                MeshMachine* mMachine;
+                const MeshMachine & mMachine;
                 std::vector<MeshLocation> nodeLocs;
                 TaskCommInfo *tci;
                 Job* job;

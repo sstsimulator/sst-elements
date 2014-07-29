@@ -98,7 +98,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     Scheduler* sched = insched -> copy(running, toRun);
     Machine* mach = new SimpleMachine(inmach->getNumNodes(), true, inmach->getNumCoresPerNode(), NULL);
     Allocator* alloc = new SimpleAllocator((SimpleMachine*) mach);
-    TaskMapper* taskMap = new SimpleTaskMapper(mach);
+    TaskMapper* taskMap = new SimpleTaskMapper(*mach);
     string nullstr = "";
     char nullcstr[] = "";
     map<Job*, AllocInfo*>* jobToAi = new map<Job*, AllocInfo*>();
@@ -248,7 +248,7 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
 {
     AllocInfo* ai;
     Job* newJob;
-    SimpleTaskMapper taskMapper = SimpleTaskMapper(mach);
+    SimpleTaskMapper taskMapper = SimpleTaskMapper(*mach);
     TaskMapInfo* tmi;
     do {
         newJob = sched->tryToStart(time, *mach);

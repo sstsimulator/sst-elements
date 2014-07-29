@@ -27,7 +27,7 @@ namespace SST {
         
 	        public:
 	        
-		        SimpleTaskMapper(Machine* mach) : TaskMapper(mach) { };
+		        SimpleTaskMapper(const Machine & mach) : TaskMapper(mach) { };
 		        
 		        std::string getSetupInfo(bool comment) const;
 
@@ -36,3 +36,4 @@ namespace SST {
     }
 }
 #endif /* SST_SCHEDULER_SIMPLETASKMAPPER_H__ */
+
