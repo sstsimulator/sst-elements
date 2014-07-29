@@ -173,6 +173,7 @@ private:
   bool performVirtualTranslation;
   uint64_t lineCount;
 
+  SST::Output* output;
   SimpleMem* cache_link;
 
   friend class boost::serialization::access;

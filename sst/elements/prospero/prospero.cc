@@ -11,6 +11,7 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+
 #include "prospero.h"
 
 #include <assert.h>
@@ -27,44 +28,27 @@ prospero::prospero(ComponentId_t id, Params& params) :
   trace_format = 0;
 
   // Work out how much we're supposed to be reporting.
-  if( params.find("outputlevel") != params.end() ) {
-	output_level = params.find_integer("outputlevel", 0);
-  }
+  output_level = params.find_integer("verbose", 0);
+  output = new SST::Output("Prospero[@p:@l] ", (uint32_t) output_level, (uint32_t) 0, SST::Output::STDOUT);
 
   if(params.find_string("traceformat") == "compressed") {
+	output->verbose(CALL_INFO, 2, 0, "Trace format will be loaded as a compressed binary file.\n");
 	trace_format = PROSPERO_TRACE_COMPRESSED;
   } else if(params.find_string("traceformat") == "binary" ) {
+	output->verbose(CALL_INFO, 2, 0, "Trace format will be loaded as an uncompressed binary file.\n");
 	trace_format = PROSPERO_TRACE_BINARY;
   } else if(params.find_string("traceformat") == "text") {
+	output->verbose(CALL_INFO, 2, 0, "Trace format will be loaded as a text file.\n");
 	trace_format = PROSPERO_TRACE_TEXT;
   } else {
-	trace_format = PROSPERO_TRACE_TEXT;
+	output->fatal(CALL_INFO, -1, "Unknown trace format, please specify text, compressed or binary.\n");
   }
 
-  if( params.find("maximum_items") == params.end() ) {
-  	max_trace_count = 4611686018427390000;
+  max_trace_count = (uint64_t) params.find_integer("max_entries", 4611686018427390000);
+  output->verbose(CALL_INFO, 2, 0, "Maximum trace items to process set to %" PRIu64 "\n", max_trace_count);
 
-	if(output_level > 0) {
-		std::cout << "TRACE:  Did not find trace limit, setting to: " << max_trace_count << std::endl;
-	}
-  } else {
-  	max_trace_count = atol( params[ "maximum_items" ].c_str() );
-
-	if(output_level > 0) {
-		std::cout << "TRACE:  Found maximum trace limit: " << max_trace_count << std::endl;
-	}
-  }
-
-  if( params.find("physlimit") == params.end() ) {
-	// set to be 1GB
-	phys_limit = 1024 * 1024 * 1024;
-  } else {
-	phys_limit = (uint64_t) atol( params[ "physlimit" ].c_str() ) * 1024 * 1024;
-
-	if(output_level > 0) {
-		std::cout << "TRACE:  Set maximum address to be " << phys_limit << std::endl;
-	}
-  }
+  phys_limit = (uint64_t) params.find_integer("physlimit", 1024 * 1024 * 1024);
+  output->verbose(CALL_INFO, 2, 0, "Physical memory limit addressable from core set to %" PRIu64 "\n", phys_limit);
 
   // Check if we should perform virtual to physical mapping.
   uint32_t performVtoP = (uint32_t) params.find_integer("translateaddresses", 1);
@@ -75,17 +59,30 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	std::cerr << "Could not find \'trace\' parameter in simulation SDL file." << std::endl;
 	exit(-1);
   } else {
-	if(output_level > 0) {
-		std::cout << "TRACE:  Load trace information from: " << params[ "trace" ] << std::endl;
-	}
+	output->verbose(CALL_INFO, 2, 0, "Trace will be loaded from: %s\n", params.find_string("trace").c_str());
 
 	if(PROSPERO_TRACE_BINARY == trace_format) {
 		trace_input = fopen(params["trace"].c_str(), "rb");
+
+		if( NULL == trace_input ) {
+			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using binary trace library.\n",
+				params["trace"].c_str());
+		}
 	} else if (PROSPERO_TRACE_TEXT == trace_format) {
 		trace_input = fopen(params["trace"].c_str(), "rt");
+
+		if( NULL == trace_input ) {
+			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using text trace library.\n",
+				params["trace"].c_str());
+		}
 	} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
 		trace_input = (FILE*) gzopen(params["trace"].c_str(), "r");
+
+		if( NULL == trace_input ) {
+			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using compressed trace library.\n",
+				params["trace"].c_str());
+		}
 #else
 		std::cerr << "Error: Prospero requested a compressed (libz) trace file but libz is not used in the build of SST.\n");
 		exit(-1);
@@ -94,14 +91,9 @@ prospero::prospero(ComponentId_t id, Params& params) :
 		printf("Unknown trace format? %" PRIu32 "\n", trace_format);
 		exit(-2);
 	}
-
-	if(trace_input == NULL) {
-		std::cerr << "TRACE:  Unable to open trace file: " <<
-			params["trace"] << ", component will halt." << std::endl;
-		exit(-1);
-	}
-	//trace_input.open(params["trace"].c_str(), fstream::in);
   }
+
+  output->verbose(CALL_INFO, 2, 0, "Trace loaded successfully.\n");
 
   if( params.find("request_limit") == params.end() ) {
 	pending_request_limit = 16;
@@ -118,57 +110,27 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	queue_count_bins[i] = 0;
   }
 
-  if( params.find("page_size") == params.end() ) {
-	page_size = 4096;
-  } else {
-	page_size = atoi( params[ "page_size" ].c_str() );
+  page_size = (uint32_t) params.find_integer("page_size", 4096);
+  output->verbose(CALL_INFO, 2, 0, "Page size set to %" PRIu32 " bytes.\n", page_size);
 
-	if(output_level > 0) {
-		std::cout << "TRACE:  Configuring traces for a page size of " << page_size << " bytes" << std::endl;
-	}
-  }
-  next_page_start = 0;
+  max_tick_count = (uint64_t) params.find_integer("max_ticks", 4611686018427390000);
+  output->verbose(CALL_INFO, 2, 0, "Maximum tick count set to: %" PRIu64 "\n", max_tick_count);
 
-  if( params.find("max_ticks") == params.end() ) {
-	max_tick_count = 4611686018427390000;
-  } else {
-	max_tick_count = atol( params[ "max_ticks" ].c_str() );
+  cache_line_size = (uint32_t) params.find_integer("cache_line", 64);
+  output->verbose(CALL_INFO, 2, 0, "Cache line size set to %" PRIu32 " bytes.\n", cache_line_size);
 
-	if(output_level > 0) {
-		std::cout << "TRACE:  Max ticks configured for " << max_tick_count << std::endl;
-	}
-  }
+  timeMultiplier = (double) params.find_floating("timemultiplier", 1.0);
+  output->verbose(CALL_INFO, 2, 0, "Time multiplier set to %f\n", timeMultiplier);
 
-  if( params.find("cache_line") == params.end() ) {
-	cache_line_size = 64;
-  } else {
-	cache_line_size = atol( params[ "cache_line" ].c_str() );
+  output->verbose(CALL_INFO, 2, 0, "Registering the Prospero core clock...\n");
+  string clock_rate = params.find_string("clock", "2GHz");
 
-	if(output_level > 0) {
-		std::cout << "TRACE:  Cache line size configured for " << cache_line_size << std::endl;
-	}
-  }
+  output->verbose(CALL_INFO, 2, 0, "Clock frequency set to: %s.\n", clock_rate.c_str());
+  registerClock(clock_rate, new Clock::Handler<prospero>(this, &prospero::tick));
 
-  timeMultiplier = params.find_floating("timemultiplier", 1.0);
+  output->verbose(CALL_INFO, 2, 0, "Clock registration complete.\n");
 
-  if( params.find("clock") != params.end() ) {
-	string clock_rate = params[ "clock" ];
-
-  	// register the prospero clock for generating addresses
-  	registerClock( clock_rate, new Clock::Handler<prospero>(this, &prospero::tick ) );
-
-	if(output_level > 0) {
-		std::cout << "TRACE:  Component will tick at " << clock_rate << std::endl;
-        }
-  } else {
-	if(output_level > 0) {
-		std::cout << "TRACE:  Component will tick at 2GHz (not specified in input)." << std::endl;
-        }
-
-  	// register the prospero clock for generating addresses
-  	registerClock( "2GHz", new Clock::Handler<prospero>(this, &prospero::tick ) );
-
-  }
+  output->verbose(CALL_INFO, 4, 0, "Creating links to the Simple Memory Interface (as a module)...\n");
 
   // configure link to cache components
   cache_link = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
@@ -199,6 +161,7 @@ prospero::prospero(ComponentId_t id, Params& params) :
   split_request_count = 0;
   new_page_creates = 0;
 
+  output->verbose(CALL_INFO, 4, 0, "Construction of the core and parameters is completed.\n");
 }
 
 void copy(void* dest, void* source, int source_offset, int length) {
@@ -212,13 +175,19 @@ void copy(void* dest, void* source, int source_offset, int length) {
 }
 
 read_trace_return prospero::readNextRequest(memory_request* req) {
+	assert(NULL != trace_input);
+
 	if(feof(trace_input)) {
 		return READ_FAILED_EOF;
 	}
 
+  	output->verbose(CALL_INFO, 2, 0, "Processing next memory request...\n");
+
 	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_COMPRESSED == trace_format) ) {
 		const int record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 		char record_buffer[ record_length ];
+
+		output->verbose(CALL_INFO, 8, 0, "Reading request from trace file...\n");
 
 		if(PROSPERO_TRACE_BINARY == trace_format) {
 			fread(record_buffer, record_length, 1, trace_input);
@@ -231,6 +200,8 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 #endif
 		}
 
+		output->verbose(CALL_INFO, 8, 0, "Read successful, now parsing event arguments...\n");
+
 		char op_type;
 
 		copy(&(req->instruction_count), record_buffer, 0, sizeof(uint64_t));
@@ -239,6 +210,9 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		copy(&(req->size), record_buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
 
 		req->instruction_count = (uint64_t) (((double) req->instruction_count) * timeMultiplier);
+
+		output->verbose(CALL_INFO, 8, 0, "Event information: Operation: %d, Address: %" PRIu64 ", Size: %" PRIu32 " @ Cycle: %" PRIu64 "\n", 
+			(int) req->memory_op_type, req->memory_address, req->size, req->instruction_count);
 
 		// decode memory operation to category the upstream components can use
 		if(op_type == 0) 
@@ -447,15 +421,12 @@ bool prospero::tick( Cycle_t ) {
 		read_trace_return result;
 
 		if(tick_count == 0) {
-			if(output_level > 0) {
-				std::cout << "TRACE:  Reading initial memory request record..." << std::endl;
-			}
+			output->verbose(CALL_INFO, 2, 0, "Reading initial memory request...\n");
 
 			result = readNextRequest( &next_request );
 
-			if(result == READ_FAILED_EOF) {
-				std::cout << "TRACE: Read failed on first record, are you sure file was created successfully?" << std::endl;
-				exit(-1);
+			if(READ_FAILED_EOF == result) {
+				output->fatal(CALL_INFO, -1, "Read initial memory event failed, are you sure the file was created successfully?\n");
 			}
 		}
 
@@ -530,7 +501,7 @@ create_prospero(SST::ComponentId_t id,
 
 static const ElementInfoParam component_params[] = {
     { "clock", "Clock frequency", "2GHz" },
-    { "outputlevel", "Level of messages or information to output", "0"},
+    { "verbose", "Level of messages or information to output", "0"},
     { "maximum_items", "Maximum number of items to be executed", "4611686018427390000"},
     { "physlimit", "Physical maximum address allowed in the memory requests (checks no trace faults/errors)", "1073741824"},
     { "translateaddresses", "Prospero performs a virtual to physical mapping based on malloc/free, default is 1 (yes)", "1"},
