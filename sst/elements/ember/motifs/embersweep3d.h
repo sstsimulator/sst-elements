@@ -36,6 +36,8 @@ private:
 	uint32_t ny;
 	uint32_t nz;
 	uint32_t kba;
+	uint32_t data_width;
+	uint32_t fields_per_cell;
 
 	int32_t  x_up;
 	int32_t  x_down;

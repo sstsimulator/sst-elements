@@ -33,6 +33,9 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 	nz  = (uint32_t) params.find_integer("nz", 50);
 	kba = (uint32_t) params.find_integer("kba", 1);
 
+	data_width = (uint32_t) params.find_integer("datatype_width", 8);
+	fields_per_cell = (uint32_t) params.find_integer("fields_per_cell", 8);
+
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % kba == 0);
 
@@ -78,84 +81,84 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 			// Sweep from (0, 0) outwards towards (Px, Py)
 			for(uint32_t i = 0; i < nz; i+= kba) {
 				if(x_down >= 0) {
-					evQ->push( new EmberRecvEvent(x_down, (nx * kba), 1000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(x_down, (nx * kba * data_width * fields_per_cell), 1000, (Communicator) 0) );
 				}
 
 				if(y_down >= 0) {
-					evQ->push( new EmberRecvEvent(y_down, (ny * kba), 1000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(y_down, (ny * kba * data_width * fields_per_cell), 1000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * fields_per_cell));
 
 				if(x_up >= 0) {
-       		                         evQ->push( new EmberSendEvent(x_up, (nx * kba), 1000, (Communicator) 0) );
+       		                         evQ->push( new EmberSendEvent(x_up, (nx * kba * data_width * fields_per_cell), 1000, (Communicator) 0) );
                		         }
 
 	                        if(y_up >= 0) {
-       		                         evQ->push( new EmberSendEvent(y_up, (ny * kba), 1000, (Communicator) 0) );
+       		                         evQ->push( new EmberSendEvent(y_up, (ny * kba * data_width * fields_per_cell), 1000, (Communicator) 0) );
                		         }
 			}
 
 			// Sweep from (Px, 0) outwards towards (0, Py)
 			for(uint32_t i = 0; i < nz; i+= kba) {
 				if(x_up >= 0) {
-					evQ->push( new EmberRecvEvent(x_up, (nx * kba), 2000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(x_up, (nx * kba * data_width * fields_per_cell), 2000, (Communicator) 0) );
 				}
 
 				if(y_down >= 0) {
-					evQ->push( new EmberRecvEvent(y_down, (ny * kba), 2000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(y_down, (ny * kba * data_width * fields_per_cell), 2000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * data_width * fields_per_cell));
 
 				if(x_down >= 0) {
-       		                         evQ->push( new EmberSendEvent(x_down, (nx * kba), 2000, (Communicator) 0) );
+       		                         evQ->push( new EmberSendEvent(x_down, (nx * kba * data_width * fields_per_cell), 2000, (Communicator) 0) );
 	                        }
 
 	                        if(y_up >= 0) {
-	                                evQ->push( new EmberSendEvent(y_up, (ny * kba), 2000, (Communicator) 0) );
+	                                evQ->push( new EmberSendEvent(y_up, (ny * kba * data_width * fields_per_cell), 2000, (Communicator) 0) );
        		                 }
 			}
 
 			// Sweep from (Px,Py) outwards towards (0,0)
 			for(uint32_t i = 0; i < nz; i+= kba) {
 				if(x_up >= 0) {
-					evQ->push( new EmberRecvEvent(x_up, (nx * kba), 3000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(x_up, (nx * kba * data_width * fields_per_cell), 3000, (Communicator) 0) );
 				}
 
 				if(y_up >= 0) {
-					evQ->push( new EmberRecvEvent(y_up, (ny * kba), 3000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(y_up, (ny * kba * data_width * fields_per_cell), 3000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * data_width * fields_per_cell));
 
 				if(x_down >= 0) {
-	                                evQ->push( new EmberSendEvent(x_down, (nx * kba), 3000, (Communicator) 0) );
+	                                evQ->push( new EmberSendEvent(x_down, (nx * kba * data_width * fields_per_cell), 3000, (Communicator) 0) );
 	                        }
 
 	                        if(y_down >= 0) {
-	                                evQ->push( new EmberSendEvent(y_down, (ny * kba), 3000, (Communicator) 0) );
+	                                evQ->push( new EmberSendEvent(y_down, (ny * kba * data_width * fields_per_cell), 3000, (Communicator) 0) );
 	                        }
 			}
 
 			// Sweep from (0, Py) outwards towards (Px, 0)
 			for(uint32_t i = 0; i < nz; i+= kba) {
 				if(x_down >= 0) {
-					evQ->push( new EmberRecvEvent(x_down, (nx * kba), 4000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(x_down, (nx * kba * data_width * fields_per_cell), 4000, (Communicator) 0) );
 				}
 
 				if(y_up >= 0) {
-					evQ->push( new EmberRecvEvent(y_up, (ny * kba), 4000, (Communicator) 0) );
+					evQ->push( new EmberRecvEvent(y_up, (ny * kba * data_width * fields_per_cell), 4000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * data_width * fields_per_cell));
 
 				if(x_up >= 0) {
-        	                        evQ->push( new EmberSendEvent(x_up, (nx * kba), 4000, (Communicator) 0) );
+        	                        evQ->push( new EmberSendEvent(x_up, (nx * kba * data_width * fields_per_cell), 4000, (Communicator) 0) );
 	                        }
 
 	                        if(y_down >= 0) {
-	                                evQ->push( new EmberSendEvent(y_down, (ny * kba), 4000, (Communicator) 0) );
+	                                evQ->push( new EmberSendEvent(y_down, (ny * kba * data_width * fields_per_cell), 4000, (Communicator) 0) );
 	                        }
 			}
 		}
