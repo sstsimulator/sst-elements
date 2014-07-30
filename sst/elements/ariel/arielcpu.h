@@ -35,6 +35,7 @@ class ArielCPU : public SST::Component {
 		ArielCPU(ComponentId_t id, Params& params);
 		~ArielCPU();
         virtual void emergencyShutdown();
+        virtual void init(unsigned int phase);
         virtual void setup() {}
         virtual void finish();
         virtual bool tick( SST::Cycle_t );
@@ -54,6 +55,8 @@ class ArielCPU : public SST::Component {
         char* shmem_region_name;
         ArielTunnel* tunnel;
         bool stopTicking;
+
+        char **execute_args;
 
 };
 

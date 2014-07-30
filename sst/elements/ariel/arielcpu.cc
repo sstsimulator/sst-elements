@@ -111,9 +111,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
-	const char* execute_binary = PINTOOL_EXECUTABLE;
 	const uint32_t pin_arg_count = 22;
-    char ** execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
+    execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
@@ -170,13 +169,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	// Remember that the list of arguments must be NULL terminated for execution
 	execute_args[(pin_arg_count - 1) + app_argc] = NULL;
 
-
-	output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
-	child_pid = forkPINChild(execute_binary, execute_args);
-	output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
-
-    tunnel->waitForChild();
-	output->verbose(CALL_INFO, 1, 0, "Child has attached!\n");
 	/////////////////////////////////////////////////////////////////////////////////////
 
 	const std::string tracePrefix = params.find_string("tracePrefix", "");
@@ -223,6 +215,19 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	fflush(stdout);
 }
 
+
+void ArielCPU::init(unsigned int phase)
+{
+    if ( phase == 0 ) {
+        output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
+        child_pid = forkPINChild(PINTOOL_EXECUTABLE, execute_args);
+        output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
+
+        tunnel->waitForChild();
+        output->verbose(CALL_INFO, 1, 0, "Child has attached!\n");
+    }
+}
+
 void ArielCPU::finish() {
 	for(uint32_t i = 0; i < core_count; ++i) {
 		cpu_cores[i]->finishCore();
@@ -255,6 +260,15 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 
 	if(the_child != 0) {
 		// This is the parent, return the PID of our child process
+        /* Wait a second, and check to see that the child actually started */
+        sleep(1);
+        int pstat;
+        pid_t check = waitpid(the_child, &pstat, WNOHANG);
+        if ( check ) {
+            output->fatal(CALL_INFO, 1,
+                    "Launching trace child failed!  Exited with status %d\n",
+                    WEXITSTATUS(pstat));
+        }
 		return (int) the_child;
 	} else {
 		output->verbose(CALL_INFO, 1, 0,
@@ -317,7 +331,7 @@ ArielCPU::~ArielCPU() {
 }
 
 void ArielCPU::emergencyShutdown() {
-    tunnel->shutdown();
+    tunnel->shutdown(true);
     unlink(shmem_region_name);
     kill(child_pid, SIGKILL);
 }
