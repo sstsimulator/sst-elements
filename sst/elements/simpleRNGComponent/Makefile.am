@@ -14,7 +14,7 @@ libsimpleRNGComponent_la_SOURCES = \
 EXTRA_DIST = \
 	mersenne.xml \
 	mersenne.py \
-	marsaglia.xml \    
+	marsaglia.xml \
 	marsaglia.py  
 
 libsimpleRNGComponent_la_LDFLAGS = -module -avoid-version
