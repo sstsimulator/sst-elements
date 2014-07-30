@@ -258,6 +258,10 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 	// Fork this binary, then exec to get around waiting for
 	// child to exit.
 	the_child = fork();
+    if ( the_child < 0 ) {
+        perror("fork");
+        output->fatal(CALL_INFO, 1, "Fork failed to launch the traced process.\n");
+    }
 
 	if(the_child != 0) {
 		// This is the parent, return the PID of our child process
@@ -265,10 +269,14 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
         sleep(1);
         int pstat;
         pid_t check = waitpid(the_child, &pstat, WNOHANG);
-        if ( check ) {
+        if ( check > 0 ) {
             output->fatal(CALL_INFO, 1,
                     "Launching trace child failed!  Exited with status %d\n",
                     WEXITSTATUS(pstat));
+        } else if ( check < 0 ) {
+            perror("waitpid");
+            output->fatal(CALL_INFO, 1,
+                    "Waitpid returned an error.  Did the child ever even start?\n");
         }
 		return (int) the_child;
 	} else {
