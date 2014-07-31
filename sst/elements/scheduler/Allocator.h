@@ -12,6 +12,7 @@
 #ifndef SST_SCHEDULER_ALLOCATOR_H__
 #define SST_SCHEDULER_ALLOCATOR_H__
 
+#include <cmath>
 #include <vector>
 #include <string>
 
@@ -32,7 +33,7 @@ namespace SST {
 
                 bool canAllocate(const Job & j)
                 {  
-                    return (machine -> getNumFreeNodes() >= j.getProcsNeeded());
+                    return (machine -> getNumFreeNodes() >= ceil((float) j.getProcsNeeded() / machine->coresPerNode ));
                 }
                 bool canAllocate(const Job & j, std::vector<MeshLocation*>* available)
                 {  

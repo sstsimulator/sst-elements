@@ -23,7 +23,7 @@ using namespace SST::Scheduler;
 AllocInfo::AllocInfo(Job* job, const Machine & mach)
 {
     this -> job = job;
-    nodesNeeded = ceil((double) job->getProcsNeeded() / mach.getNumCoresPerNode());
+    nodesNeeded = ceil((float) job->getProcsNeeded() / mach.coresPerNode);
     nodeIndices = new int[nodesNeeded];
     nodeIndices[0] = -1; // ConstraintAllocator puts allocation here
 }

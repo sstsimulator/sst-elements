@@ -18,11 +18,6 @@
 #include <vector>
 
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
-
-
-
-#define ARRAY(row,col) 40*(row-1) + (col-1)
 
 namespace SST {
     namespace Scheduler {

@@ -40,7 +40,6 @@
 //#include "sst/core/serialization.h"
 
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 
 namespace SST {
     namespace Scheduler {

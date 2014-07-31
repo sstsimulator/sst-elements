@@ -62,7 +62,7 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     vector<MeshLocation>* nodes = new vector<MeshLocation>();
     for(int i = 0; i < allocInfo->getNodesNeeded(); i++){
         //put the same node location for each core
-        for(int j = 0; j < mMachine.getNumCoresPerNode(); j++){
+        for(int j = 0; j < mMachine.coresPerNode; j++){
             MeshLocation loc = MeshLocation(allocInfo->nodeIndices[i], mMachine);
             nodes->push_back(loc);
         }
@@ -245,7 +245,7 @@ RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
     locs[0] = new int[size];
     locs[1] = new int[size];
     locs[2] = new int[size];
-    indMap = new int[mach.getNumNodes()];//maps real node indexed to node vector (elements) indexes
+    indMap = new int[mach.numNodes];//maps real node indexed to node vector (elements) indexes
     for(int i = 0; i < size; i++){
         MeshLocation curLoc = meshLocs->elements->at(i);
         indMap[curLoc.toInt(mach)] = i; //overwriting the same location is fine

@@ -25,7 +25,6 @@
 #include "LinearAllocator.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
@@ -65,16 +64,21 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
     if (!canAllocate(*job)) {
         return NULL;
     }
+    
+    std::vector<int>* freeNodes = mMachine->getFreeNodes();
+    std::vector<MeshLocation*>* freeprocs = new std::vector<MeshLocation*>(freeNodes->size());
+    for(unsigned int i = 0; i < freeNodes->size(); i++){
+        freeprocs->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
+    }   
+    delete freeNodes;
 
-    std::vector<MeshLocation*>* freeprocs = ((MeshMachine*)machine) -> freeNodes();
     stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);
 
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
+    AllocInfo* retVal = new AllocInfo(job, *machine);
     for (int i = 0; i < (int)freeprocs -> size(); i++) {
         if (i < nodesNeeded) {
-            retVal -> nodes -> at(i) = freeprocs->at(i);
             retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt(*mMachine);
         } else {
             delete freeprocs -> at(i);

@@ -107,7 +107,7 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 	std::vector<int> * freeNodes = ((SimpleMachine*)machine)->getFreeNodes();
 
-	if( (unsigned) ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode()) <= freeNodes->size() ){
+	if( (unsigned) ceil((double) job->getProcsNeeded() / machine->coresPerNode) <= freeNodes->size() ){
 		if( constraints_changed() ){
 			read_constraints();
 		}
@@ -157,7 +157,7 @@ AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 	AllocInfo * alloc = new AllocInfo( job, *machine );
 	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->getFreeNodes();
     
-    int numNodes = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int numNodes = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 
 	for( int node_counter = 0; node_counter < numNodes; node_counter ++ ){
 #define LINEAR_FROM_TOP true
@@ -311,7 +311,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
 	}
 	
-	unsigned numNodes = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+	unsigned numNodes = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 	
 	int num_constrained_needed = 0;
 	if( unconstrained_compute_nodes->size() >= numNodes ){

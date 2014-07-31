@@ -29,7 +29,6 @@
 #include "LinearAllocator.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 #define DEBUG false
@@ -69,7 +68,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
 
     vector<vector<MeshLocation*>*>* intervals = getIntervals();
 
-    int num = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int num = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 
     int bestInterval = -1;  //index of best interval found so far
     //(-1 = none)
@@ -103,7 +102,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         //no single interval is big enough; minimize the span
         return minSpanAllocate(job);
     } else {
-        MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
+        AllocInfo* retVal = new AllocInfo(job, *machine);
         MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine); 
         if(mMachine == NULL){
             schedout.fatal(CALL_INFO, 1, "Best Fit Allocator requires MeshMachine");
@@ -111,7 +110,6 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         int j;
         for (j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
             if (j < num) {
-                retVal -> nodes -> at(j) = intervals -> at(bestInterval) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt(*mMachine);
             } else {
                 delete intervals -> at(bestInterval) -> at(j);

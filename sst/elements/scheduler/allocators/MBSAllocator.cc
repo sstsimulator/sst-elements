@@ -246,7 +246,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
     //a map of dimensions to numbers
     std::map<int,int>* RBR = factorRequest(job);
 
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 
     while (allocated < nodesNeeded){
         //Start trying allocate the largest blocks
@@ -314,7 +314,7 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
     std::map<int,int>* retVal = new std::map<int,int>();
     int procs = 0;
 
-    int nodesNeeded = ceil((double) j->getProcsNeeded() / machine->getNumCoresPerNode());
+    int nodesNeeded = ceil((double) j->getProcsNeeded() / machine->coresPerNode);
 
     while (procs < nodesNeeded){
         //begin our search

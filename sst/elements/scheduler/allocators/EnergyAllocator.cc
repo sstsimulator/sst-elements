@@ -33,7 +33,6 @@
 #include "Job.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
@@ -71,7 +70,14 @@ std::string EnergyAllocator::getSetupInfo(bool comment)
 
 AllocInfo* EnergyAllocator::allocate(Job* job)
 {
-    return allocate(job,((MeshMachine*)machine) -> freeNodes());
+    std::vector<int>* freeNodes = mMachine->getFreeNodes();
+    std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
+    for(unsigned int i = 0; i < freeNodes->size(); i++){
+        available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
+    }   
+    delete freeNodes;
+    
+    return allocate(job, available);
 }
 
 //Allocates job if possible.
@@ -83,14 +89,13 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
         return NULL;
     }
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
+    AllocInfo* retVal = new AllocInfo(job, *machine);
 
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
     
     //optimization: if exactly enough procs are free, just return them
     if ((unsigned int) nodesNeeded == available -> size()) {
         for (int i = 0; i < nodesNeeded; i++) {
-            (*retVal -> nodes)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt(*mMachine);
         }
         delete available;
@@ -99,7 +104,6 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
 
     std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, nodesNeeded, *mMachine);
     for (int i = 0; i < nodesNeeded; i++) {
-        (*retVal->nodes)[i] = ret->at(i);
         retVal->nodeIndices[i] = ret->at(i)->toInt(*mMachine);
         delete (*available)[i];
     }

@@ -28,31 +28,28 @@ namespace SST {
 
                 Machine(int numNodes, int numCoresPerNode, double** D_matrix);
                 ~Machine();
+                
+                void reset();
+                void allocate(AllocInfo* allocInfo);
+                void deallocate(AllocInfo* allocInfo);
 
                 int getNumFreeNodes() const { return numAvail; }
-                int getNumNodes() const { return numNodes; }
-                int getNumCoresPerNode() const { return coresPerNode; }
-                
                 std::vector<int>* getFreeNodes() const;
-                
+                std::vector<int>* getUsedNodes() const;
+				double getCoolingPower() const;
+                 
                 virtual std::string getSetupInfo(bool comment) = 0;
-                virtual void reset() = 0;
-                virtual void allocate(AllocInfo* allocInfo) = 0;
-                virtual void deallocate(AllocInfo* allocInfo) = 0;
                 virtual long getNodeDistance(int node1, int node2) const = 0;
                 
                 double** D_matrix;
+                
+                const int numNodes;          //total number of nodes
+                const int coresPerNode;
 
-            protected:
-                int numNodes;          //total number of nodes
+            private:
                 int numAvail;          //number of available nodes
-                int coresPerNode;
-                
-                //TODO: put private:
-                std::vector<bool> isFree;  //whether each node is free
-                
+                std::vector<bool> isFreeM;  //whether each node is free
         };
-
     }
 }
 #endif

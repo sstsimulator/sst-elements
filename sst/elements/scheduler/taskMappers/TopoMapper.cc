@@ -77,7 +77,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
 #endif
     //Partition task if nodes have homogeneous multiple processors
     //Current code does not support heterogeneous case
-    if( mach.getNumCoresPerNode() > 1){
+    if( mach.coresPerNode > 1){
 #ifdef HAVE_METIS
         idx_t objval; //objective function result
 
@@ -111,7 +111,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     }
 
     //build node topology graph for new task distribution
-    vector<vector<int> > nodeTopGraph(ceil((double) numTasks / mach.getNumCoresPerNode()));
+    vector<vector<int> > nodeTopGraph(ceil((double) numTasks / mach.coresPerNode));
     vector<vector<int> > nodeTopGraphWeights(nodeTopGraph.size()); // edge weights
     for(unsigned int source = 0; source < commGraph.size(); ++source) {
         for(unsigned int j = 0; j < commGraph[source].size(); ++j) {
@@ -219,7 +219,7 @@ void TopoMapper::setup(AllocInfo* allocInfo)
     //add node weights
     numCores = vector<int>(numNodes);
 
-    std::fill(numCores.begin(), numCores.end(), mach.getNumCoresPerNode());
+    std::fill(numCores.begin(), numCores.end(), mach.coresPerNode);
 
     //create node graph
     for(int i = 0; i < numNodes; i++){

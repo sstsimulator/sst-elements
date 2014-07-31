@@ -42,7 +42,7 @@ AllocInfo* SimpleAllocator::allocate(Job* j)
     if (canAllocate(*j)) {
         AllocInfo* ai = new AllocInfo(j, *machine);
         std::vector<int>* freeNodes = machine->getFreeNodes();
-        for(int i = 0; i < j->getProcsNeeded(); i++) {
+        for(int i = 0; i < ai->getNodesNeeded(); i++) {
             ai->nodeIndices[i] = freeNodes->at(i);
         }
         delete freeNodes;

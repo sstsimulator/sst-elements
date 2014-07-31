@@ -96,7 +96,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     //create copies of the scheduler, machine, and allocator for our simulation
     Scheduler* sched = insched -> copy(running, toRun);
-    Machine* mach = new SimpleMachine(inmach->getNumNodes(), true, inmach->getNumCoresPerNode(), NULL);
+    Machine* mach = new SimpleMachine(inmach->numNodes, true, inmach->coresPerNode, NULL);
     Allocator* alloc = new SimpleAllocator((SimpleMachine*) mach);
     TaskMapper* taskMap = new SimpleTaskMapper(*mach);
     string nullstr = "";

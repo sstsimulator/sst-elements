@@ -29,7 +29,6 @@
 #include "LinearAllocator.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
@@ -69,16 +68,15 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
 
     std::vector<std::vector<MeshLocation*>*>* intervals = getIntervals();
 
-    int numNodes = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int numNodes = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 
     //find an interval to use if one exists
     for (int i = 0; i < (int)intervals -> size(); i++) {
         if ((int)intervals -> at(i) -> size() >= numNodes) {
-            MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
+            AllocInfo* retVal = new AllocInfo(job, *machine);
             int j;
             for (j = 0; j<numNodes; j++) {
                 schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt(*mMachine));
-                retVal -> nodes -> at(j) = intervals -> at(i) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt(*mMachine);
             }
             j++;

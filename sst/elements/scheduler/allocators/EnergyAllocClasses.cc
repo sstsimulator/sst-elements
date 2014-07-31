@@ -26,7 +26,6 @@
 #include "Job.h" 
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 namespace SST {
@@ -60,39 +59,36 @@ namespace SST {
             {     
 
 #ifdef HAVE_GLPK
+                int numNodes = machine.numNodes;
                 int Putil=1500;
                 int Pidle=1000;
                     
                 double Tsup=288.15;
-                //double Tred=30;
-                //double sum_inlet=0;
-                //double max_inlet=0;
                 
-                double D[1600];
+                double* D = new double[numNodes*numNodes];
                 int d_counter = 0;
-                for(int i=0;i<40;i++){
-                    for(int j=0;j<40;j++){
+                for(int i=0;i<numNodes;i++){
+                    for(int j=0;j<numNodes;j++){
                         D[d_counter] = machine.D_matrix[i][j];
                         d_counter++;
                     }
                 }
 
-                double Dsum[40]; //stores the sum of each row of D
+                double Dsum[numNodes]; //stores the sum of each row of D
                 
                 double oldprocessors = 0; //total number of already-allocated processors
                 for(int x = 0; x < processors; x++)
                     oldprocessors += oldx[x];
 
-                int ia[2000];
-                int ja[2000];
-                double ar[2000];
-
+                int* ia = new int[numNodes*(numNodes+6)];
+                int* ja = new int[numNodes*(numNodes+6)];
+                double* ar = new double[numNodes*(numNodes+6)];
 
                 int x,y;
-                for (x = 1; x <= 40; x++) {
-                    Dsum[x-1] = 0;
-                    for(y = 1; y <= 40; y++) {
-                        Dsum[x-1] += D[ARRAY(x,y)];
+                for (x = 0; x < numNodes; x++) {
+                    Dsum[x] = 0;
+                    for(y = 0; y < numNodes; y++) {
+                        Dsum[x] += D[numNodes*x + y];
                     }
                 }
 
@@ -109,26 +105,26 @@ namespace SST {
 
 
                 //rows
-                glp_add_rows(lp, 81);
+                glp_add_rows(lp, numNodes*2 + 1);
 
                 int row;
-                for (row = 1; row <= 40; row++) {
+                for (row = 1; row <= numNodes; row++) {
                     glp_set_row_bnds(lp, row, GLP_FX, Tsup + Dsum[row-1] * Pidle, Tsup + Dsum[row-1] * Pidle);
                 } 
 
-                for (row = 41; row <= 80; row++) {
+                for (row = numNodes+1; row <= 2*numNodes; row++) {
                     glp_set_row_bnds(lp, row, GLP_LO, 0.0, 0.0);
                 }
 
-                glp_set_row_name(lp, 81, "Requiredprocs");
-                glp_set_row_bnds(lp, 81, GLP_FX, requiredprocessors + oldprocessors, requiredprocessors + oldprocessors);
+                glp_set_row_name(lp, 2*numNodes + 1, "Requiredprocs");
+                glp_set_row_bnds(lp, 2*numNodes + 1, GLP_FX, requiredprocessors + oldprocessors, requiredprocessors + oldprocessors);
 
 
                 //columns
-                glp_add_cols(lp, 81);
+                glp_add_cols(lp, 2*numNodes + 1);
 
                 int col;
-                for(col = 1; col <= 40; col++) {
+                for(col = 1; col <= numNodes; col++) {
                     if (oldx[col-1] == 0) {
                         glp_set_col_bnds(lp, col, GLP_DB, oldx[col-1], 1);
                     } else { 
@@ -137,39 +133,39 @@ namespace SST {
                     glp_set_obj_coef(lp, col, 0);
                 }
 
-                for(col = 41; col <= 80; col++) {
+                for(col = numNodes + 1; col <= 2*numNodes; col++) {
                     glp_set_col_bnds(lp, col, GLP_FR, 0.0, 0.0);
                     glp_set_obj_coef(lp, col, 0);
                 } 
 
-                glp_set_col_bnds(lp, 81, GLP_FR, 0.0, 0.0);
-                glp_set_obj_coef(lp, 81, 1);
+                glp_set_col_bnds(lp, 2*numNodes + 1, GLP_FR, 0.0, 0.0);
+                glp_set_obj_coef(lp, 2*numNodes + 1, 1);
 
                 int arraycount = 1;
                 //matrix
-                for (row = 1; row <= 40; row++) {
+                for (row = 0; row < numNodes; row++) {
                     //ia = row #, ja = col #, ar = value
-                    for(col = 1; col <= 40; col++) {
-                        ia[arraycount] = row;
-                        ja[arraycount] = col;
-                        ar[arraycount] =  D[ARRAY(row,col)] * -Putil; 
+                    for(col = 0; col < numNodes; col++) {
+                        ia[arraycount] = row + 1;
+                        ja[arraycount] = col + 1;
+                        ar[arraycount] =  D[numNodes*row + col] * -Putil; 
                         arraycount++;
                     }
-                    ia[arraycount] = row; 
-                    ja[arraycount] = 40 + row;
+                    ia[arraycount] = row + 1; 
+                    ja[arraycount] = numNodes + row + 1;
                     ar[arraycount] =  1; 
                     arraycount++;
                 }
 
-                for (row = 41; row <= 80; row++) {
+                for (row = numNodes + 1; row <= 2*numNodes; row++) {
                     ia[arraycount] = row, ja[arraycount] = row, ar[arraycount] = -1;
                     arraycount++;
                     ia[arraycount] = row, ja[arraycount] = 81, ar[arraycount] = 1;
                     arraycount++;
                 }
 
-                for (col = 1; col <= 40; col++) {
-                    ia[arraycount] = 81, ja[arraycount] = col, ar[arraycount] = 1;
+                for (col = 1; col <= numNodes; col++) {
+                    ia[arraycount] = 2*numNodes + 1, ja[arraycount] = col, ar[arraycount] = 1;
                     arraycount++;
                 }
 
@@ -177,15 +173,20 @@ namespace SST {
                 glp_load_matrix(lp, arraycount-1, ia, ja, ar);
                 glp_simplex(lp, &parm);
 
-                double allocarray[40];
-                for (x = 1; x <= 40; x++) {
+                double allocarray[numNodes];
+                for (x = 1; x <= numNodes; x++) {
                     allocarray[x-1] = glp_get_col_prim(lp, x);
                 }
 
-                for(x = 0; x < 40; x++)
+                for(x = 0; x < numNodes; x++)
                     roundedalloc[x] = 0;
 
-                roundallocarray(allocarray, 40, requiredprocessors+oldprocessors, roundedalloc);
+                roundallocarray(allocarray, numNodes, requiredprocessors+oldprocessors, roundedalloc);
+                
+                delete [] D;
+                delete [] ia;
+                delete[] ja;
+                delete [] ar;
 #else
                 schedout.init("", 10, 0, Output::STDOUT);
                 schedout.fatal(CALL_INFO,1,"GLPK required for energy-aware scheduler");
@@ -196,9 +197,10 @@ namespace SST {
             { 
                 std::vector<MeshLocation*>* ret = new std::vector<MeshLocation*>();
 
-                int* oldx = new int[40];
-                int* newx = new int[40];
-                for (int x= 0; x < 40; x++) {
+                int numNodes = machine.numNodes;
+                int* oldx = new int[numNodes];
+                int* newx = new int[numNodes];
+                for (int x= 0; x < numNodes; x++) {
                     oldx[x] = 1;
                     newx[x] = 0;
                 }
@@ -206,8 +208,8 @@ namespace SST {
                     oldx[(*available)[x]->toInt(machine)] = 0;
                 }
                 
-                hybridalloc(oldx, newx, 40, numProcs, machine);
-                for (int x = 0; x < 40; x++) {
+                hybridalloc(oldx, newx, numNodes, numProcs, machine);
+                for (int x = 0; x < numNodes; x++) {
                     if (newx[x] == 1 && oldx[x] == 0) {
                         ret -> push_back(new MeshLocation(x, machine));
                     }

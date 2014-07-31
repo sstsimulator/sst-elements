@@ -17,7 +17,6 @@
 #define SST_SCHEDULER_SIMPLEMACHINE_H__
 
 #include <string>
-#include <vector>
 
 #include "Machine.h"
 
@@ -34,10 +33,6 @@ namespace SST {
                 std::string getSetupInfo(bool comment);
 
                 void reset();  //return to beginning-of-simulation state
-
-                void allocate(AllocInfo* allocInfo);
-
-                void deallocate(AllocInfo* allocInfo);  //deallocate processors
                 
                 long getNodeDistance(int node1, int node2) const;
 

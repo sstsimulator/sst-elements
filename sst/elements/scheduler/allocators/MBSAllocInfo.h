@@ -24,22 +24,35 @@
 #include "sst/core/serialization.h"
 
 #include "Job.h"
-#include "MeshAllocInfo.h"
+#include "AllocInfo.h"
 #include "MBSAllocClasses.h"
 
 namespace SST {
     namespace Scheduler {
 
-        class MBSMeshAllocInfo : public MeshAllocInfo {
+        class MBSMeshAllocInfo : public AllocInfo {
 
             public:
                 std::set<Block*, Block>* blocks;
+                std::vector<MeshLocation*>* nodes;
 
-                MBSMeshAllocInfo(Job* j, const Machine & mach) : MeshAllocInfo(j, mach){
+                MBSMeshAllocInfo(Job* j, const Machine & mach) : AllocInfo(j, mach){
                     //Keep track of the blocks allocated
                     Block* BComp = new Block(NULL,NULL);
                     blocks = new std::set<Block*, Block>(*BComp);
                     delete BComp;
+                    nodes = new std::vector<MeshLocation*>(j -> getProcsNeeded());
+                    for (int x = 0; x < j -> getProcsNeeded(); x++) {
+                        nodeIndices[x] = -1;
+                    }
+                }
+                
+                ~MBSMeshAllocInfo()
+                {
+                    for (int x = 0; x < (int)nodes -> size(); x++) {
+                        delete nodes -> at (x);
+                    }
+                    delete nodes;
                 }
 
 

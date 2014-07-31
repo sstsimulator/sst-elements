@@ -18,8 +18,6 @@ libscheduler_la_SOURCES = \
     linkBuilder.cc		nodeComponent.cc	 	schedComponent.cc \
     Scheduler.h 	SimpleMachine.h		Statistics.h \
     schedLib.cc		SimpleMachine.cc	Statistics.cc \
-    MeshAllocInfo.cc \
-    MeshAllocInfo.h \
     Factory.cc \
     Factory.h \
     faultInjectionComponent.cc \

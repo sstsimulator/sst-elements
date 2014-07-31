@@ -45,7 +45,6 @@
 #include "Job.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 #include "NearestAllocClasses.h"
 #include "EnergyAllocClasses.h"
@@ -54,36 +53,24 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-NearestAllocator::NearestAllocator(MeshMachine* m, CenterGenerator* cg,
-                                   PointCollector* pc, Scorer* s, std::string name) 
-{
-    schedout.init("", 8, 0, Output::STDOUT);
-    machine = m;
-    centerGenerator = cg;
-    pointCollector = pc;
-    scorer = s;
-    configName = name;
-}
-
 NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    MeshMachine* m = (MeshMachine*) mach;
-    if (NULL == m) {
+    mMachine = (MeshMachine*) mach;
+    if (NULL == mMachine) {
         schedout.fatal(CALL_INFO, 1, "Nearest allocators require a Mesh machine");
     }
 
-
     if (params -> at(0) == "MM") {
-        MMAllocator(m);
+        MMAllocator(mMachine);
     } else if (params -> at(0) == "MC1x1") {
-        MC1x1Allocator(m);
+        MC1x1Allocator(mMachine);
     } else if (params -> at(0) == "genAlg") {
-        genAlgAllocator(m);
+        genAlgAllocator(mMachine);
     } else if (params -> at(0) == "OldMC1x1") {
-        OldMC1x1Allocator(m);
+        OldMC1x1Allocator(mMachine);
     } else if (params -> at(0) == "Hybrid") {
-        HybridAllocator(m);
+        HybridAllocator(mMachine);
     } else {
 
         if (params -> size() < 4) {
@@ -94,16 +81,16 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         CenterGenerator* cg = NULL;
         PointCollector* pc = NULL;
         Scorer* sc = NULL;
-        machine = m;
+        machine = mMachine;
 
         std::string cgstr = params -> at(1);
 
         if (cgstr == ("all")) {
-            cg = new AllCenterGenerator(m);
+            cg = new AllCenterGenerator(mMachine);
         } else if (cgstr == ("free")) {
-            cg = new FreeCenterGenerator(m);
+            cg = new FreeCenterGenerator(mMachine);
         } else if (cgstr == ("intersect")) {
-            cg = new IntersectionCenterGen(m);
+            cg = new IntersectionCenterGen(mMachine);
         } else {
             schedout.fatal(CALL_INFO, 1, "Unknown center generator %s", cgstr.c_str());
         }
@@ -126,7 +113,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         if (pcstr == ("l1")) {
             sc = new L1DistFromCenterScorer();
         } else if(pcstr == ("linf")) {
-            if (m -> getXDim() > 1 && m -> getYDim() > 1 && m -> getZDim() > 1) {
+            if (mMachine -> getXDim() > 1 && mMachine -> getYDim() > 1 && mMachine -> getZDim() > 1) {
                 schedout.fatal(CALL_INFO, 1, "\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
             }
             long TB = 0;
@@ -209,7 +196,14 @@ std::string NearestAllocator::getSetupInfo(bool comment)
 }
 AllocInfo* NearestAllocator::allocate(Job* job)
 {
-    return allocate(job,((MeshMachine*)machine) -> freeNodes());
+    std::vector<int>* freeNodes = mMachine->getFreeNodes();
+    std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
+    for(unsigned int i = 0; i < freeNodes->size(); i++){
+        available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
+    }   
+    delete freeNodes;
+    
+    return allocate(job, available);
 }
 
 //Allocates job if possible.
@@ -221,16 +215,13 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         return NULL;
     }
     
-    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
+    AllocInfo* retVal = new AllocInfo(job, *machine);
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
-
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
 
     //optimization: if exactly enough procs are free, just return them
     if ((unsigned int) nodesNeeded == available -> size()) {
         for (int i = 0; i < nodesNeeded; i++) {
-            (*retVal -> nodes)[i] = (*available)[i];
             retVal -> nodeIndices[i] = (*available)[i] -> toInt(*mMachine);
         }
         delete available;
@@ -268,7 +259,6 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
             delete bestVal;
             bestVal = val;
             for (int i = 0; i < nodesNeeded; i++) {
-                (*(retVal -> nodes))[i] = (*nearest)[i];
                 retVal -> nodeIndices[i] = (*nearest)[i] -> toInt(*mMachine);
             }
             if (recordingTies) {

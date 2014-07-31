@@ -25,23 +25,15 @@
 #include "sst/core/serialization.h"
 
 #include "Allocator.h"
+#include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 #define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
-#define ABS(X) ((X) >= 0 ? (X) : (-(X)))
 
 using namespace SST::Scheduler;
-
-namespace SST {
-    namespace Scheduler {
-        class MeshLocation;
-        class MeshAllocInfo;
-    }
-}
 
 MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, double** D_matrix)
                          : Machine((Xdim*Ydim*Zdim), numCoresPerNode, D_matrix)
@@ -50,17 +42,6 @@ MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, doub
     xdim = Xdim;
     ydim = Ydim;
     zdim = Zdim;
-    isFree.resize(xdim);
-    for (int i = 0; i < xdim; i++) {
-        isFree[i].resize(ydim);
-        for (int j = 0; j < (ydim); j++) {
-            isFree[i][j].resize(zdim);
-            for (int k = 0; k < zdim; k++) {
-                isFree[i][j][k] = true;
-            }
-        }
-    }
-    reset();
 }
 
 std::string MeshMachine::getParamHelp() 
@@ -74,110 +55,9 @@ std::string MeshMachine::getSetupInfo(bool comment)
     if (comment) com="# ";
     else com="";
     std::stringstream ret;
-    ret << com<<xdim<<"x"<<ydim<<"x"<<zdim<<" Mesh";
+    ret << com << xdim << "x" << ydim << "x" << zdim << " Mesh";
     ret << ", " << coresPerNode << " cores per node";
     return ret.str();
-}
-
-int MeshMachine::getMachSize() const
-{
-    return xdim*ydim*zdim;
-}
-
-void MeshMachine::reset()
-{
-    numAvail = xdim * ydim * zdim;
-    for (int i = 0; i < xdim; i++) {
-        for (int j = 0; j < ydim; j++) {
-            for (int k = 0; k < zdim; k++) {
-                isFree[i][j][k] = true;
-            }
-        }
-    }
-}
-
-//returns list of free nodes
-std::vector<MeshLocation*>* MeshMachine::freeNodes() const
-{
-
-    std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
-    /*for(int i = 0; i < numNodes; i++){
-        if(isFree[i]){
-            retVal -> push_back(new MeshLocation(i, *this));
-        }
-    }*/
-    
-    for (int i = 0; i < xdim; i++) {
-        for (int j = 0; j < ydim; j++) {
-            for (int k = 0; k < zdim; k++) {
-                if (isFree[i][j][k]) {
-                    retVal -> push_back(new MeshLocation(i,j,k));
-                }
-            }
-        }
-    }
-    return retVal;
-}
-
-//returns list of used nodes
-std::vector<MeshLocation*>* MeshMachine::usedNodes() const
-{
-    std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
-    /*for(int i = 0; i < numNodes; i++){
-        if(!isFree[i]){
-            retVal -> push_back(new MeshLocation(i, *this));
-        }
-    }*/
-    
-    for (int i = 0; i < xdim; i++) {
-        for (int j = 0; j < ydim; j++) {
-            for (int k = 0; k < zdim; k++) {
-                if (!isFree[i][j][k]) {
-                    retVal -> push_back(new MeshLocation(i,j,k));
-                }
-            }
-        }
-    }
-    return retVal;
-}
-
-//allocate list of nodes in allocInfo
-void MeshMachine::allocate(AllocInfo* allocInfo)
-{
-    std::vector<MeshLocation*>* nodes = ((MeshAllocInfo*)allocInfo) -> nodes;
-    //MeshMachine (unlike simplemachine) is not responsible for setting
-    //which nodes are used in allocInfo as it's been set by the
-    //allocator already
-
-    for (unsigned int i = 0; i < nodes -> size(); i++) {
-        if (!isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy node: " );
-        }
-        isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z] = false;
-    }
-    numAvail -= nodes-> size();
-    /*
-    for(int i = 0; i < num; i++) {
-        isFree[allocInfo -> nodeIndices[i]] = false;
-    }*/
-}
-
-void MeshMachine::deallocate(AllocInfo* allocInfo) {
-    //deallocate list of nodes in allocInfo
-
-    std::vector<MeshLocation*>* nodes = ((MeshAllocInfo*)allocInfo) -> nodes;
-
-    for (unsigned int i = 0; i < nodes -> size(); i++) {
-        if (isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy node: " );
-        }
-        isFree[((*nodes)[i]) -> x][((*nodes)[i]) -> y][((*nodes)[i]) -> z] = true;
-    }
-    numAvail += nodes -> size();
-    /*
-    for(int i = 0; i < num; i++) {
-        isFree[allocInfo -> nodeIndices[i]] = true;
-    }*/
 }
 
 long MeshMachine::getNodeDistance(int node1, int node2) const
@@ -207,61 +87,9 @@ long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
     return retVal;
 }
 
-double MeshMachine::getCoolingPower() const
-{
-    int Putil=2000;
-    int Pidle=1000;
-
-    double Tred=30;  
-
-    MeshLocation* tempLoc = NULL;
-    int busynodes = 0;
-    double max_inlet = 0;
-    double sum_inlet = 0;
-
-    //max inlet temp and number of busy nodes
-    for (int i = 0; i < getNumNodes(); i++) {
-        tempLoc = new MeshLocation(i, *this);
-        if( !isFree[tempLoc->x][tempLoc->y][tempLoc->z] ){
-            busynodes++;
-        }
-        if(D_matrix != NULL){
-            sum_inlet = 0;
-            for (int j = 0; j < getNumNodes(); j++)
-            {
-                sum_inlet += D_matrix[i][j] * (Pidle + Putil * (!isFree[tempLoc->x][tempLoc->y][tempLoc->z]));
-            }
-            if(sum_inlet > max_inlet){
-                max_inlet = sum_inlet;
-            }
-        }
-        delete tempLoc;
-    }
-
-    // Total power of data center
-    double Pcompute = busynodes * Putil + getNumNodes() * Pidle;
-
-    // Supply temperature
-    double Tsup;
-    if(D_matrix != NULL){
-        Tsup = Tred - max_inlet;
-    } else {
-        Tsup = Tred;
-    }
-
-    // Coefficient of performance
-    double COP = 0.0068 * Tsup * Tsup + 0.0008 * Tsup + 0.458;
-
-    // Cooling power in kW
-    double Pcooling = 0.001 * Pcompute * (1 / COP);
-
-    return  Pcooling;
-}
-
-
 AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
 {
-    int numNodes = ceil( (double) job->getProcsNeeded() / getNumCoresPerNode());
+    int numNodes = ceil( (double) job->getProcsNeeded() / coresPerNode);
     
     int xSize, ySize, zSize;
     //dimensions if we fit job in a cube
@@ -392,12 +220,12 @@ MeshLocation::MeshLocation(const MeshLocation & in)
 
 int MeshLocation::L1DistanceTo(const MeshLocation & other) const
 {
-    return ABS(x - other.x) + ABS(y - other.y) + ABS(z - other.z);
+    return abs(x - other.x) + abs(y - other.y) + abs(z - other.z);
 }
 
 int MeshLocation::LInfDistanceTo(const MeshLocation & other) const
 {
-    return MAX(ABS(x - other.x), MAX(ABS(y - other.y), ABS(z - other.z)));
+    return MAX(abs(x - other.x), MAX(abs(y - other.y), abs(z - other.z)));
 }
 
 bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2)

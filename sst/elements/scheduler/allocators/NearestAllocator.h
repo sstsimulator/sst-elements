@@ -61,11 +61,9 @@ namespace SST {
 
                 std::string configName;
 
-                //bool readnewcenter;
+                MeshMachine *mMachine;
 
             public:
-                NearestAllocator(MeshMachine* m, CenterGenerator* cg,
-                                 PointCollector* pc, Scorer* s,std::string name); 
 
                 NearestAllocator(std::vector<std::string>* params, Machine* mach);
 

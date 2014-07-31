@@ -33,8 +33,6 @@ namespace SST {
                 int xdim;              //size of mesh in each dimension
                 int ydim;
                 int zdim;
-
-                std::vector<std::vector<std::vector<bool> > > isFree;  //whether each node is free
                 
             public:
                 
@@ -47,24 +45,10 @@ namespace SST {
                 int getXDim() const { return xdim; }
                 int getYDim() const { return ydim; }
                 int getZDim() const { return zdim; }
-
-                int getMachSize() const;
-
-                void reset();
-
-                std::vector<MeshLocation*>* freeNodes() const;
-
-                std::vector<MeshLocation*>* usedNodes() const;
-
-                void allocate(AllocInfo* allocInfo);
-
-                void deallocate(AllocInfo* allocInfo);
                 
                 long getNodeDistance(int node1, int node2) const;
 
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
-
-				double getCoolingPower() const;
 				
                 //baseline allocation: minimum-volume rectangular prism that fits into the machine
                 AllocInfo* getBaselineAllocation(Job* job);

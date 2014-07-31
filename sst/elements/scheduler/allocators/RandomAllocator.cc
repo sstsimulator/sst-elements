@@ -16,7 +16,6 @@
 #include "Job.h"
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
@@ -56,14 +55,20 @@ AllocInfo* RandomAllocator::allocate(Job* job){
     
     MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
-    MeshAllocInfo* retVal = new MeshAllocInfo(job, *machine);
+    AllocInfo* retVal = new AllocInfo(job, *machine);
 
     //figure out which processors to use
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->getNumCoresPerNode());
-    std::vector<MeshLocation*>* available = ((MeshMachine*)machine) -> freeNodes();
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    
+    std::vector<int>* freeNodes = mMachine->getFreeNodes();
+    std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
+    for(unsigned int i = 0; i < freeNodes->size(); i++){
+        available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
+    }   
+    delete freeNodes;
+    
     for (int i = 0; i < nodesNeeded; i++) {
         int num = rand() % available -> size();
-        (*retVal -> nodes)[i] = (*available)[num];
         retVal -> nodeIndices[i] = (*available)[num] -> toInt(*mMachine);
         available -> erase(available -> begin() + num);
     }

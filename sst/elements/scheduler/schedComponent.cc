@@ -35,7 +35,6 @@
 #include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshAllocInfo.h"
 #include "MeshMachine.h"
 #include "misc.h"
 #include "Scheduler.h"
@@ -568,8 +567,7 @@ void schedComponent::startJob(Job* job)
     
     if (timePerDistance -> at(0) != 0
           && NULL != mMachine
-          && NULL != (MeshAllocInfo*) ai
-          && NULL != ((MeshAllocInfo*)ai) -> nodes) {
+          && NULL != ai ) {
         
         double randomNumber = rng->nextUniform() * 0.8 - 0.4;
         //calculate baseline L1 pairwise distance

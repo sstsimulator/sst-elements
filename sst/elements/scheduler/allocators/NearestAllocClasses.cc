@@ -40,10 +40,8 @@
 #include <algorithm>  //for std::stable_sort
 
 #include "MeshMachine.h"
-#include "MeshAllocInfo.h"
 
 using namespace std;
-
 using namespace SST::Scheduler;
 
 //Center Generators: 
@@ -380,7 +378,13 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
 
     //Subtract from score for bordering allocated processors
     if (borderFactor != 0){
-        vector<MeshLocation*>* used = mesh -> usedNodes();
+        std::vector<int>* usedNodes = mesh->getUsedNodes();
+        std::vector<MeshLocation*>* used = new std::vector<MeshLocation*>(usedNodes->size());
+        for(unsigned int i = 0; i < usedNodes->size(); i++){
+            used->at(i) = new MeshLocation(usedNodes->at(i), *mesh);
+        }   
+        delete usedNodes;
+        
         LInfComparator* lc = new LInfComparator(center -> x,center -> y,center -> z);
         stable_sort(used -> begin(), used -> end(),*lc);
         delete lc;
