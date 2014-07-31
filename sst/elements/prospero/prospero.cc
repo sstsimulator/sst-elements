@@ -44,6 +44,11 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	output->fatal(CALL_INFO, -1, "Unknown trace format, please specify text, compressed or binary.\n");
   }
 
+  maxFile = (uint32_t) params.find_integer("maxtracefile", 1);
+  output->verbose(CALL_INFO, 2, 0, "Maximum number of trace files to open is %" PRIu32 "\n", maxFile);
+
+  currentFile = 0;
+
   max_trace_count = (uint64_t) params.find_integer("max_entries", 4611686018427390000);
   output->verbose(CALL_INFO, 2, 0, "Maximum trace items to process set to %" PRIu64 "\n", max_trace_count);
 
@@ -60,28 +65,33 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	exit(-1);
   } else {
 	output->verbose(CALL_INFO, 2, 0, "Trace will be loaded from: %s\n", params.find_string("trace").c_str());
+	char* nameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
+	tracePrefix = params["trace"];
 
 	if(PROSPERO_TRACE_BINARY == trace_format) {
-		trace_input = fopen(params["trace"].c_str(), "rb");
+		sprintf(nameBuffer, "%s-0.trace", tracePrefix.c_str());
+		trace_input = fopen(nameBuffer, "rb");
 
 		if( NULL == trace_input ) {
 			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using binary trace library.\n",
-				params["trace"].c_str());
+				nameBuffer);
 		}
 	} else if (PROSPERO_TRACE_TEXT == trace_format) {
-		trace_input = fopen(params["trace"].c_str(), "rt");
+		sprintf(nameBuffer, "%s-0.trace", tracePrefix.c_str());
+		trace_input = fopen(nameBuffer, "rt");
 
 		if( NULL == trace_input ) {
 			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using text trace library.\n",
-				params["trace"].c_str());
+				nameBuffer);
 		}
 	} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
-		trace_input = (FILE*) gzopen(params["trace"].c_str(), "r");
+		sprintf(nameBuffer, "%s-0-gz.trace", tracePrefix.c_str());
+		trace_input = (FILE*) gzopen(nameBuffer, "r");
 
 		if( NULL == trace_input ) {
 			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using compressed trace library.\n",
-				params["trace"].c_str());
+				nameBuffer);
 		}
 #else
 		std::cerr << "Error: Prospero requested a compressed (libz) trace file but libz is not used in the build of SST.\n");
@@ -91,6 +101,8 @@ prospero::prospero(ComponentId_t id, Params& params) :
 		printf("Unknown trace format? %" PRIu32 "\n", trace_format);
 		exit(-2);
 	}
+
+	free(nameBuffer);
   }
 
   output->verbose(CALL_INFO, 2, 0, "Trace loaded successfully.\n");
@@ -179,12 +191,56 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 
 	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_TEXT == trace_format) ) {
 		if( feof(trace_input) ) {
-			return READ_FAILED_EOF;
+			currentFile++;
+			char* nameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
+			
+			if(currentFile < maxFile) {
+				output->verbose(CALL_INFO, 2, 0, "Current file is exhausted, moving onto file index %" PRIu32 " out of %" PRIu32 "\n", currentFile,
+					maxFile);
+				fclose(trace_input);
+
+				sprintf(nameBuffer, "%s-%" PRIu32 ".trace", tracePrefix.c_str(), currentFile);
+
+				if(PROSPERO_TRACE_BINARY == trace_format) {
+					trace_input = fopen(nameBuffer, "rb");
+				} else {
+					trace_input = fopen(nameBuffer, "rt");
+				}
+
+				if(feof(trace_input)) {
+					return READ_FAILED_EOF;
+				}
+			} else {
+				return READ_FAILED_EOF;
+			}
+
+			free(nameBuffer);
 		}
 	} else if( PROSPERO_TRACE_COMPRESSED == trace_format ) {
+#ifdef HAVE_LIBZ
 		if( gzeof((gzFile) trace_input) ) {
-			return READ_FAILED_EOF;
+			currentFile++;
+			char* nameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
+
+			if(currentFile < maxFile) {
+				output->verbose(CALL_INFO, 2, 0, "Current file is exhausted, moving onto file index: %" PRIu32 "\n", currentFile);
+				gzclose((gzFile) trace_input);
+
+				sprintf(nameBuffer, "%s-%" PRIu32 "-gz.trace", tracePrefix.c_str(), currentFile);
+				trace_input = (FILE*) gzopen(nameBuffer, "rb");
+				if( gzeof((gzFile) trace_input) ) {
+					output->output("RETURN EOF as trace_input is EOF immediately after opening.\n");
+					return READ_FAILED_EOF;
+				}
+			} else {
+				return READ_FAILED_EOF;
+			}
+
+			free(nameBuffer);
 		}
+#else
+		output->fatal(CALL_INFO, -1, "Trace format is in compressed but no support for compression library during compile.\n");
+#endif
 	}
 
   	output->verbose(CALL_INFO, 2, 0, "Processing next memory request...\n");
@@ -483,11 +539,11 @@ bool prospero::tick( Cycle_t ) {
 			keep_generating = false;
 		}
 
-
 		queue_count_bins[pending_requests.size()]++;
 		return false;
 	} else {
 		if(pending_requests.size() == 0) {
+			primaryComponentOKToEndSim();
 			return true;
 		}
 
