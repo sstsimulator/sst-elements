@@ -163,6 +163,8 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
       else if (!strncmp(t[1], "wr", 80)) v[0] = Ingress(resp[id].wr);
       else if (!strncmp(t[1], "data", 80)) IngressInt(v, resp[id].data);
       else if (!strncmp(t[1], "id", 80)) IngressInt(v, resp[id].id);
+      else if (!strncmp(t[1], "llsc", 80)) IngressInt(v, resp[id].llsc);
+      else if (!strncmp(t[1], "llscsuc", 80)) IngressInt(v, resp[id].llsc_suc);
       else _abort(chdlComponent, "Invalid simplemem resp port: %s\n", t[1]);
     } else {
       _abort(chdlComponent, "Malformed IO port name in netlist: %s\n",
@@ -174,7 +176,6 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
   } else if (!strncmp(t[0], "id", 80) && t.size() == 1) {
     for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1) {
       v[i] = Lit((core_id & mask) != 0);
-      out.output("Core id %u: %u\n", i, (core_id & mask) != 0);
     }
   }
 }
@@ -268,10 +269,14 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   }
   resp[port].id = idMap[req->id];
 
+  resp[port].llsc = ((req->flags & SimpleMem::Request::F_LLSC) != 0);
+  resp[port].llsc_suc = ((req->flags & SimpleMem::Request::F_LLSC_RESP) != 0);
+
   out.debug(_L1_, "Response arrived on port %d for req %d, wr = %d, "
-                  "data = %u, size = %lu, datasize = %lu\n",
+                  "data = %u, size = %lu, datasize = %lu, flags = %x\n",
                int(port), int(req->id), resp[port].wr,
-               (unsigned)resp[port].data, req->size, req->data.size());
+               (unsigned)resp[port].data, req->size, req->data.size(),
+               req->flags);
 
   delete req;
 
@@ -280,7 +285,8 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
 
 void chdlComponent::consoleOutput(char c) {
  if (c == '\n') {
-   out.output("%u OUTPUT> %s\n", core_id, outputBuffer.c_str());
+   out.output("%lu %u OUTPUT> %s\n", (unsigned long)now[cd], core_id,
+              outputBuffer.c_str());
    outputBuffer.clear();
  } else {
    outputBuffer = outputBuffer + c;
@@ -312,11 +318,6 @@ bool chdlComponent::clockTick(Cycle_t c) {
     // Handle requests
     for (unsigned i = 0; i < req.size(); ++i) {
       if (req[i].valid) {
-        out.debug(_L0_, "Req on port %u to %08lx: ", i, req[i].addr);
-        if (req[i].wr)
-          out.debug(_L0_, "Write %lu\n", req[i].data); 
-        else
-          out.debug(_L0_, "Read\n");
 
         int flags = (req[i].uncached ? SimpleMem::Request::F_NONCACHEABLE : 0) |
                     (req[i].locked ? SimpleMem::Request::F_LOCKED : 0) |
@@ -336,6 +337,16 @@ bool chdlComponent::clockTick(Cycle_t c) {
             SimpleMem::Request::Read, req[i].addr, req[i].size, flags
           );
         }
+
+        out.debug(_L0_, "Req %d on port %u to %08lx: ",
+                  (int)r->id, i, req[i].addr);
+
+        if (req[i].wr)
+          out.debug(_L0_, "Write %lu, ", req[i].data); 
+        else
+          out.debug(_L0_, "Read, ");
+
+        out.debug(_L0_, "flags=%x\n", flags);
 
         if (req[i].wr && req[i].addr == 0x80000008) consoleOutput(req[i].data);
 

@@ -46,7 +46,7 @@ namespace ChdlComponent {
 
   struct respdata {
     uint64_t data, id;
-    bool ready, valid, wr;
+    bool ready, valid, wr, llsc, llsc_suc;
   };
 
   class chdlComponent : public Component {
