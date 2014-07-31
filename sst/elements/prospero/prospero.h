@@ -147,6 +147,10 @@ private:
 
   FILE* trace_input;
   memory_request next_request;
+  uint32_t currentFile;
+  uint32_t maxFile;
+  std::string tracePrefix;
+
   uint32_t trace_format;
   uint64_t total_bytes_read;
   uint64_t total_bytes_written;
