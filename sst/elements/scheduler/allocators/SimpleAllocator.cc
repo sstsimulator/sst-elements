@@ -37,15 +37,16 @@ std::string SimpleAllocator::getSetupInfo(bool comment)
     return com + "Simple Allocator";
 }
 
-
-
-//allocates j if possible
-//returns information on the allocation or NULL if it wasn't possible
-//(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* SimpleAllocator::allocate(Job* j) 
 {  
     if (canAllocate(*j)) {
-        return new AllocInfo(j, *machine);
+        AllocInfo* ai = new AllocInfo(j, *machine);
+        std::vector<int>* freeNodes = machine->getFreeNodes();
+        for(int i = 0; i < j->getProcsNeeded(); i++) {
+            ai->nodeIndices[i] = freeNodes->at(i);
+        }
+        delete freeNodes;
+        return ai;
     }
     return NULL;
 }

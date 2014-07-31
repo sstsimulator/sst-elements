@@ -16,6 +16,9 @@
 #ifndef SST_SCHEDULER_MACHINE_H__
 #define SST_SCHEDULER_MACHINE_H__
 
+#include <string>
+#include <vector>
+
 namespace SST {
     namespace Scheduler {
         class AllocInfo;
@@ -23,34 +26,19 @@ namespace SST {
         class Machine{
             public:
 
-                Machine(int numNodes, int numCoresPerNode, double** D_matrix)
-                {
-                    this->D_matrix = D_matrix;
-                    this->numNodes = numNodes;
-                    this->coresPerNode = numCoresPerNode;
-                }
-
-                virtual ~Machine()
-                {
-                    if(D_matrix != NULL){
-                        for (int i = 0; i < numNodes; i++)
-	                        delete[] D_matrix[i];
-                        delete[] D_matrix;
-                    }
-                }
-
-                virtual std::string getSetupInfo(bool comment) = 0;
+                Machine(int numNodes, int numCoresPerNode, double** D_matrix);
+                ~Machine();
 
                 int getNumFreeNodes() const { return numAvail; }
                 int getNumNodes() const { return numNodes; }
                 int getNumCoresPerNode() const { return coresPerNode; }
                 
-                virtual void reset() = 0;
-
-                virtual void allocate(AllocInfo* allocInfo) = 0;
-
-                virtual void deallocate(AllocInfo* allocInfo) = 0;
+                std::vector<int>* getFreeNodes() const;
                 
+                virtual std::string getSetupInfo(bool comment) = 0;
+                virtual void reset() = 0;
+                virtual void allocate(AllocInfo* allocInfo) = 0;
+                virtual void deallocate(AllocInfo* allocInfo) = 0;
                 virtual long getNodeDistance(int node1, int node2) const = 0;
                 
                 double** D_matrix;
@@ -59,6 +47,10 @@ namespace SST {
                 int numNodes;          //total number of nodes
                 int numAvail;          //number of available nodes
                 int coresPerNode;
+                
+                //TODO: put private:
+                std::vector<bool> isFree;  //whether each node is free
+                
         };
 
     }

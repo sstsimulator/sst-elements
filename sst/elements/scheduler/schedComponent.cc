@@ -573,7 +573,7 @@ void schedComponent::startJob(Job* job)
         
         double randomNumber = rng->nextUniform() * 0.8 - 0.4;
         //calculate baseline L1 pairwise distance
-        AllocInfo* baselineAlloc = MeshAllocInfo::getBaselineAllocation(*mMachine, job);
+        AllocInfo* baselineAlloc = mMachine->getBaselineAllocation(job);
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(*mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
          

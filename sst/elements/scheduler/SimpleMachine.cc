@@ -21,6 +21,7 @@
 #include "Job.h"
 #include "Machine.h"
 #include "output.h"
+#include "allocators/SimpleAllocator.h"
 
 using namespace SST::Scheduler;
 
@@ -37,9 +38,8 @@ SimpleMachine::SimpleMachine(int numNodes, bool insimulationmachine, int numCore
 void SimpleMachine::reset() 
 {  
     numAvail = numNodes;
-    freeNodes.clear();
     for(int i = 0; i < numNodes; i++)
-        freeNodes.push_back(i);
+        isFree[i] = true;
 }
 
 std::string SimpleMachine::getSetupInfo(bool comment)
@@ -57,7 +57,7 @@ std::string SimpleMachine::getSetupInfo(bool comment)
 
 //Allocates nodes
 void SimpleMachine::allocate(AllocInfo* allocInfo) 
-{  
+{
     int num = allocInfo -> job -> getProcsNeeded();  //number of nodes
 
     if (allocInfo -> job -> hasStarted()) {
@@ -70,16 +70,8 @@ void SimpleMachine::allocate(AllocInfo* allocInfo)
     }
 
     numAvail -= num;
-    if (allocInfo->nodeIndices[0] == -1){ //default allocator
-        for(int i=0; i<num; i++) {
-            allocInfo->nodeIndices[i] = freeNodes.back();
-            freeNodes.pop_back();
-        }
-    }
-    else { //ConstraintAllocator; remove the indices given by allocInfo
-        for(int i=0; i<num; i++){
-            freeNodes.erase( remove(freeNodes.begin(), freeNodes.end(), allocInfo->nodeIndices[i]) , freeNodes.end() );
-        }
+    for(int i = 0; i < num; i++) {
+        isFree[allocInfo -> nodeIndices[i]] = false;
     }
 }
 
@@ -94,8 +86,9 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo)
     }
 
     numAvail += num;
+    
     for(int i = 0; i < num; i++) {
-        freeNodes.push_back(allocInfo -> nodeIndices[i]);
+        isFree[allocInfo -> nodeIndices[i]] = true;
     }
 }
 
@@ -103,12 +96,5 @@ long SimpleMachine::getNodeDistance(int node1, int node2) const
 {
     schedout.fatal(CALL_INFO, 1, "Attempt to read node distance from Simple Machine");
     return -1;
-}
-
-std::vector<int>* SimpleMachine::getFreeNodes(){
-    std::vector<int>* retVal = new std::vector<int>();
-    for (unsigned int i = 0; i < freeNodes.size(); i++)
-        retVal->push_back(freeNodes[i]);
-    return retVal;
 }
 

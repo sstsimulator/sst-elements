@@ -35,9 +35,6 @@ namespace SST {
                 ~MeshAllocInfo();
 
                 std::string getNodeList(Machine* m);
-                
-                //baseline allocation: minimum-volume rectangular prism that fits into the machine
-                static AllocInfo* getBaselineAllocation(const MeshMachine & mach, Job* job);
         };
 
     }

@@ -31,8 +31,6 @@ namespace SST {
                 SimpleMachine(int numNodes, bool insimulationmachine, int numCoresPerNode, double** D_matrix);
                 virtual ~SimpleMachine() {}
 
-                //static Machine* Make(vector<string>* params); //Factory creation method
-                //static string getParamHelp();
                 std::string getSetupInfo(bool comment);
 
                 void reset();  //return to beginning-of-simulation state
@@ -43,12 +41,7 @@ namespace SST {
                 
                 long getNodeDistance(int node1, int node2) const;
 
-                //ConstraintAllocator needs these
-                std::vector<int>* getFreeNodes();
-
             private:
-                static const int debug = 0;  //whether to include debugging printouts
-                std::vector<int> freeNodes;       //indices of currently-free nodes
                 bool simulationmachine;
         };
 

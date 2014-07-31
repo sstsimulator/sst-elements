@@ -287,7 +287,6 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
-        //printf("Defaulting to Simple Allocator\n");
         SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
         if (mach == NULL) {
             schedout.fatal(CALL_INFO, 1, "Simple Allocator requires SimpleMachine");
@@ -301,7 +300,6 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             //Simple Allocator for use with simple machine
         case SIMPLEALLOC:
             {
-                //if(DEBUG) printf("Simple Allocator\n");
                 schedout.debug(CALL_INFO, 4, 0, "Simple Allocator\n");
 
                 SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
@@ -315,7 +313,6 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             //Random Allocator, allocates nodes randomly from a mesh
         case RANDOM:
             schedout.debug(CALL_INFO, 4, 0, "Random Allocator\n");
-            //if(DEBUG) printf("Random Allocator\n");
             return new RandomAllocator(m);
             break;
 
@@ -323,7 +320,6 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             //according to various metrics
         case NEAREST:
             schedout.debug(CALL_INFO, 4, 0, "Nearest Allocator\n");
-            //if(DEBUG) printf("Nearest Allocator\n");
             nearestparams = new vector<string>;
             for (int x = 0; x < (int)schedparams -> size(); x++) {
                 nearestparams -> push_back(schedparams -> at(x));
@@ -332,41 +328,35 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             break;
         case GENALG:
             schedout.debug(CALL_INFO, 4, 0, "General Algorithm Nearest Allocator\n");
-            //if(DEBUG) printf("General Algorithm Nearest Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("genAlg");
             return new NearestAllocator(nearestparams, m);
             break;
         case MM:
             schedout.debug(CALL_INFO, 4, 0, "MM Allocator\n");
-            //if(DEBUG) printf("MM Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("MM");
             return new NearestAllocator(nearestparams, m);
             break;
         case ENERGY:
             schedout.debug(CALL_INFO, 4, 0, "Energy-Aware Allocator\n");
-            //if(DEBUG) printf("MC1x1 Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("Energy");
             return new EnergyAllocator(nearestparams, m);
             break;
         case HYBRID:
             schedout.debug(CALL_INFO, 4, 0, "Hybrid Allocator\n");
-            //if(DEBUG) printf("MC1x1 Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("Hybrid");
             return new NearestAllocator(nearestparams, m);
             break;
         case MC1X1:
             schedout.debug(CALL_INFO, 4, 0, "MC1x1 Allocator\n");
-            //if(DEBUG) printf("MC1x1 Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("MC1x1");
             return new NearestAllocator(nearestparams, m);
             break;
         case OLDMC1X1:
-            //if(DEBUG) printf("Old MC1x1 Allocator\n");
             schedout.debug(CALL_INFO, 4, 0, "Old MC1x1 Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("OldMC1x1");
@@ -375,15 +365,12 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
 
             //MBS Allocators use a block-based approach
         case MBS:
-            //if(DEBUG) printf("MBS Allocator\n");
             schedout.debug(CALL_INFO, 4, 0, "MBS Allocator\n");
             return new MBSAllocator(nearestparams, m);
         case GRANULARMBS:
-            //if(DEBUG) printf("Granular MBS Allocator\n");
             schedout.debug(CALL_INFO, 4, 0, "Granular MBS Allocator\n");
             return new GranularMBSAllocator(nearestparams, m);
         case OCTETMBS: 
-            //if(DEBUG) printf("Octet MBS Allocator\n");
             schedout.debug(CALL_INFO, 4, 0, "Octet MBS Allocator\n");
             return new OctetMBSAllocator(nearestparams, m);
 

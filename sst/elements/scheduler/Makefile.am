@@ -12,7 +12,7 @@ libscheduler_la_SOURCES = \
     Allocator.h \
     AllocInfo.h		exceptions.h \
     AllocInfo.cc \
-    Job.h	Machine.h \
+    Job.h	Machine.h Machine.cc \
     Job.cc \
     linkBuilder.h		misc.h			nodeComponent.h			schedComponent.h \
     linkBuilder.cc		nodeComponent.cc	 	schedComponent.cc \

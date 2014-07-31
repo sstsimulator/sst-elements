@@ -65,6 +65,9 @@ namespace SST {
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
 
 				double getCoolingPower() const;
+				
+                //baseline allocation: minimum-volume rectangular prism that fits into the machine
+                AllocInfo* getBaselineAllocation(Job* job);
         };
         
         /**
