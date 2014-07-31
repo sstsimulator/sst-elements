@@ -30,6 +30,7 @@ uint32_t max_thread_count;
 uint32_t trace_format;
 uint64_t instruction_count;
 uint32_t traceEnabled __attribute__((aligned(64)));
+uint64_t nextFileTrip;
 
 const char READ_OPERATION_CHAR = 0;
 const char WRITE_OPERATION_CHAR = 1;
@@ -45,7 +46,7 @@ typedef struct {
 	UINT64 insCount;
 	UINT64 readCount;
 	UINT64 writeCount;
-	UINT64 padC;
+	UINT64 currentFile;
 	UINT64 padD;
 	UINT64 padE;
 	UINT64 padF;
@@ -66,6 +67,8 @@ KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
     "b", "32768", "Size in bytes for each trace buffer");
 KNOB<UINT32> KnobTraceEnabled(KNOB_MODE_WRITEONCE, "pintool",
     "d", "1", "Disable until application says that tracing can start, 0=disable until app, 1=start enabled, default=1");
+KNOB<UINT64> KnobFileTrip(KNOB_MODE_WRITEONCE, "pintool",
+    "l", "100000000", "Trip into a new trace file at this instruction count, default=100000000");
 
 void prospero_enable() {
 	printf("PROSPERO: Tracing enabled\n");
@@ -188,6 +191,33 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
 
 VOID IncrementInstructionCount(THREADID id) {
 	thread_instr_id[id].insCount++;
+
+	if(thread_instr_id[id].insCount >= (nextFileTrip * thread_instr_id[id].currentFile)) {
+		char buffer[256];
+
+		if(trace_format == 0 || trace_format == 1) {
+			fclose(trace[id]);
+	
+			if(trace_format == 0) {
+				sprintf(buffer, "%s-%lu-%lu.trace",
+					KnobTraceFile.Value().c_str(),
+					id, thread_instr_id[id].currentFile);
+				trace[id] = fopen(buffer, "wt");
+			} else {
+				sprintf(buffer,	"%s-%lu-%lu.trace",
+                                        KnobTraceFile.Value().c_str(),
+                                        id, thread_instr_id[id].currentFile);
+                                trace[id] = fopen(buffer, "wb");
+			}
+		} else if(trace_format == 2) {
+			gzclose((gzFile) trace[id]);
+			sprintf(buffer, "%s-%lu-%lu-gz.trace",
+				KnobTraceFile.Value().c_str(), id, (UINT32) thread_instr_id[id].currentFile);
+			trace[id] = (FILE*) gzopen(buffer, "wb");
+		}
+
+		thread_instr_id[id].currentFile++;
+	}
 }
 
 // Is called for every instruction and instruments reads and writes
@@ -329,7 +359,7 @@ int main(int argc, char *argv[])
 	trace_format = 0;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
+		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
 		trace[i] = fopen(nameBuffer, "wt");
 	}
 
@@ -341,7 +371,7 @@ int main(int argc, char *argv[])
 	trace_format = 1;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
+		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
 		trace[i] = fopen(nameBuffer, "wb");
 	}
 
@@ -354,7 +384,7 @@ int main(int argc, char *argv[])
 	trace_format = 2;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-gz.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
+		sprintf(nameBuffer, "%s-%lu-0-gz.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
 		trace[i] = (FILE*) gzopen(nameBuffer, "wb");
 	}
 #endif
@@ -367,7 +397,13 @@ int main(int argc, char *argv[])
     for(UINT32 i = 0; i < max_thread_count; ++i) {
 	thread_instr_id[i].insCount = 0;
 	thread_instr_id[i].threadInit = 0;
+
+	// Next file is going to be marked as 1 (we are really on file 0).
+	thread_instr_id[i].currentFile = 1;
     }
+
+    nextFileTrip = KnobFileTrip.Value();
+    printf("PROSPERO: Next file trip count set to %llu instructions.\n", nextFileTrip);
 
     // Thread zero is always started
     thread_instr_id[0].threadInit = 1;
