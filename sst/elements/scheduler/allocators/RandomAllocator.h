@@ -39,7 +39,7 @@ namespace SST {
 
                 std::string getParamHelp();
 
-                std::string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment) const;
 
                 AllocInfo* allocate(Job* job);
         };

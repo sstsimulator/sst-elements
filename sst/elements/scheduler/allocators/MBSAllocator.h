@@ -53,7 +53,7 @@ namespace SST {
 
                 MBSAllocator(std::vector<std::string>* params, Machine* mach);
 
-                std::string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment) const;
 
                 std::string getParamHelp();
 

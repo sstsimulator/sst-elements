@@ -87,7 +87,7 @@ std::string ConstraintAllocator::getParamHelp()
     return "";
 }
 
-std::string ConstraintAllocator::getSetupInfo(bool comment)
+std::string ConstraintAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if (comment) {

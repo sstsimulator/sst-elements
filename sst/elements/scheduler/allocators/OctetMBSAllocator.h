@@ -39,7 +39,7 @@ namespace SST {
                 OctetMBSAllocator(MeshMachine* m, int x, int y, int z);
                 OctetMBSAllocator(std::vector<std::string>* params, Machine* m);
 
-                std::string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment) const;
 
                 static OctetMBSAllocator Make(std::vector<std::string>* params, MeshMachine* mach);
 

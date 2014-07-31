@@ -46,7 +46,7 @@ GranularMBSAllocator::GranularMBSAllocator(MeshMachine* m, int x, int y, int z) 
     //if (DEBUG) printFBR("Post Initialize:");
 }
 
-std::string GranularMBSAllocator::getSetupInfo(bool comment)
+std::string GranularMBSAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if (comment) {

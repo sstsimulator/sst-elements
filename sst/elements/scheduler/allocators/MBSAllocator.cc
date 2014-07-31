@@ -83,7 +83,7 @@ MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
 
 }
 
-std::string MBSAllocator::getSetupInfo(bool comment)
+std::string MBSAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if (comment) {

@@ -34,7 +34,7 @@ namespace SST {
             public: 
                 GranularMBSAllocator(MeshMachine* m, int x, int y, int z);
 
-                std::string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment) const;
 
                 GranularMBSAllocator(std::vector<std::string>* params, Machine* mach);
 

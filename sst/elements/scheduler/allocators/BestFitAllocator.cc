@@ -44,7 +44,7 @@ BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): Linea
     if (NULL == dynamic_cast<MeshMachine*>(mach)) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
 }
 
-string BestFitAllocator::getSetupInfo(bool comment)
+string BestFitAllocator::getSetupInfo(bool comment) const
 {
     string com;
     if (comment) {

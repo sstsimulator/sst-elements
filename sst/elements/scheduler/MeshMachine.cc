@@ -16,6 +16,7 @@
 #include <sst_config.h>
 
 #include <cmath>
+#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <sstream>

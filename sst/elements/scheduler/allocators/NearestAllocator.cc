@@ -177,7 +177,7 @@ std::string NearestAllocator::getParamHelp()
     return ret.str();
 }
 
-std::string NearestAllocator::getSetupInfo(bool comment)
+std::string NearestAllocator::getSetupInfo(bool comment) const
 { 
     std::string com;
     if (comment) {

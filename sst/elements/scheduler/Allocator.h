@@ -29,7 +29,7 @@ namespace SST {
             public:
                 virtual ~Allocator() {}
 
-                virtual std::string getSetupInfo(bool comment) = 0;
+                virtual std::string getSetupInfo(bool comment) const = 0;
 
                 bool canAllocate(const Job & j)
                 {  
@@ -37,7 +37,7 @@ namespace SST {
                 }
                 bool canAllocate(const Job & j, std::vector<MeshLocation*>* available)
                 {  
-                    return (available -> size() >= (unsigned int)j.getProcsNeeded());
+                    return (available -> size() >= (unsigned int) ceil((float) j.getProcsNeeded() / machine->coresPerNode));
                 }
 
                 //allocates job if possible

@@ -47,7 +47,7 @@ OctetMBSAllocator::OctetMBSAllocator(MeshMachine* m, int x, int y, int z) : MBSA
     //if (DEBUG) printFBR("Post Initialize:");
 }
 
-string OctetMBSAllocator::getSetupInfo(bool comment)
+string OctetMBSAllocator::getSetupInfo(bool comment) const
 {
     string com;
     if (comment)  {

@@ -26,7 +26,7 @@ SimpleAllocator::SimpleAllocator(SimpleMachine* m)
     machine = m;
 }
 
-std::string SimpleAllocator::getSetupInfo(bool comment) 
+std::string SimpleAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if (comment) {

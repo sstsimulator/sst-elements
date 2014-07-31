@@ -49,7 +49,8 @@ RoundUpMBSAllocator::RoundUpMBSAllocator(MeshMachine* m, int x, int y, int z) : 
     schedout.init("", 8, ~0, Output::STDOUT);
 }
 
-std::string RoundUpMBSAllocator::getSetupInfo(bool comment){
+std::string RoundUpMBSAllocator::getSetupInfo(bool comment) const
+{
     string com;
     if (comment)  {
         com = "# ";

@@ -83,7 +83,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
 
         idx_t nvtxs = numTasks;
         idx_t ncon = 1; //number of balancing constraints
-        idx_t nparts = ceil((double) numTasks / mach.getNumCoresPerNode()); //number of parts to partition
+        idx_t nparts = ceil((double) numTasks / mach.coresPerNode); //number of parts to partition
 
         //create graph info in CSR format
         vector<idx_t> xadj;

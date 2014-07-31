@@ -55,7 +55,7 @@ std::string EnergyAllocator::getParamHelp()
     return "This allocator requires d_matrix input.";
 }
 
-std::string EnergyAllocator::getSetupInfo(bool comment)
+std::string EnergyAllocator::getSetupInfo(bool comment) const
 { 
     std::string com;
     if (comment) {

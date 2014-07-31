@@ -38,7 +38,7 @@ namespace SST {
                 {
                     return "[<file>]\n\tfile: Path to file giving the curve";
                 }
-                std::string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment) const;
 
                 AllocInfo* allocate(Job* job);
         };

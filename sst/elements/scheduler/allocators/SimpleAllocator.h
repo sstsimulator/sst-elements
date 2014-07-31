@@ -32,7 +32,7 @@ namespace SST {
 
                 ~SimpleAllocator() {}
 
-                std::string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment) const;
 
                 AllocInfo* allocate(Job* j);  //allocates j if possible
                 //returns information on the allocation or NULL if it wasn't possible

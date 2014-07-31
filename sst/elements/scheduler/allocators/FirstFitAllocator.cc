@@ -43,7 +43,7 @@ FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* 
     }
 }
 
-std::string FirstFitAllocator::getSetupInfo(bool comment)
+std::string FirstFitAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if (comment)  {

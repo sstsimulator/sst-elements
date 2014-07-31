@@ -36,7 +36,7 @@ std::string RandomAllocator::getParamHelp()
     return "";
 }
 
-std::string RandomAllocator::getSetupInfo(bool comment)
+std::string RandomAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if(comment)  {

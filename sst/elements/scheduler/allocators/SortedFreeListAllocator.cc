@@ -41,7 +41,7 @@ SortedFreeListAllocator::SortedFreeListAllocator(std::vector<std::string>* param
     }
 }
 
-std::string SortedFreeListAllocator::getSetupInfo(bool comment)
+std::string SortedFreeListAllocator::getSetupInfo(bool comment) const
 {
     std::string com;
     if (comment)  {
