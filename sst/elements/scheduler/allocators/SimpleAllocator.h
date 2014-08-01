@@ -22,13 +22,13 @@
 namespace SST {
     namespace Scheduler {
 
-        class SimpleMachine;
+        class Machine;
         class Job;
 
         class SimpleAllocator : public Allocator {
             public:
 
-                SimpleAllocator(SimpleMachine* m);
+                SimpleAllocator(Machine* m);
 
                 ~SimpleAllocator() {}
 

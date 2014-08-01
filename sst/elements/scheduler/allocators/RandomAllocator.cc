@@ -21,11 +21,11 @@
 using namespace SST::Scheduler;
 
 
-RandomAllocator::RandomAllocator(Machine* mesh) 
+RandomAllocator::RandomAllocator(Machine* mesh) : Allocator(*mesh)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
-    machine = dynamic_cast<MeshMachine*>(mesh);
-    if (machine == NULL) {
+    mMachine = dynamic_cast<MeshMachine*>(mesh);
+    if (mMachine == NULL) {
         schedout.fatal(CALL_INFO, 1, "Random Allocator requires Mesh");
     }
     srand(0);
@@ -52,13 +52,11 @@ std::string RandomAllocator::getSetupInfo(bool comment) const
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* RandomAllocator::allocate(Job* job){
     if(!canAllocate(*job)) return NULL;
-    
-    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
 
-    AllocInfo* retVal = new AllocInfo(job, *machine);
+    AllocInfo* retVal = new AllocInfo(job, machine);
 
     //figure out which processors to use
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
     
     std::vector<int>* freeNodes = mMachine->getFreeNodes();
     std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());

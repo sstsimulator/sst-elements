@@ -34,7 +34,6 @@ namespace SST {
         class MBSMeshAllocInfo;
         class Block;
 
-
         /**
          * The Rounding Up MBS Allocator will do the same GranularMBS style allocation, except that
          * instead of preserving larger blocks like all of the other MBS algorithms, one
@@ -69,6 +68,7 @@ namespace SST {
                  * @return what you need to send the Mesh object, to actually allocate the processors
                  */
             private:
+                MeshMachine* mMachine;
                 MBSMeshAllocInfo* processRequest(std::map<int,int>* RBR, Job* job);
 
                 /**

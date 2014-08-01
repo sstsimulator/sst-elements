@@ -44,6 +44,9 @@ namespace SST {
                 std::string getSetupInfo(bool comment) const;
 
                 AllocInfo* allocate(Job* job) ;
+            
+            private:
+                MeshMachine* mMachine;
         };
 
     }

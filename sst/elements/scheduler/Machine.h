@@ -27,13 +27,14 @@ namespace SST {
             public:
 
                 Machine(int numNodes, int numCoresPerNode, double** D_matrix);
-                ~Machine();
+                virtual ~Machine();
                 
                 void reset();
                 void allocate(AllocInfo* allocInfo);
                 void deallocate(AllocInfo* allocInfo);
 
                 int getNumFreeNodes() const { return numAvail; }
+                bool isFree(int nodeNum) const { return freeNodes[nodeNum]; }
                 std::vector<int>* getFreeNodes() const;
                 std::vector<int>* getUsedNodes() const;
 				double getCoolingPower() const;
@@ -48,8 +49,9 @@ namespace SST {
 
             private:
                 int numAvail;          //number of available nodes
-                std::vector<bool> isFreeM;  //whether each node is free
+                std::vector<bool> freeNodes;  //whether each node is free
         };
     }
 }
 #endif
+

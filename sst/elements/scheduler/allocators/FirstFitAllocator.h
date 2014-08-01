@@ -28,8 +28,6 @@ namespace SST {
         class AllocInfo;
         class Job;
 
-
-
         class FirstFitAllocator : public LinearAllocator {
 
             public:

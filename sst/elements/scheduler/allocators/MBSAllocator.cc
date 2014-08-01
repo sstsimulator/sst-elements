@@ -37,24 +37,21 @@ using namespace SST::Scheduler;
 
 
 //this constructor doesn't call initialize() and is for derived classes
-MBSAllocator::MBSAllocator(Machine* mach)
+MBSAllocator::MBSAllocator(Machine* mach) : Allocator(*mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
-    if (NULL == m) {
+    meshMachine = dynamic_cast<MeshMachine*>(mach);
+    if (NULL == meshMachine) {
         schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
     }
-    meshMachine = m; //make us happy
-    machine = m;     //make Allocator happy
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 }
 
-MBSAllocator::MBSAllocator(MeshMachine* m, int x, int y, int z)
+MBSAllocator::MBSAllocator(MeshMachine* m, int x, int y, int z) : Allocator(*m)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    meshMachine = m; //make us happy
-    machine = m;     //make Allocator happy
+    meshMachine = m;
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 
@@ -64,21 +61,19 @@ MBSAllocator::MBSAllocator(MeshMachine* m, int x, int y, int z)
     //if (DEBUG) printFBR("Post Initialize:");
 }
 
-MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
+MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach) : Allocator(*mach)
 { 
-    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
-    if (NULL == m) {
+    meshMachine = dynamic_cast<MeshMachine*>(mach);
+    if (NULL == meshMachine) {
         schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
     }
-    meshMachine = m; //make us happy
-    machine = m;     //make Allocator happy
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 
     //create the starting blocks
     schedout.debug(CALL_INFO, 1, 0, "Initializing MBSAllocator:");
     initialize(
-               new MeshLocation(m -> getXDim(),m -> getYDim(),m -> getZDim()), 
+               new MeshLocation(meshMachine -> getXDim(),meshMachine -> getYDim(),meshMachine -> getZDim()), 
                new MeshLocation(0,0,0));
 
 }
@@ -240,13 +235,13 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
     //if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s\n",job -> toString().c_str());
 
-    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job, *machine);
+    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job, machine);
     int allocated = 0;
 
     //a map of dimensions to numbers
     std::map<int,int>* RBR = factorRequest(job);
 
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
     while (allocated < nodesNeeded){
         //Start trying allocate the largest blocks
@@ -267,10 +262,9 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
             std::set<MeshLocation*, MeshLocation>* newBlockprocs = newBlock -> processors();
             std::set<MeshLocation*, MeshLocation>::iterator it = newBlockprocs -> begin();
             //processors() is sorted by MeshLocation comparator
-            MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
             for (int i = allocated; it != newBlockprocs -> end();i++){
                 retVal -> nodes -> at(i) = *(it);
-                retVal -> nodeIndices[i] = (*it) -> toInt(*mMachine);
+                retVal -> nodeIndices[i] = (*it) -> toInt(*meshMachine);
                 it++;
                 allocated++;
             }
@@ -314,7 +308,7 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
     std::map<int,int>* retVal = new std::map<int,int>();
     int procs = 0;
 
-    int nodesNeeded = ceil((double) j->getProcsNeeded() / machine->coresPerNode);
+    int nodesNeeded = ceil((double) j->getProcsNeeded() / machine.coresPerNode);
 
     while (procs < nodesNeeded){
         //begin our search

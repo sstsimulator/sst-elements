@@ -27,17 +27,19 @@ namespace SST {
 
         class Allocator {
             public:
+                Allocator(const Machine & mach) : machine(mach){ };
+
                 virtual ~Allocator() {}
 
                 virtual std::string getSetupInfo(bool comment) const = 0;
 
                 bool canAllocate(const Job & j)
                 {  
-                    return (machine -> getNumFreeNodes() >= ceil((float) j.getProcsNeeded() / machine->coresPerNode ));
+                    return (machine.getNumFreeNodes() >= ceil((float) j.getProcsNeeded() / machine.coresPerNode ));
                 }
                 bool canAllocate(const Job & j, std::vector<MeshLocation*>* available)
                 {  
-                    return (available -> size() >= (unsigned int) ceil((float) j.getProcsNeeded() / machine->coresPerNode));
+                    return (available -> size() >= (unsigned int) ceil((float) j.getProcsNeeded() / machine.coresPerNode));
                 }
 
                 //allocates job if possible
@@ -53,7 +55,7 @@ namespace SST {
                 virtual void done() { }
 
             protected:
-                Machine* machine;
+                const Machine & machine;
 
         };
 
@@ -61,3 +63,4 @@ namespace SST {
 }
 
 #endif
+

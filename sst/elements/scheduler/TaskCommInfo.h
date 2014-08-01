@@ -13,6 +13,7 @@
 #define SST_SCHEDULER_TASKCOMMINFO_H__
 
 #include <cstddef>
+#include <map>
 #include <vector>
 
 namespace SST {
@@ -24,9 +25,9 @@ namespace SST {
         
 	        public:
 		        TaskCommInfo(Job* job); //default: all-to-all communication
-	            TaskCommInfo(Job* job, std::vector<std::vector<std::vector<int>*> >* inCommInfo); // communication matrix input
+	            TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo); // communication matrix input
 	            TaskCommInfo(Job* job, int xdim, int ydim, int zdim); // mesh dimension input
-	            TaskCommInfo(Job* job, std::vector<std::vector<std::vector<int>*> >* inCommInfo, double** inCoords); //coordinate input
+	            TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, double** inCoords); //coordinate input
 
                 TaskCommInfo(const TaskCommInfo& tci);
                 
@@ -41,7 +42,7 @@ namespace SST {
 
                 //first vector: 0:communication info, 1: corresponding weights
                 //second & third vectors: adjacency list of tasks
-                std::vector<std::vector<std::vector<int>*> >* getCommInfo() const;
+                std::vector<std::map<int,int> >* getCommInfo() const;
                 int** getCommMatrix() const;
                 int getCommWeight(int task1, int task2) const;
                 int getSize() const { return size; }
@@ -52,9 +53,9 @@ namespace SST {
 
 	        private:
                 commType taskCommType;
-                //first vector: 0:communication info, 1: corresponding weights
-                //second & third vectors: adjacency list of tasks
-                std::vector<std::vector<std::vector<int>*> >* commInfo;
+                //vector: task #s
+                //map<key,value> = map<communicatingTask, weight>
+                std::vector<std::map<int,int> >* commInfo;
 
 		        unsigned int size;
 		        
@@ -67,4 +68,5 @@ namespace SST {
     }
 }
 #endif
+
 

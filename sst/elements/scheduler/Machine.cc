@@ -20,7 +20,7 @@ using namespace SST::Scheduler;
 Machine::Machine(int inNumNodes, int numCoresPerNode, double** D_matrix) : numNodes(inNumNodes), coresPerNode(numCoresPerNode)
 {
     this->D_matrix = D_matrix;
-    isFreeM = std::vector<bool>(numNodes);
+    freeNodes = std::vector<bool>(numNodes);
     reset();
 }
 
@@ -37,7 +37,7 @@ void Machine::reset()
 {
     numAvail = numNodes;
     for(int i = 0; i < numNodes; i++){
-        isFreeM[i] = true;
+        freeNodes[i] = true;
     }
 }
 
@@ -52,10 +52,10 @@ void Machine::allocate(AllocInfo* allocInfo)
     }
     
     for(int i = 0; i < nodeCount; i++) {
-        if(!isFreeM[allocInfo -> nodeIndices[i]]){
+        if(!freeNodes[allocInfo -> nodeIndices[i]]){
             schedout.fatal(CALL_INFO, 0, "Attempted to allocate job %ld to a busy node: ", allocInfo->job->getJobNum() );
         }
-        isFreeM[allocInfo -> nodeIndices[i]] = false;
+        freeNodes[allocInfo -> nodeIndices[i]] = false;
     }
 }
 
@@ -70,29 +70,29 @@ void Machine::deallocate(AllocInfo* allocInfo)
     }
     
     for(int i = 0; i < nodeCount; i++) {
-        if(isFreeM[allocInfo -> nodeIndices[i]]){
+        if(freeNodes[allocInfo -> nodeIndices[i]]){
             schedout.fatal(CALL_INFO, 0, "Attempted to deallocate job %ld from an idle node: ", allocInfo->job->getJobNum() );
         }
-        isFreeM[allocInfo -> nodeIndices[i]] = true;
+        freeNodes[allocInfo -> nodeIndices[i]] = true;
     }
 }
 
 std::vector<int>* Machine::getFreeNodes() const
 {
-    std::vector<int>* freeNodes = new std::vector<int>();
+    std::vector<int>* freeList = new std::vector<int>();
     for(int i = 0; i < numNodes; i++){
-        if(isFreeM[i]){
-            freeNodes->push_back(i);
+        if(freeNodes[i]){
+            freeList->push_back(i);
         }
     }
-    return freeNodes;
+    return freeList;
 }
 
 std::vector<int>* Machine::getUsedNodes() const
 {
     std::vector<int>* usedNodes = new std::vector<int>();
     for(int i = 0; i < numNodes; i++){
-        if(!isFreeM[i]){
+        if(!freeNodes[i]){
             usedNodes->push_back(i);
         }
     }
@@ -112,14 +112,14 @@ double Machine::getCoolingPower() const
 
     //max inlet temp and number of busy nodes
     for (int i = 0; i < numNodes; i++) {
-        if( !isFreeM[i] ){
+        if( !freeNodes[i] ){
             busynodes++;
         }
         if(D_matrix != NULL){
             sum_inlet = 0;
             for (int j = 0; j < numNodes; j++)
             {
-                sum_inlet += D_matrix[i][j] * (Pidle + Putil * (!isFreeM[i]));
+                sum_inlet += D_matrix[i][j] * (Pidle + Putil * (!freeNodes[i]));
             }
             if(sum_inlet > max_inlet){
                 max_inlet = sum_inlet;
@@ -146,3 +146,4 @@ double Machine::getCoolingPower() const
 
     return  Pcooling;
 }
+

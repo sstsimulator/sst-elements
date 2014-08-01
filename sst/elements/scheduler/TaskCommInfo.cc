@@ -29,7 +29,7 @@ TaskCommInfo::TaskCommInfo(Job* job)
     zdim = 0;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::vector<std::vector<int>*> >* inCommInfo)
+TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo)
 {
     init(job);
     taskCommType = TaskCommInfo::CUSTOM;
@@ -51,7 +51,7 @@ TaskCommInfo::TaskCommInfo(Job* job, int xdim, int ydim, int zdim)
     this->zdim = zdim;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::vector<std::vector<int>*> >* inCommInfo, double** inCoords)
+TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, double** inCoords)
 {
     init(job);
     taskCommType = TaskCommInfo::COORDINATE;
@@ -71,15 +71,10 @@ TaskCommInfo::TaskCommInfo(const TaskCommInfo& tci)
     zdim = tci.zdim;
     
     if(taskCommType == CUSTOM || taskCommType == COORDINATE){
-        commInfo = new std::vector<std::vector<std::vector<int>*> >(2);
-        commInfo->at(0).resize(size);
-        commInfo->at(1).resize(size);
+        commInfo = new std::vector<std::map<int,int> >(size);
         for(unsigned int i = 0; i < size; i++){
-            commInfo->at(0)[i] = new std::vector<int>(tci.commInfo->at(0)[i]->size());
-            commInfo->at(1)[i] = new std::vector<int>(tci.commInfo->at(0)[i]->size());
-            for(unsigned int j = 0; j < tci.commInfo->at(0)[i]->size(); j++){
-                commInfo->at(0)[i]->push_back(tci.commInfo->at(0)[i]->at(j));
-                commInfo->at(1)[i]->push_back(tci.commInfo->at(1)[i]->at(j));
+            for(std::map<int, int>::iterator it = tci.commInfo->at(i).begin(); it != tci.commInfo->at(i).end(); it++){
+                commInfo->at(i)[it->first] = it->second;
             }
         }
     } else {
@@ -108,10 +103,6 @@ void TaskCommInfo::init(Job* job)
 TaskCommInfo::~TaskCommInfo()
 {
     if(commInfo != NULL){
-        for(unsigned int i = 0; i < size; i++){
-            delete commInfo->at(0)[i];
-            delete commInfo->at(1)[i];
-        }
         delete commInfo;
     }
     if(coordMatrix != NULL){
@@ -143,37 +134,26 @@ int** TaskCommInfo::getCommMatrix() const
     return outMatrix;
 }
 
-std::vector<std::vector<std::vector<int>*> >* TaskCommInfo::getCommInfo() const
+std::vector<std::map<int,int> >* TaskCommInfo::getCommInfo() const
 {
-    std::vector<std::vector<std::vector<int>*> >* retVec = new std::vector<std::vector<std::vector<int>*> >(2);
-    retVec->at(0).resize(size);
-    retVec->at(1).resize(size);
-    unsigned int cnt;
+    std::vector<std::map<int,int> >* retVec = new std::vector<std::map<int,int> >(size);
 
     switch(taskCommType){
     case ALLTOALL:
         for(unsigned int taskIt = 0; taskIt < size; taskIt++){
-            retVec->at(0)[taskIt] = new std::vector<int>(size - 1);
-            retVec->at(1)[taskIt] = new std::vector<int>(size - 1);
-            cnt = 0;
             for(unsigned int otherIt = 0; otherIt < size; otherIt++){
                 if(otherIt != taskIt){
-                    retVec->at(0)[taskIt]->at(cnt) = otherIt;
-                    retVec->at(1)[taskIt]->at(cnt) = 1;
-                    cnt++;
+                    retVec->at(taskIt)[otherIt] = 1;
                 }
             }
         }
         break;
     case MESH:
         for(unsigned int taskIt = 0; taskIt < size; taskIt++){
-            retVec->at(0)[taskIt] = new std::vector<int>();
-            retVec->at(1)[taskIt] = new std::vector<int>();
             for(unsigned int otherIt = 0; otherIt < size; otherIt++){
                 int weight = getCommWeight(taskIt, otherIt);
                 if(weight != 0){
-                    retVec->at(0)[taskIt]->push_back(otherIt);
-                    retVec->at(1)[taskIt]->push_back(weight);
+                    retVec->at(taskIt)[otherIt] = weight;
                 }
             }
         }
@@ -181,8 +161,9 @@ std::vector<std::vector<std::vector<int>*> >* TaskCommInfo::getCommInfo() const
     case CUSTOM:
     case COORDINATE:
         for(unsigned int taskIt = 0; taskIt < size; taskIt++){
-            retVec->at(0)[taskIt] = new std::vector<int>(*(commInfo->at(0)[taskIt]));
-            retVec->at(1)[taskIt] = new std::vector<int>(*(commInfo->at(1)[taskIt]));
+            for(std::map<int, int>::iterator it = commInfo->at(taskIt).begin(); it != commInfo->at(taskIt).end(); it++){
+                retVec->at(taskIt)[it->first] = it->second;
+            }
         }
         break;
     default:
@@ -196,7 +177,12 @@ std::vector<std::vector<std::vector<int>*> >* TaskCommInfo::getCommInfo() const
 int TaskCommInfo::getCommWeight(int task0, int task1) const
 {
     int dist = 0;
-    if(taskCommType == TaskCommInfo::MESH){
+    switch(taskCommType){
+    case ALLTOALL:
+        dist = 1;
+        break;
+    case MESH:
+    {
         int task0Dims[3];
         getTaskDims(task0, task0Dims);
         int task1Dims[3];
@@ -208,15 +194,16 @@ int TaskCommInfo::getCommWeight(int task0, int task1) const
         if(tempDist == 1){
             dist = 1;
         }
-    } else if (taskCommType == TaskCommInfo::ALLTOALL) {
-        dist = 1;
-    } else {
-        for(unsigned int i = 0; i < commInfo->at(0)[task0]->size(); i++){
-            if(commInfo->at(0)[task0]->at(i) == task1){
-                dist = commInfo->at(1)[task0]->at(i);
-                break;
-            }
+        break;
+    }
+    case CUSTOM:
+    case COORDINATE:
+        if(commInfo->at(task0).count(task1) != 0){
+            dist = commInfo->at(task0)[task1];
         }
+        break;
+    default:
+        schedout.fatal(CALL_INFO, 1, "Unknown Communication type");
     }
     return dist;
 }
@@ -302,8 +289,8 @@ int** TaskCommInfo::buildCustomMatrix() const
 
     //write data
     for(unsigned int taskIt = 0; taskIt < commInfo->at(0).size(); ++taskIt) {
-        for(unsigned int adjIt = 0; adjIt < commInfo->at(0)[taskIt]->size(); adjIt++){
-            outMatrix[taskIt][commInfo->at(0)[taskIt]->at(adjIt)] = commInfo->at(1)[taskIt]->at(adjIt);
+        for(std::map<int, int>::iterator it = commInfo->at(taskIt).begin(); it != commInfo->at(taskIt).end(); it++){
+            outMatrix[taskIt][it->first] = it->second;
         }
     }
 
@@ -316,4 +303,5 @@ void TaskCommInfo::getTaskDims(int taskNo, int outDims[3]) const
     outDims[1] = (taskNo / xdim) % ydim;
     outDims[2] = taskNo / (xdim*ydim);
 }
+
 

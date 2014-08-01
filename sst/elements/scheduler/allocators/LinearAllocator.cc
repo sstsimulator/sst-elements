@@ -632,7 +632,7 @@ int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L)
 
 //Takes in a set of parameters and passes them on to MeshLocationOrdering,
 //which will give us an ordering on the mesh.  This ordering is the returned.
-LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach) 
+LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach) : Allocator(*mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     mMachine = dynamic_cast<MeshMachine*>(mach);
@@ -640,8 +640,6 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
         schedout.fatal(CALL_INFO, 1, "Linear allocators require a MeshMachine* machine");
         //error("Linear allocators require a MeshMachine* machine");
     }
-
-    machine = mMachine;
 
     bool sort, hilbert;
     sort = false;
@@ -741,7 +739,7 @@ AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
     delete freeNodes;
     
     sort(avail -> begin(), avail -> end(), *ordering);
-    int num = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int num = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
     //scan through possible starting locations to find best one
     int bestStart = 0;   //index of best starting location so far
@@ -755,8 +753,7 @@ AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
     }
 
     //return the best allocation found
-    AllocInfo* retVal = new AllocInfo(job, *machine);
-    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
+    AllocInfo* retVal = new AllocInfo(job, machine);
     for (int i = 0; i< (int)avail -> size(); i++) {
         if (i >= bestStart && i < bestStart + num) {
             retVal -> nodeIndices[i  - bestStart] = avail-> at(i)->toInt(*mMachine);

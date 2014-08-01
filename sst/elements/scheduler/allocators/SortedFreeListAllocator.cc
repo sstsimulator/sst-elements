@@ -32,13 +32,6 @@ using namespace SST::Scheduler;
 SortedFreeListAllocator::SortedFreeListAllocator(std::vector<std::string>* params, Machine* mach) : LinearAllocator(params, mach)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
-    //if (DEBUG) {
-    //    printf("Constructing SortedFreeListAllocator\n");
-    //}
-    schedout.debug(CALL_INFO, 1, 0, "Constructing SortedFreeListAllocator\n");
-    if (NULL == dynamic_cast<MeshMachine*>(mach)) {
-        schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
-    }
 }
 
 std::string SortedFreeListAllocator::getSetupInfo(bool comment) const
@@ -57,15 +50,13 @@ std::string SortedFreeListAllocator::getSetupInfo(bool comment) const
 //(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* SortedFreeListAllocator::allocate(Job* job) 
 {
-    MeshMachine* mMachine = static_cast<MeshMachine*>(machine);
-
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s \n", job -> toString().c_str());
 
     if (!canAllocate(*job)) {
         return NULL;
     }
     
-    std::vector<int>* freeNodes = mMachine->getFreeNodes();
+    std::vector<int>* freeNodes = machine.getFreeNodes();
     std::vector<MeshLocation*>* freeprocs = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         freeprocs->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
@@ -74,9 +65,9 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
 
     stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);
 
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
-    AllocInfo* retVal = new AllocInfo(job, *machine);
+    AllocInfo* retVal = new AllocInfo(job, machine);
     for (int i = 0; i < (int)freeprocs -> size(); i++) {
         if (i < nodesNeeded) {
             retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt(*mMachine);

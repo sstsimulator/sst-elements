@@ -37,12 +37,11 @@
 
 using namespace SST::Scheduler;
 
-EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach)
+EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach) : Allocator(*mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     configName = "Energy";
-    machine = mach;
-    
+        
     mMachine = dynamic_cast<MeshMachine*>(mach);
     if(mMachine == NULL){
         schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
@@ -89,9 +88,9 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
         return NULL;
     }
 
-    AllocInfo* retVal = new AllocInfo(job, *machine);
+    AllocInfo* retVal = new AllocInfo(job, machine);
 
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
     
     //optimization: if exactly enough procs are free, just return them
     if ((unsigned int) nodesNeeded == available -> size()) {

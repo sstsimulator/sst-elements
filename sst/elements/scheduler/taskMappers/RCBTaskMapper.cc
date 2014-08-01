@@ -54,6 +54,12 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
 
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
     int jobSize = job->getProcsNeeded();
+    
+    //Optimization: SimpleTaskMapper if <= 2 tasks are provided
+    if(jobSize <= 2 || allocInfo->getNodesNeeded() == 1){
+        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mach);
+        return simpleMapper.mapTasks(allocInfo);
+    }
 
     //dummy rotator for initialization
     Rotator dummyRotator = Rotator(*this, mMachine);

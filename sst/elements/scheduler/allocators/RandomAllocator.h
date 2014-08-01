@@ -24,10 +24,10 @@
 
 #include "Allocator.h"
 
-
 namespace SST {
     namespace Scheduler {
         class Machine;
+        class MeshMachine;
         class Job;
 
         class RandomAllocator : public Allocator {
@@ -42,6 +42,9 @@ namespace SST {
                 std::string getSetupInfo(bool comment) const;
 
                 AllocInfo* allocate(Job* job);
+                
+            private:
+                MeshMachine *mMachine;
         };
 
     }

@@ -46,6 +46,7 @@ using namespace std;
 
 RoundUpMBSAllocator::RoundUpMBSAllocator(MeshMachine* m, int x, int y, int z) : GranularMBSAllocator(m, x, y, z) 
 {
+    mMachine = m;
     schedout.init("", 8, ~0, Output::STDOUT);
 }
 
@@ -72,7 +73,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job)
     schedout.debug(CALL_INFO, 1, 0, "Allocating %s\n",job -> toString().c_str());
 
     //a map of dimensions to numbers
-    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
     map<int,int>* RBR = generateIdealRequest(nodesNeeded);
     //if (DEBUG) printRBR(RBR);
     printRBR(RBR);
@@ -127,7 +128,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
 {
     //construct what we will eventually return
     //TreeMap<int,int> retVal = new TreeMap<int,int>();
-    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job, *machine);
+    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job, *mMachine);
 
     int procs = 0;
 
@@ -187,7 +188,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
             } else {
                 toAssign = value;
             }
-            int nodesNeeded = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+            int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
             //add if necessary
             for (int assigned = 0; assigned < toAssign && value > 0; assigned++)
             {

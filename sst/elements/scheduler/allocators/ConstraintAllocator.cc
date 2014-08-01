@@ -36,9 +36,9 @@
 using namespace SST::Scheduler;
 
 ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile, schedComponent* sc) 
+    : Allocator(*m)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    machine = m;
     ConstraintsFileName = ConstFile;
     this->sc = sc;
     // read Dependencies
@@ -105,9 +105,9 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 	static int count = 0;
 
-	std::vector<int> * freeNodes = ((SimpleMachine*)machine)->getFreeNodes();
+	std::vector<int> * freeNodes = machine.getFreeNodes();
 
-	if( (unsigned) ceil((double) job->getProcsNeeded() / machine->coresPerNode) <= freeNodes->size() ){
+	if( (unsigned) ceil((double) job->getProcsNeeded() / machine.coresPerNode) <= freeNodes->size() ){
 		if( constraints_changed() ){
 			read_constraints();
 		}
@@ -154,10 +154,10 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 
 AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
-	AllocInfo * alloc = new AllocInfo( job, *machine );
-	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->getFreeNodes();
+	AllocInfo * alloc = new AllocInfo( job, machine );
+	std::vector<int> * free_comp_nodes = machine.getFreeNodes();
     
-    int numNodes = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int numNodes = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
 	for( int node_counter = 0; node_counter < numNodes; node_counter ++ ){
 #define LINEAR_FROM_TOP true
@@ -181,7 +181,7 @@ AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 
 
 AllocInfo * ConstraintAllocator::generate_AllocInfo( ConstrainedAllocation * constrained_alloc ){
-	AllocInfo * alloc = new AllocInfo( constrained_alloc->job, *machine );
+	AllocInfo * alloc = new AllocInfo( constrained_alloc->job, machine );
 
 	int node_counter = 0;
 
@@ -274,8 +274,8 @@ std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::stri
 // returns an allocation satisifying the given constraint, or NULL if it can not be satisifed 
 // satisfied means: at least one constrained node used and one constraint node avoided
 ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::vector<std::string> * nodes_on_constraint_line ){
-	std::vector<int> * all_available_compute_nodes = ((SimpleMachine *)machine)->getFreeNodes();
-	std::vector<int> * unconstrained_compute_nodes = ((SimpleMachine *)machine)->getFreeNodes();
+	std::vector<int> * all_available_compute_nodes = machine.getFreeNodes();
+	std::vector<int> * unconstrained_compute_nodes = machine.getFreeNodes();
 	std::list<std::vector<int> *> * constrained_compute_nodes = new std::list<std::vector<int> *>(); 
 
 	std::sort( all_available_compute_nodes->begin(), all_available_compute_nodes->end() );
@@ -311,7 +311,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
 	}
 	
-	unsigned numNodes = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+	unsigned numNodes = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 	
 	int num_constrained_needed = 0;
 	if( unconstrained_compute_nodes->size() >= numNodes ){

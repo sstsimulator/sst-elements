@@ -41,7 +41,8 @@ BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): Linea
 {
     schedout.init("", 8, 0, Output::STDOUT);
     schedout.debug(CALL_INFO, 0, 0, "Constructing BestFitAllocator\n");
-    if (NULL == dynamic_cast<MeshMachine*>(mach)) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
+    mMachine = dynamic_cast<MeshMachine*>(mach);
+    if (NULL == mMachine) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
 }
 
 string BestFitAllocator::getSetupInfo(bool comment) const
@@ -68,7 +69,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
 
     vector<vector<MeshLocation*>*>* intervals = getIntervals();
 
-    int num = ceil((double) job->getProcsNeeded() / machine->coresPerNode);
+    int num = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
     int bestInterval = -1;  //index of best interval found so far
     //(-1 = none)
@@ -102,8 +103,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
         //no single interval is big enough; minimize the span
         return minSpanAllocate(job);
     } else {
-        AllocInfo* retVal = new AllocInfo(job, *machine);
-        MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine); 
+        AllocInfo* retVal = new AllocInfo(job, machine);
         if(mMachine == NULL){
             schedout.fatal(CALL_INFO, 1, "Best Fit Allocator requires MeshMachine");
         }
