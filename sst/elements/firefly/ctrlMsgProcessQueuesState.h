@@ -28,7 +28,7 @@ class ProcessQueuesState : StateBase< T1 >
   public:
     ProcessQueuesState( int verbose, Output::output_location_t loc, T1& obj ) : 
         StateBase<T1>( verbose, loc, obj ),
-        m_ackKey( 0 ),
+        m_getKey( 0 ),
         m_rspKey( 0 ),
         m_needRecv( 0 ),
         m_missedInt( false ),
@@ -178,7 +178,7 @@ class ProcessQueuesState : StateBase< T1 >
         void* key;
     };
 
-    struct AckInfo {
+    struct GetInfo {
         _CommReq*  req;
         CtrlHdr    hdr;
         nid_t      nid;
@@ -269,7 +269,8 @@ class ProcessQueuesState : StateBase< T1 >
 
 
     void processLoopResp( LoopResp* );
-    void processLongAck( AckInfo* );
+    void processLongGet( GetInfo* );
+    void processLongRsp( _CommReq* );
     void processPioSendFini( _CommReq* );
 
     bool enterSend( _CommReq* );
@@ -333,7 +334,7 @@ class ProcessQueuesState : StateBase< T1 >
     bool pioSendFini( void* );
     bool pioSendFini( CtrlHdr* );
     bool dmaRecvFini( _CommReq*, nid_t, uint32_t, size_t );
-    bool dmaRecvFini( AckInfo*, nid_t, uint32_t, size_t );
+    bool dmaRecvFini( GetInfo*, nid_t, uint32_t, size_t );
     bool dmaRecvFini( ShortRecvBuffer*, nid_t, uint32_t, size_t );
     bool dmaSendFini( _CommReq* );
 
@@ -354,10 +355,10 @@ class ProcessQueuesState : StateBase< T1 >
         StateBase<T1>::exit();
     }
 
-    key_t    genAckKey() {
-        key_t tmp = m_ackKey;;
-        ++m_ackKey;
-        if ( m_ackKey == LongAckKey ) m_ackKey = 0; 
+    key_t    genGetKey() {
+        key_t tmp = m_getKey;;
+        ++m_getKey;
+        if ( m_getKey == LongAckKey ) m_getKey = 0; 
         return tmp | LongAckKey;
     }  
 
@@ -378,7 +379,7 @@ class ProcessQueuesState : StateBase< T1 >
         return region | ReadRspKey;
     }  
 
-    key_t   m_ackKey;
+    key_t   m_getKey;
     key_t   m_rspKey;
     int     m_needRecv;
     bool    m_missedInt;
@@ -386,7 +387,7 @@ class ProcessQueuesState : StateBase< T1 >
     std::deque< _CommReq* >         m_pstdRcvQ;
     std::deque< Msg* >              m_recvdMsgQ;
     std::deque< _CommReq* >         m_longRspQ;
-    std::deque< AckInfo* >          m_longAckQ;
+    std::deque< GetInfo* >          m_longGetQ;
     std::deque<_CommReq*>           m_sendDmaFiniQ;
 
     std::deque< FuncCtxBase* >      m_funcStack; 
@@ -486,11 +487,11 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
 
     } else {
         dbg().verbose(CALL_INFO,1,0,"sending long message %lu bytes\n",length); 
-        req->hdr().ackKey = genAckKey();
+        req->hdr().getKey = genGetKey();
 
-        AckInfo* info = new AckInfo;
-        RecvFunctor<AckInfo*>* functor =
-            newDmaRecvFini<AckInfo*>( info, &ProcessQueuesState::dmaRecvFini );
+        GetInfo* info = new GetInfo;
+        RecvFunctor<GetInfo*>* functor =
+            newDmaRecvFini<GetInfo*>( info, &ProcessQueuesState::dmaRecvFini );
 
         info->req = req;
 
@@ -499,9 +500,9 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
         hdrVec[0].ptr = &info->hdr; 
         hdrVec[0].len = sizeof( info->hdr ); 
         
-        dbg().verbose(CALL_INFO,1,0,"post ack buffer, nid=%d ackeKy=%#x\n",
-                                        nid, req->hdr().ackKey );
-        obj().nic().dmaRecv( nid, req->hdr().ackKey, hdrVec, functor ); 
+        dbg().verbose(CALL_INFO,1,0,"post ack buffer, nid=%d getKey=%#x\n",
+                                        nid, req->hdr().getKey );
+        obj().nic().dmaRecv( nid, req->hdr().getKey, hdrVec, functor ); 
     }
 
     obj().nic().pioSend( nid, ShortMsgQ, vec,
@@ -594,13 +595,13 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     } 
 
     while ( ! m_longRspQ.empty() ) {
-        m_longRspQ.front()->setDone();
+        processLongRsp( m_longRspQ.front() );
         m_longRspQ.pop_front();
     }
 
-    while ( ! m_longAckQ.empty() ) {
-        processLongAck( m_longAckQ.front() );
-        m_longAckQ.pop_front();
+    while ( ! m_longGetQ.empty() ) {
+        processLongGet( m_longGetQ.front() );
+        m_longGetQ.pop_front();
     }
 
     while ( ! m_sendDmaFiniQ.empty() ) {
@@ -754,12 +755,12 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
             std::vector<IoVec> vec;
             vec.insert( vec.begin(), hdrVec );
 
-            dbg().verbose(CALL_INFO,1,0,"send long msg response ackKey=%#x"
-                " rspkey=%#x\n", ctx->hdr().ackKey, rspKey );
+            dbg().verbose(CALL_INFO,1,0,"send long msg get req getKey=%#x"
+                " rspkey=%#x\n", ctx->hdr().getKey, rspKey );
             hdr->rspKey = rspKey;
-            hdr->ackKey = ctx->hdr().ackKey;
+            hdr->getKey = ctx->hdr().getKey;
 
-            obj().nic().pioSend( nid, hdr->ackKey, vec, functor );
+            obj().nic().pioSend( nid, hdr->getKey, vec, functor );
         }
         ctx->removeMsg();
     } else {
@@ -807,7 +808,7 @@ bool ProcessQueuesState<T1>::dmaRecvFini( _CommReq* req, nid_t nid,
 }
 
 template< class T1 >
-bool ProcessQueuesState<T1>::dmaRecvFini( AckInfo* info, nid_t nid, 
+bool ProcessQueuesState<T1>::dmaRecvFini( GetInfo* info, nid_t nid, 
                                             uint32_t tag, size_t length )
 {
     dbg().verbose(CALL_INFO,1,0,"nid=%d tag=%#x length=%lu\n",
@@ -816,7 +817,7 @@ bool ProcessQueuesState<T1>::dmaRecvFini( AckInfo* info, nid_t nid,
     info->nid = nid;
     info->tag = tag;
     info->length = length;
-    m_longAckQ.push_back( info );
+    m_longGetQ.push_back( info );
 
     foo();
 
@@ -920,8 +921,8 @@ bool ProcessQueuesState<T1>::pioSendFini( void* hdr )
 template< class T1 >
 bool ProcessQueuesState<T1>::pioSendFini( CtrlHdr* hdr )
 {
-    dbg().verbose(CALL_INFO,1,0,"MsgHdr, Ack sent ackKey=%#x rspKey=%#x\n",
-                                    hdr->ackKey, hdr->rspKey);
+    dbg().verbose(CALL_INFO,1,0,"MsgHdr, Ack sent getKey=%#x rspKey=%#x\n",
+                                    hdr->getKey, hdr->rspKey);
     delete hdr;
     foo();
 
@@ -929,9 +930,15 @@ bool ProcessQueuesState<T1>::pioSendFini( CtrlHdr* hdr )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processLongAck( AckInfo* info )
+void ProcessQueuesState<T1>::processLongRsp( _CommReq* req )
 {
-    dbg().verbose(CALL_INFO,1,0,"ackKey=%#x rspKey=%#x\n",info->hdr.ackKey,
+    req->setDone();
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processLongGet( GetInfo* info )
+{
+    dbg().verbose(CALL_INFO,1,0,"getKey=%#x rspKey=%#x\n",info->hdr.getKey,
                                         info->hdr.rspKey);
 
     SendFunctor<_CommReq*>* functor = 
