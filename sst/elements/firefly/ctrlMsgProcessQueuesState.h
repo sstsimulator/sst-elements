@@ -330,8 +330,8 @@ class ProcessQueuesState : StateBase< T1 >
         return new RecvFunctor<XX>(this, fptr, ptr);
     };
 
+    bool pioSendFini( void* );
     bool pioSendFini( CtrlHdr* );
-    bool pioSendFini( _CommReq* );
     bool dmaRecvFini( _CommReq*, nid_t, uint32_t, size_t );
     bool dmaRecvFini( AckInfo*, nid_t, uint32_t, size_t );
     bool dmaRecvFini( ShortRecvBuffer*, nid_t, uint32_t, size_t );
@@ -388,7 +388,6 @@ class ProcessQueuesState : StateBase< T1 >
     std::deque< _CommReq* >         m_longRspQ;
     std::deque< AckInfo* >          m_longAckQ;
     std::deque<_CommReq*>           m_sendDmaFiniQ;
-    std::deque<_CommReq*>           m_sendPioFiniQ;
 
     std::deque< FuncCtxBase* >      m_funcStack; 
     std::deque< FuncCtxBase* >      m_intStack; 
@@ -418,14 +417,10 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
         delay += obj().txNicDelay();
         size_t length = req->getLength( );
 
-		// try to simulate  the extra time when switching from PIO to sendDMA
-		// which we don't currently do 
-        if ( length >= 16  ) {
-            delay += 200;
-        }
-
         if ( length > obj().shortMsgLength() ) {
             delay += obj().regRegionDelay( length );
+        } else {
+            delay += obj().memcpyDelay( length );
         }
         functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
           ( this, &ProcessQueuesState::enterSend, req );  
@@ -464,23 +459,30 @@ bool ProcessQueuesState<T1>::enterSendLoop( _CommReq* req )
 template< class T1 >
 bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
 {
-    SendFunctor<_CommReq*>* functor = 
-            newPioSendFini<_CommReq*>( req, &ProcessQueuesState::pioSendFini );
+    void* hdrPtr = NULL;
+    size_t length = req->getLength( );
 
     IoVec hdrVec;   
-    hdrVec.ptr = &req->hdr(); 
     hdrVec.len = sizeof( req->hdr() ); 
+
+    if ( length <= obj().shortMsgLength() ) {
+        hdrPtr = hdrVec.ptr = malloc( hdrVec.len );
+        memcpy( hdrVec.ptr, &req->hdr(), hdrVec.len );
+    } else {
+        hdrVec.ptr = &req->hdr(); 
+    }
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
     
-    size_t length = req->getLength( );
     nid_t nid = calcNid( req, req->getDestRank() );
 
     if ( length <= obj().shortMsgLength() ) {
         dbg().verbose(CALL_INFO,1,0,"Short %lu bytes dest %#x\n",length,nid); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
+        req->setDone();
+
 
     } else {
         dbg().verbose(CALL_INFO,1,0,"sending long message %lu bytes\n",length); 
@@ -502,7 +504,8 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
         obj().nic().dmaRecv( nid, req->hdr().ackKey, hdrVec, functor ); 
     }
 
-    obj().nic().pioSend( nid, ShortMsgQ, vec, functor );
+    obj().nic().pioSend( nid, ShortMsgQ, vec,
+          newPioSendFini<void*>( hdrPtr, &ProcessQueuesState::pioSendFini ) );
 
     if ( ! req->isBlocking() ) {
         exit();
@@ -603,11 +606,6 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     while ( ! m_sendDmaFiniQ.empty() ) {
         m_sendDmaFiniQ.front()->setDone();
         m_sendDmaFiniQ.pop_front();
-    }
-
-    while ( ! m_sendPioFiniQ.empty() ) {
-		processPioSendFini( m_sendPioFiniQ.front() );	
-        m_sendPioFiniQ.pop_front();
     }
 
     if ( ! m_loopResp.empty() ) {
@@ -909,6 +907,17 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 }
 
 template< class T1 >
+bool ProcessQueuesState<T1>::pioSendFini( void* hdr )
+{
+    dbg().verbose(CALL_INFO,1,0,"hdr=%p\n", hdr );
+    if ( hdr ) {
+        free( hdr );
+    }
+
+    return true;
+}
+
+template< class T1 >
 bool ProcessQueuesState<T1>::pioSendFini( CtrlHdr* hdr )
 {
     dbg().verbose(CALL_INFO,1,0,"MsgHdr, Ack sent ackKey=%#x rspKey=%#x\n",
@@ -944,26 +953,6 @@ bool ProcessQueuesState<T1>::dmaSendFini( _CommReq* req )
     foo();
     
     return true; 
-}
-
-template< class T1 >
-bool ProcessQueuesState<T1>::pioSendFini( _CommReq* req )
-{
-    dbg().verbose(CALL_INFO,1,0,"_CommReq\n");
-    m_sendPioFiniQ.push_back( req );
-    
-    foo();
-
-    return true;
-}
-
-template< class T1 >
-void ProcessQueuesState<T1>::processPioSendFini( _CommReq* req )
-{
-    if ( req->getLength() <= obj().shortMsgLength() ) {
-        dbg().verbose(CALL_INFO,1,0,"short message\n");
-        req->setDone();
-    }
 }
 
 template< class T1 >
