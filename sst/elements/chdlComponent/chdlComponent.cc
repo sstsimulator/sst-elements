@@ -80,9 +80,13 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
   clockFreq = p.find_string("clockFreq", "2GHz");
   memFile = p.find_string("memInit", "");
   core_id = p.find_integer("id", 0);
+  core_count = p.find_integer("cores", 1);
 
   string vcdFilename = p.find_string("vcd", "", dumpVcd);
   if (dumpVcd) vcd.open(vcdFilename);
+
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 
   memLink = dynamic_cast<SimpleMem*>(
     loadModuleWithComponent("memHierarchy.memInterface", this, p)
@@ -174,9 +178,11 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
     counters[port] = new unsigned long();
     EgressInt(*counters[port], v);
   } else if (!strncmp(t[0], "id", 80) && t.size() == 1) {
-    for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1) {
+    for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1)
       v[i] = Lit((core_id & mask) != 0);
-    }
+  } else if (!strncmp(t[0], "cores", 80) && t.size() == 1) {
+    for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1)
+      v[i] = Lit((core_count & mask) != 0);    
   }
 }
 
@@ -243,7 +249,8 @@ void chdlComponent::finish() {
   unsigned long simCycle(Simulation::getSimulation()->getCurrentSimCycle());  
 
   for (auto &x : counters)
-    out.debug(_L2_, "CHDL counter \"%s\": %lu\n", x.first.c_str(), *x.second);
+    out.output("CHDL %u counter \"%s\": %lu\n",
+               core_id, x.first.c_str(), *x.second);
 
   out.debug(_L2_, "%lu sim cycles\n", simCycle);
 }
@@ -379,6 +386,7 @@ static const ElementInfoParam component_params[] = {
   {"debugLevel", "Level of verbosity of output", "1"},
   {"memInit", "File containing initial memory contents", ""},
   {"id", "Device ID passed to \"id\" input, if present", "0"},
+  {"cores", "Number of devices IDs passed to \"cores\" input, if present", "0"},
   {"vcd", "Filename of .vcd waveform file for this component's taps", ""},
   {NULL, NULL, NULL}
 };

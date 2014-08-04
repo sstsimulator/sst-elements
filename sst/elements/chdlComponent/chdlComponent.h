@@ -106,7 +106,7 @@ namespace ChdlComponent {
 
     chdl::cdomain_handle_t cd;
 
-    int debugLevel, tog, core_id;
+    int debugLevel, tog, core_id, core_count;
 
     Output out;
     std::ofstream vcd;
