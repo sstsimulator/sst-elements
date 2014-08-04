@@ -227,7 +227,8 @@ class _CommReq : public Hermes::MessageRequestBase {
         m_resp( NULL ),
         m_done( false ),
         m_destRank( Hermes::AnySrc ),
-        m_ignore( 0 )
+        m_ignore( 0 ),
+        m_isMine( false )
     {
         m_hdr.count = getLength() / dtypeSize;
         m_hdr.dtypeSize = dtypeSize; 
@@ -250,7 +251,8 @@ class _CommReq : public Hermes::MessageRequestBase {
         m_resp( resp ),
         m_done( false ),
         m_destRank( Hermes::AnySrc ),
-        m_ignore( 0 )
+        m_ignore( 0 ),
+        m_isMine( true )
     { 
         m_hdr.count = count;
         m_hdr.dtypeSize = dtypeSize; 
@@ -319,7 +321,7 @@ class _CommReq : public Hermes::MessageRequestBase {
     }
 
     bool isMine( ) {
-        return NULL != m_buf;
+        return m_isMine;
     }
 
   private:
@@ -333,6 +335,7 @@ class _CommReq : public Hermes::MessageRequestBase {
     Hermes::RankID      m_destRank;
     Hermes::MessageResponse  m_matchInfo;
     uint64_t            m_ignore;
+    bool                m_isMine; 
 };
 
 class WaitReq {
