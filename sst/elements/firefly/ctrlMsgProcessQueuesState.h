@@ -184,6 +184,7 @@ class ProcessQueuesState : StateBase< T1 >
         nid_t      nid;
         uint32_t   tag;
         size_t     length;
+        bool       waitAck;
     };
 
     class FuncCtxBase {
@@ -336,7 +337,6 @@ class ProcessQueuesState : StateBase< T1 >
     bool dmaRecvFini( _CommReq*, nid_t, uint32_t, size_t );
     bool dmaRecvFini( GetInfo*, nid_t, uint32_t, size_t );
     bool dmaRecvFini( ShortRecvBuffer*, nid_t, uint32_t, size_t );
-    bool dmaSendFini( _CommReq* );
 
     bool        checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
                                                     uint64_t ignore );
@@ -358,14 +358,14 @@ class ProcessQueuesState : StateBase< T1 >
     key_t    genGetKey() {
         key_t tmp = m_getKey;;
         ++m_getKey;
-        if ( m_getKey == LongAckKey ) m_getKey = 0; 
-        return tmp | LongAckKey;
+        if ( m_getKey == LongGetKey ) m_getKey = 0; 
+        return tmp | LongGetKey;
     }  
 
     key_t    genRspKey() {
         key_t tmp = m_rspKey;
         ++m_rspKey;
-        if ( m_rspKey == LongAckKey ) m_rspKey = 0; 
+        if ( m_rspKey == LongRspKey ) m_rspKey = 0; 
         return tmp | LongRspKey;
     }  
 
@@ -388,7 +388,6 @@ class ProcessQueuesState : StateBase< T1 >
     std::deque< Msg* >              m_recvdMsgQ;
     std::deque< _CommReq* >         m_longRspQ;
     std::deque< GetInfo* >          m_longGetQ;
-    std::deque<_CommReq*>           m_sendDmaFiniQ;
 
     std::deque< FuncCtxBase* >      m_funcStack; 
     std::deque< FuncCtxBase* >      m_intStack; 
@@ -490,9 +489,11 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
         req->hdr().key = genGetKey();
 
         GetInfo* info = new GetInfo;
+
         RecvFunctor<GetInfo*>* functor =
             newDmaRecvFini<GetInfo*>( info, &ProcessQueuesState::dmaRecvFini );
 
+        info->waitAck = false;
         info->req = req;
 
         std::vector<IoVec> hdrVec;
@@ -503,6 +504,8 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
         dbg().verbose(CALL_INFO,1,0,"post ack buffer, nid=%d get key=%#x\n",
                                         nid, req->hdr().key );
         obj().nic().dmaRecv( nid, req->hdr().key, hdrVec, functor ); 
+        req->m_ackKey = req->hdr().key;
+        req->m_ackNid = nid;
     }
 
     obj().nic().pioSend( nid, ShortMsgQ, vec,
@@ -602,11 +605,6 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     while ( ! m_longGetQ.empty() ) {
         processLongGet( m_longGetQ.front() );
         m_longGetQ.pop_front();
-    }
-
-    while ( ! m_sendDmaFiniQ.empty() ) {
-        m_sendDmaFiniQ.front()->setDone();
-        m_sendDmaFiniQ.pop_front();
     }
 
     if ( ! m_loopResp.empty() ) {
@@ -741,8 +739,11 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
             RecvFunctor<_CommReq*>* rfunctor =
                 newDmaRecvFini<_CommReq*>(req,&ProcessQueuesState::dmaRecvFini);
 
-            nid_t nid = calcNid( ctx->req, ctx->hdr().rank);
+            nid_t nid = calcNid( ctx->req, ctx->hdr().rank );
             obj().nic().dmaRecv( nid, rspKey, req->ioVec(), rfunctor ); 
+
+            req->m_ackKey = ctx->hdr().key; 
+            req->m_ackNid = nid;
 
             IoVec hdrVec;   
             CtrlHdr* hdr = new CtrlHdr;
@@ -758,7 +759,6 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
             dbg().verbose(CALL_INFO,1,0,"send long msg get req get key=%#x"
                 " response key=%#x\n", ctx->hdr().key, rspKey );
             hdr->key = rspKey;
-            //hdr->getKey = ctx->hdr().getKey;
 
             obj().nic().pioSend( nid, ctx->hdr().key, vec, functor );
         }
@@ -813,7 +813,7 @@ bool ProcessQueuesState<T1>::dmaRecvFini( GetInfo* info, nid_t nid,
 {
     dbg().verbose(CALL_INFO,1,0,"nid=%d tag=%#x length=%lu\n",
                                                     nid, tag, length );
-    assert( ( tag & LongAckKey ) == LongAckKey );
+    assert( ( tag & LongGetKey ) == LongGetKey );
     info->nid = nid;
     info->tag = tag;
     info->length = length;
@@ -932,33 +932,51 @@ template< class T1 >
 void ProcessQueuesState<T1>::processLongRsp( _CommReq* req )
 {
     req->setDone();
+
+    IoVec hdrVec;   
+    CtrlHdr* hdr = new CtrlHdr;
+    hdrVec.ptr = hdr; 
+    hdrVec.len = sizeof( *hdr ); 
+
+    SendFunctor<CtrlHdr*>* functor = newPioSendFini<CtrlHdr*>( 
+                    hdr, &ProcessQueuesState::pioSendFini );
+
+    std::vector<IoVec> vec;
+    vec.insert( vec.begin(), hdrVec );
+
+    dbg().verbose(CALL_INFO,1,0,"send long msg response getKey=%#x\n", 
+                                                req->m_ackKey );
+
+    obj().nic().pioSend( req->m_ackNid, req->m_ackKey, vec, functor );
 }
 
 template< class T1 >
 void ProcessQueuesState<T1>::processLongGet( GetInfo* info )
 {
-    dbg().verbose(CALL_INFO,1,0,"response key=%#x\n", info->hdr.key);
+    if ( info->waitAck ) {
+        dbg().verbose(CALL_INFO,1,0,"acked\n");
+        info->req->setDone();
+        delete info;
+        return;
+    }
 
-    SendFunctor<_CommReq*>* functor = 
-    newPioSendFini<_CommReq*>( info->req, &ProcessQueuesState::dmaSendFini );
+    dbg().verbose(CALL_INFO,1,0,"response key %#x\n",info->hdr.key);
+
+    info->waitAck = true;
 
     nid_t nid = calcNid( info->req, info->req->getDestRank()  );
     dbg().verbose(CALL_INFO,1,0,"send to nid=%#x\n", nid );
-    obj().nic().dmaSend( nid, info->hdr.key, info->req->ioVec(), functor );
+    obj().nic().dmaSend( nid, info->hdr.key, info->req->ioVec(), NULL );
 
-    delete info;
-}
+    RecvFunctor<GetInfo*>* functor =
+            newDmaRecvFini<GetInfo*>( info, &ProcessQueuesState::dmaRecvFini );
 
+    std::vector<IoVec> hdrVec;
+    hdrVec.resize(1);
+    hdrVec[0].ptr = &info->hdr; 
+    hdrVec[0].len = sizeof( info->hdr ); 
 
-template< class T1 >
-bool ProcessQueuesState<T1>::dmaSendFini( _CommReq* req )
-{
-    dbg().verbose(CALL_INFO,1,0,"_CommReq\n");
-    m_sendDmaFiniQ.push_back( req );
-    
-    foo();
-    
-    return true; 
+    obj().nic().dmaRecv( info->req->m_ackNid, info->req->m_ackKey, hdrVec, functor ); 
 }
 
 template< class T1 >

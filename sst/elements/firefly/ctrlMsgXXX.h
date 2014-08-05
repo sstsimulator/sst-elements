@@ -40,7 +40,7 @@ class StateArgsBase;
 
 typedef unsigned char key_t;
 
-static const key_t LongAckKey  = 1 << (sizeof(key_t) * 8 - 2);
+static const key_t LongGetKey  = 1 << (sizeof(key_t) * 8 - 2);
 static const key_t LongRspKey  = 2 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadReqKey  = 3 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
@@ -322,6 +322,10 @@ class _CommReq : public Hermes::MessageRequestBase {
     bool isMine( ) {
         return m_isMine;
     }
+
+    // need to save info for the long protocol ack
+    int m_ackKey;
+    int m_ackNid;
 
   private:
 
