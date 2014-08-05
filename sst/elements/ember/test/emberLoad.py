@@ -14,8 +14,8 @@ loadFile = ""
 cmdLine  = ""
 numCores = 1
 debug    = 0
-topology = ""
-shape    = ""
+topology = "torus"
+shape    = "2"
 loading  = 0
 radix    = 0
 printStats = 0
@@ -23,9 +23,9 @@ emberVerbose = 0
 emberBufferSize = 1000
 
 netBW = "4GB/s"
-netPktSize="64B"
+netPktSize="2048B"
 netFlitSize="8B"
-netBufSize="1KB"
+netBufSize="8KB"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -135,15 +135,15 @@ _hermesParams = {
 		"hermesParams.functionSM.defaultVerbose" : 2,
 		"hermesParams.ctrlMsg.debug" : debug,
 		"hermesParams.ctrlMsg.verboseLevel" : 2,
-		"hermesParams.ctrlMsg.shortMsgLength" : 64000,
+		"hermesParams.ctrlMsg.shortMsgLength" : 12000,
 		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
-		"hermesParams.ctrlMsg.memcpyDelay_ps" : 200,
-		"hermesParams.ctrlMsg.txDelay_ns" : 100,
+		"hermesParams.ctrlMsg.memcpyDelay_ps" : 350,
+		"hermesParams.ctrlMsg.txDelay_ns" : 130,
 		"hermesParams.ctrlMsg.rxDelay_ns" : 100,
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
-		"hermesParams.ctrlMsg.regRegionBaseDelay_ps" : 10000000,
-		"hermesParams.ctrlMsg.regRegionPerByteDelay_ps" : 28,
+		"hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 3000,
+		"hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 100,
 		"hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
 		"hermesParams.loadMap.0.start" : 0,
 		"hermesParams.loadMap.0.len" : 2,
