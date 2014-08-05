@@ -54,9 +54,9 @@ XXX::XXX( Component* owner, Params& params ) :
     m_rxDelay = params.find_integer( "rxDelay_ns", 100 );
     m_txNicDelay = params.find_integer( "txNicDelay_ns", 100 );
     m_rxNicDelay = params.find_integer( "rxNicDelay_ns", 100 );
-    m_regRegionBaseDelay_ps = params.find_integer( "regRegionBaseDelay_ps", 3000 );
-    m_regRegionPerByteDelay_ps = params.find_integer( "regRegionPerByteDelay_ps", 26 );
-    m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 65000 );
+    m_regRegionBaseDelay_ns = params.find_integer( "regRegionBaseDelay_ns", 0 );
+    m_regRegionPerPageDelay_ns = params.find_integer( "regRegionPerPageDelay_ns", 0 );
+    m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 4096 );
     
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 

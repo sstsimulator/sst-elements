@@ -127,13 +127,16 @@ class XXX  {
     }
 
     int regRegionDelay( int nbytes ) {
-        // times are in ps.
-        float tmp = m_regRegionBaseDelay_ps;   
-        if ( nbytes > m_regRegionXoverLength  ) {
-            tmp += nbytes * m_regRegionPerByteDelay_ps; 
+        double tmp = 0;
+
+        if ( nbytes ) {
+            tmp = m_regRegionBaseDelay_ns;
         }
-        // return ns.
-        return tmp/1000.0;
+
+        if ( nbytes > m_regRegionXoverLength  ) {
+            tmp += (nbytes/4096) * m_regRegionPerPageDelay_ns; 
+        }
+        return tmp;
     }
 
     int txDelay() {
@@ -159,8 +162,8 @@ class XXX  {
     int m_rxDelay;
     int m_txNicDelay;
     int m_rxNicDelay;
-    int m_regRegionBaseDelay_ps;
-    int m_regRegionPerByteDelay_ps;
+    int m_regRegionBaseDelay_ns;
+    int m_regRegionPerPageDelay_ns;
     int m_regRegionXoverLength;
 
   private:
