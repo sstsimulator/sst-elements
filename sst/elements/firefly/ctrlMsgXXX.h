@@ -51,12 +51,11 @@ struct MatchHdr {
     Hermes::RankID rank;
     Hermes::Communicator group;
     uint64_t    tag;
-    key_t       getKey;      
+    key_t       key;      
 };
 
 struct CtrlHdr {
-    key_t     rspKey;
-    key_t     getKey;
+    key_t     key;
 };
 
 static const int    ShortMsgQ       = 0xf00d;
