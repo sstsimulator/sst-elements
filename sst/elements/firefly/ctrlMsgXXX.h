@@ -387,8 +387,9 @@ class WaitReq {
                                         Hermes::MessageResponse* resp[] ) : 
         indexPtr(NULL)
     {
+        Hermes::MessageResponse* tmp = (Hermes::MessageResponse*)resp;
         for ( int i = 0; i < count; i++ ) {
-            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), resp[i] ) );
+            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), &tmp[i] ) );
         }
     }
 
