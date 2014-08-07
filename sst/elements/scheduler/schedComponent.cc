@@ -202,9 +202,7 @@ void schedComponent::setup()
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
         (*nodeIter)->send( getID );
     }
-
     // done setting up the links, now read the job list
-
     jobs = jobParser -> parseJobs(getCurrentSimTime());
     
     for(int i = 0; i < (int) jobs.size(); i++)
@@ -546,18 +544,18 @@ void schedComponent::startJob(Job* job)
 {
     //allocate & update machine
     CommParser commParser = CommParser();
-    commParser.parseComm(job); //read communication files
-    job->start( getCurrentSimTime() ); //job started flag
-    AllocInfo* ai = theAllocator->allocate(job); //get allocation
-    machine->allocate(ai); //allocate
+    commParser.parseComm(job);                      //read communication files
+    job->start( getCurrentSimTime() );              //job started flag
+    AllocInfo* ai = theAllocator->allocate(job);    //get allocation
+    machine->allocate(ai);                          //allocate
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
-    scheduler->startNext( getCurrentSimTime(), *machine ); //start in scheduler
-    stats->jobStarts(tmi, getCurrentSimTime() ); //record stats
+    scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler
+    stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
 
     //DEBUG
-    //for(int i = 0; i < job->getProcsNeeded(); i++){
-    //    std::cout << i << "<->" << tmi->taskToNode[i] << ",";
-    //}std::cout << "\n";
+    //if(job->getJobNum() % 100 == 0){
+        std::cout << "Job " << job->getJobNum() << " has been started\n";
+    //}
     
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;

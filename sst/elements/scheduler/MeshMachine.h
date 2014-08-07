@@ -30,7 +30,7 @@ namespace SST {
         class MeshMachine : public Machine {
 
             private:
-                int xdim;              //size of mesh in each dimension
+                int xdim;   //size of mesh in each dimension
                 int ydim;
                 int zdim;
                 
@@ -46,6 +46,14 @@ namespace SST {
                 int getYDim() const { return ydim; }
                 int getZDim() const { return zdim; }
                 
+                //returns the coordinates of the given node index
+                int xOf(long node) const { return node % xdim; }
+                int yOf(long node) const { return (node / xdim) % ydim; }
+                int zOf(long node) const { return node / (xdim * ydim); }
+
+                //returns index of given dimensions
+                long indexOf(int x, int y, int z) const { return (x + xdim * y + xdim * ydim * z); }
+
                 long getNodeDistance(int node1, int node2) const;
 
                 long pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
@@ -79,14 +87,11 @@ namespace SST {
 
                 bool equals(const MeshLocation & other) const;
 
-                void print();
-
                 int toInt(const MeshMachine & m);
 
                 std::string toString();
-
-                int hashCode();
         };
     }
 }
 #endif
+

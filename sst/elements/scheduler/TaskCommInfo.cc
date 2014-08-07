@@ -19,56 +19,46 @@
 using namespace SST::Scheduler;
 
 TaskCommInfo::TaskCommInfo(Job* job)
+    : xdim(0), ydim(0), zdim(0), centerTask(-1)
 {
     init(job);
     taskCommType = TaskCommInfo::ALLTOALL;
     commInfo = NULL;
     coordMatrix = NULL;
-    xdim = 0;
-    ydim = 0;
-    zdim = 0;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo)
+TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, int inCenterTask)
+    : xdim(0), ydim(0), zdim(0), centerTask(inCenterTask)
 {
     init(job);
     taskCommType = TaskCommInfo::CUSTOM;
     commInfo = inCommInfo;
     coordMatrix = NULL;
-    xdim = 0;
-    ydim = 0;
-    zdim = 0;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, int xdim, int ydim, int zdim)
+TaskCommInfo::TaskCommInfo(Job* job, int inx, int iny, int inz, int inCenterTask)
+    : xdim(inx), ydim(iny), zdim(inz), centerTask(inCenterTask)
 {
     init(job);
     taskCommType = TaskCommInfo::MESH;
     commInfo = NULL;
     coordMatrix = NULL;
-    this->xdim = xdim;
-    this->ydim = ydim;
-    this->zdim = zdim;
 }
 
-TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, double** inCoords)
+TaskCommInfo::TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, double** inCoords, int inCenterTask)
+    : xdim(0), ydim(0), zdim(0), centerTask(inCenterTask)
 {
     init(job);
     taskCommType = TaskCommInfo::COORDINATE;
     commInfo = inCommInfo;
     coordMatrix = inCoords;
-    this->xdim = 0;
-    this->ydim = 0;
-    this->zdim = 0;
 }
 
 TaskCommInfo::TaskCommInfo(const TaskCommInfo& tci)
+    : xdim(tci.xdim), ydim(tci.ydim), zdim(tci.zdim), centerTask(tci.centerTask)
 {
     size = tci.size;
     taskCommType = tci.taskCommType;
-    xdim = tci.xdim;
-    ydim = tci.ydim;
-    zdim = tci.zdim;
     
     if(taskCommType == CUSTOM || taskCommType == COORDINATE){
         commInfo = new std::vector<std::map<int,int> >(size);
@@ -160,11 +150,8 @@ std::vector<std::map<int,int> >* TaskCommInfo::getCommInfo() const
         break;
     case CUSTOM:
     case COORDINATE:
-        for(unsigned int taskIt = 0; taskIt < size; taskIt++){
-            for(std::map<int, int>::iterator it = commInfo->at(taskIt).begin(); it != commInfo->at(taskIt).end(); it++){
-                retVec->at(taskIt)[it->first] = it->second;
-            }
-        }
+        delete retVec;
+        retVec = new std::vector<std::map<int,int> >(*commInfo);
         break;
     default:
         schedout.fatal(CALL_INFO, 1, "Unknown Communication type");
@@ -303,5 +290,4 @@ void TaskCommInfo::getTaskDims(int taskNo, int outDims[3]) const
     outDims[1] = (taskNo / xdim) % ydim;
     outDims[2] = taskNo / (xdim*ydim);
 }
-
 

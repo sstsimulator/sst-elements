@@ -13,8 +13,6 @@
  * Machine based on a mesh structure
  */
 
-#include <sst_config.h>
-
 #include <cmath>
 #include <stdlib.h>
 #include <vector>
@@ -37,7 +35,7 @@
 using namespace SST::Scheduler;
 
 MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, double** D_matrix)
-                         : Machine((Xdim*Ydim*Zdim), numCoresPerNode, D_matrix)
+                         : Machine((long) Xdim*Ydim*Zdim, numCoresPerNode, D_matrix)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
@@ -199,8 +197,6 @@ MeshLocation::MeshLocation(int X, int Y, int Z)
 
 MeshLocation::MeshLocation(int inpos, const MeshMachine & m) 
 {
-    //return x + m -> getXDim() * y + m -> getXDim() * m -> getYDim() * z; 
-
     schedout.init("", 8, 0, Output::STDOUT);
     z = inpos / (m.getXDim() * m.getYDim());
     inpos -= z * m.getXDim() * m.getYDim();
@@ -245,12 +241,6 @@ bool MeshLocation::equals(const MeshLocation & other) const
     return x == other.x && y == other.y && z == other.z;
 }
 
-void MeshLocation::print() {
-    //printf("(%d,%d,%d)\n",x,y,z);
-    schedout.output("(%d,%d,%d)\n", x, y, z);
-}
-
-
 int MeshLocation::toInt(const MeshMachine & m){
     return x + m.getXDim() * y + m.getXDim() * m.getYDim() * z; 
 }
@@ -260,8 +250,3 @@ std::string MeshLocation::toString(){
     ret << "(" << x <<  ", " << y  << ", " << z << ")";
     return ret.str();
 }
-
-int MeshLocation::hashCode() {
-    return x + 31 * y + 961 * z;
-}
-

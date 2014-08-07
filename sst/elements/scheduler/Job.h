@@ -29,10 +29,12 @@ namespace SST {
 
         class Job {
             public:
+                struct CommInfo;
+
                 Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime,
-                    unsigned long estRunningTime);
+                    unsigned long estRunningTime, CommInfo commInfo = CommInfo());
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
-                    long estRunningTime, std::string ID );
+                    long estRunningTime, std::string ID, CommInfo commInfo = CommInfo());
                 Job(const Job &job);
                 
                 ~Job();
@@ -65,18 +67,22 @@ namespace SST {
                 void startsAtTime(unsigned long time);
                 TaskCommInfo* taskCommInfo;
                 
-                //these are used to prevent large memory usage:
+                //following structure is used to prevent large memory usage:
                 //the communication files are read only when the job starts
-                TaskCommInfo::commType commType;
-                std::string commFile;
-                std::string coordFile;
-                int meshx, meshy, meshz;
+                const struct CommInfo{
+                    CommInfo() : commType(TaskCommInfo::ALLTOALL) {}
+                    TaskCommInfo::commType commType;
+                    std::string commFile;
+                    std::string coordFile;
+                    int meshx, meshy, meshz;
+                    int centerTask;
+                } commInfo;
 
-            private:
                 unsigned long arrivalTime;        //when the job arrived
                 int procsNeeded;         //how many processors it uses
                 unsigned long actualRunningTime;  //how long it runs
                 unsigned long estRunningTime;     //user estimated running time
+            private:
                 unsigned long startTime;	     //when the job started (-1 if not running)
                 //unsigned long jobFST;           //FST value for job
                 bool hasRun;
@@ -92,21 +98,8 @@ namespace SST {
 
                 friend class Statistics;
                 friend class schedComponent;
-                //so statistics and schedComponent can use actual job times
-
-                friend class boost::serialization::access;
-                template<class Archive>
-                    void serialize(Archive & ar, const unsigned int version )
-                    {
-                        ar & BOOST_SERIALIZATION_NVP(arrivalTime);
-                        ar & BOOST_SERIALIZATION_NVP(procsNeeded);
-                        ar & BOOST_SERIALIZATION_NVP(actualRunningTime);
-                        ar & BOOST_SERIALIZATION_NVP(estRunningTime);
-                        ar & BOOST_SERIALIZATION_NVP(startTime);
-                        ar & BOOST_SERIALIZATION_NVP(jobNum);
-                        ar & BOOST_SERIALIZATION_NVP(ID);
-                    }
-        };
+       };
     }
 }
 #endif
+

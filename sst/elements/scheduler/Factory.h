@@ -25,13 +25,13 @@ namespace SST {
     class Params;
     namespace Scheduler {
 
-        //forward declared classes
-        class schedComponent;
-        class Machine;
-        class Scheduler;
         class Allocator;
-        class TaskMapper;
+        class AllocMapper;
         class FST;
+        class Machine;
+        class schedComponent;
+        class Scheduler;
+        class TaskMapper;
 
         class Factory{
             public:
@@ -79,6 +79,7 @@ namespace SST {
                     CONSTRAINT = 13,
                     ENERGY = 14,
                     HYBRID = 15,
+                    NEARESTAMAP = 16,
                 };
                 enum TaskMapperType{
                     SIMPLEMAP = 0,
@@ -86,6 +87,7 @@ namespace SST {
                     RANDOMMAP = 2,
                     TOPOMAP = 3,
                     RCMMAP = 4,
+                    NEARESTAMT = 5,
                 };
                 
                 enum FSTType{
@@ -119,14 +121,14 @@ namespace SST {
                 static const int numMachTableEntries = 2;
                 static const int numSchedTableEntries = 6;
                 static const int numFSTTableEntries = 3;
-                static const int numAllocTableEntries = 16;
-                static const int numTaskMapTableEntries = 5;
+                static const int numAllocTableEntries = 17;
+                static const int numTaskMapTableEntries = 6;
                 
                 static const machTableEntry machTable[2];
                 static const schedTableEntry schedTable[6];
                 static const FSTTableEntry FSTTable[3];
-                static const allocTableEntry allocTable[16];
-                static const taskMapTableEntry taskMapTable[5];
+                static const allocTableEntry allocTable[17];
+                static const taskMapTableEntry taskMapTable[6];
 
                 SchedulerType schedulername(std::string inparam);
                 MachineType machinename(std::string inparam);

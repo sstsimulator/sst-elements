@@ -21,7 +21,6 @@
 
 #include "Machine.h"
 #include "MeshMachine.h"
-#include "misc.h"
 #include "schedComponent.h"
 #include "SimpleMachine.h"
 #include "InputParser.h"
@@ -48,6 +47,8 @@
 #include "taskMappers/RCBTaskMapper.h"
 #include "taskMappers/SimpleTaskMapper.h"
 #include "taskMappers/TopoMapper.h"
+
+#include "allocMappers/NearestAllocMapper.h"
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -88,6 +89,7 @@ const Factory::allocTableEntry Factory::allocTable[] = {
     {CONSTRAINT, "constraint"},
     {ENERGY, "energy"},
     {HYBRID, "hybrid"},
+    {NEARESTAMAP, "nearestamap"},
 };
 
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
@@ -96,6 +98,7 @@ const Factory::taskMapTableEntry Factory::taskMapTable[] = {
     {RANDOMMAP, "random"},
     {TOPOMAP, "topo"},
     {RCMMAP, "rcm"},
+    {NEARESTAMT, "nearestamap"},
 };
 
 const Factory::FSTTableEntry Factory::FSTTable[] = {
@@ -174,7 +177,6 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
 
             //Stateful Scheduler with Delayed Compression Manager
         case DELAYED:
-            //if(DEBUG) printf("Delayed Compression Scheduler\n");
             schedout.debug(CALL_INFO, 4, 0, "Delayed Compression Scheduler\n");
             if (schedparams -> size() == 1) {
                 return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"));
@@ -185,7 +187,6 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
 
             //Stateful Scheduler with Even Less Conservative Manager
         case ELC:
-            //if(DEBUG) printf("Even Less Convervative Scheduler\n");
             schedout.debug(CALL_INFO, 4, 0, "Even Less Convervative Scheduler\n");
             if (schedparams -> size() == 1) {
                 schedout.fatal(CALL_INFO, 1, "Even Less Conservative scheduler requires number of backfill times as an argument");
@@ -251,7 +252,6 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
             //Mesh Machine
         case MESH:
             {
-                //if(DEBUG) printf("Mesh Machine\n");
                 schedout.debug(CALL_INFO, 4, 0, "Mesh Machine\n");
 
                 if (schedparams -> size() != 3 && schedparams -> size() != 4) {
@@ -284,6 +284,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
+    MeshMachine *mMachine = dynamic_cast<MeshMachine*>(m);
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
@@ -414,7 +415,13 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 return new ConstraintAllocator(mach, params.find("ConstraintAllocatorDependencies") -> second, params.find("ConstraintAllocatorConstraints") -> second, sc);
                 break;
             }
-
+        case NEARESTAMAP:
+            if(mMachine == NULL){
+                schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
+            } else {
+                return new NearestAllocMapper(*mMachine);
+            }
+            break;
         default:
             schedout.fatal(CALL_INFO, 1, "Could not parse name of allocator");
         }
@@ -438,10 +445,8 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
         case RCBMAP:
             if(mMachine == NULL){
                 schedout.fatal(CALL_INFO, 1, "RCB Mapper requires mesh machine");
-                taskMapper = NULL;
-            } else { 
-                taskMapper = new RCBTaskMapper(*mMachine);
             }
+            taskMapper = new RCBTaskMapper(*mMachine);
             break;
         case RANDOMMAP:
             taskMapper = new RandomTaskMapper(*mach);
@@ -451,7 +456,13 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             break;
         case RCMMAP:
             taskMapper = new TopoMapper(*mach, TopoMapper::RCM);
-            break;            
+            break;  
+        case NEARESTAMT:
+            if(mMachine == NULL){
+                schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
+            }
+            taskMapper = new NearestAllocMapper(*mMachine);
+            break;      
         default: 
             taskMapper = NULL;
             schedout.fatal(CALL_INFO, 1, "Could not parse name of task mapper");

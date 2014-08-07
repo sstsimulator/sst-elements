@@ -39,7 +39,7 @@ std::string SimpleMachine::getSetupInfo(bool comment)
         com="";
     }
     char mesg[100];
-    sprintf(mesg, "SimpleMachine with %d nodes, %d cores per node", numNodes, coresPerNode);
+    sprintf(mesg, "SimpleMachine with %ld nodes, %d cores per node", numNodes, coresPerNode);
     return com + mesg;
 }
 

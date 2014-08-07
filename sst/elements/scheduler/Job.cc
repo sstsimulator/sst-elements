@@ -17,7 +17,6 @@
 
 #include <iostream> //debug
 
-#include "exceptions.h"
 #include "output.h"
 #include "TaskCommInfo.h"
 
@@ -25,21 +24,21 @@ using namespace SST::Scheduler;
 
 static long nextJobNum = 0;  //used setting jobNum
 
-Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime, unsigned long estRunningTime) 
+Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime, unsigned long estRunningTime, CommInfo inComm) : commInfo(inComm)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
 }
 
 Job::Job(long arrivalTime, int procsNeeded, long actualRunningTime,
-         long estRunningTime, std::string ID) 
+         long estRunningTime, std::string ID, CommInfo inComm) : commInfo(inComm)
 {
     initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
     this -> ID = ID;
 }
 
 //copy constructor
-Job::Job(const Job &job)
+Job::Job(const Job &job) : commInfo(job.commInfo)
 {
     arrivalTime = job.arrivalTime;
     procsNeeded = job.procsNeeded;
@@ -85,7 +84,6 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
     hasRun = false;
     started = false;
     taskCommInfo = NULL;
-    commType = TaskCommInfo::ALLTOALL;
 }
 
 std::string Job::toString()
@@ -119,3 +117,4 @@ void Job::startsAtTime(unsigned long time)
     hasRun = true; 
     started = true; 
 }
+

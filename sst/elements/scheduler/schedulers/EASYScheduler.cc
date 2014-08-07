@@ -28,7 +28,6 @@
 
 #include "Job.h"
 #include "Machine.h"
-#include "misc.h"
 #include "output.h"
 
 using namespace std;

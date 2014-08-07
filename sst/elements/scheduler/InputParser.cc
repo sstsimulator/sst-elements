@@ -77,6 +77,7 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
     //read line by line
     string line;
     while (!input.eof()) {
+        //DEBUG
         getline(input, line);
         if (useYumYumTraceFormat) {
             newYumYumJobLine(line, currSimTime);
@@ -185,52 +186,63 @@ bool JobParser::newJobLine(std::string line)
     int procsNeeded = -1;
     unsigned long runningTime = 0;
     unsigned long estRunningTime = 0;
-    string communicationFile = "";
+    string nextStr = "";
     int x = 0, y = 0, z = 0;
 
     std::stringstream is(line);
-    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> communicationFile;
+    is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> nextStr;
 
     if(estRunningTime <= 0){
         estRunningTime = runningTime;
     }
     
-    jobs.push_back(new Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
-    Job* j = jobs.back();
-    
     //get communication info
-    if(communicationFile.empty()){
-        j->commType = TaskCommInfo::ALLTOALL;
-    } else if(communicationFile.compare("mesh") == 0) {
-        is >> x >> y >> z;
-    	if(x*y*z != procsNeeded) {
-    		schedout.fatal(CALL_INFO, 1, "The communication mesh structure does not match the number of processors in line:\n%s\n", line.c_str());
-    	} else {
-    		j->commType = TaskCommInfo::MESH;
-    		j->meshx = x;
-    		j->meshy = y;
-    		j->meshz = z;
-    	}
-    } else if(communicationFile.compare("coord") == 0){
-        //read task communication file name
-        is >> communicationFile;
-        communicationFile = folderPath.string() + '/' + communicationFile;//get file name as a path
-        j->commFile = communicationFile;
-        //read coordinates file name
-        is >> communicationFile;        
-        communicationFile = folderPath.string() + '/' + communicationFile;//get file name as a path
-        j->coordFile = communicationFile;
-        
-        j->commType = TaskCommInfo::COORDINATE;
+    Job::CommInfo commInfo;
+    if(nextStr.empty()){
+        commInfo.commType = TaskCommInfo::ALLTOALL;
     } else {
-        communicationFile = folderPath.string() + '/' + communicationFile;//get file name as a path
-    	j->commFile = communicationFile;
-    	
-    	j->commType = TaskCommInfo::CUSTOM;
+        while(!nextStr.empty()) {
+            if(nextStr.compare("mesh") == 0) {
+                if( !(is >> x >> y >> z) ) {
+                    z = 1;
+                }
+                if(x*y*z != procsNeeded) {
+                    schedout.fatal(CALL_INFO, 1, "The communication mesh structure does not match the number of processors in line:\n\"%s\"\n", line.c_str());
+                } else {
+                    commInfo.commType = TaskCommInfo::MESH;
+                    commInfo.meshx = x;
+                    commInfo.meshy = y;
+                    commInfo.meshz = z;
+                }
+            } else if(nextStr.compare("coord") == 0){
+                commInfo.commType = TaskCommInfo::COORDINATE;
+                //read task communication file name
+                is >> nextStr;
+                nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
+                commInfo.commFile = nextStr;
+                //read coordinates file name
+                is >> nextStr;
+                nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
+                commInfo.coordFile = nextStr;
+            } else if(nextStr.compare("center") == 0){
+                is >> commInfo.centerTask;
+            } else if(nextStr.compare("comm") == 0){
+                commInfo.commType = TaskCommInfo::CUSTOM;
+                nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
+                commInfo.commFile = nextStr;
+            } else {
+                schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+            }
+            if(!(is >> nextStr)){
+                break;
+            }
+        }
     }
+    //add job
+    jobs.push_back(new Job(arrivalTime, procsNeeded, runningTime, estRunningTime, commInfo));
 
     //validate
-    return validateJob(j, &jobs, runningTime);
+    return validateJob(jobs.back() , &jobs, runningTime);
 }
 
 bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
@@ -251,7 +263,7 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
         ok = false;
     }
     if (ok && j->getProcsNeeded() > (machine->numNodes * machine->coresPerNode)) {
-        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
+        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %ld are in the machine", 
                        j->getJobNum(), j->getProcsNeeded(), machine->numNodes);
         ok = false;
     }
@@ -262,20 +274,20 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
 void CommParser::parseComm(Job * job)
 {
     TaskCommInfo* tci;
-    switch(job->commType){
+    switch(job->commInfo.commType){
     case TaskCommInfo::ALLTOALL:
         tci = new TaskCommInfo(job);
         break;
     case TaskCommInfo::CUSTOM:
-        tci = new TaskCommInfo(job, readCommFile(job->commFile, job->getProcsNeeded()) );
+        tci = new TaskCommInfo(job, readCommFile(job->commInfo.commFile, job->getProcsNeeded()) );
         break;
     case TaskCommInfo::MESH:
-        tci = new TaskCommInfo(job, job->meshx, job->meshy, job->meshz);
+        tci = new TaskCommInfo(job, job->commInfo.meshx, job->commInfo.meshy, job->commInfo.meshz);
         break;
     case TaskCommInfo::COORDINATE:
         tci = new TaskCommInfo(job, 
-                               readCommFile(job->commFile, job->getProcsNeeded()),
-                               readCoordFile(job->coordFile, job->getProcsNeeded())
+                               readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
+                               readCoordFile(job->commInfo.coordFile, job->getProcsNeeded())
                                );
         break;
     default:

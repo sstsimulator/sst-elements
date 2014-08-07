@@ -105,7 +105,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     for (unsigned int x = 0; x < running -> size(); x++) {
         AllocInfo* ai = alloc -> allocate(running -> at(x));
-        if (NULL == ai) schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %d processors for %s", mach -> getNumFreeNodes(), running -> at(x) -> toString().c_str());
+        if (NULL == ai) schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %ld processors for %s", mach -> getNumFreeNodes(), running -> at(x) -> toString().c_str());
         mach -> allocate(ai);
         jobToAi -> insert(pair<Job*, AllocInfo*>(running -> at(x), ai));
     }

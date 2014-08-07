@@ -26,15 +26,16 @@ namespace SST {
         class Machine{
             public:
 
-                Machine(int numNodes, int numCoresPerNode, double** D_matrix);
+                Machine(long numNodes, int numCoresPerNode, double** D_matrix);
                 virtual ~Machine();
                 
                 void reset();
                 void allocate(AllocInfo* allocInfo);
                 void deallocate(AllocInfo* allocInfo);
 
-                int getNumFreeNodes() const { return numAvail; }
+                long getNumFreeNodes() const { return numAvail; }
                 bool isFree(int nodeNum) const { return freeNodes[nodeNum]; }
+                std::vector<bool>* freeNodeList() const { return new std::vector<bool>(freeNodes); }
                 std::vector<int>* getFreeNodes() const;
                 std::vector<int>* getUsedNodes() const;
 				double getCoolingPower() const;
@@ -44,11 +45,11 @@ namespace SST {
                 
                 double** D_matrix;
                 
-                const int numNodes;          //total number of nodes
+                const long numNodes;          //total number of nodes
                 const int coresPerNode;
 
             private:
-                int numAvail;          //number of available nodes
+                long numAvail;                //number of available nodes
                 std::vector<bool> freeNodes;  //whether each node is free
         };
     }

@@ -34,6 +34,8 @@ libscheduler_la_SOURCES = \
     TaskMapInfo.cc \
     TaskMapInfo.h \
     TaskMapper.h \
+    AllocMapper.cc \
+    AllocMapper.h \
     allocators/BestFitAllocator.cc \
     allocators/BestFitAllocator.h \
     allocators/ConstraintAllocator.cc \
@@ -66,6 +68,10 @@ libscheduler_la_SOURCES = \
     allocators/SimpleAllocator.h \
     allocators/SortedFreeListAllocator.cc \
     allocators/SortedFreeListAllocator.h \
+    allocMappers/FibonacciHeap.cc \
+    allocMappers/FibonacciHeap.h \
+    allocMappers/NearestAllocMapper.cc \
+    allocMappers/NearestAllocMapper.h \
     events/ArrivalEvent.cc \
     events/ArrivalEvent.h \
     events/CommunicationEvent.h \

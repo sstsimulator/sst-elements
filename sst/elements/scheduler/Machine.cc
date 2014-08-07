@@ -17,7 +17,7 @@
 
 using namespace SST::Scheduler;
 
-Machine::Machine(int inNumNodes, int numCoresPerNode, double** D_matrix) : numNodes(inNumNodes), coresPerNode(numCoresPerNode)
+Machine::Machine(long inNumNodes, int numCoresPerNode, double** D_matrix) : numNodes(inNumNodes), coresPerNode(numCoresPerNode)
 {
     this->D_matrix = D_matrix;
     freeNodes = std::vector<bool>(numNodes);
@@ -27,7 +27,7 @@ Machine::Machine(int inNumNodes, int numCoresPerNode, double** D_matrix) : numNo
 Machine::~Machine()
 {
     if(D_matrix != NULL){
-        for (int i = 0; i < numNodes; i++)
+        for (long i = 0; i < numNodes; i++)
             delete[] D_matrix[i];
         delete[] D_matrix;
     }
@@ -36,17 +36,15 @@ Machine::~Machine()
 void Machine::reset()
 {
     numAvail = numNodes;
-    for(int i = 0; i < numNodes; i++){
-        freeNodes[i] = true;
-    }
+    std::fill(freeNodes.begin(), freeNodes.end(), true);
 }
 
 void Machine::allocate(AllocInfo* allocInfo)
 {
-    int nodeCount = allocInfo->getNodesNeeded();
+    long nodeCount = allocInfo->getNodesNeeded();
     
     if(numAvail < nodeCount){
-        schedout.fatal(CALL_INFO, 1, "Attempted to allocate %d nodes when only %d are available", nodeCount, numAvail);
+        schedout.fatal(CALL_INFO, 1, "Attempted to allocate %ld nodes when only %ld are available", nodeCount, numAvail);
     } else {
         numAvail -= nodeCount;
     }
@@ -61,10 +59,10 @@ void Machine::allocate(AllocInfo* allocInfo)
 
 void Machine::deallocate(AllocInfo* allocInfo)
 {
-    int nodeCount = allocInfo->getNodesNeeded();
+    long nodeCount = allocInfo->getNodesNeeded();
     
     if(nodeCount > (numNodes - numAvail)) {
-        schedout.fatal(CALL_INFO, 1, "Attempted to deallocate %d nodes when only %d are busy", nodeCount, (numNodes-numAvail));
+        schedout.fatal(CALL_INFO, 1, "Attempted to deallocate %ld nodes when only %ld are busy", nodeCount, (numNodes-numAvail));
     } else {
         numAvail += nodeCount;
     }
@@ -79,10 +77,12 @@ void Machine::deallocate(AllocInfo* allocInfo)
 
 std::vector<int>* Machine::getFreeNodes() const
 {
-    std::vector<int>* freeList = new std::vector<int>();
-    for(int i = 0; i < numNodes; i++){
+    std::vector<int>* freeList = new std::vector<int>(numAvail);
+    unsigned int counter = 0;
+    for(long i = 0; i < numNodes && counter < freeList->size(); i++){
         if(freeNodes[i]){
-            freeList->push_back(i);
+            freeList->at(counter) = i;
+            counter++;
         }
     }
     return freeList;
@@ -90,10 +90,12 @@ std::vector<int>* Machine::getFreeNodes() const
 
 std::vector<int>* Machine::getUsedNodes() const
 {
-    std::vector<int>* usedNodes = new std::vector<int>();
-    for(int i = 0; i < numNodes; i++){
+    std::vector<int>* usedNodes = new std::vector<int>(numNodes - numAvail);
+    unsigned long int counter = 0;
+    for(long i = 0; i < numNodes && counter < usedNodes->size(); i++){
         if(!freeNodes[i]){
-            usedNodes->push_back(i);
+            usedNodes->at(counter) = i;
+            counter++;
         }
     }
     return usedNodes;
@@ -111,13 +113,13 @@ double Machine::getCoolingPower() const
     double sum_inlet = 0;
 
     //max inlet temp and number of busy nodes
-    for (int i = 0; i < numNodes; i++) {
+    for (long i = 0; i < numNodes; i++) {
         if( !freeNodes[i] ){
             busynodes++;
         }
         if(D_matrix != NULL){
             sum_inlet = 0;
-            for (int j = 0; j < numNodes; j++)
+            for (long j = 0; j < numNodes; j++)
             {
                 sum_inlet += D_matrix[i][j] * (Pidle + Putil * (!freeNodes[i]));
             }
@@ -146,4 +148,3 @@ double Machine::getCoolingPower() const
 
     return  Pcooling;
 }
-
