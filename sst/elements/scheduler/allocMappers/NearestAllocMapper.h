@@ -32,18 +32,19 @@ namespace SST {
                     EXHAUSTIVE = 1,
                 };
 
-                NearestAllocMapper(const MeshMachine & mach, AlgorithmType mode = EXHAUSTIVE);
+                enum CenterGenType{//center machine node generation
+                    GREEDY_CEN = 0,
+                    EXHAUST_CEN = 1,
+                };
+
+                NearestAllocMapper(const MeshMachine & mach, AlgorithmType algMode = EXHAUSTIVE, CenterGenType centerMode = GREEDY_CEN);
                 ~NearestAllocMapper();
 
                 std::string getSetupInfo(bool comment) const;
 
                 //returns allocation information or NULL if it wasn't possible
                 //(doesn't make allocation; merely returns info on possible allocation)
-                //GREEDY:O(VE + V^2 lg V + N)
-                //EXHAUSTIVE: O(VE + V^2 lg V + NE)
-                //providing a center Task speeds up the algorithm:
-                //GREEDY: O(V + E + N)
-                //EXHAUSTIVE: O(V + NE)
+                //providing a center Task significantly speeds up the algorithm
                 AllocInfo* allocate(Job* job);
 
                 //returns task mapping info of a single job; does not map the tasks
@@ -52,7 +53,9 @@ namespace SST {
             private:
 
                 AlgorithmType algorithm;
+                CenterGenType centerGen;
                 const MeshMachine & mMachine;
+                long lastNode;
 
                 //allocation variables:
                 // - as object variables for easier access, deleted after allocation
@@ -66,12 +69,23 @@ namespace SST {
                 int centerNode;
 
                 //creates a new communication graph (hyper graph) based on the # coresPerNode
-                //O(getCenterTask) = O(VE + V^2 lg V)
+                //if(GREEDY_CEN || centerTask_given)
+                //  if(coresPerNode == 1)           O(V)
+                //  if(coresPerNode == c)
+                //      if(METIS_available)         O(VE/c + (V/c)^2 lg (V/c) + METIS_partitioning(V/c))
+                //      else                        O(VE/c + (V/c)^2 lg (V/c))
+                //else                              O(VE + V^2 lg V)
                 void createCommGraph(const TaskCommInfo & tci);
+
+                //O(V + E)
+                void greedyMap();
+
+                //O(V * E)
+                void exhaustiveMap();
 
                 //finds the vertex that minimizes the cumulative communication distance
                 //@upperLimit: max number of tasks to search for
-                //O(V*dijkstraWithLimit) = O(VE + V^2 lg V)
+                //else, O(V*dijkstraWithLimit) = O(VE + V^2 lg V)
                 int getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long upperLimit = LONG_MAX) const;
 
                 //returns adjacency list of a directed tree with centerTask as its root
@@ -84,10 +98,17 @@ namespace SST {
                 //returns a center machine node for allocation
                 //@upperLimit: max number of nodes to search for
                 //chooses an heuristic center that has approximately nodesNeeded free nodes around it
-                //O(N + V^(2/3))
-                int getCenterNode(const int nodesNeeded, const long upperLimit = 1000) const;
+                //tries all the nodes
+                //O(N * V^2)
+                int getCenterNodeExh(const int nodesNeeded, const long upperLimit = 1000) const;
 
-                //custom implementation of Dijkstra's algorithm with Fibonacci heap - O(E + V lg V)
+                //returns a center machine node for allocation
+                //gets the next free node
+                //O(N), depends on the machine utilization, expected: O(N * util)
+                int getCenterNodeGr();
+
+                //custom implementation of Dijkstra's algorithm with Fibonacci heap
+                //O(E + V lg V)
                 //the algorithm terminates if the total distance is larger than given limit
                 //edge distances are taken as ( 1 / edgeWeight)
                 double dijkstraWithLimit(const std::vector<std::map<int,int> > & graph,
@@ -95,15 +116,17 @@ namespace SST {
                                          const double limit
                                          ) const;
 
-                //returns the number of the closest available nodes in the machine graph
-                //adds the nodes to the outList when provided
-                //O(N), but typically O(initDist^2)
+                //if initDist = 0, returns the number of the closest available nodes in the machine graph
+                //else, returns the number of the available nodes with distance=initDist in the machine graph
                 //@initDist: starting distance from the center node
-                int closestNodes(long srcNode, int initDist, std::list<int> *outList = NULL) const;
+                //adds the nodes to the outList when provided
+                //if initDist = 0, O(N^2), but typically O(1)
+                //else, O(initDist^2)
+                int closestNodes(const long srcNode, const int initDist, std::list<int> *outList = NULL) const;
 
                 //returns the tiedNodes element with the least communication using inTask
                 //removes the returned index from the list
-                //O(tiedNodes->size() * E), O(tiedNodes->size() * E) when called for all tasks
+                //O(tiedNodes->size() * E + V), O(tiedNodes->size() * E + V) when called for all tasks
                 int tieBreaker(std::list<int> & tiedNodes, int inTask) const;
 
                 //orders neighbors of the given task in commTree by their communication
@@ -111,14 +134,8 @@ namespace SST {
                 //O(E lg E), O(V) when called for all tasks
                 std::vector<int> orderTreeNeighByComm(int task) const;
 
-                //O(V + E) - not sure
-                void greedyMap();
-
-                //O(V + N * E) - not sure
-                void exhaustiveMap();
-
                 //sorts given vector from largest to smallest
-                //O(n lg n)
+                //O(n lg n), n=toSort.size()
                 //@values sorted values
                 //@return sorted vector indexes
                 std::vector<int> sortWithIndices(const std::vector<int> & toSort,

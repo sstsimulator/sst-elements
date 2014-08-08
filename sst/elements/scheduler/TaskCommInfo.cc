@@ -19,7 +19,7 @@
 using namespace SST::Scheduler;
 
 TaskCommInfo::TaskCommInfo(Job* job)
-    : xdim(0), ydim(0), zdim(0), centerTask(-1)
+    : xdim(0), ydim(0), zdim(0), centerTask(0)
 {
     init(job);
     taskCommType = TaskCommInfo::ALLTOALL;

@@ -46,10 +46,12 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     job = allocInfo->job;
     tci = job->taskCommInfo;
 
-    //check job compatibility
+    //check job compatibility - use simple task mapper if not compatible
     if(tci->getCommType() != TaskCommInfo::MESH &&
        tci->getCommType() != TaskCommInfo::COORDINATE) {
-        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires coordinate input");
+        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mach);
+        return simpleMapper.mapTasks(allocInfo);
+        //schedout.fatal(CALL_INFO, 1, "Job %ld attempted to use RCB task mapper without coordinate input\n", job->getJobNum());
     }
 
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo);

@@ -279,16 +279,22 @@ void CommParser::parseComm(Job * job)
         tci = new TaskCommInfo(job);
         break;
     case TaskCommInfo::CUSTOM:
-        tci = new TaskCommInfo(job, readCommFile(job->commInfo.commFile, job->getProcsNeeded()) );
+        tci = new TaskCommInfo(job, 
+                               readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
+                               job->commInfo.centerTask );
         break;
     case TaskCommInfo::MESH:
-        tci = new TaskCommInfo(job, job->commInfo.meshx, job->commInfo.meshy, job->commInfo.meshz);
+        tci = new TaskCommInfo(job, 
+                               job->commInfo.meshx,
+                               job->commInfo.meshy,
+                               job->commInfo.meshz,
+                               job->commInfo.centerTask );
         break;
     case TaskCommInfo::COORDINATE:
         tci = new TaskCommInfo(job, 
                                readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
-                               readCoordFile(job->commInfo.coordFile, job->getProcsNeeded())
-                               );
+                               readCoordFile(job->commInfo.coordFile, job->getProcsNeeded()),
+                               job->commInfo.centerTask );
         break;
     default:
         schedout.fatal(CALL_INFO, 1, "Unknown Communication type at Job %ld", 

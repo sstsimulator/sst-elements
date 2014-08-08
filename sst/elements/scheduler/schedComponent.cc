@@ -553,9 +553,9 @@ void schedComponent::startJob(Job* job)
     stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
 
     //DEBUG
-    //if(job->getJobNum() % 100 == 0){
-        //std::cout << "Job " << job->getJobNum() << " has been started\n";
-    //}
+    if(job->getJobNum() % 50 == 0){
+        std::cout << "Job " << job->getJobNum() << " has been started\n";
+    }
     
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;
@@ -591,7 +591,7 @@ void schedComponent::startJob(Job* job)
                                  ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
         
         //overestimate the fraction to be safe
-        //timeWithComm = ceil(timeWithComm);
+        timeWithComm = ceil(timeWithComm);
         
         //DEBUG
         /*if(actualRunningTime != 0)
