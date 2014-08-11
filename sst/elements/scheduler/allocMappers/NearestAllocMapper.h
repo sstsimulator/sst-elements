@@ -33,11 +33,11 @@ namespace SST {
                 };
 
                 enum CenterGenType{//center machine node generation
-                    GREEDY_CEN = 0,
-                    EXHAUST_CEN = 1,
+                    GREEDY_NODE = 0,
+                    EXHAUST_NODE = 1,
                 };
 
-                NearestAllocMapper(const MeshMachine & mach, AlgorithmType algMode = EXHAUSTIVE, CenterGenType centerMode = GREEDY_CEN);
+                NearestAllocMapper(const MeshMachine & mach, AlgorithmType algMode = EXHAUSTIVE, CenterGenType centerMode = EXHAUST_NODE);
                 ~NearestAllocMapper();
 
                 std::string getSetupInfo(bool comment) const;

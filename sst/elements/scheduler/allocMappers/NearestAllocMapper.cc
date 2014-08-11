@@ -93,10 +93,10 @@ AllocInfo* NearestAllocMapper::allocate(Job* job)
 
     //choose center node
     switch(centerGen){
-    case GREEDY_CEN:
+    case GREEDY_NODE:
         centerNode = getCenterNodeGr();
         break;
-    case EXHAUST_CEN:
+    case EXHAUST_NODE:
         centerNode = getCenterNodeExh(nodesNeeded);
         break;
     default:
@@ -157,20 +157,11 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
     int jobSize = tci.getSize();
     int nodesNeeded = ceil((float) jobSize / mach.coresPerNode);
 
-    //update center task if necessary
-    switch(centerGen){
-    case GREEDY_CEN:
-        centerTask = 0;
-        break;
-    case EXHAUST_CEN:
-        //find center task if not given
-        if(centerTask == -1){
-            centerTask = getCenterTask(*rawCommGraph);
-        }
-        break;
-    default:
-        schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
-    };
+    //find center task if not given
+    //if(centerTask == -1){
+      //  centerTask = getCenterTask(*rawCommGraph);
+    //}
+    centerTask = rand() % jobSize;
 
     taskToVertex.resize(jobSize);
     if(mach.coresPerNode == 1){
@@ -561,7 +552,7 @@ int NearestAllocMapper::tieBreaker(list<int> & tiedNodes, int inTask) const
 
         //for each possible node
         double minDist = DBL_MAX;
-        list<int>::iterator bestIt;        
+        list<int>::iterator bestIt;
         for(list<int>::iterator nodeIt = tiedNodes.begin(); nodeIt != tiedNodes.end(); nodeIt++){
             double curDist = 0;
             //iterate over task neighbors and calculate the total comm distance if this task was allocated here
@@ -584,20 +575,20 @@ vector<int> NearestAllocMapper::sortWithIndices(const vector<int> & toSort, vect
    vector<pair<int, int> > pairs(toSort.size());
    vector<int> indices(toSort.size());
 
-   for(uint i = 0; i < toSort.size(); i++){
+   for(unsigned int i = 0; i < toSort.size(); i++){
        pairs[i] = pair<int, int>(toSort[i], i);
    }
 
    stable_sort(pairs.begin(), pairs.end(), SortHelper());
 
-   for(uint i = 0; i < toSort.size(); i++){
+   for(unsigned int i = 0; i < toSort.size(); i++){
        indices[i] = pairs[i].second;
    }
 
    if(values != NULL){
        values->clear();
        values->resize(toSort.size());
-       for(uint i = 0; i < toSort.size(); i++){
+       for(unsigned int i = 0; i < toSort.size(); i++){
            values->at(i) = pairs[i].first;
        }
    }
