@@ -592,6 +592,7 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
                 entryCache.pop_back();
                 --entryCacheSize;
                 oldEntry->cacheIter = entryCache.end();
+                oldEntry->inController = false;
                 sendEntryToMemory(oldEntry);
             }
         }
