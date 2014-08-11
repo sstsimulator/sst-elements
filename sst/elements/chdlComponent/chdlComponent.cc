@@ -9,6 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#define CHDL_FASTSIM
+
 #include "sst_config.h"
 #include "sst/core/serialization.h"
 #include "chdlComponent.h"
@@ -67,7 +69,7 @@ template <typename T> void IngressInt(vector<node> &v, T &x) {
 }
 
 chdlComponent::chdlComponent(ComponentId_t id, Params &p):
-  Component(id), tog(0)
+  Component(id), tog(0), stopSim(0), registered(false)
 {
   debugLevel = p.find_integer("debugLevel", 1);
   int debug(p.find_integer("debug", 0));
@@ -87,6 +89,7 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
+  registered = true;
 
   memLink = dynamic_cast<SimpleMem*>(
     loadModuleWithComponent("memHierarchy.memInterface", this, p)
@@ -183,6 +186,11 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
   } else if (!strncmp(t[0], "cores", 80) && t.size() == 1) {
     for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1)
       v[i] = Lit((core_count & mask) != 0);    
+  } else if (!strncmp(t[0], "stop", 80) &&
+             !strncmp(t[1], "sim", 80) && t.size() == 2)
+  {
+    out.output("Core %u found stop sim signal\n", core_id); 
+    Egress(stopSim, v[0]);
   }
 }
 
@@ -301,12 +309,18 @@ void chdlComponent::consoleOutput(char c) {
 }
 
 bool chdlComponent::clockTick(Cycle_t c) {
+  #ifdef CHDL_FASTSIM
+  evaluator_t tick_arg(default_evaluator());
+  #else
+  cdomain_handle_t tick_arg(cd);
+  #endif
+
   if (tog) {
     tog = !tog;
-    for (auto &t : tickables()[cd]) t->tick(cd);
+    for (auto &t : tickables()[cd]) t->tick(tick_arg);
     for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
-    for (auto &t : tickables()[cd]) t->tock(cd);
-    for (auto &t : tickables()[cd]) t->post_tock(cd);
+    for (auto &t : tickables()[cd]) t->tock(tick_arg);
+    for (auto &t : tickables()[cd]) t->post_tock(tick_arg);
     ++now[cd];
     if (cd == 1) ++now[0];
   } else {
@@ -318,9 +332,9 @@ bool chdlComponent::clockTick(Cycle_t c) {
       responses_this_cycle[i] = 0;
     }
 
-    if (dumpVcd) print_taps(vcd, cd);
+    if (dumpVcd) print_taps(vcd, tick_arg);
 
-    for (auto &t : tickables()[cd]) t->pre_tick(cd);
+    for (auto &t : tickables()[cd]) t->pre_tick(tick_arg);
 
     // Handle requests
     for (unsigned i = 0; i < req.size(); ++i) {
@@ -368,11 +382,20 @@ bool chdlComponent::clockTick(Cycle_t c) {
     }
 
     if (dumpVcd) print_time(vcd);
+
+    // If the CPU is exiting the simulation, unregister.
+    if (stopSim && registered) {
+      out.output("Core %u UNREGISTERING EXIT\n", core_id);
+      registered = false;
+      unregisterExit();
+    }
   }
 
   return false;
 }
 
+BOOST_CLASS_EXPORT(reqdata);
+BOOST_CLASS_EXPORT(respdata);
 BOOST_CLASS_EXPORT(chdlComponent);
 
 static Component* create_chdlComponent(ComponentId_t id, Params &p) {

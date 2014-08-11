@@ -42,11 +42,39 @@ namespace ChdlComponent {
   struct reqdata {
     uint64_t addr, data, id, size;
     bool valid, wr, llsc, locked, uncached;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+      void serialize(Archive &ar, const unsigned version)
+    {
+      ar & BOOST_SERIALIZATION_NVP(addr);
+      ar & BOOST_SERIALIZATION_NVP(data);
+      ar & BOOST_SERIALIZATION_NVP(id);
+      ar & BOOST_SERIALIZATION_NVP(size);
+      ar & BOOST_SERIALIZATION_NVP(valid);
+      ar & BOOST_SERIALIZATION_NVP(wr);
+      ar & BOOST_SERIALIZATION_NVP(llsc);
+      ar & BOOST_SERIALIZATION_NVP(locked);
+      ar & BOOST_SERIALIZATION_NVP(uncached);
+    }
   };
 
   struct respdata {
     uint64_t data, id;
     bool ready, valid, wr, llsc, llsc_suc;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+      void serialize(Archive &ar, const unsigned version)
+    {
+      ar & BOOST_SERIALIZATION_NVP(data);
+      ar & BOOST_SERIALIZATION_NVP(id);
+      ar & BOOST_SERIALIZATION_NVP(ready);
+      ar & BOOST_SERIALIZATION_NVP(valid);
+      ar & BOOST_SERIALIZATION_NVP(wr);
+      ar & BOOST_SERIALIZATION_NVP(llsc);
+      ar & BOOST_SERIALIZATION_NVP(llsc_suc);
+    }
   };
 
   class chdlComponent : public Component {
@@ -62,25 +90,61 @@ namespace ChdlComponent {
     template <class Archive>
       void save(Archive &ar, const unsigned version) const
     {
+      #if 0
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-      ar & BOOST_SERIALIZATION_NVP(clockFreq);
       ar & BOOST_SERIALIZATION_NVP(memLink);
+      ar & BOOST_SERIALIZATION_NVP(clockFreq);
       ar & BOOST_SERIALIZATION_NVP(netlFile);
-      ar & BOOST_SERIALIZATION_NVP(debugLevel);
+      ar & BOOST_SERIALIZATION_NVP(memFile);
+      ar & BOOST_SERIALIZATION_NVP(outputBuffer);
+      ar & BOOST_SERIALIZATION_NVP(req);
+      ar & BOOST_SERIALIZATION_NVP(resp); 
       ar & BOOST_SERIALIZATION_NVP(idMap);
+      ar & BOOST_SERIALIZATION_NVP(portMap);
+      ar & BOOST_SERIALIZATION_NVP(ports);
+      ar & BOOST_SERIALIZATION_NVP(counters);
       ar & BOOST_SERIALIZATION_NVP(cd);
+      ar & BOOST_SERIALIZATION_NVP(debugLevel);
+      ar & BOOST_SERIALIZATION_NVP(tog);
+      ar & BOOST_SERIALIZATION_NVP(core_id);
+      ar & BOOST_SERIALIZATION_NVP(core_count);
+      ar & BOOST_SERIALIZATION_NVP(out);
+      ar & BOOST_SERIALIZATION_NVP(dumpVcd);
+      ar & BOOST_SERIALIZATION_NVP(stopSim);
+      ar & BOOST_SERIALIZATION_NVP(registered);
+      #endif
+
+      // TODO: Also, somehow, save the CHDL simulator state
     }
 
     template <class Archive>
       void load(Archive &ar, const unsigned version)
     {
+      #if 0
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-      ar & BOOST_SERIALIZATION_NVP(clockFreq);
       ar & BOOST_SERIALIZATION_NVP(memLink);
+      ar & BOOST_SERIALIZATION_NVP(clockFreq);
       ar & BOOST_SERIALIZATION_NVP(netlFile);
-      ar & BOOST_SERIALIZATION_NVP(debugLevel);
+      ar & BOOST_SERIALIZATION_NVP(memFile);
+      ar & BOOST_SERIALIZATION_NVP(outputBuffer);
+      ar & BOOST_SERIALIZATION_NVP(req);
+      ar & BOOST_SERIALIZATION_NVP(resp); 
       ar & BOOST_SERIALIZATION_NVP(idMap);
+      ar & BOOST_SERIALIZATION_NVP(portMap);
+      ar & BOOST_SERIALIZATION_NVP(ports);
+      ar & BOOST_SERIALIZATION_NVP(counters);
       ar & BOOST_SERIALIZATION_NVP(cd);
+      ar & BOOST_SERIALIZATION_NVP(debugLevel);
+      ar & BOOST_SERIALIZATION_NVP(tog);
+      ar & BOOST_SERIALIZATION_NVP(core_id);
+      ar & BOOST_SERIALIZATION_NVP(core_count);
+      ar & BOOST_SERIALIZATION_NVP(out);
+      ar & BOOST_SERIALIZATION_NVP(dumpVcd);
+      ar & BOOST_SERIALIZATION_NVP(stopSim);
+      ar & BOOST_SERIALIZATION_NVP(registered);
+      #endif
+
+      // TODO: Also, somehow, load the CHDL simulator state
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -110,7 +174,7 @@ namespace ChdlComponent {
 
     Output out;
     std::ofstream vcd;
-    bool dumpVcd;
+    bool dumpVcd, stopSim, registered;
 
     std::vector<unsigned> responses_this_cycle;
 };
