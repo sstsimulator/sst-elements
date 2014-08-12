@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+import os
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ns")
@@ -19,9 +20,10 @@ comp_cpu.addParams({
 #      "trace" : "/nfshome/sdhammo/lulesh/sstprospero-0-99-gz.trace",
       "heartbeat" : "100000",
       "tracestartat" : "0",
-      "trace" : "/home/sdhammo/lulesh/sstprospero-93",
+#      "trace" : "/home/sdhammo/lulesh/sstprospero-93",
+      "trace" : os.environ['SST_ROOT'] + '/sst/elements/prospero/tests/array/sstprospero-0', 
       "maxtracefile" : 1,
-      "traceformat" : "binary"
+      "traceformat" : "compressed"
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({

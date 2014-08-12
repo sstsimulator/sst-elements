@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PINDIR=/home/projects/pin/gcc/2.13.61206
+PINDIR=/usr/local/module-pkgs/pin/pin-2.13-61206-gcc.4.4.7-linux
 CXX=g++
 PREPROC=-DBIGARRAY_MULTIPLIER=1 -DUSING_XED -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -DPROSPERO_LIBZ
 LD=g++
