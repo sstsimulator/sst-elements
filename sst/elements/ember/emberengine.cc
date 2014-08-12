@@ -646,6 +646,7 @@ void EmberEngine::processGetTimeEvent(EmberGetTimeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Get Time Event\n");
 	ev->setTime((uint64_t) getCurrentSimTimeNano());
 	issueNextEvent(0);
+	accumulateTime = NULL;
 }
 
 void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
@@ -911,9 +912,11 @@ void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
 void EmberEngine::handleEvent(Event* ev) {
 	// Accumulate the time processing the last event into a counter
 	// we track these by event type
-	const uint64_t sim_time_now = (uint64_t) getCurrentSimTimeNano();
-	accumulateTime->add( sim_time_now - nextEventStartTimeNanoSec );
-	nextEventStartTimeNanoSec = sim_time_now;
+    const uint64_t sim_time_now = (uint64_t) getCurrentSimTimeNano();
+    if ( accumulateTime ) {
+        accumulateTime->add( sim_time_now - nextEventStartTimeNanoSec );
+    }
+    nextEventStartTimeNanoSec = sim_time_now;
 
 	// Cast out the event we are processing and then hand off to whatever
 	// handlers we have created
