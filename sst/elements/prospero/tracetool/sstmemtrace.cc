@@ -68,7 +68,7 @@ KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<UINT32> KnobTraceEnabled(KNOB_MODE_WRITEONCE, "pintool",
     "d", "1", "Disable until application says that tracing can start, 0=disable until app, 1=start enabled, default=1");
 KNOB<UINT64> KnobFileTrip(KNOB_MODE_WRITEONCE, "pintool",
-    "l", "100000000", "Trip into a new trace file at this instruction count, default=100000000");
+    "l", "1125899906842624", "Trip into a new trace file at this instruction count, default=1125899906842624 (2**50)");
 
 void prospero_enable() {
 	printf("PROSPERO: Tracing enabled\n");
