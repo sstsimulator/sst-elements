@@ -3,19 +3,25 @@ import sst
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ns")
-sst.setProgramOption("stopAtCycle", "1000000ns")
+sst.setProgramOption("stopAtCycle", "5s")
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "prospero.prospero")
 comp_cpu.addParams({
-      "physlimit" : str(512 * 1024 * 1024),
+      "physlimit" : str(4906 * 1024 * 1024),
       "tracetype" : "file",
       "verbose" : "0",
       "cache_line" : "64",
 #      "trace" : "traces/pinatrace.out"
 #      "trace" : "/Users/sdhammo/Documents/Subversion/sst-simulator-org-trunk/sst/elements/prospero/xml/traces/sstprospero-0-gz.trace",
-      "trace" : "/Users/sdhammo/Documents/Subversion/sst-simulator-org-trunk/sst/elements/prospero/tracetool/test/array/sstprospero-0-gz.trace", 
-      "traceformat" : "compressed"
+#      "trace" : "/home/sdhammo/subversion/sst-simulator-org-trunk/sst/elements/prospero/tests/array/sstprospero-0", 
+#      "trace" : "/home/sdhammo/lulesh/sstprospero-99",
+#      "trace" : "/nfshome/sdhammo/lulesh/sstprospero-0-99-gz.trace",
+      "heartbeat" : "100000",
+      "tracestartat" : "0",
+      "trace" : "/home/sdhammo/lulesh/sstprospero-93",
+      "maxtracefile" : 1,
+      "traceformat" : "binary"
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
@@ -33,10 +39,9 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
       "access_time" : "1000 ns",
-      "mem_size" : "512",
+      "mem_size" : "4906",
       "clock" : "1GHz"
 })
-
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")

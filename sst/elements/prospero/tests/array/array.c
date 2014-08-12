@@ -4,7 +4,7 @@
 int main(int argc, char* argv[]) {
 	printf("Running arrays...\n");
 
-	const int SIZE = 4096;
+	const int SIZE = 131072;
 	int i;
 	double sum = 0;
 	double* the_array = (double*) malloc(sizeof(double) * SIZE);
