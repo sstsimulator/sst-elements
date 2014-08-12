@@ -581,6 +581,9 @@ static const ElementInfoParam component_params[] = {
     { "timemultiplier", "Dilate time in trace file based on this value, >1.0 = take longer, <1.0 take shorter, default=1.0","1.0" },
     { "heartbeat", "Prospero can report every heartbeat period to ensure progress can be tracked", "100000000" },
     { "traceformat", "Trace file format: \"text\", \"binary\" or \"compressed\", default is \"text\"", "text"},
+    { "maxtracefile", "For multiple trace simulations (where a single instance runs multiple files) this sets the maximum file count", "1"},
+    { "tracestartat", "Sets the start index for the trace files to be loaded at (for multi trace file simulations)", "0"},
+    { "max_entries", "Maximum entries to process from this trace file", "2147483647"},
     { NULL, NULL, NULL }
 };
 
