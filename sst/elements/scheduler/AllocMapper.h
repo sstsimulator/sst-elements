@@ -42,22 +42,21 @@ namespace SST {
 
                 virtual std::string getSetupInfo(bool comment) const = 0;
 
-                //allocates job if possible
                 //returns information on the allocation or NULL if it wasn't possible
                 //(doesn't make allocation; merely returns info on possible allocation)
-                //AllocInfo Machines are ordered so that tasks mapping becomes in-order
+                //implementations should store the task mapping information by calling addMapping()
                 virtual AllocInfo* allocate(Job* job) = 0;
 
                 //returns task mapping info of a single job; does not map the tasks
                 //deletes the job mapping info after calling the function
-                virtual TaskMapInfo* mapTasks(AllocInfo* allocInfo) = 0;
+                TaskMapInfo* mapTasks(AllocInfo* allocInfo);
 
             private:
                 static std::map<long, std::vector<int>*> mappings; //keeps the task mapping after allocation
 
             protected:
                 //adds mapping information
-                void addMapping(long jobNum, std::vector<int>* data);
+                void addMapping(long jobNum, std::vector<int>* taskToNode);
                 //return mapping of the given job
                 //calls schedout.fatal() if mapping is not available
                 std::vector<int>* getMappingOf(long jobNum);

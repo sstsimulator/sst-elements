@@ -14,7 +14,6 @@
 #include "sst_config.h"
 #include "EnergyAllocClasses.h"
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>

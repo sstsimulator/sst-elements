@@ -11,12 +11,28 @@
 
 #include "AllocMapper.h"
 
+#include "AllocInfo.h"
+#include "Job.h"
+#include "TaskMapInfo.h"
+
 #include "output.h"
 
 using namespace SST::Scheduler;
 
 //set aside memory for mappings
 std::map<long, std::vector<int>*> AllocMapper::mappings = std::map<long, std::vector<int>*>();
+
+TaskMapInfo* AllocMapper::mapTasks(AllocInfo* allocInfo)
+{
+    long jobNum = allocInfo->job->getJobNum();
+    std::vector<int>* mapping = getMappingOf(jobNum);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    for(long taskIt = 0; taskIt < allocInfo->job->getProcsNeeded(); taskIt++){
+        tmi->insert(taskIt, mapping->at(taskIt));
+    }
+    delete mapping;
+    return tmi;
+}
 
 void AllocMapper::addMapping(long jobNum, std::vector<int>* data)
 {

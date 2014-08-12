@@ -9,10 +9,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include "sst_config.h"
 #include "NearestAllocMapper.h"
 
 #ifdef HAVE_METIS
-#include "metis.h"
+#include <metis.h>
 #endif
 
 #include "AllocInfo.h"
@@ -21,7 +22,6 @@
 #include "Machine.h"
 #include "MeshMachine.h"
 #include "TaskCommInfo.h"
-#include "TaskMapInfo.h"
 #include "output.h"
 
 #include <cmath>
@@ -139,18 +139,6 @@ AllocInfo* NearestAllocMapper::allocate(Job* job)
     return ai;
 }
 
-TaskMapInfo* NearestAllocMapper::mapTasks(AllocInfo* allocInfo)
-{
-    long jobNum = allocInfo->job->getJobNum();
-    std::vector<int>* mapping = getMappingOf(jobNum);
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
-    for(long taskIt = 0; taskIt < allocInfo->job->getProcsNeeded(); taskIt++){
-        tmi->insert(taskIt, mapping->at(taskIt));
-    }
-    delete mapping;
-    return tmi;
-}
-
 void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
 {
     std::vector<std::map<int,int> >* rawCommGraph = tci.getCommInfo();
@@ -159,9 +147,9 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
 
     //find center task if not given
     //if(centerTask == -1){
-      //  centerTask = getCenterTask(*rawCommGraph);
+    //    centerTask = getCenterTask(*rawCommGraph);
     //}
-    centerTask = rand() % jobSize;
+    centerTask = 0;
 
     taskToVertex.resize(jobSize);
     if(mach.coresPerNode == 1){
@@ -371,35 +359,37 @@ vector<vector<int> >* NearestAllocMapper::breadthFirstTree(int centerVertex,
     return commTree;
 }
 
-int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long upperLimit) const
+int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long upperLimit)
 {
-    int bestNode = 0;
+    int bestNode = -1;
     double bestScore = -DBL_MAX;
     long searchCount = 0;
     //approximate L1 from center to keep all the nodes in a 3D diamond
     const int optDist = cbrt(nodesNeeded);
     //for all nodes
     for(long nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
-        if(isFree->at(nodeIt)){
+        if(isFree->at(lastNode)){
             double curScore = 0;
             for(int dist = 1; dist <= optDist; dist++){
-                curScore += (double) closestNodes(nodeIt, dist) / dist;
+                curScore += (double) closestNodes(lastNode, dist) / dist;
             }
             //penalize node if it has more space around it
             //this should increase machine efficiency
             for(int dist = optDist + 1; dist <= optDist + 2; dist++){
-                curScore -= (double) closestNodes(nodeIt, dist) / (dist*dist);
+                curScore -= (double) closestNodes(lastNode, dist) / (dist*dist);
             }
             //update best node
             if(curScore > bestScore){
                 bestScore = curScore;
-                bestNode = nodeIt;
+                bestNode = lastNode;
             }
             //optimization - preempt if upper bound reached
             searchCount++;
             if(searchCount >= upperLimit){
                 break;
             }
+        } else {
+            lastNode = (lastNode + 1) % mach.numNodes;
         }
     }
     return bestNode;

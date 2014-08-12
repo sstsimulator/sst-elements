@@ -23,7 +23,6 @@ namespace SST {
         class AllocInfo;
         class Job;
         class MeshMachine;
-        class TaskCommInfo;
 
         class NearestAllocMapper : public AllocMapper {
             public:
@@ -37,7 +36,7 @@ namespace SST {
                     EXHAUST_NODE = 1,
                 };
 
-                NearestAllocMapper(const MeshMachine & mach, AlgorithmType algMode = EXHAUSTIVE, CenterGenType centerMode = EXHAUST_NODE);
+                NearestAllocMapper(const MeshMachine & mach, AlgorithmType algMode = EXHAUSTIVE, CenterGenType centerMode = GREEDY_NODE);
                 ~NearestAllocMapper();
 
                 std::string getSetupInfo(bool comment) const;
@@ -46,9 +45,6 @@ namespace SST {
                 //(doesn't make allocation; merely returns info on possible allocation)
                 //providing a center Task significantly speeds up the algorithm
                 AllocInfo* allocate(Job* job);
-
-                //returns task mapping info of a single job; does not map the tasks
-                TaskMapInfo* mapTasks(AllocInfo* allocInfo);
 
             private:
 
@@ -85,7 +81,8 @@ namespace SST {
 
                 //finds the vertex that minimizes the cumulative communication distance
                 //@upperLimit: max number of tasks to search for
-                //else, O(V*dijkstraWithLimit) = O(VE + V^2 lg V)
+                //if(upperLimit < V),   O((E + V lg V) * upperLimit)
+                //else,                 O((E + V lg V) * V)
                 int getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long upperLimit = LONG_MAX) const;
 
                 //returns adjacency list of a directed tree with centerTask as its root
@@ -98,9 +95,10 @@ namespace SST {
                 //returns a center machine node for allocation
                 //@upperLimit: max number of nodes to search for
                 //chooses an heuristic center that has approximately nodesNeeded free nodes around it
-                //tries all the nodes
-                //O(N * V^2)
-                int getCenterNodeExh(const int nodesNeeded, const long upperLimit = 1000) const;
+                //tries first next upperLimit nodes
+                //if(upperLimit < N),   O(N + upperLimit * V^2)
+                //else,                 O(N * V^2)
+                int getCenterNodeExh(const int nodesNeeded, const long upperLimit = 2000);
 
                 //returns a center machine node for allocation
                 //gets the next free node

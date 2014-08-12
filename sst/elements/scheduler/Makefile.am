@@ -111,3 +111,9 @@ libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS)
 libscheduler_la_LIBADD += $(GLPK_LIB)
 AM_CPPFLAGS += $(GLPK_CPPFLAGS)
 endif
+
+if HAVE_METIS
+libscheduler_la_LDFLAGS += $(METIS_LDFLAGS)
+libscheduler_la_LIBADD += $(METIS_LIB)
+AM_CPPFLAGS += $(METIS_CPPFLAGS)
+endif
