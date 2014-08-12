@@ -151,6 +151,7 @@ private:
   uint32_t maxFile;
   std::string tracePrefix;
 
+  uint64_t heartbeat_cycle;
   uint32_t trace_format;
   uint64_t total_bytes_read;
   uint64_t total_bytes_written;

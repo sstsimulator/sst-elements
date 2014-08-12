@@ -31,6 +31,8 @@ prospero::prospero(ComponentId_t id, Params& params) :
   output_level = params.find_integer("verbose", 0);
   output = new SST::Output("Prospero[@p:@l] ", (uint32_t) output_level, (uint32_t) 0, SST::Output::STDOUT);
 
+  heartbeat_cycle = (uint64_t) params.find_integer("heartbeat", 1000000000000000);
+
   if(params.find_string("traceformat") == "compressed") {
 	output->verbose(CALL_INFO, 2, 0, "Trace format will be loaded as a compressed binary file.\n");
 	trace_format = PROSPERO_TRACE_COMPRESSED;
@@ -47,7 +49,7 @@ prospero::prospero(ComponentId_t id, Params& params) :
   maxFile = (uint32_t) params.find_integer("maxtracefile", 1);
   output->verbose(CALL_INFO, 2, 0, "Maximum number of trace files to open is %" PRIu32 "\n", maxFile);
 
-  currentFile = 0;
+  currentFile = (uint32_t) params.find_integer("tracestartat", 0);
 
   max_trace_count = (uint64_t) params.find_integer("max_entries", 4611686018427390000);
   output->verbose(CALL_INFO, 2, 0, "Maximum trace items to process set to %" PRIu64 "\n", max_trace_count);
@@ -473,7 +475,11 @@ void prospero::createPendingRequest(memory_request mem_req) {
 	}
 }
 
-bool prospero::tick( Cycle_t ) {
+bool prospero::tick( Cycle_t cycles ) {
+	if(cycles % heartbeat_cycle == 0) {
+		output->output("Heartbeat at: %" PRIu64 " cycles.\n", cycles);
+	}
+
 	if(keep_generating) {
 		if(output_level > 0) {
 		//		std::cout << "TRACE: Tick count " << tick_count << std::endl;
@@ -573,6 +579,7 @@ static const ElementInfoParam component_params[] = {
     { "max_ticks", "Maximum number of ticks the Prospero CPU can execute for", "4611686018427390000" },
     { "cache_line", "Size of the first level cache block in bytes (Prospero does non-aligned address splits)", "64"},
     { "timemultiplier", "Dilate time in trace file based on this value, >1.0 = take longer, <1.0 take shorter, default=1.0","1.0" },
+    { "heartbeat", "Prospero can report every heartbeat period to ensure progress can be tracked", "100000000" },
     { "traceformat", "Trace file format: \"text\", \"binary\" or \"compressed\", default is \"text\"", "text"},
     { NULL, NULL, NULL }
 };
