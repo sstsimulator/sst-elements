@@ -10,6 +10,7 @@
 // distribution.
 
 #define CHDL_FASTSIM
+// #define CHDL_TRANS
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
@@ -236,6 +237,9 @@ void chdlComponent::init(unsigned phase) {
       for (unsigned i = 0; i < tickables().size(); ++i) {
         out.output("cdomain %u: %lu\n", i, tickables()[i].size());
       }
+      #ifdef CHDL_TRANS
+      init_trans();
+      #endif
     }
   } else if (phase == 2 && memFile != "") {
     ifstream m(memFile);
@@ -310,17 +314,29 @@ void chdlComponent::consoleOutput(char c) {
 
 bool chdlComponent::clockTick(Cycle_t c) {
   #ifdef CHDL_FASTSIM
-  evaluator_t tick_arg(default_evaluator());
+  #ifdef CHDL_TRANS
+  #define tick_arg trans_evaluator()
+  #else
+  evaluator_t tick_arg(default_evaluator(cd));
+  #endif
   #else
   cdomain_handle_t tick_arg(cd);
   #endif
 
   if (tog) {
     tog = !tog;
+    #ifdef CHDL_TRANS
+    recompute_logic_trans(cd);
+    tick_trans(cd);
+    for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
+    tock_trans(cd);
+    post_tock_trans(cd);
+    #else
     for (auto &t : tickables()[cd]) t->tick(tick_arg);
     for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
     for (auto &t : tickables()[cd]) t->tock(tick_arg);
     for (auto &t : tickables()[cd]) t->post_tock(tick_arg);
+    #endif
     ++now[cd];
     if (cd == 1) ++now[0];
   } else {
@@ -334,7 +350,11 @@ bool chdlComponent::clockTick(Cycle_t c) {
 
     if (dumpVcd) print_taps(vcd, tick_arg);
 
+    #ifdef TRANS
+    pre_tick(cd);
+    #else
     for (auto &t : tickables()[cd]) t->pre_tick(tick_arg);
+    #endif
 
     // Handle requests
     for (unsigned i = 0; i < req.size(); ++i) {
