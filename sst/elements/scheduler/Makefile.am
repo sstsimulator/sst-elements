@@ -72,6 +72,8 @@ libscheduler_la_SOURCES = \
     allocMappers/FibonacciHeap.h \
     allocMappers/NearestAllocMapper.cc \
     allocMappers/NearestAllocMapper.h \
+    allocMappers/SpectralAllocMapper.cc \
+    allocMappers/SpectralAllocMapper.h \
     events/ArrivalEvent.cc \
     events/ArrivalEvent.h \
     events/CommunicationEvent.h \

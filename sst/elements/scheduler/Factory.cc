@@ -49,6 +49,7 @@
 #include "taskMappers/TopoMapper.h"
 
 #include "allocMappers/NearestAllocMapper.h"
+#include "allocMappers/SpectralAllocMapper.h"
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -90,6 +91,7 @@ const Factory::allocTableEntry Factory::allocTable[] = {
     {ENERGY, "energy"},
     {HYBRID, "hybrid"},
     {NEARESTAMAP, "nearestamap"},
+    {SPECTRALAMAP, "spectralamap"},
 };
 
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
@@ -99,6 +101,7 @@ const Factory::taskMapTableEntry Factory::taskMapTable[] = {
     {TOPOMAP, "topo"},
     {RCMMAP, "rcm"},
     {NEARESTAMT, "nearestamap"},
+    {SPECTRALAMT, "spectralamap"},
 };
 
 const Factory::FSTTableEntry Factory::FSTTable[] = {
@@ -416,14 +419,29 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 break;
             }
         case NEARESTAMAP:
+            if(params.find("taskMapper") != params.end()){
+                vector<string>* taskmapparams = parseparams(params["taskMapper"]);
+                if(taskmappername( taskmapparams->at(0) ) != NEARESTAMT){
+                    schedout.fatal(CALL_INFO, 1, "Allocator and Task Mapper should be the same when using AllocMappers\n");
+                }
+            }
             if(mMachine == NULL){
-                schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
+                schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine\n");
             } else {
                 return new NearestAllocMapper(*mMachine);
             }
             break;
+        case SPECTRALAMAP:
+            if(params.find("taskMapper") != params.end()){
+                vector<string>* taskmapparams = parseparams(params["taskMapper"]);
+                if(taskmappername( taskmapparams->at(0) ) != SPECTRALAMT){
+                    schedout.fatal(CALL_INFO, 1, "Allocator and Task Mapper should be the same when using AllocMappers\n");
+                }
+            }
+            return new SpectralAllocMapper(*m);
+            break;
         default:
-            schedout.fatal(CALL_INFO, 1, "Could not parse name of allocator");
+            schedout.fatal(CALL_INFO, 1, "Could not parse name of allocator\n");
         }
     }
     return NULL; //control never reaches here
@@ -444,7 +462,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             break;
         case RCBMAP:
             if(mMachine == NULL){
-                schedout.fatal(CALL_INFO, 1, "RCB Mapper requires mesh machine");
+                schedout.fatal(CALL_INFO, 1, "RCB Mapper requires mesh machine\n");
             }
             taskMapper = new RCBTaskMapper(*mMachine);
             break;
@@ -462,7 +480,10 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
                 schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
             }
             taskMapper = new NearestAllocMapper(*mMachine);
-            break;      
+            break;  
+        case SPECTRALAMT:
+            taskMapper = new SpectralAllocMapper(*mach);
+            break;    
         default: 
             taskMapper = NULL;
             schedout.fatal(CALL_INFO, 1, "Could not parse name of task mapper");

@@ -14,13 +14,8 @@
 #include "sst/core/rng/mersenne.h"
 #include "schedComponent.h" 
 
-#include <assert.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
-#include <cstdlib>
 #include <cstring>
-#include <fstream>
 
 #include <iostream> //debug
 
