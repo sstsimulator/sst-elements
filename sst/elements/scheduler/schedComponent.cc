@@ -191,7 +191,6 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
 void schedComponent::setup()
 {
-
     for( vector<SST::Link *>::iterator nodeIter = nodes.begin(); nodeIter != nodes.end(); nodeIter ++ ){
         // ask the newly-connected node for its ID
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
@@ -410,7 +409,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
 
 
 void schedComponent::handleJobArrivalEvent(Event *ev) 
-{
+{    
     schedout.debug(CALL_INFO, 4, 0, "arrival event\n");
     
     CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *>(ev);
@@ -567,7 +566,7 @@ void schedComponent::startJob(Job* job)
         AllocInfo* baselineAlloc = mMachine->getBaselineAllocation(job);
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(*mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
-         
+
         double baselineAvgL1Distance = baselineMap->getAvgHopDist(*mMachine);
         delete baselineMap;
                 
@@ -585,23 +584,12 @@ void schedComponent::startJob(Job* job)
                                 ( timePerDistance->at(2) + avgL1Distance *
                                  ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
         
-        //overestimate the fraction to be safe
-        timeWithComm = ceil(timeWithComm);
+        //overestimate the fraction to be safe             
+        actualRunningTime = ceil(timeWithComm);
         
         //DEBUG
-        /*if(actualRunningTime != 0)
-            std::cout << "Nodes:" << job->getProcsNeeded()
-                      << ",\tbaseHop:" << baselineAvgL1Distance
-                      << ",\tactual:" << actualRunningTime 
-                      << ",\tbaseRun:" << (int) baselineRunningTime
-                      << ",\tcommHop:" << avgL1Distance
-                      << ",\twithCommRun:" << (int) timeWithComm
-                      << ",\twithComm/actual:\t" << timeWithComm/actualRunningTime
-                      << "\n";*/
-        //if(actualRunningTime != 0)
-        //    std::cout << timeWithComm/actualRunningTime << "\n";
-                      
-        actualRunningTime = timeWithComm;
+        //cout << "L1dist: " << avgL1Distance << "\n";
+        //cout << "actime: " << actualRunningTime << "\n";
     }
 
     if (actualRunningTime > job->getEstimatedRunningTime()) {
@@ -610,13 +598,13 @@ void schedComponent::startJob(Job* job)
     }
 
     // send to each job in the node list
-    for (int i = 0; i < job->getProcsNeeded(); ++i) {
+    for (int i = 0; i < ai->getNodesNeeded(); ++i) {
         JobStartEvent *ec = new JobStartEvent(actualRunningTime, job->getJobNum());
         nodes[jobNodes[i]] -> send(ec); 
     }
 
     ITMI itmi;
-    itmi.i = job -> getProcsNeeded();
+    itmi.i = ai->getNodesNeeded();
     itmi.tmi = tmi;
     runningJobs[job->getJobNum()] = itmi;
 
