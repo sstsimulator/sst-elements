@@ -144,7 +144,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
     Factory factory;
     machine = factory.getMachine(params, nodes.size());
-    scheduler = factory.getScheduler(params, nodes.size());
+    scheduler = factory.getScheduler(params, nodes.size(), *machine);
     theAllocator = factory.getAllocator(params, machine, this);
     theTaskMapper = factory.getTaskMapper(params, machine);
     FSTtype = factory.getFST(params);

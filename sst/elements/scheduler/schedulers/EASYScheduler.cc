@@ -131,28 +131,29 @@ Job* EASYScheduler::tryToStart(unsigned long time, const Machine & mach)
     }
     
     bool succeeded = false;  //whether we found a job to allocate
-    int availProcs = mach.getNumFreeNodes();
+    int availNodes = mach.getNumFreeNodes();
     
-    if (availProcs >= (*job)->getProcsNeeded()) {
+    if (availNodes >= ceil(((float)(*job)->getProcsNeeded()) / mach.coresPerNode)) {
         succeeded = true;
     } else {
         job++; 
     }
     
     while (!succeeded && job != toRun->end()) {
-        if (availProcs >= (*job)->getProcsNeeded()) {
+        int nodesNeeded = ceil(((float)(*job)->getProcsNeeded()) / mach.coresPerNode);
+        if (availNodes >= nodesNeeded) {
             // check if j would delay the first job if it started now
             if (time + (*job)->getEstimatedRunningTime() <= guaranteedStart){
                 succeeded = true;
             } else {
-                int avail = availProcs;
+                int avail = availNodes;
                 multiset<RunningInfo*, RunningInfo>::iterator it  = running->begin();
                 while (it != running->end() && (*it)->estComp <= guaranteedStart) {
-                    avail += (*it)->numProcs;
+                    avail += (*it)->numNodes;
                     it++;
                 }
                 set<Job*, JobComparator>::iterator tempit = toRun->begin();
-                if (avail  - (*job)->getProcsNeeded() >= (*tempit)->getProcsNeeded()){
+                if (avail  - nodesNeeded >= ceil(((float)(*tempit)->getProcsNeeded()) / mach.coresPerNode) ){
                     succeeded = true;
                 }
             }
@@ -195,7 +196,7 @@ void EASYScheduler::startNext(unsigned long time, const Machine & mach)
     schedout.debug(CALL_INFO, 7, 0, "%ld: %s starts\n", time, nextToStart->toString().c_str()); 
     RunningInfo* started = new RunningInfo();
     started -> jobNum = nextToStart->getJobNum();
-    started -> numProcs = nextToStart->getProcsNeeded();
+    started -> numNodes = ceil((float)nextToStart->getProcsNeeded() / mach.coresPerNode);
     started -> estComp = time + nextToStart->getEstimatedRunningTime();
     toRun -> erase(jobIt); //remove the job from toRun list
     running -> insert(started); //add to running list       
@@ -240,7 +241,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, const Machine & mach)
     unsigned long lastGuarantee = guaranteedStart;
     bool succeeded = false;
 
-    int size = (*firstJob) -> getProcsNeeded();
+    int size = ceil(((float)(*firstJob)->getProcsNeeded()) / mach.coresPerNode);
     int free = mach.getNumFreeNodes();
 
     if (free >= size) {
@@ -252,7 +253,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, const Machine & mach)
     multiset<RunningInfo*, RunningInfo>::iterator it = running -> begin();
 
     while (!succeeded && it != running->end()) {
-        futureFree += (*it) -> numProcs;
+        futureFree += (*it)->numNodes;
         if(futureFree >= size) {
             guaranteedStart = (*it) -> estComp;
             succeeded = true;
@@ -267,7 +268,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, const Machine & mach)
             schedout.output("Time: %lu\n", time);
             schedout.output("Running: ");
             for (multiset<RunningInfo*, RunningInfo>::iterator it3 = running -> begin(); it3 != running -> end(); it3++) {
-                schedout.output("%ld %d %ld \n", (*it3) -> jobNum, (*it3) -> numProcs, (*it3) -> estComp);
+                schedout.output("%ld %d %ld \n", (*it3) -> jobNum, (*it3) -> numNodes, (*it3) -> estComp);
             }
             schedout.output("toRun: ");
             for (set<Job*, JobComparator>::iterator it3 = toRun->begin(); it3 != toRun -> end(); it3++) {

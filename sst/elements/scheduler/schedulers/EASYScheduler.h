@@ -71,12 +71,12 @@ namespace SST {
                 class RunningInfo : public std::binary_function<RunningInfo*, RunningInfo*,bool> {
                     public:
                         long jobNum;
-                        int numProcs;
+                        int numNodes;
                         unsigned long estComp;
                         RunningInfo(RunningInfo* inRI) 
                         {
                             jobNum = inRI -> jobNum;
-                            numProcs = inRI -> numProcs;
+                            numNodes = inRI -> numNodes;
                             estComp = inRI -> estComp;
                         }
                         RunningInfo() 

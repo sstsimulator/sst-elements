@@ -154,13 +154,26 @@ AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
 		std::swap(xSize, zSize);
 	}
    
-    //Fill given space, use shortest dim first
+    //Fill given space with snake-like order, use shortest dim first
     int nodeCount = 0;
     bool done = false;
+    bool xFwd = true;
+    bool yFwd = true;
+    int i, j;
     std::vector<MeshLocation> nodes;
     for(int k = 0; k < zSize && !done; k++){
-        for(int j = 0; j < ySize && !done; j++){
-            for(int i = 0; i < xSize && !done; i++){
+        for(int yVal = 0; yVal < ySize && !done; yVal++){
+            if(yFwd){
+                j = yVal;
+            } else {
+                j = ySize - yVal - 1;
+            }
+            for(int xVal = 0; xVal < xSize && !done; xVal++){
+                if(xFwd){
+                    i = xVal;
+                } else {
+                    i = xSize - xVal - 1;
+                }
                 //use state not to mix dimension of the actual machine
                 switch(state) {
                 case 0: nodes.push_back(MeshLocation(i,j,k)); break;
@@ -169,14 +182,16 @@ AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
                 case 3: nodes.push_back(MeshLocation(i,k,j)); break;
                 case 4: nodes.push_back(MeshLocation(k,i,j)); break;
                 case 5: nodes.push_back(MeshLocation(j,k,i)); break;
-                default: schedout.fatal(CALL_INFO, 0, "Unexpected error.");
+                default: schedout.fatal(CALL_INFO, 0, "Unexpected error.\n");
                 }
                 nodeCount++;
                 if(nodeCount == numNodes){
                     done = true;
                 }
             }
+            xFwd = !xFwd;
         }
+        yFwd = !yFwd;
     }
     
     //create allocInfo

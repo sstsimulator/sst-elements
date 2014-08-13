@@ -36,7 +36,7 @@ namespace SST {
         class Factory{
             public:
                 Factory(); //only sets up the output class
-                Scheduler* getScheduler(SST::Params& params, int numNodes);
+                Scheduler* getScheduler(SST::Params& params, int numNodes, const Machine & mach);
                 Machine* getMachine(SST::Params& params, int numNodes);
                 Allocator* getAllocator(SST::Params& params, Machine* m, schedComponent* sc);
                 TaskMapper* getTaskMapper(SST::Params& params, Machine* mach);

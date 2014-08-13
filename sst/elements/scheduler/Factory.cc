@@ -115,7 +115,7 @@ Factory::Factory()
     schedout.init("", 8, 0, Output::STDOUT);
 }
 
-Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
+Scheduler* Factory::getScheduler(SST::Params& params, int numNodes, const Machine & mach)
 {
     if(params.find("scheduler") == params.end()){
         schedout.verbose(CALL_INFO, 1, 0, "Defaulting to Priority Scheduler with FIFO queue\n");
@@ -158,9 +158,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
         case CONS:
             schedout.debug(CALL_INFO, 4, 0, "Conservative Scheduler\n");
             if (schedparams -> size() == 1) {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"), true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"), true, mach);
             } else {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams->at(1)), true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams->at(1)), true, mach);
             }
             break;
 
@@ -172,9 +172,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
             }
             filltimes = strtol(schedparams->at(1).c_str(),NULL,0);
             if (2 == schedparams -> size()) {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"),filltimes);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"),filltimes, mach);
             } else {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams->at(2)), filltimes);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams->at(2)), filltimes, mach);
             }
             break;
 
@@ -182,9 +182,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
         case DELAYED:
             schedout.debug(CALL_INFO, 4, 0, "Delayed Compression Scheduler\n");
             if (schedparams -> size() == 1) {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"));
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"), mach);
             } else {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams -> at(1)));
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams -> at(1)), mach);
             }
             break;
 
@@ -196,9 +196,9 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numNodes)
             }
             filltimes = strtol(schedparams->at(1).c_str(),NULL,0);
             if (schedparams -> size() == 2) {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"),filltimes, true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make("fifo"),filltimes, true, mach);
             } else {
-                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams -> at(2)), filltimes, true);
+                return new StatefulScheduler(numNodes, StatefulScheduler::JobComparator::Make(schedparams -> at(2)), filltimes, true, mach);
             }
             break;
 
