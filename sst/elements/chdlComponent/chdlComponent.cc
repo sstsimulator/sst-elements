@@ -275,7 +275,7 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   if (responses_this_cycle[port]) {
     out.debug(_L2_, "Adding an entry to resp_q[%u]. ", port);
     resp_q[port].push(req);
-    out.debug(_L2_, "I now has %u entries.\n", (unsigned)resp_q[i].size());
+    out.debug(_L2_, "I now has %u entries.\n", (unsigned)resp_q[port].size());
   } else {
     if (/*sp[0].ready*/1) resp[port].valid = true;
     else _abort(chdlComponent, "response arrived when receiver not ready");
