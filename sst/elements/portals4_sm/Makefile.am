@@ -10,6 +10,8 @@ comp_LTLIBRARIES = libportals4_sm.la
 libportals4_sm_la_SOURCES = \
 	portals4_sm.cc \
 	portals_args.h \
+	part.h \
+	part.cc \
 	trig_cpu/application.h \
 	trig_cpu/portals.h \
 	trig_cpu/portals.cc \
