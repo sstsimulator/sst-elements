@@ -155,6 +155,9 @@ class XXX  {
         return m_rxNicDelay;
     }
 
+    int sendReqFiniDelay() {
+        return m_sendReqFiniDelay;
+    }
 
     int m_matchDelay_ns;
     int m_memcpyDelay_ps;
@@ -165,6 +168,7 @@ class XXX  {
     int m_regRegionBaseDelay_ns;
     int m_regRegionPerPageDelay_ns;
     int m_regRegionXoverLength;
+    int m_sendReqFiniDelay;
 
   private:
     class DelayEvent : public SST::Event {
@@ -230,7 +234,8 @@ class _CommReq : public Hermes::MessageRequestBase {
         m_done( false ),
         m_destRank( Hermes::AnySrc ),
         m_ignore( 0 ),
-        m_isMine( false )
+        m_isMine( false ),
+        m_finiDelay_ns( 0 )
     {
         m_hdr.count = getLength() / dtypeSize;
         m_hdr.dtypeSize = dtypeSize; 
@@ -254,7 +259,8 @@ class _CommReq : public Hermes::MessageRequestBase {
         m_done( false ),
         m_destRank( Hermes::AnySrc ),
         m_ignore( 0 ),
-        m_isMine( true )
+        m_isMine( true ),
+        m_finiDelay_ns( 0 )
     { 
         m_hdr.count = count;
         m_hdr.dtypeSize = dtypeSize; 
@@ -294,7 +300,10 @@ class _CommReq : public Hermes::MessageRequestBase {
     }
 
     bool isDone() { return m_done; }
-    void setDone() { m_done = true; }
+    void setDone(int delay = 0 ) { 
+        m_finiDelay_ns = delay;
+        m_done = true; 
+    }
 
     void getResp( Hermes::MessageResponse* resp ) {
         *resp = m_matchInfo;
@@ -325,6 +334,7 @@ class _CommReq : public Hermes::MessageRequestBase {
     bool isMine( ) {
         return m_isMine;
     }
+    int  getFiniDelay() { return m_finiDelay_ns; }
 
     // need to save info for the long protocol ack
     int m_ackKey;
@@ -342,6 +352,7 @@ class _CommReq : public Hermes::MessageRequestBase {
     Hermes::MessageResponse  m_matchInfo;
     uint64_t            m_ignore;
     bool                m_isMine; 
+    int                 m_finiDelay_ns;
 };
 
 class WaitReq {
@@ -358,25 +369,25 @@ class WaitReq {
     };
 
   public:
-    WaitReq( _CommReq* req ) : indexPtr(NULL) {
+    WaitReq( _CommReq* req ) : indexPtr(NULL), delay_ns(0) {
         reqQ.push_back( X( req ) ); 
     }
 
-    WaitReq( std::vector<_CommReq*> reqs ) : indexPtr(NULL) {
+    WaitReq( std::vector<_CommReq*> reqs ) : indexPtr(NULL), delay_ns(0) {
         for ( unsigned int i = 0; i < reqs.size(); i++ ) {
             reqQ.push_back( X( i, reqs[i] ) ); 
         } 
     }
 
     WaitReq( Hermes::MessageRequest req, Hermes::MessageResponse* resp ) :
-        indexPtr(NULL)
+        indexPtr(NULL), delay_ns(0)
     {
         reqQ.push_back( X( static_cast<_CommReq*>(req), resp ) );
     }
 
     WaitReq( int count, Hermes::MessageRequest req[], int *index,
                                         Hermes::MessageResponse* resp ) :
-        indexPtr(index)
+        indexPtr(index), delay_ns(0)
     {
         for ( int i = 0; i < count; i++ ) {
             reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), resp ) );
@@ -385,7 +396,7 @@ class WaitReq {
 
     WaitReq( int count, Hermes::MessageRequest req[],
                                         Hermes::MessageResponse* resp[] ) : 
-        indexPtr(NULL)
+        indexPtr(NULL), delay_ns(0)
     {
         Hermes::MessageResponse* tmp = (Hermes::MessageResponse*)resp;
         for ( int i = 0; i < count; i++ ) {
@@ -398,6 +409,8 @@ class WaitReq {
 
         while ( iter != reqQ.end() ) {
             if ( iter->req->isDone() ) {
+                delay_ns += iter->req->getFiniDelay();
+                ++delay_ns;
                 if ( iter->resp ) {
                     iter->req->getResp( iter->resp );
                 }
@@ -422,9 +435,12 @@ class WaitReq {
         } 
         return reqQ.empty();
     }
+    int getDelay() { return delay_ns; }
 
+  private:
     std::deque< X > reqQ;
     int* indexPtr; 
+    int  delay_ns;
 };
 
 }

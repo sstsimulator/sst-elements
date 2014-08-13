@@ -40,9 +40,9 @@ class StateBase {
     }
     virtual ~StateBase() {}
 
-    virtual void exit( ) {
+    virtual void exit( int delay = 0 ) {
         //m_dbg.verbose(CALL_INFO,1,0,"\n");
-        obj.schedFunctor( m_functor );
+        obj.schedFunctor( m_functor, delay );
         m_functor = NULL;
     }
 

@@ -351,8 +351,8 @@ class ProcessQueuesState : StateBase< T1 >
         return StateBase<T1>::clearExit( );
     }
 
-    void exit() {
-        StateBase<T1>::exit();
+    void exit( int delay = 0 ) {
+        StateBase<T1>::exit( delay );
     }
 
     key_t    genGetKey() {
@@ -481,8 +481,7 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
         dbg().verbose(CALL_INFO,1,0,"Short %lu bytes dest %#x\n",length,nid); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
-        req->setDone();
-
+        req->setDone(obj().sendReqFiniDelay());
 
     } else {
         dbg().verbose(CALL_INFO,1,0,"sending long message %lu bytes\n",length); 
@@ -572,7 +571,7 @@ bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
 	assert( stack.empty() );
 
     if ( ctx->req->isDone() ) {
-        exit();
+        exit( ctx->req->getDelay() );
         delete ctx;
         ctx = NULL;
         dbg().verbose(CALL_INFO,2,0,"exit found CommReq\n"); 
@@ -955,7 +954,7 @@ void ProcessQueuesState<T1>::processLongGet( GetInfo* info )
 {
     if ( info->waitAck ) {
         dbg().verbose(CALL_INFO,1,0,"acked\n");
-        info->req->setDone();
+        info->req->setDone(obj().sendReqFiniDelay());
         delete info;
         return;
     }

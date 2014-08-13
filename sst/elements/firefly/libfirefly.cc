@@ -263,6 +263,7 @@ static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
     {"rxDelay_ns", "Sets the time setup a Recv","100"},
     {"rxNicDelay_ns","", "0"},
     {"txNicDelay_ns","", "0"},
+    {"sendReqFiniDelay_ns","", "0"},
     {"regRegionXoverLength","Sets the transition point page pinning", "4096"},
     {"regRegionPerPageDelay_ns","Sets the time to pin pages", "0"},
     {"regRegionBaseDelay_ns","Sets the base time to pin pages", "0"},
