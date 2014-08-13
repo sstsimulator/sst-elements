@@ -14,6 +14,7 @@
 
 #include <string>
 #include <map>
+#include <queue>
 
 // TODO: perhaps CHDL shouldn't have things with names that conflict with C
 // standard library macros. "assert" causes a problem here if the inclusion
@@ -167,6 +168,7 @@ namespace ChdlComponent {
     std::map<unsigned long, unsigned long> idMap, portMap;
     std::map<std::string, unsigned> ports;
     std::map<std::string, unsigned long *> counters;
+    std::vector<std::queue<Interfaces::SimpleMem::Request *> > resp_q;
 
     chdl::cdomain_handle_t cd;
 

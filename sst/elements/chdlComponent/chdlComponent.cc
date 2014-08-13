@@ -217,6 +217,7 @@ void chdlComponent::init(unsigned phase) {
 
     req.resize(ports.size());
     resp.resize(ports.size());
+    resp_q.resize(ports.size());
     responses_this_cycle.resize(ports.size());
 
     for (auto x : inputs) init_io(x.first, x.second);
@@ -269,37 +270,37 @@ void chdlComponent::finish() {
 
 
 void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
-  // TODO: support queuing of responses
   unsigned port = portMap[req->id];
 
-  // This is a temporary hack. We should be queueing up responses when they
-  // arrive more than once per clock cycle, but for now we'll just tick the
-  // clock and pretend time has passed.
-  if (responses_this_cycle[port]) { clockTick(0); clockTick(0); }
+  if (responses_this_cycle[port]) {
+    out.debug(_L2_, "Adding an entry to resp_q[%u]. ", port);
+    resp_q[port].push(req);
+    out.debug(_L2_, "I now has %u entries.\n", (unsigned)resp_q[i].size());
+  } else {
+    if (/*sp[0].ready*/1) resp[port].valid = true;
+    else _abort(chdlComponent, "response arrived when receiver not ready");
 
-  if (/*sp[0].ready*/1) resp[port].valid = true;
-  else _abort(chdlComponent, "response arrived when receiver not ready");
+    resp[port].wr = req->cmd == SimpleMem::Request::WriteResp;
+    if (!resp[port].wr) {
+      resp[port].data = 0;
+      for (unsigned i = 0; i < req->data.size(); ++i)
+        resp[port].data |= req->data[i] << 8*i;
+    }
+    resp[port].id = idMap[req->id];
 
-  resp[port].wr = req->cmd == SimpleMem::Request::WriteResp;
-  if (!resp[port].wr) {
-    resp[port].data = 0;
-    for (unsigned i = 0; i < req->data.size(); ++i)
-      resp[port].data |= req->data[i] << 8*i;
+    resp[port].llsc = ((req->flags & SimpleMem::Request::F_LLSC) != 0);
+    resp[port].llsc_suc = ((req->flags & SimpleMem::Request::F_LLSC_RESP) != 0);
+
+    out.debug(_L1_, "Response arrived on port %d for req %d, wr = %d, "
+                    "data = %u, size = %lu, datasize = %lu, flags = %x\n",
+                 int(port), int(req->id), resp[port].wr,
+                 (unsigned)resp[port].data, req->size, req->data.size(),
+                 req->flags);
+
+    delete req;
+
+    ++responses_this_cycle[port];
   }
-  resp[port].id = idMap[req->id];
-
-  resp[port].llsc = ((req->flags & SimpleMem::Request::F_LLSC) != 0);
-  resp[port].llsc_suc = ((req->flags & SimpleMem::Request::F_LLSC_RESP) != 0);
-
-  out.debug(_L1_, "Response arrived on port %d for req %d, wr = %d, "
-                  "data = %u, size = %lu, datasize = %lu, flags = %x\n",
-               int(port), int(req->id), resp[port].wr,
-               (unsigned)resp[port].data, req->size, req->data.size(),
-               req->flags);
-
-  delete req;
-
-  ++responses_this_cycle[port];
 }
 
 void chdlComponent::consoleOutput(char c) {
@@ -342,7 +343,11 @@ bool chdlComponent::clockTick(Cycle_t c) {
   } else {
     tog = !tog;
     for (unsigned i = 0; i < req.size(); ++i) {
-      if (responses_this_cycle[i] > 1)
+      if (responses_this_cycle[i] == 0 && !resp_q[i].empty()) {
+        // Handle enqueued event.
+        handleEvent(resp_q[i].front());
+        resp_q[i].pop();
+      } else if (responses_this_cycle[i] > 1)
         out.output("ERROR: %u responses on port %u this cycle.\n",
                    responses_this_cycle[i], i);
       responses_this_cycle[i] = 0;
@@ -398,6 +403,8 @@ bool chdlComponent::clockTick(Cycle_t c) {
         portMap[r->id] = i;
 
         memLink->sendRequest(r);
+
+       
       }
     }
 
