@@ -177,10 +177,16 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
             }
         }
         xadj[jobSize] = adjncy.size();
+        
+        std::vector<idx_t> METIS_taskToVertex(taskToVertex.size());
+        
         //partition
         METIS_PartGraphKway(&nvtxs, &ncon, &xadj[0], &adjncy[0], NULL, NULL,
-                            &adjwgt[0], &nparts, NULL, NULL, NULL, &objval, &taskToVertex[0]);
-
+                            &adjwgt[0], &nparts, NULL, NULL, NULL, &objval, &METIS_taskToVertex[0]);
+                            
+        for(unsigned int i = 0; i < taskToVertex.size(); i++){
+            taskToVertex[i] = METIS_taskToVertex[i];
+        }
 #else
         //partition with greedy: create vertices using breadth-first search from the center node
         std::vector<std::vector<int> >* rawCommTree = breadthFirstTree(centerTask, *rawCommGraph, weightTree);
