@@ -3,7 +3,7 @@ import sst;
 sst.setProgramOption("timebase", "1 ps");
 sst.setProgramOption("stopAtCycle", "1ms");
 
-NCPUS = 8;
+NCPUS = 4;
 CPROT = "MESI"
 BENCHMARK = "vecsum"
 
