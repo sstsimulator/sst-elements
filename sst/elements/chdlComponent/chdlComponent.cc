@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#define CHDL_FASTSIM
-// #define CHDL_TRANS
+// #define CHDL_FASTSIM // Support for new fastsim branch of CHDL
+// #define CHDL_TRANS   // (buggy) support for translation in fastsim
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
