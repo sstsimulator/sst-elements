@@ -185,7 +185,7 @@ bool JobParser::newJobLine(std::string line)
     unsigned long arrivalTime = -1;
     int procsNeeded = -1;
     unsigned long runningTime = 0;
-    unsigned long estRunningTime = 0;
+    long int estRunningTime = 0;
     string nextStr = "";
     int x = 0, y = 0, z = 0;
 
@@ -193,7 +193,7 @@ bool JobParser::newJobLine(std::string line)
     is >> arrivalTime >> procsNeeded >> runningTime >> estRunningTime >> nextStr;
 
     if(estRunningTime <= 0){
-        estRunningTime = runningTime;
+        estRunningTime = 2 * runningTime;
     }
     
     //get communication info

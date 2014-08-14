@@ -1,0 +1,138 @@
+'''
+SST scheduler simulation input file generator
+Input parameters are given below
+Setting a parameter to "default" or "" will select the default option
+'''
+import os
+
+# Root folder for input files:
+# environment variable SST_HOME should point to SST home folder 
+#   for the following example to work properly
+ROOT_FOLDER = os.environ.get('SST_HOME') + \
+              '/scratch/src/sst-simulator/sst/elements/scheduler/simulations/'
+
+# Input workload trace path:
+traceName = ROOT_FOLDER + 'NASA.sim'
+
+# Output file name:
+outFile = ROOT_FOLDER + 'sstInput.py'
+
+# Machine (cluster) configuration:
+# mesh[xdim, ydim, zdim], simple. (default: simple)
+machine = 'mesh[4,4,4]'
+
+# Number of machine nodes
+# The script calculates the number of nodes if mesh machine is provided
+# any integer. (default: 1)
+numberNodes = ''
+
+# Number of cores in each machine node
+# any integer. (default: 1)
+coresPerNode = '2'
+
+# Scheduler algorithm:
+# cons, delayed, easy, elc, pqueue, prioritize. (default: pqueue)
+scheduler = 'easy' 
+
+# Fair start time algorithm:
+# none, relaxed, strict. (default: none)
+FST = ''
+
+# Allocation algorithm:
+# bestfit, constraint, energy, firstfit, genalg, granularmbs, hybrid, mbs,
+# mc1x1, mm, nearest, octetmbs, oldmc1x1,random, simple, sortedfreelist, 
+# nearestamap, spectralamap. (default: simple)
+allocator = 'bestfit'
+
+# Task mapping algorithm:
+# simple, rcb, random, topo, rcm, nearestamap, spectralamap. (default: simple)
+taskMapper = 'default'
+
+# Communication overhead parameters
+# a0[a1,a2,a3,a4] (default: none)
+timeperdistance = '.7[.3,0.9875,0.3848,.2]'
+
+# Heat distribution matrix (D_matrix) input file
+# file path, none. (default: none)
+dMatrixFile = 'none'
+
+# Randomization seed for communication time overhead
+# none, any integer. (default: none)
+randomSeed = "42"
+
+
+'''
+Do not modify the script after this point.
+'''
+
+import sys
+
+if __name__ == '__main__':
+  if outFile == "" or outFile == "default":
+    print "Error: There is no default value for outFile"
+    sys.exit()
+  f = open(outFile,'w')
+  
+  f.write('# scheduler simulation input file\n')
+  f.write('import sst\n')
+  f.write('\n')
+  f.write('# Define SST core options\n')
+  f.write('sst.setProgramOption("run-mode", "both")\n')
+  f.write('sst.setProgramOption("partitioner", "self")\n')
+  f.write('\n')
+  f.write('# Define the simulation components\n')
+  f.write('scheduler = sst.Component("myScheduler", \
+            "scheduler.schedComponent")\n')
+  f.write('scheduler.addParams({\n')
+  
+  if traceName == "" or traceName == "default":
+    print "Error: There is no default value for traceName"
+    os.remove(outFile)
+    sys.exit()
+  f.write('      "traceName" : "' + traceName + '",\n')
+  if machine != "" and machine != "default":
+    f.write('      "machine" : "' + machine + '",\n')
+  if coresPerNode != "":
+    f.write('      "coresPerNode" : "' + coresPerNode + '",\n')
+  if scheduler != "" and scheduler != "default":
+    f.write('      "scheduler" : "' + scheduler + '",\n')
+  if FST != "" and FST != "default":
+    f.write('      "FST" : "' + FST + '",\n')
+  if allocator != "" and allocator != "default":
+    f.write('      "allocator" : "' + allocator + '",\n')
+  if taskMapper != "" and taskMapper != "default":
+    f.write('      "taskMapper" : "' + taskMapper + '",\n')
+  if timeperdistance != "" and timeperdistance != "default":
+    f.write('      "timeperdistance" : "' + timeperdistance + '",\n')
+  if dMatrixFile != "" and dMatrixFile != "default":
+    f.write('      "dMatrixFile" : "' + dMatrixFile + '",\n')
+  if randomSeed != "" and randomSeed != "default":
+    f.write('      "runningTimeSeed" : "' + randomSeed + '",\n')
+  f.seek(-2, os.SEEK_END)
+  f.truncate()
+  f.write('\n})\n')
+  f.write('\n')
+  
+  f.write('# nodes\n')
+  if machine.split('[')[0] == 'mesh':
+    nums = machine.split('[')[1]
+    nums = nums.split(']')[0]
+    nums = nums.split(',')
+    numberNodes = int(nums[0])*int(nums[1])*int(nums[2])
+  for i in range(0, numberNodes):
+    f.write('n' + str(i) + ' = sst.Component("n' + str(i) + \
+            '", "scheduler.nodeComponent")\n')
+    f.write('n' + str(i) + '.addParams({\n')
+    f.write('      "nodeNum" : "' + str(i) + '",\n')
+    f.write('})\n')
+  f.write('\n')
+    
+  f.write('# define links\n')
+  for i in range(0, numberNodes):
+    f.write('l' + str(i) + ' = sst.Link("l' + str(i) + '")\n')
+    f.write('l' + str(i) + '.connect( (scheduler, "nodeLink' + str(i) + \
+            '", "0 ns"), (n' + str(i) + ', "Scheduler", "0 ns") )\n')
+  f.write('\n')
+    
+  f.close()
+

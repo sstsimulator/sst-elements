@@ -66,6 +66,9 @@ namespace SST {
                 
                 double* D = new double[numNodes*numNodes];
                 int d_counter = 0;
+                if(machine.D_matrix == NULL){
+                    schedout.fatal(CALL_INFO, 1, "heat recirculation matrix D is required for energy and hybrid allocators\n");
+                }
                 for(int i=0;i<numNodes;i++){
                     for(int j=0;j<numNodes;j++){
                         D[d_counter] = machine.D_matrix[i][j];
@@ -188,7 +191,7 @@ namespace SST {
                 delete [] ar;
 #else
                 schedout.init("", 10, 0, Output::STDOUT);
-                schedout.fatal(CALL_INFO,1,"GLPK required for energy-aware scheduler");
+                schedout.fatal(CALL_INFO,1,"GLPK is required for energy-aware scheduler\n");
 #endif
             }
 
