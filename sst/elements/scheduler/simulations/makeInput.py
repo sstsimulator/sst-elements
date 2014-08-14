@@ -22,7 +22,7 @@ outFile = ROOT_FOLDER + 'sstInput.py'
 machine = 'mesh[4,4,4]'
 
 # Number of machine nodes
-# The script calculates the number of nodes if mesh machine is provided
+# The script calculates the number of nodes if mesh machine is provided.
 # any integer. (default: 1)
 numberNodes = ''
 
@@ -58,7 +58,7 @@ dMatrixFile = 'none'
 
 # Randomization seed for communication time overhead
 # none, any integer. (default: none)
-randomSeed = "42"
+randomSeed = ''
 
 
 '''

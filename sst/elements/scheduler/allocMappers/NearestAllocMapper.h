@@ -26,17 +26,26 @@ namespace SST {
 
         class NearestAllocMapper : public AllocMapper {
             public:
-                enum AlgorithmType{
-                    GREEDY = 0,
-                    EXHAUSTIVE = 1,
+                enum TaskGenType{//center task generation
+                    GREEDY_TASK = 0, //O(V * E)
+                    EXHAUSTIVE_TASK = 1, //O(VE + V^2 lg V) if no center task is given
                 };
 
-                enum CenterGenType{//center machine node generation
-                    GREEDY_NODE = 0,
-                    EXHAUST_NODE = 1,
+                enum NodeGenType{//center machine node generation
+                    GREEDY_NODE = 0,   //O(N)
+                    EXHAUST_NODE = 1,  //O(N + upperLimit * V^2)
                 };
 
-                NearestAllocMapper(const MeshMachine & mach, AlgorithmType algMode = EXHAUSTIVE, CenterGenType centerMode = GREEDY_NODE);
+                enum TaskOrderType{//neighbor task ordering
+                    GREEDY_ORDER = 0, //O(V * E)
+                    SORTED_ORDER = 1, //O(V * E) while expanding, chooses the task with the
+                                      //highest communication to the currently allocated tasks
+                };
+
+                NearestAllocMapper(const MeshMachine & mach,
+                                   TaskGenType taskGen = EXHAUSTIVE_TASK,
+                                   NodeGenType nodeGen = EXHAUST_NODE,
+                                   TaskOrderType taskOrder = SORTED_ORDER);
                 ~NearestAllocMapper();
 
                 std::string getSetupInfo(bool comment) const;
@@ -48,8 +57,10 @@ namespace SST {
 
             private:
 
-                AlgorithmType algorithm;
-                CenterGenType centerGen;
+                TaskGenType taskGen;
+                NodeGenType nodeGen;
+                TaskOrderType taskOrder;
+
                 const MeshMachine & mMachine;
                 long lastNode;
 
@@ -59,7 +70,6 @@ namespace SST {
                 std::vector<bool>* isFree;     //keeps a temporary copy of node list
                 std::vector<int> taskToVertex; //maps task #s to communication graph vertices
                 std::vector<std::map<int,int> >* commGraph;
-                std::vector<std::vector<int> >* commTree;   //breadth-first tree version of the commGraph
                 std::vector<std::vector<int> > weightTree;  //weight of the commTree
                 int centerTask;
                 int centerNode;
@@ -68,29 +78,19 @@ namespace SST {
                 //if(GREEDY_CEN || centerTask_given)
                 //  if(coresPerNode == 1)           O(V)
                 //  if(coresPerNode == c)
-                //      if(METIS_available)         O(VE/c + (V/c)^2 lg (V/c) + METIS_partitioning(V/c))
-                //      else                        O(VE/c + (V/c)^2 lg (V/c))
+                //      if(METIS_available)         O(V + E + METIS_partitioning({V,E}))
+                //      else                        O(V + E)
                 //else                              O(VE + V^2 lg V)
                 void createCommGraph(const TaskCommInfo & tci);
 
-                //O(V + E)
-                void greedyMap();
-
-                //O(V * E)
-                void exhaustiveMap();
+                //O(V * E) - not sure
+                void allocateAndMap();
 
                 //finds the vertex that minimizes the cumulative communication distance
                 //@upperLimit: max number of tasks to search for
                 //if(upperLimit < V),   O((E + V lg V) * upperLimit)
                 //else,                 O((E + V lg V) * V)
                 int getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long upperLimit = LONG_MAX) const;
-
-                //returns adjacency list of a directed tree with centerTask as its root
-                //O(V + E)
-                //@weights output for tree weights
-                std::vector<std::vector<int> >* breadthFirstTree(int centerTask,
-                                                                 const std::vector<std::map<int,int> > & graph,
-                                                                 std::vector<std::vector<int> > & outWeights) const;
 
                 //returns a center machine node for allocation
                 //@upperLimit: max number of nodes to search for
@@ -122,15 +122,15 @@ namespace SST {
                 //else, O(initDist^2)
                 int closestNodes(const long srcNode, const int initDist, std::list<int> *outList = NULL) const;
 
-                //returns the tiedNodes element with the least communication using inTask
+                //returns the tiedNodes element with the least total communication distance using inTask
                 //removes the returned index from the list
                 //O(tiedNodes->size() * E + V), O(tiedNodes->size() * E + V) when called for all tasks
                 int tieBreaker(std::list<int> & tiedNodes, int inTask) const;
 
-                //orders neighbors of the given task in commTree by their communication
-                //return indexes for largest to smallest
-                //O(E lg E), O(V) when called for all tasks
-                std::vector<int> orderTreeNeighByComm(int task) const;
+                //returns the unallocated neighbors of the given task, sorted if SORTED_ORDER
+                //GREEDY_ORDER: O(E), O(E + V) for all tasks
+                //SORTED_ORDER: O(V^2), upperbound O(EV) for all tasks
+                std::vector<int>* getNeighbors(int taskNo) const;
 
                 //sorts given vector from largest to smallest
                 //O(n lg n), n=toSort.size()
