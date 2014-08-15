@@ -586,10 +586,6 @@ void schedComponent::startJob(Job* job)
         
         //overestimate the fraction to be safe             
         actualRunningTime = ceil(timeWithComm);
-        
-        //DEBUG
-        //cout << "L1dist: " << avgL1Distance << "\n";
-        //cout << "actime: " << actualRunningTime << "\n";
     }
 
     if (actualRunningTime > job->getEstimatedRunningTime()) {

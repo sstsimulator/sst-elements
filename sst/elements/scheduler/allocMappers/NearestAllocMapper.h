@@ -38,12 +38,14 @@ namespace SST {
 
                 enum TaskOrderType{//neighbor task ordering
                     GREEDY_ORDER = 0, //O(V * E)
-                    SORTED_ORDER = 1, //O(V * E) while expanding, chooses the task with the
+                    SORTED_ORDER = 1, //O(V^2 lg V) while expanding, chooses the task with the
                                       //highest communication to the currently allocated tasks
                 };
+                //if number of cores per node > 1,  + O(V + E lg V)
+                //Sum up of all time complexities to get the allocation complexity
 
                 NearestAllocMapper(const MeshMachine & mach,
-                                   TaskGenType taskGen = EXHAUSTIVE_TASK,
+                                   TaskGenType taskGen = GREEDY_TASK,
                                    NodeGenType nodeGen = EXHAUST_NODE,
                                    TaskOrderType taskOrder = SORTED_ORDER);
                 ~NearestAllocMapper();
@@ -71,6 +73,7 @@ namespace SST {
                 std::vector<int> taskToVertex; //maps task #s to communication graph vertices
                 std::vector<std::map<int,int> >* commGraph;
                 std::vector<std::vector<int> > weightTree;  //weight of the commTree
+                std::vector<bool> marked;
                 int centerTask;
                 int centerNode;
 
@@ -78,8 +81,8 @@ namespace SST {
                 //if(GREEDY_CEN || centerTask_given)
                 //  if(coresPerNode == 1)           O(V)
                 //  if(coresPerNode == c)
-                //      if(METIS_available)         O(V + E + METIS_partitioning({V,E}))
-                //      else                        O(V + E)
+                //      if(METIS_available)         O(V + E lg V + METIS_partitioning({V,E}))
+                //      else                        O(V + E lg V)
                 //else                              O(VE + V^2 lg V)
                 void createCommGraph(const TaskCommInfo & tci);
 
@@ -98,7 +101,7 @@ namespace SST {
                 //tries first next upperLimit nodes
                 //if(upperLimit < N),   O(N + upperLimit * V^2)
                 //else,                 O(N * V^2)
-                int getCenterNodeExh(const int nodesNeeded, const long upperLimit = 2000);
+                int getCenterNodeExh(const int nodesNeeded, const long upperLimit = LONG_MAX);
 
                 //returns a center machine node for allocation
                 //gets the next free node
@@ -116,7 +119,7 @@ namespace SST {
 
                 //if initDist = 0, returns the number of the closest available nodes in the machine graph
                 //else, returns the number of the available nodes with distance=initDist in the machine graph
-                //@initDist: starting distance from the center node
+                //@initDist: distance from the center node
                 //adds the nodes to the outList when provided
                 //if initDist = 0, O(N^2), but typically O(1)
                 //else, O(initDist^2)
@@ -125,23 +128,20 @@ namespace SST {
                 //returns the tiedNodes element with the least total communication distance using inTask
                 //removes the returned index from the list
                 //O(tiedNodes->size() * E + V), O(tiedNodes->size() * E + V) when called for all tasks
-                int tieBreaker(std::list<int> & tiedNodes, int inTask) const;
+                int bestNode(std::list<int> & tiedNodes, int inTask) const;
 
-                //returns the unallocated neighbors of the given task, sorted if SORTED_ORDER
-                //GREEDY_ORDER: O(E), O(E + V) for all tasks
-                //SORTED_ORDER: O(V^2), upperbound O(EV) for all tasks
-                std::vector<int>* getNeighbors(int taskNo) const;
+                //adds the unallocated neighbors of curTask to the task list with descenting weights
+                //O(V lg V)
+                void getSortedNeighbors(int curTask, std::list<std::pair<int, double> > *taskList);
 
-                //sorts given vector from largest to smallest
+                //sorts given vector, descending
                 //O(n lg n), n=toSort.size()
-                //@values sorted values
                 //@return sorted vector indexes
-                std::vector<int> sortWithIndices(const std::vector<int> & toSort,
-                                                 std::vector<int> *values = NULL ) const;
-                struct SortHelper {
-                    bool operator() (const std::pair<int, int>& l, const std::pair<int, int>& r)
+                //std::vector<int> sortIndices(const std::vector<std::pair<int, double>> & toSort) const;
+                struct ByWeights {
+                    bool operator() (const std::pair<int, double>& l, const std::pair<int, double>& r)
                     {
-                        return (l.first > r.first);
+                        return (l.second >= r.second);
                     }
                 } compObject;
         };

@@ -128,6 +128,7 @@ AllocInfo* NearestAllocMapper::allocate(Job* job)
     taskToVertex.clear();
     delete commGraph;
     weightTree.clear();
+    marked.clear();
 
     return ai;
 }
@@ -210,7 +211,7 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
             //map
             taskToVertex[nextTask] = vertexIndex;
             //add unmarked neighbors to the queue
-            for(std::map<int, int>::const_iterator it = commGraph->at(nextTask).begin(); it != commGraph->at(nextTask).end(); it++){
+            for(std::map<int, int>::iterator it = rawCommGraph->at(nextTask).begin(); it != rawCommGraph->at(nextTask).end(); it++){
                 if(!isMarked[it->first]){
                     isMarked[it->first] = true;
                     queue.push(it->first);
@@ -218,7 +219,7 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
             }
         }
 #endif
-        //fill commGraph - O(V + E lg V), O(V + E) if commGraph were not using map structure
+        //fill commGraph - O(V + E lg V)
         commGraph = new std::vector<std::map<int,int> >(nodesNeeded);
         //for all tasks
         for(int taskIt = 0; taskIt < jobSize; taskIt++){
@@ -252,31 +253,44 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
 
 void NearestAllocMapper::allocateAndMap()
 {
-    std::queue<int> tasks;
-    tasks.push(centerTask);
+    list<pair<int, double> > tasks; //task No's and their weights
+    tasks.push_back(pair<int,double>(centerTask, 0));
     list<int> frameNodes; //nodes that "frame" the current allocation
     frameNodes.push_back(centerNode);
+    marked.resize(commGraph->size(), false);
+    marked[centerTask] = true;
     //main loop
     while(!tasks.empty()){
-        int curTask = tasks.front();
-        tasks.pop();
+        int curTask = tasks.front().first;
+        tasks.pop_front();
         //get which node to allocate
-        int nodeToAlloc = tieBreaker(frameNodes, curTask);
+        int nodeToAlloc = bestNode(frameNodes, curTask);
 
         //allocate and update containers
         taskToNode[curTask] = nodeToAlloc;
         isFree->at(nodeToAlloc) = false;
 
-        //get unallocated neighbors and put in the queue
-        vector<int>* neighbors = getNeighbors(curTask);
-        for(unsigned int i = 0; i < neighbors->size(); i++){
-            tasks.push(neighbors->at(i));
-        }
-        delete neighbors;
+        //get unallocated neighbors of curTask and update the queue
+        switch(taskOrder){
+        case GREEDY_ORDER:
+            for(map<int, int>::const_iterator it = commGraph->at(curTask).begin(); it != commGraph->at(curTask).end(); it++){
+                if(!marked[it->first]){
+                    marked[it->first] = true;
+                    tasks.push_back(pair<int,double>(it->first, 0));
+                }
+            }
+            break;
+        case SORTED_ORDER:
+            getSortedNeighbors(curTask, &tasks);
+            break;
+        default:
+            schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
+        };
 
         //extend frame - do not add the same node twice
         list<int> *newNodes = new list<int>();
         closestNodes(nodeToAlloc, 0, newNodes);
+
         for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
             bool found = false;
             for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
@@ -295,15 +309,16 @@ void NearestAllocMapper::allocateAndMap()
 
 int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long upperLimit) const
 {
-    int centerTask = INT_MAX;
+    int centerTask = -1;
     double minDist = DBL_MAX;
     int jobSize = inCommGraph.size();
     long searchCount = 0;
 
     double newDist;
-    for(int i = 0; i < jobSize; i++){
+    int minTask = max((long) 0, jobSize / 2  - upperLimit / 2);
+    int maxTask = min((long) jobSize, jobSize / 2 + upperLimit / 2);
+    for(int task = minTask; task < maxTask; task++){
         //start from the middle task - higher probability of smallest distance
-        int task = max((long) 0, (i + jobSize / 2) % jobSize - upperLimit / 2);
         newDist = dijkstraWithLimit(inCommGraph, task, minDist);
         if(newDist < minDist){
             minDist = newDist;
@@ -328,27 +343,27 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long upper
     for(long nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
         if(isFree->at(lastNode)){
             double curScore = 0;
-            for(int dist = 1; dist <= optDist; dist++){
-                curScore += (double) closestNodes(lastNode, dist) / (dist);
+            for(int dist = 1; dist <= optDist + 1; dist++){
+                curScore += (double) closestNodes(lastNode, dist);
             }
             //penalize node if it has more space around it
-            //this should increase machine efficiency
-            for(int dist = optDist + 1; dist <= optDist + 2; dist++){
-                curScore -= (double) closestNodes(lastNode, dist) / (dist*dist);
+            if(curScore > nodesNeeded){
+                curScore = 2 * nodesNeeded - curScore;
             }
+
             //update best node
             if(curScore > bestScore){
                 bestScore = curScore;
                 bestNode = lastNode;
             }
-            //optimization - preempt if upper bound reached
+
+            //preempt if upper bound is reached
             searchCount++;
             if(searchCount >= upperLimit){
                 break;
             }
-        } else {
-            lastNode = (lastNode + 1) % mach.numNodes;
         }
+        lastNode = (lastNode + 1) % mach.numNodes;
     }
     return bestNode;
 }
@@ -385,7 +400,7 @@ double NearestAllocMapper::dijkstraWithLimit(const vector<map<int,int> > & graph
     while(!heap.isEmpty()){
         unsigned int curNode = heap.deleteMin();
         //preempt if total distance is higher than limit
-        totDist += dists[curNode] - dists[prevVertex[curNode]];
+        totDist += dists[curNode];
         if(totDist > limit){
             break;
         }
@@ -409,15 +424,11 @@ int NearestAllocMapper::closestNodes(const long srcNode, const int initDist, std
     int srcX = mMachine.xOf(srcNode);
     int srcY = mMachine.yOf(srcNode);
     int srcZ = mMachine.zOf(srcNode);
-    int largestDim = mMachine.getXDim() + mMachine.getYDim() + mMachine.getZDim();
+    int largestDelta = mMachine.getXDim() + mMachine.getYDim() + mMachine.getZDim();
     while(nodeCount == 0){
-        if(initDist == 0){
-            //increase L1 distance of the search
-            delta++;
-        } else { //function is called for specific distance
-            break;
-        }
-        if(delta > largestDim){
+        //increase L1 distance of the search
+        delta++;
+        if(delta > largestDelta){
             //no available node found - this is an exception while allocating the last node
             break;
         }
@@ -432,7 +443,6 @@ int NearestAllocMapper::closestNodes(const long srcNode, const int initDist, std
                         continue;
                     } else {
                         int zRange = yRange - abs(srcY - y);
-
                         int z = srcZ - zRange;
                         if(z >= 0) {
                             retNode = mMachine.indexOf(x, y, z);
@@ -443,7 +453,6 @@ int NearestAllocMapper::closestNodes(const long srcNode, const int initDist, std
                                 }
                             }
                         }
-
                         z = srcZ + zRange;
                         if(zRange != 0 && z < mMachine.getZDim()){
                             retNode = mMachine.indexOf(x, y, z);
@@ -458,12 +467,14 @@ int NearestAllocMapper::closestNodes(const long srcNode, const int initDist, std
                 }
             }
         }
+        if(initDist != 0){ //function is called for specific distance
+            break;
+        }
     }
-
     return nodeCount;
 }
 
-int NearestAllocMapper::tieBreaker(list<int> & tiedNodes, int inTask) const
+int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
 {
     int bestNode = 0;
     //optimization
@@ -501,49 +512,61 @@ int NearestAllocMapper::tieBreaker(list<int> & tiedNodes, int inTask) const
     return bestNode;
 }
 
-vector<int>* NearestAllocMapper::getNeighbors(int taskNo) const
+void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> > *taskList)
 {
-    vector<int>* neighbors = new vector<int>();
+    vector<pair<int, double> > neighborList;
 
-    //find unallocated neighbors
-    for(map<int, int>::const_iterator it = commGraph->at(taskNo).begin(); it != commGraph->at(taskNo).end(); it++){
-        if(taskToVertex[it->first] == -1){
-            neighbors->push_back(it->first);
-        }
-    }
-
-    //sort if necessary
-    if(taskOrder == SORTED_ORDER){
-        int size = neighbors->size();
-        vector<int> commWeights(size);
-        //for all neighbors
-        for(vector<int>::const_iterator neighIt = neighbors->begin(); neighIt != neighbors->end(); neighIt++){
-            //for all of 2nd degree neighbors, add up communication for those already allocated
-            for(map<int, int>::const_iterator neigh2It = commGraph->at(*neighIt).begin(); neigh2It != commGraph->at(*neighIt).end(); neigh2It++){
-                if(taskToVertex[neigh2It->first] != -1){
-                    commWeights[*neighIt] += neigh2It->second;
+    //find unmarked neighbors
+    for(map<int, int>::const_iterator it = commGraph->at(curTask).begin(); it != commGraph->at(curTask).end(); it++){
+        if(!marked[it->first]){ //add this neighbor
+            marked[it->first] = true;
+            //calculate weight
+            double weight = 0;
+            for(map<int, int>::const_iterator neighIt = commGraph->at(it->first).begin();
+                    neighIt != commGraph->at(it->first).end();
+                    neighIt++) {
+                //if allocated
+                if(taskToNode[neighIt->first] != -1){
+                    weight += neighIt->second; //add to weight
                 }
             }
+            neighborList.push_back(pair<int, double>(it->first, weight));
         }
-
-        //sort weights, get indices
-        vector<int> sorted = sortWithIndices(commWeights);
-
-        //re-order neighbors
-        vector<int>* sortedNeighbors = new vector<int>(size);
-        for(int i = 0; i < size; i++){
-            sortedNeighbors->at(i) = neighbors->at(sorted[i]);
-        }
-        delete neighbors;
-        neighbors = sortedNeighbors;
-    } else if(taskOrder != GREEDY_ORDER){
-        schedout.fatal(CALL_INFO, 1, "Unknown task ordering option for Nearest AllocMapper");
     }
 
-    return neighbors;
+    //sort neighborList, descending
+    sort(neighborList.begin(), neighborList.end(), ByWeights());
+
+    //merge new list and the input list
+    list<pair<int, double> >::iterator taskIt = taskList->begin();
+    for(unsigned int i = 0; i < neighborList.size(); i++){
+        while(taskIt != taskList->end() && neighborList[i].second < taskIt->second){
+            taskIt++;
+        }
+        taskList->insert(taskIt, neighborList[i]);
+    }
+
+    //now we know that first task will be allocated next - if available
+    if(!taskList->empty()){
+        pair<int, double> toAlloc =  taskList->front();
+        taskList->pop_front();
+        //update weights in task list based on the first task
+        for(taskIt = taskList->begin(); taskIt != taskList->end(); taskIt++){
+            //update weights
+            if(commGraph->at(toAlloc.first).count(taskIt->first) != 0){
+                taskIt->second += commGraph->at(toAlloc.first)[taskIt->first];
+            }
+        }
+        //reorder list
+        taskList->sort(ByWeights());
+        //re-add toAlloc
+        taskList->push_front(toAlloc);
+    }
+
 }
 
-vector<int> NearestAllocMapper::sortWithIndices(const vector<int> & toSort, vector<int> *values) const
+/*
+vector<int> NearestAllocMapper::sortIndices(const vector<int> & toSort) const
 {
    vector<pair<int, int> > pairs(toSort.size());
    vector<int> indices(toSort.size());
@@ -552,20 +575,13 @@ vector<int> NearestAllocMapper::sortWithIndices(const vector<int> & toSort, vect
        pairs[i] = pair<int, int>(toSort[i], i);
    }
 
-   stable_sort(pairs.begin(), pairs.end(), SortHelper());
+   sort(pairs.begin(), pairs.end(), SortHelper());
 
    for(unsigned int i = 0; i < toSort.size(); i++){
        indices[i] = pairs[i].second;
    }
 
-   if(values != NULL){
-       values->clear();
-       values->resize(toSort.size());
-       for(unsigned int i = 0; i < toSort.size(); i++){
-           values->at(i) = pairs[i].first;
-       }
-   }
-
    return indices;
 }
+*/
 
