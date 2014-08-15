@@ -191,7 +191,7 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
 #else
         //partition with greedy: create vertices using breadth-first search from the center node
         vector<bool> isMarked(jobSize, false);
-        isMarked[centerVertex] = true;
+        isMarked[centerTask] = true;
         std::queue<int> queue;
         int nextTask;
         int vertexIndex = 0;
@@ -208,9 +208,9 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
                 vertexTaskCount = 1;
             }
             //map
-            taskToVertex[nextJob] = vertexIndex;
+            taskToVertex[nextTask] = vertexIndex;
             //add unmarked neighbors to the queue
-            for(std::map<int, int>::const_iterator it = graph.at(nextTask).begin(); it != graph.at(nextTask).end(); it++){
+            for(std::map<int, int>::const_iterator it = commGraph->at(nextTask).begin(); it != commGraph->at(nextTask).end(); it++){
                 if(!isMarked[it->first]){
                     isMarked[it->first] = true;
                     queue.push(it->first);
