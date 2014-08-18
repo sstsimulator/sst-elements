@@ -56,6 +56,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     string coherenceProtocol    = _params.find_string("coherence_protocol", "");
     string statGroups           = _params.find_string("stat_group_ids", "");
     int noncacheableRequests    = _params.find_integer("force_noncacheable_reqs", 0);
+    SimTime_t maxWaitTime       = _params.find_integer("maxRequestDelay", 0);  // Nanoseconds
     bool L1 = (L1int == 1);
     vector<int> statGroupIds;
     
@@ -111,7 +112,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
 
-    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds, noncacheableRequests};
+    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds, noncacheableRequests, maxWaitTime};
     return new Cache(_id, _params, config);
 }
 

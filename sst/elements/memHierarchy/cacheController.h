@@ -88,6 +88,7 @@ public:
         void printEntry(Addr baseAddr);
         void printEntry2(vector<MemEvent*> events);
         bool isFull();
+        MemEvent* getOldestRequest() const;
     };
     
     virtual void init(unsigned int);
@@ -271,10 +272,13 @@ private:
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregested from TimeVortx and reregisted only when an event is received */
     bool clockTick(Cycle_t time) {
-        timestamp_++; 
+        timestamp_++;
         if(cf_.dirControllerExists_) memNICIdle_ = directoryLink_->clock();
         topCC_->sendOutgoingCommands();
         bottomCC_->sendOutgoingCommands();
+        if ( cf_.maxWaitTime > 0 ) {
+            checkMaxWait();
+        }
         return false;
     }
     
@@ -312,7 +316,32 @@ private:
         }
         return false;
     }
-    
+
+    void checkMaxWait(void) const {
+        SimTime_t curTime = getCurrentSimTimeNano();
+        MemEvent *oldReq = NULL;
+        MemEvent *oldCacheReq = mshr_->getOldestRequest();
+        MemEvent *oldUnCacheReq = mshrNoncacheable_->getOldestRequest();
+
+        if ( oldCacheReq && oldUnCacheReq ) {
+            oldReq = (oldCacheReq->getInitializationTime() < oldUnCacheReq->getInitializationTime()) ? oldCacheReq : oldUnCacheReq;
+        } else if ( oldCacheReq ) {
+            oldReq = oldCacheReq;
+        } else {
+            oldReq = oldUnCacheReq;
+        }
+
+        if ( oldReq ) {
+            SimTime_t waitTime = curTime - oldReq->getInitializationTime();
+            if ( waitTime > cf_.maxWaitTime ) {
+                d_->fatal(CALL_INFO, 1, "Maximum Cache Request time reached!\n"
+                        "Event: %s 0x%" PRIx64 " from %s\n",
+                        CommandString[oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str()
+                        );
+            }
+        }
+    }
+
     struct CacheConfig{
         string cacheFrequency_;
         CacheArray* cacheArray_;
@@ -326,6 +355,7 @@ private:
         bool dirControllerExists_;
         vector<int> statGroupIds_;
         bool allNoncacheableRequests_;
+        SimTime_t maxWaitTime;
     };
     
     CacheConfig             cf_;

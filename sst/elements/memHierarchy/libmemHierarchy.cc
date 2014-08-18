@@ -73,6 +73,7 @@ static const ElementInfoParam cache_params[] = {
     {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "0"},
     {"force_noncacheable_reqs", "Used for verification purposes.  All requests are considered to be 'noncacheable'", "0"},
+    {"maxRequestDelay",         "Set an error timeout if memory requests take longer than this in ns  (0: disable)", "0"},
     {NULL, NULL, NULL}
 };
 

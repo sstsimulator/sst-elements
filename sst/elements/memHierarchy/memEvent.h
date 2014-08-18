@@ -166,6 +166,7 @@ public:
         me->NACKedEvent_  = NACKedEvent;
         me->NACKedCmd_    = NACKedEvent->cmd_;
         me->cmd_          = NACK;
+        me->initTime_     = source->getCurrentSimTimeNano();
         return me;
     }
     
@@ -193,6 +194,7 @@ public:
         addr_ = _addr;
         baseAddr_ = _baseAddr;
         cmd_  = _cmd;
+        initTime_ = _src->getCurrentSimTimeNano();
      }
     
      void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size){
@@ -202,7 +204,7 @@ public:
         baseAddr_ = _baseAddr;
         cmd_      = _cmd;
         size_     = _size;
-     
+        initTime_ = _src->getCurrentSimTimeNano();
      }
     
     void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data){
@@ -211,6 +213,7 @@ public:
         addr_        = _addr;
         baseAddr_    = _baseAddr;
         cmd_         = _cmd;
+        initTime_ = _src->getCurrentSimTimeNano();
         setPayload(_data);
     }
     
@@ -236,6 +239,7 @@ public:
         NACKedEvent_      = NULL;
         inMSHR_           = false;
         statsUpdated_     = false;
+        initTime_         = 0;
         payload_.clear();
     }
 
@@ -258,6 +262,9 @@ public:
     void setAddr(Addr _addr) { addr_ = _addr; }
     /** Sets the Base Address of this MemEvent */
     void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
+
+    /** Returns the time (in nanoseconds) when this event was created */
+    SimTime_t getInitializationTime(void) const { return initTime_; }
 
     /** @return  the size in bytes that this MemEvent represents */
     uint32_t getSize(void) const { return size_; }
@@ -443,6 +450,7 @@ private:
     uint64_t        startTime_;
     bool            inMSHR_;
     bool            statsUpdated_;
+    SimTime_t       initTime_;
 
 
     MemEvent() {} // For serialization only

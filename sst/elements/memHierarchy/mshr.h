@@ -62,6 +62,22 @@ bool Cache::MSHR::isFull(){
     return false;
 }
 
+MemEvent* Cache::MSHR::getOldestRequest() const {
+    MemEvent *ev = NULL;
+    for ( mshrTable::const_iterator it = map_.begin() ; it != map_.end() ; ++it ) {
+        for ( vector<mshrType>::const_iterator jt = it->second.begin() ; jt != it->second.end() ; jt++ ) {
+            if ( jt->elem.type() == typeid(MemEvent*) ) {
+                MemEvent *me = boost::get<MemEvent*>(jt->elem);
+                if ( !ev || ( me->getInitializationTime() < ev->getInitializationTime() ) ) {
+                    ev = me;
+                }
+            }
+        }
+    }
+
+    return ev;
+};
+
 
 bool Cache::MSHR::insert(Addr _baseAddr, MemEvent* _event){
     _event->setInMSHR(true);
