@@ -14,6 +14,8 @@
 
 #include "TaskMapper.h"
 
+#include "sst/core/rng/marsaglia.h"
+
 #include <string>
 
 namespace SST {
@@ -34,6 +36,9 @@ namespace SST {
 		        std::string getSetupInfo(bool comment) const;
 
 		        TaskMapInfo* mapTasks(AllocInfo* allocInfo);
+		    
+		    private:
+		        SST::RNG::MarsagliaRNG rng; //random number generator
         };
     }
 }

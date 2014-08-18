@@ -27,22 +27,23 @@ namespace SST {
         class NearestAllocMapper : public AllocMapper {
             public:
                 enum TaskGenType{//center task generation
-                    GREEDY_TASK = 0, //O(V * E)
-                    EXHAUSTIVE_TASK = 1, //O(VE + V^2 lg V) if no center task is given
+                    GREEDY_TASK = 0, //O(VE)
+                    EXHAUSTIVE_TASK = 1, //O(VE + V^2 lg V) - can be limited
                 };
 
                 enum NodeGenType{//center machine node generation
                     GREEDY_NODE = 0,   //O(N)
-                    EXHAUST_NODE = 1,  //O(N + upperLimit * V^2)
+                    EXHAUST_NODE = 1,  //O(N * V^2) - can be limited
                 };
 
                 enum TaskOrderType{//neighbor task ordering
-                    GREEDY_ORDER = 0, //O(V * E)
-                    SORTED_ORDER = 1, //O(V^2 lg V) while expanding, chooses the task with the
-                                      //highest communication to the currently allocated tasks
-                };
-                //if number of cores per node > 1,  + O(V + E lg V)
-                //Sum up of all time complexities to get the allocation complexity
+                    GREEDY_ORDER = 0, //O(VE)
+                    SORTED_ORDER = 1, //O(VE + V^2 lg V) while expanding,
+                                      //chooses the task with the highest
+                                      //communication to the currently allocated tasks
+                 };
+                //if number of cores per node > 1, add O(V + E lg V)
+                //replace all V with V/c when c cores per node, except for taskGenType
 
                 NearestAllocMapper(const MeshMachine & mach,
                                    TaskGenType taskGen = GREEDY_TASK,

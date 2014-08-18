@@ -225,6 +225,7 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
         for(int taskIt = 0; taskIt < jobSize; taskIt++){
             //for all neighbors
             for(map<int, int>::iterator it = rawCommGraph->at(taskIt).begin(); it != rawCommGraph->at(taskIt).end(); it++){
+                //add communication weight if not in the same vertex
                 if(taskToVertex[taskIt] != taskToVertex[it->first]){
                     if(commGraph->at(taskToVertex[taskIt]).count(taskToVertex[it->first]) == 0){
                         commGraph->at(taskToVertex[taskIt])[taskToVertex[it->first]] = it->second;

@@ -22,6 +22,7 @@ using namespace SST::Scheduler;
 
 RandomTaskMapper::RandomTaskMapper(const Machine & mach) : TaskMapper(mach)
 {
+    rng = SST::RNG::MarsagliaRNG();
 }
 
 RandomTaskMapper::~RandomTaskMapper()
@@ -41,7 +42,7 @@ std::string RandomTaskMapper::getSetupInfo(bool comment) const
 
 TaskMapInfo* RandomTaskMapper::mapTasks(AllocInfo* allocInfo)
 {
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, mach);
     int jobSize = allocInfo->job->getProcsNeeded();
     
     std::vector<int> available = std::vector<int>();
@@ -53,7 +54,7 @@ TaskMapInfo* RandomTaskMapper::mapTasks(AllocInfo* allocInfo)
     }
     
     for(int i = 0; i < jobSize; i++){
-        int num = rand() % available.size();
+        int num = rng.generateNextUInt64() % available.size();
         tmi->insert(i, available.at(num));
         availableCores.at(num) = availableCores.at(num) - 1;
         if(availableCores.at(num) == 0){

@@ -118,7 +118,7 @@ int** TaskCommInfo::getCommMatrix() const
         outMatrix = buildCustomMatrix();
         break;
     default:
-        schedout.fatal(CALL_INFO, 1, "Unknown Communication type");
+        schedout.fatal(CALL_INFO, 1, "Unknown Communication type\n");
         outMatrix = NULL;
     }
     return outMatrix;

@@ -538,6 +538,7 @@ void schedComponent::startJob(Job* job)
 {
     //allocate & update machine
     CommParser commParser = CommParser();
+    
     commParser.parseComm(job);                      //read communication files
     job->start( getCurrentSimTime() );              //job started flag
     AllocInfo* ai = theAllocator->allocate(job);    //get allocation
@@ -555,8 +556,8 @@ void schedComponent::startJob(Job* job)
     int* jobNodes = ai->nodeIndices;
     unsigned long actualRunningTime = job->getActualTime();   
     
-    MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine); 
-    
+    MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine);
+
     if (timePerDistance -> at(0) != 0
           && NULL != mMachine
           && NULL != ai ) {
@@ -567,7 +568,7 @@ void schedComponent::startJob(Job* job)
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(*mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
 
-        double baselineAvgL1Distance = baselineMap->getAvgHopDist(*mMachine);
+        double baselineAvgL1Distance = baselineMap->getAvgHopDist();
         delete baselineMap;
                 
         //calculate running time w/o any communication overhead:
@@ -577,7 +578,7 @@ void schedComponent::startJob(Job* job)
                                         ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
         
         //calculate new hop distance with allocation & task mapping
-        double avgL1Distance = tmi->getAvgHopDist(*mMachine);
+        double avgL1Distance = tmi->getAvgHopDist();
         //new running time with overhead        
         double timeWithComm = baselineRunningTime *
                                ( timePerDistance->at(0) + timePerDistance->at(1) *

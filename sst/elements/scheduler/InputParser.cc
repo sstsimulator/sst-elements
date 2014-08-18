@@ -67,7 +67,7 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
         input.open(jobTrace.c_str());  //try without directory
     }                     
     if(!input.is_open()){
-        schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s", fileName.c_str());
+        schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s\n", fileName.c_str());
     }
     
     jobs.clear();
@@ -161,7 +161,7 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
     strcpy( lastJobRead, ID );
 
     if (tokens.size() != 3) {
-        schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s", line.c_str());
+        schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s\n", line.c_str());
     } else {
         if (useYumYumTraceFormat) {
             jobs.push_back(new Job(currSimTime + 1, procs, duration, duration + 1, std::string(ID)));
@@ -218,17 +218,19 @@ bool JobParser::newJobLine(std::string line)
                 commInfo.commType = TaskCommInfo::COORDINATE;
                 //read task communication file name
                 is >> nextStr;
-                nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
+                //nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
                 commInfo.commFile = nextStr;
+                //std::cout << commInfo.commFile << "\n";
                 //read coordinates file name
                 is >> nextStr;
-                nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
+                //nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
                 commInfo.coordFile = nextStr;
             } else if(nextStr.compare("center") == 0){
                 is >> commInfo.centerTask;
             } else if(nextStr.compare("comm") == 0){
                 commInfo.commType = TaskCommInfo::CUSTOM;
-                nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
+                is >> nextStr;
+                //nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
                 commInfo.commFile = nextStr;
             } else {
                 schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
@@ -249,21 +251,21 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
 {
     bool ok = true;
     if (j->getProcsNeeded() <= 0) {
-        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it",
+        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  requests %d processors; ignoring it\n",
                          j->getJobNum(), j->getProcsNeeded());
         delete jobs->back();
         jobs->pop_back();
         ok = false;
     }
     if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
-        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it",
+        schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it\n",
                          j->getJobNum(), runningTime);
         delete jobs->back();
         jobs->pop_back();
         ok = false;
     }
     if (ok && j->getProcsNeeded() > (machine->numNodes * machine->coresPerNode)) {
-        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %ld are in the machine", 
+        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %ld are in the machine\n", 
                        j->getJobNum(), j->getProcsNeeded(), (machine->numNodes * machine->coresPerNode));
         ok = false;
     }
@@ -392,7 +394,7 @@ double** DParser::readDMatrix()
         inFile = filePath;
     }                     
     if(!input.is_open()){
-        schedout.fatal(CALL_INFO, 1, "Unable to open file: %s", fileName.c_str());
+        schedout.fatal(CALL_INFO, 1, "Unable to open file: %s\n", fileName.c_str());
     }
     input.close();
 
@@ -437,7 +439,7 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
     ifstream inputFile;
     inputFile.open( fileName, std::fstream::in );
     if(!inputFile.is_open()){
-        schedout.fatal(CALL_INFO, 1, "Unable to open file: %s", fileName);
+        schedout.fatal(CALL_INFO, 1, "Unable to open matrix market file: %s\n", fileName);
     }
 
     //read header

@@ -25,7 +25,7 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-RCBTaskMapper::RCBTaskMapper(const MeshMachine & inMach) : TaskMapper(mach), mMachine(inMach)
+RCBTaskMapper::RCBTaskMapper(const MeshMachine & inMach) : TaskMapper(inMach), mMachine(inMach)
 {
 
 }
@@ -49,17 +49,17 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
     //check job compatibility - use simple task mapper if not compatible
     if(tci->getCommType() != TaskCommInfo::MESH &&
        tci->getCommType() != TaskCommInfo::COORDINATE) {
-        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mach);
+        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mMachine);
         return simpleMapper.mapTasks(allocInfo);
         //schedout.fatal(CALL_INFO, 1, "Job %ld attempted to use RCB task mapper without coordinate input\n", job->getJobNum());
     }
 
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, mMachine);
     int jobSize = job->getProcsNeeded();
     
     //Optimization: SimpleTaskMapper if <= 2 tasks are provided
     if(jobSize <= 2 || allocInfo->getNodesNeeded() == 1){
-        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mach);
+        SimpleTaskMapper simpleMapper = SimpleTaskMapper(mMachine);
         return simpleMapper.mapTasks(allocInfo);
     }
 
@@ -88,12 +88,6 @@ TaskMapInfo* RCBTaskMapper::mapTasks(AllocInfo* allocInfo)
 
     //map
     mapTaskHelper(&nodeGroup, &taskGroup, tmi);
-
-    //DEBUG
-    //for(int i = 0; i<jobSize; i++){
-    //    std::cout << "task:" << i << " <-> node:" << tmi->taskToNode[i] << endl;
-    //}
-    //////
 
     return tmi;
 }

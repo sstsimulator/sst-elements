@@ -103,7 +103,11 @@ libscheduler_la_SOURCES = \
 EXTRA_DIST = \
 	simulations/DMatrix4_5_2 \
 	simulations/makeSDL.pl \
-	simulations/sdl-3.py
+	simulations/test_scheduler_Atlas.sim \
+	simulations/test_scheduler_0.003.sim \
+	simulations/sphere3.mtx \
+	simulations/sphere3_coord.mtx \
+	simulations/makeInput.py
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
 libscheduler_la_LIBADD =

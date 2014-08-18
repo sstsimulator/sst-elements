@@ -13,36 +13,47 @@
 
 #include "AllocInfo.h"
 #include "Job.h"
-#include "MeshMachine.h"
+#include "Machine.h"
 #include "output.h"
 #include "TaskCommInfo.h"
 
 using namespace SST::Scheduler;
 
-TaskMapInfo::TaskMapInfo(AllocInfo* ai)
+TaskMapInfo::TaskMapInfo(AllocInfo* ai, const Machine & inMach) : machine(inMach)
 {
     allocInfo = ai;
     job = ai->job;
     taskCommInfo = job->taskCommInfo;
     size = job->getProcsNeeded();
-    taskToNode = new int[size];
+    taskToNode = std::vector<long int>(size, -1);
     mappedCount = 0;
     avgHopDist = 0;
+    numAvailCores = std::map<long int, int>();
 }
 
 TaskMapInfo::~TaskMapInfo()
 {
     delete allocInfo;
-    delete [] taskToNode;
 }
 
-void TaskMapInfo::insert(int taskInd, int nodeInd)
+void TaskMapInfo::insert(int taskInd, long int nodeInd)
 {
+    if(taskToNode[taskInd] != -1){
+        schedout.fatal(CALL_INFO, 1, "Attempted to map task %d of job %ld multiple times.\n", taskInd, job->getJobNum());
+    }
+    if(numAvailCores.count(nodeInd) == 0){
+        numAvailCores[nodeInd] = machine.coresPerNode - 1;
+    } else {
+        numAvailCores[nodeInd]--;
+        if(numAvailCores[nodeInd] < 0){
+            schedout.fatal(CALL_INFO, 1, "Task %d of job %ld is mapped to node %ld, where there is no core available.\n", taskInd, job->getJobNum(), nodeInd);
+        }
+    }
     taskToNode[taskInd] = nodeInd;
     mappedCount++;
 }
 
-double TaskMapInfo::getAvgHopDist(const MeshMachine & machine)
+double TaskMapInfo::getAvgHopDist()
 {
     if(avgHopDist == 0) {
         //check if every task is mapped
@@ -51,7 +62,7 @@ double TaskMapInfo::getAvgHopDist(const MeshMachine & machine)
         }
 
         unsigned long totalHopDist = 0;
-        int neighborCount = 0;
+        int neighborCount = 0;    
 
         //iterate through all tasks
         std::vector<std::map<int,int> >* commInfo = taskCommInfo->getCommInfo();
@@ -75,5 +86,4 @@ double TaskMapInfo::getAvgHopDist(const MeshMachine & machine)
 
     return avgHopDist;
 }
-
 

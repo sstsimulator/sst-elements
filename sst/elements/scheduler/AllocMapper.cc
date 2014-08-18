@@ -26,7 +26,7 @@ TaskMapInfo* AllocMapper::mapTasks(AllocInfo* allocInfo)
 {
     long jobNum = allocInfo->job->getJobNum();
     std::vector<int>* mapping = getMappingOf(jobNum);
-    TaskMapInfo* tmi = new TaskMapInfo(allocInfo);
+    TaskMapInfo* tmi = new TaskMapInfo(allocInfo, mach);
     for(long taskIt = 0; taskIt < allocInfo->job->getProcsNeeded(); taskIt++){
         tmi->insert(taskIt, mapping->at(taskIt));
     }

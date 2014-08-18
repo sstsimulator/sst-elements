@@ -8,8 +8,8 @@ import os
 # Root folder for input files:
 # environment variable SST_HOME should point to SST home folder 
 #   for the following example to work properly
-ROOT_FOLDER = os.environ.get('SST_HOME') + \
-              '/scratch/src/sst-simulator/sst/elements/scheduler/simulations/'
+ROOT_FOLDER = os.environ.get('SST_ROOT') + \
+              '/sst/elements/scheduler/simulations/'
 
 # Input workload trace path:
 traceName = ROOT_FOLDER + 'NASA.sim'
