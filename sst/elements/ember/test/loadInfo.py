@@ -31,8 +31,12 @@ class EmberEP( EndPoint ):
             ep.addParams(self.driverParams)
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
+            nicLink.setNoCut()
+
             loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
+            loopLink.setNoCut() 
+
             ep.addLink(nicLink, "nic", "150ns")
             nic.addLink(nicLink, "core" + str(x), "150ns")
 
