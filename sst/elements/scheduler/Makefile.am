@@ -104,7 +104,6 @@ EXTRA_DIST = \
 	simulations/DMatrix4_5_2 \
 	simulations/makeSDL.pl \
 	simulations/test_scheduler_Atlas.sim \
-	simulations/test_scheduler_0.003.sim \
 	simulations/sphere3.mtx \
 	simulations/sphere3_coord.mtx \
 	simulations/makeInput.py
