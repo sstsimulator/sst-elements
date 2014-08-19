@@ -63,8 +63,7 @@ simpleTracer::simpleTracer( ComponentId_t id, Params& params ): Component( id ) 
     }
 
     //flags
-    writeDebug_4 = writeDebug_8 = false;
-    if (debug >= 4) { writeDebug_4 = true; }
+    writeDebug_8 = false;
     if (debug >= 8) { writeDebug_8 = true; }
 
     // check links
@@ -219,6 +218,7 @@ void simpleTracer::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> 
 
 void simpleTracer::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins){
 // Prints Access Latency Distribution
+
     unsigned int count = 0;
     unsigned int minLat, maxLat;
     bool minSet = false;
@@ -242,26 +242,26 @@ void simpleTracer::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins
     fprintf(fp, "-----------------------------------------------------------------\n");
     fprintf(fp, "Latency Range(ns): Count\n");
 
-    vector<unsigned int> latencyHist;
-    if (0 == latencyHist.size()){
-        latencyHist.resize(numBins);
+    if (maxLat == minLat){
+        fprintf(fp, "- [%d-%d]: %d\n", minLat, maxLat, count);
     }
-
-    float steps = (float)(maxLat - minLat)/ numBins;
-    unsigned int step = (unsigned int) ceil(steps);
-    //fprintf(fp, "steps = %f\t step = %u\n", steps, step);
-    for (unsigned int i=0; i<AccessLatencyDist.size(); i++){
-        if(AccessLatencyDist[i] > 0) {
-            unsigned int binNum = i/step;
-            latencyHist[binNum] += AccessLatencyDist[i];
+    else {
+        vector<unsigned int> latencyHist;
+        if (0 == latencyHist.size()){ 
+             latencyHist.resize(numBins); 
         }
-    }
-
-    for (unsigned int i=0; i<latencyHist.size(); i++) {
-        //if((i+1) == latencyHist.size())
-        //   fprintf(fp, "- [%d-%d]: %d\n", i*step, maxLat, latencyHist[i]);
-        //else
-           fprintf(fp, "- [%d-%d]: %d\n", i*step, (i+1)*step-1, latencyHist[i]);
+        float steps = (float)(maxLat - minLat)/ numBins;
+        unsigned int step = (unsigned int) ceil(steps);
+        //fprintf(fp, "steps = %f\t step = %u\n", steps, step);
+        for (unsigned int i=0; i<AccessLatencyDist.size(); i++){
+            if(AccessLatencyDist[i] > 0) {
+                unsigned int binNum = i/step;
+                latencyHist[binNum] += AccessLatencyDist[i];
+            }
+        }
+        for (unsigned int i=0; i<latencyHist.size(); i++) {
+            fprintf(fp, "- [%d-%d]: %d\n", i*step, (i+1)*step-1, latencyHist[i]);
+        }
     }
 
     fprintf(fp, "-----------------------------------------------------------------\n");

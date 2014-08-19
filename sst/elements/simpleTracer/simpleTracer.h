@@ -22,8 +22,6 @@
 #include <fstream>
 #include <map>
 
-#define PostProcessEnable 0
-
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -60,7 +58,6 @@ private:
     // Flags
     bool writeTrace;
     bool writeStats;
-    bool writeDebug_4;
     bool writeDebug_8;
 
     unsigned int nbCount;
@@ -77,9 +74,9 @@ private:
     TimeConverter* nanoTimeConv;
 
     // Serialization
-    simpleTracer();                       // for serialization only
-    simpleTracer(const simpleTracer&);          // do not implement
-    void operator=(const simpleTracer&);  // do not implement
+    simpleTracer();                         // for serialization only
+    simpleTracer(const simpleTracer&);      // do not implement
+    void operator=(const simpleTracer&);    // do not implement
 }; // class simpleTracer
 } //namespace simpleTracer
 } // namespace SST
