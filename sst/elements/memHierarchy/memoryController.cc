@@ -117,7 +117,7 @@ void MemController::handleEvent(SST::Event* _event){
 			fprintf(traceFP, "R %" PRIu64 ", %" PRIu64 ", %d\n",
 				getCurrentSimTimeNano(), ev->getAddr(), (int) ev->getSize());
 		} else if (cmd == PutM) {
-			fprintf(traceFP, "W %" PRIu64 ", %" PRIu64 ", %d\n"
+			fprintf(traceFP, "W %" PRIu64 ", %" PRIu64 ", %d\n",
 				getCurrentSimTimeNano(), ev->getAddr(), (int) ev->getSize());
 		}
         }
