@@ -8,7 +8,7 @@ amount of time the job actually ran for) and estimated run time (the estimated
 job given when the job was submitted, if any). The optional entries are:
 - comm <intra-job (task) communication file in matrixMarket format>
 - center <center task number of the job>
-- coord <task coordinates in matrixMarket format>
+- coord <task communication file> <task coordinates file in matrixMarket>
 - mesh <x> <y> <z>: job with stencil communication with x,y,z dimensions
 If no communication structure is given, all-to-all communication is assumed
 The .sim file can be created from the Parallel Workloads Archive .swf format
@@ -325,9 +325,7 @@ format is a[b,c,d]; then the total time for a job is
 a * (ActualRunTime) + b* (c + d * (AveragePerNeighborL1Distance))
 
 An important detail is that this may be larger than the Estimated Run Time for
-some simulations.  If this happens, SST uses the Estimated Run Time instead of
-the L1-based run time.  SST does not throw an error, but does display a warning
-message.
+some simulations. If this happens, SST does throws an error.
 
 makesdl.pl can also incorporate the allocation based timing.  An example with a
 = .7, b = .3, c = 19.6666, d = 1.9161 is

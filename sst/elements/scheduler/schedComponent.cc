@@ -591,7 +591,7 @@ void schedComponent::startJob(Job* job)
 
     if (actualRunningTime > job->getEstimatedRunningTime()) {
         schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", job -> getJobNum(), actualRunningTime, job->getEstimatedRunningTime());
-        actualRunningTime = job->getEstimatedRunningTime();
+        //actualRunningTime = job->getEstimatedRunningTime();
     }
 
     // send to each job in the node list

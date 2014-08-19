@@ -28,22 +28,21 @@ namespace SST {
             public:
                 enum TaskGenType{//center task generation
                     GREEDY_TASK = 0, //O(VE)
-                    EXHAUSTIVE_TASK = 1, //O(VE + V^2 lg V) - can be limited
+                    EXHAUSTIVE_TASK = 1, //O(VE + V^2 lg V) if no center task is given
                 };
 
                 enum NodeGenType{//center machine node generation
                     GREEDY_NODE = 0,   //O(N)
-                    EXHAUST_NODE = 1,  //O(N * V^2) - can be limited
+                    EXHAUST_NODE = 1,  //O(N + upperLimit * V^2)
                 };
 
                 enum TaskOrderType{//neighbor task ordering
                     GREEDY_ORDER = 0, //O(VE)
-                    SORTED_ORDER = 1, //O(VE + V^2 lg V) while expanding,
-                                      //chooses the task with the highest
-                                      //communication to the currently allocated tasks
-                 };
-                //if number of cores per node > 1, add O(V + E lg V)
-                //replace all V with V/c when c cores per node, except for taskGenType
+                    SORTED_ORDER = 1, //O(VE + V^2 lg V) while expanding, chooses the task with the
+                                      //highest communication to the currently allocated tasks
+                };
+                //if number of cores per node > 1,  + O(V + E lg V)
+                //Sum up of all time complexities to get the allocation complexity
 
                 NearestAllocMapper(const MeshMachine & mach,
                                    TaskGenType taskGen = GREEDY_TASK,
@@ -133,7 +132,7 @@ namespace SST {
 
                 //adds the unallocated neighbors of curTask to the task list with descenting weights
                 //O(V lg V)
-                void getSortedNeighbors(int curTask, std::list<std::pair<int, double> > *taskList);
+                void getSortedNeighbors(int curTask, std::list<std::pair<int, double> > & taskList);
 
                 //sorts given vector, descending
                 //O(n lg n), n=toSort.size()
@@ -142,7 +141,7 @@ namespace SST {
                 struct ByWeights {
                     bool operator() (const std::pair<int, double>& l, const std::pair<int, double>& r)
                     {
-                        return (l.second >= r.second);
+                        return (l.second < r.second);
                     }
                 } compObject;
         };

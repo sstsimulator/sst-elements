@@ -260,6 +260,7 @@ void NearestAllocMapper::allocateAndMap()
     frameNodes.push_back(centerNode);
     marked.resize(commGraph->size(), false);
     marked[centerTask] = true;
+    
     //main loop
     while(!tasks.empty()){
         int curTask = tasks.front().first;
@@ -282,7 +283,7 @@ void NearestAllocMapper::allocateAndMap()
             }
             break;
         case SORTED_ORDER:
-            getSortedNeighbors(curTask, &tasks);
+            getSortedNeighbors(curTask, tasks);
             break;
         default:
             schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
@@ -291,7 +292,6 @@ void NearestAllocMapper::allocateAndMap()
         //extend frame - do not add the same node twice
         list<int> *newNodes = new list<int>();
         closestNodes(nodeToAlloc, 0, newNodes);
-
         for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
             bool found = false;
             for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
@@ -513,9 +513,9 @@ int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
     return bestNode;
 }
 
-void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> > *taskList)
+void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> > & taskList)
 {
-    vector<pair<int, double> > neighborList;
+    vector<pair<int, double> > neighborArray;
 
     //find unmarked neighbors
     for(map<int, int>::const_iterator it = commGraph->at(curTask).begin(); it != commGraph->at(curTask).end(); it++){
@@ -531,39 +531,38 @@ void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> 
                     weight += neighIt->second; //add to weight
                 }
             }
-            neighborList.push_back(pair<int, double>(it->first, weight));
+            neighborArray.push_back(pair<int, double>(it->first, weight));
         }
     }
-
-    //sort neighborList, descending
-    sort(neighborList.begin(), neighborList.end(), ByWeights());
+    
+    //sort neighborList, ascending
+    sort(neighborArray.begin(), neighborArray.end(), ByWeights());
 
     //merge new list and the input list
-    list<pair<int, double> >::iterator taskIt = taskList->begin();
-    for(unsigned int i = 0; i < neighborList.size(); i++){
-        while(taskIt != taskList->end() && neighborList[i].second < taskIt->second){
+    list<pair<int, double> >::iterator taskIt = taskList.begin();
+    for(unsigned int i = 0; i < neighborArray.size(); i++){
+        while(taskIt != taskList.end() && neighborArray[i].second > taskIt->second){
             taskIt++;
         }
-        taskList->insert(taskIt, neighborList[i]);
+        taskList.insert(taskIt, neighborArray[i]);
     }
-
-    //now we know that first task will be allocated next - if available
-    if(!taskList->empty()){
-        pair<int, double> toAlloc =  taskList->front();
-        taskList->pop_front();
+    
+    //now we know that last task will be allocated next - if available
+    if(!taskList.empty()){
+        pair<int, double> toAlloc =  taskList.back();
+        taskList.pop_back();
         //update weights in task list based on the first task
-        for(taskIt = taskList->begin(); taskIt != taskList->end(); taskIt++){
+        for(taskIt = taskList.begin(); taskIt != taskList.end(); taskIt++){
             //update weights
             if(commGraph->at(toAlloc.first).count(taskIt->first) != 0){
                 taskIt->second += commGraph->at(toAlloc.first)[taskIt->first];
             }
         }
         //reorder list
-        taskList->sort(ByWeights());
-        //re-add toAlloc
-        taskList->push_front(toAlloc);
+        taskList.sort(ByWeights());
+        //re-add toAlloc to the beginning
+        taskList.push_front(toAlloc);
     }
-
 }
 
 /*
