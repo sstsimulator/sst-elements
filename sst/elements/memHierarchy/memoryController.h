@@ -157,11 +157,11 @@ private:
     uint64_t    numCycles_;
     
     Output::output_location_t statsOutputTarget_;
-#ifdef HAVE_LIBZ
-    gzFile traceFP;
-#else
+//#ifdef HAVE_LIBZ
+//    gzFile traceFP;
+//#else
     FILE *traceFP;
-#endif
+//#endif
 
 
 };

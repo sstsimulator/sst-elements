@@ -68,7 +68,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
-    
+
+    string traceFileLoc     = params.find_string("trace_file", "");
+    if("" != traceFileLoc) {
+	traceFP = fopen(traceFileLoc.c_str(), "wt");
+    } else {
+	traceFP = NULL;
+    }
+
     requestWidth_           = cacheLineSize_;
     requestSize_            = cacheLineSize_;
     numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
@@ -103,8 +110,18 @@ void MemController::handleEvent(SST::Event* _event){
     dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_,"Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
     Command cmd = ev->getCmd();
-    
+
     if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM){
+	if(NULL != traceFP) {
+		if(cmd == GetS || cmd == GetX || cmd == GetSEx) {
+			fprintf(traceFP, "R %" PRIu64 ", %" PRIu64 ", %d\n",
+				getCurrentSimTimeNano(), ev->getAddr(), (int) ev->getSize());
+		} else if (cmd == PutM) {
+			fprintf(traceFP, "W %" PRIu64 ", %" PRIu64 ", %d\n"
+				getCurrentSimTimeNano(), ev->getAddr(), (int) ev->getSize());
+		}
+        }
+
         if(cmd == GetS)         GetSReqReceived_++;
         else if(cmd == GetX)    GetXReqReceived_++;
         else if(cmd == GetSEx)  GetSExReqReceived_++;
@@ -290,6 +307,11 @@ void MemController::setup(void){
 void MemController::finish(void){
 	munmap(memBuffer_, memSize_);
 	if(-1 != backingFd_) close(backingFd_);
+
+    // Close the trace file IF it is opened
+    if(NULL != traceFP) {
+	fclose(traceFP);
+    }
 
     backend_->finish();
 
