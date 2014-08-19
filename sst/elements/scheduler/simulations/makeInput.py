@@ -5,17 +5,11 @@ Setting a parameter to "default" or "" will select the default option
 '''
 import os
 
-# Root folder for input files:
-# environment variable SST_HOME should point to SST home folder 
-#   for the following example to work properly
-ROOT_FOLDER = os.environ.get('SST_ROOT') + \
-              '/sst/elements/scheduler/simulations/'
-
 # Input workload trace path:
-traceName = ROOT_FOLDER + 'test_scheduler_Atlas.sim'
+traceName = 'test_scheduler_Atlas.sim'
 
 # Output file name:
-outFile = ROOT_FOLDER + 'sstInput.py'
+outFile = 'sstInput.py'
 
 # Machine (cluster) configuration:
 # mesh[xdim, ydim, zdim], simple. (default: simple)
