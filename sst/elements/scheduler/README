@@ -118,7 +118,8 @@ simple - a simple machine, which is a bag of nodes.
 
 mesh - a three dimensional mesh of nodes. Must take 3 arguments [x,y,z], or
 two arguments [x,y] in which case z is assumed to be 1. Requires that x*y*z =
-numprocs.
+numprocs. The machine nodes are numbered first in x, then y, then z directions.
+A node number 20 in a [3,4,5] machine corresponds to x=2, y=2, z=1.
 
 
               Allocators: 
@@ -308,6 +309,16 @@ calculations (i.e. average or maximum (actualStartTime - FST)) are performed.
 An example of the sdl file with strict FST calculations would be
 
 ./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random strict > testsdl.sdl 
+
+
+        Heat Recirculation Matrix (D_Matrix):
+
+The scheduler accepts heat recirculation matrix in matrix market format for the
+energy allocator (For details on D_Matrix, refer to Tang, Q.; Gupta, S. K S;
+Varsamopoulos, G., "Energy-Efficient Thermal-Aware Task Scheduling for
+Homogeneous High-Performance Computing Data Centers: A Cyber-Physical
+Approach", IEEE Transactions on Parallel and Distributed Systems, vol.19,no.11,
+pp.1458,1472, Nov. 2008 doi: 10.1109/TPDS.2008.111)
 
 
         Allocation Based Timing:
