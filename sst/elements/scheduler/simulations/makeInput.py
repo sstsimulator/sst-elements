@@ -12,14 +12,14 @@ ROOT_FOLDER = os.environ.get('SST_ROOT') + \
               '/sst/elements/scheduler/simulations/'
 
 # Input workload trace path:
-traceName = ROOT_FOLDER + 'NASA.sim'
+traceName = ROOT_FOLDER + 'test_scheduler_Atlas.sim'
 
 # Output file name:
 outFile = ROOT_FOLDER + 'sstInput.py'
 
 # Machine (cluster) configuration:
 # mesh[xdim, ydim, zdim], simple. (default: simple)
-machine = 'mesh[4,4,4]'
+machine = 'mesh[5,4,4]'
 
 # Number of machine nodes
 # The script calculates the number of nodes if mesh machine is provided.
@@ -28,7 +28,7 @@ numberNodes = ''
 
 # Number of cores in each machine node
 # any integer. (default: 1)
-coresPerNode = '2'
+coresPerNode = '4'
 
 # Scheduler algorithm:
 # cons, delayed, easy, elc, pqueue, prioritize. (default: pqueue)
@@ -49,7 +49,7 @@ allocator = 'bestfit'
 taskMapper = 'default'
 
 # Communication overhead parameters
-# a0[a1,a2,a3,a4] (default: none)
+# a[b,c,d,e] (default: none)
 timeperdistance = '.7[.3,0.9875,0.3848,.2]'
 
 # Heat distribution matrix (D_matrix) input file

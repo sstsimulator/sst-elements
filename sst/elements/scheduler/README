@@ -10,15 +10,15 @@ job given when the job was submitted, if any). The optional entries are:
 - center <center task number of the job>
 - coord <task communication file> <task coordinates file in matrixMarket>
 - mesh <x> <y> <z>: job with stencil communication with x,y,z dimensions
-If no communication structure is given, all-to-all communication is assumed
+If no communication structure is given, all-to-all communication is assumed.
 The .sim file can be created from the Parallel Workloads Archive .swf format
-using convert_trace.pl. The output from the simulatons is stored in a .time
+using convertTrace.py. The output from the simulatons is stored in a .time
 file (stating information about each job, particularly what time and in what
 order each was run) and a .alloc file (gives allocation information about each 
 job such as number of processors and total pairwise L1 distance--note that
 SimpleMachine does not support .alloc files). If the original simulation was
 example.sim, the outputs will be example.sim.time and example.sim.alloc. All
-the files necesary to do this, both example simulations from the PWA and perl
+the files necesary to do this, both example simulations from the PWA and python
 scripts to create helper files, are in the /simulations subfolder. Note that as
 if this writing, simulations with jobs that require more than
 (UNSIGNED_LONG_MAX)/10^12 bits will not run correctly. If there are 64 bits in
@@ -30,7 +30,7 @@ a long, this corresponds to 7 months after the start (time 18446744).
 
 There are two options to run SST: 
 
-1) ./sst pyhtonInput.py --verbose
+1) ./sst sstInput.py --verbose
 2) ./sst --sdl-file=example.sdl --verbose 
 
 where --verbose is optional. sst is in the /core folder of the installation.
@@ -39,14 +39,14 @@ by modifying the parameters at the beginning of the file. The command is:
 
 python makeInput.py
 
-An sdl file for a given instance can be generated using makeSDL.pl, with the
-first argument the number of processors, second argument the name of the trace
-file (the .sim file), and the third through fifth argument the name of the
-scheduler, machine, and allocator respectively. The scheduler, machine, and
-allocator can be modified from their original version using brackets, i.e.
-pqueue[shortfirst] is a priority queue that runs the shortest jobs first,
-whereas pqueue defaults to a fifo priority queue. Note that the
-Perl script gives the SDL as terminal output and it must be piped into
+Alternatively, an sdl file for a given instance can be generated using 
+makeSDL.pl, with the first argument the number of processors, second argument
+the name of the trace file (the .sim file), and the third through fifth
+argument the name of the scheduler, machine, and allocator respectively. The
+scheduler, machine, and allocator can be modified from their original version
+using brackets, i.e. pqueue[shortfirst] is a priority queue that runs the
+shortest jobs first, whereas pqueue defaults to a fifo priority queue. Note
+that the Perl script gives the SDL as terminal output and it must be piped into
 the file directly. An example command to generate an SDL file named
 "testsdl.sdl" with the easy scheduler (with priorities based on largest
  number of required processors), on a 24x167x1 mesh with a random
@@ -310,8 +310,6 @@ An example of the sdl file with strict FST calculations would be
 ./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random strict > testsdl.sdl 
 
 
-
-
         Allocation Based Timing:
 
 The scheduler component can change the runtime of jobs based on their
@@ -320,14 +318,18 @@ each pair of nodes allocated for the job.  Therefore, a mesh is required for
 this metric to be used.  
 
 The details are given in the parameter <timeperdistance> in the sdl file.  The
-format is a[b,c,d]; then the total time for a job is
+format is a[b,c,d,r]; then the total time for a job is
 
-a * (ActualRunTime) + b* (c + d * (AveragePerNeighborL1Distance))
+BaselineRunningTime * (a + b * (c + AveragePerNeighborL1Distance * (d + r))
+
+Where BaselineRunningTime of a job is calculated assuming that the same job is
+allocated to the smallest possible rectangular mesh and its tasks are mapped
+in-order (simple task mapper). r is the randomization factor.
 
 An important detail is that this may be larger than the Estimated Run Time for
 some simulations. If this happens, SST does throws an error.
 
-makesdl.pl can also incorporate the allocation based timing.  An example with a
-= .7, b = .3, c = 19.6666, d = 1.9161 is
+makesdl.pl can also incorporate the allocation based timing. An example with a
+= .7, b = .3, c = 0.9875, d = 0.3848, r = 0.2 is
 
-./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random none .7[.3,19.6666,1.9161] > testsdl.sdl 
+./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random none .7[.3,0.9875,0.3848,.2] > testsdl.sdl 

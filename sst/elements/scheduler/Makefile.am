@@ -105,8 +105,7 @@ EXTRA_DIST = \
 	simulations/makeSDL.pl \
 	simulations/test_scheduler_Atlas.sim \
 	simulations/sphere3.mtx \
-	simulations/sphere3_coord.mtx \
-	simulations/makeInput.py
+	simulations/sphere3_coord.mtx
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
 libscheduler_la_LIBADD =
