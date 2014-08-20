@@ -54,7 +54,7 @@ AllocInfo* SpectralAllocMapper::allocate(Job* job)
     std::vector<int>* freeNodes = mach.getFreeNodes();
     commMatrix = job->taskCommInfo->getCommInfo();
     unsigned int numNodes = ai->getNodesNeeded();
-    unsigned long mappedcount = numNodes;
+    unsigned long int mappedcount = numNodes;
 
     vector<int>* taskToNode = new vector<int>(numNodes, -1);
     //pairs representing potential correspondence
@@ -76,8 +76,8 @@ AllocInfo* SpectralAllocMapper::allocate(Job* job)
         //find max of it and select the corresponding pair
         double max = 0;
         int index = 0;
-        unsigned long maxIndex = -1;
-        for(list<unsigned long>::const_iterator it = pairIndices.begin(); it != pairIndices.end(); it++){
+        unsigned long int maxIndex = -1;
+        for(list<unsigned long int>::const_iterator it = pairIndices.begin(); it != pairIndices.end(); it++){
             if(principal->at(index) > max && taskToNode->at(possPairs[*it].first) == -1){
                 max = principal->at(index);
                 maxIndex = *it;
@@ -91,8 +91,8 @@ AllocInfo* SpectralAllocMapper::allocate(Job* job)
         taskToNode->at(toMap.first) = toMap.second;
 
         //remove conflicting pairs
-        list<unsigned long>::iterator tempIt;
-        for(list<unsigned long>::iterator it = pairIndices.begin(); it != pairIndices.end(); it++){
+        list<unsigned long int>::iterator tempIt;
+        for(list<unsigned long int>::iterator it = pairIndices.begin(); it != pairIndices.end(); it++){
             if(possPairs[*it].first == toMap.first || possPairs[*it].second == toMap.second){
                 tempIt = it;
                 pairIndices.erase(it);
@@ -111,7 +111,7 @@ AllocInfo* SpectralAllocMapper::allocate(Job* job)
 
     //fill allocInfo
     int index = 0;
-    for(list<unsigned long>::iterator it = pairIndices.begin(); it != pairIndices.end(); it++){
+    for(list<unsigned long int>::iterator it = pairIndices.begin(); it != pairIndices.end(); it++){
         toMap = possPairs[*it];
         ai->nodeIndices[index] = toMap.second;
         index++;
@@ -163,12 +163,12 @@ vector<double>* SpectralAllocMapper::multWithM(const vector<double> & inVector) 
     //vector is ordered such that t0<->n0, t0<->n1, ..., t1<->n0, t1<->n1, ...
     vector<double>* retVec = new vector<double>(pairIndices.size(), 0);
     long int resInd = 0; //index for retVec
-    for(list<unsigned long>::const_iterator i = pairIndices.begin(); i != pairIndices.end(); i++){
+    for(list<unsigned long int>::const_iterator i = pairIndices.begin(); i != pairIndices.end(); i++){
         int task0 = possPairs[*i].first;
-        unsigned long node0 = possPairs[*i].second;
-        for(list<unsigned long>::const_iterator j = pairIndices.begin(); j != pairIndices.end(); j++){
+        unsigned long int node0 = possPairs[*i].second;
+        for(list<unsigned long int>::const_iterator j = pairIndices.begin(); j != pairIndices.end(); j++){
             int task1 = possPairs[*j].first;
-            unsigned long node1 = possPairs[*j].second;
+            unsigned long int node1 = possPairs[*j].second;
             long int mulInd = 0; //index for inVector
             if(task0 != task1
                     && node0 != node1

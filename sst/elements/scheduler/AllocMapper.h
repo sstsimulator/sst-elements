@@ -34,7 +34,7 @@ namespace SST {
                 AllocMapper(const Machine & mach) : Allocator(mach), TaskMapper(mach) { };
                 ~AllocMapper(){
                     if(!mappings.empty()){
-                        for(std::map<long, std::vector<int>*>::const_iterator it = mappings.begin(); it != mappings.end(); it++){
+                        for(std::map<long int, std::vector<int>*>::const_iterator it = mappings.begin(); it != mappings.end(); it++){
                             delete it->second;
                         }
                     }
@@ -52,15 +52,11 @@ namespace SST {
                 TaskMapInfo* mapTasks(AllocInfo* allocInfo);
 
             private:
-                static std::map<long, std::vector<int>*> mappings; //keeps the task mapping after allocation
+                static std::map<long int, std::vector<int>*> mappings; //keeps the task mapping after allocation
 
             protected:
-                //adds mapping information
-                void addMapping(long jobNum, std::vector<int>* taskToNode);
-                //return mapping of the given job
-                //calls schedout.fatal() if mapping is not available
-                std::vector<int>* getMappingOf(long jobNum);
-
+                //stores mapping information
+                void addMapping(long int jobNum, std::vector<int>* taskToNode);
         };
     }
 }

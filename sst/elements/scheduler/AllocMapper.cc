@@ -20,32 +20,26 @@
 using namespace SST::Scheduler;
 
 //set aside memory for mappings
-std::map<long, std::vector<int>*> AllocMapper::mappings = std::map<long, std::vector<int>*>();
+std::map<long int, std::vector<int>*> AllocMapper::mappings = std::map<long int, std::vector<int>*>();
 
 TaskMapInfo* AllocMapper::mapTasks(AllocInfo* allocInfo)
 {
-    long jobNum = allocInfo->job->getJobNum();
-    std::vector<int>* mapping = getMappingOf(jobNum);
+    long int jobNum = allocInfo->job->getJobNum();
+    if(mappings.count(jobNum) == 0){
+        schedout.fatal(CALL_INFO, 1, "AllocMapper: task mapping for job %ld called before allocation\n", jobNum);
+    }
+    std::vector<int>* mapping = mappings[jobNum];
+    mappings.erase(jobNum);
     TaskMapInfo* tmi = new TaskMapInfo(allocInfo, mach);
-    for(long taskIt = 0; taskIt < allocInfo->job->getProcsNeeded(); taskIt++){
+    for(long int taskIt = 0; taskIt < allocInfo->job->getProcsNeeded(); taskIt++){
         tmi->insert(taskIt, mapping->at(taskIt));
     }
     delete mapping;
     return tmi;
 }
 
-void AllocMapper::addMapping(long jobNum, std::vector<int>* data)
+void AllocMapper::addMapping(long int jobNum, std::vector<int>* data)
 {
     AllocMapper::mappings[jobNum] = data;
-}
-
-std::vector<int>* AllocMapper::getMappingOf(long jobNum)
-{
-    if(mappings.count(jobNum) == 0){
-        schedout.fatal(CALL_INFO, 1, "AllocMapper: task mapping for job %ld called before allocation\n", jobNum);
-    }
-    std::vector<int>* retVal = mappings[jobNum];
-    mappings.erase(jobNum);
-    return retVal;
 }
 

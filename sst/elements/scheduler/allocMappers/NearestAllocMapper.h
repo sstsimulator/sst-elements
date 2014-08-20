@@ -14,6 +14,7 @@
 
 #include "AllocMapper.h"
 
+#include <limits.h>
 #include <list>
 #include <map>
 
@@ -64,7 +65,7 @@ namespace SST {
                 TaskOrderType taskOrder;
 
                 const MeshMachine & mMachine;
-                long lastNode;
+                long int lastNode;
 
                 //allocation variables:
                 // - as object variables for easier access, deleted after allocation
@@ -93,7 +94,7 @@ namespace SST {
                 //@upperLimit: max number of tasks to search for
                 //if(upperLimit < V),   O((E + V lg V) * upperLimit)
                 //else,                 O((E + V lg V) * V)
-                int getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long upperLimit = LONG_MAX) const;
+                int getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long int upperLimit = LONG_MAX) const;
 
                 //returns a center machine node for allocation
                 //@upperLimit: max number of nodes to search for
@@ -101,7 +102,7 @@ namespace SST {
                 //tries first next upperLimit nodes
                 //if(upperLimit < N),   O(N + upperLimit * V^2)
                 //else,                 O(N * V^2)
-                int getCenterNodeExh(const int nodesNeeded, const long upperLimit = LONG_MAX);
+                int getCenterNodeExh(const int nodesNeeded, const long int upperLimit = LONG_MAX);
 
                 //returns a center machine node for allocation
                 //gets the next free node
@@ -123,7 +124,7 @@ namespace SST {
                 //adds the nodes to the outList when provided
                 //if initDist = 0, O(N^2), but typically O(1)
                 //else, O(initDist^2)
-                int closestNodes(const long srcNode, const int initDist, std::list<int> *outList = NULL) const;
+                int closestNodes(const long int srcNode, const int initDist, std::list<int> *outList = NULL) const;
 
                 //returns the tiedNodes element with the least total communication distance using inTask
                 //removes the returned index from the list

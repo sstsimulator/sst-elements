@@ -308,16 +308,16 @@ void NearestAllocMapper::allocateAndMap()
     }
 }
 
-int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long upperLimit) const
+int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long int upperLimit) const
 {
     int centerTask = -1;
     double minDist = DBL_MAX;
     int jobSize = inCommGraph.size();
-    long searchCount = 0;
+    long int searchCount = 0;
 
     double newDist;
-    int minTask = max((long) 0, jobSize / 2  - upperLimit / 2);
-    int maxTask = min((long) jobSize, jobSize / 2 + upperLimit / 2);
+    int minTask = max((long int) 0, jobSize / 2  - upperLimit / 2);
+    int maxTask = min((long int) jobSize, jobSize / 2 + upperLimit / 2);
     for(int task = minTask; task < maxTask; task++){
         //start from the middle task - higher probability of smallest distance
         newDist = dijkstraWithLimit(inCommGraph, task, minDist);
@@ -333,15 +333,15 @@ int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & in
     return centerTask;
 }
 
-int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long upperLimit)
+int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int upperLimit)
 {
     int bestNode = -1;
     double bestScore = -DBL_MAX;
-    long searchCount = 0;
+    long int searchCount = 0;
     //approximate L1 from center to keep all the nodes in a 3D diamond
     const int optDist = cbrt(nodesNeeded);
     //for all nodes
-    for(long nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
+    for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
         if(isFree->at(lastNode)){
             double curScore = 0;
             for(int dist = 1; dist <= optDist + 1; dist++){
@@ -371,7 +371,7 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long upper
 
 int NearestAllocMapper::getCenterNodeGr()
 {
-    for(long nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
+    for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
         if(isFree->at(lastNode)){
             break;
         } else {
@@ -417,7 +417,7 @@ double NearestAllocMapper::dijkstraWithLimit(const vector<map<int,int> > & graph
     return totDist;
 }
 
-int NearestAllocMapper::closestNodes(const long srcNode, const int initDist, std::list<int> *outList) const
+int NearestAllocMapper::closestNodes(const long int srcNode, const int initDist, std::list<int> *outList) const
 {
     int nodeCount = 0;
     int retNode;
