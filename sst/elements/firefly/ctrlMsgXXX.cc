@@ -49,7 +49,9 @@ XXX::XXX( Component* owner, Params& params ) :
         new Event::Handler<XXX>(this,&XXX::delayHandler));
 
     m_matchDelay_ns = params.find_integer( "matchDelay_ns", 1 );
-    m_memcpyDelay_ps = params.find_integer( "memcpyDelay_ps", 1 );
+    m_memcpyBaseDelay_ns = params.find_integer( "memcpyBaseDelay_ns", 100 );
+    m_memcpyPer64BytesDelay_ns = 
+                    params.find_integer( "memcpyPer64BytesDelay_ns", 1 );
     m_txDelay = params.find_integer( "txDelay_ns", 100 );
     m_rxDelay = params.find_integer( "rxDelay_ns", 100 );
     m_txNicDelay = params.find_integer( "txNicDelay_ns", 100 );
@@ -80,6 +82,12 @@ void XXX::init( Info* info, VirtNic* nic )
 {
     m_info = info;
     m_nic = nic;
+    nic->setNotifyOnPutDone(
+        new VirtNic::Handler<XXX,void*>(this, &XXX::notifyPutDone )
+    );
+    nic->setNotifyOnGetDone(
+        new VirtNic::Handler<XXX,void*>(this, &XXX::notifyGetDone )
+    );
     nic->setNotifyOnSendPioDone(
         new VirtNic::Handler<XXX,void*>(this, &XXX::notifySendPioDone )
     );
@@ -110,8 +118,12 @@ void XXX::setup()
     m_processQueuesState = new ProcessQueuesState<XXX>(
                         m_dbg_level, m_dbg_loc, *this );
 
-    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns. memcpyDelay %d ps\n",
-                            m_matchDelay_ns, m_memcpyDelay_ps );
+    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns.\n",  m_matchDelay_ns );
+    m_dbg.verbose(CALL_INFO,1,0,"memcpyBaseDelay %d ns.\n", 
+                            m_memcpyBaseDelay_ns );
+    m_dbg.verbose(CALL_INFO,1,0,"memcpyPer64BytesDelay %d ns.\n",
+                            m_memcpyPer64BytesDelay_ns );
+
     m_dbg.verbose(CALL_INFO,1,0,"txDelay %d ns. rxDelay %d ns\n",
                             m_txDelay, m_rxDelay );
 }
@@ -270,6 +282,34 @@ void XXX::delayHandler( SST::Event* e )
         }
     }
     delete e;
+}
+
+bool XXX::notifyGetDone( void* key )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"key=%p\n",key);
+
+    if ( key ) {
+        FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
+        if ( (*functor)() ) {
+            delete functor;
+        }     
+    }
+
+    return true;
+}
+
+bool XXX::notifyPutDone( void* key )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"key=%p\n",key);
+
+    if ( key ) {
+        FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
+        if ( (*functor)() ) {
+            delete functor;
+        }     
+    }
+
+    return true;
 }
 
 bool XXX::notifySendPioDone( void* key )

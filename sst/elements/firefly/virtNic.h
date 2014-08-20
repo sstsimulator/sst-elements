@@ -158,13 +158,20 @@ class VirtNic : public SST::Module {
     void dmaSend( int dest, int tag, std::vector<IoVec>& vec, void* key );
     void dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key );
     void pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key );
+    void get( int node, int tag, std::vector<IoVec>& vec, void* key );
+    void put( int node, int tag, std::vector<IoVec>& vec, void* key );
+    void regMem( int node, int tag, std::vector<IoVec>& vec, void *key );
 
     void setNotifyOnSendDmaDone(VirtNic::HandlerBase<void*>* functor);
     void setNotifyOnRecvDmaDone(
         VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor);
     void setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor);
+    void setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor);
+    void setNotifyOnPutDone(VirtNic::HandlerBase<void*>* functor);
     void setNotifyNeedRecv( VirtNic::HandlerBase3Args<int,int,size_t>* functor);
 
+    void notifyGetDone( void* key );
+    void notifyPutDone( void* key );
     void notifySendPioDone( void* key );
     void notifySendDmaDone( void* key );
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
@@ -183,6 +190,8 @@ class VirtNic : public SST::Module {
     Output::output_location_t   m_dbg_loc;
     int                         m_dbg_level;
 
+    VirtNic::HandlerBase<void*>* m_notifyGetDone; 
+    VirtNic::HandlerBase<void*>* m_notifyPutDone; 
     VirtNic::HandlerBase<void*>* m_notifySendPioDone; 
     VirtNic::HandlerBase<void*>* m_notifySendDmaDone; 
     VirtNic::HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone; 

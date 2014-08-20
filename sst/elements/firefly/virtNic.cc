@@ -21,6 +21,8 @@ using namespace SST;
 
 VirtNic::VirtNic( Component* owner, Params& params ) :
     m_realNicId(-1),
+    m_notifyGetDone(NULL),
+    m_notifyPutDone(NULL),
     m_notifySendPioDone(NULL),
     m_notifySendDmaDone(NULL),
     m_notifyRecvDmaDone(NULL),
@@ -39,6 +41,8 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
 
 VirtNic::~VirtNic()
 {
+    if ( m_notifyPutDone ) delete m_notifyPutDone;
+    if ( m_notifyGetDone ) delete m_notifyGetDone;
     if ( m_notifySendPioDone ) delete m_notifySendPioDone;
     if ( m_notifySendDmaDone ) delete m_notifySendDmaDone;
     if ( m_notifyRecvDmaDone ) delete m_notifyRecvDmaDone;
@@ -75,6 +79,12 @@ void VirtNic::handleEvent( Event* ev )
     m_dbg.verbose(CALL_INFO,2,0,"%d\n",event->type);
 
     switch( event->type ) {
+    case NicRespEvent::Get:
+        (*m_notifyGetDone)( event->key );
+        break;
+    case NicRespEvent::Put:
+        (*m_notifyPutDone)( event->key );
+        break;
     case NicRespEvent::PioSend:
         (*m_notifySendPioDone)( event->key );
         break;
@@ -131,6 +141,27 @@ void VirtNic::pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 			calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
 }
 
+void VirtNic::get( int node, int tag, std::vector<IoVec>& vec, void* key )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get, 
+			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
+}
+
+void VirtNic::put( int node, int tag, std::vector<IoVec>& vec, void* key )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get, 
+			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
+}
+
+void VirtNic::regMem( int node, int tag, std::vector<IoVec>& vec, void* key )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::RegMemRgn, 
+			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
+}
+
 void VirtNic::setNotifyOnSendDmaDone(VirtNic::HandlerBase<void*>* functor) 
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
@@ -148,6 +179,18 @@ void VirtNic::setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor)
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_notifySendPioDone = functor;
+}
+
+void VirtNic::setNotifyOnPutDone(VirtNic::HandlerBase<void*>* functor) 
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_notifyPutDone = functor;
+}
+
+void VirtNic::setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor) 
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_notifyGetDone = functor;
 }
 
 void VirtNic::setNotifyNeedRecv(

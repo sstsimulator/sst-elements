@@ -60,7 +60,7 @@ class NicInitEvent : public Event {
 class NicCmdEvent : public Event {
 
   public:
-    enum Type { PioSend, DmaSend, DmaRecv } type;
+    enum Type { PioSend, DmaSend, DmaRecv, Put, Get, RegMemRgn } type;
     int  node;
 	int dst_vNic;
     int tag;
@@ -99,7 +99,7 @@ class NicCmdEvent : public Event {
 class NicRespEvent : public Event {
 
   public:
-    enum Type { PioSend, DmaSend, DmaRecv, NeedRecv } type;
+    enum Type { PioSend, DmaSend, DmaRecv, NeedRecv, Put, Get } type;
     int src_vNic;
     int node;
     int tag;
@@ -162,6 +162,7 @@ class Nic : public SST::Component  {
   private:
 
     struct MsgHdr {
+        enum Op { Msg, Rdma } op;
         size_t len;
         int    tag;
         unsigned short    dst_vNicId;
@@ -171,7 +172,7 @@ class Nic : public SST::Component  {
     class SelfEvent : public SST::Event {
       public:
         enum { MatchDelay, ProcessMerlinEvent,
-                ProcessSend } type;
+                ProcessSend, Put, Get } type;
         ~SelfEvent() {}
 
         int                 node;
@@ -198,49 +199,295 @@ class Nic : public SST::Component  {
         void notifyNeedRecv( int src_vNic, int src, int tag, size_t len );
         void notifySendDmaDone( void* key );
         void notifySendPioDone( void* key );
+        void notifyPutDone( void* key );
+        void notifyGetDone( void* key );
     };
 
 
+    class MemRgnEntry {
+      public:
+        MemRgnEntry( int _vNicNum, std::vector<IoVec>& iovec ) : 
+            m_vNicNum( _vNicNum ),
+            m_iovec( iovec )
+        { }
+
+        std::vector<IoVec>& iovec() { return m_iovec; } 
+        int vNicNum() { return m_vNicNum; }
+
+      private:
+        int          m_vNicNum;
+        std::vector<IoVec>  m_iovec;
+        
+    };
+
+    template < class TRetval = void  >
+    class NotifyFunctorBase {
+    public:
+        virtual TRetval operator()() = 0;
+        virtual ~NotifyFunctorBase() {}
+    };
+
+    template < class T1, class A1, class TRetval = void >
+    class NotifyFunctor_1 : public NotifyFunctorBase< TRetval > {
+      private:
+        T1* m_obj;
+        TRetval ( T1::*m_fptr )( A1 );
+        A1 m_a1;
+
+      public:
+        NotifyFunctor_1( T1* obj, TRetval (T1::*fptr)(A1), A1 a1 ) :
+            m_obj( obj ),
+            m_fptr( fptr ), 
+            m_a1( a1 )
+        {}
+
+        virtual TRetval operator()( ) {
+            return (*m_obj.*m_fptr)( m_a1  );
+        }
+    };
+
+    template < class T1, class A1, class A2, class TRetval = void >
+    class NotifyFunctor_2 : public NotifyFunctorBase< TRetval > {
+      private:
+        T1* m_obj;
+        TRetval ( T1::*m_fptr )( A1, A2 );
+        A1 m_a1;
+        A2 m_a2;
+
+      public:
+        NotifyFunctor_2( T1* obj, TRetval (T1::*fptr)(A1,A2), A1 a1, A2 a2 ) :
+            m_obj( obj ),
+            m_fptr( fptr ), 
+            m_a1( a1 ),
+            m_a2( a2 )
+        {}
+
+        virtual TRetval operator()( ) {
+            return (*m_obj.*m_fptr)( m_a1, m_a2  );
+        }
+    };
+
+    template < class T1, class A1, class A2, class A3, class A4, class A5, 
+                    class A6, class TRetval = void >
+    class NotifyFunctor_6 : public NotifyFunctorBase< TRetval > {
+      private:
+        T1* m_obj;
+        TRetval ( T1::*m_fptr )( A1, A2, A3, A4, A5, A6 );
+        A1 m_a1;
+        A2 m_a2;
+        A3 m_a3;
+        A4 m_a4;
+        A5 m_a5;
+        A6 m_a6; 
+
+      public:
+        NotifyFunctor_6( T1* obj, TRetval (T1::*fptr)(A1, A2, A3, A4, A5, A6 ),
+                 A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6 ) :
+            m_obj( obj ),
+            m_fptr( fptr ), 
+            m_a1( a1 ),
+            m_a2( a2 ),
+            m_a3( a3 ),
+            m_a4( a4 ),
+            m_a5( a5 ),
+            m_a6( a6 )
+        {}
+
+        virtual TRetval operator()( ) {
+            return (*m_obj.*m_fptr)( m_a1, m_a2, m_a3, m_a4, m_a5, m_a6  );
+        }
+    };
+
     class Entry {
       public:
-        Entry( int _vNicNum, NicCmdEvent* event ) : 
+        Entry( int local_vNic, NicCmdEvent* cmd = NULL ) :
             currentVec(0),
             currentPos(0),
             currentLen(0),
-            m_event( event ),
-            m_vNicNum( _vNicNum )
+            m_cmdEvent( cmd ),
+            m_local_vNic( local_vNic ),
+            m_ioVec( NULL ),
+            m_notifyFunctor( NULL )
         {
         }
+        ~Entry() { 
+            if ( m_cmdEvent ) delete m_cmdEvent; 
+            if ( m_notifyFunctor ) delete m_notifyFunctor;
+        }
 
-        int node() { return m_event->node; }
+        int local_vNic()   { return m_local_vNic; }
 
-        int vNicNum() { return m_vNicNum; }
-        int src_vNicNum() { return m_src_vNicNum; }
-        void set_src_vNicNum( int val ) { m_src_vNicNum = val; }
-
-        std::vector<IoVec>& ioVec() { return m_event->iovec; }
-
-        NicCmdEvent* event() { return m_event; }
+        std::vector<IoVec>& ioVec() { 
+            assert(m_ioVec);
+            return *m_ioVec; 
+        }
 
         size_t totalBytes() {
+            assert(m_ioVec);
             size_t bytes = 0;
-            for ( unsigned int i = 0; i < m_event->iovec.size(); i++ ) {
-                bytes += m_event->iovec[i].len; 
+            for ( unsigned int i = 0; i < m_ioVec->size(); i++ ) {
+                bytes += m_ioVec->at(i).len; 
             } 
             return bytes;
         }
+
         size_t      currentVec;
         size_t      currentPos;  
         size_t      currentLen; 
-        int         src;
-        int         tag;
-        size_t      len;
+        virtual void* key() { 
+            assert( m_cmdEvent );
+            return m_cmdEvent->key; 
+        }
 
+        virtual int node() {
+            assert( m_cmdEvent );
+            return m_cmdEvent->node;
+        }
+        void setNotifier( NotifyFunctorBase<>* notifier) {
+            m_notifyFunctor = notifier;
+        }
+        void notify() {
+            if ( m_notifyFunctor ) {
+                (*m_notifyFunctor)(); 
+            }
+        }
+        
+      protected:
+        NicCmdEvent*        m_cmdEvent;
+        int                 m_local_vNic;
+        std::vector<IoVec>* m_ioVec;
 
       private:
-        NicCmdEvent*  m_event;
-        int           m_vNicNum;
-        int           m_src_vNicNum;
+        NotifyFunctorBase<>* m_notifyFunctor;
+    };
+
+
+    class SendEntry: public Entry {
+      public:
+
+        SendEntry( int local_vNic, NicCmdEvent* cmd = NULL ) : 
+            Entry( local_vNic, cmd )
+        {
+            m_ioVec = &m_cmdEvent->iovec;
+        }
+
+        virtual MsgHdr::Op getOp() {
+            return MsgHdr::Msg;
+        }
+
+        virtual int tag()       { return m_cmdEvent->tag; }
+        virtual int dst_vNic( ) { return m_cmdEvent->dst_vNic; } 
+        virtual int type()      { return m_cmdEvent->type; }
+    };
+
+    class RecvEntry: public Entry {
+
+      public:
+        RecvEntry( int local_vNic, NicCmdEvent* cmd = NULL ) : 
+            Entry( local_vNic, cmd) 
+        {
+            if ( cmd ) {
+                m_ioVec = &cmd->iovec;  
+            }
+        }
+
+        void setMatchInfo( int src, MsgHdr& hdr ) { 
+            m_matchSrc = src;
+            m_matchHdr = hdr; 
+        } 
+
+        int match_src()    { return m_matchSrc; }
+        virtual int match_tag()    { return m_matchHdr.tag; }  
+        size_t match_len() { return m_matchHdr.len; }  
+        int src_vNic()     { return m_matchHdr.src_vNicId; }
+
+      private:
+        int                 m_matchSrc;
+        MsgHdr              m_matchHdr;
+    };
+
+    class PutRecvEntry : public RecvEntry {
+      public:
+        PutRecvEntry( int local_vNic, std::vector<IoVec>* ioVec ) :
+            RecvEntry( local_vNic ),
+            m_recvVec(*ioVec)
+        {
+            m_ioVec = &m_recvVec;
+        }
+
+        int match_tag() { return -1; }
+
+      private:
+        void* m_key;
+        std::vector<IoVec> m_recvVec;
+    };
+
+    struct RdmaMsgHdr {
+        enum { Put, Get, GetResp } op;
+        uint16_t    rgnNum;
+        uint16_t    respKey;
+        uint32_t    offset;
+    };
+
+    class GetOrgnEntry : public SendEntry {
+      public:
+        GetOrgnEntry( int local_vNic, NicCmdEvent* cmd, int respKey ) :
+            SendEntry( local_vNic, cmd ),
+            m_rdmaVec( 1 ) 
+        { 
+            m_hdr.respKey = respKey;
+            m_hdr.rgnNum = cmd->tag; 
+            m_hdr.offset = -1;
+            m_hdr.op = RdmaMsgHdr::Get;
+            m_rdmaVec[0].ptr = &m_hdr;
+            m_rdmaVec[0].len = sizeof( m_hdr );
+            m_ioVec = &m_rdmaVec;
+        }
+
+        virtual MsgHdr::Op getOp() {
+            return MsgHdr::Rdma;
+        }
+        
+      private:
+        RdmaMsgHdr          m_hdr;
+        std::vector<IoVec>  m_rdmaVec; 
+    };
+
+    class PutOrgnEntry : public SendEntry {
+      public:
+        PutOrgnEntry( int local_vNic, int dst_node,int dst_vNic,
+                int respKey, MemRgnEntry* memRgn ) :
+            SendEntry( local_vNic ),
+            m_dst_node( dst_node ),
+            m_dst_vNic( dst_vNic ), 
+            m_memRgn( memRgn )
+        {
+            m_putVec.resize(1);
+            m_hdr.respKey = respKey;
+            m_hdr.op = RdmaMsgHdr::GetResp;
+            m_putVec[0].ptr = &m_hdr;
+            m_putVec[0].len = sizeof(m_hdr);
+            for ( unsigned int i; i < memRgn->iovec().size(); i++ ) {
+                m_putVec.push_back( memRgn->iovec()[i] );
+            }
+
+            m_ioVec = &m_putVec;
+        }
+
+        virtual MsgHdr::Op getOp() {
+            return MsgHdr::Rdma;
+        }
+        virtual int tag() { return -1; }
+        virtual int dst_vNic() { return m_dst_vNic; }
+        virtual int node() { return m_dst_node; }
+        virtual int type() { return NicCmdEvent::Put; }
+
+      private:
+        int                 m_dst_node;
+        int                 m_dst_vNic;
+        MemRgnEntry*        m_memRgn;
+        RdmaMsgHdr          m_hdr;
+        std::vector<IoVec>  m_putVec;
     };
 
 public:
@@ -253,20 +500,25 @@ public:
     int getNum_vNics() { return m_num_vNics; }
 
   private:
+    bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
     void dmaSend( NicCmdEvent*, int );
     void pioSend( NicCmdEvent*, int );
     void dmaRecv( NicCmdEvent*, int );
+    void get( NicCmdEvent*, int );
+    void put( NicCmdEvent*, int );
+    void regMemRgn( NicCmdEvent*, int );
     void processSend();
-    Entry* processSend( Entry* );
+    void processGet(SelfEvent& );
+    SendEntry* processSend( SendEntry* );
 
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );
     }
     
     bool processRecvEvent( MerlinFireflyEvent* );
-    bool findRecv( MerlinFireflyEvent*, MsgHdr& );
+    bool findRecv( int src, MsgHdr& );
     void moveEvent( MerlinFireflyEvent* );
 
     void notifySendDmaDone( int vNicNum, void* key ) {
@@ -287,6 +539,20 @@ public:
         m_vNicV[vNic]->notifyNeedRecv( src_vNic, src, tag, length );
     }
 
+    void notifyPutDone( int vNic, void* key ) {
+        m_dbg.verbose(CALL_INFO,2,0,"%p\n",key);
+        assert(0);
+    }
+
+    void notifyGetDone( int vNic, void* key ) {
+        m_dbg.verbose(CALL_INFO,2,0,"%p\n",key);
+        m_vNicV[vNic]->notifyGetDone( key );
+    }
+
+    uint16_t genGetKey() {
+        return ++m_getKey;
+    }
+
     size_t copyIn( Output& dbg, Nic::Entry& entry, MerlinFireflyEvent& event );
     bool  copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry );
 
@@ -295,10 +561,12 @@ public:
     int NetToId( int );
     int IdToNet( int );
 
-    std::deque<Entry*>      m_sendQ;
-    Entry*                  m_currentSend;
-    std::vector< std::map< int, std::deque<Entry*> > > m_recvM;
-    std::map< int, Entry* > m_activeRecvM;;
+    std::deque<SendEntry*>      m_sendQ;
+    std::vector< std::map< int, MemRgnEntry* > > m_memRgnM;
+    SendEntry*                  m_currentSend;
+    std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;
+    std::map< int, RecvEntry* > m_activeRecvM;
+    std::map< int, PutRecvEntry* > m_getOrgnM;
  
     int                     m_rxMatchDelay;
     int                     m_txDelay;
@@ -323,6 +591,7 @@ public:
     int  m_ftLoading;
 	unsigned int  m_packetSizeInBytes;
 	int  m_packetSizeInBits;
+    uint16_t m_getKey;
 }; 
 
 } // namesapce Firefly 

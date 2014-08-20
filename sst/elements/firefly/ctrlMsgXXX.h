@@ -41,6 +41,7 @@ class StateArgsBase;
 typedef unsigned char key_t;
 
 static const key_t LongGetKey  = 1 << (sizeof(key_t) * 8 - 2);
+static const key_t LongAckKey = LongGetKey;
 static const key_t LongRspKey  = 2 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadReqKey  = 3 << (sizeof(key_t) * 8 - 2);
 static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
@@ -119,7 +120,9 @@ class XXX  {
     void schedFunctor( FunctorBase_0<bool>*, int delay = 0 );
 
     int memcpyDelay(int bytes ) {
-        return (float) (bytes * m_memcpyDelay_ps)/ 1000.0; 
+        if ( 0 == bytes ) return 0;
+        return m_memcpyBaseDelay_ns + 
+                    (bytes / 64) * m_memcpyPer64BytesDelay_ns; 
     } 
 
     int matchDelay( int i ) {
@@ -160,7 +163,8 @@ class XXX  {
     }
 
     int m_matchDelay_ns;
-    int m_memcpyDelay_ps;
+    int m_memcpyBaseDelay_ns;
+    int m_memcpyPer64BytesDelay_ns;
     int m_txDelay;
     int m_rxDelay;
     int m_txNicDelay;
@@ -195,6 +199,8 @@ class XXX  {
   private:
     void delayHandler( Event* );
     void loopHandler( Event* );
+    bool notifyGetDone( void* );
+    bool notifyPutDone( void* );
     bool notifySendPioDone( void* );
     bool notifySendDmaDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
