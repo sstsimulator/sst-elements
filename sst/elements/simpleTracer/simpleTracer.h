@@ -64,7 +64,6 @@ private:
     unsigned int sbCount;
     uint64_t timestamp;
 
-    vector<SST::MemHierarchy::Addr>bucketList;
     vector<SST::MemHierarchy::Addr>AddrHist;   // Address Histogram
     vector<unsigned int> AccessLatencyDist;
 

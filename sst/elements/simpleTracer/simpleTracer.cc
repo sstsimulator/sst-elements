@@ -74,6 +74,9 @@ simpleTracer::simpleTracer( ComponentId_t id, Params& params ): Component( id ) 
     nanoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 
     out->debug(CALL_INFO, 1, 0, "simpleTracer initialization complete\n");
+    nbCount = 0;
+    sbCount = 0;
+    timestamp = 0;
 
 } // constructor 
 
@@ -83,14 +86,14 @@ simpleTracer::~simpleTracer() {}
 bool simpleTracer::clock(Cycle_t current){
     timestamp++;
 
-    unsigned int pageNum; 
-    unsigned int accessLatency;
+    unsigned int pageNum = 0; 
+    unsigned int accessLatency = 0;
     SST::Event *ev = NULL;
-    SST::MemHierarchy::Addr addr;
+    SST::MemHierarchy::Addr addr =0;
     //uint64_t picoseconds = (uint64_t) picoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
     uint64_t nanoseconds = (uint64_t) nanoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
 
-// process Memevents from north-side to south-side
+    // process Memevents from north-side to south-side
     while((ev = northBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){ 
@@ -153,7 +156,7 @@ bool simpleTracer::clock(Cycle_t current){
         }
 
         if(writeDebug_8 & writeTrace){
-             fprintf(traceFile,"SB: Addr: 0x%" PRIu64, addr);
+             fprintf(traceFile,"SB: Addr: 0x%" PRIu64, me->getAddr());
              fprintf(traceFile, " timestamp: %"PRIu64, timestamp);
              fprintf(traceFile, " Cmd: %u", me->getCmd());
              fprintf(traceFile, " ID: %"PRIu64"-%d", me->getID().first, me->getID().second);
@@ -168,7 +171,6 @@ bool simpleTracer::clock(Cycle_t current){
     }
 
     return false;
-
 } //clock
 
 void simpleTracer::finish(){
@@ -218,9 +220,9 @@ void simpleTracer::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> 
 
 void simpleTracer::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins){
 // Prints Access Latency Distribution
-
     unsigned int count = 0;
-    unsigned int minLat, maxLat;
+    unsigned int minLat = 0;
+    unsigned int maxLat = 0;
     bool minSet = false;
     for (unsigned int i=0; i<AccessLatencyDist.size(); i++){
         if (AccessLatencyDist[i] > 0) {
@@ -250,7 +252,7 @@ void simpleTracer::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins
         if (0 == latencyHist.size()){ 
              latencyHist.resize(numBins); 
         }
-        float steps = (float)(maxLat - minLat)/ numBins;
+        float steps = (float) maxLat/numBins;
         unsigned int step = (unsigned int) ceil(steps);
         //fprintf(fp, "steps = %f\t step = %u\n", steps, step);
         for (unsigned int i=0; i<AccessLatencyDist.size(); i++){
