@@ -259,6 +259,16 @@ class ProcessQueuesState : StateBase< T1 >
         WaitReq*    req;
     };
 
+    class ProcessLongGetFiniCtx : public FuncCtxBase {
+      public:
+		ProcessLongGetFiniCtx( _CommReq* _req ) : req( _req ) {}
+
+        ~ProcessLongGetFiniCtx() { }
+
+        _CommReq*    req;
+    };
+
+
     nid_t calcNid( _CommReq* req, Hermes::RankID rank ) {
         return obj().info()->getGroup( req->getGroup() )->getNodeId(rank);
     }
@@ -270,7 +280,8 @@ class ProcessQueuesState : StateBase< T1 >
 
     void processLoopResp( LoopResp* );
     void processLongAck( GetInfo* );
-    void processLongGetFini( _CommReq* );
+    void processLongGetFini( std::deque< FuncCtxBase* >&, _CommReq* );
+    bool processLongGetFini0( std::deque< FuncCtxBase* >& );
     void processPioSendFini( _CommReq* );
 
     bool enterSend( _CommReq* );
@@ -622,12 +633,6 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     } 
 
     // this does not cost time
-    while ( ! m_longGetFiniQ.empty() ) {
-        processLongGetFini( m_longGetFiniQ.front() );
-        m_longGetFiniQ.pop_front();
-    }
-
-    // this does not cost time
     while ( ! m_longAckQ.empty() ) {
         processLongAck( m_longAckQ.front() );
         m_longAckQ.pop_front();
@@ -639,7 +644,19 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
         m_loopResp.pop_front(); 
     }
 
-    if ( ! m_recvdMsgQ.empty() ) {
+    if ( ! m_longGetFiniQ.empty() ) {
+
+        ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
+        	new FunctorStatic_0< ProcessQueuesState,
+                                      std::deque< FuncCtxBase* >&, bool > 
+          ( this, &ProcessQueuesState::processQueues0, stack ) );  
+        stack.push_back( ctx );
+
+        processLongGetFini( stack, m_longGetFiniQ.front() );
+
+        m_longGetFiniQ.pop_front();
+
+    } else if ( ! m_recvdMsgQ.empty() ) {
 
         ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
         	new FunctorStatic_0< ProcessQueuesState,
@@ -948,9 +965,33 @@ bool ProcessQueuesState<T1>::pioSendFini( CtrlHdr* hdr )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processLongGetFini( _CommReq* req )
+void ProcessQueuesState<T1>::processLongGetFini( 
+                        std::deque< FuncCtxBase* >& stack, _CommReq* req )
 {
-    req->setDone();
+    ProcessLongGetFiniCtx* ctx = new ProcessLongGetFiniCtx( req );
+    dbg().verbose(CALL_INFO,1,0,"\n");
+
+    stack.push_back( ctx );
+
+    FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
+                                            std::deque< FuncCtxBase* >&,
+                                            bool > 
+                    ( this, &ProcessQueuesState::processLongGetFini0, stack );  
+
+    obj().schedFunctor( functor, obj().sendAckDelay()  );
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::processLongGetFini0( 
+                            std::deque< FuncCtxBase* >&stack )
+{
+    _CommReq* req = static_cast<ProcessLongGetFiniCtx*>(stack.back())->req;
+
+    dbg().verbose(CALL_INFO,1,0,"\n");
+    
+    delete stack.back();
+    stack.pop_back();
+    req->setDone( 1500 );
 
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;
@@ -967,7 +1008,12 @@ void ProcessQueuesState<T1>::processLongGetFini( _CommReq* req )
                                                 req->m_ackNid, req->m_ackKey );
 
     obj().nic().pioSend( req->m_ackNid, req->m_ackKey, vec, functor );
+
+    obj().schedFunctor( stack.back()->getRetFunctor() );
+
+    return true;
 }
+
 
 template< class T1 >
 void ProcessQueuesState<T1>::processLongAck( GetInfo* info )

@@ -162,6 +162,10 @@ class XXX  {
         return m_sendReqFiniDelay;
     }
 
+    int sendAckDelay() {
+        return m_sendAckDelay;
+    }
+
     int m_matchDelay_ns;
     int m_memcpyBaseDelay_ns;
     int m_memcpyPer64BytesDelay_ns;
@@ -173,6 +177,7 @@ class XXX  {
     int m_regRegionPerPageDelay_ns;
     int m_regRegionXoverLength;
     int m_sendReqFiniDelay;
+    int m_sendAckDelay;
 
   private:
     class DelayEvent : public SST::Event {
