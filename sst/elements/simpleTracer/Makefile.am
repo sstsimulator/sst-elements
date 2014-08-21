@@ -13,5 +13,6 @@ libsimpleTracer_la_LDFLAGS = -module -avoid-version
 
 EXTRA_DIST = \
         tests/test-1.py \
+        tests/test-2.py \
         README 
 
