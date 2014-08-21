@@ -9,13 +9,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst_config.h"
 #include "TopoMapper.h"
 
-#ifdef HAVE_METIS
-#include <metis.h>
-#endif
+#include "sst_config.h"
 
+#ifdef HAVE_METIS
+#include "metis.h"
+#endif
 #include "rcm.h"
 
 #include <climits>
@@ -62,7 +62,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     numTasks = allocInfo->job->getProcsNeeded();
     numNodes = allocInfo->getNodesNeeded();
 
-    //Call SimpleTaskMapper if <= 2 tasks are provided
+    //Optimization: SimpleTaskMapper if <= 2 tasks are provided
     if(numTasks <= 2 || numNodes == 1){
         SimpleTaskMapper simpleMapper = SimpleTaskMapper(mach);
         return simpleMapper.mapTasks(allocInfo);
@@ -71,17 +71,13 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
     setup(allocInfo); //convert network & job info into required formats
 
     mapping = vector<int>(numTasks);
-#ifdef HAVE_METIS
-    vector<idx_t> part(numTasks); //partition vector: part[task] = partition #
-#else
     vector<int> part(numTasks); //partition vector: part[task] = partition #
-#endif
     //Partition task if nodes have homogeneous multiple processors
     //Current code does not support heterogeneous case
     if( mach.coresPerNode > 1){
 #ifdef HAVE_METIS
         idx_t objval; //objective function result
-
+        vector<idx_t> METIS_part(numTasks); //partition vector: part[task] = partition #
         idx_t nvtxs = numTasks;
         idx_t ncon = 1; //number of balancing constraints
         idx_t nparts = ceil((double) numTasks / mach.coresPerNode); //number of parts to partition
@@ -101,7 +97,34 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
 
         //partition
         METIS_PartGraphKway(&nvtxs, &ncon, &xadj[0], &adjncy[0], NULL, NULL,
-                            &adjwgt[0], &nparts, NULL, NULL, NULL, &objval, &part[0]);
+                            &adjwgt[0], &nparts, NULL, NULL, NULL, &objval, &METIS_part[0]);
+
+        //check if partitioning is balanced or not, correct if necessary
+        //count number of tasks at each vertex
+        std::vector<int> numTasksInNode(nparts, 0);
+        std::vector<int> extraTasks; //keeps overflowing tasks
+        bool isBalanced = true;
+        for(int taskNo = 0; taskNo < numTasks; taskNo++){
+            numTasksInNode[METIS_part[taskNo]]++;
+            if(numTasksInNode[METIS_part[taskNo]] > mach.coresPerNode){
+                extraTasks.push_back(taskNo);
+                isBalanced = false;
+            } else {
+                part[taskNo] = METIS_part[taskNo];
+            }
+        }
+        //fix if not balanced
+        long int nodeIter = 0;
+        while(!isBalanced && !extraTasks.empty()){
+            if(numTasksInNode[nodeIter] < mach.coresPerNode){
+                numTasksInNode[nodeIter]++;
+                part[extraTasks.back()] = nodeIter;
+                extraTasks.pop_back();
+            } else {
+                nodeIter++;
+            }
+        }
+
 #else
         schedout.fatal(CALL_INFO, 1, "Topo Mapper requires METIS library for multi-core nodes");
 #endif
@@ -236,7 +259,6 @@ void TopoMapper::setup(AllocInfo* allocInfo)
             }
         }
     }
-
 }
 
 int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,

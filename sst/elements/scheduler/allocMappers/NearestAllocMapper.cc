@@ -180,15 +180,38 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
         }
         xadj[jobSize] = adjncy.size();
 
-        std::vector<idx_t> METIS_taskToVertex(taskToVertex.size());
+        std::vector<idx_t> METIS_taskToVertex(taskToVertex.size()); //to avoid build error
 
         //partition
         METIS_PartGraphKway(&nvtxs, &ncon, &xadj[0], &adjncy[0], NULL, NULL,
                             &adjwgt[0], &nparts, NULL, NULL, NULL, &objval, &METIS_taskToVertex[0]);
 
-        for(unsigned int i = 0; i < taskToVertex.size(); i++){
-            taskToVertex[i] = METIS_taskToVertex[i];
+        //check if partitioning is balanced or not, correct if necessary
+        //count number of tasks at each vertex
+        std::vector<int> numTasksInNode(nodesNeeded, 0);
+        std::vector<int> extraTasks; //keeps overflowing tasks
+        bool isBalanced = true;
+        for(unsigned int taskNo = 0; taskNo < taskToVertex.size(); taskNo++){
+            numTasksInNode[METIS_taskToVertex[taskNo]]++;
+            if(numTasksInNode[METIS_taskToVertex[taskNo]] > mach.coresPerNode){
+                extraTasks.push_back(taskNo);
+                isBalanced = false;
+            } else {
+                taskToVertex[taskNo] = METIS_taskToVertex[taskNo];
+            }
         }
+        //fix if not balanced
+        long int nodeIter = 0;
+        while(!isBalanced && !extraTasks.empty()){
+            if(numTasksInNode[nodeIter] < mach.coresPerNode){
+                numTasksInNode[nodeIter]++;
+                taskToVertex[extraTasks.back()] = nodeIter;
+                extraTasks.pop_back();
+            } else {
+                nodeIter++;
+            }
+        }
+
 #else
         //partition with greedy: create vertices using breadth-first search from the center node
         vector<bool> isMarked(jobSize, false);
@@ -260,7 +283,7 @@ void NearestAllocMapper::allocateAndMap()
     frameNodes.push_back(centerNode);
     marked.resize(commGraph->size(), false);
     marked[centerTask] = true;
-    
+
     //main loop
     while(!tasks.empty()){
         int curTask = tasks.front().first;
@@ -534,7 +557,7 @@ void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> 
             neighborArray.push_back(pair<int, double>(it->first, weight));
         }
     }
-    
+
     //sort neighborList, ascending
     sort(neighborArray.begin(), neighborArray.end(), ByWeights());
 
@@ -546,7 +569,7 @@ void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> 
         }
         taskList.insert(taskIt, neighborArray[i]);
     }
-    
+
     //now we know that last task will be allocated next - if available
     if(!taskList.empty()){
         pair<int, double> toAlloc =  taskList.back();
