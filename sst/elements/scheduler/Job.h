@@ -70,7 +70,7 @@ namespace SST {
                 //following structure is used to prevent large memory usage:
                 //the communication files are read only when the job starts
                 const struct CommInfo{
-                    CommInfo() : commType(TaskCommInfo::ALLTOALL) {}
+                    CommInfo() : commType(TaskCommInfo::ALLTOALL), centerTask(-1) {}
                     TaskCommInfo::commType commType;
                     std::string commFile;
                     std::string coordFile;

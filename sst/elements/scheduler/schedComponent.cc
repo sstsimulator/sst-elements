@@ -538,7 +538,6 @@ void schedComponent::startJob(Job* job)
 {
     //allocate & update machine
     CommParser commParser = CommParser();
-    
     commParser.parseComm(job);                      //read communication files
     job->start( getCurrentSimTime() );              //job started flag
     AllocInfo* ai = theAllocator->allocate(job);    //get allocation
@@ -547,11 +546,6 @@ void schedComponent::startJob(Job* job)
     scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler
     stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
 
-    //DEBUG
-    //if(job->getJobNum() % 100 == 0){
-    //    std::cout << "Job " << job->getJobNum() << " has been started\n";
-    //}
-    
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;
     unsigned long actualRunningTime = job->getActualTime();   

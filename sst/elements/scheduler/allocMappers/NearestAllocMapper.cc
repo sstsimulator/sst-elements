@@ -211,7 +211,6 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
                 nodeIter++;
             }
         }
-
 #else
         //partition with greedy: create vertices using breadth-first search from the center node
         vector<bool> isMarked(jobSize, false);
@@ -283,7 +282,7 @@ void NearestAllocMapper::allocateAndMap()
     frameNodes.push_back(centerNode);
     marked.resize(commGraph->size(), false);
     marked[centerTask] = true;
-
+    
     //main loop
     while(!tasks.empty()){
         int curTask = tasks.front().first;
