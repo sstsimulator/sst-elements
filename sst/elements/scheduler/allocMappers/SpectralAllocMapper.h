@@ -27,18 +27,22 @@ namespace SST {
     class Machine;
 
     //Spectral Mapping algorithm is based on the paper
-    //Leordeanu, M.; Hebert, M., "A spectral technique for correspondence problems using pairwise constraints,"
-    //Computer Vision, 2005. ICCV 2005. Tenth IEEE International Conference on , vol.2, no., pp.1482,1489 Vol. 2,
-    //17-21 Oct. 2005 doi: 10.1109/ICCV.2005.20
+    // Leordeanu, M.; Hebert, M., "A spectral technique for correspondence problems using pairwise
+    // constraints," Computer Vision, 2005. ICCV 2005. Tenth IEEE International Conference on ,
+    // vol.2, no., pp.1482,1489 Vol. 2, 17-21 Oct. 2005 doi: 10.1109/ICCV.2005.20
 
     class SpectralAllocMapper : public AllocMapper {
 
         public:
-            SpectralAllocMapper(const Machine & mach, int rngSeed = -1);
+            SpectralAllocMapper(const Machine & mach, bool alloacateAndMap , int rngSeed = -1);
             ~SpectralAllocMapper();
 
             string getSetupInfo(bool comment) const;
-            AllocInfo* allocate(Job* job);
+
+            //allocation & mapping function
+            void allocMap(const AllocInfo & ai,
+                          std::vector<long int> & usedNodes,
+                          std::vector<int> & taskToNode);
 
         private:
             //SST::RNG::MersenneRNG randNG;   //random number generator
@@ -52,8 +56,8 @@ namespace SST {
             vector<double>* principalEigenVector(const unsigned int maxIteration = 100,
                                                  const double epsilon = 5e-3) const; //error margin
             //O(inVector.size()^2)
+            //multiply with M matrix - refer to paper for definition
             vector<double>* multWithM(const vector<double> & inVector) const;
-            double multVectorVector(const vector<double> & vector0, const vector<double> & vector1) const;
             void normalize(vector<double> & inVector) const;
         };
 
@@ -61,3 +65,4 @@ namespace SST {
 }
 
 #endif /* SPECTRALALLOCMAPPER_H_ */
+

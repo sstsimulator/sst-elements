@@ -46,17 +46,13 @@ namespace SST {
                 //Sum up of all time complexities to get the allocation complexity
 
                 NearestAllocMapper(const MeshMachine & mach,
+                                   bool allocateAndMap,
                                    TaskGenType taskGen = GREEDY_TASK,
                                    NodeGenType nodeGen = EXHAUST_NODE,
                                    TaskOrderType taskOrder = SORTED_ORDER);
                 ~NearestAllocMapper();
 
                 std::string getSetupInfo(bool comment) const;
-
-                //returns allocation information or NULL if it wasn't possible
-                //(doesn't make allocation; merely returns info on possible allocation)
-                //providing a center Task significantly speeds up the algorithm
-                AllocInfo* allocate(Job* job);
 
             private:
 
@@ -68,15 +64,18 @@ namespace SST {
                 long int lastNode;
 
                 //allocation variables:
-                // - as object variables for easier access, deleted after allocation
-                std::vector<int> taskToNode;   //maps communication graph vertices to machine nodes
-                std::vector<bool>* isFree;     //keeps a temporary copy of node list
+                std::vector<int> vertexToNode; //maps communication graph vertices to machine nodes
                 std::vector<int> taskToVertex; //maps task #s to communication graph vertices
                 std::vector<std::map<int,int> >* commGraph;
                 std::vector<std::vector<int> > weightTree;  //weight of the commTree
                 std::vector<bool> marked;
                 int centerTask;
                 int centerNode;
+
+                //allocation & mapping function
+                void allocMap(const AllocInfo & ai,
+                              std::vector<long int> & usedNodes,
+                              std::vector<int> & taskToNode);
 
                 //creates a new communication graph (hyper graph) based on the # coresPerNode
                 //if(GREEDY_CEN || centerTask_given)
@@ -85,10 +84,7 @@ namespace SST {
                 //      if(METIS_available)         O(V + E lg V + METIS_partitioning({V,E}))
                 //      else                        O(V + E lg V)
                 //else                              O(VE + V^2 lg V)
-                void createCommGraph(const TaskCommInfo & tci);
-
-                //O(V * E) - not sure
-                void allocateAndMap();
+                void createCommGraph(const Job & job);
 
                 //finds the vertex that minimizes the cumulative communication distance
                 //@upperLimit: max number of tasks to search for
@@ -144,7 +140,7 @@ namespace SST {
                     {
                         return (l.second < r.second);
                     }
-                } compObject;
+                };
         };
     }
 }

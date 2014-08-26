@@ -540,7 +540,7 @@ void schedComponent::startJob(Job* job)
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
     job->start( getCurrentSimTime() );              //job started flag
-    AllocInfo* ai = theAllocator->allocate(job);    //get allocation
+    AllocInfo* ai = theAllocator->allocate(job);    //get allocation    
     machine->allocate(ai);                          //allocate
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
     scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler

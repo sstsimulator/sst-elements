@@ -31,10 +31,11 @@ using namespace SST::Scheduler;
 using namespace std;
 
 NearestAllocMapper::NearestAllocMapper(const MeshMachine & mach,
+                                       bool allocateAndMap,
                                        TaskGenType inTaskGen,
                                        NodeGenType inNodeGen,
                                        TaskOrderType inTaskOrder)
-    : AllocMapper(mach), mMachine(mach)
+    : AllocMapper(mach, allocateAndMap), mMachine(mach)
 {
     taskGen = inTaskGen;
     nodeGen = inNodeGen;
@@ -58,18 +59,14 @@ std::string NearestAllocMapper::getSetupInfo(bool comment) const
     return com + "Nearest AllocMapper";
 }
 
-AllocInfo* NearestAllocMapper::allocate(Job* job)
+void NearestAllocMapper::allocMap(const AllocInfo & ai,
+                                  vector<long int> & usedNodes,
+                                  vector<int> & taskToNode)
 {
-    if (!canAllocate(*job)){
-        return NULL;
-    }
-
-    AllocInfo *ai = new AllocInfo(job, mach);
-    int nodesNeeded = ai->getNodesNeeded();
+    Job *job = ai.job;
+    int nodesNeeded = ai.getNodesNeeded();
     int jobSize = job->getProcsNeeded();
 
-    //get free node info
-    isFree = mach.freeNodeList();
     //choose center node
     switch(nodeGen){
     case GREEDY_NODE:
@@ -81,60 +78,97 @@ AllocInfo* NearestAllocMapper::allocate(Job* job)
     default:
         schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
     };
-    
+
     //Optimization: Simple allocation & mapping if single node is needed
     if(nodesNeeded == 1){
-        ai->nodeIndices[0] = centerNode;
-        std::vector<int> *mapping = new std::vector<int>(jobSize);
+        usedNodes[0] = centerNode;
         for(int i = 0; i < jobSize; i++){
-            mapping->at(i) = centerNode;
+            taskToNode[i] = centerNode;
         }
-        addMapping(job->getJobNum(), mapping);
-        return ai;
+        return;
     }
-
-    //reset taskToNode
-    taskToNode.resize(nodesNeeded);
-    std::fill(taskToNode.begin(), taskToNode.end(), -1);
-    //get centerTask
-    centerTask = job->taskCommInfo->centerTask;
 
     //create breadth-first tree around a center task
-    createCommGraph(*(job->taskCommInfo));
+    createCommGraph(*job);
 
-    //map tasks
-    allocateAndMap();
+    list<pair<int, double> > tasks; //task No's and their weights
+    tasks.push_back(pair<int,double>(centerTask, 0));
+    list<int> frameNodes; //nodes that "frame" the current allocation
+    frameNodes.push_back(centerNode);
+    marked.resize(commGraph->size(), false);
+    marked[centerTask] = true;
+    vertexToNode.resize(nodesNeeded);
+    fill(vertexToNode.begin(), vertexToNode.end(), -1);
+    int mappedCounter = 0;
 
-    //fill the allocInfo
-    for(int i = 0; i < nodesNeeded; i++){
-        ai->nodeIndices[i] = taskToNode[i];
+    //main loop
+    while(!tasks.empty()){
+        int curTask = tasks.front().first;
+        tasks.pop_front();
+        //get which node to allocate
+        int nodeToAlloc = bestNode(frameNodes, curTask);
+
+        //allocate and update containers
+        vertexToNode[curTask] = nodeToAlloc;
+        usedNodes[mappedCounter++] = nodeToAlloc;
+        isFree->at(nodeToAlloc) = false;
+
+        //get unallocated neighbors of curTask and update the queue
+        switch(taskOrder){
+        case GREEDY_ORDER:
+            for(map<int, int>::const_iterator it = commGraph->at(curTask).begin(); it != commGraph->at(curTask).end(); it++){
+                if(!marked[it->first]){
+                    marked[it->first] = true;
+                    tasks.push_back(pair<int,double>(it->first, 0));
+                }
+            }
+            break;
+        case SORTED_ORDER:
+            getSortedNeighbors(curTask, tasks);
+            break;
+        default:
+            schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
+        };
+
+        //extend frame - do not add the same node twice
+        list<int> *newNodes = new list<int>();
+        closestNodes(nodeToAlloc, 0, newNodes);
+        for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
+            bool found = false;
+            for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
+                if(*oldIt == *newIt){
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                frameNodes.push_back(*newIt);
+            }
+        }
+        delete newNodes;
     }
 
-    //store mapping
-    std::vector<int> *mapping = new std::vector<int>(jobSize);
-    for(int i = 0; i < jobSize; i++){
-        mapping->at(i) = taskToNode[taskToVertex[i]];
+    //fill taskToNode
+    for(int taskIt = 0; taskIt < jobSize; taskIt++){
+        taskToNode[taskIt] = vertexToNode[taskToVertex[taskIt]];
     }
-    addMapping(job->getJobNum(), mapping);
 
     //free memory
-    taskToNode.clear();
-    delete isFree;
+    vertexToNode.clear();
     taskToVertex.clear();
     delete commGraph;
     weightTree.clear();
     marked.clear();
-
-    return ai;
 }
 
-void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
+void NearestAllocMapper::createCommGraph(const Job & job)
 {
-    std::vector<std::map<int,int> >* rawCommGraph = tci.getCommInfo();
-    int jobSize = tci.getSize();
+    std::vector<std::map<int,int> >* rawCommGraph = job.taskCommInfo->getCommInfo();
+    int jobSize = job.procsNeeded;
     int nodesNeeded = ceil((float) jobSize / mach.coresPerNode);
 
-    //assign center task if required
+    //assign center task
+    centerTask = job.taskCommInfo->centerTask;
     if(centerTask == -1){
         switch(taskGen){
         case GREEDY_TASK:
@@ -269,62 +303,6 @@ void NearestAllocMapper::createCommGraph(const TaskCommInfo & tci)
     }
 }
 
-void NearestAllocMapper::allocateAndMap()
-{
-    list<pair<int, double> > tasks; //task No's and their weights
-    tasks.push_back(pair<int,double>(centerTask, 0));
-    list<int> frameNodes; //nodes that "frame" the current allocation
-    frameNodes.push_back(centerNode);
-    marked.resize(commGraph->size(), false);
-    marked[centerTask] = true;
-    
-    //main loop
-    while(!tasks.empty()){
-        int curTask = tasks.front().first;
-        tasks.pop_front();
-        //get which node to allocate
-        int nodeToAlloc = bestNode(frameNodes, curTask);
-
-        //allocate and update containers
-        taskToNode[curTask] = nodeToAlloc;
-        isFree->at(nodeToAlloc) = false;
-
-        //get unallocated neighbors of curTask and update the queue
-        switch(taskOrder){
-        case GREEDY_ORDER:
-            for(map<int, int>::const_iterator it = commGraph->at(curTask).begin(); it != commGraph->at(curTask).end(); it++){
-                if(!marked[it->first]){
-                    marked[it->first] = true;
-                    tasks.push_back(pair<int,double>(it->first, 0));
-                }
-            }
-            break;
-        case SORTED_ORDER:
-            getSortedNeighbors(curTask, tasks);
-            break;
-        default:
-            schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
-        };
-
-        //extend frame - do not add the same node twice
-        list<int> *newNodes = new list<int>();
-        closestNodes(nodeToAlloc, 0, newNodes);
-        for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
-            bool found = false;
-            for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
-                if(*oldIt == *newIt){
-                    found = true;
-                    break;
-                }
-            }
-            if(!found){
-                frameNodes.push_back(*newIt);
-            }
-        }
-        delete newNodes;
-    }
-}
-
 int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long int upperLimit) const
 {
     int centerTask = -1;
@@ -360,14 +338,13 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
     //for all nodes
     for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
         if(isFree->at(lastNode)){
-            double curScore = 1;
+            double curScore = 0;
             for(int dist = 1; dist <= optDist + 1; dist++){
                 curScore += (double) closestNodes(lastNode, dist);
             }
             //penalize node if it has more space around it
-            //using curScore -= numExtraNodes
             if(curScore > nodesNeeded){
-                curScore = nodesNeeded - curScore;
+                curScore = 2 * nodesNeeded - curScore;
             }
 
             //update best node
@@ -505,7 +482,7 @@ int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
         vector<int> neighbors;
         vector<int> neighWeights;
         for(map<int, int>::iterator it = commGraph->at(inTask).begin(); it != commGraph->at(inTask).end(); it++){
-            if(taskToNode[it->first] != -1){
+            if(vertexToNode[it->first] != -1){
                 neighbors.push_back(it->first);
                 neighWeights.push_back(it->second);
             }
@@ -518,7 +495,7 @@ int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
             double curDist = 0;
             //iterate over task neighbors and calculate the total comm distance if this task was allocated here
             for(unsigned int nIt = 0; nIt < neighbors.size(); nIt++){
-                curDist += mach.getNodeDistance(taskToNode[neighbors[nIt]], *nodeIt) * neighWeights[nIt];
+                curDist += mach.getNodeDistance(vertexToNode[neighbors[nIt]], *nodeIt) * neighWeights[nIt];
             }
             if(curDist < minDist){
                 minDist = curDist;
@@ -545,7 +522,7 @@ void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> 
                     neighIt != commGraph->at(it->first).end();
                     neighIt++) {
                 //if allocated
-                if(taskToNode[neighIt->first] != -1){
+                if(vertexToNode[neighIt->first] != -1){
                     weight += neighIt->second; //add to weight
                 }
             }

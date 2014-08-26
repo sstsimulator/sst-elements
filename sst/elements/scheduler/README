@@ -247,6 +247,8 @@ the number of needed nodes, and allocates those processors in order.  If no
 single interval is found that is large enough, it minimizes the span of
 processors returned.
 
+nearestamap - Described below among task mappers
+spectralamap - Described below among task mappers
 
         Task Mappers: 
 
@@ -256,8 +258,8 @@ processors returned.
 - topo: uses task communication graph for recursive bisection
 - rcm: uses reverse Cuthill Mckee algorithm for task mapping
 
-Below task mappers do allocation and task mapping simultaneously. To use them,
-both allocator and task mapper should be selected as the same option.
+Below task mappers do allocation and task mapping simultaneously. Their
+allocation and mapping decisions can be used individually
 
 - nearestamap: selects a center machine node and a center task. Expands the
 mapping breadth-first in both domains. The following options are hard-coded and

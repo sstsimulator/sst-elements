@@ -419,26 +419,23 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 break;
             }
         case NEARESTAMAP:
-            if(params.find("taskMapper") != params.end()){
-                vector<string>* taskmapparams = parseparams(params["taskMapper"]);
-                if(taskmappername( taskmapparams->at(0) ) != NEARESTAMT){
-                    schedout.fatal(CALL_INFO, 1, "Allocator and Task Mapper should be the same when using AllocMappers\n");
-                }
-            }
             if(mMachine == NULL){
                 schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine\n");
+            }
+            if(params.find("taskMapper") != params.end()
+               && taskmappername(parseparams(params["taskMapper"])->at(0)) == NEARESTAMT){
+                return new NearestAllocMapper(*mMachine, true);
             } else {
-                return new NearestAllocMapper(*mMachine);
+                return new NearestAllocMapper(*mMachine, false);
             }
-            break;
+            break;       
         case SPECTRALAMAP:
-            if(params.find("taskMapper") != params.end()){
-                vector<string>* taskmapparams = parseparams(params["taskMapper"]);
-                if(taskmappername( taskmapparams->at(0) ) != SPECTRALAMT){
-                    schedout.fatal(CALL_INFO, 1, "Allocator and Task Mapper should be the same when using AllocMappers\n");
-                }
+            if(params.find("taskMapper") != params.end()
+              && taskmappername(parseparams(params["taskMapper"])->at(0)) == SPECTRALAMT){
+               return new SpectralAllocMapper(*m, true);
+            } else {
+                return new SpectralAllocMapper(*m, false);
             }
-            return new SpectralAllocMapper(*m);
             break;
         default:
             schedout.fatal(CALL_INFO, 1, "Could not parse name of allocator\n");
@@ -479,10 +476,20 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             if(mMachine == NULL){
                 schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
             }
-            taskMapper = new NearestAllocMapper(*mMachine);
+            if(params.find("allocator") != params.end()
+              && allocatorname(parseparams(params["allocator"])->at(0)) == NEARESTAMAP ){
+                taskMapper = new NearestAllocMapper(*mMachine, true);
+            } else {
+                taskMapper = new NearestAllocMapper(*mMachine, false);
+            }
             break;  
         case SPECTRALAMT:
-            taskMapper = new SpectralAllocMapper(*mach);
+           if(params.find("allocator") != params.end()
+              && allocatorname(parseparams(params["allocator"])->at(0)) == SPECTRALAMAP ){
+                taskMapper = new SpectralAllocMapper(*mach, true);
+            } else {
+                taskMapper = new SpectralAllocMapper(*mach, false);
+            }
             break;    
         default: 
             taskMapper = NULL;
