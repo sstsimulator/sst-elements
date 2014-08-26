@@ -24,7 +24,6 @@
 #include "TaskCommInfo.h"
 #include "output.h"
 
-#include <cmath>
 #include <cfloat>
 #include <queue>
 
@@ -69,16 +68,26 @@ AllocInfo* NearestAllocMapper::allocate(Job* job)
     int nodesNeeded = ai->getNodesNeeded();
     int jobSize = job->getProcsNeeded();
 
-    //Optimization: Simple allocation & mapping if <= 2 tasks are provided
-    if(jobSize <= 2 || nodesNeeded == 1){
-        std::vector<int>* freeNodes = machine.getFreeNodes();
-        for(int i = 0; i < ai->getNodesNeeded(); i++) {
-            ai->nodeIndices[i] = freeNodes->at(i);
-        }
-        delete freeNodes;
+    //get free node info
+    isFree = mach.freeNodeList();
+    //choose center node
+    switch(nodeGen){
+    case GREEDY_NODE:
+        centerNode = getCenterNodeGr();
+        break;
+    case EXHAUST_NODE:
+        centerNode = getCenterNodeExh(nodesNeeded);
+        break;
+    default:
+        schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
+    };
+    
+    //Optimization: Simple allocation & mapping if single node is needed
+    if(nodesNeeded == 1){
+        ai->nodeIndices[0] = centerNode;
         std::vector<int> *mapping = new std::vector<int>(jobSize);
         for(int i = 0; i < jobSize; i++){
-            mapping->at(i) = ai->nodeIndices[i/mach.coresPerNode];
+            mapping->at(i) = centerNode;
         }
         addMapping(job->getJobNum(), mapping);
         return ai;
@@ -92,20 +101,6 @@ AllocInfo* NearestAllocMapper::allocate(Job* job)
 
     //create breadth-first tree around a center task
     createCommGraph(*(job->taskCommInfo));
-    //get free node info
-    isFree = mach.freeNodeList();
-
-    //choose center node
-    switch(nodeGen){
-    case GREEDY_NODE:
-        centerNode = getCenterNodeGr();
-        break;
-    case EXHAUST_NODE:
-        centerNode = getCenterNodeExh(nodesNeeded);
-        break;
-    default:
-        schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
-    };
 
     //map tasks
     allocateAndMap();
@@ -365,13 +360,14 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
     //for all nodes
     for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
         if(isFree->at(lastNode)){
-            double curScore = 0;
+            double curScore = 1;
             for(int dist = 1; dist <= optDist + 1; dist++){
                 curScore += (double) closestNodes(lastNode, dist);
             }
             //penalize node if it has more space around it
+            //using curScore -= numExtraNodes
             if(curScore > nodesNeeded){
-                curScore = 2 * nodesNeeded - curScore;
+                curScore = nodesNeeded - curScore;
             }
 
             //update best node
