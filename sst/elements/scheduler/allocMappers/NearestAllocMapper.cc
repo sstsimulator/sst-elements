@@ -338,15 +338,22 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
     //for all nodes
     for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
         if(isFree->at(lastNode)){
-            double curScore = 0;
+            double curScore = 1;
+            int availNodes = 1;
             for(int dist = 1; dist <= optDist + 1; dist++){
-                curScore += (double) closestNodes(lastNode, dist);
+                double scoreFactor = dist*dist*dist;
+                int availInDist = closestNodes(lastNode, dist);
+                if(availNodes < nodesNeeded && availNodes + availInDist > nodesNeeded){
+                    curScore += (nodesNeeded - availNodes) / scoreFactor;
+                    break;
+                } else if(availNodes < nodesNeeded){
+                    curScore += availInDist / scoreFactor;
+                    availNodes += availInDist;
+                } else { //penalize extra nodes
+                    curScore -= availInDist / scoreFactor;
+                }
             }
-            //penalize node if it has more space around it
-            if(curScore > nodesNeeded){
-                curScore = 2 * nodesNeeded - curScore;
-            }
-
+            
             //update best node
             if(curScore > bestScore){
                 bestScore = curScore;
