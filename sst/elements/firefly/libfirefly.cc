@@ -265,6 +265,7 @@ static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
     {"rxNicDelay_ns","", "0"},
     {"txNicDelay_ns","", "0"},
     {"sendReqFiniDelay_ns","", "0"},
+    {"recvReqFiniDelay_ns","", "0"},
     {"sendAckDelay_ns","", "0"},
     {"regRegionXoverLength","Sets the transition point page pinning", "4096"},
     {"regRegionPerPageDelay_ns","Sets the time to pin pages", "0"},

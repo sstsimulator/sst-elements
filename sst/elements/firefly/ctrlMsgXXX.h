@@ -121,8 +121,17 @@ class XXX  {
 
     int memcpyDelay(int bytes ) {
         if ( 0 == bytes ) return 0;
+#if CHAMA 
+        int tmp = 0;
+        if ( bytes >= 2024 ) {
+            tmp  = m_memcpyBaseDelay_ns + 
+                    (bytes / 64) * m_memcpyPer64BytesDelay_ns; 
+        }
+        return tmp;
+#else
         return m_memcpyBaseDelay_ns + 
                     (bytes / 64) * m_memcpyPer64BytesDelay_ns; 
+#endif
     } 
 
     int matchDelay( int i ) {
@@ -162,6 +171,10 @@ class XXX  {
         return m_sendReqFiniDelay;
     }
 
+    int recvReqFiniDelay() {
+        return m_recvReqFiniDelay;
+    }
+
     int sendAckDelay() {
         return m_sendAckDelay;
     }
@@ -177,6 +190,7 @@ class XXX  {
     int m_regRegionPerPageDelay_ns;
     int m_regRegionXoverLength;
     int m_sendReqFiniDelay;
+    int m_recvReqFiniDelay;
     int m_sendAckDelay;
 
   private:

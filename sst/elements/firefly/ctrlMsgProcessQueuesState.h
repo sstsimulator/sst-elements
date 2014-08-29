@@ -785,7 +785,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         } else if ( length <= obj().shortMsgLength() ) { 
 		    dbg().verbose(CALL_INFO,1,0,"short\n");
-            req->setDone();
+            req->setDone(obj().recvReqFiniDelay());
         } else {
 
             dbg().verbose(CALL_INFO,1,0,"long\n");
@@ -992,7 +992,7 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
     
     delete stack.back();
     stack.pop_back();
-    req->setDone( 1500 );
+    req->setDone( obj().recvReqFiniDelay() );
 
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;

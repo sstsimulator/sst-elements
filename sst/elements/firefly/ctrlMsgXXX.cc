@@ -63,6 +63,7 @@ XXX::XXX( Component* owner, Params& params ) :
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 
     m_sendReqFiniDelay = params.find_integer( "sendReqFiniDelay_ns", 0 );
+    m_recvReqFiniDelay = params.find_integer( "recvReqFiniDelay_ns", 0 );
     m_sendAckDelay = params.find_integer( "sendAckDelay_ns", 0 );
 
     m_loopLink = owner->configureLink(
