@@ -891,8 +891,10 @@ void ProcessQueuesState<T1>::enableInt( FuncCtxBase* ctx,
     }
 
 	m_funcStack.push_back(ctx);
+
 	ctx->setRetFunctor( new FunctorStatic_0< ProcessQueuesState,
           std::deque< FuncCtxBase* >&, bool > ( this, funcPtr, m_funcStack ) );
+
 	m_intCtx = ctx;
 
 	if ( m_missedInt ) foo();
@@ -926,12 +928,6 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 
     dbg().verbose(CALL_INFO,2,0,"\n" );
 
-    if ( m_missedInt ) {
-        foo();
-        m_missedInt = false;
-        return true;
-    }
-
 	FunctorBase_0< bool >* retFunctor = m_intCtx->getRetFunctor();
 
 	m_intCtx = NULL;
@@ -939,6 +935,11 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 	if ( (*retFunctor)() ) {
 		delete retFunctor;
 	}
+
+    if ( m_intCtx && m_missedInt ) {
+        foo();
+        m_missedInt = false;
+    }
 
     return true; 
 }
@@ -1154,6 +1155,7 @@ int ProcessQueuesState<T1>::copyIoVec(
             } 
         }
     }
+    //return obj().memcpyDelay( (copied * 5)/64 );
     return obj().memcpyDelay( copied );
 }
 
