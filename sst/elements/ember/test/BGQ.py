@@ -144,6 +144,8 @@ _hermesParams = {
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 700,
+		"hermesParams.ctrlMsg.recvReqFiniDelay_ns" : 0,
+		"hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
 		"hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 1500,
 		"hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 0,
 		"hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
