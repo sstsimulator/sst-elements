@@ -40,17 +40,17 @@ namespace MemHierarchy {
     } while (false)
 
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
-#define _ERROR_ C,ERROR,0
-#define _WARNING_ C,WARNING,0
-#define _INFO_ C,INFO,0
-#define _L3_ C,L3,0     //Important messages:  incoming requests, state changes, etc
-#define _L4_ C,L4,0     //Importan messages:  send request, forward request, send response
-#define _L5_ C,L5,0     //
-#define _L6_ C,L6,0     //BottomCC messages
-#define _L7_ C,L7,0     //TopCC messages
-#define _L8_ C,L8,0     //Atomics
-#define _L9_ C,L9,0     //MSHR messages
-#define _L10_ C,L10,0   //Directory controller, Bus, Memory Controller
+#define _ERROR_ CALL_INFO,ERROR,0
+#define _WARNING_ CALL_INFO,WARNING,0
+#define _INFO_ CALL_INFO,INFO,0
+#define _L3_ CALL_INFO,L3,0     //Important messages:  incoming requests, state changes, etc
+#define _L4_ CALL_INFO,L4,0     //Importan messages:  send request, forward request, send response
+#define _L5_ CALL_INFO,L5,0     //
+#define _L6_ CALL_INFO,L6,0     //BottomCC messages
+#define _L7_ CALL_INFO,L7,0     //TopCC messages
+#define _L8_ CALL_INFO,L8,0     //Atomics
+#define _L9_ CALL_INFO,L9,0     //MSHR messages
+#define _L10_ CALL_INFO,L10,0   //Directory controller, Bus, Memory Controller
 
 struct mshrType {
     boost::variant<Addr, MemEvent*> elem;
@@ -76,8 +76,6 @@ struct CtrlStats{
 
 #define MAX_CACHE_CHILDREN (512);
     
-#define C CALL_INFO
-
 const unsigned int kibi = 1024;
 const unsigned int mebi = kibi * 1024;
 const unsigned int gibi = mebi * 1024;

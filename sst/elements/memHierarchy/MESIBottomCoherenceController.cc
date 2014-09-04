@@ -402,11 +402,11 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
 void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
-    dbg->output(C,"\n------------------------------------------------------------------------\n");
-    dbg->output(C,"--- Cache Stats\n");
-    dbg->output(C,"--- Name: %s\n", ownerName_.c_str());
-    dbg->output(C,"--- Overall Statistics\n");
-    dbg->output(C,"------------------------------------------------------------------------\n");
+    dbg->output(CALL_INFO,"\n------------------------------------------------------------------------\n");
+    dbg->output(CALL_INFO,"--- Cache Stats\n");
+    dbg->output(CALL_INFO,"--- Name: %s\n", ownerName_.c_str());
+    dbg->output(CALL_INFO,"--- Overall Statistics\n");
+    dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
 
     for(unsigned int i = 0; i < _groupIds.size(); i++){
         uint64_t totalMisses = stats_[_groupIds[i]].GETXMissIM_      + stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETSMissIS_ +
@@ -416,47 +416,47 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
         double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
         
         if(i != 0){
-            dbg->output(C,"------------------------------------------------------------------------\n");
-            dbg->output(C,"--- Cache Stats\n");
-            dbg->output(C,"--- Name: %s\n", ownerName_.c_str());
-            dbg->output(C,"--- Group Statistics, Group ID = %i\n", _groupIds[i]);
-            dbg->output(C,"------------------------------------------------------------------------\n");
+            dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
+            dbg->output(CALL_INFO,"--- Cache Stats\n");
+            dbg->output(CALL_INFO,"--- Name: %s\n", ownerName_.c_str());
+            dbg->output(CALL_INFO,"--- Group Statistics, Group ID = %i\n", _groupIds[i]);
+            dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
         }
-        dbg->output(C,"- Total data requests:                            %"PRIu64"\n", totalRequests);
-        dbg->output(C,"- Total misses:                                   %"PRIu64"\n", totalMisses);
-        dbg->output(C,"- Total hits:                                     %"PRIu64"\n", totalHits);
-        dbg->output(C,"- Hit ratio:                                      %.3f%%\n", hitRatio);
-        dbg->output(C,"- Miss ratio:                                     %.3f%%\n", 100 - hitRatio);
-        dbg->output(C,"- Read misses:                                    %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
-        dbg->output(C,"- Write misses:                                   %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_);
-        dbg->output(C,"- GetS received:                                  %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_ + stats_[_groupIds[i]].GETSHit_);
-        dbg->output(C,"- GetX received:                                  %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXHit_);
-        dbg->output(C,"- GetSEx received:                                %"PRIu64"\n", stats_[_groupIds[i]].GetSExReqsReceived_);
-        dbg->output(C,"- GetS-IS misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
-        dbg->output(C,"- GetS-Blocked misses:                            %"PRIu64"\n", stats_[_groupIds[i]].GETSMissBlocked_);
-        dbg->output(C,"- GetX-SM misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_);
-        dbg->output(C,"- GetX-IM misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETXMissIM_);
-        dbg->output(C,"- GetX-Blocked misses:                            %"PRIu64"\n", stats_[_groupIds[i]].GETXMissBlocked_);
-        dbg->output(C,"- GetS hits:                                      %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
-        dbg->output(C,"- GetX hits:                                      %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
-        dbg->output(C,"- Avg Updgrade Latency (cyc):                     %"PRIu64"\n", _updgradeLatency);
+        dbg->output(CALL_INFO,"- Total data requests:                            %"PRIu64"\n", totalRequests);
+        dbg->output(CALL_INFO,"- Total misses:                                   %"PRIu64"\n", totalMisses);
+        dbg->output(CALL_INFO,"- Total hits:                                     %"PRIu64"\n", totalHits);
+        dbg->output(CALL_INFO,"- Hit ratio:                                      %.3f%%\n", hitRatio);
+        dbg->output(CALL_INFO,"- Miss ratio:                                     %.3f%%\n", 100 - hitRatio);
+        dbg->output(CALL_INFO,"- Read misses:                                    %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
+        dbg->output(CALL_INFO,"- Write misses:                                   %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_);
+        dbg->output(CALL_INFO,"- GetS received:                                  %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_ + stats_[_groupIds[i]].GETSHit_);
+        dbg->output(CALL_INFO,"- GetX received:                                  %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETXMissIM_ + stats_[_groupIds[i]].GETXHit_);
+        dbg->output(CALL_INFO,"- GetSEx received:                                %"PRIu64"\n", stats_[_groupIds[i]].GetSExReqsReceived_);
+        dbg->output(CALL_INFO,"- GetS-IS misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETSMissIS_);
+        dbg->output(CALL_INFO,"- GetS-Blocked misses:                            %"PRIu64"\n", stats_[_groupIds[i]].GETSMissBlocked_);
+        dbg->output(CALL_INFO,"- GetX-SM misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETXMissSM_);
+        dbg->output(CALL_INFO,"- GetX-IM misses:                                 %"PRIu64"\n", stats_[_groupIds[i]].GETXMissIM_);
+        dbg->output(CALL_INFO,"- GetX-Blocked misses:                            %"PRIu64"\n", stats_[_groupIds[i]].GETXMissBlocked_);
+        dbg->output(CALL_INFO,"- GetS hits:                                      %"PRIu64"\n", stats_[_groupIds[i]].GETSHit_);
+        dbg->output(CALL_INFO,"- GetX hits:                                      %"PRIu64"\n", stats_[_groupIds[i]].GETXHit_);
+        dbg->output(CALL_INFO,"- Avg Updgrade Latency (cyc):                     %"PRIu64"\n", _updgradeLatency);
         if(!L1_){
-            dbg->output(C,"- PutS received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
-            dbg->output(C,"- PutM received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
-            dbg->output(C,"- PutX received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
+            dbg->output(CALL_INFO,"- PutS received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
+            dbg->output(CALL_INFO,"- PutM received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
+            dbg->output(CALL_INFO,"- PutX received:                                  %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
         }
         else{
             assert(stats_[_groupIds[i]].PUTSReqsReceived_ == 0);
             assert(stats_[_groupIds[i]].PUTMReqsReceived_ == 0);
             assert(stats_[_groupIds[i]].PUTXReqsReceived_ == 0);
         }
-        dbg->output(C,"- PUTM sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(C,"- PUTE sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(C,"- PUTX sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
-        dbg->output(C,"- Inv stalled because LOCK held:                  %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
-        dbg->output(C,"- Requests received (incl coherence traffic):     %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
-        dbg->output(C,"- Requests handled by MSHR (MSHR hits):           %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
-        if(!L1_) dbg->output(C,"- NACKs sent (MSHR Full, BottomCC):               %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
+        dbg->output(CALL_INFO,"- PUTM sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
+        dbg->output(CALL_INFO,"- PUTE sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
+        dbg->output(CALL_INFO,"- PUTX sent due to [inv, evictions]:              [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
+        dbg->output(CALL_INFO,"- Inv stalled because LOCK held:                  %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
+        dbg->output(CALL_INFO,"- Requests received (incl coherence traffic):     %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
+        dbg->output(CALL_INFO,"- Requests handled by MSHR (MSHR hits):           %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
+        if(!L1_) dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, BottomCC):               %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
         else    assert(stats_[_groupIds[i]].NACKsSent_ == 0);
     }
 

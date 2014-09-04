@@ -41,7 +41,7 @@ public:
 
 
     void setState(TCC_State _newState) {
-        d_->debug(C,L4,0, "CCLine Changing State. Old State = %s, New State = %s\n", TccLineString[state_], TccLineString[_newState]);
+        d_->debug(CALL_INFO,L4,0, "CCLine Changing State. Old State = %s, New State = %s\n", TccLineString[state_], TccLineString[_newState]);
         state_ = _newState;
     }
     
@@ -58,14 +58,14 @@ public:
         assert(numSharers_ == 0);
         ownerId_ = _id;
         ownerExists_ = true;
-        d_->debug(C,L4,0, "Owner set.\n");
+        d_->debug(CALL_INFO,L4,0, "Owner set.\n");
     }
     
     void clearOwner() {
         ownerExists_ = false;
         assert(numSharers_ == 0);
         ownerId_ = -1;
-        d_->debug(C,L4,0,"Owner cleared.\n");
+        d_->debug(CALL_INFO,L4,0,"Owner cleared.\n");
     }
     
     int getOwnerId(){
@@ -111,7 +111,7 @@ public:
         sharers_[_id] = false;
         numSharers_--;
         
-        d_->debug(C,L4,0, "Removed sharer. Number of sharers sharers = %u\n", numSharers_);
+        d_->debug(CALL_INFO,L4,0, "Removed sharer. Number of sharers sharers = %u\n", numSharers_);
         
         updateState();
         //assertSharers();
@@ -124,7 +124,7 @@ public:
         if(_id == -1) return;
         numSharers_++;
         sharers_[_id] = true;
-        d_->debug(C,L4,0, "Added sharer.  Number of sharers = %u\n", numSharers_);
+        d_->debug(CALL_INFO,L4,0, "Added sharer.  Number of sharers = %u\n", numSharers_);
         assert(ownerExists_ == false);
 
         //assertSharers();
