@@ -6,8 +6,8 @@ import sys,getopt
 
 iterations = 1;
 msgSize = 1024;
-motif = "Halo2D"
-shape = "8x8"
+motif = "Sweep3D"
+shape = "4x4x4"
 num_vNics = 1
 debug = 0
 
@@ -99,14 +99,22 @@ nicParams = ({
 
 driverParams = ({
 		"debug" : debug,
-		"verbose" : 0,
+		"verbose" : 1,
 		"jobId" : 0,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
 		"printStats" : 0,
 		"motif0" : motif,
-		"buffersize" : 8192,
+		"motifParams0.nx" : "30",
+		"motifParams0.ny" : "30",
+		"motifParams0.nz" : "30",
+		"motifParams0.computetime" : "140",
+		"motifParams0.pex" : "4",
+		"motifParams0.pey" : "16",
+		"motifParams0.pez" : "0", 
+		"motifParams0.kba" : "10",
+		"buffersize" : 32768,
 		"motifParams0.messagesize" : msgSize,
 		"motifParams0.messagesizex" : msgSize,
 		"motifParams0.messagesizey" : msgSize,
