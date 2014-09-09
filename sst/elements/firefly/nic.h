@@ -19,11 +19,10 @@
 
 #include "sst/elements/merlin/linkControl.h"
 #include "ioVec.h"
+#include "merlinEvent.h"
 
 namespace SST {
 namespace Firefly {
-
-class MerlinFireflyEvent;
 
 class NicInitEvent : public Event {
 
@@ -171,8 +170,8 @@ class Nic : public SST::Component  {
 
     class SelfEvent : public SST::Event {
       public:
-        enum { MatchDelay, ProcessMerlinEvent,
-                ProcessSend, Put, Get } type;
+        enum { MoveEvent, NotifyNeedRecv,
+                ProcessSend, Put, Get, MoveDone } type;
         ~SelfEvent() {}
 
         int                 node;
@@ -181,7 +180,7 @@ class Nic : public SST::Component  {
         void*               key;
         size_t              len;
         MerlinFireflyEvent* mEvent;
-        bool                retval;
+        //bool                retval;
 
         MsgHdr				hdr;
     };
@@ -512,12 +511,24 @@ public:
     void processSend();
     void processGet(SelfEvent& );
     SendEntry* processSend( SendEntry* );
+    void moveDone( MerlinFireflyEvent* ); 
+
+    MerlinFireflyEvent* getMerlinEvent(int vc ) {
+        MerlinFireflyEvent* event = 
+                static_cast<MerlinFireflyEvent*>( m_linkControl->recv( vc ) );
+        if ( event ) {
+            event->src = NetToId( event->src );
+        }
+        return event;
+    }
 
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );
     }
     
-    bool processRecvEvent( MerlinFireflyEvent* );
+    void processRecvEvent( MerlinFireflyEvent* );
+    void processFirstEvent( MerlinFireflyEvent* );
+
     bool findRecv( int src, MsgHdr& );
     void moveEvent( MerlinFireflyEvent* );
 
@@ -528,11 +539,13 @@ public:
         m_vNicV[vNicNum]->notifySendPioDone(  key );
     }
 
-    void notifyRecvDmaDone(int vNic, int src_vNic, int src, int tag, size_t len, void* key) {
+    void notifyRecvDmaDone(int vNic, int src_vNic, int src, int tag,
+                                                    size_t len, void* key) {
         m_vNicV[vNic]->notifyRecvDmaDone( src_vNic, src, tag, len, key );
     }
 
-    void notifyNeedRecv( int vNic, int src_vNic, int src, int tag, size_t length ) {
+    void notifyNeedRecv( int vNic, int src_vNic, int src, int tag,
+                                                    size_t length ) {
     	m_dbg.verbose(CALL_INFO,2,0,"src_vNic=%d src=%d tag=%#x len=%lu\n",
                                             src_vNic,src,tag,length);
 
@@ -585,7 +598,6 @@ public:
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
 
-    bool m_recvNotifyEnabled;
     int  m_packetId;
     int  m_ftRadix;
     int  m_ftLoading;

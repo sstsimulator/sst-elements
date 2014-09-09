@@ -1034,7 +1034,10 @@ template< class T1 >
 void ProcessQueuesState<T1>::needRecv( int nid, int tag, size_t length  )
 {
     dbg().verbose(CALL_INFO,1,0,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
-    assert( tag == (uint32_t) ShortMsgQ );
+    if ( tag != (uint32_t) ShortMsgQ ) {
+        dbg().fatal(CALL_INFO,0,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
+    }
+
     ++m_needRecv;
     foo();
 }
