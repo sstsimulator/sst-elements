@@ -25,7 +25,7 @@ emberBufferSize = 1000
 netBW = "3.3GB/s"
 netPktSize="2048B"
 netFlitSize="8B"
-netBufSize="8KB"
+netBufSize="80000B"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
