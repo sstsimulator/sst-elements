@@ -25,7 +25,7 @@ emberBufferSize = 1000
 netBW = "4GB/s"
 netPktSize="2048B"
 netFlitSize="8B"
-netBufSize="8KB"
+netBufSize="80000B"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -137,11 +137,14 @@ _hermesParams = {
 		"hermesParams.ctrlMsg.verboseLevel" : 2,
 		"hermesParams.ctrlMsg.shortMsgLength" : 12000,
 		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
-		"hermesParams.ctrlMsg.memcpyDelay_ps" : 350,
+		"hermesParams.ctrlMsg.memcpyBaseDelay_ns" : 0,
+		"hermesParams.ctrlMsg.memcpyPer64BytesDelay_ns" : 22,
 		"hermesParams.ctrlMsg.txDelay_ns" : 130,
 		"hermesParams.ctrlMsg.rxDelay_ns" : 100,
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
+		"hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 0,
+		"hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
 		"hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 3000,
 		"hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 100,
 		"hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
