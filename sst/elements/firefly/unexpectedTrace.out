@@ -1,7 +1,0 @@
-rank
-size
-isend
-barrier
-recv
-waitSend
-fini
