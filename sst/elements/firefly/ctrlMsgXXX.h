@@ -15,6 +15,7 @@
 
 #include "ctrlMsg.h"
 #include "ioVec.h"
+#include "latencyMod.h"
 
 namespace SST {
 namespace Firefly {
@@ -119,19 +120,16 @@ class XXX  {
     void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
     void schedFunctor( FunctorBase_0<bool>*, int delay = 0 );
 
-    int memcpyDelay(int bytes ) {
-        if ( 0 == bytes ) return 0;
-#if CHAMA 
-        int tmp = 0;
-        if ( bytes >= 2024 ) {
-            tmp  = m_memcpyBaseDelay_ns + 
-                    (bytes / 64) * m_memcpyPer64BytesDelay_ns; 
-        }
-        return tmp;
-#else
-        return m_memcpyBaseDelay_ns + 
-                    (bytes / 64) * m_memcpyPer64BytesDelay_ns; 
-#endif
+    LatencyMod* m_txMemcpyMod;
+    LatencyMod* m_rxMemcpyMod;
+    LatencyMod* m_txSetupMod;
+    LatencyMod* m_rxSetupMod;
+
+    int txMemcpyDelay( int bytes ) {
+        return m_txMemcpyMod->getLatency( bytes );
+    }
+    int rxMemcpyDelay( int bytes ) {
+        return m_rxMemcpyMod->getLatency( bytes );
     } 
 
     int matchDelay( int i ) {
@@ -151,12 +149,12 @@ class XXX  {
         return tmp;
     }
 
-    int txDelay() {
-        return m_txDelay;
+    int txDelay( int bytes ) {
+        return m_txSetupMod->getLatency( bytes );
     }
 
-    int rxDelay() {
-        return m_rxDelay;
+    int rxDelay( int bytes) {
+        return m_rxSetupMod->getLatency( bytes );
     }
 
     int txNicDelay() {
@@ -180,10 +178,6 @@ class XXX  {
     }
 
     int m_matchDelay_ns;
-    int m_memcpyBaseDelay_ns;
-    int m_memcpyPer64BytesDelay_ns;
-    int m_txDelay;
-    int m_rxDelay;
     int m_txNicDelay;
     int m_rxNicDelay;
     int m_regRegionBaseDelay_ns;

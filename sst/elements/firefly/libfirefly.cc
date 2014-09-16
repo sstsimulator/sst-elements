@@ -36,6 +36,7 @@
 #include <ctrlMsg.h>
 #include <loopBack.h>
 #include <merlinEvent.h>
+#include <latencyMod.h>
 
 using namespace Firefly;
 
@@ -154,6 +155,18 @@ static const ElementInfoParam virtNicModule_params[] = {
 };
 
 static Module*
+load_latencyMod(Params& params)
+{
+    return new RangeLatMod(params);
+}
+
+static const ElementInfoParam latencyModule_params[] = {
+	{"base", "base latency component", "1"},
+	{"op", "operation to perform", "1"},
+    {NULL, NULL}
+};
+
+static Module*
 load_hermesInitSM(Params& params)
 {
     return new InitFuncSM(params);
@@ -257,11 +270,11 @@ static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
     {"shortMsgLength","Sets the short to long message transition point", "16000"},
     {"verboseLevel","Set the verbose level", "1"},
     {"debug","Set the debug level", "0"},
-    {"memcpyBaseDelay_ns","Sets the base time to copy memory", "100"},
-    {"memcpyPer64BytesDelay_ns","Sets the time to copy memory 64 byts", "5"},
+    {"txMemcpyMod","Set the module used to calculate TX mempcy latency", ""},
+    {"rxMemcpyMod","Set the module used to calculate RX mempcy latency", ""},
     {"matchDelay_ns","Sets the time to do a match", "100"},
-    {"txDelay_ns","Sets the time to setup a Send", "100"},
-    {"rxDelay_ns", "Sets the time setup a Recv","100"},
+    {"txSetupMod","Set the module used to calculate TX setup latency", ""},
+    {"rxSetupMod","Set the module used to calculate RX setup latency", ""},
     {"rxNicDelay_ns","", "0"},
     {"txNicDelay_ns","", "0"},
     {"sendReqFiniDelay_ns","", "0"},
@@ -324,6 +337,16 @@ static const ElementInfoModule modules[] = {
       virtNicModule_params,
       "SST::Module"
     },
+
+    { "LatencyMod",
+      "",
+      NULL,
+      load_latencyMod,
+      NULL,
+      latencyModule_params,
+      "SST::Firefly::LatencyMod"
+    },
+
     { "Init",
       "Hermes Init Function State Machine",
       NULL,

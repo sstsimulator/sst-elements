@@ -434,7 +434,9 @@ template< class T1 >
 void ProcessQueuesState<T1>::enterSend( _CommReq* req,
                                         FunctorBase_0<bool>* exitFunctor )
 {
-    int delay = obj().txDelay();
+    size_t length = req->getLength( );
+    int delay = obj().txDelay( length );
+
     dbg().verbose(CALL_INFO,2,0,"new send CommReq\n");
 
     req->setSrcRank( getMyRank( req ) );
@@ -445,21 +447,12 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
           ( this, &ProcessQueuesState::enterSendLoop, req );  
     } else {
         delay += obj().txNicDelay();
-        size_t length = req->getLength( );
 
+        delay += obj().txMemcpyDelay( sizeof( req->hdr() ) );
         if ( length > obj().shortMsgLength() ) {
             delay += obj().regRegionDelay( length );
         } else {
-            delay += obj().memcpyDelay( length );
-#if BGQ 
-    // fix this with a module
-            if ( length > 64 ) {
-                delay += 1000;
-            }
-            if ( length > 256 ) {
-                delay += 500;
-            }
-#endif
+            delay += obj().txMemcpyDelay( length );
         }
         functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
           ( this, &ProcessQueuesState::enterSend, req );  
@@ -701,28 +694,19 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>( stack.back());
     
-    int delay;
+    int delay = 0;
     ctx->req = searchPostedRecv( ctx->hdr(), delay );
 
     if ( ctx->req ) {
-        delay += obj().rxDelay();
+        delay += obj().rxDelay( ctx->hdr().count * ctx->hdr().dtypeSize );
+        printf("%d %d\n",delay,ctx->hdr().count * ctx->hdr().dtypeSize);
 
-
-#if BGQ 
-    // fix this with a module
-            if ( ctx->hdr().count * ctx->hdr().dtypeSize > 64 ) {
-                delay += 1000;
-            }
-            if ( ctx->hdr().count * ctx->hdr().dtypeSize > 256 ) {
-                delay += 500;
-            }
-#endif
-		
         if ( ! obj().nic().isLocal( calcNid( ctx->req, ctx->hdr().rank ) ) ) {
             delay += obj().rxNicDelay();
         }
     }
 
+    printf("%d\n",delay);
     FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
                                             std::deque< FuncCtxBase* >&,
                                             bool > 
@@ -1159,7 +1143,7 @@ int ProcessQueuesState<T1>::copyIoVec(
         }
     }
     //return obj().memcpyDelay( (copied * 5)/64 );
-    return obj().memcpyDelay( copied );
+    return obj().rxMemcpyDelay( copied );
 }
 
 template< class T1 >
