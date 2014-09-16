@@ -472,6 +472,9 @@ class Nic : public SST::Component  {
 
             m_ioVec = &m_putVec;
         }
+        ~PutOrgnEntry() {
+            delete m_memRgn;
+        }
 
         virtual MsgHdr::Op getOp() {
             return MsgHdr::Rdma;

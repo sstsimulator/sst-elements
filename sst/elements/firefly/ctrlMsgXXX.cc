@@ -98,6 +98,11 @@ XXX::~XXX()
 	if ( m_recvState ) delete m_recvState;
 	if ( m_waitAnyState) delete m_waitAnyState;
 	if ( m_processQueuesState) delete m_processQueuesState;
+
+    delete m_txMemcpyMod;
+    delete m_rxMemcpyMod;
+    delete m_txSetupMod;
+    delete m_rxSetupMod;
 }
 
 void XXX::init( Info* info, VirtNic* nic )
