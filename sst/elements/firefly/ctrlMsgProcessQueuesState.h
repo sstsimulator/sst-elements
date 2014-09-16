@@ -699,14 +699,12 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
 
     if ( ctx->req ) {
         delay += obj().rxDelay( ctx->hdr().count * ctx->hdr().dtypeSize );
-        printf("%d %d\n",delay,ctx->hdr().count * ctx->hdr().dtypeSize);
 
         if ( ! obj().nic().isLocal( calcNid( ctx->req, ctx->hdr().rank ) ) ) {
             delay += obj().rxNicDelay();
         }
     }
 
-    printf("%d\n",delay);
     FunctorBase_0< bool >* functor = new FunctorStatic_0< ProcessQueuesState,
                                             std::deque< FuncCtxBase* >&,
                                             bool > 
