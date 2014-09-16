@@ -180,7 +180,6 @@ class Nic : public SST::Component  {
         void*               key;
         size_t              len;
         MerlinFireflyEvent* mEvent;
-        //bool                retval;
 
         MsgHdr				hdr;
     };
@@ -397,7 +396,7 @@ class Nic : public SST::Component  {
 
         int match_src()    { return m_matchSrc; }
         virtual int match_tag()    { return m_matchHdr.tag; }  
-        size_t match_len() { return m_matchHdr.len; }  
+        virtual size_t match_len() { return m_matchHdr.len; }  
         int src_vNic()     { return m_matchHdr.src_vNicId; }
 
       private:
@@ -415,6 +414,7 @@ class Nic : public SST::Component  {
         }
 
         int match_tag() { return -1; }
+        size_t match_len() { return totalBytes(); }
 
       private:
         void* m_key;
