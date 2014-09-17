@@ -463,6 +463,8 @@ void Nic::processGet( SelfEvent& event )
 
     MemRgnEntry* entry = m_memRgnM[ event.hdr.dst_vNicId ][hdr.rgnNum]; 
 
+    m_memRgnM[ event.hdr.dst_vNicId ].erase(hdr.rgnNum); 
+
     m_sendQ.push_back( new PutOrgnEntry( entry->vNicNum(), 
                                     event.node, event.hdr.src_vNicId, 
                                     hdr.respKey, entry ) );

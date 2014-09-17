@@ -308,7 +308,7 @@ class Nic : public SST::Component  {
             m_notifyFunctor( NULL )
         {
         }
-        ~Entry() { 
+        virtual ~Entry() { 
             if ( m_cmdEvent ) delete m_cmdEvent; 
             if ( m_notifyFunctor ) delete m_notifyFunctor;
         }
@@ -369,6 +369,9 @@ class Nic : public SST::Component  {
             m_ioVec = &m_cmdEvent->iovec;
         }
 
+        virtual ~SendEntry() {
+        }
+
         virtual MsgHdr::Op getOp() {
             return MsgHdr::Msg;
         }
@@ -387,6 +390,8 @@ class Nic : public SST::Component  {
             if ( cmd ) {
                 m_ioVec = &cmd->iovec;  
             }
+        }
+        virtual ~RecvEntry() {
         }
 
         void setMatchInfo( int src, MsgHdr& hdr ) { 
@@ -411,6 +416,9 @@ class Nic : public SST::Component  {
             m_recvVec(*ioVec)
         {
             m_ioVec = &m_recvVec;
+        }
+
+        virtual ~PutRecvEntry() {
         }
 
         int match_tag() { return -1; }
@@ -441,6 +449,9 @@ class Nic : public SST::Component  {
             m_rdmaVec[0].ptr = &m_hdr;
             m_rdmaVec[0].len = sizeof( m_hdr );
             m_ioVec = &m_rdmaVec;
+        }
+
+        virtual ~GetOrgnEntry() {
         }
 
         virtual MsgHdr::Op getOp() {
