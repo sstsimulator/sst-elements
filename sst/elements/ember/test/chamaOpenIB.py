@@ -137,10 +137,26 @@ _hermesParams = {
 		"hermesParams.ctrlMsg.verboseLevel" : 2,
 		"hermesParams.ctrlMsg.shortMsgLength" : 12000,
 		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
-		"hermesParams.ctrlMsg.memcpyBaseDelay_ns" : 80,
-		"hermesParams.ctrlMsg.memcpyPer64BytesDelay_ns" : 30,
+
+        "hermesParams.ctrlMsg.txSetupMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txSetupModParams.range.0" : "0-:1000ns",
+
+        "hermesParams.ctrlMsg.rxSetupMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.rxSetupModParams.range.0" : "0-:1000ns",
+
+        "hermesParams.ctrlMsg.txMemcpyMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.txMemcpyModParams.base" : "80ns",
+        "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:469ps",
+
+        "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.rxMemcpyModParams.base" : "80ns",
+        "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:469ps",
+
 		"hermesParams.ctrlMsg.txDelay_ns" : 1000,
 		"hermesParams.ctrlMsg.rxDelay_ns" : 1000,
+
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 900,
