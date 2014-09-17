@@ -54,7 +54,7 @@ class LoadInfo:
 		self.numCores = int(numCores)
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
-		self.nullEP, nidlist = self.foo( -1, self.readCmdLine("Null") )
+		self.nullEP, nidlist = self.foo( -1, self.readCmdLine(['Null']) )
 		self.nullEP.prepParams()
 
 	def foo( self, jobId, x ):
@@ -72,7 +72,7 @@ class LoadInfo:
 		jobId = 0
 		for line in iter(fo.readline,b''):
 			if  line[0] != '#':
-				self.map.append( self.foo( jobId, self.readCmdLine(line ) ) )
+				self.map.append( self.foo( jobId, self.readCmdLine([line] ) ) )
 				jobId += 1
 		fo.close()
 		self.verifyLoadInfo()
@@ -81,43 +81,49 @@ class LoadInfo:
 		self.map.append( self.foo( 0, self.readCmdLine( cmd ) ) )
 		self.verifyLoadInfo()
 
-	def readCmdLine(self, cmdLine ):
-		cmdList = cmdLine.split()
+	def readCmdLine(self, cmds ):
+		tmp = {}
+		tmp['motif_count'] = len(cmds) 
+		for i, cmdLine in enumerate( cmds ) :
+			cmdList = cmdLine.split()
 
-		ranksPerNode = self.numCores 
-		nidList = []
+			ranksPerNode = self.numCores 
+			nidList = []
 
-		while len(cmdList):
-			if "-" != cmdList[0][0]:
-				break
+			while len(cmdList):
+				if "-" != cmdList[0][0]:
+					break
 
-			o, a = cmdList.pop(0).split("=")
+				o, a = cmdList.pop(0).split("=")
 
-			if "-ranksPerNode" == o:
-				ranksPerNode = int(a)
-			elif "-nidList" == o:
-				nidList = a
-			else:
-				sys.exit("bad argument")	
+				if "-ranksPerNode" == o:
+					ranksPerNode = int(a)
+				elif "-nidList" == o:
+					nidList = a
+				else:
+					sys.exit("bad argument")	
 
-		if 0 == len(nidList):
-			nidList = "0-" + str(self.numNodes-1) 
+			if 0 == len(nidList):
+				nidList = "0-" + str(self.numNodes-1) 
 			
-		if "Null" != cmdList[0]:
-			print "Job: -nidList={0} -ranksPerNode={1} {2}".format( nidList, ranksPerNode, cmdList )
+			if "Null" != cmdList[0]:
+				print "Job: -nidList={0} -ranksPerNode={1} {2}".format( nidList, ranksPerNode, cmdList )
 
-		if  ranksPerNode > self.numCores:
-			sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
+			if  ranksPerNode > self.numCores:
+				sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
 						str(self.numCores) + " coresPerNode")
-		return ( nidList, ranksPerNode, self.parseCmd("ember.", "Motif", cmdList) ) 
 
-	def parseCmd(self, motifPrefix, motifSuffix, cmdList ):
-		motif = {}
-		motif['motif0'] = motifPrefix + cmdList[0] + motifSuffix
+			tmp.update(self.parseCmd("ember.", "Motif", cmdList, i ))
+
+		return ( nidList, ranksPerNode, tmp )
+
+	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
+		motif = {} 
+		motif['motif'+str(cmdNum)] = motifPrefix + cmdList[0] + motifSuffix
 		cmdList.pop(0)
 		for x in cmdList:
 			y = x.split("=")
-			motif['motifParams0.' + y[0]] = y[1]
+			motif['motifParams'+str(cmdNum)+'.' + y[0]] = y[1]
 		return motif
 
 	def verifyLoadInfo(self):

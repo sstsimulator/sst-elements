@@ -11,7 +11,7 @@ import networkConfig
 from networkConfig import *
 
 loadFile = ""
-cmdLine  = ""
+cmdLine = []
 numCores = 1
 debug    = 0
 topology = ""
@@ -29,11 +29,12 @@ netBufSize="14KB"
 
 
 if 1 == len(sys.argv) :
-    cmdLine  = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
+    cmdLine  = ['Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10']
+    #cmdLine.append('PingPong')
     topology = "torus"
     shape    = "4x4x4"
-    printStats = 1
-    emberVerbose = 1  
+    printStats = 0 
+    emberVerbose = 1 
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
