@@ -122,9 +122,20 @@ driverParams = ({
 		"hermesParams.ctrlMsg.verboseLevel" : 1,
 		"hermesParams.ctrlMsg.shortMsgLength" : 5000,
 		"hermesParams.ctrlMsg.matchDelay_ps" : 0,
-		"hermesParams.ctrlMsg.memcpyDelay_ps" : 200,
-		"hermesParams.ctrlMsg.txDelay_ns" : 130,
-		"hermesParams.ctrlMsg.rxDelay_ns" : 130,
+        "hermesParams.ctrlMsg.txSetupMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txSetupModParams.range.0" : "0-:130ns",
+
+        "hermesParams.ctrlMsg.rxSetupMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.rxSetupModParams.range.0" : "0-:130ns",
+
+        "hermesParams.ctrlMsg.txMemcpyMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:200ps",
+
+        "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:200ps",
+
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 200,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 200,
 		"hermesParams.ctrlMsg.regRegionBaseDelay_ps" : 10000000,
