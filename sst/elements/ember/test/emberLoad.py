@@ -25,7 +25,7 @@ emberBufferSize = 1000
 netBW = "4GB/s"
 netPktSize="2048B"
 netFlitSize="8B"
-netBufSize="80000B"
+netBufSize="14KB"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -137,10 +137,21 @@ _hermesParams = {
 		"hermesParams.ctrlMsg.verboseLevel" : 2,
 		"hermesParams.ctrlMsg.shortMsgLength" : 12000,
 		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
-		"hermesParams.ctrlMsg.memcpyBaseDelay_ns" : 0,
-		"hermesParams.ctrlMsg.memcpyPer64BytesDelay_ns" : 22,
-		"hermesParams.ctrlMsg.txDelay_ns" : 130,
-		"hermesParams.ctrlMsg.rxDelay_ns" : 100,
+
+        "hermesParams.ctrlMsg.txSetupMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txSetupModParams.range.0" : "0-:130ns",
+
+        "hermesParams.ctrlMsg.rxSetupMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.rxSetupModParams.range.0" : "0-:100ns",
+
+        "hermesParams.ctrlMsg.txMemcpyMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:344ps",
+
+        "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
+        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:344ps",
+
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 0,
