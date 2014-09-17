@@ -154,9 +154,6 @@ _hermesParams = {
         "hermesParams.ctrlMsg.rxMemcpyModParams.base" : "80ns",
         "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:469ps",
 
-		"hermesParams.ctrlMsg.txDelay_ns" : 1000,
-		"hermesParams.ctrlMsg.rxDelay_ns" : 1000,
-
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
 		"hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 900,
