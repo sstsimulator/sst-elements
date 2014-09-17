@@ -104,7 +104,7 @@ driverParams = ({
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
-		"printStats" : 0,
+		"printStats" : 1,
 		"motif0" : motif,
 		"motifParams0.nx" : "30",
 		"motifParams0.ny" : "30",
@@ -142,7 +142,7 @@ driverParams = ({
         "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:200ps",
 
         "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
-        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.rxMemcpyModParams.op" : "Mult",
         "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:200ps",
 
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 200,

@@ -133,7 +133,7 @@ driverParams = ({
         "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:200ps",
 
         "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
-        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
+        "hermesParams.ctrlMsg.rxMemcpyModParams.op" : "Mult",
         "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:200ps",
 
 		"hermesParams.ctrlMsg.txNicDelay_ns" : 200,
