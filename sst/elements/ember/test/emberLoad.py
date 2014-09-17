@@ -14,18 +14,26 @@ loadFile = ""
 cmdLine  = ""
 numCores = 1
 debug    = 0
-topology = "torus"
-shape    = "2"
+topology = ""
+shape    = ""
 loading  = 0
 radix    = 0
-printStats = 0
-emberVerbose = 0
-emberBufferSize = 1000
+printStats = 0 
+emberVerbose = 0 
+emberBufferSize = 0 
 
 netBW = "4GB/s"
 netPktSize="2048B"
 netFlitSize="8B"
 netBufSize="14KB"
+
+
+if 1 == len(sys.argv) :
+    cmdLine  = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
+    topology = "torus"
+    shape    = "4x4x4"
+    printStats = 1
+    emberVerbose = 1  
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -73,7 +81,7 @@ if "" == topology:
 
 if "torus" == topology:
 	if "" == shape:
-		sys.exit("What torus shape? (e.x. 4, 2x2, 4x4x8")
+		sys.exit("What torus shape? (e.x. 4, 2x2, 4x4x8)")
 	topoInfo = TorusInfo(shape)
 	topo = topoTorus()
 	print "network: topology=torus shape={0}".format(shape)
@@ -124,7 +132,7 @@ _emberParams = {
 
 _hermesParams = {
 		"hermesParams.debug" : debug,
-		"hermesParams.verboseLevel" : 2,
+		"hermesParams.verboseLevel" : 1,
 		"hermesParams.nicModule" : "firefly.VirtNic",
 		"hermesParams.nicParams.debug" : debug,
 		"hermesParams.nicParams.debugLevel" : 1 ,
