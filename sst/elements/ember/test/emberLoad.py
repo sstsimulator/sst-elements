@@ -57,7 +57,7 @@ for o, a in opts:
     elif o in ("--loadFile"):
         loadFile = a
     elif o in ("--cmdLine"):
-        cmdLine = [a]
+        cmdLine.append( a ) 
     elif o in ("--topo"):
         topology = a
     elif o in ("--radix"):
