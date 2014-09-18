@@ -27,6 +27,7 @@ netPktSize="2048B"
 netFlitSize="8B"
 netBufSize="14KB"
 
+print sys.argv
 
 if 1 == len(sys.argv) :
     cmdLine  = ['Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10']
@@ -56,7 +57,7 @@ for o, a in opts:
     elif o in ("--loadFile"):
         loadFile = a
     elif o in ("--cmdLine"):
-        cmdLine = a
+        cmdLine = [a]
     elif o in ("--topo"):
         topology = a
     elif o in ("--radix"):
