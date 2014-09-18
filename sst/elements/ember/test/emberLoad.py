@@ -27,7 +27,6 @@ netPktSize="2048B"
 netFlitSize="8B"
 netBufSize="14KB"
 
-print sys.argv
 
 if 1 == len(sys.argv) :
     cmdLine  = ['Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10']
