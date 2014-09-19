@@ -195,6 +195,8 @@ private:
 	Histogram<uint32_t, uint32_t>* histoBarrier;
 	Histogram<uint32_t, uint32_t>* histoAllreduce;
 	Histogram<uint32_t, uint32_t>* histoReduce;
+	Histogram<uint32_t, uint32_t>* histoSendSizes;
+	Histogram<uint32_t, uint32_t>* histoRecvSizes;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement
