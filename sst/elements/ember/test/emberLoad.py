@@ -95,6 +95,7 @@ elif "fattree" == topology:
 
 	topoInfo = FattreeInfo(radix,loading)
 	topo = topoFatTree()
+	print "network: topology=fattree radix={0} loading={1}".format(radix,loading)
 else:
 	sys.exit("how did we get here")
 
