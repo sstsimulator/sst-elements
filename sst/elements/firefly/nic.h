@@ -477,7 +477,7 @@ class Nic : public SST::Component  {
             m_hdr.op = RdmaMsgHdr::GetResp;
             m_putVec[0].ptr = &m_hdr;
             m_putVec[0].len = sizeof(m_hdr);
-            for ( unsigned int i; i < memRgn->iovec().size(); i++ ) {
+            for ( unsigned int i = 0; i < memRgn->iovec().size(); i++ ) {
                 m_putVec.push_back( memRgn->iovec()[i] );
             }
 
