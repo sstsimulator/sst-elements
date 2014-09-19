@@ -35,8 +35,8 @@
             <access_latency_cycles> 2  </access_latency_cycles>
             <cache_line_size> 64 </cache_line_size>
             <L1> 1 </L1>
-            <debug> 0 </debug>
-            <statistics> 0 </statistics>
+            <debug> 1 </debug>
+            <statistics> 1 </statistics>
             <prefetcher> cassini.NextBlockPrefetcher </prefetcher>
 		</params>
 		<link name=cpu_cache_link port=high_network_0 latency=$lat />
