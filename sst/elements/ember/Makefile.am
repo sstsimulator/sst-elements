@@ -91,4 +91,5 @@ sstspygen_SOURCES = tools/spygen/spygen.cc
 libember_la_LDFLAGS = -module -avoid-version
 
 EXTRA_DIST = \
+	test/emberLoad.py \
 	test/embernightly.py
