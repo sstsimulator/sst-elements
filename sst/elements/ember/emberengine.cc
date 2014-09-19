@@ -30,6 +30,8 @@ static const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
 static const char* REDUCE_HISTO_NAME = "Reduce Time";
 static const char* COMPUTE_HISTO_NAME = "Compute Time";
 static const char* START_HISTO_NAME = "Start Time";
+static const char* SENDSIZE_HISTO_NAME = "Send Sizes in Bytes";
+static const char* RECVSIZE_HISTO_NAME = "Recv Sizes in Bytes";
 
 EmberSpyInfo::EmberSpyInfo(int32_t r) :
 	rank(r),
@@ -99,7 +101,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	case 1:
 		dataMode = BACKZEROS;
 		break;
-    case 2:
+        case 2:
 		dataMode = BACKUNINIT;
 		break;
 	default:
@@ -153,12 +155,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Create the generator
 	string gentype = params.find_string("motif0");
 	motifCount = (uint32_t) params.find_integer("motif_count", 1);
+	currentMotif = 0;
 
 	if(motifCount > 1) {
 		// If we have other motifs after this zero, we need to keep a copy of the parameters
 		// so we can instantiate the motif as needed.
 		engineParams = new SST::Params(params);
-		currentMotif = 0;
 	}
 
 	if( gentype == "" ) {
@@ -220,6 +222,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	userBinWidth = (uint64_t) params.find_integer("reduce_bin_width", 5);
 	histoReduce = new Histogram<uint32_t, uint32_t>(REDUCE_HISTO_NAME, userBinWidth);
 
+	userBinWidth = (uint64_t) params.find_integer("sendsize_bin_width", 64);
+	histoSendSizes = new Histogram<uint32_t, uint32_t>(SENDSIZE_HISTO_NAME, userBinWidth);
+
+	userBinWidth = (uint64_t) params.find_integer("recvsize_bin_width", 64);
+	histoRecvSizes = new Histogram<uint32_t, uint32_t>(RECVSIZE_HISTO_NAME, userBinWidth);
+
 	// Set the accumulation to be the start
 	accumulateTime = histoStart;
 
@@ -251,6 +259,8 @@ EmberEngine::~EmberEngine() {
 	delete computeNoiseDistrib;
 	delete output;
 	delete msgapi;
+	delete histoSendSizes;
+	delete histoRecvSizes;
 }
 
 PayloadDataType EmberEngine::convertToHermesType(EmberDataType theType) {
@@ -387,6 +397,38 @@ void EmberEngine::finish() {
 		if(printStats > 1) {
 			output->output("- Distribution:\n");
 			printHistogram(histoAllreduce);
+		}
+
+		output->output("- Histogram of Send Sizes (bytes):\n");
+		output->output("--> Total bytes:    %" PRIu32 "\n", histoSendSizes->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoSendSizes->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
+			histoSendSizes->getItemCount() == 0 ? 0 :
+			(histoSendSizes->getValuesSummed() / histoSendSizes->getItemCount()));
+		output->output("--> Avr B/W:        %.2f GB/s (Duration of Run)\n",
+			(histoSendSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double) getCurrentSimTimeNano()) / 1000000000.0));
+		output->output("--> Avr B/W:        %.2f GB/s (During Critical Path Send Operations)\n",
+			(histoSendSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double)
+				(histoSend->getValuesSummed() + histoISend->getValuesSummed()) / 1000000000.0)));
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoSendSizes);
+		}
+
+		output->output("- Histogram of Recv Sizes (bytes):\n");
+		output->output("--> Total bytes:    %" PRIu32 "\n", histoRecvSizes->getValuesSummed());
+		output->output("--> Item count:     %" PRIu32 "\n", histoRecvSizes->getItemCount());
+		output->output("--> Average:        %" PRIu32 "\n",
+			histoRecvSizes->getItemCount() == 0 ? 0 :
+			(histoRecvSizes->getValuesSummed() / histoRecvSizes->getItemCount()));
+		output->output("--> Avr B/W:        %.2f GB/s (Duration of Run)\n",
+			(histoRecvSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double) getCurrentSimTimeNano()) / 1000000000.0));
+		output->output("--> Avr B/W:        %.2f GB/s (During Critical Path Recv Operations)\n",
+			(histoRecvSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double)
+				(histoRecv->getValuesSummed() + histoIRecv->getValuesSummed()) / 1000000000.0)));
+		if(printStats > 1) {
+			output->output("- Distribution:\n");
+			printHistogram(histoRecvSizes);
 		}
 	}
 
@@ -596,6 +638,9 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 	// at the end of simulation
 	updateSpyplot((int32_t) ev->getSendToRank(), (uint64_t) ev->getMessageSize());
 
+	// Keep track of message sizes sent from this node
+	histoSendSizes->add(ev->getMessageSize());
+
 	accumulateTime = histoSend;
 }
 
@@ -669,6 +714,8 @@ void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
 			ev->getMessageRequestHandle(), &irecvFunctor);
 		break;
 	}
+
+	histoRecvSizes->add(ev->getMessageSize());
 	accumulateTime = histoIRecv;
 }
 
@@ -697,6 +744,8 @@ void EmberEngine::processISendEvent(EmberISendEvent* ev) {
 	// at the end of simulation
 	updateSpyplot((int32_t) ev->getSendToRank(), (uint64_t) ev->getMessageSize());
 
+	histoSendSizes->add(ev->getMessageSize());
+
 	accumulateTime = histoISend;
 }
 
@@ -721,6 +770,8 @@ void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
 			&currentRecv[0], &recvFunctor);
 		break;
 	}
+
+	histoRecvSizes->add(ev->getMessageSize());
 	accumulateTime = histoRecv;
 }
 
