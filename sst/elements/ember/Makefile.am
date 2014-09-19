@@ -94,5 +94,4 @@ EXTRA_DIST = \
 	test/emberLoad.py \
 	test/loadInfo.py \
 	test/CrossProduct.py \
-	test/Tester.py \
-	test/embernightly.py
+	test/Tester.py 
