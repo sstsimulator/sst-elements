@@ -112,7 +112,7 @@ sst.merlin._params["output_buf_size"] = netBufSize
 sst.merlin._params.update( topoInfo.getNetworkParams() )
 
 _nicParams = { 
-		"debug" : 1,
+		"debug" : debug,
 		"verboseLevel": 1,
 		"module" : "merlin.linkcontrol",
 		"topology" : "merlin." + topology,
