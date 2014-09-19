@@ -457,11 +457,14 @@ void Nic::processGet( SelfEvent& event )
     }
 
     RdmaMsgHdr& hdr = *(RdmaMsgHdr*) &event.mEvent->buf[0];
+
+    assert( event.hdr.tag == hdr.rgnNum );
     
     m_dbg.verbose(CALL_INFO,1,0,"rgnNum %d offset=%d respKey=%d\n",
                         hdr.rgnNum, hdr.offset, hdr.respKey );
 
     MemRgnEntry* entry = m_memRgnM[ event.hdr.dst_vNicId ][hdr.rgnNum]; 
+    assert( entry );
 
     m_memRgnM[ event.hdr.dst_vNicId ].erase(hdr.rgnNum); 
 
