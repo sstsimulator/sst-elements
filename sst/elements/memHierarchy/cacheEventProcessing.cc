@@ -198,7 +198,7 @@ void Cache::finish(){
     uint64_t averageLatency;
     if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
     else averageLatency = 0;
-    
+
     bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency);
     topCC_->printStats(statsFile_);
     listener_->printStats(*d_);

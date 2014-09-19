@@ -205,6 +205,7 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 }
 
 void StridePrefetcher::printStats(Output &out) {
+	out.output("--------------------------------------------------------------------\n");
 	out.output("Stride Prefetch Engine Statistics (Owner: %s):\n", owner->getName().c_str());
 	out.output("--------------------------------------------------------------------\n");
 	out.output("Cache Miss Events:                      %"PRIu64"\n", missEventsProcessed);
@@ -212,9 +213,9 @@ void StridePrefetcher::printStats(Output &out) {
 	out.output("Cache Miss Rate (%%):                    %f\n", ((missEventsProcessed
                	/ ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
 	out.output("Cache Hit Rate (%%):                     %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
-                       	hitEventsProcessed))) * 100.0));    
-    out.output("Prefetches Opportunities:               %"PRIu64"\n", prefetchOpportunities);
-    out.output("Prefetches Issued:                      %"PRIu64"\n", prefetchEventsIssued);
+                       	hitEventsProcessed))) * 100.0));
+        out.output("Prefetches Opportunities:               %"PRIu64"\n", prefetchOpportunities);
+        out.output("Prefetches Issued:                      %"PRIu64"\n", prefetchEventsIssued);
 	out.output("Prefetches canceled by page boundary:   %"PRIu64"\n", prefetchIssueCanceledByPageBoundary);
 	out.output("Prefetches canceled by history:         %"PRIu64"\n", prefetchIssueCanceledByHistory);
 	out.output("--------------------------------------------------------------------\n");

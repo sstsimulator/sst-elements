@@ -171,9 +171,10 @@ private:
             stats_[0].GETXMissSM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
         }
-        if(_event->isPrefetch())
-            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
-       
+
+//        if(_event->isPrefetch())
+        listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
+
         _event->setStatsUpdated(true);
     }
 
@@ -183,9 +184,10 @@ private:
             stats_[0].GETXMissIM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
         }
-        if(_event->isPrefetch())
-            listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
-        
+
+//        if(_event->isPrefetch())
+        listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
+
         _event->setStatsUpdated(true);
     }
 
@@ -201,9 +203,10 @@ private:
                 if(groupStats_) stats_[getGroupId()].GETSMissBlocked_++;
             }
         }
-        if(_event->isPrefetch())
-            listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _event->getBaseAddr());
-        
+
+//        if(_event->isPrefetch())
+        listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _event->getBaseAddr());
+
         _event->setStatsUpdated(true);
     }
 
@@ -219,9 +222,10 @@ private:
                 if(groupStats_) stats_[getGroupId()].GETXMissBlocked_++;
             }
         }
-        if(_event->isPrefetch())
-            listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _event->getBaseAddr());
-        
+
+//        if(_event->isPrefetch())
+        listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _event->getBaseAddr());
+ 
         _event->setStatsUpdated(true);
     }
 
@@ -231,9 +235,10 @@ private:
             stats_[0].GETSMissIS_++;
             if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
         }
-        if(_event->isPrefetch())
-            listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr());
-        
+
+//        if(_event->isPrefetch())
+        listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr());
+
         _event->setStatsUpdated(true);
     }
 
