@@ -44,6 +44,8 @@ libember_la_SOURCES = \
 	emberredev.cc \
 	embergettimeev.h \
 	embergettimeev.cc \
+	embermap.h \
+	emberlinearmap.h \
 	motifs/embernull.h  \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
@@ -94,4 +96,5 @@ EXTRA_DIST = \
 	test/emberLoad.py \
 	test/loadInfo.py \
 	test/CrossProduct.py \
+	test/networkConfig.py \
 	test/Tester.py 
