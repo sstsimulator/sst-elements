@@ -536,13 +536,19 @@ void schedComponent::finish()
 
 void schedComponent::startJob(Job* job) 
 {
+
+    //debug
+    /*if(job->getJobNum() % 100 == 0){
+        std::cout << "Job " << job->getJobNum() << " started.\n";
+    }*/
+
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
     job->start( getCurrentSimTime() );              //job started flag
-    AllocInfo* ai = theAllocator->allocate(job);    //get allocation    
+    AllocInfo* ai = theAllocator->allocate(job);    //get allocation
+    TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks  
     machine->allocate(ai);                          //allocate
-    TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
     scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler
     stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
 

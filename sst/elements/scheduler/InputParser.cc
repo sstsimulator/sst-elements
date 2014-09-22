@@ -275,25 +275,24 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
 
 void CommParser::parseComm(Job * job)
 {
-    TaskCommInfo* tci;
     switch(job->commInfo.commType){
     case TaskCommInfo::ALLTOALL:
-        tci = new TaskCommInfo(job);
+        new TaskCommInfo(job);
         break;
     case TaskCommInfo::CUSTOM:
-        tci = new TaskCommInfo(job, 
+        new TaskCommInfo(job, 
                                readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
                                job->commInfo.centerTask );
         break;
     case TaskCommInfo::MESH:
-        tci = new TaskCommInfo(job, 
+        new TaskCommInfo(job, 
                                job->commInfo.meshx,
                                job->commInfo.meshy,
                                job->commInfo.meshz,
                                job->commInfo.centerTask );
         break;
     case TaskCommInfo::COORDINATE:
-        tci = new TaskCommInfo(job, 
+        new TaskCommInfo(job, 
                                readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
                                readCoordFile(job->commInfo.coordFile, job->getProcsNeeded()),
                                job->commInfo.centerTask );
@@ -530,7 +529,7 @@ vector<T*>* MatrixMarketReader2D<T>::readMatrix(const char* fileName, bool ignor
         int size = outVector->size();
         for(int i = 0; i < size; i++){
             tempData = outVector->at(i);
-            if(tempData[0] != tempData[1]){
+            if(tempData[0] != tempData[1] && tempData[2] != 0){
                 tempDataSym = new T[3];
                 tempDataSym[0] = tempData[1];
                 tempDataSym[1] = tempData[0];
