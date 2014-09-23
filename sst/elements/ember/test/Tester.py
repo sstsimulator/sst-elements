@@ -89,7 +89,7 @@ for network in networks :
                 hash_object  = hashlib.md5(b"sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], x, test['motif'], y, config))
                 hex_dig = hash_object.hexdigest()
                 print "test_SweepEmber_" + hex_dig + "() {"
-                print "echo {0} {1} {2} {3}".format(network['topo'], x, test['motif'], y)
+                print "echo \"    \" {0} {1} {2} {3}".format(network['topo'], x, test['motif'], y)
                 print "sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4} > tmp_file".format(network['topo'], x, test['motif'], y, config)
                 print "grep Simulation.is.complete tmp_file > outFile "
                 print "TL=`grep Simulation.is.complete tmp_file`"
