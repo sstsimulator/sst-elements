@@ -41,6 +41,9 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 
 	uint64_t compTime = (uint64_t) params.find_integer("computetime", 1000);
 	nsCompute = (uint64_t) (nx * ny * compTime);
+
+	printf("COMPUTE TIME PER CELL IS %" PRIu64 " * %" PRIu32 " x %" PRIu32 " = %" PRIu64 "\n",
+		compTime, nx, ny, nsCompute);
 }
 
 void EmberSweep3DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
@@ -109,7 +112,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_down, (ny * kba * data_width * fields_per_cell), 2000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba * data_width * fields_per_cell));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * fields_per_cell));
 
 				if(x_down >= 0) {
        		                         evQ->push( new EmberSendEvent(x_down, (nx * kba * data_width * fields_per_cell), 2000, (Communicator) 0) );
@@ -130,7 +133,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_up, (ny * kba * data_width * fields_per_cell), 3000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba * data_width * fields_per_cell));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * fields_per_cell));
 
 				if(x_down >= 0) {
 	                                evQ->push( new EmberSendEvent(x_down, (nx * kba * data_width * fields_per_cell), 3000, (Communicator) 0) );
@@ -151,7 +154,7 @@ void EmberSweep3DGenerator::generate(const SST::Output* output, const uint32_t p
 					evQ->push( new EmberRecvEvent(y_up, (ny * kba * data_width * fields_per_cell), 4000, (Communicator) 0) );
 				}
 
-				evQ->push(new EmberComputeEvent(nsCompute * kba * data_width * fields_per_cell));
+				evQ->push(new EmberComputeEvent(nsCompute * kba * fields_per_cell));
 
 				if(x_up >= 0) {
         	                        evQ->push( new EmberSendEvent(x_up, (nx * kba * data_width * fields_per_cell), 4000, (Communicator) 0) );
