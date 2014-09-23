@@ -141,6 +141,16 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	double compNoiseStdDev = (double) params.find_floating("noisestddev", 0.1);
 	string noiseType = params.find_string("noisegen", "constant");
 
+	// Set the rank mapping scheme we are using
+	Params mapParams = params.find_prefix_params("rankmap.");
+	string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
+	rankMap = dynamic_cast<EmberRankMap*>(loadModuleWithComponent(rankMapModule, this, mapParams));
+
+	if(NULL == rankMap) {
+		std::cerr << "Error: Unable to load rank map scheme " << rankMapModule << std::endl;
+		exit(-1);
+	}
+
 	// Get the Spyplot mode
 	spyplotMode = (uint32_t) params.find_integer("spyplotmode", 0);
 
@@ -174,6 +184,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 			output->fatal(CALL_INFO, -1, "Error: Could not load the generator %s for Ember\n", gentype.c_str());
 		}
 	}
+
+	// Set the rank map
+	generator->setRankMap(rankMap);
 
 	// Configure self link to handle event timing
 	selfEventLink = configureSelfLink("self", "1ps",
@@ -448,7 +461,10 @@ void EmberEngine::setup() {
 	thisRank = (uint32_t) msgapi->myWorldRank();
 	worldSize = (uint32_t) msgapi->myWorldSize();
 
+	// Tell the motif and the rank mapper what is happening in
+	// terms of this rank and the size of the world
 	generator->configureEnvironment(output, thisRank, worldSize);
+	rankMap->setEnvironment(thisRank, worldSize);
 
 	char outputPrefix[256];
 	sprintf(outputPrefix, "@t:%d:%d:EmberEngine::@p:@l: ", jobId, (int) thisRank);
@@ -824,6 +840,9 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 
 		// Configure the motif environment
 		generator->configureEnvironment(output, thisRank, worldSize);
+
+		// Set the rank map
+        	generator->setRankMap(rankMap);
 
         	// Update event count to ensure we are not correctly sync'd
         	eventCount = (uint32_t) evQueue.size();

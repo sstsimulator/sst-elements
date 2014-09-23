@@ -25,6 +25,7 @@
 #include "emberinitev.h"
 #include "embercomputeev.h"
 #include "emberfinalizeev.h"
+#include "embermap.h"
 
 namespace SST {
 namespace Ember {
@@ -38,6 +39,7 @@ public:
 		std::queue<EmberEvent*>* evQ) = 0;
 	virtual void finish(const SST::Output* output) = 0;
 	virtual bool autoInitialize() { return false; }
+	virtual void setRankMap(EmberRankMap* mapper);
 
 	void getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
                 int32_t* myX, int32_t* myY, int32_t* myZ);
@@ -47,6 +49,9 @@ public:
         	const int32_t posX, const int32_t posY, const int32_t posZ);
 
 	~EmberGenerator();
+
+private:
+	EmberRankMap* rankMap;
 
 };
 

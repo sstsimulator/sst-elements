@@ -20,6 +20,8 @@
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
+#include "embermap.h"
+#include "emberlinearmap.h"
 #include "motifs/emberhalo2d.h"
 #include "motifs/emberhalo2dNBR.h"
 //#include "motifs/emberhalo3dnb.h"
@@ -67,6 +69,11 @@ load_Barrier( Component* comp, Params& params ) {
 static Module*
 load_Ring( Component* comp, Params& params ) {
 	return new EmberRingGenerator(comp, params);
+}
+
+static Module*
+load_LinearNodeMap( Component* comp, Params& params ) {
+	return new EmberLinearRankMap(comp, params);
 }
 
 static Module*
@@ -341,6 +348,15 @@ static const ElementInfoModule modules[] = {
 	load_PingPong,
 	pingpong_params,
     	"SST::Ember::EmberGenerator"
+    },
+    {
+	"LinearMap",
+	"Performs a linear mapping of MPI ranks",
+	NULL,
+	NULL,
+	load_LinearNodeMap,
+	NULL,
+	"SST::Ember::EmberRankMap"
     },
     { 	"RingMotif",
 	"Performs a Ring Motif",

@@ -34,6 +34,8 @@
 #include <vector>
 #include <string>
 
+#include "embermap.h"
+#include "emberlinearmap.h"
 #include "embergen.h"
 #include "emberevent.h"
 #include "emberinitev.h"
@@ -145,6 +147,7 @@ private:
 	uint32_t currentMotif;
 	bool continueProcessing;
 	EmberDataMode dataMode;
+	EmberRankMap* rankMap;
 
 	std::queue<EmberEvent*> evQueue;
 	std::map<int32_t, EmberSpyInfo*>* spyinfo;
