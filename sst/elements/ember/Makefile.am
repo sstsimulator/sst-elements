@@ -23,6 +23,8 @@ libember_la_SOURCES = \
 	emberinitev.h  \
 	emberrecvev.h \
 	embersendev.h \
+	embermap.h \
+	emberlinearmap.h \
 	emberstartev.h \
 	emberstartev.cc \
 	emberstopev.h \
@@ -46,6 +48,8 @@ libember_la_SOURCES = \
 	embergettimeev.cc \
 	embermap.h \
 	emberlinearmap.h \
+	motifs/ember3dcommdbl.h \
+	motifs/ember3dcommdbl.cc \
 	motifs/embernull.h  \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
