@@ -90,6 +90,7 @@ for network in networks :
                 hex_dig = hash_object.hexdigest()
                 print "test_SweepEmber_" + hex_dig + "() {"
                 print "echo \"    \" {0} {1} {2} {3}".format(network['topo'], x, test['motif'], y)
+                print "pushd $SST_ROOT/sst/elements/ember/test"
                 print "sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4} > tmp_file".format(network['topo'], x, test['motif'], y, config)
                 print "grep Simulation.is.complete tmp_file > outFile "
                 print "TL=`grep Simulation.is.complete tmp_file`"
@@ -110,5 +111,6 @@ for network in networks :
                 print "else"
                 print "    echo ' '; echo Test Passed; echo ' ' "
                 print "fi"
+                print "popd"
                 print "}"
                 #call("sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], x, test['motif'], y, config), shell=True )
