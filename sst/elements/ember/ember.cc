@@ -159,6 +159,9 @@ static const ElementInfoParam component_params[] = {
     { "printStats", "Prints the statistics from the component, used as a bit field, 1 = print end of run statisitics, 2 = print end of motif runs in multi motif runs, default 0 = print nothing.", "0"},
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "msgapi", "Sets the messaging API of the end point" },
+    { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
+    { "distrib", "Sets the distribution SST module for compute modeling, default is a constant distribution of mean 1", "1.0"},
+    { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
     { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
     { "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = spy on sends", "0" },
     { "motif_count", "Sets the number of motifs to run in this instance of the component", "1" },
@@ -363,6 +366,10 @@ static const ElementInfoParam gaussDistrib_params[] = {
 	{	NULL, NULL, NULL 	}
 };
 
+static const ElementInfoParam linearMapper_params[] = {
+	{	NULL, NULL, NULL 	}
+};
+
 static const ElementInfoModule modules[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
@@ -396,7 +403,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_LinearNodeMap,
-	NULL,
+	linearMapper_params,
 	"SST::Ember::EmberRankMap"
     },
     { 	"RingMotif",
