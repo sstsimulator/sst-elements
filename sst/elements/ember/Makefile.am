@@ -52,6 +52,8 @@ libember_la_SOURCES = \
 	emberdistrib.cc \
 	emberconstdistrib.h \
 	emberconstdistrib.cc \
+	embergaussdistrib.h \
+	embergaussdistrib.cc \
 	motifs/ember3dcommdbl.h \
 	motifs/ember3dcommdbl.cc \
 	motifs/embernull.h  \

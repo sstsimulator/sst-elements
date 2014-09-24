@@ -41,6 +41,7 @@
 #include "motifs/embermsgrate.h"
 #include "motifs/emberhalo3d26.h"
 #include "emberconstdistrib.h"
+#include "embergaussdistrib.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -60,6 +61,11 @@ load_PingPong( Component* comp, Params& params ) {
 static Module*
 load_ConstDistrib( Component* comp, Params& params) {
 	return new EmberConstDistribution(comp, params);
+}
+
+static Module*
+load_GaussDistrib( Component* comp, Params& params) {
+	return new EmberGaussianDistribution(comp, params);
 }
 
 static Module*
@@ -351,6 +357,12 @@ static const ElementInfoParam constDistrib_params[] = {
 	{	NULL, NULL, NULL 	}
 };
 
+static const ElementInfoParam gaussDistrib_params[] = {
+	{	"mean",			"Sets the mean value of the Gaussian distribution", "1.0" },
+	{	"stddev",		"Sets the standard deviation of the Gaussian distribution", "0.25" },
+	{	NULL, NULL, NULL 	}
+};
+
 static const ElementInfoModule modules[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
@@ -367,6 +379,15 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_ConstDistrib,
 	constDistrib_params,
+	"SST::Ember::EmberComputeDistribution"
+    },
+    {
+	"GaussianDistrib",
+	"Gaussian distributed compute noise model",
+	NULL,
+	NULL,
+	load_GaussDistrib,
+	gaussDistrib_params,
 	"SST::Ember::EmberComputeDistribution"
     },
     {
