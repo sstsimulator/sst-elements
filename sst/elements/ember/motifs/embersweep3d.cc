@@ -41,9 +41,6 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 
 	uint64_t compTime = (uint64_t) params.find_integer("computetime", 1000);
 	nsCompute = (uint64_t) (nx * ny * compTime);
-
-	printf("COMPUTE TIME PER CELL IS %" PRIu64 " * %" PRIu32 " x %" PRIu32 " = %" PRIu64 "\n",
-		compTime, nx, ny, nsCompute);
 }
 
 void EmberSweep3DGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
