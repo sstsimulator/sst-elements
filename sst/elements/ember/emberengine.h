@@ -53,6 +53,7 @@
 #include "emberallredev.h"
 #include "emberredev.h"
 #include "embergettimeev.h"
+#include "emberdistrib.h"
 
 using namespace SST::Statistics;
 using namespace SST::Hermes;
@@ -177,7 +178,7 @@ private:
 	HermesAPIFunctor allreduceFunctor;
 	HermesAPIFunctor reduceFunctor;
 
-	SSTRandomDistribution* computeNoiseDistrib;
+	EmberComputeDistribution* computeDistrib;
 
 	uint32_t getDataTypeWidth(EmberDataType theType);
 	PayloadDataType convertToHermesType(EmberDataType theType);

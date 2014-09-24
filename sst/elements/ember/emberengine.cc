@@ -136,30 +136,26 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
         	}
     	}
 
-	// Create a noise distribution
-	double compNoiseMean = (double) params.find_floating("noisemean", 1.0);
-	double compNoiseStdDev = (double) params.find_floating("noisestddev", 0.1);
-	string noiseType = params.find_string("noisegen", "constant");
-
 	// Set the rank mapping scheme we are using
 	Params mapParams = params.find_prefix_params("rankmap.");
 	string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
 	rankMap = dynamic_cast<EmberRankMap*>(loadModuleWithComponent(rankMapModule, this, mapParams));
 
 	if(NULL == rankMap) {
-		std::cerr << "Error: Unable to load rank map scheme " << rankMapModule << std::endl;
+		std::cerr << "Error: Unable to load rank map scheme: \'" << rankMapModule << "\'" << std::endl;
 		exit(-1);
 	}
 
 	// Get the Spyplot mode
 	spyplotMode = (uint32_t) params.find_integer("spyplotmode", 0);
 
-	if("gaussian" == noiseType) {
-		computeNoiseDistrib = new SSTGaussianDistribution(compNoiseMean, compNoiseStdDev);
-	} else if ("constant" == noiseType) {
-		computeNoiseDistrib = new SSTConstantDistribution(compNoiseMean);
-	} else {
-		output->fatal(CALL_INFO, -1, "Unknown computational noise distribution (%s)\n", noiseType.c_str());
+	Params distribParams = params.find_prefix_params("distribParams.");
+	string distribModule = params.find_string("distrib", "ember.ConstDistrib");
+
+	computeDistrib = dynamic_cast<EmberComputeDistribution*>(loadModuleWithComponent(distribModule, this, distribParams));
+	if(NULL == computeDistrib) {
+		std::cerr << "Error: Unable to load compute distribution: \'" << distribModule << "\'" << std::endl;
+		exit(-1);
 	}
 
 	// Create the generator
@@ -269,7 +265,7 @@ EmberEngine::~EmberEngine() {
 	delete histoCompute;
 	delete histoAllreduce;
 	delete histoReduce;
-	delete computeNoiseDistrib;
+	delete computeDistrib;
 	delete output;
 	delete msgapi;
 	delete histoSendSizes;
@@ -860,9 +856,14 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
 
+	// Get the time now to allow for time dependent distributions
+	const uint64_t now = getCurrentSimTimeNano();
+
 	// Issue the next event with a delay (essentially the time we computed something)
-	const uint64_t noiseAdjustedTime = (computeNoiseDistrib->getNextDouble() * ev->getNanoSecondDelay());
+	const uint64_t noiseAdjustedTime = (computeDistrib->sample(now) * ev->getNanoSecondDelay());
 	output->verbose(CALL_INFO, 2, 0, "Adjust time by noise distribution to give: %" PRIu64 "ns\n", noiseAdjustedTime);
+
+	// Next event will occur in the future at a distribution adjusted compute period forward
 	issueNextEvent(noiseAdjustedTime);
 	accumulateTime = histoCompute;
 }

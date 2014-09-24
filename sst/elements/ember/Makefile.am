@@ -48,6 +48,10 @@ libember_la_SOURCES = \
 	embergettimeev.cc \
 	embermap.h \
 	emberlinearmap.h \
+	emberdistrib.h \
+	emberdistrib.cc \
+	emberconstdistrib.h \
+	emberconstdistrib.cc \
 	motifs/ember3dcommdbl.h \
 	motifs/ember3dcommdbl.cc \
 	motifs/embernull.h  \

@@ -40,6 +40,7 @@
 #include "motifs/embernull.h"
 #include "motifs/embermsgrate.h"
 #include "motifs/emberhalo3d26.h"
+#include "emberconstdistrib.h"
 
 using namespace SST;
 using namespace SST::Ember;
@@ -54,6 +55,11 @@ create_EmberComponent(SST::ComponentId_t id,
 static Module*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
+}
+
+static Module*
+load_ConstDistrib( Component* comp, Params& params) {
+	return new EmberConstDistribution(comp, params);
 }
 
 static Module*
@@ -340,6 +346,11 @@ static const ElementInfoParam msgrate_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam constDistrib_params[] = {
+	{ 	"constant",		"Sets the constant value to return in the distribution.", "1.0" },
+	{	NULL, NULL, NULL 	}
+};
+
 static const ElementInfoModule modules[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
@@ -348,6 +359,15 @@ static const ElementInfoModule modules[] = {
 	load_PingPong,
 	pingpong_params,
     	"SST::Ember::EmberGenerator"
+    },
+    {
+	"ConstDistrib",
+	"Constant compute distribution model",
+	NULL,
+	NULL,
+	load_ConstDistrib,
+	constDistrib_params,
+	"SST::Ember::EmberComputeDistribution"
     },
     {
 	"LinearMap",
