@@ -893,7 +893,7 @@ void EmberEngine::completedWait(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
 
 	// Delete the previous MessageRequest
-	delete *currentReq;
+	delete currentReq;
 
 	issueNextEvent(0);
 }
