@@ -61,7 +61,8 @@ uint64_t EmberSpyInfo::getBytesSent() {
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
-    generationPhase(0),
+    	generationPhase(0),
+	currentMotif(0),
 	finalizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedFinalize)),
 	initFunctor(HermesAPIFunctor(this, &EmberEngine::completedInit)),
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
@@ -161,7 +162,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Create the generator
 	string gentype = params.find_string("motif0");
 	motifCount = (uint32_t) params.find_integer("motif_count", 1);
-	currentMotif = 0;
 
 	if(motifCount > 1) {
 		// If we have other motifs after this zero, we need to keep a copy of the parameters
@@ -606,7 +606,7 @@ void EmberEngine::processStopEvent(EmberStopEvent* ev) {
 
 	primaryComponentOKToEndSim();
 	if ( jobId >= 0 ) {
-		output->output("%" PRIi32":Ember End Point Finalize completed at: %"
+		output->verbose(CALL_INFO, 1, 0, "%" PRIi32":Ember End Point Finalize completed at: %"
 							PRIu64 " ns\n", jobId, getCurrentSimTimeNano());
 	}
 }

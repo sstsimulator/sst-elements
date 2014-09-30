@@ -41,6 +41,7 @@ enum EmberEventType {
 	ISEND,
 	WAIT,
 	WAITALL,
+	WAITANY,
 	COMPUTE,
 	BARRIER,
 	START,

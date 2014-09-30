@@ -32,6 +32,8 @@ libember_la_SOURCES = \
 	embercomputeev.cc \
 	emberwaitev.cc \
 	emberwaitev.h \
+	emberwaitanyev.cc \
+	emberwaitanyev.h \
 	emberwaitallev.cc \
 	emberwaitallev.h \
 	emberirecvev.cc \
