@@ -17,7 +17,9 @@ libcassini_la_SOURCES = \
 	simpletlb.h \
 	simpletlb.cc \
 	pageentry.h \
-	pageentry.cc
+	pageentry.cc \
+	addrHistogrammer.cc \
+	addrHistogrammer.h
 
 EXTRA_DIST = \
 	tests/streamcpu.xml \

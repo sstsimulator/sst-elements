@@ -17,6 +17,7 @@
 #include "sst/core/element.h"
 #include "nbprefetch.h"
 #include "strideprefetch.h"
+#include "addrHistogrammer.h"
 
 using namespace SST;
 using namespace SST::Cassini;
@@ -46,6 +47,16 @@ static const ElementInfoParam stridePrefetcher_params[] = {
     { NULL, NULL, NULL }
 };
 
+static Module* load_AddrHistogrammer(Params& params){
+    return new AddrHistogrammer(params);
+}
+
+static const ElementInfoParam addrHistogrammer_params[] = {
+    {"cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
+    {"histo_bin_width",             "The width of bins in the histograms tracking the reads and writes leaving this cache, default is 64-bytes", "64"},
+    {NULL, NULL, NULL}
+};
+
 static const ElementInfoModule modules[] = {
     { "NextBlockPrefetcher",
       "Creates a prefetch engine which automatically loads the next block",
@@ -61,6 +72,14 @@ static const ElementInfoModule modules[] = {
       load_StridePrefetcher,
       NULL,
       stridePrefetcher_params,
+      "SST::MemHierarchy::CacheListener"
+    },
+    { "AddrHistogrammer",
+      "Creates a histogrammer which tracks the reads and writes leaving this cache",
+      NULL,
+      load_AddrHistogrammer,
+      NULL,
+      addrHistogrammer_params,
       "SST::MemHierarchy::CacheListener"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
