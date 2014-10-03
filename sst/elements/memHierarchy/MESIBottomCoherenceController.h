@@ -185,7 +185,7 @@ private:
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
         }
 
-        if(!(_event->isPrefetch())) // really should be 'if (prefetching is on and not a prefetch miss)'
+        if(!(_event->isPrefetch())) // probably should be 'if (prefetching is on and not a prefetch miss)'
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
 
         _event->setStatsUpdated(true);
