@@ -172,7 +172,7 @@ private:
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
         }
 
-//        if(_event->isPrefetch())
+        if(!(_event->isPrefetch()))
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
 
         _event->setStatsUpdated(true);
@@ -185,7 +185,7 @@ private:
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
         }
 
-//        if(_event->isPrefetch())
+        if(!(_event->isPrefetch())) // really should be 'if (prefetching is on and not a prefetch miss)'
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
 
         _event->setStatsUpdated(true);
@@ -204,7 +204,7 @@ private:
             }
         }
 
-//        if(_event->isPrefetch())
+        if(!(_event->isPrefetch()))
         listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _event->getBaseAddr());
 
         _event->setStatsUpdated(true);
@@ -223,7 +223,7 @@ private:
             }
         }
 
-//        if(_event->isPrefetch())
+        if(!(_event->isPrefetch()))
         listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _event->getBaseAddr());
  
         _event->setStatsUpdated(true);
@@ -236,7 +236,7 @@ private:
             if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
         }
 
-//        if(_event->isPrefetch())
+        if(!(_event->isPrefetch()))
         listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr());
 
         _event->setStatsUpdated(true);
