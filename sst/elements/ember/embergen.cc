@@ -41,5 +41,5 @@ void EmberGenerator::getPosition(const int32_t rank, const int32_t px, const int
 int32_t EmberGenerator::convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
 	const int32_t posX, const int32_t posY, const int32_t posZ) {
 
-	rankMap->convertPositionToRank(peX, peY, peZ, posX, posY, posZ);
+	return rankMap->convertPositionToRank(peX, peY, peZ, posX, posY, posZ);
 }
