@@ -61,16 +61,13 @@ uint64_t EmberSpyInfo::getBytesSent() {
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
-    	generationPhase(0),
-	currentMotif(0),
+    generationPhase(0),
 	finalizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedFinalize)),
 	initFunctor(HermesAPIFunctor(this, &EmberEngine::completedInit)),
 	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
 	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
 	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
-	waitNoDelFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitWithoutDelete)),
 	waitallFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitall)),
-	waitallNoDelFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitallWithoutDelete)),
 	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
 	isendFunctor(HermesAPIFunctor(this, &EmberEngine::completedISend)),
 	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
@@ -162,6 +159,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Create the generator
 	string gentype = params.find_string("motif0");
 	motifCount = (uint32_t) params.find_integer("motif_count", 1);
+	currentMotif = 0;
 
 	if(motifCount > 1) {
 		// If we have other motifs after this zero, we need to keep a copy of the parameters
@@ -606,7 +604,7 @@ void EmberEngine::processStopEvent(EmberStopEvent* ev) {
 
 	primaryComponentOKToEndSim();
 	if ( jobId >= 0 ) {
-		output->verbose(CALL_INFO, 1, 0, "%" PRIi32":Ember End Point Finalize completed at: %"
+		output->output("%" PRIi32":Ember End Point Finalize completed at: %"
 							PRIu64 " ns\n", jobId, getCurrentSimTimeNano());
 	}
 }
@@ -659,16 +657,8 @@ void EmberEngine::processSendEvent(EmberSendEvent* ev) {
 void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
 
-    currentRecv.resize(1);
-
-	if(ev->deleteRequestPointer()) {
-		msgapi->wait( *ev->getMessageRequestHandle(), &currentRecv[0], &waitFunctor);
-	} else {
-		msgapi->wait( *ev->getMessageRequestHandle(), &currentRecv[0], &waitNoDelFunctor);
-	}
-
-	// Keep track of the current request handle, we will free this auto(magically).
-	currentReq = ev->getMessageRequestHandle();
+    	currentRecv.resize(1);
+	msgapi->wait( *ev->getMessageRequestHandle(), &currentRecv[0], &waitFunctor);
 
 	accumulateTime = histoWait;
 }
@@ -677,20 +667,11 @@ void EmberEngine::processWaitallEvent(EmberWaitallEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Waitall Event (%s)\n", ev->getPrintableString().c_str());
 
         const int numReq = ev->getNumMessageRequests();
+	currentRecv.resize(numReq);
 
 	if(numReq > 0) {
-		currentRecv.resize(numReq);
-
-		if(ev->deleteRequestPointer()) {
-			msgapi->waitall(numReq, ev->getMessageRequestHandle(),
-	                    (MessageResponse**)&currentRecv[0], &waitallFunctor);
-		} else {
-			msgapi->waitall(numReq, ev->getMessageRequestHandle(),
-	                    (MessageResponse**)&currentRecv[0], &waitallNoDelFunctor);
-		}
-
-		// Keep track of the current request handle, we will free this auto(magically).
-		currentReq = ev->getMessageRequestHandle();
+		msgapi->waitall(numReq, ev->getMessageRequestHandle(),
+                    (MessageResponse**) &currentRecv[0], &waitallFunctor);
 
 		accumulateTime = histoWait;
 	} else {
@@ -891,32 +872,13 @@ void EmberEngine::completedBarrier(int val) {
 
 void EmberEngine::completedWait(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
-
-	// Delete the previous MessageRequest
-	delete currentReq;
-
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedWaitallWithoutDelete(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d (no delete of message request)\n", val);
 	issueNextEvent(0);
 }
 
 void EmberEngine::completedWaitall(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
-
-	// Delete the previous MessageRequest
-	delete currentReq;
-
 	issueNextEvent(0);
 }
-
-void EmberEngine::completedWaitWithoutDelete(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d (no delete of message request)\n", val);
-	issueNextEvent(0);
-}
-
 
 void EmberEngine::completedIRecv(int val) {
 	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result = %d\n", val);

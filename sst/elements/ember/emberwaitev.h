@@ -29,7 +29,6 @@ class EmberWaitEvent : public EmberEvent {
 		MessageRequest* getMessageRequestHandle();
 		EmberEventType getEventType();
 		std::string getPrintableString();
-		bool deleteRequestPointer();
 
 	private:
 		MessageRequest* request;

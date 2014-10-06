@@ -14,16 +14,18 @@
 
 using namespace SST::Ember;
 
-EmberWaitallEvent::EmberWaitallEvent(int cnt, MessageRequest reqs_p[],
+EmberWaitallEvent::EmberWaitallEvent(int cnt, MessageRequest* reqs_p,
                                                     bool delRequest) :
     reqs(reqs_p),
     delReq(delRequest),
-    numMessageRequests(cnt) 
+    numMessageRequests(cnt)
 {
 }
 
 EmberWaitallEvent::~EmberWaitallEvent() {
-
+	if(delReq) {
+		delete reqs;
+	}
 }
 
 MessageRequest* EmberWaitallEvent::getMessageRequestHandle() {

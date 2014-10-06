@@ -21,7 +21,9 @@ EmberWaitEvent::EmberWaitEvent(MessageRequest* req, bool delRequest) :
 }
 
 EmberWaitEvent::~EmberWaitEvent() {
-
+	if(delReq) {
+		delete request;
+	}
 }
 
 MessageRequest* EmberWaitEvent::getMessageRequestHandle() {
@@ -37,8 +39,4 @@ std::string EmberWaitEvent::getPrintableString() {
         sprintf(buffer, "Wait Event");
         std::string bufferStr = buffer;
         return bufferStr;
-}
-
-bool EmberWaitEvent::deleteRequestPointer() {
-	return delReq;
 }
