@@ -22,7 +22,7 @@ libcassini_la_SOURCES = \
 	addrHistogrammer.h
 
 EXTRA_DIST = \
-	tests/streamcpu.xml \
-	tests/streamcpu-sp.xml
+	tests/streamcpu.py \
+	tests/streamcpu-sp.py
 
 libcassini_la_LDFLAGS = -module -avoid-version
