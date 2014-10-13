@@ -41,20 +41,20 @@ class MemNIC;
 class DirectoryController : public Component {
 
     Output dbg;
-	struct DirEntry;
+    struct DirEntry;
     
-	/* Total number of cache blocks we are responsible for */
-	/* ie, sum of all caches we talk to */
+    /* Total number of cache blocks we are responsible for */
+    /* ie, sum of all caches we talk to */
     uint32_t    entrySize;
-	uint32_t    numTargets;
+    uint32_t    numTargets;
     uint32_t    blocksize;
-	uint32_t    targetCount;
+    uint32_t    targetCount;
     uint32_t    cacheLineSize;
 
-	/* Range of addresses supported by this directory */
-	uint64_t    lookupBaseAddr;
-	Addr        addrRangeStart;
-	Addr        addrRangeEnd;
+    /* Range of addresses supported by this directory */
+    uint64_t    lookupBaseAddr;
+    Addr        addrRangeStart;
+    Addr        addrRangeEnd;
     Addr        interleaveSize;
     Addr        interleaveStep;
 
@@ -78,23 +78,23 @@ class DirectoryController : public Component {
     uint64_t    PutSReqReceived;
     
     std::list<DirEntry*>                    entryCache;
-	std::map<Addr, DirEntry*>               directory;
-	std::map<std::string, uint32_t>         node_lookup;
+    std::map<Addr, DirEntry*>               directory;
+    std::map<std::string, uint32_t>         node_lookup;
     std::vector<std::string>                nodeid_to_name;
-
-	/* Queue of packets to work on */
-	std::list<MemEvent*>                    workQueue;
+    
+    /* Queue of packets to work on */
+    std::list<MemEvent*>                    workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
 
     std::map<MemEvent::id_type, MemEvent*>  noncacheableWrites;
     Output::output_location_t               printStatsLoc;
 
-	SST::Link*  memLink;
+    SST::Link*  memLink;
     MemNIC*     network;
     
     
     /** Find directory entry by base address */
-	DirEntry* getDirEntry(Addr target);
+    DirEntry* getDirEntry(Addr target);
 	
     /** Create directory entrye */
     DirEntry* createDirEntry(Addr baseTarget, Addr target, uint32_t reqSize);
@@ -105,7 +105,7 @@ class DirectoryController : public Component {
     /** Send invalidate to a sharer */
     void sendInvalidate(int target, DirEntry* entry);
 
-	/** Function gets called when the meta data (flags, state) for a particular request is in the directory controller*/
+    /** Function gets called when the meta data (flags, state) for a particular request is in the directory controller*/
     void handleDataRequest(DirEntry* entry, MemEvent *new_ev);
 	
     /** Fetch response received.  Respond to the event that cause the Fetch in the first place */
@@ -117,20 +117,20 @@ class DirectoryController : public Component {
     /** Function changes state of the cache line to indicate the new exclusive sharer */
     void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);
 
-	/** Handles recieved PutM requests */
+    /** Handles recieved PutM requests */
     void handlePutM(DirEntry *entry, MemEvent *ev);
 	
-	/** Handles recieved PutS requests */
+    /** Handles recieved PutS requests */
     void handlePutS(MemEvent *ev);
 
     /** Retry original request upon receiving a NACK */
-    void processIncomingNACK(MemEvent* _origReqEvent);
+    void processIncomingNACK(MemEvent* _origReqEvent, MemEvent* _nackEvent);
 
 
-	/** Advances or transitions an entry to the 'next state' by calling the handler that was previously assigned */
+    /** Advances or transitions an entry to the 'next state' by calling the handler that was previously assigned */
     void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 
-	/** Find link id by name.  Create map entry if not found */
+    /** Find link id by name.  Create map entry if not found */
     uint32_t node_id(const std::string &name);
     
     /** Find link id by name. */
@@ -150,18 +150,18 @@ class DirectoryController : public Component {
     void requestDataFromMemory(DirEntry *entry);
 	
     /** Write updated entry to memory */
-	void updateEntryToMemory(DirEntry *entry);
+    void updateEntryToMemory(DirEntry *entry);
     
     /** Send entry to main memory. No payload is actually sent for reasons described in 'updateCacheEntry'. */
     void sendEntryToMemory(DirEntry *entry);
 	
     /** Called to clear "active items" from an entry */
-	void resetEntry(DirEntry *entry);
+    void resetEntry(DirEntry *entry);
 
-	/** Sends MemEvent to a target */
-	void sendResponse(MemEvent *ev);
+    /** Sends MemEvent to a target */
+    void sendResponse(MemEvent *ev);
 
-	/** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
+    /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
     MemEvent::id_type writebackData(MemEvent *data_event);
 
     /** Determines if request is valid in terms of address ranges */
@@ -173,28 +173,28 @@ class DirectoryController : public Component {
     /** Print directory controller status */
     const char* printDirectoryEntryStatus(Addr addr);
 
-  	/** */
+    /** */
     typedef void(DirectoryController::*ProcessFunc)(DirEntry *entry, MemEvent *new_ev);
 
     /** Internal struct to keep track of directory requests to main memory */
     struct DirEntry {
-		static const        MemEvent::id_type NO_LAST_REQUEST;
+        static const        MemEvent::id_type NO_LAST_REQUEST;
 
         /* These items are bookkeeping for in-progress commands */
-		ProcessFunc         nextFunc;
+	ProcessFunc         nextFunc;
         std::string         waitingOn; // waiting to hear from this source
         Command             nextCommand;  // Command which we're waiting for
-		uint32_t            waitingAcks;
+	uint32_t            waitingAcks;
         uint32_t            reqSize;
         bool                inController; // Whether this is present in the controller, or needs to be fetched
-		bool                dirty;
+	bool                dirty;
         Addr                baseAddr;
         Addr                addr;
         MemEvent::id_type   lastRequest;  // ID of message we're wanting a response to
-		MemEvent            *activeReq;
+	MemEvent            *activeReq;
         std::list<DirEntry*>::iterator cacheIter;
-		std::vector<bool>   sharers;
-
+	std::vector<bool>   sharers;
+	
         DirEntry(Addr _baseAddress, Addr _address, uint32_t _reqSize, uint32_t _bitlength){
             clearEntry();
             baseAddr     = _baseAddress;
