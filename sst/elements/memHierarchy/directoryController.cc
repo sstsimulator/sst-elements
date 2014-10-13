@@ -171,7 +171,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     
     if(NACK == cmd){
         MemEvent* origEvent = ev->getNACKedEvent();
-        processIncomingNACK(origEvent);
+        processIncomingNACK(origEvent,ev);
         delete ev;
         return true;
     }
@@ -290,17 +290,27 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 
 
 
-void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent){
-    /* Re-send request */
-    sendResponse(_origReqEvent);
-    dbg.output("Orig Cmd NACKed = %s \n", CommandString[_origReqEvent->getCmd()]);
+void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent, MemEvent* _nackEvent){
+    DirEntry *entry = getDirEntry(_origReqEvent->getBaseAddr());
+    dbg.debug(_L10_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n", 
+	_origReqEvent->getResponseToID().first, _origReqEvent->getResponseToID().second, _nackEvent->getResponseToID().first, 
+	_nackEvent->getResponseToID().second, entry->lastRequest.first, entry->lastRequest.second);
+    
+    /* Retry request if it has not already been handled */
+    if ((_nackEvent->getResponseToID() == entry->lastRequest) || _origReqEvent->getCmd() == Inv) {
+	/* Re-send request */
+	sendResponse(_origReqEvent);
+	dbg.output("Orig Cmd NACKed, retry = %s \n", CommandString[_origReqEvent->getCmd()]);
+    } else {
+	dbg.output("Orig Cmd NACKed, no retry = %s \n", CommandString[_origReqEvent->getCmd()]);
+    }
 }
 
 
 
 pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
     dbg.debug(_L10_, "Entry found and in progress\n");
-        if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM)) &&
+        if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM) || (entry->nextCommand == GetSResp && cmd == PutS)) &&
           ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())){
             dbg.debug(_L10_, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
             if(ev->getResponseToID() != entry->lastRequest){
