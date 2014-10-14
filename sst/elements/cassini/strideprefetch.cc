@@ -72,11 +72,18 @@ void StridePrefetcher::DetectStride() {
 						(strideReach * stride), stride);
 
 					prefetchOpportunities++;
+
+					// Check next address is aligned to a cache line boundary
+					assert((targetAddress + (strideReach * stride)) % blockSize == 0);
+
 					ev = new MemEvent(owner, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), GetS);
 				} else {
 					const Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
 					const Addr targetAddressPhysPage = targetAddress / pageSize;
 					const Addr targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
+
+					// Check next address is aligned to a cache line boundary
+					assert(targetPrefetchAddress % blockSize == 0);
 
 					// if the address we found and the next prefetch address are on the same
 					// we can safely prefetch without causing a page fault, otherwise we
