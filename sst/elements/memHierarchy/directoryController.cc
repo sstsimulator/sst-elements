@@ -498,7 +498,11 @@ void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
 
     entry->clearDirty(id);
 
-    if(ev->getCmd() == PutM) writebackData(entry->activeReq);
+    if(ev->getCmd() == PutM || ev->getCmd() == GetSResp) {
+        writebackData(entry->activeReq);
+    } else {
+        dbg.debug(_L10_, "Alert! dropping PutM\n");
+    }
 	
     updateEntryToMemory(entry);
 
