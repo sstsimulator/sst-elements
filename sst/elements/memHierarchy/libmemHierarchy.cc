@@ -123,7 +123,6 @@ static const ElementInfoPort cpu_ports[] = {
 static const ElementInfoParam cpu_params[] = {
     {"verbose",                 "Determine how verbose the output from the CPU is", "1"},
     {"rngseed",                 "Set a seed for the random generation of addresses", "7"},
-    {"workPerCycle",            "How much work to do per cycle."},
     {"commFreq",                "How often to do a memory operation."},
     {"memSize",                 "Size of physical memory."},
     {"do_write",                "Enable writes to memory (versus just reads).", "1"},
@@ -160,6 +159,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
+    {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
+    {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
     {NULL, NULL, NULL}
 };
 

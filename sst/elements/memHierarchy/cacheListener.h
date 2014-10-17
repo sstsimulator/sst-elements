@@ -43,7 +43,8 @@ public:
 
     virtual void printStats(Output &out) {}
     virtual void setOwningComponent(const SST::Component* owner) {}
-    virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) {}
+    virtual void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,
+				const Addr addr, const uint32_t size) {}
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 

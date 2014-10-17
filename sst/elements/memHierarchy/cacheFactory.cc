@@ -137,13 +137,16 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     
     
     /* --------------- Prefetcher ---------------*/
-    if (prefetcher.empty()) listener_ = new CacheListener();
-    else listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, _params));
+    if (prefetcher.empty()) {
+	listener_ = new CacheListener();
+    } else {
+	Params prefetcherParams = _params.find_prefix_params("prefetcher." );
+	listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, prefetcherParams));
+    }
 
     listener_->setOwningComponent(this);
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
-    
     /* ---------------- Latency ---------------- */
     assert(accessLatency_ >= 1);
     if(mshrLatency_ < 1) intrapolateMSHRLatency();

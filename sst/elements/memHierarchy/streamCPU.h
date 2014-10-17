@@ -52,7 +52,6 @@ private:
 
     Output out;
     int numLS;
-	int workPerCycle;
 	int commFreq;
 	bool do_write;
 	uint32_t maxAddr;
@@ -73,7 +72,6 @@ private:
 	void save(Archive & ar, const unsigned int version) const
 	{
 		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-		ar & BOOST_SERIALIZATION_NVP(workPerCycle);
 		ar & BOOST_SERIALIZATION_NVP(commFreq);
 		ar & BOOST_SERIALIZATION_NVP(maxAddr);
 		ar & BOOST_SERIALIZATION_NVP(mem_link);
@@ -83,7 +81,6 @@ private:
 	void load(Archive & ar, const unsigned int version)
 	{
 		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-		ar & BOOST_SERIALIZATION_NVP(workPerCycle);
 		ar & BOOST_SERIALIZATION_NVP(commFreq);
 		ar & BOOST_SERIALIZATION_NVP(maxAddr);
 		ar & BOOST_SERIALIZATION_NVP(mem_link);

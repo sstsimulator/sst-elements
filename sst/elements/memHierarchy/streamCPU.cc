@@ -29,14 +29,10 @@ using namespace SST::MemHierarchy;
 streamCPU::streamCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
-    out.init("", 0, 0, Output::NONE);
+	uint32_t outputLevel = (uint32_t) params.find_integer("verbose", 0);
+        out.init("StreamCPU:@p:@l: ", outputLevel, 0, Output::STDOUT);
 
 	// get parameters
-	if ( params.find("workPerCycle") == params.end() ) {
-		_abort(event_test,"couldn't find work per cycle\n");
-	}
-	workPerCycle = strtol( params[ "workPerCycle" ].c_str(), NULL, 0 );
-
 	if ( params.find("commFreq") == params.end() ) {
 		_abort(event_test,"couldn't find communication frequency\n");
 	}
@@ -100,10 +96,9 @@ void streamCPU::handleEvent(Event *ev)
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			out.output("%s: Received MemEvent with command %d (response to %"PRIx64", addr 0x%"PRIx64") [Time: %" PRIx64 "] [%zu outstanding requests]\n",
-					getName().c_str(),
-					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
-                    requests.size());
+
+			out.verbose(CALL_INFO, 1, 0, "Received MemEvent (response to: %10" PRIu64 ", Addr=%15" PRIu64 ", Took: %7" PRIu64 "ns, %6" PRIu32 " pending requests).\n",
+				event->getResponseToID().first, event->getAddr(), et, requests.size());
 			num_reads_returned++;
 		}
 
@@ -113,21 +108,12 @@ void streamCPU::handleEvent(Event *ev)
 	}
 }
 
-// each clock tick we do 'workPerCycle' iterations of a simple loop.
-// We have a 1/commFreq chance of sending an event of size commSize to
-// one of our neighbors.
 bool streamCPU::clockTic( Cycle_t )
 {
-	volatile int v = 0;
-	for (int i = 0; i < workPerCycle; ++i) {
-		v++;
-	}
-
 	// communicate?
 	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
 		if ( requests.size() > 10 ) {
-			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
-					getName().c_str());
+			out.verbose(CALL_INFO, 1, 0, "Not issuing operation, too many outstanding requests are in flight.\n");
 		} else {
 
 			// yes, communicate
@@ -145,11 +131,9 @@ bool streamCPU::clockTic( Cycle_t )
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			//out.output("%s: %d Issued %s (%"PRIu64") for address 0x%""\n",
-			//		getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, nextAddr);
-			std::cout << getName() << " " << numLS << " issued: " <<
-				(doWrite ? "write" : "read") << " (id=" << e->getID().first << ", Addr=" << nextAddr <<
-				std::endl;
+			out.verbose(CALL_INFO, 1, 0, "Issued request %10d: %5s for address %20d.\n",
+				numLS, (doWrite ? "write" : "read"), nextAddr);
+
 			num_reads_issued++;
 			nextAddr = (nextAddr + 8);
 

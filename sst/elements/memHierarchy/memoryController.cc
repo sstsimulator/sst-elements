@@ -32,6 +32,7 @@
 #include "memEvent.h"
 #include "memBackend.h"
 #include "bus.h"
+#include "cacheListener.h"
 
 #define NO_STRING_DEFINED "N/A"
 
@@ -42,7 +43,7 @@ using namespace SST::MemHierarchy;
 
 
 /*************************** Memory Controller ********************/
-MemController::MemController(ComponentId_t id, Params &params) : Component(id){
+MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     int debugLevel = params.find_integer("debug_level", 0);
     if(debugLevel < 0 || debugLevel > 10)
         _abort(MemController, "Debugging level must be betwee 0 and 10. \n");
@@ -68,6 +69,26 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
+
+    const uint32_t listenerCount  = (uint32_t) params.find_integer("listenercount", 0);
+    char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
+    char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+
+    for(uint32_t i = 0; i < listenerCount; ++i) {
+	    sprintf(nextListenerName, "listener%" PRIu32, i);
+	    string listenerMod     = params.find_string(nextListenerName, "");
+
+            if(listenerMod != "") {
+		sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
+		Params listenerParams = params.find_prefix_params(nextListenerParams);
+
+		CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadModule(listenerMod, listenerParams));
+		listeners_.push_back(loadedListener);
+	    }
+    }
+
+    free(nextListenerName);
+    free(nextListenerParams);
 
     string traceFileLoc     = params.find_string("trace_file", "");
     if("" != traceFileLoc) {
@@ -106,32 +127,40 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id){
 
 
 void MemController::handleEvent(SST::Event* _event){
-	MemEvent *ev = static_cast<MemEvent*>(_event);
+    MemEvent *ev = static_cast<MemEvent*>(_event);
     dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_,"Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
     Command cmd = ev->getCmd();
 
-    if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM){
-	if(NULL != traceFP) {
-		if(cmd == GetS || cmd == GetX || cmd == GetSEx) {
-			fprintf(traceFP, "R %" PRIu64 ", %" PRIu64 ", %d\n",
-				getCurrentSimTimeNano(), ev->getAddr(), (int) ev->getSize());
-		} else if (cmd == PutM) {
-			fprintf(traceFP, "W %" PRIu64 ", %" PRIu64 ", %d\n",
-				getCurrentSimTimeNano(), ev->getAddr(), (int) ev->getSize());
+    // Notify our listeners that we have received an event
+
+    if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM) {
+	std::vector<CacheListener*>::iterator listener_itr;
+
+	if(cmd == GetS || cmd == GetX || cmd == GetSEx) {
+		// Notify listeners that we have equiv. of a read
+		const int listenerCount = listeners_.size();
+		for(int i = 0; i < listenerCount; ++i) {
+			listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
 		}
-        }
+	} else if(cmd == PutM) {
+		// Notify listeners that we have equiv. of a read
+		const int listenerCount = listeners_.size();
+		for(int i = 0; i < listenerCount; ++i) {
+			listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
+		}
+	}
 
         if(cmd == GetS)         GetSReqReceived_++;
         else if(cmd == GetX)    GetXReqReceived_++;
         else if(cmd == GetSEx)  GetSExReqReceived_++;
         else if(cmd == PutM)    PutMReqReceived_++;
-    
+
         addRequest(ev);
     }
     else if(cmd == PutS || cmd == PutE) return;
     else _abort(MemController, "MemController:  Command not supported, Cmd = %s", CommandString[cmd]);
-    
+
     delete _event;
 }
 

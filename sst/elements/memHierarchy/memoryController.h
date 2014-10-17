@@ -9,12 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * File:   coherenceControllers.h
- * Author: Branden Moore Caesar De la Paz III
- * Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
- */
-
 #ifndef _MEMORYCONTROLLER_H
 #define _MEMORYCONTROLLER_H
 
@@ -33,8 +27,7 @@
 
 #include "memEvent.h"
 #include "bus.h"
-
-
+#include "cacheListener.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -155,7 +148,8 @@ private:
     uint64_t    GetSExReqReceived_;
     uint64_t    numReqOutstanding_;
     uint64_t    numCycles_;
-    
+    std::vector<CacheListener*> listeners_;
+
     Output::output_location_t statsOutputTarget_;
 //#ifdef HAVE_LIBZ
 //    gzFile traceFP;

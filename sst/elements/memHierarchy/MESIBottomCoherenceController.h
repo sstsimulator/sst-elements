@@ -173,7 +173,7 @@ private:
         }
 
         if(!(_event->isPrefetch()))
-        listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
+        listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr(), _event->getSize());
 
         _event->setStatsUpdated(true);
     }
@@ -186,7 +186,7 @@ private:
         }
 
         if(!(_event->isPrefetch())) // probably should be 'if (prefetching is on and not a prefetch miss)'
-        listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr());
+        listener_->notifyAccess(CacheListener::WRITE, CacheListener::MISS, _event->getBaseAddr(), _event->getSize());
 
         _event->setStatsUpdated(true);
     }
@@ -205,7 +205,7 @@ private:
         }
 
         if(!(_event->isPrefetch()))
-        listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _event->getBaseAddr());
+        listener_->notifyAccess(CacheListener::READ, CacheListener::HIT, _event->getBaseAddr(), _event->getSize());
 
         _event->setStatsUpdated(true);
     }
@@ -224,7 +224,7 @@ private:
         }
 
         if(!(_event->isPrefetch()))
-        listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _event->getBaseAddr());
+        listener_->notifyAccess(CacheListener::WRITE, CacheListener::HIT, _event->getBaseAddr(), _event->getSize());
  
         _event->setStatsUpdated(true);
     }
@@ -237,7 +237,7 @@ private:
         }
 
         if(!(_event->isPrefetch()))
-        listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr());
+        listener_->notifyAccess(CacheListener::READ, CacheListener::MISS, _event->getBaseAddr(), _event->getSize());
 
         _event->setStatsUpdated(true);
     }
