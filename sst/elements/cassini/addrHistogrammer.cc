@@ -37,7 +37,8 @@ AddrHistogrammer::AddrHistogrammer(Params& params) {
 AddrHistogrammer::~AddrHistogrammer() { delete rdHisto;  delete wrHisto; }
 
 
-void AddrHistogrammer::notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr)
+void AddrHistogrammer::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,
+	const Addr addr, const uint32_t size)
 {
 	if(notifyResType == MISS) {
        Addr baseAddr = (addr - (addr % blockSize));

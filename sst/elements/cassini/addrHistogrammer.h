@@ -36,7 +36,9 @@ class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
         ~AddrHistogrammer();
 
 	void setOwningComponent(const SST::Component* owner);
-        void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr);
+        void notifyAccess(const NotifyAccessType notifyType,
+		const NotifyResultType notifyResType,
+		const Addr addr, const uint32_t size);
 	void registerResponseCallback(Event::HandlerBase *handler);
 	void printStats(Output& out);
 
