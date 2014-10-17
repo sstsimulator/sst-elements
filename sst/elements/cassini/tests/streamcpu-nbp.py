@@ -1,46 +1,45 @@
 import sst
 
+# Define SST core options
 sst.setProgramOption("timebase", "1ns")
+sst.setProgramOption("stopAtCycle", "0 ns")
 
-cpu = sst.Component("cpu", "memHierarchy.streamCPU")
-cpu.addParams({
-		"verbose" : "0",
-		"workPerCycle" : "1000",
-		"commFreq" : "100",
-		"memSize" : "0x1000000",
-		"do_write" : "1",
-		"num_loadstore" : "100000"
-	})
+# Define the simulation components
+comp_cpu = sst.Component("cpu", "memHierarchy.streamCPU")
+comp_cpu.addParams({
+      "do_write" : "1",
+      "num_loadstore" : "100000",
+      "commFreq" : "100",
+      "memSize" : "524288",
+      "verbose" : 0
+})
 
-l1cache = sst.Component("l1cache", "memHierarchy.Cache")
-l1cache.addParams({
-		"num_ways" : "4",
-		"num_rows" : "32",
-		"blocksize" : "64",
-		"prefetcher" : "cassini.NextBlockPrefetcher",
-		"access_time" : "2ns",
-		"num_upstream" : "1",
-		"printStats" : "1"
-	})
+comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+comp_l1cache.addParams({
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MESI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "prefetcher" : "cassini.NextBlockPrefetcher",
+      "debug" : "1",
+      "statistics" : "1",
+      "L1" : "1",
+      "cache_size" : "8 KB"
+})
 
-membus = sst.Component("membus", "memHierarchy.Bus")
-membus.addParams({
-		"numPorts" : "2",
-		"busDelay" : "20ns"
-	})
+comp_memory = sst.Component("memory", "memHierarchy.MemController")
+comp_memory.addParams({
+      "coherence_protocol" : "MSI",
+      "access_time" : "1000 ns",
+      "mem_size" : "512",
+      "clock" : "1GHz"
+})
 
-memory = sst.Component("memory", "memHierarchy.MemController")
-memory.addParams({
-		"access_time" : "100ns",
-		"mem_size" : "512",
-		"clock" : "1GHz"
-	})
 
-cpu_cache_link = sst.Link("cpu_cache_link")
-cpu_cache_link.connect( (cpu, "mem_link", "50ps"), (l1cache, "upstream0", "50ps") )
-
-cache_bus_link = sst.Link("cache_bus_link")
-cache_bus_link.connect( (membus, "port0", "50ps"), (l1cache, "snoop_link", "50ps") )
-
-memory_link = sst.Link("mem_bus_link")
-memory_link.connect( (membus, "port1", "50ps"), (memory, "snoop_link", "50ps") )
+# Define the simulation links
+link_cpu_cache_link = sst.Link("link_cpu_cache_link")
+link_cpu_cache_link.connect( (comp_cpu, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_mem_bus_link = sst.Link("link_mem_bus_link")
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )

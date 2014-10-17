@@ -34,7 +34,7 @@ NextBlockPrefetcher::NextBlockPrefetcher(Params& params) {
 
 NextBlockPrefetcher::~NextBlockPrefetcher() {}
 
-void NextBlockPrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr)
+void NextBlockPrefetcher::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size)
 {
 	if(notifyResType == MISS) {
 	    missEventsProcessed++;
