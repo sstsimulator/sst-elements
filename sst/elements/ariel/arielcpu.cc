@@ -58,14 +58,28 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		sprintf(level_buffer, "pagecount%" PRIu32, i);
 		page_counts[i] = (uint64_t) params.find_integer(level_buffer, 131072);
 	}
-	free(level_buffer);
 
 	uint32_t default_level = (uint32_t) params.find_integer("defaultlevel", 0);
 	uint32_t translateCacheSize = (uint32_t) params.find_integer("translatecacheentries", 4096);
 
 	output->verbose(CALL_INFO, 1, 0, "Creating memory manager, default allocation from %" PRIu32 " memory pool.\n", default_level);
-	memmgr = new ArielMemoryManager(memory_levels, 
+	memmgr = new ArielMemoryManager(memory_levels,
 		page_sizes, page_counts, output, default_level, translateCacheSize);
+
+	// Prepopulate any page tables as we find them
+	for(uint32_t i = 0; i < memory_levels; ++i) {
+		sprintf(level_buffer, "page_populate_%" PRIu32, i);
+		std::string popFilePath = params.find_string(level_buffer, "");
+
+		if(popFilePath != "") {
+			output->verbose(CALL_INFO, 1, 0, "Populating page tables for level %" PRIu32 " from %s...\n",
+				i, popFilePath.c_str());
+			memmgr->populateTables(popFilePath.c_str(), i);
+		}
+	}
+	free(level_buffer);
+
+	output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
 
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find_integer("maxissuepercycle", 1);
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find_integer("maxcorequeue", 64);

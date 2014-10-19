@@ -36,6 +36,7 @@ class ArielMemoryManager {
 		uint64_t translateAddress(uint64_t virtAddr);
 		void setDefaultPool(uint32_t pool);
 		void cacheTranslation(uint64_t virtualA, uint64_t physicalA);
+		void populateTables(const char* populateFilePath, const uint32_t level);
 		void printStats();
 
 	private:

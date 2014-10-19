@@ -63,6 +63,25 @@ ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint6
 	pageAllocationCount = 0;
 }
 
+void ArielMemoryManager::populateTables(const char* populateFilePath, const uint32_t level) {
+	if(strcmp(populateFilePath, "") == 0) {
+		output->fatal(CALL_INFO, -1, "Pre-populate of page tables called without a valid file path\n");
+	}
+
+	if(level >= memoryLevels) {
+		output->fatal(CALL_INFO, -1, "Pre-populate of page tables called without a valid memory level (level=%" PRIu32 ", maxLevels=%" PRIu32 ")\n",
+			level, memoryLevels);
+	}
+
+	// We need to load each entry and the create it in the page table for
+	// this level
+	FILE* popFile = fopen(populateFilePath, "rt");
+
+	
+
+	fclose(popFile);
+}
+
 // Set the new default level for continuing allocations.
 void ArielMemoryManager::setDefaultPool(const uint32_t newLevel) {
 	defaultLevel = newLevel;
