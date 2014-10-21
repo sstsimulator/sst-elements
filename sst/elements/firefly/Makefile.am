@@ -54,6 +54,8 @@ libfirefly_la_SOURCES = \
 	funcSM/waitAny.h \
 	funcSM/waitAll.cc \
 	funcSM/waitAll.h \
+	funcSM/commSplit.cc \
+	funcSM/commSplit.h \
 	funcSM/init.h \
 	hades.h \
 	hades.h \

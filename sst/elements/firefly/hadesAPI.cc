@@ -204,3 +204,11 @@ void Hades::test(MessageRequest req, int& flag, MessageResponse* resp,
         Functor* retFunc)
 {
 }
+
+void Hades::comm_split( Communicator oldComm, int color, int key,
+                            Communicator* newComm, Functor* retFunc )
+{
+    m_functionSM->start( FunctionSM::CommSplit, retFunc,
+                       new CommSplitStartEvent( oldComm, color, key, newComm) );
+} 
+

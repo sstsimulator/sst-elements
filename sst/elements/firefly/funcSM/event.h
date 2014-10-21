@@ -321,6 +321,22 @@ class WaitAllStartEvent : public Event {
 };
 
 
+class CommSplitStartEvent : public Event {
+  public:
+    CommSplitStartEvent( Hermes::Communicator _oldComm, int _color, int _key,
+                            Hermes::Communicator* _newComm ) :
+        oldComm(_oldComm),
+        color( _color ),
+        key( _key ),
+        newComm( _newComm )
+    { }
+
+    Hermes::Communicator oldComm;
+    int color;
+    int key;
+    Hermes::Communicator* newComm;
+};
+
 
 }
 }

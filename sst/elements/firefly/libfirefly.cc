@@ -33,6 +33,7 @@
 #include <funcSM/wait.h>
 #include <funcSM/waitAny.h>
 #include <funcSM/waitAll.h>
+#include <funcSM/commSplit.h>
 #include <ctrlMsg.h>
 #include <loopBack.h>
 #include <merlinEvent.h>
@@ -250,6 +251,13 @@ load_hermesWaitAllSM(Params& params)
 {
     return new WaitAllFuncSM(params);
 }
+
+static Module*
+load_hermesCommSplitSM(Params& params)
+{
+    return new CommSplitFuncSM(params);
+}
+
 
 static const ElementInfoParam funcSMModule_params[] = {
     {"enterLatency", "Sets the time to enter a function", "30"},
@@ -503,6 +511,14 @@ static const ElementInfoModule modules[] = {
       "Hermes WaitAll Function State Machine",
       NULL,
       load_hermesWaitAllSM,
+      NULL,
+      funcSMModule_params,
+      "SST::Firefly::FunctionSMInterface"
+    },
+    { "CommSplit",
+      "Hermes CommSplit Function State Machine",
+      NULL,
+      load_hermesCommSplitSM,
       NULL,
       funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"

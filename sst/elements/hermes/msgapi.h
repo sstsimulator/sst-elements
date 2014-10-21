@@ -158,6 +158,9 @@ class MessageInterface : public Module {
 
     virtual void test( MessageRequest* req, int& flag, MessageResponse* resp,
         Functor* ) {};
+
+    virtual void comm_split( Communicator, int color, int key,
+        Communicator*, Functor* ) {}
     
 };
 

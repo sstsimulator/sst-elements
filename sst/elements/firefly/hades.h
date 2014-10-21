@@ -126,6 +126,10 @@ class Hades : public Hermes::MessageInterface
     virtual void test(Hermes::MessageRequest req, int& flag, 
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
+    virtual void comm_split( Hermes::Communicator, int color, int key,
+        Hermes::Communicator*, Hermes::Functor* );
+
+
     Hermes::RankID myWorldRank();
     int myWorldSize();
 
