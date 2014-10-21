@@ -85,9 +85,8 @@ class Group
 
   private:
     VirtNic* m_virtNic;
-    int 	m_rank;
+    int 	 m_rank;
     std::map< int, int> m_nidMap;
-
 };
 }
 }
