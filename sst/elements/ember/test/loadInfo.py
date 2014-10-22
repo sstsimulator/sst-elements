@@ -71,7 +71,7 @@ class LoadInfo:
 		fo = open(fileName)
 		jobId = 0
 		for line in iter(fo.readline,b''):
-			if  line[0] != '#':
+			if  line[0] != '#' and False == line.isspace():
 				self.map.append( self.foo( jobId, self.readCmdLine([line] ) ) )
 				jobId += 1
 		fo.close()
