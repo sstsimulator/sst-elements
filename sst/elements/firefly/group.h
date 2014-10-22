@@ -59,7 +59,12 @@ class IdentityGroup : public Group
 class DenseGroup : public Group 
 {
   public:
-    int getSize() { return m_map.rbegin()->first; }
+    int getSize() { 
+        if ( m_map.empty() ) {
+            return 0;
+        }
+        return m_map.rbegin()->first; 
+    }
 
     void initMapping( int from, int to, int range ) {
 		m_map[ from ] = to;		
