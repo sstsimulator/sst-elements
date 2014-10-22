@@ -56,6 +56,7 @@ libember_la_SOURCES = \
 	emberconstdistrib.cc \
 	embergaussdistrib.h \
 	embergaussdistrib.cc \
+	embercommSplitev.h \
 	motifs/ember3dcommdbl.h \
 	motifs/ember3dcommdbl.cc \
 	motifs/embernull.h  \
@@ -93,7 +94,9 @@ libember_la_SOURCES = \
 	motifs/embernaslu.h \
 	motifs/embernaslu.cc \
 	motifs/embermsgrate.h \
-	motifs/embermsgrate.cc
+	motifs/embermsgrate.cc \
+	motifs/embercomm.h \
+	motifs/embercomm.cc 
 
 #	motifs/emberhalo3dnb.h \
 #	motifs/emberhalo3dnb.cc

@@ -53,6 +53,9 @@
 #include "emberallredev.h"
 #include "emberredev.h"
 #include "embergettimeev.h"
+#include "emberCommSplitEv.h"
+#include "emberCommGetRankEv.h"
+#include "emberCommGetSizeEv.h"
 #include "emberdistrib.h"
 
 using namespace SST::Statistics;
@@ -113,6 +116,9 @@ public:
 	void processAllreduceEvent(EmberAllreduceEvent* ev);
 	void processReduceEvent(EmberReduceEvent* ev);
 	void processGetTimeEvent(EmberGetTimeEvent* ev);
+	void processCommSplitEvent(EmberCommSplitEvent* ev);
+	void processCommGetRankEvent(EmberCommGetRankEvent* ev);
+	void processCommGetSizeEvent(EmberCommGetSizeEvent* ev);
 
 	void completedInit(int val);
 	void completedFinalize(int val);
@@ -126,6 +132,9 @@ public:
 	void completedBarrier(int val);
 	void completedAllreduce(int val);
 	void completedReduce(int val);
+	void completedCommSplit(int val);
+	void completedCommGetRank(int val);
+	void completedCommGetSize(int val);
 
 	void issueNextEvent(uint32_t nanoSecDelay);
 	void printHistogram(Histogram<uint32_t, uint32_t>* histo);
@@ -174,6 +183,9 @@ private:
 	HermesAPIFunctor barrierFunctor;
 	HermesAPIFunctor allreduceFunctor;
 	HermesAPIFunctor reduceFunctor;
+	HermesAPIFunctor commSplitFunctor;
+	HermesAPIFunctor commGetSizeFunctor;
+	HermesAPIFunctor commGetRankFunctor;
 
 	EmberComputeDistribution* computeDistrib;
 

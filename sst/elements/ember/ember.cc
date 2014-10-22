@@ -40,6 +40,7 @@
 #include "motifs/embernull.h"
 #include "motifs/embermsgrate.h"
 #include "motifs/emberhalo3d26.h"
+#include "motifs/embercomm.h"
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -151,6 +152,11 @@ load_Null( Component* comp, Params& params ) {
 static Module*
 load_MsgRate( Component* comp, Params& params ) {
 	return new EmberMsgRateGenerator(comp, params);
+}
+
+static Module*
+load_Comm( Component* comp, Params& params ) {
+	return new EmberCommGenerator(comp, params);
 }
 
 
@@ -355,6 +361,13 @@ static const ElementInfoParam msgrate_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam comm_params[] = {
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"messagesize",		"Sets the size of the message in bytes",	 	"0"},
+	{	NULL,	NULL,	NULL	}
+};
+
+
 static const ElementInfoParam constDistrib_params[] = {
 	{ 	"constant",		"Sets the constant value to return in the distribution.", "1.0" },
 	{	NULL, NULL, NULL 	}
@@ -540,6 +553,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_MsgRate,
 	msgrate_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"CommMotif",
+	"Performs a comm_split test.",
+	NULL,
+	NULL,
+	load_Comm,
+	comm_params,
     "SST::Ember::EmberGenerator"
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }

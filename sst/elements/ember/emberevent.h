@@ -48,7 +48,10 @@ enum EmberEventType {
 	STOP,
 	ALLREDUCE,
 	REDUCE,
-	GETTIME
+	GETTIME,
+    COMM_SPLIT,
+    COMM_GET_RANK,
+    COMM_GET_SIZE
 };
 
 class EmberEvent : public SST::Event {

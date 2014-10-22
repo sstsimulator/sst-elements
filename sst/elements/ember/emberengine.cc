@@ -72,7 +72,10 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	isendFunctor(HermesAPIFunctor(this, &EmberEngine::completedISend)),
 	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
 	allreduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedAllreduce)),
-	reduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedReduce))
+	reduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedReduce)),
+	commSplitFunctor(HermesAPIFunctor(this, &EmberEngine::completedCommSplit)),
+	commGetSizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedCommGetSize)),
+	commGetRankFunctor(HermesAPIFunctor(this, &EmberEngine::completedCommGetRank))
 {
 	output = new Output();
 
@@ -465,7 +468,7 @@ void EmberEngine::setup() {
 	string outputPrefixStr = outputPrefix;
 	output->setPrefix(outputPrefixStr);
 
-	output->verbose(CALL_INFO, 2, 0, "Identified %" PRIu32 " motifs to be simulated.", motifCount);
+	output->verbose(CALL_INFO, 2, 0, "Identified %" PRIu32 " motifs to be simulated.\n", motifCount);
 
 	// Send an start event to this rank, this starts up the component
 	EmberStartEvent* startEv = new EmberStartEvent();
@@ -834,6 +837,23 @@ void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
 	}
 }
 
+void EmberEngine::processCommGetRankEvent(EmberCommGetRankEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a CommGetRank  Event\n");
+	msgapi->rank( ev->getComm(), ev->getRankPtr(), &commGetRankFunctor ); 
+}
+
+void EmberEngine::processCommGetSizeEvent(EmberCommGetSizeEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a CommGetSize  Event\n");
+	msgapi->size( ev->getComm(), (int*) ev->getSizePtr(), &commGetSizeFunctor ); 
+}
+
+void EmberEngine::processCommSplitEvent(EmberCommSplitEvent* ev) {
+	output->verbose(CALL_INFO, 2, 0, "Processing a CommSplit  Event\n");
+	msgapi->comm_split(ev->getOldComm(), 
+        ev->getColor(), ev->getKey(), ev->getNewComm(), &commSplitFunctor );
+}
+
+
 void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
 	output->verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
 
@@ -862,6 +882,21 @@ void EmberEngine::completedFinalize(int val) {
 	primaryComponentOKToEndSim();
 
 	continueProcessing = false;
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedCommSplit(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed CommSplit, result = %d\n", val);
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedCommGetSize(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed CommGetSize, result = %d\n", val);
+	issueNextEvent(0);
+}
+
+void EmberEngine::completedCommGetRank(int val) {
+	output->verbose(CALL_INFO, 2, 0, "Completed CommGetRank, result = %d\n", val);
 	issueNextEvent(0);
 }
 
@@ -983,6 +1018,15 @@ void EmberEngine::handleEvent(Event* ev) {
 		break;
 	case BARRIER:
 		processBarrierEvent( (EmberBarrierEvent*) eEv );
+		break;
+	case COMM_SPLIT:
+		processCommSplitEvent( (EmberCommSplitEvent*) eEv );
+		break;
+	case COMM_GET_RANK:
+		processCommGetRankEvent( (EmberCommGetRankEvent*) eEv );
+		break;
+	case COMM_GET_SIZE:
+		processCommGetSizeEvent( (EmberCommGetSizeEvent*) eEv );
 		break;
 	case FINALIZE:
 		processFinalizeEvent(dynamic_cast<EmberFinalizeEvent*>(eEv));
