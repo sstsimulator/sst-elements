@@ -36,7 +36,7 @@ class ProcessQueuesState : StateBase< T1 >
     {
         char buffer[100];
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
-                            obj.info()->nodeId(), obj.info()->worldRank());
+                            obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
         postShortRecvBuffer();
     }
@@ -270,7 +270,7 @@ class ProcessQueuesState : StateBase< T1 >
 
 
     nid_t calcNid( _CommReq* req, Hermes::RankID rank ) {
-        return obj().info()->getGroup( req->getGroup() )->getNodeId(rank);
+        return obj().info()->getGroup( req->getGroup() )->getMapping( rank );
     }
 
     Hermes::RankID getMyRank( _CommReq* req ) {

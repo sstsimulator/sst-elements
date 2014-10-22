@@ -135,7 +135,7 @@ void XXX::init( Info* info, VirtNic* nic )
 void XXX::setup() 
 {
     char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::XXX::@p():@l ",m_info->nodeId(), 
+    snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::XXX::@p():@l ",m_nic->getNodeId(), 
                                                 m_info->worldRank());
     m_dbg.setPrefix(buffer);
 

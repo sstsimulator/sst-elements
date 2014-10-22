@@ -29,7 +29,7 @@ class WaitAnyState : StateBase< T1 >
     {
         char buffer[100];
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::WaitAnyState::@p():@l ",
-                            obj.info()->nodeId(), obj.info()->worldRank());
+                            obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
     }
     void enter( std::vector<CommReq*>&, FunctorBase_1<CommReq*,bool>*, 

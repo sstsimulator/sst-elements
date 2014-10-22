@@ -24,9 +24,6 @@ namespace Firefly {
 
 class VirtNic : public SST::Module {
 
-    static const int coreShift = 21;
-    static const int nidMask = (1 << coreShift) - 1;
-
     // Functor classes for handling callbacks
     template < typename argT >
     class HandlerBase {
@@ -120,37 +117,21 @@ class VirtNic : public SST::Module {
 		return m_coreId;
 	}
 
-	int getRealNicId() {
-		return m_realNicId;
-	}
-
-    int getVirtNicId() {
-        return calcVirtNicId( m_realNicId, m_coreId );
+    int getNodeId() {
+		return m_realNicId * m_numCores + m_coreId;
     }
 
-	int calcCoreId( int virtNicId ) {
-		if ( -1 == virtNicId ) {
-			return -1;
-		} else {
-			return virtNicId >> coreShift;
-		}
-	}
-
-	int calcRealNicId( int virtNicId ) {
-		if ( -1 == virtNicId ) {
-			return -1;
-		} else {
-			return virtNicId & nidMask;
-		}
-	}
-
-	int calcVirtNicId( int realNicId, int coreId ) {
-        return (coreId << coreShift) | realNicId;
-	}
-
-    bool isLocal( int virtNicId ) {
-        return ( calcRealNicId( virtNicId ) == m_realNicId );
+    bool isLocal( int nodeId ) {
+        return ( (nodeId / m_numCores) == m_realNicId ); 
     }
+
+	int calcCoreId( int nodeId ) {
+		if ( -1 == nodeId ) {
+			return -1;
+		} else {
+			return nodeId % m_numCores;
+		}
+	}
 
     bool canDmaSend();
     bool canDmaRecv();
@@ -178,6 +159,17 @@ class VirtNic : public SST::Module {
     void notifyNeedRecv( int src, int tag, size_t length );
 
   private:
+
+	int calcRealNicId( int nodeId ) {
+		if ( -1 == nodeId ) {
+			return -1;
+		} else {
+			return nodeId / m_numCores;
+		}
+	}
+	int calcNodeId( int nic, int vNic ) {
+        return nic * m_numCores + vNic;
+    }
 
     void handleEvent( Event * );
 

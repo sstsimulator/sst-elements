@@ -18,76 +18,73 @@
 namespace SST {
 namespace Firefly {
 
-class Group
+class MapBase {
+  public:
+    virtual int getSize() = 0;
+    virtual void initMapping( int from, int to, int range ) = 0;
+    virtual int getMapping( int from ) = 0;
+};
+
+class Group : public MapBase
 {
   public:
-    Group( VirtNic* nic ) : 
-        m_virtNic( nic ),
-        m_rank( -1 )
+    Group() 
+      : m_myRank( -1 )
     {}
+    int getMyRank() {  return m_myRank; }
+    void setMyRank( int rank ) { m_myRank = rank; }
 
-    int getMyRank() { return m_rank; }
+  private:
+    int                 m_myRank;
+};
 
-    size_t size() { 
-		assert( m_virtNic->getNumCores() > 0 );
-		return m_nidMap.rbegin()->first * m_virtNic->getNumCores(); 
-	}
+class IdentityGroup : public Group 
+{
+  public:
+    IdentityGroup() : m_size(0) {} 
 
-    void set( int rank, int nid, int num ) {
-		m_nidMap[ rank ] = nid;		
-		m_nidMap[ rank + num ] = -1;
+    int getSize() { return m_size; }
+
+    void initMapping( int from, int to, int range ) {
+        assert( from == to ); 
+        assert( 0 == m_size );
+        m_size = range; 
     }
 
-    void initMyRank() {
-		int nodeId = m_virtNic->getRealNicId();
-		std::map<int,int>::iterator iter;
+    int getMapping( int from ) { return from; }
+  private:
+    int m_size;
+};
 
-		for ( iter = m_nidMap.begin(); iter != m_nidMap.end(); ++iter ) {
+class DenseGroup : public Group 
+{
+  public:
+    int getSize() { return m_map.rbegin()->first; }
+
+    void initMapping( int from, int to, int range ) {
+		m_map[ from ] = to;		
+		m_map[ from + range ] = -1;
+    }
+
+    int getMapping( int from ) {
+		int to = -1;
+		std::map<int,int>::iterator iter;
 		
+		for ( iter = m_map.begin(); iter != m_map.end(); ++iter ) {
 			std::map<int,int>::iterator next = iter;
 			++next;
-			int len = next->first - iter->first;
-			if ( nodeId >= iter->second && nodeId < iter->second + len ) {
-        		m_rank = iter->first + (nodeId - iter->second);
-				m_rank *= m_virtNic->getNumCores();
-				m_rank += m_virtNic->getCoreId();
+			if ( from >= iter->first && from < next->first ) {
+				to = iter->second + (from - iter->first); 
 				break;
 			}
 		}
-		assert( -1 != m_rank );
-    }
-
-	// this is special case of rankToNid that handles wildcard
-    int rankToNid( int rank ) {
-        int nid = -1; 
-        if ( -1 == rank ) {
-            return -1;
-        }
-        nid = getNodeId( rank );
-        return nid;
-    } 
-
-    int getNodeId( int rank ) {
-		int nid = -1;
-		int numCores = m_virtNic->getNumCores();
-		std::map<int,int>::iterator iter;
-		
-		for ( iter = m_nidMap.begin(); iter != m_nidMap.end(); ++iter ) {
-			std::map<int,int>::iterator next = iter;
-			++next;
-			if ( rank/numCores >= iter->first && rank/numCores < next->first ) {
-				nid = iter->second + (rank/numCores - iter->first); 
-				break;
-			}
-		}
-        return m_virtNic->calcVirtNicId( nid, rank % numCores );
+        return to;
     }
 
   private:
-    VirtNic* m_virtNic;
-    int 	 m_rank;
-    std::map< int, int> m_nidMap;
+    std::map< int, int> m_map;
 };
+
 }
 }
 #endif

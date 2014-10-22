@@ -135,13 +135,11 @@ class Hades : public Hermes::MessageInterface
 
   private:
 
-    int myNodeId();
-
     int sizeofDataType( Hermes::PayloadDataType type ) { 
         return m_info.sizeofDataType(type); 
     }
 
-    Group* initAdjacentMap( std::istream& );
+    void initAdjacentMap( std::istream&, Group*, int numCores );
 
     SST::Link*          m_enterLink;  
     VirtNic*            m_virtNic;
@@ -151,6 +149,7 @@ class Hades : public Hermes::MessageInterface
 
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
+    std::string                          m_nidListString;
 };
 
 } // namesapce Firefly 

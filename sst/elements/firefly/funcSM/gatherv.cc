@@ -34,7 +34,7 @@ void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_event = static_cast< GatherStartEvent* >(e);
 
     m_qqq = new QQQ( 2, m_info->getGroup(m_event->group)->getMyRank(),
-                m_info->getGroup(m_event->group)->size(), m_event->root );
+                m_info->getGroup(m_event->group)->getSize(), m_event->root );
 
     m_dbg.verbose(CALL_INFO,1,0,"group %d, root %d, size %d, rank %d\n",
                     m_event->group, m_event->root, m_qqq->size(),

@@ -64,8 +64,6 @@ libfirefly_la_SOURCES = \
 	testDriver.h \
 	testDriver.cc \
 	merlinEvent.h \
-	nicTester.h \
-	nicTester.cc \
 	virtNic.h \
 	virtNic.cc \
 	nic.h \

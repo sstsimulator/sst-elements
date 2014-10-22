@@ -37,7 +37,7 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_event = static_cast< GatherStartEvent* >(e);
 
     m_rank = m_info->getGroup(m_event->group)->getMyRank();
-    m_size = m_info->getGroup(m_event->group)->size();
+    m_size = m_info->getGroup(m_event->group)->getSize();
 
     int numStages = ceil( log2(m_size) );
     m_dbg.verbose(CALL_INFO,1,0,"numStages=%d rank=%d size=%d\n",

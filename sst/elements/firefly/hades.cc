@@ -52,26 +52,12 @@ Hades::Hades( Component* owner, Params& params ) :
                                         moduleName.c_str());
     }
 
-    std::string nidListString = params.find_string("nidListString");
-    m_dbg.verbose(CALL_INFO,1,0,"nidListString `%s`\n", nidListString.c_str());
+    m_nidListString = params.find_string("nidListString");
+    m_dbg.verbose(CALL_INFO,1,0,"nidListString `%s`\n", 
+                                            m_nidListString.c_str());
 
-	if ( ! nidListString.empty() ) {
-
-		std::istringstream iss(nidListString);
-
-    	m_info.addGroup( Hermes::GroupWorld, initAdjacentMap(iss) );
-
-	}
-
-  	Group* group = m_info.getGroup(Hermes::GroupWorld);
-
-if ( group ) {
-
-
-    Params tmpParams;
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     int protoNum = 0;
-    tmpParams = params.find_prefix_params("ctrlMsg.");
+    Params tmpParams = params.find_prefix_params("ctrlMsg.");
     m_protocolM[ protoNum ] = 
         dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
                             "firefly.CtrlMsgProto", owner, tmpParams ) );
@@ -87,7 +73,6 @@ if ( group ) {
 
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
                                     m_protocolMapByName );
-}
 }
 
 Hades::~Hades()
@@ -112,44 +97,47 @@ void Hades::printStatus( Output& out )
 
 void Hades::_componentSetup()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
-                        m_virtNic->getNumCores(), m_virtNic->getCoreId());
+    m_dbg.verbose(CALL_INFO,1,0,"nodeId %d numCores %d, coreNum %d\n",
+      m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
-	Group* group = m_info.getGroup(Hermes::GroupWorld);
+	if ( ! m_nidListString.empty() ) {
+  	    Group* group = m_info.getGroup( 
+                    m_info.newGroup( Hermes::GroupWorld, Info::Dense ) );
 
-  	m_dbg.verbose(CALL_INFO,1,0,"numRanks %lu\n", group->size());
+		std::istringstream iss( m_nidListString );
 
-	// if there is a group we need to setup the message passing stack
-	if ( group ) {
+        initAdjacentMap(iss, group, m_virtNic->getNumCores() ); 
 
-		group->initMyRank();
+  	    m_dbg.verbose(CALL_INFO,1,0,"numRanks %u\n", group->getSize());
+        int nid = m_virtNic->getNodeId();
 
-    	std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
-    	for ( ; iter != m_protocolM.end(); ++iter ) {
-        	iter->second->setup();
-    	}
+  	    m_dbg.verbose(CALL_INFO,1,0,"nid %u\n", nid);
 
-    	m_functionSM->setup();
+        for ( int i =0; i < group->getSize(); i++ ) {
+            if ( nid == group->getMapping( i ) ) {
+  	            m_dbg.verbose(CALL_INFO,1,0,"rank %d -> nid %d\n", i, nid );
+                group->setMyRank( i );
+                break;
+            } 
+        }
 	}
 
+    std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
+    for ( ; iter != m_protocolM.end(); ++iter ) {
+       	iter->second->setup();
+    }
+
+  	m_functionSM->setup();
+
     char buffer[100];
-    snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
+    snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",
+                                    m_virtNic->getNodeId(), myWorldRank());
     m_dbg.setPrefix(buffer);
 }
 
-int Hades::myNodeId()
-{
-    if ( m_virtNic ) {
-        return m_virtNic->getVirtNicId();
-    } else {
-        return -1;
-    }
-}
-
-Group* Hades::initAdjacentMap( std::istream& nidList )
+void Hades::initAdjacentMap( std::istream& nidList, Group* group, int numCores )
 {
 	int nid = 0;
-    Group* group = new Group( m_virtNic );
 
 	assert( nidList.peek() != EOF );
 
@@ -168,16 +156,18 @@ Group* Hades::initAdjacentMap( std::istream& nidList )
 			} else {
 				endNid = startNid;
 			}
-			size_t len = (endNid-startNid) + 1;
+			size_t len = ( endNid - startNid ) + 1;
     		m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%d\n",
-								nid,startNid,endNid);
-			group->set( nid, startNid, len );
+					nid, startNid, endNid);
+            if ( numCores > 1 ) {
+    		    m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%lu\n",
+					nid, startNid*numCores, len*numCores - 1);
+            }
+			group->initMapping( nid, startNid * numCores, len * numCores );
 			nid += len;
 			tmp.clear();
 		}
 	} while ( nidList.peek() != EOF );
-		
-    return group;
 }
 
 void Hades::_componentInit(unsigned int phase )
@@ -187,21 +177,18 @@ void Hades::_componentInit(unsigned int phase )
 
 int Hades::myWorldSize()
 {
+    int size = -1;
 	Group* group = m_info.getGroup(Hermes::GroupWorld);
 	if ( group ) { 
-    	return group->size();
-	} else {
-		return -1;
+    	size = group->getSize();
 	}
+    m_dbg.verbose(CALL_INFO,1,0,"size=%d\n",size);
+    return size;
 }
 
 Hermes::RankID Hades::myWorldRank() 
 {
     int rank = m_info.worldRank();
     m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);
-    if ( -1 == rank ) {
-        return -1; 
-    } else {
-        return rank;
-    }
+    return rank;
 }

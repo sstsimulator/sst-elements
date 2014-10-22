@@ -30,7 +30,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     ++m_seq;
 
     m_yyy = new YYY( 8, m_info->getGroup(m_event->group)->getMyRank(),
-                m_info->getGroup(m_event->group)->size(), m_event->root ); 
+                m_info->getGroup(m_event->group)->getSize(), m_event->root ); 
 
     m_dbg.verbose(CALL_INFO,1,0,"%s group %d, root %d, size %d, rank %d\n",
                     m_event->all ? "ALL ": "",

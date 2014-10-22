@@ -92,11 +92,11 @@ void VirtNic::handleEvent( Event* ev )
         (*m_notifySendDmaDone)( event->key );
         break;
     case NicRespEvent::DmaRecv:
-        (*m_notifyRecvDmaDone)( calcVirtNicId(event->node, event->src_vNic),
+        (*m_notifyRecvDmaDone)( calcNodeId( event->node, event->src_vNic ),
                     event->tag, event->len, event->key  );
         break;
     case NicRespEvent::NeedRecv:
-        (*m_notifyNeedRecv)( calcVirtNicId( event->node, event->src_vNic),
+        (*m_notifyNeedRecv)( calcNodeId( event->node, event->src_vNic),
                     event->tag, event->len );
         break;
     default:
@@ -122,42 +122,42 @@ bool VirtNic::canDmaRecv()
 
 void VirtNic::dmaSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"dest=%d\n",dest);
 
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaSend, 
             calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
 }
 void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"src=%d\n",src);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaRecv,
             calcCoreId(src), calcRealNicId(src), tag, vec, key ) );
 }
 
 void VirtNic::pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"dest=%d\n",dest);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend, 
 			calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
 }
 
 void VirtNic::get( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"node=%d\n",node);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get, 
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
 void VirtNic::put( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"node=%d\n",node);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get, 
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
 void VirtNic::regMem( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"node=%d\n",node);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::RegMemRgn, 
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }

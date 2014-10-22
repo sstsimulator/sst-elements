@@ -87,7 +87,8 @@ void FunctionSM::printStatus( Output& out )
 void FunctionSM::setup()
 {
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:%d:FunctionSM::@p():@l ",m_info.nodeId(),
+    int nodeId = -1;
+    snprintf(buffer,100,"@t:%d:%d:FunctionSM::@p():@l ",nodeId,
                                                 m_info.worldRank());
     m_dbg.setPrefix(buffer);
 
@@ -103,7 +104,7 @@ void FunctionSM::setup()
     defaultParams[ "debug" ]   = m_params.find_string("defaultDebug","0");
     defaultParams[ "verbose" ] = m_params.find_string("defaultVerbose","0"); 
     std::ostringstream tmp;
-    tmp <<  m_info.nodeId(); 
+    tmp <<  nodeId; 
     defaultParams[ "nodeId" ] = tmp.str();
     tmp.str("");
     tmp << m_info.worldRank(); 

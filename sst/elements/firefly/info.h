@@ -20,37 +20,38 @@ namespace Firefly {
 
 class Info {
   public:
+    Info() : m_currentGroupID(0) {}
 	~Info() {
     	std::map<Hermes::Communicator, Group*>::iterator iter; 
 		for ( iter = m_groupMap.begin(); iter != m_groupMap.end(); ++iter ) {
 			delete (*iter).second;	
 		}
 	}
-    void addGroup( Hermes::Communicator group, Group* x ) {
-        m_groupMap[group] = x; 
+
+    enum GroupType { Dense, Identity }; 
+    Hermes::Communicator newGroup( Hermes::Communicator groupID, 
+                GroupType type = Dense ) {
+
+        assert( m_groupMap.find( groupID ) == m_groupMap.end() );
+        switch( type) {
+          case Dense:
+            m_groupMap[groupID] = new DenseGroup();
+            break;
+          case Identity:
+            m_groupMap[groupID] = new IdentityGroup();
+            break;
+        }
+        return groupID;
+    }
+
+    Hermes::Communicator newGroup( GroupType type = Dense ) {
+        return newGroup( genGroupID(), type );
     }
 
     Group* getGroup( Hermes::Communicator group ) {
 		if ( m_groupMap.empty() ) return NULL;
         return m_groupMap[group];
     } 
-
-    int rankToNodeId(Hermes::Communicator group, Hermes::RankID rank) {
-        return m_groupMap[group]->getNodeId(rank);
-    }
-
-    int rankToWorldRank( Hermes::Communicator group, Hermes::RankID rank ) {
-        assert( Hermes::GroupWorld == group ); 
-        return rank;
-    } 
-
-    int worldRankToNid( int rank ) {
-        return m_groupMap[Hermes::GroupWorld]->rankToNid( rank );
-    }
-
-    int nodeId() {
-        return m_groupMap[Hermes::GroupWorld]->getNodeId( worldRank() );
-    }
 
     int worldRank() {
         if ( m_groupMap.empty() ) {
@@ -59,6 +60,7 @@ class Info {
             return m_groupMap[Hermes::GroupWorld]->getMyRank();
         }
     }
+
     unsigned sizeofDataType( Hermes::PayloadDataType type ) {
         switch( type ) {
         case Hermes::CHAR:
@@ -77,7 +79,16 @@ class Info {
     } 
 
   private: 
+
+    Hermes::Communicator genGroupID() {
+        while ( m_groupMap.find(m_currentGroupID) != m_groupMap.end() ) {
+            ++m_currentGroupID;
+        }
+        return m_currentGroupID;
+    }
+
     std::map<Hermes::Communicator, Group*> m_groupMap;
+    Hermes::Communicator    m_currentGroupID;
 };
 
 }
