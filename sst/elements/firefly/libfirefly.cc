@@ -16,7 +16,6 @@
 
 #include <nic.h>
 #include <testDriver.h>
-#include <nicTester.h>
 #include <hades.h>
 #include <virtNic.h>
 #include <funcSM/init.h>
@@ -50,16 +49,6 @@ create_testDriver(SST::ComponentId_t id, SST::Params& params)
 }
 
 static const ElementInfoParam testDriver_params[] = {
-	{ NULL, NULL, NULL }
-};
-
-static SST::Component*
-create_nicTester(SST::ComponentId_t id, SST::Params& params)
-{
-    return new NicTester( id, params );
-}
-
-static const ElementInfoParam nicTester_params[] = {
 	{ NULL, NULL, NULL }
 };
 
@@ -304,12 +293,6 @@ static const ElementInfoComponent components[] = {
       NULL,
       create_testDriver,
       NULL,//testDriver_params
-    },
-    { "nicTester",
-      "nic tester",
-      NULL,
-      create_nicTester,
-	  NULL,//nicTester_params
     },
     { "nic",
       "nic",
