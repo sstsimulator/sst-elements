@@ -56,6 +56,8 @@ libember_la_SOURCES = \
 	emberconstdistrib.cc \
 	embergaussdistrib.h \
 	embergaussdistrib.cc \
+	emberCommGetRankEv.h \
+	emberCommGetSizeEv.h \
 	emberCommSplitEv.h \
 	motifs/ember3dcommdbl.h \
 	motifs/ember3dcommdbl.cc \
