@@ -25,29 +25,28 @@ using namespace SST::MemHierarchy;
  * Bottom Coherence Controller Implementation
  *---------------------------------------------------------------------------------------------------------------------*/
 	    
-void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId){
-	State state = _wbCacheLine->getState();
+void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, string _origRqstr){
+    State state = _wbCacheLine->getState();
     setGroupId(_groupId);
 
     switch(state){
-	case S:
+    case S:
         inc_EvictionPUTSReqSent();
-        sendWriteback(PutS, _wbCacheLine);
+        sendWriteback(PutS, _wbCacheLine, _origRqstr);
         _wbCacheLine->setState(I);
-
-		break;
-	case M:
+	break;
+    case M:
         inc_EvictionPUTMReqSent();
-		sendWriteback(PutM, _wbCacheLine);
+	sendWriteback(PutM, _wbCacheLine, _origRqstr);
         _wbCacheLine->setState(I);
-		break;
+	break;
     case E:
         inc_EvictionPUTEReqSent();
-        sendWriteback(PutE, _wbCacheLine);
-		_wbCacheLine->setState(I);
+        sendWriteback(PutE, _wbCacheLine, _origRqstr);
+	_wbCacheLine->setState(I);
         break;
-	default:
-		_abort(MemHierarchy::CacheController, "Eviction: Not a valid state: %s \n", BccLineString[state]);
+    default:
+	_abort(MemHierarchy::CacheController, "Eviction: Not a valid state: %s \n", BccLineString[state]);
     }
 }
 
@@ -115,7 +114,7 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
         d_->debug(_L6_,"Cache line in transition.\n");
         if(_event->getAckNeeded() && _cacheLine->getState() == SM){  //no need to send ACK if state = IM
             inc_InvalidatePUTSReqSent();
-            sendWriteback(PutS, _cacheLine);
+            sendWriteback(PutS, _cacheLine, _event->getRqstr());
         }
         return;
     }
@@ -230,16 +229,16 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == M || state == E){
         if(state == M){
             inc_InvalidatePUTMReqSent();
-            sendWriteback(PutM, _cacheLine);
+            sendWriteback(PutM, _cacheLine, _event->getRqstr());
         }
         else{
             inc_InvalidatePUTEReqSent();
-            sendWriteback(PutE, _cacheLine);
+            sendWriteback(PutE, _cacheLine, _event->getRqstr());
         }
         _cacheLine->setState(I);
     }
     else if(state == S){
-        if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine);
+        if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine, _event->getRqstr());
         _cacheLine->setState(I);
     }
     else _abort(MemHierarchy::CacheController, "BottomCC Invalidate: Not a valid state: %s \n", BccLineString[state]);
@@ -253,11 +252,11 @@ void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == M || state == E){
         _cacheLine->setState(S);
         inc_InvalidatePUTXReqSent();
-        if(state == E) sendWriteback(PutXE, _cacheLine);
-        else           sendWriteback(PutX, _cacheLine);
+        if(state == E) sendWriteback(PutXE, _cacheLine, _event->getRqstr());
+        else           sendWriteback(PutX, _cacheLine, _event->getRqstr());
     }
     else if(state == S){
-        if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine);
+        if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine, _event->getRqstr());
         _cacheLine->setState(I);
     }
     else _abort(MemHierarchy::CacheController, "Not a valid state: %s", BccLineString[state]);
@@ -370,13 +369,14 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
 
 
 
-void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine){
+void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine, string _origRqstr){
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, _cacheLine->getBaseAddr(), _cacheLine->getBaseAddr(), _cmd);
     newCommandEvent->setDst(nextLevelCacheName_);
     if(_cmd == PutM || _cmd == PutX){
         newCommandEvent->setSize(_cacheLine->getLineSize());
         newCommandEvent->setPayload(*_cacheLine->getData());
     }
+    newCommandEvent->setRqstr(_origRqstr);
     
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};

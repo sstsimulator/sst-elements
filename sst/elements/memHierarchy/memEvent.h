@@ -167,6 +167,7 @@ public:
         me->NACKedCmd_    = NACKedEvent->cmd_;
         me->cmd_          = NACK;
         me->initTime_     = source->getCurrentSimTimeNano();
+        me->rqstr_        = rqstr_;
         return me;
     }
     
@@ -177,6 +178,8 @@ public:
         me->responseToID_ = eventID_;
         me->dst_          = src_;
         me->src_          = dst_;
+        me->rqstr_        = rqstr_;
+        me->prefetch_     = prefetch_;
         return me;
     }
 
@@ -225,6 +228,7 @@ public:
         baseAddr_         = 0;
         dst_              = NONE;
         src_              = NONE;
+        rqstr_            = NONE;
         size_             = 0;
         flags_            = 0;
         groupID_          = 0;
@@ -384,6 +388,10 @@ public:
     const std::string& getDst(void) const { return dst_; }
     /** Sets the destination string - who received this MemEvent */
     void setDst(const std::string& _d) { dst_ = _d; }
+    /** @return the requestor string - whose original request caused this MemEvent */
+    const std::string& getRqstr(void) const { return rqstr_; }
+    /** Sets the requestor string - whose original request caused this MemEvent */
+    void setRqstr(const std::string& _rqstr) { rqstr_ = _rqstr; }
 
     /** @returns the state of all flags for this MemEvent */
     uint32_t getFlags(void) const { return flags_; }
@@ -437,6 +445,7 @@ private:
     Addr            baseAddr_;
     string          src_;
     string          dst_;
+    string          rqstr_;
     Command         cmd_;
     Command         NACKedCmd_;
     MemEvent*       NACKedEvent_;
@@ -470,6 +479,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(baseAddr_);
         ar & BOOST_SERIALIZATION_NVP(src_);
         ar & BOOST_SERIALIZATION_NVP(dst_);
+        ar & BOOST_SERIALIZATION_NVP(rqstr_);
         ar & BOOST_SERIALIZATION_NVP(cmd_);
         ar & BOOST_SERIALIZATION_NVP(NACKedEvent_);
         ar & BOOST_SERIALIZATION_NVP(payload_);

@@ -49,7 +49,7 @@ public:
     void init(const char* name){}
     
     /** Send cache line data to the lower level caches */
-    virtual void handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId);
+    virtual void handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, string _origRqstr);
 
     /** Process new cache request:  GetX, GetS, GetSEx, PutM, PutS, PutX */
     virtual void handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd, bool _mshrHit);
@@ -114,7 +114,7 @@ public:
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
 
     /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* cacheLine);
+    void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
 
     /** Print statistics at the end of simulation */
     void printStats(int _statsFile, vector<int> _statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency);

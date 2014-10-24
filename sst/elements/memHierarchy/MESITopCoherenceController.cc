@@ -94,18 +94,18 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
 
 
 
-void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd, bool _mshrHit){
+void MESITopCC::handleInvalidate(int _lineIndex, string _origRqstr, Command _cmd, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(ccLine->isShareless() && !ccLine->ownerExists()) return;
     
     switch(_cmd){
         case Inv:
         case FetchInv:
-            sendInvalidates(_lineIndex, "", _mshrHit);
+            sendInvalidates(_lineIndex, "", _origRqstr, _mshrHit);
             break;
         case InvX:
         case FetchInvX:
-            sendInvalidateX(_lineIndex, _mshrHit);
+            sendInvalidateX(_lineIndex, _origRqstr, _mshrHit);
             break;
         default:
             _abort(MemHierarchy::CacheController, "Command not supported, Cmd = %s", CommandString[_cmd]);
@@ -114,7 +114,7 @@ void MESITopCC::handleInvalidate(int _lineIndex, Command _cmd, bool _mshrHit){
 
 
 
-void MESITopCC::handleEviction(int _lineIndex, State _state){
+void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     CCLine* ccLine = ccLines_[_lineIndex];
     assert(!CacheArray::CacheLine::inTransition(_state));
     assert(ccLine->valid());
@@ -123,7 +123,7 @@ void MESITopCC::handleEviction(int _lineIndex, State _state){
     if(_state == I || (ccLine->isShareless() && !ccLine->ownerExists())) return;
     
     /* Send invalidates */
-    sendEvictionInvalidates(_lineIndex, false);
+    sendEvictionInvalidates(_lineIndex, _origRqstr, false);
     
     if(ccLine->inTransition()){
         d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
@@ -133,19 +133,19 @@ void MESITopCC::handleEviction(int _lineIndex, State _state){
 
 
 
-int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode, bool _mshrHit){
+int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     
     int sentInvalidates = 0;
     map<string, int>::iterator sharer;
-    int requestingId = _requestingNode.empty() ? -1 : lowNetworkNodeLookupByName(_requestingNode);
+    int requestingId = _srcNode.empty() ? -1 : lowNetworkNodeLookupByName(_srcNode);
     
     bool acksNeeded = (ccLine->ownerExists() || ccLine->acksNeeded_);
     
     if(ccLine->ownerExists()){
         sentInvalidates = 1;
-        string onwerName = lowNetworkNodeLookupById(ccLine->ownerId_);
-        sendInvalidate(ccLine, onwerName, acksNeeded, _mshrHit);
+        string ownerName = lowNetworkNodeLookupById(ccLine->ownerId_);
+        sendInvalidate(ccLine, ownerName, _origRqstr, acksNeeded, _mshrHit);
     }
     else{
         for(sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++){
@@ -156,7 +156,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode, bool _msh
             }
             if(ccLine->isSharer(sharerId)){
                 sentInvalidates++;
-                sendInvalidate(ccLine, sharer->first, acksNeeded, _mshrHit);
+                sendInvalidate(ccLine, sharer->first, _origRqstr, acksNeeded, _mshrHit);
             }
         }
     }
@@ -173,11 +173,12 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _requestingNode, bool _msh
 
 
 
-void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded, bool _mshrHit){
+void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, string _origRqstr, bool _acksNeeded, bool _mshrHit){
     MemEvent* invalidateEvent = new MemEvent((Component*)owner_, _cLine->getBaseAddr(), _cLine->getBaseAddr(), Inv);
     if(_acksNeeded) invalidateEvent->setAckNeeded();            //TODO: add comment as to why this is needed (ie weak vs strong consistency)
     invalidateEvent->setDst(destination);
-    
+    invalidateEvent->setRqstr(_origRqstr);
+
     uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
@@ -187,21 +188,21 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, bool _acksNee
 
 
 
-void MESITopCC::sendEvictionInvalidates(int _lineIndex, bool _mshrHit){
-    int invalidatesSent = sendInvalidates(_lineIndex, "", _mshrHit);
+void MESITopCC::sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool _mshrHit){
+    int invalidatesSent = sendInvalidates(_lineIndex, "", _origRqstr, _mshrHit);
     evictionInvReqsSent_ += invalidatesSent;
 }
 
 
 
-void MESITopCC::sendCCInvalidates(int _lineIndex, string _requestingNode, bool _mshrHit){
-    int invalidatesSent = sendInvalidates(_lineIndex, _requestingNode, _mshrHit);
+void MESITopCC::sendCCInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit){
+    int invalidatesSent = sendInvalidates(_lineIndex, _srcNode, _origRqstr, _mshrHit);
     invReqsSent_ += invalidatesSent;
 }
 
 
 
-void MESITopCC::sendInvalidateX(int _lineIndex, bool _mshrHit){
+void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(!ccLine->ownerExists()) return;
     
@@ -213,7 +214,8 @@ void MESITopCC::sendInvalidateX(int _lineIndex, bool _mshrHit){
     MemEvent* invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), ccLine->getBaseAddr(), InvX);
     invalidateEvent->setAckNeeded();
     invalidateEvent->setDst(ownerName);
-    
+    invalidateEvent->setRqstr(_origRqstr); 
+
     uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
 
     Response resp = {invalidateEvent, deliveryTime, false};
@@ -244,7 +246,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* If exclusive sharer exists, downgrade it to S state */
     else if(l->ownerExists()) {
         d_->debug(_L7_,"GetS Req but exclusive cache exists \n");
-        sendInvalidateX(lineIndex, _mshrHit);
+        sendInvalidateX(lineIndex, _event->getRqstr(), _mshrHit);
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
@@ -273,7 +275,7 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     else if(ccLine->ownerExists()){
         d_->debug(_L7_,"GetX Req recieived but exclusive cache exists \n");
         assert(ccLine->isShareless());
-        sendCCInvalidates(lineIndex, _event->getSrc(), _mshrHit);
+        sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
         respond = false;
     }
     /* Sharers exist */
@@ -281,13 +283,13 @@ void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
         d_->debug(_L7_,"GetX Req recieved but sharers exists \n");
         switch(cmd){
             case GetX:
-                sendCCInvalidates(lineIndex, _event->getSrc(), _mshrHit);
+                sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
                 ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
                 respond = true;
                 break;
             case GetSEx:
                 ccLine->setAcksNeeded();
-                invSent = sendInvalidates(lineIndex, _event->getSrc(), _mshrHit);
+                invSent = sendInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
                 respond = (invSent > 0) ? false : true;
                 break;
             default:
@@ -359,7 +361,7 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 
 
 bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
-    if(_event->isPrefetch()) return true;
+    //if(_event->isPrefetch()) return true;
     
     Command cmd = _event->getCmd();
     MemEvent * responseEvent = _event->makeResponse(_newState);

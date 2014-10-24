@@ -63,10 +63,10 @@ public:
     
     /** Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual void handleEviction(int lineIndex, State _state) {return;}
+    virtual void handleEviction(int lineIndex, string _origRqstr, State _state) {return;}
    
     /* Incoming Inv/InvX/FetchInv/FetchInvX received.  TopCC sends invalidates up the hierarchy if necessary */
-    virtual void handleInvalidate(int lineIndex, Command cmd, bool _mshrHit){return;}
+    virtual void handleInvalidate(int lineIndex, string _origRqstr, Command cmd, bool _mshrHit){return;}
 
     /** Create MemEvent and send Response to HgLvl caches */
     bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic = false);
@@ -138,10 +138,10 @@ public:
     
     /* Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
-    virtual void handleEviction(int lineIndex, State state);
+    virtual void handleEviction(int lineIndex, string origRqstr, State state);
     
     /* Incoming Inv/FetchInv received.  TopCC sends invalidates up the hierarchy if necessary */
-    virtual void handleInvalidate(int lineIndex, Command cmd, bool mshrHit);
+    virtual void handleInvalidate(int lineIndex, string origRqstr, Command cmd, bool mshrHit);
     
     /** Determines whether the Inv request will ultimately require an MSHR entry (ie. request will stall) */
     virtual bool willRequestPossiblyStall(int lineIndex, MemEvent* event);
@@ -186,12 +186,12 @@ private:
     int                 protocol_;
     vector<CCLine*>     ccLines_;
 
-    int sendInvalidates(int lineIndex, string requestingNode, bool _mshrHit);
-    void sendInvalidateX(int lineIndex, bool _mshrHit);
-    void sendInvalidate(CCLine* _cLine, string destination, bool _acksNeeded, bool _mshrHit);
+    int sendInvalidates(int lineIndex, string srcNode, string origRqstr, bool _mshrHit);
+    void sendInvalidateX(int lineIndex, string _origRqstr, bool _mshrHit);
+    void sendInvalidate(CCLine* _cLine, string destination, string origRqstr, bool _acksNeeded, bool _mshrHit);
     
-    void sendEvictionInvalidates(int _lineIndex, bool _mshrHit);
-    void sendCCInvalidates(int _lineIndex, string _requestingNode, bool _mshrHit);
+    void sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool _mshrHit);
+    void sendCCInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit);
     };
 
 }}
