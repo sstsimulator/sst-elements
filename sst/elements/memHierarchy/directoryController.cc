@@ -39,10 +39,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     targetCount = 0;
 
-	registerTimeBase("1 ns", true);
+    registerTimeBase("1 ns", true);
 
-	memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
-	assert(memLink);
+    memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
+    assert(memLink);
 
 
     entryCacheMaxSize = (size_t)params.find_integer("entry_cache_size", 32768);
@@ -50,21 +50,27 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     int addr = params.find_integer("network_address");
     std::string net_bw = params.find_string("network_bw");
 
-	addrRangeStart  = (uint64_t)params.find_integer("addr_range_start", 0);
-	addrRangeEnd    = (uint64_t)params.find_integer("addr_range_end", 0);
-	interleaveSize  = (Addr)params.find_integer("interleave_size", 0);
+    addrRangeStart  = (uint64_t)params.find_integer("addr_range_start", 0);
+    addrRangeEnd    = (uint64_t)params.find_integer("addr_range_end", 0);
+    interleaveSize  = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize  *= 1024;
-	interleaveStep  = (Addr)params.find_integer("interleave_step", 0);
+    interleaveStep  = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep  *= 1024;
+    protocol        = params.find_string("coherence_protocol", "");
+    dbg.debug(_L5_, "Directory controller using protocol: %s\n", protocol.c_str());
 
-	if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
+    if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
-
+    
+    /* Check parameter validity */
+    assert(protocol == "MESI" || protocol == "mesi" || protocol == "MSI" || protocol == "msi");
+    if (protocol == "mesi") protocol = "MESI";
+    if (protocol == "msi") protocol = "MSI";
 
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port                        = "network";
     myInfo.link_bandwidth                   = net_bw;
-	myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
+    myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
     myInfo.name                             = getName();
     myInfo.network_addr                     = addr;
     myInfo.type                             = MemNIC::TypeDirectoryCtrl;
@@ -307,10 +313,14 @@ void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent, MemEvent*
 }
 
 
-
+/*
+ *  Return value indicates (successful, erase packet from queue)
+ */
 pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
     dbg.debug(_L10_, "Entry found and in progress\n");
-        if((entry->nextCommand == cmd || (entry->nextCommand == FetchResp && cmd == PutM) || (entry->nextCommand == GetSResp && cmd == PutS)) &&
+        if((entry->nextCommand == cmd || 
+                    (entry->nextCommand == FetchResp && cmd == PutM) || 
+                    (entry->nextCommand == GetSResp && cmd == PutS)) &&
           ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())){
             dbg.debug(_L10_, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
             if(ev->getResponseToID() != entry->lastRequest){
@@ -319,6 +329,17 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             advanceEntry(entry, ev);
             delete ev;
             return make_pair<bool, bool>(true, true);
+        } else if (entry->nextCommand == FetchResp && cmd == PutE) {    // exclusive replacement raced with a fetch, re-direct to memory
+            dbg.debug(_L10_, "Entry %"PRIx64" request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
+            
+            assert(entry->isDirty());
+            assert(entry->findOwner() == node_name_to_id(ev->getSrc()));
+            int id = node_name_to_id(ev->getSrc());
+            entry->clearDirty(id);
+            entry->nextFunc = &DirectoryController::handleDataRequest;
+            advanceEntry(entry, ev);
+            delete ev;
+            return make_pair<bool, bool>(true,true);
         }
         else{
             assert(!(entry->nextCommand == FetchResp && cmd == PutS));
@@ -376,54 +397,51 @@ void DirectoryController::sendInvalidate(int target, DirEntry* entry){
 }
 
 
-
+/**
+ *  Handle data request (Get) to directory controller from caches
+ */
 void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     entry->reqSize     = entry->activeReq->getSize();
     Command cmd        = entry->activeReq->getCmd();
     
-	uint32_t requesting_node = node_id(entry->activeReq->getSrc());
+    uint32_t requesting_node = node_id(entry->activeReq->getSrc());
     
     if(entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)){      // Don't set as a sharer whne dealing with noncacheable
-		entry->nextFunc = &DirectoryController::sendResponse;
-		requestDataFromMemory(entry);
-    }
-	else if(entry->isDirty()){                                      // Must do a fetch
-		MemEvent *ev      = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInv, cacheLineSize);
+	entry->nextFunc = &DirectoryController::sendResponse;
+	requestDataFromMemory(entry);
+    } else if(entry->isDirty()){                                      // Must do a fetch
+	MemEvent *ev      = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInv, cacheLineSize);
         std::string &dest = nodeid_to_name[entry->findOwner()];
         ev->setDst(dest);
 
-		entry->nextFunc    = &DirectoryController::finishFetch;
+	entry->nextFunc    = &DirectoryController::finishFetch;
         entry->nextCommand = FetchResp;
         entry->waitingOn   = dest;
         entry->lastRequest = ev->getID();
 
-		sendResponse(ev);
-	}
-    else if(cmd == GetX || cmd == GetSEx){
-		assert(0 == entry->waitingAcks);
-		for(uint32_t i = 0 ; i < numTargets ; i++){                 // Must send invalidates
-			if(i == requesting_node) continue;
-			if(entry->sharers[i]){
+	sendResponse(ev);
+    } else if(cmd == GetX || cmd == GetSEx){
+	assert(0 == entry->waitingAcks);
+	for(uint32_t i = 0 ; i < numTargets ; i++){                 // Must send invalidates
+	    if(i == requesting_node) continue;
+	    if(entry->sharers[i]){
                 sendInvalidate(i, entry);
                 entry->waitingAcks++;
             }
-		}
+	}
         if( entry->waitingAcks > 0){
              entry->nextFunc = &DirectoryController::getExclusiveDataForRequest;
              entry->nextCommand = PutS;
              entry->waitingOn = "N/A";
              entry->lastRequest = DirEntry::NO_LAST_REQUEST;
              dbg.output(CALL_INFO, "Sending Invalidates to fulfill request for exclusive, BsAddr = %"PRIx64".\n", entry->baseAddr);
-        
-        }
-        else getExclusiveDataForRequest(entry, NULL);
+        } else getExclusiveDataForRequest(entry, NULL);
 
-	}
-    else{                                                           //Handle GetS requests
-		entry->addSharer(requesting_node);
-		entry->nextFunc = &DirectoryController::sendResponse;
-		requestDataFromMemory(entry);
-	}
+    } else {                                                        //Handle GetS requests
+	entry->addSharer(requesting_node);
+	entry->nextFunc = &DirectoryController::sendResponse;
+	requestDataFromMemory(entry);
+    }
 }
 
 
@@ -450,12 +468,26 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
 
 void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
     bool noncacheable = entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE);
+    MemEvent *ev;
+    if (entry->activeReq->getCmd() == GetS) {                   // Handle GetS requests according to coherence protocol
+        if (protocol == "MESI" && entry->countRefs() == 1) {    // Return block in E state if this is the only requestor
+            uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
+            assert(entry->sharers[requesting_node]);            // ensure we are responding to the right requestor
+            entry->clearSharers();
+            entry->setDirty(requesting_node);                   
+            ev = entry->activeReq->makeResponse(E);             
+        } else {                                                // Assume protocol is MSI, enough error checking already exists to make sure protocol is valid
+            ev = entry->activeReq->makeResponse();
+        }
+    } else {
+        ev = entry->activeReq->makeResponse();
+    }
 
-	MemEvent *ev = entry->activeReq->makeResponse();
     ev->setSize(cacheLineSize);
     ev->setPayload(new_ev->getPayload());
-	sendResponse(ev);
+    sendResponse(ev);
     
+
     if(noncacheable && 0 == entry->countRefs()) directory.erase(entry->baseAddr);
     else updateEntryToMemory(entry);
 
@@ -500,7 +532,7 @@ void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
 
     if(ev->getCmd() == PutM || ev->getCmd() == GetSResp) {
         writebackData(entry->activeReq);
-    } else {
+    } else if (ev->getCmd() != PutE) { // ok to drop a PutE -> block is not really dirty
         dbg.debug(_L10_, "Alert! dropping PutM\n");
     }
 	

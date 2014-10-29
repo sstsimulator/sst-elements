@@ -57,6 +57,8 @@ class DirectoryController : public Component {
     Addr        addrRangeEnd;
     Addr        interleaveSize;
     Addr        interleaveStep;
+    
+    string      protocol;
 
     size_t      entryCacheMaxSize;
     size_t      entryCacheSize;

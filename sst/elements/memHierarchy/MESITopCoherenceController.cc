@@ -321,7 +321,7 @@ void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, i
         _ccLine->addSharer(_sharerId);
         _ccLine->setState(V);
      }
-    else _ccLine->updateState();        /* Id PutE, PutM -> num sharers should be 0 before state goes to (V) */
+    else _ccLine->updateState();        /* If PutE, PutM -> num sharers should be 0 before state goes to (V) */
 
 }
 

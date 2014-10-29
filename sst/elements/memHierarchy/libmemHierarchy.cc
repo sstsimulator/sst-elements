@@ -233,7 +233,7 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 static const ElementInfoParam dirctrl_params[] = {
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
-	{"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
     {"addr_range_end",      "End of Address Range, for this controller.", NULL},
     {"interleave_size",     "(optional) Size of interleaved pages in KB.", "0"},
@@ -244,6 +244,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"debug_level",         "Debugging level: 0 to 10", "0"},
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
+    {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},
     {NULL, NULL, NULL}
 };
 

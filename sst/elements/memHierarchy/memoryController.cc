@@ -258,7 +258,7 @@ void MemController::performRequest(DRAMReq* _req){
 
         if(_req->reqEvent_->getCmd() == GetX) _req->respEvent_->setGrantedState(M);
         else{
-            if(protocol_) _req->respEvent_->setGrantedState(E);
+            if(protocol_) _req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
             else _req->respEvent_->setGrantedState(S);
         }
 	}

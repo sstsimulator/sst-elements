@@ -75,9 +75,11 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
         inc_PUTSReqsReceived();
         break;
     case PutM:
+        handlePutMRequest(_event, _cacheLine);
+        break;
     case PutX:
     case PutXE:                             //TODO:  Case PutX:  PUTXReqsReceived_++;
-        handlePutMRequest(_event, _cacheLine);
+        handlePutXRequest(_event, _cacheLine);
         break;
     case PutE:
         handlePutERequest(_cacheLine);
@@ -296,9 +298,9 @@ void MESIBottomCC::handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine){
 void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine){
     State state = _cacheLine->getState();
     assert(state == M || state == E);
-    if(state == E) _cacheLine->setState(M);
+    if(state == E && _event->getCmd() != PutXE) _cacheLine->setState(M);    // Update state if line was written
     if(_event->getCmd() != PutXE){
-        _cacheLine->setData(_event->getPayload(), _event);   //Only PutM/PutX write data in the cache line
+        _cacheLine->setData(_event->getPayload(), _event);                  //Only PutM/PutX write data in the cache line
         d_->debug(_L6_,"Data written to cache line\n");
     }
 }

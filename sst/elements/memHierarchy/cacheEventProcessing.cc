@@ -111,6 +111,7 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
         case GetS:
         case GetX:
         case GetSEx:
+	    if (_cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
             inserted = mshrNoncacheable_->insert(_baseAddr, _event);
             assert(inserted);
             if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);

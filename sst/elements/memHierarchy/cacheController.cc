@@ -233,7 +233,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     /* Scenario where this 'if' occurs:  HiLv$ evicts a shared line (S->I), sends PutS to LowLv$.
        Simultaneously, LowLv$ sends an Inv to HiLv$. Thus, HiLv$ sends an Inv an already invalidated line */
     if(!_cacheLine || (_cacheLine->getState() == I && !_mshrHit)){
-        d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exists or invalid.\n");
+        d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
         return false;
     }
 
@@ -349,7 +349,7 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
         if(cmd != PutS){
             if(!(_cacheLine->inStableState() && ccLine->inStableState())){
                 cout << msg << endl;
-                BOOST_ASSERT_MSG(0, "Responsed sent and cache line is in transient state.  Could be something wrong\n");
+                BOOST_ASSERT_MSG(0, "Response sent and cache line is in transient state.  Could be something wrong\n");
             }
         }
         /* Upon a PutS (due to invalidate, ie mshrEntry exists), only possible pending request should be a GetSEx request, make sure this is the case */
