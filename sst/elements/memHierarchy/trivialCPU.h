@@ -63,7 +63,6 @@ private:
 
     Output out;
     int numLS;
-	int workPerCycle;
 	int commFreq;
 	bool do_write;
 	uint64_t maxAddr;

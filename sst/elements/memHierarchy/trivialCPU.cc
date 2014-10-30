@@ -36,12 +36,6 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     out.init("", 0, 0, Output::STDOUT);
 
-	// get parameters
-	if ( params.find("workPerCycle") == params.end() ) {
-		_abort(event_test,"couldn't find work per cycle\n");
-	}
-	workPerCycle = strtol( params[ "workPerCycle" ].c_str(), NULL, 0 );
-
 	if ( params.find("commFreq") == params.end() ) {
 		_abort(event_test,"couldn't find communication frequency\n");
 	}
@@ -114,17 +108,9 @@ void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
 }
 
 
-// each clock tick we do 'workPerCycle' iterations of a simple loop.
-// We have a 1/commFreq chance of sending an event of size commSize to
-// one of our neighbors.
 bool trivialCPU::clockTic( Cycle_t )
 {
-    ++clock_ticks;
-
-	volatile int v = 0;
-	for (int i = 0; i < workPerCycle; ++i) {
-		v++;
-	}
+        ++clock_ticks;
 
 	// Histogram bin the requests pending per cycle
         requestsPendingCycle->add((uint64_t) requests.size());
