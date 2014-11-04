@@ -126,7 +126,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
-	const uint32_t pin_arg_count = 22;
+	const uint32_t pin_arg_count = 23;
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
@@ -137,6 +137,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-pause_tool");
     execute_args[arg++] = const_cast<char*>("15");
 #endif
+    execute_args[arg++] = const_cast<char*>("-follow_execv");
     execute_args[arg++] = const_cast<char*>("-t");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     strcpy(execute_args[arg-1], ariel_tool.c_str());
