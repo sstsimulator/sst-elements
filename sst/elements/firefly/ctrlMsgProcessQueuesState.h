@@ -1128,8 +1128,6 @@ int ProcessQueuesState<T1>::copyIoVec(
 
         for ( unsigned int j=0; j < src[i].len && copied < len ; j++ ) {
 
-            assert( rP < dst[rV].len );
-
             if ( dst[rV].ptr && src[i].ptr ) {
                 ((char*)dst[rV].ptr)[rP] = ((char*)src[i].ptr)[j];
             }

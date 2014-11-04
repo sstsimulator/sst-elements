@@ -12,27 +12,24 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_COMMSPLIT_H
 #define COMPONENTS_FIREFLY_FUNCSM_COMMSPLIT_H
 
-#include "funcSM/api.h"
-#include "funcSM/event.h"
-#include "ctrlMsg.h"
+#include "funcSM/allgather.h"
 
 namespace SST {
 namespace Firefly {
 
-class CommSplitFuncSM :  public FunctionSMInterface
+class CommSplitFuncSM :  public AllgatherFuncSM
 {
   public:
-    CommSplitFuncSM( SST::Params& params );
+    CommSplitFuncSM( SST::Params& params )
+        : AllgatherFuncSM( params ) {}
 
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
     
-    virtual std::string protocolName() { return "CtrlMsgProtocol"; }
-
   private:
-    CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
-
-    CommSplitStartEvent* m_event;
+    int* m_sendbuf; 
+    int* m_recvbuf;
+    CommSplitStartEvent* m_commSplitEvent;
 };
 
 }
