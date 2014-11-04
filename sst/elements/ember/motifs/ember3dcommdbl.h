@@ -26,7 +26,7 @@ public:
 	void configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize);
         void generate(const SST::Output* output, const uint32_t phase, std::queue<EmberEvent*>* evQ);
         void finish(const SST::Output* output);
-	int32_t power2(const uint32_t expon);
+	int32_t power3(const uint32_t expon);
 
 private:
 	uint32_t rank;
@@ -35,10 +35,14 @@ private:
 	uint32_t peY;
 	uint32_t peZ;
 
+	uint32_t computeBetweenSteps;
 	uint32_t items_per_node;
 	uint32_t iterations;
 	MessageRequest* requests;
 	uint32_t next_request;
+
+	uint32_t basePhase;
+	uint32_t itemsThisPhase;
 
 };
 

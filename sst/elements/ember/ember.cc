@@ -40,6 +40,7 @@
 #include "motifs/embernull.h"
 #include "motifs/embermsgrate.h"
 #include "motifs/emberhalo3d26.h"
+#include "motifs/ember3dcommdbl.h"
 #include "motifs/embercomm.h"
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
@@ -87,6 +88,11 @@ load_Ring( Component* comp, Params& params ) {
 static Module*
 load_LinearNodeMap( Component* comp, Params& params ) {
 	return new EmberLinearRankMap(comp, params);
+}
+
+static Module*
+load_CommDoubling( Component* comp, Params& params ) {
+	return new Ember3DCommDoublingGenerator(comp, params);
 }
 
 static Module*
@@ -361,12 +367,21 @@ static const ElementInfoParam msgrate_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam commdbl_params[] = {
+	{	"pex",		"Sets the processors in the X-dimension", "1"	},
+	{	"pey",		"Sets the processors in the Y-dimension", "1" 	},
+	{	"pez",		"Sets the processors in the Z-dimension", "1"	},
+        {       "basephase",    "Starts the phase at offset.", "0" },
+	{	"compute_at_step", 	"Sets the computation time in between each communication phase in nanoseconds", "1000" 	},
+	{	"items_per_node",	"Sets the number of items to exchange between nodes per phase", "100" },
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam comm_params[] = {
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	"messagesize",		"Sets the size of the message in bytes",	 	"0"},
 	{	NULL,	NULL,	NULL	}
 };
-
 
 static const ElementInfoParam constDistrib_params[] = {
 	{ 	"constant",		"Sets the constant value to return in the distribution.", "1.0" },
@@ -391,6 +406,15 @@ static const ElementInfoModule modules[] = {
 	load_PingPong,
 	pingpong_params,
     	"SST::Ember::EmberGenerator"
+    },
+    {
+	"CommDoubleMotif",
+	"Performs a communication doubling pattern based on a research scientific analytics problem",
+	NULL,
+	NULL,
+	load_CommDoubling,
+	commdbl_params,
+	"SST::Ember::EmberGenerator"
     },
     {
 	"ConstDistrib",
