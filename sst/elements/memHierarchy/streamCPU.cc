@@ -59,12 +59,16 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 				handleEvent) );
 	assert(mem_link);
 
+	addrOffset = (uint64_t) params.find_integer("addressoffset", 0);
+
 	registerTimeBase("1 ns", true);
 	//set our clock
     clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
 	clockTC = registerClock( "1GHz", clockHandler );
 	num_reads_issued = num_reads_returned = 0;
-	nextAddr = 0;
+
+	// Start the next address from the offset
+	nextAddr = addrOffset;
 }
 
 streamCPU::streamCPU() :
@@ -137,8 +141,8 @@ bool streamCPU::clockTic( Cycle_t )
 			num_reads_issued++;
 			nextAddr = (nextAddr + 8);
 
-			if(nextAddr > maxAddr) {
-				nextAddr = 0;
+			if(nextAddr > (maxAddr - 4)) {
+				nextAddr = addrOffset;
 			}
 
 	        	numLS--;

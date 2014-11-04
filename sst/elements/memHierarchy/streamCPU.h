@@ -57,6 +57,7 @@ private:
 	uint32_t maxAddr;
 	uint32_t nextAddr;
 	uint64_t num_reads_issued, num_reads_returned;
+	uint64_t addrOffset;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
 
@@ -75,6 +76,7 @@ private:
 		ar & BOOST_SERIALIZATION_NVP(commFreq);
 		ar & BOOST_SERIALIZATION_NVP(maxAddr);
 		ar & BOOST_SERIALIZATION_NVP(mem_link);
+		ar & BOOST_SERIALIZATION_NVP(addrOffset);
 	}
 
 	template<class Archive>
@@ -84,6 +86,7 @@ private:
 		ar & BOOST_SERIALIZATION_NVP(commFreq);
 		ar & BOOST_SERIALIZATION_NVP(maxAddr);
 		ar & BOOST_SERIALIZATION_NVP(mem_link);
+		ar & BOOST_SERIALIZATION_NVP(addrOffset);
 		//resture links
 		mem_link->setFunctor(new SST::Event::Handler<streamCPU>(this,&streamCPU::handleEvent));
 	}

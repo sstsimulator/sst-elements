@@ -129,6 +129,7 @@ static const ElementInfoParam cpu_params[] = {
     {"num_loadstore",           "Stop after this many reads and writes.", "-1"},
     {"noncacheableRangeStart",  "Beginning of range of addresses that are noncacheable.", "0x0"},
     {"noncacheableRangeEnd",    "End of range of addresses that are noncacheable.", "0x0"},
+    {"addressoffset",           "Apply an offset to a calculated address to check for non-alignment issues", "0"},
     {NULL, NULL, NULL}
 };
 
