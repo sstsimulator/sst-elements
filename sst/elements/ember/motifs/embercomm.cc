@@ -22,7 +22,11 @@ EmberCommGenerator::EmberCommGenerator(SST::Component* owner, Params& params) :
     iterations = (uint32_t) params.find_integer("iterations", 1);
 }
 
-void EmberCommGenerator::configureEnvironment(const SST::Output* output, uint32_t pRank, uint32_t worldSize) {
+void EmberCommGenerator::configureEnvironment(const SST::Output* output,
+            uint32_t pRank, uint32_t worldSize) 
+{
+    size = worldSize;
+    rank = pRank;
 }
 
 void EmberCommGenerator::finish(const SST::Output* output) {
@@ -39,13 +43,17 @@ void EmberCommGenerator::generate(const SST::Output* output,
                 const uint32_t phase, std::queue<EmberEvent*>* evQ) 
 {
     if ( phase == 0 ) {
-        evQ->push( new EmberCommSplitEvent( GroupWorld, 0, 0, &newComm ) );
+        evQ->push( new EmberCommSplitEvent( GroupWorld, 
+                                rank/(size/2), 
+                                rank % (size/2),
+                                &newComm ) );
     } else if ( phase == 1 ) {
         output->verbose(CALL_INFO, 2, 0,"newComm=%d\n",newComm);
         evQ->push( new EmberCommGetSizeEvent( newComm, &size) );
         evQ->push( new EmberCommGetRankEvent( newComm, &rank) );
     } else { 
 
+        output->verbose(CALL_INFO, 2, 0,"new size=%d rank=%d\n",size,rank);
         uint32_t to = mod(rank + 1, size), from = mod( (signed int) rank - 1, size );
         output->verbose(CALL_INFO, 2, 0,"to=%d from=%d\n",to,from);
 

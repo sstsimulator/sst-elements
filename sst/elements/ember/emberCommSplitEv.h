@@ -23,8 +23,8 @@ namespace Ember {
 
 class EmberCommSplitEvent : public EmberEvent {
 	public:
-		EmberCommSplitEvent(Communicator oldComm, int key, 
-                                    int color, Communicator* newComm ) 
+		EmberCommSplitEvent(Communicator oldComm, int color, 
+                                    int key, Communicator* newComm ) 
           : m_oldComm( oldComm), m_key(key), m_color(color), m_newComm(newComm)
         {}
 		~EmberCommSplitEvent() {}
