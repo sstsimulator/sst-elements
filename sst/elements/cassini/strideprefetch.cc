@@ -66,10 +66,14 @@ void StridePrefetcher::DetectStride() {
 			}
 
 			if(foundStride) {
+				Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
+				targetPrefetchAddress = targetPrefetchAddress - (targetPrefetchAddress % blockSize);
+
 				if(overrunPageBoundary) {
-					output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+					output->verbose(CALL_INFO, 2, 0, 
+						"Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 "), prefetchAddress=%" PRIu64 "\n",
 						targetAddress, targetAddress + (strideReach * stride),
-						(strideReach * stride), stride);
+						(strideReach * stride), stride, targetPrefetchAddress);
 
 					prefetchOpportunities++;
 
@@ -78,7 +82,6 @@ void StridePrefetcher::DetectStride() {
 
 					ev = new MemEvent(owner, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), GetS);
 				} else {
-					const Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
 					const Addr targetAddressPhysPage = targetAddress / pageSize;
 					const Addr targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
 
