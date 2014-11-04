@@ -34,6 +34,7 @@ static const ElementInfoParam ariel_params[] = {
     {"memorylevels", "Number of memory levels in the system", "1"},
     {"pagesize%(memorylevels)d", "Page size for memory Level x", "4096"},
     {"pagecount%(memorylevels)d", "Page count for memory Level x", "131072"},
+    {"page_populate_%(memorylevels)d", "Pre-populate/partially pre-populate a page table for a level in memory, this is the file to read in.", ""},
     {"defaultlevel", "Default memory level", "0"},
     {"maxissuepercycle", "Maximum number of requests to issue per cycle, per core", "1"},
     {"maxcorequeue", "Maximum queue depth per core", "64"},
@@ -48,7 +49,7 @@ static const ElementInfoParam ariel_params[] = {
     {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
-	{NULL, NULL, NULL}
+    {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort ariel_ports[] = {
