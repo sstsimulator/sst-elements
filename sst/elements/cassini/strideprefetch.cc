@@ -190,9 +190,12 @@ StridePrefetcher::StridePrefetcher(Params& params) {
 		recentAddrList[i] = (Addr) 0;
 	}
 
-    prefetchEventsIssued = 0;
-    missEventsProcessed = 0;
-    hitEventsProcessed = 0;
+        output->verbose(CALL_INFO, 1, 0, "StridePrefetcher created, cache line: %" PRIu64 ", page size: %" PRIu64 "\n",
+		blockSize, pageSize);
+
+        prefetchEventsIssued = 0;
+        missEventsProcessed = 0;
+        hitEventsProcessed = 0;
 	prefetchIssueCanceledByPageBoundary = 0;
 	prefetchIssueCanceledByHistory = 0;
 	prefetchOpportunities = 0;
