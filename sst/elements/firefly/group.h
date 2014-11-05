@@ -20,6 +20,7 @@ namespace Firefly {
 
 class MapBase {
   public:
+    virtual ~MapBase() {}
     virtual int getSize() = 0;
     virtual void initMapping( int from, int to, int range ) = 0;
     virtual int getMapping( int from ) = 0;
