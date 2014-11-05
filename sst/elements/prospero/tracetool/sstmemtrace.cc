@@ -37,9 +37,13 @@ const char WRITE_OPERATION_CHAR = 1;
 
 char RECORD_BUFFER[ sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char) ];
 
-typedef FILE* FILEPTR;
+// We have two file pointers, one for compressed traces and one for
+// "normal" (binary or text) traces
+FILE** trace;
 
-FILEPTR* trace;
+#ifdef PROSPERO_LIBZ
+gzFile* traceZ;
+#endif
 
 typedef struct {
 	UINT64 threadInit;
@@ -115,30 +119,31 @@ VOID RecordMemRead(VOID * addr, UINT32 size, THREADID thr)
     PerformInstrumentCountCheck(thr);
 
     if(0 == trace_format) {
-
-    } else if (1 == trace_format) {
+	fprintf(trace[thr], "%llu R %llu %d\n",
+		(unsigned long long int) thread_instr_id[thr].insCount,
+		(unsigned long long int) ma_addr,
+		(int) size);
+	thread_instr_id[thr].readCount++;
+    } else if (1 == trace_format || 2 == trace_format) {
 	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	if(thr < max_thread_count && (traceEnabled > 0)) {
-    		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
-		thread_instr_id[thr].readCount++;
-	}
+	if(1 == trace_format) {
+		if(thr < max_thread_count && (traceEnabled > 0)) {
+    			fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+			thread_instr_id[thr].readCount++;
+		}
+	} else {
 #ifdef PROSPERO_LIBZ
-    } else if (2 == trace_format) {
-	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &READ_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
-    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
-
-	if(thr < max_thread_count && (traceEnabled > 0)) {
-		gzwrite((gzFile) trace[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
-		thread_instr_id[thr].readCount++;
-	}
+		if(thr < max_thread_count && (traceEnabled > 0)) {
+			gzwrite(traceZ[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+			thread_instr_id[thr].readCount++;
+		}
 #endif
-   }
+	}
+     }
 
 #ifdef PROSPERO_DEBUG
      printf("PROSPERO: Completed into RecordMemRead...\n");
@@ -158,31 +163,31 @@ VOID RecordMemWrite(VOID * addr, UINT32 size, THREADID thr)
     UINT64 ma_addr = (UINT64) addr;
 
     if(0 == trace_format) {
-
-    } else if(1 == trace_format) {
+	fprintf(trace[thr], "%llu W %llu %d\n",
+		(unsigned long long int) thread_instr_id[thr].insCount,
+		(unsigned long long int) ma_addr,
+		(int) size);
+	thread_instr_id[thr].writeCount++;
+    } else if(1 == trace_format || 2 == trace_format) {
     	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
     	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
     	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
 
-	if(thr < max_thread_count && (traceEnabled > 0)) {
-   		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
-		thread_instr_id[thr].writeCount++;
-	}
+	if(1 == trace_format) {
+		if(thr < max_thread_count && (traceEnabled > 0)) {
+	   		fwrite(RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char), 1, trace[thr]);
+			thread_instr_id[thr].writeCount++;
+		}
+	} else {
 #ifdef PROSPERO_LIBZ
-   } else if(2 == trace_format) {
-    	copy(RECORD_BUFFER, &(thread_instr_id[thr].insCount), 0, sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &WRITE_OPERATION_CHAR, sizeof(uint64_t), sizeof(char) );
-    	copy(RECORD_BUFFER, &ma_addr, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t) );
-    	copy(RECORD_BUFFER, &size, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t) );
-
-	if(thr < max_thread_count && (traceEnabled > 0)) {
-		gzwrite((gzFile) trace[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
-		thread_instr_id[thr].writeCount++;
-	}
+		if(thr < max_thread_count && (traceEnabled > 0)) {
+			gzwrite(traceZ[thr], RECORD_BUFFER, sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char));
+			thread_instr_id[thr].writeCount++;
+		}
 #endif
-   }
-
+	}
+     }
 #ifdef PROSPERO_DEBUG
      printf("PROSPERO: Completed into RecordMemWrite...\n");
 #endif
@@ -197,25 +202,31 @@ VOID IncrementInstructionCount(THREADID id) {
 
 		if(trace_format == 0 || trace_format == 1) {
 			fclose(trace[id]);
-	
+
 			if(trace_format == 0) {
 				sprintf(buffer, "%s-%lu-%lu.trace",
 					KnobTraceFile.Value().c_str(),
-					id, thread_instr_id[id].currentFile);
+					(unsigned long) id,
+					(unsigned long) thread_instr_id[id].currentFile);
 				trace[id] = fopen(buffer, "wt");
 			} else {
 				sprintf(buffer,	"%s-%lu-%lu.trace",
                                         KnobTraceFile.Value().c_str(),
-                                        id, thread_instr_id[id].currentFile);
+					(unsigned long) id,
+					(unsigned long) thread_instr_id[id].currentFile);
                                 trace[id] = fopen(buffer, "wb");
 			}
-		} else if(trace_format == 2) {
-			gzclose((gzFile) trace[id]);
-			sprintf(buffer, "%s-%lu-%lu-gz.trace",
-				KnobTraceFile.Value().c_str(), id, (UINT32) thread_instr_id[id].currentFile);
-			trace[id] = (FILE*) gzopen(buffer, "wb");
 		}
-
+#ifdef PROSPERO_LIBZ
+		else if(trace_format == 2) {
+			gzclose(traceZ[id]);
+			sprintf(buffer, "%s-%lu-%lu-gz.trace",
+				KnobTraceFile.Value().c_str(),
+				(unsigned long) id,
+				(unsigned long) thread_instr_id[id].currentFile);
+			traceZ[id] = gzopen(buffer, "wb");
+		}
+#endif
 		thread_instr_id[id].currentFile++;
 	}
 }
@@ -308,7 +319,7 @@ VOID Fini(INT32 code, VOID *v)
 #ifdef PROSPERO_LIBZ
     } else if (2 == trace_format) {
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		gzclose(trace[i]);
+		gzclose(traceZ[i]);
 	}
 #endif
     }
@@ -350,16 +361,20 @@ int main(int argc, char *argv[])
     	std::cout << "PROSPERO: Trace is enabled from startup" << std::endl;
     }
 
-    trace = (FILEPTR*) malloc(sizeof(FILEPTR) * max_thread_count);
+    trace  = (FILE**) malloc(sizeof(FILE*) * max_thread_count);
+#ifdef PROSPERO_LIBZ
+    traceZ = (gzFile*) malloc(sizeof(gzFile) * max_thread_count);
+#endif
     fileBuffers = (char**) malloc(sizeof(char*) * max_thread_count);
 
     char nameBuffer[256];
 
     if(KnobTraceFormat.Value() == "text") {
+	printf("PROSPERO: Tracing will be recorded in text format.\n");
 	trace_format = 0;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
+		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
 		trace[i] = fopen(nameBuffer, "wt");
 	}
 
@@ -368,10 +383,11 @@ int main(int argc, char *argv[])
 		setvbuf(trace[i], fileBuffers[i], _IOFBF, (size_t) KnobFileBufferSize.Value());
 	}
     } else if(KnobTraceFormat.Value() == "binary") {
+	printf("PROSPERO: Tracing will be recorded in uncompressed binary format.\n");
 	trace_format = 1;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
+		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
 		trace[i] = fopen(nameBuffer, "wb");
 	}
 
@@ -381,11 +397,12 @@ int main(int argc, char *argv[])
 	}
 #ifdef PROSPERO_LIBZ
     } else if(KnobTraceFormat.Value() == "compressed") {
+	printf("PROSPERO: Tracing will be recorded in compressed binary format.\n");
 	trace_format = 2;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0-gz.trace", KnobTraceFile.Value().c_str(), (uint32_t) i);
-		trace[i] = (FILE*) gzopen(nameBuffer, "wb");
+		sprintf(nameBuffer, "%s-%lu-0-gz.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
+		traceZ[i] = gzopen(nameBuffer, "wb");
 	}
 #endif
     } else {

@@ -73,7 +73,7 @@ public:
 
 	if(2 == trace_format) {
 #ifdef HAVE_LIBZ
-		gzclose( (gzFile) trace_input );
+		gzclose(trace_inputZ);
 #else
 		std::cerr << "Error: trace format is compressed but libz is not available.\n");
 		exit(-1);
@@ -146,6 +146,9 @@ private:
   virtual bool tick( SST::Cycle_t );
 
   FILE* trace_input;
+#ifdef HAVE_LIBZ
+  gzFile trace_inputZ;
+#endif
   memory_request next_request;
   uint32_t currentFile;
   uint32_t maxFile;

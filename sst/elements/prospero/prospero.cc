@@ -89,9 +89,9 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
 		sprintf(nameBuffer, "%s-0-gz.trace", tracePrefix.c_str());
-		trace_input = (FILE*) gzopen(nameBuffer, "r");
+		trace_inputZ = gzopen(nameBuffer, "r");
 
-		if( NULL == trace_input ) {
+		if( NULL == trace_inputZ ) {
 			output->fatal(CALL_INFO, -1, "Unable to successfully open: %s using compressed trace library.\n",
 				nameBuffer);
 		}
@@ -195,7 +195,7 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		if( feof(trace_input) ) {
 			currentFile++;
 			char* nameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
-			
+
 			if(currentFile < maxFile) {
 				output->verbose(CALL_INFO, 2, 0, "Current file is exhausted, moving onto file index %" PRIu32 " out of %" PRIu32 "\n", currentFile,
 					maxFile);
@@ -220,17 +220,17 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		}
 	} else if( PROSPERO_TRACE_COMPRESSED == trace_format ) {
 #ifdef HAVE_LIBZ
-		if( gzeof((gzFile) trace_input) ) {
+		if( gzeof(trace_inputZ) ) {
 			currentFile++;
 			char* nameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
 
 			if(currentFile < maxFile) {
 				output->verbose(CALL_INFO, 2, 0, "Current file is exhausted, moving onto file index: %" PRIu32 "\n", currentFile);
-				gzclose((gzFile) trace_input);
+				gzclose(trace_inputZ);
 
 				sprintf(nameBuffer, "%s-%" PRIu32 "-gz.trace", tracePrefix.c_str(), currentFile);
-				trace_input = (FILE*) gzopen(nameBuffer, "rb");
-				if( gzeof((gzFile) trace_input) ) {
+				trace_inputZ = gzopen(nameBuffer, "rb");
+				if( gzeof(trace_inputZ) ) {
 					output->output("RETURN EOF as trace_input is EOF immediately after opening.\n");
 					return READ_FAILED_EOF;
 				}
@@ -248,23 +248,29 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
   	output->verbose(CALL_INFO, 2, 0, "Processing next memory request...\n");
 
 	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_COMPRESSED == trace_format) ) {
-		const int record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
+		const size_t record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 		char record_buffer[ record_length ];
 
-		output->verbose(CALL_INFO, 8, 0, "Reading request from trace file...\n");
+		output->verbose(CALL_INFO, 8, 0, "Reading request from trace file (requesting %d bytes)...\n", (int) record_length);
+		size_t readBytes = 0;
 
 		if(PROSPERO_TRACE_BINARY == trace_format) {
-			fread(record_buffer, record_length, 1, trace_input);
+			readBytes = fread(record_buffer, (size_t) record_length, (size_t) 1, trace_input);
+
+			if(readBytes != record_length) {
+				output->fatal(CALL_INFO, -1, "Error reading trace file: requested %d bytes but only read in %d bytes.\n",
+					(int) record_length, (int) readBytes);
+			}
 		} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
-			gzread( (gzFile) trace_input, record_buffer, record_length);
+			gzread( trace_inputZ, record_buffer, record_length);
 #else
 			std::cerr << "Error: Requested trace format 2 but libz unavailable\n");
 			exit(-1);
 #endif
 		}
 
-		output->verbose(CALL_INFO, 8, 0, "Read successful, now parsing event arguments...\n");
+		output->verbose(CALL_INFO, 8, 0, "Read successful (%d bytes), now parsing event arguments...\n", (int) readBytes);
 
 		char op_type;
 
@@ -275,11 +281,11 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 
 		req->instruction_count = (uint64_t) (((double) req->instruction_count) * timeMultiplier);
 
-		output->verbose(CALL_INFO, 8, 0, "Event information: Operation: %d, Address: %" PRIu64 ", Size: %" PRIu32 " @ Cycle: %" PRIu64 "\n", 
+		output->verbose(CALL_INFO, 8, 0, "Event information: Operation: %d, Address: %" PRIu64 ", Size: %" PRIu32 " @ Cycle: %" PRIu64 "\n",
 			(int) req->memory_op_type, req->memory_address, req->size, req->instruction_count);
 
 		// decode memory operation to category the upstream components can use
-		if(op_type == 0) 
+		if(op_type == 0)
 			req->memory_op_type = READ;
 		else if (op_type == 1)
 			req->memory_op_type = WRITE;
