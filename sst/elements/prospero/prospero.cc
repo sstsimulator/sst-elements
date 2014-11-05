@@ -256,10 +256,10 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 
 		if(PROSPERO_TRACE_BINARY == trace_format) {
 			readBytes = fread(record_buffer, (size_t) record_length, (size_t) 1, trace_input);
+			readBytes = readBytes * record_length;
 
 			if(readBytes != record_length) {
-				output->fatal(CALL_INFO, -1, "Error reading trace file: requested %d bytes but only read in %d bytes.\n",
-					(int) record_length, (int) readBytes);
+				return READ_FAILED_EOF;
 			}
 		} else if (PROSPERO_TRACE_COMPRESSED == trace_format) {
 #ifdef HAVE_LIBZ
