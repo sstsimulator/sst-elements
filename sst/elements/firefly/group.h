@@ -67,6 +67,22 @@ class DenseGroup : public Group
     }
 
     void initMapping( int from, int to, int range ) {
+        std::map<int,int>::iterator iter;
+
+        for ( iter = m_map.begin(); iter != m_map.end(); ++iter ) {
+            std::map<int,int>::iterator next = iter;
+            ++next;
+
+            if ( from == next->first ) {
+                assert( -1 == next->second );
+                if ( to == iter->second + ( next->first - iter->first ) ) {
+                    m_map.erase( next->first );
+                    m_map[ from + range ] = -1; 
+                    return;
+                }   
+            }
+        }
+
 		m_map[ from ] = to;		
 		m_map[ from + range ] = -1;
     }
@@ -74,7 +90,7 @@ class DenseGroup : public Group
     int getMapping( int from ) {
 		int to = -1;
 		std::map<int,int>::iterator iter;
-		
+
 		for ( iter = m_map.begin(); iter != m_map.end(); ++iter ) {
 			std::map<int,int>::iterator next = iter;
 			++next;
