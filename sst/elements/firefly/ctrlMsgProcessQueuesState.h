@@ -1112,21 +1112,19 @@ template< class T1 >
 int ProcessQueuesState<T1>::copyIoVec( 
                 std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t len )
 {
-    dbg().verbose(CALL_INFO,1,0,"dst.size() %lu src.size() %lu len=%lu\n",
+    dbg().verbose(CALL_INFO,1,0,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
                                     dst.size(), src.size(), len );
 
-    dbg().verbose(CALL_INFO,1,0,"dst.ptr) %p dst.len() %lu\n",
-                                    dst[0].ptr, dst[0].len );
-    dbg().verbose(CALL_INFO,1,0,"src.ptr) %p src.len() %lu\n",
-                                    src[0].ptr, src[0].len );
     size_t copied = 0;
     size_t rV = 0,rP =0;
     for ( unsigned int i=0; i < src.size() && copied < len; i++ ) 
     {
         assert( rV < dst.size() );
-        dbg().verbose(CALL_INFO,3,0,"vec[%d].len %lu\n", i, src[i].len);
+        dbg().verbose(CALL_INFO,3,0,"src[%d].len %lu\n", i, src[i].len);
 
         for ( unsigned int j=0; j < src[i].len && copied < len ; j++ ) {
+            dbg().verbose(CALL_INFO,3,0,"copied=%lu rV=%lu rP=%lu\n",
+                                                        copied,rV,rP);
 
             if ( dst[rV].ptr && src[i].ptr ) {
                 ((char*)dst[rV].ptr)[rP] = ((char*)src[i].ptr)[j];
@@ -1134,6 +1132,7 @@ int ProcessQueuesState<T1>::copyIoVec(
             ++copied;
             ++rP;
             if ( rP == dst[rV].len ) {
+                rP = 0;
                 ++rV;
             } 
         }
