@@ -167,7 +167,7 @@ StridePrefetcher::StridePrefetcher(Params& params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
 	verbosity = params.find_integer("verbose", 0);
-	output = new Output("StridePrefetcher", verbosity, 0, Output::STDOUT);
+	output = new Output("StridePrefetcher: ", verbosity, 0, Output::STDOUT);
 
 	recheckCountdown = 0;
         blockSize = (uint64_t) params.find_integer("cache_line_size", 64);
