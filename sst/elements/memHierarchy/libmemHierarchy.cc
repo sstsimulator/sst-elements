@@ -33,6 +33,7 @@
 #include "directoryController.h"
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
+#include "memNIC.h"
 #include "memBackend.h"
 
 using namespace SST;
@@ -227,6 +228,11 @@ static Module* create_MemInterface(Component *comp, Params &params) {
 }
 
 
+static Module* create_MemNIC(Component *comp, Params &params) {
+    return new MemNIC(comp);
+}
+
+
 static Component* create_DirectoryController(ComponentId_t id, Params& params){
 	return new DirectoryController( id, params );
 }
@@ -327,6 +333,15 @@ static const ElementInfoModule modules[] = {
         create_MemInterface,
         NULL,
         "SST::Interfaces::SimpleMem"
+    },
+    {
+        "memNIC",
+        "Memory-oriented Network Interface",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_MemNIC, /* Module Alloc w/ params */
+        NULL, /* Params */
+        NULL, /* Interface */
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };

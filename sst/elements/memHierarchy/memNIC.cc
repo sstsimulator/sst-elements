@@ -42,10 +42,12 @@ int MemNIC::getFlitSize(MemEvent *ev)
 }
 
 
-MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) :
-    comp(comp), ci(ci), recvHandler(handler)
+void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 {
     dbg.init("@t:MemNIC::@p():@l " + comp->getName() + ": ", 0, 0, Output::NONE); //TODO: Parameter
+
+    ci = ci;
+    recvHandler = handler;
 
 	num_vcs = ci.num_vcs;
 
@@ -57,6 +59,19 @@ MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) 
     UnitAlgebra buf_size("1KB");
     link_control->configureLink(comp, ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, buf_size, buf_size);
 
+}
+
+
+MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) :
+    comp(comp)
+{
+    moduleInit(ci, handler);
+}
+
+
+MemNIC::MemNIC(Component *comp) :
+    comp(comp)
+{
 }
 
 

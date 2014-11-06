@@ -20,6 +20,7 @@
 #include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
+#include <sst/core/module.h>
 #include "memEvent.h"
 #include "util.h"
 
@@ -29,7 +30,7 @@
 namespace SST {
 namespace MemHierarchy {
 
-class MemNIC {
+class MemNIC : public Module {
 
 public:
     enum ComponentType {
@@ -60,7 +61,7 @@ public:
         int network_addr;
         ComponentType type;
         ComponentTypeInfo typeInfo;
-        
+
         ComponentInfo() :
             link_port(""), link_bandwidth(""), name(""),
             network_addr(0)
@@ -167,6 +168,13 @@ private:
 
 public:
     MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
+    /** Constructor to be used when loading as a module.
+     */
+    MemNIC(Component *comp);
+    /** To be used when loading MemNIC as a module.  Not necessary to call
+     * when using the full-featured constructor
+     */
+    void moduleInit(ComponentInfo &ci, Event::HandlerBase *handler = NULL);
 
 
     /* Call these from their respective calls in the component */
