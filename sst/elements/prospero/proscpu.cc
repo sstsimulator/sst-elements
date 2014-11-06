@@ -129,6 +129,8 @@ bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
 				break;
 			}
 		} else {
+			output->verbose(CALL_INFO, 8, 0, "Not issuing on cycle %" PRIu64 ", waiting for cycle: %" PRIu64 "\n",
+				(uint64_t) currentCycle, currentEntry->getIssueAtCycle());
 			// Have reached a point in the trace which is too far ahead in time
 			// so stall until we find that point
 			break;
