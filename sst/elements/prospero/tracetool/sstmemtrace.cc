@@ -210,7 +210,7 @@ VOID IncrementInstructionCount(THREADID id) {
 					(unsigned long) thread_instr_id[id].currentFile);
 				trace[id] = fopen(buffer, "wt");
 			} else {
-				sprintf(buffer,	"%s-%lu-%lu.trace",
+				sprintf(buffer,	"%s-%lu-%lu-bin.trace",
                                         KnobTraceFile.Value().c_str(),
 					(unsigned long) id,
 					(unsigned long) thread_instr_id[id].currentFile);
@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
 	trace_format = 1;
 
 	for(UINT32 i = 0; i < max_thread_count; ++i) {
-		sprintf(nameBuffer, "%s-%lu-0.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
+		sprintf(nameBuffer, "%s-%lu-0-bin.trace", KnobTraceFile.Value().c_str(), (unsigned long) i);
 		trace[i] = fopen(nameBuffer, "wb");
 	}
 

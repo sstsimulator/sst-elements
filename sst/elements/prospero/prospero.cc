@@ -71,7 +71,7 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	tracePrefix = params["trace"];
 
 	if(PROSPERO_TRACE_BINARY == trace_format) {
-		sprintf(nameBuffer, "%s-0.trace", tracePrefix.c_str());
+		sprintf(nameBuffer, "%s-0-bin.trace", tracePrefix.c_str());
 		trace_input = fopen(nameBuffer, "rb");
 
 		if( NULL == trace_input ) {
@@ -201,11 +201,12 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 					maxFile);
 				fclose(trace_input);
 
-				sprintf(nameBuffer, "%s-%" PRIu32 ".trace", tracePrefix.c_str(), currentFile);
 
 				if(PROSPERO_TRACE_BINARY == trace_format) {
+					sprintf(nameBuffer, "%s-%" PRIu32 "-bin.trace", tracePrefix.c_str(), currentFile);
 					trace_input = fopen(nameBuffer, "rb");
 				} else {
+					sprintf(nameBuffer, "%s-%" PRIu32 ".trace", tracePrefix.c_str(), currentFile);
 					trace_input = fopen(nameBuffer, "rt");
 				}
 
