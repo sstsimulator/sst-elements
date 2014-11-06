@@ -583,8 +583,8 @@ public:
     size_t copyIn( Output& dbg, Nic::Entry& entry, MerlinFireflyEvent& event );
     bool  copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry );
 
-    int fattree_ID_to_IP(int id);
-    int IP_to_fattree_ID(int ip);
+    /* int fattree_ID_to_IP(int id); */
+    /* int IP_to_fattree_ID(int ip); */
     int NetToId( int );
     int IdToNet( int );
 

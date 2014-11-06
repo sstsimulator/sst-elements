@@ -51,12 +51,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     std::string topo  = params.find_string( "topology", "" );
 
     if ( 0 == topo.compare("merlin.fattree") ) {
-        m_ftLoading = params.find_integer( "fattree:loading", -1 );
-        m_ftRadix = params.find_integer( "fattree:radix", -1);
-
-        if ( -1 == m_ftLoading || -1 == m_ftRadix ) {
-            assert(0);
-        }
     	m_dbg.verbose(CALL_INFO,1,0,"Fattree\n");
 
     } else if ( 0 == topo.compare("merlin.torus") ) {
@@ -251,67 +245,68 @@ void Nic::handleVnicEvent( Event* ev, int id )
     }
 }
 
-int Nic::IP_to_fattree_ID(int ip)
-{
-    union Addr {
-        uint8_t x[4];
-        int32_t s;
-    };
+// int Nic::IP_to_fattree_ID(int ip)
+// {
+//     union Addr {
+//         uint8_t x[4];
+//         int32_t s;
+//     };
 
-    Addr addr;
-    addr.s = ip;
+//     Addr addr;
+//     addr.s = ip;
 
-    int id = 0;
-    id += addr.x[1] * (m_ftRadix/2) * m_ftLoading;
-    id += addr.x[2] * m_ftLoading;
-    id += addr.x[3] -2;
+//     int id = 0;
+//     id += addr.x[1] * (m_ftRadix/2) * m_ftLoading;
+//     id += addr.x[2] * m_ftLoading;
+//     id += addr.x[3] -2;
 
-    m_dbg.verbose(CALL_INFO,1,0,"ip=%#x -> id=%d\n", ip, id ); 
-    return id;
-}
+//     m_dbg.verbose(CALL_INFO,1,0,"ip=%#x -> id=%d\n", ip, id ); 
+//     return id;
+// }
 
 int Nic::IdToNet( int v )
 {
-    if ( m_ftRadix ) {
-        return fattree_ID_to_IP( v ); 
-    } else {
+    // if ( m_ftRadix ) {
+    //     return fattree_ID_to_IP( v ); 
+    // } else {
         return v;
-    }
+    // }
 }
 int Nic::NetToId( int v )
 {
-    if ( m_ftRadix ) {
-        return IP_to_fattree_ID( v );
-    } else {
-        return v;
-    }
+    // if ( m_ftRadix ) {
+    //     return IP_to_fattree_ID( v );
+    // } else {
+    //     return v;
+    // }
+    return v;
 }
 
-int Nic::fattree_ID_to_IP(int id)
-{
-    union Addr {
-        uint8_t x[4];
-        int32_t s;
-    };
+// int Nic::fattree_ID_to_IP(int id)
+// {
+//     union Addr {
+//         uint8_t x[4];
+//         int32_t s;
+//     };
 
-    Addr addr;
+//     Addr addr;
 
-    int edge_switch = (id / m_ftLoading);
-    int pod = edge_switch / (m_ftRadix/2);
-    int subnet = edge_switch % (m_ftRadix/2);
+//     int edge_switch = (id / m_ftLoading);
+//     int pod = edge_switch / (m_ftRadix/2);
+//     int subnet = edge_switch % (m_ftRadix/2);
 
-    addr.x[0] = 10;
-    addr.x[1] = pod;
-    addr.x[2] = subnet;
-    addr.x[3] = 2 + (id % m_ftLoading);
+//     addr.x[0] = 10;
+//     addr.x[1] = pod;
+//     addr.x[2] = subnet;
+//     addr.x[3] = 2 + (id % m_ftLoading);
 
-#if 1 
-    m_dbg.verbose(CALL_INFO,1,0,"NIC id %d to %u.%u.%u.%u.\n",
-                        id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]);
-#endif
+// #if 1 
+//     m_dbg.verbose(CALL_INFO,1,0,"NIC id %d to %u.%u.%u.%u.\n",
+//                         id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]);
+// #endif
 
-    return addr.s;
-}
+//     return addr.s;
+// }
 
 void Nic::handleSelfEvent( Event *e )
 {

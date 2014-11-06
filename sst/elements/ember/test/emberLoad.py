@@ -88,12 +88,12 @@ if "torus" == topology:
 	print "network: topology=torus shape={0}".format(shape)
 
 elif "fattree" == topology:
-	if 0 == radix: 
-		sys.exit("What radix?")
-	if 0 == loading:
-		sys.exit("What loading?")
-
-	topoInfo = FattreeInfo(radix,loading)
+	if "" == shape: # use shape if defined, otherwise use radix as legacy mode
+		if 0 == radix: 
+			sys.exit("Must either specify shape or radix/loading.")
+		if 0 == loading:
+			sys.exit("Must either specify shape or radix/loading.")
+	topoInfo = FattreeInfo(radix,loading,shape)
 	topo = topoFatTree()
 	print "network: topology=fattree radix={0} loading={1}".format(radix,loading)
 else:

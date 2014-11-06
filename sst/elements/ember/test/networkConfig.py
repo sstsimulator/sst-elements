@@ -1,4 +1,4 @@
-
+import sys
 
 class TopoInfo:
 	def getNumNodes(self):
@@ -42,14 +42,31 @@ class TorusInfo(TopoInfo):
 
 
 class FattreeInfo(TopoInfo):
-	def __init__( self, radix, loading  ):
+	def __init__( self, radix, loading, shape  ):
 		self.params = {}
-		self.params["router_radix"] = int(radix) 
-		self.params["fattree:hosts_per_edge_rtr"] = int(loading) 
-		self.numNodes = int(radix) * int(radix)/2 * int(loading)
-
+                my_shape = shape
+		if ( "" == my_shape ):
+                        my_radix = int(radix)
+			my_shape = "%s,%d:%d,%d:%d"%(loading,my_radix/2,my_radix/2,my_radix/2,my_radix)
+#                        self.params["router_radix"] = int(radix) 
+#                        self.params["fattree:hosts_per_edge_rtr"] = int(loading) 
+#                        self.numNodes = int(radix) * int(radix)/2 * int(loading)
+		self.numNodes = self.calcNumNodes(my_shape)
+		self.params["fattree:shape"] = my_shape
+                
 	def getNetworkParams(self):
 		return self.params
 
 	def getNumNodes(self):
 		return self.numNodes 
+
+        def calcNumNodes(self, shape):
+                print shape
+                levels = shape.split(":")
+
+                total_hosts = 1;
+                for l in levels:
+                        links = l.split(",")
+                        total_hosts = total_hosts * int(links[0])
+
+                return total_hosts
