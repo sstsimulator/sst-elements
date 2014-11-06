@@ -153,6 +153,7 @@ private:
   uint32_t currentFile;
   uint32_t maxFile;
   std::string tracePrefix;
+  char* record_buffer;
 
   uint64_t heartbeat_cycle;
   uint32_t trace_format;

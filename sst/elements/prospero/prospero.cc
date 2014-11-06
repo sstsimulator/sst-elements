@@ -26,6 +26,7 @@ prospero::prospero(ComponentId_t id, Params& params) :
   Component(id) {
 
   trace_format = 0;
+  record_buffer = (char*) malloc(sizeof(char) * 256);
 
   // Work out how much we're supposed to be reporting.
   output_level = params.find_integer("verbose", 0);
@@ -250,7 +251,6 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 
 	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_COMPRESSED == trace_format) ) {
 		const size_t record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
-		char* record_buffer = (char*) malloc(sizeof(char) * record_length);
 
 		output->verbose(CALL_INFO, 8, 0, "Reading request from trace file (requesting %d bytes)...\n", (int) record_length);
 		size_t readBytes = 0;
@@ -295,7 +295,6 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 			req->memory_op_type = READ;
 		}
 
-		free(record_buffer);
 	} else if (trace_format == PROSPERO_TRACE_TEXT) {
 		uint64_t tmp_addr;
 		uint64_t tmp_cycle;
