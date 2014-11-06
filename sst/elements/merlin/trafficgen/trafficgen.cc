@@ -22,7 +22,13 @@
 
 #include "sst/elements/merlin/linkControl.h"
 
+#ifdef HAVE_MPI
+#include <boost/mpi.hpp>
+#endif
+
+
 using namespace SST::Merlin;
+
 
 TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     Component(cid),
@@ -48,11 +54,12 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
         _abort(TrafficGen, "num_peers must be set!\n");
     }
 
-    num_vns = params.find_integer("num_vns");
-    if ( num_vns == -1 ) {
-        _abort(TrafficGen, "num_vns must be set!\n");
-    }
-
+    // num_vns = params.find_integer("num_vns");
+    // if ( num_vns == -1 ) {
+    //     _abort(TrafficGen, "num_vns must be set!\n");
+    // }
+    num_vns = 1;
+    
     std::string link_bw_s = params.find_string("link_bw");
     if ( link_bw_s == "" ) {
         _abort(TrafficGen, "link_bw must be set!\n");
@@ -63,11 +70,11 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     addressMode = SEQUENTIAL;
 
-    if ( !params.find_string("topology").compare("merlin.fattree") ) {
-        addressMode = FATTREE_IP;
-        ft_loading = params.find_integer("fattree:loading");
-        ft_radix = params.find_integer("fattree:radix");
-    }
+    // if ( !params.find_string("topology").compare("merlin.fattree") ) {
+    //     addressMode = FATTREE_IP;
+    //     ft_loading = params.find_integer("fattree:loading");
+    //     ft_radix = params.find_integer("fattree:radix");
+    // }
 
     // Create a LinkControl object
 
@@ -186,6 +193,7 @@ void TrafficGen::finish()
             id, packets_sent, packets_recd, stats.getNumPkts(),
             stats.getMinLatency(), stats.getMaxLatency(),
             stats.getMeanLatency(), stats.getStdDevLatency());
+
 }
 
 void TrafficGen::setup()
@@ -204,7 +212,7 @@ TrafficGen::clock_handler(Cycle_t cycle)
 {
     if ( done ) return true;
     else if (packets_sent >= packets_to_send) {
-        out.output("Node %d done sending.\n", id);
+        // out.output("Node %d done sending.\n", id);
         primaryComponentOKToEndSim();
         done = true;
     }

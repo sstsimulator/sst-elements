@@ -110,8 +110,6 @@ static const ElementInfoParam test_nic_params[] = {
     {"num_vns","Number of requested virtual networks."},
     {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
     {"topology", "Name of the topology module that should be loaded to control routing."},
-    {"fattree:loading", "Number of host links on level 1 fattree switches (only needed if topology is a fattree).", "-1"},
-    {"fattree:radix", "Switch radix for the fattree (only needed if topology is a fattree).", "-1"},
     // {"packet_size","Packet size specified in either b or B (can include SI prefix)."},
     // {"packets_to_send","Number of packets to send in the test."},
     // {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix)."},
@@ -140,8 +138,6 @@ static const ElementInfoParam traffic_generator_params[] = {
     {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
     {"topology", "Name of the topology module that should be loaded to control routing."},
     {"buffer_length", "Length of input and output buffers.","1kB"},
-    {"fattree:loading", "Number of host links on level 1 fattree switches (only needed if topology is a fattree).", "-1"},
-    {"fattree:radix", "Switch radix for the fattree (only needed if topology is a fattree).", "-1"},
     {"packets_to_send","Number of packets to send in the test.","1000"},
     {"packet_size","Packet size specified in either b or B (can include SI prefix).","5"},
     {"delay_between_packets","","0"},
@@ -207,9 +203,7 @@ load_fattree_topology(Component* comp, Params& params)
 }
 
 static const ElementInfoParam fattree_params[] = {
-    {"fattree:addr","IP address of the router"},
-    {"fattree:level","Level of the router"},
-    {"fattree:loading","Number of hosts connected to edge routers (level = 1)."},
+    {"fattree:shape","Shape of the fattree"},
     {NULL,NULL,NULL}
 };
 

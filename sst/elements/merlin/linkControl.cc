@@ -333,14 +333,14 @@ void LinkControl::handle_input(Event* ev)
         input_buf[event->vn].push(event);
         if ( event->getTraceType() == RtrEvent::FULL ) {
             std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                                                                     << " ns: Received an event on LinkControl in NIC: "
-                                                                     << parent->getName() << " on VN " << event->vn << " from src " << event->src
-                                                                     << "." << std::endl;
+                      << " ns: Received an event on LinkControl in NIC: "
+                      << parent->getName() << " on VN " << event->vn << " from src " << event->src
+                      << "." << std::endl;
         }
-	if ( receiveFunctor != NULL ) {
-	    bool keep = (*receiveFunctor)(event->vn);
-	    if ( !keep) receiveFunctor = NULL;
-	}
+        if ( receiveFunctor != NULL ) {
+            bool keep = (*receiveFunctor)(event->vn);
+            if ( !keep) receiveFunctor = NULL;
+        }
         SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
         stats.insertPacketLatency(lat);
     }

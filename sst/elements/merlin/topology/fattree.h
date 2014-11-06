@@ -26,29 +26,25 @@ namespace Merlin {
 
 class topo_fattree: public Topology {
 
-    typedef union {
-        uint8_t  x[4];
-        int32_t  s;
-        uint32_t u;
-    } Addr;
-
-    struct RouteTableEntry {
-        Addr mask;
-        Addr value;
-    };
-
-
+private:
     int rtr_level;
-    int edge_loading;
-    Addr my_address;
+    int level_id;
+    int level_group;
+
+    int high_host;
+    int low_host;
+
+    int down_route_factor;
+
+    int levels;
+    int id;
+    int up_ports;
+    int down_ports;
     int num_ports;
 
-    RouteTableEntry *table;
+    void parseShape(const std::string &shape, int *downs, int *ups) const;
 
-
-    void buildRouteTable(void);
-    void printRouteTable(FILE *fp) const;
-
+    
 public:
     topo_fattree(Component* comp, Params& params);
     ~topo_fattree();

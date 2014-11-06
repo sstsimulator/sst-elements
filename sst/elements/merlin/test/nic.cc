@@ -37,33 +37,28 @@ nic::nic(ComponentId_t cid, Params& params) :
     id = params.find_integer("id");
     if ( id == -1 ) {
     }
-    std::cout << "id: " << id << "\n";
-    std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
+    // std::cout << "id: " << id << "\n";
+    // std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
 
     num_peers = params.find_integer("num_peers");
     if ( num_peers == -1 ) {
     }
-    std::cout << "num_peers: " << num_peers << "\n";
+    // std::cout << "num_peers: " << num_peers << "\n";
 
-    num_vns = params.find_integer("num_vns");
-    if ( num_vns == -1 ) {
-    }
-    std::cout << "num_vns: " << num_vns << "\n";
-
+    // num_vns = params.find_integer("num_vns");
+    // if ( num_vns == -1 ) {
+    // }
+    // std::cout << "num_vns: " << num_vns << "\n";
+    num_vns = 1;
+    
     std::string link_bw_s = params.find_string("link_bw");
     if ( link_bw_s == "" ) {
     }
-    std::cout << "link_bw: " << link_bw_s << std::endl;
+    // std::cout << "link_bw: " << link_bw_s << std::endl;
     // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
     UnitAlgebra link_bw(link_bw_s);
     
     addressMode = SEQUENTIAL;
-
-    if ( !params.find_string("topology").compare("merlin.fattree") ) {
-        addressMode = FATTREE_IP;
-        ft_loading = params.find_integer("fattree:loading");
-        ft_radix = params.find_integer("fattree:radix");
-    }
 
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
@@ -156,7 +151,7 @@ BOOST_CLASS_EXPORT(MyRtrEvent)
 bool
 nic::clock_handler(Cycle_t cycle)
 {
-    static const int num_msg = 10;
+    static const int num_msg = 1;
     static const int send_vc = 0;
     static const int size_in_bits = 400;
     int expected_recv_count = (num_peers-1)*num_msg;

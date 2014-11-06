@@ -185,109 +185,168 @@ class topoTorus(Topo):
 class topoFatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "fattree:loading","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.nicKeys = ["fattree:addr", "fattree:IP", "fattree:loading", "fattree:radix"]
+        self.rtrKeys = ["topology", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
+        self.nicKeys = ["link_bw"]
+        self.ups = []
+        self.downs = []
+        self.routers_per_level = []
+        self.groups_per_level = []
+        self.start_ids = []
+
+
     def getName(self):
         return "Fat Tree"
+
     def prepParams(self):
+        self.shape = _params["fattree:shape"]
+        
+        levels = self.shape.split(":")
+
+        for l in levels:
+            links = l.split(",")
+
+            self.downs.append(int(links[0]))
+            if len(links) > 1:
+                self.ups.append(int(links[1]))
+
+        self.total_hosts = 1
+        for i in self.downs:
+            self.total_hosts *= i
+
+        print "Total hosts: " + str(self.total_hosts)
+
+        self.routers_per_level = [0] * len(self.downs)
+        self.routers_per_level[0] = self.total_hosts / self.downs[0]
+        for i in xrange(1,len(self.downs)):
+            self.routers_per_level[i] = self.routers_per_level[i-1] * self.ups[i-1] / self.downs[i]
+
+        self.start_ids = [0] * len(self.downs)
+        for i in xrange(1,len(self.downs)):
+            self.start_ids[i] = self.start_ids[i-1] + self.routers_per_level[i-1]
+
+        self.groups_per_level = [1] * len(self.downs);
+        if self.ups: # if ups is empty, then this is a single level and the following line will fail
+            self.groups_per_level[0] = self.total_hosts / self.downs[0]
+
+        for i in xrange(1,len(self.downs)-1):
+            self.groups_per_level[i] = self.groups_per_level[i-1] / self.downs[i] 
+
         _params["debug"] = debug
         _params["topology"] = "merlin.fattree"
-        _params["router_radix"] = int(_params["router_radix"])
-        _params["num_ports"] = _params["router_radix"]
-        _params["fattree:radix"] = _params["router_radix"]
-        _params["fattree:hosts_per_edge_rtr"] = int(_params["fattree:hosts_per_edge_rtr"])
-        _params["fattree:loading"] = _params["fattree:hosts_per_edge_rtr"]
-        _params["num_vns"] = 2
-        _params["num_peers"] = _params["router_radix"] * (_params["router_radix"]/2) * _params["fattree:hosts_per_edge_rtr"]
+        _params["num_peers"] = self.total_hosts
+        
 
-    def build(self):
-        def addrToNum(addr):
-            return (addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8) | addr[0]
-        def formatAddr(addr):
-            return ".".join([str(x) for x in addr])
+    def fattree_rb(self, level, group, links):
+#        print "routers_per_level: %d, groups_per_level: %d, start_ids: %d"%(self.routers_per_level[level],self.groups_per_level[level],self.start_ids[level])
+        id = self.start_ids[level] + group * (self.routers_per_level[level]/self.groups_per_level[level])
+    #    print "start id: " + str(id)
 
-        myip = [10, _params["router_radix"], 1, 1]
-        router_num = 0
 
-        links = dict()
-        def getLink(name):
-            if name not in links:
-                links[name] = sst.Link(name)
-            return links[name]
+        host_links = []
+        if level == 0:
+            # create all the nodes
+            for i in xrange(self.downs[0]):
+                node_id = id * self.downs[0] + i
+#                print "group: %d, id: %d, node_id: %d"%(group, id, node_id)
+                hlink = sst.Link("hostlink_%d"%node_id)
+                host_links.append(hlink)
+#                print "Instancing node " + str(node_id)
+                self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys))
 
-        # <!-- CORE ROUTERS -->
-        num_core = (_params["router_radix"]/2) * (_params["router_radix"]/2)
-        for i in xrange(num_core):
-            myip[2] = 1 + i/(_params["router_radix"]/2)
-            myip[3] = 1 + i%(_params["router_radix"]/2)
-
-            rtr = sst.Component("core:%s"%formatAddr(myip), "merlin.hr_router")
+            # Create the edge router
+            rtr_id = id
+#            print "Instancing router " + str(rtr_id)
+            rtr = sst.Component("rtr_l0_g%d_r0"%(group), "merlin.hr_router")
+            # Add parameters
             rtr.addParams(_params.subset(self.rtrKeys))
-            rtr.addParams({
-                "id": router_num,
-                "fattree:addr": addrToNum(myip),
-                "fattree:level": 3})
-            router_num = router_num +1
+            rtr.addParam("id",rtr_id)
+            rtr.addParam("num_ports",self.ups[0] + self.downs[0])
+            # Add links
+            for l in xrange(len(host_links)):
+                rtr.addLink(host_links[l],"port%d"%l, _params["link_lat"])
+            for l in xrange(len(links)):
+                rtr.addLink(links[l],"port%d"%(l+self.downs[0]), _params["link_lat"])
+            return
+    
+        rtrs_in_group = self.routers_per_level[level] / self.groups_per_level[level]
+        # Create the down links for the routers
+        rtr_links = [ [] for index in range(rtrs_in_group) ]
+        for i in xrange(rtrs_in_group):
+            for j in xrange(self.downs[level]):
+#                print "Creating link: link_l%d_g%d_r%d_p%d"%(level,group,i,j);
+                rtr_links[i].append(sst.Link("link_l%d_g%d_r%d_p%d"%(level,group,i,j)));
 
-            for l in xrange(_params["router_radix"]):
-                rtr.addLink(getLink("link:pod%d_core%d"%(l, i)), "port%d"%l, _params["link_lat"])
+        # Now create group links to pass to lower level groups from router down links
+        group_links = [ [] for index in range(self.downs[level]) ]
+        for i in xrange(self.downs[level]):
+            for j in xrange(rtrs_in_group):
+                group_links[i].append(rtr_links[j][i])
+            
+        for i in xrange(self.downs[level]):
+            self.fattree_rb(level-1,group*self.downs[level]+i,group_links[i])
+
+        # Create the routers in this level.
+        # Start by adding up links to rtr_links
+        for i in xrange(len(links)):
+            rtr_links[i % rtrs_in_group].append(links[i])
+            
+        for i in xrange(rtrs_in_group):
+            rtr_id = id + i
+#            print "Instancing router " + str(rtr_id)
+            rtr = sst.Component("rtr_l%d_g%d_r%d"%(level,group,i), "merlin.hr_router")
+            # Add parameters
+            rtr.addParams(_params.subset(self.rtrKeys))
+            rtr.addParam("id",rtr_id)
+            rtr.addParam("num_ports",self.ups[level] + self.downs[level])
+            # Add links
+            for l in xrange(len(rtr_links[i])):
+                rtr.addLink(rtr_links[i][l],"port%d"%l, _params["link_lat"])
+
+    
+    def build(self):
+#        print "build()"
+        level = len(self.ups)
+        if self.ups: # True for all cases except for single level
+            #  Create the router links
+            rtrs_in_group = self.routers_per_level[level] / self.groups_per_level[level]
+
+            # Create the down links for the routers
+            rtr_links = [ [] for index in range(rtrs_in_group) ]
+            for i in xrange(rtrs_in_group):
+                for j in xrange(self.downs[level]):
+#                    print "Creating link: link_l%d_g0_r%d_p%d"%(level,i,j);
+                    rtr_links[i].append(sst.Link("link_l%d_g0_r%d_p%d"%(level,i,j)));
+
+            # Now create group links to pass to lower level groups from router down links
+            group_links = [ [] for index in range(self.downs[level]) ]
+            for i in xrange(self.downs[level]):
+                for j in xrange(rtrs_in_group):
+                    group_links[i].append(rtr_links[j][i])
 
 
-        # PODS
-        for pod in xrange(_params["router_radix"]):
-            myip[1] = pod
-            #  <!-- AGGREGATION ROUTERS -->
-            for r in xrange(_params["router_radix"]/2):
-                router = _params["router_radix"]/2 + r
-                myip[2] = router
-                myip[3] = 1
-                rtr = sst.Component("agg:%s"%formatAddr(myip), "merlin.hr_router")
+            for i in xrange(self.downs[len(self.ups)]):
+                self.fattree_rb(level-1,i,group_links[i])
+
+            # Create the routers in this level
+            radix = self.downs[level]
+            for i in xrange(self.routers_per_level[level]):
+                rtr_id = self.start_ids[len(self.ups)] + i
+#                print "Instancing router " + str(rtr_id)
+                rtr = sst.Component("rtr_l%d_g0_r%d"%(len(self.ups),i),"merlin.hr_router")
                 rtr.addParams(_params.subset(self.rtrKeys))
-                rtr.addParams({
-                    "id": router_num,
-                    "fattree:addr": addrToNum(myip),
-                    "fattree:level": 2})
-                router_num = router_num +1
+                rtr.addParam("id", rtr_id)
+                rtr.addParam("num_ports",radix)
+                
+                for l in xrange(len(rtr_links[i])):
+                    rtr.addLink(rtr_links[i][l], "port%d"%l, _params["link_lat"])
 
-                for l in xrange(_params["router_radix"]/2):
-                    rtr.addLink(getLink("link:pod%d_aggr%d_edge%d"%(pod, r, l)), "port%d"%l, _params["link_lat"])
-
-                for l in xrange(_params["router_radix"]/2):
-                    core = (_params["router_radix"]/2) * r + l
-                    rtr.addLink(getLink("link:pod%d_core%d"%(pod, core)), "port%d"%(l+_params["router_radix"]/2), _params["link_lat"])
-
-            #  <!-- EDGE ROUTERS -->\n")
-            for r in xrange(_params["router_radix"]/2):
-                myip[2] = r
-                myip[3] = 1
-                rtr = sst.Component("edge:%s"%formatAddr(myip), "merlin.hr_router")
-                rtr.addParams(_params.subset(self.rtrKeys))
-                rtr.addParams({
-                    "id": router_num,
-                    "fattree:addr": addrToNum(myip),
-                    "fattree:level": 1})
-                router_num = router_num +1
-
-                for l in xrange(_params["fattree:hosts_per_edge_rtr"]):
-                    node_id = pod * (_params["router_radix"]/2) * _params["fattree:hosts_per_edge_rtr"]
-                    node_id = node_id + r * _params["fattree:hosts_per_edge_rtr"]
-                    node_id = node_id + l
-                    rtr.addLink(getLink("link:pod%d_edge%d_node%d"%(pod, r, node_id)), "port%d"%l, _params["link_lat"])
-
-                for l in xrange(_params["router_radix"]/2):
-                    rtr.addLink(getLink("link:pod%d_aggr%d_edge%d"%(pod, l, r)), "port%d"%(l+_params["router_radix"]/2), _params["link_lat"])
-
-                for n in range(_params["fattree:hosts_per_edge_rtr"]):
-                    node_id = pod * (_params["router_radix"]/2) * _params["fattree:hosts_per_edge_rtr"]
-                    node_id = node_id + r * _params["fattree:hosts_per_edge_rtr"]
-                    node_id = node_id + n
-
-                    myip[3] = n+2
-
-                    _params["fattree:addr"] = addrToNum(myip);
-                    _params["fattree:IP"] = formatAddr(myip);
-                    self._getEndPoint(node_id).build(node_id, getLink("link:pod%d_edge%d_node%d"%(pod, r, node_id)), _params.subset(self.nicKeys))
-
+        else: # Single level case
+            # create all the nodes
+            for i in xrange(self.downs[0]):
+                node_id = i
+#                print "Instancing node " + str(node_id)
+        rtr_id = 0
+#        print "Instancing router " + str(rtr_id)
 
 
 
@@ -386,7 +445,7 @@ class EndPoint:
 
 class TestEndPoint:
     def __init__(self):
-        self.nicKeys = ["topology", "num_peers", "num_vns", "link_bw"]
+        self.nicKeys = ["topology", "num_peers", "link_bw"]
 
     def getName(self):
         return "Test End Point"
@@ -409,7 +468,7 @@ class TrafficGenEndPoint:
         for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
             for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
                 self.optionalKeys.append("%s:%s"%(genType, tag))
-        self.nicKeys = ["topology", "num_peers", "num_vns", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
+        self.nicKeys = ["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
     def getName(self):
         return "Pattern-based traffic generator"
     def prepParams(self):
