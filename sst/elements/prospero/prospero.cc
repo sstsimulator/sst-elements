@@ -250,7 +250,7 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 
 	if( (PROSPERO_TRACE_BINARY == trace_format) || (PROSPERO_TRACE_COMPRESSED == trace_format) ) {
 		const size_t record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
-		char record_buffer[ record_length ];
+		char* record_buffer = (char*) malloc(sizeof(char) * record_length);
 
 		output->verbose(CALL_INFO, 8, 0, "Reading request from trace file (requesting %d bytes)...\n", (int) record_length);
 		size_t readBytes = 0;
@@ -294,6 +294,8 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 			std::cerr << "TRACE:  Unknown memory operation type (setting to read), request number: " << requests_generated << std::endl;
 			req->memory_op_type = READ;
 		}
+
+		free(record_buffer);
 	} else if (trace_format == PROSPERO_TRACE_TEXT) {
 		uint64_t tmp_addr;
 		uint64_t tmp_cycle;
@@ -331,6 +333,7 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		uint64_t remainder = (req->memory_address % page_size);
 		uint64_t page_lookup = req->memory_address - remainder;
 	        uint64_t page_start;
+
         	if(page_table.find(page_lookup) == page_table.end()) {
 			// page fault
 			page_table[page_lookup] = next_page_start;

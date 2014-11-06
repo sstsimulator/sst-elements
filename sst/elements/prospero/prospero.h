@@ -82,7 +82,7 @@ public:
 		fclose(trace_input);
 	}
 
-	if(output_level > 0) 
+	if(output_level > 0)
 		std::cout << "TRACE:  Close of trace input complete." << std::endl;
 
 	double sim_seconds = (double) getCurrentSimTimeNano() / (double) 1000000000.0;
