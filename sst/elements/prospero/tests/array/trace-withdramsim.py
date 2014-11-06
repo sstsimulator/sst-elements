@@ -13,8 +13,8 @@ comp_cpu.addParams({
       "tracetype" : """file""",
       "outputlevel" : """0""",
       "cache_line" : """64""",
-      "trace" : os.environ['SST_ROOT'] + '/sst/elements/prospero/tests/array/sstprospero-0',
-      "traceformat" : "compressed"
+      "trace" : os.getcwd() + '/sstprospero-0',
+      "traceformat" : "text"
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
@@ -31,10 +31,10 @@ comp_l1cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : """MSI""",
-      "system_ini" : """system.ini""",
+      "system_ini" : os.environ['SST_DEP_DRAMSIM_ROOT'] + """/ini/system.ini""",
       "clock" : """1GHz""",
       "access_time" : """1000 ns""",
-      "device_ini" : """DDR3_micron_32M_8B_x4_sg125.ini""",
+      "device_ini" : os.environ['SST_DEP_DRAMSIM_ROOT'] + """/ini/DDR3_micron_32M_8B_x4_sg125.ini""",
       "mem_size" : """512""",
       "backend" : """memHierarchy.dramsim"""
 })
