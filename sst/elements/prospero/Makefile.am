@@ -15,7 +15,9 @@ libprospero_la_SOURCES = \
 	prosbinaryreader.h \
 	prosbinaryreader.cc \
 	prosbingzreader.h \
-	prosbingzreader.cc
+	prosbingzreader.cc \
+	prosmemmgr.h \
+	prosmemmgr.cc
 
 EXTRA_DIST = \
 	xml/trace.xml \

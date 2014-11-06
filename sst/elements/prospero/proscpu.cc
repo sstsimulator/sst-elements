@@ -11,7 +11,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	const uint32_t output_level = (uint32_t) params.find_integer("verbose", 0);
 	output = new SST::Output("Prospero[@p:@l]: ", output_level, 0, SST::Output::STDOUT);
 
-	std::string traceModule = params.find_string("reader", "prospero.TextTraceReader");
+	std::string traceModule = params.find_string("reader", "prospero.ProsperoTextTraceReader");
 	output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
 
 	Params readerParams = params.find_prefix_params("readerParams.");
@@ -20,6 +20,8 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	if(NULL == reader) {
 		output->fatal(CALL_INFO, -1, "Failed to load reader module: %s\n", traceModule.c_str());
 	}
+
+	reader->setOutput(output);
 
 	pageSize = (uint64_t) params.find_integer("pagesize", 4096);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero page size for %" PRIu64 " bytes.\n", pageSize);
@@ -53,9 +55,13 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	currentEntry = reader->readNextEntry();
 	output->verbose(CALL_INFO, 1, 0, "Read of first entry complete.\n");
 
+	output->verbose(CALL_INFO, 1, 0, "Creating memory manager with page size %" PRIu64 "...\n", pageSize);
+	memMgr = new ProsperoMemoryManager(pageSize, output);
+	output->verbose(CALL_INFO, 1, 0, "Created memory manager successfully.\n");
+
 	// We start by telling the system to continue to process as long as the first entry
 	// is not NULL
-	traceEnded = currentEntry != NULL;
+	traceEnded = currentEntry == NULL;
 
 	readsIssued = 0;
 	writesIssued = 0;
@@ -66,7 +72,8 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 }
 
 ProsperoComponent::~ProsperoComponent() {
-
+	delete memMgr;
+	delete output;
 }
 
 void ProsperoComponent::finish() {
@@ -80,12 +87,14 @@ void ProsperoComponent::finish() {
 void ProsperoComponent::handleResponse(SimpleMem::Request *ev) {
 	output->verbose(CALL_INFO, 4, 0, "Handle response from memory subsystem.\n");
 
+	currentOutstanding--;
+
 	// Our responsibility to delete incoming event
 	delete ev;
 }
 
 bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
-	output->verbose(CALL_INFO, 8, 0, "Prospero execute on cycle %" PRIu64 "\n", (uint64_t) currentCycle);
+	output->verbose(CALL_INFO, 16, 0, "Prospero execute on cycle %" PRIu64 "\n", (uint64_t) currentCycle);
 
 	// If we have finished reading the trace we need to let the events in flight
 	// drain and the system come to a rest
@@ -140,14 +149,18 @@ void ProsperoComponent::issueRequest(ProsperoTraceEntry* entry) {
 	if(lineOffset + entryLength > cacheLineSize) {
 		// Perform a split cache line load
 		const uint64_t lowerLength = cacheLineSize - lineOffset;
-		const uint64_t upperLength = entryLength - lineOffset;
+		const uint64_t upperLength = entryLength - lowerLength;
 
+		if(lowerLength + upperLength != entryLength) {
+			output->fatal(CALL_INFO, -1, "Error: split cache line, lower size=%" PRIu64 ", upper size=%" PRIu64 " != request length: %" PRIu64 " (cache line %" PRIu64 ")\n",
+				lowerLength, upperLength, entryLength, cacheLineSize);
+		}
 		assert(lowerLength + upperLength == entryLength);
 
 		// Start split requests at the original requested address and then
 		// also the the next cache line along
-		const uint64_t lowerAddress = entryAddress;
-		const uint64_t upperAddress = (lowerAddress - (lowerAddress % cacheLineSize)) + cacheLineSize;
+		const uint64_t lowerAddress = memMgr->translate(entryAddress);
+		const uint64_t upperAddress = memMgr->translate((lowerAddress - (lowerAddress % cacheLineSize)) + cacheLineSize);
 
 		SimpleMem::Request* reqLower = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
@@ -167,11 +180,14 @@ void ProsperoComponent::issueRequest(ProsperoTraceEntry* entry) {
 			writesIssued += 2;
 			splitWritesIssued++;
 		}
+
+		currentOutstanding++;
+		currentOutstanding++;
 	} else {
 		// Perform a single load
 		SimpleMem::Request* request = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
-			entryAddress, entryLength);
+			memMgr->translate(entryAddress), entryLength);
 		cache_link->sendRequest(request);
 
 		if(isRead) {
@@ -179,5 +195,7 @@ void ProsperoComponent::issueRequest(ProsperoTraceEntry* entry) {
 		} else {
 			writesIssued++;
 		}
+
+		currentOutstanding++;
 	}
 }

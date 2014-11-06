@@ -45,6 +45,10 @@ public:
 	ProsperoTraceReader( Component* owner, Params& params ) {};
 	~ProsperoTraceReader() { };
 	virtual ProsperoTraceEntry* readNextEntry() { return NULL; };
+	void setOutput(Output* out) { output = out; }
+
+protected:
+	Output* output;
 
 };
 

@@ -24,6 +24,7 @@
 #include "sst/core/interfaces/simpleMem.h"
 
 #include "prosreader.h"
+#include "prosmemmgr.h"
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
@@ -56,6 +57,7 @@ private:
   Output* output;
   ProsperoTraceReader* reader;
   ProsperoTraceEntry* currentEntry;
+  ProsperoMemoryManager* memMgr;
   SimpleMem* cache_link;
   FILE* traceFile;
   bool traceEnded;

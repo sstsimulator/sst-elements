@@ -33,12 +33,15 @@ void ProsperoCompressedBinaryTraceReader::copy(char* target, const char* source,
 }
 
 ProsperoTraceEntry* ProsperoCompressedBinaryTraceReader::readNextEntry() {
+	output->verbose(CALL_INFO, 4, 0, "Reading next trace entry...\n");
+
 	uint64_t reqAddress = 0;
 	uint64_t reqCycles  = 0;
 	char reqType = 'R';
 	uint32_t reqLength  = 0;
 
 	if(gzeof(traceInput)) {
+		output->verbose(CALL_INFO, 2, 0, "End of trace file reached, returning empty request.\n");
 		return NULL;
 	}
 
@@ -53,6 +56,7 @@ ProsperoTraceEntry* ProsperoCompressedBinaryTraceReader::readNextEntry() {
 			reqLength,
 			reqType == 'R' ? READ : WRITE);
 	} else {
+		output->verbose(CALL_INFO, 2, 0, "Did not read a full record from the compressed trace, returning empty request.\n");
 		// Did not get a full read?
 		return NULL;
 	}
