@@ -46,8 +46,8 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 {
     dbg.init("@t:MemNIC::@p():@l " + comp->getName() + ": ", 0, 0, Output::NONE); //TODO: Parameter
 
-    ci = ci;
-    recvHandler = handler;
+    this->ci = ci;
+    this->recvHandler = handler;
 
 	num_vcs = ci.num_vcs;
 
