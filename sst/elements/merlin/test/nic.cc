@@ -37,24 +37,24 @@ nic::nic(ComponentId_t cid, Params& params) :
     id = params.find_integer("id");
     if ( id == -1 ) {
     }
-    // std::cout << "id: " << id << "\n";
-    // std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
+    std::cout << "id: " << id << "\n";
+    std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
 
     num_peers = params.find_integer("num_peers");
     if ( num_peers == -1 ) {
     }
-    // std::cout << "num_peers: " << num_peers << "\n";
+    std::cout << "num_peers: " << num_peers << "\n";
 
     // num_vns = params.find_integer("num_vns");
     // if ( num_vns == -1 ) {
     // }
-    // std::cout << "num_vns: " << num_vns << "\n";
-    num_vns = 1;
+    num_vns = 2;
+    std::cout << "num_vns: " << num_vns << "\n";
     
     std::string link_bw_s = params.find_string("link_bw");
     if ( link_bw_s == "" ) {
     }
-    // std::cout << "link_bw: " << link_bw_s << std::endl;
+    std::cout << "link_bw: " << link_bw_s << std::endl;
     // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
     UnitAlgebra link_bw(link_bw_s);
     
