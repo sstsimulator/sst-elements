@@ -12,38 +12,53 @@
 #ifndef _SST_PROSPERO_H
 #define _SST_PROSPERO_H
 
+#include "sst/core/output.h"
 #include "sst/core/serialization.h"
+#include "sst/core/component.h"
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 #include "sst/core/event.h"
 #include "sst/core/sst_types.h"
 #include "sst/core/component.h"
 #include "sst/core/link.h"
+#include "sst/core/interfaces/simplemem.h"
+
+#include "prosreader.h"
+
+#ifdef HAVE_LIBZ
+#include <zlib.h>
+#endif
+
+using namespace SST;
+using namespace SST::Interfaces;
 
 namespace SST {
 namespace Prospero {
 
-class ProsperoComponent : public SST::Component {
+class ProsperoComponent : public Component {
 public:
 
-  ProsperoComponent(SST::ComponentId_t id, SST::Params& params);
+  ProsperoComponent(ComponentId_t id, Params& params);
   ~ProsperoComponent();
 
   void setup() { }
-  void finish() { }
+  void finish();
 
 private:
   ProsperoComponent();                         // Serialization only
   ProsperoComponent(const ProsperoComponent&); // Do not impl.
   void operator=(const ProsperoComponent&);    // Do not impl.
 
-  void handleResponse( SST::Event *ev );
-  bool tick( SST::Cycle_t );
+  void handleResponse( Event *ev );
+  bool tick( Cycle_t );
+  void issueRequest(ProsperoTraceEntry* entry);
 
+  Output* output;
   ProsperoTraceReader* reader;
   ProsperoTraceEntry* currentEntry;
   SimpleMem* cache_link;
   FILE* traceFile;
+  bool traceEnded;
 #ifdef HAVE_LIBZ
   gzFile traceFileZ;
 #endif
@@ -51,6 +66,12 @@ private:
   uint64_t cacheLineSize;
   uint32_t maxOutstanding;
   uint32_t currentOutstanding;
+  uint32_t maxIssuePerCycle;
+
+  uint64_t readsIssued;
+  uint64_t writesIssued;
+  uint64_t splitReadsIssued;
+  uint64_t splitWritesIssued;
 
   friend class boost::serialization::access;
   template<class Archive>

@@ -6,8 +6,16 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libprospero.la
 libprospero_la_SOURCES = \
-        prospero.h \
-        prospero.cc
+	libprospero.cc \
+        proscpu.h \
+        proscpu.cc \
+	prosreader.h \
+	prostextreader.h \
+	prostextreader.cc \
+	prosbinaryreader.h \
+	prosbinaryreader.cc \
+	prosbingzreader.h \
+	prosbingzreader.cc
 
 EXTRA_DIST = \
 	xml/trace.xml \

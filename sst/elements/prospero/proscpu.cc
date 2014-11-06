@@ -27,7 +27,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
         cacheLineSize = (uint64_t) params.find_integer("cache_line_size", 64);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero cache line size for %" PRIu64 " bytes.\n", cacheLineSize);
 
-	std::string prosClock = params.find_integer("clock", "2GHz");
+	std::string prosClock = params.find_string("clock", "2GHz");
 	// Register the clock
 	registerClock(prosClock, new Clock::Handler<ProsperoComponent>(this, &ProsperoComponent::tick));
 
@@ -46,7 +46,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 	cache_link = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
   	cache_link->initialize("cache_link", new SimpleMem::Handler<ProsperoComponent>(this,
-		&ProsperoComponent::handleEvent) );
+		&ProsperoComponent::handleResponse) );
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 
 	output->verbose(CALL_INFO, 1, 0, "Reading first entry from the trace reader...\n");
@@ -56,11 +56,25 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	// We start by telling the system to continue to process as long as the first entry
 	// is not NULL
 	traceEnded = currentEntry != NULL;
+
+	readsIssued = 0;
+	writesIssued = 0;
+	splitReadsIssued = 0;
+	splitWritesIssued = 0;
+
 	output->verbose(CALL_INFO, 1, 0, "Prospero configuration completed successfully.\n");
 }
 
 ProsperoComponent::~ProsperoComponent() {
 
+}
+
+void ProsperoComponent::finish() {
+	output->output("Prospero Component Statistics:\n");
+	output->output("- Reads issued:             %" PRIu64 "\n", readsIssued);
+	output->output("- Writes issued:            %" PRIu64 "\n", writesIssued);
+	output->output("- Split reads issued:       %" PRIu64 "\n", splitReadsIssued);
+	output->output("- Split writes issued:      %" PRIu64 "\n", splitWritesIssued);
 }
 
 void ProsperoComponent::handleResponse(SST::Event *ev) {
@@ -145,11 +159,25 @@ void ProsperoComponent::issueRequest(ProsperoTraceEntry* entry) {
 
 		cache_link->sendRequest(reqLower);
 		cache_link->sendRequest(reqUpper);
+
+		if(isRead) {
+			readsIssued += 2;
+			splitReadsIssued++;
+		} else {
+			writesIssued += 2;
+			splitWritesIssued++;
+		}
 	} else {
 		// Perform a single load
 		SimpleMem::Request* request = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			entryAddress, entryLength);
 		cache_link->sendRequest(request);
+
+		if(isRead) {
+			readsIssued++;
+		} else {
+			writesIssued++;
+		}
 	}
 }

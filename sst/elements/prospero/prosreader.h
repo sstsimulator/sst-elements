@@ -7,7 +7,7 @@
 #include <sst/core/params.h>
 
 namespace SST {
-namespace Ember {
+namespace Prospero {
 
 typedef enum {
 	READ,
@@ -38,13 +38,16 @@ private:
 	const ProsperoTraceEntryOperation op;
 };
 
-class ProsperoReader : public Module {
+class ProsperoTraceReader : public Module {
 
 public:
-	ProsperoReader( Component* owner, Params& params );
-	~ProsperoReader();
-	ProsperoTraceEntry* readNextEntry();
+	ProsperoTraceReader( Component* owner, Params& params ) { }
+	~ProsperoTraceReader() { }
+	virtual ProsperoTraceEntry* readNextEntry() { return NULL; }
 
 };
+
+}
+}
 
 #endif
