@@ -61,7 +61,6 @@ class FattreeInfo(TopoInfo):
 		return self.numNodes 
 
         def calcNumNodes(self, shape):
-                print shape
                 levels = shape.split(":")
 
                 total_hosts = 1;
