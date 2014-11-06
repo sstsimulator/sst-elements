@@ -14,8 +14,6 @@ libprospero_la_SOURCES = \
 	prostextreader.cc \
 	prosbinaryreader.h \
 	prosbinaryreader.cc \
-	prosbingzreader.h \
-	prosbingzreader.cc \
 	prosmemmgr.h \
 	prosmemmgr.cc
 
@@ -29,4 +27,8 @@ libprospero_la_LDFLAGS = -module -avoid-version
 
 if USE_LIBZ
 libprospero_la_LIBADD = -lz
+
+libprospero_la_SOURCES += \
+	prosbingzreader.h \
+	prosbingzreader.cc
 endif

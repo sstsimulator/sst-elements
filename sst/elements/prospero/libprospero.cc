@@ -18,8 +18,9 @@
 #include "proscpu.h"
 #include "prostextreader.h"
 #include "prosbinaryreader.h"
+#ifdef HAVE_LIBZ
 #include "prosbingzreader.h"
-
+#endif
 
 using namespace SST;
 using namespace SST::Prospero;
@@ -36,9 +37,11 @@ static Module* create_BinaryTraceReader(Component* comp, Params& params) {
 	return new ProsperoBinaryTraceReader(comp, params);
 }
 
+#ifdef HAVE_LIBZ
 static Module* create_CompressedBinaryTraceReader(Component* comp, Params& params) {
 	return new ProsperoCompressedBinaryTraceReader(comp, params);
 }
+#endif
 
 static const ElementInfoParam prospero_params[] = {
     { "verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0" },
@@ -61,10 +64,12 @@ static const ElementInfoParam prosperoBinaryReader_params[] = {
     { NULL, NULL, NULL }
 };
 
+#ifdef HAVE_LIBZ
 static const ElementInfoParam prosperoCompressedBinaryReader_params[] = {
     { "file", "Sets the file for the trace reader to use", "" },
     { NULL, NULL, NULL }
 };
+#endif
 
 static const ElementInfoPort prospero_ports[] = {
     { "cache_link", "Link to the memHierarchy cache", NULL },
@@ -90,7 +95,8 @@ static const ElementInfoModule modules[] = {
 		prosperoBinaryReader_params,
 		"SST::Prospero::ProsperoTraceReader"
 	},
- 	{
+#ifdef HAVE_LIBZ
+	{
 		"ProsperoCompressedBinaryTraceReader",
 		"Reads a trace from a compressed binary file",
 		NULL,
@@ -99,6 +105,7 @@ static const ElementInfoModule modules[] = {
 		prosperoCompressedBinaryReader_params,
 		"SST::Prospero::ProsperoTraceReader"
 	},
+#endif
     	{NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
