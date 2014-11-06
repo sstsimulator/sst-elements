@@ -2,6 +2,7 @@
 #ifndef _H_SST_PROSPERO_READER
 #define _H_SST_PROSPERO_READER
 
+#include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <sst/core/module.h>
 #include <sst/core/params.h>
@@ -41,9 +42,9 @@ private:
 class ProsperoTraceReader : public Module {
 
 public:
-	ProsperoTraceReader( Component* owner, Params& params ) { }
-	~ProsperoTraceReader() { }
-	virtual ProsperoTraceEntry* readNextEntry() { return NULL; }
+	ProsperoTraceReader( Component* owner, Params& params ) {};
+	~ProsperoTraceReader() { };
+	virtual ProsperoTraceEntry* readNextEntry() { return NULL; };
 
 };
 

@@ -21,7 +21,7 @@
 #include "sst/core/sst_types.h"
 #include "sst/core/component.h"
 #include "sst/core/link.h"
-#include "sst/core/interfaces/simplemem.h"
+#include "sst/core/interfaces/simpleMem.h"
 
 #include "prosreader.h"
 
@@ -49,7 +49,7 @@ private:
   ProsperoComponent(const ProsperoComponent&); // Do not impl.
   void operator=(const ProsperoComponent&);    // Do not impl.
 
-  void handleResponse( Event *ev );
+  void handleResponse( SimpleMem::Request* ev );
   bool tick( Cycle_t );
   void issueRequest(ProsperoTraceEntry* entry);
 

@@ -77,7 +77,7 @@ void ProsperoComponent::finish() {
 	output->output("- Split writes issued:      %" PRIu64 "\n", splitWritesIssued);
 }
 
-void ProsperoComponent::handleResponse(SST::Event *ev) {
+void ProsperoComponent::handleResponse(SimpleMem::Request *ev) {
 	output->verbose(CALL_INFO, 4, 0, "Handle response from memory subsystem.\n");
 
 	// Our responsibility to delete incoming event

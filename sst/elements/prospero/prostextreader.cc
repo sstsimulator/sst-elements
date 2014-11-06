@@ -1,7 +1,12 @@
 
+#include "sst_config.h"
 #include "prostextreader.h"
 
-ProsperoTextTraceReader::ProsperoTextTraceReader( Component* owner, Params& params ) {
+using namespace SST::Prospero;
+
+ProsperoTextTraceReader::ProsperoTextTraceReader( Component* owner, Params& params ) :
+	ProsperoTraceReader(owner, params) {
+
 	std::string traceFile = params.find_string("file", "");
 	traceInput = fopen(traceFile.c_str(), "rt");
 
@@ -20,11 +25,11 @@ ProsperoTraceEntry* ProsperoTextTraceReader::readNextEntry() {
 	uint32_t reqLength  = 0;
 
 	if(EOF == fscanf(traceInput, "%" PRIu64 " %c %" PRIu64 " %" PRIu32 "",
-		&reqCycles, &reqType, &reyAddress, &reqLength) ) {
+		&reqCycles, &reqType, &reqAddress, &reqLength) ) {
 		return NULL;
 	} else {
 		return new ProsperoTraceEntry(reqCycles, reqAddress,
-			reqType == 'R' ? READ : WRITE,
-			reqLength);
+			reqLength,
+			reqType == 'R' ? READ : WRITE);
 	}
 }

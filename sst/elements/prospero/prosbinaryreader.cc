@@ -1,7 +1,12 @@
 
-#include "prostextreader.h"
+#include "sst_config.h"
+#include "prosbinaryreader.h"
 
-ProsperoBinaryTraceReader::ProsperoBinaryTraceReader( Component* owner, Params& params ) {
+using namespace SST::Prospero;
+
+ProsperoBinaryTraceReader::ProsperoBinaryTraceReader( Component* owner, Params& params ) :
+	ProsperoTraceReader(owner, params) {
+
 	std::string traceFile = params.find_string("file", "");
 	traceInput = fopen(traceFile.c_str(), "rb");
 
@@ -19,9 +24,11 @@ ProsperoBinaryTraceReader::~ProsperoBinaryTraceReader() {
 	}
 }
 
-void ProsperoBinaryTraceReader::copy(char* target, const char* source, const uint32_t len) {
-	for(uint32_t i = 0; i < len; ++i) {
-		target[i] = source[i];
+void ProsperoBinaryTraceReader::copy(char* target, const char* source,
+	const size_t bufferOffset, const size_t len) {
+
+	for(size_t i = 0; i < len; ++i) {
+		target[i] = source[bufferOffset + i];
 	}
 }
 
@@ -37,14 +44,14 @@ ProsperoTraceEntry* ProsperoBinaryTraceReader::readNextEntry() {
 
 	if(1 == fread(buffer, recordLength, 1, traceInput)) {
 		// We DID read an entry
-		copy(&reqCycles, buffer, 0, sizeof(uint64_t));
-		copy(&reqType, buffer, sizeof(uint64_t), sizeof(char));
-		copy(&reqAddress, buffer, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t));
-		copy(&reqLength, buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
+		copy((char*) &reqCycles,  buffer, 0, sizeof(uint64_t));
+		copy((char*) &reqType,    buffer, sizeof(uint64_t), sizeof(char));
+		copy((char*) &reqAddress, buffer, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t));
+		copy((char*) &reqLength,  buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
 
 		return new ProsperoTraceEntry(reqCycles, reqAddress,
-			reqType == 'R' ? READ : WRITE,
-			reqLength);
+			reqLength,
+			reqType == 'R' ? READ : WRITE);
 	} else {
 		// Did not get a full read?
 		return NULL;
