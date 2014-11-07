@@ -1,10 +1,10 @@
 #!/bin/bash
 
-PINDIR=/Users/si/Documents/PIN/2.13
+PINDIR=/Users/sdhammo/Documents/PIN/2.13
 CXX=clang++
 LD=clang++
 CC=clang
-PREPROC=-DBIGARRAY_MULTIPLIER=1 -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC
+PREPROC=-DBIGARRAY_MULTIPLIER=1 -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC -DPROSPERO_LIBZ
 CXXFLAGS=-stdlib=libstdc++ -O3 -g -fomit-frame-pointer -fno-strict-aliasing
 
 all: sstmemtrace.dylib
@@ -20,7 +20,7 @@ sstmemtrace.dylib: sstmemtrace.o
 		-o $@ $< \
 		-L$(PINDIR)/extras/xed2-intel64/lib \
 		-L$(PINDIR)/intel64/lib \
-		-L$(PINDIR)/intel64/lib-ext -lpin -lxed -lpindwarf
+		-L$(PINDIR)/intel64/lib-ext -lpin -lxed -lpindwarf -lz
 
 sstmemtrace.o: sstmemtrace.cc
 	$(CXX) $(CXXFLAGS) -c \
