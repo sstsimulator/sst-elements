@@ -21,6 +21,7 @@
 #include <sst/core/rng/distrib.h>
 #include <sst/core/rng/expon.h>
 #include <sst/core/rng/gaussian.h>
+#include <sst/core/rng/poisson.h>
 
 #include <sst/core/rng/sstrand.h>
 #include <sst/core/rng/mersenne.h>

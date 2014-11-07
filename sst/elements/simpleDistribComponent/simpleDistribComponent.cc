@@ -60,6 +60,9 @@ SimpleDistribComponent::SimpleDistribComponent(ComponentId_t id, Params& params)
   } else if("exponential" == distrib_type) {
 	double lambda = params.find_floating("lambda", 1.0);
 	comp_distrib = new SSTExponentialDistribution(lambda, new MersenneRNG(10111));
+  } else if("poisson" == distrib_type) {
+	double lambda = params.find_floating("lambda", 3.0);
+	comp_distrib = new SSTPoissonDistribution(lambda, new MersenneRNG(10111));
   } else {
 	std::cerr << "Unknown distribution type." << std::endl;
 	exit(-1);
