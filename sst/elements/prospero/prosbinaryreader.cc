@@ -42,7 +42,7 @@ ProsperoTraceEntry* ProsperoBinaryTraceReader::readNextEntry() {
 		return NULL;
 	}
 
-	if(1 == fread(buffer, recordLength, 1, traceInput)) {
+	if(1 == fread(buffer, (size_t) recordLength, (size_t) 1, traceInput)) {
 		// We DID read an entry
 		copy((char*) &reqCycles,  buffer, 0, sizeof(uint64_t));
 		copy((char*) &reqType,    buffer, sizeof(uint64_t), sizeof(char));
