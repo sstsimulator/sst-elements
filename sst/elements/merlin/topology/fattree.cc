@@ -178,8 +178,9 @@ void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vec
             if ( i != inPort ) outPorts.push_back(i);
         }
 
-        // If I'm not at the top level (no up_ports), send to one up port
-        if ( up_ports != 0 ) {
+        // If I'm not at the top level (no up_ports) an I didn't
+        // receive this from an up_port, send to one up port
+        if ( up_ports != 0 && inPort < down_ports ) {
             outPorts.push_back(down_ports+(inPort % up_ports));
         }
     }
