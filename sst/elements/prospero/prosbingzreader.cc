@@ -45,7 +45,9 @@ ProsperoTraceEntry* ProsperoCompressedBinaryTraceReader::readNextEntry() {
 		return NULL;
 	}
 
-	if(gzread(traceInput, buffer, recordLength) > 0) {
+	int bytesRead = gzread(traceInput, buffer, (unsigned int) recordLength);
+
+	if(bytesRead == recordLength) {
 		// We DID read an entry
 		copy((char*) &reqCycles,  buffer, 0, sizeof(uint64_t));
 		copy((char*) &reqType,    buffer, sizeof(uint64_t), sizeof(char));
