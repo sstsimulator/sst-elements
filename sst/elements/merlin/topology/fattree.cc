@@ -171,8 +171,22 @@ internal_router_event* topo_fattree::process_input(RtrEvent* ev)
 
 void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
 {
-    route(inPort, 0, ev);
-    outPorts.push_back(ev->getNextPort());
+
+    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
+        // Send to all my downports except the one it came from
+        for ( int i = 0; i < down_ports; i++ ) {
+            if ( i != inPort ) outPorts.push_back(i);
+        }
+
+        // If I'm not at the top level (no up_ports), send to one up port
+        if ( up_ports != 0 ) {
+            outPorts.push_back(down_ports+(inPort % up_ports));
+        }
+    }
+    else {
+        route(inPort, 0, ev);
+        outPorts.push_back(ev->getNextPort());
+    }
     // cout << "routeInitData()" << endl;
     // if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
     //     switch (rtr_level) {
