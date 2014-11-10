@@ -10,6 +10,12 @@ ProsperoTextTraceReader::ProsperoTextTraceReader( Component* owner, Params& para
 	std::string traceFile = params.find_string("file", "");
 	traceInput = fopen(traceFile.c_str(), "rt");
 
+	if(NULL == traceInput) {
+		fprintf(stderr, "Fatal: Unable to open file: %s in text reader.\n",
+			traceFile.c_str());
+		exit(-1);
+	}
+
 };
 
 ProsperoTextTraceReader::~ProsperoTextTraceReader() {

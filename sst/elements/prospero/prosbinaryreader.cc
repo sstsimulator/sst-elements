@@ -10,6 +10,12 @@ ProsperoBinaryTraceReader::ProsperoBinaryTraceReader( Component* owner, Params& 
 	std::string traceFile = params.find_string("file", "");
 	traceInput = fopen(traceFile.c_str(), "rb");
 
+	if(NULL == traceInput) {
+		fprintf(stderr, "Fatal: Error opening trace file: %s in binary reader.\n",
+			traceFile.c_str());
+		exit(-1);
+	}
+
 	recordLength = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 	buffer = (char*) malloc(sizeof(char) * recordLength);
 };
