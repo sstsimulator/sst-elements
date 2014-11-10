@@ -32,8 +32,8 @@ uint64_t instruction_count;
 uint32_t traceEnabled __attribute__((aligned(64)));
 uint64_t nextFileTrip;
 
-const char READ_OPERATION_CHAR = 0;
-const char WRITE_OPERATION_CHAR = 1;
+const char READ_OPERATION_CHAR = 'R';
+const char WRITE_OPERATION_CHAR = 'W';
 
 char RECORD_BUFFER[ sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char) ];
 
