@@ -30,6 +30,6 @@ ProsperoTraceEntry* ProsperoTextTraceReader::readNextEntry() {
 	} else {
 		return new ProsperoTraceEntry(reqCycles, reqAddress,
 			reqLength,
-			reqType == 'R' ? READ : WRITE);
+			(reqType == 'R' || reqType == 'r') ? READ : WRITE);
 	}
 }

@@ -68,6 +68,8 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	splitReadsIssued = 0;
 	splitWritesIssued = 0;
 
+	currentOutstanding = 0;
+
 	output->verbose(CALL_INFO, 1, 0, "Prospero configuration completed successfully.\n");
 }
 
@@ -94,12 +96,19 @@ void ProsperoComponent::handleResponse(SimpleMem::Request *ev) {
 }
 
 bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
-	output->verbose(CALL_INFO, 16, 0, "Prospero execute on cycle %" PRIu64 "\n", (uint64_t) currentCycle);
+	if(NULL == currentEntry) {
+		output->verbose(CALL_INFO, 16, 0, "Prospero execute on cycle %" PRIu64 ", current entry is NULL, outstanding=%" PRIu32 ", maxOut=%" PRIu32 "\n",
+			(uint64_t) currentCycle, currentOutstanding, maxOutstanding);
+	} else {
+		output->verbose(CALL_INFO, 16, 0, "Prospero execute on cycle %" PRIu64 ", current entry time: %" PRIu64 ", outstanding=%" PRIu32 ", maxOut=%" PRIu32 "\n",
+			(uint64_t) currentCycle, (uint64_t) currentEntry->getIssueAtCycle(),
+			currentOutstanding, maxOutstanding);
+	}
 
 	// If we have finished reading the trace we need to let the events in flight
 	// drain and the system come to a rest
 	if(traceEnded) {
-		if(currentOutstanding == 0) {
+		if(0 == currentOutstanding) {
 			primaryComponentOKToEndSim();
                         return true;
 		}
@@ -141,7 +150,7 @@ bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
 	return false;
 }
 
-void ProsperoComponent::issueRequest(ProsperoTraceEntry* entry) {
+void ProsperoComponent::issueRequest(const ProsperoTraceEntry* entry) {
 	const uint64_t entryAddress = entry->getAddress();
 	const uint64_t entryLength  = (uint64_t) entry->getLength();
 
@@ -200,4 +209,7 @@ void ProsperoComponent::issueRequest(ProsperoTraceEntry* entry) {
 
 		currentOutstanding++;
 	}
+
+	// Delete this entry, we are done converting it into a request
+	delete entry;
 }

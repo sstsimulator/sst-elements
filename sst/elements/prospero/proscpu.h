@@ -52,7 +52,7 @@ private:
 
   void handleResponse( SimpleMem::Request* ev );
   bool tick( Cycle_t );
-  void issueRequest(ProsperoTraceEntry* entry);
+  void issueRequest(const ProsperoTraceEntry* entry);
 
   Output* output;
   ProsperoTraceReader* reader;

@@ -49,14 +49,14 @@ ProsperoTraceEntry* ProsperoCompressedBinaryTraceReader::readNextEntry() {
 
 	if(bytesRead == recordLength) {
 		// We DID read an entry
-		copy((char*) &reqCycles,  buffer, 0, sizeof(uint64_t));
+		copy((char*) &reqCycles,  buffer, (size_t) 0, sizeof(uint64_t));
 		copy((char*) &reqType,    buffer, sizeof(uint64_t), sizeof(char));
 		copy((char*) &reqAddress, buffer, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t));
 		copy((char*) &reqLength,  buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
 
 		return new ProsperoTraceEntry(reqCycles, reqAddress,
 			reqLength,
-			reqType == 'R' ? READ : WRITE);
+			(reqType == 'R' || reqType == 'r') ? READ : WRITE);
 	} else {
 		output->verbose(CALL_INFO, 2, 0, "Did not read a full record from the compressed trace, returning empty request.\n");
 		// Did not get a full read?

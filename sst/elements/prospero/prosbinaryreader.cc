@@ -44,14 +44,14 @@ ProsperoTraceEntry* ProsperoBinaryTraceReader::readNextEntry() {
 
 	if(1 == fread(buffer, (size_t) recordLength, (size_t) 1, traceInput)) {
 		// We DID read an entry
-		copy((char*) &reqCycles,  buffer, 0, sizeof(uint64_t));
+		copy((char*) &reqCycles,  buffer, (size_t) 0, sizeof(uint64_t));
 		copy((char*) &reqType,    buffer, sizeof(uint64_t), sizeof(char));
 		copy((char*) &reqAddress, buffer, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t));
 		copy((char*) &reqLength,  buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
 
 		return new ProsperoTraceEntry(reqCycles, reqAddress,
 			reqLength,
-			reqType == 'R' ? READ : WRITE);
+			(reqType == 'R' || reqType == 'r') ? READ : WRITE);
 	} else {
 		// Did not get a full read?
 		return NULL;

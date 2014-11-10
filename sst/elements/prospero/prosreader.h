@@ -26,12 +26,12 @@ public:
 
 		}
 
-	bool isRead()  { return op == READ;  }
-	bool isWrite() { return op == WRITE; }
-	uint64_t getAddress() { return address; }
-	uint32_t getLength() { return length; }
-	uint64_t getIssueAtCycle() { return cycles; }
-	ProsperoTraceEntryOperation getOperationType() { return op; }
+	bool isRead() const { return op == READ;  }
+	bool isWrite() const { return op == WRITE; }
+	uint64_t getAddress() const { return address; }
+	uint32_t getLength() const { return length; }
+	uint64_t getIssueAtCycle() const { return cycles; }
+	ProsperoTraceEntryOperation getOperationType() const { return op; }
 private:
 	const uint64_t cycles;
 	const uint64_t address;
