@@ -10,6 +10,12 @@ ProsperoCompressedBinaryTraceReader::ProsperoCompressedBinaryTraceReader( Compon
 	std::string traceFile = params.find_string("file", "");
 	traceInput = gzopen(traceFile.c_str(), "rb");
 
+	if(Z_NULL == traceInput) {
+		fprintf(stderr, "Fatal: attempted to open: %s but zlib returns error condition.\n",
+			traceFile.c_str());
+		exit(-1);
+	}
+
 	recordLength = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 	buffer = (char*) malloc(sizeof(char) * recordLength);
 };
