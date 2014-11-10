@@ -46,7 +46,8 @@ private:
     int stalled_cycles;
 
     bool done;
-
+    bool initialized;
+    
     LinkControl* link_control;
 
     int last_target;

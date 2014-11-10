@@ -213,7 +213,7 @@ class topoFatTree(Topo):
         for i in self.downs:
             self.total_hosts *= i
 
-        print "Total hosts: " + str(self.total_hosts)
+#        print "Total hosts: " + str(self.total_hosts)
 
         self.routers_per_level = [0] * len(self.downs)
         self.routers_per_level[0] = self.total_hosts / self.downs[0]
