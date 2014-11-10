@@ -18,7 +18,7 @@ comp_l1cache.addParams({
       "access_latency_cycles" : "1",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
-      "coherence_protocol" : "MSI",
+      "coherence_protocol" : "MESI",
       "associativity" : "8",
       "cache_line_size" : "64",
       "statistics" : "1",
@@ -27,13 +27,13 @@ comp_l1cache.addParams({
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : """MSI""",
-      "system_ini" : os.environ['SST_DEP_DRAMSIM_ROOT'] + """/ini/system.ini""",
-      "clock" : """1GHz""",
-      "access_time" : """1000 ns""",
-      "device_ini" : os.environ['SST_DEP_DRAMSIM_ROOT'] + """/ini/DDR3_micron_32M_8B_x4_sg125.ini""",
-      "mem_size" : """512""",
-      "backend" : """memHierarchy.dramsim"""
+      "coherence_protocol" : "MESI",
+      "system_ini" : "system.ini",
+      "clock" : "1GHz",
+      "access_time" : "1000 ns",
+      "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "mem_size" : "512",
+      "backend" : "memHierarchy.dramsim"
 })
 
 # Define the simulation links
