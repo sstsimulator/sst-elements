@@ -74,6 +74,8 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	totalBytesWritten = 0;
 
 	currentOutstanding = 0;
+	cyclesWithNoIssue = 0;
+	cyclesWithIssue = 0;
 
 	output->verbose(CALL_INFO, 1, 0, "Prospero configuration completed successfully.\n");
 }
@@ -84,22 +86,47 @@ ProsperoComponent::~ProsperoComponent() {
 }
 
 void ProsperoComponent::finish() {
-	output->output("Prospero Component Statistics:\n");
-	output->output("- Reads issued:             %" PRIu64 "\n", readsIssued);
-	output->output("- Writes issued:            %" PRIu64 "\n", writesIssued);
-	output->output("- Split reads issued:       %" PRIu64 "\n", splitReadsIssued);
-	output->output("- Split writes issued:      %" PRIu64 "\n", splitWritesIssued);
-	output->output("- Bytes read:               %" PRIu64 "\n", totalBytesRead);
-	output->output("- Bytes written:            %" PRIu64 "\n", totalBytesWritten);
-
 	const uint64_t nanoSeconds = getCurrentSimTimeNano();
-	output->output("- Bandwidth (read):         %" PRIu64 "B/s\n",
-		(PROSPERO_MAX(totalBytesRead, 1) / PROSPERO_MAX(nanoSeconds / 1000000000, 1)));
-	output->output("- Bandwidth (written):      %" PRIu64 "B/s\n",
-		(PROSPERO_MAX(totalBytesWritten, 1) / PROSPERO_MAX(nanoSeconds / 1000000000, 1)));
-	output->output("- Bandwidth (combined):     %" PRIu64 "B/s\n",
-		(PROSPERO_MAX(totalBytesWritten + totalBytesRead, 1)
-		/ PROSPERO_MAX(nanoSeconds / 1000000000, 1)));
+
+	output->output("\n");
+	output->output("Prospero Component Statistics:\n");
+
+	output->output("------------------------------------------------------------------------\n");
+	output->output("- Completed at:                          %" PRIu64 " ns\n", nanoSeconds);
+	output->output("- Cycles with ops issued:                %" PRIu64 " cycles\n", cyclesWithIssue);
+	output->output("- Cycles with no ops issued (LS full):   %" PRIu64 " cycles\n", cyclesWithNoIssue);
+
+	output->output("------------------------------------------------------------------------\n");
+	output->output("- Reads issued:                          %" PRIu64 "\n", readsIssued);
+	output->output("- Writes issued:                         %" PRIu64 "\n", writesIssued);
+	output->output("- Split reads issued:                    %" PRIu64 "\n", splitReadsIssued);
+	output->output("- Split writes issued:                   %" PRIu64 "\n", splitWritesIssued);
+	output->output("- Bytes read:                            %" PRIu64 "\n", totalBytesRead);
+	output->output("- Bytes written:                         %" PRIu64 "\n", totalBytesWritten);
+
+	output->output("------------------------------------------------------------------------\n");
+
+	const double totalBytesReadDbl = (double) totalBytesRead;
+	const double totalBytesWrittenDbl = (double) totalBytesWritten;
+	const double secondsDbl = ((double) nanoSeconds) / 1000000000.0;
+
+	output->output("- Bandwidth (read):                      %20.2f B/s\n",
+		totalBytesReadDbl / secondsDbl);
+	output->output("- Bandwidth (written):                   %20.2f B/s\n",
+		totalBytesWrittenDbl / secondsDbl);
+	output->output("- Bandwidth (combined):                  %20.2f B/s\n",
+		(totalBytesReadDbl + totalBytesWrittenDbl) / secondsDbl);
+
+	output->output("- Avr. Read request size:                %20.2f bytes\n",
+		((double) PROSPERO_MAX(totalBytesRead, 1)) /
+		((double) PROSPERO_MAX(readsIssued, 1)));
+	output->output("- Avr. Write request size:               %20.2f bytes\n",
+		((double) PROSPERO_MAX(totalBytesWritten, 1)) /
+		((double) PROSPERO_MAX(writesIssued, 1)));
+	output->output("- Avr. Request size:                     %20.2f bytes\n",
+		((double) PROSPERO_MAX(totalBytesRead + totalBytesWritten, 1)) /
+		((double) PROSPERO_MAX(readsIssued + writesIssued, 1)));
+	output->output("\n");
 }
 
 void ProsperoComponent::handleResponse(SimpleMem::Request *ev) {
@@ -132,6 +159,8 @@ bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
 		return false;
 	}
 
+	const uint64_t outstandingBeforeIssue = currentOutstanding;
+
 	// Wait to see if the current operation can be issued, if yes then
 	// go ahead and issue it, otherwise we will stall
 	for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
@@ -160,6 +189,15 @@ bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
 			// so stall until we find that point
 			break;
 		}
+	}
+
+	const uint64_t outstandingAfterIssue = currentOutstanding;
+	const uint64_t issuedThisCycle = outstandingAfterIssue - outstandingBeforeIssue;
+
+	if(0 == issuedThisCycle) {
+		cyclesWithNoIssue++;
+	} else {
+		cyclesWithIssue++;
 	}
 
 	// Keep simulation ticking, we have more work to do if we reach here
