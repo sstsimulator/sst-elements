@@ -17,6 +17,22 @@ libprospero_la_SOURCES = \
 	prosmemmgr.h \
 	prosmemmgr.cc
 
+EXTRA_DIST = \
+        tests/array/trace-binary.py \
+        tests/array/trace-binary-withdramsim.py \
+        tests/array/trace-compressed.py \
+        tests/array/trace-compressed-withdramsim.py \
+        tests/array/trace-text.py \
+        tests/array/trace-text-withdramsim.py \
+        tests/array/array.c \
+        tests/array/Makefile \
+        tracetool/Makefile \
+        tracetool/Makefile.osx \
+        tracetool/sstmemtrace.cc \
+        tracetool/api/Makefile \
+        tracetool/api/Makefile.osx \
+        tracetool/api/prospero.c \
+        tracetool/api/prospero.h
 
 libprospero_la_LDFLAGS = -module -avoid-version
 
