@@ -17,11 +17,6 @@ libprospero_la_SOURCES = \
 	prosmemmgr.h \
 	prosmemmgr.cc
 
-EXTRA_DIST = \
-	xml/trace.xml \
-	xml/trace.py \
-	xml/trace-withdramsim.xml \
-	xml/trace-withdramsim.py
 
 libprospero_la_LDFLAGS = -module -avoid-version
 
