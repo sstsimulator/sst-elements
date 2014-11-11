@@ -74,6 +74,8 @@ private:
   uint64_t writesIssued;
   uint64_t splitReadsIssued;
   uint64_t splitWritesIssued;
+  uint64_t totalBytesRead;
+  uint64_t totalBytesWritten;
 
   friend class boost::serialization::access;
   template<class Archive>

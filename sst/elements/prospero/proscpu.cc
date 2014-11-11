@@ -1,9 +1,12 @@
 
 #include "sst_config.h"
 #include "proscpu.h"
+#include <algorithm>
 
 using namespace SST;
 using namespace SST::Prospero;
+
+#define PROSPERO_MAX(a, b) ((a) < (b) ? (b) : (a))
 
 ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	Component(id) {
@@ -67,6 +70,8 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	writesIssued = 0;
 	splitReadsIssued = 0;
 	splitWritesIssued = 0;
+	totalBytesRead = 0;
+	totalBytesWritten = 0;
 
 	currentOutstanding = 0;
 
@@ -84,6 +89,17 @@ void ProsperoComponent::finish() {
 	output->output("- Writes issued:            %" PRIu64 "\n", writesIssued);
 	output->output("- Split reads issued:       %" PRIu64 "\n", splitReadsIssued);
 	output->output("- Split writes issued:      %" PRIu64 "\n", splitWritesIssued);
+	output->output("- Bytes read:               %" PRIu64 "\n", totalBytesRead);
+	output->output("- Bytes written:            %" PRIu64 "\n", totalBytesWritten);
+
+	const uint64_t nanoSeconds = getCurrentSimTimeNano();
+	output->output("- Bandwidth (read):         %" PRIu64 "B/s\n",
+		(PROSPERO_MAX(totalBytesRead, 1) / PROSPERO_MAX(nanoSeconds / 1000000000, 1)));
+	output->output("- Bandwidth (written):      %" PRIu64 "B/s\n",
+		(PROSPERO_MAX(totalBytesWritten, 1) / PROSPERO_MAX(nanoSeconds / 1000000000, 1)));
+	output->output("- Bandwidth (combined):     %" PRIu64 "B/s\n",
+		(PROSPERO_MAX(totalBytesWritten + totalBytesRead, 1)
+		/ PROSPERO_MAX(nanoSeconds / 1000000000, 1)));
 }
 
 void ProsperoComponent::handleResponse(SimpleMem::Request *ev) {
@@ -156,6 +172,12 @@ void ProsperoComponent::issueRequest(const ProsperoTraceEntry* entry) {
 
 	const uint64_t lineOffset   = entryAddress % cacheLineSize;
 	bool  isRead                = entry->isRead();
+
+	if(isRead) {
+		totalBytesRead += entryLength;
+	} else {
+		totalBytesWritten += entryLength;
+	}
 
 	if(lineOffset + entryLength > cacheLineSize) {
 		// Perform a split cache line load
