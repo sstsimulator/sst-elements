@@ -5,13 +5,15 @@ AM_CPPFLAGS = \
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
+
 libember_la_SOURCES = \
+	embergen.h \
+	embermpigen.h \
+	embermap.h \
 	ember.cc \
 	emberengine.h  \
 	emberfinalizeev.cc  \
-	embergen.h     \
 	embergen.cc	\
-	embermpigen.h \
 	embermpigen.cc \
 	emberinitev.cc  \
 	emberrecvev.cc  \
@@ -23,7 +25,6 @@ libember_la_SOURCES = \
 	emberinitev.h  \
 	emberrecvev.h \
 	embersendev.h \
-	embermap.h \
 	emberlinearmap.h \
 	emberstartev.h \
 	emberstartev.cc \
@@ -48,7 +49,6 @@ libember_la_SOURCES = \
 	emberredev.cc \
 	embergettimeev.h \
 	embergettimeev.cc \
-	embermap.h \
 	emberlinearmap.h \
 	emberdistrib.h \
 	emberdistrib.cc \
@@ -115,3 +115,9 @@ EXTRA_DIST = \
 	test/CrossProduct.py \
 	test/networkConfig.py \
 	test/Tester.py 
+
+if USE_EMBER_CONTEXTS
+libember_la_SOURCES += \
+	embermpicxtgen.h \
+	embermpicxtgen.cc
+endif
