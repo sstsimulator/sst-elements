@@ -40,6 +40,12 @@ class TrafficGen : public Component {
 
 private:
 
+    static int count;
+    static int received;
+    static int min_lat;
+    static int max_lat;
+    static int mean_sum;
+    
     class Generator {
     public:
         virtual int getNextValue(void) = 0;

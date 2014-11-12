@@ -21,6 +21,7 @@
 #include "hr_router/hr_router.h"
 #include "test/nic.h"
 #include "test/pt2pt/pt2pt_test.h"
+#include "test/bisection/bisection_test.h"
 
 #include "topology/torus.h"
 #include "topology/singlerouter.h"
@@ -90,6 +91,31 @@ static const ElementInfoParam pt2pt_test_params[] = {
 };
 
 static const ElementInfoPort pt2pt_test_ports[] = {
+    {"rtr",  "Port that hooks up to router.", nic_events},
+    {NULL, NULL, NULL}
+};
+
+// bisection_test element info
+
+static Component*
+create_bisection_test(SST::ComponentId_t id,
+		  SST::Params& params)
+{
+    return new bisection_test( id, params );
+}
+
+
+static const ElementInfoParam bisection_test_params[] = {
+    //    {"num_vns","Number of requested virtual networks."},
+    {"num_peers","Number of peers on the network (must be even number)"},
+    {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix).","2GB/s"},
+    {"packet_size","Packet size specified in either b or B (can include SI prefix).","64B"},
+    {"packets_to_send","Number of packets to send in the test.", "32"},
+    {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix).", "128B"},
+    {NULL,NULL,NULL}
+};
+
+static const ElementInfoPort bisection_test_ports[] = {
     {"rtr",  "Port that hooks up to router.", nic_events},
     {NULL, NULL, NULL}
 };
@@ -269,6 +295,14 @@ static const ElementInfoComponent components[] = {
       create_pt2pt_test,
       pt2pt_test_params,
       pt2pt_test_ports,
+      COMPONENT_CATEGORY_NETWORK
+    },
+    { "bisection_test",
+      "Simple NIC to test bisection bandwidth of a network.",
+      NULL,
+      create_bisection_test,
+      bisection_test_params,
+      bisection_test_ports,
       COMPONENT_CATEGORY_NETWORK
     },
     { "test_nic",

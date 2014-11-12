@@ -154,7 +154,7 @@ void topo_fattree::route(int port, int vc, internal_router_event* ev)
         ev->setNextPort((dest - low_host) / down_route_factor);
     }
     else {
-        ev->setNextPort(down_ports + (dest % up_ports));
+        ev->setNextPort(down_ports + ((dest/down_route_factor) % up_ports));
         // cout << "id: " << id << ", dest = " << dest << ", next port = " << (down_ports + (dest % up_ports)) << endl;
     }
 }

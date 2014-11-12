@@ -16,7 +16,7 @@ from sst.merlin import *
 
 if __name__ == "__main__":
     topos = dict([(1,topoTorus()), (2,topoFatTree()), (3,topoDragonFly()), (4,topoSimple())])
-    endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint())])
+    endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint()), (3, BisectionEndPoint())])
 
 
     print "Merlin SDL Generator\n"

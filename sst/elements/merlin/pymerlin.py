@@ -462,6 +462,25 @@ class TestEndPoint:
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
 
 
+class BisectionEndPoint:
+    def __init__(self):
+        self.nicKeys = ["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size"]
+
+    def getName(self):
+        return "Bisection Test End Point"
+
+    def prepParams(self):
+        pass
+
+    def build(self, nID, link, extraKeys):
+        nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
+        nic.addParams(_params.subset(self.nicKeys))
+        nic.addParams(_params.subset(extraKeys))
+        nic.addParam("id", nID)
+        nic.addLink(link, "rtr", _params["link_lat"])
+        #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+
+
 class TrafficGenEndPoint:
     def __init__(self):
         self.optionalKeys = ["delay_between_packets"]
@@ -505,7 +524,7 @@ class TrafficGenEndPoint:
 
 if __name__ == "__main__":
     topos = dict([(1,topoTorus()), (2,topoFatTree()), (3,topoDragonFly()), (4,topoSimple())])
-    endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint())])
+    endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint()), (3, BisectionEndPoint())])
 
 
     print "Merlin SDL Generator\n"
