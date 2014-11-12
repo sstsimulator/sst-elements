@@ -30,6 +30,7 @@
 
 #include "sst/elements/merlin/linkControl.h"
 
+#define ENABLE_FINISH_HACK 0
 
 namespace SST {
 namespace Merlin {
@@ -40,11 +41,13 @@ class TrafficGen : public Component {
 
 private:
 
+#if ENABLE_FINISH_HACK
     static int count;
     static int received;
     static int min_lat;
     static int max_lat;
     static int mean_sum;
+#endif
     
     class Generator {
     public:

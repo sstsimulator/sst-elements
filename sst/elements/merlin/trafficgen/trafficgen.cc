@@ -29,12 +29,13 @@
 
 using namespace SST::Merlin;
 
+#if ENABLE_FINISH_HACK
 int TrafficGen::count = 0;
 int TrafficGen::received = 0;
 int TrafficGen::min_lat = 0xffffffff;
 int TrafficGen::max_lat = 0;
 int TrafficGen::mean_sum = 0;
-
+#endif
 
 TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     Component(cid),
@@ -200,6 +201,7 @@ void TrafficGen::finish()
             stats.getMinLatency(), stats.getMaxLatency(),
             stats.getMeanLatency(), stats.getStdDevLatency());
 
+#if ENABLE_FINISH_HACK
     received += packets_recd;
     if ( stats.getMinLatency() < min_lat ) min_lat = stats.getMinLatency();
     if ( stats.getMaxLatency() > max_lat ) max_lat = stats.getMaxLatency();
@@ -234,12 +236,15 @@ void TrafficGen::finish()
 
         }
     }
+#endif
 }
 
 void TrafficGen::setup()
 {
     link_control->setup();
+#if ENABLE_FINISH_HACK
     count++;
+#endif
 }
 
 void
