@@ -151,8 +151,7 @@ void topo_fattree::route(int port, int vc, internal_router_event* ev)
     int dest = ev->getDest();
     if ( dest >= low_host && dest <= high_host ) {
         // cout << "id: " << id << ", dest = " << dest << ", next port = " << (dest / down_route_factor) << endl
-            ;
-            ev->setNextPort((dest - low_host) / down_route_factor);
+        ev->setNextPort((dest - low_host) / down_route_factor);
     }
     else {
         ev->setNextPort(down_ports + (dest % up_ports));
@@ -244,10 +243,7 @@ internal_router_event* topo_fattree::process_InitData_input(RtrEvent* ev)
 int
 topo_fattree::getEndpointID(int port)
 {
-    if ( rtr_level > 1 ) return -2;
-    if ( port >= down_ports ) return -3;
-    // Just for early testing, not correct
-    return port;
+    return low_host + port;
 }
 
 Topology::PortState topo_fattree::getPortState(int port) const
