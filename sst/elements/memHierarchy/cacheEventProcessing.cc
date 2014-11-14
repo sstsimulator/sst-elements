@@ -31,7 +31,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::processEvent(MemEvent* event, bool _mshrHit) {
+void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
     Command cmd     = event->getCmd();
     if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
@@ -48,8 +48,8 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     /* Set requestor field if this is the first cache that's seen this event */
     if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
-    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %"PRIu64", %s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
+    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %"PRIu64", %s%s \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", replaying ? ", replay" : "");
     
     if(noncacheable || cf_.allNoncacheableRequests_){
         processNoncacheable(event, cmd, baseAddr);
@@ -66,7 +66,8 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
                 }
                 break;
             }
-            if(mshr_->isFull()){
+            if(mshr_->isFull() || (!L1_ && !replaying && mshr_->isAlmostFull() && !isCacheHit(event,cmd,baseAddr))){ 
+                // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 sendNACK(event);
                 break;
             }
@@ -114,6 +115,7 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
 	    if (_cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
             inserted = mshrNoncacheable_->insert(_baseAddr, _event);
             assert(inserted);
+            _event->setStartTime(timestamp_);
             if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
             else             bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
             break;
@@ -140,9 +142,9 @@ void Cache::handleSelfEvent(SST::Event* _event){
     ev->setBaseAddr(toBaseAddr(ev->getAddr()));
     ev->setInMSHR(false);
     ev->setStatsUpdated(false);
-
-    if(ev->getCmd() != NULLCMD && !mshr_->isFull())
-        processEvent(ev, ev->isPrefetch());
+    
+    if(ev->getCmd() != NULLCMD && !mshr_->isFull() && (L1_ || !mshr_->isAlmostFull()))
+        processEvent(ev, ev->isPrefetch(), false);
 }
 
 
@@ -222,5 +224,5 @@ void Cache::processIncomingEvent(SST::Event* _ev){
     //assert(!event->statsUpdated());
     event->setInMSHR(false);
     event->setStatsUpdated(false);
-    processEvent(event, false);
+    processEvent(event, false, false);
 }

@@ -291,7 +291,7 @@ public:
     bool isAtomic(){ return queryFlag(MemEvent::F_LLSC); }
     
     bool isHighNetEvent(){
-        if(cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx){
+        if(cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback()){
             return true;
         }
         return false;

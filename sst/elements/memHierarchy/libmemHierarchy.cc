@@ -70,7 +70,7 @@ static const ElementInfoParam cache_params[] = {
     {"statistics",              "Print cache stats at end of simulation: 0, 1", "0"},
     {"network_bw",              "Network link bandwidth.", "0"},
     {"network_address",         "When using a directory controller, this parameter represents the network address of this cache.", "0"},
-	{"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",          "When using a directory controller, this parameter represents the number of VCS on the on-chip network.", "3"},
     {"debug",                   "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",             "Debugging level: 0 to 10", "0"},
     {"force_noncacheable_reqs", "Used for verification purposes.  All requests are considered to be 'noncacheable'", "0"},
@@ -90,7 +90,7 @@ static const ElementInfoPort cache_ports[] = {
 
 static Component* create_Bus(ComponentId_t id, Params& params)
 {
-	return new Bus( id, params );
+    return new Bus( id, params );
 }
 
 static const ElementInfoParam bus_params[] = {
@@ -152,7 +152,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"interleave_step",     "Distance between sucessive interleaved pages on this controller in KB.", "0"},
     {"memory_file",         "Optional backing-store file to pre-load memory, or store resulting state", "N/A"},
     {"clock",               "Clock frequency of controller", NULL},
-    {"divert_DC_lookups",   "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
+    //{"divert_DC_lookups",   "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0", "0"},
     {"backend",             "Timing backend to use:  Default to simpleMem", "memHierarchy.simpleMem"},
     {"request_width",       "Size of a DRAM request in bytes.  Should be a power of 2 - default 64", "64"},
     {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
@@ -252,6 +252,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},
+    {"mshr_num_entries",    "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
     {NULL, NULL, NULL}
 };
 
@@ -272,7 +273,7 @@ static const ElementInfoParam dmaengine_params[] = {
     {"debug_level",     "Debugging level: 0 to 10", "0"},
     {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
     {"netAddr",         "Network address of component.", NULL},
-	{"network_num_vc",  "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",  "The number of VCS on the on-chip network.", "3"},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };

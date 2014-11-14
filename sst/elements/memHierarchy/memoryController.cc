@@ -65,7 +65,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 	string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
 	string clock_freq       = params.find_string("clock", "");
     cacheLineSize_          = params.find_integer("request_width", 64);
-    divertDCLookups_        = params.find_integer("divert_DC_lookups", 0);
+    //divertDCLookups_        = params.find_integer("divert_DC_lookups", 0);
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
@@ -135,20 +135,10 @@ void MemController::handleEvent(SST::Event* _event){
     // Notify our listeners that we have received an event
 
     if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM) {
-	std::vector<CacheListener*>::iterator listener_itr;
-
-	if(cmd == GetS || cmd == GetX || cmd == GetSEx) {
-		// Notify listeners that we have equiv. of a read
-		const int listenerCount = listeners_.size();
-		for(int i = 0; i < listenerCount; ++i) {
-			listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
-		}
-	} else if(cmd == PutM) {
-		// Notify listeners that we have equiv. of a read
-		const int listenerCount = listeners_.size();
-		for(int i = 0; i < listenerCount; ++i) {
-			listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
-		}
+        // Notify listeners that we have equiv. of a read
+	const int listenerCount = listeners_.size();
+	for(int i = 0; i < listenerCount; ++i) {
+	    listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
 	}
 
         if(cmd == GetS)         GetSReqReceived_++;

@@ -24,9 +24,9 @@
 #include "cacheListener.h"
 #include <sst/core/params.h>
 #include <boost/lexical_cast.hpp>
+#include "mshr.h"
 
 #define N   200
-#define HUGE_MSHR 100000
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -156,8 +156,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
 
     /* ----------------- MSHR ----------------- */
-    mshr_               = new MSHR(this, cf_.MSHRSize_);
-    mshrNoncacheable_       = new MSHR(this, HUGE_MSHR);
+    mshr_               = new MSHR(d_, cf_.MSHRSize_);
+    mshrNoncacheable_       = new MSHR(d_, HUGE_MSHR);
     
     /* ---------------- Links ---------------- */
     lowNetPorts_        = new vector<Link*>();

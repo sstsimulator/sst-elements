@@ -125,6 +125,8 @@ public:
     /** Create MemEvent and send NACK cmd to HgLvl caches */
     void sendNACK(MemEvent*);
     
+    bool isCoherenceMiss(MemEvent* _event, CacheLine* _cacheLine);
+
     /* Send andy outgoing messages directed to lower level caches or 
        directory controller (if one exists) */
     void sendOutgoingCommands(){

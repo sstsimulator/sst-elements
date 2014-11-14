@@ -36,6 +36,17 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
+bool Cache::isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr) {
+    int lineIndex = cf_.cacheArray_->find(_baseAddr,false);
+     
+    if (isCacheMiss(lineIndex))                         return false;
+    CacheLine* cacheLine = getCacheLine(lineIndex);
+    if (bottomCC_->isCoherenceMiss(_event,cacheLine))   return false;
+    if (!(_event->isPrefetch() && (_event->getRqstr() == this->getName())) && topCC_->isCoherenceMiss(_event,cacheLine))  return false;
+    
+    return true;
+}
+
 void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
     bool done = false;
     CacheLine* cacheLine;
@@ -76,7 +87,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
-        if(!processRequestInMSHR(_baseAddr, _event))                    /* L1s wont stall because they don't have any sharers */
+        if(!processRequestInMSHR(_baseAddr, _event))                 /* L1s wont stall because they don't have any sharers */
             return;
     }
     topCC_->handleInvalidate(lineIndex, _event->getRqstr(), _cmd, _mshrHit); /* Invalidate upper levels */
@@ -323,7 +334,7 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
                   _i, CommandString[_event->getCmd()], toBaseAddr(_event->getAddr()), _event->getAddr(), _event->getDst().c_str());
     d_->debug(_L3_,"--------------------------------------\n");
     
-    this->processEvent(_event, true);
+    this->processEvent(_event, true, true);
     
     d_->debug(_L3_,"--------------------------------------\n");
     _mshrEntry.erase(_it);
@@ -465,9 +476,12 @@ CacheArray::CacheLine* Cache::getCacheLine(int _lineIndex){
 
 
 bool Cache::insertToMSHR(Addr _baseAddr, MemEvent* _event){
-    return mshr_->insert(_baseAddr, _event);
+    if (mshr_->insert(_baseAddr, _event)) {
+        _event->setStartTime(timestamp_);
+        return true;
+    }
+    return false;
 }
-
 
 
 bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
@@ -478,7 +492,6 @@ bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
     }
     return true;
 }
-
 
 
 void Cache::sendNACK(MemEvent* _event){

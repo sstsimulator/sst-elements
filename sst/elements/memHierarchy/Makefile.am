@@ -43,6 +43,7 @@ libmemHierarchy_la_SOURCES = \
 	cacheArray.cc \
 	cacheArray.h \
 	mshr.h \
+	mshr.cc \
 	trivialCPU.h \
 	trivialCPU.cc \
 	streamCPU.h \

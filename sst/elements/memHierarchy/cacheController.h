@@ -30,6 +30,7 @@
 #include <sst/core/output.h>
 
 #include "cacheArray.h"
+#include "mshr.h"
 #include "replacementManager.h"
 #include "coherenceControllers.h"
 #include "util.h"
@@ -56,40 +57,6 @@ public:
     typedef uint64_t                        uint64;
 
     friend class InstructionStream;
-    
-    /** MSHR full exception.  Catch block responsible for sending NACK */
-    class mshrException : public exception{ const char* what () const throw (){ return "Memory requests needs to be NACKed. MSHR is full\n"; }};
-
-    class MSHR{
-    public:
-        mshrTable   map_ ;
-        Cache*      cache_;
-        int         size_;
-        int         maxSize_;
-        
-        MSHR(Cache*, int);
-        bool exists(Addr baseAddr);
-        void insertFront(Addr baseAddr, MemEvent* event);
-        bool insertAll(Addr, vector<mshrType>);
-        bool insert(Addr baseAddr, MemEvent* event);
-        bool insertPointer(Addr keyAddr, Addr pointerAddr);
-        bool insert(Addr baseAddr, Addr pointer);
-        bool insert(Addr baseAddr, mshrType mshrEntry);
-        MemEvent* removeFront(Addr _baseAddr);
-        void removeElement(Addr baseAddr, MemEvent* event);
-        void removeElement(Addr baseAddr, Addr pointer);
-        void removeElement(Addr baseAddr, mshrType mshrEntry);
-        vector<mshrType> removeAll(Addr);
-        const vector<mshrType> lookup(Addr baseAddr);
-        MemEvent* lookupFront(Addr _baseAddr);
-        bool isHit(Addr baseAddr);
-        bool isHitAndStallNeeded(Addr baseAddr, Command cmd);
-        uint getSize(){ return size_; }
-        void printEntry(Addr baseAddr);
-        void printEntry2(vector<MemEvent*> events);
-        bool isFull();
-        MemEvent* getOldestRequest() const;
-    };
     
     virtual void init(unsigned int);
     virtual void setup(void);
@@ -124,7 +91,7 @@ private:
     void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
     
     /** Process the oldest incoming event */
-    void processEvent(MemEvent* event, bool mshrHit);
+    void processEvent(MemEvent* event, bool mshrHit, bool replaying);
     
     /** Configure this component's links */
     void configureLinks();
@@ -223,6 +190,9 @@ private:
 
     /** Make sure that this request is not a dirty writeback.  Cache miss cannot occur on a dirty writeback  */
     inline void checkCacheMissValidity(MemEvent* event) throw(ignoreEventException);
+    
+    /** Check whether this request will hit or miss in the cache - including correct coherence permission */
+    bool isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);
 
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
@@ -270,7 +240,7 @@ private:
     int groupId;
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
-         the clock gets deregested from TimeVortx and reregisted only when an event is received */
+         the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++;
         if(cf_.dirControllerExists_) memNICIdle_ = directoryLink_->clock();
@@ -280,30 +250,6 @@ private:
             checkMaxWait();
         }
         return false;
-    }
-    
-    /** Process the request on the top of the incoming event queue */
-    void processQueueRequest(){
-        MemEvent* memEvent = static_cast<MemEvent*>(incomingEventQueue_.front().first);
-        processEvent(memEvent, false);
-        incomingEventQueue_.pop();
-        idleCount_ = 0;
-    }
-    
-    /** Retry an event in the 'retry queue' */
-    void retryEvent(){
-        retryQueue_ = retryQueueNext_;
-        retryQueueNext_.clear();
-        for(vector<MemEvent*>::iterator it = retryQueue_.begin(); it != retryQueue_.end();){
-            d_->debug(_L3_,"Retrying event\n");
-            if(mshr_->isFull()){
-                retryQueueNext_ = retryQueue_;
-                return;
-            }
-            processEvent(*it, true);
-            retryQueue_.erase(it);
-        }
-        idleCount_ = 0;
     }
     
     /** Increment idle clock count */

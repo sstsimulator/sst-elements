@@ -52,14 +52,6 @@ enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _L9_ CALL_INFO,L9,0     //MSHR messages
 #define _L10_ CALL_INFO,L10,0   //Directory controller, Bus, Memory Controller
 
-struct mshrType {
-    boost::variant<Addr, MemEvent*> elem;
-    MemEvent* memEvent_;
-    mshrType(MemEvent* _memEvent) : elem(_memEvent), memEvent_(_memEvent) {}
-    mshrType(Addr _addr) : elem(_addr) {}
-    //~mshrType(){ delete memEvent_; }
-    
-};
 
 struct CtrlStats{
     uint64_t     TotalRequestsReceived_,

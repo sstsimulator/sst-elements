@@ -10,7 +10,7 @@
 // distribution.
 
 /*
- * File:   coherenceControllers.h
+ * File:   directoryController.h
  * Author: Branden Moore / Caesar De la Paz III
  * Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
  */
@@ -31,6 +31,7 @@
 #include <sst/core/output.h>
 #include "memEvent.h"
 #include "util.h"
+#include "mshr.h"
 
 using namespace std;
 
@@ -59,10 +60,16 @@ class DirectoryController : public Component {
     Addr        interleaveStep;
     
     string      protocol;
-
+    
+    /* MSHRs */
+    uint64_t    mshrLatency;
+    MSHR*       mshr;
+    
+    /* Directory cache */
     size_t      entryCacheMaxSize;
     size_t      entryCacheSize;
 
+    /* Statistics counters */
     uint64_t    numReqsProcessed;
     uint64_t    totalReqProcessTime;
     uint64_t    numCacheHits;
@@ -79,6 +86,9 @@ class DirectoryController : public Component {
     uint64_t    PutEReqReceived;
     uint64_t    PutSReqReceived;
     
+    uint64_t    mshrHits;
+
+    /* Directory structures */
     std::list<DirEntry*>                    entryCache;
     std::map<Addr, DirEntry*>               directory;
     std::map<std::string, uint32_t>         node_lookup;
@@ -87,10 +97,11 @@ class DirectoryController : public Component {
     /* Queue of packets to work on */
     std::list<MemEvent*>                    workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
+    std::map<MemEvent::id_type, Addr>       dirEntryMiss;
 
-    std::map<MemEvent::id_type, MemEvent*>  noncacheableWrites;
     Output::output_location_t               printStatsLoc;
-
+    
+    /* Network connections */
     SST::Link*  memLink;
     MemNIC*     network;
     
@@ -128,6 +139,8 @@ class DirectoryController : public Component {
     /** Retry original request upon receiving a NACK */
     void processIncomingNACK(MemEvent* _origReqEvent, MemEvent* _nackEvent);
 
+    /** NACK incoming request because there are no available MSHRs */
+    void mshrNACKRequest(MemEvent * event);
 
     /** Advances or transitions an entry to the 'next state' by calling the handler that was previously assigned */
     void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
@@ -227,13 +240,13 @@ class DirectoryController : public Component {
             waitingOn   = "N/A";
         }
         
-		uint32_t countRefs(void){
-			uint32_t count = 0;
+	uint32_t countRefs(void){
+	    uint32_t count = 0;
             for (uint32_t i = 0; i < sharers.size(); i++)
                 if (sharers[i]) count++;
             
-			return count;
-		}
+	    return count;
+	}
 
         void clearSharers(void){
             for (uint32_t i = 0; i < sharers.size(); i++)
@@ -278,15 +291,15 @@ class DirectoryController : public Component {
             return 0;
         }
 
-		bool inProgress(void) { return activeReq != NULL; }
-	};
+	bool inProgress(void) { return activeReq != NULL; }
+    };
 
 public:
-	DirectoryController(ComponentId_t id, Params &params);
+    DirectoryController(ComponentId_t id, Params &params);
     ~DirectoryController();
-	void setup(void);
+    void setup(void);
     void init(unsigned int phase);
-	void finish(void);
+    void finish(void);
     
     /** Print status of entries/work queue */
     void printStatus(Output &out);
@@ -297,7 +310,7 @@ public:
 
     /** Event received from higher level caches.  
         Insert to work queue so that it is process in the upcoming clock tick */
-	void handlePacket(SST::Event *event);
+    void handlePacket(SST::Event *event);
 	
     /** Handler that gets called by clock tick.  
         Function redirects request according to their type. */

@@ -182,6 +182,20 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
+bool MESIBottomCC::isCoherenceMiss(MemEvent* _event, CacheLine* _cacheLine) {
+    Command cmd = _event->getCmd();
+    State state = _cacheLine->getState();
+    if (cmd == GetS) {
+        if (state != I) { return false; }
+        else { return true; }
+    } else if (cmd == GetX || cmd == GetSEx) {
+        if (state == S || state == I) { return true; }
+        else { return false; }
+    }
+    _abort(MemHierarchy::CacheController, "Unknown command.\n");
+    return true;
+}
+
 bool MESIBottomCC::isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine, bool _mshrH){
     State state = _cacheLine->getState();
 
