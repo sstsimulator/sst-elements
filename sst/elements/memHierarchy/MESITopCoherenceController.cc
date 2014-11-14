@@ -51,7 +51,6 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
 }
 
 
-
 /*-------------------------------------------------------------------------------------
  * MESI Top Coherence Controller Implementation
  *-------------------------------------------------------------------------------------*/
@@ -230,6 +229,20 @@ void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit
 /*---------------------------------------------------------------------------------------------------
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
+
+bool MESITopCC::isCoherenceMiss(MemEvent* _event, CacheLine* _cacheLine) {
+    State state     = _cacheLine->getState();
+    int lineIndex   = _cacheLine->getIndex();
+    CCLine* l       = ccLines_[lineIndex];
+    Command cmd     = _event->getCmd();
+    int requestor =  lowNetworkNodeLookupByName(_event->getSrc());
+    
+    if (l->inTransition()) return true;
+    if (l->ownerExists() || state == I) return true;
+    if (state == S && cmd != GetS) return true;
+    if (cmd == GetSEx && l->numSharers() > 0 && !(l->numSharers() == 1 && l->isSharer(requestor))) return true;
+    return false;
+}
 
 void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
     vector<uint8_t>* data = _cacheLine->getData();

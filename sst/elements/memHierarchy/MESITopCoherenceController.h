@@ -64,7 +64,9 @@ public:
     /** Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
     virtual void handleEviction(int lineIndex, string _origRqstr, State _state) {return;}
-   
+    
+    virtual bool isCoherenceMiss(MemEvent* event, CacheLine * line) { return false; }
+
     /* Incoming Inv/InvX/FetchInv/FetchInvX received.  TopCC sends invalidates up the hierarchy if necessary */
     virtual void handleInvalidate(int lineIndex, string _origRqstr, Command cmd, bool _mshrHit){return;}
 
@@ -177,7 +179,8 @@ public:
     
     /** Returns number of sharers. */
     uint numSharers(int lineIndex){return ccLines_[lineIndex]->numSharers();}
-
+    
+    bool isCoherenceMiss(MemEvent* event, CacheLine* cacheLine);
 private:
     uint                numLines_;
     uint                lowNetworkNodeCount_;
