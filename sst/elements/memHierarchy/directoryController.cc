@@ -288,8 +288,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     
     //DirEntry *entr = getDirEntry(mshr->lookupFront(ev->getAddr()));
     Addr target = ev->getBaseAddr();
-    if (target == 0) {
-        assert(dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end());
+    if (target == 0 && dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end()) {    // directory entry miss
         target = dirEntryMiss[ev->getResponseToID()];
         dirEntryMiss.erase(ev->getResponseToID());
     } else {
