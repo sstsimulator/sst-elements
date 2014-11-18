@@ -60,15 +60,15 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
         case GetS:
         case GetX:
         case GetSEx:
+            if(mshr_->isFull() || (!L1_ && !replaying && mshr_->isAlmostFull()  && (!isCacheHit(event,cmd,baseAddr) || mshr_->isHitAndStallNeeded(baseAddr, cmd)))){ 
+                // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
+                sendNACK(event);
+                break;
+            }
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 if(processRequestInMSHR(baseAddr, event)){
                     d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                 }
-                break;
-            }
-            if(mshr_->isFull() || (!L1_ && !replaying && mshr_->isAlmostFull() && !isCacheHit(event,cmd,baseAddr))){ 
-                // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
-                sendNACK(event);
                 break;
             }
             processCacheRequest(event, cmd, baseAddr, _mshrHit);

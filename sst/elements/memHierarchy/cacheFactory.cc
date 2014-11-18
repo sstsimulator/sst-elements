@@ -87,7 +87,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     if(-1 == mshrSize)          mshrSize = HUGE_MSHR;
     
     /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
-    if(10 > mshrSize)           _abort(Cache, "MSHR should be at least of 10 MSHR entries long");
+    if(mshrSize < 2)            _abort(Cache, "MSHR requires at least 2 entries to avoid deadlock and realistically should have at least 10 entries\n");
 
     
     /* ---------------- Initialization ----------------- */

@@ -61,7 +61,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
     int mshrSize    = params.find_integer("mshr_num_entries",-1);
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
-    if (mshrSize < 10) _abort(DirectoryController, "MSHR should have at least 10 entries");
+    if (mshrSize < 1) _abort(DirectoryController, "Directory requires at least 1 MSHR");
     mshr            = new   MSHR(&dbg, mshrSize); 
 
     if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
@@ -301,7 +301,6 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     if(memReqs.find(ev->getResponseToID()) != memReqs.end()){
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
-        dbg.debug(_L10_, "Directory controller: target: %"PRIx64"; targetBlock: %"PRIx64"\n",target,targetBlock); 
         if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()){   // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
             DirEntry *entr = getDirEntry(target);
