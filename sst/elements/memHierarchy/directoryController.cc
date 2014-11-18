@@ -92,7 +92,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /*Parameter not needed since cache entries are always stored at address 0.
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
-    lookupBaseAddr      = 0;  /* Use to offset into main memory from where DirEntries are stored */
+    lookupBaseAddr      = 1;  /* Use to offset into main memory from where DirEntries are stored */
     numReqsProcessed    = 0;
     totalReqProcessTime = 0;
     numCacheHits        = 0;
@@ -292,7 +292,9 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         target = dirEntryMiss[ev->getResponseToID()];
         dirEntryMiss.erase(ev->getResponseToID());
     } else {
-        MemEvent *origReq = mshr->lookupFront(ev->getBaseAddr());
+        // Convert back to non-local address and find in mshrs
+        target = convertAddressFromLocalAddress(target); 
+        MemEvent *origReq = mshr->lookupFront(target);
         target = origReq->getBaseAddr();
     }
     
@@ -763,7 +765,23 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev){
 
 }
 
+Addr DirectoryController::convertAddressFromLocalAddress(Addr addr){
+    assert(interleaveStep <= interleaveSize); // one-to-one mapping required for this method
+    Addr res = 0;
+    if(0 == interleaveSize){
+        res = addr + addrRangeStart - lookupBaseAddr;
+    }
+    else {
+        addr = addr - lookupBaseAddr;
+        Addr step   = addr / interleaveSize; 
+        Addr offset = addr % interleaveSize;
+        res = (step * interleaveStep) + offset;
+        res = res + addrRangeStart;
 
+    }
+    dbg.debug(_L10_, "Converted ACTUAL memory address 0x%"PRIx64" to physical address 0x%"PRIx64"\n", addr, res);
+    return res;
+}
 
 Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
     Addr res = 0;

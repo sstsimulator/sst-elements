@@ -182,6 +182,9 @@ class DirectoryController : public Component {
     /** Determines if request is valid in terms of address ranges */
     bool isRequestAddressValid(MemEvent *ev);
     
+    /** Convert local address of the main memory section this directory controller owns to global address */
+    Addr convertAddressFromLocalAddress(Addr addr);
+    
     /** Convert global address to local address of the main memory section this directory controller owns */
     Addr convertAddressToLocalAddress(Addr addr);
 
