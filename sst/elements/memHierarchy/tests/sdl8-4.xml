@@ -28,7 +28,6 @@ Difference from sld8-3.xml: Directory has entry cache
 
 <param_include>
     <cpuParams>
-        <workPerCycle> 1000 </workPerCycle>
         <commFreq> 100 </commFreq>
         <memSize> 0x1000 </memSize>
         <num_loadstore> 1000 </num_loadstore>

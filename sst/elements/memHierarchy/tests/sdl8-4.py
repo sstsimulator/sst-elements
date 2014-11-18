@@ -9,7 +9,6 @@ sst.setProgramOption("stopAtCycle", "10000ns")
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "do_write" : """1"""
@@ -30,7 +29,6 @@ comp_c0_l1cache.addParams({
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "do_write" : """1"""
@@ -67,7 +65,6 @@ comp_n0_l2cache.addParams({
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
 comp_cpu2.addParams({
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "do_write" : """1"""
@@ -88,7 +85,6 @@ comp_c2_l1cache.addParams({
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
 comp_cpu3.addParams({
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "do_write" : """1"""

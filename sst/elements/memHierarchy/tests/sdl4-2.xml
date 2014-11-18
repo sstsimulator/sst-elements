@@ -26,7 +26,6 @@ Difference from sdl4-1.xml:  DRAMSim
 
 <param_include>
     <cpuParams>
-        <workPerCycle> 1000 </workPerCycle>
         <commFreq> 100 </commFreq>
         <memSize> 0x1000 </memSize>
         <num_loadstore> 1000 </num_loadstore>

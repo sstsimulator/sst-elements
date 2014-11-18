@@ -13,7 +13,6 @@ comp_cpu.addParams({
       "memSize" : """0x100000""",
       "noncacheableRangeStart" : """0""",
       "do_write" : """1""",
-      "workPerCycle" : """1000""",
       "noncacheableRangeEnd" : """0x100"""
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")

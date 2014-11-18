@@ -25,7 +25,6 @@ Topology:
 <sst>
 	<component name="cpu" type="memHierarchy.trivialCPU">
 		<params>
-			<workPerCycle> 1000 </workPerCycle>
 			<commFreq> 100 </commFreq>
 			<memSize> 0x1000 </memSize>
 			<do_write> 1 </do_write>

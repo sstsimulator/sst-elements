@@ -9,7 +9,6 @@ sst.setProgramOption("stopAtCycle", "10000ns")
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
       "memSize" : """0x100000""",
-      "workPerCycle" : """1000""",
       "num_loadstore" : """10000""",
       "commFreq" : """100""",
       "do_write" : """1"""

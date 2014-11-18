@@ -20,7 +20,6 @@ Difference from sdl7-1.xml:  Interleaved layout
 
 <param_include>
     <cpuParams>
-        <workPerCycle> 1000 </workPerCycle>
         <commFreq> 100 </commFreq>
         <memSize> 0x1000000 </memSize>
         <do_write> 1 </do_write>

@@ -11,7 +11,6 @@ comp_cpu0.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -34,7 +33,6 @@ comp_cpu1.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -57,7 +55,6 @@ comp_cpu2.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -80,7 +77,6 @@ comp_cpu3.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -119,7 +115,6 @@ comp_cpu4.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -142,7 +137,6 @@ comp_cpu5.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -165,7 +159,6 @@ comp_cpu6.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
@@ -188,7 +181,6 @@ comp_cpu7.addParams({
       "num_loadstore" : """1000""",
       "commFreq" : """100""",
       "memSize" : """0x1000""",
-      "workPerCycle" : """1000""",
       "do_write" : """1""",
       "noncacheableRangeStart" : """0""",
       "noncacheableRangeEnd" : """0x100"""
