@@ -258,7 +258,7 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     // If I'm not a host port, I'm going to send out the VC count to
     // my neighbors in case they don't have any host ports to get the
     // request from.
-    if ( !host_port ) {
+    if ( !host_port && port_link ) {
         RtrInitEvent* init_ev = new RtrInitEvent();
         init_ev->command = RtrInitEvent::SET_VCS;
         init_ev->int_value = vcs;
