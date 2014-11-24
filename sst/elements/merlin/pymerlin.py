@@ -73,7 +73,6 @@ class topoSimple(Topo):
             self._getEndPoint(l).build(l, link, {})
         
 
-
 class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
@@ -176,6 +175,118 @@ class topoTorus(Topo):
                 rtr.addLink(nicLink, "port%d"%port, _params["link_lat"])
                 port = port+1
                 nodeID = int(_params["torus:local_ports"]) * i + n
+                self._getEndPoint(nodeID).build(nodeID, nicLink, {})
+
+
+
+class topoMesh(Topo):
+    def __init__(self):
+        Topo.__init__(self)
+        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+    def getName(self):
+        return "Mesh"
+    def prepParams(self):
+        self.nd = int(_params["num_dims"])
+        peers = 1
+        radix = 0
+        self.dims = []
+        self.dimwidths = []
+        if not "mesh:shape" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d size:"%x
+                ds = int(raw_input())
+                self.dims.append(ds);
+            _params["mesh:shape"] = self.formatShape(self.dims)
+        else:
+            self.dims = [int(x) for x in _params["mesh:shape"].split('x')]
+        if not "mesh:width" in _params:
+            for x in xrange(self.nd):
+                print "Dim %d width (# of links in this dimension):" % x
+                dw = int(raw_input())
+                self.dimwidths.append(dw)
+            _params["mesh:width"] = self.formatShape(self.dimwidths)
+        else:
+            self.dimwidths = [int(x) for x in _params["torus:width"].split('x')]
+
+        local_ports = int(_params["mesh:local_ports"])
+        radix = local_ports + 2 * sum(self.dimwidths)
+
+        for x in self.dims:
+            peers = peers * x
+        peers = peers * local_ports
+
+        _params["num_peers"] = peers
+        _params["num_dims"] = self.nd
+        _params["topology"] = _params["topology"] = "merlin.mesh"
+        _params["debug"] = debug
+        _params["num_ports"] = _params["router_radix"] = radix
+        _params["num_vns"] = 2
+        _params["mesh:local_ports"] = local_ports
+
+    def formatShape(self, arr):
+        return 'x'.join([str(x) for x in arr])
+
+    def build(self):
+        def idToLoc(rtr_id):
+            foo = list()
+            for i in xrange(self.nd-1, 0, -1):
+                div = 1
+                for j in range(0, i):
+                    div = div * self.dims[j]
+                value = (rtr_id / div)
+                foo.append(value)
+                rtr_id = rtr_id - (value * div)
+            foo.append(rtr_id)
+            foo.reverse()
+            return foo
+
+
+        num_routers = _params["num_peers"] / _params["mesh:local_ports"]
+        links = dict()
+        def getLink(leftName, rightName, num):
+            name = "link.%s:%s:%d"%(leftName, rightName, num)
+            if name not in links:
+                links[name] = sst.Link(name)
+            return links[name]
+
+        for i in xrange(num_routers):
+            # set up 'mydims'
+            mydims = idToLoc(i)
+            mylocstr = self.formatShape(mydims)
+
+            rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
+            rtr.addParams(_params.subset(self.rtrKeys))
+            rtr.addParam("id", i)
+
+            port = 0
+            for dim in xrange(self.nd):
+                theirdims = mydims[:]
+
+                # Positive direction
+                if mydims[dim]+1 < self.dims[dim]:
+                    theirdims[dim] = (mydims[dim] +1 ) % self.dims[dim]
+                    theirlocstr = self.formatShape(theirdims)
+                    for num in xrange(self.dimwidths[dim]):
+                        rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
+                        port = port+1
+                else:
+                    port += self.dimwidths[dim]
+
+                # Negative direction
+                if mydims[dim] > 0:
+                    theirdims[dim] = ((mydims[dim] -1) +self.dims[dim]) % self.dims[dim]
+                    theirlocstr = self.formatShape(theirdims)
+                    for num in xrange(self.dimwidths[dim]):
+                        rtr.addLink(getLink(theirlocstr, mylocstr, num), "port%d"%port, _params["link_lat"])
+                        port = port+1
+                else:
+                    port += self.dimwidths[dim]
+
+            for n in xrange(_params["mesh:local_ports"]):
+                nicLink = sst.Link("nic.%d:%d"%(i, n))
+                rtr.addLink(nicLink, "port%d"%port, _params["link_lat"])
+                port = port+1
+                nodeID = int(_params["mesh:local_ports"]) * i + n
                 self._getEndPoint(nodeID).build(nodeID, nicLink, {})
 
 

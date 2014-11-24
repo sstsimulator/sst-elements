@@ -23,6 +23,8 @@ libmerlin_la_SOURCES = \
 	test/bisection/bisection_test.cc \
 	topology/torus.h \
 	topology/torus.cc \
+	topology/mesh.h \
+	topology/mesh.cc \
 	topology/fattree.h \
 	topology/fattree.cc \
 	topology/dragonfly.h \

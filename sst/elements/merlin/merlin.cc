@@ -24,6 +24,7 @@
 #include "test/bisection/bisection_test.h"
 
 #include "topology/torus.h"
+#include "topology/mesh.h"
 #include "topology/singlerouter.h"
 #include "topology/fattree.h"
 #include "topology/dragonfly.h"
@@ -221,6 +222,21 @@ static const ElementInfoParam torus_params[] = {
 };
 
 
+// topo_mesh
+static Module*
+load_mesh_topology(Component* comp, Params& params)
+{
+    return new topo_mesh(comp,params);
+}
+
+static const ElementInfoParam mesh_params[] = {
+    {"mesh:shape","Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+    {"mesh:width","Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+    {"mesh:local_ports","Number of endpoints attached to each router."},
+    {NULL,NULL,NULL}
+};
+
+
 // topo tree
 static Module*
 load_fattree_topology(Component* comp, Params& params)
@@ -329,6 +345,14 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_torus_topology,
       torus_params,
+      "SST::Merlin::Topology"
+    },
+    { "mesh",
+      "Mesh topology object",
+      NULL,
+      NULL,
+      load_mesh_topology,
+      mesh_params,
       "SST::Merlin::Topology"
     },
     { "singlerouter",
