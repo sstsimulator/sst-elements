@@ -38,6 +38,8 @@ private:
 	bool clockTic( SST::Cycle_t );
 
     	Output* out;
+
+	RequestGenerator* reqGen;
 	std::map<uint64_t, SimTime_t> requests;
     	Interfaces::SimpleMem *memory;
 
