@@ -12,6 +12,10 @@
 #ifndef _H_SST_MEM_H_REQ_GEN_CPU
 #define _H_SST_MEM_H_REQ_GEN_CPU
 
+#include <sst/core/component.h>
+#include <sst/core/interfaces/simpleMem.h>
+
+using namespace SST::Interfaces;
 using namespace SST::Statistics;
 
 namespace SST {
@@ -28,13 +32,17 @@ private:
 	RequestGenCPU();  // for serialization only
 	RequestGenCPU(const RequestGenCPU&); // do not implement
 	void operator=(const RequestGenCPU&); // do not implement
+	~RequestGenCPU();
 
 	void handleEvent( Interfaces::SimpleMem::Request *ev );
 	bool clockTic( SST::Cycle_t );
 
-    	Output out;
+    	Output* out;
 	std::map<uint64_t, SimTime_t> requests;
     	Interfaces::SimpleMem *memory;
+
+	uint32_t maxRequestsPending;
+	uint32_t requestsPending;
 
 };
 
