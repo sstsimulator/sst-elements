@@ -45,7 +45,7 @@ static const ElementInfoParam ariel_params[] = {
     {"executable", "Executable to trace", NULL},
     {"appargcount", "Number of arguments to the traced executable", "0"},
     {"apparg%(appargcount)d", "Arguments for the traced executable", NULL},
-    {"arielmode", "PIN tool startup mode", "1"},
+    {"arielmode", "Tool interception mode, set to 1 to trace entire program (default), set to 0 to delay tracing until ariel_enable() call.", "1"},
     {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
