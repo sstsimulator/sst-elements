@@ -15,12 +15,16 @@ typedef enum {
 class RequestGeneratorRequest {
 public:
 	RequestGenOp(const uint64_t addr,
-		RequestGenOperation opType) : physAddr(addr), op(opType) {};
+		const uint64_t length,
+		RequestGenOperation opType) : physAddr(addr),
+			len(length), op(opType) {};
 	~RequestGenOp();
 	uint64_t getAddress() const { return physAddr; }
+	uint64_t getLength() const { return length; }
 	RequestGenOperation getOperation() const { return op; }
 protected:
 	uint64_t physAddr;
+	uint64_t len;
 	RequestGenOperation op;
 };
 
