@@ -36,15 +36,18 @@ private:
 
 	void handleEvent( Interfaces::SimpleMem::Request *ev );
 	bool clockTic( SST::Cycle_t );
+	void issueRequest(const RequestGeneratorRequest* req);
 
     	Output* out;
 
 	RequestGenerator* reqGen;
 	std::map<uint64_t, SimTime_t> requests;
     	Interfaces::SimpleMem *memory;
+	RequestGeneratorRequest* nextReq;
 
 	uint32_t maxRequestsPending;
 	uint32_t requestsPending;
+	uint64_t cacheLine;
 
 };
 
