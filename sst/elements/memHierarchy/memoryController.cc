@@ -224,7 +224,7 @@ void MemController::performRequest(DRAMReq* _req){
 
     if(_req->cmd_ == PutM){  /* Write request to memory */
         dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), noncacheable ? "true" : "false");
-		for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
+	for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
             memBuffer_[localBaseAddr + i] = _req->reqEvent_->getPayload()[i];
 	}
     else{
@@ -235,17 +235,18 @@ void MemController::performRequest(DRAMReq* _req){
             for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
                 memBuffer_[localAbsAddr + i] = _req->reqEvent_->getPayload()[i];
         }
-
+        
         if(noncacheable) localAddr = localAbsAddr;
         else             localAddr = localBaseAddr;
         
     	_req->respEvent_ = _req->reqEvent_->makeResponse();
         assert(_req->respEvent_->getSize() == _req->reqEvent_->getSize());
-    
-        dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
-		for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++)
+            dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
+	for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++)
             _req->respEvent_->getPayload()[i] = memBuffer_[localAddr + i];
-
+        
+        if (noncacheable) _req->respEvent_->setFlag(MemEvent::F_NONCACHEABLE);
+        
         if(_req->reqEvent_->getCmd() == GetX) _req->respEvent_->setGrantedState(M);
         else{
             if(protocol_) _req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist

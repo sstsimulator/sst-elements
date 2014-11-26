@@ -92,7 +92,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /*Parameter not needed since cache entries are always stored at address 0.
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
-    lookupBaseAddr      = 1;  /* Use to offset into main memory from where DirEntries are stored */
+    lookupBaseAddr      = 0;  /* Use to offset into main memory from where DirEntries are stored */
     numReqsProcessed    = 0;
     totalReqProcessTime = 0;
     numCacheHits        = 0;
@@ -131,14 +131,18 @@ DirectoryController::~DirectoryController(){
 void DirectoryController::handlePacket(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
-    workQueue.push_back(ev);
+    if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+        dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%"PRIx64", Addr = 0x%"PRIx64"\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
+        memLink->send(ev);
+    } else {
+        workQueue.push_back(ev);
+    }
 }
 
 
 
 bool DirectoryController::clock(SST::Cycle_t cycle){
     network->clock();   // what does this do?
-
     if(!workQueue.empty()){
         MemEvent *event = workQueue.front();
         processPacket(event);
@@ -147,8 +151,6 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
 	return false;
 }
-
-
 
 bool DirectoryController::processPacket(MemEvent *ev){
     assert(isRequestAddressValid(ev));
@@ -283,10 +285,12 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
+    if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+        network->send(ev);
+        return;
+    }
 
-    //MemEvent *origRequest = getOrigReq(mshr->lookup(ev->getAddr()));
-    
-    //DirEntry *entr = getDirEntry(mshr->lookupFront(ev->getAddr()));
+
     Addr target = ev->getBaseAddr();
     if (target == 0 && dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end()) {    // directory entry miss
         target = dirEntryMiss[ev->getResponseToID()];
@@ -440,11 +444,8 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     Command cmd        = entry->activeReq->getCmd();
     
     uint32_t requesting_node = node_id(entry->activeReq->getSrc());
-    
-    if(entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)){      // Don't set as a sharer whne dealing with noncacheable
-	entry->nextFunc = &DirectoryController::sendResponse;
-	requestDataFromMemory(entry);
-    } else if(entry->isDirty()){                                      // Must do a fetch
+    assert(!entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)); 
+    if(entry->isDirty()){                                       // Must do a fetch
 	MemEvent *ev      = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInv, cacheLineSize);
         std::string &dest = nodeid_to_name[entry->findOwner()];
         ev->setDst(dest);
@@ -457,7 +458,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 	sendResponse(ev);
     } else if(cmd == GetX || cmd == GetSEx){
 	assert(0 == entry->waitingAcks);
-	for(uint32_t i = 0 ; i < numTargets ; i++){                 // Must send invalidates
+	for(uint32_t i = 0 ; i < numTargets ; i++){             // Must send invalidates
 	    if(i == requesting_node) continue;
 	    if(entry->sharers[i]){
                 sendInvalidate(i, entry);
@@ -472,7 +473,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
              dbg.output(CALL_INFO, "Sending Invalidates to fulfill request for exclusive, BsAddr = %"PRIx64".\n", entry->baseAddr);
         } else getExclusiveDataForRequest(entry, NULL);
 
-    } else {                                                        //Handle GetS requests
+    } else {                                                    //Handle GetS requests
 	entry->addSharer(requesting_node);
 	entry->nextFunc = &DirectoryController::sendResponse;
 	requestDataFromMemory(entry);
@@ -502,7 +503,6 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
 
 
 void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
-    //bool noncacheable = entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE);
     MemEvent *ev;
     if (entry->activeReq->getCmd() == GetS) {                   // Handle GetS requests according to coherence protocol
         if (protocol == "MESI" && entry->countRefs() == 1) {    // Return block in E state if this is the only requestor
@@ -525,8 +525,6 @@ void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
     dbg.debug(_L10_, "Sending requested data for 0x%"PRIx64" to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
 
     updateEntryToMemory(entry);
-    //if(noncacheable && 0 == entry->countRefs()) directory.erase(entry->baseAddr);
-    //else updateEntryToMemory(entry);
 
 }
 
@@ -632,16 +630,13 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
     Addr localBaseAddr   = convertAddressToLocalAddress(entry->activeReq->getBaseAddr());
     MemEvent *ev         = new MemEvent(this, localAddr, localBaseAddr, entry->activeReq->getCmd(), cacheLineSize);
     memReqs[ev->getID()] = entry->baseAddr;
-    
     entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn     = "memory";
     entry->lastRequest   = ev->getID();
     memLink->send(ev);
     ++dataReads;
-    dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%"PRIx64", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
+    dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%"PRIx64", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
 }
-
-
 
 void DirectoryController::updateCacheEntry(DirEntry *entry){
     if(0 == entryCacheMaxSize){
