@@ -7,8 +7,8 @@ EXTRA_DIST = \
 	tests/sdl1.xml \
 	tests/sdl2.xml \
 	tests/sdl3.xml \
-	tests/sdl1.xml.ref \
-	tests/sdl2.xml.ref \
+	tests/sdl1.ref \
+	tests/sdl2.ref \
 	tests/sdl3.xml.ref \
 	tests/sdl1.py \
 	tests/sdl2.py \
