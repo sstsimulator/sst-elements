@@ -92,7 +92,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /*Parameter not needed since cache entries are always stored at address 0.
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
-    lookupBaseAddr      = 0;  /* Use to offset into main memory from where DirEntries are stored */
+    lookupBaseAddr      = cacheLineSize;  /* Use to offset into main memory from where DirEntries are stored */
     numReqsProcessed    = 0;
     totalReqProcessTime = 0;
     numCacheHits        = 0;
@@ -133,7 +133,12 @@ void DirectoryController::handlePacket(SST::Event *event){
     ev->setDeliveryTime(getCurrentSimTimeNano());
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%"PRIx64", Addr = 0x%"PRIx64"\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
+        Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
+        Addr localBaseAddr   = convertAddressToLocalAddress(ev->getBaseAddr());
+        ev->setBaseAddr(localBaseAddr);
+        ev->setAddr(localAddr);
         memLink->send(ev);
+
     } else {
         workQueue.push_back(ev);
     }
@@ -142,7 +147,8 @@ void DirectoryController::handlePacket(SST::Event *event){
 
 
 bool DirectoryController::clock(SST::Cycle_t cycle){
-    network->clock();   // what does this do?
+    network->clock();
+
     if(!workQueue.empty()){
         MemEvent *event = workQueue.front();
         processPacket(event);
@@ -286,32 +292,25 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+        Addr globalAddr       = convertAddressFromLocalAddress(ev->getAddr());
+        Addr globalBaseAddr   = convertAddressFromLocalAddress(ev->getBaseAddr());
+        ev->setBaseAddr(globalBaseAddr);
+        ev->setAddr(globalAddr);
         network->send(ev);
         return;
     }
 
 
-    Addr target = ev->getBaseAddr();
-    if (target == 0 && dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end()) {    // directory entry miss
-        target = dirEntryMiss[ev->getResponseToID()];
+    if (ev->getBaseAddr() == 0 && dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end()) {    // directory entry miss
         dirEntryMiss.erase(ev->getResponseToID());
-    } else {
-        // Convert back to non-local address and find in mshrs
-        target = convertAddressFromLocalAddress(target); 
-        MemEvent *origReq = mshr->lookupFront(target);
-        target = origReq->getBaseAddr();
-    }
-    
-
+    }    
     
     if(memReqs.find(ev->getResponseToID()) != memReqs.end()){
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
         if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()){   // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
-            DirEntry *entr = getDirEntry(target);
             assert(entry);
-            assert(entry == entr);
             entry->inController = true;
             advanceEntry(entry, ev);
         }

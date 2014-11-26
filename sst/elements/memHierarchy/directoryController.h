@@ -164,9 +164,6 @@ class DirectoryController : public Component {
     /** Requests data from Memory */
     void requestDataFromMemory(DirEntry *entry);
 	
-    /** Forwards data from Memory for noncacheable GetX requests */
-    void forwardDataToMemory(DirEntry *entry);
-    
     /** Write updated entry to memory */
     void updateEntryToMemory(DirEntry *entry);
     
