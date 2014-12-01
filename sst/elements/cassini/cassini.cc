@@ -52,6 +52,7 @@ static Module* load_AddrHistogrammer(Params& params){
 }
 
 static const ElementInfoParam addrHistogrammer_params[] = {
+    {"verbose",                     "Controls the verbosity of the cassini components", ""},
     {"cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
     {"histo_bin_width",             "The width of bins in the histograms tracking the reads and writes leaving this cache, default is 64-bytes", "64"},
     {NULL, NULL, NULL}

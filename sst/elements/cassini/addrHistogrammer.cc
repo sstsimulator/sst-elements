@@ -9,6 +9,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+// File:   addrHistogrammer.cc
+// Author: Jagan Jayaraj (derived from Cassini prefetcher modules written by Si Hammond)
+
 #include "sst_config.h"
 #include "addrHistogrammer.h"
 
@@ -25,64 +28,102 @@ using namespace SST::Cassini;
 AddrHistogrammer::AddrHistogrammer(Params& params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 	blockSize = (uint32_t) params.find_integer("cache_line_size", 64);
-	binWidth = (uint32_t) params.find_integer("bin_width", 64);
-    rdHisto = new Statistics::Histogram<uint32_t,uint32_t>("Histogram of reads",binWidth);
-    wrHisto = new Statistics::Histogram<uint32_t,uint32_t>("Histogram of writes",binWidth);
+	binWidth = (uint32_t) params.find_integer("histo_bin_width", 64);
     // Get the level of verbosity the user is asking to print out, default is 1
     // which means don't print much.
-    verbosity = (uint32_t) params.find_integer("verbose", 1);
+    verbosity = (uint32_t) params.find_integer("verbose", 0);
+    
+    rdHisto = new Statistics::Histogram<uint32_t,uint32_t>("Histogram of reads",binWidth);
+    wrHisto = new Statistics::Histogram<uint32_t,uint32_t>("Histogram of writes",binWidth);
+
+    output = new Output();
+    output->init("", verbosity, (uint32_t) 0, Output::FILE);
 }
 
 
-AddrHistogrammer::~AddrHistogrammer() { delete rdHisto;  delete wrHisto; }
+AddrHistogrammer::~AddrHistogrammer() {
+    delete rdHisto;
+    delete wrHisto;
+    delete output;
+}
 
 
 void AddrHistogrammer::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,
 	const Addr addr, const uint32_t size)
 {
-	if(notifyResType == MISS) {
-       Addr baseAddr = (addr - (addr % blockSize));
-       if(notifyType == READ) {
-          // Add to the read histogram
-          rdHisto->add(baseAddr);
-       } else {
-          // Add to the write hitogram
-          wrHisto->add(baseAddr);
-       }
-	}
+    if(notifyResType != MISS) return;
+    Addr baseAddr = (addr - (addr % blockSize));
+    switch (notifyType) {
+      case READ:
+        // Add to the read histogram
+        rdHisto->add(baseAddr);
+        return;
+      case WRITE:
+        // Add to the write hitogram
+        wrHisto->add(baseAddr);
+        return;
+    }
 }
 
-void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler)  
-{
+void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler) {
 	registeredCallbacks.push_back(handler);
 }
 
-void AddrHistogrammer::setOwningComponent(const SST::Component* own) 
-{
+void AddrHistogrammer::setOwningComponent(const SST::Component* own) {
 	owner = own;
 }
 
-// copied from emberengine.cc
-void AddrHistogrammer::printHistogram(Statistics::Histogram<uint32_t, uint32_t> *histo) {
-        output->output(1,"addrHistogrammer.cc","printHistogram","Histogram Min: %" PRIu32 "\n", histo->getBinStart());
-        output->output(1,"addrHistogrammer.cc","printHistogram","Histogram Max: %" PRIu32 "\n", histo->getBinEnd());
-        output->output(1,"addrHistogrammer.cc","printHistogram","Histogram Bin: %" PRIu32 "\n", histo->getBinWidth());
-        for(uint32_t i = histo->getBinStart(); i <= histo->getBinEnd(); i += histo->getBinWidth()) {
-                if( histo->getBinCountByBinStart(i) > 0 ) {
-                        output->output(1,"addrHistogrammer.cc","printHistogram"," [%" PRIu32 ", %" PRIu32 "]   %" PRIu32 "\n",
-                                i, (i + histo->getBinWidth()), histo->getBinCountByBinStart(i));
-                }
+// print the Histogram efficiently using string buffers
+void AddrHistogrammer::printHistogram(Statistics::Histogram<uint32_t, uint32_t> *histo, std::string RdWr) {
+    uint32_t binstart = histo->getBinStart();
+    uint32_t binend   = histo->getBinEnd();
+    uint32_t binwidth = histo->getBinWidth();
+    uint32_t nbins    = histo->getBinCount();
+    
+    // The output method in the Output class performs an fflush for every
+    //  single invocation when the target is a FILE.  Since we don't care
+    //  so much about the ordering of the prints between different processes
+    //  here, we want to minimize the number of calls to output.  We pack
+    //  all the print statements in a string buffer, and call output just once.
+    std::string prefix = "addrHistogrammer (" + RdWr +"):";
+    
+    // compute the size of the string buffer
+    int addrlen  = 20; // We are assuming the worst case address length.
+                       // 2^64 is twenty chars wide in ASCII
+    int countlen = 10; // Counts are assumed to be 32-bit integers.
+                       // It takes 10 ASCII characters to represent 2^32
+    int nspaces  =  5; // Spaces between the addresses and count
+    int nbrackets=  2; // Number of brackets
+    int linelen  = prefix.length() + 2*addrlen + countlen + nspaces + nbrackets + 1;
+                  // Length of the prefix + 2 addresses + 1 count + spaces + brackets + newline
+    int buflen   = linelen * nbins;
+    
+    std::string strbuf;
+    strbuf.reserve(buflen);
+    std::stringstream ss(strbuf); // Initialize the stringstream to be the size of the buffer
+                                  // Yes it's a wasteful copy, but far better than file flushes
+    ss.seekp(0);                  // Reset the output stream to the first char in the buffer
+    
+    //ss << "Histogram Min: %" << binstart << "\n";
+    //ss << "Histogram Max: %" << binend   << "\n";
+    //ss << "Histogram Bin: %" << binwidth << "\n";
+    
+    for(uint32_t i = binstart; i <= binend; i += binwidth) {
+        if( histo->getBinCountByBinStart(i) > 0 ) {
+            ss << prefix << " [" << i << ", " << (i + binwidth) << "]   "
+                << histo->getBinCountByBinStart(i) << "\n";
         }
+    }
+    
+    output->output(1,"addrHistogrammer.cc","printHistogram","%s",ss.str().c_str());
+        // Both str() and c_str() create new objects or arrays and involve data
+        //  copies, but definitely better than fflushes.
 }
 
 // Called during Cache::finish
 void AddrHistogrammer::printStats(Output& dbg) {
-    output = new Output();
-    output->init("addrHistogrammer: ", verbosity, (uint32_t) 0, Output::FILE);
-    
-    output->output(1,"addrHistogrammer.cc","printStats","Reads: Address - Address+binWidth    Count\n");
-    AddrHistogrammer::printHistogram(rdHisto);
-    output->output(1,"addrHistogrammer.cc","printStats","Writes: Address - Address+binWidth    Count\n");
-    AddrHistogrammer::printHistogram(wrHisto);
-    delete output;
+    //output->output(1,"addrHistogrammer.cc","printStats","Reads: Address - Address+binWidth    Count\n");
+    //output->output(1,"addrHistogrammer.cc","printStats","Writes: Address - Address+binWidth    Count\n");
+    AddrHistogrammer::printHistogram(rdHisto, "read");
+    AddrHistogrammer::printHistogram(wrHisto, "write");
 }

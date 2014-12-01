@@ -51,7 +51,7 @@ class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
     Statistics::Histogram<uint32_t, uint32_t>* rdHisto;
     Statistics::Histogram<uint32_t, uint32_t>* wrHisto;
     Output *output;
-    void printHistogram(Statistics::Histogram<uint32_t, uint32_t> *);
+    void printHistogram(Statistics::Histogram<uint32_t, uint32_t> *, std::string);
 };
 
 }
