@@ -20,7 +20,7 @@ public:
 		const uint64_t length,
 		RequestGenOperation opType) : physAddr(addr),
 			len(length), op(opType) {};
-	~RequestGeneratorRequest();
+	~RequestGeneratorRequest() { }
 	uint64_t getAddress() const { return physAddr; }
 	uint64_t getLength() const { return len; }
 	RequestGenOperation getOperation() const { return op; }
