@@ -55,7 +55,7 @@ static const ElementInfoParam cache_params[] = {
     {"cache_frequency",         "Cache clock frequency.  In the case of L1s, this is usually the same as the CPU's frequency."},
     {"cache_size",              "Cache size in bytes.  Eg.  4KB or 1MB"},
     {"associativity",           "Associativity of the cache. In seet associative mode, this is the number of ways."},
-    {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, or MRU. "},
+    {"replacement_policy",      "Replacement policy of the cache array.  Options:  LRU, LFU, Random, MRU, or NMRU. "},
     {"access_latency_cycles",   "Latency (in Cycles) to lookup data in the cache array."},
     {"L1",                      "Parameter specifies whether cache is an L1 --0, or 1--"},
     {"coherence_protocol",      "Coherence protocol.  Supported --MESI, MSI--"},

@@ -60,7 +60,9 @@ public:
     /** Returns number of sharers.
         Dummy TopCC always returns 0 */
     virtual uint numSharers(int lineIndex){ return 0; }
-    
+   
+    virtual uint ownerExists(int lineIndex){ return 0; }
+
     /** Handle Eviction. Return true if invalidates are sent and 'this' cache needs
        to wait for akcks Dummy TopCC always returns false */
     virtual void handleEviction(int lineIndex, string _origRqstr, State _state) {return;}
@@ -179,6 +181,8 @@ public:
     
     /** Returns number of sharers. */
     uint numSharers(int lineIndex){return ccLines_[lineIndex]->numSharers();}
+    
+    uint ownerExists(int lineIndex){return ccLines_[lineIndex]->ownerExists();}
     
     bool isCoherenceMiss(MemEvent* event, CacheLine* cacheLine);
 private:

@@ -35,9 +35,8 @@ class ReplacementMgr{
     public:
         typedef unsigned int uint;
         virtual void update(uint id) = 0;
-        virtual void startReplacement()= 0; //many policies don't need it
-        virtual void recordCandidate(uint id, bool sharersAware, State state) = 0;
         virtual uint getBestCandidate() = 0;
+        virtual uint findBestCandidate(uint setBegin, State * state, bool sharersAware) = 0;
         virtual void replaced(uint id) = 0;
         void setTopCC(TopCacheController* cc) {topCC_ = cc;}
         void setBottomCC(MESIBottomCC* cc) {bottomCC_ = cc;}
@@ -55,36 +54,38 @@ private:
     uint64_t    timestamp;
     int32_t     bestCandidate;
     uint64_t*   array;
-    uint        numLines_;
+    uint        numLines;
+    uint        numWays;
 
     struct Rank {
         uint64_t   timestamp;
         uint       sharers;
+        uint       owned;
         State      state;
 
         void reset() {
             state       = I;
             sharers     = 0;
             timestamp   = 0;
+            owned       = 0;
         }
 
         inline bool lessThan(const Rank& other) const {
-            if(state == I && other.state != I) return true;
+            if(state == I) return true;
             //if(!CacheArray::CacheLine::inTransition(state) && CacheArray::CacheLine::inTransition(other.state)) return true;
             else{
                 if (sharers == 0 && other.sharers > 0) return true;
                 else if (sharers > 0 && other.sharers == 0) return false;
+                else if (!owned && other.owned) return true;
+                else if (owned && !other.owned) return false;
                 else return timestamp < other.timestamp;
             }
         }
     };
 
-Rank bestRank;
-
 public:
-    LRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines)  {
-        array = (uint64_t*) calloc(numLines_, sizeof(uint64_t));
-        bestRank.reset();
+    LRUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays)  {
+        array = (uint64_t*) calloc(numLines, sizeof(uint64_t));
     }
 
     virtual ~LRUReplacementMgr() {
@@ -92,27 +93,30 @@ public:
     }
 
     void update(uint id) { array[id] = timestamp++; }
-
-    void recordCandidate(uint id, bool sharersAware, State state) {
-        Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, state};
-        if (bestCandidate == -1 || candRank.lessThan(bestRank)) {
-            bestRank = candRank;
-            bestCandidate = id;
+    
+    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+        uint setEnd = setBegin + numWays;
+        bestCandidate = setBegin;
+        Rank bestRank = {array[setBegin], (sharersAware)? topCC_->numSharers(setBegin) : 0, (sharersAware)? topCC_->ownerExists(setBegin) : 0, state[0]};
+        if (state[0] == I) return (uint)bestCandidate;
+        setBegin++;
+        int i = 1;
+        for (uint id = setBegin; id < setEnd; id++) {
+            Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, (sharersAware)? topCC_->ownerExists(id) : 0, state[i]};
+            if (candRank.lessThan(bestRank)) {
+                bestRank = candRank;
+                bestCandidate = id;
+                if (state[i] == I) return (uint)bestCandidate;
+            }
+            i++;
         }
-        
+        return (uint)bestCandidate;
     }
 
     uint getBestCandidate() { return (uint)bestCandidate;}
 
     void replaced(uint id) {
-        bestCandidate = -1;
-        bestRank.reset();
         array[id] = 0;
-    }
-
-    void startReplacement() {
-        bestCandidate = -1;
-        bestRank.reset();
     }
 
 };
@@ -130,24 +134,31 @@ class LFUReplacementMgr : public ReplacementMgr {
         };
         LFUInfo* array;
         uint numLines;
+        uint numWays;
 
         struct Rank {
             LFUInfo lfuInfo;
             uint sharers;
+            uint owned;
             State state;
 
             void reset() {
                 state = I;
                 sharers = 0;
+                owned = 0;
                 lfuInfo = (LFUInfo){0, 0};
             }
 
             inline bool lessThan(const Rank& other, const uint64_t curTs) const {
-                if(state == I && other.state != I) return true;
+                if(state == I) return true;
                 //else if (valid == other.valid) {
                     if (sharers == 0 && other.sharers > 0) {
                         return true;
                     } else if (sharers > 0 && other.sharers == 0) {
+                        return false;
+                    } else if (!owned && other.owned) {
+                        return true;
+                    } else if (owned && !other.owned) {
                         return false;
                     } else {
                         if (lfuInfo.acc == 0) return true;
@@ -162,13 +173,10 @@ class LFUReplacementMgr : public ReplacementMgr {
            
         };
 
-        Rank bestRank;
-
     public:
     
-        LFUReplacementMgr(Output* _dbg, uint _numLines) : timestamp(1), bestCandidate(-1), numLines(_numLines) {
+        LFUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays) {
             array = (LFUInfo*)calloc(numLines, sizeof(LFUInfo));
-            bestRank.reset();
         }
 
         ~LFUReplacementMgr() {
@@ -180,29 +188,32 @@ class LFUReplacementMgr : public ReplacementMgr {
             array[id].acc++;
             timestamp += 1000;
         }
-
-        void recordCandidate(uint id, bool sharersAware, State state) {
-            Rank candRank = {array[id], 0, state};
-
-            if (bestCandidate == -1 || candRank.lessThan(bestRank, timestamp)) {
-                bestRank = candRank;
-                bestCandidate = id;
+        uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+            uint setEnd = setBegin + numWays;
+            bestCandidate = setBegin;
+            Rank bestRank = {array[setBegin], (sharersAware)? topCC_->numSharers(setBegin) : 0, (sharersAware)? topCC_->ownerExists(setBegin) : 0, state[0] };
+            if (state[0] == I) return (uint)bestCandidate; 
+        
+            setBegin++;
+            int i = 1;
+            for (uint id = setBegin; id < setEnd; id++) {
+                Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, (sharersAware)? topCC_->ownerExists(id) : 0, state[i]};
+                if (candRank.lessThan(bestRank, timestamp)) {
+                    bestRank = candRank;
+                    bestCandidate = id;
+                    if (state[i] == I) return (uint)bestCandidate;
+                }
+                i++;
             }
+            return (uint)bestCandidate;
         }
 
         uint getBestCandidate() { return (uint)bestCandidate; }
 
         void replaced(uint id) {
-            bestCandidate = -1;
-            bestRank.reset();
             array[id].acc = 0;
         }
     
-        void startReplacement(){
-            bestCandidate = -1;
-            bestRank.reset();
-        }
-     
 };
 
 
@@ -215,61 +226,68 @@ private:
     uint64_t    timestamp;
     int32_t     bestCandidate;
     uint64_t*   array;
-    uint        numLines_;
+    uint        numLines;
+    uint        numWays;
 
     struct Rank {
         uint64_t  timestamp;
         uint      sharers;
+        uint      owned;
         State     state;
 
         void reset() {
             state       = I;
             sharers     = 0;
+            owned       = 0;
             timestamp   = 0;
         }
 
         inline bool biggerThan(const Rank& other) const {
-            if(state == I && other.state != I) return true;
+            if(state == I) return true;
             else{
                 if (sharers == 0 && other.sharers > 0) return true;
                 else if (sharers > 0 && other.sharers == 0) return false;
+                else if (owned && !other.owned) return false;
+                else if (!owned && other.owned) return true;
                 else return timestamp > other.timestamp;
             }
         }
     };
 
-Rank bestRank;
-
 public:
-    MRUReplacementMgr(Output* _dbg, uint _numLines, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines_(_numLines)  {
-        array = (uint64_t*) calloc(numLines_, sizeof(uint64_t));
-        bestRank.reset();
+    MRUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays)  {
+        array = (uint64_t*) calloc(numLines, sizeof(uint64_t));
     }
 
     virtual ~MRUReplacementMgr() { free(array); }
 
     void update(uint id) { array[id] = timestamp++; }
 
-    void recordCandidate(uint id, bool sharersAware, State state) {
-        Rank candRank = {array[id], (sharersAware) ? topCC_->numSharers(id) : 0, state};
-        if (bestCandidate == -1 || candRank.biggerThan(bestRank)) {
-            bestRank = candRank;
-            bestCandidate = id;
-        }
+    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+        uint setEnd = setBegin + numWays;
+        bestCandidate = setBegin;
+        Rank bestRank = {array[setBegin], (sharersAware)? topCC_->numSharers(setBegin) : 0, (sharersAware)? topCC_->ownerExists(setBegin) : 0, state[0] };
+        if (state[0] == I) return (uint)bestCandidate; 
         
+        setBegin++;
+        int i = 1;
+        for (uint id = setBegin; id < setEnd; id++) {
+            Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, (sharersAware)? topCC_->ownerExists(id) : 0, state[i]};
+            if (candRank.biggerThan(bestRank)) {
+                bestRank = candRank;
+                bestCandidate = id;
+                if (state[i] == I) return (uint)bestCandidate;
+            }
+            i++;
+        }
+        return (uint)bestCandidate;
     }
+
 
     uint getBestCandidate() { return (uint)bestCandidate;}
 
     void replaced(uint id) {
-        bestCandidate = -1;
-        bestRank.reset();
         array[id] = 0;
-    }
-
-    void startReplacement() {
-        bestCandidate = -1;
-        bestRank.reset();
     }
 
 };
@@ -281,29 +299,69 @@ public:
  * ------------------------------------------------------------------------------------------*/
 class RandomReplacementMgr : public ReplacementMgr {
  private:
-    vector<uint64_t> candidates_;
-    unsigned int numWays_;
+    int32_t bestCandidate;
+    uint numWays;
     SST::RNG::MarsagliaRNG randomGenerator_;
 
 public:
-    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays_(_numWays), randomGenerator_(1, 1) {
-        candidates_.clear();
+    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays(_numWays), randomGenerator_(1, 1) {
     }
     virtual ~RandomReplacementMgr() {
         
     }
 
     void update(uint id){}
-    void recordCandidate(uint id, bool sharersAware, State state) { candidates_.push_back(id);}
-
-    uint getBestCandidate() {
-        int bestCandidate = randomGenerator_.generateNextUInt32() % numWays_;
-        return (uint)candidates_[bestCandidate];
+        
+    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+        bestCandidate = (randomGenerator_.generateNextUInt32() % numWays) + setBegin;
+        return (uint)bestCandidate;
     }
 
-    void replaced(uint id) { candidates_.clear(); }
-    void startReplacement() { candidates_.clear(); }
+    uint getBestCandidate() {
+        return (uint)bestCandidate;
+    }
+
+    void replaced(uint id) { }
 };
+
+/* ------------------------------------------------------------------------------------------
+ *  Not most recently used (nmru)
+ * ------------------------------------------------------------------------------------------*/
+
+class NMRUReplacementMgr : public ReplacementMgr {
+private:
+    int32_t     bestCandidate;
+    int32_t *   array;
+    uint        numLines;
+    uint        numWays;
+    SST::RNG::MarsagliaRNG randomGenerator;
+
+public:
+    NMRUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays) : bestCandidate(-1), numLines(_numLines), numWays(_numWays), randomGenerator(1,1)  {
+        array = (int32_t*) calloc(numLines/numWays, sizeof(int32_t));
+    }
+
+    virtual ~NMRUReplacementMgr() { free(array); }
+
+    void update(uint id) { 
+        array[id/numWays] = id % numWays; 
+    }
+
+    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+        int index = randomGenerator.generateNextUInt32() % (numWays-1);
+        if (index < array[setBegin/numWays]) bestCandidate = setBegin + index;
+        else bestCandidate = setBegin + index + 1;
+
+        return (uint)bestCandidate;
+    }
+
+
+    uint getBestCandidate() { return (uint)bestCandidate;}
+
+    void replaced(uint id) {}
+
+};
+
 
 }}
 

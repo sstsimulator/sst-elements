@@ -25,7 +25,9 @@ namespace SST { namespace MemHierarchy {
 SetAssociativeArray::SetAssociativeArray(Output* _dbg, unsigned int _cacheSize, unsigned int _lineSize, unsigned int _associativity,
                      ReplacementMgr* _rm, HashFunction* _hf, bool _sharersAware) :
                      CacheArray(_dbg, _cacheSize, _cacheSize/_lineSize,
-                     _associativity, _lineSize, _rm, _hf, _sharersAware) { }
+                     _associativity, _lineSize, _rm, _hf, _sharersAware) { 
+                        setStates = new State[_associativity];
+                     }
 
 
 int SetAssociativeArray::find(const Addr baseAddr, bool update){
@@ -45,17 +47,13 @@ int SetAssociativeArray::find(const Addr baseAddr, bool update){
 
 unsigned int SetAssociativeArray::preReplace(const Addr baseAddr){
     Addr lineAddr   = toLineAddr(baseAddr);
-    replacementMgr_->startReplacement();
     int set         = hash_->hash(0, lineAddr) & setMask_;
     int setBegin    = set * associativity_;
-    int setEnd      = setBegin + associativity_;
-
-    for (int id = setBegin; id < setEnd; id++)
-        replacementMgr_->recordCandidate(id , sharersAware_? true : false, lines_[id]->getState());
     
-    unsigned int candidate_id = replacementMgr_->getBestCandidate();
-    replacementMgr_->update(candidate_id);
-    return candidate_id;
+    for (unsigned int id = 0; id < associativity_; id++) {
+        setStates[id] = lines_[id+setBegin]->getState();
+    }
+    return replacementMgr_->findBestCandidate(setBegin, setStates, sharersAware_? true: false);
 }
 
 void SetAssociativeArray::replace(const Addr baseAddr, unsigned int candidate_id){

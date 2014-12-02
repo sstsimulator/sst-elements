@@ -212,7 +212,7 @@ public:
     int find(Addr baseAddr, bool updateReplacement);
     unsigned int preReplace(Addr baseAddr);
     void replace(Addr baseAddr, unsigned int candidate_id);
-
+    State * setStates;
 };
 
 }}

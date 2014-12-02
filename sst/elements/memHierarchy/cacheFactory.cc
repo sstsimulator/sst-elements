@@ -104,10 +104,11 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
         _abort(Cache, "Not supported protocol\n");
 
     ReplacementMgr* replManager;
-    if (boost::iequals(replacement, "lru"))         replManager = new LRUReplacementMgr(dbg, numLines, true);
-    else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines);
+    if (boost::iequals(replacement, "lru"))         replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+    else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
     else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
-    else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, true);
+    else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
+    else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
     else _abort(Cache, "Replacement policy was not entered correctly or is not supported.\n");
     
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
