@@ -85,7 +85,9 @@ class DirectoryController : public Component {
     uint64_t    PutMReqReceived;
     uint64_t    PutEReqReceived;
     uint64_t    PutSReqReceived;
-    
+    uint64_t    NACKReceived;
+    uint64_t    NACKSent;
+
     uint64_t    mshrHits;
 
     /* Directory structures */
@@ -98,6 +100,7 @@ class DirectoryController : public Component {
     std::list<MemEvent*>                    workQueue;
     std::map<MemEvent::id_type, Addr>       memReqs;
     std::map<MemEvent::id_type, Addr>       dirEntryMiss;
+    std::map<MemEvent::id_type, pair<Addr,Addr> > noncacheMemReqs;
 
     Output::output_location_t               printStatsLoc;
     
@@ -190,6 +193,15 @@ class DirectoryController : public Component {
 
     /** Print directory controller status */
     const char* printDirectoryEntryStatus(Addr addr);
+
+    /** Profile received requests */
+    inline void profileRequestRecv(MemEvent * event, DirEntry * entry);
+    /** Profile sent requests */
+    inline void profileRequestSent(MemEvent * event);
+    /** Profile received responses */
+    inline void profileResponseRecv(MemEvent * event);
+    /** Profile sent responses */
+    inline void profileResponseSent(MemEvent * event);
 
     /** */
     typedef void(DirectoryController::*ProcessFunc)(DirEntry *entry, MemEvent *new_ev);

@@ -93,21 +93,25 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
     lookupBaseAddr      = cacheLineSize;  /* Use to offset into main memory from where DirEntries are stored */
+    
+    // Profiling counters
     numReqsProcessed    = 0;
     totalReqProcessTime = 0;
-    numCacheHits        = 0;
+    numCacheHits        = 0;    //
     dataReads           = 0;
     dataWrites          = 0;
     dirEntryReads       = 0;
     dirEntryWrites      = 0;
     
-    GetXReqReceived     = 0;
-    GetSExReqReceived   = 0;
-    GetSReqReceived     = 0;
+    GetXReqReceived     = 0;    //
+    GetSExReqReceived   = 0;    //
+    GetSReqReceived     = 0;    //
     
-    PutMReqReceived     = 0;
-    PutEReqReceived     = 0;
-    PutSReqReceived     = 0;
+    PutMReqReceived     = 0;    //
+    PutEReqReceived     = 0;    //
+    PutSReqReceived     = 0;    //
+    NACKReceived        = 0;
+    NACKSent            = 0;
 
 }
 
@@ -131,20 +135,96 @@ DirectoryController::~DirectoryController(){
 void DirectoryController::handlePacket(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
+    
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%"PRIx64", Addr = 0x%"PRIx64"\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
+        profileRequestRecv(ev,NULL);
         Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
         Addr localBaseAddr   = convertAddressToLocalAddress(ev->getBaseAddr());
+        noncacheMemReqs[ev->getID()] = make_pair<Addr,Addr>(ev->getBaseAddr(),ev->getAddr());
         ev->setBaseAddr(localBaseAddr);
         ev->setAddr(localAddr);
+        profileRequestSent(ev);
         memLink->send(ev);
-
     } else {
         workQueue.push_back(ev);
     }
 }
 
+/**
+ * Profile requests sent to directory controller
+ */
+inline void DirectoryController::profileRequestRecv(MemEvent * event, DirEntry * entry) {
+    Command cmd = event->getCmd();
+    switch (cmd) {
+    case GetX:
+        GetXReqReceived++;
+        break;
+    case GetSEx:
+        GetSExReqReceived++;
+        break;
+    case GetS:
+        GetSReqReceived++;
+        break;
+    case PutM:
+        PutMReqReceived++;
+        break;
+    case PutE:
+        PutEReqReceived++;
+        break;
+    case PutS:
+        PutSReqReceived++;
+        break;
+    case NACK:
+        NACKReceived++;
+        break;
+    default:
+        _abort(DirectoryController, "Profiler does not recognize command: %s\n", CommandString[cmd]);
+        break;
 
+    }
+    if (!entry || entry->inController) {
+        ++numCacheHits;
+    }
+}
+/** 
+ * Profile requests sent from directory controller to memory
+ */
+inline void DirectoryController::profileRequestSent(MemEvent * event) {
+    Command cmd = event->getCmd();
+    switch(cmd) {
+    case PutM:
+        if (event->getAddr() == 0) dirEntryWrites++;
+        else dataWrites++;
+        break;
+    case GetX:
+        if (event->queryFlag(MemEvent::F_NONCACHEABLE)) {
+            dataWrites++;
+            break;
+        }
+    case GetSEx:
+    case GetS:
+        if (event->getAddr() == 0) dirEntryReads++;
+        else dataReads++;
+        break;
+    default:
+        _abort(DirectoryController, "Profiler does not recognize command: %s\n", CommandString[cmd]);
+        break;
+        
+    }
+}
+
+inline void DirectoryController::profileResponseSent(MemEvent * event) {
+    Command cmd = event->getCmd();
+    switch(cmd) {
+    case NACK:
+        NACKSent++;
+        break;
+    default:
+        _abort(DirectoryController, "Profiler does not recognize command: %s\n", CommandString[cmd]);
+        break;
+    }
+}
 
 bool DirectoryController::clock(SST::Cycle_t cycle){
     network->clock();
@@ -168,6 +248,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     
     if(NACK == cmd){
         MemEvent* origEvent = ev->getNACKedEvent();
+        profileRequestRecv(ev,getDirEntry(origEvent->getBaseAddr()));
         processIncomingNACK(origEvent,ev);
         delete ev;
         return true;
@@ -201,10 +282,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
 
 
     /* New Request */
+    profileRequestRecv(ev,entry);     // profile request
     switch(cmd){
         case PutS:
             assert(entry);
-            PutSReqReceived++;
             requesting_node = node_name_to_id(ev->getSrc());
             entry->removeSharer(requesting_node);
             if(entry->countRefs() == 0) resetEntry(entry);
@@ -215,13 +296,9 @@ bool DirectoryController::processPacket(MemEvent *ev){
         case PutM:
         case PutE:
             assert(entry);
-
-            if(cmd == PutM)         PutMReqReceived++;
-            else if(cmd == PutE)    PutEReqReceived++;
             
             if(entry->inController){
                 entry->activeReq = ev;
-                ++numCacheHits;
                 handlePutM(entry, ev);
             } else {
                 if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
@@ -243,9 +320,6 @@ bool DirectoryController::processPacket(MemEvent *ev){
         case GetX:
         case GetSEx:
         case GetS:
-            if(cmd == GetS)         GetSReqReceived++;
-            else if(cmd == GetX)    GetXReqReceived++;
-            else if(cmd == GetSEx)  GetSExReqReceived++;
            
             /* Create directory entry if this is a new block */
             if(!entry){
@@ -267,7 +341,6 @@ bool DirectoryController::processPacket(MemEvent *ev){
             entry->activeReq = ev; // should also be the top request in the mshrs for this addr
 
             if(entry->inController){
-                ++numCacheHits;
                 handleDataRequest(entry, ev);
             }
             else{
@@ -292,12 +365,16 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
-        Addr globalAddr       = convertAddressFromLocalAddress(ev->getAddr());
-        Addr globalBaseAddr   = convertAddressFromLocalAddress(ev->getBaseAddr());
-        ev->setBaseAddr(globalBaseAddr);
-        ev->setAddr(globalAddr);
-        network->send(ev);
-        return;
+        if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
+            Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;
+            Addr globalAddr = noncacheMemReqs[ev->getID()].second;
+            ev->setBaseAddr(globalBaseAddr);
+            ev->setAddr(globalAddr);
+            noncacheMemReqs.erase(ev->getResponseToID());
+            network->send(ev);
+            return;
+        }
+        _abort(DirectoryController, "Received unexpected noncacheable message from Memory!\n");
     }
 
 
@@ -327,6 +404,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 
 void DirectoryController::mshrNACKRequest(MemEvent* ev) {
     MemEvent * nackEv = ev->makeNACKResponse(this,ev);
+    profileResponseSent(nackEv);
     sendResponse(nackEv);
 }
 
@@ -617,8 +695,8 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry){
     entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn     = "memory";
     entry->lastRequest   = me->getID();
+    profileRequestSent(me);
     memLink->send(me);
-    ++dirEntryReads;
     dbg.debug(_L10_, "Requesting Entry from memory for 0x%"PRIx64"(%"PRIu64", %d); next cmd: %s\n", entry->baseAddr, me->getID().first, me->getID().second, CommandString[entry->nextCommand]);
 }
 
@@ -632,8 +710,8 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
     entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn     = "memory";
     entry->lastRequest   = ev->getID();
+    profileRequestSent(ev);
     memLink->send(ev);
-    ++dataReads;
     dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%"PRIx64", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
 }
 
@@ -649,8 +727,8 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
         }
 
         /* Find out if we're no longer cached, and just remove */
-        if((!entry->activeReq) &&(0 == entry->countRefs())){
-            dbg.debug(_L10_, "Entry for 0x%"PRIx64" has no referenes - purging\n", entry->baseAddr);
+        if((!entry->activeReq) && (0 == entry->countRefs())){
+            dbg.debug(_L10_, "Entry for 0x%"PRIx64" has no references - purging\n", entry->baseAddr);
             directory.erase(entry->baseAddr);
             delete entry;
             return;
@@ -686,12 +764,11 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry){
 
 
 void DirectoryController::sendEntryToMemory(DirEntry *entry){
-    Addr entryAddr = 0; /* Offset into our buffer? This won't work for a mem that doesn't have addr 0 in its range */
-    MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, PutM, cacheLineSize); //PutM?
+    Addr entryAddr = 0; // Always use local address 0 for directory entries
+    MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, PutM, cacheLineSize);
     me->setSize(entrySize);
-    //memReqs[me->getID()] = entry->baseAddr; // ...Does this ever get removed????
+    profileRequestSent(me);
     memLink->send(me);
-    ++dirEntryWrites;
 }
 
 
@@ -703,10 +780,9 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     assert(data_event->getPayload().size() == cacheLineSize);
     ev->setSize(data_event->getPayload().size());
     ev->setPayload(data_event->getPayload());
-
+    profileRequestSent(ev);
     memLink->send(ev);
-    ++dataWrites;
-
+    
     dbg.debug(_L10_, "Writing back data. Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     return ev->getID();
 }
@@ -844,16 +920,19 @@ void DirectoryController::finish(void){
     out.output("--- Name: %s\n", getName().c_str());
     out.output("--------------------------------------------------------------------\n");
     out.output("- Total requests received:  %"PRIu64"\n", numReqsProcessed);
-    out.output("- GetS recieved:  %"PRIu64"\n", GetSReqReceived);
-    out.output("- GetX received:  %"PRIu64"\n", GetXReqReceived);
-    out.output("- GetSEx recieved:  %"PRIu64"\n", GetSExReqReceived);
-    out.output("- PutM received:  %"PRIu64"\n", PutMReqReceived);
-    out.output("- PutE received:  %"PRIu64"\n", PutEReqReceived);
-    out.output("- PutS received:  %"PRIu64"\n", PutSReqReceived);
-    out.output("- Entry Data Reads:  %"PRIu64"\n", dirEntryReads);
-    out.output("- Entry Data Writes:  %"PRIu64"\n", dirEntryWrites);
-    out.output("- Avg Req Time:  %"PRIu64" ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
-    out.output("- Entry Cache Hits:  %"PRIu64"\n", numCacheHits);
+    out.output("- GetS recieved:            %"PRIu64"\n", GetSReqReceived);
+    out.output("- GetX received:            %"PRIu64"\n", GetXReqReceived);
+    out.output("- GetSEx recieved:          %"PRIu64"\n", GetSExReqReceived);
+    out.output("- PutM received:            %"PRIu64"\n", PutMReqReceived);
+    out.output("- PutE received:            %"PRIu64"\n", PutEReqReceived);
+    out.output("- PutS received:            %"PRIu64"\n", PutSReqReceived);
+    out.output("- NACK received:            %"PRIu64"\n", NACKReceived);
+    out.output("- Data reads issued:        %"PRIu64"\n", dataReads);
+    out.output("- Data writes issued:       %"PRIu64"\n", dataWrites);
+    out.output("- Dir entry reads:          %"PRIu64"\n", dirEntryReads);
+    out.output("- Dir entry writes:         %"PRIu64"\n", dirEntryWrites);
+    out.output("- Avg Req Time:             %"PRIu64" ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
+    out.output("- Entry Cache Hits:         %"PRIu64"\n", numCacheHits);
 }
 
 
