@@ -1,7 +1,10 @@
 
 #include <sst_config.h>
-#include "requestGenModule.h"
+
+#include "reqGenModule.h"
 #include "requestGenCPU.h"
+
+using namespace SST::Miranda;
 
 RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 	const int verbose = (int) params.find_integer("verbose", 0);
@@ -65,7 +68,7 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	out->verbose(CALL_INFO, 2, 0, "Recv event for processing from interface\n");
 
 	// Decrement pending requests, we have recv'd a response
-	outstandingRequests--;
+	requestsPending--;
 }
 
 void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
@@ -77,15 +80,15 @@ void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
 	out->verbose(CALL_INFO, 4, 0, "Issue request: address=%" PRIu64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
 		reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
 
-	if(lineOffset + entryLength > cacheLine) {
+	if(lineOffset + reqLength > cacheLine) {
 		// Request is for a split operation (i.e. split over cache lines)
-		const uint64_t lowerlength = cacheLineSize - lineOffset;
-		const uint64_t upperLength = entryLength - lowerLength;
+		const uint64_t lowerLength = cacheLine - lineOffset;
+		const uint64_t upperLength = reqLength - lowerLength;
 
 		// Ensure that lengths are calculated correctly.
 		assert(lowerLength + upperLength == reqLength);
 
-		const uint64_t lowerAdress = entryAddress;
+		const uint64_t lowerAddress = reqAddress;
 		const uint64_t upperAddress = (lowerAddress - lowerAddress % cacheLine) +
 						cacheLine;
 
@@ -104,8 +107,8 @@ void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
 			upperAddress, upperLength);
 
 		out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
-		cache_link->sendRequest(reqLower);
-		cache_link->sendRequest(reqUpper);
+		memory->sendRequest(reqLower);
+		memory->sendRequest(reqUpper);
 		out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
 
 		requestsPending += 2;
@@ -115,7 +118,7 @@ void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			reqAddress, reqLength);
 
-		cache_link->sendRequest(request);
+		memory->sendRequest(request);
 
 		requestsPending++;
 	}
@@ -142,9 +145,9 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	// Process the request which may require splitting into multiple
 	// requests (if breaks over a cache line)
 	out->verbose(CALL_INFO, 2, 0, "Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
-		requestsPending, maxOutstanding);
+		requestsPending, requestsPending);
 
-	if(requestsPending < maxOutstanding) {
+	if(requestsPending < maxRequestsPending) {
 		out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");
 		issueRequest(nextReq);
 	} else {

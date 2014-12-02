@@ -16,10 +16,9 @@
 #include <sst/core/interfaces/simpleMem.h>
 
 using namespace SST::Interfaces;
-using namespace SST::Statistics;
 
 namespace SST {
-namespace MemHierarchy {
+namespace Miranda {
 
 class RequestGenCPU : public SST::Component {
 public:
@@ -35,7 +34,7 @@ private:
 	~RequestGenCPU();
 
 	void handleEvent( Interfaces::SimpleMem::Request *ev );
-	bool clockTic( SST::Cycle_t );
+	bool clockTick( SST::Cycle_t );
 	void issueRequest(const RequestGeneratorRequest* req);
 
     	Output* out;

@@ -1,8 +1,13 @@
 
 #include <sst_config.h>
+#include <sst/core/params.h>
 #include <sst/elements/miranda/generators/singlestream.h>
 
-SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params ) {
+using namespace SST::Miranda;
+
+SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params ) :
+	RequestGenerator(owner, params) {
+
 	issueCount = (uint64_t) params.find_integer("count", 1000);
 	reqLength  = (uint64_t) params.find_integer("length", 8);
 	nextAddr   = (uint64_t) params.find_integer("startat", 0);
