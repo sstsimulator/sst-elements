@@ -13,7 +13,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	const int verbose = (int) params.find_integer("verbose", 0);
 	out = new Output("RequestGenCPU[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
 
-	maxRequestsPending = (uint32_t) params.find_integer("maxmemoryreqs", 16);
+	maxRequestsPending = (uint32_t) params.find_integer("maxmemreqpending", 16);
 	requestsPending = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum requests to be memory to be outstanding.\n",

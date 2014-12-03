@@ -29,8 +29,12 @@ static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
 }
 
 static const ElementInfoParam singleStreamGen_params[] = {
-    { "cache_line_size",  "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64" },
     { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "count",            "Count for number of items being requested", "1024" },
+    { "length",           "Length of requests", "8" },
+    { "max_address",      "Maximum address allowed for generation", "16384" },
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "startat",          "Sets the start address for generation", "0" },
     { NULL, NULL, NULL }
 };
 
@@ -48,12 +52,14 @@ static const ElementInfoModule modules[] = {
 };
 
 static const ElementInfoParam basecpu_params[] = {
-	{ "verbose", 		"Sets the verbosity of output produced by the CPU", 	"0" },
-        { "printStats",       "Prints statistics output", "0" },
-        { "generator",        "The generator to be loaded for address creation", "miranda.SingleStreamGenerator" },
-        { "clock",            "Clock for the base CPU", "2GHz" },
-        { "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
-	{ NULL,	NULL, NULL }
+     { "cache_line_size",  "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64" },
+     { "maxmemreqpending", "Set the maximum number of requests allowed to be pending", "16" },
+     { "verbose", 		"Sets the verbosity of output produced by the CPU", 	"0" },
+     { "printStats",       "Prints statistics output", "0" },
+     { "generator",        "The generator to be loaded for address creation", "miranda.SingleStreamGenerator" },
+     { "clock",            "Clock for the base CPU", "2GHz" },
+     { "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
+     { NULL, NULL, NULL }
 };
 
 static const ElementInfoPort basecpu_ports[] = {
