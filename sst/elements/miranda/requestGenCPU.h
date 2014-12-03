@@ -15,6 +15,8 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 
+#include "reqGenModule.h"
+
 using namespace SST::Interfaces;
 
 namespace SST {

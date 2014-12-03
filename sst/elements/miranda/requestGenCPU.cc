@@ -33,7 +33,22 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 
 	Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
 	memory = dynamic_cast<SimpleMem*>( loadModuleWithComponent(interfaceName.c_str(), this, interfaceParams) );
-	memory->initialize("cache_link", new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+
+	if(NULL == memory) {
+		out->fatal(CALL_INFO, -1, "Error loading memory interface module.\n");
+	} else {
+		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
+	}
+
+	out->verbose(CALL_INFO, 1, 0, "Initializing memory interface...\n");
+
+	bool init_success = memory->initialize("cache_link", new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+
+	if(init_success) {
+		out->fatal(CALL_INFO, -1, "Failed to initialize interface: %s\n", interfaceName.c_str());
+	} else {
+		out->verbose(CALL_INFO, 1, 0, "Loaded memory initialize routine returned successfully.\n");
+	}
 
 	if(NULL == memory) {
 		out->fatal(CALL_INFO, -1, "Failed to load interface: %s\n", interfaceName.c_str());

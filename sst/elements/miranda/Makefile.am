@@ -7,6 +7,7 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmiranda.la
 
 libmiranda_la_SOURCES = \
+	miranda.cc \
 	reqGenModule.h \
 	requestGenCPU.cc \
 	requestGenCPU.h	\
