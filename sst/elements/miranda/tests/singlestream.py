@@ -8,7 +8,8 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 4,
-	"generator" : "miranda.SingleStreamGenerator"
+	"generator" : "miranda.SingleStreamGenerator",
+	"generatorParams.verbose" : 4
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")

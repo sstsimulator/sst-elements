@@ -7,7 +7,9 @@
 
 using namespace SST::Miranda;
 
-RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
+RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
+	Component(id) {
+
 	const int verbose = (int) params.find_integer("verbose", 0);
 	out = new Output("RequestGenCPU[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
 
@@ -16,18 +18,6 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum requests to be memory to be outstanding.\n",
 		maxRequestsPending);
-
-	std::string reqGenModName = params.find_string("generator", "");
-
-	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
-	Params genParams = params.find_prefix_params("generatorParams.");
-	reqGen = dynamic_cast<RequestGenerator*>( loadModuleWithComponent(reqGenModName, this, genParams) );
-
-	if(NULL == reqGen) {
-		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
-	} else {
-		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
-	}
 
 	std::string interfaceName = params.find_string("memoryinterface", "memHierarchy.memInterface");
 	out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
@@ -47,15 +37,29 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 	bool init_success = cache_link->initialize("cache_link", new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
 
 	if(init_success) {
-		out->fatal(CALL_INFO, -1, "Failed to initialize interface: %s\n", interfaceName.c_str());
-	} else {
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory initialize routine returned successfully.\n");
+	} else {
+		out->fatal(CALL_INFO, -1, "Failed to initialize interface: %s\n", interfaceName.c_str());
 	}
 
 	if(NULL == cache_link) {
 		out->fatal(CALL_INFO, -1, "Failed to load interface: %s\n", interfaceName.c_str());
 	} else {
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
+	}
+
+	std::string reqGenModName = params.find_string("generator", "");
+	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
+	Params genParams = params.find_prefix_params("generatorParams.");
+	reqGen = dynamic_cast<RequestGenerator*>( loadModuleWithComponent(reqGenModName, this, genParams) );
+
+	// Set first request to NULL to force a regenerate
+	nextReq = new RequestGeneratorRequest();
+
+	if(NULL == reqGen) {
+		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
+	} else {
+		out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	}
 
 	std::string cpuClock = params.find_string("clock", "2GHz");
@@ -88,7 +92,7 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	requestsPending--;
 }
 
-void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
+void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 	const uint64_t reqAddress = req->getAddress();
 	const uint64_t reqLength  = req->getLength();
 	bool isRead               = req->isRead();
@@ -140,29 +144,29 @@ void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
 		requestsPending++;
 	}
 
-	// Delete the request
-	delete req;
+	// Mark request as issued
+	req->markIssued();
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	if(reqGen->isFinished()) {
-		// Deregister here
-		primaryComponentOKToEndSim();
-		return true;
+		if(0 == requestsPending) {
+			// Deregister here
+			primaryComponentOKToEndSim();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
-	if(NULL == nextReq) {
-		nextReq = reqGen->nextRequest();
-
-		if(NULL == nextReq) {
-			out->fatal(CALL_INFO, -1, "Request generator returned a NULL when getting the next request\n");
-		}
+	if(nextReq->isIssued()) {
+		reqGen->nextRequest(nextReq);
 	}
 
 	// Process the request which may require splitting into multiple
 	// requests (if breaks over a cache line)
 	out->verbose(CALL_INFO, 2, 0, "Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
-		requestsPending, requestsPending);
+		requestsPending, maxRequestsPending);
 
 	if(requestsPending < maxRequestsPending) {
 		out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");

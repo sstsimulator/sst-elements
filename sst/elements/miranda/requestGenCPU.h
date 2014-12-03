@@ -37,7 +37,7 @@ private:
 
 	void handleEvent( SimpleMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
-	void issueRequest(const RequestGeneratorRequest* req);
+	void issueRequest(RequestGeneratorRequest* req);
 
     	Output* out;
 

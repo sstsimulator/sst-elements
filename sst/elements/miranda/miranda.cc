@@ -25,6 +25,7 @@ static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
 }
 
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
+	printf("ALLOCATING A MIRANDA CPU...\n");
 	return new RequestGenCPU(id, params);
 }
 
