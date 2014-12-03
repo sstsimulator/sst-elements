@@ -14,7 +14,7 @@
 #include <sst/core/serialization.h>
 #include <sst/core/element.h>
 
-#include "requestGenCPU.h"
+#include "mirandaCPU.h"
 #include "generators/singlestream.h"
 
 using namespace SST;

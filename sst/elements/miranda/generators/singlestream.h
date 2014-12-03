@@ -2,7 +2,7 @@
 #ifndef _H_SST_MIRANDA_SINGLE_STREAM_GEN
 #define _H_SST_MIRANDA_SINGLE_STREAM_GEN
 
-#include <sst/elements/miranda/reqGenModule.h>
+#include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
 
 namespace SST {

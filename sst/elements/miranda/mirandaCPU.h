@@ -15,7 +15,7 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include "reqGenModule.h"
+#include "mirandaGenerator.h"
 
 using namespace SST::Interfaces;
 

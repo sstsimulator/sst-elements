@@ -2,8 +2,8 @@
 #include <sst_config.h>
 #include <sst/core/simulation.h>
 
-#include "reqGenModule.h"
-#include "requestGenCPU.h"
+#include "mirandaGenerator.h"
+#include "mirandaCPU.h"
 
 using namespace SST::Miranda;
 
