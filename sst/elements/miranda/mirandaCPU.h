@@ -50,6 +50,11 @@ private:
 	uint32_t requestsPending;
 	uint64_t cacheLine;
 
+	uint64_t requestsIssued;
+	uint64_t splitRequestsIssued;
+
+	bool printStats;
+
 };
 
 }

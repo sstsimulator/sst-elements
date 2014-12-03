@@ -48,6 +48,8 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
 	}
 
+	printStats = (params.find_integer("printStats", 0) == 0 ) ? true : false;
+
 	std::string reqGenModName = params.find_string("generator", "");
 	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
 	Params genParams = params.find_prefix_params("generatorParams.");
@@ -69,6 +71,9 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	registerAsPrimaryComponent();
 	primaryComponentDoNotEndSim();
 
+	requestsIssued = 0;
+	splitRequestsIssued = 0;
+
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
 
@@ -78,7 +83,15 @@ RequestGenCPU::~RequestGenCPU() {
 }
 
 void RequestGenCPU::finish() {
+	if(printStats) return;
 
+	out->output("------------------------------------------------------------------------\n");
+	out->output("Miranda CPU Statistics:\n");
+	out->output("\n");
+	out->output("Requests issued:                       %" PRIu64 "\n", requestsIssued);
+	out->output("Split Requests issued:                 %" PRIu64 "\n", splitRequestsIssued);
+	out->output("------------------------------------------------------------------------\n");
+	out->output("\n");
 }
 
 void RequestGenCPU::init(unsigned int phase) {
@@ -133,6 +146,9 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 		out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
 
 		requestsPending += 2;
+
+		// Keep track of split requests
+		splitRequestsIssued++;
 	} else {
 		// This is not a split laod, i.e. issue in a single transaction
 		SimpleMem::Request* request = new SimpleMem::Request(
@@ -146,6 +162,9 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 
 	// Mark request as issued
 	req->markIssued();
+
+	// Increment requests issued
+	requestsIssued++;
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
