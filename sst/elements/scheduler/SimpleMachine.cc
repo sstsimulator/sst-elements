@@ -24,7 +24,7 @@ using namespace SST::Scheduler;
 
 //takes number of nodes
 SimpleMachine::SimpleMachine(int numNodes, bool insimulationmachine, int numCoresPerNode, double** D_matrix)
-                             : Machine(numNodes, numCoresPerNode, D_matrix) 
+                             : Machine(numNodes, numCoresPerNode, D_matrix, 1) 
 {  
     schedout.init("", 8, ~0, Output::STDOUT);
     simulationmachine = insimulationmachine;
@@ -43,9 +43,13 @@ std::string SimpleMachine::getSetupInfo(bool comment)
     return com + mesg;
 }
 
-long SimpleMachine::getNodeDistance(int node1, int node2) const
+unsigned int SimpleMachine::getNodeDistance(int node1, int node2) const
 {
-    schedout.fatal(CALL_INFO, 1, "Attempt to read node distance from Simple Machine");
-    return -1;
+    return 1;
 }
 
+std::vector<unsigned int> SimpleMachine::getRoute(int node1, int node2, double commWeight) const
+{
+    std::vector<unsigned int> dummy(1, 0);
+    return dummy;
+}

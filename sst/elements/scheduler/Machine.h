@@ -21,27 +21,31 @@
 
 namespace SST {
     namespace Scheduler {
-        class AllocInfo;
+        class TaskMapInfo;
 
         class Machine{
             public:
 
-                Machine(long numNodes, int numCoresPerNode, double** D_matrix);
+                Machine(long numNodes, int numCoresPerNode, double** D_matrix, unsigned int numLinks);
                 virtual ~Machine();
                 
                 void reset();
-                void allocate(AllocInfo* allocInfo);
-                void deallocate(AllocInfo* allocInfo);
+                void allocate(TaskMapInfo* taskMapInfo);
+                void deallocate(TaskMapInfo* taskMapInfo);
 
                 long getNumFreeNodes() const { return numAvail; }
                 bool isFree(int nodeNum) const { return freeNodes[nodeNum]; }
                 std::vector<bool>* freeNodeList() const { return new std::vector<bool>(freeNodes); }
                 std::vector<int>* getFreeNodes() const;
                 std::vector<int>* getUsedNodes() const;
-				double getCoolingPower() const;
+                double getCoolingPower() const;
                  
                 virtual std::string getSetupInfo(bool comment) = 0;
-                virtual long getNodeDistance(int node1, int node2) const = 0;
+                virtual unsigned int getNodeDistance(int node0, int node1) const = 0;
+
+                //finds the communication route between node0 and node1 for the given weight of commWeight
+                //@return The link indices used in the route
+                virtual std::vector<unsigned int> getRoute(int node0, int node1, double commWeight) const = 0;
                 
                 double** D_matrix;
                 
@@ -51,6 +55,7 @@ namespace SST {
             private:
                 long numAvail;                //number of available nodes
                 std::vector<bool> freeNodes;  //whether each node is free
+                std::vector<double> traffic;  //traffic on network links
         };
     }
 }

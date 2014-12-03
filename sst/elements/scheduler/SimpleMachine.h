@@ -26,7 +26,7 @@ namespace SST {
 
         class SimpleMachine : public Machine {
 
-            public:                
+            public:
                 SimpleMachine(int numNodes, bool insimulationmachine, int numCoresPerNode, double** D_matrix);
                 virtual ~SimpleMachine() {}
 
@@ -34,7 +34,10 @@ namespace SST {
 
                 void reset();  //return to beginning-of-simulation state
                 
-                long getNodeDistance(int node1, int node2) const;
+                unsigned int getNodeDistance(int node0, int node1) const;
+
+                //SimpleMachine assumes a single network link in the machine
+                std::vector<unsigned int> getRoute(int node0, int node1, double commWeight) const;
 
             private:
                 bool simulationmachine;

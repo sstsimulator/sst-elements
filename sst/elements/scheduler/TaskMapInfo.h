@@ -25,15 +25,6 @@ namespace SST {
 
         class TaskMapInfo {
 
-            private:
-                TaskCommInfo* taskCommInfo;
-                int size;
-                int mappedCount;
-                double avgHopDist;
-                const Machine & machine;
-                std::map<long int, int> numAvailCores;
-                std::vector<long int> taskToNode;
-
             public:
                 AllocInfo* allocInfo;
                 Job* job;
@@ -49,6 +40,23 @@ namespace SST {
                 //returns average per-neighbor hop distance
                 //assumes no migration, i.e., it calculates the hop distance only once
                 double getAvgHopDist();
+
+                //returns the links used by this job along with the traffic weights
+                //assumes static route
+                std::map<unsigned int, double> getTraffic();
+                //return max traffic in a link, created only by current job
+                double getMaxJobCongestion() { return maxCongestion; }
+
+            private:
+                TaskCommInfo* taskCommInfo;
+                int mappedCount;
+                double avgHopDist;
+                const Machine & machine;
+                std::map<long int, int> numAvailCores;
+                std::vector<long int> taskToNode;
+                std::map<unsigned int, double> traffic;
+                double maxCongestion;        //max congestion within the corresponding job
+                void updateNetworkMetrics(); //calculates traffic and hop distance info
         };
     }
 }
