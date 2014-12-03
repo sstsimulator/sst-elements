@@ -35,7 +35,7 @@ private:
 	void operator=(const RequestGenCPU&); // do not implement
 	~RequestGenCPU();
 
-	void handleEvent( Interfaces::SimpleMem::Request *ev );
+	void handleEvent( SimpleMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
 	void issueRequest(const RequestGeneratorRequest* req);
 
@@ -43,7 +43,7 @@ private:
 
 	RequestGenerator* reqGen;
 	std::map<uint64_t, SimTime_t> requests;
-    	Interfaces::SimpleMem *memory;
+    	SimpleMem* cache_link;
 	RequestGeneratorRequest* nextReq;
 
 	uint32_t maxRequestsPending;

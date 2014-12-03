@@ -78,6 +78,6 @@ extern "C" {
         NULL,
         modules,
         NULL,
-        NULL,
+        NULL
     };
 }

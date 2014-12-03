@@ -1,5 +1,6 @@
 
 #include <sst_config.h>
+#include <sst/core/simulation.h>
 
 #include "reqGenModule.h"
 #include "requestGenCPU.h"
@@ -32,9 +33,10 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 	out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
 
 	Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
-	memory = dynamic_cast<SimpleMem*>( loadModuleWithComponent(interfaceName.c_str(), this, interfaceParams) );
+	cache_link = dynamic_cast<SimpleMem*>( loadModuleWithComponent(interfaceName,
+		this, interfaceParams) );
 
-	if(NULL == memory) {
+	if(NULL == cache_link) {
 		out->fatal(CALL_INFO, -1, "Error loading memory interface module.\n");
 	} else {
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
@@ -42,7 +44,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 
 	out->verbose(CALL_INFO, 1, 0, "Initializing memory interface...\n");
 
-	bool init_success = memory->initialize("cache_link", new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+	bool init_success = cache_link->initialize("cache_link", new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
 
 	if(init_success) {
 		out->fatal(CALL_INFO, -1, "Failed to initialize interface: %s\n", interfaceName.c_str());
@@ -50,7 +52,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory initialize routine returned successfully.\n");
 	}
 
-	if(NULL == memory) {
+	if(NULL == cache_link) {
 		out->fatal(CALL_INFO, -1, "Failed to load interface: %s\n", interfaceName.c_str());
 	} else {
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
@@ -67,7 +69,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) {
 }
 
 RequestGenCPU::~RequestGenCPU() {
-	delete memory;
+	delete cache_link;
 	delete reqGen;
 }
 
@@ -122,8 +124,8 @@ void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
 			upperAddress, upperLength);
 
 		out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
-		memory->sendRequest(reqLower);
-		memory->sendRequest(reqUpper);
+		cache_link->sendRequest(reqLower);
+		cache_link->sendRequest(reqUpper);
 		out->verbose(CALL_INFO, 4, 0, "Completed issue.\n");
 
 		requestsPending += 2;
@@ -133,7 +135,7 @@ void RequestGenCPU::issueRequest(const RequestGeneratorRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			reqAddress, reqLength);
 
-		memory->sendRequest(request);
+		cache_link->sendRequest(request);
 
 		requestsPending++;
 	}
