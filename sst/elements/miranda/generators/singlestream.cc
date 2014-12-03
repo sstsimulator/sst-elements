@@ -20,6 +20,7 @@ SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params )
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
+	out->verbose(CALL_INFO, 1, 0, "First address: %" PRIu64 "\n", nextAddr);
 }
 
 SingleStreamGenerator::~SingleStreamGenerator() {
@@ -29,11 +30,11 @@ SingleStreamGenerator::~SingleStreamGenerator() {
 void SingleStreamGenerator::nextRequest(RequestGeneratorRequest* req) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
-	// What is the next address?
-	nextAddr = (nextAddr + reqLength) % maxAddr;
-
 	// Populate request
 	req->set(nextAddr, reqLength, READ);
+
+	// What is the next address?
+	nextAddr = (nextAddr + reqLength) % maxAddr;
 
 	issueCount--;
 }

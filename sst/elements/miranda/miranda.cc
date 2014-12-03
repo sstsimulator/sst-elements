@@ -25,13 +25,13 @@ static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
 }
 
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
-	printf("ALLOCATING A MIRANDA CPU...\n");
 	return new RequestGenCPU(id, params);
 }
 
 static const ElementInfoParam singleStreamGen_params[] = {
-    {"cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
-    {NULL, NULL, NULL}
+    { "cache_line_size",  "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64" },
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoModule modules[] = {
@@ -49,6 +49,10 @@ static const ElementInfoModule modules[] = {
 
 static const ElementInfoParam basecpu_params[] = {
 	{ "verbose", 		"Sets the verbosity of output produced by the CPU", 	"0" },
+        { "printStats",       "Prints statistics output", "0" },
+        { "generator",        "The generator to be loaded for address creation", "miranda.SingleStreamGenerator" },
+        { "clock",            "Clock for the base CPU", "2GHz" },
+        { "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
 	{ NULL,	NULL, NULL }
 };
 

@@ -7,9 +7,10 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
-	"verbose" : 4,
+	"verbose" : 0,
 	"generator" : "miranda.SingleStreamGenerator",
-	"generatorParams.verbose" : 4,
+	"generatorParams.verbose" : 0,
+	"generatorParams.startat" : 3,
 	"printStats" : 1
 })
 

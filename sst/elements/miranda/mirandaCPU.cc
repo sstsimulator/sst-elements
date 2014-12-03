@@ -57,6 +57,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	// Set first request to NULL to force a regenerate
 	nextReq = new RequestGeneratorRequest();
+	nextReq->markIssued();
 
 	if(NULL == reqGen) {
 		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
@@ -70,6 +71,8 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 	registerAsPrimaryComponent();
 	primaryComponentDoNotEndSim();
+
+	cacheLine = (uint64_t) params.find_integer("cache_line_size", 64);
 
 	requestsIssued = 0;
 	splitRequestsIssued = 0;
