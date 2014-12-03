@@ -12,6 +12,8 @@ libmiranda_la_SOURCES = \
 	mirandaCPU.cc \
 	mirandaCPU.h	\
 	generators/singlestream.h \
-	generators/singlestream.cc
+	generators/singlestream.cc \
+	generators/randomgen.h \
+	generators/randomgen.cc
 
 libmiranda_la_LDFLAGS = -module -avoid-version

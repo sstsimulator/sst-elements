@@ -16,12 +16,17 @@
 
 #include "mirandaCPU.h"
 #include "generators/singlestream.h"
+#include "generators/randomgen.h"
 
 using namespace SST;
 using namespace SST::Miranda;
 
 static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
 	return new SingleStreamGenerator(owner, params);
+}
+
+static Module* load_RandomGenerator(Component* owner, Params& params) {
+	return new RandomGenerator(owner, params);
 }
 
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
@@ -38,6 +43,15 @@ static const ElementInfoParam singleStreamGen_params[] = {
     { NULL, NULL, NULL }
 };
 
+static const ElementInfoParam randomGen_params[] = {
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "count",            "Count for number of items being requested", "1024" },
+    { "length",           "Length of requests", "8" },
+    { "max_address",      "Maximum address allowed for generation", "16384" },
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoModule modules[] = {
 	{
 		"SingleStreamGenerator",
@@ -46,6 +60,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_SingleStreamGenerator,
 		singleStreamGen_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"RandomGenerator",
+		"Creates a single random stream of accesses to/from memory",
+		NULL,
+		NULL,
+		load_RandomGenerator,
+		randomGen_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL }

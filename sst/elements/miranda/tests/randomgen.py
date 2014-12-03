@@ -8,11 +8,10 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.SingleStreamGenerator",
+	"generator" : "miranda.RandomGenerator",
 	"generatorParams.verbose" : 0,
-	"generatorParams.startat" : 3,
 	"generatorParams.count" : 500000,
-	"generatorParams.max_address" : 512000,
+	"generatorParams.max_address" : 524288,
 	"printStats" : 1,
 })
 
@@ -29,7 +28,7 @@ comp_l1cache.addParams({
       "low_network_links" : "1",
       "statistics" : "1",
       "L1" : "1",
-      "cache_size" : "2KB"
+      "cache_size" : "8KB"
 })
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
