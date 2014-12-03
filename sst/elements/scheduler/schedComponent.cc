@@ -72,13 +72,13 @@ schedComponent::~schedComponent()
 }
 
 int readSeed( Params & params, std::string paramName ){
-    if( params.find( paramName ) != params.end() ){
-        return atoi( params[ paramName ].c_str() );
-    }else if( params.find( "seed" ) != params.end() ){
-        return atoi( params[ "seed" ].c_str() );
-    }else{
-        return time( NULL );
-    }
+	if( params.find( paramName ) != params.end() ){
+		return atoi( params[ paramName ].c_str() );
+	}else if( params.find( "seed" ) != params.end() ){
+		return atoi( params[ "seed" ].c_str() );
+	}else{
+		return time( NULL );
+	}
 }
 
 
@@ -303,10 +303,10 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
 {
     if (dynamic_cast<CommunicationEvent *>(ev)) {
         CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *> (ev);
-        if( commEvent->CommType == RETRIEVE_ID &&
-            commEvent->reply == true ){
-                nodeIDs.insert(nodeIDs.begin() + node, *(std::string*)commEvent->payload);
-        }
+	    if( commEvent->CommType == RETRIEVE_ID &&
+	        commEvent->reply == true ){
+            	nodeIDs.insert(nodeIDs.begin() + node, *(std::string*)commEvent->payload);
+	    }
         delete ev;
     } else if (dynamic_cast<CompletionEvent*>(ev)) {
         CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);
@@ -371,7 +371,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
                 nodes[tmi->allocInfo->nodeIndices[i]] -> send(ec); 
             }
 
-            machine -> deallocate(tmi);
+            machine -> deallocate(tmi->allocInfo);
             theAllocator -> deallocate(tmi->allocInfo);
             if (useYumYumTraceFormat) {
                 stats->jobFinishes(tmi, getCurrentSimTime() + 1);
@@ -463,7 +463,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             int finishedJobNum = finishingcomp.front() -> jobNum;
             TaskMapInfo *tmi = runningJobs[finishedJobNum].tmi;
             runningJobs.erase(finishedJobNum);
-            machine->deallocate(tmi);
+            machine->deallocate(tmi->allocInfo);
             theAllocator->deallocate(tmi->allocInfo);
             
             if (useYumYumTraceFormat) {
@@ -548,7 +548,7 @@ void schedComponent::startJob(Job* job)
     job->start( getCurrentSimTime() );              //job started flag
     AllocInfo* ai = theAllocator->allocate(job);    //get allocation
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks  
-    machine->allocate(tmi);                         //allocate
+    machine->allocate(ai);                          //allocate
     scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler
     stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
 
@@ -590,7 +590,7 @@ void schedComponent::startJob(Job* job)
     }
 
     if (actualRunningTime > job->getEstimatedRunningTime()) {
-        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", job->getJobNum(), actualRunningTime, job->getEstimatedRunningTime());
+        schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", job -> getJobNum(), actualRunningTime, job->getEstimatedRunningTime());
         //actualRunningTime = job->getEstimatedRunningTime();
     }
 

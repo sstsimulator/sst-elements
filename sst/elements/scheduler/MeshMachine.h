@@ -24,7 +24,6 @@
 namespace SST {
     namespace Scheduler {
 
-        class AllocInfo;
         class Job;
         class MeshLocation;
 
@@ -48,29 +47,19 @@ namespace SST {
                 int getZDim() const { return zdim; }
                 
                 //returns the coordinates of the given node index
-                int xOf(unsigned int node) const { return node % xdim; }
-                int yOf(unsigned int node) const { return (node / xdim) % ydim; }
-                int zOf(unsigned int node) const { return node / (xdim * ydim); }
+                int xOf(long node) const { return node % xdim; }
+                int yOf(long node) const { return (node / xdim) % ydim; }
+                int zOf(long node) const { return node / (xdim * ydim); }
 
                 //returns index of given dimensions
-                unsigned int indexOf(int x, int y, int z) const { return (x + xdim * y + xdim * ydim * z); }
+                long indexOf(int x, int y, int z) const { return (x + xdim * y + xdim * ydim * z); }
 
-                unsigned int getNodeDistance(int node0, int node1) const;
+                long getNodeDistance(int node1, int node2) const;
 
-                unsigned int pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
-
-                //returns the index of the given network link
-                //@x,y,z coordinates of the source node 
-                //@direction link dimension from the source node(x=x,y=1,z=2)
-                //assumes that sending&receiving is the same
-                unsigned int getLinkIndex(int x, int y, int z, int dimension) const;
-                
+                long pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
+				
                 //baseline allocation: minimum-volume rectangular prism that fits into the machine
                 AllocInfo* getBaselineAllocation(Job* job);
-
-                //MeshMachine default routing is dimension ordered: first x, then y, then z, all in increasing direction
-                //@return vector of link indices
-                std::vector<unsigned int> getRoute(int node0, int node1, double commWeight) const;
         };
         
         /**

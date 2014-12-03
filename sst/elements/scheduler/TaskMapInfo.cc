@@ -24,11 +24,11 @@ TaskMapInfo::TaskMapInfo(AllocInfo* ai, const Machine & inMach) : machine(inMach
     allocInfo = ai;
     job = ai->job;
     taskCommInfo = job->taskCommInfo;
-    taskToNode = std::vector<long int>(job->getProcsNeeded(), -1);
+    size = job->getProcsNeeded();
+    taskToNode = std::vector<long int>(size, -1);
     mappedCount = 0;
-    avgHopDist = -1;
+    avgHopDist = 0;
     numAvailCores = std::map<long int, int>();
-    traffic = std::map<unsigned int, double>();
 }
 
 TaskMapInfo::~TaskMapInfo()
@@ -55,94 +55,35 @@ void TaskMapInfo::insert(int taskInd, long int nodeInd)
 
 double TaskMapInfo::getAvgHopDist()
 {
-    //calculate average hop distance if not calculated yet
-    if(avgHopDist == -1) {
-        updateNetworkMetrics();
+    if(avgHopDist == 0) {
+        //check if every task is mapped
+        if(size > mappedCount){
+            schedout.fatal(CALL_INFO, 1, "Task mapping info requested before all tasks are mapped.");
+        }
+
+        unsigned long totalHopDist = 0;
+        int neighborCount = 0;    
+
+        //iterate through all tasks
+        std::vector<std::map<int,int> >* commInfo = taskCommInfo->getCommInfo();
+        for(int taskIter = 0; taskIter < size; taskIter++){
+            //iterate through communicating tasks and add distance for communication
+            for(std::map<int, int>::iterator it = commInfo->at(taskIter).begin(); it != commInfo->at(taskIter).end(); it++){
+                totalHopDist += machine.getNodeDistance(taskToNode[taskIter], taskToNode[it->first])
+                                * it->second; // multiply hop distance with communication weight
+                neighborCount++;
+            }
+        }
+        delete commInfo;
+
+        //distance per neighbor
+        //two-way distances and uncounted neighbors cancel each other
+        avgHopDist = totalHopDist;
+        if(neighborCount != 0){
+            avgHopDist /= neighborCount;
+        }
     }
+
     return avgHopDist;
 }
 
-std::map<unsigned int, double> TaskMapInfo::getTraffic()
-{
-    //calculate traffic if not calculated yet
-    if(avgHopDist == -1){
-        updateNetworkMetrics();
-    }
-    return traffic;
-}
-
-void TaskMapInfo::updateNetworkMetrics()
-{
-    if(job->getProcsNeeded() > mappedCount){
-        schedout.fatal(CALL_INFO, 1, "Network metrics of a job has been requested before all tasks are mapped.");
-    }
-
-    //hop-distance related:
-    unsigned long totalHopDist = 0;
-    int neighborCount = 0;
-
-    //traffic: create a communication structure for the nodes
-    std::map<unsigned int,std::map<unsigned int, double> > nodeCommInfo;
-    for(int nodeIt = 0; nodeIt < allocInfo->getNodesNeeded(); nodeIt++){
-        nodeCommInfo[allocInfo->nodeIndices[nodeIt]] = std::map<unsigned int, double>();
-    }
-
-    //iterate through tasks
-    std::vector<std::map<int,int> >* commInfo = taskCommInfo->getCommInfo();
-
-    for(int taskIter = 0; taskIter < job->getProcsNeeded(); taskIter++){
-        //iterate through neighbors of taskIter
-        for(std::map<int, int>::iterator it = commInfo->at(taskIter).begin(); it != commInfo->at(taskIter).end(); it++){
-            //update hop related:
-            totalHopDist += machine.getNodeDistance(taskToNode[taskIter], taskToNode[it->first])
-                            * it->second; // multiply hop distance with communication weight
-            neighborCount++;
-
-            //update traffic related:
-            if (nodeCommInfo[taskToNode[taskIter]].count(taskToNode[it->first]) == 0){ //no existing communication there
-                nodeCommInfo[taskToNode[taskIter]][taskToNode[it->first]] = it->second;
-                nodeCommInfo[taskToNode[it->first]][taskToNode[taskIter]] = it->second;
-            } else { //add to existing communication
-                nodeCommInfo[taskToNode[taskIter]][taskToNode[it->first]] += it->second;
-                nodeCommInfo[taskToNode[it->first]][taskToNode[taskIter]] += it->second;
-            }
-        }
-    }
-    delete commInfo;
-
-    //calculate average hop distance per neighbor
-    //two-way distances and uncounted neighbors cancel each other
-    avgHopDist = totalHopDist;
-    if(neighborCount != 0){
-        avgHopDist /= neighborCount;
-    }
-
-    //create traffic
-    //iterate through all nodes
-    for(unsigned int nodeIter = 0; nodeIter < nodeCommInfo.size(); nodeIter++){
-        //iterate through its neighbors in the nodeCommInfo
-        for(std::map<unsigned int, double>::iterator it = nodeCommInfo[nodeIter].begin(); it != nodeCommInfo[nodeIter].end(); it++){
-            //add communication to the traffic
-            if(nodeIter < it->first){ //avoid duplicates
-                //get used links
-                std::vector<unsigned int> route = machine.getRoute(nodeIter, it->first, it->second);
-                //iterate through the links to populate traffic
-                for(unsigned int linkIt = 0; linkIt < route.size(); linkIt++){
-                    if(traffic.count(route[linkIt]) == 0){ // no existing communication there
-                        traffic[route[linkIt]] = it->second;
-                    } else { //add to existing communication
-                        traffic[route[linkIt]] += it->second;
-                    }
-                }
-            }
-        }
-    }
-
-    //calculate maxCongestion
-    maxCongestion = 0;
-    for(std::map<unsigned int, double>::iterator it = traffic.begin(); it != traffic.end(); it++){
-        if(it->second > maxCongestion){
-            maxCongestion = it->second;
-        }
-    }
-}
