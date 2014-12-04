@@ -101,13 +101,17 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     TaskMapper* taskMap = new SimpleTaskMapper(*mach);
     string nullstr = "";
     char nullcstr[] = "";
-    map<Job*, AllocInfo*>* jobToAi = new map<Job*, AllocInfo*>();
+    map<Job*, TaskMapInfo*>* jobToAi = new map<Job*, TaskMapInfo*>();
 
     for (unsigned int x = 0; x < running -> size(); x++) {
         AllocInfo* ai = alloc -> allocate(running -> at(x));
-        if (NULL == ai) schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %ld processors for %s", mach -> getNumFreeNodes(), running -> at(x) -> toString().c_str());
-        mach -> allocate(ai);
-        jobToAi -> insert(pair<Job*, AllocInfo*>(running -> at(x), ai));
+        if (NULL == ai){
+            schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %ld processors for %s", mach -> getNumFreeNodes(), running -> at(x) -> toString().c_str());
+        }
+        TaskMapInfo* tmi = taskMap->mapTasks(ai);
+        mach -> allocate(tmi);
+        jobToAi -> insert(pair<Job*, TaskMapInfo*>(running -> at(x), tmi));
+        delete tmi;
     }
 
     Statistics* stats = new Statistics(mach, sched, alloc, taskMap, nullstr.c_str(), nullcstr, true, this);
@@ -185,7 +189,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
         //tell our simulated scheduler etc that the job completed
         mach -> deallocate(jobToAi -> find(endtimes -> begin() -> first) -> second);
-        alloc -> deallocate(jobToAi -> find(endtimes -> begin() -> first) -> second);
+        alloc -> deallocate(jobToAi -> find(endtimes -> begin() -> first) -> second -> allocInfo);
         sched -> jobFinishes(endtimes -> begin() -> first, time, *mach);
         endtimes -> erase(endtimes -> begin());
 
@@ -222,7 +226,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     delete taskMap;
     delete stats;
     delete endtimes;
-    for (map<Job*, AllocInfo*>::iterator it = jobToAi->begin(); it != jobToAi -> end(); it++) {
+    for (map<Job*, TaskMapInfo*>::iterator it = jobToAi->begin(); it != jobToAi -> end(); it++) {
         delete it -> second;
     }
     jobToAi -> clear();
@@ -244,7 +248,9 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 }
 
 //helper function; tells the scheduler to start a job
-bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes, std::map<Job*, AllocInfo*>* jobToAi, Job* j, Scheduler* sched, Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time) 
+bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes,
+                   std::map<Job*, TaskMapInfo*>* jobToAi, Job* j, Scheduler* sched, 
+                   Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time) 
 {
     AllocInfo* ai;
     Job* newJob;
@@ -266,7 +272,7 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
             else {
                 schedout.debug(CALL_INFO, 7, 0, "%lu: FST starting %s\n", time, ai -> job -> toString().c_str());
                 endtimes -> insert(pair<Job*, unsigned long>(ai -> job, time + ai -> job -> getActualTime()));
-                jobToAi -> insert(pair<Job*, AllocInfo*>(ai -> job, ai));
+                jobToAi -> insert(pair<Job*, TaskMapInfo*>(ai -> job, tmi));
             }
             stats -> jobStarts(tmi, time);
         }

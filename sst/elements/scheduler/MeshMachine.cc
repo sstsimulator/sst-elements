@@ -13,6 +13,7 @@
  * Machine based on a mesh structure
  */
 
+#include <algorithm>
 #include <cmath>
 #include <stdlib.h>
 #include <vector>
@@ -35,7 +36,10 @@
 using namespace SST::Scheduler;
 
 MeshMachine::MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, double** D_matrix)
-                         : Machine((long) Xdim*Ydim*Zdim, numCoresPerNode, D_matrix)
+                         : Machine((long) Xdim*Ydim*Zdim,
+                                   numCoresPerNode,
+                                   D_matrix,
+                                   3*Xdim*Ydim*Zdim - Xdim*Ydim - Xdim*Zdim - Ydim*Zdim)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
@@ -59,7 +63,7 @@ std::string MeshMachine::getSetupInfo(bool comment)
     return ret.str();
 }
 
-long MeshMachine::getNodeDistance(int node1, int node2) const
+unsigned int MeshMachine::getNodeDistance(int node1, int node2) const
 {
     MeshLocation loc1 = MeshLocation(node1, *this);
     MeshLocation loc2 = MeshLocation(node2, *this);
@@ -71,7 +75,7 @@ long MeshMachine::getNodeDistance(int node1, int node2) const
     return dist;
 }
 
-long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
+unsigned int MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
 {
     int num = locs -> size();
     //returns total pairwise L_1 distance between 1st num members of array
@@ -89,7 +93,6 @@ long MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
 AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
 {
     int numNodes = ceil( (double) job->getProcsNeeded() / coresPerNode);
-    
     int xSize, ySize, zSize;
     //dimensions if we fit job in a cube
     xSize = (int)ceil( (float)cbrt((float)numNodes) ); 
@@ -130,31 +133,30 @@ AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
             ySize = (int)ceil( ((float)numNodes) / (xdim * zdim) );
         }
     }
-    
     //order dimensions from shortest to longest
-	int state = 0; //keeps order mapping
-	if(xSize <= ySize && ySize <= zSize) {
-		state = 0;
-	} else if(ySize <= xSize && xSize <= zSize) {
-		state = 1;
-		std::swap(xSize, ySize);
-	} else if(zSize <= ySize && ySize <= xSize) {
-		state = 2;
-		std::swap(xSize, zSize);
-	} else if(xSize <= zSize && zSize <= ySize) {
-		state = 3;
-		std::swap(zSize, ySize);
-	} else if(ySize <= zSize && zSize <= xSize) {
-		state = 4;
-		std::swap(xSize, ySize);
-		std::swap(ySize, zSize);
-	} else if(zSize <= xSize && xSize <= ySize) {
-		state = 5;
-		std::swap(xSize, ySize);
-		std::swap(xSize, zSize);
-	}
+    int state = 0; //keeps order mapping
+    if(xSize <= ySize && ySize <= zSize) {
+        state = 0;
+    } else if(ySize <= xSize && xSize <= zSize) {
+        state = 1;
+        std::swap(xSize, ySize);
+    } else if(zSize <= ySize && ySize <= xSize) {
+        state = 2;
+        std::swap(xSize, zSize);
+    } else if(xSize <= zSize && zSize <= ySize) {
+        state = 3;
+        std::swap(zSize, ySize);
+    } else if(ySize <= zSize && zSize <= xSize) {
+        state = 4;
+        std::swap(xSize, ySize);
+        std::swap(ySize, zSize);
+    } else if(zSize <= xSize && xSize <= ySize) {
+        state = 5;
+        std::swap(xSize, ySize);
+        std::swap(xSize, zSize);
+    }
    
-    //Fill given space with snake-like order, use shortest dim first
+    //Fill given space with snake-shaped order, use shortest dim first
     int nodeCount = 0;
     bool done = false;
     bool xFwd = true;
@@ -193,13 +195,69 @@ AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
         }
         yFwd = !yFwd;
     }
-    
     //create allocInfo
     AllocInfo* allocInfo = new AllocInfo(job, *this);
     for(int i = 0; i < numNodes; i++){
         allocInfo->nodeIndices[i] = nodes.at(i).toInt(*this);
     }
     return allocInfo;
+}
+
+unsigned int MeshMachine::getLinkIndex(int x, int y, int z, int dimension) const
+{
+    int linkNo;
+    //link order: first all links in x dimension (same ordering with nodes), then y, then z
+    switch(dimension){
+        case 0:
+            if(x == (xdim - 1)){
+                schedout.fatal(CALL_INFO, 1, "Link index requested for a corner node.\n");
+            }
+            linkNo = x + y * (xdim - 1) + z * ydim * (xdim - 1);
+            break;
+        case 1:
+            if(y == (ydim - 1)){
+                schedout.fatal(CALL_INFO, 1, "Link index requested for a corner node.\n");
+            }
+            //add all x links
+            linkNo = zdim * ydim * (xdim - 1);
+            linkNo += x + y * xdim + z * xdim * (ydim - 1);
+            break;
+        case 2:
+            if(z == (zdim - 1)){
+                schedout.fatal(CALL_INFO, 1, "Link index requested for a corner node.\n");
+            }
+            //add all x and y links
+            linkNo = zdim * (2 * xdim * ydim - ydim - xdim);
+            linkNo += x + y * xdim + z * xdim * ydim;
+            break;
+        default:
+            schedout.fatal(CALL_INFO, 1, "Link index requested for non-existing dimension.\n");
+    }
+    return linkNo;
+}
+
+std::vector<unsigned int> MeshMachine::getRoute(int node0, int node1, double commWeight) const
+{
+    std::vector<unsigned int> links(0);
+    int x0 = xOf(node0);
+    int x1 = xOf(node1);
+    int y0 = yOf(node0);
+    int y1 = yOf(node1);
+    int z0 = zOf(node0);
+    int z1 = zOf(node1);
+    //add X route
+    for(int x = std::min(x0, x1); x < std::max(x0, x1); x++){
+        links.push_back(getLinkIndex(x, y0, z0, 0));
+    }
+    //add Y route
+    for(int y = std::min(y0, y1); y < std::max(y0, y1); y++){
+        links.push_back(getLinkIndex(x1, y, z0, 1));
+    }
+    //add Z route
+    for(int z = std::min(z0, z1); z < std::max(z0, z1); z++){
+        links.push_back(getLinkIndex(x1, y1, z, 2));
+    }
+    return links;
 }
 
 MeshLocation::MeshLocation(int X, int Y, int Z) 

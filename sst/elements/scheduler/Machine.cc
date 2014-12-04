@@ -14,13 +14,20 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "output.h"
+#include "TaskMapInfo.h"
 
 using namespace SST::Scheduler;
 
-Machine::Machine(long inNumNodes, int numCoresPerNode, double** D_matrix) : numNodes(inNumNodes), coresPerNode(numCoresPerNode)
+Machine::Machine(long inNumNodes,
+                 int numCoresPerNode,
+                 double** D_matrix,
+                 unsigned int numLinks)
+                 : numNodes(inNumNodes),
+                   coresPerNode(numCoresPerNode)
 {
     this->D_matrix = D_matrix;
     freeNodes = std::vector<bool>(numNodes);
+    traffic = std::vector<double>(numLinks);
     reset();
 }
 
@@ -37,10 +44,12 @@ void Machine::reset()
 {
     numAvail = numNodes;
     std::fill(freeNodes.begin(), freeNodes.end(), true);
+    std::fill(traffic.begin(), traffic.end(), 0);
 }
 
-void Machine::allocate(AllocInfo* allocInfo)
+void Machine::allocate(TaskMapInfo* taskMapInfo)
 {
+    AllocInfo* allocInfo = taskMapInfo->allocInfo;
     long nodeCount = allocInfo->getNodesNeeded();
     
     if(numAvail < nodeCount){
@@ -55,10 +64,17 @@ void Machine::allocate(AllocInfo* allocInfo)
         }
         freeNodes[allocInfo -> nodeIndices[i]] = false;
     }
+
+    //update network traffic
+    std::map<unsigned int, double> jobTraffic = taskMapInfo->getTraffic();
+    for(std::map<unsigned int, double>::iterator it = jobTraffic.begin(); it != jobTraffic.end(); it++){
+        traffic[it->first] += it->second;
+    }
 }
 
-void Machine::deallocate(AllocInfo* allocInfo)
+void Machine::deallocate(TaskMapInfo* taskMapInfo)
 {
+    AllocInfo* allocInfo = taskMapInfo->allocInfo;
     long nodeCount = allocInfo->getNodesNeeded();
     
     if(nodeCount > (numNodes - numAvail)) {
@@ -72,6 +88,15 @@ void Machine::deallocate(AllocInfo* allocInfo)
             schedout.fatal(CALL_INFO, 0, "Attempted to deallocate job %ld from an idle node: ", allocInfo->job->getJobNum() );
         }
         freeNodes[allocInfo -> nodeIndices[i]] = true;
+    }
+
+    //update network traffic
+    std::map<unsigned int, double> jobTraffic = taskMapInfo->getTraffic();
+    for(std::map<unsigned int, double>::iterator it = jobTraffic.begin(); it != jobTraffic.end(); it++){
+        traffic[it->first] -= it->second;
+        if(traffic[it->first] < 0){
+            schedout.fatal(CALL_INFO, 1, "Traffic on link %u became negative", it->first);
+        }
     }
 }
 
@@ -105,8 +130,7 @@ double Machine::getCoolingPower() const
 {
     int Putil=2000;
     int Pidle=1000;
-
-    double Tred=30;  
+    double Tred=30;
 
     int busynodes = 0;
     double max_inlet = 0;
@@ -128,10 +152,8 @@ double Machine::getCoolingPower() const
             }
         }
     }
-
     // Total power of data center
     double Pcompute = busynodes * Putil + numNodes * Pidle;
-
     // Supply temperature
     double Tsup;
     if(D_matrix != NULL){
@@ -139,10 +161,8 @@ double Machine::getCoolingPower() const
     } else {
         Tsup = Tred;
     }
-
     // Coefficient of performance
     double COP = 0.0068 * Tsup * Tsup + 0.0008 * Tsup + 0.458;
-
     // Cooling power in kW
     double Pcooling = 0.001 * Pcompute * (1 / COP);
 
