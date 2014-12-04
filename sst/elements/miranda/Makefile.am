@@ -17,7 +17,7 @@ libmiranda_la_SOURCES = \
 	generators/randomgen.cc
 
 EXTRA_DIST = \
-	randomgen.py \
-	singlestream.py
+	tests/randomgen.py \
+	tests/singlestream.py
 
 libmiranda_la_LDFLAGS = -module -avoid-version
