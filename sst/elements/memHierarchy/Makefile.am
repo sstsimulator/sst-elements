@@ -57,21 +57,6 @@ EXTRA_DIST = \
 	tests/example.xml \
 	tests/example.py \
 	tests/exampleM5.xml \
-	tests/sdl-1.xml \
-	tests/sdl2-1.xml \
-	tests/sdl-2.xml \
-	tests/sdl3-1.xml \
-	tests/sdl3-2.xml \
-	tests/sdl3-3.xml \
-	tests/sdl-3.xml \
-	tests/sdl4-1.xml \
-	tests/sdl4-2.xml \
-	tests/sdl5-1.xml \
-	tests/sdl8-1.xml \
-	tests/sdl8-3.xml \
-	tests/sdl8-4.xml \
-	tests/sdl9-1.xml \
-	tests/sdl9-2.xml \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
 	tests/sdl-2.py \
