@@ -80,7 +80,6 @@ class DMAEngine : public Component {
     std::set<Request*> activeRequests;
 
     Output dbg;
-    std::vector<MemNIC::ComponentInfo> directories;
     uint64_t blocksize;
     Output::output_location_t statsOutputTarget;
     uint64_t numTransfers;

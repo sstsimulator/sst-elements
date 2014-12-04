@@ -45,12 +45,23 @@ public:
             uint32_t blocksize;
             uint32_t num_blocks;
         } cache;
-        struct {
+        struct AddrRange {
             uint64_t rangeStart;
             uint64_t rangeEnd;
             uint64_t interleaveSize;
             uint64_t interleaveStep;
-        } dirctrl;
+            bool contains(uint64_t addr) const {
+                if ( addr >= rangeStart && addr < rangeEnd ) {
+                    if ( interleaveSize == 0 ) return true;
+                    uint64_t offset = (addr - rangeStart) % interleaveStep;
+                    return (offset < interleaveSize);
+                }
+                return false;
+            }
+            bool operator<(const AddrRange &o) const {
+                return (rangeStart < o.rangeStart);
+            }
+        } addrRange;
     };
 
     struct ComponentInfo {
@@ -60,11 +71,10 @@ public:
         std::string name;
         int network_addr;
         ComponentType type;
-        ComponentTypeInfo typeInfo;
 
         ComponentInfo() :
-            link_port(""), link_bandwidth(""), name(""),
-            network_addr(0)
+            link_port(""), num_vcs(0), link_bandwidth(""), name(""),
+            network_addr(0), type(TypeOther)
         { }
     };
 
@@ -102,6 +112,12 @@ public:
         ComponentTypeInfo compInfo;
 
         InitMemRtrEvent() {}
+        InitMemRtrEvent(const std::string &name, int addr, ComponentType type) :
+            Merlin::RtrEvent(), name(name), address(addr), compType(type)
+        {
+            src = addr;
+        }
+
         InitMemRtrEvent(const std::string &name, int addr, ComponentType type, ComponentTypeInfo info) :
             Merlin::RtrEvent(), name(name), address(addr), compType(type), compInfo(info)
         {
@@ -126,16 +142,19 @@ public:
                 ar & BOOST_SERIALIZATION_NVP(compInfo.cache.num_blocks);
                 break;
             case TypeDirectoryCtrl:
-                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeStart);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeEnd);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveSize);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveStep);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeStart);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeEnd);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.interleaveSize);
+                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.interleaveStep);
                 break;
             default:
                 _abort(MemNIC, "Don't know how to serialize this type [%d].\n", compType);
             }
         }
     };
+
+
+    typedef std::pair<ComponentInfo, ComponentTypeInfo> PeerInfo_t;
 
 private:
 
@@ -145,6 +164,7 @@ private:
 
     Component *comp;
     ComponentInfo ci;
+    std::vector<ComponentTypeInfo> typeInfoList;
     Event::HandlerBase *recvHandler;
     Merlin::LinkControl *link_control;
 
@@ -153,9 +173,9 @@ private:
     int last_recv_vc;
     std::map<std::string, int> addrMap;
     /* Built during init -> available in Setup and later */
-    std::vector<ComponentInfo> peers;
+    std::vector<PeerInfo_t> peers;
     /* Built during init -> available for lookups later */
-    std::vector<MemNIC::ComponentInfo> directories;
+    std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string> directories;
 
 
     /* Translates a MemEvent string destination to an network address
@@ -176,6 +196,9 @@ public:
      */
     void moduleInit(ComponentInfo &ci, Event::HandlerBase *handler = NULL);
 
+    void addTypeInfo(const ComponentTypeInfo &cti) {
+        typeInfoList.push_back(cti);
+    }
 
     /* Call these from their respective calls in the component */
     void setup(void);
@@ -188,7 +211,7 @@ public:
     MemEvent* recv(void);
     void sendInitData(MemEvent *ev);
     MemEvent* recvInitData(void);
-    const std::vector<ComponentInfo>& getPeerInfo(void) const { return peers; }
+    const std::vector<PeerInfo_t>& getPeerInfo(void) const { return peers; }
     // translate a memory address to a network target (string)
     std::string findTargetDirectory(Addr addr);
     // NOTE: does not clear the listing of directories which are used for address lookups

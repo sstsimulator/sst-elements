@@ -59,16 +59,14 @@ void DMAEngine::setup(void)
     networkLink->setup();
     bool blocksizeSet = false;
 
-    const std::vector<MemNIC::ComponentInfo> &peers = networkLink->getPeerInfo();
-    for ( std::vector<MemNIC::ComponentInfo>::const_iterator i = peers.begin() ; i != peers.end() ; ++i ) {
-        switch (i->type) {
+    const std::vector<MemNIC::PeerInfo_t> &peers = networkLink->getPeerInfo();
+    for ( std::vector<MemNIC::PeerInfo_t>::const_iterator i = peers.begin() ; i != peers.end() ; ++i ) {
+        switch (i->first.type) {
         case MemNIC::TypeDirectoryCtrl:
-            /* Record directory controller info */
-            directories.push_back(*i);
             break;
         case MemNIC::TypeCache:
             if ( !blocksizeSet ) {
-                blocksize = i->typeInfo.cache.blocksize;
+                blocksize = i->second.cache.blocksize;
                 blocksizeSet = true;
             }
         default:

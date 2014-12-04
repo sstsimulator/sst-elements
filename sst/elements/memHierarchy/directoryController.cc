@@ -79,11 +79,14 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     myInfo.name                             = getName();
     myInfo.network_addr                     = addr;
     myInfo.type                             = MemNIC::TypeDirectoryCtrl;
-    myInfo.typeInfo.dirctrl.rangeStart      = addrRangeStart;
-    myInfo.typeInfo.dirctrl.rangeEnd        = addrRangeEnd;
-    myInfo.typeInfo.dirctrl.interleaveSize  = interleaveSize;
-    myInfo.typeInfo.dirctrl.interleaveStep  = interleaveStep;
     network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+
+    MemNIC::ComponentTypeInfo typeInfo;
+    typeInfo.addrRange.rangeStart      = addrRangeStart;
+    typeInfo.addrRange.rangeEnd        = addrRangeEnd;
+    typeInfo.addrRange.interleaveSize  = interleaveSize;
+    typeInfo.addrRange.interleaveStep  = interleaveStep;
+    network->addTypeInfo(typeInfo);
 
 
     registerClock(params.find_string("clock", "1GHz"), new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
@@ -940,13 +943,13 @@ void DirectoryController::finish(void){
 void DirectoryController::setup(void){
     network->setup();
 
-    const std::vector<MemNIC::ComponentInfo> &ci = network->getPeerInfo();
-    for(std::vector<MemNIC::ComponentInfo>::const_iterator i = ci.begin() ; i != ci.end() ; ++i){
-        dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->network_addr, i->name.c_str(), i->type);
-        if(MemNIC::TypeCache == i->type){
+    const std::vector<MemNIC::PeerInfo_t> &ci = network->getPeerInfo();
+    for(std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i){
+        dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->first.network_addr, i->first.name.c_str(), i->first.type);
+        if(MemNIC::TypeCache == i->first.type){
             numTargets++;
-            if(blocksize)   assert(blocksize == i->typeInfo.cache.blocksize);
-            else            blocksize = i->typeInfo.cache.blocksize;
+            if(blocksize)   assert(blocksize == i->second.cache.blocksize);
+            else            blocksize = i->second.cache.blocksize;
         }
     }
     if(0 == numTargets) _abort(DirectoryController, "Directory Controller %s unable to see any caches.\n", getName().c_str());

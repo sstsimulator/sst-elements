@@ -180,10 +180,13 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         myInfo.name = getName();
         myInfo.network_addr = _params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache;
-        myInfo.typeInfo.cache.blocksize = cf_.lineSize_;
-        myInfo.typeInfo.cache.num_blocks = cf_.numLines_;
+
+        MemNIC::ComponentTypeInfo typeInfo;
+        typeInfo.cache.blocksize = cf_.lineSize_;
+        typeInfo.cache.num_blocks = cf_.numLines_;
 
         directoryLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        directoryLink_->addTypeInfo(typeInfo);
     } else {
         directoryLink_ = NULL;
     }

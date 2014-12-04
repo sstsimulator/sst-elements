@@ -89,10 +89,21 @@ void MemNIC::init(unsigned int phase)
 {
     link_control->init(phase);
     if ( !phase ) {
-        InitMemRtrEvent *ev = new InitMemRtrEvent(comp->getName(),
-                ci.network_addr, ci.type, ci.typeInfo);
-        ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
-        link_control->sendInitData(ev);
+        InitMemRtrEvent *ev;
+        if ( typeInfoList.empty() ) {
+            ev = new InitMemRtrEvent(comp->getName(),
+                    ci.network_addr, ci.type);
+            ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
+            link_control->sendInitData(ev);
+        } else {
+            for ( std::vector<ComponentTypeInfo>::iterator i = typeInfoList.begin() ;
+                    i != typeInfoList.end() ; ++i ) {
+                ev = new InitMemRtrEvent(comp->getName(),
+                        ci.network_addr, ci.type, *i);
+                ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
+                link_control->sendInitData(ev);
+            }
+        }
         dbg.debug(_L10_, "Sent init data!\n");
     }
     while ( SST::Event *ev = link_control->recvInitData() ) {
@@ -100,17 +111,17 @@ void MemNIC::init(unsigned int phase)
         if ( imre ) {
             dbg.debug(_L10_, "Creating IMRE for %d (%s)\n", imre->address, imre->name.c_str());
             addrMap[imre->name] = imre->address;
+
             ComponentInfo ci;
             ci.name = imre->name;
             ci.network_addr = imre->address;
             ci.type = imre->compType;
-            ci.typeInfo = imre->compInfo;
-            peers.push_back(ci);
+            peers.push_back(std::make_pair(ci, imre->compInfo));
 
-	    // save a copy for directory controller lookups later
-	    if (ci.type == MemNIC::TypeDirectoryCtrl) {
-	      directories.push_back(ci);
-	    }
+            // save a copy for directory controller lookups later
+            if (ci.type == MemNIC::TypeDirectoryCtrl) {
+                directories[imre->compInfo.addrRange] = imre->name;
+            }
         } else {
             initQueue.push_back(static_cast<MemRtrEvent*>(ev));
         }
@@ -147,25 +158,12 @@ MemEvent* MemNIC::recvInitData(void)
 
 std::string MemNIC::findTargetDirectory(Addr addr)
 {
-  for ( std::vector<MemNIC::ComponentInfo>::const_iterator i = directories.begin() ;
-	i != directories.end() ; ++i ) {
-    const MemNIC::ComponentTypeInfo &di = i->typeInfo;
-    //dbg.debug(_L10_, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
-    //        addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
-    if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
-      if ( 0 == di.dirctrl.interleaveSize ) {
-	return i->name;
-      } else {
-	Addr temp = addr - di.dirctrl.rangeStart;
-	Addr offset = temp % di.dirctrl.interleaveStep;
-	if ( offset < di.dirctrl.interleaveSize ) {
-	  return i->name;
-	}
-      }
+    for ( std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string>::const_iterator i = directories.begin() ;
+            i != directories.end() ; ++i ) {
+        if ( i->first.contains(addr) ) return i->second;
     }
-  }
-  _abort(DMAEngine, "Unable to find directory for address 0x%"PRIx64"\n", addr);
-  return "";
+    _abort(DMAEngine, "Unable to find directory for address 0x%"PRIx64"\n", addr);
+    return "";
 }
 
 
