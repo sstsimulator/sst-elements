@@ -50,8 +50,12 @@ private:
 	uint32_t requestsPending;
 	uint64_t cacheLine;
 
-	uint64_t requestsIssued;
-	uint64_t splitRequestsIssued;
+	uint64_t readRequestsIssued;
+	uint64_t splitReadRequestsIssued;
+	uint64_t writeRequestsIssued;
+	uint64_t splitWriteRequestsIssued;
+	uint64_t cyclesWithoutIssue;
+	uint64_t cyclesWithIssue;
 
 	bool printStats;
 

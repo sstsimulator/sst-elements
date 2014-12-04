@@ -74,8 +74,12 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	cacheLine = (uint64_t) params.find_integer("cache_line_size", 64);
 
-	requestsIssued = 0;
-	splitRequestsIssued = 0;
+	readRequestsIssued = 0;
+	splitReadRequestsIssued = 0;
+	writeRequestsIssued = 0;
+	splitWriteRequestsIssued = 0;
+	cyclesWithIssue = 0;
+	cyclesWithoutIssue = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
@@ -91,8 +95,22 @@ void RequestGenCPU::finish() {
 	out->output("------------------------------------------------------------------------\n");
 	out->output("Miranda CPU Statistics:\n");
 	out->output("\n");
-	out->output("Requests issued:                       %" PRIu64 "\n", requestsIssued);
-	out->output("Split Requests issued:                 %" PRIu64 "\n", splitRequestsIssued);
+	out->output("Total requests issued:                 %" PRIu64 "\n",
+		(readRequestsIssued + (splitReadRequestsIssued * 2)+
+		writeRequestsIssued + (splitWriteRequestsIssued * 2)));
+	out->output("Total split Requests issued:           %" PRIu64 "\n",
+		(splitReadRequestsIssued + splitWriteRequestsIssued));
+	out->output("Total read (split + non-split):        %" PRIu64 "\n",
+		(readRequestsIssued + splitReadRequestsIssued ));
+	out->output("Total write (split + non-split):       %" PRIu64 "\n",
+		(writeRequestsIssued + splitWriteRequestsIssued ));
+	out->output("Non-split read requests:               %" PRIu64 "\n", readRequestsIssued);
+	out->output("Non-split write requests:              %" PRIu64 "\n", writeRequestsIssued);
+	out->output("Split read requests:                   %" PRIu64 "\n", splitReadRequestsIssued);
+	out->output("Split write requests:                  %" PRIu64 "\n", splitWriteRequestsIssued);
+	out->output("\n");
+	out->output("Cycles with request issues:            %" PRIu64 "\n", cyclesWithIssue);
+	out->output("Cycles without request issue:          %" PRIu64 "\n", cyclesWithoutIssue);
 	out->output("------------------------------------------------------------------------\n");
 	out->output("\n");
 }
@@ -151,7 +169,11 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 		requestsPending += 2;
 
 		// Keep track of split requests
-		splitRequestsIssued++;
+		if(isRead) {
+			splitReadRequestsIssued++;
+		} else {
+			splitWriteRequestsIssued++;
+		}
 	} else {
 		// This is not a split laod, i.e. issue in a single transaction
 		SimpleMem::Request* request = new SimpleMem::Request(
@@ -161,13 +183,16 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 		cache_link->sendRequest(request);
 
 		requestsPending++;
+
+		if(isRead) {
+			readRequestsIssued++;
+		} else {
+			writeRequestsIssued++;
+		}
 	}
 
 	// Mark request as issued
 	req->markIssued();
-
-	// Increment requests issued
-	requestsIssued++;
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
@@ -193,8 +218,12 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	if(requestsPending < maxRequestsPending) {
 		out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");
 		issueRequest(nextReq);
+
+		cyclesWithIssue++;
 	} else {
 		out->verbose(CALL_INFO, 4, 0, "Will not issue, not free slots in load/store unit.\n");
+
+		cyclesWithoutIssue++;
 	}
 
 	return false;

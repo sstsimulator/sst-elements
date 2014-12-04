@@ -32,10 +32,16 @@ RandomGenerator::~RandomGenerator() {
 void RandomGenerator::nextRequest(RequestGeneratorRequest* req) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
-	const uint64_t addr = (rng->generateNextUInt64() % maxAddr) / reqLength;
+	const uint64_t rand_addr = rng->generateNextUInt64();
+	// Ensure we have a reqLength aligned request
+	const uint64_t addr_under_limit = (rand_addr % maxAddr);
+	const uint64_t addr = (addr_under_limit < reqLength) ? addr_under_limit :
+		(rand_addr % maxAddr) - (rand_addr % reqLength);
+
+	const double op_decide = rng->nextUniform();
 
 	// Populate request
-	req->set(addr, reqLength, READ);
+	req->set(addr, reqLength, (op_decide < 0.5) ? READ : WRITE);
 
 	issueCount--;
 }
