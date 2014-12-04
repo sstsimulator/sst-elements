@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#for sdl in sdl*.xml ;
+#for sdl in sdl*.py ;
 #do
 #    echo ${sdl}
 #    rm -f ${sdl}.new
@@ -21,7 +21,7 @@ runCmd() {
 
 export -f runCmd
 
-find . -maxdepth 1 -name sdl\*.xml -print0 | xargs -0 -n 1 -P 4 bash -c 'runCmd "$0"'
+find . -maxdepth 1 -name sdl\*.py -print0 | xargs -0 -n 1 -P 4 bash -c 'runCmd "$0"'
 
 
 
