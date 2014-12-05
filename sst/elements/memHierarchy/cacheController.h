@@ -302,6 +302,7 @@ private:
         vector<int> statGroupIds_;
         bool allNoncacheableRequests_;
         SimTime_t maxWaitTime;
+        bool upperSliced;
     };
     
     CacheConfig             cf_;
@@ -313,7 +314,7 @@ private:
     MemNIC*                 directoryLink_;
     Output*                 d_;
     Output*                 d2_;
-    string                  nextLevelCacheName_;
+    vector<string>*         nextLevelCacheNames_;
     bool                    L1_;
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
@@ -340,7 +341,7 @@ private:
     bool                    clockOn_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
- 	std::map<string, LinkId_t>     nameMap_;
+    std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
 
 

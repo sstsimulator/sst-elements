@@ -354,7 +354,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     MemEvent* forwardEvent;
     forwardEvent = new MemEvent(*_event);
     forwardEvent->setSrc(((Component*)owner_)->getName());
-    forwardEvent->setDst(nextLevelCacheName_);
+    forwardEvent->setDst(getDestination(_baseAddr));
     forwardEvent->setSize(_lineSize);
     
     /* Determine latency in cycles */
@@ -387,7 +387,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
 
 void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine, string _origRqstr){
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, _cacheLine->getBaseAddr(), _cacheLine->getBaseAddr(), _cmd);
-    newCommandEvent->setDst(nextLevelCacheName_);
+    newCommandEvent->setDst(getDestination(_cacheLine->getBaseAddr()));
     if(_cmd == PutM || _cmd == PutX){
         newCommandEvent->setSize(_cacheLine->getLineSize());
         newCommandEvent->setPayload(*_cacheLine->getData());
@@ -414,6 +414,21 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
 }
 
 
+void MESIBottomCC::setNextLevelCache(vector<string>* _nlc) {
+    nextLevelCacheNames_ = _nlc; 
+}
+
+string MESIBottomCC::getDestination(Addr baseAddr) {
+    if (nextLevelCacheNames_->size() == 1) {
+        return nextLevelCacheNames_->front();
+    } else if (nextLevelCacheNames_->size() > 1) {
+        // round robin for now
+        int index = (baseAddr/lineSize_) % nextLevelCacheNames_->size();
+        return (*nextLevelCacheNames_)[index];
+    } else {
+        return "";
+    }
+}
 
 void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency){
     Output* dbg = new Output();

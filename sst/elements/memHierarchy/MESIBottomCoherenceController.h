@@ -120,7 +120,10 @@ public:
     void printStats(int _statsFile, vector<int> _statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency);
     
     /** Sets the name of the next level cache */
-    void setNextLevelCache(string _nlc){ nextLevelCacheName_ = _nlc; }
+    void setNextLevelCache(vector<string> * _nlc);
+    
+    /** Hashes address to find correct destination cache */
+    string getDestination(Addr baseAddr);
 
     /** Create MemEvent and send NACK cmd to HgLvl caches */
     void sendNACK(MemEvent*);
@@ -153,7 +156,7 @@ private:
     vector<int>         statGroupIds_;
     
     string              ownerName_;
-    string              nextLevelCacheName_;
+    vector<string>*     nextLevelCacheNames_;
 
     int                 groupId_;
     uint32_t            groupId_timestamp_;

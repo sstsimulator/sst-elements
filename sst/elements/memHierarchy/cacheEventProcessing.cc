@@ -150,19 +150,25 @@ void Cache::handleSelfEvent(SST::Event* _event){
 
 
 void Cache::init(unsigned int _phase){
-    
     SST::Event *ev;
-    if(directoryLink_) directoryLink_->init(_phase);
+    if(directoryLink_) {
+        directoryLink_->init(_phase);
+    }
     
     if(!_phase){
-        if(L1_) for(uint idc = 0; idc < highNetPorts_->size(); idc++) highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-        else{
-            for(uint i = 0; i < highNetPorts_->size(); i++)
+        if(L1_) {
+            for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
+                highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+            }
+        } else{
+            for(uint i = 0; i < highNetPorts_->size(); i++) {
                 highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
+            }
         }
         if(!cf_.dirControllerExists_){
-            for(uint i = 0; i < lowNetPorts_->size(); i++)
+            for(uint i = 0; i < lowNetPorts_->size(); i++) {
                 lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
+            }
         }
         
     }
@@ -172,10 +178,14 @@ void Cache::init(unsigned int _phase){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
             if(!memEvent) delete memEvent;
             else{
-                if(cf_.dirControllerExists_) directoryLink_->sendInitData(new MemEvent(*memEvent));
+                if(cf_.dirControllerExists_) 
+                {
+                    directoryLink_->sendInitData(new MemEvent(*memEvent));
+                }
                 else{
-                    for(uint idp = 0; idp < lowNetPorts_->size(); idp++)
+                    for(uint idp = 0; idp < lowNetPorts_->size(); idp++) {
                         lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
+                    }
                 }
             }
             delete memEvent;
@@ -187,7 +197,9 @@ void Cache::init(unsigned int _phase){
             while ((ev = lowNetPorts_->at(i)->recvInitData())){
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
                 if(!memEvent) delete memEvent;
-                else if(memEvent->getCmd() == NULLCMD) nextLevelCacheName_ = memEvent->getSrc();
+                else if(memEvent->getCmd() == NULLCMD) {
+                    nextLevelCacheNames_->push_back(memEvent->getSrc());
+                }
                 delete memEvent;
             }
         }
@@ -196,7 +208,8 @@ void Cache::init(unsigned int _phase){
 
 
 void Cache::setup(){
-    bottomCC_->setNextLevelCache(nextLevelCacheName_);
+    if (nextLevelCacheNames_->size() == 0) nextLevelCacheNames_->push_back(""); // avoid segfault on accessing this
+    bottomCC_->setNextLevelCache(nextLevelCacheNames_);
 }
 
 

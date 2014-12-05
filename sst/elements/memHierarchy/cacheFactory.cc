@@ -158,12 +158,13 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(d_, cf_.MSHRSize_);
-    mshrNoncacheable_       = new MSHR(d_, HUGE_MSHR);
+    mshrNoncacheable_   = new MSHR(d_, HUGE_MSHR);
     
     /* ---------------- Links ---------------- */
     lowNetPorts_        = new vector<Link*>();
     highNetPorts_       = new vector<Link*>();
-    
+
+    nextLevelCacheNames_ = new vector<string>; 
     /* ---------------- Clock ---------------- */
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
     defaultTimeBase_    = registerClock(cf_.cacheFrequency_, clockHandler_);
