@@ -80,6 +80,8 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	splitWriteRequestsIssued = 0;
 	cyclesWithIssue = 0;
 	cyclesWithoutIssue = 0;
+	bytesRead = 0;
+	bytesWritten = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
@@ -93,7 +95,7 @@ void RequestGenCPU::finish() {
 	if(printStats) return;
 
 	out->output("------------------------------------------------------------------------\n");
-	out->output("Miranda CPU Statistics:\n");
+	out->output("Miranda CPU Statistics (%s):\n", getName().c_str());
 	out->output("\n");
 	out->output("Total requests issued:                 %" PRIu64 "\n",
 		(readRequestsIssued + (splitReadRequestsIssued * 2)+
@@ -108,6 +110,9 @@ void RequestGenCPU::finish() {
 	out->output("Non-split write requests:              %" PRIu64 "\n", writeRequestsIssued);
 	out->output("Split read requests:                   %" PRIu64 "\n", splitReadRequestsIssued);
 	out->output("Split write requests:                  %" PRIu64 "\n", splitWriteRequestsIssued);
+	out->output("\n");
+	out->output("Total bytes read:                      %" PRIu64 "\n", bytesRead);
+	out->output("Total bytes written:                   %" PRIu64 "\n", bytesWritten);
 	out->output("\n");
 	out->output("Cycles with request issues:            %" PRIu64 "\n", cyclesWithIssue);
 	out->output("Cycles without request issue:          %" PRIu64 "\n", cyclesWithoutIssue);
@@ -134,6 +139,12 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 
 	out->verbose(CALL_INFO, 4, 0, "Issue request: address=%" PRIu64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
 		reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
+
+	if(isRead) {
+		bytesRead += reqLength;
+	} else {
+		bytesWritten += reqLength;
+	}
 
 	if(lineOffset + reqLength > cacheLine) {
 		// Request is for a split operation (i.e. split over cache lines)

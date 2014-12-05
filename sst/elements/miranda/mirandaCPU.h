@@ -56,6 +56,8 @@ private:
 	uint64_t splitWriteRequestsIssued;
 	uint64_t cyclesWithoutIssue;
 	uint64_t cyclesWithIssue;
+	uint64_t bytesRead;
+	uint64_t bytesWritten;
 
 	bool printStats;
 
