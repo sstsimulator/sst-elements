@@ -39,7 +39,7 @@ struct logInfo {  //information about one type of log that can be created
 
 const logInfo supportedLogs[] = {
     {"time", "\n# Job \tArrival\tStart\tEnd\tRun\tWait\tResp.\tProcs\n"},
-    {"alloc", "\n# Job\tProcs\tActual Time\t Avg Pairwise L1 Distance\n"},
+    {"alloc", "\n# Job\tProcs\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"}
@@ -47,7 +47,7 @@ const logInfo supportedLogs[] = {
 
 const logInfo supportedLogsFST[] = {
     {"time", "\n# Job \tArrival\tStart\tEnd\tRun\tWait\tResp.\tProcs\tFST\n"},
-    {"alloc", "\n# Procs Needed\tActual Time\t Avg Pairwise L1 Distance\n"},
+    {"alloc", "\n# Procs Needed\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"}
@@ -262,7 +262,7 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
     if (NULL == calcFST) {
         sprintf(mesg, "%ld\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%d\n",
                 jobNum,                           //Job Num
-                arrival,			      //Arrival time
+                arrival,                  //Arrival time
                 startTime,                        //Start time(currentTime)
                 time,                             //End time
                 runtime,                          //Run time
@@ -273,14 +273,14 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
     } else {
         sprintf(mesg, "%ld\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%d\t%lu\n",
                 jobNum,                           //Job Num
-                arrival,			      //Arrival time
+                arrival,                  //Arrival time
                 startTime,                        //Start time(currentTime)
                 time,                             //End time
                 runtime,                          //Run time
                 (startTime - arrival),            //Wait time
                 (time - arrival),                 //Response time
                 procsneeded,                      //Processors needed
-                calcFST -> getFST(jobNum));    //FST	                    
+                calcFST -> getFST(jobNum));    //FST                        
     }
     appendToLog(mesg, supportedLogs[TIME].logName);
 }
@@ -290,12 +290,12 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
 void Statistics::writeAlloc(TaskMapInfo* tmi) 
 {
     char mesg[100];
-    int num = tmi -> job -> getProcsNeeded();
-    sprintf(mesg, "%ld\t%d\t%lu\t%f\n",
-            tmi -> job -> getJobNum(),
-            num,
-            tmi -> job -> getActualTime(),
-            tmi -> getAvgHopDist() );
+    sprintf(mesg, "%ld\t%d\t%lu\t%f\t%f\n",
+            tmi->job-> getJobNum(),
+            tmi->job->getProcsNeeded(),
+            tmi->job->getActualTime(),
+            tmi->getAvgHopDist(),
+            tmi->getMaxJobCongestion() );
     appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
 
