@@ -46,7 +46,7 @@ public:
 	    out.output("\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
 
     	out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
-    	for(uint64_t i = requestsPendingCycle->getBinStart(); i <= requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
+    	for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
             out.output("  [%" PRIu64 ", %" PRIu64 "]  %" PRIu64 "\n",
 	    	i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinCountByBinStart(i));
 	}
