@@ -82,7 +82,9 @@ void ArielMemoryManager::populateTables(const char* populateFilePath, const uint
 	const uint64_t levelPageSize = pageSizes[level];
 
 	while( ! feof(popFile) ) {
-		fscanf(popFile, "%" PRIu64 "\n", &pinAddr);
+		if(EOF == fscanf(popFile, "%" PRIu64 "\n", &pinAddr)) {
+			break;
+		}
 
 		if(freePages[level]->size() == 0) {
 			output->fatal(CALL_INFO, -1, "Attempted to pin address %" PRIu64 " in level %" PRIu32 " but no free pages.\n",
