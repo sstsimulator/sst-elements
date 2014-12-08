@@ -291,4 +291,17 @@ void ArielMemoryManager::printStats() {
 	output->output("Translation Cache Evicts:         %" PRIu64 "\n", translationCacheEvicts);
 	output->output("Translation Cache Shoot down:     %" PRIu64 "\n", translationShootdown);
 	output->output("Total Page Allocations Performed: %" PRIu64 "\n", pageAllocationCount);
+	output->output("Page Table Sizes:\n");
+
+	for(uint32_t i = 0; i < memoryLevels; ++i) {
+	output->output("- Map entries at level %" PRIu32 "         %" PRIu32 "\n",
+		i, (uint32_t) pageTables[i]->size());
+	}
+
+	output->output("Page Table Coverages:\n");
+
+	for(uint32_t i = 0; i < memoryLevels; ++i) {
+	output->output("- Bytes at level %" PRIu32 "              %" PRIu64 "\n",
+		i, ((uint64_t) pageTables[i]->size()) * ((uint64_t) pageSizes[i]));
+	}
 }
