@@ -37,42 +37,42 @@ namespace MemHierarchy {
 class trivialCPU : public SST::Component {
 public:
 
-	trivialCPU(SST::ComponentId_t id, SST::Params& params);
-	void init();
-	void finish() {
-		out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
-				getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
-        	if ( noncacheableReads || noncacheableWrites )
-            		out.output("\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
+    trivialCPU(SST::ComponentId_t id, SST::Params& params);
+    void init();
+    void finish() {
+    	out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
+    		getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
+    	if ( noncacheableReads || noncacheableWrites )
+	    out.output("\t%zu Noncacheable Reads\n\t%zu Noncacheable Writes\n", noncacheableReads, noncacheableWrites);
 
-		out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
-		for(uint64_t i = requestsPendingCycle->getBinStart(); i < requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
-			out.output("  [%" PRIu64 ", %" PRIu64 "]  %" PRIu64 "\n",
-			i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinCountByBinStart(i));
-		}
+    	out.output("Number of Pending Requests per Cycle (Binned by 2 Requests)\n");
+    	for(uint64_t i = requestsPendingCycle->getBinStart(); i <= requestsPendingCycle->getBinEnd(); i += requestsPendingCycle->getBinWidth()) {
+            out.output("  [%" PRIu64 ", %" PRIu64 "]  %" PRIu64 "\n",
+	    	i, i + requestsPendingCycle->getBinWidth(), requestsPendingCycle->getBinCountByBinStart(i));
 	}
+    }
 
 private:
-	trivialCPU();  // for serialization only
-	trivialCPU(const trivialCPU&); // do not implement
-	void operator=(const trivialCPU&); // do not implement
-	void init(unsigned int phase);
+    trivialCPU();  // for serialization only
+    trivialCPU(const trivialCPU&); // do not implement
+    void operator=(const trivialCPU&); // do not implement
+    void init(unsigned int phase);
 
-	void handleEvent( Interfaces::SimpleMem::Request *ev );
-	virtual bool clockTic( SST::Cycle_t );
+    void handleEvent( Interfaces::SimpleMem::Request *ev );
+    virtual bool clockTic( SST::Cycle_t );
 
     Output out;
     int numLS;
-	int commFreq;
-	bool do_write;
-	uint64_t maxAddr;
-	uint64_t num_reads_issued, num_reads_returned;
+    int commFreq;
+    bool do_write;
+    uint64_t maxAddr;
+    uint64_t num_reads_issued, num_reads_returned;
     uint64_t noncacheableRangeStart, noncacheableRangeEnd;
     uint64_t clock_ticks;
     size_t noncacheableReads, noncacheableWrites;
     Histogram<uint64_t, uint64_t>* requestsPendingCycle;
 
-	std::map<uint64_t, SimTime_t> requests;
+    std::map<uint64_t, SimTime_t> requests;
 
     Interfaces::SimpleMem *memory;
 
