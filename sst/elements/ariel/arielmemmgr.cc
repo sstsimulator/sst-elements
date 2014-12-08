@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <stdio.h>
 
 #include "arielmemmgr.h"
 
@@ -76,8 +77,31 @@ void ArielMemoryManager::populateTables(const char* populateFilePath, const uint
 	// We need to load each entry and the create it in the page table for
 	// this level
 	FILE* popFile = fopen(populateFilePath, "rt");
+	uint64_t pinAddr = 0;
 
-	
+	const uint64_t levelPageSize = pageSizes[level];
+
+	while( ! feof(popFile) ) {
+		fscanf(popFile, "%" PRIu64 "\n", &pinAddr);
+
+		if(freePages[level]->size() == 0) {
+			output->fatal(CALL_INFO, -1, "Attempted to pin address %" PRIu64 " in level %" PRIu32 " but no free pages.\n",
+				pinAddr, level);
+		}
+
+		if(pinAddr % levelPageSize > 0) {
+			output->fatal(CALL_INFO, -1, "Attempted to pin address %" PRIu64 " in level %" PRIu32 " but address is not page aligned to page size %" PRIu64 "\n",
+				pinAddr, level, levelPageSize);
+		}
+
+		const uint64_t freePhysical = freePages[level]->front();
+		freePages[level]->pop();
+
+		output->verbose(CALL_INFO, 4, 0, "Pinning address %" PRIu64 " in level %" PRIu32 " (physical=%" PRIu64 "\n",
+			pinAddr, level, freePhysical);
+
+		pageTables[level]->insert( std::pair<uint64_t, uint64_t>( pinAddr, freePhysical ) );
+	}
 
 	fclose(popFile);
 }
