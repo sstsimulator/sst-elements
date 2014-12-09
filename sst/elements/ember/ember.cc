@@ -42,6 +42,7 @@
 #include "motifs/emberhalo3d26.h"
 #include "motifs/ember3dcommdbl.h"
 #include "motifs/embercomm.h"
+#include "motifs/ember3damr.h"
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -58,6 +59,11 @@ create_EmberComponent(SST::ComponentId_t id,
 static Module*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
+}
+
+static Module*
+load_3DAMR( Component* comp, Params& params ) {
+	return new Ember3DAMRGenerator(comp, params);
 }
 
 static Module*
@@ -209,6 +215,13 @@ static const ElementInfoPort component_ports[] = {
 static const ElementInfoParam pingpong_params[] = {
     	{	"messageSize",		"Sets the message size of the ping pong operation",	"1024"},
 	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam amr3d_params[] = {
+    	{	"messageSize",		"Sets the message size of the ping pong operation",	"1024"},
+	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"blockfile",		"File containing the 3D AMR blocks (from MiniAMR)", 	"blocks.amr"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -414,6 +427,15 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_CommDoubling,
 	commdbl_params,
+	"SST::Ember::EmberGenerator"
+    },
+    {
+	"3DAMRMotif",
+	"Models an adaptive refinement step from MiniAMR",
+	NULL,
+	NULL,
+	load_3DAMR,
+	amr3d_params,
 	"SST::Ember::EmberGenerator"
     },
     {

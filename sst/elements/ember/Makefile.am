@@ -61,6 +61,8 @@ libember_la_SOURCES = \
 	emberCommSplitEv.h \
 	motifs/ember3dcommdbl.h \
 	motifs/ember3dcommdbl.cc \
+	motifs/ember3damr.h \
+	motifs/ember3damr.cc \
 	motifs/embernull.h  \
 	motifs/emberhalo1d.h  \
 	motifs/emberhalo1d.cc  \
