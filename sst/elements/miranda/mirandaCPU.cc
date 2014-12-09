@@ -1,6 +1,7 @@
 
 #include <sst_config.h>
 #include <sst/core/simulation.h>
+#include <sst/core/unitAlgebra.h>
 
 #include "mirandaGenerator.h"
 #include "mirandaCPU.h"
@@ -113,6 +114,30 @@ void RequestGenCPU::finish() {
 	out->output("\n");
 	out->output("Total bytes read:                      %" PRIu64 "\n", bytesRead);
 	out->output("Total bytes written:                   %" PRIu64 "\n", bytesWritten);
+
+	const uint64_t nanoSeconds = getCurrentSimTimeNano();
+	out->output("Nanoseconds:                           %" PRIu64 "\n", nanoSeconds);
+
+	const double seconds = ((double) nanoSeconds) / (1.0e9);
+	out->output("Seconds:                               %f\n", seconds);
+
+	char bufferRead[32];
+	sprintf(bufferRead, "%f B/s", ((double) bytesRead / seconds));
+
+	char bufferWrite[32];
+	sprintf(bufferWrite, "%f B/s", ((double) bytesWritten / seconds));
+
+	char bufferCombined[32];
+	sprintf(bufferCombined, "%f B/s", ((double)(bytesRead + bytesWritten) / seconds));
+
+	UnitAlgebra readBandwidth(bufferRead);
+	UnitAlgebra writeBandwidth(bufferWrite);
+	UnitAlgebra combinedBandwidth(bufferCombined);
+
+	out->output("CPU Bandwidth (read):                  %s\n", readBandwidth.toStringBestSI().c_str());
+	out->output("CPU Bandwidth (write):                 %s\n", writeBandwidth.toStringBestSI().c_str());
+	out->output("CPU Bandwidth (combined):              %s\n", combinedBandwidth.toStringBestSI().c_str());
+
 	out->output("\n");
 	out->output("Cycles with request issues:            %" PRIu64 "\n", cyclesWithIssue);
 	out->output("Cycles without request issue:          %" PRIu64 "\n", cyclesWithoutIssue);
