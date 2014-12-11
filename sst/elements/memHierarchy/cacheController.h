@@ -348,10 +348,9 @@ private:
 };
 
 /*  Implementation Details
-    The coherency implemented by MemHierarchy's 'Cache' component is a directory-based intra-node MESI/MSI coherency
-    similar to modern processors like Intel sandy bridge and ARM CCI.  Intra-node Directory-based coherency
-    in the common norm nowadays given that fact that snoopy-based systems do not scale well beyond 3-4 cores.
-    The class "Directory Controller" implements a directory-based inter-node coherency and needs to 
+    The coherence protocol implemented by MemHierarchy's 'Cache' component is a directory-based intra-node MESI/MSI coherency
+    similar to modern processors like Intel sandy bridge and ARM CCI.  Intra-node Directory-based protocols.
+    The class "Directory Controller" implements directory-based inter-node coherence and needs to 
     be used along "Merlin", our interconnet network simulator (Contact Scott Hemmert about Merlin).
  
     The Cache class serves as the main cache controller.  It is in charge or handling incoming
@@ -363,16 +362,17 @@ private:
         - Replacement Manager:  Class handles work related to the replacement policy of the cache.  
         Similar to Cache Array, this class is OO-based so different replacement policies are simply
         subclasses of the main based abstrac class (ReplacementMgr), therefore they need to implement 
-        certain functions in order for them to work properly.
+        certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru), 
+        least-frequently-used (lfu), most-recently-used (mru), random, and not-most-recently-used (nmru).
  
         - Hash:  Class implements common hashing functions.  These functions are used by the Cache Array
         class.  For instance, a typical set associative array uses a simple hash function, whereas
         skewed associate and ZCaches use more advanced hashing functions.
  
-        - MSHR:  Inner class that represents a hardware Miss Status Handling Register (or Miss Status Holding
-        Register, depending on where you learned caches).  Noncacheable requests used a separate MSHR
-        for simplicity.
-        The MSHR is a map of <addr, vector<UNION(event, addr pointer)> >.  
+        - MSHR:  Class that represents a hardware Miss Status Handling Register (or Miss Status Holding
+        Register).  Noncacheable requests use a separate MSHR for simplicity.
+
+        The MSHR is a map of <addr, vector<UNION(event, addr pointer)> >. 
         Why a UNION(event, addr pointer)?  Upon receiving a miss request, all cache line replacement candidates 
         might be in transition, regardless of the replacement policy and associativity used.  Instead
         of sending NACKS (which is inefficient), the MSHR stores a pointer in the MSHR entry.  When a 
@@ -396,26 +396,24 @@ private:
     pending requests in the MSHR.  The MSHR is in charge of "replaying" pending requests once
     the cache line is in a stable state. 
  
-    Coherency-related algorithms are broken down into a Top Cache Coherence (topCC) controller and a
-    Bottom Cache Coherence (bottomCC) Controllers.  As the name suggests,  the topCC handles
-    requests sent to the Higher Level caches (closer to CPU), which could be invalidates, and
+    Coherence-related algorithms are broken down into a Top Cache Coherence (topCC) controller and a
+    Bottom Cache Coherence (bottomCC) controller.  As the name suggests,  the topCC handles
+    requests sent to the higher level caches (closer to CPU), which could be invalidates, and
     responses.  Whereas bottomCC deals with "Cache Lines" to store state and data information, topCC
-    deals with "CCLine" stores cache coherency based information, mainly sharers, owners, and atomic-related
+    deals with "CCLine" and stores coherence state, mainly sharers, owners, and atomic-related
     information.  BottomCC handles upgrades, and makes sure a request only proceeds if the cache holds
     the right state.  It also sends responses if the request came from the directory controller.
     
-    Prefetchers are part of SST's Cassini element, not part of MemHierarchy.  Prefetcher can be used along
-    any level cache, although they are commonly placed along an L2.
+    Prefetchers are part of SST's Cassini element, not part of MemHierarchy.  Prefetchers can be used along
+    any level cache. Prefetch does not currently work alongside a shared, sliced caches.
     
  
     Key notes:
-        - MemHierarchy's CClines always have deterministic information about the sharers, as opposed to 
-        more advance researchy directory-based coherency schemes (read "A Tagless Coherence Directory") 
-        where they try to reduce area and sharer space by making sharer information not always deterministic.
+        - MemHierarchy's CClines always have deterministic information about the sharers.
         
-        - In case of deadlock situations (tons of them), the lower level cache has priority.  For instance,
-        if a L2 sends invalidate to an L1, while at the same time an L1 sends an upgrade request to an L2, the
-        L2 has priority.  The L1 request is store in the L2 MSHR to be handled at a later time.
+        - In case of deadlock situations, the lower level cache has priority.  For instance,
+        if an L2 sends an invalidate to an L1, while at the same time an L1 sends an upgrade request to an L2, the
+        L2 has priority.  The L1 request is stored in the L2 MSHR to be handled at a later time.
         
         - The cache supports hardware "locking" (GetSEx command), and atomics-based requests (LLSC, GetS with 
         LLSC flag on).  For LLSC atomics, the flag "LLSC_Resp" is set when a store (GetX) was successful.
@@ -430,8 +428,11 @@ private:
         Once a responce comes from Memory (or LwLvl caches), the MSHR is looked up and it takes "MSHR_hit_latency" to
         send that request to the higher level caches, instead of taking another "access_latency" cycles which would
         normally take quite longer.
- 
-        - A "Bus" component is only needed in between two caches when there is more than one higher level cache.
+        
+        - To avoid deadlock, at least one MSHR is always reserved for requests from lower levels (e.g., Invs). 
+        Therefore, each cache requires a minimum of two MSHRs (one for sending, one for receiving).
+
+        - A "Bus" component is only needed between two caches when there is more than one higher level cache.
           Eg.  L1  L1 <-- bus --> L2.  When a single L1 connects directly to an L2, no bus is needed.
     
         - An L1 cache handles as many requests sent by the CPU per cycle.  However, only one request is sent
@@ -443,15 +444,10 @@ private:
         IE.  Cache hits are more common than Cache misses (when blocked Event exceptions get thrown).
         
         - Class member variables have a suffix "_", while function parameters have it as a preffix.
-          This convention is highly praised by David Cheriton, a genious in simulators, and CS professor
-          at Stanford (oh and... billionarie!).
         
         - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window 
-          (comments should not interfere with the actual code!!)
  
         - TODO:
-            - Directory Controller (DC) needs to use an MSHR to handle pending, blocked requests.
-              Current DC implementation is inefficient.
             - L2, and L3 should go to "sleep" (no clock tick handler) when they are idle.  This will improve
               SST performance.
             - Create a 'simplistic' memHierarchy model, one that does not measures contentions and sends requests

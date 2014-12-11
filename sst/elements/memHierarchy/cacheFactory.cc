@@ -26,7 +26,6 @@
 #include <boost/lexical_cast.hpp>
 #include "mshr.h"
 
-#define N   200
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
@@ -87,7 +86,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     if(-1 == mshrSize)          mshrSize = HUGE_MSHR;
     
     /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
-    if(mshrSize < 2)            _abort(Cache, "MSHR requires at least 2 entries to avoid deadlock and realistically should have at least 10 entries\n");
+    if(mshrSize < 2)            _abort(Cache, "MSHR requires at least 2 entries to avoid deadlock\n");
 
     
     /* ---------------- Initialization ----------------- */
@@ -136,6 +135,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     string prefetcher   = _params.find_string("prefetcher");
     mshrLatency_        = _params.find_integer("mshr_latency_cycles", 0);
     
+    /* --------------- Check parameters -------------*/
+    if (accessLatency_ < 1) _abort(Cache, "Cache access latency must be at least 1\n");
     
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) {
@@ -149,13 +150,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     /* ---------------- Latency ---------------- */
-    assert(accessLatency_ >= 1);
     if(mshrLatency_ < 1) intrapolateMSHRLatency();
     
-    assert(mshrLatency_ >= 1 && mshrLatency_ <= 200);
-
-
-
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(d_, cf_.MSHRSize_);
     mshrNoncacheable_   = new MSHR(d_, HUGE_MSHR);
@@ -177,7 +173,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
-		myInfo.num_vcs = _params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = _params.find_integer("network_num_vc", 3);
         myInfo.name = getName();
         myInfo.network_addr = _params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache;
@@ -207,8 +203,11 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     upgradeCount_          = 0;
     
     if(groupStats_){
-        for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++)
+        for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {
+            if (i > 0 && (cf_.statGroupIds_[i] == 0 || cf_.statGroupIds_[i] == -1)) 
+                _abort(Cache, "Custom group IDs cannot be 0 or -1\n");
             stats_[cf_.statGroupIds_[i]].initialize();
+        }
     }
         
     /* --------------- Coherence Controllers --------------- */
@@ -266,6 +265,7 @@ void Cache::configureLinks(){
 
 
 void Cache::intrapolateMSHRLatency(){
+    uint64 N = 200; // max cache latency supported by the intrapolation method
     int y[N];
 
     if(L1_){
@@ -274,24 +274,20 @@ void Cache::intrapolateMSHRLatency(){
     }
     
     /* L2 */
-    assert_msg(accessLatency_ > 4, "L2 should have a latency bigger than 4 cycles.");
     y[0] = 0;
     y[1] = 1;
-    for(int idx = 2;  idx < 12; idx++) y[idx] = 2;
-    for(int idx = 13; idx < 16; idx++) y[idx] = 3;
-    for(int idx = 17; idx < 26; idx++) y[idx] = 5;
+    for(uint64 idx = 2;  idx < 12; idx++) y[idx] = 2;
+    for(uint64 idx = 13; idx < 16; idx++) y[idx] = 3;
+    for(uint64 idx = 17; idx < 26; idx++) y[idx] = 5;
 
     
     /* L3 */
-    for(int idx = 27; idx < 46; idx++) y[idx] = 19;
-    for(int idx = 47; idx < 68; idx++) y[idx] = 26;
-    for(int idx = 69; idx < N;  idx++) y[idx] = 32;
+    for(uint64 idx = 27; idx < 46; idx++) y[idx] = 19;
+    for(uint64 idx = 47; idx < 68; idx++) y[idx] = 26;
+    for(uint64 idx = 69; idx < N;  idx++) y[idx] = 32;
     
-    assert_msg(accessLatency_ > 4, "Cache access latencies greater than 200 cycles not supported.");
-
-    assert(accessLatency_ >= 0 && accessLatency_ <= N);
+    assert(accessLatency_ <= N);
     mshrLatency_ = y[accessLatency_];
-        assert(mshrLatency_   >= 1 && mshrLatency_ <= 200);
 
 }
 

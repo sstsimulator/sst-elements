@@ -69,26 +69,37 @@ class DirectoryController : public Component {
     size_t      entryCacheMaxSize;
     size_t      entryCacheSize;
 
-    /* Statistics counters */
+    /* Statistics counters for profiling DC */
     uint64_t    numReqsProcessed;
     uint64_t    totalReqProcessTime;
     uint64_t    numCacheHits;
-    uint64_t    dataReads;
-    uint64_t    dataWrites;
-    uint64_t    dirEntryReads;
-    uint64_t    dirEntryWrites;
-    
+    uint64_t    mshrHits;
+    // Received events - from caches
     uint64_t    GetXReqReceived;
     uint64_t    GetSExReqReceived;
     uint64_t    GetSReqReceived;
-    
     uint64_t    PutMReqReceived;
     uint64_t    PutEReqReceived;
     uint64_t    PutSReqReceived;
     uint64_t    NACKReceived;
+    uint64_t    FetchRespReceived;
+    uint64_t    FetchRespXReceived;
+    uint64_t    PutMRespReceived;
+    uint64_t    PutERespReceived;
+    uint64_t    PutSRespReceived;
+    // Sent events - to mem
+    uint64_t    dataReads;
+    uint64_t    dataWrites;
+    uint64_t    dirEntryReads;
+    uint64_t    dirEntryWrites;
+    // Sent events - to caches
     uint64_t    NACKSent;
+    uint64_t    InvSent;
+    uint64_t    FetchInvSent;
+    uint64_t    FetchInvXSent;
+    uint64_t    GetSRespSent;
+    uint64_t    GetXRespSent;
 
-    uint64_t    mshrHits;
 
     /* Directory structures */
     std::list<DirEntry*>                    entryCache;
@@ -177,7 +188,7 @@ class DirectoryController : public Component {
     void resetEntry(DirEntry *entry);
 
     /** Sends MemEvent to a target */
-    void sendResponse(MemEvent *ev);
+    void sendEventToCaches(MemEvent *ev);
 
     /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
     MemEvent::id_type writebackData(MemEvent *data_event);

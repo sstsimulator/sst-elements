@@ -115,7 +115,6 @@ public:
         }
         
         State getState() const { return state_; }
-        void updateState(){ setState(nextState[state_]); }
         
         void setState(State _newState){
             d_->debug(_L6_, "Changing states: Old state = %s, New State = %s\n", BccLineString[state_], BccLineString[_newState]);

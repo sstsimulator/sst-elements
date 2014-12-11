@@ -100,6 +100,8 @@ public:
     /** Write data to cache line */
     void updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine);
     
+    void updateCoherenceState(CacheLine* _cacheLine, State _grantedState);
+
     /** Wrapper for the other 'forwardMessage' function with a different signature */
     void forwardMessage(MemEvent* _event, CacheLine* cacheLine, vector<uint8_t>* _data);
     

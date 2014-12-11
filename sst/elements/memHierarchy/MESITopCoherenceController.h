@@ -98,6 +98,11 @@ public:
     vector<Link*>*  highNetPorts_;
     uint            NACKsSent_;
     CCLine*         dummyCCLine_;
+    
+    virtual void profileReqSent(Command _cmd, bool _eviction) {
+        if (_cmd == NACK) NACKsSent_++;   
+    }
+    
 };
 
 /*--------------------------------------------------------------------------------------------
@@ -114,9 +119,11 @@ public:
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);
         
-        L1_                 = false;
-        invReqsSent_        = 0, evictionInvReqsSent_ = 0;
-        protocol_           = _protocol;
+        L1_                     = false;
+        invReqsSent_            = 0;
+        evictionInvReqsSent_    = 0;
+        invXReqsSent_           = 0;
+        protocol_               = _protocol;
         ccLines_.resize(numLines_);
         
         for(uint i = 0; i < ccLines_.size(); i++)
@@ -130,8 +137,10 @@ public:
         lowNetworkIdMap_.clear();
     }
     
-    uint            invReqsSent_;
-    uint            evictionInvReqsSent_;
+    // profiling
+    uint invReqsSent_;
+    uint invXReqsSent_;
+    uint evictionInvReqsSent_;
     
     /** Return the specified ccLines array element */
     virtual CCLine* getCCLine(int _index) { return ccLines_[_index];}
@@ -185,6 +194,7 @@ public:
     uint ownerExists(int lineIndex){return ccLines_[lineIndex]->ownerExists();}
     
     bool isCoherenceMiss(MemEvent* event, CacheLine* cacheLine);
+
 private:
     uint                numLines_;
     uint                lowNetworkNodeCount_;
@@ -199,6 +209,8 @@ private:
     
     void sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool _mshrHit);
     void sendCCInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit);
+    
+    void profileReqSent(Command _cmd, bool _eviction, int _num);
     };
 
 }}

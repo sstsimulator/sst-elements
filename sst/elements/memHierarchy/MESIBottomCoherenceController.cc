@@ -56,7 +56,6 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
     bool upgrade;
     setGroupId(_event->getGroupId());
     d_->debug(_L6_,"BottomCC State = %s\n", BccLineString[_cacheLine->getState()]);
-    assert(!_cacheLine->inTransition());   //MSHR should catch this.. but just to make sure
     
     switch(_cmd){
     case GetS:
@@ -116,6 +115,7 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
         d_->debug(_L6_,"Cache line in transition.\n");
         if(_event->getAckNeeded() && _cacheLine->getState() == SM){  //no need to send ACK if state = IM
             inc_InvalidatePUTSReqSent();
+            _cacheLine->setState(IM); 
             sendWriteback(PutS, _cacheLine, _event->getRqstr());
         }
         return;
@@ -137,9 +137,9 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
 
 
 void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLine, MemEvent* _origRequest){
-    _cacheLine->updateState();
-    //printData(d_, "Response Data", &_responseEvent->getPayload());
-    
+   
+    updateCoherenceState(_cacheLine,_responseEvent->getGrantedState());
+
     Command origCmd = _origRequest->getCmd();
     if(!MemEvent::isDataRequest(origCmd)){
         d_->debug(_L3_,"Error:  Request waiting in MSHR has invalid command type.  Internal error. InvalidCommand = %s.\n", CommandString[origCmd]);
@@ -147,16 +147,34 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
     }
 
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
-    if(_cacheLine->getState() == S && _responseEvent->getGrantedState() == E){
-        _cacheLine->setState(E);
+}
+
+
+void MESIBottomCC::updateCoherenceState(CacheLine* _cacheLine, State _grantedState) {
+    State state = _cacheLine->getState();
+    switch (state) {
+        case I:
+            break;
+        case S:
+        case IS:
+            if (_grantedState == E) _cacheLine->setState(E);
+            else _cacheLine->setState(S);
+            break;
+        case E:
+            break;
+        case M:
+        case IM:
+        case SM:
+            _cacheLine->setState(M);
+            break;
+        default:
+            _abort(MemHierarchy::CacheController, "Unrecognized state");
     }
 }
 
 
-
 void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     setGroupId(_event->getGroupId());
-    if(!_cacheLine) return;
     if(_cacheLine->inTransition() && !_event->getAckNeeded()) return;
     
     Command cmd = _event->getCmd();
@@ -261,7 +279,9 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
 }
 
 
-
+/*
+ *  Give up exclusive ownership of block and send writeback if dirty
+ */
 void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
     State state = _cacheLine->getState();
     

@@ -189,14 +189,14 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, string _origR
 
 void MESITopCC::sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool _mshrHit){
     int invalidatesSent = sendInvalidates(_lineIndex, "", _origRqstr, _mshrHit);
-    evictionInvReqsSent_ += invalidatesSent;
+    profileReqSent(Inv, true, invalidatesSent);
 }
 
 
 
 void MESITopCC::sendCCInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit){
     int invalidatesSent = sendInvalidates(_lineIndex, _srcNode, _origRqstr, _mshrHit);
-    invReqsSent_ += invalidatesSent;
+    profileReqSent(Inv, false, invalidatesSent);
 }
 
 
@@ -208,7 +208,6 @@ void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit
     ccLine->setState(InvX_A);
     string ownerName = lowNetworkNodeLookupById(ccLine->getOwnerId());
 
-    invReqsSent_++;
     
     MemEvent* invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), ccLine->getBaseAddr(), InvX);
     invalidateEvent->setAckNeeded();
@@ -219,6 +218,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit
 
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
+    profileReqSent(InvX, false, 1);
     
     d_->debug(_L7_,"InvalidateX sent: Addr = %"PRIx64", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
 }
@@ -256,7 +256,7 @@ void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
         _ret = sendResponse(_event, E, data, _mshrHit);
     }
     
-    /* If exclusive sharer exists, downgrade it to S state */
+    /* If exclusive owner exists, downgrade it to S state */
     else if(l->ownerExists()) {
         d_->debug(_L7_,"GetS Req but exclusive cache exists \n");
         sendInvalidateX(lineIndex, _event->getRqstr(), _mshrHit);
@@ -357,6 +357,7 @@ void MESITopCC::printStats(int _stats){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
     dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, TopCC):                  %u\n", NACKsSent_);
+    dbg->output(CALL_INFO,"- InvalidateX sent                                %u\n", invXReqsSent_);
     dbg->output(CALL_INFO,"- Invalidates sent (non-eviction):                %u\n", invReqsSent_);
     dbg->output(CALL_INFO,"- Invalidates sent due to evictions:              %u\n", evictionInvReqsSent_);
 }
@@ -411,7 +412,7 @@ void TopCacheController::sendNACK(MemEvent *_event){
     Response resp       = {NACKevent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    NACKsSent_++;
+    profileReqSent(NACK,false);
     d_->debug(_L3_,"TCC - Sending NACK\n");
 }
 
@@ -425,7 +426,21 @@ void TopCacheController::sendEvent(MemEvent *_event){
     d_->debug(_L3_,"TCC - Sending Event To HgLvLCache at cycle = %"PRIu64". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
 }
 
-
+void MESITopCC::profileReqSent(Command _cmd, bool _eviction, int _num) {
+    switch(_cmd) {
+        case Inv:
+            if (_eviction) evictionInvReqsSent_ += _num;
+            else invReqsSent_ += _num;
+            break;
+        case InvX:
+            invXReqsSent_ += _num;
+        case NACK:
+            NACKsSent_ += _num;
+            break;
+        default:
+            break;
+    }
+}
 
 int MESITopCC::lowNetworkNodeLookupByName(const std::string& _name){
 	int id = -1;

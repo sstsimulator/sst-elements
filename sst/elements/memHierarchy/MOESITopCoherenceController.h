@@ -42,10 +42,10 @@ public:
                MESITopCC(_cache, _dbg, _protocol, _numLines, _lineSize, _accessLatency, _mshrLatency,  _childrenLinks){}
     
     void handleEviction(int lineIndex, State _state);
-    bool handleRequest(MemEvent* event, CacheLine* cacheLine);
+    bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);
     void handleInvalidate(int lineIndex, Command cmd);
     void handleInvAck(MemEvent* event, CCLine* ccLine);
-
+    bool handleGetSRequest(MemEvent * _event, CacheLine* _cacheLine, bool _mshrHit);
 };
 
 }}

@@ -22,31 +22,35 @@ namespace SST { namespace MemHierarchy {
 using namespace std;
 typedef uint64_t Addr;
 
-/* Coherence states for Bottom Coherence Controller Cache Lines, MESI Protocol */
+/*
+ *  Command types
+ *  Not all coherence protocols use all types
+ */
 #define X_TYPES \
     X(NULLCMD) \
     /* Requests */ \
-    X(GetS)            /* Request to get cache line in S state */                                       \
-    X(GetX)            /* Request to get cache line in M state  (ie. exclusive write access) */         \
-    X(GetSEx)          /* Request to get cache line in M state, with a LOCK flag.  Invalidates will block until LOCK flag is lifted */ \
-                       /* GetSEx sets the LOCK, GetX removes the LOCK  */ \
-    /* Request Responses */ \
-    X(GetSResp)        /* Respond to a GetS request */ \
-    X(GetXResp)        /* Respond to a GetX request */ \
-    /* Writebacks, These commands also serve as Invalidate Acknowledgments (ie they are piggybacks) */ \
-    X(PutS)            /* Remove sharer from sharer's list in the lower level cache */\
-    X(PutM)            /* Remove owner and write new data to cache line */\
-    X(PutE)            /* Remove owner but don't write data to cache line since it is 'clean' */\
-    X(PutX)            /* Remove owner and add as a sharer (M->S), write data to cache line */\
-    X(PutXE)           /* Remove owner and add as a sharer (M->S), don't write data to cache line */\
-    /* Invalidates */ \
-    X(Inv)             /* Invalidate cache line request */\
-    X(InvX)            /* Invalidate cache line exclusivity but keep as sharer (M->S). */\
-    /* Directory Controller*/ \
-    X(FetchInv)        /* Invalidate cache line and send back data to directory controller */\
-    X(FetchInvX)       /* Remove exclusivity from cache line, keep cache line in S state, and send back updated data to directory controller */\
+    X(GetS)            /* Read:  Request to get cache line in S state */\
+    X(GetX)            /* Write: Request to get cache line in M state */\
+    X(GetSEx)          /* Read:  Request to get cache line in M state with a LOCK flag. Invalidates will block until LOCK flag is lifted */\
+                       /*        GetSEx sets the LOCK, GetX removes the LOCK  */\
+    /* Request Responses */\
+    X(GetSResp)        /* Response to a GetS request */\
+    X(GetXResp)        /* Response to a GetX request */\
+    /* Writebacks, these commands also serve as invalidation acknowledgments */\
+    X(PutS)            /* Clean replacement from S->I:      Remove sharer */\
+    X(PutM)            /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
+    X(PutE)            /* Clean replacement from E->I:      Remove owner but don't writeback data */\
+    X(PutX)            /* Dirty downgrade from M->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), writeback data */\
+    X(PutXE)           /* Clean downgrade from E->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), don't writeback data */\
+    /* Invalidates - sent by caches or directory controller */\
+    X(Inv)             /* Other write request:  Invalidate cache line */\
+    X(InvX)            /* Other read request:   Downgrade cache line to O/S (Remove exclusivity) */\
+    /* Invalidates - sent by directory controller */\
+    X(FetchInv)        /* Other write request:  Invalidate cache line */\
+    X(FetchInvX)       /* Other read request:   Downgrade cache line to O/S (Remove exclusivity) */\
     X(FetchResp)       /* response to a FetchInv or FetchInvX request */\
-    /* Others */ \
+    X(FetchXResp)      /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
+    /* Others */\
     X(NACK)
 
 /** Valid commands for the MemEvent */
@@ -69,9 +73,9 @@ static const char* CommandString[] __attribute__((unused)) = {
 /* Coherence states for Top Coherence Controller Cache Lines */
     
 #define TCCLINE_TYPES \
-    X(V) \
-    X(InvX_A) \
-    X(Inv_A)
+    X(V)        /* Valid */\
+    X(InvX_A)   /* Have sent InvX, waiting for acks */\
+    X(Inv_A)    /* Have sent Inv, waiting for acks */
 
 /** Valid commands for the MemEvent */
 typedef enum {
@@ -89,19 +93,19 @@ static const char* TccLineString[] __attribute__((unused)) = {
 
 #undef TCCLINE_TYPES
 
-//Stable and transient states.  Example:  IS means cache line is in transition from Invalid to Share state
+/* Coherence states for Bottom Coherence Controller Cache Lines
+ * Not all protocols use all states 
+ */
 #define BCCLINE_TYPES \
-    X(I) \
-    X(IS) \
-    X(IM) \
-    X(S)  \
-    X(SI) \
-    X(EI) \
-    X(SM) \
-    X(E) \
-    X(M) \
-    X(MI) \
-    X(MS) \
+    X(I)    /* Invalid */\
+    X(IS)   /* Invalid, have issued read request */\
+    X(IM)   /* Invalid, have issued write request */\
+    X(S)    /* Shared */\
+    X(SM)   /* Shared, have issued upgrade request */\
+    X(E)    /* Exclusive, clean */\
+    X(O)    /* Owned, dirty */\
+    X(OM)   /* Owned, have issued upgrade request */\
+    X(M)    /* Exclusive, dirty */\
     X(DUMMY) \
     X(NULLST)
 
@@ -120,8 +124,6 @@ static const char* BccLineString[] __attribute__((unused)) = {
 
 #undef BCCLINE_TYPES
 
-//TODO: Make it more robust
-static const State nextState[] = {I, S, M, S, I, I, M, E, M, I, S};
 static const std::string NONE = "None";
 
 /**
@@ -130,7 +132,7 @@ static const std::string NONE = "None";
  * This class primarily consists of a Command to perform at a particular address,
  * potentially including data.
  *
- * The command list includes the needed commands to execute cache coherency protocols
+ * The command list includes the needed commands to execute cache coherence protocols
  * as well as standard reads and writes to memory.
  */
 class MemEvent : public SST::Event {
@@ -429,8 +431,9 @@ public:
             case GetX:
                 return GetXResp;
             case FetchInv:
-            case FetchInvX:
                 return FetchResp;
+            case FetchInvX:
+                return FetchXResp;
             default:
                 return NULLCMD;
         }
