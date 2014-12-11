@@ -56,10 +56,6 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	Params genParams = params.find_prefix_params("generatorParams.");
 	reqGen = dynamic_cast<RequestGenerator*>( loadModuleWithComponent(reqGenModName, this, genParams) );
 
-	// Set first request to NULL to force a regenerate
-	nextReq = new RequestGeneratorRequest();
-	nextReq->markIssued();
-
 	if(NULL == reqGen) {
 		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
 	} else {
@@ -84,6 +80,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	bytesRead = 0;
 	bytesWritten = 0;
 	reqLatency = 0;
+	reqMaxPerCycle = 2;
 
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
@@ -164,13 +161,13 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	out->verbose(CALL_INFO, 2, 0, "Recv event for processing from interface\n");
 
 	SimpleMem::Request::id_t reqID = ev->id;
-	std::map<SimpleMem::Request::id_t, uint64_t>::iterator reqFind = requests.find(reqID);
+	std::map<SimpleMem::Request::id_t, uint64_t>::iterator reqFind = requestsInFlight.find(reqID);
 
-	if(reqFind == requests.end()) {
+	if(reqFind == requestsInFlight.end()) {
 		out->fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
 	} else{
 		reqLatency += (getCurrentSimTimeNano() - reqFind->second);
-		requests.erase(reqID);
+		requestsInFlight.erase(reqID);
 
 		// Decrement pending requests, we have recv'd a response
 		requestsPending--;
@@ -220,8 +217,8 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			upperAddress, upperLength);
 
-		requests.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqLower->id, getCurrentSimTimeNano()) );
-		requests.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqUpper->id, getCurrentSimTimeNano()) );
+		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqLower->id, getCurrentSimTimeNano()) );
+		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqUpper->id, getCurrentSimTimeNano()) );
 
 		out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
 		cache_link->sendRequest(reqLower);
@@ -242,7 +239,7 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			reqAddress, reqLength);
 
-		requests.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(request->id, getCurrentSimTimeNano()) );
+		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(request->id, getCurrentSimTimeNano()) );
 		cache_link->sendRequest(request);
 
 		requestsPending++;
@@ -269,23 +266,35 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 		}
 	}
 
-	if(nextReq->isIssued()) {
-		reqGen->nextRequest(nextReq);
-	}
-
 	// Process the request which may require splitting into multiple
 	// requests (if breaks over a cache line)
 	out->verbose(CALL_INFO, 2, 0, "Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
 		requestsPending, maxRequestsPending);
 
 	if(requestsPending < maxRequestsPending) {
-		out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");
-		issueRequest(nextReq);
-
 		cyclesWithIssue++;
+
+		for(uint32_t reqThisCycle = 0; reqThisCycle < reqMaxPerCycle; ++reqThisCycle) {
+			if(requestsPending < maxRequestsPending) {
+				out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");
+
+				if(pendingRequests.size() == 0) {
+					reqGen->generate(&pendingRequests);
+
+					if(pendingRequests.size() == 0) {
+						break;
+					}
+				} else {
+					issueRequest(pendingRequests.front());
+					pendingRequests.pop();
+				}
+			} else {
+				out->verbose(CALL_INFO, 2, 0, "Unable to issue as all resources are now full, continue next cycle.\n");
+				break;
+			}
+		}
 	} else {
 		out->verbose(CALL_INFO, 4, 0, "Will not issue, not free slots in load/store unit.\n");
-
 		cyclesWithoutIssue++;
 	}
 

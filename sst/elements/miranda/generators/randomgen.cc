@@ -29,7 +29,7 @@ RandomGenerator::~RandomGenerator() {
 	delete rng;
 }
 
-void RandomGenerator::nextRequest(RequestGeneratorRequest* req) {
+void RandomGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
 	const uint64_t rand_addr = rng->generateNextUInt64();
@@ -41,7 +41,10 @@ void RandomGenerator::nextRequest(RequestGeneratorRequest* req) {
 	const double op_decide = rng->nextUniform();
 
 	// Populate request
+	RequestGeneratorRequest* req = new RequestGeneratorRequest();
 	req->set(addr, reqLength, (op_decide < 0.5) ? READ : WRITE);
+
+	q->push(req);
 
 	issueCount--;
 }

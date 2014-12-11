@@ -6,6 +6,8 @@
 #include <sst/core/output.h>
 #include <sst/core/rng/sstrand.h>
 
+#include <queue>
+
 using namespace SST::RNG;
 
 namespace SST {
@@ -16,7 +18,7 @@ class RandomGenerator : public RequestGenerator {
 public:
 	RandomGenerator( Component* owner, Params& params );
 	~RandomGenerator();
-	void nextRequest(RequestGeneratorRequest* req);
+	void generate(std::queue<RequestGeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 

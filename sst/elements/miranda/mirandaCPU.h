@@ -42,12 +42,14 @@ private:
     	Output* out;
 
 	RequestGenerator* reqGen;
-	std::map<SimpleMem::Request::id_t, SimTime_t> requests;
+	std::map<SimpleMem::Request::id_t, SimTime_t> requestsInFlight;
     	SimpleMem* cache_link;
-	RequestGeneratorRequest* nextReq;
+
+	std::queue<RequestGeneratorRequest*> pendingRequests;
 
 	uint32_t maxRequestsPending;
 	uint32_t requestsPending;
+	uint32_t reqMaxPerCycle;
 	uint64_t cacheLine;
 
 	uint64_t readRequestsIssued;

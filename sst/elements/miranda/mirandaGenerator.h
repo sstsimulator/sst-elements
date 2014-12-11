@@ -7,6 +7,8 @@
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
+#include <queue>
+
 namespace SST {
 namespace Miranda {
 
@@ -43,10 +45,8 @@ class RequestGenerator : public Module {
 
 public:
 	RequestGenerator( Component* owner, Params& params) {}
-	~RequestGenerator() {};
-	virtual void nextRequest(RequestGeneratorRequest* req) {
-		req->set(0, 0, READ);
-	}
+	~RequestGenerator() {}
+	virtual void generate(std::queue<RequestGeneratorRequest*>* q) { }
 	virtual bool isFinished() { return true; }
 	virtual void completed() { }
 

@@ -5,6 +5,8 @@
 #include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
 
+#include <queue>
+
 namespace SST {
 namespace Miranda {
 
@@ -13,7 +15,7 @@ class SingleStreamGenerator : public RequestGenerator {
 public:
 	SingleStreamGenerator( Component* owner, Params& params );
 	~SingleStreamGenerator();
-	void nextRequest(RequestGeneratorRequest* req);
+	void generate(std::queue<RequestGeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
