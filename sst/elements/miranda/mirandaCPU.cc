@@ -88,9 +88,14 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 RequestGenCPU::~RequestGenCPU() {
 	delete cache_link;
 	delete reqGen;
+	delete out;
 }
 
 void RequestGenCPU::finish() {
+	// Tell the generator we are completed.
+	reqGen->completed();
+
+	// Check whether we want to print statistics or not, if not we're done
 	if(printStats) return;
 
 	out->output("------------------------------------------------------------------------\n");
@@ -285,8 +290,12 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 						break;
 					}
 				} else {
-					issueRequest(pendingRequests.front());
+					RequestGeneratorRequest* nxtRq = pendingRequests.front();
 					pendingRequests.pop();
+
+					issueRequest(nxtRq);
+
+					delete nxtRq;
 				}
 			} else {
 				out->verbose(CALL_INFO, 2, 0, "Unable to issue as all resources are now full, continue next cycle.\n");

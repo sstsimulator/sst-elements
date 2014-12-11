@@ -13,7 +13,7 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	out = new Output("STREAMBenchGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
 	n = (uint64_t) params.find_integer("n", 10000);
-	reqLength = (uint64_t) params.find_integer("reqlength", 8);
+	reqLength = (uint64_t) params.find_integer("length", 8);
 
 	start_a = 0;
 	start_b = (n * reqLength);

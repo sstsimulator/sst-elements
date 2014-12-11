@@ -43,7 +43,6 @@ static const ElementInfoParam singleStreamGen_params[] = {
     { "count",            "Count for number of items being requested", "1024" },
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
-    { "verbose",          "Sets the verbosity output of the generator", "0" },
     { "startat",          "Sets the start address for generation", "0" },
     { NULL, NULL, NULL }
 };
@@ -53,16 +52,13 @@ static const ElementInfoParam randomGen_params[] = {
     { "count",            "Count for number of items being requested", "1024" },
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
-    { "verbose",          "Sets the verbosity output of the generator", "0" },
     { NULL, NULL, NULL }
 };
 
 static const ElementInfoParam streamBench_params[] = {
     { "verbose",          "Sets the verbosity output of the generator", "0" },
-    { "count",            "Count for number of items being requested", "1024" },
-    { "length",           "Length of requests", "8" },
-    { "max_address",      "Maximum address allowed for generation", "16384" },
-    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "n",                "Sets the number of elements in the STREAM arrays", "10000" },
+    { "length"   ,        "Sets the length of the request", "8" },
     { NULL, NULL, NULL }
 };
 
