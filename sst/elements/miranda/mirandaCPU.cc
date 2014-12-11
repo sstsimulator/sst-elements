@@ -83,6 +83,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	cyclesWithoutIssue = 0;
 	bytesRead = 0;
 	bytesWritten = 0;
+	reqLatency = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
@@ -138,6 +139,16 @@ void RequestGenCPU::finish() {
 	out->output("CPU Bandwidth (write):                 %s\n", writeBandwidth.toStringBestSI().c_str());
 	out->output("CPU Bandwidth (combined):              %s\n", combinedBandwidth.toStringBestSI().c_str());
 
+	char bufferLatency[32];
+	sprintf(bufferLatency, "%f ns", ((double) reqLatency) / (readRequestsIssued + (splitReadRequestsIssued * 2)+
+                writeRequestsIssued + (splitWriteRequestsIssued * 2)));
+
+	UnitAlgebra avrLatency(bufferLatency);
+
+	out->output("\n");
+	out->output("Total request latency:                 %" PRIu64 " ns\n", reqLatency);
+	out->output("Average request latency:               %s\n", avrLatency.toStringBestSI().c_str());
+
 	out->output("\n");
 	out->output("Cycles with request issues:            %" PRIu64 "\n", cyclesWithIssue);
 	out->output("Cycles without request issue:          %" PRIu64 "\n", cyclesWithoutIssue);
@@ -152,8 +163,20 @@ void RequestGenCPU::init(unsigned int phase) {
 void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	out->verbose(CALL_INFO, 2, 0, "Recv event for processing from interface\n");
 
-	// Decrement pending requests, we have recv'd a response
-	requestsPending--;
+	SimpleMem::Request::id_t reqID = ev->id;
+	std::map<SimpleMem::Request::id_t, uint64_t>::iterator reqFind = requests.find(reqID);
+
+	if(reqFind == requests.end()) {
+		out->fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
+	} else{
+		reqLatency += (getCurrentSimTimeNano() - reqFind->second);
+		requests.erase(reqID);
+
+		// Decrement pending requests, we have recv'd a response
+		requestsPending--;
+
+		delete ev;
+	}
 }
 
 void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
@@ -197,6 +220,9 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			upperAddress, upperLength);
 
+		requests.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqLower->id, getCurrentSimTimeNano()) );
+		requests.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqUpper->id, getCurrentSimTimeNano()) );
+
 		out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
 		cache_link->sendRequest(reqLower);
 		cache_link->sendRequest(reqUpper);
@@ -216,6 +242,7 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			reqAddress, reqLength);
 
+		requests.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(request->id, getCurrentSimTimeNano()) );
 		cache_link->sendRequest(request);
 
 		requestsPending++;

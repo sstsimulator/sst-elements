@@ -42,7 +42,7 @@ private:
     	Output* out;
 
 	RequestGenerator* reqGen;
-	std::map<uint64_t, SimTime_t> requests;
+	std::map<SimpleMem::Request::id_t, SimTime_t> requests;
     	SimpleMem* cache_link;
 	RequestGeneratorRequest* nextReq;
 
@@ -58,6 +58,8 @@ private:
 	uint64_t cyclesWithIssue;
 	uint64_t bytesRead;
 	uint64_t bytesWritten;
+
+	uint64_t reqLatency;
 
 	bool printStats;
 
