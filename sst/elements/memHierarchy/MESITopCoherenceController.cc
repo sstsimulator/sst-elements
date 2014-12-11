@@ -23,7 +23,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*-------------------------------------------------------------------------------------
- * Top Coherence Controller Implementation
+ * Top Coherence Controller Implementation - protocol agnostic
  *-------------------------------------------------------------------------------------*/
 
 bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
@@ -34,7 +34,7 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
 
     switch(cmd){
         case GetS:
-            if(state == S || state == M || state == E)
+            if(state == S || state == M || state == E || state == O)
                 return sendResponse(_event, S, data,  _mshrHit);
             break;
         case GetX:
@@ -118,14 +118,14 @@ void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     assert(!CacheArray::CacheLine::inTransition(_state));
     assert(ccLine->valid());
     
-    /* if state is invalid OR, there's no shares or owner, then no need to send invalidations */
+    /* if state is invalid OR, there's no sharers or owner, then no need to send invalidations */
     if(_state == I || (ccLine->isShareless() && !ccLine->ownerExists())) return;
     
     /* Send invalidates */
     sendEvictionInvalidates(_lineIndex, _origRqstr, false);
     
     if(ccLine->inTransition()){
-        d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of lw lvl caches. St = %s, OwnerExists = %s \n",
+        d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of upper level caches. St = %s, OwnerExists = %s \n",
                         BccLineString[_state], ccLine->ownerExists() ? "True" : "False");
     }
 }
@@ -434,6 +434,7 @@ void MESITopCC::profileReqSent(Command _cmd, bool _eviction, int _num) {
             break;
         case InvX:
             invXReqsSent_ += _num;
+            break;
         case NACK:
             NACKsSent_ += _num;
             break;
