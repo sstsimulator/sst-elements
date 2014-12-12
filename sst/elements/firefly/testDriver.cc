@@ -240,7 +240,7 @@ void TestDriver::handle_event( Event* ev )
     }
 }
 
-void TestDriver::funcDone( int retval )
+bool TestDriver::funcDone( int retval )
 {
     m_selfLink->send(1,NULL);
 
@@ -282,6 +282,7 @@ void TestDriver::funcDone( int retval )
         m_dbg.verbose(CALL_INFO,1,0,"`%s` retval=%d\n" ,
                                 m_funcName.c_str(), retval);
     }
+    return false;
 }
 
 void TestDriver::recvReturn( )

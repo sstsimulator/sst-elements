@@ -34,10 +34,10 @@ class TestDriver : public SST::Component {
     void printStatus( Output& );
 
   private:
-    typedef Arg_Functor<TestDriver, int> DerivedFunctor;
+    typedef Arg_Functor<TestDriver, int, bool > DerivedFunctor;
 
     void handle_event(SST::Event*);
-    void funcDone(int retval);
+    bool funcDone(int retval);
     void allgatherEnter();
     void allgatherReturn();
     void allgathervEnter();

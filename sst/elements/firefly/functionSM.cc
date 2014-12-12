@@ -231,7 +231,9 @@ void FunctionSM::handleToDriver( Event* e )
     assert( e );
     m_dbg.verbose(CALL_INFO,3,0," returning\n");
     DriverEvent* event = static_cast<DriverEvent*>(e);
-    (*event->retFunc)( event->retval );
+    if ( (*event->retFunc)( event->retval ) ) {
+        delete event->retFunc;
+    }    
     m_sm = NULL;
     delete e;
 }
