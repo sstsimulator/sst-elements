@@ -1,0 +1,56 @@
+// Copyright 2009-2014 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2014, Sandia Corporation
+// All rights reserved.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+
+#ifndef _H_EMBER_WAITALL_EV
+#define _H_EMBER_WAITALL_EV
+
+#include "emberMPIEvent.h"
+
+using namespace SST::Hermes;
+
+namespace SST {
+namespace Ember {
+
+class EmberWaitallEvent : public EmberMPIEvent {
+
+public:
+	EmberWaitallEvent( MessageInterface& api, Output* output, Histo* histo,
+           int count, MessageRequest* m_req, MessageResponse** m_resp  ) :
+        EmberMPIEvent( api, output, histo ),
+        m_count(count),
+        m_req(m_req),
+        m_resp(m_resp)
+    { }
+
+	~EmberWaitallEvent() {}
+
+    std::string getName() { return "Waitall"; }
+
+    void issue( uint64_t time, FOO* functor ) {
+
+        m_output->verbose(CALL_INFO, 1, 0, "\n");
+
+        EmberEvent::issue( time );
+
+        m_api.waitall( m_count, m_req, m_resp, functor );
+    }
+
+private:
+    int m_count;
+    MessageRequest* m_req;
+    MessageResponse** m_resp;
+};
+
+}
+}
+
+#endif

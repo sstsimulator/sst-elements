@@ -32,6 +32,7 @@
 #include "motifs/embernaslu.h"
 #include "motifs/emberpingpong.h"
 #include "motifs/emberring.h"
+#include "motifs/emberinit.h"
 #include "motifs/emberfini.h"
 #include "motifs/emberbarrier.h"
 #include "motifs/emberallreduce.h"
@@ -99,6 +100,11 @@ load_LinearNodeMap( Component* comp, Params& params ) {
 static Module*
 load_CommDoubling( Component* comp, Params& params ) {
 	return new Ember3DCommDoublingGenerator(comp, params);
+}
+
+static Module*
+load_Init( Component* comp, Params& params ) {
+	return new EmberInitGenerator(comp, params);
 }
 
 static Module*
@@ -172,34 +178,48 @@ load_Comm( Component* comp, Params& params ) {
 }
 
 
-
 static const ElementInfoParam component_params[] = {
     { "printStats", "Prints the statistics from the component, used as a bit field, 1 = print end of run statisitics, 2 = print end of motif runs in multi motif runs, default 0 = print nothing.", "0"},
+
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "msgapi", "Sets the messaging API of the end point" },
-    { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
-    { "distrib", "Sets the distribution SST module for compute modeling, default is a constant distribution of mean 1", "1.0"},
-    { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
-    { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
-    { "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = spy on sends", "0" },
-    { "motif_count", "Sets the number of motifs to run in this instance of the component", "1" },
-    { "start_bin_width", "Bin width of the start time histogram", "5" },
-    { "send_bin_width", "Bin width of the send time histogram", "5" },
-    { "compute_bin_width", "Bin width of the compute time histogram", "5" },
-    { "init_bin_width", "Bin width of the init time histogram", "5" },
-    { "finalize_bin_width", "Bin width of the finalize time histogram", "5"},
-    { "recv_bin_width", "Bin width of the recv time histogram", "5" },
-    { "irecv_bin_width", "Bin width of the irecv time histogram", "5" },
-    { "isend_bin_width", "Bin width of the isend time histogram", "5" },
-    { "wait_bin_width", "Bin width of the wait time histogram", "5" },
-    { "barrier_bin_width", "Bin width of the barrier time histogram", "5" },
-    { "recvsize_bin_width", "Bin width of the recv sizes (bytes) histogram", "64" },
-    { "sendsize_bin_width", "Bin width of the send sizes (bytes) histogram", "64" },
-    { "allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
-    { "reduce_bin_width", "Bin width of the reduce time histogram", "5" },
-    { "buffersize", "Sets the size of the message buffer which is used to back data transmission", "32768"},
     { "jobId", "Sets the job id", "-1"},
-    { "datamode", "Sets the data mode (i.e. should Ember back data for simulation, 0=No backing, 1=Back with zeros, default is 0", "0"},
+
+    { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
+
+    { "distribModule", "Sets the distribution SST module for compute modeling, default is a constant distribution of mean 1", "1.0"},
+
+    { "rankmapper", "Sets the rank mapping SST module to load to rank translations, default is linear mapping", "ember.LinearMap" },
+
+    { "motif%(motif_count)d", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
+
+    { "name", "Sets the event generator or motif for the engine", "ember.EmberPingPongGenerator" },
+    { "api", "Sets the api used by a motif", "hermesParams" },
+
+    { "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = spy on sends", "0" },
+
+    { "Send_bin_width", "Bin width of the send time histogram", "5" },
+    { "Compute_bin_width", "Bin width of the compute time histogram", "5" },
+    { "Init_bin_width", "Bin width of the init time histogram", "5" },
+    { "Finalize_bin_width", "Bin width of the finalize time histogram", "5"},
+    { "Recv_bin_width", "Bin width of the recv time histogram", "5" },
+    { "Rank_bin_width", "Bin width of the rank time histogram", "5" },
+    { "Size_bin_width", "Bin width of the size time histogram", "5" },
+    { "Recv_bin_width", "Bin width of the recv time histogram", "5" },
+    { "Irecv_bin_width", "Bin width of the irecv time histogram", "5" },
+    { "Isend_bin_width", "Bin width of the isend time histogram", "5" },
+    { "Wait_bin_width", "Bin width of the wait time histogram", "5" },
+    { "Waitall_bin_width", "Bin width of the waitall time histogram", "5" },
+    { "Waitany_bin_width", "Bin width of the waitany time histogram", "5" },
+    { "Barrier_bin_width", "Bin width of the barrier time histogram", "5" },
+    { "Recvsize_bin_width", "Bin width of the recv sizes (bytes) histogram", "64" },
+    { "Sendsize_bin_width", "Bin width of the send sizes (bytes) histogram", "64" },
+    { "Allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
+    { "Reduce_bin_width", "Bin width of the reduce time histogram", "5" },
+    { "Commsplit_bin_width", "Bin width of the commsplit time histogram", "5" },
+    { "Gettime_bin_width", "Bin width of the gettime time histogram", "5" },
+
+
     { "noisegen", "Sets the noise generator for the system", "constant" },
     { "noisemean", "Sets the mean of a Gaussian noise generator", "1.0" },
     { "noisestddev", "Sets the standard deviation of a noise generator", "0.1" },
@@ -213,8 +233,8 @@ static const ElementInfoPort component_ports[] = {
 };
 
 static const ElementInfoParam pingpong_params[] = {
-    	{	"messageSize",		"Sets the message size of the ping pong operation",	"1024"},
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+    	{	"arg.messageSize",		"Sets the message size of the ping pong operation",	"1024"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -226,27 +246,27 @@ static const ElementInfoParam amr3d_params[] = {
 };
 
 static const ElementInfoParam allpingpong_params[] = {
-    	{	"messagesize",		"Sets the message size of the ping pong operation",	"128"},
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
-	{	"computetime",		"Sets the time spent computing some values",	 	"1000"},
+    	{	"arg.messagesize",		"Sets the message size of the ping pong operation",	"128"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
+	{	"arg.computetime",		"Sets the time spent computing some values",	 	"1000"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam barrier_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam allreduce_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam reduce_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"count",		"Sets the number of elements to reduce",	 	"1"},
-	{	"root",			"Sets the root of the reduction",		 	"0"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"arg.root",			"Sets the root of the reduction",		 	"0"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -258,110 +278,114 @@ static const ElementInfoParam halo1d_params[] = {
 };
 
 static const ElementInfoParam halo2d_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
-	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"10"},
-	{	"messagesizex",		"Sets the message size in X-dimension (in bytes)",	"128"},
-	{	"messagesizey",		"Sets the message size in Y-dimension (in bytes)",	"128"},
-	{	"computecopy",		"Sets the time spent copying data between messages",	"5"},
-	{	"sizex",		"Sets the processor decomposition in Y", "0"},
-	{	"sizey",		"Sets the processor decomposition in X", "0"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"arg.computenano",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"arg.messagesizex",		"Sets the message size in X-dimension (in bytes)",	"128"},
+	{	"arg.messagesizey",		"Sets the message size in Y-dimension (in bytes)",	"128"},
+	{	"arg.computecopy",		"Sets the time spent copying data between messages",	"5"},
+	{	"arg.sizex",		"Sets the processor decomposition in Y", "0"},
+	{	"arg.sizey",		"Sets the processor decomposition in X", "0"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam halo3d_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
-	{	"computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
-	{	"flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
-	{	"peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
-	{	"nx",			"Sets the problem size in X-dimension",			"100"},
-	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
-	{	"nz",			"Sets the problem size in Z-dimension",			"100"},
-	{	"pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
-	{	"pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
-	{	"pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
-	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
-	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
-	{	"fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
-	{	"field_chunk",	        "Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
-	{	"datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"arg.computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"arg.flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
+	{	"arg.peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+	{	"arg.nx",			"Sets the problem size in X-dimension",			"100"},
+	{	"arg.ny",			"Sets the problem size in Y-dimension",			"100"},
+	{	"arg.nz",			"Sets the problem size in Z-dimension",			"100"},
+	{	"arg.pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
+	{	"arg.pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
+	{	"arg.pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
+	{	"arg.copytime",		"Sets the time spent copying data between messages",	"5"},
+	{	"arg.doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
+	{	"arg.fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"arg.field_chunk",	        "Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"arg.datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam halo3dsv_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
-	{	"computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
-	{	"flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
-	{	"peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
-	{	"nx",			"Sets the problem size in X-dimension",			"100"},
-	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
-	{	"nz",			"Sets the problem size in Z-dimension",			"100"},
-	{	"pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
-	{	"pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
-	{	"pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
-	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
-	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
-	{	"fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
-	{	"field_chunk",	        "Specify how many variables are being computed per field chunk. Default is 1", "1"},
-	{	"datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"arg.computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"arg.flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
+	{	"arg.peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+	{	"arg.nx",			"Sets the problem size in X-dimension",			"100"},
+	{	"arg.ny",			"Sets the problem size in Y-dimension",			"100"},
+	{	"arg.nz",			"Sets the problem size in Z-dimension",			"100"},
+	{	"arg.pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
+	{	"arg.pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
+	{	"arg.pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
+	{	"arg.copytime",		"Sets the time spent copying data between messages",	"5"},
+	{	"arg.doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
+	{	"arg.fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"arg.field_chunk",	        "Specify how many variables are being computed per field chunk. Default is 1", "1"},
+	{	"arg.datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam halo3d26_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
-	{	"computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
-	{	"flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
-	{	"peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
-	{	"nx",			"Sets the problem size in X-dimension",			"100"},
-	{	"ny",			"Sets the problem size in Y-dimension",			"100"},
-	{	"nz",			"Sets the problem size in Z-dimension",			"100"},
-	{	"pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
-	{	"pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
-	{	"pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
-	{	"copytime",		"Sets the time spent copying data between messages",	"5"},
-	{	"doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
-	{	"fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
-	{	"datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"arg.computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
+	{	"arg.flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
+	{	"arg.peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+	{	"arg.nx",			"Sets the problem size in X-dimension",			"100"},
+	{	"arg.ny",			"Sets the problem size in Y-dimension",			"100"},
+	{	"arg.nz",			"Sets the problem size in Z-dimension",			"100"},
+	{	"arg.pex",			"Sets the processors in X-dimension (0=auto)",		"0"},
+	{	"arg.pey",			"Sets the processors in Y-dimension (0=auto)",		"0"},
+	{	"arg.pez",			"Sets the processors in Z-dimension (0=auto)",		"0"},
+	{	"arg.copytime",		"Sets the time spent copying data between messages",	"5"},
+	{	"arg.doreduce",		"How often to do reduces, 1 = each iteration",		"1"},
+	{	"arg.fields_per_cell",	"Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+	{	"arg.datatype_width",	"Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam ring_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"messagesize",		"Sets the size of the message in bytes",	 	"1024"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.messagesize",		"Sets the size of the message in bytes",	 	"1024"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam sweep3d_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
-	{	"pey",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
-	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
-	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
-	{	"nz",			"Sets the problem size in the Z-dimension",	"50"},
-	{	"kba",			"Sets the KBA (Nz-K blocking factor, default is 1 (no blocking))", "1"},
-	{	"computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
-	{	"fields_per_cell",	"Sets the number of fields at each cell point", "8"},
-	{	"datatype_width",	"Sets the width of the datatype used at the cell", "8"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
+	{	"arg.pey",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
+	{	"arg.nx",			"Sets the problem size in the X-dimension",	"50"},
+	{	"arg.ny",			"Sets the problem size in the Y-dimension",	"50"},
+	{	"arg.nz",			"Sets the problem size in the Z-dimension",	"50"},
+	{	"arg.kba",			"Sets the KBA (Nz-K blocking factor, default is 1 (no blocking))", "1"},
+	{	"arg.computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
+	{	"arg.fields_per_cell",	"Sets the number of fields at each cell point", "8"},
+	{	"arg.datatype_width",	"Sets the width of the datatype used at the cell", "8"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam sweep2d_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
-	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
-	{	"y_block",		"Sets the Y-blocking factor (must be Ny % y_block == 0, default is 1 (no blocking))", "1"},
-	{	"computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.nx",			"Sets the problem size in the X-dimension",	"50"},
+	{	"arg.ny",			"Sets the problem size in the Y-dimension",	"50"},
+	{	"arg.y_block",		"Sets the Y-blocking factor (must be Ny % y_block == 0, default is 1 (no blocking))", "1"},
+	{	"arg.computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam naslu_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
-	{	"pey",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
-	{	"nx",			"Sets the problem size in the X-dimension",	"50"},
-	{	"ny",			"Sets the problem size in the Y-dimension",	"50"},
-	{	"nz",			"Sets the problem size in the Z-dimension",	"50"},
-	{	"nzblock",		"Sets the Z-dimensional block size (Nz % Nzblock == 0, default is 1)", "1"},
-	{	"computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.pex",			"Sets the processor array size in X-dimension, 0 means auto-calculate",	"0"},
+	{	"arg.pey",			"Sets the processor array size in Y-dimension, 0 means auto-calculate",	"0"},
+	{	"arg.nx",			"Sets the problem size in the X-dimension",	"50"},
+	{	"arg.ny",			"Sets the problem size in the Y-dimension",	"50"},
+	{	"arg.nz",			"Sets the problem size in the Z-dimension",	"50"},
+	{	"arg.nzblock",		"Sets the Z-dimensional block size (Nz % Nzblock == 0, default is 1)", "1"},
+	{	"arg.computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam init_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -502,7 +526,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo2DNBR,
-	NULL,
+	halo2d_params,
     "SST::Ember::EmberGenerator"
     },
 //    { 	"Halo3DNB26Motif",
@@ -526,7 +550,7 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	NULL,
 	load_Halo3DSV,
-	halo3d_params,
+	halo3dsv_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo3D26Motif",
@@ -575,6 +599,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_Reduce,
 	reduce_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"InitMotif",
+	"Performs a communication Initialization Motif",
+	NULL,
+	NULL,
+	load_Init,
+	init_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"FiniMotif",

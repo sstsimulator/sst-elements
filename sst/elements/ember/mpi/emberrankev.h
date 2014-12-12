@@ -10,38 +10,41 @@
 // distribution.
 
 
-#ifndef _H_EMBER_GETTIME_EV
-#define _H_EMBER_GETTIME_EV
+#ifndef _H_EMBER_RANK_EVENT
+#define _H_EMBER_RANK_EVENT
 
-#include <sst/elements/hermes/msgapi.h>
-#include "emberevent.h"
-
-using namespace SST::Hermes;
+#include "emberMPIEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberGetTimeEvent : public EmberEvent {
+class EmberRankEvent : public EmberMPIEvent {
+
 public:
-	EmberGetTimeEvent( Output* output, uint64_t* ptr ) :
-        EmberEvent(output),
-        m_timePtr(ptr)
+	EmberRankEvent( MessageInterface& api, Output* output, Histo* histo,
+            Communicator comm, uint32_t* rankPtr ) :
+        EmberMPIEvent( api, output, histo ),
+        m_comm( comm ),
+        m_rankPtr( rankPtr)
     {}
 
-	~EmberGetTimeEvent() {} 
+	~EmberRankEvent() {}
 
-    std::string getName() { return "GetTime"; }
+    std::string getName() { return "Rank"; }
 
-    virtual void issue( uint64_t time, FOO* functor ) 
-    {
+    void issue( uint64_t time, FOO* functor ) {
+
         m_output->verbose(CALL_INFO, 1, 0, "\n");
+
         EmberEvent::issue( time );
-        *m_timePtr = time;
+
+        m_api.rank( m_comm, m_rankPtr, functor );
     }
 
 private:
-	uint64_t* m_timePtr; 
-
+    Communicator m_comm;
+    uint32_t*    m_rankPtr;
+    
 };
 
 }

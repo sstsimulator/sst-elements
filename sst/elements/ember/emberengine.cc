@@ -12,1047 +12,235 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include <sst/core/timeLord.h>
 #include "emberengine.h"
+#include "embergen.h"
+
 
 using namespace std;
-using namespace SST::Statistics;
 using namespace SST::Ember;
-
-static const char* FINALIZE_HISTO_NAME = "Finalize Time";
-static const char* INIT_HISTO_NAME = "Initialization Time";
-static const char* RECV_HISTO_NAME = "Recv Time";
-static const char* SEND_HISTO_NAME = "Send Time";
-static const char* WAIT_HISTO_NAME = "Wait Time";
-static const char* IRECV_HISTO_NAME = "IRecv Time";
-static const char* ISEND_HISTO_NAME = "ISend Time";
-static const char* BARRIER_HISTO_NAME = "Barrier Time";
-static const char* ALLREDUCE_HISTO_NAME = "Allreduce Time";
-static const char* REDUCE_HISTO_NAME = "Reduce Time";
-static const char* COMPUTE_HISTO_NAME = "Compute Time";
-static const char* START_HISTO_NAME = "Start Time";
-static const char* SENDSIZE_HISTO_NAME = "Send Sizes in Bytes";
-static const char* RECVSIZE_HISTO_NAME = "Recv Sizes in Bytes";
-
-EmberSpyInfo::EmberSpyInfo(int32_t r) :
-	rank(r),
-	bytesSent(0),
-	sendsPerformed(0) {
-}
-
-void EmberSpyInfo::incrementSendCount() {
-	sendsPerformed = sendsPerformed + 1;
-}
-
-void EmberSpyInfo::addSendBytes(uint64_t sendBytes) {
-	bytesSent += sendBytes;
-}
-
-int32_t EmberSpyInfo::getRemoteRank() {
-	return rank;
-}
-
-uint32_t EmberSpyInfo::getSendCount() {
-	return sendsPerformed;
-}
-
-uint64_t EmberSpyInfo::getBytesSent() {
-	return bytesSent;
-}
+using namespace SST::Hermes;
 
 EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Component( id ),
-    generationPhase(0),
-	finalizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedFinalize)),
-	initFunctor(HermesAPIFunctor(this, &EmberEngine::completedInit)),
-	recvFunctor(HermesAPIFunctor(this, &EmberEngine::completedRecv)),
-	sendFunctor(HermesAPIFunctor(this, &EmberEngine::completedSend)),
-	waitFunctor(HermesAPIFunctor(this, &EmberEngine::completedWait)),
-	waitallFunctor(HermesAPIFunctor(this, &EmberEngine::completedWaitall)),
-	irecvFunctor(HermesAPIFunctor(this, &EmberEngine::completedIRecv)),
-	isendFunctor(HermesAPIFunctor(this, &EmberEngine::completedISend)),
-	barrierFunctor(HermesAPIFunctor(this, &EmberEngine::completedBarrier)),
-	allreduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedAllreduce)),
-	reduceFunctor(HermesAPIFunctor(this, &EmberEngine::completedReduce)),
-	commSplitFunctor(HermesAPIFunctor(this, &EmberEngine::completedCommSplit)),
-	commGetSizeFunctor(HermesAPIFunctor(this, &EmberEngine::completedCommGetSize)),
-	commGetRankFunctor(HermesAPIFunctor(this, &EmberEngine::completedCommGetRank))
+	currentMotif(0),
+	m_motifDone(false)
 {
-	output = new Output();
-
 	// Get the level of verbosity the user is asking to print out, default is 1
 	// which means don't print much.
 	uint32_t verbosity = (uint32_t) params.find_integer("verbose", 1);
-	output->init("EmberEngine", verbosity, (uint32_t) 0, Output::STDOUT);
+	m_jobId = params.find_integer("jobId", -1);
 
-	// See if the user requested that we print statistics for this run
-	printStats = ((uint32_t) (params.find_integer("printStats", 0)));
+	std::ostringstream prefix;
+    prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
 
-	jobId = params.find_integer("jobId", -1);
-	if ( -1 == jobId ) {
-		printStats = 0;
-	}
+	output.init( prefix.str(), verbosity, (uint32_t) 0, Output::STDOUT);
 
-	// Decide if we should back simulated data movement with real data
-	// data mode 0 indicates no data at all, 1 indicates backed with zeros
-	uint32_t paramDataMode = (uint32_t) params.find_integer("datamode", 0);
-	switch(paramDataMode) {
-	case 0:
-		dataMode = NOBACKING;
-		break;
-	case 1:
-		dataMode = BACKZEROS;
-		break;
-        case 2:
-		dataMode = BACKUNINIT;
-		break;
-	default:
-		output->fatal(CALL_INFO, -1, "Unknown backing mode: %" PRIu32 " (see \"datamode\" parameter)\n",
-			paramDataMode);
-	}
+	output.verbose(CALL_INFO, 1, 0, "\n");
 
-	if(dataMode != NOBACKING) {
-		// Configure the empty buffer ready for use by MPI routines.
-		emptyBufferSize = (uint32_t) params.find_integer("buffersize", 8192);
-		emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
-        if ( dataMode == BACKZEROS ) { 
-		    for(uint32_t i = 0; i < emptyBufferSize; ++i) {
-			    emptyBuffer[i] = 0;
-		    }
-        }
-	}
+   	//params.print_all_params( std::cout );
 
-	// Create the messaging interface we are going to use
-	string msgiface = params.find_string("msgapi");
-	if ( msgiface == "" ) {
-        	msgapi = new MessageInterface();
-    	} else {
-        	Params hermesParams = params.find_prefix_params("hermesParams." );
+    // create a map of all the available API's
+    m_apiMap = createApiMap( this, params );
+    assert( ! m_apiMap.empty() );
 
-        	msgapi = dynamic_cast<MessageInterface*>(loadModuleWithComponent(
-                            msgiface, this, hermesParams));
+	motifParams.resize( params.find_integer("motif_count", 1) );
+	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
+                                    "to be simulated.\n", motifParams.size());
+	
+	for ( unsigned int i = 0;  i < motifParams.size(); i++ ) {
+		std::ostringstream tmp;
+    	tmp << i;
+		motifParams[i] = params.find_prefix_params( "motif" + tmp.str() + "." );
+	} 
 
-        	if(NULL == msgapi) {
-                	std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;
-                	exit(-1);
-        	}
-    	}
-
-	// Set the rank mapping scheme we are using
-	Params mapParams = params.find_prefix_params("rankmap.");
-	string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
-	rankMap = dynamic_cast<EmberRankMap*>(loadModuleWithComponent(rankMapModule, this, mapParams));
-
-	if(NULL == rankMap) {
-		std::cerr << "Error: Unable to load rank map scheme: \'" << rankMapModule << "\'" << std::endl;
-		exit(-1);
-	}
-
-	// Get the Spyplot mode
-	spyplotMode = (uint32_t) params.find_integer("spyplotmode", 0);
-
-	Params distribParams = params.find_prefix_params("distribParams.");
-	string distribModule = params.find_string("distrib", "ember.ConstDistrib");
-
-	computeDistrib = dynamic_cast<EmberComputeDistribution*>(loadModuleWithComponent(distribModule, this, distribParams));
-	if(NULL == computeDistrib) {
-		std::cerr << "Error: Unable to load compute distribution: \'" << distribModule << "\'" << std::endl;
-		exit(-1);
-	}
-
-	// Create the generator
-	string gentype = params.find_string("motif0");
-	motifCount = (uint32_t) params.find_integer("motif_count", 1);
-	currentMotif = 0;
-
-	if(motifCount > 1) {
-		// If we have other motifs after this zero, we need to keep a copy of the parameters
-		// so we can instantiate the motif as needed.
-		engineParams = new SST::Params(params);
-	}
-
-	if( gentype == "" ) {
-		output->fatal(CALL_INFO, -1, "Error: You did not specify a generator for Ember to use (parameter is called \'motif0\')\n");
-	} else {
-		Params generatorParams = params.find_prefix_params("motifParams0.");
-
-		generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
-
-		if(NULL == generator) {
-			output->fatal(CALL_INFO, -1, "Error: Could not load the generator %s for Ember\n", gentype.c_str());
-		}
-	}
-
-	// Set the rank map
-	generator->setRankMap(rankMap);
-
+    // Init the first Motif
+    m_generator = initMotif( motifParams[0], m_apiMap, m_jobId );
+    assert( m_generator );
+    
 	// Configure self link to handle event timing
 	selfEventLink = configureSelfLink("self", "1ps",
 		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
+    assert(selfEventLink);
 
 	// Make sure we don't stop the simulation until we are ready
-    	registerAsPrimaryComponent();
-    	primaryComponentDoNotEndSim();
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
 	// Create a time converter for our compute events
-	nanoTimeConverter = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
-
-	uint64_t userBinWidth = (uint64_t) params.find_integer("compute_bin_width", 20);
-	histoCompute = new Histogram<uint32_t, uint32_t>(COMPUTE_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("send_bin_width", 5);
-	histoSend = new Histogram<uint32_t, uint32_t>(SEND_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("recv_bin_width", 5);
-	histoRecv = new Histogram<uint32_t, uint32_t>(RECV_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("init_bin_width", 5);
-	histoInit = new Histogram<uint32_t, uint32_t>(INIT_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("finalize_bin_width", 5);
-	histoFinalize = new Histogram<uint32_t, uint32_t>(FINALIZE_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("start_bin_width", 5);
-	histoStart = new Histogram<uint32_t, uint32_t>(START_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("wait_bin_width", 5);
-	histoWait = new Histogram<uint32_t, uint32_t>(WAIT_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("irecv_bin_width", 5);
-	histoIRecv = new Histogram<uint32_t, uint32_t>(IRECV_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("isend_bin_width", 5);
-	histoISend = new Histogram<uint32_t, uint32_t>(ISEND_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("barrier_bin_width", 5);
-	histoBarrier = new Histogram<uint32_t, uint32_t>(BARRIER_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("allreduce_bin_width", 5);
-	histoAllreduce = new Histogram<uint32_t, uint32_t>(ALLREDUCE_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("reduce_bin_width", 5);
-	histoReduce = new Histogram<uint32_t, uint32_t>(REDUCE_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("sendsize_bin_width", 64);
-	histoSendSizes = new Histogram<uint32_t, uint32_t>(SENDSIZE_HISTO_NAME, userBinWidth);
-
-	userBinWidth = (uint64_t) params.find_integer("recvsize_bin_width", 64);
-	histoRecvSizes = new Histogram<uint32_t, uint32_t>(RECVSIZE_HISTO_NAME, userBinWidth);
-
-	// Set the accumulation to be the start
-	accumulateTime = histoStart;
-
-	continueProcessing = true;
+	nanoTimeConverter =
+        Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 }
 
 EmberEngine::~EmberEngine() {
-	switch(dataMode) {
-	case BACKZEROS:
-	case BACKUNINIT:
-		// Free the big buffer we have been using
-		free(emptyBuffer);
-		break;
-    default:
-        break;
-	}
-
-	delete histoBarrier;
-	delete histoIRecv;
-	delete histoWait;
-	delete histoStart;
-	delete histoFinalize;
-	delete histoInit;
-	delete histoRecv;
-	delete histoSend;
-	delete histoCompute;
-	delete histoAllreduce;
-	delete histoReduce;
-	delete computeDistrib;
-	delete output;
-	delete msgapi;
-	delete histoSendSizes;
-	delete histoRecvSizes;
 }
 
-PayloadDataType EmberEngine::convertToHermesType(EmberDataType theType) {
-	switch(theType) {
-		case EMBER_F64:
-			return DOUBLE;
-		case EMBER_F32:
-			return FLOAT;
-		default:
-			return CHAR;
-			// Error?
-	}
+EmberEngine::ApiMap EmberEngine::createApiMap( 
+                        SST::Component* owner, SST::Params params )
+{
+    ApiMap tmp;
+
+    ApiInfo *info = new ApiInfo;
+    info->data = NULL;
+
+    //params.print_all_params( std::cout );
+
+    std::string ifaceModuleName = "firefly.hades"; 
+    std::string ifaceName = "hermesParams";
+    Params ifaceParams = params.find_prefix_params(ifaceName + "." );
+
+     
+    tmp[ ifaceName ] = info;
+    //ifaceParams.print_all_params(std::cout);
+    tmp[ ifaceName ]->api = 
+        dynamic_cast<Interface*>(owner->loadModuleWithComponent(
+                            ifaceModuleName, owner, ifaceParams));
+
+    return tmp;
 }
 
-uint32_t EmberEngine::getDataTypeWidth(const EmberDataType theType) {
-	switch(theType) {
-		case EMBER_F64:
-			return 8;
-		case EMBER_F32:
-			return 4;
-		default:
-			return 1;
-			// error?
+EmberGenerator* EmberEngine::initMotif( SST::Params params,
+											const ApiMap& apiMap, int jobId )
+{
+    EmberGenerator* gen = NULL;
+
+	//params.print_all_params(std::cout);
+	
+    // get the name of the motif
+    std::string gentype = params.find_string( "name" );
+	assert( !gentype.empty() );
+
+    // get the api the motif uses
+    std::string api = params.find_string("api" );
+	assert( !api.empty() );
+
+	output.verbose(CALL_INFO, 1, 0, "api=`%s` motif=`%s`\n", 
+										api.c_str(), gentype.c_str());
+
+	if( gentype.empty()) {
+		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator" 
+                "or Ember to use\n");
+	} else {
+		gen = dynamic_cast<EmberGenerator*>(
+                loadModuleWithComponent(gentype, this, params ) );
+
+		if(NULL == gen) {
+			output.fatal(CALL_INFO, -1, "Error: Could not load the "
+                    "generator %s for Ember\n", gentype.c_str());
+		}
 	}
+
+    ApiInfo* info = apiMap.find(api)->second;
+    gen->initOutput( &output );
+    gen->initAPI( info->api );
+    gen->initData( &info->data );
+    info->data->jobId = jobId;
+    return gen; 
 }
 
 void EmberEngine::init(unsigned int phase) {
 	// Pass the init phases through to the communication layer
-	msgapi->_componentInit(phase);
-}
-
-void EmberEngine::printHistogram(Histogram<uint32_t, uint32_t>* histo) {
-        output->output("Histogram Min: %" PRIu32 "\n", histo->getBinStart());
-        output->output("Histogram Max: %" PRIu32 "\n", histo->getBinEnd());
-        output->output("Histogram Bin: %" PRIu32 "\n", histo->getBinWidth());
-	for(uint32_t i = histo->getBinStart(); i <= histo->getBinEnd(); i += histo->getBinWidth()) {
-		if( histo->getBinCountByBinStart(i) > 0 ) {
-			output->output(" [%" PRIu32 ", %" PRIu32 "]   %" PRIu32 "\n",
-				i, (i + histo->getBinWidth()), histo->getBinCountByBinStart(i));
-		}
-	}
+    ApiMap::iterator iter = m_apiMap.begin(); 	
+    for ( ; iter != m_apiMap.end(); ++iter ) {
+	    iter->second->api->_componentInit(phase);
+    }
 }
 
 void EmberEngine::finish() {
-	// Tell the generator we are finishing the simulation
-	generator->finish(output);
-
-	if(printStats & (uint32_t) 1) {
-		output->output("Ember End Point Completed at: %" PRIu64 " ns\n", getCurrentSimTimeNano());
-		output->output("Ember Statistics for Rank %" PRIu32 "\n", thisRank);
-
-		output->output("- Histogram of compute times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoCompute->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoCompute->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoCompute->getItemCount() == 0 ? 0 :
-			(histoCompute->getValuesSummed() / histoCompute->getItemCount()));
-		if(printStats > 1) {
-			printHistogram(histoCompute);
-		}
-
-		output->output("- Histogram of send times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoSend->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoSend->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoSend->getItemCount() == 0 ? 0 :
-			(histoSend->getValuesSummed() / histoSend->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoSend);
-		}
-
-		output->output("- Histogram of irecv times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoIRecv->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoIRecv->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoIRecv->getItemCount() == 0 ? 0 :
-			(histoIRecv->getValuesSummed() / histoIRecv->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoIRecv);
-		}
-
-		output->output("- Histogram of isend times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoISend->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoISend->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoISend->getItemCount() == 0 ? 0 :
-			(histoISend->getValuesSummed() / histoISend->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoISend);
-		}
-
-		output->output("- Histogram of recv times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoRecv->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoRecv->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoRecv->getItemCount() == 0 ? 0 :
-			(histoRecv->getValuesSummed() / histoRecv->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoRecv);
-		}
-
-		output->output("- Histogram of wait times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoWait->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoWait->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoWait->getItemCount() == 0 ? 0 :
-			(histoWait->getValuesSummed() / histoWait->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoWait);
-		}
-
-		output->output("- Histogram of barrier times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoBarrier->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoBarrier->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoBarrier->getItemCount() == 0 ? 0 :
-			(histoBarrier->getValuesSummed() / histoBarrier->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoBarrier);
-		}
-
-		output->output("- Histogram of allreduce times:\n");
-		output->output("--> Total time:     %" PRIu32 "\n", histoAllreduce->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoAllreduce->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoAllreduce->getItemCount() == 0 ? 0 :
-			(histoAllreduce->getValuesSummed() / histoAllreduce->getItemCount()));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoAllreduce);
-		}
-
-		output->output("- Histogram of Send Sizes (bytes):\n");
-		output->output("--> Total bytes:    %" PRIu32 "\n", histoSendSizes->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoSendSizes->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoSendSizes->getItemCount() == 0 ? 0 :
-			(histoSendSizes->getValuesSummed() / histoSendSizes->getItemCount()));
-		output->output("--> Avr B/W:        %.2f GB/s (Duration of Run)\n",
-			(histoSendSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double) getCurrentSimTimeNano()) / 1000000000.0));
-		output->output("--> Avr B/W:        %.2f GB/s (During Critical Path Send Operations)\n",
-			(histoSendSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double)
-				(histoSend->getValuesSummed() + histoISend->getValuesSummed()) / 1000000000.0)));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoSendSizes);
-		}
-
-		output->output("- Histogram of Recv Sizes (bytes):\n");
-		output->output("--> Total bytes:    %" PRIu32 "\n", histoRecvSizes->getValuesSummed());
-		output->output("--> Item count:     %" PRIu32 "\n", histoRecvSizes->getItemCount());
-		output->output("--> Average:        %" PRIu32 "\n",
-			histoRecvSizes->getItemCount() == 0 ? 0 :
-			(histoRecvSizes->getValuesSummed() / histoRecvSizes->getItemCount()));
-		output->output("--> Avr B/W:        %.2f GB/s (Duration of Run)\n",
-			(histoRecvSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double) getCurrentSimTimeNano()) / 1000000000.0));
-		output->output("--> Avr B/W:        %.2f GB/s (During Critical Path Recv Operations)\n",
-			(histoRecvSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double)
-				(histoRecv->getValuesSummed() + histoIRecv->getValuesSummed()) / 1000000000.0)));
-		if(printStats > 1) {
-			output->output("- Distribution:\n");
-			printHistogram(histoRecvSizes);
-		}
-	}
-
-	char* baseSpyName = (char*) malloc(sizeof(char) * 64);
-	sprintf(baseSpyName, "ember-%" PRId32 ".spy", thisRank);
-	generateSpyplotRank(baseSpyName);
-	free(baseSpyName);
 }
 
 void EmberEngine::setup() {
 	// Notify communication layer we are done with init phase
 	// and are now in final bring up state
-	msgapi->_componentSetup();
+	
+    ApiMap::iterator iter = m_apiMap.begin(); 	
+    for ( ; iter != m_apiMap.end(); ++iter ) {
+	    iter->second->api->_componentSetup();
+    }
 
-	// Get my rank from the communication layer, we will
-	// need to pass this to the generator
-	thisRank = (uint32_t) msgapi->myWorldRank();
-	worldSize = (uint32_t) msgapi->myWorldSize();
-
-	// Tell the motif and the rank mapper what is happening in
-	// terms of this rank and the size of the world
-	generator->configureEnvironment(output, thisRank, worldSize);
-	rankMap->setEnvironment(thisRank, worldSize);
-
-	char outputPrefix[256];
-	sprintf(outputPrefix, "@t:%d:%d:EmberEngine::@p:@l: ", jobId, (int) thisRank);
-	string outputPrefixStr = outputPrefix;
-	output->setPrefix(outputPrefixStr);
-
-	output->verbose(CALL_INFO, 2, 0, "Identified %" PRIu32 " motifs to be simulated.\n", motifCount);
-
-	// Send an start event to this rank, this starts up the component
-	EmberStartEvent* startEv = new EmberStartEvent();
-	selfEventLink->send(startEv);
-
-        // Add the init event to the queue if the motif is set to auto initialize true
-        if(generator->autoInitialize()) {
-                EmberInitEvent* initEv = new EmberInitEvent();
-                evQueue.push(initEv);
-        }
-
-	// Update event count to ensure we are not correctly sync'd
-	eventCount = (uint32_t) evQueue.size();
-
-	if(spyplotMode != EMBER_SPYPLOT_NONE) {
-		spyinfo = new std::map<int32_t, EmberSpyInfo*>();
-	}
-}
-
-void EmberEngine::generateSpyplotRank(const char* filename) {
-	// if we are told not to generate spyplot then exit
-	if(EMBER_SPYPLOT_NONE == spyplotMode) {
-		return;
-	}
-
-	output->verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots (Rank %" PRId32 "\n", thisRank);
-
-	FILE* spyplotFile = fopen(filename, "wt");
-	assert(NULL != spyplotFile);
-
-	std::map<int32_t, EmberSpyInfo*>::iterator spy_itr;
-	for(spy_itr = spyinfo->begin(); spy_itr != spyinfo->end(); spy_itr++) {
-		EmberSpyInfo* info = spy_itr->second;
-
-		fprintf(spyplotFile, "%" PRId32 " %" PRIu32 " %" PRIu64 "\n", info->getRemoteRank(),
-			info->getSendCount(), info->getBytesSent());
-	}
-
-	fclose(spyplotFile);
-
-	///////////////////////////////////////////////////////////
-
-	output->verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots completed (Rank %" PRId32 "\n", thisRank);
-}
-
-void EmberEngine::updateSpyplot(const int32_t remoteRank, const uint64_t bytesSent) {
-	if(spyplotMode > EMBER_SPYPLOT_NONE) {
-		std::map<int32_t, EmberSpyInfo*>::iterator spy_itr = spyinfo->find(remoteRank);
-		EmberSpyInfo* info = NULL;
-
-		if(spy_itr == spyinfo->end()) {
-			info = new EmberSpyInfo(remoteRank);
-			spyinfo->insert(std::pair<int32_t, EmberSpyInfo*>(remoteRank, info));
-		} else {
-			info = spy_itr->second;
-		}
-
-		// Add the info for this send into the object
-		info->incrementSendCount();
-		info->addSendBytes(bytesSent);
-	}
-}
-
-void EmberEngine::processStartEvent(EmberStartEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Start Event\n");
-
+	// Prime the event queue 
 	issueNextEvent(0);
-        accumulateTime = histoCompute;
-}
-
-ReductionOperation convertToHermesReductionOp(EmberReductionOperation op) {
-	switch(op) {
-		case EMBER_SUM:
-			return SUM;
-		default:
-			return SUM;
-	}
-}
-
-void EmberEngine::processAllreduceEvent(EmberAllreduceEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing an Allreduce Event\n");
-	const uint32_t dataTypeWidth = getDataTypeWidth(ev->getElementType());
-
-	switch(dataMode) {
-
-	case NOBACKING:
-		msgapi->allreduce(NULL, NULL,
-			ev->getElementCount(), convertToHermesType(ev->getElementType()),
-			convertToHermesReductionOp(ev->getReductionOperation()),
-			ev->getCommunicator(), &allreduceFunctor);
-		break;
-
-	case BACKZEROS:
-	case BACKUNINIT:
-		assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
-		msgapi->allreduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
-			ev->getElementCount(), convertToHermesType(ev->getElementType()),
-			convertToHermesReductionOp(ev->getReductionOperation()),
-			ev->getCommunicator(), &allreduceFunctor);
-		break;
-	}
-
-	accumulateTime = histoAllreduce;
-}
-
-void EmberEngine::processReduceEvent(EmberReduceEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing an Reduce Event\n");
-	const uint32_t dataTypeWidth = getDataTypeWidth(ev->getElementType());
-
-	switch(dataMode) {
-	case NOBACKING:
-		msgapi->reduce(NULL, NULL,
-			ev->getElementCount(), convertToHermesType(ev->getElementType()),
-			convertToHermesReductionOp(ev->getReductionOperation()),
-			(RankID) ev->getReductionRoot(),
-			ev->getCommunicator(), &reduceFunctor);
-		break;
-
-	case BACKZEROS:
-	case BACKUNINIT:
-		assert(emptyBufferSize >= (ev->getElementCount() * dataTypeWidth * 2));
-
-		msgapi->reduce((Addr) emptyBuffer, (Addr) (emptyBuffer + (dataTypeWidth * ev->getElementCount())),
-			ev->getElementCount(), convertToHermesType(ev->getElementType()),
-			convertToHermesReductionOp(ev->getReductionOperation()),
-			(RankID) ev->getReductionRoot(),
-			ev->getCommunicator(), &reduceFunctor);
-		break;
-	}
-
-	accumulateTime = histoReduce;
-}
-
-void EmberEngine::processStopEvent(EmberStopEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Stop Event\n");
-
-	primaryComponentOKToEndSim();
-	if ( jobId >= 0 ) {
-		output->output("%" PRIi32":Ember End Point Finalize completed at: %"
-							PRIu64 " ns\n", jobId, getCurrentSimTimeNano());
-	}
-}
-
-void EmberEngine::processInitEvent(EmberInitEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing an Init Event\n");
-	msgapi->init(&initFunctor);
-
-	accumulateTime = histoInit;
-}
-
-void EmberEngine::processBarrierEvent(EmberBarrierEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Barrier Event\n");
-	msgapi->barrier(ev->getCommunicator(), &barrierFunctor);
-
-	accumulateTime = histoBarrier;
-}
-
-void EmberEngine::processSendEvent(EmberSendEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Send Event (%s)\n", ev->getPrintableString().c_str());
-
-	switch(dataMode) {
-	case NOBACKING:
-		msgapi->send(NULL, ev->getMessageSize(),
-			CHAR, (RankID) ev->getSendToRank(),
-			ev->getTag(), ev->getCommunicator(),
-			&sendFunctor);
-		break;
-
-	case BACKZEROS:
-	case BACKUNINIT:
-		assert( emptyBufferSize >= ev->getMessageSize() );
-		msgapi->send((Addr) emptyBuffer, ev->getMessageSize(),
-			CHAR, (RankID) ev->getSendToRank(),
-			ev->getTag(), ev->getCommunicator(),
-			&sendFunctor);
-		break;
-	}
-
-	// Update the Spyplot, this will detect if we want to output
-	// at the end of simulation
-	updateSpyplot((int32_t) ev->getSendToRank(), (uint64_t) ev->getMessageSize());
-
-	// Keep track of message sizes sent from this node
-	histoSendSizes->add(ev->getMessageSize());
-
-	accumulateTime = histoSend;
-}
-
-void EmberEngine::processWaitEvent(EmberWaitEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Wait Event (%s)\n", ev->getPrintableString().c_str());
-
-    	currentRecv.resize(1);
-	msgapi->wait( *ev->getMessageRequestHandle(), &currentRecv[0], &waitFunctor);
-
-	accumulateTime = histoWait;
-}
-
-void EmberEngine::processWaitallEvent(EmberWaitallEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Waitall Event (%s)\n", ev->getPrintableString().c_str());
-
-        const int numReq = ev->getNumMessageRequests();
-	currentRecv.resize(numReq);
-
-	if(numReq > 0) {
-		msgapi->waitall(numReq, ev->getMessageRequestHandle(),
-                    (MessageResponse**) &currentRecv[0], &waitallFunctor);
-
-		accumulateTime = histoWait;
-	} else {
-		output->verbose(CALL_INFO, 2, 0, "No events in waitall, continuing to next event.\n");
-		issueNextEvent(0);
-	}
-}
-
-void EmberEngine::processGetTimeEvent(EmberGetTimeEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Get Time Event\n");
-	ev->setTime((uint64_t) getCurrentSimTimeNano());
-	issueNextEvent(0);
-	accumulateTime = NULL;
-}
-
-void EmberEngine::processIRecvEvent(EmberIRecvEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing an IRecv Event (%s)\n", ev->getPrintableString().c_str());
-
-	switch(dataMode) {
-	case NOBACKING:
-		msgapi->irecv(NULL, ev->getMessageSize(),
-			CHAR, (RankID) ev->getRecvFromRank(),
-			ev->getTag(), ev->getCommunicator(),
-			ev->getMessageRequestHandle(), &irecvFunctor);
-		break;
-
-	case BACKZEROS:
-	case BACKUNINIT:
-		assert( emptyBufferSize >= ev->getMessageSize() );
-		msgapi->irecv((Addr) emptyBuffer, ev->getMessageSize(),
-			CHAR, (RankID) ev->getRecvFromRank(),
-			ev->getTag(), ev->getCommunicator(),
-			ev->getMessageRequestHandle(), &irecvFunctor);
-		break;
-	}
-
-	histoRecvSizes->add(ev->getMessageSize());
-	accumulateTime = histoIRecv;
-}
-
-void EmberEngine::processISendEvent(EmberISendEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing an ISend Event (%s)\n", ev->getPrintableString().c_str());
-
-	switch(dataMode) {
-	case NOBACKING:
-		msgapi->isend(NULL, ev->getMessageSize(),
-			CHAR, (RankID) ev->getSendToRank(),
-			ev->getTag(), ev->getCommunicator(),
-			ev->getMessageRequestHandle(), &isendFunctor);
-		break;
-
-	case BACKZEROS:
-	case BACKUNINIT:
-	        assert( emptyBufferSize >= ev->getMessageSize() );
-		msgapi->isend((Addr) emptyBuffer, ev->getMessageSize(),
-			CHAR, (RankID) ev->getSendToRank(),
-			ev->getTag(), ev->getCommunicator(),
-			ev->getMessageRequestHandle(), &isendFunctor);
-		break;
-	}
-
-	// Update the Spyplot, this will detect if we want to output
-	// at the end of simulation
-	updateSpyplot((int32_t) ev->getSendToRank(), (uint64_t) ev->getMessageSize());
-
-	histoSendSizes->add(ev->getMessageSize());
-
-	accumulateTime = histoISend;
-}
-
-void EmberEngine::processRecvEvent(EmberRecvEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Recv Event (%s)\n", ev->getPrintableString().c_str());
-	currentRecv.resize(1);
-
-	switch(dataMode) {
-	case NOBACKING:
-		msgapi->recv(NULL, ev->getMessageSize(),
-			CHAR, (RankID) ev->getRecvFromRank(),
-			ev->getTag(), ev->getCommunicator(),
-			&currentRecv[0], &recvFunctor);
-		break;
-
-	case BACKZEROS:
-	case BACKUNINIT:
-	        assert( emptyBufferSize >= ev->getMessageSize() );
-		msgapi->recv((Addr) emptyBuffer, ev->getMessageSize(),
-			CHAR, (RankID) ev->getRecvFromRank(),
-			ev->getTag(), ev->getCommunicator(),
-			&currentRecv[0], &recvFunctor);
-		break;
-	}
-
-	histoRecvSizes->add(ev->getMessageSize());
-	accumulateTime = histoRecv;
-}
-
-void EmberEngine::processFinalizeEvent(EmberFinalizeEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Finalize Event\n");
-
-	if(currentMotif < (motifCount - 1)) {
-		char nameBuffer[64];
-
-		if(printStats & ((uint32_t) 2)) {
-			char motifCompleteBuffer[64];
-			sprintf(motifCompleteBuffer, "%" PRIu64 "ns", (uint64_t) getCurrentSimTimeNano());
-        		const UnitAlgebra ua_motifComplete(motifCompleteBuffer);
-
-			output->output("Motif %" PRIu32 " completed at %s.\n", currentMotif, ua_motifComplete.toStringBestSI().c_str());
-		}
-
-		currentMotif++;
-		output->verbose(CALL_INFO, 2, 0, "Loading the next motif (motif%" PRIu32 ")...\n", currentMotif);
-
-		// Delete the existing motif (call destructor)
-		delete generator;
-
-		// Get the type of the next motif
-		sprintf(nameBuffer, "motif%" PRIu32, currentMotif);
-		const std::string nameBufferStr(nameBuffer);
-		const string gentype = engineParams->find_string(nameBufferStr);
-
-		output->verbose(CALL_INFO, 2, 0, "Motif type is %s, loading parameters...\n", gentype.c_str());
-
-		sprintf(nameBuffer, "motifParams%" PRIu32 ".", currentMotif);
-		Params generatorParams = engineParams->find_prefix_params(nameBuffer);
-
-		// Load the next motif in the sequence
-                generator = dynamic_cast<EmberGenerator*>( loadModuleWithComponent(gentype, this, generatorParams ) );
-
-                if(NULL == generator) {
-                        output->fatal(CALL_INFO, -1, "Error: Could not load the generator %s for motif %" PRIu32 "\n", gentype.c_str(), currentMotif);
-                } else {
-			output->verbose(CALL_INFO, 2, 0, "Motif laoded correctly, beginning processing.\n");
-		}
-
-		// Reset the phase generator for this motif
-		generationPhase = 0;
-
-		// Clear any pending events in the queue (from the old motif, when you issue finalize, you mean it).
-		while(! evQueue.empty()) {
-			evQueue.pop();
-		}
-
-		// Configure the motif environment
-		generator->configureEnvironment(output, thisRank, worldSize);
-
-		// Set the rank map
-        	generator->setRankMap(rankMap);
-
-        	// Update event count to ensure we are not correctly sync'd
-        	eventCount = (uint32_t) evQueue.size();
-
-		// Begin to issue events from the new motif
-		issueNextEvent(0);
-	} else {
-		output->verbose(CALL_INFO, 2, 0, "Last motif in this simulation, calling finalize in the messaging API.\n");
-
-		msgapi->fini(&finalizeFunctor);
-		accumulateTime = histoFinalize;
-	}
-}
-
-void EmberEngine::processCommGetRankEvent(EmberCommGetRankEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a CommGetRank  Event\n");
-	msgapi->rank( ev->getComm(), ev->getRankPtr(), &commGetRankFunctor ); 
-}
-
-void EmberEngine::processCommGetSizeEvent(EmberCommGetSizeEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a CommGetSize  Event\n");
-	msgapi->size( ev->getComm(), (int*) ev->getSizePtr(), &commGetSizeFunctor ); 
-}
-
-void EmberEngine::processCommSplitEvent(EmberCommSplitEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a CommSplit  Event\n");
-	msgapi->comm_split(ev->getOldComm(), 
-        ev->getColor(), ev->getKey(), ev->getNewComm(), &commSplitFunctor );
-}
-
-
-void EmberEngine::processComputeEvent(EmberComputeEvent* ev) {
-	output->verbose(CALL_INFO, 2, 0, "Processing a Compute Event (%s)\n", ev->getPrintableString().c_str());
-
-	// Get the time now to allow for time dependent distributions
-	const uint64_t now = getCurrentSimTimeNano();
-
-	// Issue the next event with a delay (essentially the time we computed something)
-	const uint64_t noiseAdjustedTime = (computeDistrib->sample(now) * ev->getNanoSecondDelay());
-	output->verbose(CALL_INFO, 2, 0, "Adjust time by noise distribution to give: %" PRIu64 "ns\n", noiseAdjustedTime);
-
-	// Next event will occur in the future at a distribution adjusted compute period forward
-	issueNextEvent(noiseAdjustedTime);
-	accumulateTime = histoCompute;
-}
-
-void EmberEngine::completedInit(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Init, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedFinalize(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Finalize, result = %d\n", val);
-
-	// Tell the simulator core we are finished and do not need any further
-	// processing to continue
-	primaryComponentOKToEndSim();
-
-	continueProcessing = false;
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedCommSplit(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed CommSplit, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedCommGetSize(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed CommGetSize, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedCommGetRank(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed CommGetRank, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedBarrier(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Barrier, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedWait(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedWaitall(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Wait, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedIRecv(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed IRecv, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedISend(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed ISend, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedSend(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Send, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedRecv(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Recv, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedAllreduce(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Allreduce, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::completedReduce(int val) {
-	output->verbose(CALL_INFO, 2, 0, "Completed Reduce, result = %d\n", val);
-	issueNextEvent(0);
-}
-
-void EmberEngine::refillQueue() {
-	generator->generate(output, generationPhase++, &evQueue);
-	eventCount = evQueue.size();
-}
-
-void EmberEngine::checkQueue() {
-	// Check if we have run out of events, if yes then
-	// we must refill the queue to continue
-	if(0 == eventCount) {
-		refillQueue();
-	}
 }
 
 void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
-	if(continueProcessing) {
-		// This issues the next event on the self link
-		// Check the queue, may need refilling
-		checkQueue();
 
-		if(0 == eventCount) {
-			// We are completed so we can now exit
-		} else {
-			EmberEvent* nextEv = evQueue.front();
-			evQueue.pop();
-			eventCount--;
+    output.verbose(CALL_INFO, 2, 0, "\n");
 
-			// issue the next event to the engine for deliver later
-			selfEventLink->send(nanoDelay, nanoTimeConverter, nextEv);
-		}
-	}
+    while ( evQueue.empty() ) {
+
+        if ( ! m_motifDone ) {
+            m_motifDone = refillQueue();
+        }
+
+        // if the event Queue is empty after a refill the motif is done
+        if (  evQueue.empty() ) {
+            m_generator->finish( &output, getCurrentSimTimeNano() );
+            delete m_generator;
+
+            if ( ++currentMotif == motifParams.size() ) {
+	            primaryComponentOKToEndSim();
+                return;
+            } else {
+                m_generator = initMotif( motifParams[currentMotif],
+													m_apiMap, m_jobId );
+                assert( m_generator );
+
+                m_motifDone = refillQueue();
+            }
+        }
+    }
+    
+	EmberEvent* nextEv = evQueue.front();
+	evQueue.pop();
+
+	// issue the next event to the engine for deliver later
+	selfEventLink->send(nanoDelay, nanoTimeConverter, nextEv);
+}
+
+bool EmberEngine::completeFunctor( int retval, EmberEvent* ev )
+{
+    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
+              ev->stateName( ev->state() ).c_str(), ev->getName().c_str());
+
+    if ( ev->complete( getCurrentSimTimeNano(), retval ) ) {
+        delete ev;
+    }  
+
+	issueNextEvent(0);
+
+    return true;
 }
 
 void EmberEngine::handleEvent(Event* ev) {
-	// Accumulate the time processing the last event into a counter
-	// we track these by event type
-    const uint64_t sim_time_now = (uint64_t) getCurrentSimTimeNano();
-    if ( accumulateTime ) {
-        accumulateTime->add( sim_time_now - nextEventStartTimeNanoSec );
-    }
-    nextEventStartTimeNanoSec = sim_time_now;
 
 	// Cast out the event we are processing and then hand off to whatever
 	// handlers we have created
 	EmberEvent* eEv = static_cast<EmberEvent*>(ev);
 
-	// Process the next event
-	switch(eEv->getEventType()) {
-	case SEND:
-		processSendEvent( (EmberSendEvent*) eEv );
-		break;
-	case RECV:
-		processRecvEvent( (EmberRecvEvent*) eEv );
-		break;
-	case IRECV:
-		processIRecvEvent( (EmberIRecvEvent*) eEv);
-		break;
-	case ISEND:
-		processISendEvent( (EmberISendEvent*) eEv);
-		break;
-	case WAIT:
-		processWaitEvent( (EmberWaitEvent*) eEv);
-		break;
-	case WAITALL:
-		processWaitallEvent( (EmberWaitallEvent*) eEv);
-		break;
-	case ALLREDUCE:
-		processAllreduceEvent( (EmberAllreduceEvent*) eEv);
-		break;
-	case REDUCE:
-		processReduceEvent( (EmberReduceEvent*) eEv);
-		break;
-	case BARRIER:
-		processBarrierEvent( (EmberBarrierEvent*) eEv );
-		break;
-	case COMM_SPLIT:
-		processCommSplitEvent( (EmberCommSplitEvent*) eEv );
-		break;
-	case COMM_GET_RANK:
-		processCommGetRankEvent( (EmberCommGetRankEvent*) eEv );
-		break;
-	case COMM_GET_SIZE:
-		processCommGetSizeEvent( (EmberCommGetSizeEvent*) eEv );
-		break;
-	case FINALIZE:
-		processFinalizeEvent(dynamic_cast<EmberFinalizeEvent*>(eEv));
-		break;
-	case INIT:
-		processInitEvent(dynamic_cast<EmberInitEvent*>(eEv));
-		break;
-	case COMPUTE:
-		processComputeEvent(dynamic_cast<EmberComputeEvent*>(eEv));
-		break;
-	case GETTIME:
-		processGetTimeEvent(dynamic_cast<EmberGetTimeEvent*>(eEv));
-		break;
-	case START:
-		processStartEvent(dynamic_cast<EmberStartEvent*>(eEv));
-		break;
-	case STOP:
-		processStopEvent(dynamic_cast<EmberStopEvent*>(eEv));
-		break;
-	default:
+    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
+              eEv->stateName( eEv->state() ).c_str(), eEv->getName().c_str());
 
-		break;
-	}
-	// Delete the current event
-	delete ev;
+    switch ( eEv->state() ) { 
+      case EmberEvent::Issue:
 
+        eEv->issue( getCurrentSimTimeNano() );
+
+	    selfEventLink->send( eEv->completeDelayNS() * 1000, ev );
+        break;
+
+      case EmberEvent::IssueFunctor:
+        eEv->issue( getCurrentSimTimeNano(), 
+                new ArgStatic_Functor< EmberEngine, int, EmberEvent*, bool >(
+                            this, &EmberEngine::completeFunctor, eEv ) );
+        break;
+
+      case EmberEvent::Complete:
+        if ( eEv->complete( getCurrentSimTimeNano() ) ) {
+            delete ev;
+        }
+	    issueNextEvent(0);
+        break;
+    }
 }
 
 EmberEngine::EmberEngine() :

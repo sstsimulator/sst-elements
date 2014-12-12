@@ -13,24 +13,3 @@
 #include "embergettimeev.h"
 
 using namespace SST::Ember;
-
-EmberGetTimeEvent::EmberGetTimeEvent(uint64_t* ns) :
-	time_point(ns) {
-
-}
-
-EmberGetTimeEvent::~EmberGetTimeEvent() {
-
-}
-
-EmberEventType EmberGetTimeEvent::getEventType() {
-	return GETTIME;
-}
-
-void EmberGetTimeEvent::setTime(uint64_t now) {
-	*time_point = now;
-}
-
-std::string EmberGetTimeEvent::getPrintableString() {
-	return "Get Time";
-}

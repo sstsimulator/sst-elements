@@ -13,7 +13,8 @@
 #ifndef _H_EMBER_COMPUTE_EVENT
 #define _H_EMBER_COMPUTE_EVENT
 
-#include "emberevent.h"
+#include "emberMPIEvent.h"
+#include "emberconstdistrib.h"
 
 namespace SST {
 namespace Ember {
@@ -21,14 +22,31 @@ namespace Ember {
 class EmberComputeEvent : public EmberEvent {
 
 public:
-	EmberComputeEvent(uint32_t nanoSecondsDelay);
-	~EmberComputeEvent();
-	EmberEventType getEventType();
-	uint32_t getNanoSecondDelay();
-	std::string getPrintableString();
+	EmberComputeEvent( Output* output, Histo* histo, uint64_t nanoSecondDelay,
+                EmberComputeDistribution* dist) :
+        EmberEvent(output, histo),
+        m_nanoSecondDelay( nanoSecondDelay ),
+        m_computeDistrib(dist)
+    {}  
+
+	~EmberComputeEvent() {}
+
+    std::string getName() { return "Compute"; }
+
+    void issue( uint64_t time, FOO* functor ) {
+
+        EmberEvent::issue( time );
+    
+        m_completeDelayNS = (double) m_nanoSecondDelay * 
+									m_computeDistrib->sample(time);
+
+        m_output->verbose(CALL_INFO, 1, 0, "Adjust time by noise "
+                "distribution to give: %" PRIu64 "ns\n", m_completeDelayNS );
+    }
 
 protected:
-	uint32_t nanoSecDelay;
+	uint64_t m_nanoSecondDelay;
+    EmberComputeDistribution* m_computeDistrib;
 
 };
 

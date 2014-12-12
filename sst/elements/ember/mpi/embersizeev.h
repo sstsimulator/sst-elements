@@ -10,38 +10,40 @@
 // distribution.
 
 
-#ifndef _H_EMBER_GETTIME_EV
-#define _H_EMBER_GETTIME_EV
+#ifndef _H_EMBER_SIZE_EVENT
+#define _H_EMBER_SIZE_EVENT
 
-#include <sst/elements/hermes/msgapi.h>
-#include "emberevent.h"
-
-using namespace SST::Hermes;
+#include "emberMPIEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberGetTimeEvent : public EmberEvent {
+class EmberSizeEvent : public EmberMPIEvent {
+
 public:
-	EmberGetTimeEvent( Output* output, uint64_t* ptr ) :
-        EmberEvent(output),
-        m_timePtr(ptr)
+	EmberSizeEvent( MessageInterface& api, Output* output, Histo* histo,
+            Communicator comm, int* sizePtr ) :
+        EmberMPIEvent( api, output, histo ),
+        m_comm( comm ),
+        m_sizePtr( sizePtr )
     {}
 
-	~EmberGetTimeEvent() {} 
+	~EmberSizeEvent() {}
 
-    std::string getName() { return "GetTime"; }
+    std::string getName() { return "Size"; }
 
-    virtual void issue( uint64_t time, FOO* functor ) 
-    {
+    void issue( uint64_t time, FOO* functor ) {
         m_output->verbose(CALL_INFO, 1, 0, "\n");
+
         EmberEvent::issue( time );
-        *m_timePtr = time;
+
+        m_api.size( m_comm, m_sizePtr, functor );
     }
 
 private:
-	uint64_t* m_timePtr; 
-
+    Communicator m_comm;
+    int*         m_sizePtr;
+    
 };
 
 }

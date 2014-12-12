@@ -14,32 +14,47 @@
 
 using namespace SST::Ember;
 
-EmberGenerator::EmberGenerator( Component* owner, Params& params ) {
-
+void* EmberGenerator::memAlloc( size_t size )
+{
+    void *ret = NULL;
+    switch ( m_dataMode  ) {
+      case Backing:
+        ret = malloc( size );
+        break;
+      case BackingZeroed: 
+        ret = malloc( size );
+        memset( ret, 0, size ); 
+        break;
+      case NoBacking:
+        break;
+    } 
+    return ret;
 }
 
-EmberGenerator::~EmberGenerator() {
-
+void EmberGenerator::memFree( void* ptr )
+{
+    switch ( m_dataMode  ) {
+      case Backing:
+      case BackingZeroed: 
+        free( ptr );
+        break;
+      case NoBacking:
+        break;
+    } 
 }
 
-void EmberGenerator::setRankMap(EmberRankMap* mapper) {
-	rankMap = mapper;
+void EmberGenerator::printHistogram(const Output* output, Histo* histo )
+{
+    output->output("Histogram Min: %" PRIu32 "\n", histo->getBinStart());
+    output->output("Histogram Max: %" PRIu32 "\n", histo->getBinEnd());
+    output->output("Histogram Bin: %" PRIu32 "\n", histo->getBinWidth());
+    for(uint32_t i = histo->getBinStart(); i <= histo->getBinEnd();
+                                            i += histo->getBinWidth()) {
+
+        if( histo->getBinCountByBinStart(i) > 0 ) {
+            output->output(" [%" PRIu32 ", %" PRIu32 "]   %" PRIu32 "\n",
+                i, (i + histo->getBinWidth()), histo->getBinCountByBinStart(i));
+        }
+    }
 }
 
-void EmberGenerator::getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
-                int32_t* myX, int32_t* myY, int32_t* myZ) {
-
-	rankMap->getPosition(rank, px, py, pz, myX, myY, myZ);
-}
-
-void EmberGenerator::getPosition(const int32_t rank, const int32_t px, const int32_t py,
-                int32_t* myX, int32_t* myY) {
-
-	rankMap->getPosition(rank, px, py, myX, myY);
-}
-
-int32_t EmberGenerator::convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
-	const int32_t posX, const int32_t posY, const int32_t posZ) {
-
-	return rankMap->convertPositionToRank(peX, peY, peZ, posX, posY, posZ);
-}

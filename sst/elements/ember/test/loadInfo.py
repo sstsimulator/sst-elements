@@ -54,7 +54,7 @@ class LoadInfo:
 		self.numCores = int(numCores)
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
-		self.nullEP, nidlist = self.foo( -1, self.readCmdLine(['Null']) )
+		self.nullEP, nidlist = self.foo( -1, self.readCmdLine({}, ['Null']) )
 		self.nullEP.prepParams()
 
 	def foo( self, jobId, x ):
@@ -67,21 +67,21 @@ class LoadInfo:
 		ep.prepParams()
 		return (ep, nidList)
 		
-	def initFile(self, fileName ):
+	def initFile(self, extra, fileName ):
 		fo = open(fileName)
 		jobId = 0
 		for line in iter(fo.readline,b''):
 			if  line[0] != '#' and False == line.isspace():
-				self.map.append( self.foo( jobId, self.readCmdLine([line] ) ) )
+				self.map.append( self.foo( jobId, self.readCmdLine( extra, [line] ) ) )
 				jobId += 1
 		fo.close()
 		self.verifyLoadInfo()
 
-	def initCmd(self, cmd ):
-		self.map.append( self.foo( 0, self.readCmdLine( cmd ) ) )
+	def initCmd(self, extra, cmd ):
+		self.map.append( self.foo( 0, self.readCmdLine( extra, cmd ) ) )
 		self.verifyLoadInfo()
 
-	def readCmdLine(self, cmds ):
+	def readCmdLine(self, extra, cmds ):
 		tmp = {}
 		tmp['motif_count'] = len(cmds) 
 		for i, cmdLine in enumerate( cmds ) :
@@ -113,17 +113,25 @@ class LoadInfo:
 				sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
 						str(self.numCores) + " coresPerNode")
 
-			tmp.update(self.parseCmd("ember.", "Motif", cmdList, i ))
+			tmp.update(self.parseCmd( extra, "ember.", "Motif", cmdList, i ))
 
 		return ( nidList, ranksPerNode, tmp )
 
-	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
+	def parseCmd(self, extra, motifPrefix, motifSuffix, cmdList, cmdNum ):
 		motif = {} 
-		motif['motif'+str(cmdNum)] = motifPrefix + cmdList[0] + motifSuffix
+
+		for x in extra.items():
+			tmp = 'motif' + str(cmdNum) + '.' + x[0] 
+			motif[ tmp ] = x[1] 
+
+		tmp = 'motif' + str(cmdNum) + '.name'
+		motif[ tmp ] = motifPrefix + cmdList[0] + motifSuffix
 		cmdList.pop(0)
 		for x in cmdList:
 			y = x.split("=")
-			motif['motifParams'+str(cmdNum)+'.' + y[0]] = y[1]
+			tmp	= 'motif' + str(cmdNum) + '.arg.' + y[0]
+			motif[ tmp ] = y[1]
+
 		return motif
 
 	def verifyLoadInfo(self):

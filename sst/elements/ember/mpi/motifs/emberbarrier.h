@@ -9,12 +9,27 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "emberevent.h"
 
-using namespace SST;
-using namespace Ember;
+#ifndef _H_EMBER_BARRIER_MOTIF
+#define _H_EMBER_BARRIER_MOTIF
 
-const char* EmberEvent::m_enumName[] = {
-    FOREACH_ENUM(GENERATE_STRING)
+#include "embermpigen.h"
+
+namespace SST {
+namespace Ember {
+
+class EmberBarrierGenerator : public EmberMessagePassingGenerator {
+
+public:
+	EmberBarrierGenerator(SST::Component* owner, Params& params);
+    bool generate( std::queue<EmberEvent*>& evQ );
+
+private:
+	uint32_t m_loopIndex;
+	uint32_t m_iterations;
 };
 
+}
+}
+
+#endif

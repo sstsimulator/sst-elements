@@ -18,9 +18,9 @@ topology = ""
 shape    = ""
 loading  = 0
 radix    = 0
-printStats = 0 
-emberVerbose = 0 
-emberBufferSize = 0 
+printStats = 0
+emberVerbose = 0
+emberBufferSize = 0
 
 netBW = "4GB/s"
 netPktSize="2048B"
@@ -29,12 +29,16 @@ netBufSize="14KB"
 
 
 if 1 == len(sys.argv) :
-    cmdLine  = ['Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10']
-    #cmdLine.append('PingPong')
+    cmdLine.append("Init")
+    cmdLine.append( "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10" )
+    cmdLine.append('Fini')
     topology = "torus"
     shape    = "4x4x4"
-    printStats = 0 
-    emberVerbose = 1 
+    printStats = 0
+    emberVerbose = 1
+
+
+motifExtra = { 'printStats' : printStats, 'api': "hermesParams" }
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -184,13 +188,13 @@ if len(loadFile) > 0:
 	if len(cmdLine) > 0:
 		sys.exit("Error: can't specify both loadFile and cmdLine");
 
-	loadInfo.initFile(loadFile)
+	loadInfo.initFile( motifExtra, loadFile)
 else:
 	if len(cmdLine) > 0:
 		if len(loadFile) > 0:
 			sys.exit("Error: can't specify both loadFile and cmdLine");
 
-		loadInfo.initCmd(cmdLine)
+		loadInfo.initCmd( motifExtra, cmdLine)
 	else:
 		sys.exit("Error: need a loadFile or cmdLine")
 

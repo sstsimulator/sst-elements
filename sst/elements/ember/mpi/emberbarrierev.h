@@ -10,38 +10,37 @@
 // distribution.
 
 
-#ifndef _H_EMBER_GETTIME_EV
-#define _H_EMBER_GETTIME_EV
+#ifndef _H_EMBER_BARRIER_EV
+#define _H_EMBER_BARRIER_EV
 
-#include <sst/elements/hermes/msgapi.h>
-#include "emberevent.h"
+#include "emberMPIEvent.h"
 
 using namespace SST::Hermes;
 
 namespace SST {
 namespace Ember {
 
-class EmberGetTimeEvent : public EmberEvent {
-public:
-	EmberGetTimeEvent( Output* output, uint64_t* ptr ) :
-        EmberEvent(output),
-        m_timePtr(ptr)
-    {}
+class EmberBarrierEvent : public EmberMPIEvent {
+  public:
+    EmberBarrierEvent( MessageInterface& api, Output* output, Histo* histo, 
+                                                    Communicator comm ) :
+        EmberMPIEvent( api, output, histo ), m_comm(comm) {}
 
-	~EmberGetTimeEvent() {} 
+    ~EmberBarrierEvent() {}
 
-    std::string getName() { return "GetTime"; }
+    std::string getName() { return "Barrier"; }
 
-    virtual void issue( uint64_t time, FOO* functor ) 
-    {
+    void issue( uint64_t time, FOO* functor ) {
+
         m_output->verbose(CALL_INFO, 1, 0, "\n");
+
         EmberEvent::issue( time );
-        *m_timePtr = time;
+
+        m_api.barrier( m_comm, functor );
     }
 
-private:
-	uint64_t* m_timePtr; 
-
+  private:
+    Communicator m_comm;
 };
 
 }

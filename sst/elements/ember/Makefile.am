@@ -1,54 +1,24 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) 
+	$(MPI_CPPFLAGS) \
+	-I../../../../sst/elements/ember/mpi
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
 
 libember_la_SOURCES = \
 	embergen.h \
-	embermpigen.h \
+	embergen.cc	\
 	embermap.h \
 	ember.cc \
 	emberengine.h  \
-	emberfinalizeev.cc  \
-	embergen.cc	\
-	embermpigen.cc \
-	emberinitev.cc  \
-	emberrecvev.cc  \
-	embersendev.cc \
 	emberengine.cc  \
 	emberevent.h \
 	emberevent.cc \
-	emberfinalizeev.h \
-	emberinitev.h  \
-	emberrecvev.h \
-	embersendev.h \
-	emberlinearmap.h \
-	emberstartev.h \
-	emberstartev.cc \
-	emberstopev.h \
-	embercomputeev.h \
-	embercomputeev.cc \
-	emberwaitev.cc \
-	emberwaitev.h \
-	emberwaitanyev.cc \
-	emberwaitanyev.h \
-	emberwaitallev.cc \
-	emberwaitallev.h \
-	emberirecvev.cc \
-	emberirecvev.h \
-	emberisendev.cc \
-	emberisendev.h \
-	emberbarrierev.h \
-	emberbarrierev.cc \
-	emberallredev.h \
-	emberallredev.cc \
-	emberredev.h \
-	emberredev.cc \
 	embergettimeev.h \
 	embergettimeev.cc \
+	emberlinearmap.h \
 	emberlinearmap.h \
 	emberdistrib.h \
 	emberdistrib.cc \
@@ -56,51 +26,63 @@ libember_la_SOURCES = \
 	emberconstdistrib.cc \
 	embergaussdistrib.h \
 	embergaussdistrib.cc \
-	emberCommGetRankEv.h \
-	emberCommGetSizeEv.h \
-	emberCommSplitEv.h \
-	motifs/ember3dcommdbl.h \
-	motifs/ember3dcommdbl.cc \
-	motifs/ember3damr.h \
-	motifs/ember3damr.cc \
-	motifs/embernull.h  \
-	motifs/emberhalo1d.h  \
-	motifs/emberhalo1d.cc  \
-	motifs/emberhalo2d.h  \
-	motifs/emberhalo2d.cc  \
-	motifs/emberhalo2dNBR.h  \
-	motifs/emberhalo2dNBR.cc  \
-	motifs/embersweep2d.h  \
-	motifs/embersweep2d.cc  \
-	motifs/emberfini.h  \
-	motifs/emberfini.cc  \
-	motifs/embernull.h \
-	motifs/emberring.h  \
-	motifs/emberring.cc  \
-	motifs/emberpingpong.cc \
-	motifs/emberpingpong.h \
-	motifs/emberbarrier.cc \
-	motifs/emberbarrier.h \
-	motifs/emberallpingpong.cc \
-	motifs/emberallpingpong.h \
-	motifs/emberallreduce.cc \
-	motifs/emberallreduce.h \
-	motifs/emberreduce.cc \
-	motifs/emberreduce.h \
-	motifs/emberhalo3d.h \
-	motifs/emberhalo3d.cc \
-	motifs/emberhalo3dsv.h \
-	motifs/emberhalo3dsv.cc \
-	motifs/emberhalo3d26.h \
-	motifs/emberhalo3d26.cc \
-	motifs/embersweep3d.h \
-	motifs/embersweep3d.cc \
-	motifs/embernaslu.h \
-	motifs/embernaslu.cc \
-	motifs/embermsgrate.h \
-	motifs/embermsgrate.cc \
-	motifs/embercomm.h \
-	motifs/embercomm.cc 
+	embercomputeev.h \
+	embercomputeev.cc \
+	mpi/embermpigen.h \
+	mpi/embermpigen.cc \
+	mpi/emberrecvev.h \
+	mpi/embersendev.h \
+	mpi/emberfinalizeev.h \
+	mpi/emberinitev.h  \
+	mpi/emberwaitev.h \
+	mpi/emberwaitanyev.h \
+	mpi/emberwaitallev.h \
+	mpi/emberirecvev.h \
+	mpi/emberisendev.h \
+	mpi/emberbarrierev.h \
+	mpi/emberallredev.h \
+	mpi/emberredev.h \
+	mpi/emberCommSplitEv.h \
+	mpi/motifs/emberinit.h  \
+	mpi/motifs/emberfini.h  \
+	mpi/motifs/ember3dcommdbl.h \
+	mpi/motifs/ember3dcommdbl.cc \
+	mpi/motifs/embernull.h  \
+	mpi/motifs/emberhalo1d.h  \
+	mpi/motifs/emberhalo1d.cc  \
+	mpi/motifs/emberhalo2d.h  \
+	mpi/motifs/emberhalo2d.cc  \
+	mpi/motifs/emberhalo2dNBR.h  \
+	mpi/motifs/emberhalo2dNBR.cc  \
+	mpi/motifs/embersweep2d.h  \
+	mpi/motifs/embersweep2d.cc  \
+	mpi/motifs/embernull.h \
+	mpi/motifs/emberring.h  \
+	mpi/motifs/emberring.cc  \
+	mpi/motifs/emberpingpong.cc \
+	mpi/motifs/emberpingpong.h \
+	mpi/motifs/emberbarrier.cc \
+	mpi/motifs/emberbarrier.h \
+	mpi/motifs/emberallpingpong.cc \
+	mpi/motifs/emberallpingpong.h \
+	mpi/motifs/emberallreduce.cc \
+	mpi/motifs/emberallreduce.h \
+	mpi/motifs/emberreduce.cc \
+	mpi/motifs/emberreduce.h \
+	mpi/motifs/emberhalo3d.h \
+	mpi/motifs/emberhalo3d.cc \
+	mpi/motifs/emberhalo3dsv.h \
+	mpi/motifs/emberhalo3dsv.cc \
+	mpi/motifs/emberhalo3d26.h \
+	mpi/motifs/emberhalo3d26.cc \
+	mpi/motifs/embersweep3d.h \
+	mpi/motifs/embersweep3d.cc \
+	mpi/motifs/embernaslu.h \
+	mpi/motifs/embernaslu.cc \
+	mpi/motifs/embermsgrate.h \
+	mpi/motifs/embermsgrate.cc \
+	mpi/motifs/embercomm.h \
+	mpi/motifs/embercomm.cc
 
 #	motifs/emberhalo3dnb.h \
 #	motifs/emberhalo3dnb.cc

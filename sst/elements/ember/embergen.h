@@ -16,43 +16,77 @@
 #include <sst/core/output.h>
 #include <sst/core/module.h>
 #include <sst/core/params.h>
-
 #include <queue>
 
+#include <sst/elements/hermes/msgapi.h>
+
 #include "emberevent.h"
-#include "embersendev.h"
-#include "emberrecvev.h"
-#include "emberinitev.h"
-#include "embercomputeev.h"
-#include "emberfinalizeev.h"
 #include "embermap.h"
 
 namespace SST {
 namespace Ember {
 
+#define GEN_DBG( lvl, fmt , args... ) \
+ {\
+    assert(m_output); \
+    m_output->verbosePrefix(  m_outputPrefix.c_str(), CALL_INFO, lvl, 0, \
+                    fmt, ##args); \
+ }
+
+class EmberGeneratorData {
+  public:
+    int                 jobId;
+    virtual ~EmberGeneratorData() {}  
+};
+
 class EmberGenerator : public Module {
 
-public:
-	EmberGenerator( Component* owner, Params& params );
-	virtual void configureEnvironment(const SST::Output* output, uint32_t rank, uint32_t worldSize) = 0;
-	virtual void generate(const SST::Output* output, const uint32_t phase,
-		std::queue<EmberEvent*>* evQ) = 0;
-	virtual void finish(const SST::Output* output) = 0;
-	virtual bool autoInitialize() { return false; }
-	virtual void setRankMap(EmberRankMap* mapper);
+  public:
+    EmberGenerator( Component* owner, Params& params ) :
+        m_name("???"),
+        m_output( NULL ),
+        m_dataMode( NoBacking )
+    {}
 
-	void getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
-                int32_t* myX, int32_t* myY, int32_t* myZ);
-        void getPosition(const int32_t rank, const int32_t px, const int32_t py,
-                int32_t* myX, int32_t* myY);
-	int32_t convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
-        	const int32_t posX, const int32_t posY, const int32_t posZ);
+	~EmberGenerator(){};
+    
+    virtual void initAPI( Hermes::Interface* api ) {
+        m_api = api; 
+    }
 
-	~EmberGenerator();
+    virtual void initData( EmberGeneratorData** data ) {
+        assert(0);
+    } 
 
-private:
-	EmberRankMap* rankMap;
+    virtual void initOutput( Output* output ) {
+        m_output = output;
+    }
 
+	virtual void generate( const SST::Output* output, const uint32_t phase,
+                    std::queue<EmberEvent*>* evQ ) { 
+        assert(0); 
+    } 
+
+	virtual bool generate( std::queue<EmberEvent*>& evQ ) { 
+        assert(0); 
+    } 
+
+	virtual void finish( const SST::Output* output, uint64_t time) { 
+        assert(0);
+    }
+
+  protected:
+    virtual void printHistogram( const Output* output, Histo* histo );
+    virtual void* memAlloc( size_t );
+    virtual void memFree( void* );
+
+    Hermes::Interface*  m_api;
+
+    std::string m_name;
+    Output* 	m_output;
+    string  	m_outputPrefix;
+
+    enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 };
 
 }

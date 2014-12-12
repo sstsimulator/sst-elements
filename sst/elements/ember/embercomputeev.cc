@@ -14,6 +14,7 @@
 
 using namespace SST::Ember;
 
+#if 0
 EmberComputeEvent::EmberComputeEvent(uint32_t nsDelay) {
 	nanoSecDelay = nsDelay;
 }
@@ -37,3 +38,4 @@ std::string EmberComputeEvent::getPrintableString() {
 
 	return bufferStr;
 }
+#endif

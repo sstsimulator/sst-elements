@@ -14,54 +14,77 @@
 #define _H_EMBER_EVENT
 
 #include <sst/core/event.h>
-#include <stdint.h>
-#include <string>
+#include <sst/core/stats/histo/histo.h>
+#include <sst/elements/hermes/msgapi.h>
 
 namespace SST {
 namespace Ember {
 
-enum EmberDataType {
-	EMBER_CHAR,
-	EMBER_F64,
-	EMBER_F32,
-	EMBER_INT32,
-	EMBER_INT64
-};
+typedef Hermes::Functor FOO;
 
-enum EmberReductionOperation {
-	EMBER_SUM
-};
+#undef FOREACH_ENUM
+#define FOREACH_ENUM(NAME) \
+    NAME( Issue ) \
+    NAME( IssueFunctor ) \
+    NAME( Complete ) \
 
-enum EmberEventType {
-	INIT,
-	FINALIZE,
-	SEND,
-	RECV,
-	IRECV,
-	ISEND,
-	WAIT,
-	WAITALL,
-	WAITANY,
-	COMPUTE,
-	BARRIER,
-	START,
-	STOP,
-	ALLREDUCE,
-	REDUCE,
-	GETTIME,
-    COMM_SPLIT,
-    COMM_GET_RANK,
-    COMM_GET_SIZE
-};
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
+typedef Statistics::Histogram<uint32_t, uint32_t> Histo;
 
 class EmberEvent : public SST::Event {
 
 public:
-	EmberEvent();
-	~EmberEvent();
-	virtual EmberEventType getEventType() = 0;
-	virtual std::string getPrintableString() = 0;
 
+    enum State { 
+        FOREACH_ENUM(GENERATE_ENUM)
+    } m_state;
+
+	EmberEvent( Output* output, Histo* histo = NULL) : 
+        m_state(Issue), m_output(output), m_histo(histo), m_completeDelayNS(0)
+	{}
+	EmberEvent( ) : 
+        m_state(Issue), m_output(NULL), m_histo(NULL), m_completeDelayNS(0) {}
+	~EmberEvent() {} 
+
+	virtual std::string getName() { return "?????"; };
+
+    State state() { return m_state; }
+    std::string stateName( State i ) { return m_enumName[i]; }
+
+    virtual void issue( uint64_t time, FOO* = NULL ) {
+        if ( m_output ) {
+            m_output->verbose(CALL_INFO, 1, 0, "time=%lu\n",time);    
+        }
+        m_issueTime = time;
+        m_state = Complete;
+    }
+
+    virtual bool complete( uint64_t time, int retval = 0 ) { 
+
+        if ( m_output ) {
+            m_output->verbose(CALL_INFO, 1, 0, "time=%lu\n",time);    
+        }
+        if ( m_histo ) {
+            m_histo->add( time - m_issueTime );
+        }  
+        return true; 
+    }
+
+    virtual uint64_t completeDelayNS() {
+        m_output->verbose(CALL_INFO, 1, 0, "delay=%"PRIu64" ns\n",
+                                                m_completeDelayNS);
+        return m_completeDelayNS;
+    }
+
+
+  protected:
+    static const char*  m_enumName[];
+    Output*             m_output;
+    Histo*              m_histo;
+    uint64_t            m_completeDelayNS;
+    uint64_t            m_issueTime;
 };
 
 }

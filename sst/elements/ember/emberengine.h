@@ -13,203 +13,64 @@
 #ifndef _H_EMBER_ENGINE
 #define _H_EMBER_ENGINE
 
-#include <sst/core/event.h>
+#include <queue>
+
 #include <sst/core/sst_types.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include <sst/core/timeLord.h>
-#include <sst/core/output.h>
-#include <sst/core/element.h>
-#include <sst/core/params.h>
-#include <sst/core/stats/histo/histo.h>
-#include <sst/core/rng/gaussian.h>
-#include <sst/core/rng/constant.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sst/elements/hermes/msgapi.h>
-#include <queue>
-#include <vector>
-#include <string>
 
-#include "embermap.h"
-#include "emberlinearmap.h"
 #include "embergen.h"
-#include "emberevent.h"
-#include "emberinitev.h"
-#include "emberfinalizeev.h"
-#include "embersendev.h"
-#include "emberrecvev.h"
-#include "emberirecvev.h"
-#include "emberisendev.h"
-#include "emberwaitev.h"
-#include "emberwaitallev.h"
-#include "emberstartev.h"
-#include "emberstopev.h"
-#include "embercomputeev.h"
-#include "emberbarrierev.h"
-#include "emberallredev.h"
-#include "emberredev.h"
-#include "embergettimeev.h"
-#include "emberCommSplitEv.h"
-#include "emberCommGetRankEv.h"
-#include "emberCommGetSizeEv.h"
-#include "emberdistrib.h"
-
-using namespace SST::Statistics;
-using namespace SST::Hermes;
 
 namespace SST {
 namespace Ember {
 
-enum EmberDataMode {
-	NOBACKING,
-	BACKZEROS,
-    BACKUNINIT,
-};
-
-const uint32_t EMBER_SPYPLOT_NONE = 0;
-const uint32_t EMBER_SPYPLOT_SEND_COUNT = 1;
-const uint32_t EMBER_SPYPLOT_SEND_BYTES = 2;
-
-class EmberSpyInfo {
-	public:
-		EmberSpyInfo(const int32_t rank);
-		void incrementSendCount();
-		void addSendBytes(uint64_t sendBytes);
-		int32_t getRemoteRank();
-		uint32_t getSendCount();
-		uint64_t getBytesSent();
-
-	private:
-		const int32_t rank;
-		uint64_t bytesSent;
-		uint32_t sendsPerformed;
-};
+//class EmberGenerator;
+class EmberEvent;
+class EmberGeneratorData;
 
 class EmberEngine : public SST::Component {
 public:
-	EmberEngine(SST::ComponentId_t id, SST::Params& params);
+	EmberEngine( SST::ComponentId_t id, SST::Params& params );
 	~EmberEngine();
 	void setup();
 	void finish();
-	void init(unsigned int phase);
-
-	void refillQueue();
-	void checkQueue();
-	void handleEvent(SST::Event* ev);
-
-	void processInitEvent(EmberInitEvent* ev);
-	void processFinalizeEvent(EmberFinalizeEvent* ev);
-	void processSendEvent(EmberSendEvent* ev);
-	void processRecvEvent(EmberRecvEvent* ev);
-	void processComputeEvent(EmberComputeEvent* ev);
-	void processStartEvent(EmberStartEvent* ev);
-	void processStopEvent(EmberStopEvent* ev);
-	void processWaitEvent(EmberWaitEvent* ev);
-	void processWaitallEvent(EmberWaitallEvent* ev);
-	void processIRecvEvent(EmberIRecvEvent* ev);
-	void processISendEvent(EmberISendEvent* ev);
-	void processBarrierEvent(EmberBarrierEvent* ev);
-	void processAllreduceEvent(EmberAllreduceEvent* ev);
-	void processReduceEvent(EmberReduceEvent* ev);
-	void processGetTimeEvent(EmberGetTimeEvent* ev);
-	void processCommSplitEvent(EmberCommSplitEvent* ev);
-	void processCommGetRankEvent(EmberCommGetRankEvent* ev);
-	void processCommGetSizeEvent(EmberCommGetSizeEvent* ev);
-
-	void completedInit(int val);
-	void completedFinalize(int val);
-	void completedSend(int val);
-	void completedRecv(int val);
-	void completedIRecv(int val);
-	void completedISend(int val);
-	void completedWait(int val);
-	void completedWaitall(int val);
-	void completedWaitallWithoutDelete(int val);
-	void completedBarrier(int val);
-	void completedAllreduce(int val);
-	void completedReduce(int val);
-	void completedCommSplit(int val);
-	void completedCommGetRank(int val);
-	void completedCommGetSize(int val);
-
-	void issueNextEvent(uint32_t nanoSecDelay);
-	void printHistogram(Histogram<uint32_t, uint32_t>* histo);
-
-	void updateSpyplot(const int32_t rank, const uint64_t bytesSent);
-	void generateSpyplotRank(const char* filename);
+	void init( unsigned int phase );
 
 private:
-	SST::Params* engineParams;
-	int jobId;
-	int thisRank;
-	int worldSize;
-	uint32_t eventCount;
-	char* emptyBuffer;
-	uint32_t emptyBufferSize;
-	uint32_t generationPhase;
-	uint32_t printStats;
-	uint32_t motifCount;
-	uint32_t currentMotif;
-	bool continueProcessing;
-	EmberDataMode dataMode;
-	EmberRankMap* rankMap;
+	bool refillQueue() {
+		return m_generator->generate( evQueue );
+	}
+	void handleEvent(SST::Event* ev);
+	void issueNextEvent(uint32_t nanoSecDelay);
+    bool completeFunctor( int retval, EmberEvent* ev ); 
+
+    struct ApiInfo {
+        Hermes::Interface* api;
+        EmberGeneratorData* data;
+    };
+
+    typedef std::map< std::string, ApiInfo* > ApiMap; 
+
+    ApiMap createApiMap( SST::Component*, SST::Params );
+    EmberGenerator* initMotif( SST::Params, const ApiMap&, int jobId  );
+
+	int         m_jobId;
+	uint32_t    currentMotif;
+    bool        m_motifDone;
+    ApiMap      m_apiMap;
+	Output      output;
 
 	std::queue<EmberEvent*> evQueue;
-	std::map<int32_t, EmberSpyInfo*>* spyinfo;
-	uint32_t spyplotMode;
 
-	EmberGenerator* generator;
-	SST::Link* selfEventLink;
-	MessageInterface* msgapi;
-	Output* output;
+	EmberGenerator*     m_generator;
+	SST::Link*          selfEventLink;
 	SST::TimeConverter* nanoTimeConverter;
-	std::vector<MessageResponse> currentRecv;
-	MessageRequest* currentReq;
 
-	typedef Arg_Functor<EmberEngine, int> HermesAPIFunctor;
-
-	HermesAPIFunctor finalizeFunctor;
-	HermesAPIFunctor initFunctor;
-	HermesAPIFunctor recvFunctor;
-	HermesAPIFunctor sendFunctor;
-	HermesAPIFunctor waitFunctor;
-	HermesAPIFunctor waitallFunctor;
-	HermesAPIFunctor irecvFunctor;
-	HermesAPIFunctor isendFunctor;
-	HermesAPIFunctor barrierFunctor;
-	HermesAPIFunctor allreduceFunctor;
-	HermesAPIFunctor reduceFunctor;
-	HermesAPIFunctor commSplitFunctor;
-	HermesAPIFunctor commGetSizeFunctor;
-	HermesAPIFunctor commGetRankFunctor;
-
-	EmberComputeDistribution* computeDistrib;
-
-	uint32_t getDataTypeWidth(EmberDataType theType);
-	PayloadDataType convertToHermesType(EmberDataType theType);
-	ReductionOperation convertToHermesReduceOp(EmberReductionOperation theOp);
-
-	Histogram<uint32_t, uint32_t>* accumulateTime;
-	uint64_t nextEventStartTimeNanoSec;
-
-	Histogram<uint32_t, uint32_t>* histoStart;
-	Histogram<uint32_t, uint32_t>* histoInit;
-	Histogram<uint32_t, uint32_t>* histoFinalize;
-	Histogram<uint32_t, uint32_t>* histoRecv;
-	Histogram<uint32_t, uint32_t>* histoSend;
-	Histogram<uint32_t, uint32_t>* histoCompute;
-	Histogram<uint32_t, uint32_t>* histoWait;
-	Histogram<uint32_t, uint32_t>* histoIRecv;
-	Histogram<uint32_t, uint32_t>* histoISend;
-	Histogram<uint32_t, uint32_t>* histoBarrier;
-	Histogram<uint32_t, uint32_t>* histoAllreduce;
-	Histogram<uint32_t, uint32_t>* histoReduce;
-	Histogram<uint32_t, uint32_t>* histoSendSizes;
-	Histogram<uint32_t, uint32_t>* histoRecvSizes;
+	std::vector<SST::Params> motifParams;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement
