@@ -11,6 +11,7 @@ comp_LTLIBRARIES = libhermes.la
 libhermes_la_SOURCES = \
 	msgapi.h \
 	hermes.cc \
+	hermes.h \
 	functor.h
 
 libhermes_la_LDFLAGS = -module -avoid-version
