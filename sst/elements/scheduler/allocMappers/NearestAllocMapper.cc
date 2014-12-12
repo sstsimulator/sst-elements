@@ -32,14 +32,10 @@ using namespace std;
 
 NearestAllocMapper::NearestAllocMapper(const MeshMachine & mach,
                                        bool allocateAndMap,
-                                       TaskGenType inTaskGen,
-                                       NodeGenType inNodeGen,
-                                       TaskOrderType inTaskOrder)
+                                       NodeGenType inNodeGen)
     : AllocMapper(mach, allocateAndMap), mMachine(mach)
 {
-    taskGen = inTaskGen;
     nodeGen = inNodeGen;
-    taskOrder = inTaskOrder;
     lastNode = 0;
 }
 
@@ -102,50 +98,45 @@ void NearestAllocMapper::allocMap(const AllocInfo & ai,
     int mappedCounter = 0;
 
     //main loop
-    while(!tasks.empty()){
-        int curTask = tasks.front().first;
-        tasks.pop_front();
-        //get which node to allocate
-        int nodeToAlloc = bestNode(frameNodes, curTask);
-
-        //allocate and update containers
-        vertexToNode[curTask] = nodeToAlloc;
-        usedNodes[mappedCounter++] = nodeToAlloc;
-        isFree->at(nodeToAlloc) = false;
-
-        //get unallocated neighbors of curTask and update the queue
-        switch(taskOrder){
-        case GREEDY_ORDER:
-            for(map<int, int>::const_iterator it = commGraph->at(curTask).begin(); it != commGraph->at(curTask).end(); it++){
-                if(!marked[it->first]){
-                    marked[it->first] = true;
-                    tasks.push_back(pair<int,double>(it->first, 0));
-                }
-            }
-            break;
-        case SORTED_ORDER:
-            getSortedNeighbors(curTask, tasks);
-            break;
-        default:
-            schedout.fatal(CALL_INFO, 1, "Unknown node selection algorithm for Nearest AllocMapper");
-        };
-
-        //extend frame - do not add the same node twice
-        list<int> *newNodes = new list<int>();
-        closestNodes(nodeToAlloc, 0, newNodes);
-        for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
-            bool found = false;
-            for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
-                if(*oldIt == *newIt){
-                    found = true;
+    while(mappedCounter < nodesNeeded){
+        if(tasks.empty()){ //This only happens if the task graph is not connected
+            //find an unmapped vertex and put it in the task list
+            for(int taskIt = 0; taskIt < jobSize; taskIt++){
+                if(vertexToNode[taskIt] == -1){
+                    tasks.push_front(pair<int,double>(taskIt, 0));
                     break;
                 }
             }
-            if(!found){
-                frameNodes.push_back(*newIt);
+        } else {
+            int curTask = tasks.back().first;
+            tasks.pop_back();
+            //get which node to allocate
+            int nodeToAlloc = bestNode(frameNodes, curTask);
+
+            //allocate and update containers
+            vertexToNode[curTask] = nodeToAlloc;
+            usedNodes[mappedCounter++] = nodeToAlloc;
+            isFree->at(nodeToAlloc) = false;
+
+            getTaskNeighbors(curTask, tasks);
+
+            //extend frame - do not add the same node twice
+            list<int> *newNodes = new list<int>();
+            closestNodes(nodeToAlloc, 0, newNodes);
+            for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
+                bool found = false;
+                for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
+                    if(*oldIt == *newIt){
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found){
+                    frameNodes.push_back(*newIt);
+                }
             }
+            delete newNodes;
         }
-        delete newNodes;
     }
 
     //fill taskToNode
@@ -167,31 +158,22 @@ void NearestAllocMapper::createCommGraph(const Job & job)
     int jobSize = job.procsNeeded;
     int nodesNeeded = ceil((float) jobSize / mach.coresPerNode);
 
-    //assign center task
-    centerTask = job.taskCommInfo->centerTask;
-    if(centerTask == -1){
-        switch(taskGen){
-        case GREEDY_TASK:
-            centerTask = 0;
-            break;
-        case EXHAUSTIVE_TASK:
-            centerTask = getCenterTask(*rawCommGraph);
-            break;
-        default:
-            schedout.fatal(CALL_INFO, 1, "Unknown task generation algorithm for Nearest AllocMapper");
-        };
-    }
-
     taskToVertex.clear();
     taskToVertex.resize(jobSize, -1);
+
+    centerTask = job.taskCommInfo->centerTask;
+
     if(mach.coresPerNode == 1){
         commGraph = rawCommGraph;
         for(int i = 0; i < nodesNeeded; i++){
             taskToVertex[i] = i;
         }
+        //assign center task
+        if(centerTask == -1){
+            centerTask = getCenterTask(*rawCommGraph);
+        }
     } else {
-        //find which task to put in which node
-#ifdef HAVE_METIS //use METIS partitioning if available
+        //find which task to put in which node using METIS partitioner
         idx_t nvtxs = jobSize; //num vertices
         idx_t ncon = 1; //number of balancing constraints
         idx_t nparts = nodesNeeded; //number of parts to partition
@@ -240,36 +222,6 @@ void NearestAllocMapper::createCommGraph(const Job & job)
                 nodeIter++;
             }
         }
-#else
-        //partition with greedy: create vertices using breadth-first search from the center node
-        vector<bool> isMarked(jobSize, false);
-        isMarked[centerTask] = true;
-        std::queue<int> queue;
-        int nextTask;
-        int vertexIndex = 0;
-        int vertexTaskCount = 0; //tasks within a vertex
-        queue.push(centerTask);
-
-        while(!queue.empty()){
-            nextTask = queue.front();
-            queue.pop();
-            //change vertex if necessary
-            vertexTaskCount++;
-            if(vertexTaskCount > mach.coresPerNode){
-                vertexIndex++;
-                vertexTaskCount = 1;
-            }
-            //map
-            taskToVertex[nextTask] = vertexIndex;
-            //add unmarked neighbors to the queue
-            for(std::map<int, int>::iterator it = rawCommGraph->at(nextTask).begin(); it != rawCommGraph->at(nextTask).end(); it++){
-                if(!isMarked[it->first]){
-                    isMarked[it->first] = true;
-                    queue.push(it->first);
-                }
-            }
-        }
-#endif
         //fill commGraph - O(V + E lg V)
         commGraph = new std::vector<std::map<int,int> >(nodesNeeded);
         //for all tasks
@@ -288,18 +240,12 @@ void NearestAllocMapper::createCommGraph(const Job & job)
         }
         delete rawCommGraph;
 
-        //get new center task
-        //assign center task if required
-        switch(taskGen){
-        case GREEDY_TASK:
-            centerTask = taskToVertex[centerTask];
-            break;
-        case EXHAUSTIVE_TASK:
+        //assign center task
+        if(centerTask == -1){
             centerTask = getCenterTask(*commGraph);
-            break;
-        default:
-            schedout.fatal(CALL_INFO, 1, "Unknown task generation algorithm for Nearest AllocMapper");
-        };
+        } else {
+            centerTask = taskToVertex[centerTask];
+        }
     }
 }
 
@@ -515,7 +461,7 @@ int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
     return bestNode;
 }
 
-void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> > & taskList)
+void NearestAllocMapper::getTaskNeighbors(int curTask, list<pair<int, double> > & taskList)
 {
     vector<pair<int, double> > neighborArray;
 
@@ -563,7 +509,7 @@ void NearestAllocMapper::getSortedNeighbors(int curTask, list<pair<int, double> 
         //reorder list
         taskList.sort(ByWeights());
         //re-add toAlloc to the beginning
-        taskList.push_front(toAlloc);
+        taskList.push_back(toAlloc);
     }
 }
 

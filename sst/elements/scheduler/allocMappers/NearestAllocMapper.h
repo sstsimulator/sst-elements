@@ -27,38 +27,23 @@ namespace SST {
 
         class NearestAllocMapper : public AllocMapper {
             public:
-                enum TaskGenType{//center task generation
-                    GREEDY_TASK = 0, //O(VE)
-                    EXHAUSTIVE_TASK = 1, //O(VE + V^2 lg V) if no center task is given
-                };
-
                 enum NodeGenType{//center machine node generation
                     GREEDY_NODE = 0,   //O(N)
                     EXHAUST_NODE = 1,  //O(N + upperLimit * V^2)
                 };
 
-                enum TaskOrderType{//neighbor task ordering
-                    GREEDY_ORDER = 0, //O(VE)
-                    SORTED_ORDER = 1, //O(VE + V^2 lg V) while expanding, chooses the task with the
-                                      //highest communication to the currently allocated tasks
-                };
-                //if number of cores per node > 1,  + O(V + E lg V)
+                //+ O(JC + J^2 lg J), J & C are equivalents of V & E in the partitioned task graph
                 //Sum up of all time complexities to get the allocation complexity
 
                 NearestAllocMapper(const MeshMachine & mach,
                                    bool allocateAndMap,
-                                   TaskGenType taskGen = GREEDY_TASK,
-                                   NodeGenType nodeGen = EXHAUST_NODE,
-                                   TaskOrderType taskOrder = SORTED_ORDER);
+                                   NodeGenType nodeGen = EXHAUST_NODE);
                 ~NearestAllocMapper();
 
                 std::string getSetupInfo(bool comment) const;
 
             private:
-
-                TaskGenType taskGen;
                 NodeGenType nodeGen;
-                TaskOrderType taskOrder;
 
                 const MeshMachine & mMachine;
                 long int lastNode;
@@ -78,7 +63,7 @@ namespace SST {
                               std::vector<int> & taskToNode);
 
                 //creates a new communication graph (hyper graph) based on the # coresPerNode
-                //if(GREEDY_CEN || centerTask_given)
+                //if(centerTask_given)
                 //  if(coresPerNode == 1)           O(V)
                 //  if(coresPerNode == c)
                 //      if(METIS_available)         O(V + E lg V + METIS_partitioning({V,E}))
@@ -127,11 +112,10 @@ namespace SST {
                 //O(tiedNodes->size() * E + V), O(tiedNodes->size() * E + V) when called for all tasks
                 int bestNode(std::list<int> & tiedNodes, int inTask) const;
 
-                //adds the unallocated neighbors of curTask to the task list with descenting weights
+                //adds the unallocated neighbors of curTask to the task list with ascending weights
                 //O(V lg V)
-                void getSortedNeighbors(int curTask, std::list<std::pair<int, double> > & taskList);
+                void getTaskNeighbors(int curTask, std::list<std::pair<int, double> > & taskList);
 
-                //sorts given vector, descending
                 //O(n lg n), n=toSort.size()
                 //@return sorted vector indexes
                 //std::vector<int> sortIndices(const std::vector<std::pair<int, double>> & toSort) const;
