@@ -43,7 +43,9 @@
 #include "motifs/emberhalo3d26.h"
 #include "motifs/ember3dcommdbl.h"
 #include "motifs/embercomm.h"
+#if 0
 #include "motifs/ember3damr.h"
+#endif
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -62,10 +64,12 @@ load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
 }
 
+#if 0
 static Module*
 load_3DAMR( Component* comp, Params& params ) {
 	return new Ember3DAMRGenerator(comp, params);
 }
+#endif
 
 static Module*
 load_ConstDistrib( Component* comp, Params& params) {
@@ -453,6 +457,7 @@ static const ElementInfoModule modules[] = {
 	commdbl_params,
 	"SST::Ember::EmberGenerator"
     },
+#if 0
     {
 	"3DAMRMotif",
 	"Models an adaptive refinement step from MiniAMR",
@@ -462,6 +467,7 @@ static const ElementInfoModule modules[] = {
 	amr3d_params,
 	"SST::Ember::EmberGenerator"
     },
+#endif
     {
 	"ConstDistrib",
 	"Constant compute distribution model",
