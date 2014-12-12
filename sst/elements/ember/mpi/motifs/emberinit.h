@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_INIT
 #define _H_EMBER_INIT
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

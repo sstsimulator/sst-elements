@@ -13,9 +13,7 @@
 #ifndef _H_EMBER_NULL
 #define _H_EMBER_NULL
 
-#include <sst/core/params.h>
-#include "embergen.h"
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_MSGRATE
 #define _H_EMBER_MSGRATE
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

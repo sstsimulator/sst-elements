@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_SWEEP_2D
 #define _H_EMBER_SWEEP_2D
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_COMPUTE_EVENT
 #define _H_EMBER_COMPUTE_EVENT
 
-#include "emberMPIEvent.h"
+#include "mpi/emberMPIEvent.h"
 #include "emberconstdistrib.h"
 
 namespace SST {

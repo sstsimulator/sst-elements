@@ -1,8 +1,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) \
-	-I../../../../sst/elements/ember/mpi
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la

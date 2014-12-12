@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_BARRIER_MOTIF
 #define _H_EMBER_BARRIER_MOTIF
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

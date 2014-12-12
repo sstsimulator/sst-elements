@@ -12,10 +12,6 @@
 #include <sst_config.h>
 
 #include "ember3dcommdbl.h"
-#include "emberirecvev.h"
-#include "emberisendev.h"
-#include "emberwaitallev.h"
-#include "emberallredev.h"
 
 using namespace SST::Ember;
 

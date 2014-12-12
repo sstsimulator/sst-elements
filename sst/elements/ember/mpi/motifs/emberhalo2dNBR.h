@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_HALO_2DNBR
 #define _H_EMBER_HALO_2DNBR
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

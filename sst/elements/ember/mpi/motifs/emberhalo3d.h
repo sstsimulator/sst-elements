@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_HALO_3D_BLOCKING
 #define _H_EMBER_HALO_3D_BLOCKING
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

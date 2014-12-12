@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_3D_COMM_DOUBLING
 #define _H_EMBER_3D_COMM_DOUBLING
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {

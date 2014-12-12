@@ -13,7 +13,7 @@
 #ifndef _H_EMBER_NAS_LU
 #define _H_EMBER_NAS_LU
 
-#include "embermpigen.h"
+#include "mpi/embermpigen.h"
 
 namespace SST {
 namespace Ember {
