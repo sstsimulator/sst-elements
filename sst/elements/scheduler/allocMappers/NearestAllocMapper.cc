@@ -174,6 +174,7 @@ void NearestAllocMapper::createCommGraph(const Job & job)
         }
     } else {
         //find which task to put in which node using METIS partitioner
+#ifdef HAVE_METIS
         idx_t nvtxs = jobSize; //num vertices
         idx_t ncon = 1; //number of balancing constraints
         idx_t nparts = nodesNeeded; //number of parts to partition
@@ -246,6 +247,9 @@ void NearestAllocMapper::createCommGraph(const Job & job)
         } else {
             centerTask = taskToVertex[centerTask];
         }
+#else
+        schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires METIS library for multi-core nodes.");
+#endif
     }
 }
 
