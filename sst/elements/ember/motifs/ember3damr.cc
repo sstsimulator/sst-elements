@@ -273,6 +273,165 @@ void Ember3DAMRGenerator::loadBlocks() {
 				currentBlock->setCommXDown(blockNextToMeNode->second, -1, -1, -1);
 			}
 		}
+        
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        // Patch up Y-Up
+        const uint32_t blockYUp = currentBlock->getRefineYUp();
+        
+        if(blockYUp == -2) {
+            // Boundary condition, no communication
+            currentBlock->setCommYUp(-1, -1, -1, -1);
+        } else if(blockLevel > blockYUp) {
+            // Communication to a coarser level (my refinement is higher than block next to me)
+            const uint32_t commToBlock = calcBlockID((blockXPos / 2),
+                                                     (blockYPos / 2) + 1, blockZPos / 2, blockYUp);
+            
+            std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+            
+            if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
+                if( ! isBlockLocal(commToBlock) ) {
+                    printf("Y+ Did not locate block: %" PRIu32 "\n", commToBlock);
+                    exit(-1);
+                }
+            } else {
+                // Projecting to coarse level
+                currentBlock->setCommYUp(blockNode->second, -1, -1, -1);
+            }
+        } else if(blockLevel < blockYUp) {
+            // Communication to a finer level (my refinement is less than block next to me)
+            const uint32_t y1 = calcBlockID(blockXPos * 2,     blockYPos * 2 + 2, blockZPos * 2,     blockYUp);
+            const uint32_t y2 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 + 2, blockZPos * 2,     blockYUp);
+            const uint32_t y3 = calcBlockID(blockXPos * 2,     blockYPos * 2 + 2, blockZPos * 2 + 1, blockYUp);
+            const uint32_t y4 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 + 2, blockZPos * 2 + 1, blockYUp);
+            
+            std::map<uint32_t, uint32_t>::iterator blockNodeY1 = blockToNodeMap.find(y1);
+            std::map<uint32_t, uint32_t>::iterator blockNodeY2 = blockToNodeMap.find(y2);
+            std::map<uint32_t, uint32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
+            std::map<uint32_t, uint32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
+            
+            if( blockNodeY1 == blockToNodeMap.end() && (! isBlockLocal(y1)) ) {
+                printf("Fail on YUp, block y1");
+                exit(-1);
+            }
+            
+            if( blockNodeY2 == blockToNodeMap.end() && (! isBlockLocal(y2)) ) {
+                printf("Fail on YUp, block y2");
+                exit(-1);
+            }
+            
+            if( blockNodeY3 == blockToNodeMap.end() && (! isBlockLocal(y3)) ) {
+                printf("Fail on YUp, block y3: %" PRIu32 "\n", y3);
+                printBlockMap();
+                exit(-1);
+            }
+            
+            if( blockNodeY4 == blockToNodeMap.end() && (! isBlockLocal(y4)) ) {
+                printf("Fail on YUp, block y4: %" PRIu32 "\n", y4);
+                exit(-1);
+            }
+            
+            currentBlock->setCommYUp(blockNodeY1->second,
+                                     blockNodeY2->second,
+                                     blockNodeY3->second,
+                                     blockNodeY4->second);
+        } else {
+            // Same level
+            const uint32_t blockNextToMe = calcBlockID(blockXPos,
+                                                       blockYPos + 1, blockZPos, blockYUp);
+            
+            std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+            
+            if(blockNextToMeNode == blockToNodeMap.end()) {
+                if( ! isBlockLocal(blockNextToMe) ) {
+                    printf("Y+ Did not find block next %" PRIu32 ", current block=%" PRIu32 "\n",
+                           blockNextToMe, currentBlock->getBlockID());
+                    exit(-1);
+                }
+            } else {
+                currentBlock->setCommYUp(blockNextToMeNode->second, -1, -1, -1);
+            }
+        }
+        
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        // Patch up Y-Down
+        const uint32_t blockYDown = currentBlock->getRefineYDown();
+        
+        if(blockYDown == -2) {
+            // Boundary condition, no communication
+            currentBlock->setCommYDown(-1, -1, -1, -1);
+        } else if(blockLevel > blockYDown) {
+            // Communication to a coarser level (my refinement is higher than block next to me)
+            const uint32_t commToBlock = calcBlockID((blockXPos / 2),
+                                                     (blockYPos / 2) - 1, blockZPos / 2, blockYDown);
+            
+            std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+            
+            if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
+                if( ! isBlockLocal(commToBlock) ) {
+                    printf("Y- Did not locate block: %" PRIu32 "\n", commToBlock);
+                    exit(-1);
+                }
+            } else {
+                // Projecting to coarse level
+                currentBlock->setCommYDown(blockNode->second, -1, -1, -1);
+            }
+        } else if(blockLevel < blockYDown) {
+            // Communication to a finer level (my refinement is less than block next to me)
+            const uint32_t y1 = calcBlockID(blockXPos * 2,     blockYPos * 2 - 1, blockZPos * 2,     blockYDown);
+            const uint32_t y2 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 - 1, blockZPos * 2,     blockYDown);
+            const uint32_t y3 = calcBlockID(blockXPos * 2,     blockYPos * 2 - 1, blockZPos * 2 + 1, blockYDown);
+            const uint32_t y4 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 - 1, blockZPos * 2 + 1, blockYDown);
+            
+            std::map<uint32_t, uint32_t>::iterator blockNodeY1 = blockToNodeMap.find(y1);
+            std::map<uint32_t, uint32_t>::iterator blockNodeY2 = blockToNodeMap.find(y2);
+            std::map<uint32_t, uint32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
+            std::map<uint32_t, uint32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
+            
+            if( blockNodeY1 == blockToNodeMap.end() && (! isBlockLocal(y1)) ) {
+                printf("Fail on YDown, block y1");
+                exit(-1);
+            }
+            
+            if( blockNodeY2 == blockToNodeMap.end() && (! isBlockLocal(y2)) ) {
+                printf("Fail on YDown, block y2");
+                exit(-1);
+            }
+            
+            if( blockNodeY3 == blockToNodeMap.end() && (! isBlockLocal(y3)) ) {
+                printf("Fail on YDown, block y3: %" PRIu32 "\n", y3);
+                printBlockMap();
+                exit(-1);
+            }
+            
+            if( blockNodeY4 == blockToNodeMap.end() && (! isBlockLocal(y4)) ) {
+                printf("Fail on YDown, block y4: %" PRIu32 "\n", y4);
+                exit(-1);
+            }
+            
+            currentBlock->setCommYDown(blockNodeY1->second,
+                                       blockNodeY2->second,
+                                       blockNodeY3->second,
+                                       blockNodeY4->second);
+            
+        } else {
+            // Same level
+            const uint32_t blockNextToMe = calcBlockID(blockXPos,
+                                                       blockYPos - 1, blockZPos, blockYDown);
+            
+            std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+            
+            if(blockNextToMeNode == blockToNodeMap.end()) {
+                if( ! isBlockLocal(blockNextToMe) ) {
+                    printf("Y- Did not find block next %" PRIu32 ", current block=%" PRIu32 "\n",
+                           blockNextToMe, currentBlock->getBlockID());
+                    exit(-1);
+                }
+            } else {
+                currentBlock->setCommYDown(blockNextToMeNode->second, -1, -1, -1);
+            }
+        }
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////
 
