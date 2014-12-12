@@ -521,7 +521,10 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             advanceEntry(entry, ev);
             delete ev;
             return make_pair<bool, bool>(true,true);
-        }
+        } else if(entry->waitingOn == "memory" && cmd == PutS && entry->nextCommand == GetSResp) {
+	    dbg.debug(_L10_, "Replacement during a GetS for a different cache, handling replacement immediately.\n");
+	    return make_pair<bool,bool>(false,false); // not a conflicting request
+	}
         else{
             dbg.debug(_L10_, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", 
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
@@ -595,10 +598,10 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 	MemEvent *ev;      
         if (cmd == GetS) { // Downgrade
             ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInvX, cacheLineSize);
-        entry->nextCommand = FetchXResp;
+            entry->nextCommand = FetchXResp;
         } else { // Invalidate
             ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInv, cacheLineSize);
-        entry->nextCommand = FetchResp;
+            entry->nextCommand = FetchResp;
         }
         std::string &dest = nodeid_to_name[entry->findOwner()];
         ev->setDst(dest);
