@@ -60,21 +60,21 @@ private:
   void handleFinalizeEvent(ZodiacEvent* zEv);
   void handleAllreduceEvent(ZodiacEvent* zEv);
   void handleBarrierEvent(ZodiacEvent* zEv);
-  void completedFunction(int val);
-  void completedRecvFunction(int val);
-  void completedWaitFunction(int val);
-  void completedAllreduceFunction(int val);
-  void completedInitFunction(int val);
-  void completedSendFunction(int val);
-  void completedFinalizeFunction(int val);
-  void completedIrecvFunction(int val);
-  void completedBarrierFunction(int val);
+  bool completedFunction(int val);
+  bool completedRecvFunction(int val);
+  bool completedWaitFunction(int val);
+  bool completedAllreduceFunction(int val);
+  bool completedInitFunction(int val);
+  bool completedSendFunction(int val);
+  bool completedFinalizeFunction(int val);
+  bool completedIrecvFunction(int val);
+  bool completedBarrierFunction(int val);
 
   void enqueueNextEvent();
 
   ////////////////////////////////////////////////////////
 
-  typedef Arg_Functor<ZodiacSiriusTraceReader, int> DerivedFunctor;
+  typedef Arg_Functor<ZodiacSiriusTraceReader, int, bool> DerivedFunctor;
 
   Output zOut;
   MessageInterface* msgapi;

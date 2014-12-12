@@ -432,49 +432,57 @@ bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
   return false;
 }
 
-void ZodiacSiriusTraceReader::completedFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from a call to the message API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedRecvFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedRecvFunction(int retVal) {
 	free(currentRecv);
 
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the recv API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedInitFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedInitFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the init API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedAllreduceFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedAllreduceFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the allreduce API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedSendFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedSendFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the send API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedFinalizeFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedFinalizeFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the finalize API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedBarrierFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedBarrierFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the barrier API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedIrecvFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedIrecvFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the irecv API.\n");
 	enqueueNextEvent();
+	return false;
 }
 
-void ZodiacSiriusTraceReader::completedWaitFunction(int retVal) {
+bool ZodiacSiriusTraceReader::completedWaitFunction(int retVal) {
 	zOut.verbose(CALL_INFO, 4, 0, "Returned from processing a call to the wait API.\n");
 
 	std::map<uint64_t, MessageRequest*>::iterator req_map_itr = reqMap.find(currentlyProcessingWaitEvent);
@@ -489,6 +497,7 @@ void ZodiacSiriusTraceReader::completedWaitFunction(int retVal) {
 	}
 
 	enqueueNextEvent();
+	return false;
 }
 
 void ZodiacSiriusTraceReader::enqueueNextEvent() {
