@@ -132,7 +132,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 			if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
 				if( ! isBlockLocal(commToBlock) ) {
-					printf("Did not locate block: %" PRIu32 "\n", commToBlock);
+					printf("X- Did not locate block: %" PRIu32 "\n", commToBlock);
 					exit(-1);
 				}
 			} else {
@@ -151,13 +151,13 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 			if( blockNodeLower == blockToNodeMap.end() ) {
 				if( ! isBlockLocal(commToBlockLower) ) {
-					printf("Did not find lower blocks: %" PRIu32 ", current ID=%" PRIu32 "\n",
+					printf("X- Did not find lower blocks: %" PRIu32 ", current ID=%" PRIu32 "\n",
 						commToBlockLower, currentBlock->getBlockID());
 					exit(-1);
 				}
 			} else if( blockNodeUpper == blockToNodeMap.end() ) {
 				if( ! isBlockLocal(commToBlockUpper) ) {
-					printf("Did not find upper blocks: %" PRIu32 "\n", commToBlockUpper);
+					printf("X- Did not find upper blocks: %" PRIu32 "\n", commToBlockUpper);
 					exit(-1);
 				}
 			} else {
@@ -172,12 +172,78 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 			if(blockNextToMeNode == blockToNodeMap.end()) {
 				if( ! isBlockLocal(blockNextToMe) ) {
-					printf("Did not find block next %" PRIu32 ", current block=%" PRIu32 "\n",
+					printf("X- Did not find block next %" PRIu32 ", current block=%" PRIu32 "\n",
 						blockNextToMe, currentBlock->getBlockID());
 					exit(-1);
 				}
 			} else {
 				currentBlock->setCommXUp(blockNextToMeNode->second, -1);
+			}
+		}
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////
+
+		// Patch up X-Down
+		const uint32_t blockXDown = currentBlock->getRefineXDown();
+
+		if(blockXDown == -2) {
+			// Boundary condition, no communication
+			currentBlock->setCommXDown(-1, -1);
+		} else if(blockLevel > blockXDown) {
+			// Communication to a coarser level (my refinement is higher than block next to me)
+			const uint32_t commToBlock = calcBlockID((blockXPos / 2) - 1,
+				blockYPos / 2, blockZPos / 2, blockXDown);
+
+			std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+
+			if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
+				if( ! isBlockLocal(commToBlock) ) {
+					printf("X+ Did not locate block: %" PRIu32 "\n", commToBlock);
+					exit(-1);
+				}
+			} else {
+				// Projecting to coarse level
+				currentBlock->setCommXDown(blockNode->second, -1);
+			}
+		} else if(blockLevel < blockXDown) {
+			// Communication to a finer level (my refinement is less than block next to me)
+			const uint32_t commToBlockLower = calcBlockID(blockXPos * 2 - 1,
+				blockYPos * 2,     blockZPos * 2, blockXDown);
+			const uint32_t commToBlockUpper = calcBlockID(blockXPos * 2 - 1,
+				blockYPos * 2 + 1, blockZPos * 2, blockXDown);
+
+			std::map<uint32_t, uint32_t>::iterator blockNodeLower = blockToNodeMap.find(commToBlockLower);
+			std::map<uint32_t, uint32_t>::iterator blockNodeUpper = blockToNodeMap.find(commToBlockUpper);
+
+			if( blockNodeLower == blockToNodeMap.end() ) {
+				if( ! isBlockLocal(commToBlockLower) ) {
+					printf("X+ Did not find lower blocks: %" PRIu32 ", current ID=%" PRIu32 "\n",
+						commToBlockLower, currentBlock->getBlockID());
+					exit(-1);
+				}
+			} else if( blockNodeUpper == blockToNodeMap.end() ) {
+				if( ! isBlockLocal(commToBlockUpper) ) {
+					printf("X+ Did not find upper blocks: %" PRIu32 "\n", commToBlockUpper);
+					exit(-1);
+				}
+			} else {
+				currentBlock->setCommXDown(blockNodeLower->second, blockNodeUpper->second);
+			}
+		} else {
+			// Same level
+			const uint32_t blockNextToMe = calcBlockID(blockXPos - 1,
+				blockYPos, blockZPos, blockXDown);
+
+			std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+
+			if(blockNextToMeNode == blockToNodeMap.end()) {
+				if( ! isBlockLocal(blockNextToMe) ) {
+					printf("X+ Did not find block next %" PRIu32 ", current block=%" PRIu32 "\n",
+						blockNextToMe, currentBlock->getBlockID());
+					exit(-1);
+				}
+			} else {
+				currentBlock->setCommXDown(blockNextToMeNode->second, -1);
 			}
 		}
 
