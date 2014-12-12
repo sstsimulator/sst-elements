@@ -39,14 +39,14 @@ class Ember3DAMRBlock {
 			refine_z_up(ref_z_up),
 			refine_z_down(ref_z_down) {
 
-				commXUp   = (int32_t*) malloc(sizeof(int32_t) * 2);
-				commXDown = (int32_t*) malloc(sizeof(int32_t) * 2);
-				commYUp   = (int32_t*) malloc(sizeof(int32_t) * 2);
-				commYDown = (int32_t*) malloc(sizeof(int32_t) * 2);
-				commZUp   = (int32_t*) malloc(sizeof(int32_t) * 2);
-				commZDown = (int32_t*) malloc(sizeof(int32_t) * 2);
+			commXUp   = (int32_t*) malloc(sizeof(int32_t) * 4);
+			commXDown = (int32_t*) malloc(sizeof(int32_t) * 4);
+			commYUp   = (int32_t*) malloc(sizeof(int32_t) * 4);
+			commYDown = (int32_t*) malloc(sizeof(int32_t) * 4);
+			commZUp   = (int32_t*) malloc(sizeof(int32_t) * 4);
+			commZDown = (int32_t*) malloc(sizeof(int32_t) * 4);
 
-			}
+		}
 
 		~Ember3DAMRBlock() {
 			free(commXUp);
@@ -113,34 +113,46 @@ class Ember3DAMRBlock {
 			return commZDown;
 		}
 
-		void setCommXUp(const int32_t lower, const int32_t upper) {
-			commXUp[0] = lower;
-			commXUp[1] = upper;
+		void setCommXUp(const int32_t x1, const int32_t x2, const int32_t x3, const int32_t x4) {
+			commXUp[0] = x1;
+			commXUp[1] = x2;
+			commXUp[2] = x3;
+			commXUp[3] = x4;
 		}
 
-		void setCommXDown(const int32_t lower, const int32_t upper) {
-			commXDown[0] = lower;
-			commXDown[1] = upper;
+		void setCommXDown(const int32_t x1, const int32_t x2, const int32_t x3, const int32_t x4) {
+			commXDown[0] = x1;
+			commXDown[1] = x2;
+			commXDown[2] = x3;
+			commXDown[3] = x4;
 		}
 
-		void setCommYUp(const int32_t lower, const int32_t upper) {
-			commYUp[0] = lower;
-			commYUp[1] = upper;
+		void setCommYUp(const int32_t x1, const int32_t x2, const int32_t x3, const int32_t x4) {
+			commYUp[0] = x1;
+			commYUp[1] = x2;
+			commYUp[2] = x3;
+			commYUp[3] = x4;
 		}
 
-		void setCommYDown(const int32_t lower, const int32_t upper) {
-			commYDown[0] = lower;
-			commYDown[1] = upper;
+		void setCommYDown(const int32_t x1, const int32_t x2, const int32_t x3, const int32_t x4) {
+			commYDown[0] = x1;
+			commYDown[1] = x2;
+			commYDown[2] = x3;
+			commYDown[3] = x4;
 		}
 
-		void setCommZUp(const int32_t lower, const int32_t upper) {
-			commZUp[0] = lower;
-			commZUp[1] = upper;
+		void setCommZUp(const int32_t x1, const int32_t x2, const int32_t x3, const int32_t x4) {
+			commZUp[0] = x1;
+			commZUp[1] = x2;
+			commZUp[2] = x3;
+			commZUp[3] = x4;
 		}
 
-		void setCommZDown(const int32_t lower, const int32_t upper) {
-			commZDown[0] = lower;
-			commZDown[1] = upper;
+		void setCommZDown(const int32_t x1, const int32_t x2, const int32_t x3, const int32_t x4) {
+			commZDown[0] = x1;
+			commZDown[1] = x2;
+			commZDown[2] = x3;
+			commZDown[3] = x4;
 		}
 
 	private:
@@ -179,6 +191,8 @@ public:
 	bool isBlockLocal(const uint32_t bID) const;
 
 private:
+	void printBlockMap();
+
 	std::vector<Ember3DAMRBlock*> localBlocks;
 	std::map<uint32_t, uint32_t>  blockToNodeMap;
 	char* blockFilePath;

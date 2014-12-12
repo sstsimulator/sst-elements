@@ -122,7 +122,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 		if(blockXUp == -2) {
 			// Boundary condition, no communication
-			currentBlock->setCommXUp(-1, -1);
+			currentBlock->setCommXUp(-1, -1, -1, -1);
 		} else if(blockLevel > blockXUp) {
 			// Communication to a coarser level (my refinement is higher than block next to me)
 			const uint32_t commToBlock = calcBlockID((blockXPos / 2) + 1,
@@ -137,32 +137,45 @@ void Ember3DAMRGenerator::loadBlocks() {
 				}
 			} else {
 				// Projecting to coarse level
-				currentBlock->setCommXUp(blockNode->second, -1);
+				currentBlock->setCommXUp(blockNode->second, -1, -1, -1);
 			}
 		} else if(blockLevel < blockXUp) {
 			// Communication to a finer level (my refinement is less than block next to me)
-			const uint32_t commToBlockLower = calcBlockID(blockXPos * 2 + 2,
-				blockYPos * 2,     blockZPos * 2, blockXUp);
-			const uint32_t commToBlockUpper = calcBlockID(blockXPos * 2 + 2,
-				blockYPos * 2 + 1, blockZPos * 2, blockXUp);
+			const uint32_t x1 = calcBlockID(blockXPos * 2 + 2, blockYPos * 2,     blockZPos * 2,     blockXUp);
+			const uint32_t x2 = calcBlockID(blockXPos * 2 + 2, blockYPos * 2 + 1, blockZPos * 2,     blockXUp);
+			const uint32_t x3 = calcBlockID(blockXPos * 2 + 2, blockYPos * 2,     blockZPos * 2 + 1, blockXUp);
+			const uint32_t x4 = calcBlockID(blockXPos * 2 + 2, blockYPos * 2 + 1, blockZPos * 2 + 1, blockXUp);
 
-			std::map<uint32_t, uint32_t>::iterator blockNodeLower = blockToNodeMap.find(commToBlockLower);
-			std::map<uint32_t, uint32_t>::iterator blockNodeUpper = blockToNodeMap.find(commToBlockUpper);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX1 = blockToNodeMap.find(x1);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX2 = blockToNodeMap.find(x2);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
 
-			if( blockNodeLower == blockToNodeMap.end() ) {
-				if( ! isBlockLocal(commToBlockLower) ) {
-					printf("X- Did not find lower blocks: %" PRIu32 ", current ID=%" PRIu32 "\n",
-						commToBlockLower, currentBlock->getBlockID());
-					exit(-1);
-				}
-			} else if( blockNodeUpper == blockToNodeMap.end() ) {
-				if( ! isBlockLocal(commToBlockUpper) ) {
-					printf("X- Did not find upper blocks: %" PRIu32 "\n", commToBlockUpper);
-					exit(-1);
-				}
-			} else {
-				currentBlock->setCommXUp(blockNodeLower->second, blockNodeUpper->second);
+			if( blockNodeX1 == blockToNodeMap.end() && (! isBlockLocal(x1)) ) {
+				printf("Fail on XUp, block x1");
+				exit(-1);
 			}
+
+			if( blockNodeX2 == blockToNodeMap.end() && (! isBlockLocal(x2)) ) {
+				printf("Fail on XUp, block x2");
+				exit(-1);
+			}
+
+			if( blockNodeX3 == blockToNodeMap.end() && (! isBlockLocal(x3)) ) {
+				printf("Fail on XUp, block x3: %" PRIu32 "\n", x3);
+				printBlockMap();
+				exit(-1);
+			}
+
+			if( blockNodeX4 == blockToNodeMap.end() && (! isBlockLocal(x4)) ) {
+				printf("Fail on XUp, block x4: %" PRIu32 "\n", x4);
+				exit(-1);
+			}
+
+			currentBlock->setCommXUp(blockNodeX1->second,
+				blockNodeX2->second,
+				blockNodeX3->second,
+				blockNodeX4->second);
 		} else {
 			// Same level
 			const uint32_t blockNextToMe = calcBlockID(blockXPos + 1,
@@ -177,7 +190,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 					exit(-1);
 				}
 			} else {
-				currentBlock->setCommXUp(blockNextToMeNode->second, -1);
+				currentBlock->setCommXUp(blockNextToMeNode->second, -1, -1, -1);
 			}
 		}
 
@@ -188,7 +201,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 		if(blockXDown == -2) {
 			// Boundary condition, no communication
-			currentBlock->setCommXDown(-1, -1);
+			currentBlock->setCommXDown(-1, -1, -1, -1);
 		} else if(blockLevel > blockXDown) {
 			// Communication to a coarser level (my refinement is higher than block next to me)
 			const uint32_t commToBlock = calcBlockID((blockXPos / 2) - 1,
@@ -203,32 +216,46 @@ void Ember3DAMRGenerator::loadBlocks() {
 				}
 			} else {
 				// Projecting to coarse level
-				currentBlock->setCommXDown(blockNode->second, -1);
+				currentBlock->setCommXDown(blockNode->second, -1, -1, -1);
 			}
 		} else if(blockLevel < blockXDown) {
 			// Communication to a finer level (my refinement is less than block next to me)
-			const uint32_t commToBlockLower = calcBlockID(blockXPos * 2 - 1,
-				blockYPos * 2,     blockZPos * 2, blockXDown);
-			const uint32_t commToBlockUpper = calcBlockID(blockXPos * 2 - 1,
-				blockYPos * 2 + 1, blockZPos * 2, blockXDown);
+			const uint32_t x1 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2,     blockZPos * 2,     blockXDown);
+			const uint32_t x2 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2 + 1, blockZPos * 2,     blockXDown);
+			const uint32_t x3 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2,     blockZPos * 2 + 1, blockXDown);
+			const uint32_t x4 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2 + 1, blockZPos * 2 + 1, blockXDown);
 
-			std::map<uint32_t, uint32_t>::iterator blockNodeLower = blockToNodeMap.find(commToBlockLower);
-			std::map<uint32_t, uint32_t>::iterator blockNodeUpper = blockToNodeMap.find(commToBlockUpper);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX1 = blockToNodeMap.find(x1);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX2 = blockToNodeMap.find(x2);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
+			std::map<uint32_t, uint32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
 
-			if( blockNodeLower == blockToNodeMap.end() ) {
-				if( ! isBlockLocal(commToBlockLower) ) {
-					printf("X+ Did not find lower blocks: %" PRIu32 ", current ID=%" PRIu32 "\n",
-						commToBlockLower, currentBlock->getBlockID());
-					exit(-1);
-				}
-			} else if( blockNodeUpper == blockToNodeMap.end() ) {
-				if( ! isBlockLocal(commToBlockUpper) ) {
-					printf("X+ Did not find upper blocks: %" PRIu32 "\n", commToBlockUpper);
-					exit(-1);
-				}
-			} else {
-				currentBlock->setCommXDown(blockNodeLower->second, blockNodeUpper->second);
+			if( blockNodeX1 == blockToNodeMap.end() && (! isBlockLocal(x1)) ) {
+				printf("Fail on XDown, block x1");
+				exit(-1);
 			}
+
+			if( blockNodeX2 == blockToNodeMap.end() && (! isBlockLocal(x2)) ) {
+				printf("Fail on XDown, block x2");
+				exit(-1);
+			}
+
+			if( blockNodeX3 == blockToNodeMap.end() && (! isBlockLocal(x3)) ) {
+				printf("Fail on XDown, block x3: %" PRIu32 "\n", x3);
+				printBlockMap();
+				exit(-1);
+			}
+
+			if( blockNodeX4 == blockToNodeMap.end() && (! isBlockLocal(x4)) ) {
+				printf("Fail on XDown, block x4: %" PRIu32 "\n", x4);
+				exit(-1);
+			}
+
+			currentBlock->setCommXDown(blockNodeX1->second,
+				blockNodeX2->second,
+				blockNodeX3->second,
+				blockNodeX4->second);
+
 		} else {
 			// Same level
 			const uint32_t blockNextToMe = calcBlockID(blockXPos - 1,
@@ -243,9 +270,11 @@ void Ember3DAMRGenerator::loadBlocks() {
 					exit(-1);
 				}
 			} else {
-				currentBlock->setCommXDown(blockNextToMeNode->second, -1);
+				currentBlock->setCommXDown(blockNextToMeNode->second, -1, -1, -1);
 			}
 		}
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////
 
 	}
 
@@ -360,4 +389,13 @@ void Ember3DAMRGenerator::generate(const SST::Output* output, const uint32_t pha
 
 void Ember3DAMRGenerator::finish(const SST::Output* output) {
 
+}
+
+void Ember3DAMRGenerator::printBlockMap() {
+	std::map<uint32_t, uint32_t>::iterator block_itr;
+
+	for(block_itr = blockToNodeMap.begin(); block_itr != blockToNodeMap.end(); block_itr++) {
+		printf("Block %" PRIu32 " maps to node: %" PRIu32 "\n",
+			block_itr->first, block_itr->second);
+	}
 }
