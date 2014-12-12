@@ -24,6 +24,7 @@
 using namespace SST;
 
 namespace SST {
+
 namespace Hermes {
 
 typedef void*    Addr;
@@ -60,7 +61,7 @@ enum ReductionOperation {
 	MAX
 };
 
-typedef Arg_FunctorBase< int > Functor; 
+typedef Arg_FunctorBase< int, bool > Functor; 
 
 static const uint32_t AnyTag = -1;
 static const uint32_t AnySrc = -1;
@@ -71,7 +72,13 @@ enum Retval {
     FAILURE
 };
 
-class MessageInterface : public Module {
+class Interface : public Module {
+    public:
+    virtual void _componentInit(unsigned int phase ) {}
+    virtual void _componentSetup( void ) {}
+};
+
+class MessageInterface : public Interface {
     public:
 
     MessageInterface() {}
@@ -79,8 +86,6 @@ class MessageInterface : public Module {
     virtual void printStatus( Output& ) {}
 
     virtual int sizeofDataType( PayloadDataType ) { assert(0); }
-    virtual void _componentInit(unsigned int phase ) {}
-    virtual void _componentSetup( void ) {}
     virtual RankID myWorldRank() { assert(0); } 
     virtual int myWorldSize() { assert(0); } 
     virtual void init(Functor*) {}

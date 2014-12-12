@@ -18,6 +18,7 @@ class VoidArg_FunctorBase {
     virtual TRetval operator()() = 0;
 };
 
+#if 0
 template <class TClass, class TArg, class TRetval = void > 
 class StaticArg_Functor : public VoidArg_FunctorBase< TRetval >
 {
@@ -37,6 +38,7 @@ class StaticArg_Functor : public VoidArg_FunctorBase< TRetval >
         return (*m_obj.*m_fptr)(m_arg );
     }
 };
+#endif
 
 template < class TArg, class TRetval = void >
 class Arg_FunctorBase { 
@@ -60,6 +62,27 @@ class Arg_Functor : public Arg_FunctorBase< TArg, TRetval >
 
     virtual TRetval operator()( TArg arg ) {
         return (*m_obj.*m_fptr)(arg );
+    }
+};
+
+template <class TClass, class TArg1, class TArg2, class TRetval = void > 
+class ArgStatic_Functor : public Arg_FunctorBase< TArg1, TRetval >
+{
+  private:
+    TClass* m_obj;
+    TRetval ( TClass::*m_fptr )( TArg1, TArg2 );
+    TArg2 m_arg2;
+
+  public:
+    ArgStatic_Functor( TClass* obj, TRetval ( TClass::*fptr )( TArg1, TArg2 ), TArg2 arg ):
+        m_obj( obj ),
+        m_fptr( fptr ),
+        m_arg2( arg )
+    { }
+    ArgStatic_Functor() {}
+
+    virtual TRetval operator()( TArg1 arg ) {
+        return (*m_obj.*m_fptr)(arg, m_arg2 );
     }
 };
 
