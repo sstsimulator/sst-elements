@@ -40,11 +40,11 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     scaleCompute = params.find_floating("scalecompute", 1.0);
 
     if ( msgiface == "" ) {
-        msgapi = new MessageInterface();
+        msgapi = new MP::Interface();
     } else {
     	Params hermesParams = params.find_prefix_params("hermesParams." );
 
-	msgapi = dynamic_cast<MessageInterface*>(loadModuleWithComponent(
+	msgapi = dynamic_cast<MP::Interface*>(loadModuleWithComponent(
                             msgiface, this, hermesParams));
 
         if(NULL == msgapi) {

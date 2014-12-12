@@ -15,15 +15,13 @@
 
 #include "emberevent.h"
 
-using namespace SST::Hermes;
-
 namespace SST {
 namespace Ember {
 
 class EmberCommSplitEvent : public EmberMPIEvent {
 
 public:
-    EmberCommSplitEvent( MessageInterface& api, Output* output, Histo* histo,
+    EmberCommSplitEvent( MP::Interface& api, Output* output, Histo* histo,
           Communicator oldComm, int color, int key, Communicator* newComm ) 
       : EmberMPIEvent( api, output, histo ),
         m_oldComm( oldComm), 

@@ -15,15 +15,13 @@
 
 #include "emberMPIEvent.h"
 
-using namespace SST::Hermes;
-
 namespace SST {
 namespace Ember {
 
 class EmberWaitEvent : public EmberMPIEvent {
 
 public:
-	EmberWaitEvent( MessageInterface& api, Output* output, Histo* histo,
+	EmberWaitEvent( MP::Interface& api, Output* output, Histo* histo,
        		MessageRequest* req, MessageResponse* resp = NULL ) :
        	EmberMPIEvent( api, output, histo ),
        	m_req( req ),

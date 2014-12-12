@@ -36,8 +36,8 @@ class RecvState : StateBase< T1 >
 
     }
     void enter( bool blocking, std::vector<IoVec>&,
-            Hermes::PayloadDataType, Hermes::RankID dest, uint32_t tag,
-            Hermes::Communicator group, CommReq*,
+            MP::PayloadDataType, MP::RankID dest, uint32_t tag,
+            MP::Communicator group, CommReq*,
             FunctorBase_0<bool>*, FunctorBase_0<bool>* = NULL );
 
     bool afterProcess();
@@ -57,8 +57,8 @@ class RecvState : StateBase< T1 >
 
 template< class T1 >
 void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, CommReq* commReq,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, CommReq* commReq,
         FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
     dbg().verbose(CALL_INFO,1,0,"%s src=%d tag=%#x functor=%p\n",

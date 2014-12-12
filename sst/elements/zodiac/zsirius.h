@@ -30,6 +30,7 @@
 #include "zevent.h"
 
 using namespace SST::Hermes;
+using namespace SST::Hermes::MP;
 
 namespace SST {
 namespace Zodiac {
@@ -77,7 +78,7 @@ private:
   typedef Arg_Functor<ZodiacSiriusTraceReader, int, bool> DerivedFunctor;
 
   Output zOut;
-  MessageInterface* msgapi;
+  MP::Interface* msgapi;
   SiriusReader* trace;
   std::queue<ZodiacEvent*>* eventQ;
   SST::Link* selfLink;

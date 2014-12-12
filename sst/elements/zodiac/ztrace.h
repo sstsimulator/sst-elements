@@ -22,6 +22,7 @@
 #include <sst/elements/hermes/msgapi.h>
 
 using namespace SST::Hermes;
+using namespace SST::Hermes::MP;
 
 namespace SST {
 namespace Zodiac {
@@ -41,7 +42,7 @@ private:
   void handleEvent( SST::Event *ev );
   virtual bool clockTic( SST::Cycle_t );
 
-  MessageInterface* msgapi;
+  MP::Interface* msgapi;
 
   friend class boost::serialization::access;
   template<class Archive>

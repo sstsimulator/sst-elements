@@ -36,17 +36,17 @@ T sum( T x, T y )
 }
 
 template< class T>
-T doOp( T x, T y, Hermes::ReductionOperation op )
+T doOp( T x, T y, MP::ReductionOperation op )
 {
     T retval;
     switch( op ) {
-      case Hermes::SUM: 
+      case MP::SUM: 
         retval = sum( x, y );
         break;
-      case Hermes::MIN: 
+      case MP::MIN: 
         retval = min( x, y );
         break;
-      case Hermes::MAX: 
+      case MP::MAX: 
         retval = max( x, y );
         break;
     } 
@@ -56,7 +56,7 @@ T doOp( T x, T y, Hermes::ReductionOperation op )
 
 template< class T >
 void collectiveOp( T* input[], int numIn, T result[],
-                    int count, Hermes::ReductionOperation op )
+                    int count, MP::ReductionOperation op )
 {
          
     for ( int c = 0; c < count; c++ ) {
@@ -68,31 +68,31 @@ void collectiveOp( T* input[], int numIn, T result[],
 }
 
 inline void collectiveOp( void* input[], int numIn, void* result, int count, 
-        Hermes::PayloadDataType dtype, Hermes::ReductionOperation op )
+        MP::PayloadDataType dtype, MP::ReductionOperation op )
 {
     switch ( dtype  ) {
-      case Hermes::CHAR: 
+      case MP::CHAR: 
 
             collectiveOp( (char**)(input), numIn, static_cast<char*>(result),
                         count, op );
             break;
-      case Hermes::INT:
+      case MP::INT:
             collectiveOp( (int**)(input), numIn, static_cast<int*>(result),
                         count, op );
             break;
-      case Hermes::LONG:
+      case MP::LONG:
             collectiveOp( (long**)(input), numIn, static_cast<long*>(result),
                         count, op );
             break;
-      case Hermes::DOUBLE:
+      case MP::DOUBLE:
             collectiveOp( (double**)(input), numIn,static_cast<double*>(result),
                         count, op );
             break;
-      case Hermes::FLOAT:
+      case MP::FLOAT:
             collectiveOp( (float**)(input), numIn, static_cast<float*>(result),
                         count, op );
             break;
-      case Hermes::COMPLEX:
+      case MP::COMPLEX:
             assert(0);
             break;
     }

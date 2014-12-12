@@ -19,6 +19,8 @@
 #include "ioVec.h"
 #include "sst/elements/hermes/msgapi.h"
 
+using namespace Hermes;
+
 namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
@@ -79,31 +81,31 @@ class API : public ProtocolAPI {
     void wait( CommReq*, FunctorBase_1<CommReq*,bool>* = NULL );
     void waitAny( std::vector<CommReq*>&, FunctorBase_1<CommReq*, bool>* = NULL );
 
-	void send(Hermes::Addr buf, uint32_t count, 
-		Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, FunctorBase_0<bool>* func );
+	void send(MP::Addr buf, uint32_t count, 
+		MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, FunctorBase_0<bool>* func );
 
-	void isend(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+	void isend(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
 		FunctorBase_0<bool>* func );
 
-    void recv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
+    void recv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func );
 
-    void irecv(Hermes::Addr _buf, uint32_t _count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+    void irecv(MP::Addr _buf, uint32_t _count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func );
 
-	void wait( Hermes::MessageRequest, Hermes::MessageResponse* resp,
+	void wait( MP::MessageRequest, MP::MessageResponse* resp,
 				FunctorBase_0<bool>* func );
-   	void waitAny( int count, Hermes::MessageRequest req[], int *index,
-              	Hermes::MessageResponse* resp, FunctorBase_0<bool>* func );
-    void waitAll( int count, Hermes::MessageRequest req[],
-                Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func );
+   	void waitAny( int count, MP::MessageRequest req[], int *index,
+              	MP::MessageResponse* resp, FunctorBase_0<bool>* func );
+    void waitAll( int count, MP::MessageRequest req[],
+                MP::MessageResponse* resp[], FunctorBase_0<bool>* func );
 
     size_t shortMsgLength();
 

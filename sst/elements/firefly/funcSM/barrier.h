@@ -26,7 +26,7 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
         BarrierStartEvent* event = static_cast<BarrierStartEvent*>( e );
 
         CollectiveStartEvent* tmp = new CollectiveStartEvent( NULL, NULL, 0,
-                Hermes::CHAR, Hermes::MAX, 0, Hermes::GroupWorld, true );
+                MP::CHAR, MP::MAX, 0, MP::GroupWorld, true );
 
         delete event;
 

@@ -205,8 +205,8 @@ void XXX::loopHandler( Event* ev )
 }
 
 void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec, 
-    Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-    Hermes::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
+    MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+    MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x length=%lu \n",
                                         dest, tag, calcLength(ioVec) );
@@ -215,8 +215,8 @@ void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec,
 }
 
 void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, 
-    Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-    Hermes::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
+    MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+    MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
@@ -229,16 +229,16 @@ void XXX::waitAny( std::vector<CommReq*>& reqs,
     m_waitAnyState->enter( reqs, functor );
 }
 
-void XXX::send(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, FunctorBase_0<bool>* func )
+void XXX::send(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, FunctorBase_0<bool>* func )
 {
     m_processQueuesState->send( buf, count, dtype, dest, tag, group, func );
 }
 
-void XXX::isend(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+void XXX::isend(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
 		FunctorBase_0<bool>* func )
 {
 
@@ -246,37 +246,37 @@ void XXX::isend(Hermes::Addr buf, uint32_t count,
 													req, func );
 }
 
-void XXX::recv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
+void XXX::recv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
     m_processQueuesState->recv( buf, count, dtype, src, tag, group, resp, func);
 }
 
-void XXX::irecv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+void XXX::irecv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
 {
     m_processQueuesState->irecv( buf, count, dtype, src, tag, group,
 						req, func );
 }
 
-void XXX::wait( Hermes::MessageRequest req, Hermes::MessageResponse* resp,
+void XXX::wait( MP::MessageRequest req, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
 	m_processQueuesState->wait( req, resp, func );
 }
 
-void XXX::waitAny( int count, Hermes::MessageRequest req[], int *index,
-        Hermes::MessageResponse* resp, FunctorBase_0<bool>* func  )
+void XXX::waitAny( int count, MP::MessageRequest req[], int *index,
+        MP::MessageResponse* resp, FunctorBase_0<bool>* func  )
 {
 	m_processQueuesState->waitAny( count, req, index, resp, func );
 }
 
-void XXX::waitAll( int count, Hermes::MessageRequest req[],
-	Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func )
+void XXX::waitAll( int count, MP::MessageRequest req[],
+	MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
 {
 	m_processQueuesState->waitAll( count, req, resp, func );
 }

@@ -58,18 +58,18 @@ class ProcessQueuesState : StateBase< T1 >
     void loopHandler( int, std::vector<IoVec>&, void* );
     void loopHandler( int, void* );
 
-	void send(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, FunctorBase_0<bool>* func ) 
+	void send(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, FunctorBase_0<bool>* func ) 
     {
         dbg().verbose(CALL_INFO,1,0,"count=%d dest=%d tag=%#x\n",count,dest,tag);
         enterSend( new _CommReq( _CommReq::Send, buf, count, 
             obj().info()->sizeofDataType( dtype), dest, tag, group ), func );
     }
 
-    void isend(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+    void isend(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
     {
         dbg().verbose(CALL_INFO,1,0,"count=%d dest=%d tag=%#x\n",count,dest,tag);
@@ -79,9 +79,9 @@ class ProcessQueuesState : StateBase< T1 >
         enterSend( static_cast<_CommReq*>(*req), func );
     }
 
-    void recv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
+    void recv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
         FunctorBase_0<bool>* func )
     {
         dbg().verbose(CALL_INFO,1,0,"count=%d src=%d tag=%#x\n",count,src,tag);
@@ -89,9 +89,9 @@ class ProcessQueuesState : StateBase< T1 >
             obj().info()->sizeofDataType(dtype), src, tag, group, resp ), func); 
     }
 
-    void irecv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+    void irecv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
     {
         dbg().verbose(CALL_INFO,1,0,"count=%d src=%d tag=%#x\n",count,src,tag);
@@ -100,7 +100,7 @@ class ProcessQueuesState : StateBase< T1 >
         enterRecv( static_cast<_CommReq*>(*req), func );
     }
 
-    void wait( Hermes::MessageRequest req, Hermes::MessageResponse* resp,
+    void wait( MP::MessageRequest req, MP::MessageResponse* resp,
         FunctorBase_0<bool>* func )
     {
         dbg().verbose(CALL_INFO,1,0,"\n");
@@ -108,15 +108,15 @@ class ProcessQueuesState : StateBase< T1 >
         enterWait( new WaitReq( req, resp ), func );
     }
 
-    void waitAny( int count, Hermes::MessageRequest req[], int *index,
-        Hermes::MessageResponse* resp, FunctorBase_0<bool>* func  ) 
+    void waitAny( int count, MP::MessageRequest req[], int *index,
+        MP::MessageResponse* resp, FunctorBase_0<bool>* func  ) 
     {
         dbg().verbose(CALL_INFO,1,0,"\n");
         enterWait( new WaitReq( count, req, index, resp ), func );
     }
 
-    void waitAll( int count, Hermes::MessageRequest req[],
-        Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func )
+    void waitAll( int count, MP::MessageRequest req[],
+        MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
     {
         dbg().verbose(CALL_INFO,1,0,"\n");
         enterWait( new WaitReq( count, req, resp ), func );
@@ -269,11 +269,11 @@ class ProcessQueuesState : StateBase< T1 >
     };
 
 
-    nid_t calcNid( _CommReq* req, Hermes::RankID rank ) {
+    nid_t calcNid( _CommReq* req, MP::RankID rank ) {
         return obj().info()->getGroup( req->getGroup() )->getMapping( rank );
     }
 
-    Hermes::RankID getMyRank( _CommReq* req ) {
+    MP::RankID getMyRank( _CommReq* req ) {
         return obj().info()->getGroup( req->getGroup() )->getMyRank();
     } 
 
@@ -1083,7 +1083,7 @@ bool ProcessQueuesState<T1>::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
     }
 
     dbg().verbose(CALL_INFO,1,0,"want rank %d %d\n", wantHdr.rank, hdr.rank );
-    if ( ( Hermes::AnySrc != wantHdr.rank ) && ( wantHdr.rank != hdr.rank ) ) {
+    if ( ( MP::AnySrc != wantHdr.rank ) && ( wantHdr.rank != hdr.rank ) ) {
         return false;
     }
 

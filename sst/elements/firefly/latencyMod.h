@@ -16,6 +16,7 @@
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
+#include <sst/core/unitAlgebra.h>
 
 #include "ioVec.h"
 

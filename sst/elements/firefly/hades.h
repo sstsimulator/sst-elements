@@ -28,7 +28,7 @@ class FunctionSM;
 class NodeInfo;
 class VirtNic;
 
-class Hades : public Hermes::MessageInterface
+class Hades : public MP::Interface
 {
   public:
     Hades(Component*, Params&);
@@ -36,106 +36,106 @@ class Hades : public Hermes::MessageInterface
     virtual void printStatus( Output& );
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
-    virtual void init(Hermes::Functor*);
-    virtual void fini(Hermes::Functor*);
-    virtual void rank(Hermes::Communicator group, Hermes::RankID* rank,
-                                                    Hermes::Functor*);
-    virtual void size(Hermes::Communicator group, int* size, Hermes::Functor* );
+    virtual void init(MP::Functor*);
+    virtual void fini(MP::Functor*);
+    virtual void rank(MP::Communicator group, MP::RankID* rank,
+                                                    MP::Functor*);
+    virtual void size(MP::Communicator group, int* size, MP::Functor* );
 
-    virtual void send(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag, 
-        Hermes::Communicator group, Hermes::Functor*);
+    virtual void send(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag, 
+        MP::Communicator group, MP::Functor*);
 
-    virtual void isend(Hermes::Addr payload, uint32_t count, 
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
-        Hermes::Functor*);
+    virtual void isend(MP::Addr payload, uint32_t count, 
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
+        MP::Functor*);
 
-    virtual void recv(Hermes::Addr target, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
-        Hermes::Functor*);
+    virtual void recv(MP::Addr target, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID source, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
+        MP::Functor*);
 
-    virtual void irecv(Hermes::Addr target, uint32_t count, 
-        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
-        Hermes::Functor*);
+    virtual void irecv(MP::Addr target, uint32_t count, 
+        MP::PayloadDataType dtype, MP::RankID source, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
+        MP::Functor*);
 
-    virtual void allreduce(Hermes::Addr mydata, void* result, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::ReductionOperation op,
-        Hermes::Communicator group, Hermes::Functor*);
+    virtual void allreduce(MP::Addr mydata, void* result, uint32_t count,
+        MP::PayloadDataType dtype, MP::ReductionOperation op,
+        MP::Communicator group, MP::Functor*);
 
-    virtual void reduce(Hermes::Addr mydata, Hermes::Addr result,
-        uint32_t count, Hermes::PayloadDataType dtype, 
-        Hermes::ReductionOperation op, Hermes::RankID root,
-        Hermes::Communicator group, Hermes::Functor*);
+    virtual void reduce(MP::Addr mydata, MP::Addr result,
+        uint32_t count, MP::PayloadDataType dtype, 
+        MP::ReductionOperation op, MP::RankID root,
+        MP::Communicator group, MP::Functor*);
 
-    virtual void allgather( Hermes::Addr sendbuf, uint32_t sendcnt, 
-        Hermes::PayloadDataType sendtype,
-        Hermes::Addr recvbuf, uint32_t recvcnt, 
-        Hermes::PayloadDataType recvtype,
-        Hermes::Communicator group, Hermes::Functor*);
+    virtual void allgather( MP::Addr sendbuf, uint32_t sendcnt, 
+        MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, uint32_t recvcnt, 
+        MP::PayloadDataType recvtype,
+        MP::Communicator group, MP::Functor*);
 
-    virtual void allgatherv( Hermes::Addr sendbuf, uint32_t sendcnt,
-        Hermes::PayloadDataType sendtype,
-        Hermes::Addr recvbuf, Hermes::Addr recvcnt, Hermes::Addr displs,
-        Hermes::PayloadDataType recvtype,
-        Hermes::Communicator group, Hermes::Functor*);
+    virtual void allgatherv( MP::Addr sendbuf, uint32_t sendcnt,
+        MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, MP::Addr recvcnt, MP::Addr displs,
+        MP::PayloadDataType recvtype,
+        MP::Communicator group, MP::Functor*);
 
-    virtual void gather( Hermes::Addr sendbuf, uint32_t sendcnt, 
-        Hermes::PayloadDataType sendtype,
-        Hermes::Addr recvbuf, uint32_t recvcnt, 
-        Hermes::PayloadDataType recvtype,
-        Hermes::RankID root, Hermes::Communicator group, Hermes::Functor*);
+    virtual void gather( MP::Addr sendbuf, uint32_t sendcnt, 
+        MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, uint32_t recvcnt, 
+        MP::PayloadDataType recvtype,
+        MP::RankID root, MP::Communicator group, MP::Functor*);
 
-    virtual void gatherv( Hermes::Addr sendbuf, uint32_t sendcnt,
-        Hermes::PayloadDataType sendtype,
-        Hermes::Addr recvbuf, Hermes::Addr recvcnt, Hermes::Addr displs,
-        Hermes::PayloadDataType recvtype,
-        Hermes::RankID root, Hermes::Communicator group, Hermes::Functor*);
+    virtual void gatherv( MP::Addr sendbuf, uint32_t sendcnt,
+        MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, MP::Addr recvcnt, MP::Addr displs,
+        MP::PayloadDataType recvtype,
+        MP::RankID root, MP::Communicator group, MP::Functor*);
 
-    virtual void barrier(Hermes::Communicator group, Hermes::Functor*);
+    virtual void barrier(MP::Communicator group, MP::Functor*);
 
     virtual void alltoall(
-        Hermes::Addr sendbuf, uint32_t sendcnt, 
-                        Hermes::PayloadDataType sendtype,
-        Hermes::Addr recvbuf, uint32_t 
-                        recvcnt, Hermes::PayloadDataType recvtype,
-        Hermes::Communicator group, Hermes::Functor*);
+        MP::Addr sendbuf, uint32_t sendcnt, 
+                        MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, uint32_t 
+                        recvcnt, MP::PayloadDataType recvtype,
+        MP::Communicator group, MP::Functor*);
 
     virtual void alltoallv(
-        Hermes::Addr sendbuf, Hermes::Addr sendcnts, 
-            Hermes::Addr senddispls, Hermes::PayloadDataType sendtype,
-        Hermes::Addr recvbuf, Hermes::Addr recvcnts, 
-            Hermes::Addr recvdispls, Hermes::PayloadDataType recvtype,
-        Hermes::Communicator group, Hermes::Functor*);
+        MP::Addr sendbuf, MP::Addr sendcnts, 
+            MP::Addr senddispls, MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, MP::Addr recvcnts, 
+            MP::Addr recvdispls, MP::PayloadDataType recvtype,
+        MP::Communicator group, MP::Functor*);
 
-    virtual void probe(Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
-        Hermes::Functor*);
+    virtual void probe(MP::RankID source, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
+        MP::Functor*);
 
-    virtual void wait(Hermes::MessageRequest req,
-        Hermes::MessageResponse* resp, Hermes::Functor*);
+    virtual void wait(MP::MessageRequest req,
+        MP::MessageResponse* resp, MP::Functor*);
 
-    virtual void waitany( int count, Hermes::MessageRequest req[], int *index,
-                 Hermes::MessageResponse* resp, Hermes::Functor* );
+    virtual void waitany( int count, MP::MessageRequest req[], int *index,
+                 MP::MessageResponse* resp, MP::Functor* );
  
-    virtual void waitall( int count, Hermes::MessageRequest req[],
-                 Hermes::MessageResponse* resp[], Hermes::Functor* );
+    virtual void waitall( int count, MP::MessageRequest req[],
+                 MP::MessageResponse* resp[], MP::Functor* );
 
-    virtual void test(Hermes::MessageRequest req, int& flag, 
-        Hermes::MessageResponse* resp, Hermes::Functor*);
+    virtual void test(MP::MessageRequest req, int& flag, 
+        MP::MessageResponse* resp, MP::Functor*);
 
-    virtual void comm_split( Hermes::Communicator, int color, int key,
-        Hermes::Communicator*, Hermes::Functor* );
+    virtual void comm_split( MP::Communicator, int color, int key,
+        MP::Communicator*, MP::Functor* );
 
 
-    Hermes::RankID myWorldRank();
+    MP::RankID myWorldRank();
     int myWorldSize();
 
   private:
 
-    int sizeofDataType( Hermes::PayloadDataType type ) { 
+    int sizeofDataType( MP::PayloadDataType type ) { 
         return m_info.sizeofDataType(type); 
     }
 

@@ -21,7 +21,7 @@ namespace Ember {
 class EmberInitEvent : public EmberMPIEvent {
 
 public:
-	EmberInitEvent( MessageInterface& api, Output* output, Histo* histo ) :
+	EmberInitEvent( MP::Interface& api, Output* output, Histo* histo ) :
             EmberMPIEvent( api, output, histo ){}
 	~EmberInitEvent() {}
 

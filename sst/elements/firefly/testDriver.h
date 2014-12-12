@@ -21,6 +21,8 @@
 
 #include "sst/elements/hermes/msgapi.h"
 
+using namespace Hermes;
+
 namespace SST {
 namespace Firefly {
 
@@ -60,7 +62,7 @@ class TestDriver : public SST::Component {
     std::string                 m_traceFileName;
     std::ifstream               m_traceFile;
     DerivedFunctor              m_functor;
-    Hermes::MessageInterface*   m_hermes;
+    MP::Interface*   			m_hermes;
     SST::Link*                  m_selfLink;
     std::string                 m_funcName;
 
@@ -69,12 +71,12 @@ class TestDriver : public SST::Component {
     enum { SendReq, RecvReq };
 
     int                     my_index;
-    Hermes::MessageRequest  my_req[2];
-    Hermes::MessageResponse my_resp[2];
-    Hermes::MessageResponse* my_respPtr[2];
-    Hermes::RankID          my_rank;
+    MP::MessageRequest  my_req[2];
+    MP::MessageResponse my_resp[2];
+    MP::MessageResponse* my_respPtr[2];
+    MP::RankID          my_rank;
     int                     my_size;
-    Hermes::RankID          m_root;
+    MP::RankID          m_root;
     int                     m_collectiveIn;
     int                     m_collectiveOut;
     Output                  m_dbg;

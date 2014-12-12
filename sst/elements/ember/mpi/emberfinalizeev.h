@@ -21,7 +21,7 @@ namespace Ember {
 class EmberFinalizeEvent : public EmberMPIEvent {
 
 public:
-	EmberFinalizeEvent( MessageInterface& api, Output* output, Histo* histo ) :
+	EmberFinalizeEvent( MP::Interface& api, Output* output, Histo* histo ) :
             EmberMPIEvent( api, output, histo ){}
 	~EmberFinalizeEvent() {}
 

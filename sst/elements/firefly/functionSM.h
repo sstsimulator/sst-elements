@@ -74,7 +74,7 @@ class FunctionSM  {
     void printStatus( Output& );
 
     void setup();
-    void start(int type, Hermes::Functor* retFunc,  SST::Event* );
+    void start(int type, MP::Functor* retFunc,  SST::Event* );
     void enter( );
 
   private:
@@ -90,7 +90,7 @@ class FunctionSM  {
 
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*    m_sm; 
-    Hermes::Functor*    m_retFunc;
+    MP::Functor*    m_retFunc;
 
     SST::Link*          m_fromDriverLink;    
     SST::Link*          m_toDriverLink;    

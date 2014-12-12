@@ -37,7 +37,7 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_sendbuf[0] = m_commSplitEvent->color;
     m_sendbuf[1] = m_commSplitEvent->key;
 
-    Hermes::PayloadDataType datatype = Hermes::INT;
+    MP::PayloadDataType datatype = MP::INT;
 
     m_dbg.verbose(CALL_INFO,1,0,"send=%p recv=%p\n",m_sendbuf,m_recvbuf);
 

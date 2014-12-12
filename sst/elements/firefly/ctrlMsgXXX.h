@@ -50,8 +50,8 @@ static const key_t ReadRspKey  = 0 << (sizeof(key_t) * 8 - 2);
 struct MatchHdr {
     uint32_t count; 
     uint32_t dtypeSize;
-    Hermes::RankID rank;
-    Hermes::Communicator group;
+    MP::RankID rank;
+    MP::Communicator group;
     uint64_t    tag;
     key_t       key;      
 };
@@ -77,42 +77,42 @@ class XXX  {
     VirtNic&   nic() { return *m_nic; }           
 
     void sendv( bool blocking, std::vector<IoVec>&,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, CommReq*, FunctorBase_0<bool>* );
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
 
     void recvv( bool blocking, std::vector<IoVec>&,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, CommReq*, FunctorBase_0<bool>* );
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
 
     void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
 
-    void send(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, FunctorBase_0<bool>* func );
+    void send(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, FunctorBase_0<bool>* func );
 
-    void isend(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+    void isend(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
 		FunctorBase_0<bool>* func );
 
-    void recv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
+    void recv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func );
 
-    void irecv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+    void irecv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func );
 
-    void wait( Hermes::MessageRequest, Hermes::MessageResponse* resp,
+    void wait( MP::MessageRequest, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func );
 
-    void waitAny( int count, Hermes::MessageRequest req[], int *index,
-        Hermes::MessageResponse* resp, FunctorBase_0<bool>* func  );
+    void waitAny( int count, MP::MessageRequest req[], int *index,
+        MP::MessageResponse* resp, FunctorBase_0<bool>* func  );
 
-    void waitAll( int count, Hermes::MessageRequest req[],
-        Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func );
+    void waitAll( int count, MP::MessageRequest req[],
+        MP::MessageResponse* resp[], FunctorBase_0<bool>* func );
 
     size_t shortMsgLength() { return m_shortMsgLength; }
 
@@ -238,20 +238,20 @@ class XXX  {
     void loopSend( int, void* );
 };
 
-class _CommReq : public Hermes::MessageRequestBase {
+class _CommReq : public MP::MessageRequestBase {
   public:
 
     enum Type { Recv, Send, Isend, Irecv };
 
     _CommReq( Type type, std::vector<IoVec>& _ioVec, 
-        unsigned int dtypeSize, Hermes::RankID rank, uint32_t tag,
-        Hermes::Communicator group ) : 
+        unsigned int dtypeSize, MP::RankID rank, uint32_t tag,
+        MP::Communicator group ) : 
         m_type( type ),
         m_buf( NULL ),
         m_ioVec( _ioVec ),
         m_resp( NULL ),
         m_done( false ),
-        m_destRank( Hermes::AnySrc ),
+        m_destRank( MP::AnySrc ),
         m_ignore( 0 ),
         m_isMine( false ),
         m_finiDelay_ns( 0 )
@@ -269,14 +269,14 @@ class _CommReq : public Hermes::MessageRequestBase {
         m_hdr.group = group;
     }
 
-    _CommReq( Type type, Hermes::Addr buf, uint32_t count,
-        unsigned int dtypeSize, Hermes::RankID rank, uint32_t tag, 
-        Hermes::Communicator group, Hermes::MessageResponse* resp = NULL ) :
+    _CommReq( Type type, MP::Addr buf, uint32_t count,
+        unsigned int dtypeSize, MP::RankID rank, uint32_t tag, 
+        MP::Communicator group, MP::MessageResponse* resp = NULL ) :
         m_type( type ),
         m_buf( buf ),
         m_resp( resp ),
         m_done( false ),
-        m_destRank( Hermes::AnySrc ),
+        m_destRank( MP::AnySrc ),
         m_ignore( 0 ),
         m_isMine( true ),
         m_finiDelay_ns( 0 )
@@ -286,7 +286,7 @@ class _CommReq : public Hermes::MessageRequestBase {
 
         if ( m_type == Recv || m_type == Irecv ) {
             m_hdr.rank = rank;
-            if ( Hermes::AnyTag == tag  ) {
+            if ( MP::AnyTag == tag  ) {
                 m_ignore = 0xffffffff;
             }
         } else {
@@ -307,7 +307,7 @@ class _CommReq : public Hermes::MessageRequestBase {
     }
 
     uint64_t ignore() { return m_ignore; }
-    void setSrcRank( Hermes::RankID rank ) {
+    void setSrcRank( MP::RankID rank ) {
         m_hdr.rank = rank;
     }
 
@@ -324,11 +324,11 @@ class _CommReq : public Hermes::MessageRequestBase {
         m_done = true; 
     }
 
-    void getResp( Hermes::MessageResponse* resp ) {
+    void getResp( MP::MessageResponse* resp ) {
         *resp = m_matchInfo;
     }
 
-    void setResp( uint32_t tag, Hermes::RankID src, uint32_t count )
+    void setResp( uint32_t tag, MP::RankID src, uint32_t count )
     {
         m_matchInfo.tag = tag;
         m_matchInfo.src = src;
@@ -339,8 +339,8 @@ class _CommReq : public Hermes::MessageRequestBase {
         }
     }
 
-    Hermes::RankID getDestRank() { return m_destRank; }
-    Hermes::Communicator getGroup() { return m_hdr.group; }
+    MP::RankID getDestRank() { return m_destRank; }
+    MP::Communicator getGroup() { return m_hdr.group; }
     
     size_t getLength( ) {
         size_t length = 0;
@@ -363,12 +363,12 @@ class _CommReq : public Hermes::MessageRequestBase {
 
     MatchHdr            m_hdr; 
     Type                m_type;
-    Hermes::Addr        m_buf;
+    MP::Addr        m_buf;
     std::vector<IoVec>  m_ioVec;
-    Hermes::MessageResponse* m_resp;
+    MP::MessageResponse* m_resp;
     bool                m_done;
-    Hermes::RankID      m_destRank;
-    Hermes::MessageResponse  m_matchInfo;
+    MP::RankID      m_destRank;
+    MP::MessageResponse  m_matchInfo;
     uint64_t            m_ignore;
     bool                m_isMine; 
     int                 m_finiDelay_ns;
@@ -376,15 +376,15 @@ class _CommReq : public Hermes::MessageRequestBase {
 
 class WaitReq {
     struct X {
-        X( _CommReq* _req, Hermes::MessageResponse* _resp = NULL ) : 
+        X( _CommReq* _req, MP::MessageResponse* _resp = NULL ) : 
             pos(0), req(_req), resp(_resp) {}
 
-        X( int _pos, _CommReq* _req, Hermes::MessageResponse* _resp = NULL ) : 
+        X( int _pos, _CommReq* _req, MP::MessageResponse* _resp = NULL ) : 
             pos(_pos), req(_req), resp(_resp) {}
 
         int pos;
         _CommReq* req;
-        Hermes::MessageResponse* resp;
+        MP::MessageResponse* resp;
     };
 
   public:
@@ -398,14 +398,14 @@ class WaitReq {
         } 
     }
 
-    WaitReq( Hermes::MessageRequest req, Hermes::MessageResponse* resp ) :
+    WaitReq( MP::MessageRequest req, MP::MessageResponse* resp ) :
         indexPtr(NULL), delay_ns(0)
     {
         reqQ.push_back( X( static_cast<_CommReq*>(req), resp ) );
     }
 
-    WaitReq( int count, Hermes::MessageRequest req[], int *index,
-                                        Hermes::MessageResponse* resp ) :
+    WaitReq( int count, MP::MessageRequest req[], int *index,
+                                        MP::MessageResponse* resp ) :
         indexPtr(index), delay_ns(0)
     {
         for ( int i = 0; i < count; i++ ) {
@@ -413,11 +413,11 @@ class WaitReq {
         }
     }
 
-    WaitReq( int count, Hermes::MessageRequest req[],
-                                        Hermes::MessageResponse* resp[] ) : 
+    WaitReq( int count, MP::MessageRequest req[],
+                                        MP::MessageResponse* resp[] ) : 
         indexPtr(NULL), delay_ns(0)
     {
-        Hermes::MessageResponse* tmp = (Hermes::MessageResponse*)resp;
+        MP::MessageResponse* tmp = (MP::MessageResponse*)resp;
         for ( int i = 0; i < count; i++ ) {
             reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), &tmp[i] ) );
         }

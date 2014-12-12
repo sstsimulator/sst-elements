@@ -17,6 +17,7 @@
 #include "zevent.h"
 
 using namespace SST::Hermes;
+using namespace SST::Hermes::MP;
 
 namespace SST {
 namespace Zodiac {

@@ -20,7 +20,7 @@ namespace Ember {
 
 class EmberAllreduceEvent : public EmberMPIEvent {
 public:
-    EmberAllreduceEvent( MessageInterface& api, Output* output, Histo* histo,
+    EmberAllreduceEvent( MP::Interface& api, Output* output, Histo* histo,
             Addr mydata, Addr result, uint32_t count, PayloadDataType dtype,
             ReductionOperation op, Communicator group ) :
         EmberMPIEvent( api, output, histo ),

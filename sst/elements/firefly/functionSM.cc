@@ -20,7 +20,6 @@
 #include "ctrlMsg.h"
 
 using namespace SST::Firefly;
-using namespace Hermes;
 
 const char* FunctionSM::m_functionName[] = {
     FOREACH_FUNCTION(GENERATE_STRING)
@@ -28,12 +27,12 @@ const char* FunctionSM::m_functionName[] = {
 
 class DriverEvent : public SST::Event {
   public:
-    DriverEvent( Hermes::Functor* _retFunc, int _retval ) :
+    DriverEvent( MP::Functor* _retFunc, int _retval ) :
         Event(),
         retFunc( _retFunc ),
         retval( _retval )
     { }
-    Hermes::Functor* retFunc;
+    MP::Functor* retFunc;
     int retval;
   private:
 };
@@ -183,7 +182,7 @@ void FunctionSM::enter( )
     m_toMeLink->send( NULL );
 }
 
-void FunctionSM::start( int type, Hermes::Functor* retFunc, SST::Event* e )
+void FunctionSM::start( int type, MP::Functor* retFunc, SST::Event* e )
 {
     assert( e );
     m_retFunc = retFunc;

@@ -15,14 +15,12 @@
 
 #include "emberMPIEvent.h"
 
-using namespace SST::Hermes;
-
 namespace SST {
 namespace Ember {
 
 class EmberBarrierEvent : public EmberMPIEvent {
   public:
-    EmberBarrierEvent( MessageInterface& api, Output* output, Histo* histo, 
+    EmberBarrierEvent( MP::Interface& api, Output* output, Histo* histo, 
                                                     Communicator comm ) :
         EmberMPIEvent( api, output, histo ), m_comm(comm) {}
 

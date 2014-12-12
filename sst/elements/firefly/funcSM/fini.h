@@ -25,7 +25,7 @@ class FiniFuncSM :  public BarrierFuncSM
     virtual void handleStartEvent( SST::Event* e, Retval& retval) {
 
         FiniStartEvent* event = static_cast<FiniStartEvent*>( e );
-        BarrierStartEvent* tmp = new BarrierStartEvent( Hermes::GroupWorld  );
+        BarrierStartEvent* tmp = new BarrierStartEvent( MP::GroupWorld  );
 
         delete event;
 

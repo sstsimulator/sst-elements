@@ -12,20 +12,17 @@
 #ifndef _H_HERMES_MESSAGE_INTERFACE
 #define _H_HERMES_MESSAGE_INTERFACE
 
-#include <sst/core/serialization.h>
-#include <sst/core/simulation.h>
-#include <sst/core/element.h>
-#include <sst/core/event.h>
-#include <sst/core/module.h>
-
 #include <assert.h>
-#include "functor.h"
+
+#include "hermes.h"
 
 using namespace SST;
 
 namespace SST {
 
 namespace Hermes {
+
+namespace MP {
 
 typedef void*    Addr;
 typedef uint32_t Communicator;
@@ -72,18 +69,11 @@ enum Retval {
     FAILURE
 };
 
-class Interface : public Module {
-    public:
-    virtual void _componentInit(unsigned int phase ) {}
-    virtual void _componentSetup( void ) {}
-};
-
-class MessageInterface : public Interface {
+class Interface : public Hermes::Interface {
     public:
 
-    MessageInterface() {}
-    virtual ~MessageInterface() {}
-    virtual void printStatus( Output& ) {}
+    Interface() {}
+    virtual ~Interface() {}
 
     virtual int sizeofDataType( PayloadDataType ) { assert(0); }
     virtual RankID myWorldRank() { assert(0); } 
@@ -166,9 +156,9 @@ class MessageInterface : public Interface {
 
     virtual void comm_split( Communicator, int color, int key,
         Communicator*, Functor* ) {}
-    
 };
 
+}
 }
 }
 

@@ -28,9 +28,9 @@ ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params& params) :
     std::string msgiface = params.find_string("msgapi");
 
     if ( msgiface == "" ) {
-        msgapi = new MessageInterface();
+        msgapi = new MP::Interface();
     } else {
-	msgapi = dynamic_cast<MessageInterface*>(loadModule(msgiface, params));
+	msgapi = dynamic_cast<MP::Interface*>(loadModule(msgiface, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;

@@ -31,7 +31,7 @@ using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
-    MessageInterface(),
+    Interface(),
     m_virtNic(NULL),
 	m_functionSM( NULL )
 {
@@ -56,6 +56,22 @@ Hades::Hades( Component* owner, Params& params ) :
     m_dbg.verbose(CALL_INFO,1,0,"nidListString `%s`\n", 
                                             m_nidListString.c_str());
 
+#if 0
+	if ( ! nidListString.empty() ) {
+
+		std::istringstream iss(nidListString);
+
+    	m_info.addGroup( MP::GroupWorld, initAdjacentMap(iss) );
+
+	}
+
+  	Group* group = m_info.getGroup(MP::GroupWorld);
+
+if ( group ) {
+
+    Params tmpParams;
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+#endif
     int protoNum = 0;
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
     m_protocolM[ protoNum ] = 
@@ -102,7 +118,7 @@ void Hades::_componentSetup()
 
 	if ( ! m_nidListString.empty() ) {
   	    Group* group = m_info.getGroup( 
-                    m_info.newGroup( Hermes::GroupWorld, Info::Dense ) );
+                    m_info.newGroup( MP::GroupWorld, Info::Dense ) );
 
 		std::istringstream iss( m_nidListString );
 
@@ -178,7 +194,7 @@ void Hades::_componentInit(unsigned int phase )
 int Hades::myWorldSize()
 {
     int size = -1;
-	Group* group = m_info.getGroup(Hermes::GroupWorld);
+	Group* group = m_info.getGroup(MP::GroupWorld);
 	if ( group ) { 
     	size = group->getSize();
 	}
@@ -186,7 +202,7 @@ int Hades::myWorldSize()
     return size;
 }
 
-Hermes::RankID Hades::myWorldRank() 
+MP::RankID Hades::myWorldRank() 
 {
     int rank = m_info.worldRank();
     m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);

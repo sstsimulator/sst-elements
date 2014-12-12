@@ -24,6 +24,7 @@
 #include "testDriver.h"
 
 using namespace Hermes;
+using namespace Hermes::MP;
 using namespace SST;
 using namespace SST::Firefly;
 
@@ -49,7 +50,7 @@ TestDriver::TestDriver(ComponentId_t id, Params &params) :
 
     Params hermesParams = params.find_prefix_params("hermesParams." );
 
-    m_hermes = dynamic_cast<MessageInterface*>(
+    m_hermes = dynamic_cast<MP::Interface*>(
                 loadModuleWithComponent( name, this, hermesParams )); 
 
     if ( !m_hermes ) {

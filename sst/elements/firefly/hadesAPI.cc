@@ -17,6 +17,7 @@
 
 using namespace SST::Firefly;
 using namespace Hermes;
+using namespace Hermes::MP;
 
 void Hades::init(Functor* retFunc )
 {

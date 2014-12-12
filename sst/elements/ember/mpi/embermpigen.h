@@ -36,7 +36,7 @@
 #include "emberallredev.h"
 #include "emberredev.h"
 
-using namespace Hermes;
+using namespace Hermes::MP;
 using namespace SST::Statistics;
 
 namespace SST {
@@ -216,9 +216,9 @@ private:
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
 
-static inline MessageInterface* cast( Interface *in )
+static inline MP::Interface* cast( Hermes::Interface *in )
 {
-    return static_cast<MessageInterface*>(in);
+    return static_cast<MP::Interface*>(in);
 }
 
 void EmberMessagePassingGenerator::enQ_barrier( Queue& q, Communicator com )

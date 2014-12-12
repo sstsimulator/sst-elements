@@ -10,27 +10,31 @@
 // distribution.
 
 
-#ifndef _H_ZODIAC_BARRIER_EVENT
-#define _H_ZODIAC_BARRIER_EVENT
+#ifndef _H_EMBER_MPI_EVENT
+#define _H_EMBER_MPI_EVENT
 
-#include "zevent.h"
+#include "emberevent.h" 
 
-using namespace SST::Hermes;
-using namespace SST::Hermes::MP;
+using namespace Hermes;
 
 namespace SST {
-namespace Zodiac {
+namespace Ember {
 
-class ZodiacBarrierEvent : public ZodiacEvent {
+class EmberMPIEvent : public EmberEvent {
 
-	public:
-		ZodiacBarrierEvent(Communicator group);
-		ZodiacEventType getEventType();
-		Communicator getCommunicatorGroup();
+  public:
 
-	private:
-		Communicator msgComm;
+    EmberMPIEvent( MessageInterface& api, Output* output, Histo* histo = NULL):
+        EmberEvent( output, histo ), m_api( api )
+    {
+        m_state = IssueFunctor;
+    }
 
+  protected:
+
+    MessageInterface&   m_api;
+
+  private:
 };
 
 }

@@ -21,7 +21,7 @@ namespace Ember {
 class EmberRankEvent : public EmberMPIEvent {
 
 public:
-	EmberRankEvent( MessageInterface& api, Output* output, Histo* histo,
+	EmberRankEvent( MP::Interface& api, Output* output, Histo* histo,
             Communicator comm, uint32_t* rankPtr ) :
         EmberMPIEvent( api, output, histo ),
         m_comm( comm ),

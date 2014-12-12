@@ -15,14 +15,12 @@
 
 #include "emberMPIEvent.h"
 
-using namespace SST::Hermes;
-
 namespace SST {
 namespace Ember {
 
 class EmberReduceEvent : public EmberMPIEvent {
 public:
-	EmberReduceEvent( MessageInterface& api, Output* output, Histo* histo,
+	EmberReduceEvent( MP::Interface& api, Output* output, Histo* histo,
             Addr mydata, Addr result, uint32_t count,
             PayloadDataType dtype, ReductionOperation op, RankID root,
             Communicator group ) :

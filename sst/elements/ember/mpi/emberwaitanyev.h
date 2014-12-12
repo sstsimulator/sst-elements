@@ -21,7 +21,7 @@ namespace Ember {
 class EmberWaitAnyEvent : public EmberMPIEvent {
 
 	public:
-		EmberWaitAnyEvent(MessageRequest* req, int* index,
+		EmberWaitAnyEvent(MP::Request* req, int* index,
 			const int requestCount);
 		EmberWaitAnyEvent(MessageRequest* req, MessageResponse* resp, int* index,
 			const int requestCount);

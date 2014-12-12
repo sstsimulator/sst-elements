@@ -15,15 +15,13 @@
 
 #include "emberMPIEvent.h"
 
-using namespace SST::Hermes;
-
 namespace SST {
 namespace Ember {
 
 class EmberISendEvent : public EmberMPIEvent {
 
 public:
-	EmberISendEvent( MessageInterface& api, Output* output, Histo* histo,
+	EmberISendEvent( MP::Interface& api, Output* output, Histo* histo,
             Addr payload, uint32_t count, PayloadDataType dtype, RankID dest,
             uint32_t tag, Communicator group, MessageRequest* req ) :
         EmberMPIEvent( api, output, histo ),

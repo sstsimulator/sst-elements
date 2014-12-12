@@ -81,10 +81,9 @@ libember_la_SOURCES = \
 	mpi/motifs/embermsgrate.h \
 	mpi/motifs/embermsgrate.cc \
 	mpi/motifs/embercomm.h \
-	mpi/motifs/embercomm.cc
-
-#	motifs/emberhalo3dnb.h \
-#	motifs/emberhalo3dnb.cc
+	mpi/motifs/embercomm.cc \
+	shmem/emberShmemGen.cc \
+	shmem/emberShmemGen.h
 
 bin_PROGRAMS = sstspygen
 

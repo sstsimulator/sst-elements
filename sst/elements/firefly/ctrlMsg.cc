@@ -58,8 +58,8 @@ void API::send( void* buf, size_t len, nid_t dest, uint64_t tag,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    m_xxx->sendv( true, ioVec, Hermes::CHAR, dest,
-                tag, Hermes::GroupWorld, NULL, functor );
+    m_xxx->sendv( true, ioVec, MP::CHAR, dest,
+                tag, MP::GroupWorld, NULL, functor );
 }
 
 void API::isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* req,
@@ -69,23 +69,23 @@ void API::isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* req,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    m_xxx->sendv( false, ioVec, Hermes::CHAR, dest,
-                tag, Hermes::GroupWorld, req, functor );
+    m_xxx->sendv( false, ioVec, MP::CHAR, dest,
+                tag, MP::GroupWorld, req, functor );
 }
 
 void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag,
                                                 FunctorBase_0<bool>* functor )
 {
-    m_xxx->sendv( true, ioVec, Hermes::CHAR, dest,
-                tag, Hermes::GroupWorld, NULL, functor );
+    m_xxx->sendv( true, ioVec, MP::CHAR, dest,
+                tag, MP::GroupWorld, NULL, functor );
 }
 
 
 void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag,
                             CommReq* req, FunctorBase_0<bool>* functor )
 {
-    m_xxx->sendv( false, ioVec, Hermes::CHAR, dest,
-                tag, Hermes::GroupWorld, req, functor );
+    m_xxx->sendv( false, ioVec, MP::CHAR, dest,
+                tag, MP::GroupWorld, req, functor );
 }
 
 void API::recv( void* buf, size_t len, nid_t src, uint64_t tag,
@@ -94,8 +94,8 @@ void API::recv( void* buf, size_t len, nid_t src, uint64_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( true, ioVec, Hermes::CHAR, src,
-                tag, Hermes::GroupWorld, NULL, functor );
+    m_xxx->recvv( true, ioVec, MP::CHAR, src,
+                tag, MP::GroupWorld, NULL, functor );
 }
 
 void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag,
@@ -104,15 +104,15 @@ void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( false, ioVec, Hermes::CHAR, src,
-                tag, Hermes::GroupWorld, req, functor );
+    m_xxx->recvv( false, ioVec, MP::CHAR, src,
+                tag, MP::GroupWorld, req, functor );
 }
 
 void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,
                             CommReq* req, FunctorBase_0<bool>* functor )
 {
-    m_xxx->recvv( false, ioVec, Hermes::CHAR, src,
-                tag, Hermes::GroupWorld, req, functor );
+    m_xxx->recvv( false, ioVec, MP::CHAR, src,
+                tag, MP::GroupWorld, req, functor );
 }
 
 void API::wait( CommReq* req, FunctorBase_1<CommReq*,bool>* functor )
@@ -127,50 +127,50 @@ void API::waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* fu
     m_xxx->waitAny( reqs, functor );
 }
 
-void API::send(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, FunctorBase_0<bool>* func )
+void API::send(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, FunctorBase_0<bool>* func )
 {
 	m_xxx->send( buf, count, dtype, dest, tag, group, func );
 }
 
-void API::isend(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+void API::isend(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
 		FunctorBase_0<bool>* func )
 {
 	m_xxx->isend( buf, count, dtype, dest, tag, group, req, func );
 }
 
-void API::recv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
+void API::recv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
 	m_xxx->recv( buf, count, dtype, src, tag, group, resp, func ); 
 }
 
-void API::irecv(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID src, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
+void API::irecv(MP::Addr buf, uint32_t count,
+        MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
+        MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
 {
 	m_xxx->irecv( buf, count, dtype, src, tag, group, req, func ); 
 }
 
-void API::wait( Hermes::MessageRequest req, Hermes::MessageResponse* resp,
+void API::wait( MP::MessageRequest req, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
 	m_xxx->wait( req, resp, func );
 }
-void API::waitAny( int count, Hermes::MessageRequest req[], int *index,
-       	Hermes::MessageResponse* resp, FunctorBase_0<bool>* func )
+void API::waitAny( int count, MP::MessageRequest req[], int *index,
+       	MP::MessageResponse* resp, FunctorBase_0<bool>* func )
 {
 	m_xxx->waitAny( count, req, index, resp, func );
 }
 
-void API::waitAll( int count, Hermes::MessageRequest req[],
-        Hermes::MessageResponse* resp[], FunctorBase_0<bool>* func )
+void API::waitAll( int count, MP::MessageRequest req[],
+        MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
 {
 	m_xxx->waitAll( count, req, resp, func );
 }

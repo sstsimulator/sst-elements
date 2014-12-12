@@ -3,6 +3,7 @@
 #define _SST_EMBER_RANK_MAP
 
 #include <sst/core/module.h>
+#include <sst/core/component.h>
 
 namespace SST {
 namespace Ember {

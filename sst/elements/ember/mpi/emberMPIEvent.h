@@ -16,6 +16,7 @@
 #include "emberevent.h" 
 
 using namespace Hermes;
+using namespace Hermes::MP;
 
 namespace SST {
 namespace Ember {
@@ -24,7 +25,7 @@ class EmberMPIEvent : public EmberEvent {
 
   public:
 
-    EmberMPIEvent( MessageInterface& api, Output* output, Histo* histo = NULL):
+    EmberMPIEvent( MP::Interface& api, Output* output, Histo* histo = NULL):
         EmberEvent( output, histo ), m_api( api )
     {
         m_state = IssueFunctor;
@@ -32,7 +33,7 @@ class EmberMPIEvent : public EmberEvent {
 
   protected:
 
-    MessageInterface&   m_api;
+    MP::Interface&   m_api;
 
   private:
 };

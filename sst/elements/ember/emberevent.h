@@ -20,7 +20,7 @@
 namespace SST {
 namespace Ember {
 
-typedef Hermes::Functor FOO;
+typedef Hermes::MP::Functor FOO;
 
 #undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \

@@ -21,7 +21,7 @@ namespace Ember {
 class EmberSendEvent : public EmberMPIEvent {
 
   public:
-	EmberSendEvent( MessageInterface& api, Output* output, Histo* histo,
+	EmberSendEvent( MP::Interface& api, Output* output, Histo* histo,
         Addr payload, uint32_t count, PayloadDataType dtype, RankID dest,
         uint32_t tag, Communicator group ) :
         EmberMPIEvent( api, output, histo ),
