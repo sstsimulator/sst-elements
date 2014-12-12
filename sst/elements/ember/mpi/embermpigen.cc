@@ -85,7 +85,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
-    GEN_DBG( 1, "\n");
+    GEN_DBG( 2, "\n");
     for ( int i = 0; i < NUM_EVENTS; i++ ) {
         delete m_histoV[i];
     }
@@ -114,7 +114,7 @@ int32_t EmberMessagePassingGenerator::convertPositionToRank(
 void EmberMessagePassingGenerator::finish(const SST::Output* output, 
         uint64_t time ) 
 {
-    GEN_DBG( 1, "\n");
+    GEN_DBG( 2, "\n");
 
     if ( ! (m_printStats & (uint32_t) 1) ) return;
 

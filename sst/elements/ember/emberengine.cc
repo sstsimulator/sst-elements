@@ -36,8 +36,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	output.init( prefix.str(), verbosity, (uint32_t) 0, Output::STDOUT);
 
-	output.verbose(CALL_INFO, 1, 0, "\n");
-
    	//params.print_all_params( std::cout );
 
     // create a map of all the available API's
@@ -114,7 +112,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     std::string api = params.find_string("api" );
 	assert( !api.empty() );
 
-	output.verbose(CALL_INFO, 1, 0, "api=`%s` motif=`%s`\n", 
+	output.verbose(CALL_INFO, 2, 0, "api=`%s` motif=`%s`\n", 
 										api.c_str(), gentype.c_str());
 
 	if( gentype.empty()) {

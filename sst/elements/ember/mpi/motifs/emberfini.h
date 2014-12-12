@@ -30,7 +30,7 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ)
     {
         initOutput();
-        GEN_DBG( 1, "\n" );
+        GEN_DBG( 2, "\n" );
         enQ_fini( evQ );
         return true;
     }

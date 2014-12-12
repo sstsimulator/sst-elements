@@ -34,7 +34,7 @@ public:
     {
         initOutput();
 
-        GEN_DBG( 1, "\n");
+        GEN_DBG( 2, "\n");
 
 		if ( 0 == m_size ) {
         	enQ_init( evQ );

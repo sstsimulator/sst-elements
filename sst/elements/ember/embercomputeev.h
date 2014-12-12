@@ -40,7 +40,7 @@ public:
         m_completeDelayNS = (double) m_nanoSecondDelay * 
 									m_computeDistrib->sample(time);
 
-        m_output->verbose(CALL_INFO, 1, 0, "Adjust time by noise "
+        m_output->verbose(CALL_INFO, 2, 0, "Adjust time by noise "
                 "distribution to give: %" PRIu64 "ns\n", m_completeDelayNS );
     }
 

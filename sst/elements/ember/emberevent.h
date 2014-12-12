@@ -55,7 +55,7 @@ public:
 
     virtual void issue( uint64_t time, FOO* = NULL ) {
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 1, 0, "time=%lu\n",time);    
+            m_output->verbose(CALL_INFO, 2, 0, "time=%lu\n",time);    
         }
         m_issueTime = time;
         m_state = Complete;
@@ -64,7 +64,7 @@ public:
     virtual bool complete( uint64_t time, int retval = 0 ) { 
 
         if ( m_output ) {
-            m_output->verbose(CALL_INFO, 1, 0, "time=%lu\n",time);    
+            m_output->verbose(CALL_INFO, 2, 0, "time=%lu\n",time);    
         }
         if ( m_histo ) {
             m_histo->add( time - m_issueTime );
@@ -73,7 +73,7 @@ public:
     }
 
     virtual uint64_t completeDelayNS() {
-        m_output->verbose(CALL_INFO, 1, 0, "delay=%"PRIu64" ns\n",
+        m_output->verbose(CALL_INFO, 2, 0, "delay=%"PRIu64" ns\n",
                                                 m_completeDelayNS);
         return m_completeDelayNS;
     }

@@ -88,10 +88,9 @@ const uint32_t EMBER_SPYPLOT_SEND_BYTES = 2;
 
 class EmberMessagePassingGeneratorData : public EmberGeneratorData {
 public:
-	EmberMessagePassingGeneratorData() : size(0), rank(-1), jobId(-1) {}
+	EmberMessagePassingGeneratorData() : size(0), rank(-1) {}
     int                 size;
     uint32_t            rank;
-    int                 jobId;
 };
 
 class EmberMessagePassingGenerator : public EmberGenerator {

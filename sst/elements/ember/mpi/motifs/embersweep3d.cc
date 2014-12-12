@@ -67,23 +67,23 @@ void EmberSweep3DGenerator::configure()
 	y_down = (myY != 0) ? rank() - px : -1;
 
 	if(0 == rank()) {
-		GEN_DBG( 1, " 3D Sweep Motif\n");
-		GEN_DBG( 1, " nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 
+		m_output->output( "%s nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 
 			", kba=%" PRIu32 ", (nx/kba)=%" PRIu32 "\n",
-			nx, ny, nz, kba, (nz / kba));
+			m_name.c_str(), nx, ny, nz, kba, (nz / kba));
 	}
 
-	GEN_DBG( 1, " Rank: %" PRIu32 " is located at coordinations of (%" PRId32 
+	
+	m_output->output( "%s Rank: %" PRIu32 " is located at coordinations of (%" PRId32 
 			", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%" 
 			PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
-			rank(), myX, myY, x_up, x_down, y_up, y_down);
+			m_name.c_str(), rank(), myX, myY, x_up, x_down, y_up, y_down);
 }
 
 bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
 	if( 0 == m_loopIndex) {
 		initOutput();
-		GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+		GEN_DBG( 2, "rank=%d size=%d\n", rank(), size());
 		configure();
 	}
 

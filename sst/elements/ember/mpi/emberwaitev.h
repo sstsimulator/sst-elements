@@ -32,7 +32,7 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 1, 0, "%p %p \n",m_req, m_respPtr);
+        m_output->verbose(CALL_INFO, 2, 0, "%p %p \n",m_req, m_respPtr);
 
         EmberEvent::issue( time );
 
