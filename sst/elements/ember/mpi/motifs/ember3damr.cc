@@ -20,9 +20,9 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 {
 	m_name = "3DCommDoubling";
 
-	peX = (uint32_t) params.find_integer("arg.pex", 0);
-	peY = (uint32_t) params.find_integer("arg.pey", 0);
-	peZ = (uint32_t) params.find_integer("arg.pez", 0);
+//	peX = (uint32_t) params.find_integer("arg.pex", 0);
+//	peY = (uint32_t) params.find_integer("arg.pey", 0);
+//	peZ = (uint32_t) params.find_integer("arg.pez", 0);
 
 	std::string blockpath = params.find_string("blockfile", "blocks.amr");
         blockFilePath = (char*) malloc(sizeof(char) * (blockpath.size() + 1));
@@ -32,6 +32,8 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 }
 
 void Ember3DAMRGenerator::loadBlocks() {
+	printf("LOADING BLOCKS FOR AMR");
+
 	FILE* blockFile = fopen(blockFilePath, "rt");
 
 	const int header = fscanf(blockFile, "%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
@@ -679,3 +681,8 @@ void Ember3DAMRGenerator::printBlockMap() {
 			block_itr->first, block_itr->second);
 	}
 }
+
+Ember3DAMRGenerator::~Ember3DAMRGenerator() {
+
+}
+

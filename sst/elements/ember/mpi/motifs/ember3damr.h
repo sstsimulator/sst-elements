@@ -178,7 +178,7 @@ class Ember3DAMRGenerator : public EmberMessagePassingGenerator {
 
 public:
 	Ember3DAMRGenerator(SST::Component* owner, Params& params);
-	~Ember3DAMRGenerator() {}
+	~Ember3DAMRGenerator();
 	void configure();
         bool generate( std::queue<EmberEvent*>& evQ );
 	int32_t power3(const uint32_t expon);
