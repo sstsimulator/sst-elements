@@ -39,7 +39,7 @@ struct logInfo {  //information about one type of log that can be created
 
 const logInfo supportedLogs[] = {
     {"time", "\n# Job \tArrival\tStart\tEnd\tRun\tWait\tResp.\tProcs\n"},
-    {"alloc", "\n# Job\tProcs\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\n"},
+    {"alloc", "\n# Job\tProcs\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\tHop-Bytes\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"}
@@ -47,7 +47,7 @@ const logInfo supportedLogs[] = {
 
 const logInfo supportedLogsFST[] = {
     {"time", "\n# Job \tArrival\tStart\tEnd\tRun\tWait\tResp.\tProcs\tFST\n"},
-    {"alloc", "\n# Procs Needed\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\n"},
+    {"alloc", "\n# Procs Needed\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\tHop-Bytes\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"}
@@ -290,12 +290,13 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
 void Statistics::writeAlloc(TaskMapInfo* tmi) 
 {
     char mesg[100];
-    sprintf(mesg, "%ld\t%d\t%lu\t%f\t%f\n",
+    sprintf(mesg, "%ld\t%d\t%lu\t%f\t%f\t%f\n",
             tmi->job-> getJobNum(),
             tmi->job->getProcsNeeded(),
             tmi->job->getActualTime(),
             tmi->getAvgHopDist(),
-            tmi->getMaxJobCongestion() );
+            tmi->getMaxJobCongestion(),
+            tmi->getHopBytes() );
     appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
 

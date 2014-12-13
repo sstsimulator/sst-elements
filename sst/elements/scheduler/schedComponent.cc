@@ -536,12 +536,6 @@ void schedComponent::finish()
 
 void schedComponent::startJob(Job* job) 
 {
-
-    //debug
-    /*if(job->getJobNum() % 100 == 0){
-        std::cout << "Job " << job->getJobNum() << " started.\n";
-    }*/
-
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
@@ -561,37 +555,34 @@ void schedComponent::startJob(Job* job)
     if (timePerDistance -> at(0) != 0
           && NULL != mMachine
           && NULL != ai ) {
-        
-        double randomNumber = rng->nextUniform() * 0.8 - 0.4;
-        //calculate baseline L1 pairwise distance
+        double randomNumber = (rng->nextUniform() * 2 - 1) * 0.0129;
+
+        //calculate baseline hopBytes
         AllocInfo* baselineAlloc = mMachine->getBaselineAllocation(job);
         SimpleTaskMapper baselineMapper = SimpleTaskMapper(*mMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
-
-        double baselineAvgL1Distance = baselineMap->getAvgHopDist();
+        double baselineHopBytes = baselineMap->getHopBytes();
         delete baselineMap;
-                
+
         //calculate running time w/o any communication overhead:
-        double baselineRunningTime = actualRunningTime / 
-                                      ( timePerDistance->at(0) + timePerDistance->at(1) *
-                                       ( timePerDistance->at(2) + baselineAvgL1Distance *
-                                        ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
-        
-        //calculate new hop distance with allocation & task mapping
-        double avgL1Distance = tmi->getAvgHopDist();
-        //new running time with overhead        
-        double timeWithComm = baselineRunningTime *
-                               ( timePerDistance->at(0) + timePerDistance->at(1) *
-                                ( timePerDistance->at(2) + avgL1Distance *
-                                 ( timePerDistance->at(3) + timePerDistance->at(4) * randomNumber ) ) );
-        
-        //overestimate the fraction to be safe             
+        double baselineRunningTime;
+        baselineRunningTime = actualRunningTime / (1 + 0.001865 * pow(baselineHopBytes, 0.1569 + randomNumber));
+
+        //get new hopBytes
+        double hopBytes = tmi->getHopBytes();
+        double timeWithComm = baselineRunningTime * (1 + 0.001865 * pow(hopBytes, 0.1569 + randomNumber));
+
+        /*
+        double hopBytes = tmi->getHopBytes();
+        double timeWithComm = actualRunningTime * 0.7 * (1 + 0.001865 * pow(hopBytes, 0.1569 + randomNumber));
+        */
+
+        //overestimate the fraction to keep min job length at 1 
         actualRunningTime = ceil(timeWithComm);
     }
 
     if (actualRunningTime > job->getEstimatedRunningTime()) {
         schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", job->getJobNum(), actualRunningTime, job->getEstimatedRunningTime());
-        //actualRunningTime = job->getEstimatedRunningTime();
     }
 
     // send to each job in the node list

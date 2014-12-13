@@ -45,7 +45,9 @@ namespace SST {
                 //assumes static route
                 std::map<unsigned int, double> getTraffic();
                 //return max traffic in a link, created only by current job
-                double getMaxJobCongestion() { return maxCongestion; }
+                double getMaxJobCongestion();
+                //return the sum of congestion on all links
+                double getHopBytes();
 
             private:
                 TaskCommInfo* taskCommInfo;
@@ -56,6 +58,7 @@ namespace SST {
                 std::vector<long int> taskToNode;
                 std::map<unsigned int, double> traffic;
                 double maxCongestion;        //max congestion within the corresponding job
+                double hopBytes;
                 void updateNetworkMetrics(); //calculates traffic and hop distance info
         };
     }

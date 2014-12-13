@@ -71,6 +71,26 @@ std::map<unsigned int, double> TaskMapInfo::getTraffic()
     return traffic;
 }
 
+
+double TaskMapInfo::getMaxJobCongestion()
+{
+    //calculate traffic if not calculated yet
+    if(avgHopDist == -1){
+        updateNetworkMetrics();
+    }
+    return maxCongestion;
+}
+
+
+double TaskMapInfo::getHopBytes()
+{
+    //calculate traffic if not calculated yet
+    if(avgHopDist == -1){
+        updateNetworkMetrics();
+    }
+    return hopBytes;
+}
+
 void TaskMapInfo::updateNetworkMetrics()
 {
     if(job->getProcsNeeded() > mappedCount){
@@ -94,8 +114,7 @@ void TaskMapInfo::updateNetworkMetrics()
         //iterate through neighbors of taskIter
         for(std::map<int, int>::iterator it = commInfo->at(taskIter).begin(); it != commInfo->at(taskIter).end(); it++){
             //update hop related:
-            totalHopDist += machine.getNodeDistance(taskToNode[taskIter], taskToNode[it->first])
-                            * it->second; // multiply hop distance with communication weight
+            totalHopDist += machine.getNodeDistance(taskToNode[taskIter], taskToNode[it->first]);
             neighborCount++;
 
             //update traffic related:
@@ -140,9 +159,14 @@ void TaskMapInfo::updateNetworkMetrics()
 
     //calculate maxCongestion
     maxCongestion = 0;
-    for(std::map<unsigned int, double>::iterator it = traffic.begin(); it != traffic.end(); it++){
+    hopBytes = 0;
+    for(std::map<unsigned int, double>::iterator it = traffic.begin(); 
+      it != traffic.end(); 
+      it++){
+        hopBytes += it->second;
         if(it->second > maxCongestion){
             maxCongestion = it->second;
         }
     }
+    hopBytes *= 256 * 1024 * 1024; //assumes 256MB/sec, need to change this
 }
