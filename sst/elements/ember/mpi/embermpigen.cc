@@ -118,7 +118,7 @@ void EmberMessagePassingGenerator::finish(const SST::Output* output,
     if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
         
         std::ostringstream filename;
-        filename << "ember-" << m_data->rank << ".spy"; 
+        filename << "ember-" << m_name << "-" << m_data->rank << ".spy"; 
 
         generateSpyplotRank( filename.str() );
     }
