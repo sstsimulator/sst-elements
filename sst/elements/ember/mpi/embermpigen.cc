@@ -110,13 +110,25 @@ int32_t EmberMessagePassingGenerator::convertPositionToRank(
     return m_rankMap->convertPositionToRank(peX, peY, peZ, posX, posY, posZ);
 }
 
-
 void EmberMessagePassingGenerator::finish(const SST::Output* output, 
         uint64_t time ) 
 {
     GEN_DBG( 2, "\n");
 
-    if ( ! (m_printStats & (uint32_t) 1) ) return;
+    if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
+        
+        std::ostringstream filename;
+        filename << "ember-" << m_data->rank << ".spy"; 
+
+        generateSpyplotRank( filename.str() );
+    }
+
+	//
+	// NOTE THAT WE RETURN HERE! BE CAREFUL WHAT YOU PUT AFTER THIS POINT
+	// 	
+    if ( ! (m_printStats & (uint32_t) 1) ) {
+		return;
+	}
 
     output->output("rank %" PRIu32 ": Motif `%s` completed at: %" PRIu64 
                     " ns\n", m_data->rank, m_name.c_str(), time ); 
@@ -179,13 +191,6 @@ void EmberMessagePassingGenerator::finish(const SST::Output* output,
         } 
 	}
 
-    if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
-        
-        std::ostringstream filename;
-        filename << "ember-" << m_data->rank << ".spy"; 
-
-        generateSpyplotRank( filename.str() );
-    }
 }
 
 void EmberMessagePassingGenerator::updateSpyplot(

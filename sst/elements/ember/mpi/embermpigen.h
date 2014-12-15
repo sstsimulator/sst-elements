@@ -67,13 +67,15 @@ namespace Ember {
 #define GENERATE_STRING(STRING) #STRING,
 
 class EmberSpyInfo {
-    public:
-        EmberSpyInfo(const int32_t rank);
-        void incrementSendCount();
-        void addSendBytes(uint64_t sendBytes);
-        int32_t getRemoteRank();
-        uint32_t getSendCount();
-        uint64_t getBytesSent();
+  public:
+	EmberSpyInfo(const int32_t rank) 
+	  : rank(rank), bytesSent(0), sendsPerformed(0) { }
+
+    void incrementSendCount() {sendsPerformed = sendsPerformed + 1; }
+    void addSendBytes(uint64_t sendBytes) { bytesSent += sendBytes; }
+    int32_t getRemoteRank() { return rank; }
+        uint32_t getSendCount() { return sendsPerformed; }
+        uint64_t getBytesSent() { return bytesSent; }
 
     private:
         const int32_t rank;
