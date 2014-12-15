@@ -189,13 +189,24 @@ public:
 	uint32_t calcBlockID(const uint32_t posX, const uint32_t posY, const uint32_t posZ, const uint32_t level);
         void calcBlockLocation(const uint32_t blockID, const uint32_t blockLevel, uint32_t* posX, uint32_t* posY, uint32_t* posZ);
         bool isBlockLocal(const uint32_t bID) const;
+	void postBlockCommunication(std::queue<EmberEvent*>& evQ, int32_t* blockComm, uint32_t* nextReq, const uint32_t faceSize, const uint32_t msgTag);
 
 private:
 	void printBlockMap();
 
         std::vector<Ember3DAMRBlock*> localBlocks;
+	MessageRequest*   requests;
+	MessageResponse** responses;
+
+	void* blockMessageBuffer;
+
         std::map<uint32_t, uint32_t>  blockToNodeMap;
         char* blockFilePath;
+
+	Output* out;
+
+	uint32_t iteration;
+	uint32_t maxIterations;
 
         uint32_t blockCount;
         uint32_t maxLevel;
@@ -214,9 +225,10 @@ private:
         uint32_t nsCompute;
         uint32_t nsCopyTime;
 
-        uint32_t nx;
-        uint32_t ny;
-        uint32_t nz;
+        uint32_t blockNx;
+        uint32_t blockNy;
+        uint32_t blockNz;
+
         uint32_t items_per_cell;
         uint32_t sizeof_cell;
 
