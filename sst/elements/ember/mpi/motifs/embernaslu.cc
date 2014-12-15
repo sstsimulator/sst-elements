@@ -76,7 +76,6 @@ bool EmberNASLUGenerator::generate( std::queue<EmberEvent*>& evQ)
     if( 0 == m_loopIndex) {
         initOutput();
         GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
-        configure();
     }
 
 	// Sweep from (0, 0) outwards towards (Px, Py)

@@ -84,7 +84,6 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 	if( 0 == m_loopIndex) {
 		initOutput();
 		GEN_DBG( 2, "rank=%d size=%d\n", rank(), size());
-		configure();
 	}
 
 	for(uint32_t repeat = 0; repeat < 2; ++repeat) {

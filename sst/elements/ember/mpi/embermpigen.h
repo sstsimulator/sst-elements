@@ -114,7 +114,10 @@ protected:
     void initData( EmberGeneratorData** data ) {
         assert( *data );
         m_data = static_cast<EmberMessagePassingGeneratorData*>(*data);
+		configure();
     }
+
+	virtual void configure() {}
 
 	void getPosition( int32_t rank, int32_t px, int32_t py, int32_t pz, 
 					int32_t* myX, int32_t* myY, int32_t* myZ );	

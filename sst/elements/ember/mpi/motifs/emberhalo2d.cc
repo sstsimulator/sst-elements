@@ -113,7 +113,6 @@ bool EmberHalo2DGenerator::generate( std::queue<EmberEvent*>& evQ) {
     if( 0 == m_loopIndex) {
         initOutput();
         GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
-		configure();
     }
 
 		m_output->verbose(CALL_INFO, 2, 0, "Halo 2D motif generating events for loopIndex %" PRIu32 "\n", m_loopIndex);
