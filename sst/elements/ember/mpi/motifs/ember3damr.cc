@@ -29,6 +29,8 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 	blockNy = (uint32_t) params.find_integer("arg.ny", 30);
 	blockNz = (uint32_t) params.find_integer("arg.nz", 30);
 
+	items_per_cell = (uint32_t) params.find_integer("arg.fieldspercell", 1);
+
 	out->verbose(CALL_INFO, 2, 0, "Block sizes are X=%" PRIu32 ", Y=%" PRIu32 ", Z=%" PRIu32 "\n",
 		blockNz, blockNy, blockNz);
 
@@ -577,6 +579,9 @@ void Ember3DAMRGenerator::loadBlocks() {
 	out->verbose(CALL_INFO, 2, 0, "Maximum requests from rank %" PRIu32 " will be set up: %" PRIu32 "\n", rank, maxRequests);
 	requests   = (MessageRequest*)   malloc( sizeof(MessageRequest) * maxRequests * 2);
         responses  = (MessageResponse**) malloc( sizeof(MessageResponse*) * maxRequests * 2);
+
+	out->verbose(CALL_INFO, 2, 0, "Requests allocated at: %p\n", requests);
+	out->verbose(CALL_INFO, 2, 0, "Responses alocated at: %p\n", responses);
 
 	uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	blockMessageBuffer = memAlloc( sizeof(double) * maxFaceDim * maxFaceDim * localBlocks.size() * 2);
