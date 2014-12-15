@@ -56,7 +56,8 @@ private:
     typedef std::map< std::string, ApiInfo* > ApiMap; 
 
     ApiMap createApiMap( SST::Component*, SST::Params );
-    EmberGenerator* initMotif( SST::Params, const ApiMap&, int jobId  );
+    EmberGenerator* initMotif( SST::Params, const ApiMap&, int jobId,
+												int motifNum );
 
 	int         m_jobId;
 	uint32_t    currentMotif;

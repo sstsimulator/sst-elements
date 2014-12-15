@@ -53,7 +53,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	} 
 
     // Init the first Motif
-    m_generator = initMotif( motifParams[0], m_apiMap, m_jobId );
+    m_generator = initMotif( motifParams[0], m_apiMap, m_jobId, currentMotif );
     assert( m_generator );
     
 	// Configure self link to handle event timing
@@ -86,7 +86,6 @@ EmberEngine::ApiMap EmberEngine::createApiMap(
     std::string ifaceModuleName = "firefly.hades"; 
     std::string ifaceName = "hermesParams";
     Params ifaceParams = params.find_prefix_params(ifaceName + "." );
-
      
     tmp[ ifaceName ] = info;
     //ifaceParams.print_all_params(std::cout);
@@ -98,7 +97,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap(
 }
 
 EmberGenerator* EmberEngine::initMotif( SST::Params params,
-											const ApiMap& apiMap, int jobId )
+							const ApiMap& apiMap, int jobId, int motifNum ) 
 {
     EmberGenerator* gen = NULL;
 
@@ -133,6 +132,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     gen->initAPI( info->api );
     gen->initData( &info->data );
     info->data->jobId = jobId;
+	info->data->motifNum = motifNum;
     return gen; 
 }
 
@@ -180,7 +180,7 @@ void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
                 return;
             } else {
                 m_generator = initMotif( motifParams[currentMotif],
-													m_apiMap, m_jobId );
+											m_apiMap, m_jobId, currentMotif );
                 assert( m_generator );
 
                 m_motifDone = refillQueue();
