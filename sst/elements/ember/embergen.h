@@ -36,6 +36,7 @@ namespace Ember {
 class EmberGeneratorData {
   public:
     int                 jobId;
+    int					motifNum;
     virtual ~EmberGeneratorData() {}  
 };
 
