@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "functionSM.h"
 #include "virtNic.h"
