@@ -605,15 +605,19 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 	const uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	char* bufferPtr = (char*) blockMessageBuffer;
 
+	const uint32_t thisRank = rank;
+
 	for(uint32_t i = 0; i < 4; ++i) {
 		if(blockComm[i] >= 0) {
-			enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
-				items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
-			(*nextReq) = (*nextReq) + 1;
+			if(blockComm[i] != thisRank) {
+				enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
+					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
+				(*nextReq) = (*nextReq) + 1;
 
-			enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
-				items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
-			(*nextReq) = (*nextReq) + 1;
+				enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
+					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
+				(*nextReq) = (*nextReq) + 1;
+			}
 		}
 	}
 }
