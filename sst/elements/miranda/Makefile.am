@@ -16,7 +16,9 @@ libmiranda_la_SOURCES = \
 	generators/randomgen.h \
 	generators/randomgen.cc \
 	generators/streambench.h \
-	generators/streambench.cc
+	generators/streambench.cc \
+	generators/revsinglestream.h \
+	generators/revsinglestream.cc
 
 EXTRA_DIST = \
 	tests/randomgen.py \
