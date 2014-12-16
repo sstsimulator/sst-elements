@@ -80,6 +80,9 @@ class EmberGenerator : public Module {
     virtual void printHistogram( const Output* output, Histo* histo );
     virtual void* memAlloc( size_t );
     virtual void memFree( void* );
+	virtual void* memAddr( void * addr ) {
+		return  m_dataMode == Backing ? addr : NULL;
+	}
 
     Hermes::Interface*  m_api;
 

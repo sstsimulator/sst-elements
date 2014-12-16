@@ -115,6 +115,7 @@ protected:
         assert( *data );
         m_data = static_cast<EmberMessagePassingGeneratorData*>(*data);
 		configure();
+		initOutput();
     }
 
 	virtual void configure() {}
@@ -271,9 +272,9 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
-	GEN_DBG(2,"dest=%d tag=%#x\n",dest,tag);
+	GEN_DBG(2,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
     q.push( new EmberSendEvent( *cast(m_api), m_output, m_histoV[Send],
-		payload, count, dtype, dest, tag, group ) );
+		memAddr(payload), count, dtype, dest, tag, group ) );
 
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
 
@@ -293,9 +294,9 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	GEN_DBG(2,"dest=%d tag=%#x\n",dest,tag);
+	GEN_DBG(2,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
     q.push( new EmberISendEvent( *cast(m_api), m_output, m_histoV[Isend],
-        payload, count, dtype, dest, tag, group, req ) );
+        memAddr(payload), count, dtype, dest, tag, group, req ) );
     
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
 
@@ -335,7 +336,7 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
 {
 	GEN_DBG(2,"src=%d tag=%x\n",source,tag);
     q.push( new EmberIRecvEvent( *cast(m_api), m_output, m_histoV[Irecv],
-        payload, count, dtype, source, tag, group, req ) );
+        memAddr(payload), count, dtype, source, tag, group, req ) );
 
 	m_histoM["RecvSize"]->add( count * cast(m_api)->sizeofDataType(dtype) ); 
 }
@@ -376,7 +377,8 @@ void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr mydata,
     Communicator group )
 {
     q.push( new EmberAllreduceEvent( *cast(m_api), m_output, 
-        m_histoV[Allreduce], mydata, result, count, dtype, op, group ) );
+        m_histoV[Allreduce], memAddr(mydata), memAddr(result), 
+					count, dtype, op, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
@@ -384,7 +386,8 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
     int root, Communicator group )
 {
     q.push( new EmberReduceEvent( *cast(m_api), m_output, 
-        m_histoV[Reduce], mydata, result, count, dtype, op, root, group ) );
+        m_histoV[Reduce], memAddr(mydata), memAddr(result), 
+					count, dtype, op, root, group ) );
 }
 
 }
