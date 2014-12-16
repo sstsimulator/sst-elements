@@ -35,8 +35,6 @@ EmberAllPingPongGenerator::EmberAllPingPongGenerator(SST::Component* owner,
 bool EmberAllPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
    if ( m_loopIndex == 0 ) {
-        
-        initOutput();
         GEN_DBG( 1, "rank=%d size=%d\n", rank(), size() );
     }
 

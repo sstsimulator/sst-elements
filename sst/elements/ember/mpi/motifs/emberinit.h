@@ -32,8 +32,6 @@ public:
 
     bool generate( std::queue<EmberEvent*>& evQ )
     {
-        initOutput();
-
         GEN_DBG( 2, "\n");
 
 		if ( 0 == m_size ) {

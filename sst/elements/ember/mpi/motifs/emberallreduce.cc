@@ -31,8 +31,6 @@ EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
 bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
     if ( 0 == m_loopIndex ) {
-        // now that we have our rank we can initialize Output 
-        initOutput();
         GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
     }
 

@@ -54,12 +54,8 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
         return true;
     }
 
-    if ( m_loopIndex == 0 ) {
-        // now that we have our rank we can initialize Output 
-        initOutput();
-        if ( 0 == rank() ) {
-            GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
-        }
+    if ( m_loopIndex == 0 && 0 == rank() ) {
+        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
     }
 
     // note that the first time through start and stop are 0

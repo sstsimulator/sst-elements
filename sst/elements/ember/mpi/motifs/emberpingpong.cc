@@ -51,8 +51,6 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( 0 == m_loopIndex ) {
-        // now that we have the rank we can initialize Output
-        initOutput();
         GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
 
         if ( 0 == rank() ) {
