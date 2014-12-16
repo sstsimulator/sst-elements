@@ -210,7 +210,7 @@ protected:
 private:
 
     void updateSpyplot( RankID remoteRank, size_t bytesSent );
-    void generateSpyplotRank( const std::string filename );
+    void generateSpyplotRank( const char* filename );
 
     int                 m_printStats;
     uint32_t            m_spyplotMode;
