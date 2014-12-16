@@ -14,7 +14,8 @@ ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Pa
 
 	stopIndex   = (uint64_t) params.find_integer("stop_at", 0);
 	startIndex  = (uint64_t) params.find_integer("start_at", 1024);
-	datawidth  = (uint64_t) params.find_integer("datawidth", 8);
+	datawidth   = (uint64_t) params.find_integer("datawidth", 8);
+	stride      = (uint64_t) params.find_integer("stride", 1);
 
 	if(startIndex < stopIndex) {
 		out->fatal(CALL_INFO, -1, "Start address (%" PRIu64 ") must be greater than stop address (%" PRIu64 ") in reverse stream generator",
@@ -24,6 +25,7 @@ ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Pa
 	out->verbose(CALL_INFO, 1, 0, "Start Address:         %" PRIu64 "\n", startIndex);
 	out->verbose(CALL_INFO, 1, 0, "Stop Address:          %" PRIu64 "\n", stopIndex);
 	out->verbose(CALL_INFO, 1, 0, "Data width:            %" PRIu64 "\n", datawidth);
+	out->verbose(CALL_INFO, 1, 0, "Stride:                %" PRIu64 "\n", stride);
 
 	nextIndex = startIndex;
 }
@@ -41,7 +43,7 @@ void ReverseSingleStreamGenerator::generate(std::queue<RequestGeneratorRequest*>
 	q->push(nextReq);
 
 	// What is the next address?
-	nextIndex--;
+	nextIndex = nextIndex - stride;
 }
 
 bool ReverseSingleStreamGenerator::isFinished() {

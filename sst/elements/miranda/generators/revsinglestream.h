@@ -24,6 +24,7 @@ private:
 	uint64_t stopIndex;
 	uint64_t datawidth;
 	uint64_t nextIndex;
+	uint64_t stride;
 
 	Output*  out;
 

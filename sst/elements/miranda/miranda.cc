@@ -57,6 +57,7 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
     { "stop_at",          "Sets the stop *index* for this generator, stop < start", "0" },
     { "verbose",          "Sets the verbosity of the output", "0" },
     { "datawidth",        "Sets the width of the memory operation", "8" },
+    { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" },
     { NULL, NULL, NULL }
 };
 
