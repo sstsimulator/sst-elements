@@ -20,10 +20,10 @@ public:
 	void completed();
 
 private:
-	uint64_t startAddr;
-	uint64_t stopAddr;
+	uint64_t startIndex;
+	uint64_t stopIndex;
 	uint64_t datawidth;
-	uint64_t nextAddr;
+	uint64_t nextIndex;
 
 	Output*  out;
 

@@ -12,14 +12,20 @@ ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Pa
 
 	out = new Output("ReverseSingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	stopAddr   = (uint64_t) params.find_integer("stop_address", 0);
-	startAddr  = (uint64_t) params.find_integer("start_address", 1024);
+	stopIndex   = (uint64_t) params.find_integer("stop_at", 0);
+	startIndex  = (uint64_t) params.find_integer("start_at", 1024);
 	datawidth  = (uint64_t) params.find_integer("datawidth", 8);
 
-	// Ensure we really are going backwards
-	assert(startAddr < stopAddr);
+	if(startIndex < stopIndex) {
+		out->fatal(CALL_INFO, -1, "Start address (%" PRIu64 ") must be greater than stop address (%" PRIu64 ") in reverse stream generator",
+			startIndex, stopIndex);
+	}
 
-	nextAddr = startAddr;
+	out->verbose(CALL_INFO, 1, 0, "Start Address:         %" PRIu64 "\n", startIndex);
+	out->verbose(CALL_INFO, 1, 0, "Stop Address:          %" PRIu64 "\n", stopIndex);
+	out->verbose(CALL_INFO, 1, 0, "Data width:            %" PRIu64 "\n", datawidth);
+
+	nextIndex = startIndex;
 }
 
 ReverseSingleStreamGenerator::~ReverseSingleStreamGenerator() {
@@ -27,19 +33,19 @@ ReverseSingleStreamGenerator::~ReverseSingleStreamGenerator() {
 }
 
 void ReverseSingleStreamGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
-	out->verbose(CALL_INFO, 4, 0, "Generating next request at address: %" PRIu64 "\n", nextAddr);
+	out->verbose(CALL_INFO, 4, 0, "Generating next request at address: %" PRIu64 "\n", nextIndex);
 
 	RequestGeneratorRequest* nextReq = new RequestGeneratorRequest();
-	nextReq->set(nextAddr * datawidth, datawidth, READ);
+	nextReq->set(nextIndex * datawidth, datawidth, READ);
 
 	q->push(nextReq);
 
 	// What is the next address?
-	nextAddr--;
+	nextIndex--;
 }
 
 bool ReverseSingleStreamGenerator::isFinished() {
-	return (nextAddr == stopAddr);
+	return (nextIndex == stopIndex);
 }
 
 void ReverseSingleStreamGenerator::completed() {

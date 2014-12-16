@@ -53,8 +53,8 @@ static const ElementInfoParam singleStreamGen_params[] = {
 };
 
 static const ElementInfoParam revSingleStreamGen_params[] = {
-    { "start_address",    "Sets the start address for this generator", "1024" },
-    { "stop_address",     "Sets the stop address for this generator, stop < start", "0" },
+    { "start_at",         "Sets the start *index* for this generator", "2048" },
+    { "stop_at",          "Sets the stop *index* for this generator, stop < start", "0" },
     { "verbose",          "Sets the verbosity of the output", "0" },
     { "datawidth",        "Sets the width of the memory operation", "8" },
     { NULL, NULL, NULL }
