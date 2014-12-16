@@ -197,15 +197,19 @@ protected:
 
 
     void initOutput( ) {
-        std::ostringstream prefix;
-        prefix << "@t:" << m_data->jobId << ":" << (signed) m_data->rank 
-                << ":EmberEngine:MPI:" << m_name << ":@p:@l: ";
-        m_outputPrefix = prefix.str();
+	char* prefix = (char*) malloc(sizeof(char) * 128);
+	sprintf(prefix, "@t:%" PRIu32 ":%" PRIu32 ":EmberEngine:MPI:%s:@p:@l: ",
+		m_data->jobId, m_data->rank, m_name.c_str());
+
+	m_outputPrefix.clear();
+	m_outputPrefix += prefix;
+
+	free(prefix);
     }
 
 private:
 
-    void updateSpyplot( RankID remoteRank, size_t bytesSent);
+    void updateSpyplot( RankID remoteRank, size_t bytesSent );
     void generateSpyplotRank( const std::string filename );
 
     int                 m_printStats;
