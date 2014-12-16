@@ -116,12 +116,14 @@ void EmberMessagePassingGenerator::finish(const SST::Output* output,
     GEN_DBG( 2, "\n");
 
     if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
-        
-        std::ostringstream filename;
-        filename << "ember-" << m_data->motifNum << "-" << m_name << "-"
-									<< m_data->rank << ".spy"; 
+	char* filenameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
+	sprintf(filenameBuffer, "ember-%" PRIu32 "-%s-%" PRIu32 ".spy",
+		(uint32_t) m_data->motifNum,
+		m_name.c_str(),
+		(uint32_t) m_data->rank);
 
-        generateSpyplotRank( filename.str() );
+        generateSpyplotRank( filenameBuffer );
+	free(filenameBuffer);
     }
 
 	//
@@ -214,13 +216,12 @@ void EmberMessagePassingGenerator::updateSpyplot(
     info->addSendBytes(bytesSent);
 }
 
-void EmberMessagePassingGenerator::generateSpyplotRank(
-                    const std::string filename) 
+void EmberMessagePassingGenerator::generateSpyplotRank(const char* filename)
 {
     GEN_DBG( 2, "Generating Communications Spyplots (Rank %" PRId32 "\n", 
                                                         m_data->rank);
 
-    FILE* spyplotFile = fopen(filename.c_str(), "wt");
+    FILE* spyplotFile = fopen(filename, "wt");
     assert(NULL != spyplotFile);
 
     std::map<int32_t, EmberSpyInfo*>::iterator spy_itr;
