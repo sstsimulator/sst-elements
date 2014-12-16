@@ -18,12 +18,17 @@
 #include "generators/singlestream.h"
 #include "generators/randomgen.h"
 #include "generators/streambench.h"
+#include "generators/revsinglestream.h"
 
 using namespace SST;
 using namespace SST::Miranda;
 
 static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
 	return new SingleStreamGenerator(owner, params);
+}
+
+static Module* load_RevSingleStreamGenerator(Component* owner, Params& params) {
+	return new ReverseSingleStreamGenerator(owner, params);
 }
 
 static Module* load_RandomGenerator(Component* owner, Params& params) {
@@ -44,6 +49,14 @@ static const ElementInfoParam singleStreamGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "startat",          "Sets the start address for generation", "0" },
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoParam revSingleStreamGen_params[] = {
+    { "start_address",    "Sets the start address for this generator", "1024" },
+    { "stop_address",     "Sets the stop address for this generator, stop < start", "0" },
+    { "verbose",          "Sets the verbosity of the output", "0" },
+    { "datawidth",        "Sets the width of the memory operation", "8" },
     { NULL, NULL, NULL }
 };
 
@@ -73,6 +86,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_SingleStreamGenerator,
 		singleStreamGen_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"ReverseSingleStreamGenerator",
+		"Creates a single reverse ordering stream of accesses to/from memory",
+		NULL,
+		NULL,
+		load_RevSingleStreamGenerator,
+		revSingleStreamGen_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
