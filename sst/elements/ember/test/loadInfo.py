@@ -54,7 +54,14 @@ class LoadInfo:
 		self.numCores = int(numCores)
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
-		self.nullEP, nidlist = self.foo( -1, self.readCmdLine({}, ['Null']) )
+		nullMotif = [{
+			'cmd' : "Null",
+			'printStats' : 0,
+			'api': "hermesParams",
+			'spyplotmode': 0
+		}]
+
+		self.nullEP, nidlist = self.foo( -1, self.readWorkList( nullMotif ) )
 		self.nullEP.prepParams()
 
 	def foo( self, jobId, x ):
@@ -72,20 +79,21 @@ class LoadInfo:
 		jobId = 0
 		for line in iter(fo.readline,b''):
 			if  line[0] != '#' and False == line.isspace():
-				self.map.append( self.foo( jobId, self.readCmdLine( extra, [line] ) ) )
+				self.map.append( self.foo( jobId, self.readWorkList( extra, [line] ) ) )
 				jobId += 1
 		fo.close()
 		self.verifyLoadInfo()
 
-	def initCmd(self, extra, cmd ):
-		self.map.append( self.foo( 0, self.readCmdLine( extra, cmd ) ) )
+	def initWork(self, workList ):
+		self.map.append( self.foo( 0, self.readWorkList( workList ) ) )
 		self.verifyLoadInfo()
 
-	def readCmdLine(self, extra, cmds ):
+	def readWorkList(self, workList ):
 		tmp = {}
-		tmp['motif_count'] = len(cmds) 
-		for i, cmdLine in enumerate( cmds ) :
-			cmdList = cmdLine.split()
+		tmp['motif_count'] = len(workList) 
+		for i, work in enumerate( workList ) :
+			cmdList = work['cmd'].split()
+			del work['cmd']
 
 			ranksPerNode = self.numCores 
 			nidList = []
@@ -113,16 +121,17 @@ class LoadInfo:
 				sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
 						str(self.numCores) + " coresPerNode")
 
-			tmp.update(self.parseCmd( extra, "ember.", "Motif", cmdList, i ))
+			motif = self.parseCmd( "ember.", "Motif", cmdList, i )
+
+			for x in work.items():
+				motif[ 'motif' + str(i) + '.' + x[0] ] = x[1] 
+
+			tmp.update( motif )
 
 		return ( nidList, ranksPerNode, tmp )
 
-	def parseCmd(self, extra, motifPrefix, motifSuffix, cmdList, cmdNum ):
+	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
 		motif = {} 
-
-		for x in extra.items():
-			tmp = 'motif' + str(cmdNum) + '.' + x[0] 
-			motif[ tmp ] = x[1] 
 
 		tmp = 'motif' + str(cmdNum) + '.name'
 		motif[ tmp ] = motifPrefix + cmdList[0] + motifSuffix

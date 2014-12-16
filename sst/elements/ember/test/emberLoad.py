@@ -11,16 +11,21 @@ import networkConfig
 from networkConfig import *
 
 loadFile = ""
-cmdLine = []
+workList = []
 numCores = 1
 debug    = 0
 topology = ""
 shape    = ""
 loading  = 0
 radix    = 0
-printStats = 0
 emberVerbose = 0
-emberBufferSize = 0
+
+motifDefaults = { 
+'cmd' : "",
+'printStats' : 0, 
+'api': "hermesParams",
+'spyplotmode': 0 
+}
 
 netBW = "4GB/s"
 netPktSize="2048B"
@@ -29,16 +34,21 @@ netBufSize="14KB"
 
 
 if 1 == len(sys.argv) :
-    cmdLine.append("Init")
-    cmdLine.append( "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10" )
-    cmdLine.append('Fini')
+    motif = dict.copy(motifDefaults)
+    motif['cmd'] = "Init"
+    workList.append( motif )
+
+    motif = dict.copy(motifDefaults)
+    motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
+    motif['spyplotmode'] = 1
+    workList.append( motif )
+
+    motif = dict.copy(motifDefaults)
+    motif['cmd'] = "Fini"
+    workList.append( motif )
+
     topology = "torus"
     shape    = "4x4x4"
-    printStats = 0
-    emberVerbose = 1
-
-
-motifExtra = { 'printStats' : printStats, 'api': "hermesParams" }
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
@@ -60,7 +70,9 @@ for o, a in opts:
     elif o in ("--loadFile"):
         loadFile = a
     elif o in ("--cmdLine"):
-        cmdLine.append( a ) 
+    	motif = dict.copy(motifDefaults)
+    	motif['cmd'] = a 
+    	workList.append( motif )
     elif o in ("--topo"):
         topology = a
     elif o in ("--radix"):
@@ -132,8 +144,6 @@ _emberParams = {
 		"hermesModule" : "firefly.hades",
 		"msgapi" : "firefly.hades",
 		"verbose" : emberVerbose,
-		"printStats" : printStats,
-		"buffersize" : emberBufferSize,
 	}
 
 _hermesParams = {
@@ -185,16 +195,16 @@ epParams.update(_hermesParams)
 loadInfo = LoadInfo( _nicParams, epParams, topoInfo.getNumNodes(), numCores )
 
 if len(loadFile) > 0:
-	if len(cmdLine) > 0:
+	if len(workList) > 0:
 		sys.exit("Error: can't specify both loadFile and cmdLine");
 
-	loadInfo.initFile( motifExtra, loadFile)
+	loadInfo.initFile( motifDefaults, loadFile)
 else:
-	if len(cmdLine) > 0:
+	if len(workList) > 0:
 		if len(loadFile) > 0:
 			sys.exit("Error: can't specify both loadFile and cmdLine");
 
-		loadInfo.initCmd( motifExtra, cmdLine)
+		loadInfo.initWork( workList )
 	else:
 		sys.exit("Error: need a loadFile or cmdLine")
 
