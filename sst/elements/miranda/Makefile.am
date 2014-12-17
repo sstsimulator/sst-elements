@@ -22,6 +22,7 @@ libmiranda_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/randomgen.py \
-	tests/singlestream.py
+	tests/singlestream.py \
+	tests/revsinglestream.py
 
 libmiranda_la_LDFLAGS = -module -avoid-version
