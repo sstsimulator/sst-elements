@@ -162,7 +162,7 @@ protected:
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group);
     inline void enQ_recv( Queue&, Addr payload, uint32_t count,
         PayloadDataType dtype, RankID src, uint32_t tag, Communicator group,
-        MessageResponse* resp );
+        MessageResponse* resp = NULL );
     inline void enQ_getTime( Queue&, uint64_t* time );
     inline void enQ_isend( Queue&, Addr payload, uint32_t count,
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
@@ -175,7 +175,7 @@ protected:
 									MessageResponse* resp = NULL );
 
     inline void enQ_waitall( Queue&, int count, MessageRequest req[],
-                MessageResponse* resp[] );
+                MessageResponse* resp[] = NULL );
     inline void enQ_commSplit( Queue&, Communicator, int color, int key, 
                 Communicator* newComm );
     inline void enQ_allreduce( Queue&, Addr mydata, Addr result, uint32_t count,
@@ -293,7 +293,7 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	GEN_DBG(2,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
+	GEN_DBG(2,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
     q.push( new EmberISendEvent( *cast(m_api), m_output, m_histoV[Isend],
         memAddr(payload), count, dtype, dest, tag, group, req ) );
     
@@ -333,7 +333,7 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID source, uint32_t tag,
     Communicator group, MessageRequest* req )
 {
-	GEN_DBG(2,"src=%d tag=%x\n",source,tag);
+	GEN_DBG(2,"src=%d tag=%x req=%p\n",source,tag,req);
     q.push( new EmberIRecvEvent( *cast(m_api), m_output, m_histoV[Irecv],
         memAddr(payload), count, dtype, source, tag, group, req ) );
 
