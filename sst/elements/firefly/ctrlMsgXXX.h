@@ -419,7 +419,11 @@ class WaitReq {
     {
         MP::MessageResponse* tmp = (MP::MessageResponse*)resp;
         for ( int i = 0; i < count; i++ ) {
+			if ( resp ) {
             reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), &tmp[i] ) );
+			} else {
+            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]) ) );
+			}
         }
     }
 
