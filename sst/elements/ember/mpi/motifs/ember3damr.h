@@ -214,9 +214,6 @@ private:
         uint32_t blocksY;
         uint32_t blocksZ;
 
-        uint32_t rank;
-        uint32_t worldSize;
-
         // Share these over all instances of the motif
         uint32_t peX;
         uint32_t peY;

@@ -92,7 +92,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			out->fatal(CALL_INFO, -1, "Unable to read blocks for rank %" PRIu32 " near line %" PRIu32 "\n",
 				currentRank, line);
 		} else {
-			if(currentRank == rank) {
+			if(currentRank == rank()) {
 				for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
 					line++;
 
@@ -576,7 +576,7 @@ void Ember3DAMRGenerator::loadBlocks() {
         }
 	}
 
-	out->verbose(CALL_INFO, 2, 0, "Maximum requests from rank %" PRIu32 " will be set up: %" PRIu32 "\n", rank, maxRequests);
+	out->verbose(CALL_INFO, 2, 0, "Maximum requests from rank %" PRIu32 " will be set up: %" PRIu32 "\n", (uint32_t) rank(), maxRequests);
 	requests   = (MessageRequest*)   malloc( sizeof(MessageRequest) * maxRequests * 2);
         responses  = (MessageResponse**) malloc( sizeof(MessageResponse*) * maxRequests * 2);
 
@@ -586,7 +586,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	blockMessageBuffer = memAlloc( sizeof(double) * maxFaceDim * maxFaceDim * localBlocks.size() * 2);
 
-	printf("Blocks on rank %" PRIu32 " count=%lu\n", rank, localBlocks.size());
+        out->verbose(CALL_INFO, 2, 0, "Blocks on rank %" PRIu32 " count is: %" PRIu32 "\n", (uint32_t) rank(), (uint32_t) localBlocks.size());
 }
 
 void Ember3DAMRGenerator::configure()
@@ -605,7 +605,7 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 	const uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	char* bufferPtr = (char*) blockMessageBuffer;
 
-	const uint32_t thisRank = rank;
+	const uint32_t thisRank = rank();
 
 	for(uint32_t i = 0; i < 4; ++i) {
 		if(blockComm[i] >= 0) {
@@ -627,7 +627,8 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 	uint32_t nextReq = 0;
 
 	if(iteration < maxIterations) {
-		out->verbose(CALL_INFO, 8, 0, "Executing iteration: %" PRIu32 "\n", iteration);
+		out->verbose(CALL_INFO, 8, 0, "Executing iteration: %" PRIu32 " on rank %" PRIu32 ", local blocks count: %" PRIu32 "\n", iteration,
+			(uint32_t) rank(), (uint32_t) localBlocks.size());
 
 		for(uint32_t i = 0; i < localBlocks.size(); ++i) {
 			Ember3DAMRBlock* currentBlock = localBlocks[i];
@@ -655,7 +656,13 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 			out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " complete.\n", currentBlock->getBlockID());
 		}
 
-		enQ_waitall( evQ, nextReq, &requests[0], &responses[0] );
+		if(nextReq > 0) {
+			out->verbose(CALL_INFO, 2, 0, "Enqueued %" PRIu32 " events, issuing wait all against them on rank %" PRIu32 "\n",
+				(uint32_t) nextReq, (uint32_t) rank());
+			enQ_waitall( evQ, nextReq, &requests[0], &responses[0] );
+		} else {
+			out->verbose(CALL_INFO, 2, 0, "Enqueued no communication events, stepping over wait-all issue.\n");
+		}
 
 		iteration++;
 		return false;
