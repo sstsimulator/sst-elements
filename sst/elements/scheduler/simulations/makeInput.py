@@ -43,8 +43,8 @@ allocator = 'bestfit'
 taskMapper = 'default'
 
 # Communication overhead parameters
-# a[b,c,d,e] (default: none)
-timeperdistance = '.7[.3,0.9875,0.3848,.2]'
+# a[b,c] (default: none)
+timeperdistance = '.001865[.1569,0.0129]'
 
 # Heat distribution matrix (D_matrix) input file
 # file path, none. (default: none)

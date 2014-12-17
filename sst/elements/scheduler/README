@@ -331,18 +331,14 @@ each pair of nodes allocated for the job.  Therefore, a mesh is required for
 this metric to be used.  
 
 The details are given in the parameter <timeperdistance> in the sdl file.  The
-format is a[b,c,d,r]; then the total time for a job is
+format is a[b,c]; then the total time for a job is
 
-BaselineRunningTime * (a + b * (c + AveragePerNeighborL1Distance * (d + r))
+BaselineRunningTime * (1 + a * pow(hop-bytes, (b + c * r))
 
 Where BaselineRunningTime of a job is calculated assuming that the same job is
 allocated to the smallest possible rectangular mesh and its tasks are mapped
-in-order (simple task mapper). r is the randomization factor.
+in-order (simple task mapper). r is a random number uniformly distributed
+between -1 and 1.
 
-An important detail is that this may be larger than the Estimated Run Time for
-some simulations. If this happens, SST does throws an error.
-
-makesdl.pl can also incorporate the allocation based timing. An example with a
-= .7, b = .3, c = 0.9875, d = 0.3848, r = 0.2 is
-
-./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random none .7[.3,0.9875,0.3848,.2] > testsdl.sdl 
+An important detail is that this may be larger than the Estimated Worst-case
+Execution Time for some jobs. If this happens, SST does throws an error.

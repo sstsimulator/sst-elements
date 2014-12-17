@@ -555,7 +555,7 @@ void schedComponent::startJob(Job* job)
     if (timePerDistance -> at(0) != 0
           && NULL != mMachine
           && NULL != ai ) {
-        double randomNumber = (rng->nextUniform() * 2 - 1) * 0.0129;
+        double randomNumber = (rng->nextUniform() * 2 - 1) * timePerDistance->at(2);
 
         //calculate baseline hopBytes
         AllocInfo* baselineAlloc = mMachine->getBaselineAllocation(job);
@@ -566,16 +566,11 @@ void schedComponent::startJob(Job* job)
 
         //calculate running time w/o any communication overhead:
         double baselineRunningTime;
-        baselineRunningTime = actualRunningTime / (1 + 0.001865 * pow(baselineHopBytes, 0.1569 + randomNumber));
+        baselineRunningTime = actualRunningTime / (1 + timePerDistance->at(0) * pow(baselineHopBytes, timePerDistance->at(1) + randomNumber));
 
         //get new hopBytes
         double hopBytes = tmi->getHopBytes();
-        double timeWithComm = baselineRunningTime * (1 + 0.001865 * pow(hopBytes, 0.1569 + randomNumber));
-
-        /*
-        double hopBytes = tmi->getHopBytes();
-        double timeWithComm = actualRunningTime * 0.7 * (1 + 0.001865 * pow(hopBytes, 0.1569 + randomNumber));
-        */
+        double timeWithComm = baselineRunningTime * (1 + timePerDistance->at(0) * pow(hopBytes, timePerDistance->at(1) + randomNumber));
 
         //overestimate the fraction to keep min job length at 1 
         actualRunningTime = ceil(timeWithComm);

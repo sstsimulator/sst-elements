@@ -132,7 +132,7 @@ static const SST::ElementInfoParam sched_params[] = {
       "None"
     },
     { "timeperdistance",
-      "How much the layout of a job affects its run time",
+      "How much the communication affects the running time",
       "None"
     },
     { "faultSeed",
