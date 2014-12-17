@@ -56,8 +56,8 @@ public:
             reqEvent_(new MemEvent(*ev)), respEvent_(NULL), amtInProcess_(0),
             amtProcessed_(0), status_(NEW){
             
-            isWrite_  = (cmd_ == PutM) ? true : false;
             cmd_      = ev->getCmd();
+            isWrite_  = (cmd_ == PutM) ? true : false;
             baseAddr_ = ev->getBaseAddr();
             addr_     = ev->getBaseAddr();
             setSize(cacheLineSize);
