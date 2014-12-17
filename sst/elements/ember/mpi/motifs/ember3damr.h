@@ -46,6 +46,14 @@ class Ember3DAMRBlock {
                         commZUp   = (int32_t*) malloc(sizeof(int32_t) * 4);
                         commZDown = (int32_t*) malloc(sizeof(int32_t) * 4);
 
+			for(int i = 0; i < 4; ++i) {
+				commXUp[i]   = -1;
+				commXDown[i] = -1;
+				commYUp[i]   = -1;
+				commYDown[i] = -1;
+				commZUp[i]   = -1;
+				commZDown[i] = -1;
+			}
                 }
 
                 ~Ember3DAMRBlock() {
