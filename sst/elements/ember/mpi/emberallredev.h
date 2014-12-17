@@ -38,7 +38,7 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "\n");
+        m_output->verbose(CALL_INFO, 2, 0, "Issuing wait all for %" PRIu32 " requests.\n", m_count);
 
         EmberEvent::issue( time );
 

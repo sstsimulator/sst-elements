@@ -114,8 +114,8 @@ protected:
     void initData( EmberGeneratorData** data ) {
         assert( *data );
         m_data = static_cast<EmberMessagePassingGeneratorData*>(*data);
-		configure();
-		setOutputPrefix();
+	configure();
+	setOutputPrefix();
     }
 
 	virtual void configure() {}

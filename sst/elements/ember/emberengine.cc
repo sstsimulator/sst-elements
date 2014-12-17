@@ -135,7 +135,6 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     info->data->jobId = jobId;
     info->data->motifNum = motifNum;
 
-    gen->setOutputPrefix();
     return gen;
 }
 
@@ -165,7 +164,7 @@ void EmberEngine::setup() {
 
 void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
 
-    output.verbose(CALL_INFO, 2, 0, "\n");
+    output.verbose(CALL_INFO, 8, 0, "Engine issuing next event with delay %" PRIu32 "\n", nanoDelay);
 
     while ( evQueue.empty() ) {
 
