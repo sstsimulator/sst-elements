@@ -21,12 +21,12 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 
 	i = 0;
 
-	out->output("STREAM-N length is %" PRIu64 "\n", n);
-	out->output("Start of array a @ %" PRIu64 "\n", start_a);
-	out->output("Start of array b @ %" PRIu64 "\n", start_b);
-	out->output("Start of array c @ %" PRIu64 "\n", start_c);
-	out->output("Array Length:      %" PRIu64 " bytes\n", (n * reqLength));
-	out->output("Total arrays:      %" PRIu64 " bytes\n", (3 * n * reqLength));
+	out->verbose(CALL_INFO, 1, 0, "STREAM-N length is %" PRIu64 "\n", n);
+	out->verbose(CALL_INFO, 1, 0, "Start of array a @ %" PRIu64 "\n", start_a);
+	out->verbose(CALL_INFO, 1, 0, "Start of array b @ %" PRIu64 "\n", start_b);
+	out->verbose(CALL_INFO, 1, 0, "Start of array c @ %" PRIu64 "\n", start_c);
+	out->verbose(CALL_INFO, 1, 0, "Array Length:      %" PRIu64 " bytes\n", (n * reqLength));
+	out->verbose(CALL_INFO, 1, 0, "Total arrays:      %" PRIu64 " bytes\n", (3 * n * reqLength));
 }
 
 STREAMBenchGenerator::~STREAMBenchGenerator() {
