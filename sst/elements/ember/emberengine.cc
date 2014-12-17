@@ -129,6 +129,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 
     ApiInfo* info = apiMap.find(api)->second;
     gen->initOutput( &output );
+    gen->setOutputPrefix();
     gen->initAPI( info->api );
     gen->initData( &info->data );
     info->data->jobId = jobId;

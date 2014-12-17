@@ -115,7 +115,7 @@ protected:
         assert( *data );
         m_data = static_cast<EmberMessagePassingGeneratorData*>(*data);
 		configure();
-		initOutput();
+		setOutputPrefix();
     }
 
 	virtual void configure() {}
@@ -197,7 +197,7 @@ protected:
 									Communicator, MessageRequest* req );
 
 
-    void initOutput( ) {
+    void setOutputPrefix() {
 	char* prefix = (char*) malloc(sizeof(char) * 128);
 	sprintf(prefix, "@t:%" PRIu32 ":%" PRIu32 ":EmberEngine:MPI:%s:@p:@l: ",
 		m_data->jobId, m_data->rank, m_name.c_str());

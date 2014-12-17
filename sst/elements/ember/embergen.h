@@ -63,14 +63,18 @@ class EmberGenerator : public Module {
         m_output = output;
     }
 
-	virtual void generate( const SST::Output* output, const uint32_t phase,
-                    std::queue<EmberEvent*>* evQ ) { 
-        assert(0); 
-    } 
+    virtual void setOutputPrefix() {
+	m_outputPrefix = "";
+    }
 
-	virtual bool generate( std::queue<EmberEvent*>& evQ ) { 
-        assert(0); 
-    } 
+    virtual void generate( const SST::Output* output, const uint32_t phase,
+        std::queue<EmberEvent*>* evQ ) {
+        assert(0);
+    }
+
+    virtual bool generate( std::queue<EmberEvent*>& evQ ) {
+        assert(0);
+    }
 
 	virtual void finish( const SST::Output* output, uint64_t time) { 
         assert(0);
