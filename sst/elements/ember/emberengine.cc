@@ -32,15 +32,15 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	m_jobId = params.find_integer("jobId", -1);
 
 	std::ostringstream prefix;
-    prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
+        prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
 
 	output.init( prefix.str(), verbosity, (uint32_t) 0, Output::STDOUT);
 
    	//params.print_all_params( std::cout );
 
-    // create a map of all the available API's
-    m_apiMap = createApiMap( this, params );
-    assert( ! m_apiMap.empty() );
+        // create a map of all the available API's
+        m_apiMap = createApiMap( this, params );
+        assert( ! m_apiMap.empty() );
 
 	motifParams.resize( params.find_integer("motif_count", 1) );
 	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
@@ -129,12 +129,14 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 
     ApiInfo* info = apiMap.find(api)->second;
     gen->initOutput( &output );
-    gen->setOutputPrefix();
+
     gen->initAPI( info->api );
     gen->initData( &info->data );
     info->data->jobId = jobId;
-	info->data->motifNum = motifNum;
-    return gen; 
+    info->data->motifNum = motifNum;
+
+    gen->setOutputPrefix();
+    return gen;
 }
 
 void EmberEngine::init(unsigned int phase) {

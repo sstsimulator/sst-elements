@@ -196,7 +196,6 @@ protected:
 	inline void enQ_irecv( Queue&, uint32_t src, uint32_t nBytes, int tag,
 									Communicator, MessageRequest* req );
 
-
     void setOutputPrefix() {
 	char* prefix = (char*) malloc(sizeof(char) * 128);
 	sprintf(prefix, "@t:%" PRIu32 ":%" PRIu32 ":EmberEngine:MPI:%s:@p:@l: ",
