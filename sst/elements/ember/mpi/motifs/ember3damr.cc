@@ -604,7 +604,7 @@ void Ember3DAMRGenerator::configure()
 	out->verbose(CALL_INFO, 2, 0, "Configuring AMR motif...\n");
 
 	char* newPrefix = (char*) malloc(sizeof(char) * 64);
-	sprintf(newPrefix, "AMD3D[%7" PRIu32 ":@p:@l]: ", (uint32_t) rank());
+	sprintf(newPrefix, "AMR-3D[%7" PRIu32 ":@p:@l]: ", (uint32_t) rank());
 
 	std::string newPrefixStr(newPrefix);
 	out->setPrefix(newPrefixStr);
