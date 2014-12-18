@@ -256,6 +256,9 @@ void McOpteron::createInstrSizeCDF(string filename)
    }
    // open the file again to read in values
    instructionSizeProbabilities = new double[max+1]; // include a spot for 0
+   for(unsigned long long i=0; i<=max; i++) { 
+      instructionSizeProbabilities[i] = 0;
+   }
    inf = fopen(filename.c_str(), "r");
    while(fscanf(inf,"%llu\t%llu", &bytes, &freq) == 2) 
       instructionSizeProbabilities[bytes] = (double)freq; 
