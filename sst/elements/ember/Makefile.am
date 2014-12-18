@@ -87,6 +87,7 @@ libember_la_SOURCES = \
 	mpi/motifs/embercomm.cc \
 	mpi/motifs/ember3damr.cc \
 	mpi/motifs/ember3damr.h \
+	mpi/motifs/ember3damrblock.h \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h
 
