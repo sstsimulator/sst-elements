@@ -88,6 +88,8 @@ void Ember3DAMRGenerator::loadBlocks() {
 		out->verbose(CALL_INFO, 4, 0, "Loading block information for rank %" PRIu32 " out of %" PRIu32 "... \n", currentRank, size());
 		line++;
 
+		int otherRankBlocks = 0;
+
 		if( EOF == fscanf(blockFile, "%" PRIu32 "\n", &blocksOnRank) ) {
 			out->fatal(CALL_INFO, -1, "Unable to read blocks for rank %" PRIu32 " near line %" PRIu32 "\n",
 				currentRank, line);
@@ -110,13 +112,23 @@ void Ember3DAMRGenerator::loadBlocks() {
 					fscanf(blockFile, "%" PRIu32 " %d %d %d %d %d %d %d\n",
 						&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
 
-					blockToNodeMap.insert( std::pair<uint32_t, uint32_t>(blockID, currentRank) );
+					blockToNodeMap.insert( std::pair<uint32_t, int32_t>(blockID, (int32_t) currentRank) );
+
+					otherRankBlocks++;
 				}
 			}
 		}
+
+		out->verbose(CALL_INFO, 4, 0, "Rank %" PRIu32 " loaded %d for rank %" PRIu32 "\n",
+			rank(), otherRankBlocks, currentRank);
 	}
 
 	fclose(blockFile);
+
+	out->verbose(CALL_INFO, 2, 0, "Rank %" PRIu32 ", loaded %" PRIu32 " blocks.\n", (uint32_t) rank(),
+		(uint32_t) localBlocks.size());
+
+	printBlockMap();
 
 	out->verbose(CALL_INFO, 4, 0, "Performing AMR block wire up...\n");
 	uint32_t maxRequests = 0;
@@ -147,7 +159,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			const uint32_t commToBlock = calcBlockID((blockXPos / 2) + 1,
 				blockYPos / 2, blockZPos / 2, blockXUp);
 
-			std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+			std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
 
 			if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
 				if( ! isBlockLocal(commToBlock) ) {
@@ -165,10 +177,10 @@ void Ember3DAMRGenerator::loadBlocks() {
 			const uint32_t x3 = calcBlockID(blockXPos * 2 + 2, blockYPos * 2,     blockZPos * 2 + 1, blockXUp);
 			const uint32_t x4 = calcBlockID(blockXPos * 2 + 2, blockYPos * 2 + 1, blockZPos * 2 + 1, blockXUp);
 
-			std::map<uint32_t, uint32_t>::iterator blockNodeX1 = blockToNodeMap.find(x1);
-			std::map<uint32_t, uint32_t>::iterator blockNodeX2 = blockToNodeMap.find(x2);
-			std::map<uint32_t, uint32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
-			std::map<uint32_t, uint32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
+			std::map<uint32_t, int32_t>::iterator blockNodeX1 = blockToNodeMap.find(x1);
+			std::map<uint32_t, int32_t>::iterator blockNodeX2 = blockToNodeMap.find(x2);
+			std::map<uint32_t, int32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
+			std::map<uint32_t, int32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
 
 			if( blockNodeX1 == blockToNodeMap.end() && (! isBlockLocal(x1)) ) {
 				out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x1);
@@ -196,7 +208,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			const uint32_t blockNextToMe = calcBlockID(blockXPos + 1,
 				blockYPos, blockZPos, blockXUp);
 
-			std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+			std::map<uint32_t, int32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
 
 			if(blockNextToMeNode == blockToNodeMap.end()) {
 				if( ! isBlockLocal(blockNextToMe) ) {
@@ -222,7 +234,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			const uint32_t commToBlock = calcBlockID((blockXPos / 2) - 1,
 				blockYPos / 2, blockZPos / 2, blockXDown);
 
-			std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+			std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
 
 			if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
 				if( ! isBlockLocal(commToBlock) ) {
@@ -240,10 +252,10 @@ void Ember3DAMRGenerator::loadBlocks() {
 			const uint32_t x3 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2,     blockZPos * 2 + 1, blockXDown);
 			const uint32_t x4 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2 + 1, blockZPos * 2 + 1, blockXDown);
 
-			std::map<uint32_t, uint32_t>::iterator blockNodeX1 = blockToNodeMap.find(x1);
-			std::map<uint32_t, uint32_t>::iterator blockNodeX2 = blockToNodeMap.find(x2);
-			std::map<uint32_t, uint32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
-			std::map<uint32_t, uint32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
+			std::map<uint32_t, int32_t>::iterator blockNodeX1 = blockToNodeMap.find(x1);
+			std::map<uint32_t, int32_t>::iterator blockNodeX2 = blockToNodeMap.find(x2);
+			std::map<uint32_t, int32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
+			std::map<uint32_t, int32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
 
 			if( blockNodeX1 == blockToNodeMap.end() && (! isBlockLocal(x1)) ) {
 				out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x1);
@@ -271,7 +283,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			const uint32_t blockNextToMe = calcBlockID(blockXPos - 1,
 				blockYPos, blockZPos, blockXDown);
 
-			std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+			std::map<uint32_t, int32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
 
 			if(blockNextToMeNode == blockToNodeMap.end()) {
 				if( ! isBlockLocal(blockNextToMe) ) {
@@ -295,7 +307,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t commToBlock = calcBlockID((blockXPos / 2),
                                                      (blockYPos / 2) + 1, blockZPos / 2, blockYUp);
 
-            std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+            std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
 
             if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
                 if( ! isBlockLocal(commToBlock) ) {
@@ -314,10 +326,10 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t y3 = calcBlockID(blockXPos * 2,     blockYPos * 2 + 2, blockZPos * 2 + 1, blockYUp);
             const uint32_t y4 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 + 2, blockZPos * 2 + 1, blockYUp);
 
-            std::map<uint32_t, uint32_t>::iterator blockNodeY1 = blockToNodeMap.find(y1);
-            std::map<uint32_t, uint32_t>::iterator blockNodeY2 = blockToNodeMap.find(y2);
-            std::map<uint32_t, uint32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
-            std::map<uint32_t, uint32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
+            std::map<uint32_t, int32_t>::iterator blockNodeY1 = blockToNodeMap.find(y1);
+            std::map<uint32_t, int32_t>::iterator blockNodeY2 = blockToNodeMap.find(y2);
+            std::map<uint32_t, int32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
+            std::map<uint32_t, int32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
 
             if( blockNodeY1 == blockToNodeMap.end() && (! isBlockLocal(y1)) ) {
 		out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y1);
@@ -343,7 +355,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             // Same level
             const uint32_t blockNextToMe = calcBlockID(blockXPos,
                                                        blockYPos + 1, blockZPos, blockYUp);
-            std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+            std::map<uint32_t, int32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
 
             if(blockNextToMeNode == blockToNodeMap.end()) {
                 if( ! isBlockLocal(blockNextToMe) ) {
@@ -368,7 +380,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t commToBlock = calcBlockID((blockXPos / 2),
                                                      (blockYPos / 2) - 1, blockZPos / 2, blockYDown);
 
-            std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+            std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
 
             if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
                 if( ! isBlockLocal(commToBlock) ) {
@@ -387,10 +399,10 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t y3 = calcBlockID(blockXPos * 2,     blockYPos * 2 - 1, blockZPos * 2 + 1, blockYDown);
             const uint32_t y4 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 - 1, blockZPos * 2 + 1, blockYDown);
 
-            std::map<uint32_t, uint32_t>::iterator blockNodeY1 = blockToNodeMap.find(y1);
-            std::map<uint32_t, uint32_t>::iterator blockNodeY2 = blockToNodeMap.find(y2);
-            std::map<uint32_t, uint32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
-            std::map<uint32_t, uint32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
+            std::map<uint32_t, int32_t>::iterator blockNodeY1 = blockToNodeMap.find(y1);
+            std::map<uint32_t, int32_t>::iterator blockNodeY2 = blockToNodeMap.find(y2);
+            std::map<uint32_t, int32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
+            std::map<uint32_t, int32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
 
             if( blockNodeY1 == blockToNodeMap.end() && (! isBlockLocal(y1)) ) {
                 out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y1);
@@ -418,7 +430,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t blockNextToMe = calcBlockID(blockXPos,
                                                        blockYPos - 1, blockZPos, blockYDown);
 
-            std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+            std::map<uint32_t, int32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
 
             if(blockNextToMeNode == blockToNodeMap.end()) {
                 if( ! isBlockLocal(blockNextToMe) ) {
@@ -443,7 +455,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t commToBlock = calcBlockID((blockXPos / 2),
                                                      (blockYPos / 2), (blockZPos / 2) + 1, blockZUp);
 
-            std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+            std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
             
             if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
                 if( ! isBlockLocal(commToBlock) ) {
@@ -462,10 +474,10 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t z3 = calcBlockID(blockXPos * 2,     blockYPos * 2 + 1, blockZPos * 2 + 2, blockZUp);
             const uint32_t z4 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 + 1, blockZPos * 2 + 2, blockZUp);
 
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ1 = blockToNodeMap.find(z1);
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ2 = blockToNodeMap.find(z2);
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ3 = blockToNodeMap.find(z3);
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ4 = blockToNodeMap.find(z4);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ1 = blockToNodeMap.find(z1);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ2 = blockToNodeMap.find(z2);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ3 = blockToNodeMap.find(z3);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ4 = blockToNodeMap.find(z4);
 
             if( blockNodeZ1 == blockToNodeMap.end() && (! isBlockLocal(z1)) ) {
                 out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z1);
@@ -491,7 +503,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             // Same level
             const uint32_t blockNextToMe = calcBlockID(blockXPos,
                                                        blockYPos, blockZPos + 1, blockZUp);
-            std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+            std::map<uint32_t, int32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
 
             if(blockNextToMeNode == blockToNodeMap.end()) {
                 if( ! isBlockLocal(blockNextToMe) ) {
@@ -515,7 +527,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t commToBlock = calcBlockID((blockXPos / 2),
                                                      (blockYPos / 2), (blockZPos / 2) - 1, blockZDown);
 
-            std::map<uint32_t, uint32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
+            std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
 
             if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
                 if( ! isBlockLocal(commToBlock) ) {
@@ -533,10 +545,10 @@ void Ember3DAMRGenerator::loadBlocks() {
             const uint32_t z3 = calcBlockID(blockXPos * 2,     blockYPos * 2 + 1, blockZPos * 2 - 1, blockZDown);
             const uint32_t z4 = calcBlockID(blockXPos * 2 + 1, blockYPos * 2 + 1, blockZPos * 2 - 1, blockZDown);
 
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ1 = blockToNodeMap.find(z1);
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ2 = blockToNodeMap.find(z2);
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ3 = blockToNodeMap.find(z3);
-            std::map<uint32_t, uint32_t>::iterator blockNodeZ4 = blockToNodeMap.find(z4);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ1 = blockToNodeMap.find(z1);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ2 = blockToNodeMap.find(z2);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ3 = blockToNodeMap.find(z3);
+            std::map<uint32_t, int32_t>::iterator blockNodeZ4 = blockToNodeMap.find(z4);
 
             if( blockNodeZ1 == blockToNodeMap.end() && (! isBlockLocal(z1)) ) {
                 out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z1);
@@ -563,7 +575,7 @@ void Ember3DAMRGenerator::loadBlocks() {
             // Same level
             const uint32_t blockNextToMe = calcBlockID(blockXPos,
                                                        blockYPos, blockZPos - 1, blockZDown);
-            std::map<uint32_t, uint32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
+            std::map<uint32_t, int32_t>::iterator blockNextToMeNode = blockToNodeMap.find(blockNextToMe);
 
             if(blockNextToMeNode == blockToNodeMap.end()) {
                 if( ! isBlockLocal(blockNextToMe) ) {
@@ -593,6 +605,14 @@ void Ember3DAMRGenerator::configure()
 {
 	out->verbose(CALL_INFO, 2, 0, "Configuring AMR motif...\n");
 
+	char* newPrefix = (char*) malloc(sizeof(char) * 64);
+	sprintf(newPrefix, "AMD3D[%7" PRIu32 ":@p:@l]: ", (uint32_t) rank());
+
+	std::string newPrefixStr(newPrefix);
+	out->setPrefix(newPrefixStr);
+
+	free(newPrefix);
+
 	loadBlocks();
 	free(blockFilePath);
 
@@ -610,6 +630,8 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 	for(uint32_t i = 0; i < 4; ++i) {
 		if(blockComm[i] >= 0) {
 			if(blockComm[i] != thisRank) {
+				out->verbose(CALL_INFO, 16, 0, "Setting up exchange with rank %" PRId32 " for message size: %" PRIu32 ", tag: %" PRIu32 "\n",
+					blockComm[i], faceSize, msgTag);
 				enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
 				(*nextReq) = (*nextReq) + 1;
@@ -619,6 +641,62 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 				(*nextReq) = (*nextReq) + 1;
 			}
 		}
+	}
+}
+
+void Ember3DAMRGenerator::aggregateCommBytes(Ember3DAMRBlock* curBlock, std::map<int32_t, uint32_t>& blockToMessageSize) {
+
+	const uint32_t thisRank = rank();
+
+	curBlock->print();
+
+	for(int i = 0 ; i < 4; ++i) {
+		int32_t* commPartners = curBlock->getCommXDown();
+		if(commPartners[i] >= 0 && commPartners[i] != thisRank) {
+			blockToMessageSize[commPartners[i]] =
+				blockToMessageSize[commPartners[i]] + blockNy * blockNz * 8;
+		}
+
+		commPartners = curBlock->getCommXUp();
+		if(commPartners[i] >= 0 && commPartners[i] != thisRank) {
+			blockToMessageSize[commPartners[i]] =
+				blockToMessageSize[commPartners[i]] + blockNy * blockNz * 8;
+		}
+
+		commPartners = curBlock->getCommYDown();
+		if(commPartners[i] >= 0 && commPartners[i] != thisRank) {
+			blockToMessageSize[commPartners[i]] =
+				blockToMessageSize[commPartners[i]] + blockNx * blockNz * 8;
+		}
+
+		commPartners = curBlock->getCommYUp();
+		if(commPartners[i] >= 0 && commPartners[i] != thisRank) {
+			blockToMessageSize[commPartners[i]] =
+				blockToMessageSize[commPartners[i]] + blockNx * blockNz * 8;
+		}
+
+		commPartners = curBlock->getCommZDown();
+		if(commPartners[i] >= 0 && commPartners[i] != thisRank) {
+			blockToMessageSize[commPartners[i]] =
+				blockToMessageSize[commPartners[i]] + blockNy * blockNx * 8;
+		}
+
+		commPartners = curBlock->getCommZUp();
+		if(commPartners[i] >= 0 && commPartners[i] != thisRank) {
+			blockToMessageSize[commPartners[i]] =
+				blockToMessageSize[commPartners[i]] + blockNy * blockNx * 8;
+		}
+	}
+}
+
+void Ember3DAMRGenerator::aggregateBlockCommunication(const std::vector<Ember3DAMRBlock*>& blocks,
+	std::map<int32_t, uint32_t>& blockToMessageSize) {
+
+	const uint32_t blocksCount = blocks.size();
+
+	for(uint32_t i = 0; i < blocksCount; ++i) {
+		Ember3DAMRBlock* currentBlock = blocks[i];
+		aggregateCommBytes(currentBlock, blockToMessageSize);
 	}
 }
 
@@ -639,19 +717,19 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 			postBlockCommunication(evQ, currentBlock->getCommXDown(), &nextReq, blockNy * blockNz, 1001);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing X-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommXUp(),   &nextReq, blockNy * blockNz, 2001);
+			postBlockCommunication(evQ, currentBlock->getCommXUp(),   &nextReq, blockNy * blockNz, 1001);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Y-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommYDown(), &nextReq, blockNx * blockNz, 3001);
+			postBlockCommunication(evQ, currentBlock->getCommYDown(), &nextReq, blockNx * blockNz, 2001);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Y-Up direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommYUp(),   &nextReq, blockNx * blockNz, 4001);
+			postBlockCommunication(evQ, currentBlock->getCommYUp(),   &nextReq, blockNx * blockNz, 2001);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Z-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommZDown(), &nextReq, blockNx * blockNy, 5001);
+			postBlockCommunication(evQ, currentBlock->getCommZDown(), &nextReq, blockNx * blockNy, 4001);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Z-Up direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommZUp(),   &nextReq, blockNx * blockNy, 6001);
+			postBlockCommunication(evQ, currentBlock->getCommZUp(),   &nextReq, blockNx * blockNy, 4001);
 
 			out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " complete.\n", currentBlock->getBlockID());
 		}
@@ -663,7 +741,21 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 		} else {
 			out->verbose(CALL_INFO, 2, 0, "Enqueued no communication events, stepping over wait-all issue.\n");
 		}
+/*
+		std::map<int32_t, uint32_t> messageSizeMap;
 
+		for(int i = 0; i < (int) size(); ++i) {
+			messageSizeMap.insert( std::pair<int32_t, uint32_t>((int32_t) i, (uint32_t) 0) );
+		}
+
+		aggregateBlockCommunication(localBlocks, messageSizeMap);
+
+		std::map<int32_t, uint32_t>::iterator messageSizeItr;
+		for(messageSizeItr = messageSizeMap.begin(); messageSizeItr != messageSizeMap.end(); messageSizeItr++) {
+			printf("Rank %" PRIu32 " to rank %" PRId32 " aggregated bytes: %" PRIu32 "\n", 
+				(uint32_t) rank(), messageSizeItr->first, messageSizeItr->second);
+		}
+*/
 		iteration++;
 		return false;
 	} else {
@@ -696,10 +788,6 @@ void Ember3DAMRGenerator::calcBlockLocation(const uint32_t blockID, const uint32
 	const uint32_t blocksXLevel = blocksX * power2(blockLevel);
 	const uint32_t blocksYLevel = blocksY * power2(blockLevel);
 	const uint32_t blocksZLevel = blocksZ * power2(blockLevel);
-
-	printf("Block location step 1: indexDiff = %" PRId32 ", blockID=%" PRIu32 "\n", indexDiff, blockID);
-	printf("Blocks X=%" PRIu32 ", Y=%" PRIu32 ", Z=%" PRIu32 "\n", blocksX, blocksY, blocksZ);
-
 	const uint32_t block_plane = indexDiff % (blocksXLevel * blocksYLevel);
 
 	*posZ = indexDiff / (blocksXLevel * blocksYLevel);
@@ -708,9 +796,6 @@ void Ember3DAMRGenerator::calcBlockLocation(const uint32_t blockID, const uint32
 	const uint32_t block_remain = block_plane % blocksXLevel;
 
 	*posX = (block_remain != 0) ? block_remain : 0;
-
-	printf("Calculating location of blockID: %" PRIu32 ", at x=%" PRIu32 ", y=%" PRIu32 ", z=%" PRIu32 "\n",
-		blockID, *posX, *posY, *posZ);
 }
 
 uint32_t Ember3DAMRGenerator::calcBlockID(const uint32_t posX, const uint32_t posY, const uint32_t posZ,
@@ -730,9 +815,6 @@ uint32_t Ember3DAMRGenerator::calcBlockID(const uint32_t posX, const uint32_t po
 	const uint32_t final_location = startIndex + posX + (posY * blocksXLevel) +
 		(posZ * blocksXLevel * blocksYLevel);
 
-	printf("Calculating location of %" PRIu32 ", %" PRIu32 ", %" PRIu32 " to be %" PRIu32 " (level=%" PRIu32 ")\n",
-		posX, posY, posZ, final_location, level);
-
 	return final_location;
 }
 
@@ -750,10 +832,10 @@ bool Ember3DAMRGenerator::isBlockLocal(const uint32_t bID) const {
 }
 
 void Ember3DAMRGenerator::printBlockMap() {
-	std::map<uint32_t, uint32_t>::iterator block_itr;
+	std::map<uint32_t, int32_t>::iterator block_itr;
 
 	for(block_itr = blockToNodeMap.begin(); block_itr != blockToNodeMap.end(); block_itr++) {
-		printf("Block %" PRIu32 " maps to node: %" PRIu32 "\n",
+		printf("Block %" PRIu32 " maps to node: %" PRId32 "\n",
 			block_itr->first, block_itr->second);
 	}
 }

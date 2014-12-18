@@ -73,7 +73,7 @@ class Ember3DAMRBlock {
                         return blockID;
                 }
 
-		               int32_t getRefineXUp() const {
+		int32_t getRefineXUp() const {
                         return refine_x_up;
                 }
 
@@ -109,7 +109,7 @@ class Ember3DAMRBlock {
                         return commYUp;
                 }
 
-              int32_t* getCommYDown() const {
+                int32_t* getCommYDown() const {
                         return commYDown;
                 }
 
@@ -163,6 +163,22 @@ class Ember3DAMRBlock {
                         commZDown[3] = x4;
                 }
 
+		void print() {
+			printf("BlockID %" PRIu32 " @ Level: %" PRIu32 "\n", blockID, refinementLevel);
+			printf("Refine X up:   %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+				refine_x_up, commXUp[0], commXUp[1], commXUp[2], commXUp[3]);
+			printf("Refine X down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+				refine_x_down, commXDown[0], commXDown[1], commXDown[2], commXDown[3]);
+			printf("Refine Y up:   %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+				refine_y_up, commYUp[0], commYUp[1], commYUp[2], commYUp[3]);
+			printf("Refine Y down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+				refine_y_down, commYDown[0], commYDown[1], commYDown[2], commYDown[3]);
+			printf("Refine Z up:   %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+				refine_z_up, commZUp[0], commZUp[1], commZUp[2], commZUp[3]);
+			printf("Refine Z down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+				refine_z_down, commZDown[0], commZDown[1], commZDown[2], commZDown[3]);
+		}
+
         private:
                 uint32_t blockID;
                 uint32_t refinementLevel;
@@ -198,6 +214,8 @@ public:
         void calcBlockLocation(const uint32_t blockID, const uint32_t blockLevel, uint32_t* posX, uint32_t* posY, uint32_t* posZ);
         bool isBlockLocal(const uint32_t bID) const;
 	void postBlockCommunication(std::queue<EmberEvent*>& evQ, int32_t* blockComm, uint32_t* nextReq, const uint32_t faceSize, const uint32_t msgTag);
+	void aggregateBlockCommunication(const std::vector<Ember3DAMRBlock*>& blocks, std::map<int32_t, uint32_t>& blockToMessageSize);
+	void aggregateCommBytes(Ember3DAMRBlock* curBlock, std::map<int32_t, uint32_t>& blockToMessageSize);
 
 private:
 	void printBlockMap();
@@ -208,7 +226,7 @@ private:
 
 	void* blockMessageBuffer;
 
-        std::map<uint32_t, uint32_t>  blockToNodeMap;
+        std::map<uint32_t, int32_t>  blockToNodeMap;
         char* blockFilePath;
 
 	Output* out;
