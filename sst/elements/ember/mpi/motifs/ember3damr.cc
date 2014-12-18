@@ -136,6 +136,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	for(uint32_t i = 0; i < localBlocks.size(); ++i) {
 		Ember3DAMRBlock* currentBlock = localBlocks[i];
 
+		printBlockMap();
 		out->verbose(CALL_INFO, 8, 0, "Wiring block %" PRIu32 "...\n", currentBlock->getBlockID());
 
 		const uint32_t blockLevel = currentBlock->getRefinementLevel();
@@ -182,26 +183,48 @@ void Ember3DAMRGenerator::loadBlocks() {
 			std::map<uint32_t, int32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
 			std::map<uint32_t, int32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
 
-			if( blockNodeX1 == blockToNodeMap.end() && (! isBlockLocal(x1)) ) {
-				out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x1);
+			int32_t rankX1 = blockNodeX1->second;
+			int32_t rankX2 = blockNodeX2->second;
+			int32_t rankX3 = blockNodeX3->second;
+			int32_t rankX4 = blockNodeX4->second;
+
+			if( blockNodeX1 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x1) ) {
+					rankX1 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x1);
+				}
 			}
 
-			if( blockNodeX2 == blockToNodeMap.end() && (! isBlockLocal(x2)) ) {
-				out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x2);
+			if( blockNodeX2 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x2) ) {
+					rankX2 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x2);
+				}
 			}
 
-			if( blockNodeX3 == blockToNodeMap.end() && (! isBlockLocal(x3)) ) {
-				out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x3);
+			if( blockNodeX3 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x3) ) {
+					rankX3 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x3);
+				}
 			}
 
-			if( blockNodeX4 == blockToNodeMap.end() && (! isBlockLocal(x4)) ) {
-				out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x4);
+			if( blockNodeX4 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x4) ) {
+					rankX4 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x4);
+				}
 			}
 
-			currentBlock->setCommXUp(blockNodeX1->second,
-				blockNodeX2->second,
-				blockNodeX3->second,
-				blockNodeX4->second);
+		        out->verbose(CALL_INFO, 32, 0, "Mapping block %" PRIu32 " to nodes %" PRId32 ", %" PRId32 ", %" PRId32 ", %" PRId32 " in X+\n",
+				currentBlock->getBlockID(), rankX1, rankX2, rankX3, rankX4);
+
+			currentBlock->setCommXUp(rankX1, rankX2, rankX3, rankX4);
+
 			maxRequests += 4;
 		} else {
 			// Same level
@@ -257,26 +280,48 @@ void Ember3DAMRGenerator::loadBlocks() {
 			std::map<uint32_t, int32_t>::iterator blockNodeX3 = blockToNodeMap.find(x3);
 			std::map<uint32_t, int32_t>::iterator blockNodeX4 = blockToNodeMap.find(x4);
 
-			if( blockNodeX1 == blockToNodeMap.end() && (! isBlockLocal(x1)) ) {
-				out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x1);
+			int32_t rankX1 = blockNodeX1->second;
+			int32_t rankX2 = blockNodeX2->second;
+			int32_t rankX3 = blockNodeX3->second;
+			int32_t rankX4 = blockNodeX4->second;
+
+			if( blockNodeX1 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x1) ) {
+					rankX1 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x1);
+				}
 			}
 
-			if( blockNodeX2 == blockToNodeMap.end() && (! isBlockLocal(x2)) ) {
-				out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x2);
+			if( blockNodeX2 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x2) ) {
+					rankX2 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x2);
+				}
 			}
 
-			if( blockNodeX3 == blockToNodeMap.end() && (! isBlockLocal(x3)) ) {
-				out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x3);
+			if( blockNodeX3 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x3) ) {
+					rankX3 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x3);
+				}
 			}
 
-			if( blockNodeX4 == blockToNodeMap.end() && (! isBlockLocal(x4)) ) {
-				out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x4);
+			if( blockNodeX4 == blockToNodeMap.end() ) {
+				if( isBlockLocal(x4) ) {
+					rankX4 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "X- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", x4);
+				}
 			}
 
-			currentBlock->setCommXDown(blockNodeX1->second,
-				blockNodeX2->second,
-				blockNodeX3->second,
-				blockNodeX4->second);
+		        out->verbose(CALL_INFO, 32, 0, "Mapping block %" PRIu32 " to nodes %" PRId32 ", %" PRId32 ", %" PRId32 ", %" PRId32 " in X-\n",
+				currentBlock->getBlockID(), rankX1, rankX2, rankX3, rankX4);
+
+			currentBlock->setCommXDown(rankX1, rankX2, rankX3, rankX4);
+
 			maxRequests += 4;
 		} else {
 			// Same level
@@ -331,25 +376,48 @@ void Ember3DAMRGenerator::loadBlocks() {
             std::map<uint32_t, int32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
             std::map<uint32_t, int32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
 
-            if( blockNodeY1 == blockToNodeMap.end() && (! isBlockLocal(y1)) ) {
-		out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y1);
-            }
+			int32_t rankY1 = blockNodeY1->second;
+			int32_t rankY2 = blockNodeY2->second;
+			int32_t rankY3 = blockNodeY3->second;
+			int32_t rankY4 = blockNodeY4->second;
 
-            if( blockNodeY2 == blockToNodeMap.end() && (! isBlockLocal(y2)) ) {
-		out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y2);
-            }
+			if( blockNodeY1 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y1) ) {
+					rankY1 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y1);
+				}
+			}
 
-            if( blockNodeY3 == blockToNodeMap.end() && (! isBlockLocal(y3)) ) {
-		out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y3);
-            }
+			if( blockNodeY2 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y2) ) {
+					rankY2 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y2);
+				}
+			}
 
-            if( blockNodeY4 == blockToNodeMap.end() && (! isBlockLocal(y4)) ) {
-		out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y4);
-            }
-            currentBlock->setCommYUp(blockNodeY1->second,
-                                     blockNodeY2->second,
-                                     blockNodeY3->second,
-                                     blockNodeY4->second);
+			if( blockNodeY3 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y3) ) {
+					rankY3 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y3);
+				}
+			}
+
+			if( blockNodeY4 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y4) ) {
+					rankY4 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y4);
+				}
+			}
+
+		        out->verbose(CALL_INFO, 32, 0, "Mapping block %" PRIu32 " to nodes %" PRId32 ", %" PRId32 ", %" PRId32 ", %" PRId32 " in Y+\n",
+				currentBlock->getBlockID(), rankY1, rankY2, rankY3, rankY4);
+
+			currentBlock->setCommYUp(rankY1, rankY2, rankY3, rankY4);
+
 	    maxRequests += 4;
         } else {
             // Same level
@@ -404,26 +472,47 @@ void Ember3DAMRGenerator::loadBlocks() {
             std::map<uint32_t, int32_t>::iterator blockNodeY3 = blockToNodeMap.find(y3);
             std::map<uint32_t, int32_t>::iterator blockNodeY4 = blockToNodeMap.find(y4);
 
-            if( blockNodeY1 == blockToNodeMap.end() && (! isBlockLocal(y1)) ) {
-                out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y1);
-            }
+			int32_t rankY1 = blockNodeY1->second;
+			int32_t rankY2 = blockNodeY2->second;
+			int32_t rankY3 = blockNodeY3->second;
+			int32_t rankY4 = blockNodeY4->second;
 
-            if( blockNodeY2 == blockToNodeMap.end() && (! isBlockLocal(y2)) ) {
-                out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y2);
-            }
+			if( blockNodeY1 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y1) ) {
+					rankY1 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y1);
+				}
+			}
 
-            if( blockNodeY3 == blockToNodeMap.end() && (! isBlockLocal(y3)) ) {
-                out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y3);
-            }
+			if( blockNodeY2 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y2) ) {
+					rankY2 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y2);
+				}
+			}
 
-            if( blockNodeY4 == blockToNodeMap.end() && (! isBlockLocal(y4)) ) {
-                out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y4);
-            }
+			if( blockNodeY3 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y3) ) {
+					rankY3 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y3);
+				}
+			}
 
-            currentBlock->setCommYDown(blockNodeY1->second,
-                                       blockNodeY2->second,
-                                       blockNodeY3->second,
-                                       blockNodeY4->second);
+			if( blockNodeY4 == blockToNodeMap.end() ) {
+				if( isBlockLocal(y4) ) {
+					rankY4 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Y- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", y4);
+				}
+			}
+
+		        out->verbose(CALL_INFO, 32, 0, "Mapping block %" PRIu32 " to nodes %" PRId32 ", %" PRId32 ", %" PRId32 ", %" PRId32 " in Y-\n",
+				currentBlock->getBlockID(), rankY1, rankY2, rankY3, rankY4);
+
+			currentBlock->setCommYDown(rankY1, rankY2, rankY3, rankY4);
 	    maxRequests += 4;
         } else {
             // Same level
@@ -479,25 +568,47 @@ void Ember3DAMRGenerator::loadBlocks() {
             std::map<uint32_t, int32_t>::iterator blockNodeZ3 = blockToNodeMap.find(z3);
             std::map<uint32_t, int32_t>::iterator blockNodeZ4 = blockToNodeMap.find(z4);
 
-            if( blockNodeZ1 == blockToNodeMap.end() && (! isBlockLocal(z1)) ) {
-                out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z1);
-            }
+			int32_t rankZ1 = blockNodeZ1->second;
+			int32_t rankZ2 = blockNodeZ2->second;
+			int32_t rankZ3 = blockNodeZ3->second;
+			int32_t rankZ4 = blockNodeZ4->second;
 
-            if( blockNodeZ2 == blockToNodeMap.end() && (! isBlockLocal(z2)) ) {
-                out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z2);
-            }
+			if( blockNodeZ1 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z1) ) {
+					rankZ1 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z1);
+				}
+			}
 
-            if( blockNodeZ3 == blockToNodeMap.end() && (! isBlockLocal(z3)) ) {
-                out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z3);
-            }
+			if( blockNodeZ2 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z2) ) {
+					rankZ2 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z2);
+				}
+			}
 
-            if( blockNodeZ4 == blockToNodeMap.end() && (! isBlockLocal(z4)) ) {
-                out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z4);
-            }
-            currentBlock->setCommZUp(blockNodeZ1->second,
-                                     blockNodeZ2->second,
-                                     blockNodeZ3->second,
-                                     blockNodeZ4->second);
+			if( blockNodeZ3 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z3) ) {
+					rankZ3 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z3);
+				}
+			}
+
+			if( blockNodeZ4 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z4) ) {
+					rankZ4 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z4);
+				}
+			}
+
+		        out->verbose(CALL_INFO, 32, 0, "Mapping block %" PRIu32 " to nodes %" PRId32 ", %" PRId32 ", %" PRId32 ", %" PRId32 " in Y-\n",
+				currentBlock->getBlockID(), rankZ1, rankZ2, rankZ3, rankZ4);
+
+			currentBlock->setCommZUp(rankZ1, rankZ2, rankZ3, rankZ4);
 	    maxRequests += 4;
         } else {
             // Same level
@@ -550,26 +661,47 @@ void Ember3DAMRGenerator::loadBlocks() {
             std::map<uint32_t, int32_t>::iterator blockNodeZ3 = blockToNodeMap.find(z3);
             std::map<uint32_t, int32_t>::iterator blockNodeZ4 = blockToNodeMap.find(z4);
 
-            if( blockNodeZ1 == blockToNodeMap.end() && (! isBlockLocal(z1)) ) {
-                out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z1);
-            }
+			int32_t rankZ1 = blockNodeZ1->second;
+			int32_t rankZ2 = blockNodeZ2->second;
+			int32_t rankZ3 = blockNodeZ3->second;
+			int32_t rankZ4 = blockNodeZ4->second;
 
-            if( blockNodeZ2 == blockToNodeMap.end() && (! isBlockLocal(z2)) ) {
-                out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z2);
-            }
+			if( blockNodeZ1 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z1) ) {
+					rankZ1 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z1);
+				}
+			}
 
-            if( blockNodeZ3 == blockToNodeMap.end() && (! isBlockLocal(z3)) ) {
-                out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z3);
-            }
+			if( blockNodeZ2 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z2) ) {
+					rankZ2 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z2);
+				}
+			}
 
-            if( blockNodeZ4 == blockToNodeMap.end() && (! isBlockLocal(z4)) ) {
-                out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z4);
-            }
+			if( blockNodeZ3 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z3) ) {
+					rankZ3 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z3);
+				}
+			}
 
-            currentBlock->setCommZDown(blockNodeZ1->second,
-                                       blockNodeZ2->second,
-                                       blockNodeZ3->second,
-                                       blockNodeZ4->second);
+			if( blockNodeZ4 == blockToNodeMap.end() ) {
+				if( isBlockLocal(z4) ) {
+					rankZ4 = -1;
+				} else {
+					out->fatal(CALL_INFO, -1, "Z- wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", z4);
+				}
+			}
+
+		        out->verbose(CALL_INFO, 32, 0, "Mapping block %" PRIu32 " to nodes %" PRId32 ", %" PRId32 ", %" PRId32 ", %" PRId32 " in Z-\n",
+				currentBlock->getBlockID(), rankZ1, rankZ2, rankZ3, rankZ4);
+
+			currentBlock->setCommZDown(rankZ1, rankZ2, rankZ3, rankZ4);
 	    maxRequests += 4;
         } else {
             // Same level
@@ -623,7 +755,7 @@ void Ember3DAMRGenerator::configure()
 }
 
 void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, int32_t* blockComm, uint32_t* nextReq, const uint32_t faceSize,
-	const uint32_t msgTag) {
+	const uint32_t msgTag, const Ember3DAMRBlock* theBlock) {
 
 	const uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	char* bufferPtr = (char*) blockMessageBuffer;
@@ -636,15 +768,27 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 				out->verbose(CALL_INFO, 16, 0, "Setting up exchange with rank %" PRId32 " for message size: %" PRIu32 ", tag: %" PRIu32 "\n",
 					blockComm[i], faceSize, msgTag);
 
-				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking recv from: %" PRIu32 " on rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 "\n",
-					blockComm[i], rank(), items_per_cell * faceSize, msgTag);
+				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking recv from: %" PRIu32 " on rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 ", blockID=%" PRIu32 " (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
+					blockComm[i], rank(), items_per_cell * faceSize, msgTag, theBlock->getBlockID(),
+					theBlock->getRefineXDown(),
+                                        theBlock->getRefineXUp(),
+                                        theBlock->getRefineYDown(),
+                                        theBlock->getRefineYUp(),
+                                        theBlock->getRefineZDown(),
+                                        theBlock->getRefineZUp());
 
 				enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
 				(*nextReq) = (*nextReq) + 1;
 
-				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking send to: %" PRIu32 " from rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 "\n",
-					blockComm[i], rank(), items_per_cell * faceSize, msgTag);
+				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking send to: %" PRIu32 " from rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 ", blockID=%" PRIu32 " (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
+					blockComm[i], rank(), items_per_cell * faceSize, msgTag, theBlock->getBlockID(),
+					theBlock->getRefineXDown(),
+					theBlock->getRefineXUp(),
+					theBlock->getRefineYDown(),
+					theBlock->getRefineYUp(),
+					theBlock->getRefineZDown(),
+					theBlock->getRefineZUp());
 
 				enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
@@ -724,22 +868,22 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 			out->verbose(CALL_INFO, 16, 0, "Creating communication events for block %" PRIu32 "\n", currentBlock->getBlockID());
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing X-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommXDown(), &nextReq, blockNy * blockNz, 1001);
+			postBlockCommunication(evQ, currentBlock->getCommXDown(), &nextReq, blockNy * blockNz, 1001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing X-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommXUp(),   &nextReq, blockNy * blockNz, 1001);
+			postBlockCommunication(evQ, currentBlock->getCommXUp(),   &nextReq, blockNy * blockNz, 1001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Y-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommYDown(), &nextReq, blockNx * blockNz, 2001);
+			postBlockCommunication(evQ, currentBlock->getCommYDown(), &nextReq, blockNx * blockNz, 2001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Y-Up direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommYUp(),   &nextReq, blockNx * blockNz, 2001);
+			postBlockCommunication(evQ, currentBlock->getCommYUp(),   &nextReq, blockNx * blockNz, 2001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Z-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommZDown(), &nextReq, blockNx * blockNy, 4001);
+			postBlockCommunication(evQ, currentBlock->getCommZDown(), &nextReq, blockNx * blockNy, 4001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Z-Up direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommZUp(),   &nextReq, blockNx * blockNy, 4001);
+			postBlockCommunication(evQ, currentBlock->getCommZUp(),   &nextReq, blockNx * blockNy, 4001, currentBlock);
 
 			out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " complete.\n", currentBlock->getBlockID());
 		}
@@ -811,6 +955,9 @@ void Ember3DAMRGenerator::calcBlockLocation(const uint32_t blockID, const uint32
 uint32_t Ember3DAMRGenerator::calcBlockID(const uint32_t posX, const uint32_t posY, const uint32_t posZ,
 	const uint32_t level) {
 
+	out->verbose(CALL_INFO, 32, 0, "Calculating block ID for position (%" PRIu32 ", %" PRIu32 ", %" PRIu32 ")  at level %" PRIu32 "...\n",
+		posX, posY, posZ, level);
+
 	uint32_t startIndex = 0;
 
 	for(uint32_t nextLevel = 0; nextLevel < level; ++nextLevel) {
@@ -818,12 +965,22 @@ uint32_t Ember3DAMRGenerator::calcBlockID(const uint32_t posX, const uint32_t po
 			* (blocksZ * power2(nextLevel)) );
 	}
 
+	out->verbose(CALL_INFO, 32, 0, "Start index of refinement level is: %" PRIu32 "\n", startIndex);
+
 	const uint32_t blocksXLevel = blocksX * power2(level);
 	const uint32_t blocksYLevel = blocksY * power2(level);
 	const uint32_t blocksZLevel = blocksZ * power2(level);
 
+	out->verbose(CALL_INFO, 32, 0, "Refinement %" PRIu32 " blocks X=%" PRIu32 ", Y=%" PRIu32 ", Z=%" PRIu32 "\n",
+		level, blocksXLevel, blocksYLevel, blocksZLevel);
+
+	out->verbose(CALL_INFO, 32, 0, "Calculate block ID, startIndex=%" PRIu32 " + %" PRIu32 " + %" PRIu32 " + %" PRIu32 "\n",
+		startIndex, posX, (posY * blocksXLevel), (posZ * blocksXLevel * blocksYLevel));
+
 	const uint32_t final_location = startIndex + posX + (posY * blocksXLevel) +
 		(posZ * blocksXLevel * blocksYLevel);
+
+	out->verbose(CALL_INFO, 32, 0, "Final block ID is %" PRIu32 "\n", final_location);
 
 	return final_location;
 }
