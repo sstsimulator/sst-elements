@@ -240,9 +240,12 @@ static const ElementInfoParam pingpong_params[] = {
 };
 
 static const ElementInfoParam amr3d_params[] = {
-    	{	"messageSize",		"Sets the message size of the ping pong operation",	"1024"},
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"blockfile",		"File containing the 3D AMR blocks (from MiniAMR)", 	"blocks.amr"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.blockfile",		"File containing the 3D AMR blocks (from MiniAMR)", 	"blocks.amr"},
+	{       "arg.nx", 		        "Sets the size of a block in X", "8" },
+        {       "arg.ny",                       "Sets the size of a block in Y", "8" },
+        {       "arg.nz",                       "Sets the size of a block in Z", "8" },
+        {       "arg.fieldspercell",            "Sets the number of fields per mesh cell", "8" },
 	{	NULL,	NULL,	NULL	}
 };
 
