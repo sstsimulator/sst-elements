@@ -168,15 +168,15 @@ class Ember3DAMRBlock {
 
 		void print() {
 			printf("BlockID %" PRIu32 " @ Level: %" PRIu32 "\n", blockID, refinementLevel);
-			printf("Refine X up:   %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+			printf("Refine X up:   %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_x_up, commXUp[0], commXUp[1], commXUp[2], commXUp[3]);
-			printf("Refine X down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+			printf("Refine X down: %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_x_down, commXDown[0], commXDown[1], commXDown[2], commXDown[3]);
-			printf("Refine Y up:   %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Y up:   %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_y_up, commYUp[0], commYUp[1], commYUp[2], commYUp[3]);
-			printf("Refine Y down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Y down: %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_y_down, commYDown[0], commYDown[1], commYDown[2], commYDown[3]);
-			printf("Refine Z up:   %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Z up:   %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_z_up, commZUp[0], commZUp[1], commZUp[2], commZUp[3]);
 			printf("Refine Z down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
 				refine_z_down, commZDown[0], commZDown[1], commZDown[2], commZDown[3]);

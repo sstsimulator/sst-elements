@@ -34,7 +34,7 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 	out->verbose(CALL_INFO, 2, 0, "Block sizes are X=%" PRIu32 ", Y=%" PRIu32 ", Z=%" PRIu32 "\n",
 		blockNz, blockNy, blockNz);
 
-	std::string blockpath = params.find_string("blockfile", "blocks.amr");
+	std::string blockpath = params.find_string("arg.blockfile", "blocks.amr");
 
         blockFilePath = (char*) malloc(sizeof(char) * (blockpath.size() + 1));
         strcpy(blockFilePath, blockpath.c_str());
@@ -632,9 +632,16 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 			if(blockComm[i] != thisRank) {
 				out->verbose(CALL_INFO, 16, 0, "Setting up exchange with rank %" PRId32 " for message size: %" PRIu32 ", tag: %" PRIu32 "\n",
 					blockComm[i], faceSize, msgTag);
+
+				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking recv from: %" PRIu32 " on rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 "\n",
+					blockComm[i], rank(), items_per_cell * faceSize, msgTag);
+
 				enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
 				(*nextReq) = (*nextReq) + 1;
+
+				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking send to: %" PRIu32 " from rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 "\n",
+					blockComm[i], rank(), items_per_cell * faceSize, msgTag);
 
 				enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
