@@ -604,7 +604,12 @@ void Ember3DAMRGenerator::configure()
 	out->verbose(CALL_INFO, 2, 0, "Configuring AMR motif...\n");
 
 	char* newPrefix = (char*) malloc(sizeof(char) * 64);
-	sprintf(newPrefix, "AMR-3D[%7" PRIu32 ":@p:@l]: ", (uint32_t) rank());
+
+	if(out->getVerboseLevel() > 8) {
+		sprintf(newPrefix, "AMR-3D[%7" PRIu32 ":@f:@p:@l]: ", (uint32_t) rank());
+	} else {
+		sprintf(newPrefix, "AMR-3D[%7" PRIu32 ":@p:@l]: ", (uint32_t) rank());
+	}
 
 	std::string newPrefixStr(newPrefix);
 	out->setPrefix(newPrefixStr);
