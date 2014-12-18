@@ -590,10 +590,8 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 	out->verbose(CALL_INFO, 2, 0, "Maximum requests from rank %" PRIu32 " will be set up: %" PRIu32 "\n", (uint32_t) rank(), maxRequests);
 	requests   = (MessageRequest*)   malloc( sizeof(MessageRequest) * maxRequests * 2);
-        responses  = (MessageResponse**) malloc( sizeof(MessageResponse*) * maxRequests * 2);
 
 	out->verbose(CALL_INFO, 2, 0, "Requests allocated at: %p\n", requests);
-	out->verbose(CALL_INFO, 2, 0, "Responses alocated at: %p\n", responses);
 
 	uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	blockMessageBuffer = memAlloc( sizeof(double) * maxFaceDim * maxFaceDim * localBlocks.size() * 2);
@@ -744,7 +742,7 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 		if(nextReq > 0) {
 			out->verbose(CALL_INFO, 2, 0, "Enqueued %" PRIu32 " events, issuing wait all against them on rank %" PRIu32 "\n",
 				(uint32_t) nextReq, (uint32_t) rank());
-			enQ_waitall( evQ, nextReq, &requests[0], &responses[0] );
+			enQ_waitall( evQ, nextReq, &requests[0] );
 		} else {
 			out->verbose(CALL_INFO, 2, 0, "Enqueued no communication events, stepping over wait-all issue.\n");
 		}
