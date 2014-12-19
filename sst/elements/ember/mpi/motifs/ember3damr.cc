@@ -12,6 +12,7 @@
 #include <sst_config.h>
 
 #include "ember3damr.h"
+#include "ember3damrfile.h"
 
 using namespace SST::Ember;
 using namespace SST::Hermes::MP;
@@ -54,27 +55,20 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 void Ember3DAMRGenerator::loadBlocks() {
 	out->verbose(CALL_INFO, 2, 0, "Loading AMR block information from %s ...\n", blockFilePath);
 
-	FILE* blockFile = fopen(blockFilePath, "rt");
+	EmberAMRFile amrFile(blockFilePath, out);
 
-	if(NULL == blockFile) {
-		out->fatal(CALL_INFO, -1, "Unable to open AMR block file (%s)\n", blockFilePath);
-	} else {
-		out->verbose(CALL_INFO, 4, 0, "AMR block file opened successfully.\n");
-	}
+	maxLevel   = amrFile.getMaxRefinement();
+	blockCount = amrFile.getBlockCount();
+	blocksX    = amrFile.getBlocksX();
+	blocksY    = amrFile.getBlocksY();
+	blocksZ    = amrFile.getBlocksZ();
 
-	const int header = fscanf(blockFile, "%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
-		&blockCount, &maxLevel, &blocksX, &blocksY, &blocksZ);
-
-	if( EOF == header ) {
-		out->fatal(CALL_INFO, -1, "Unable to successfully read AMR header information from block file.\n");
-	} else {
-		out->verbose(CALL_INFO, 2, 0, "Loaded AMR block information: %" PRIu32 " blocks, %" PRIu32 " max refinement, blocks (X=%" PRIu32 ",Y=%" PRIu32 ",Z=%" PRIu32 ")\n",
-			blockCount, maxLevel, blocksX, blocksY, blocksZ);
-	}
+	out->verbose(CALL_INFO, 2, 0, "Loaded AMR block information: %" PRIu32 " blocks, %" PRIu32 " max refinement, blocks (X=%" PRIu32 ",Y=%" PRIu32 ",Z=%" PRIu32 ")\n",
+		blockCount, maxLevel, blocksX, blocksY, blocksZ);
 
 	uint32_t blocksOnRank = 0;
 	uint32_t blockID = 0;
-	int32_t  blockLevel = 0;
+	uint32_t  blockLevel = 0;
 	int32_t  xUp = 0;
 	int32_t  xDown = 0;
 	int32_t  yUp = 0;
@@ -84,38 +78,44 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 	uint32_t line = 0;
 
+
 	for(uint32_t currentRank = 0; currentRank < size(); ++currentRank) {
 		out->verbose(CALL_INFO, 4, 0, "Loading block information for rank %" PRIu32 " out of %" PRIu32 "... \n", currentRank, size());
 		line++;
 
 		int otherRankBlocks = 0;
 
-		if( EOF == fscanf(blockFile, "%" PRIu32 "\n", &blocksOnRank) ) {
-			out->fatal(CALL_INFO, -1, "Unable to read blocks for rank %" PRIu32 " near line %" PRIu32 "\n",
-				currentRank, line);
+		amrFile.readNodeMeshLine(&blocksOnRank);
+		out->verbose(CALL_INFO, 16, 0, "Processing node %" PRIu32 ", node header says there are %" PRIu32 " blocks on this node.\n",
+			currentRank, blocksOnRank);
+
+		if(currentRank == rank()) {
+			for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
+				line++;
+
+				amrFile.readNextMeshLine(&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+				out->verbose(CALL_INFO, 32, 0, "Read mesh block: %" PRIu32 " level=%" PRIu32 ", (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
+					blockID, blockLevel, xDown, xUp, yDown, yUp, zDown, zUp);
+
+				localBlocks.push_back( new Ember3DAMRBlock(blockID, blockLevel, xUp, xDown, yUp, yDown, zUp, zDown) );
+			}
 		} else {
-			if(currentRank == rank()) {
-				for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
-					line++;
+			for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
+				line++;
 
-					// I need to pay attention and record the file contents
-					fscanf(blockFile, "%" PRIu32 " %d %d %d %d %d %d %d\n",
-						&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+				amrFile.readNextMeshLine(&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+				out->verbose(CALL_INFO, 32, 0, "Read mesh block: %" PRIu32 " level=%" PRIu32 ", (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
+					blockID, blockLevel, xDown, xUp, yDown, yUp, zDown, zUp);
 
-					localBlocks.push_back( new Ember3DAMRBlock(blockID, blockLevel, xUp, xDown, yUp,
-						yDown, zUp, zDown) );
+				std::map<uint32_t, int32_t>::iterator checkExists = blockToNodeMap.find(blockID);
+
+				if(checkExists != blockToNodeMap.end()) {
+					out->fatal(CALL_INFO, -1, "Read in block %" PRIu32 " but that block already exists and points to rank %" PRId32 " (processing rank: %" PRIu32 ")\n",
+						blockID, checkExists->second, currentRank);
 				}
-			} else {
-				for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
-					line++;
 
-					fscanf(blockFile, "%" PRIu32 " %d %d %d %d %d %d %d\n",
-						&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
-
-					blockToNodeMap.insert( std::pair<uint32_t, int32_t>(blockID, (int32_t) currentRank) );
-
-					otherRankBlocks++;
-				}
+				blockToNodeMap.insert( std::pair<uint32_t, int32_t>(blockID, (int32_t) currentRank) );
+				otherRankBlocks++;
 			}
 		}
 
@@ -123,20 +123,20 @@ void Ember3DAMRGenerator::loadBlocks() {
 			rank(), otherRankBlocks, currentRank);
 	}
 
-	fclose(blockFile);
-
-	out->verbose(CALL_INFO, 2, 0, "Rank %" PRIu32 ", loaded %" PRIu32 " blocks.\n", (uint32_t) rank(),
-		(uint32_t) localBlocks.size());
-
-	printBlockMap();
+	out->verbose(CALL_INFO, 2, 0, "Rank %" PRIu32 ", loaded %" PRIu32 " blocks locally and %" PRIu32 " remotely, stopped at line: %" PRIu32 ".\n", (uint32_t) rank(),
+		(uint32_t) localBlocks.size(), (uint32_t) blockToNodeMap.size(), line);
 
 	out->verbose(CALL_INFO, 4, 0, "Performing AMR block wire up...\n");
 	uint32_t maxRequests = 0;
 
+	// Print out the block map to file if we are running in verbose mode.
+	if(out->getVerboseLevel() >= 8) {
+		printBlockMap();
+	}
+
 	for(uint32_t i = 0; i < localBlocks.size(); ++i) {
 		Ember3DAMRBlock* currentBlock = localBlocks[i];
 
-		printBlockMap();
 		out->verbose(CALL_INFO, 8, 0, "Wiring block %" PRIu32 "...\n", currentBlock->getBlockID());
 
 		const uint32_t blockLevel = currentBlock->getRefinementLevel();
@@ -427,6 +427,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
             if(blockNextToMeNode == blockToNodeMap.end()) {
                 if( ! isBlockLocal(blockNextToMe) ) {
+		    out->output("Dumping block map for rank: %" PRIu32 "\n", rank());
 		    out->fatal(CALL_INFO, -1, "Y+ wireup for block failed to locate wire up partner (block: %" PRIu32 ")\n", blockNextToMe);
                 }
             } else {
@@ -1001,10 +1002,29 @@ bool Ember3DAMRGenerator::isBlockLocal(const uint32_t bID) const {
 void Ember3DAMRGenerator::printBlockMap() {
 	std::map<uint32_t, int32_t>::iterator block_itr;
 
+	char* map_output = (char*) malloc(sizeof(char) * PATH_MAX);
+	sprintf(map_output, "blocks-%" PRIu32 ".map", rank());
+
+	FILE* map_output_file = fopen(map_output, "wt");
+
 	for(block_itr = blockToNodeMap.begin(); block_itr != blockToNodeMap.end(); block_itr++) {
-		printf("Block %" PRIu32 " maps to node: %" PRId32 "\n",
+		fprintf(map_output_file, "Block %" PRIu32 " maps to node: %" PRId32 "\n",
 			block_itr->first, block_itr->second);
 	}
+
+	fclose(map_output_file);
+
+	sprintf(map_output, "blocks-local-%" PRIu32 ".map", rank());
+	map_output_file = fopen(map_output, "wt");
+
+	assert(map_output_file != NULL);
+
+	for(int i = 0; i < localBlocks.size(); ++i) {
+		fprintf(map_output_file, "Block: %" PRIu32 "\n", localBlocks[i]->getBlockID());
+	}
+
+	fclose(map_output_file);
+	free(map_output);
 }
 
 Ember3DAMRGenerator::~Ember3DAMRGenerator() {
