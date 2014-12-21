@@ -17,7 +17,7 @@ using namespace SST::Scheduler;
 
 FibonacciHeap::FibonacciHeap(unsigned int size)
 {
-    nodesByID.resize(size);
+    nodesByID.resize(size, NULL);
     minRoot = NULL;
 }
 
@@ -175,4 +175,12 @@ void FibonacciHeap::decreaseKey(unsigned int nodeID, double newKey)
     if(newKey < minRoot->key){
         minRoot = node;
     }
+}
+
+double FibonacciHeap::getKey(unsigned int nodeID)
+{
+    if(nodesByID[nodeID] == NULL){
+        schedout.fatal(CALL_INFO, 1, "Tried to get key of non-existing node.");
+    }
+    return nodesByID[nodeID]->key;
 }

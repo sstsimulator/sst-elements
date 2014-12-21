@@ -13,6 +13,7 @@
 #define SST_SCHEDULER_NEARESTALLOCMAPPER_H_
 
 #include "AllocMapper.h"
+#include "FibonacciHeap.h"
 
 #include <limits.h>
 #include <list>
@@ -28,12 +29,11 @@ namespace SST {
         class NearestAllocMapper : public AllocMapper {
             public:
                 enum NodeGenType{//center machine node generation
-                    GREEDY_NODE = 0,   //O(N)
-                    EXHAUST_NODE = 1,  //O(N + upperLimit * V^2)
+                    GREEDY_NODE = 0,   //O(N + VE)
+                    EXHAUST_NODE = 1,  //O(NV + VE)
                 };
-
-                //+ O(JC + J^2 lg J), J & C are equivalents of V & E in the partitioned task graph
-                //Sum up of all time complexities to get the allocation complexity
+                
+                //add O(VE + V^2 lg V) if center task is not provided
 
                 NearestAllocMapper(const MeshMachine & mach,
                                    bool allocateAndMap,
@@ -47,12 +47,12 @@ namespace SST {
 
                 const MeshMachine & mMachine;
                 long int lastNode;
+                std::list<long> radiusToVolume;
 
                 //allocation variables:
                 std::vector<int> vertexToNode; //maps communication graph vertices to machine nodes
                 std::vector<int> taskToVertex; //maps task #s to communication graph vertices
                 std::vector<std::map<int,int> >* commGraph;
-                std::vector<std::vector<int> > weightTree;  //weight of the commTree
                 std::vector<bool> marked;
                 int centerTask;
                 int centerNode;
@@ -66,8 +66,7 @@ namespace SST {
                 //if(centerTask_given)
                 //  if(coresPerNode == 1)           O(V)
                 //  if(coresPerNode == c)
-                //      if(METIS_available)         O(V + E lg V + METIS_partitioning({V,E}))
-                //      else                        O(V + E lg V)
+                //      if(METIS_available)         O(V + E lg V)
                 //else                              O(VE + V^2 lg V)
                 void createCommGraph(const Job & job);
 
@@ -81,8 +80,8 @@ namespace SST {
                 //@upperLimit: max number of nodes to search for
                 //chooses an heuristic center that has approximately nodesNeeded free nodes around it
                 //tries first next upperLimit nodes
-                //if(upperLimit < N),   O(N + upperLimit * V^2)
-                //else,                 O(N * V^2)
+                //if(upperLimit < N),   O(N + upperLimit * V)
+                //else,                 O(N * V)
                 int getCenterNodeExh(const int nodesNeeded, const long int upperLimit = LONG_MAX);
 
                 //returns a center machine node for allocation
@@ -113,18 +112,8 @@ namespace SST {
                 int bestNode(std::list<int> & tiedNodes, int inTask) const;
 
                 //adds the unallocated neighbors of curTask to the task list with ascending weights
-                //O(V lg V)
-                void getTaskNeighbors(int curTask, std::list<std::pair<int, double> > & taskList);
-
-                //O(n lg n), n=toSort.size()
-                //@return sorted vector indexes
-                //std::vector<int> sortIndices(const std::vector<std::pair<int, double>> & toSort) const;
-                struct ByWeights {
-                    bool operator() (const std::pair<int, double>& l, const std::pair<int, double>& r)
-                    {
-                        return (l.second < r.second);
-                    }
-                };
+                //O(V), O(V+E) when called for all nodes
+                void updateTaskList(int mappedTask, FibonacciHeap & taskList);
         };
     }
 }

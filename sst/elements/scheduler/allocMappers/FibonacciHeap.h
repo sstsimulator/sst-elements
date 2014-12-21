@@ -44,14 +44,17 @@ namespace SST {
 
             public:
 
+                //needs maximum size
                 FibonacciHeap(unsigned int size);
                 ~FibonacciHeap();
 
                 bool isEmpty() { return minRoot == NULL; }
                 int findMin();
+                //ID should be smaller than max size
                 void insert(unsigned int nodeID, double key);
                 int deleteMin();
                 void decreaseKey(unsigned int nodeID, double newKey);
+                double getKey(unsigned int nodeID);
         };
     }
 }
