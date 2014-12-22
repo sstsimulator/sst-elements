@@ -290,6 +290,8 @@ int McOpteron::generateInstrSize()
    // sanity check
    if(size == 0) { 
       fprintf(stderr, "Error generating instruction size...aborting...\n");
+      cerr<<" Random p was "<<p<<", maxInstrSize is "<<maxInstrSize<<", iSP[0] is " <<
+                  instructionSizeProbabilities[0]<< endl;  
       exit(1);
    }
 	return size; 
