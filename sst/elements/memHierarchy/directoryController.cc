@@ -66,7 +66,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
-    
+	
     /* Check parameter validity */
     assert(protocol == "MESI" || protocol == "mesi" || protocol == "MSI" || protocol == "msi");
     if (protocol == "mesi") protocol = "MESI";
@@ -138,8 +138,8 @@ DirectoryController::~DirectoryController(){
     
     while(workQueue.size()){
         MemEvent *front = workQueue.front();
-        workQueue.pop_front();
         delete front;
+        workQueue.pop_front();
     }
 }
 
@@ -289,7 +289,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
     if(!workQueue.empty()){
         MemEvent *event = workQueue.front();
-        processPacket(event);
+	processPacket(event);
         workQueue.erase(workQueue.begin());
     }
 
@@ -297,11 +297,11 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 }
 
 bool DirectoryController::processPacket(MemEvent *ev){
-    assert(isRequestAddressValid(ev));
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%"PRIx64", Src = %s\n",
             getName().c_str(), ev->getID().first, ev->getID().second, CommandString[ev->getCmd()],
             ev->getBaseAddr(), ev->getSrc().c_str());
+    assert(isRequestAddressValid(ev));
     Command cmd = ev->getCmd();
     
     if(NACK == cmd){
@@ -460,7 +460,6 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         
         _abort(DirectoryController, "Unexpected event received\n"); /* Don't have this req recorded */
     }
-
 
     delete ev;
 }
@@ -888,10 +887,15 @@ void DirectoryController::resetEntry(DirEntry *entry){
             mshr->removeElement(entry->activeReq->getBaseAddr(),entry->activeReq);
             dbg.debug(_L10_, "Removing request from mshr. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[entry->activeReq->getCmd()], entry->activeReq->getBaseAddr(), entry->activeReq->getAddr(), mshr->getSize());
             if (mshr->isHit(entry->activeReq->getBaseAddr())) {
-                MemEvent * ev = mshr->lookupFront(entry->baseAddr);
-                dbg.debug(_L10_, "Reactivating event. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-                workQueue.push_back(ev);
-            }
+	    vector<mshrType> replayEntries = mshr->removeAll(entry->activeReq->getBaseAddr());
+	    for(vector<mshrType>::reverse_iterator it = replayEntries.rbegin(); it != replayEntries.rend(); it++) {
+		MemEvent *ev = boost::get<MemEvent*>((*it).elem);
+                std::list<MemEvent*>::iterator it = workQueue.begin();
+		it++;
+		dbg.debug(_L10_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+	        workQueue.insert(it,ev);
+}
+}
         }
         delete entry->activeReq;
     }
@@ -909,7 +913,6 @@ void DirectoryController::sendEventToCaches(MemEvent *ev){
 
 bool DirectoryController::isRequestAddressValid(MemEvent *ev){
     Addr addr = ev->getBaseAddr();
-
     if(0 == interleaveSize){
         return(addr >= addrRangeStart && addr < addrRangeEnd);
     } else {
@@ -932,9 +935,9 @@ Addr DirectoryController::convertAddressFromLocalAddress(Addr addr){
         res = addr + addrRangeStart - lookupBaseAddr;
     }
     else {
-        addr = addr - lookupBaseAddr;
-        Addr step   = addr / interleaveSize; 
-        Addr offset = addr % interleaveSize;
+        Addr a 	    = addr - lookupBaseAddr;
+        Addr step   = a / interleaveSize; 
+        Addr offset = a % interleaveSize;
         res = (step * interleaveStep) + offset;
         res = res + addrRangeStart;
 
@@ -949,9 +952,9 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
         res = lookupBaseAddr + addr - addrRangeStart;
     }
     else {
-        addr        = addr - addrRangeStart;
-        Addr step   = addr / interleaveStep;
-        Addr offset = addr % interleaveStep;
+        Addr a      = addr - addrRangeStart;
+        Addr step   = a / interleaveStep;
+        Addr offset = a % interleaveStep;
         res         = lookupBaseAddr +(step * interleaveSize) + offset;
     }
     dbg.debug(_L10_, "Converted physical address 0x%"PRIx64" to ACTUAL memory address 0x%"PRIx64"\n", addr, res);
