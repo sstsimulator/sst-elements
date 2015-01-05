@@ -890,10 +890,10 @@ void DirectoryController::resetEntry(DirEntry *entry){
 	    vector<mshrType> replayEntries = mshr->removeAll(entry->activeReq->getBaseAddr());
 	    for(vector<mshrType>::reverse_iterator it = replayEntries.rbegin(); it != replayEntries.rend(); it++) {
 		MemEvent *ev = boost::get<MemEvent*>((*it).elem);
-                std::list<MemEvent*>::iterator it = workQueue.begin();
-		it++;
+                std::list<MemEvent*>::iterator insert_it = workQueue.begin();
+		insert_it++;
 		dbg.debug(_L10_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-	        workQueue.insert(it,ev);
+	        workQueue.insert(insert_it,ev);
 }
 }
         }
