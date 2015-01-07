@@ -49,7 +49,8 @@ public:
         bool cpuResponse;
     };
     
-    MemNIC*    directoryLink_;
+    MemNIC*    bottomNetworkLink_;
+    MemNIC*    topNetworkLink_;
     bool       groupStats_;
     uint64_t   timestamp_;
     uint64_t   accessLatency_;

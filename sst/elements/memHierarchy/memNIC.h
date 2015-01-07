@@ -34,8 +34,10 @@ class MemNIC : public Module {
 
 public:
     enum ComponentType {
-        TypeCache,
-        TypeDirectoryCtrl,
+        TypeCache,              // cache - connected to network below & talks to dir 
+        TypeNetworkCache,       // cache - connected to network above & below, talks to cache above, dir below; associated with a particular set of addresses
+        TypeCacheToCache,       // cache - connected to network below & talks to cache 
+        TypeDirectoryCtrl,      // directory - connected to network above & talks to cache; associated with a particular set of addresses
         TypeDMAEngine,
         TypeOther
     };
@@ -66,7 +68,7 @@ public:
 
     struct ComponentInfo {
         std::string link_port;
-		int num_vcs;
+	int num_vcs;
         std::string link_bandwidth;
         std::string name;
         int network_addr;
@@ -137,10 +139,12 @@ public:
             ar & BOOST_SERIALIZATION_NVP(address);
             ar & BOOST_SERIALIZATION_NVP(name);
             switch ( compType ) {
+            case TypeCacheToCache:
             case TypeCache:
                 ar & BOOST_SERIALIZATION_NVP(compInfo.cache.blocksize);
                 ar & BOOST_SERIALIZATION_NVP(compInfo.cache.num_blocks);
                 break;
+            case TypeNetworkCache:
             case TypeDirectoryCtrl:
                 ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeStart);
                 ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeEnd);
@@ -175,7 +179,7 @@ private:
     /* Built during init -> available in Setup and later */
     std::vector<PeerInfo_t> peers;
     /* Built during init -> available for lookups later */
-    std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string> directories;
+    std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string> destinations;
 
 
     /* Translates a MemEvent string destination to an network address
@@ -213,8 +217,8 @@ public:
     MemEvent* recvInitData(void);
     const std::vector<PeerInfo_t>& getPeerInfo(void) const { return peers; }
     // translate a memory address to a network target (string)
-    std::string findTargetDirectory(Addr addr);
-    // NOTE: does not clear the listing of directories which are used for address lookups
+    std::string findTargetDestination(Addr addr);
+    // NOTE: does not clear the listing of destinations which are used for address lookups
     void clearPeerInfo(void) { peers.clear(); }
 
 };

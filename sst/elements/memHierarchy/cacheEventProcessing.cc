@@ -150,9 +150,19 @@ void Cache::handleSelfEvent(SST::Event* _event){
 
 
 void Cache::init(unsigned int _phase){
+    if (cf_.topNetwork_ == "cache") { // I'm connected to the network ONLY via a single NIC
+        bottomNetworkLink_->init(_phase);
+            
+        /*  */
+        while(MemEvent *ev = bottomNetworkLink_->recvInitData()){
+            delete ev;
+        }
+        return;
+    }
+    
     SST::Event *ev;
-    if(directoryLink_) {
-        directoryLink_->init(_phase);
+    if(bottomNetworkLink_) {
+        bottomNetworkLink_->init(_phase);
     }
     
     if(!_phase){
@@ -165,7 +175,7 @@ void Cache::init(unsigned int _phase){
                 highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
             }
         }
-        if(!cf_.dirControllerExists_){
+        if(cf_.bottomNetwork_ == ""){
             for(uint i = 0; i < lowNetPorts_->size(); i++) {
                 lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
             }
@@ -178,9 +188,9 @@ void Cache::init(unsigned int _phase){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
             if(!memEvent) delete memEvent;
             else{
-                if(cf_.dirControllerExists_) 
+                if(cf_.bottomNetwork_ != "") 
                 {
-                    directoryLink_->sendInitData(new MemEvent(*memEvent));
+                    bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
                 }
                 else{
                     for(uint idp = 0; idp < lowNetPorts_->size(); idp++) {
@@ -192,7 +202,7 @@ void Cache::init(unsigned int _phase){
         }
     }
     
-    if(!cf_.dirControllerExists_){
+    if(cf_.bottomNetwork_ == ""){
         for(uint i = 0; i < lowNetPorts_->size(); i++) {
             while ((ev = lowNetPorts_->at(i)->recvInitData())){
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);

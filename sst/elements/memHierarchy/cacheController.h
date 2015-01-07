@@ -243,7 +243,7 @@ private:
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++;
-        if(cf_.dirControllerExists_) memNICIdle_ = directoryLink_->clock();
+        if(cf_.bottomNetwork_ != "") memNICIdle_ = bottomNetworkLink_->clock();
         topCC_->sendOutgoingCommands();
         bottomCC_->sendOutgoingCommands();
         if ( cf_.maxWaitTime > 0 ) {
@@ -255,7 +255,7 @@ private:
     /** Increment idle clock count */
     bool incIdleCount(){
         idleCount_++;
-        if(!cf_.dirControllerExists_ && idleCount_ > idleMax_){
+        if(cf_.bottomNetwork_ == "" && idleCount_ > idleMax_){
             clockOn_ = false;
             idleCount_ = 0;
             return true;
@@ -298,7 +298,8 @@ private:
         uint lineSize_;
         uint MSHRSize_;
         bool L1_;
-        bool dirControllerExists_;
+        string bottomNetwork_;
+        string topNetwork_;
         vector<int> statGroupIds_;
         bool allNoncacheableRequests_;
         SimTime_t maxWaitTime;
@@ -311,7 +312,8 @@ private:
     vector<Link*>*          lowNetPorts_;
     vector<Link*>*          highNetPorts_;
     Link*                   selfLink_;
-    MemNIC*                 directoryLink_;
+    MemNIC*                 bottomNetworkLink_;
+    MemNIC*                 topNetworkLink_;
     Output*                 d_;
     Output*                 d2_;
     vector<string>*         nextLevelCacheNames_;

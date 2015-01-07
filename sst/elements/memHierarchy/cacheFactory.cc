@@ -54,6 +54,8 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     int dirAtNextLvl            = _params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = _params.find_string("coherence_protocol", "");
     string statGroups           = _params.find_string("stat_group_ids", "");
+    string bottomNetwork        = _params.find_string("bottom_network", "");
+    string topNetwork           = _params.find_string("top_network", "");
     int noncacheableRequests    = _params.find_integer("force_noncacheable_reqs", 0);
     SimTime_t maxWaitTime       = _params.find_integer("maxRequestDelay", 0);  // Nanoseconds
     bool L1 = (L1int == 1);
@@ -76,9 +78,14 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     if(L1int != 1 && L1int != 0)    _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
     if(accessLatency == -1 )        _abort(Cache, "Access time not specified\n");
     if(dirAtNextLvl > 1 ||
-       dirAtNextLvl < 0)            _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache");
+       dirAtNextLvl < 0)            _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache\n");
     long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
-    
+    if(!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))
+        _abort(Cache, "Did not correctly specify bottom_network\n");
+    if(!(topNetwork == "" || topNetwork == "cache"))
+        _abort(Cache, "Did not correctly specify top_network\n");
+
+    if (dirAtNextLvl) bottomNetwork = "directory";
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
     if(L1 && mshrSize != -1)    _abort(Cache, "The parameter 'mshr_num_entries' is not valid in an L1 since MemHierarchy"
                                 "assumes an L1 MSHR size matches the size of the load/store queue unit of the CPU.  An L1"
@@ -112,7 +119,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
 
-    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, dirAtNextLvl, statGroupIds, noncacheableRequests, maxWaitTime};
+    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, bottomNetwork, topNetwork, statGroupIds, noncacheableRequests, maxWaitTime};
     return new Cache(_id, _params, config);
 }
 
@@ -134,10 +141,23 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     accessLatency_      = _params.find_integer("access_latency_cycles", -1);
     string prefetcher   = _params.find_string("prefetcher");
     mshrLatency_        = _params.find_integer("mshr_latency_cycles", 0);
+    int cacheSliceCount         = _params.find_integer("num_cache_slices", 1);
+    int sliceID                 = _params.find_integer("slice_id", 0);
+    string sliceAllocPolicy     = _params.find_string("slice_allocation_policy", "rr");
     
     /* --------------- Check parameters -------------*/
     if (accessLatency_ < 1) _abort(Cache, "Cache access latency must be at least 1\n");
-    
+   
+    if (cf_.topNetwork_ == "cache") {
+        if (cacheSliceCount == 1) sliceID = 0;
+        else if (cacheSliceCount > 1) {
+            if (sliceID >= cacheSliceCount) _abort(Cache, "slice_id should be between 0 and num_cache_slices\n");
+            if (sliceAllocPolicy != "rr") _abort(Cache, "unknown slice_allocation_policy; only valid option is 'rr'\n");
+        } else {
+            _abort(Cache, "num_cache_slices should be 1 or greater; 1 is default\n");
+        }
+    }
+
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) {
 	listener_ = new CacheListener();
@@ -167,8 +187,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
 
-    /* ---------------- Directory Controller --------------- */
-    if (cf_.dirControllerExists_) {
+    /* ---------------- Memory NICs --------------- */
+    if (cf_.bottomNetwork_ == "directory" && cf_.topNetwork_ == "") { // cache with a dir below, direct connection to cache above
         assert(isPortConnected("directory"));
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
@@ -176,18 +196,69 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 	myInfo.num_vcs = _params.find_integer("network_num_vc", 3);
         myInfo.name = getName();
         myInfo.network_addr = _params.find_integer("network_address");
-        myInfo.type = MemNIC::TypeCache;
+        myInfo.type = MemNIC::TypeCache; 
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.cache.blocksize = cf_.lineSize_;
         typeInfo.cache.num_blocks = cf_.numLines_;
 
-        directoryLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        directoryLink_->addTypeInfo(typeInfo);
+        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_->addTypeInfo(typeInfo);
+
+        topNetworkLink_ = NULL;
+    } else if (cf_.bottomNetwork_ == "cache" && cf_.topNetwork_ == "") { // cache with another cache below it on the network
+        assert(isPortConnected("cache"));
+        MemNIC::ComponentInfo myInfo;
+        myInfo.link_port = "cache";
+        myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
+	myInfo.num_vcs = _params.find_integer("network_num_vc", 3);
+        myInfo.name = getName();
+        myInfo.network_addr = _params.find_integer("network_address");
+        myInfo.type = MemNIC::TypeCacheToCache; 
+
+        MemNIC::ComponentTypeInfo typeInfo;
+        typeInfo.cache.blocksize = cf_.lineSize_;
+        typeInfo.cache.num_blocks = cf_.numLines_;
+
+        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_->addTypeInfo(typeInfo);
+        
+        topNetworkLink_ = NULL;
+    } else if (cf_.bottomNetwork_ == "directory" && cf_.topNetwork_ == "cache") {
+        assert(isPortConnected("directory"));
+        MemNIC::ComponentInfo myInfo;
+        myInfo.link_port = "directory";
+        myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
+	myInfo.num_vcs = _params.find_integer("network_num_vc", 3);
+        myInfo.name = getName();
+        myInfo.network_addr = _params.find_integer("network_address");
+        myInfo.type = MemNIC::TypeNetworkCache; 
+
+        MemNIC::ComponentTypeInfo typeInfo;
+        uint64_t addrRangeStart = 0;
+        uint64_t addrRangeEnd = (uint64_t)-1;
+        uint64_t interleaveSize = 0;
+        uint64_t interleaveStep = 0;
+        if (cacheSliceCount > 1) {
+            if (sliceAllocPolicy == "rr") {
+                addrRangeStart = sliceID*cf_.lineSize_;
+                interleaveSize = cf_.lineSize_;
+                interleaveStep = cacheSliceCount*cf_.lineSize_;
+            }
+        }
+        typeInfo.addrRange.rangeStart      = addrRangeStart;
+        typeInfo.addrRange.rangeEnd        = addrRangeEnd;
+        typeInfo.addrRange.interleaveSize  = interleaveSize;
+        typeInfo.addrRange.interleaveStep  = interleaveStep;
+        
+        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_->addTypeInfo(typeInfo);
+        
+        topNetworkLink_ = bottomNetworkLink_;
     } else {
-        directoryLink_ = NULL;
+        bottomNetworkLink_ = NULL;
+        topNetworkLink_ = NULL;
     }
-    
     
     /* ------------- Member variables intialization ------------- */
     
@@ -212,9 +283,9 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
-    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_) :
+    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_, topNetworkLink_) :
                       new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, directoryLink_, groupStats_, cf_.statGroupIds_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, bottomNetworkLink_, groupStats_, cf_.statGroupIds_);
    
     /*---------------  Misc --------------- */
     cf_.rm_->setTopCC(topCC_);  cf_.rm_->setBottomCC(bottomCC_);
@@ -232,12 +303,12 @@ void Cache::configureLinks(){
     sprintf(buf,  "Error:  Low network port was not specified correctly on component %s.  Please name ports \'low_network_x' where x is the port number and starts at 0\n", this->getName().c_str());
     sprintf(buf3, "Error:  More than one high network port specified in %s.  Please use a 'Bus' component when connecting more than one higher level cache (eg. 2 L1s, 1 L2)\n", this->getName().c_str());
 
-    if(!cf_.dirControllerExists_){
+    if(cf_.bottomNetwork_ == ""){
         for(uint id = 0 ; id < 200; id++) {
             string linkName = "low_network_" + boost::lexical_cast<std::string>(id);
             SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
             if(link){
-                d_->debug(_INFO_,"Low Netowork Link ID: %u \n", (uint)link->getId());
+                d_->debug(_INFO_,"Low Network Link ID: %u \n", (uint)link->getId());
                 lowNetPorts_->push_back(link);
                 lowNetExists = true;
             }else break;
@@ -245,20 +316,21 @@ void Cache::configureLinks(){
         }
     }
 
-    for(uint id = 0 ; id < 200; id++) {
-        string linkName = "high_network_" + boost::lexical_cast<std::string>(id);
-        SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));  //TODO: fix
-        if(link) {
-            d_->debug(_INFO_,"High Network Link ID: %u \n", (uint)link->getId());
-            highNetPorts_->push_back(link);
-            highNetCount++;
-        }else break;
+    if(cf_.topNetwork_ == "") {
+        for(uint id = 0 ; id < 200; id++) {
+            string linkName = "high_network_" + boost::lexical_cast<std::string>(id);
+            SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));  //TODO: fix
+            if(link) {
+                d_->debug(_INFO_,"High Network Link ID: %u \n", (uint)link->getId());
+                highNetPorts_->push_back(link);
+                highNetCount++;
+            } else break;
+        }
     }
     
-    
-    if(!cf_.dirControllerExists_) BOOST_ASSERT_MSG(lowNetExists, buf);
-    BOOST_ASSERT_MSG(highNetCount > 0,  buf2);
-    BOOST_ASSERT_MSG(highNetCount < 2,  buf3);
+    if(cf_.bottomNetwork_ == "") BOOST_ASSERT_MSG(lowNetExists, buf);
+    if(cf_.topNetwork_ == "") BOOST_ASSERT_MSG(highNetCount > 0,  buf2);
+    if(cf_.topNetwork_ == "") BOOST_ASSERT_MSG(highNetCount < 2,  buf3);
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
 }
 

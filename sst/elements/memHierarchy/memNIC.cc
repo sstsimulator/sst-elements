@@ -29,8 +29,7 @@ int MemNIC::addrForDest(const std::string &target) const
 {
   std::map<std::string, int>::const_iterator addrIter = addrMap.find(target);
   if ( addrIter == addrMap.end() )
-    dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
-  dbg.debug(_L10_, "Translated address %s to %d\n", target.c_str(), addrIter->second);
+      dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
   return addrIter->second;
 }
 
@@ -49,7 +48,7 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
     this->ci = ci;
     this->recvHandler = handler;
 
-	num_vcs = ci.num_vcs;
+    num_vcs = ci.num_vcs;
 
     flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
@@ -87,19 +86,18 @@ void MemNIC::setup(void)
 
 void MemNIC::init(unsigned int phase)
 {
+
     link_control->init(phase);
     if ( !phase ) {
         InitMemRtrEvent *ev;
         if ( typeInfoList.empty() ) {
-            ev = new InitMemRtrEvent(comp->getName(),
-                    ci.network_addr, ci.type);
+            ev = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type);
             ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
             link_control->sendInitData(ev);
         } else {
             for ( std::vector<ComponentTypeInfo>::iterator i = typeInfoList.begin() ;
                     i != typeInfoList.end() ; ++i ) {
-                ev = new InitMemRtrEvent(comp->getName(),
-                        ci.network_addr, ci.type, *i);
+                ev = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, *i);
                 ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
                 link_control->sendInitData(ev);
             }
@@ -109,18 +107,19 @@ void MemNIC::init(unsigned int phase)
     while ( SST::Event *ev = link_control->recvInitData() ) {
         InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
         if ( imre ) {
-            dbg.debug(_L10_, "Creating IMRE for %d (%s)\n", imre->address, imre->name.c_str());
             addrMap[imre->name] = imre->address;
 
-            ComponentInfo ci;
-            ci.name = imre->name;
-            ci.network_addr = imre->address;
-            ci.type = imre->compType;
-            peers.push_back(std::make_pair(ci, imre->compInfo));
+            ComponentInfo peerCI;
+            peerCI.name = imre->name;
+            peerCI.network_addr = imre->address;
+            peerCI.type = imre->compType;
+            peers.push_back(std::make_pair(peerCI, imre->compInfo));
 
-            // save a copy for directory controller lookups later
-            if (ci.type == MemNIC::TypeDirectoryCtrl) {
-                directories[imre->compInfo.addrRange] = imre->name;
+            // save a copy for lookups later if we should be sending requests to this entity
+            if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && peerCI.type == MemNIC::TypeDirectoryCtrl) { // cache -> dir
+                destinations[imre->compInfo.addrRange] = imre->name;
+            } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
+                destinations[imre->compInfo.addrRange] = imre->name;
             }
         } else {
             initQueue.push_back(static_cast<MemRtrEvent*>(ev));
@@ -156,13 +155,13 @@ MemEvent* MemNIC::recvInitData(void)
     return NULL;
 }
 
-std::string MemNIC::findTargetDirectory(Addr addr)
+std::string MemNIC::findTargetDestination(Addr addr)
 {
-    for ( std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string>::const_iterator i = directories.begin() ;
-            i != directories.end() ; ++i ) {
+    for ( std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string>::const_iterator i = destinations.begin() ;
+            i != destinations.end() ; ++i ) {
         if ( i->first.contains(addr) ) return i->second;
     }
-    _abort(DMAEngine, "Unable to find directory for address 0x%"PRIx64"\n", addr);
+    _abort(MemNIC, "Unable to find target for address 0x%"PRIx64"\n", addr);
     return "";
 }
 
@@ -172,7 +171,6 @@ bool MemNIC::clock(void)
     /* If stuff to send, and space to send it, send */
     bool empty = sendQueue.empty();
     if (!empty) {
-        dbg.debug(_L10_, "SendQueue has %zu elements in it.\n", sendQueue.size());
         MemRtrEvent *head = sendQueue.front();
         if ( link_control->spaceToSend(0, head->size_in_bits) ) {
             bool sent = link_control->send(head, 0);
@@ -214,7 +212,6 @@ MemEvent* MemNIC::recv(void)
 
 void MemNIC::send(MemEvent *ev)
 {
-    dbg.debug(_L10_, "Adding event (%"PRIx64", %d) to send queue\n", ev->getID().first, ev->getID().second);
     MemRtrEvent *mre = new MemRtrEvent(ev);
     mre->src = ci.network_addr;
     mre->dest = addrForDest(ev->getDst());

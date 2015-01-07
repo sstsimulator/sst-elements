@@ -1048,7 +1048,7 @@ void DirectoryController::setup(void){
     const std::vector<MemNIC::PeerInfo_t> &ci = network->getPeerInfo();
     for(std::vector<MemNIC::PeerInfo_t>::const_iterator i = ci.begin() ; i != ci.end() ; ++i){
         dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->first.network_addr, i->first.name.c_str(), i->first.type);
-        if(MemNIC::TypeCache == i->first.type){
+        if(MemNIC::TypeCache == i->first.type || MemNIC::TypeNetworkCache == i->first.type){
             numTargets++;
             if(blocksize)   assert(blocksize == i->second.cache.blocksize);
             else            blocksize = i->second.cache.blocksize;

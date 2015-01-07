@@ -43,6 +43,7 @@ public:
         highNetPorts_       = _childrenLinks;
         NACKsSent_          = 0;
         dummyCCLine_        = new CCLine(_dbg);
+        topNetworkLink_     = NULL;
     }
     
     /** Upon a request, this function returns true if a response was sent back.
@@ -78,9 +79,14 @@ public:
     /** Look at the outgoing queue buffer to see if we need to send an memEvent through the SST Links */
     void sendOutgoingCommands(){
         timestamp_++;
-
+        
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
-            highNetPorts_->at(0)->send(outgoingEventQueue_.front().event);
+            MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
+            if (topNetworkLink_) {
+                topNetworkLink_->send(outgoingEvent);
+            } else {
+                highNetPorts_->at(0)->send(outgoingEvent);
+            }
             outgoingEventQueue_.pop_front();
         }
     }
@@ -113,7 +119,7 @@ class MESITopCC : public TopCacheController{
 
 public:
     MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines,
-              uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks) :
+              uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
               TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency, _childrenLinks),
               numLines_(_numLines), lowNetworkNodeCount_(0){
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
@@ -125,7 +131,8 @@ public:
         invXReqsSent_           = 0;
         protocol_               = _protocol;
         ccLines_.resize(numLines_);
-        
+        topNetworkLink_         = _topNetworkLink;
+
         for(uint i = 0; i < ccLines_.size(); i++)
             ccLines_[i] = new CCLine(_dbg);
     }

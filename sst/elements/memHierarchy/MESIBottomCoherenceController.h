@@ -29,14 +29,14 @@ public:
     /** Constructor for MESIBottomCC. */
     MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg,
                  vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
-                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink, bool _groupStats, vector<int> _statGroupIds) :
+                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _bottomNetworkLink, bool _groupStats, vector<int> _statGroupIds) :
                  CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
-        L1_             = _L1;
-        directoryLink_  = _directoryLink;
-        groupStats_     = _groupStats;
-        statGroupIds_   = _statGroupIds;
+        L1_                 = _L1;
+        bottomNetworkLink_  = _bottomNetworkLink;
+        groupStats_         = _groupStats;
+        statGroupIds_       = _statGroupIds;
         
         if(groupStats_){
             for(unsigned int i = 0; i < statGroupIds_.size(); i++)
@@ -139,9 +139,9 @@ public:
         
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
-            if(directoryLink_) {
-                outgoingEvent->setDst(directoryLink_->findTargetDirectory(outgoingEvent->getBaseAddr()));
-                directoryLink_->send(outgoingEvent);
+            if(bottomNetworkLink_) {
+                outgoingEvent->setDst(bottomNetworkLink_->findTargetDestination(outgoingEvent->getBaseAddr()));
+                bottomNetworkLink_->send(outgoingEvent);
             } else {
                 lowNetPorts_->at(0)->send(outgoingEvent);
             }
