@@ -15,7 +15,6 @@
 #include <sst/core/element.h>
 
 #include <nic.h>
-#include <testDriver.h>
 #include <hades.h>
 #include <hadesMP.h>
 #include <virtNic.h>
@@ -42,12 +41,6 @@
 using namespace Firefly;
 
 BOOST_CLASS_EXPORT(MerlinFireflyEvent)
-
-static SST::Component*
-create_testDriver(SST::ComponentId_t id, SST::Params& params)
-{
-    return new TestDriver(id, params);
-}
 
 static const ElementInfoParam testDriver_params[] = {
 	{ NULL, NULL, NULL }
@@ -295,12 +288,6 @@ static void init_MerlinFireflyEvent()
 }
 
 static const ElementInfoComponent components[] = {
-    { "testDriver",
-      "Firefly test driver ",
-      NULL,
-      create_testDriver,
-      NULL,//testDriver_params
-    },
     { "nic",
       "nic",
       NULL,
