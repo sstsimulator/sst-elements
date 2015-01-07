@@ -180,10 +180,10 @@ load_Comm( Component* comp, Params& params ) {
 
 
 static const ElementInfoParam component_params[] = {
+    { "module", "Sets the OS module", ""},
     { "printStats", "Prints the statistics from the component, used as a bit field, 1 = print end of run statisitics, 2 = print end of motif runs in multi motif runs, default 0 = print nothing.", "0"},
 
     { "verbose", "Sets the output verbosity of the component", "0" },
-    { "msgapi", "Sets the messaging API of the end point" },
     { "jobId", "Sets the job id", "-1"},
 
     { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},

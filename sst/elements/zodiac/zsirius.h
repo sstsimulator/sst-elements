@@ -78,6 +78,7 @@ private:
   typedef Arg_Functor<ZodiacSiriusTraceReader, int, bool> DerivedFunctor;
 
   Output zOut;
+  OS* os;
   MP::Interface* msgapi;
   SiriusReader* trace;
   std::queue<ZodiacEvent*>* eventQ;

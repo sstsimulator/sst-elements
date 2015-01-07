@@ -23,7 +23,7 @@ emberVerbose = 0
 motifDefaults = { 
 'cmd' : "",
 'printStats' : 0, 
-'api': "hermesParams",
+'api': "HadesMP",
 'spyplotmode': 0 
 }
 
@@ -141,8 +141,9 @@ _nicParams = {
 	}
 
 _emberParams = {
-		"hermesModule" : "firefly.hades",
-		"msgapi" : "firefly.hades",
+		"os.module"    : "firefly.hades",
+		"os.name"      : "hermesParams",
+		"api.0.module" : "firefly.hadesMP",
 		"verbose" : emberVerbose,
 	}
 

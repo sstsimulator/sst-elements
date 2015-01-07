@@ -76,8 +76,7 @@ class Interface : public Hermes::Interface {
     virtual ~Interface() {}
 
     virtual int sizeofDataType( PayloadDataType ) { assert(0); }
-    virtual RankID myWorldRank() { assert(0); } 
-    virtual int myWorldSize() { assert(0); } 
+
     virtual void init(Functor*) {}
     virtual void fini(Functor*) {}
     virtual void rank(Communicator group, RankID* rank, Functor*) {}

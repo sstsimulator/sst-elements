@@ -60,9 +60,8 @@ libfirefly_la_SOURCES = \
 	hades.h \
 	hades.h \
 	hades.cc \
-	hadesAPI.cc \
-	testDriver.h \
-	testDriver.cc \
+	hadesMP.cc \
+	hadesMP.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \

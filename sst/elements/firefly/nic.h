@@ -98,7 +98,7 @@ class NicCmdEvent : public Event {
 class NicRespEvent : public Event {
 
   public:
-    enum Type { PioSend, DmaSend, DmaRecv, NeedRecv, Put, Get } type;
+    enum Type { PioSend, DmaSend, DmaRecv, Put, Get, NeedRecv } type;
     int src_vNic;
     int node;
     int tag;

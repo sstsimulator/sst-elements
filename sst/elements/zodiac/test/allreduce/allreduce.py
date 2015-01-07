@@ -96,7 +96,7 @@ driverParams = ({
 		"verbose" : 1,
 		"bufLen" : 8,
 		"hermesModule" : "firefly.hades",
-		"msgapi" : "firefly.hades",
+		"os.module" : "firefly.hades",
 		"trace" : "npe-" + str(numRanks) + "/allred-" + str(numRanks) +".stf",
 		"sharedTrace" : "allred-128.stf",
 		"printStats" : 1,

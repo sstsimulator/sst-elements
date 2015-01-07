@@ -21,14 +21,13 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-#include <sst/elements/hermes/msgapi.h>
+#include <sst/elements/hermes/hermes.h>
 
 #include "embergen.h"
 
 namespace SST {
 namespace Ember {
 
-//class EmberGenerator;
 class EmberEvent;
 class EmberGeneratorData;
 
@@ -48,6 +47,8 @@ private:
 	void issueNextEvent(uint32_t nanoSecDelay);
     bool completeFunctor( int retval, EmberEvent* ev ); 
 
+	Hermes::OS*	m_os;
+
     struct ApiInfo {
         Hermes::Interface* api;
         EmberGeneratorData* data;
@@ -55,9 +56,9 @@ private:
 
     typedef std::map< std::string, ApiInfo* > ApiMap; 
 
-    ApiMap createApiMap( SST::Component*, SST::Params );
-    EmberGenerator* initMotif( SST::Params, const ApiMap&, int jobId,
-												int motifNum );
+    ApiMap createApiMap( Hermes::OS* os, SST::Component*, SST::Params );
+    EmberGenerator* initMotif( SST::Params, const ApiMap&,
+										int jobId, int motifNum );
 
 	int         m_jobId;
 	uint32_t    currentMotif;

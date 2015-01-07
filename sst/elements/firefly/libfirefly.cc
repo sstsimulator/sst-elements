@@ -17,6 +17,7 @@
 #include <nic.h>
 #include <testDriver.h>
 #include <hades.h>
+#include <hadesMP.h>
 #include <virtNic.h>
 #include <funcSM/init.h>
 #include <funcSM/fini.h>
@@ -109,6 +110,12 @@ static Module*
 load_hades(Component* comp, Params& params)
 {
     return new Hades(comp, params);
+}
+
+static Module*
+load_hadesMP(Component* comp, Params& params)
+{
+    return new HadesMP(comp, params);
 }
 
 static const ElementInfoParam hadesModule_params[] = {
@@ -313,12 +320,20 @@ static const ElementInfoComponent components[] = {
 
 static const ElementInfoModule modules[] = {
     { "hades",
-      "Firefly Hermes module",
+      "Firefly Hermes OS module",
       NULL,
       NULL,
       load_hades,
       hadesModule_params,
-      "SST::Hermes::MessageInterface"
+      "SST::Hermes::OS"
+    },
+    { "hadesMP",
+      "Firefly Hermes MP module",
+      NULL,
+      NULL,
+      load_hadesMP,
+      NULL,
+      "SST::Hermes::MP::Interface"
     },
     { "VirtNic",
       "Firefly VirtNic module",

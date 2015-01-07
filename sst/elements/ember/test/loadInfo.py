@@ -57,7 +57,7 @@ class LoadInfo:
 		nullMotif = [{
 			'cmd' : "Null",
 			'printStats' : 0,
-			'api': "hermesParams",
+			'api': "",
 			'spyplotmode': 0
 		}]
 

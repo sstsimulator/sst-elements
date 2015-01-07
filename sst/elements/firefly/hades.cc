@@ -32,7 +32,6 @@ using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
-    Interface(),
     m_virtNic(NULL),
 	m_functionSM( NULL )
 {
@@ -148,7 +147,7 @@ void Hades::_componentSetup()
 
     char buffer[100];
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",
-                                    m_virtNic->getNodeId(), myWorldRank());
+                                    m_virtNic->getNodeId(), getNid());
     m_dbg.setPrefix(buffer);
 }
 
@@ -192,7 +191,7 @@ void Hades::_componentInit(unsigned int phase )
     m_virtNic->init( phase );
 }
 
-int Hades::myWorldSize()
+int Hades::getNumNids()
 {
     int size = -1;
 	Group* group = m_info.getGroup(MP::GroupWorld);
@@ -203,7 +202,7 @@ int Hades::myWorldSize()
     return size;
 }
 
-MP::RankID Hades::myWorldRank() 
+int Hades::getNid() 
 {
     int rank = m_info.worldRank();
     m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);

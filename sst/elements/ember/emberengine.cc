@@ -32,15 +32,26 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	m_jobId = params.find_integer("jobId", -1);
 
 	std::ostringstream prefix;
-        prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
+	prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
 
 	output.init( prefix.str(), verbosity, (uint32_t) 0, Output::STDOUT);
 
-   	//params.print_all_params( std::cout );
+    Params osParams = params.find_prefix_params("os.");
 
-        // create a map of all the available API's
-        m_apiMap = createApiMap( this, params );
-        assert( ! m_apiMap.empty() );
+    std::string osName = osParams.find_string("name");
+    assert( ! osName.empty() );
+    std::string osModuleName = osParams.find_string("module");
+    assert( ! osModuleName.empty() );
+
+    Params modParams = params.find_prefix_params( osName + "." );
+
+    m_os  = dynamic_cast<OS*>( loadModuleWithComponent(
+                            osModuleName, this, modParams ) );
+    assert( m_os );
+
+	// create a map of all the available API's
+	m_apiMap = createApiMap( m_os, this, params );
+    assert( ! m_apiMap.empty() );
 
 	motifParams.resize( params.find_integer("motif_count", 1) );
 	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
@@ -73,25 +84,39 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 EmberEngine::~EmberEngine() {
 }
 
-EmberEngine::ApiMap EmberEngine::createApiMap( 
+EmberEngine::ApiMap EmberEngine::createApiMap( OS* os, 
                         SST::Component* owner, SST::Params params )
 {
     ApiMap tmp;
 
-    ApiInfo *info = new ApiInfo;
-    info->data = NULL;
+    Params apiList = params.find_prefix_params( "api." );
+    
+    int apiNum = 0;
+    while ( 1 ) {
 
-    //params.print_all_params( std::cout );
+	    std::ostringstream numStr;
+   	    numStr << apiNum++;
 
-    std::string ifaceModuleName = "firefly.hades"; 
-    std::string ifaceName = "hermesParams";
-    Params ifaceParams = params.find_prefix_params(ifaceName + "." );
-     
-    tmp[ ifaceName ] = info;
-    //ifaceParams.print_all_params(std::cout);
-    tmp[ ifaceName ]->api = 
-        dynamic_cast<Interface*>(owner->loadModuleWithComponent(
-                            ifaceModuleName, owner, ifaceParams));
+        Params apiParams = apiList.find_prefix_params( numStr.str() + "." );
+        if ( apiParams.empty() ) {
+            break;
+        }
+
+        std::string moduleName = apiParams.find_string( "module" );
+        assert( ! moduleName.empty() );
+        Params modParams = apiParams.find_prefix_params( "params" );
+
+        Hermes::Interface* api = dynamic_cast<Interface*>(
+                        owner->loadModuleWithComponent( 
+                            moduleName, owner, modParams ) );
+        assert( tmp.find( api->getName() ) == tmp.end() );
+
+        api->setOS( os );
+
+        tmp[ api->getName() ] = new ApiInfo;
+        tmp[ api->getName() ]->data = NULL;
+        tmp[ api->getName() ]->api = api;
+    }
 
     return tmp;
 }
@@ -101,8 +126,6 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 {
     EmberGenerator* gen = NULL;
 
-	//params.print_all_params(std::cout);
-	
     // get the name of the motif
     std::string gentype = params.find_string( "name" );
 	assert( !gentype.empty() );
@@ -139,24 +162,18 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 }
 
 void EmberEngine::init(unsigned int phase) {
-	// Pass the init phases through to the communication layer
-    ApiMap::iterator iter = m_apiMap.begin(); 	
-    for ( ; iter != m_apiMap.end(); ++iter ) {
-	    iter->second->api->_componentInit(phase);
-    }
+	// Pass the init phases through to the OS layer
+	m_os->_componentInit(phase);	
 }
 
 void EmberEngine::finish() {
 }
 
 void EmberEngine::setup() {
-	// Notify communication layer we are done with init phase
+	// Notify OS layer we are done with init phase
 	// and are now in final bring up state
 	
-    ApiMap::iterator iter = m_apiMap.begin(); 	
-    for ( ; iter != m_apiMap.end(); ++iter ) {
-	    iter->second->api->_componentSetup();
-    }
+	m_os->_componentSetup();	
 
 	// Prime the event queue 
 	issueNextEvent(0);

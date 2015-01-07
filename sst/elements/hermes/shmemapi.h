@@ -29,6 +29,7 @@ class Interface : public Hermes::Interface {
 
     Interface() {}
     virtual ~Interface() {}
+    virtual void setOS( OS* ) { assert(0); }
 
     virtual void start_pes(int,Functor*) {}
     virtual void num_pes(Functor*) {}

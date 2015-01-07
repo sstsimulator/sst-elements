@@ -23,11 +23,18 @@ namespace SST {
 
 namespace Hermes {
 
-class Interface : public Module {
-    public:
-    virtual void _componentInit(unsigned int phase ) {}
+class OS : public Module {
+  public:
+    virtual void _componentInit( unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
-	virtual void printStatus( Output& ) {}
+    virtual void printStatus( Output& ) {}
+    virtual int  getNid() { assert(0); }
+};
+
+class Interface : public Module {
+  public:
+    virtual void setOS( OS* ) { assert(0); }
+    virtual std::string getName() { assert(0); }
 };
 
 }

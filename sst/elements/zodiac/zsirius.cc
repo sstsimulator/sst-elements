@@ -36,30 +36,32 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
   sendFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedSendFunction)),
   waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction))
 {
-    string msgiface = params.find_string("msgapi");
     scaleCompute = params.find_floating("scalecompute", 1.0);
 
-    if ( msgiface == "" ) {
-        msgapi = new MP::Interface();
-    } else {
-    	Params hermesParams = params.find_prefix_params("hermesParams." );
+    string osModule = params.find_string("os.module");
+    assert( ! osModule.empty() );
 
-	msgapi = dynamic_cast<MP::Interface*>(loadModuleWithComponent(
-                            msgiface, this, hermesParams));
+   	Params hermesParams = params.find_prefix_params("hermesParams." );
 
-        if(NULL == msgapi) {
-		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;
-		exit(-1);
-        }
-    }
+    os = dynamic_cast<OS*>(loadModuleWithComponent(
+                            osModule, this, hermesParams));
+    assert(os);
+
+    Params modParams;
+    msgapi = dynamic_cast<MP::Interface*>(loadModuleWithComponent(
+                            "firefly.hadesMP", this, modParams));
+    assert(msgapi);
+
+    msgapi->setOS( os );
 
     trace_file = params.find_string("trace");
     if("" == trace_file) {
-	std::cerr << "Error: could not find a file contain a trace to simulate!" << std::endl;
-	exit(-1);
+        std::cerr << "Error: could not find a file contain a trace "
+            "to simulate!" << std::endl;
+	    exit(-1);
     } else {
-	std::cout << "Trace prefix: " << trace_file << std::endl;
-     }
+        std::cout << "Trace prefix: " << trace_file << std::endl;
+    }
 
     eventQ = new std::queue<ZodiacEvent*>();
 
@@ -84,9 +86,10 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 }
 
 void ZodiacSiriusTraceReader::setup() {
-    msgapi->_componentSetup();
+    os->_componentSetup();
 
-    rank = msgapi->myWorldRank();
+    rank = os->getNid();
+
     eventQ = new std::queue<ZodiacEvent*>();
 
     char trace_name[trace_file.length() + 20];
@@ -135,7 +138,7 @@ void ZodiacSiriusTraceReader::setup() {
 }
 
 void ZodiacSiriusTraceReader::init(unsigned int phase) {
-	msgapi->_componentInit(phase);
+	os->_componentInit(phase);
 }
 
 void ZodiacSiriusTraceReader::finish() {
