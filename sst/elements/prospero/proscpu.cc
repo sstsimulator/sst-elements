@@ -1,5 +1,7 @@
 
 #include "sst_config.h"
+#include <sst/core/unitAlgebra.h>
+
 #include "proscpu.h"
 #include <algorithm>
 
@@ -110,12 +112,28 @@ void ProsperoComponent::finish() {
 	const double totalBytesWrittenDbl = (double) totalBytesWritten;
 	const double secondsDbl = ((double) nanoSeconds) / 1000000000.0;
 
-	output->output("- Bandwidth (read):                      %20.2f B/s\n",
-		totalBytesReadDbl / secondsDbl);
-	output->output("- Bandwidth (written):                   %20.2f B/s\n",
-		totalBytesWrittenDbl / secondsDbl);
-	output->output("- Bandwidth (combined):                  %20.2f B/s\n",
-		(totalBytesReadDbl + totalBytesWrittenDbl) / secondsDbl);
+	char buffBWRead[32];
+	sprintf(buffBWRead, "%f B/s", ((double) totalBytesReadDbl / secondsDbl));
+
+	UnitAlgebra baBWRead(buffBWRead);
+
+	output->output("- Bandwidth (read):                      %s\n",
+		baBWRead.toStringBestSI().c_str());
+
+	char buffBWWrite[32];
+	sprintf(buffBWWrite, "%f B/s", ((double) totalBytesWrittenDbl / secondsDbl));
+
+	UnitAlgebra uaBWWrite(buffBWWrite);
+
+	output->output("- Bandwidth (written):                   %s\n",
+		uaBWWrite.toStringBestSI().c_str());
+
+	char buffBWCombined[32];
+	sprintf(buffBWCombined, "%f B/s", ((double) (totalBytesReadDbl + totalBytesWrittenDbl) / secondsDbl));
+
+	UnitAlgebra uaBWCombined(buffBWCombined);
+
+	output->output("- Bandwidth (combined):                  %s\n", uaBWCombined.toStringBestSI().c_str());
 
 	output->output("- Avr. Read request size:                %20.2f bytes\n",
 		((double) PROSPERO_MAX(totalBytesRead, 1)) /
