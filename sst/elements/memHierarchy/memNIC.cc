@@ -62,14 +62,14 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 
 
 MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) :
-    comp(comp)
+    typeInfoSent(false), comp(comp)
 {
     moduleInit(ci, handler);
 }
 
 
 MemNIC::MemNIC(Component *comp) :
-    comp(comp)
+    typeInfoSent(false), comp(comp)
 {
 }
 
@@ -102,6 +102,7 @@ void MemNIC::init(unsigned int phase)
                 link_control->sendInitData(ev);
             }
         }
+        typeInfoSent = true;
         dbg.debug(_L10_, "Sent init data!\n");
     }
     while ( SST::Event *ev = link_control->recvInitData() ) {
@@ -200,10 +201,32 @@ MemEvent* MemNIC::recv(void)
 
         MemRtrEvent *mre = (MemRtrEvent*)link_control->recv(last_recv_vc);
         if ( NULL != mre ) {
-            MemEvent *deliverEvent = mre->event;
-            deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
-            delete mre;
-            return deliverEvent;
+            if ( mre->hasClientData() ) {
+                MemEvent *deliverEvent = mre->event;
+                deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
+                delete mre;
+                return deliverEvent;
+            } else {
+                InitMemRtrEvent *imre = static_cast<InitMemRtrEvent*>(mre);
+
+                // We shouldn't have any new players on the network - just updated address ranges.
+                // Ideally, we should support removing of address ranges as well.  Future work...
+
+                ComponentInfo peerCI;
+                peerCI.name = imre->name;
+                peerCI.network_addr = imre->address;
+                peerCI.type = imre->compType;
+                // If user has not cleared info...
+                if ( !peers.empty() )
+                    peers.push_back(std::make_pair(peerCI, imre->compInfo));
+
+                // Save any new address ranges.
+                if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && peerCI.type == MemNIC::TypeDirectoryCtrl) { // cache -> dir
+                    destinations[imre->compInfo.addrRange] = imre->name;
+                } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
+                    destinations[imre->compInfo.addrRange] = imre->name;
+                }
+            }
         }
     }
     return NULL;
@@ -222,3 +245,13 @@ void MemNIC::send(MemEvent *ev)
 }
 
 
+void MemNIC::sendNewTypeInfo(const ComponentTypeInfo &cti)
+{
+    for ( std::map<std::string, int>::const_iterator i = addrMap.begin() ; i != addrMap.end() ; ++i ) {
+        InitMemRtrEvent *imre = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, cti);
+        imre->dest = i->second;
+        imre->size_in_bits = 128;  // 2* 64bit address (for a range)
+        imre->vn = 0;
+        sendQueue.push_back(imre);
+    }
+}

@@ -96,6 +96,9 @@ public:
             mre->event = new MemEvent(*event);
             return mre;
         }
+
+        virtual bool hasClientData() const { return true; }
+
         friend class boost::serialization::access;
         template<class Archive>
             void
@@ -106,7 +109,7 @@ public:
             }
     };
 
-    class InitMemRtrEvent : public Merlin::RtrEvent {
+    class InitMemRtrEvent : public MemRtrEvent {
     public:
         std::string name;
         int address;
@@ -115,13 +118,13 @@ public:
 
         InitMemRtrEvent() {}
         InitMemRtrEvent(const std::string &name, int addr, ComponentType type) :
-            Merlin::RtrEvent(), name(name), address(addr), compType(type)
+            MemRtrEvent(), name(name), address(addr), compType(type)
         {
             src = addr;
         }
 
         InitMemRtrEvent(const std::string &name, int addr, ComponentType type, ComponentTypeInfo info) :
-            Merlin::RtrEvent(), name(name), address(addr), compType(type), compInfo(info)
+            MemRtrEvent(), name(name), address(addr), compType(type), compInfo(info)
         {
             src = addr;
         }
@@ -129,6 +132,9 @@ public:
         virtual RtrEvent* clone(void) {
             return new InitMemRtrEvent(*this);
         }
+
+        virtual bool hasClientData() const { return false; }
+
         friend class boost::serialization::access;
         template<class Archive>
         void
@@ -165,6 +171,7 @@ private:
     Output dbg;
     int num_vcs;
     size_t flitSize;
+    bool typeInfoSent; // True if TypeInfo has already been sent
 
     Component *comp;
     ComponentInfo ci;
@@ -189,6 +196,8 @@ private:
     /* Get size in flits for a MemEvent */
     int getFlitSize(MemEvent *ev);
 
+    /* Used during run to send updated address ranges */
+    void sendNewTypeInfo(const ComponentTypeInfo &cti);
 
 public:
     MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
@@ -202,6 +211,7 @@ public:
 
     void addTypeInfo(const ComponentTypeInfo &cti) {
         typeInfoList.push_back(cti);
+        if ( typeInfoSent ) sendNewTypeInfo(cti);
     }
 
     /* Call these from their respective calls in the component */
