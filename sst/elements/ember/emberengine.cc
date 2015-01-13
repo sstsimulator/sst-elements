@@ -173,7 +173,12 @@ void EmberEngine::setup() {
 	// Notify OS layer we are done with init phase
 	// and are now in final bring up state
 	
-	m_os->_componentSetup();	
+    m_os->_componentSetup();	
+
+    std::ostringstream prefix;
+    prefix << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: ";
+
+    output.setPrefix( prefix.str() );
 
 	// Prime the event queue 
 	issueNextEvent(0);
@@ -216,7 +221,7 @@ void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
 
 bool EmberEngine::completeFunctor( int retval, EmberEvent* ev )
 {
-    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
+    output.verbose(CALL_INFO, 1, 0, "%s %s Event\n", 
               ev->stateName( ev->state() ).c_str(), ev->getName().c_str());
 
     if ( ev->complete( getCurrentSimTimeNano(), retval ) ) {
@@ -234,7 +239,7 @@ void EmberEngine::handleEvent(Event* ev) {
 	// handlers we have created
 	EmberEvent* eEv = static_cast<EmberEvent*>(ev);
 
-    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
+    output.verbose(CALL_INFO, 1, 0, "%s %s Event\n", 
               eEv->stateName( eEv->state() ).c_str(), eEv->getName().c_str());
 
     switch ( eEv->state() ) { 
