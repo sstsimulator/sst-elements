@@ -987,7 +987,7 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
 
-    dbg().verbose(CALL_INFO,1,0,"send long msg response to nid=%d key=%#x\n", 
+    dbg().verbose(CALL_INFO,1,0,"send long msg Ack to nid=%d key=%#x\n", 
                                                 req->m_ackNid, req->m_ackKey );
 
     obj().nic().pioSend( req->m_ackNid, req->m_ackKey, vec, functor );

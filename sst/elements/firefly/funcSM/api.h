@@ -57,9 +57,8 @@ class FunctionSMInterface : public Module {
     {
         char buffer[100];
 
-        snprintf(buffer,100,"@t:%#lx:%ld:%sFunc::@p():@l ",
+        snprintf(buffer,100,"@t:%ld:%sFunc::@p():@l ",
                     params.find_integer("nodeId"), 
-                    params.find_integer("worldRank"),
                     m_name.c_str() );
 
         m_dbg.init( buffer, params.find_integer("verbose",0), 0,

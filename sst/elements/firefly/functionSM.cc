@@ -86,9 +86,8 @@ void FunctionSM::printStatus( Output& out )
 void FunctionSM::setup()
 {
     char buffer[100];
-    int nodeId = -1;
-    snprintf(buffer,100,"@t:%d:%d:FunctionSM::@p():@l ",nodeId,
-                                                m_info.worldRank());
+    int nodeId =  m_info.worldRank();
+    snprintf(buffer,100,"@t:%d:FunctionSM::@p():@l ", nodeId );
     m_dbg.setPrefix(buffer);
 
     m_smV.resize( NumFunctions );
@@ -105,9 +104,6 @@ void FunctionSM::setup()
     std::ostringstream tmp;
     tmp <<  nodeId; 
     defaultParams[ "nodeId" ] = tmp.str();
-    tmp.str("");
-    tmp << m_info.worldRank(); 
-    defaultParams[ "worldRank" ] = tmp.str();
 
     for ( int i = 0; i < NumFunctions; i++ ) {
         std::string name = functionName( (FunctionEnum) i );
@@ -150,7 +146,6 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
     }
 
     params["nodeId"] = defaultParams[ "nodeId" ];
-    params["worldRank"] = defaultParams[ "worldRank" ];
 
     m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
                              params );

@@ -125,7 +125,6 @@ static const ElementInfoParam hadesModule_params[] = {
 	{"enterLatency","internal",""},
 	{"returnLatency","internal",""},
 	{"module","internal",""},
-    {"worldRank", "internal", ""},
     {"nodeId", "internal", ""},
     {"name", "internal", ""},
     {NULL, NULL}
