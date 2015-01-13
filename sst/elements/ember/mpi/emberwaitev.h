@@ -30,6 +30,8 @@ public:
 
 	~EmberWaitEvent() {}
 
+    std::string getName() { return "Wait"; }
+
     void issue( uint64_t time, FOO* functor ) {
 
         m_output->verbose(CALL_INFO, 2, 0, "%p %p \n",m_req, m_respPtr);
