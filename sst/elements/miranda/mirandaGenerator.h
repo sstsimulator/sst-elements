@@ -20,6 +20,9 @@ typedef enum {
 class RequestGeneratorRequest {
 public:
 	RequestGeneratorRequest() : physAddr(0), len(0), op(READ), issued(false) {}
+	RequestGeneratorRequest(const uint64_t cAddr,
+		const uint64_t cLength, const RequestGenOperation cOpType) :
+		physAddr(cAddr), len(cLength), op(cOpType), issued(false) {}
 	~RequestGeneratorRequest() { }
 	uint64_t getAddress() const { return physAddr; }
 	uint64_t getLength() const { return len; }

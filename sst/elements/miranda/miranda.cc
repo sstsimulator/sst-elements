@@ -19,6 +19,7 @@
 #include "generators/randomgen.h"
 #include "generators/streambench.h"
 #include "generators/revsinglestream.h"
+#include "generators/stencil3dbench.h"
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -39,6 +40,10 @@ static Module* load_STREAMGenerator(Component* owner, Params& params) {
 	return new STREAMBenchGenerator(owner, params);
 }
 
+static Module* load_Stencil3DGenerator(Component* owner, Params& params) {
+	return new Stencil3DBenchGenerator(owner, params);
+}
+
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
 	return new RequestGenCPU(id, params);
 }
@@ -49,6 +54,18 @@ static const ElementInfoParam singleStreamGen_params[] = {
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
     { "startat",          "Sets the start address for generation", "0" },
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoParam stencil3dGen_params[] = {
+    { "nx",               "Sets the dimensions of the problem space in X", "10"},
+    { "ny",               "Sets the dimensions of the problem space in Y", "10"},
+    { "nz",               "Sets the dimensions of the problem space in Z", "10"},
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "datawidth",        "Sets the data width of the mesh element, typically 8 bytes for a double", "8" },
+    { "startz",           "Sets the start location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "0" },
+    { "endz",             "Sets the end location in Z-plane for this instance, parallelism implemented as Z-plane decomposition", "10" },
+    { "iterations",       "Sets the number of iterations to perform over this mesh", "1"},
     { NULL, NULL, NULL }
 };
 
@@ -105,6 +122,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_STREAMGenerator,
 		streamBench_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"Stencil3DBenchGenerator",
+		"Creates a representation of a 3D 27pt stencil benchmark",
+		NULL,
+		NULL,
+		load_Stencil3DGenerator,
+		stencil3dGen_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{

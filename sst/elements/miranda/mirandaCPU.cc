@@ -262,12 +262,12 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	if(reqGen->isFinished()) {
-		if(0 == requestsPending) {
+		if( (pendingRequests.size() == 0) && (0 == requestsPending) ) {
+			out->verbose(CALL_INFO, 4, 0, "Request generator complete and no requests pending, simulation can halt.\n");
+
 			// Deregister here
 			primaryComponentOKToEndSim();
 			return true;
-		} else {
-			return false;
 		}
 	}
 
@@ -284,12 +284,17 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 				out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");
 
 				if(pendingRequests.size() == 0) {
-					reqGen->generate(&pendingRequests);
+					if(! reqGen->isFinished()) {
+						reqGen->generate(&pendingRequests);
+					}
 
 					if(pendingRequests.size() == 0) {
 						break;
 					}
 				} else {
+					out->verbose(CALL_INFO, 4, 0, "Issuing request cycle %" PRIu64 ", pending requests: %" PRIu64 ".\n",
+						(uint64_t) cycle, (uint64_t) pendingRequests.size());
+
 					RequestGeneratorRequest* nxtRq = pendingRequests.front();
 					pendingRequests.pop();
 
