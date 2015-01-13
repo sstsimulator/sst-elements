@@ -136,9 +136,11 @@ void EmberHalo3DGenerator::configure()
 
 bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ ) 
 {
-	if ( 0 == m_loopIndex) {
+	if ( 0 == m_loopIndex && 0 == rank() ) {
         GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
     }
+
+    GEN_DBG( 1, "loop=%d\n", m_loopIndex );
 
 		enQ_compute( evQ, nsCompute);
 
