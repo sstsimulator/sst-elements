@@ -469,7 +469,16 @@ void Nic::processGet( SelfEvent& event )
 
     processSend();
 
-    m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    // recv notifier is not currently installed, check for event 
+    MerlinFireflyEvent* mEvent = getMerlinEvent( 0 );
+
+    if ( mEvent ) {
+        m_dbg.verbose(CALL_INFO,2,0,"another event waiting\n");
+        processRecvEvent( mEvent );
+    } else {
+        m_dbg.verbose(CALL_INFO,2,0,"set recv notify\n");
+        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    }
 }
 
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
