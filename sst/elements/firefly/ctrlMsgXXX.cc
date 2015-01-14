@@ -306,7 +306,7 @@ void XXX::delayHandler( SST::Event* e )
 
 bool XXX::notifyGetDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"key=%p\n",key);
+    m_dbg.verbose(CALL_INFO,1,0,"key=%p\n",key);
 
     if ( key ) {
         FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
