@@ -113,7 +113,7 @@ int32_t EmberMessagePassingGenerator::convertPositionToRank(
 void EmberMessagePassingGenerator::finish(const SST::Output* output, 
         uint64_t time ) 
 {
-    GEN_DBG( 2, "\n");
+    GEN_DBG( 1, "%s\n",m_name.c_str());
 
     if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
 	char* filenameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
