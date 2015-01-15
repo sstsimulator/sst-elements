@@ -15,6 +15,8 @@
 #include "portControl.h"
 #include "merlin.h"
 
+#include <boost/lexical_cast.hpp>
+
 using namespace SST;
 using namespace Merlin;
 
@@ -150,6 +152,16 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     //                                        new Event::Handler<PortControl>(this,&PortControl::handle_output));
     
     curr_out_vc = 0;
+
+    // Register statistics
+    std::string name("port");
+    name = name + boost::lexical_cast<std::string>(port_number) + "_send_bit_count";
+    send_bit_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
+
+    name = "port";
+    name = name + boost::lexical_cast<std::string>(port_number) + "_send_packet_count";
+    send_packet_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
+
 }
 
 // void
@@ -685,6 +697,8 @@ PortControl::handle_output_r2r(Event* ev) {
                       << "." << std::endl;
 	    }
         
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->size_in_bits);
+        send_packet_count->addData(1);
 	    if ( host_port ) {
             // std::cout << "Found an event to send on host port " << port_number << std::endl;
             port_link->send(1,send_event->getEncapsulatedEvent()); 
@@ -693,7 +707,7 @@ PortControl::handle_output_r2r(Event* ev) {
 	    }
 	    else {
             port_link->send(1,send_event); 
-	    }   
+	    }
 	}
 	else {
 	    // What do we do if there's nothing to send??  It could be
@@ -790,6 +804,8 @@ PortControl::handle_output_n2r(Event* ev) {
                       << "." << std::endl;
 	    }
         
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->size_in_bits);
+        send_packet_count->addData(1);
 	    if ( host_port ) {
             // std::cout << "Found an event to send on host port " << port_number << std::endl;
             port_link->send(1,send_event->getEncapsulatedEvent()); 

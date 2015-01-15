@@ -28,7 +28,7 @@ class barrier_action : public Action {
 public:
 
     barrier_action() {
-	setPriority(75);
+	setPriority(BARRIERPRIORITY);
 	
 	min = 0xffffffff;
 	max = 0;

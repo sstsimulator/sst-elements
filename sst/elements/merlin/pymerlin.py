@@ -71,7 +71,7 @@ class topoSimple(Topo):
             link = sst.Link("link:%d"%l)
             rtr.addLink(link, "port%d"%l, _params["link_lat"])
             self._getEndPoint(l).build(l, link, {})
-        
+            
 
 class topoTorus(Topo):
     def __init__(self):
@@ -412,7 +412,6 @@ class topoFatTree(Topo):
             # Add links
             for l in xrange(len(rtr_links[i])):
                 rtr.addLink(rtr_links[i][l],"port%d"%l, _params["link_lat"])
-
     
     def build(self):
 #        print "build()"
@@ -447,7 +446,7 @@ class topoFatTree(Topo):
                 rtr.addParams(_params.subset(self.rtrKeys))
                 rtr.addParam("id", rtr_id)
                 rtr.addParam("num_ports",radix)
-                
+
                 for l in xrange(len(rtr_links[i])):
                     rtr.addLink(rtr_links[i][l], "port%d"%l, _params["link_lat"])
 

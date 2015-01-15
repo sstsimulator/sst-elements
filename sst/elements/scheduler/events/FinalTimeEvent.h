@@ -31,7 +31,7 @@ namespace SST {
                 //is therefore set to force schedComponent to handle this event.
 
                 FinalTimeEvent() : SST::Event() {
-                    setPriority(98); // one less than the event that says everything is done
+                    setPriority(FINALEVENTPRIORITY); // one less than the event that says everything is done
                     //(we want this to be after everything except that)
                     forceExecute = false;
                 }

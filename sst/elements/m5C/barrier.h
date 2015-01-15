@@ -86,7 +86,7 @@ class BarrierAction : public SST::Action
 
     BarrierAction( int numPerRank ) :m_numReporting( 0 ), m_opened( false ){
         BA_DBG("\n");
-        setPriority(75);
+        setPriority(BARRIERPRIORITY);
         char buf[100];
         m_nRanks = SST::Simulation::getSimulation()->getNumRanks();
 

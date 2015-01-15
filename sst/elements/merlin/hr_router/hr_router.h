@@ -20,6 +20,8 @@
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
 
+#include <sst/core/statapi/stataccumulator.h>
+
 #include <queue>
 
 #include "sst/elements/merlin/router.h"
@@ -66,13 +68,14 @@ private:
     std::string xbar_bw;
     TimeConverter* xbar_tc;
     Clock::Handler<hr_router>* my_clock_handler;
-
+    
     bool clock_handler(Cycle_t cycle);
     bool debug_clock_handler(Cycle_t cycle);
     static void sigHandler(int signal);
 
     void init_vcs();
-    
+
+    Statistic<uint64_t>** xbar_stalls;
 public:
     hr_router(ComponentId_t cid, Params& params);
     ~hr_router();

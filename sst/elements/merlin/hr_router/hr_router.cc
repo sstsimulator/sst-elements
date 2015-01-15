@@ -213,6 +213,15 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                   << link_bw.toStringBestSI() << std::endl;
         abort();
     }
+
+    // Register statistics
+    xbar_stalls = new Statistic<uint64_t>*[num_ports];
+    for ( int i = 0; i < num_ports; i++ ) {
+        std::string name("port");
+        name = name + boost::lexical_cast<std::string>(i) + "_xbar_stalls";
+        xbar_stalls[i] = registerStatistic(new AccumulatorStatistic<uint64_t>(this, name));
+    }
+    
 }
 
 
@@ -344,6 +353,19 @@ hr_router::clock_handler(Cycle_t cycle)
                           << "." << std::endl;
             }
 
+        }
+        else {
+            // Add time to the xbar_stalled statistic if there is data
+            // available and nothing is being moved
+            if ( in_port_busy[i] <= 0 ) {
+                internal_router_event** vc_heads = ports[i]->getVCHeads();
+                for ( int j = 0; j < num_vcs; j++ ) {
+                    if ( vc_heads[j] != NULL ) {
+                        xbar_stalls[i]->addData(1);
+                        break;
+                    }
+                }
+            }
         }
         
         // Should stop at zero, need to find a clean way to do this

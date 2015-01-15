@@ -166,7 +166,7 @@ class MemEvent : public SST::Event {
                 pkt->isRequest() ? (pkt->needsResponse() ? "needs" :""):"",
                 pkt->getAddr() );
 
-        setPriority( 50 );
+        setPriority( MEMEVENTPRIORITY );
 
         if ( m_flags & VALID_ADDR ) {
             m_addr = pkt->getAddr();
