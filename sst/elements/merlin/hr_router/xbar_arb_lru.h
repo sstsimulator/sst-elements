@@ -122,6 +122,7 @@ public:
                     it = priority.erase(it);
                 }
                 else {
+                    progress_vc[port] = -2;
                     ++it;
                 }
             }

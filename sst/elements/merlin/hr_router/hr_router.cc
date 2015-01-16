@@ -221,7 +221,6 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         name = name + boost::lexical_cast<std::string>(i) + "_xbar_stalls";
         xbar_stalls[i] = registerStatistic(new AccumulatorStatistic<uint64_t>(this, name));
     }
-    
 }
 
 
@@ -337,7 +336,8 @@ hr_router::clock_handler(Cycle_t cycle)
     
     // Move the events and decrement the busy values
     for ( int i = 0; i < num_ports; i++ ) {
-        if ( progress_vcs[i] != -1 ) {
+        // if ( progress_vcs[i] != -1 ) {
+        if ( progress_vcs[i] > -1 ) {
             internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
             ports[ev->getNextPort()]->send(ev,ev->getVC());
             // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
@@ -354,20 +354,10 @@ hr_router::clock_handler(Cycle_t cycle)
             }
 
         }
-        else {
-            // Add time to the xbar_stalled statistic if there is data
-            // available and nothing is being moved
-            if ( in_port_busy[i] <= 0 ) {
-                internal_router_event** vc_heads = ports[i]->getVCHeads();
-                for ( int j = 0; j < num_vcs; j++ ) {
-                    if ( vc_heads[j] != NULL ) {
-                        xbar_stalls[i]->addData(1);
-                        break;
-                    }
-                }
-            }
+        else if ( progress_vcs[i] == -2 ) {
+                xbar_stalls[i]->addData(1);
         }
-        
+
         // Should stop at zero, need to find a clean way to do this
         // with no branch.  For now it should work.
         if ( in_port_busy[i] != 0 ) in_port_busy[i]--;

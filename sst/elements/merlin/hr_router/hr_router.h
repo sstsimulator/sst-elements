@@ -74,7 +74,6 @@ private:
     static void sigHandler(int signal);
 
     void init_vcs();
-
     Statistic<uint64_t>** xbar_stalls;
 public:
     hr_router(ComponentId_t cid, Params& params);
