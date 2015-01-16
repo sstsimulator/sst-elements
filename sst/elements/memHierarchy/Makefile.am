@@ -79,7 +79,7 @@ sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
 	memEvent.h \
 	memNIC.h \
-	memBackend.h \
+	membackend/memBackend.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
