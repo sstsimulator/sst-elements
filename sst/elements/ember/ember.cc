@@ -44,6 +44,7 @@
 #include "mpi/motifs/ember3dcommdbl.h"
 #include "mpi/motifs/embercomm.h"
 #include "mpi/motifs/ember3damr.h"
+#include "mpi/motifs/emberfft3d.h"
 
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
@@ -178,6 +179,10 @@ load_Comm( Component* comp, Params& params ) {
 	return new EmberCommGenerator(comp, params);
 }
 
+static Module*
+load_FFT3D( Component* comp, Params& params ) {
+	return new EmberFFT3DGenerator(comp, params);
+}
 
 static const ElementInfoParam component_params[] = {
     { "module", "Sets the OS module", ""},
@@ -217,7 +222,9 @@ static const ElementInfoParam component_params[] = {
     { "Sendsize_bin_width", "Bin width of the send sizes (bytes) histogram", "64" },
     { "Allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
     { "Reduce_bin_width", "Bin width of the reduce time histogram", "5" },
-    { "Commsplit_bin_width", "Bin width of the commsplit time histogram", "5" },
+    { "Commsplit_bin_width", "Bin width of the comm_split time histogram", "5" },
+    { "Commcreate_bin_width", "Bin width of the comm_create time histogram", "5" },
+    { "Commdestroy_bin_width", "Bin width of the comm_destroy time histogram", "5" },
     { "Gettime_bin_width", "Bin width of the gettime time histogram", "5" },
 
 
@@ -246,6 +253,16 @@ static const ElementInfoParam amr3d_params[] = {
         {       "arg.ny",                       "Sets the size of a block in Y", "8" },
         {       "arg.nz",                       "Sets the size of a block in Z", "8" },
         {       "arg.fieldspercell",            "Sets the number of fields per mesh cell", "8" },
+	{	NULL,	NULL,	NULL	}
+};
+static const ElementInfoParam fft3d_params[] = {
+	{ "arg.iterations",	"Sets the number of ping pong operations to perform", 	"1"},
+	{ "arg.nx", 	    "Sets the size of a block in X", "8" },
+    { "arg.ny",         "Sets the size of a block in Y", "8" },
+    { "arg.nz",         "Sets the size of a block in Z", "8" },
+    { "arg.npRow",      "Sets the number of rows in the PE decomposition", "0" },
+	{ "arg.copytime",    "Sets the time spent copying data between messages",	"5"},
+	{ "arg.peflops",     "Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -455,6 +472,15 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_CommDoubling,
 	commdbl_params,
+	"SST::Ember::EmberGenerator"
+    },
+    {
+	"FFT3DMotif",
+	"Models an FFT",
+	NULL,
+	NULL,
+	load_FFT3D,
+	fft3d_params,
 	"SST::Ember::EmberGenerator"
     },
     {

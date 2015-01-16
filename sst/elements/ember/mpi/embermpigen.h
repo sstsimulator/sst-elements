@@ -33,6 +33,8 @@
 #include "emberwaitallev.h"
 #include "emberwaitev.h"
 #include "emberCommSplitEv.h"
+#include "emberCommCreateEv.h"
+#include "emberCommDestroyEv.h"
 #include "emberallredev.h"
 #include "emberredev.h"
 
@@ -61,6 +63,7 @@ namespace Ember {
     NAME( Reduce ) \
     NAME( Gettime ) \
     NAME( Commsplit ) \
+    NAME( Commcreate ) \
     NAME( NUM_EVENTS ) \
 
 #define GENERATE_ENUM(ENUM) ENUM,
@@ -173,11 +176,15 @@ protected:
 
     inline void enQ_wait( Queue&, MessageRequest* req, 
 									MessageResponse* resp = NULL );
-
     inline void enQ_waitall( Queue&, int count, MessageRequest req[],
                 MessageResponse* resp[] = NULL );
+
     inline void enQ_commSplit( Queue&, Communicator, int color, int key, 
                 Communicator* newComm );
+    inline void enQ_commCreate( Queue&, Communicator, std::vector<int>&,
+                Communicator* newComm );
+    inline void enQ_commDestroy( Queue&, Communicator );
+
     inline void enQ_allreduce( Queue&, Addr mydata, Addr result, uint32_t count,
                 PayloadDataType dtype, ReductionOperation op,
                 Communicator group );
@@ -369,6 +376,20 @@ void EmberMessagePassingGenerator::enQ_commSplit( Queue& q, Communicator oldcom,
 {
     q.push( new EmberCommSplitEvent( *cast(m_api), m_output, 
         m_histoV[Commsplit], oldcom, color, key, newCom ) );
+}
+
+void EmberMessagePassingGenerator::enQ_commCreate( Queue& q, 
+        Communicator oldcom, std::vector<int>& ranks, Communicator* newCom )
+{
+    q.push( new EmberCommCreateEvent( *cast(m_api), m_output, 
+        m_histoV[Commsplit], oldcom, ranks, newCom ) );
+}
+
+void EmberMessagePassingGenerator::enQ_commDestroy( Queue& q, 
+            Communicator comm )
+{
+    q.push( new EmberCommDestroyEvent( *cast(m_api), m_output, 
+        m_histoV[Commsplit], comm ) );
 }
 
 void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr mydata,
