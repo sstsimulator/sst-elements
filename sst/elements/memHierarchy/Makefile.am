@@ -22,16 +22,16 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
-    memBackend.h \
-    memBackend.cc \
+        membackend/memBackend.h \
+        membackend/memBackend.cc \
 	memEvent.h \
 	memNIC.h \
 	memNIC.cc \
 	directoryController.h \
 	directoryController.cc \
 	coherenceControllers.h \
-    memHierarchyInterface.cc \
-    memHierarchyInterface.h \
+        memHierarchyInterface.cc \
+        memHierarchyInterface.h \
 	MESIBottomCoherenceController.h \
 	MESIBottomCoherenceController.cc \
 	MESITopCoherenceController.h \

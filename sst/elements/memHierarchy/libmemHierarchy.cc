@@ -34,7 +34,7 @@
 #include "dmaEngine.h"
 #include "memHierarchyInterface.h"
 #include "memNIC.h"
-#include "memBackend.h"
+#include "membackend/memBackend.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
