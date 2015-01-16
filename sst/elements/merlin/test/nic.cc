@@ -163,7 +163,7 @@ BOOST_CLASS_EXPORT(MyRtrEvent)
 bool
 nic::clock_handler(Cycle_t cycle)
 {
-    static const int num_msg = 100;
+    static const int num_msg = 10;
     static const int send_vc = 0;
     static const int size_in_bits = 400;
     int expected_recv_count = (num_peers-1)*num_msg;
