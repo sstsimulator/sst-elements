@@ -63,7 +63,6 @@ public:
 
     class CacheLine {
     private:
-        Output*         d_;
         State           state_;
         Addr            baseAddr_;
         vector<uint8_t> data_;
@@ -76,8 +75,8 @@ public:
     
     public:
         /** Constructor */
-        CacheLine(Output* _dbg, unsigned int _size, int _index) :
-                 d_(_dbg), state_(I), baseAddr_(0), size_(_size), index_(_index){
+        CacheLine(unsigned int _size, int _index) :
+                 state_(I), baseAddr_(0), size_(_size), index_(_index){
             data_.resize(size_/sizeof(uint8_t));
             reset();
         }
@@ -90,12 +89,10 @@ public:
 
         void incLock(){
             userLock_++;
-            d_->debug(_L8_,"User-level lock set on this cache line\n");
         }
         
         void decLock(){
             userLock_--;
-            if(userLock_ == 0) d_->debug(_L8_,"User lock cleared on this cache line\n");
         }
         
         vector<uint8_t>* getData(){ return &data_; }
@@ -117,7 +114,6 @@ public:
         State getState() const { return state_; }
         
         void setState(State _newState){
-            d_->debug(_L6_, "Changing states: Old state = %s, New State = %s\n", BccLineString[state_], BccLineString[_newState]);
             state_ = _newState;
             if(state_ == I) clear();
         }
@@ -140,17 +136,12 @@ public:
         unsigned int getLineSize(){ return size_; }
         
         void clear(){
-            vector<uint8_t>::iterator it;
-            for(it = data_.begin(); it != data_.end(); it++){ *it = 0; }
-            assert(state_ == I);
             assert(userLock_ == 0);
             assert(eventsWaitingForLock_ == false);
             atomicEnd();
         }
         
         void reset(){
-            vector<uint8_t>::iterator it;
-            for(it = data_.begin(); it != data_.end(); it++){ *it = 0; }
             state_                  = I;
             userLock_               = 0;
             eventsWaitingForLock_   = false;
@@ -192,7 +183,7 @@ protected:
         lines_.resize(numLines_);
 
         for(unsigned int i = 0; i < numLines_; i++){
-            lines_[i] = new CacheLine(_dbg, lineSize_, i);
+            lines_[i] = new CacheLine(lineSize_, i);
         }
         
         pMembers();

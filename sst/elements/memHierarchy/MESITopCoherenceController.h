@@ -36,8 +36,8 @@ public:
     #include "ccLine.h"
     
     TopCacheController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency,
-                       uint64_t _mshrLatency, vector<Link*>* _childrenLinks)
-                       : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency){
+                       uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks)
+                       : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_                 = true;
         highNetPorts_       = _childrenLinks;
@@ -74,7 +74,7 @@ public:
     virtual void handleInvalidate(int lineIndex, string _origRqstr, Command cmd, bool _mshrHit){return;}
 
     /** Create MemEvent and send Response to HgLvl caches */
-    bool sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic = false);
+    void sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic = false);
 
     /** Look at the outgoing queue buffer to see if we need to send an memEvent through the SST Links */
     void sendOutgoingCommands(){
@@ -97,7 +97,7 @@ public:
     void sendNACK(MemEvent*);
     
     /** Send event to Higher level caches */
-    void sendEvent(MemEvent*);
+    void resendEvent(MemEvent*);
     
     virtual void printStats(int _stats){};
    
@@ -119,8 +119,8 @@ class MESITopCC : public TopCacheController{
 
 public:
     MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines,
-              uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
-              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency, _childrenLinks),
+              uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
+              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, _childrenLinks),
               numLines_(_numLines), lowNetworkNodeCount_(0){
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);
@@ -177,19 +177,19 @@ public:
     
     /** Handle incoming GetS Request.
         TopCC sends invalidates if needed, and add sharer appropriately */
-    void handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
+    bool handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit);
     
     /** Handle incoming GetX Request.
         TopCC sends invalidates if needed, add sharer and mark sharer as exclusive */
-    void handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit, bool& _ret);
+    bool handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _childId, bool _mshrHit);
    
     /** Handle incoming PutM Request.
         Clear exclusive sharer */
-    void handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _childId, bool& _ret);
+    void handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _childId);
     
     /** Handle incoming GetS Request.
         Clear sharer */
-    void handlePutSRequest(CCLine* _ccLine, int _childId, bool& _ret);
+    bool handlePutSRequest(CCLine* _ccLine, int _childId);
     
     /** Returns the state of the CCLine. */
     TCC_State getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }

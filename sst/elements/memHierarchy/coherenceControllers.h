@@ -54,6 +54,7 @@ public:
     bool       groupStats_;
     uint64_t   timestamp_;
     uint64_t   accessLatency_;
+    uint64_t   tagLatency_;
     uint64_t   mshrLatency_;
     string     name_;
     virtual void sendOutgoingCommands() = 0;
@@ -95,10 +96,11 @@ public:
     void setName(string _name){ name_ = _name; }
     
 protected:
-    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency):
-                        timestamp_(0), accessLatency_(1), owner_(_cache), d_(_dbg), lineSize_(_lineSize), sentEvents_(0){
-        accessLatency_ = _accessLatency;
-        mshrLatency_   = _mshrLatency;
+    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency):
+                        timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(_cache), d_(_dbg), lineSize_(_lineSize), sentEvents_(0){
+        accessLatency_  = _accessLatency;
+        tagLatency_     = _tagLatency;
+        mshrLatency_    = _mshrLatency;
     }
     ~CoherencyController(){}
     const Cache* owner_;

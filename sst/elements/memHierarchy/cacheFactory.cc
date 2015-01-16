@@ -36,7 +36,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
     int debugLevel = _params.find_integer("debug_level", 0);
-    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
+    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be between 0 and 10. \n");
     
     dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)_params.find_integer("debug", 0));
     dbg->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
@@ -71,43 +71,41 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     }
 
     /* Check user specified all required fields */
-    if(frequency.empty())           _abort(Cache, "No cache frequency specified (usually frequency = cpu frequency).\n");
-    if(-1 >= associativity)         _abort(Cache, "Associativity was not specified.\n");
-    if(sizeStr.empty())             _abort(Cache, "Cache size was not specified. \n")
-    if(-1 == lineSize)              _abort(Cache, "Line size was not specified (blocksize).\n");
-    if(L1int != 1 && L1int != 0)    _abort(Cache, "Not specified whether cache is L1 (0 or 1)\n");
-    if(accessLatency == -1 )        _abort(Cache, "Access time not specified\n");
-    if(dirAtNextLvl > 1 ||
-       dirAtNextLvl < 0)            _abort(Cache, "Did not specified correctly where there exists a directory controller at higher level cache\n");
-    long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
-    if(!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))
-        _abort(Cache, "Did not correctly specify bottom_network\n");
-    if(!(topNetwork == "" || topNetwork == "cache"))
-        _abort(Cache, "Did not correctly specify top_network\n");
+    if(frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency\n");
+    if(-1 >= associativity)         dbg->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
+    if(sizeStr.empty())             dbg->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
+    if(-1 == lineSize)              dbg->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
+    if(L1int != 1 && L1int != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: L1 - should be '1' if cache is an L1, 0 otherwise\n");
+    if(accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
+    
+    /* Check that parameters are valid */
+    if(dirAtNextLvl > 1 || dirAtNextLvl < 0)    dbg->fatal(CALL_INFO, -1, "Invalid param: directory_at_next_level - should be '1' if directory exists at next level below this cache, 0 otherwise\n");
+    if(!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))  dbg->fatal(CALL_INFO, -1, "Invalid param: bottom_network - valid options are '', 'directory', or 'cache'\n");
+    if(!(topNetwork == "" || topNetwork == "cache"))    dbg->fatal(CALL_INFO, -1, "Invalid param: top_network - valid options are '' or 'cache'\n");
 
-    if (dirAtNextLvl) bottomNetwork = "directory";
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    if(L1 && mshrSize != -1)    _abort(Cache, "The parameter 'mshr_num_entries' is not valid in an L1 since MemHierarchy"
-                                "assumes an L1 MSHR size matches the size of the load/store queue unit of the CPU.  An L1"
-                                "will always be available to the CPU");
-    if(-1 == mshrSize)          mshrSize = HUGE_MSHR;
+    if(L1 && mshrSize != -1)    dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue\n");
     
     /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
-    if(mshrSize < 2)            _abort(Cache, "MSHR requires at least 2 entries to avoid deadlock\n");
+    if(-1 == mshrSize) mshrSize = HUGE_MSHR;
+    if(mshrSize < 2)            dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock\n");
 
+    /* Update parameters for initialization */
+    if (dirAtNextLvl) bottomNetwork = "directory";
     
     /* ---------------- Initialization ----------------- */
     HashFunction* ht = new PureIdHashFunction;
     boost::algorithm::to_lower(coherenceProtocol);
     boost::algorithm::to_lower(replacement);
     
+    long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
     uint numLines = cacheSize/lineSize;
     uint protocol = 0;
     
     if(coherenceProtocol == "mesi")      protocol = 1;
     else if(coherenceProtocol == "msi")  protocol = 0;
     else
-        _abort(Cache, "Not supported protocol\n");
+        dbg->fatal(CALL_INFO,-1, "Invalid param: coherence_protocol - must be 'msi' or 'mesi'\n");
 
     ReplacementMgr* replManager;
     if (boost::iequals(replacement, "lru"))         replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
@@ -115,7 +113,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
     else if (boost::iequals(replacement, "mru"))    replManager = new MRUReplacementMgr(dbg, numLines, associativity, true);
     else if (boost::iequals(replacement, "nmru"))   replManager = new NMRUReplacementMgr(dbg, numLines, associativity);
-    else _abort(Cache, "Replacement policy was not entered correctly or is not supported.\n");
+    else dbg->fatal(CALL_INFO, -1, "Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'\n");
     
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
 
@@ -139,6 +137,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     statsFile_          = _params.find_integer("statistics", 0);
     idleMax_            = _params.find_integer("idle_max", 10000);
     accessLatency_      = _params.find_integer("access_latency_cycles", -1);
+    tagLatency_         = _params.find_integer("tag_access_latency_cycles",accessLatency_);
     string prefetcher   = _params.find_string("prefetcher");
     mshrLatency_        = _params.find_integer("mshr_latency_cycles", 0);
     int cacheSliceCount         = _params.find_integer("num_cache_slices", 1);
@@ -146,15 +145,15 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     string sliceAllocPolicy     = _params.find_string("slice_allocation_policy", "rr");
     
     /* --------------- Check parameters -------------*/
-    if (accessLatency_ < 1) _abort(Cache, "Cache access latency must be at least 1\n");
+    if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "Invalid param: access_latency_cycles - must be at least 1\n");
    
     if (cf_.topNetwork_ == "cache") {
         if (cacheSliceCount == 1) sliceID = 0;
         else if (cacheSliceCount > 1) {
-            if (sliceID >= cacheSliceCount) _abort(Cache, "slice_id should be between 0 and num_cache_slices\n");
-            if (sliceAllocPolicy != "rr") _abort(Cache, "unknown slice_allocation_policy; only valid option is 'rr'\n");
+            if (sliceID >= cacheSliceCount) d_->fatal(CALL_INFO,-1, "Invalid param: slice_id - should be between 0 and num_cache_slices-1\n");
+            if (sliceAllocPolicy != "rr") d_->fatal(CALL_INFO,-1, "Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin)\n");
         } else {
-            _abort(Cache, "num_cache_slices should be 1 or greater; 1 is default\n");
+            d2_->fatal(CALL_INFO, -1, "Invalid param: num_cache_slices - should be 1 or greater\n");
         }
     }
 
@@ -276,16 +275,16 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {
             if (i > 0 && (cf_.statGroupIds_[i] == 0 || cf_.statGroupIds_[i] == -1)) 
-                _abort(Cache, "Custom group IDs cannot be 0 or -1\n");
+                d_->fatal(CALL_INFO,-1, "Invalid param: stat_group_ids - custom IDs cannot be 0 or -1\n");
             stats_[cf_.statGroupIds_[i]].initialize();
         }
     }
         
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
-    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_, topNetworkLink_) :
-                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, mshrLatency_, highNetPorts_);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, mshrLatency_, L1_, bottomNetworkLink_, groupStats_, cf_.statGroupIds_);
+    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, topNetworkLink_) :
+                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, L1_, bottomNetworkLink_, groupStats_, cf_.statGroupIds_);
    
     /*---------------  Misc --------------- */
     cf_.rm_->setTopCC(topCC_);  cf_.rm_->setBottomCC(bottomCC_);

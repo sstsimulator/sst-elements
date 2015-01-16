@@ -46,7 +46,7 @@ using namespace SST::MemHierarchy;
 MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     int debugLevel = params.find_integer("debug_level", 0);
     if(debugLevel < 0 || debugLevel > 10)
-        _abort(MemController, "Debugging level must be betwee 0 and 10. \n");
+        _abort(MemController, "Debugging level must be between 0 and 10. \n");
     
     dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     dbg.debug(_L10_,"---");
@@ -54,16 +54,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
     unsigned int ramSize    = (unsigned int)params.find_integer("mem_size", 0);
     memSize_                = ramSize * (1024*1024ul);
-	rangeStart_             = (Addr)params.find_integer("range_start", 0);
-	interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
+    rangeStart_             = (Addr)params.find_integer("range_start", 0);
+    interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize_         *= 1024;
-	interleaveStep_         = (Addr)params.find_integer("interleave_step", 0);
+    interleaveStep_         = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep_         *= 1024;
 
-    if(0 == memSize_)       _abort(MemController, "Memory size must be bigger than zero and specified in MB\n");
+    if(0 == memSize_)       dbg.fatal(CALL_INFO,-1, "Invalid param: mem_size - must be greater than 0 and specified in MB\n");
 
-	string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
-	string clock_freq       = params.find_string("clock", "");
+    string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
+    string clock_freq       = params.find_string("clock", "");
     cacheLineSize_          = params.find_integer("request_width", 64);
     //divertDCLookups_        = params.find_integer("divert_DC_lookups", 0);
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
@@ -105,10 +105,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     int mmap_flags          = setBackingFile(memoryFile);
     backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
     lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
-	memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
+    memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
 
-	if(!memBuffer_)         _abort(MemController, "Unable to MMAP backing store for Memory\n");
-    if (!backend_)          _abort(MemController, "Unable to load Module %s as backend\n", backendName.c_str());
+    if(!memBuffer_)         dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
+    if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
 
     GetSReqReceived_        = 0;
     GetXReqReceived_        = 0;
@@ -149,7 +149,7 @@ void MemController::handleEvent(SST::Event* _event){
         addRequest(ev);
     }
     else if(cmd == PutS || cmd == PutE) return;
-    else _abort(MemController, "MemController:  Command not supported, Cmd = %s", CommandString[cmd]);
+    else dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
 
     delete _event;
 }
@@ -354,7 +354,7 @@ int MemController::setBackingFile(string memoryFile){
 	int mmap_flags = MAP_PRIVATE;
 	if(NO_STRING_DEFINED != memoryFile) {
 		backingFd_ = open(memoryFile.c_str(), O_RDWR);
-		if(backingFd_ < 0) _abort(MemController, "Unable to open backing file!\n");
+		if(backingFd_ < 0) dbg.fatal(CALL_INFO,-1,"Failed to open backing file\n");
 	} else {
 		backingFd_  = -1;
 		mmap_flags  |= MAP_ANON;

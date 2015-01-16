@@ -23,9 +23,15 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*-------------------------------------------------------------------------------------
- * Top Coherence Controller Implementation - protocol agnostic
+ * Top Coherence Controller Implementation
+ * TCC for the L1 cache
+ * Handles all protocols
  *-------------------------------------------------------------------------------------*/
 
+/**
+ *  Handles requests to the L1 cache, protocol agnostic
+ *  @return whether the L1 sent a response to the processor
+ */
 bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit){
     Command cmd           = _event->getCmd();
     vector<uint8_t>* data = _cacheLine->getData();
@@ -34,18 +40,21 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
 
     switch(cmd){
         case GetS:
-            if(state == S || state == M || state == E || state == O)
-                return sendResponse(_event, S, data,  _mshrHit);
+            if(state == S || state == M || state == E || state == O) {
+                sendResponse(_event, S, data,  _mshrHit);
+                return true;
+            }
             break;
         case GetX:
         case GetSEx:
             if(state == M){
-                if(_event->isStoreConditional()) return sendResponse(_event, M, data, _mshrHit, atomic);
-                else                             return sendResponse(_event, M, data, _mshrHit);
+                if(_event->isStoreConditional()) sendResponse(_event, M, data, _mshrHit, atomic);
+                else                             sendResponse(_event, M, data, _mshrHit);
+                return true;
             }
             break;
         default:
-            _abort(MemHierarchy::CacheController, "Wrong command type!");
+            d_->fatal(CALL_INFO,-1,"TCC received an unrecognized request: %s\n",CommandString[cmd]);
     }
     return false;
 }
@@ -53,13 +62,21 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
 
 /*-------------------------------------------------------------------------------------
  * MESI Top Coherence Controller Implementation
+ * TCC for all caches below the L1
+ * Handles MSI & MESI protocols
  *-------------------------------------------------------------------------------------*/
 
+/*********************************
+ * Methods for request handling
+ *********************************/
+/**
+ * Send requests to appropriate handler
+ * @return whether TCC was able to handle the request given the current coherence state
+ */
 bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit) {
     Command cmd    = _event->getCmd();
     int id         = lowNetworkNodeLookupByName(_event->getSrc());
     CCLine* ccLine = ccLines_[_cacheLine->getIndex()];
-    bool ret       = false;
 
     if(ccLine->inTransition() && !_event->isWriteback()){
         d_->debug(_L7_,"TopCC: Stalling request, ccLine in transition \n");
@@ -68,31 +85,170 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
 
     switch(cmd){
         case GetS:
-            handleGetSRequest(_event, _cacheLine, id, _mshrHit, ret);
+            return handleGetSRequest(_event, _cacheLine, id, _mshrHit);
             break;
         case GetX:
         case GetSEx:
-            handleGetXRequest(_event, _cacheLine, id, _mshrHit, ret);
+            return handleGetXRequest(_event, _cacheLine, id, _mshrHit);
             break;
         case PutS:
-            handlePutSRequest(ccLine, id, ret);
+            return handlePutSRequest(ccLine, id);
             break;
         case PutM:
         case PutE:
         case PutX:
         case PutXE:
-            handlePutMRequest(ccLine, cmd, _cacheLine->getState(), id, ret);
+            handlePutMRequest(ccLine, cmd, _cacheLine->getState(), id);
+            return true;
             break;
-
         default:
-            _abort(MemHierarchy::CacheController, "Wrong command type!");
+            d_->fatal(CALL_INFO,-1,"TCC received an unrecognized request: %s\n",CommandString[cmd]);
     }
 
-    return ret;
+    return false;
+}
+
+
+/**
+ *  Handles GetS requests
+ *      Only called when the line is present in the cache
+ *      Un-owned: Update sharer/owner info & send data to requestor
+ *      Owned: send invalidation to line owner
+ *  @return whether the handler responded to the requestor
+ */
+bool MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit) {
+    vector<uint8_t>* data = _cacheLine->getData();
+    State state           = _cacheLine->getState();
+    int lineIndex         = _cacheLine->getIndex();
+    CCLine* l             = ccLines_[lineIndex];
+
+    /* Send Data in E state */
+    if(protocol_ &&  !l->ownerExists() && l->isShareless() && (state == E || state == M)){
+        l->setOwner(_sharerId);
+        sendResponse(_event, E, data, _mshrHit);
+        return true;
+    }
+    /* If exclusive owner exists, downgrade it to S state */
+    else if(l->ownerExists()) {
+        d_->debug(_L7_,"GetS request but exclusive cache exists \n");
+        sendInvalidateX(lineIndex, _event->getRqstr(), _mshrHit);
+        return false;
+    }
+    /* Send Data in S state */
+    else if(state == S || state == M || state == E){
+        assert(!l->isSharer(_sharerId));
+        l->addSharer(_sharerId);
+        sendResponse(_event, S, data, _mshrHit);
+        return true;
+    }
+    else{
+        d_->fatal(CALL_INFO,-1,"TCC is handling a GetS request but coherence state is not valid and stable: %s\n",BccLineString[state]);
+    }
+    return false;
+}
+
+
+/**
+ *  Handles GetX requests
+ *      Only called when line is present in the cache
+ *      If no write permission - return false
+ *      If owner exists - invalidate owner
+ *      If sharers exist - invalidate sharers
+ *      If don't need to wait for acks, respond to requestor
+ *  @return whether response was sent to requestor 
+ */
+bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit){
+    State state     = _cacheLine->getState();
+    int lineIndex   = _cacheLine->getIndex();
+    CCLine* ccLine  = ccLines_[lineIndex];
+    Command cmd     = _event->getCmd();
+    bool respond    = true;
+    int invSent;
+    
+    /* Do we have the appropriate state */
+    if(!(state == M || state == E)) respond = false;
+    /* Invalidate any exclusive sharers before responding to GetX request */
+    else if(ccLine->ownerExists()){
+        d_->debug(_L7_,"GetX Req recieived but exclusive cache exists \n");
+        assert(ccLine->isShareless());
+        sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
+        respond = false;
+    }
+    /* Sharers exist */
+    else if(ccLine->numSharers() > 0){
+        d_->debug(_L7_,"GetX Req recieved but sharers exists \n");
+        switch(cmd){
+            case GetX:
+                sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
+                ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
+                respond = true;
+                break;
+            case GetSEx:
+                ccLine->setAcksNeeded();
+                invSent = sendInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
+                respond = (invSent > 0) ? false : true;
+                break;
+            default:
+                d_->fatal(CALL_INFO,-1,"TCC received an unrecognized GetX request: %s\n",CommandString[cmd]);
+        }
+    }
+    /* Sharers don't exist, no need to send invalidates */
+    else respond = true;
+    
+    if(respond){
+        ccLine->setOwner(_sharerId);
+        sendResponse(_event, M, _cacheLine->getData(), _mshrHit);
+        return true;
+    }
+    return false;
+}
+
+
+/**
+ *  Handles replacement & downgrade requests when cache has exclusive access (PutM, PutX, PutE, PutXE)
+ */
+void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _sharerId){
+    assert(_state == M || _state == E);
+
+    /* Remove exclusivity for all: PutM, PutX, PutE */
+    if(_ccLine->ownerExists())  _ccLine->clearOwner();
+
+    /*If PutX, keep as sharer since transition ia M->S */
+    if(_cmd == PutX || _cmd == PutXE){  /* If PutX, then state = V since we only wanted to get rid of the M-state hglv cache */
+        _ccLine->addSharer(_sharerId);
+        _ccLine->setState(V);
+     }
+    else _ccLine->updateState();        /* If PutE, PutM -> num sharers should be 0 before state goes to (V) */
+
+}
+
+
+/**
+ *  Handles replacement requests when cache has shared access (PutS)
+ *  @return whether the request was handled & the block is now idle 
+ *  Because the MESI protocol uses Put requests in place of Acks, we need to know when to attempt
+ *  retrying a waiting request that sent out invalidations.
+ */
+bool MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId){
+    if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
+    else{
+        /* Corner case example:  L2 sends invalidates and at the same time L1 sends eviction.  In the case, it is important to ignore this PutS request */
+        return false;                   
+    }
+    
+    if(_ccLine->isShareless()) return true;
+    else                       return false;
 }
 
 
 
+
+
+/*
+ * Send invalidation requests to appropriate handler
+ *  For data invalidations -> sendInvalidates
+ *  For write permission invalidation -> sendInvalidateX
+ */
 void MESITopCC::handleInvalidate(int _lineIndex, string _origRqstr, Command _cmd, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(ccLine->isShareless() && !ccLine->ownerExists()) return;
@@ -107,12 +263,14 @@ void MESITopCC::handleInvalidate(int _lineIndex, string _origRqstr, Command _cmd
             sendInvalidateX(_lineIndex, _origRqstr, _mshrHit);
             break;
         default:
-            _abort(MemHierarchy::CacheController, "Command not supported, Cmd = %s", CommandString[_cmd]);
+            d_->fatal(CALL_INFO,-1,"TCC received an unrecognized invalidation request: %s\n",CommandString[_cmd]);
     }
 }
 
 
-
+/*
+ * Handle evictions
+ */
 void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     CCLine* ccLine = ccLines_[_lineIndex];
     assert(!CacheArray::CacheLine::inTransition(_state));
@@ -130,8 +288,13 @@ void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     }
 }
 
-
-
+/**********************************
+ *  Methods for sending messages
+ **********************************/
+/*
+ *  Send invalidates
+ *  Return: count of invalidates sent
+ */
 int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     
@@ -141,16 +304,15 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqst
     
     bool acksNeeded = (ccLine->ownerExists() || ccLine->acksNeeded_);
     
-    if(ccLine->ownerExists()){
+    if (ccLine->ownerExists()) {
         sentInvalidates = 1;
         string ownerName = lowNetworkNodeLookupById(ccLine->ownerId_);
         sendInvalidate(ccLine, ownerName, _origRqstr, acksNeeded, _mshrHit);
-    }
-    else{
-        for(sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++){
+    } else {
+        for(sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++) {
             int sharerId = sharer->second;
-            if(requestingId == sharerId){
-                if(ccLine->isSharer(sharerId)) ccLine->removeSharer(sharerId);
+            if (requestingId == sharerId) {
+                if (ccLine->isSharer(sharerId)) ccLine->removeSharer(sharerId);
                 continue;
             }
             if(ccLine->isSharer(sharerId)){
@@ -160,9 +322,8 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqst
         }
     }
     
-    
-    if(!acksNeeded) ccLine->removeAllSharers();
-    else if(acksNeeded && sentInvalidates > 0) ccLine->setState(Inv_A);
+    if (!acksNeeded) ccLine->removeAllSharers();
+    else if (acksNeeded && sentInvalidates > 0) ccLine->setState(Inv_A);
     
     ccLine->acksNeeded_ = false;
     
@@ -244,115 +405,6 @@ bool MESITopCC::isCoherenceMiss(MemEvent* _event, CacheLine* _cacheLine) {
     return false;
 }
 
-void MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
-    vector<uint8_t>* data = _cacheLine->getData();
-    State state           = _cacheLine->getState();
-    int lineIndex         = _cacheLine->getIndex();
-    CCLine* l             = ccLines_[lineIndex];
-
-    /* Send Data in E state */
-    if(protocol_ &&  !l->ownerExists() && l->isShareless() && (state == E || state == M)){
-        l->setOwner(_sharerId);
-        _ret = sendResponse(_event, E, data, _mshrHit);
-    }
-    
-    /* If exclusive owner exists, downgrade it to S state */
-    else if(l->ownerExists()) {
-        d_->debug(_L7_,"GetS Req but exclusive cache exists \n");
-        sendInvalidateX(lineIndex, _event->getRqstr(), _mshrHit);
-    }
-    /* Send Data in S state */
-    else if(state == S || state == M || state == E){
-        assert(!l->isSharer(_sharerId));
-        l->addSharer(_sharerId);
-        _ret = sendResponse(_event, S, data, _mshrHit);
-    }
-    else{
-        _abort(MemHierarchy::CacheController, "Unkwown state!");
-    }
-}
-
-
-
-void MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _sharerId, bool _mshrHit, bool& _ret){
-    State state     = _cacheLine->getState();
-    int lineIndex   = _cacheLine->getIndex();
-    CCLine* ccLine  = ccLines_[lineIndex];
-    Command cmd     = _event->getCmd();
-    bool respond    = true;
-    int invSent;
-    
-    /* Do we have the appropriate state */
-    if(!(state == M || state == E)) respond = false;
-    /* Invalidate any exclusive sharers before responding to GetX request */
-    else if(ccLine->ownerExists()){
-        d_->debug(_L7_,"GetX Req recieived but exclusive cache exists \n");
-        assert(ccLine->isShareless());
-        sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
-        respond = false;
-    }
-    /* Sharers exist */
-    else if(ccLine->numSharers() > 0){
-        d_->debug(_L7_,"GetX Req recieved but sharers exists \n");
-        switch(cmd){
-            case GetX:
-                sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
-                ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
-                respond = true;
-                break;
-            case GetSEx:
-                ccLine->setAcksNeeded();
-                invSent = sendInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
-                respond = (invSent > 0) ? false : true;
-                break;
-            default:
-                _abort(MemHierarchy::CacheController, "Unkwown state!");
-        }
-    }
-    /* Sharers don't exist, no need to send invalidates */
-    else respond = true;
-    
-    if(respond){
-        ccLine->setOwner(_sharerId);
-        sendResponse(_event, M, _cacheLine->getData(), _mshrHit);
-        _ret = true;
-    }
-
-}
-
-
-
-void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _sharerId, bool& _ret){
-    _ret = true;
-    assert(_state == M || _state == E);
-
-    /* Remove exclusivity for all: PutM, PutX, PutE */
-    if(_ccLine->ownerExists())  _ccLine->clearOwner();
-
-    /*If PutX, keep as sharer since transition ia M->S */
-    if(_cmd == PutX || _cmd == PutXE){  /* If PutX, then state = V since we only wanted to get rid of the M-state hglv cache */
-        _ccLine->addSharer(_sharerId);
-        _ccLine->setState(V);
-     }
-    else _ccLine->updateState();        /* If PutE, PutM -> num sharers should be 0 before state goes to (V) */
-
-}
-
-
-
-void MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId, bool& _ret){
-    if(_ccLine->isSharer(_sharerId)) _ccLine->removeSharer(_sharerId);
-    else{
-        _ret = false;                   /* Corner case example:  L2 sends invalidates and at the same time L1 sends evict.  In the case, it is important to ignore this PutS request */
-        return;
-    }
-    
-    if(_ccLine->isShareless()) _ret = true;
-    else                       _ret = false;
-}
-
-
-
 void MESITopCC::printStats(int _stats){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
@@ -373,9 +425,13 @@ bool MESITopCC::willRequestPossiblyStall(int lineIndex, MemEvent* _event){
 }
 
 
-
-bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
-    //if(_event->isPrefetch()) return true;
+/**
+ *  Send response to requestor
+ *  Latency: 
+ *      MSHR hit: means we got a response with data from some other cache so no need for cache array access -> mshr latency
+ *      MSHR miss: access to cache array to get data
+ */
+void TopCacheController::sendResponse(MemEvent *_event, State _newState, std::vector<uint8_t>* _data, bool _mshrHit, bool _finishedAtomically){
     
     Command cmd = _event->getCmd();
     MemEvent * responseEvent = _event->makeResponse(_newState);
@@ -395,20 +451,22 @@ bool TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
     }
     else responseEvent->setPayload(*_data);
     
-    uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    uint64_t deliveryTime = timestamp_ + (_mshrHit ? mshrLatency_ : accessLatency_);
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
     d_->debug(_L3_,"TCC - Sending Response at cycle = %"PRIu64". Current Time = %"PRIu64", Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
-    return true;
 }
 
 
-
+/**
+ *  Handles: sending a NACK to an upper level cache
+ *  Latency: tag access to determine whether event needs to be NACKed
+ */
 void TopCacheController::sendNACK(MemEvent *_event){
     MemEvent *NACKevent = _event->makeNACKResponse((Component*)owner_, _event);
     
-    uint64 deliveryTime      = timestamp_ + accessLatency_;
+    uint64 deliveryTime      = timestamp_ + tagLatency_;
     Response resp       = {NACKevent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
@@ -417,14 +475,18 @@ void TopCacheController::sendNACK(MemEvent *_event){
 }
 
 
-
-void TopCacheController::sendEvent(MemEvent *_event){
-    uint64 deliveryTime = timestamp_ + accessLatency_;
+/*
+ *  Handles: resending a nacked event
+ *  Latency: Find original event in MSHRs
+ */
+void TopCacheController::resendEvent(MemEvent *_event){
+    uint64 deliveryTime = timestamp_ + mshrLatency_;
     Response resp       = {_event, deliveryTime, true};
     addToOutgoingQueue(resp);
     
     d_->debug(_L3_,"TCC - Sending Event To HgLvLCache at cycle = %"PRIu64". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
 }
+
 
 void MESITopCC::profileReqSent(Command _cmd, bool _eviction, int _num) {
     switch(_cmd) {

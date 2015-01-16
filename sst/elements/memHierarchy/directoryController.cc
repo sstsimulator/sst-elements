@@ -32,7 +32,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Component(id), blocksize(0){
     int debugLevel = params.find_integer("debug_level", 0);
     cacheLineSize = params.find_integer("cache_line_size", 64);
-    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
+    if(debugLevel < 0 || debugLevel > 10)     _abort(DirectoryController, "Debugging level must be between 0 and 10. \n");
     
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     printStatsLoc = (Output::output_location_t)params.find_integer("statistics", 0);
@@ -61,7 +61,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
     int mshrSize    = params.find_integer("mshr_num_entries",-1);
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
-    if (mshrSize < 1) _abort(DirectoryController, "Directory requires at least 1 MSHR");
+    if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n");
     mshr            = new   MSHR(&dbg, mshrSize); 
 
     if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
@@ -413,7 +413,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             break;
         default:
             /* Ignore unexpected */
-            _abort(DirectoryController, "Cmd not expected, Cmd = %s\n", CommandString[cmd]);
+            dbg.fatal(CALL_INFO, -1, "Command not recognized: %s\n", CommandString[cmd]);
             break;
     }
 
@@ -437,7 +437,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             network->send(ev);
             return;
         }
-        _abort(DirectoryController, "Received unexpected noncacheable message from Memory!\n");
+        dbg.fatal(CALL_INFO, -1, "Received unexpected noncacheable response from memory%s\n");
     }
 
 
@@ -454,11 +454,9 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             entry->inController = true;
             advanceEntry(entry, ev);
         }
-        else  _abort(DirectoryController, "Received unexpected message from Memory!\n");
-    }
-    else{
-        
-        _abort(DirectoryController, "Unexpected event received\n"); /* Don't have this req recorded */
+        else  dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - response type not recognized: %s\n",CommandString[ev->getCmd()]);
+    } else {
+        dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - matching request not found\n");
     }
 
     delete ev;
@@ -1054,7 +1052,7 @@ void DirectoryController::setup(void){
             else            blocksize = i->second.cache.blocksize;
         }
     }
-    if(0 == numTargets) _abort(DirectoryController, "Directory Controller %s unable to see any caches.\n", getName().c_str());
+    if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"Directory Controller %s is unable to see any caches\n",getName().c_str());
 
     network->clearPeerInfo();
     entrySize = (numTargets+1)/8 +1;

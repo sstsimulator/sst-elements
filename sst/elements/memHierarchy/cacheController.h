@@ -105,6 +105,7 @@ private:
     /** Function processes incomming access requests from HiLv$ or the CPU
         It appropriately redirects requests to Top and/or Bottom controllers.  */
     void processCacheRequest(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
+    void processCacheReplacement(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
     
     /** Function processes incomming invalidate messages.  Redirects message 
         to Top and Bottom controllers appropriately  */
@@ -121,7 +122,7 @@ private:
     /** Find replacement for the current request.  If the replacement candidate is
         valid then a writeback is needed.  If replacemenent candidate is transitioning, we 
         need to wait (stall) until the replacement is in a 'stable' state */
-    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex, bool _mshrHit) throw(blockedEventException);
+    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(blockedEventException);
 
     /** Depending on the replacement policy and cache array type, this function appropriately
         searches for the replacement candidate */
@@ -133,7 +134,7 @@ private:
 
     /** Evict replacement cache line in higher level caches (if necessary).
         TopCC sends invalidates to lower level caches; stall if invalidates were sent */
-    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr, bool _mshrHit) throw (blockedEventException);
+    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (blockedEventException);
 
     /** Writeback cache line to lower level caches */
     inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine);
@@ -327,6 +328,7 @@ private:
     vector<MemEvent*>       retryQueueNext_;
     queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
     uint64                  accessLatency_;
+    uint64                  tagLatency_;
     uint64                  mshrLatency_;
     uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
     uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)

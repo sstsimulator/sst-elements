@@ -162,7 +162,7 @@ std::string MemNIC::findTargetDestination(Addr addr)
             i != destinations.end() ; ++i ) {
         if ( i->first.contains(addr) ) return i->second;
     }
-    _abort(MemNIC, "Unable to find target for address 0x%"PRIx64"\n", addr);
+    dbg.fatal(CALL_INFO,-1,"MemNIC %s cannot find a target for address 0x%"PRIx64"\n",comp->getName().c_str(),addr);
     return "";
 }
 

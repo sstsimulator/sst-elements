@@ -60,6 +60,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
         case GetS:
         case GetX:
         case GetSEx:
+            // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
             if(mshr_->isFull() || (!L1_ && !replaying && mshr_->isAlmostFull()  && (!isCacheHit(event,cmd,baseAddr) || mshr_->isHitAndStallNeeded(baseAddr, cmd)))){ 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 sendNACK(event);
@@ -82,7 +83,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
         case PutE:
         case PutX:
         case PutXE:
-            processCacheRequest(event, cmd, baseAddr, _mshrHit);
+            processCacheReplacement(event, cmd, baseAddr, _mshrHit);
             break;
         case Inv:
         case InvX:
@@ -243,8 +244,6 @@ void Cache::finish(){
 
 void Cache::processIncomingEvent(SST::Event* _ev){
     MemEvent* event = static_cast<MemEvent*>(_ev);
-    //assert(!event->inMSHR());
-    //assert(!event->statsUpdated());
     event->setInMSHR(false);
     event->setStatsUpdated(false);
     processEvent(event, false, false);

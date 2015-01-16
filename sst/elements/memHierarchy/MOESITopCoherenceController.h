@@ -38,8 +38,8 @@ private:
 
 public:
     MOESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines,
-               uint _lineSize, uint64_t _accessLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
-               MESITopCC(_cache, _dbg, _protocol, _numLines, _lineSize, _accessLatency, _mshrLatency,  _childrenLinks, _topNetworkLink){}
+               uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
+               MESITopCC(_cache, _dbg, _protocol, _numLines, _lineSize, _accessLatency, _tagLatency, _mshrLatency,  _childrenLinks, _topNetworkLink){}
     
     void handleEviction(int lineIndex, State _state);
     bool handleRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrHit);

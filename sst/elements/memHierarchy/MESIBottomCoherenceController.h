@@ -27,10 +27,10 @@ namespace SST { namespace MemHierarchy {
 class MESIBottomCC : public CoherencyController{
 public:
     /** Constructor for MESIBottomCC. */
-    MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg,
-                 vector<Link*>* _parentLinks, CacheListener* _listener, unsigned int _lineSize,
-                 uint64 _accessLatency, uint64 _mshrLatency, bool _L1, MemNIC* _bottomNetworkLink, bool _groupStats, vector<int> _statGroupIds) :
-                 CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _mshrLatency), lowNetPorts_(_parentLinks),
+    MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg, vector<Link*>* _parentLinks, CacheListener* _listener, 
+            unsigned int _lineSize, uint64 _accessLatency, uint64 _tagLatency, uint64 _mshrLatency, bool _L1, 
+            MemNIC* _bottomNetworkLink, bool _groupStats, vector<int> _statGroupIds) :
+                 CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
         L1_                 = _L1;
@@ -70,7 +70,7 @@ public:
     /** Function serves three purposes:  1) check if we need to to upgrade the cache line
         and 2) change to transition state if upgrade needed, and 3) forward request to
         lower level cache */
-    bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit);
+    bool isUpgradeToModifiedNeeded(MemEvent* _event, CacheLine* _cacheLine);
 
     /** Handle GetX request.  Cache line is already in the correct state
         and/or has been upgraded */
@@ -78,7 +78,7 @@ public:
 
     /** Handle GetS request.  Cache line is already in the correct state
         and/or has been upgraded */
-    void handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool _mshrH);
+    void handleGetSRequest(MemEvent* event, CacheLine* cacheLine);
     
     /** Handle PutM request.  Write data to cache line.  Update E->M state if necessary */
     void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
@@ -110,7 +110,7 @@ public:
     void forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int _lineSize, vector<uint8_t>* _data);
 
     /** Send Event.  This version simply forwards/sends the event provided */
-    void sendEvent(MemEvent* _event);
+    void resendEvent(MemEvent* _event);
     
     /** Send response memEvent to lower level caches */
     void sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
