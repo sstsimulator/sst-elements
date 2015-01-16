@@ -36,6 +36,10 @@
 #include "memNIC.h"
 #include "membackend/memBackend.h"
 
+#ifdef HAVE_GOBLIN_HMCSIM
+#include "membackend/GOBLINHMCSimBackend.h"
+#endif
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -223,6 +227,16 @@ static Module* create_Mem_VaultSim(Component* comp, Params& params){
     return new VaultSimMemory(comp, params);
 }
 
+#ifdef HAVE_GOBLIN_HMCSIM
+static Module* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
+    return new GOBLINHMCSimBackend(comp, params);
+}
+
+static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
+    {NULL, NULL, NULL}
+};
+#endif
+
 static const ElementInfoParam vaultsimMem_params[] = {
     {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
     {NULL, NULL, NULL}
@@ -321,6 +335,17 @@ static const ElementInfoModule modules[] = {
         NULL, /* ModuleAlloc */
         create_Mem_HybridSim, /* Module Alloc w/ params */
         hybridsimMem_params,
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
+#ifdef HAVE_GOBLIN_HMCSIM
+    {
+        "goblinHMCSim",
+        "GOBLIN HMC Simulator driven memory timings",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_Mem_GOBLINHMCSim, /* Module Alloc w/ params */
+        goblin_hmcsim_Mem_params,
         "SST::MemHierarchy::MemBackend"
     },
 #endif

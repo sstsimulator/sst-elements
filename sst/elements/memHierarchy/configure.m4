@@ -8,8 +8,11 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use global DRAMSim check
   SST_CHECK_DRAMSIM([],[],[AC_MSG_ERROR([DRAMSim requested but could not be found])])
 
-  # Use global DRAMSim check
+  # Use global HybridSim check
   SST_CHECK_HYBRIDSIM([],[],[AC_MSG_ERROR([HybridSim requested but could not be found])])
+
+  # Use GOBLIN HMC Sim
+  SST_CHECK_GOBLIN_HMCSIM([],[],[AC_MSG_ERROR([HybridSim requested but could not be found])])
 
   AS_IF([test "$mh_happy" = "yes"], [$1], [$2])
 ])

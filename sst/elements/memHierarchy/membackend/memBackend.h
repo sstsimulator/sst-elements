@@ -93,8 +93,6 @@ private:
 };
 
 
-
-
 #if defined(HAVE_LIBDRAMSIM)
 class DRAMSimMemory : public MemBackend {
 public:
@@ -110,8 +108,6 @@ private:
     std::map<uint64_t, std::deque<MemController::DRAMReq*> > dramReqs;
 };
 #endif
-
-
 
 
 #if defined(HAVE_LIBHYBRIDSIM)

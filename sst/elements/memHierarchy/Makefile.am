@@ -105,3 +105,12 @@ libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
 AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 endif
+
+if USE_GOBLIN_HMCSIM
+libmemHierarchy_la_SOURCES += \
+	membackend/GOBLINHMCSimBackend.h \
+	membackend/GOBLIBHMCSimBackend.cc
+libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
+AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
+endif
