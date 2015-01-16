@@ -14,7 +14,7 @@
 #include <iostream>
 #include <map>
 
-#include "sst/elements/memHierarchy/memoryController.h"
+#include "memoryController.h"
 
 #endif /* defined(__SST__memBackend__) */
 
