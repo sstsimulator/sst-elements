@@ -339,6 +339,31 @@ class CommSplitStartEvent : public Event {
     MP::Communicator* newComm;
 };
 
+class CommCreateStartEvent : public Event {
+  public:
+    CommCreateStartEvent( MP::Communicator _oldComm, size_t _nRanks, 
+                int* _ranks, MP::Communicator* _newComm ) :
+        oldComm(_oldComm),
+        nRanks( _nRanks ),
+        ranks( _ranks ),
+        newComm( _newComm )
+    { }
+
+    MP::Communicator oldComm;
+    size_t nRanks;
+    int*   ranks;
+    MP::Communicator* newComm;
+};
+
+class CommDestroyStartEvent : public Event {
+  public:
+    CommDestroyStartEvent( MP::Communicator _comm ) :
+        comm(_comm)
+    { }
+
+    MP::Communicator comm;
+};
+
 
 }
 }

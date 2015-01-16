@@ -49,6 +49,10 @@ class Info {
     MP::Communicator newGroup( GroupType type = Dense ) {
         return newGroup( genGroupID(), type );
     }
+    void delGroup( MP::Communicator group ) {
+        delete m_groupMap[ group ];
+        m_groupMap.erase( group );
+    }
 
     Group* getGroup( MP::Communicator group ) {
 		if ( m_groupMap.empty() ) return NULL;

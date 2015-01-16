@@ -49,6 +49,8 @@ class ProtocolAPI;
         NAME(WaitAny)   \
         NAME(WaitAll)   \
         NAME(CommSplit)   \
+        NAME(CommCreate)   \
+        NAME(CommDestroy)   \
         NAME(NumFunctions)  \
 
 #define GENERATE_ENUM(ENUM) ENUM,

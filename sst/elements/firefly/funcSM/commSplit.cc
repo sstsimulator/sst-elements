@@ -25,7 +25,7 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_dbg.verbose(CALL_INFO,1,0,"color=%d key=%d\n", 
                 m_commSplitEvent->color, m_commSplitEvent->key );
 
-    Group* oldGrp = m_info->getGroup( m_commSplitEvent->oldComm);
+    Group* oldGrp = m_info->getGroup( m_commSplitEvent->oldComm );
     assert(oldGrp);
 
     uint32_t cnt = oldGrp->getSize();

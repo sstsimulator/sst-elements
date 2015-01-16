@@ -33,6 +33,8 @@
 #include <funcSM/waitAny.h>
 #include <funcSM/waitAll.h>
 #include <funcSM/commSplit.h>
+#include <funcSM/commCreate.h>
+#include <funcSM/commDestroy.h>
 #include <ctrlMsg.h>
 #include <loopBack.h>
 #include <merlinEvent.h>
@@ -244,6 +246,18 @@ static Module*
 load_hermesCommSplitSM(Params& params)
 {
     return new CommSplitFuncSM(params);
+}
+
+static Module*
+load_hermesCommCreateSM(Params& params)
+{
+    return new CommCreateFuncSM(params);
+}
+
+static Module*
+load_hermesCommDestroySM(Params& params)
+{
+    return new CommDestroyFuncSM(params);
 }
 
 
@@ -503,6 +517,22 @@ static const ElementInfoModule modules[] = {
       "Hermes CommSplit Function State Machine",
       NULL,
       load_hermesCommSplitSM,
+      NULL,
+      funcSMModule_params,
+      "SST::Firefly::FunctionSMInterface"
+    },
+    { "CommCreate",
+      "Hermes CommCreate Function State Machine",
+      NULL,
+      load_hermesCommCreateSM,
+      NULL,
+      funcSMModule_params,
+      "SST::Firefly::FunctionSMInterface"
+    },
+    { "CommDestroy",
+      "Hermes CommDestroy Function State Machine",
+      NULL,
+      load_hermesCommDestroySM,
       NULL,
       funcSMModule_params,
       "SST::Firefly::FunctionSMInterface"

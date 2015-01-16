@@ -219,3 +219,18 @@ void HadesMP::comm_split( Communicator oldComm, int color, int key,
     functionSM().start( FunctionSM::CommSplit, retFunc,
                        new CommSplitStartEvent( oldComm, color, key, newComm) );
 } 
+
+void HadesMP::comm_create( MP::Communicator oldComm, size_t nRanks, int* ranks,
+        MP::Communicator* newComm, MP::Functor* retFunc )
+{
+    dbg().verbose(CALL_INFO,1,0,"\n");
+    functionSM().start( FunctionSM::CommCreate, retFunc,
+            new CommCreateStartEvent( oldComm, nRanks, ranks, newComm) );
+}
+
+void HadesMP::comm_destroy( MP::Communicator comm, MP::Functor* retFunc )
+{
+    dbg().verbose(CALL_INFO,1,0,"\n");
+    functionSM().start( FunctionSM::CommDestroy, retFunc,
+            new CommDestroyStartEvent( comm ) );
+}

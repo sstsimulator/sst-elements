@@ -134,6 +134,11 @@ class HadesMP : public MP::Interface
     virtual void comm_split( MP::Communicator, int color, int key,
         MP::Communicator*, MP::Functor* );
 
+    virtual void comm_create( MP::Communicator, size_t nRanks, int* ranks,
+        MP::Communicator*, MP::Functor* );
+
+    virtual void comm_destroy( MP::Communicator, MP::Functor* );
+
   private:
 	Output& dbg() { return m_os->m_dbg; }
 	FunctionSM& functionSM() { return *m_os->m_functionSM; }	

@@ -155,6 +155,11 @@ class Interface : public Hermes::Interface {
 
     virtual void comm_split( Communicator, int color, int key,
         Communicator*, Functor* ) {}
+
+    virtual void comm_create( Communicator, size_t nRanks, int *ranks,
+        Communicator*, Functor* ) {}
+
+    virtual void comm_destroy( Communicator, Functor* ) {}
 };
 
 }
