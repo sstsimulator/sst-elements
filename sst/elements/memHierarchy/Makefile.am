@@ -74,6 +74,17 @@ EXTRA_DIST = \
 	tests/sdl9-2.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini
+
+sstdir = $(includedir)/sst/elements/memHierarchy
+nobase_sst_HEADERS = \
+	memEvent.h \
+	memNIC.h \
+	memBackend.h \
+	memoryController.h \
+	cacheListener.h \
+	bus.h \
+	util.h
+
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 libmemHierarchy_la_LIBADD = 
 

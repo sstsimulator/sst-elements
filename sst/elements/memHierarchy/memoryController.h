@@ -25,9 +25,9 @@
 #include <zlib.h>
 #endif
 
-#include "memEvent.h"
-#include "bus.h"
-#include "cacheListener.h"
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/bus.h"
+#include "sst/elements/memHierarchy/cacheListener.h"
 
 namespace SST {
 namespace MemHierarchy {

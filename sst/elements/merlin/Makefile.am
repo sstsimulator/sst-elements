@@ -41,6 +41,10 @@ libmerlin_la_SOURCES = \
 	pymodule.c \
 	pymerlin.py
 
+sstdir = $(includedir)/sst/elements/merline
+nobase_sst_HEADERS = \
+	linkControl.h \
+	router.h
 
 libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 
