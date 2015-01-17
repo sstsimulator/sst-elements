@@ -37,7 +37,7 @@
 #include "membackend/memBackend.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
-#include "membackend/GOBLINHMCSimBackend.h"
+#include "membackend/GOBLINHMCBackend.h"
 #endif
 
 using namespace SST;

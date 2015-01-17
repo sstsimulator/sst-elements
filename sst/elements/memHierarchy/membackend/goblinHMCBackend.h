@@ -7,6 +7,8 @@
 #include <sst/core/output.h>
 #include <membackend/memBackend.h>
 
+#include <list>
+
 #include <hmc_sim.h>
 
 namespace SST {
@@ -15,7 +17,7 @@ namespace MemHierarchy {
 class GOBLINHMCSimBackend : public MemBackend {
 
 public:
-	GOBLINHMCSimBackend() {};MemController::DRAMReq* req)
+	GOBLINHMCSimBackend() : MemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
 	bool issueRequest(MemController::DRAMReq* req);
@@ -35,6 +37,13 @@ private:
 	uint32_t hmc_dram_count;
 	uint32_t hmc_capacity_per_device;
 	uint32_t hmc_xbar_depth;
+	uint32_t hmc_max_req_size;
+	uint32_t hmc_max_trace_level;
+	uint32_t hmc_tag_count;
+	uint32_t hmc_trace_level;
+
+	std::string hmc_trace_file;
+	FILE* hmc_trace_file_handle;
 
 	// We have to create a packet up to the maximum the sim will allow
 	uint64_t hmc_packet[HMC_MAX_UQ_PACKET];
@@ -46,6 +55,7 @@ private:
 
 	void zeroPacket(uint64_t* packet) const;
 	void processResponses();
+	void printPendingRequests();
 
 };
 

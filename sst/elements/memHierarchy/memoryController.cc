@@ -103,7 +103,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
 
     int mmap_flags          = setBackingFile(memoryFile);
-    backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, params));
+
+    // Ensure we can extract backend parameters for memH.
+    Params backendParams = params.find_prefix_params("backend.");
+    backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, backendParams));
+
     lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
     memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
 

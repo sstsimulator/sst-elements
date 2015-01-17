@@ -16,8 +16,6 @@
 
 #include "memoryController.h"
 
-#endif /* defined(__SST__memBackend__) */
-
 #if defined(HAVE_LIBDRAMSIM)
 // DRAMSim uses DEBUG
 #ifdef DEBUG
@@ -141,3 +139,6 @@ private:
 };
 
 }}
+
+#endif /* defined(__SST__memBackend__) */
+

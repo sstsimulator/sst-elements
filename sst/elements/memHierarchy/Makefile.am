@@ -108,9 +108,9 @@ endif
 
 if USE_GOBLIN_HMCSIM
 libmemHierarchy_la_SOURCES += \
-	membackend/GOBLINHMCSimBackend.h \
-	membackend/GOBLIBHMCSimBackend.cc
+	membackend/goblinHMCBackend.h \
+	membackend/goblinHMCBackend.cc
 libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
-AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
+AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
 endif
