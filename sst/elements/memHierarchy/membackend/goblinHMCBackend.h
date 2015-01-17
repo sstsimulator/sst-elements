@@ -42,6 +42,8 @@ private:
 	uint32_t hmc_tag_count;
 	uint32_t hmc_trace_level;
 
+	uint32_t nextLink;
+
 	std::string hmc_trace_file;
 	FILE* hmc_trace_file_handle;
 

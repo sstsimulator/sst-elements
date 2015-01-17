@@ -18,7 +18,28 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	hmc_capacity_per_device = (uint32_t) params.find_integer("capacity_per_device", HMC_MIN_CAPACITY);
 	hmc_xbar_depth   = (uint32_t) params.find_integer("xbar_depth", 4);
 	hmc_max_req_size = (uint32_t) params.find_integer("max_req_size", 64);
-	hmc_trace_level  = (uint32_t) params.find_integer("trace", 0);
+	hmc_trace_level  = 0;
+
+	if("yes" == params.find_string("trace-banks", "no")) {
+		hmc_trace_level = hmc_trace_level | HMC_TRACE_BANK;
+	}
+
+	if("yes" == params.find_string("trace-queue", "no")) {
+		hmc_trace_level = hmc_trace_level | HMC_TRACE_QUEUE;
+	}
+
+	if("yes" == params.find_string("trace-cmds", "no")) {
+		hmc_trace_level = hmc_trace_level | HMC_TRACE_CMD;
+	}
+
+	if("yes" == params.find_string("trace-latency", "no")) {
+		hmc_trace_level = hmc_trace_level | HMC_TRACE_LATENCY;
+	}
+
+	if("yes" == params.find_string("trace-stalls", "no")) {
+		hmc_trace_level = hmc_trace_level | HMC_TRACE_STALL;
+	}
+
 	hmc_tag_count    = (uint32_t) params.find_integer("tag_count", 64);
 
 	hmc_trace_file   = params.find_string("trace_file", "hmc-trace.out");
@@ -89,6 +110,8 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 
 	zeroPacket(hmc_packet);
 
+	nextLink = 0;
+
 	// We are done with all the config/
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
@@ -118,14 +141,15 @@ bool GOBLINHMCSimBackend::issueRequest(MemController::DRAMReq* req) {
 
 	hmc_rqst_t       	req_type;
 
-	if(req->isWrite_) {
-		// We are issuing a write
-		req_type = WR64;
-	} else {
+//	if(req->isWrite_) {
+//		// We are issuing a write
+//		req_type = WR64;
+//	} else {
 		req_type = RD64;
-	}
+//	}
 
-	const uint8_t           req_link   = 0;
+	const uint8_t           req_link   = 0; //(uint8_t) (nextLink);
+	//nextLink = (nextLink == hmc_link_count) ? 0 : nextLink + 1;
 
 	uint64_t                req_header = (uint64_t) 0;
 	uint64_t                req_tail   = (uint64_t) 0;
@@ -194,7 +218,7 @@ void GOBLINHMCSimBackend::processResponses() {
 
 	printPendingRequests();
 
-	for(int i = 0; i < the_hmc.num_links; ++i) {
+	for(uint32_t i = 0; i < (uint32_t) the_hmc.num_links; ++i) {
 		output->verbose(CALL_INFO, 4, 0, "Pooling responses on link %d...\n", i);
 
 		rc = HMC_OK;
@@ -261,6 +285,7 @@ void GOBLINHMCSimBackend::processResponses() {
 					// Should this situation happen? We have pulled the request now we want it decoded, if it stalls is it lost?
 					output->verbose(CALL_INFO, 8, 0, "Attempted to decode an HMC memory request but HMC returns stall.\n");
 				} else {
+					fflush(hmc_trace_file_handle);
 					output->fatal(CALL_INFO, -1, "Error: call to decode an HMC sim memory response returned an error code (code=%d, possible tag=%" PRIu16 ")\n", decode_rc, resp_tag);
 				}
 			} else if(HMC_STALL == rc) {
