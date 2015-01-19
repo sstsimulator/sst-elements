@@ -31,11 +31,12 @@ comp_l1cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",
-      "system_ini" : "system.ini",
       "clock" : "1GHz",
-      "access_time" : "1000 ns",
-      "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "mem_size" : "512",
+      "backend.access_time" : "1000 ns",
+      "backend.system_ini" : "system.ini",
+      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "backend.mem_size" : "512",
+      "mem_size" : 512,
       "backend" : "memHierarchy.dramsim"
 })
 

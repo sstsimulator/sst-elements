@@ -79,8 +79,9 @@ comp_memory.addParams({
 })
 if useDramSim == "yes":
     comp_memory.addParams({
-          "system_ini" : "system.ini",
-          "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+          "backend.system_ini" : "system.ini",
+          "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+	  "backend.mem_size" : memSize,
           "backend" : "memHierarchy.dramsim"
     })
 
