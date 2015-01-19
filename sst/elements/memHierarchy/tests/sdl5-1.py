@@ -8,149 +8,149 @@ sst.setProgramOption("stopAtCycle", "300000ns")
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
-      "memSize" : """0x1000""",
-      "num_loadstore" : """1000""",
-      "commFreq" : """100""",
-      "do_write" : """1"""
+      "memSize" : "0x1000",
+      "num_loadstore" : "1000",
+      "commFreq" : "100",
+      "do_write" : "1"
 })
 comp_c0_l1cache = sst.Component("c0.l1cache", "memHierarchy.Cache")
 comp_c0_l1cache.addParams({
-      "access_latency_cycles" : """5""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "L1" : """1""",
-      "debug" : """""",
-      "cache_size" : """4 KB"""
+      "access_latency_cycles" : "5",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "L1" : "1",
+      "debug" : "",
+      "cache_size" : "4 KB"
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
-      "memSize" : """0x1000""",
-      "num_loadstore" : """1000""",
-      "commFreq" : """100""",
-      "do_write" : """1"""
+      "memSize" : "0x1000",
+      "num_loadstore" : "1000",
+      "commFreq" : "100",
+      "do_write" : "1"
 })
 comp_c1_l1cache = sst.Component("c1.l1cache", "memHierarchy.Cache")
 comp_c1_l1cache.addParams({
-      "access_latency_cycles" : """5""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "L1" : """1""",
-      "debug" : """""",
-      "cache_size" : """4 KB"""
+      "access_latency_cycles" : "5",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "L1" : "1",
+      "debug" : "",
+      "cache_size" : "4 KB"
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
-      "bus_frequency" : """2 Ghz"""
+      "bus_frequency" : "2 Ghz"
 })
 comp_n0_l2cache = sst.Component("n0.l2cache", "memHierarchy.Cache")
 comp_n0_l2cache.addParams({
-      "access_latency_cycles" : """20""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """8""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "debug" : """""",
-      "cache_size" : """32 KB"""
+      "access_latency_cycles" : "20",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "8",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "debug" : "",
+      "cache_size" : "32 KB"
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
 comp_cpu2.addParams({
-      "memSize" : """0x1000""",
-      "num_loadstore" : """1000""",
-      "commFreq" : """100""",
-      "do_write" : """1"""
+      "memSize" : "0x1000",
+      "num_loadstore" : "1000",
+      "commFreq" : "100",
+      "do_write" : "1"
 })
 comp_c2_l1cache = sst.Component("c2.l1cache", "memHierarchy.Cache")
 comp_c2_l1cache.addParams({
-      "access_latency_cycles" : """5""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "L1" : """1""",
-      "debug" : """""",
-      "cache_size" : """4 KB"""
+      "access_latency_cycles" : "5",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "L1" : "1",
+      "debug" : "",
+      "cache_size" : "4 KB"
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
 comp_cpu3.addParams({
-      "memSize" : """0x1000""",
-      "num_loadstore" : """1000""",
-      "commFreq" : """100""",
-      "do_write" : """1"""
+      "memSize" : "0x1000",
+      "num_loadstore" : "1000",
+      "commFreq" : "100",
+      "do_write" : "1"
 })
 comp_c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
 comp_c3_l1cache.addParams({
-      "access_latency_cycles" : """5""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "L1" : """1""",
-      "debug" : """""",
-      "cache_size" : """4 KB"""
+      "access_latency_cycles" : "5",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "L1" : "1",
+      "debug" : "",
+      "cache_size" : "4 KB"
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
 comp_n1_bus.addParams({
-      "bus_frequency" : """2 Ghz"""
+      "bus_frequency" : "2 Ghz"
 })
 comp_n1_l2cache = sst.Component("n1.l2cache", "memHierarchy.Cache")
 comp_n1_l2cache.addParams({
-      "access_latency_cycles" : """20""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """8""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "debug" : """""",
-      "cache_size" : """32 KB"""
+      "access_latency_cycles" : "20",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "8",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "debug" : "",
+      "cache_size" : "32 KB"
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
-      "bus_frequency" : """2 Ghz"""
+      "bus_frequency" : "2 Ghz"
 })
 comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 comp_l3cache.addParams({
-      "access_latency_cycles" : """100""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """8""",
-      "cache_line_size" : """64""",
-      "debug_level" : """8""",
-      "statistics" : """1""",
-      "debug" : """""",
-      "cache_size" : """64 KB"""
+      "access_latency_cycles" : "100",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "8",
+      "cache_line_size" : "64",
+      "debug_level" : "8",
+      "statistics" : "1",
+      "debug" : "",
+      "cache_size" : "64 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : """MSI""",
-      "debug" : """""",
-      "system_ini" : """system.ini""",
-      "clock" : """1GHz""",
-      "access_time" : """1000 ns""",
-      "mem_size" : """512""",
-      "device_ini" : """DDR3_micron_32M_8B_x4_sg125.ini""",
-      "backend" : """memHierarchy.dramsim"""
+      "coherence_protocol" : "MSI",
+      "debug" : "",
+      "clock" : "1GHz",
+      "mem_size" : "512",
+      "backend.access_time" : "1000 ns",
+      "backend.system_ini" : "system.ini",
+      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "backend" : "memHierarchy.dramsim"
 })
 
 

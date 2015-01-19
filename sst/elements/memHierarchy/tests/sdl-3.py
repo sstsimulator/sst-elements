@@ -8,35 +8,35 @@ sst.setProgramOption("stopAtCycle", "200000ns")
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
-      "do_write" : """1""",
-      "num_loadstore" : """1000""",
-      "commFreq" : """100""",
-      "memSize" : """0x1000"""
+      "do_write" : "1",
+      "num_loadstore" : "1000",
+      "commFreq" : "100",
+      "memSize" : "0x1000"
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
-      "access_latency_cycles" : """4""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "debug" : """""",
-      "statistics" : """1""",
-      "L1" : """1""",
-      "cache_size" : """4 KB"""
+      "access_latency_cycles" : "4",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "debug" : "",
+      "statistics" : "1",
+      "L1" : "1",
+      "cache_size" : "4 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : """MSI""",
-      "debug" : """""",
-      "system_ini" : """system.ini""",
-      "clock" : """1GHz""",
-      "access_time" : """100 ns""",
-      "device_ini" : """DDR3_micron_32M_8B_x4_sg125.ini""",
-      "mem_size" : """512""",
-      "request_width" : """64""",
-      "backend" : """memHierarchy.dramsim"""
+      "coherence_protocol" : "MSI",
+      "debug" : "",
+      "clock" : "1GHz",
+      "backend.access_time" : "100 ns",
+      "request_width" : "64",
+      "backend" : "memHierarchy.dramsim",
+      "backend.system_ini" : "system.ini",
+      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "mem_size" : "512"
 })
 
 

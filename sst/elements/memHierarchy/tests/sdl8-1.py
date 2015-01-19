@@ -8,78 +8,78 @@ sst.setProgramOption("stopAtCycle", "10000ns")
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
-      "memSize" : """0x100000""",
-      "num_loadstore" : """10000""",
-      "commFreq" : """100""",
-      "do_write" : """1"""
+      "memSize" : "0x100000",
+      "num_loadstore" : "10000",
+      "commFreq" : "100",
+      "do_write" : "1"
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
-      "access_latency_cycles" : """5""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "cache_size" : """4 KB""",
-      "statistics" : """1""",
-      "L1" : """1""",
-      "debug" : """"""
+      "access_latency_cycles" : "5",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "cache_size" : "4 KB",
+      "statistics" : "1",
+      "L1" : "1",
+      "debug" : ""
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
-      "access_latency_cycles" : """20""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """8""",
-      "cache_line_size" : """64""",
-      "cache_size" : """32 KB""",
-      "statistics" : """1""",
-      "debug" : """"""
+      "access_latency_cycles" : "20",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "8",
+      "cache_line_size" : "64",
+      "cache_size" : "32 KB",
+      "statistics" : "1",
+      "debug" : ""
 })
 comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 comp_l3cache.addParams({
-      "access_latency_cycles" : """100""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """16""",
-      "cache_line_size" : """64""",
-      "cache_size" : """64 KB""",
-      "statistics" : """1""",
-      "debug" : """""",
-      "network_address" : """1""",
-      "directory_at_next_level" : """1"""
+      "access_latency_cycles" : "100",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "16",
+      "cache_line_size" : "64",
+      "cache_size" : "64 KB",
+      "statistics" : "1",
+      "debug" : "",
+      "network_address" : "1",
+      "directory_at_next_level" : "1"
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
-      "xbar_bw" : """1GB/s""",
-      "link_bw" : """1GB/s""",
-      "input_buf_size" : """1KB""",
-      "num_ports" : """2""",
-      "flit_size" : """72B""",
-      "output_buf_size" : """1KB""",
-      "id" : """0""",
-      "topology" : """merlin.singlerouter"""
+      "xbar_bw" : "1GB/s",
+      "link_bw" : "1GB/s",
+      "input_buf_size" : "1KB",
+      "num_ports" : "2",
+      "flit_size" : "72B",
+      "output_buf_size" : "1KB",
+      "id" : "0",
+      "topology" : "merlin.singlerouter"
 })
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
-      "coherence_protocol" : """MSI""",
-      "debug" : """""",
-      "network_address" : """0""",
-      "entry_cache_size" : """16384""",
-      "network_bw" : """1GB/s""",
-      "addr_range_end" : """0x1F000000""",
-      "addr_range_start" : """0x0"""
+      "coherence_protocol" : "MSI",
+      "debug" : "",
+      "network_address" : "0",
+      "entry_cache_size" : "16384",
+      "network_bw" : "1GB/s",
+      "addr_range_end" : "0x1F000000",
+      "addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : """MSI""",
-      "debug" : """""",
-      "access_time" : """100 ns""",
-      "clock" : """1GHz""",
-      "mem_size" : """512"""
+      "coherence_protocol" : "MSI",
+      "debug" : "",
+      "backend.access_time" : "100 ns",
+      "clock" : "1GHz",
+      "mem_size" : "512"
 })
 
 

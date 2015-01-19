@@ -221,7 +221,7 @@
             <rangeStart>  ${DEBUG_LEVEL} </rangeStart>
             <coherence_protocol> MSI </coherence_protocol>
             <request_width> 64 </request_width>
-            <access_time> 25 ns </access_time>
+            <backend.access_time> 25 ns </backend.access_time>
             <mem_size>    1024  </mem_size>
             <clock>       2GHz </clock>
             <statistics> 0 </statistics>
