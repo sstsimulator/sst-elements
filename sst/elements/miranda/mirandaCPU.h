@@ -14,10 +14,13 @@
 
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/statapi/stataccumulator.h>
 
 #include "mirandaGenerator.h"
 
+using namespace SST;
 using namespace SST::Interfaces;
+using namespace SST::Statistics;
 
 namespace SST {
 namespace Miranda {
@@ -52,19 +55,15 @@ private:
 	uint32_t reqMaxPerCycle;
 	uint64_t cacheLine;
 
-	uint64_t readRequestsIssued;
-	uint64_t splitReadRequestsIssued;
-	uint64_t writeRequestsIssued;
-	uint64_t splitWriteRequestsIssued;
-	uint64_t cyclesWithoutIssue;
-	uint64_t cyclesWithIssue;
-	uint64_t bytesRead;
-	uint64_t bytesWritten;
-
-	uint64_t reqLatency;
-
-	bool printStats;
-
+	Statistic<uint64_t>* statReadReqs;
+	Statistic<uint64_t>* statWriteReqs;
+	Statistic<uint64_t>* statSplitReadReqs;
+	Statistic<uint64_t>* statSplitWriteReqs;
+	Statistic<uint64_t>* statCyclesWithIssue;
+	Statistic<uint64_t>* statCyclesWithoutIssue;
+	Statistic<uint64_t>* statBytesRead;
+	Statistic<uint64_t>* statBytesWritten;
+	Statistic<uint64_t>* statReqLatency;
 };
 
 }

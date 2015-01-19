@@ -145,6 +145,19 @@ static const ElementInfoModule modules[] = {
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
+static const ElementInfoStatistic basecpu_stats[] = {
+	{ "split_read_reqs",	"Number of read requests split over a cache line boundary",	2 },
+	{ "split_write_reqs",	"Number of write requests split over a cache line boundary", 	2 },
+	{ "read_reqs", 		"Number of read requests issued", 				1 },
+	{ "write_reqs", 	"Number of write requests issued", 				1 },
+	{ "total_bytes_read",   "Count the total bytes requested by read operations",		1 },
+	{ "total_bytes_write",  "Count the total bytes requested by write operations",      	1 },
+	{ "total_req_latency",  "Running total of all latency for all requests",                2 },
+        { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        1 },
+        { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    1 },
+	{ NULL,			NULL,								0 }
+};
+
 static const ElementInfoParam basecpu_params[] = {
      { "cache_line_size",  "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64" },
      { "maxmemreqpending", "Set the maximum number of requests allowed to be pending", "16" },
@@ -169,7 +182,8 @@ static const ElementInfoComponent components[] = {
 		load_MirandaBaseCPU,
 		basecpu_params,
 		basecpu_ports,
-		COMPONENT_CATEGORY_PROCESSOR
+		COMPONENT_CATEGORY_PROCESSOR,
+		basecpu_stats
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0 }
 };

@@ -16,8 +16,12 @@ STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	reqLength = (uint64_t) params.find_integer("operandwidth", 8);
 
 	start_a = (uint64_t) params.find_integer("start_a", 0);
-	start_b = (uint64_t) params.find_integer("start_b", (n * reqLength));
-	start_c = (uint64_t) params.find_integer("start_c", 2 * (n * reqLength));
+	const uint64_t def_b = start_a + (n * reqLength);
+
+	start_b = (uint64_t) params.find_integer("start_b", def_b);
+
+	const uint64_t def_c = start_b + (2 * (n * reqLength));
+	start_c = (uint64_t) params.find_integer("start_c", def_c);
 
 	i = 0;
 
@@ -37,14 +41,17 @@ void STREAMBenchGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Array index: %" PRIu64 "\n", i);
 
 	RequestGeneratorRequest* read_b = new RequestGeneratorRequest();
+	out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", (start_b + (i * reqLength)));
 	read_b->set(start_b + (i * reqLength), reqLength, READ);
 	q->push(read_b);
 
 	RequestGeneratorRequest* read_c = new RequestGeneratorRequest();
+	out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", (start_c + (i * reqLength)));
 	read_c->set(start_c + (i * reqLength), reqLength, READ);
 	q->push(read_c);
 
 	RequestGeneratorRequest* write_a = new RequestGeneratorRequest();
+	out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", (start_a + (i * reqLength)));
 	write_a->set(start_a + (i * reqLength), reqLength, WRITE);
 	q->push(write_a);
 

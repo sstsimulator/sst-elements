@@ -49,8 +49,6 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
 	}
 
-	printStats = (params.find_integer("printStats", 0) == 0 ) ? true : false;
-
 	std::string reqGenModName = params.find_string("generator", "");
 	out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
 	Params genParams = params.find_prefix_params("generatorParams.");
@@ -71,17 +69,17 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	cacheLine = (uint64_t) params.find_integer("cache_line_size", 64);
 
-	readRequestsIssued = 0;
-	splitReadRequestsIssued = 0;
-	writeRequestsIssued = 0;
-	splitWriteRequestsIssued = 0;
-	cyclesWithIssue = 0;
-	cyclesWithoutIssue = 0;
-	bytesRead = 0;
-	bytesWritten = 0;
-	reqLatency = 0;
-	reqMaxPerCycle = 2;
+	statReadReqs   		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "read_reqs") );
+	statWriteReqs  		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "write_reqs") );
+	statSplitReadReqs 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "split_read_reqs") );
+	statSplitWriteReqs 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "split_write_reqs") );
+	statCyclesWithIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_with_issue") );
+	statCyclesWithoutIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_no_issue") );
+	statBytesRead 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_read") );
+	statBytesWritten 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_write") );
+	statReqLatency 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_req_latency") );
 
+	reqMaxPerCycle = 2;
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
 
@@ -89,73 +87,21 @@ RequestGenCPU::~RequestGenCPU() {
 	delete cache_link;
 	delete reqGen;
 	delete out;
+
+	delete statReadReqs;
+	delete statWriteReqs;
+	delete statSplitReadReqs;
+	delete statSplitWriteReqs;
+	delete statCyclesWithIssue;
+	delete statCyclesWithoutIssue;
+	delete statBytesRead;
+	delete statBytesWritten;
+	delete statReqLatency;
 }
 
 void RequestGenCPU::finish() {
 	// Tell the generator we are completed.
 	reqGen->completed();
-
-	// Check whether we want to print statistics or not, if not we're done
-	if(printStats) return;
-
-	out->output("------------------------------------------------------------------------\n");
-	out->output("Miranda CPU Statistics (%s):\n", getName().c_str());
-	out->output("\n");
-	out->output("Total requests issued:                 %" PRIu64 "\n",
-		(readRequestsIssued + (splitReadRequestsIssued * 2)+
-		writeRequestsIssued + (splitWriteRequestsIssued * 2)));
-	out->output("Total split Requests issued:           %" PRIu64 "\n",
-		(splitReadRequestsIssued + splitWriteRequestsIssued));
-	out->output("Total read (split + non-split):        %" PRIu64 "\n",
-		(readRequestsIssued + splitReadRequestsIssued ));
-	out->output("Total write (split + non-split):       %" PRIu64 "\n",
-		(writeRequestsIssued + splitWriteRequestsIssued ));
-	out->output("Non-split read requests:               %" PRIu64 "\n", readRequestsIssued);
-	out->output("Non-split write requests:              %" PRIu64 "\n", writeRequestsIssued);
-	out->output("Split read requests:                   %" PRIu64 "\n", splitReadRequestsIssued);
-	out->output("Split write requests:                  %" PRIu64 "\n", splitWriteRequestsIssued);
-	out->output("\n");
-	out->output("Total bytes read:                      %" PRIu64 "\n", bytesRead);
-	out->output("Total bytes written:                   %" PRIu64 "\n", bytesWritten);
-
-	const uint64_t nanoSeconds = getCurrentSimTimeNano();
-	out->output("Nanoseconds:                           %" PRIu64 "\n", nanoSeconds);
-
-	const double seconds = ((double) nanoSeconds) / (1.0e9);
-	out->output("Seconds:                               %f\n", seconds);
-
-	char bufferRead[32];
-	sprintf(bufferRead, "%f B/s", ((double) bytesRead / seconds));
-
-	char bufferWrite[32];
-	sprintf(bufferWrite, "%f B/s", ((double) bytesWritten / seconds));
-
-	char bufferCombined[32];
-	sprintf(bufferCombined, "%f B/s", ((double)(bytesRead + bytesWritten) / seconds));
-
-	UnitAlgebra readBandwidth(bufferRead);
-	UnitAlgebra writeBandwidth(bufferWrite);
-	UnitAlgebra combinedBandwidth(bufferCombined);
-
-	out->output("CPU Bandwidth (read):                  %s\n", readBandwidth.toStringBestSI().c_str());
-	out->output("CPU Bandwidth (write):                 %s\n", writeBandwidth.toStringBestSI().c_str());
-	out->output("CPU Bandwidth (combined):              %s\n", combinedBandwidth.toStringBestSI().c_str());
-
-	char bufferLatency[32];
-	sprintf(bufferLatency, "%f ns", ((double) reqLatency) / (readRequestsIssued + (splitReadRequestsIssued * 2)+
-                writeRequestsIssued + (splitWriteRequestsIssued * 2)));
-
-	UnitAlgebra avrLatency(bufferLatency);
-
-	out->output("\n");
-	out->output("Total request latency:                 %" PRIu64 " ns\n", reqLatency);
-	out->output("Average request latency:               %s\n", avrLatency.toStringBestSI().c_str());
-
-	out->output("\n");
-	out->output("Cycles with request issues:            %" PRIu64 "\n", cyclesWithIssue);
-	out->output("Cycles without request issue:          %" PRIu64 "\n", cyclesWithoutIssue);
-	out->output("------------------------------------------------------------------------\n");
-	out->output("\n");
 }
 
 void RequestGenCPU::init(unsigned int phase) {
@@ -171,7 +117,7 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	if(reqFind == requestsInFlight.end()) {
 		out->fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
 	} else{
-		reqLatency += (getCurrentSimTimeNano() - reqFind->second);
+		statReqLatency->addData((getCurrentSimTimeNano() - reqFind->second));
 		requestsInFlight.erase(reqID);
 
 		// Decrement pending requests, we have recv'd a response
@@ -191,9 +137,9 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 		reqAddress, reqLength, (isRead ? "READ" : "WRITE"), lineOffset);
 
 	if(isRead) {
-		bytesRead += reqLength;
+		statBytesRead->addData(reqLength);
 	} else {
-		bytesWritten += reqLength;
+		statBytesWritten->addData(reqLength);
 	}
 
 	if(lineOffset + reqLength > cacheLine) {
@@ -234,9 +180,9 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 
 		// Keep track of split requests
 		if(isRead) {
-			splitReadRequestsIssued++;
+			statSplitReadReqs->addData(1);
 		} else {
-			splitWriteRequestsIssued++;
+			statSplitWriteReqs->addData(1);
 		}
 	} else {
 		// This is not a split laod, i.e. issue in a single transaction
@@ -250,9 +196,9 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 		requestsPending++;
 
 		if(isRead) {
-			readRequestsIssued++;
+			statReadReqs->addData(1);
 		} else {
-			writeRequestsIssued++;
+			statWriteReqs->addData(1);
 		}
 	}
 
@@ -277,7 +223,7 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 		requestsPending, maxRequestsPending);
 
 	if(requestsPending < maxRequestsPending) {
-		cyclesWithIssue++;
+		statCyclesWithIssue->addData(1);
 
 		for(uint32_t reqThisCycle = 0; reqThisCycle < reqMaxPerCycle; ++reqThisCycle) {
 			if(requestsPending < maxRequestsPending) {
@@ -309,7 +255,7 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 		}
 	} else {
 		out->verbose(CALL_INFO, 4, 0, "Will not issue, not free slots in load/store unit.\n");
-		cyclesWithoutIssue++;
+		statCyclesWithoutIssue->addData(1);
 	}
 
 	return false;
