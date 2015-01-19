@@ -44,6 +44,7 @@ libember_la_SOURCES = \
 	mpi/emberMPIEvent.h \
 	mpi/emberrankev.h \
 	mpi/embersizeev.h \
+	mpi/emberCommCreateEv.h \
 	mpi/emberCommSplitEv.h \
 	mpi/motifs/emberinit.h  \
 	mpi/motifs/emberfini.h  \
