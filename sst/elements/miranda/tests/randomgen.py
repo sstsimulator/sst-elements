@@ -4,6 +4,9 @@ import sst
 sst.setProgramOption("timebase", "1ns")
 sst.setProgramOption("stopAtCycle", "0 ns")
 
+# Tell SST what statistics handling we want
+sst.setStatisticLoadLevel(4)
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
@@ -14,6 +17,9 @@ comp_cpu.addParams({
 	"generatorParams.max_address" : 524288,
 	"printStats" : 1,
 })
+
+# Enable statistics outputs
+comp_cpu.enableAllStatistics()
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
