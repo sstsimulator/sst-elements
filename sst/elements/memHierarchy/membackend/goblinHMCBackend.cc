@@ -176,6 +176,10 @@ bool GOBLINHMCSimBackend::issueRequest(MemController::DRAMReq* req) {
 
 		// Restore tag for use later, remember this request did not succeed
 		tag_queue.push(req_tag);
+
+		// Return false, the request was not issued so we must tell memory controller to give it
+		// back to us when we are free
+		return false;
 	} else if(0 == rc) {
 		output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
 
