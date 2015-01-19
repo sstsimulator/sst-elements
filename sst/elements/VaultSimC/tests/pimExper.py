@@ -41,7 +41,7 @@ coreCtr = corePorts()
 
 # common
 memParams = {
-        "access_time" : "50ns"
+        "backend.access_time" : "50ns"
         }
 l1PrefetchParams = { }
 l2PrefetchParams = {
