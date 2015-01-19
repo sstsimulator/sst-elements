@@ -9,14 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
-
-/*
- * File:   coherenceControllers.h
- * Author: Branden Moore / Caesar De la Paz III
- *  Email:  bjmoor@sandia.gov / caesar.sst@gmail.com
- */
-
 #include <sst_config.h>
 
 #include "sst/core/serialization.h"
@@ -35,9 +27,19 @@
 #include "memHierarchyInterface.h"
 #include "memNIC.h"
 #include "membackend/memBackend.h"
+#include "membackend/simpleMemBackend.h"
+#include "membackend/vaultSimBackend.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/GOBLINHMCBackend.h"
+#endif
+
+#ifdef HAVE_LIBDRAMSIM
+#include "membackend/dramSimBackend.h"
+#endif
+
+#ifdef HAVE_LIBHYBRIDSIM
+#include "membackend/hybridSimBackend.h"
 #endif
 
 using namespace SST;

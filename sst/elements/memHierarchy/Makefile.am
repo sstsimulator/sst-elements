@@ -24,6 +24,10 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.cc \
         membackend/memBackend.h \
         membackend/memBackend.cc \
+	membackend/simpleMemBackend.cc \
+	membackend/simpleMemBackend.h \
+	membackend/vaultSimBackend.h \
+	membackend/vaultSimBackend.cc \
 	memEvent.h \
 	memNIC.h \
 	memNIC.cc \
@@ -80,6 +84,8 @@ nobase_sst_HEADERS = \
 	memEvent.h \
 	memNIC.h \
 	membackend/memBackend.h \
+	membackend/vaultSimBackend.h \
+	membackend/simpleMemBackend.h \
 	memoryController.h \
 	cacheListener.h \
 	bus.h \
@@ -91,12 +97,18 @@ libmemHierarchy_la_LIBADD =
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
+libmemHierarchy_la_SOURCES += membackend/dramSimBackend.cc \
+	membackend/dramSimBackend.h
+nobase_sst_HEADERS += membackend/dramSimBackend.h
 AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 endif
 
 if HAVE_HYBRIDSIM
 libmemHierarchy_la_LDFLAGS += $(HYBRIDSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(HYBRIDSIM_LIB)
+libmemHierarchy_la_SOURCES += membackend/hybridSimBackend.cc \
+	membackend/hybridSimBackend.h
+nobase_sst_HEADERS += membackend/hybridSimBackend.h
 AM_CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
 endif
 
@@ -108,8 +120,9 @@ endif
 
 if USE_GOBLIN_HMCSIM
 libmemHierarchy_la_SOURCES += \
-	membackend/goblinHMCBackend.h \
-	membackend/goblinHMCBackend.cc
+	membackend/goblinHMCBackend.cc \
+	membackend/goblinHMCBackend.h
+nobase_sst_HEADERS += membackend/goblinHMCBackend.h
 libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
 AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
