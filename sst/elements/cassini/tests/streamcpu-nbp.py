@@ -11,7 +11,8 @@ comp_cpu.addParams({
       "num_loadstore" : "100000",
       "commFreq" : "100",
       "memSize" : "524288",
-      "verbose" : 0
+      "verbose" : 0,
+      "addressoffset" : "1"
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
@@ -32,7 +33,7 @@ comp_l1cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "access_time" : "1000 ns",
+      "backend.access_time" : "1000 ns",
       "mem_size" : "512",
       "clock" : "1GHz"
 })

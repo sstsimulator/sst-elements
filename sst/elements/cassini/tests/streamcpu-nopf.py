@@ -31,7 +31,7 @@ comp_l1cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",
-      "access_time" : "1000 ns",
+      "backend.access_time" : "1000 ns",
       "mem_size" : "512",
       "clock" : "1GHz"
 })
