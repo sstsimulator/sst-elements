@@ -1,5 +1,6 @@
 
 import sys,getopt
+import defaultParams
 
 import sst
 from sst.merlin import *
@@ -27,11 +28,10 @@ motifDefaults = {
 'spyplotmode': 0 
 }
 
-netBW = "4GB/s"
-netPktSize="2048B"
-netFlitSize="8B"
-netBufSize="14KB"
-
+nicParams = defaultParams.nicParams
+networkParams = defaultParams.networkParams
+hermesParams = defaultParams.hermesParams
+emberParams = defaultParams.emberParams 
 
 if 1 == len(sys.argv) :
     motif = dict.copy(motifDefaults)
@@ -115,85 +115,33 @@ elif "fattree" == topology:
 else:
 	sys.exit("how did we get here")
 
-print "network: BW={0} pktSize={1} flitSize={2}".format(netBW,netPktSize,netFlitSize)
+
+nicParams['debug'] = debug
+hermesParams['hermesParams.debug'] = debug
+hermesParams['hermesParams.nicParams.debug'] = debug
+hermesParams['hermesParams.functionSM.defaultDebug'] = debug
+hermesParams['hermesParams.ctrlMsg.debug'] = debug
+emberParams['verbose'] = emberVerbose
+
+print "network: BW={0} pktSize={1} flitSize={2}".format(
+        networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
 
 sst.merlin._params["link_lat"] = "40ns"
-sst.merlin._params["link_bw"] = netBW 
-sst.merlin._params["xbar_bw"] = netBW 
-sst.merlin._params["flit_size"] = netFlitSize
+sst.merlin._params["link_bw"] = networkParams['link_bw']   
+sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
+sst.merlin._params["flit_size"] = networkParams['flitSize'] 
 sst.merlin._params["input_latency"] = "50ns"
 sst.merlin._params["output_latency"] = "50ns"
-sst.merlin._params["input_buf_size"] = netBufSize 
-sst.merlin._params["output_buf_size"] = netBufSize 
+sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
+sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
 
 sst.merlin._params.update( topoInfo.getNetworkParams() )
 
-_nicParams = { 
-		"debug" : debug,
-		"verboseLevel": 1,
-		"module" : "merlin.linkcontrol",
-		"topology" : "merlin." + topology,
-		"packetSize" : netPktSize,
-		"link_bw" : netBW,
-		"buffer_size" : netBufSize,
-		"rxMatchDelay_ns" : 100,
-		"txDelay_ns" : 50,
-	}
-
-_emberParams = {
-		"os.module"    : "firefly.hades",
-		"os.name"      : "hermesParams",
-		"api.0.module" : "firefly.hadesMP",
-		"verbose" : emberVerbose,
-	}
-
-_hermesParams = {
-		"hermesParams.debug" : debug,
-		"hermesParams.verboseLevel" : 1,
-		"hermesParams.nicModule" : "firefly.VirtNic",
-		"hermesParams.nicParams.debug" : debug,
-		"hermesParams.nicParams.debugLevel" : 1 ,
-		"hermesParams.policy" : "adjacent",
-		"hermesParams.functionSM.defaultEnterLatency" : 30000,
-		"hermesParams.functionSM.defaultReturnLatency" : 30000,
-		"hermesParams.functionSM.defaultDebug" : debug,
-		"hermesParams.functionSM.defaultVerbose" : 2,
-		"hermesParams.ctrlMsg.debug" : debug,
-		"hermesParams.ctrlMsg.verboseLevel" : 2,
-		"hermesParams.ctrlMsg.shortMsgLength" : 12000,
-		"hermesParams.ctrlMsg.matchDelay_ns" : 150,
-
-        "hermesParams.ctrlMsg.txSetupMod" : "firefly.LatencyMod",
-        "hermesParams.ctrlMsg.txSetupModParams.range.0" : "0-:130ns",
-
-        "hermesParams.ctrlMsg.rxSetupMod" : "firefly.LatencyMod",
-        "hermesParams.ctrlMsg.rxSetupModParams.range.0" : "0-:100ns",
-
-        "hermesParams.ctrlMsg.txMemcpyMod" : "firefly.LatencyMod",
-        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
-        "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:344ps",
-
-        "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
-        "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
-        "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:344ps",
-
-		"hermesParams.ctrlMsg.txNicDelay_ns" : 0,
-		"hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
-		"hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 0,
-		"hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
-		"hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 3000,
-		"hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 100,
-		"hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
-		"hermesParams.loadMap.0.start" : 0,
-		"hermesParams.loadMap.0.len" : 2,
-	}
-
-
 epParams = {} 
-epParams.update(_emberParams)
-epParams.update(_hermesParams)
+epParams.update(emberParams)
+epParams.update(hermesParams)
 
-loadInfo = LoadInfo( _nicParams, epParams, topoInfo.getNumNodes(), numCores )
+loadInfo = LoadInfo( nicParams, epParams, topoInfo.getNumNodes(), numCores )
 
 if len(loadFile) > 0:
 	if len(workList) > 0:
