@@ -1,6 +1,8 @@
 
 import sys,getopt
 import defaultParams
+import chamaOpenIBParams
+import bgqParams
 
 import sst
 from sst.merlin import *
@@ -20,6 +22,7 @@ shape    = ""
 loading  = 0
 radix    = 0
 emberVerbose = 0
+platform = "default"
 
 motifDefaults = { 
 'cmd' : "",
@@ -28,10 +31,6 @@ motifDefaults = {
 'spyplotmode': 0 
 }
 
-nicParams = defaultParams.nicParams
-networkParams = defaultParams.networkParams
-hermesParams = defaultParams.hermesParams
-emberParams = defaultParams.emberParams 
 
 if 1 == len(sys.argv) :
     motif = dict.copy(motifDefaults)
@@ -49,10 +48,11 @@ if 1 == len(sys.argv) :
 
     topology = "torus"
     shape    = "4x4x4"
+    platform = "chamaOpenIB"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
-					"radix=","loading=","debug=",
+					"radix=","loading=","debug=","platform=",
 					"numCores=","loadFile=","cmdLine=","printStats=",
 					"emberVerbose=","netBW=","netPktSize=","netFlitSize="])
 
@@ -63,6 +63,8 @@ except getopt.GetopError as err:
 for o, a in opts:
     if o in ("--shape"):
         shape = a
+    elif o in ("--platform"):
+        platform = a
     elif o in ("--numCores"):
         numCores = a
     elif o in ("--debug"):
@@ -91,6 +93,24 @@ for o, a in opts:
         netPktSize = a
     else:
         assert False, "unhandle option" 
+
+if platform == "default":
+    nicParams = defaultParams.nicParams
+    networkParams = defaultParams.networkParams
+    hermesParams = defaultParams.hermesParams
+    emberParams = defaultParams.emberParams 
+elif platform == "chamaOpenIB":
+    nicParams = chamaOpenIBParams.nicParams
+    networkParams = chamaOpenIBParams.networkParams
+    hermesParams = chamaOpenIBParams.hermesParams
+    emberParams = chamaOpenIBParams.emberParams 
+elif platform == "bgq":
+    nicParams = bgqParams.nicParams
+    networkParams = bgqParams.networkParams
+    hermesParams = bgqParams.hermesParams
+    emberParams = bgqParams.emberParams 
+else:
+	sys.exit("Must specify platform configuration")
 
 
 if "" == topology:
