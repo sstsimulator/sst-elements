@@ -16,7 +16,7 @@ from networkConfig import *
 loadFile = ""
 workList = []
 numCores = 1
-debug    = 0
+debug    = 1
 topology = ""
 shape    = ""
 loading  = 0
@@ -137,6 +137,7 @@ else:
 
 
 nicParams['debug'] = debug
+nicParams['verboseLevel'] = 1 
 hermesParams['hermesParams.debug'] = debug
 hermesParams['hermesParams.nicParams.debug'] = debug
 hermesParams['hermesParams.functionSM.defaultDebug'] = debug

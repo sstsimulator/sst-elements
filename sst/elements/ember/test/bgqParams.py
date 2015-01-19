@@ -4,7 +4,7 @@ debug = 0
 networkParams = {
     "topology" : "merlin." + "torus",
     "packetSize" : "2048B",
-    "link_bw" : "4GB/s",
+    "link_bw" : "1.77GB/s",
     "flitSize" : "8B",
     "buffer_size" : "14KB",
 }
@@ -71,8 +71,9 @@ hermesParams = {
     "hermesParams.ctrlMsg.recvReqFiniDelay_ns" : 0,
 
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
-    "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 3000,
-    "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 100,
+
+    "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 1500,
+    "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 0,
     "hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
     "hermesParams.loadMap.0.start" : 0,
     "hermesParams.loadMap.0.len" : 2,
