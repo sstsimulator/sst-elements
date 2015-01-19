@@ -91,7 +91,7 @@ private:
     void processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr);
     
     /** Process the oldest incoming event */
-    void processEvent(MemEvent* event, bool mshrHit, bool replaying);
+    void processEvent(MemEvent* event, bool mshrHit);
     
     /** Configure this component's links */
     void configureLinks();
@@ -193,7 +193,7 @@ private:
     inline void checkCacheMissValidity(MemEvent* event) throw(ignoreEventException);
     
     /** Check whether this request will hit or miss in the cache - including correct coherence permission */
-    bool isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);
+    int isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);
 
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
@@ -234,7 +234,7 @@ private:
 
     /** Add requests to the 'retry queue.'  This event will be reissued at a later time */
     void retryRequestLater(MemEvent* event);
-
+    void profileEvent(MemEvent* event, Command cmd, bool mshrHit);
     void incTotalRequestsReceived(int _groupId);
     void incTotalMSHRHits(int _groupId);
     void incInvalidateWaitingForUserLock(int _groupId);
@@ -330,14 +330,8 @@ private:
     uint64                  accessLatency_;
     uint64                  tagLatency_;
     uint64                  mshrLatency_;
-    uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
-    uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
-    uint64                  mshrHits_;
-    uint64                  upgradeCount_;
     uint64                  timestamp_;
     int                     statsFile_;
-    bool                    groupStats_;
-    map<int,CtrlStats>      stats_;
     int                     idleMax_;
     int                     idleCount_;
     bool                    memNICIdle_;
@@ -347,7 +341,13 @@ private:
     TimeConverter*          defaultTimeBase_;
     std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
-
+    
+    /* Profiling */
+    bool                    groupStats_;
+    map<int,CtrlStats>      stats_;
+    uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
+    uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
+    uint64                  upgradeCount_;
 
 };
 

@@ -244,6 +244,7 @@ public:
         NACKedCmd_        = NULLCMD;
         NACKedEvent_      = NULL;
         inMSHR_           = false;
+        blocked_          = false;
         statsUpdated_     = false;
         initTime_         = 0;
         payload_.clear();
@@ -279,6 +280,9 @@ public:
     
     bool inMSHR(){ return inMSHR_; }
     void setInMSHR(bool _value){ inMSHR_ = _value; }
+    
+    bool blocked(){ return blocked_; }
+    void setBlocked(bool _value){ blocked_ = _value; }
     
     bool statsUpdated(){ return statsUpdated_; }
     void setStatsUpdated(bool _value) { statsUpdated_ = _value; }
@@ -461,6 +465,7 @@ private:
     bool            storeConditional_;
     uint64_t        startTime_;
     bool            inMSHR_;
+    bool            blocked_;
     bool            statsUpdated_;
     SimTime_t       initTime_;
 
@@ -494,6 +499,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(storeConditional_);
         ar & BOOST_SERIALIZATION_NVP(startTime_);
         ar & BOOST_SERIALIZATION_NVP(inMSHR_);
+        ar & BOOST_SERIALIZATION_NVP(blocked_);
         ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
     }
 };

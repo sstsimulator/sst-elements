@@ -31,16 +31,97 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
+void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
+    if (mshr_->isHitAndStallNeeded(event->getBaseAddr(), cmd)) return; // will block this event, profile it later
+    int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
+    bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
+    if (wasBlocked) event->setBlocked(false);
+
+    switch(cmd) {
+        case GetS:
+            if (!_mshrHit) {                // New event
+                if (cacheHit == 0) stats_[0].newReqGetSHits_++;
+                else {
+                    stats_[0].newReqGetSMisses_++;
+                    if (cacheHit == 1 || cacheHit == 2) stats_[0].GetS_IS++;
+                    else if (cacheHit == 3) stats_[0].GetS_M++;
+                }
+            } else if (wasBlocked) {        // Blocked event, now unblocked
+                if (cacheHit == 0) stats_[0].blockedReqGetSHits_++;
+                else {
+                    stats_[0].blockedReqGetSMisses_++;
+                    if (cacheHit == 1 || cacheHit == 2) stats_[0].GetS_IS++;
+                    else if (cacheHit == 3) stats_[0].GetS_M++;
+                }
+            }
+            break;
+        case GetX:
+            if (!_mshrHit) {                // New event
+                if (cacheHit == 0) stats_[0].newReqGetXHits_++;
+                else {
+                    stats_[0].newReqGetXMisses_++;
+                    if (cacheHit == 1) stats_[0].GetX_IM++;
+                    else if (cacheHit == 2) stats_[0].GetX_SM++;
+                    else if (cacheHit == 3) stats_[0].GetX_M++;
+                }
+            } else if (wasBlocked) {        // Blocked event, now unblocked
+                if (cacheHit == 0) stats_[0].blockedReqGetXHits_++;
+                else {
+                    stats_[0].blockedReqGetXMisses_++;
+                    if (cacheHit == 1) stats_[0].GetX_IM++;
+                    else if (cacheHit == 2) stats_[0].GetX_SM++;
+                    else if (cacheHit == 3) stats_[0].GetX_M++;
+                }
+            }
+            break;
+        case GetSEx:
+            if (!_mshrHit) {                // New event
+                if (cacheHit == 0) stats_[0].newReqGetSExHits_++;
+                else {
+                    stats_[0].newReqGetSExMisses_++;
+                    if (cacheHit == 1) stats_[0].GetSE_IM++;
+                    else if (cacheHit == 2) stats_[0].GetSE_SM++;
+                    else if (cacheHit == 3) stats_[0].GetSE_M++;
+                }
+            } else if (wasBlocked) {        // Blocked event, now unblocked
+                if (cacheHit == 0) stats_[0].blockedReqGetSExHits_++;
+                else {
+                    stats_[0].blockedReqGetSExMisses_++;
+                    if (cacheHit == 1) stats_[0].GetSE_IM++;
+                    else if (cacheHit == 2) stats_[0].GetSE_SM++;
+                    else if (cacheHit == 3) stats_[0].GetSE_M++;
+                }
+            }
+            break;
+        case GetSResp:
+        case GetXResp:
+        case PutS:
+        case PutE:
+        case PutX:
+        case PutXE:
+        case PutM:
+        case FetchInv:
+        case FetchInvX:
+        case Inv:
+        case InvX:
+        case NACK:
+        default:
+            break;
+
+    }
+}
+
+
+void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     Command cmd     = event->getCmd();
     if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
     bool noncacheable   = event->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
     MemEvent* origEvent;
     
-    if(!_mshrHit){
+    if(!_mshrHit){ 
         incTotalRequestsReceived(groupId);
-        d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+        d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
         cout << flush;
     }
     else incTotalMSHRHits(groupId);
@@ -49,19 +130,20 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
     if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
     d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %"PRIu64", %s%s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", replaying ? ", replay" : "");
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
     
     if(noncacheable || cf_.allNoncacheableRequests_){
         processNoncacheable(event, cmd, baseAddr);
         return;
     }
-    
+    profileEvent(event, cmd, _mshrHit);
+
     switch(cmd){
         case GetS:
         case GetX:
         case GetSEx:
             // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
-            if(mshr_->isFull() || (!L1_ && !replaying && mshr_->isAlmostFull()  && (!isCacheHit(event,cmd,baseAddr) || mshr_->isHitAndStallNeeded(baseAddr, cmd)))){ 
+            if(mshr_->isFull() || (!L1_ && !_mshrHit && mshr_->isAlmostFull()  && (!isCacheHit(event,cmd,baseAddr) || mshr_->isHitAndStallNeeded(baseAddr, cmd)))){ 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 sendNACK(event);
                 break;
@@ -69,6 +151,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit, bool replaying) {
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 if(processRequestInMSHR(baseAddr, event)){
                     d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                    event->setBlocked(true);
                 }
                 break;
             }
@@ -145,7 +228,7 @@ void Cache::handleSelfEvent(SST::Event* _event){
     ev->setStatsUpdated(false);
     
     if(ev->getCmd() != NULLCMD && !mshr_->isFull() && (L1_ || !mshr_->isAlmostFull()))
-        processEvent(ev, ev->isPrefetch(), false);
+        processEvent(ev, false);
 }
 
 
@@ -246,5 +329,5 @@ void Cache::processIncomingEvent(SST::Event* _ev){
     MemEvent* event = static_cast<MemEvent*>(_ev);
     event->setInMSHR(false);
     event->setStatsUpdated(false);
-    processEvent(event, false, false);
+    processEvent(event, false);
 }

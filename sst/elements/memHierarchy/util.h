@@ -44,7 +44,7 @@ enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _WARNING_ CALL_INFO,WARNING,0
 #define _INFO_ CALL_INFO,INFO,0
 #define _L3_ CALL_INFO,L3,0     //Important messages:  incoming requests, state changes, etc
-#define _L4_ CALL_INFO,L4,0     //Importan messages:  send request, forward request, send response
+#define _L4_ CALL_INFO,L4,0     //Important messages:  send request, forward request, send response
 #define _L5_ CALL_INFO,L5,0     //
 #define _L6_ CALL_INFO,L6,0     //BottomCC messages
 #define _L7_ CALL_INFO,L7,0     //TopCC messages
@@ -54,16 +54,41 @@ enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 
 
 struct CtrlStats{
-    uint64_t     TotalRequestsReceived_,
-                 TotalMSHRHits_,
-                 InvWaitingForUserLock_,
-                 updgradeLatency_;
-    
+    uint64_t    TotalRequestsReceived_,
+                TotalMSHRHits_,
+                InvWaitingForUserLock_,
+                updgradeLatency_,
+                newReqGetSHits_,
+                newReqGetSMisses_,
+                blockedReqGetSHits_,
+                blockedReqGetSMisses_,
+                newReqGetXHits_,
+                newReqGetXMisses_,
+                blockedReqGetXHits_,
+                blockedReqGetXMisses_,
+                newReqGetSExHits_,
+                newReqGetSExMisses_,
+                blockedReqGetSExHits_,
+                blockedReqGetSExMisses_,
+                GetS_IS,
+                GetS_M,
+                GetX_IM,
+                GetX_SM,
+                GetX_M,
+                GetSE_IM,
+                GetSE_SM,
+                GetSE_M;
     CtrlStats(){
         initialize();
     }
     
-    void initialize(){ TotalRequestsReceived_ = TotalMSHRHits_ = InvWaitingForUserLock_ = updgradeLatency_ = 0; }
+    void initialize(){ 
+        TotalRequestsReceived_ = TotalMSHRHits_ = InvWaitingForUserLock_ = updgradeLatency_ = 0; 
+        newReqGetSHits_ = newReqGetSMisses_ = blockedReqGetSHits_ = blockedReqGetSMisses_ = 0;
+        newReqGetXHits_ = newReqGetXMisses_ = blockedReqGetXHits_ = blockedReqGetXMisses_ = 0;
+        newReqGetSExHits_ = newReqGetSExMisses_ = blockedReqGetSExHits_ = blockedReqGetSExMisses_ = 0;
+        GetS_IS = GetS_M = GetX_IM = GetX_SM = GetX_M = GetSE_IM = GetSE_SM = GetSE_M = 0;
+    }
 };
 
 #define MAX_CACHE_CHILDREN (512);

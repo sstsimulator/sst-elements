@@ -269,7 +269,6 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     memNICIdle_            = false;
     timestamp_             = 0;
     totalUpgradeLatency_   = 0;
-    mshrHits_              = 0;
     upgradeCount_          = 0;
     
     if(groupStats_){

@@ -42,17 +42,21 @@ using namespace SST::MemHierarchy;
  *      Line is present in the cache and
  *      Line is in the correct coherence state for the request (BottomCC state is correct) and
  *      Line is not currently being invalidated (TopCC state is correct)
- *  @return whether access will be a cache hit
+ *  @return int indicating cache hit (0) or miss (1=cold miss, 2=bottomCC miss, 3= topCC miss)
  */
-bool Cache::isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr) {
+int Cache::isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr) {
     int lineIndex = cf_.cacheArray_->find(_baseAddr,false);
      
-    if (isCacheMiss(lineIndex))                         return false;
+    if (isCacheMiss(lineIndex))                         return 1;
     CacheLine* cacheLine = getCacheLine(lineIndex);
-    if (bottomCC_->isCoherenceMiss(_event,cacheLine))   return false;
-    if (!(_event->isPrefetch() && (_event->getRqstr() == this->getName())) && topCC_->isCoherenceMiss(_event,cacheLine))  return false;
+    if (bottomCC_->isCoherenceMiss(_event,cacheLine))   {
+        State st = cacheLine->getState();
+        if (st == I) return 1;
+        else return 2;
+    }
+    if (!(_event->isPrefetch() && (_event->getRqstr() == this->getName())) && topCC_->isCoherenceMiss(_event,cacheLine))  return 3;
     
-    return true;
+    return 0;
 }
 
 /*
@@ -99,6 +103,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         }
     }
     catch(blockedEventException const& e){
+
         processRequestInMSHR(_baseAddr, _event);                        /* This request needs to stall until another pending request finishes.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
     }
     catch(ignoreEventException const& e){}
@@ -371,7 +376,6 @@ void Cache::activatePrevEvents(Addr _baseAddr){
                 /* only update upgrade latency on first replayed event. Other "MSHR hits" 
                    are not really upgrades, they are just blocked events */
                 if(i == 0) updateUpgradeLatencyAverage(start);
-                mshrHits_++;
             }
         }
     }
@@ -385,7 +389,7 @@ bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Ad
                   _i, CommandString[_event->getCmd()], toBaseAddr(_event->getAddr()), _event->getAddr(), _event->getDst().c_str());
     d_->debug(_L3_,"--------------------------------------\n");
     
-    this->processEvent(_event, true, true);
+    this->processEvent(_event, true);
     
     d_->debug(_L3_,"--------------------------------------\n");
     _mshrEntry.erase(_it);

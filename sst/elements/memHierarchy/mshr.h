@@ -65,7 +65,7 @@ public:
     bool isHitAndStallNeeded(Addr baseAddr, Command cmd);   // should this fcn really be in MSHR? MSHR should just be buffer
     bool elementIsHit(Addr baseAddr, MemEvent *event);
     bool isFull();                                          // external
-    bool isAlmostFull();                                          // external
+    bool isAlmostFull();                                    // external
     MemEvent* getOldestRequest() const;                     // external
     
     // used internally
