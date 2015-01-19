@@ -8,233 +8,234 @@ sst.setProgramOption("stopAtCycle", "100ms")
 # Define the simulation components
 comp_system = sst.Component("system", "m5C.M5")
 comp_system.addParams({
-      "info" : """no""",
-      "mem_initializer_port" : """core0-dcache""",
-      "configFile" : """exampleM5.xml""",
-      "frequency" : """2 Ghz""",
-      "statFile" : """out.txt""",
-      "debug" : """0""",
-      "memory_trace" : """0""",
-      "registerExit" : """yes"""
+      "info" : "no",
+      "mem_initializer_port" : "core0-dcache",
+      "configFile" : "exampleM5.xml",
+      "frequency" : "2 Ghz",
+      "statFile" : "out.txt",
+      "debug" : "0",
+      "memory_trace" : "0",
+      "registerExit" : "yes"
 })
 comp_c0_l1Dcache = sst.Component("c0.l1Dcache", "memHierarchy.Cache")
 comp_c0_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c0_l1Icache = sst.Component("c0.l1Icache", "memHierarchy.Cache")
 comp_c0_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c1_l1Dcache = sst.Component("c1.l1Dcache", "memHierarchy.Cache")
 comp_c1_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c1_l1Icache = sst.Component("c1.l1Icache", "memHierarchy.Cache")
 comp_c1_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c2_l1Dcache = sst.Component("c2.l1Dcache", "memHierarchy.Cache")
 comp_c2_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c2_l1Icache = sst.Component("c2.l1Icache", "memHierarchy.Cache")
 comp_c2_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c3_l1Dcache = sst.Component("c3.l1Dcache", "memHierarchy.Cache")
 comp_c3_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c3_l1Icache = sst.Component("c3.l1Icache", "memHierarchy.Cache")
 comp_c3_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c4_l1Dcache = sst.Component("c4.l1Dcache", "memHierarchy.Cache")
 comp_c4_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c4_l1Icache = sst.Component("c4.l1Icache", "memHierarchy.Cache")
 comp_c4_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c5_l1Dcache = sst.Component("c5.l1Dcache", "memHierarchy.Cache")
 comp_c5_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c5_l1Icache = sst.Component("c5.l1Icache", "memHierarchy.Cache")
 comp_c5_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c6_l1Dcache = sst.Component("c6.l1Dcache", "memHierarchy.Cache")
 comp_c6_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c6_l1Icache = sst.Component("c6.l1Icache", "memHierarchy.Cache")
 comp_c6_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c7_l1Dcache = sst.Component("c7.l1Dcache", "memHierarchy.Cache")
 comp_c7_l1Dcache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_c7_l1Icache = sst.Component("c7.l1Icache", "memHierarchy.Cache")
 comp_c7_l1Icache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """2""",
-      "cache_frequency" : """2 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """1""",
-      "cache_line_size" : """64""",
-      "L1" : """1""",
-      "cache_size" : """8 KB"""
+      "debug" : "0",
+      "access_latency_cycles" : "2",
+      "cache_frequency" : "2 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "1",
+      "cache_line_size" : "64",
+      "L1" : "1",
+      "cache_size" : "8 KB"
 })
 comp_bus = sst.Component("bus", "memHierarchy.Bus")
 comp_bus.addParams({
-      "bus_frequency" : """2 Ghz"""
+      "bus_frequency" : "2 Ghz"
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
-      "debug" : """0""",
-      "access_latency_cycles" : """6""",
-      "cache_frequency" : """2.0 Ghz""",
-      "replacement_policy" : """lru""",
-      "coherence_protocol" : """MSI""",
-      "associativity" : """4""",
-      "cache_line_size" : """64""",
-      "L1" : """0""",
-      "cache_size" : """64 KB""",
-      "mshr_num_entries" : """4096"""
+      "debug" : "0",
+      "access_latency_cycles" : "6",
+      "cache_frequency" : "2.0 Ghz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "4",
+      "cache_line_size" : "64",
+      "L1" : "0",
+      "cache_size" : "64 KB",
+      "mshr_num_entries" : "4096"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "debug" : """0""",
-      "coherence_protocol" : """MSI""",
-      "mem_size" : """1024""",
-      "access_time" : """25 ns""",
-      "clock" : """2GHz""",
-      "request_width" : """64""",
-      "rangeStart" : """0"""
+      "debug" : "0",
+      "coherence_protocol" : "MSI",
+      "mem_size" : "1024",
+      "backend.mem_size" : "1024",
+      "backend.access_time" : "25 ns",
+      "clock" : "2GHz",
+      "request_width" : "64",
+      "rangeStart" : "0"
 })
 
 
