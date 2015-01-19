@@ -133,20 +133,15 @@ bool GOBLINHMCSimBackend::issueRequest(MemController::DRAMReq* req) {
 	const uint16_t          req_tag  = (uint16_t) tag_queue.front();
 	tag_queue.pop();
 
-	if(0 == addr) {
-		output->verbose(CALL_INFO, 1, 0, "Warning: generated a request to address 0, instantly returned\n");
-		ctrl->handleMemResponse(req);
-		return true;
-	}
-
 	hmc_rqst_t       	req_type;
 
-//	if(req->isWrite_) {
-//		// We are issuing a write
-//		req_type = WR64;
-//	} else {
+	// Check if the request is for a read or write then transform this into something
+	// for HMC simulator to use, right now lets just try 64-byte lengths
+	if(req->isWrite_) {
+		req_type = WR64;
+	} else {
 		req_type = RD64;
-//	}
+	}
 
 	const uint8_t           req_link   = 0; //(uint8_t) (nextLink);
 	//nextLink = (nextLink == hmc_link_count) ? 0 : nextLink + 1;
