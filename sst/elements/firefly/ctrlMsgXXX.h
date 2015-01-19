@@ -39,7 +39,7 @@ class FunctorBase_1;
 
 class StateArgsBase;
 
-typedef unsigned char key_t;
+typedef unsigned short key_t;
 
 static const key_t LongGetKey  = 1 << (sizeof(key_t) * 8 - 2);
 static const key_t LongAckKey = LongGetKey;
