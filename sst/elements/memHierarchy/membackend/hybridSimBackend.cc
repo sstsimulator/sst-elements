@@ -1,6 +1,7 @@
 
 #include <sst_config.h>
 #include "membackend/memBackend.h"
+#include "membackend/hybridSimBackend.h" 
 
 using namespace SST;
 using namespace SST::MemHierarchy;
