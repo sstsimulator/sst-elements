@@ -21,6 +21,8 @@ libmiranda_la_SOURCES = \
 	generators/revsinglestream.cc \
 	generators/stencil3dbench.h \
 	generators/stencil3dbench.cc \
+	generators/gupsgen.h \
+	generators/gupsgen.cc \
 	generators/nullgen.h
 
 EXTRA_DIST = \

@@ -17,6 +17,7 @@
 #include "mirandaCPU.h"
 #include "generators/singlestream.h"
 #include "generators/randomgen.h"
+#include "generators/gupsgen.h"
 #include "generators/streambench.h"
 #include "generators/revsinglestream.h"
 #include "generators/stencil3dbench.h"
@@ -27,6 +28,10 @@ using namespace SST::Miranda;
 
 static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
 	return new SingleStreamGenerator(owner, params);
+}
+
+static Module* load_GUPSGenerator(Component* owner, Params& params) {
+	return new GUPSGenerator(owner, params);
 }
 
 static Module* load_RevSingleStreamGenerator(Component* owner, Params& params) {
@@ -88,6 +93,14 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
 };
 
 static const ElementInfoParam randomGen_params[] = {
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "count",            "Count for number of items being requested", "1024" },
+    { "length",           "Length of requests", "8" },
+    { "max_address",      "Maximum address allowed for generation", "16384" },
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoParam gupsGen_params[] = {
     { "verbose",          "Sets the verbosity output of the generator", "0" },
     { "count",            "Count for number of items being requested", "1024" },
     { "length",           "Length of requests", "8" },
@@ -158,6 +171,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_RandomGenerator,
 		randomGen_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"GUPSGenerator",
+		"Creates a random stream of accesses to read-modify-write",
+		NULL,
+		NULL,
+		load_GUPSGenerator,
+		gupsGen_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
