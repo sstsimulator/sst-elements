@@ -16,7 +16,7 @@ from networkConfig import *
 loadFile = ""
 workList = []
 numCores = 1
-debug    = 1
+debug    = 0
 topology = ""
 shape    = ""
 loading  = 0
