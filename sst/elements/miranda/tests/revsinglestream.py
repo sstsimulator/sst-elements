@@ -16,6 +16,12 @@ comp_cpu.addParams({
 	"printStats" : 1,
 })
 
+# Tell SST what statistics handling we want
+sst.setStatisticLoadLevel(4)
+
+# Enable statistics outputs
+comp_cpu.enableAllStatistics()
+
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
       "access_latency_cycles" : "2",
