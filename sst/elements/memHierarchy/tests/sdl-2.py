@@ -34,6 +34,7 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "backend.access_time" : "100 ns",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "backend.system_ini" : "system.ini",
       "mem_size" : "512",
       "backend.mem_size" : "512",
       "request_width" : "32",
