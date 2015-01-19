@@ -20,6 +20,7 @@
 #include "generators/streambench.h"
 #include "generators/revsinglestream.h"
 #include "generators/stencil3dbench.h"
+#include "generators/nullgen.h"
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -40,6 +41,10 @@ static Module* load_STREAMGenerator(Component* owner, Params& params) {
 	return new STREAMBenchGenerator(owner, params);
 }
 
+static Module* load_EmptyGenerator(Component* owner, Params& params) {
+	return new EmptyGenerator(owner, params);
+}
+
 static Module* load_Stencil3DGenerator(Component* owner, Params& params) {
 	return new Stencil3DBenchGenerator(owner, params);
 }
@@ -47,6 +52,10 @@ static Module* load_Stencil3DGenerator(Component* owner, Params& params) {
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
 	return new RequestGenCPU(id, params);
 }
+
+static const ElementInfoParam emptyGen_params[] = {
+    { NULL, NULL, NULL },
+};
 
 static const ElementInfoParam singleStreamGen_params[] = {
     { "verbose",          "Sets the verbosity output of the generator", "0" },
@@ -104,6 +113,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_SingleStreamGenerator,
 		singleStreamGen_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"EmptyGenerator",
+		"Creates an empty generator which just completes and does not issue requests",
+		NULL,
+		NULL,
+		load_EmptyGenerator,
+		emptyGen_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{

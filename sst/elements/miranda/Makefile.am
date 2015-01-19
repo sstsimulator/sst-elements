@@ -20,7 +20,8 @@ libmiranda_la_SOURCES = \
 	generators/revsinglestream.h \
 	generators/revsinglestream.cc \
 	generators/stencil3dbench.h \
-	generators/stencil3dbench.cc
+	generators/stencil3dbench.cc \
+	generators/nullgen.h
 
 EXTRA_DIST = \
 	tests/randomgen.py \
