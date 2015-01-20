@@ -37,12 +37,14 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
     assert( 2 == size() );
 
+    // note that the first time through start and stop are 0
+    m_totalTime += m_stopTime - m_startTime;
+
     // if are done printout results and exit 
     if ( m_loopIndex == m_iterations  ) {
-        if ( 0 == rank()) { 
-            int totalMsgs = m_numMsgs * m_iterations;
-            double tmp = (double) m_totalTime / 1000000000.0;
-            m_output->output("MsgRate: %s msgSize %" PRIu32", totalTime %.6f "
+        int totalMsgs = m_numMsgs * m_iterations;
+        double tmp = (double) m_totalTime / 1000000000.0;
+        m_output->output("MsgRate: %s msgSize %" PRIu32", totalTime %.6f "
                 "sec, %.3f msg/sec, %.3f MB/s\n",
                         0 == rank() ? "Send" : "Recv",
                         m_msgSize,
@@ -50,7 +52,6 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
                         totalMsgs / tmp,
                         ((double)totalMsgs*m_msgSize/1000000.0)/tmp );
 
-        }
         return true;
     }
 
@@ -58,8 +59,6 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
         GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
     }
 
-    // note that the first time through start and stop are 0
-    m_totalTime += m_stopTime - m_startTime;
 
     GEN_DBG( 1, "%p %p\n",&m_reqs[0],&m_resp[0]);
     if ( 0 == rank() ) {
