@@ -107,7 +107,8 @@ EXTRA_DIST = \
 	test/loadInfo.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
-	test/Tester.py 
+	test/Tester.py \
+	test/defaultParams.py
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \
