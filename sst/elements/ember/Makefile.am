@@ -108,7 +108,8 @@ EXTRA_DIST = \
 	test/CrossProduct.py \
 	test/networkConfig.py \
 	test/Tester.py \
-	test/defaultParams.py
+	test/defaultParams.py \
+	test/chamaOpenIBParams.py
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \
