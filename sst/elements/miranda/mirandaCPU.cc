@@ -249,16 +249,23 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 						(uint64_t) cycle, (uint64_t) pendingRequests.size());
 
 					GeneratorRequest* nxtRq = pendingRequests.front();
-					pendingRequests.pop();
-
+					
 					if(nxtRq->getOperation() == REQ_FENCE) {
-
+                        // Check do we have pending requests, need to wait for these
+                        // complete before we are allowed to continue
+                        if(pendingRequests.size() == 0) {
+                            pendingRequests.pop();
+                            delete nxtRq;
+                        }
 					} else {
+                        // Clear the operation and issue it
+                        pendingRequests.pop();
+                        
 						MemoryOpRequest* memOpRq = dynamic_cast<MemoryOpRequest*>(nxtRq);
 						issueRequest(memOpRq);
+                        
+                        delete nxtRq;
 					}
-
-					delete nxtRq;
 				}
 			} else {
 				out->verbose(CALL_INFO, 2, 0, "Unable to issue as all resources are now full, continue next cycle.\n");
