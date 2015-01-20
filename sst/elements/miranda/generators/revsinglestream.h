@@ -15,7 +15,7 @@ class ReverseSingleStreamGenerator : public RequestGenerator {
 public:
 	ReverseSingleStreamGenerator( Component* owner, Params& params );
 	~ReverseSingleStreamGenerator();
-	void generate(std::queue<RequestGeneratorRequest*>* q);
+	void generate(MirandaRequestQueue* q);
 	bool isFinished();
 	void completed();
 

@@ -18,7 +18,7 @@ class EmptyGenerator : public RequestGenerator {
 public:
 	EmptyGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) {}
 	~EmptyGenerator() { }
-	void generate(std::queue<RequestGeneratorRequest*>* q) { }
+	void generate(MirandaRequestQueue* q) { }
 	bool isFinished() { return true; }
 	void completed() { }
 

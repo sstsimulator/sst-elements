@@ -34,13 +34,10 @@ ReverseSingleStreamGenerator::~ReverseSingleStreamGenerator() {
 	delete out;
 }
 
-void ReverseSingleStreamGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
+void ReverseSingleStreamGenerator::generate(std::queue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request at address: %" PRIu64 "\n", nextIndex);
 
-	RequestGeneratorRequest* nextReq = new RequestGeneratorRequest();
-	nextReq->set(nextIndex * datawidth, datawidth, READ);
-
-	q->push(nextReq);
+	q->push(new MemoryOpRequest(nextIndex * datawidth, datawidth, READ));
 
 	// What is the next address?
 	nextIndex = nextIndex - stride;

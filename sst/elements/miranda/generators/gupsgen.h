@@ -18,7 +18,7 @@ class GUPSGenerator : public RequestGenerator {
 public:
 	GUPSGenerator( Component* owner, Params& params );
 	~GUPSGenerator();
-	void generate(std::queue<RequestGeneratorRequest*>* q);
+	void generate(MirandaRequestQueue* q);
 	bool isFinished();
 	void completed();
 

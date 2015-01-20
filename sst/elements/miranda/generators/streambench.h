@@ -15,7 +15,7 @@ class STREAMBenchGenerator : public RequestGenerator {
 public:
 	STREAMBenchGenerator( Component* owner, Params& params );
 	~STREAMBenchGenerator();
-	void generate(std::queue<RequestGeneratorRequest*>* q);
+	void generate(MirandaRequestQueue* q);
 	bool isFinished();
 	void completed();
 

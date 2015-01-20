@@ -27,13 +27,10 @@ SingleStreamGenerator::~SingleStreamGenerator() {
 	delete out;
 }
 
-void SingleStreamGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
+void SingleStreamGenerator::generate(std::queue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
-	RequestGeneratorRequest* nextReq = new RequestGeneratorRequest();
-	nextReq->set(nextAddr, reqLength, READ);
-
-	q->push(nextReq);
+	q->push(new MemoryOpRequest(nextAddr, reqLength, READ));
 
 	// What is the next address?
 	nextAddr = (nextAddr + reqLength) % maxAddr;

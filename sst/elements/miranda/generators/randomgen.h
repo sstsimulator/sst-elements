@@ -18,7 +18,7 @@ class RandomGenerator : public RequestGenerator {
 public:
 	RandomGenerator( Component* owner, Params& params );
 	~RandomGenerator();
-	void generate(std::queue<RequestGeneratorRequest*>* q);
+	void generate(MirandaRequestQueue* q);
 	bool isFinished();
 	void completed();
 

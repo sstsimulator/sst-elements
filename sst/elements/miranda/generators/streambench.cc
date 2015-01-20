@@ -37,23 +37,17 @@ STREAMBenchGenerator::~STREAMBenchGenerator() {
 	delete out;
 }
 
-void STREAMBenchGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
+void STREAMBenchGenerator::generate(MirandaRequestQueue* q) {
 	out->verbose(CALL_INFO, 4, 0, "Array index: %" PRIu64 "\n", i);
 
-	RequestGeneratorRequest* read_b = new RequestGeneratorRequest();
 	out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", (start_b + (i * reqLength)));
-	read_b->set(start_b + (i * reqLength), reqLength, READ);
-	q->push(read_b);
+	q->push(new MemoryOpRequest(start_b + (i * reqLength), reqLength, READ));
 
-	RequestGeneratorRequest* read_c = new RequestGeneratorRequest();
 	out->verbose(CALL_INFO, 8, 0, "Issuing READ request for address %" PRIu64 "\n", (start_c + (i * reqLength)));
-	read_c->set(start_c + (i * reqLength), reqLength, READ);
-	q->push(read_c);
+	q->push(new MemoryOpRequest(start_c + (i * reqLength), reqLength, READ));
 
-	RequestGeneratorRequest* write_a = new RequestGeneratorRequest();
 	out->verbose(CALL_INFO, 8, 0, "Issuing WRITE request for address %" PRIu64 "\n", (start_a + (i * reqLength)));
-	write_a->set(start_a + (i * reqLength), reqLength, WRITE);
-	q->push(write_a);
+	q->push(new MemoryOpRequest(start_a + (i * reqLength), reqLength, WRITE));
 
 	i++;
 }

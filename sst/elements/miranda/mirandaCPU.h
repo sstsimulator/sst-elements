@@ -40,7 +40,7 @@ private:
 
 	void handleEvent( SimpleMem::Request* ev );
 	bool clockTick( SST::Cycle_t );
-	void issueRequest(RequestGeneratorRequest* req);
+	void issueRequest(MemoryOpRequest* req);
 
     	Output* out;
 
@@ -48,7 +48,7 @@ private:
 	std::map<SimpleMem::Request::id_t, SimTime_t> requestsInFlight;
     	SimpleMem* cache_link;
 
-	std::queue<RequestGeneratorRequest*> pendingRequests;
+	MirandaRequestQueue pendingRequests;
 
 	uint32_t maxRequestsPending;
 	uint32_t requestsPending;

@@ -137,7 +137,7 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	}
 }
 
-void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
+void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 	const uint64_t reqAddress = req->getAddress();
 	const uint64_t reqLength  = req->getLength();
 	bool isRead               = req->isRead();
@@ -211,9 +211,6 @@ void RequestGenCPU::issueRequest(RequestGeneratorRequest* req) {
 			statWriteReqs->addData(1);
 		}
 	}
-
-	// Mark request as issued
-	req->markIssued();
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
@@ -251,10 +248,15 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 					out->verbose(CALL_INFO, 4, 0, "Issuing request cycle %" PRIu64 ", pending requests: %" PRIu64 ".\n",
 						(uint64_t) cycle, (uint64_t) pendingRequests.size());
 
-					RequestGeneratorRequest* nxtRq = pendingRequests.front();
+					GeneratorRequest* nxtRq = pendingRequests.front();
 					pendingRequests.pop();
 
-					issueRequest(nxtRq);
+					if(nxtRq->getOperation() == REQ_FENCE) {
+
+					} else {
+						MemoryOpRequest* memOpRq = dynamic_cast<MemoryOpRequest*>(nxtRq);
+						issueRequest(memOpRq);
+					}
 
 					delete nxtRq;
 				}

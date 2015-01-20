@@ -14,34 +14,41 @@ namespace Miranda {
 
 typedef enum {
 	READ,
-	WRITE
-} RequestGenOperation;
+	WRITE,
+	REQ_FENCE
+} ReqOperation;
 
-class RequestGeneratorRequest {
+class GeneratorRequest {
 public:
-	RequestGeneratorRequest() : physAddr(0), len(0), op(READ), issued(false) {}
-	RequestGeneratorRequest(const uint64_t cAddr,
-		const uint64_t cLength, const RequestGenOperation cOpType) :
-		physAddr(cAddr), len(cLength), op(cOpType), issued(false) {}
-	~RequestGeneratorRequest() { }
-	uint64_t getAddress() const { return physAddr; }
-	uint64_t getLength() const { return len; }
-	RequestGenOperation getOperation() const { return op; }
-	bool     isRead() const { return op == READ; }
-	bool     isWrite() const { return op == WRITE; }
-	bool	 isIssued() const { return issued; }
-	void	 markIssued() { issued = true; }
-	void     set(const uint64_t addr, const uint64_t length, const RequestGenOperation opType) {
-		physAddr = addr;
-		len = length;
-		op = opType;
-		issued = false;
-	}
+	GeneratorRequest() {}
+	virtual ReqOperation getOperation() const = 0;
+};
+
+typedef std::queue<GeneratorRequest*> MirandaRequestQueue;
+
+class MemoryOpRequest : public GeneratorRequest {
+public:
+	MemoryOpRequest(const uint64_t cAddr,
+		const uint64_t cLength,
+		const ReqOperation cOpType) :
+		GeneratorRequest(),
+		addr(cAddr), length(cLength), op(cOpType) {}
+	ReqOperation getOperation() const { return op; }
+	bool isRead() const { return op == READ; }
+	bool isWrite() const { return op == WRITE; }
+	uint64_t getAddress() const { return addr; }
+	uint64_t getLength() const { return length; }
+
 protected:
-	uint64_t physAddr;
-	uint64_t len;
-	RequestGenOperation op;
-	bool issued;
+	uint64_t addr;
+	uint64_t length;
+	ReqOperation op;
+};
+
+class FenceOpRequest : public GeneratorRequest {
+public:
+	FenceOpRequest() : GeneratorRequest() {}
+	ReqOperation getOperation() const { return REQ_FENCE; }
 };
 
 class RequestGenerator : public Module {
@@ -49,7 +56,7 @@ class RequestGenerator : public Module {
 public:
 	RequestGenerator( Component* owner, Params& params) {}
 	~RequestGenerator() {}
-	virtual void generate(std::queue<RequestGeneratorRequest*>* q) { }
+	virtual void generate(MirandaRequestQueue* q) { }
 	virtual bool isFinished() { return true; }
 	virtual void completed() { }
 

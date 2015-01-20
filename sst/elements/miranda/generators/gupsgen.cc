@@ -29,7 +29,7 @@ GUPSGenerator::~GUPSGenerator() {
 	delete rng;
 }
 
-void GUPSGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
+void GUPSGenerator::generate(MirandaRequestQueue* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
 	const uint64_t rand_addr = rng->generateNextUInt64();
@@ -38,15 +38,8 @@ void GUPSGenerator::generate(std::queue<RequestGeneratorRequest*>* q) {
 	const uint64_t addr = (addr_under_limit < reqLength) ? addr_under_limit :
 		(rand_addr % maxAddr) - (rand_addr % reqLength);
 
-	// Populate request
-	RequestGeneratorRequest* readReq = new RequestGeneratorRequest();
-	readReq->set(addr, reqLength, READ);
-
-	RequestGeneratorRequest* writeReq = new RequestGeneratorRequest();
-	writeReq->set(addr, reqLength, WRITE);
-
-	q->push(readReq);
-	q->push(writeReq);
+	q->push(new MemoryOpRequest(addr, reqLength, READ));
+	q->push(new MemoryOpRequest(addr, reqLength, WRITE));
 
 	issueCount--;
 }
