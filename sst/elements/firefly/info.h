@@ -79,6 +79,8 @@ class Info {
             return sizeof( double);
         case MP::FLOAT:
             return sizeof( float );
+        case MP::COMPLEX:
+            return sizeof( double ) * 2;
         default:
             assert(0);
         }
