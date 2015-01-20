@@ -253,7 +253,7 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 					if(nxtRq->getOperation() == REQ_FENCE) {
                         // Check do we have pending requests, need to wait for these
                         // complete before we are allowed to continue
-                        if(pendingRequests.size() == 0) {
+                        if(requestsInFlight.size() == 0) {
                             pendingRequests.pop();
                             delete nxtRq;
                         }

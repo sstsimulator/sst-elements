@@ -42,6 +42,7 @@ void RandomGenerator::generate(std::queue<GeneratorRequest*>* q) {
 
 	// Populate request
 	q->push(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
+	q->push(new FenceOpRequest());
 
 	issueCount--;
 }
