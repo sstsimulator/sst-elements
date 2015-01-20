@@ -109,7 +109,8 @@ EXTRA_DIST = \
 	test/networkConfig.py \
 	test/Tester.py \
 	test/defaultParams.py \
-	test/chamaOpenIBParams.py
+	test/chamaOpenIBParams.py \
+	test/bgqParams.py
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \
