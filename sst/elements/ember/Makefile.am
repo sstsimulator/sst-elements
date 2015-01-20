@@ -71,6 +71,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberallpingpong.h \
 	mpi/motifs/emberallreduce.cc \
 	mpi/motifs/emberallreduce.h \
+	mpi/motifs/emberalltoall.cc \
+	mpi/motifs/emberalltoall.h \
+	mpi/motifs/emberalltoallv.cc \
+	mpi/motifs/emberalltoallv.h \
 	mpi/motifs/emberreduce.cc \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
