@@ -21,6 +21,8 @@
 #include "emberconstdistrib.h"
 #include "emberinitev.h"
 #include "emberfinalizeev.h"
+#include "emberalltoallvev.h"
+#include "emberalltoallev.h"
 #include "emberbarrierev.h"
 #include "emberrankev.h"
 #include "embersizeev.h"
@@ -59,6 +61,8 @@ namespace Ember {
     NAME( Waitany ) \
     NAME( Compute ) \
     NAME( Barrier ) \
+    NAME( Alltoallv ) \
+    NAME( Alltoall ) \
     NAME( Allreduce ) \
     NAME( Reduce ) \
     NAME( Gettime ) \
@@ -191,6 +195,15 @@ protected:
     inline void enQ_reduce( Queue&, Addr mydata, Addr result, uint32_t count,
                 PayloadDataType dtype, ReductionOperation op,
                 int root, Communicator group );
+    inline void enQ_alltoall( Queue&, 
+        Addr sendData, int sendCnts, PayloadDataType senddtype,
+        Addr recvData, int recvCnts, PayloadDataType recvdtype,
+        Communicator group );
+
+    inline void enQ_alltoallv( Queue&, 
+        Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
+        Communicator group );
 
 	// deprecated
 	inline void enQ_send( Queue&, uint32_t dst, uint32_t nBytes, int tag,
@@ -408,6 +421,28 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
     q.push( new EmberReduceEvent( *cast(m_api), m_output, 
         m_histoV[Reduce], memAddr(mydata), memAddr(result), 
 					count, dtype, op, root, group ) );
+}
+
+void EmberMessagePassingGenerator::enQ_alltoall( Queue& q, 
+        Addr sendData, int sendCnts, PayloadDataType senddtype,
+        Addr recvData, int recvCnts, PayloadDataType recvdtype,
+        Communicator group )
+{
+    q.push( new EmberAlltoallEvent( *cast(m_api), m_output, 
+        m_histoV[Alltoall], memAddr(sendData), sendCnts, senddtype, 
+        memAddr(recvData), recvCnts, recvdtype, group ) );
+}
+
+void EmberMessagePassingGenerator::enQ_alltoallv( Queue& q, 
+        Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
+        Communicator group )
+{
+    q.push( new EmberAlltoallvEvent( *cast(m_api), m_output, 
+        m_histoV[Alltoallv],
+            memAddr(sendData), sendCnts, sendDsp, senddtype, 
+            memAddr(recvData), recvCnts, recvDsp, recvdtype, 
+                group ) );
 }
 
 }
