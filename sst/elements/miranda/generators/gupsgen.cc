@@ -22,6 +22,8 @@ GUPSGenerator::GUPSGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
+
+	issueOpFences = params.find_string("issue_op_fences", "yes") == "yes";
 }
 
 GUPSGenerator::~GUPSGenerator() {
@@ -40,6 +42,10 @@ void GUPSGenerator::generate(MirandaRequestQueue* q) {
 
 	q->push(new MemoryOpRequest(addr, reqLength, READ));
 	q->push(new MemoryOpRequest(addr, reqLength, WRITE));
+
+	if(issueOpFences) {
+                q->push(new FenceOpRequest());
+        }
 
 	issueCount--;
 }

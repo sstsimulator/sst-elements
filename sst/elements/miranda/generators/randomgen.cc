@@ -22,6 +22,8 @@ RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	out->verbose(CALL_INFO, 1, 0, "Will issue %" PRIu64 " operations\n", issueCount);
 	out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
 	out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", maxAddr);
+
+	issueOpFences = params.find_string("issue_op_fences", "yes") == "yes";
 }
 
 RandomGenerator::~RandomGenerator() {
@@ -42,7 +44,10 @@ void RandomGenerator::generate(std::queue<GeneratorRequest*>* q) {
 
 	// Populate request
 	q->push(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
-	q->push(new FenceOpRequest());
+
+	if(issueOpFences) {
+		q->push(new FenceOpRequest());
+	}
 
 	issueCount--;
 }

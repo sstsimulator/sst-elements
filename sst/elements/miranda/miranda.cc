@@ -97,6 +97,7 @@ static const ElementInfoParam randomGen_params[] = {
     { "count",            "Count for number of items being requested", "1024" },
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
+    { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
     { NULL, NULL, NULL }
 };
 
@@ -105,6 +106,7 @@ static const ElementInfoParam gupsGen_params[] = {
     { "count",            "Count for number of items being requested", "1024" },
     { "length",           "Length of requests", "8" },
     { "max_address",      "Maximum address allowed for generation", "16384" },
+    { "issue_op_fences",  "Issue operation fences, \"yes\" or \"no\", default is yes", "yes" },
     { NULL, NULL, NULL }
 };
 

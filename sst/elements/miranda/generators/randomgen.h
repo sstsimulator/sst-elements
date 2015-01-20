@@ -27,6 +27,7 @@ private:
 	uint64_t start;
 	uint64_t maxAddr;
 	uint64_t issueCount;
+	bool issueOpFences;
 	SSTRandom* rng;
 	Output*  out;
 

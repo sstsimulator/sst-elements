@@ -29,6 +29,7 @@ private:
 	uint64_t issueCount;
 	SSTRandom* rng;
 	Output*  out;
+	bool issueOpFences;
 
 };
 
