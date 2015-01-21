@@ -125,8 +125,7 @@ void NearestAllocMapper::allocMap(const AllocInfo & ai,
             updateTaskList(curTask, tasks);
 
             //extend frame - do not add the same node twice
-            list<int> *newNodes = new list<int>();
-            closestNodes(nodeToAlloc, 0, newNodes);
+            list<int> *newNodes = closestNodes(nodeToAlloc, 0);
             for(list<int>::iterator newIt = newNodes->begin(); newIt != newNodes->end(); newIt++){
                 bool found = false;
                 for(list<int>::iterator oldIt = frameNodes.begin(); oldIt != frameNodes.end(); oldIt++){
@@ -302,7 +301,9 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
             int availNodes = 1;
             for(int dist = 1; dist <= searchRadius; dist++){
                 double scoreFactor = 4*pow(dist,2) + 2;
-                int availInDist = closestNodes(lastNode, dist);
+                std::list<int>* toDelete = closestNodes(lastNode, dist);
+                int availInDist = toDelete->size();
+                delete toDelete;
                 if(availNodes < nodesNeeded && availNodes + availInDist > nodesNeeded){
                     curScore += (2*nodesNeeded - 2*availNodes - availInDist) / scoreFactor;
                     availNodes = nodesNeeded;
@@ -379,62 +380,34 @@ double NearestAllocMapper::dijkstraWithLimit(const vector<map<int,int> > & graph
     return totDist;
 }
 
-int NearestAllocMapper::closestNodes(const long int srcNode, const int initDist, std::list<int> *outList) const
+std::list<int>* NearestAllocMapper::closestNodes(const long int srcNode, const int initDist) const
 {
-    int nodeCount = 0;
-    int retNode;
     int delta = initDist - 1;  //L1 distance to search for
-    int srcX = mMachine.xOf(srcNode);
-    int srcY = mMachine.yOf(srcNode);
-    int srcZ = mMachine.zOf(srcNode);
     int largestDelta = mMachine.getXDim() + mMachine.getYDim() + mMachine.getZDim();
-    while(nodeCount == 0){
+    std::list<int>* outList = new std::list<int>();
+    while(outList->size() == 0){
         //increase L1 distance of the search
         delta++;
         if(delta > largestDelta){
-            //no available node found - this is an exception while allocating the last node
+            //no available node found - this is an exception when allocating the last node in machine
             break;
         }
-        //scan the nodes with L1 dist = delta;
-        for(int x = srcX - delta; x < mMachine.getXDim() && x < (srcX + delta + 1); x++){
-            if(x < 0){
-                continue;
+        delete outList;
+        outList = mMachine.getFreeAtL1Distance(srcNode, delta);
+        //eliminate those which are not free in the temporary list
+        list<int>::iterator it = outList->begin();
+        while(it != outList->end()){
+            if(!isFree->at(*it)){
+                it = outList->erase(it);
             } else {
-                int yRange = delta - abs(srcX - x);
-                for(int y = srcY - yRange; y < mMachine.getYDim() && y < (srcY + yRange + 1); y++){
-                    if(y < 0){
-                        continue;
-                    } else {
-                        int zRange = yRange - abs(srcY - y);
-                        int z = srcZ - zRange;
-                        if(z >= 0) {
-                            retNode = mMachine.indexOf(x, y, z);
-                            if(isFree->at(retNode)){
-                                nodeCount++;
-                                if(outList != NULL){
-                                    outList->push_back(retNode);
-                                }
-                            }
-                        }
-                        z = srcZ + zRange;
-                        if(zRange != 0 && z < mMachine.getZDim()){
-                            retNode = mMachine.indexOf(x, y, z);
-                            if(isFree->at(retNode)){
-                                nodeCount++;
-                                if(outList != NULL){
-                                    outList->push_back(retNode);
-                                }
-                            }
-                        }
-                    }
-                }
+                it++;
             }
-        }
+        }      
         if(initDist != 0){ //function is called for specific distance
             break;
         }
     }
-    return nodeCount;
+    return outList;
 }
 
 int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const

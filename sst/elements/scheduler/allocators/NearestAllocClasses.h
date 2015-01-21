@@ -50,31 +50,6 @@ namespace SST {
 
         //Comparators:
 
-        class L1Comparator: public std::binary_function<MeshLocation*, MeshLocation*, bool> {
-            //compares points by L1 distance to a reference point
-            //Warning: not consistent with equals (will call diff pts equal)
-
-            private:
-                MeshLocation* pt;  //point we measure distance from
-
-            public:
-                L1Comparator(int x, int y, int z) 
-                {
-                    //constructor that takes coordinates of reference point
-                    pt = new MeshLocation(x, y, z);
-                }
-
-                bool operator()(MeshLocation* L1, MeshLocation* L2) 
-                {
-                    return pt -> L1DistanceTo(*L1) < pt -> L1DistanceTo(*L2);
-                }
-                std::string toString()
-                {
-                    return "L1Comparator";
-                }
-        };
-
-
         class LInfComparator : public std::binary_function<MeshLocation*, MeshLocation*, bool> {
             //compares points by L infinity distance to a reference point
             //Warning: not consistent with equals (will call diff pts equal)
@@ -129,7 +104,6 @@ namespace SST {
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available); 
 
                 std::string getSetupInfo(bool comment);
-
         };
 
         class CoolingGenerator : public CenterGenerator {
@@ -141,16 +115,12 @@ namespace SST {
                 std::string getSetupInfo(bool comment); 
         };
 
-
-
         class IntersectionCenterGen : public CenterGenerator {
             //guaranted list contains all intersections of free locations
             //(including the free locations themselves)
 
             public:
-                IntersectionCenterGen(MeshMachine* m) : CenterGenerator(m)
-            {
-            }
+                IntersectionCenterGen(MeshMachine* m) : CenterGenerator(m) { }
 
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available); 
 
@@ -162,10 +132,8 @@ namespace SST {
             //generated list is all locations 
             public:
 
-                AllCenterGenerator(MeshMachine* m) : CenterGenerator(m)
-            {
-            }
-
+                AllCenterGenerator(MeshMachine* m) : CenterGenerator(m) { }
+                
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);
 
                 std::string getSetupInfo(bool comment)
@@ -178,7 +146,6 @@ namespace SST {
                     }
                     return com + "AllCenterGenerator";
                 }
-
         };
 
 
@@ -188,8 +155,7 @@ namespace SST {
             //a way to gather nearest free processors to a given center
 
             public:
-                virtual std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num,
-                                                          std::vector<MeshLocation*>* available) = 0;
+                virtual std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const MeshMachine & mach) = 0;
                 virtual std::string getSetupInfo(bool comment) = 0;
                 //returns num nearest locations to center from available
                 //may reorder available and return it
@@ -199,8 +165,7 @@ namespace SST {
         class L1PointCollector : public PointCollector {
             //collects points nearest to center in terms of L1 distance
             public:
-                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num,
-                                                  std::vector<MeshLocation*>* available); 
+                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const MeshMachine & mach); 
 
                 std::string getSetupInfo(bool comment);
 
@@ -209,62 +174,10 @@ namespace SST {
         class LInfPointCollector : public PointCollector{
 
             public:
-                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num,
-                                                  std::vector<MeshLocation*>* available); 
+                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const MeshMachine & mach); 
 
                 std::string getSetupInfo(bool comment);
 
-        };
-
-        /**
-         * GreedyLInf uses the same initial strategy as the regular LInf point
-         * collector, but differs in how selects points from the outer shell.
-         * GreedyLInf will pick a point in the outer shell that is closest (in terms of
-         * L1 distance to the rest of the group).  The next point it picks will be
-         * closest to the inner+newly selected points.  In the case of a tie, between
-         * two points equally close to the group of points selected so far, a comparison
-         * is made between how close the point is to the center.  This method is mainly
-         * useful in preventing an allocation from looking like this:
-         * 
-         *   *
-         *    C
-         *    **
-         * 
-         * when it could look like this:
-         * 
-         *   **
-         *   *C
-         *   
-         * Both equal in terms of the regular LInf point collector, but one is definitely more correct.
-         * 
-         * @author Peter Walker
-         */
-        class GreedyLInfPointCollector : public PointCollector{
-
-            /**
-             * PointInfo will keep locations, and distances together
-             */
-            private:
-                class PointInfo : public std::binary_function<PointInfo*,PointInfo*, bool>{
-                    public:
-                        MeshLocation* point;
-                        int L1toGroup;
-                        long tieBreaker;	//This is used as the tie breaker before MeshLocation ordering
-                        PointInfo(MeshLocation* point, int L1toGroup);
-                        bool operator()(PointInfo* const& pi1, PointInfo* const& pi2);
-
-                        std::string toString();
-                };
-
-            public:
-
-                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num,
-                                                  std::vector<MeshLocation*>* available) ;
-
-                //loc shouldn't be in innerProcs
-                int L1toInner(MeshLocation* outer, std::vector<MeshLocation*>* innerProcs) ;
-
-                std::string getSetupInfo(bool comment);
         };
 
         //Scorers:

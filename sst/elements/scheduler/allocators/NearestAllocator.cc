@@ -67,8 +67,6 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         MC1x1Allocator(mMachine);
     } else if (params -> at(0) == "genAlg") {
         genAlgAllocator(mMachine);
-    } else if (params -> at(0) == "OldMC1x1") {
-        OldMC1x1Allocator(mMachine);
     } else if (params -> at(0) == "Hybrid") {
         HybridAllocator(mMachine);
     } else {
@@ -100,8 +98,6 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
             pc = new L1PointCollector();
         } else if (pcstr == ("linf")) {
             pc = new LInfPointCollector();
-        } else if (pcstr == ("greedylinf")) {
-            pc = new GreedyLInfPointCollector();
         } else {
             schedout.fatal(CALL_INFO, 1, "Unknown point collector %s", pcstr.c_str());
         }
@@ -171,7 +167,6 @@ std::string NearestAllocator::getParamHelp()
     std::stringstream ret;
     ret << "[<center_gen>,<point_col>,<scorer>]\n"<<
         "\tcenter_gen: Choose center generator (all, free, intersect)\n"<<
-        "\tpoint_col: Choose point collector (L1, LInf, GreedyLInf)\n"<<
         "\tscorer: Choose point scorer (L1, LInf, Pairwise)";
     return ret.str();
 }
@@ -194,12 +189,12 @@ std::string NearestAllocator::getSetupInfo(bool comment) const
     return ret.str();
 }
 AllocInfo* NearestAllocator::allocate(Job* job)
-{
+{    
     std::vector<int>* freeNodes = mMachine->getFreeNodes();
     std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    }   
+    } 
     delete freeNodes;
     
     return allocate(job, available);
@@ -215,7 +210,6 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     }
     
     AllocInfo* retVal = new AllocInfo(job, machine);
-
     int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
     //optimization: if exactly enough procs are free, just return them
@@ -226,7 +220,6 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         delete available;
         return retVal;
     }
-
 
     //score of best value found so far with it tie-break score:
     std::pair<long,long>* bestVal = new std::pair<long,long>(LONG_MAX,LONG_MAX);
@@ -246,12 +239,12 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     } else { 
         possCenters = centerGenerator -> getCenters(available);
     }
+    delete available;
     
     std::vector<MeshLocation*>* nearest = NULL;
     std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
-    for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
-        nearest = pointCollector -> getNearest(*center, nodesNeeded, available);
-
+    for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {        
+        nearest = pointCollector -> getNearest(*center, nodesNeeded, *mMachine);        
         std::pair<long,long>* val = scorer -> valueOf(*center, nearest, nodesNeeded, mMachine); 
         if (val -> first < bestVal -> first || 
             (val -> first == bestVal -> first && val -> second < bestVal -> second) ) {
@@ -274,9 +267,9 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
                 alloc -> push_back((*nearest)[i]);
             bestAllocs -> push_back(alloc);
         }
+        delete nearest;
     }
     //clear memory
-    delete nearest;
     delete alloc;
     delete bestAllocs;
     possCenters -> clear();
@@ -302,33 +295,18 @@ void NearestAllocator::MMAllocator(MeshMachine* m) {
     scorer = new PairwiseL1DistScorer();
 }
 
-void NearestAllocator::OldMC1x1Allocator(MeshMachine* m) {
+void NearestAllocator::MC1x1Allocator(MeshMachine* m) {
     configName = "MC1x1";
     mMachine = m;
     centerGenerator = new FreeCenterGenerator(m);
     pointCollector = new LInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
-    //readnewcenter = false;
-}
-
-void NearestAllocator::MC1x1Allocator(MeshMachine* m) {
-    configName = "MC1x1";
-    mMachine = m;
-    centerGenerator = new FreeCenterGenerator(m);
-    pointCollector = new GreedyLInfPointCollector();
-    scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
-    //readnewcenter = false;
 } 
 
 void NearestAllocator::HybridAllocator(MeshMachine* m) {
     configName = "Hybrid";
     mMachine = m;
     centerGenerator = NULL;
-    pointCollector = new GreedyLInfPointCollector();
+    pointCollector = new LInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
-    //readnewcenter = false;
 } 
-
-
-
-

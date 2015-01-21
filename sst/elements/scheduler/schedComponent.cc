@@ -541,11 +541,11 @@ void schedComponent::startJob(Job* job)
     commParser.parseComm(job);                      //read communication files
     job->start( getCurrentSimTime() );              //job started flag
     AllocInfo* ai = theAllocator->allocate(job);    //get allocation
-    TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks  
+    TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
     machine->allocate(tmi);                         //allocate
     scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler
     stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
-
+    
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;
     unsigned long actualRunningTime = job->getActualTime();   

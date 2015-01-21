@@ -145,18 +145,10 @@ free nodes to be a potential center, compares them using their total pairwise
 L1 distance. Only works on a 3 dimensional mesh (though one or more
 dimensions can be 1). The most time-consuming allocator.
 
-oldmc1x1 - the old MC1x1 allocator based on the nearest paradigm; collects
+mc1x1 - the MC1x1 allocator based on the nearest paradigm; collects
 points around a given center based on the LInf metric. Considers any free node
 to be a potential center, compares them using their total pairwise LInf
-distance. Currently only works on a mesh where one of the three dimensions is
-1. Very time-consuming on even moderate numbers of processos.
-
-mc1x1 - an improved version of OldMC1x1 that uses an improved point collector,
-based on the idea that the outer shell of nodes (the last few chosen)
-should be clustered as close to each other as possible.  OldMC1x1 treats all
-points equally if they have the same distance from previous layers.
-Currently only works on a mesh where one of the three dimensions is 1. Very
-time-consuming on even moderate numbers of processors.
+distance. Very time-consuming.
 
 nearest - the nearest allocator, allowing customization of which point
 collector, center generator, scorer, and tiebreaker is used. Very time

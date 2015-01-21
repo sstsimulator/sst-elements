@@ -98,13 +98,12 @@ namespace SST {
                                          const double limit
                                          ) const;
 
-                //if initDist = 0, returns the number of the closest available nodes in the machine graph
-                //else, returns the number of the available nodes with distance=initDist in the machine graph
+                //if initDist = 0, returns the list of the closest available nodes in the machine graph
+                //else, returns the list of the available nodes with distance=initDist in the machine graph
                 //@initDist: distance from the center node
-                //adds the nodes to the outList when provided
                 //if initDist = 0, O(N^2), but typically O(1)
                 //else, O(initDist^2)
-                int closestNodes(const long int srcNode, const int initDist, std::list<int> *outList = NULL) const;
+                std::list<int> *closestNodes(const long int srcNode, const int initDist) const;
 
                 //returns the tiedNodes element with the least total communication distance using inTask
                 //removes the returned index from the list

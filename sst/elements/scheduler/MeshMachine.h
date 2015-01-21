@@ -16,6 +16,7 @@
 #ifndef SST_SCHEDULER_MESHMACHINE_H__
 #define SST_SCHEDULER_MESHMACHINE_H__
 
+#include <list>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,9 @@ namespace SST {
                 int ydim;
                 int zdim;
                 
+                //helper for getFreeAt... functions
+                void appendIfFree(int x, int y, int z, std::list<int>* nodeList) const;
+                
             public:
                 
                 MeshMachine(int Xdim, int Ydim, int Zdim, int numCoresPerNode, double** D_matrix);
@@ -53,9 +57,15 @@ namespace SST {
                 int zOf(unsigned int node) const { return node / (xdim * ydim); }
 
                 //returns index of given dimensions
-                unsigned int indexOf(int x, int y, int z) const { return (x + xdim * y + xdim * ydim * z); }
-
+                int indexOf(int x, int y, int z) const { return (x + xdim * y + xdim * ydim * z); }
+                
+                //returns the network distance of the given nodes
                 unsigned int getNodeDistance(int node0, int node1) const;
+                
+                //returns the free nodes at given Distance
+                std::list<int>* getFreeAtL1Distance(int center, int distance) const;
+                //LInf distance list is sorted based on L1 distance
+                std::list<int>* getFreeAtLInfDistance(int center, int distance) const;
 
                 unsigned int pairwiseL1Distance(std::vector<MeshLocation*>* locs) const;
 

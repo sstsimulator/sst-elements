@@ -39,6 +39,16 @@
 #include <set>
 #include <algorithm>  //for std::stable_sort
 
+
+
+
+
+
+#include <iostream>
+
+
+
+
 #include "MeshMachine.h"
 
 using namespace std;
@@ -145,12 +155,31 @@ vector<MeshLocation*>* AllCenterGenerator::getCenters(vector<MeshLocation*>* ava
 
 //Point Collectors:
 
-vector<MeshLocation*>* L1PointCollector::getNearest(MeshLocation* center, int num,
-                                                    vector<MeshLocation*>* available) 
+vector<MeshLocation*>* L1PointCollector::getNearest(MeshLocation* center, int num, const MeshMachine & mach) 
 {
-    L1Comparator L1c(center -> x, center -> y, center -> z);
-    stable_sort(available -> begin(),available -> end(), L1c);  //sort available using L1c
-    return available;
+    //get sufficient nodes
+    int found = 1;
+    int dist = 1;
+    std::list<int>* nodeList = new std::list<int>();
+    while(found < num && dist <= (mach.getXDim() + mach.getYDim() + mach.getZDim())){
+        std::list<int>* tempList = mach.getFreeAtL1Distance(center->toInt(mach), dist);
+        found += tempList->size();
+        nodeList->insert(nodeList->end(), tempList->begin(), tempList->end());
+        delete tempList;
+        dist++;
+    }
+    
+    //convert to MeshLocation
+    vector<MeshLocation*>* retList = new vector<MeshLocation*>(num);
+    retList->at(0) = center;
+    int i = 1;
+    for(std::list<int>::iterator it = nodeList->begin(); it != nodeList->end() && i < num; it++){
+        retList->at(i) = new MeshLocation(*it, mach);
+        i++;
+    }
+    delete nodeList;
+    
+    return retList;
 }
 
 string  L1PointCollector::getSetupInfo(bool comment)
@@ -164,12 +193,31 @@ string  L1PointCollector::getSetupInfo(bool comment)
     return com + "L1PointCollector";
 }
 
-vector<MeshLocation*>* LInfPointCollector::getNearest(MeshLocation* center, int num,
-                                                      vector<MeshLocation*>* available) 
+vector<MeshLocation*>* LInfPointCollector::getNearest(MeshLocation* center, int num, const MeshMachine & mach) 
 {
-    LInfComparator lic(center -> x, center -> y, center -> z);
-    stable_sort(available -> begin(),available -> end(), lic);  //sort available using L1c
-    return available;
+    //get sufficient nodes
+    int found = 1;
+    int dist = 1;
+    std::list<int>* nodeList = new std::list<int>();
+    while(found < num && dist <= (mach.getXDim() + mach.getYDim() + mach.getZDim())){
+        std::list<int>* tempList = mach.getFreeAtLInfDistance(center->toInt(mach), dist);
+        found += tempList->size();
+        nodeList->insert(nodeList->end(), tempList->begin(), tempList->end());
+        delete tempList;
+        dist++;
+    }
+    
+    //convert to MeshLocation
+    vector<MeshLocation*>* retList = new vector<MeshLocation*>(num);
+    retList->at(0) = center;
+    int i = 1;
+    for(std::list<int>::iterator it = nodeList->begin(); it != nodeList->end() && i < num; it++){
+        retList->at(i) = new MeshLocation(*it, mach);
+        i++;
+    }
+    delete nodeList;
+    
+    return retList;
 }
 
 string LInfPointCollector::getSetupInfo(bool comment)
@@ -179,128 +227,6 @@ string LInfPointCollector::getSetupInfo(bool comment)
         com="# ";
     } else  {
         com="";
-    }
-    return com + "LInfPointCollector";
-}
-
-GreedyLInfPointCollector::PointInfo::PointInfo(MeshLocation* point, int L1toGroup)
-{
-    this -> point = point;
-    this -> L1toGroup = L1toGroup;
-    this -> tieBreaker = 0;
-}
-
-bool GreedyLInfPointCollector::PointInfo::operator()(PointInfo* const& pi1, PointInfo* const& pi2)
-{
-    if (pi1 -> L1toGroup == pi2 -> L1toGroup) {
-        if (pi1 -> tieBreaker == pi2 -> tieBreaker) {
-            return (*pi2 -> point)(pi1 -> point, pi2 -> point);   //TODO: how does using pi2 location in the ordering add bias to the final result?
-        }
-        return (pi2 -> tieBreaker > pi1 -> tieBreaker);
-    }
-    return pi2 -> L1toGroup > pi1 -> L1toGroup;
-}
-
-string GreedyLInfPointCollector::PointInfo::toString()
-{
-    stringstream ret;
-    ret << "{" << this -> point << "," << this -> tieBreaker << "," << this -> L1toGroup << "}";
-    return ret.str();
-}
-
-vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center, int num, vector<MeshLocation*>* available) 
-{
-    vector<MeshLocation*>* tempavail = new vector<MeshLocation*>;
-    for (unsigned int x = 0; x < available -> size(); x++) {
-        tempavail -> push_back(available -> at(x));
-    }
-
-    LInfComparator lic(center -> x, center -> y, center -> z);
-    stable_sort(tempavail -> begin(),tempavail -> end(), lic);  //sort available using L1c
-
-    //Skip to the outer shell
-    int outerIndex = 0;	//The index of the first MeshLocation of the Outermost Shell
-    int outerShell = (*tempavail)[0] -> LInfDistanceTo(*center);	// This gives us the shell number for a MeshLocation
-    // one past the last one we would normally use
-    for (int i=1; i < num; ++i){
-        int newOuterShell = (*tempavail)[i]->LInfDistanceTo(*center);
-        if (newOuterShell > outerShell){
-            outerShell = newOuterShell;
-            outerIndex = i;
-        }
-    }
-
-    //Put all of the Inner Shell's processors together
-    vector<MeshLocation*>* innerProcs = new vector<MeshLocation*>();
-    for (int i = 0; i < outerIndex; ++i) {
-        innerProcs -> push_back((*tempavail)[i]);
-    }
-    PointInfo PIComp(NULL,0); //a dummy PointInfo that serves as the comparator (as we must give a specific comparator in C++)
-    //Put points in the outer shell into PointInfos with L1 distance to rest of group
-    set<PointInfo*, PointInfo >* outerProcs = new set<PointInfo*, PointInfo>(PIComp);
-    set<PointInfo*, PointInfo >* newouterProcs = new set<PointInfo*, PointInfo>(PIComp); //helps change the values within a set as this cannot be done directly
-    for (unsigned int i = outerIndex;i < tempavail -> size();i++) {
-        PointInfo* outerPoint = new PointInfo((*tempavail)[i], L1toInner((*tempavail)[i],innerProcs));
-        outerPoint -> tieBreaker = outerPoint->point->L1DistanceTo(*center);
-        outerProcs -> insert(outerPoint);
-    }
-
-    //Find the minimum L1toGroup, add it to tempavail
-    int totalSelected = innerProcs -> size();	//Keeps track of all the processors thus far added
-    while (totalSelected < num) {
-        PointInfo* first = *(outerProcs -> begin());
-        innerProcs -> push_back(first -> point);	//This is the current minimum of the set (lowest L1 distance to the rest of the inner procs)
-        outerProcs -> erase(outerProcs -> begin());
-        ++totalSelected; 	//Make progress in the loop
-        //recalculate all the other distances adding this point into the inner group.
-        newouterProcs -> clear(); //don't have to do deletes because all pointers
-        //are in outerProcs anyway
-        if (totalSelected < num) {	//TODO bad form?
-            for (set<PointInfo*, PointInfo>::iterator info = outerProcs -> begin(); info != outerProcs -> end(); info++){
-                if ((*info) -> L1toGroup < 0) {
-                    exit(0);
-                }
-                //instead of recalculating the whole thing, we just need to add another length to the total distance
-                //sets cannot have values changed so must erase and reinsert the pointinfo, using newouterProcs as an intermediary so the iterator isn't invalidated
-                PointInfo* iter = *info;
-                (iter) -> L1toGroup +=  (iter)->point->L1DistanceTo(*(first->point));
-                newouterProcs -> insert(iter);
-            }
-            outerProcs -> clear();
-            set<PointInfo*, PointInfo>* temp = outerProcs;
-            outerProcs = newouterProcs;
-            newouterProcs = temp;
-        }
-        delete first; //the point may still be used but the PointInfo will not
-        first = NULL;
-    }
-    while (!outerProcs -> empty())
-    {
-        delete *outerProcs -> begin();
-        outerProcs -> erase(outerProcs -> begin());
-    }
-    delete outerProcs;
-    tempavail -> clear();
-    delete tempavail;
-    return  innerProcs;
-}
-
-//loc shouldn't be in innerProcs
-int GreedyLInfPointCollector::L1toInner(MeshLocation* outer, vector<MeshLocation*>* innerProcs) 
-{
-    int distance = 0;
-    for ( vector<MeshLocation*>::iterator inner = innerProcs -> begin(); inner != innerProcs -> end(); ++inner)
-        distance += outer -> L1DistanceTo(**inner);
-    return distance;
-}
-
-string GreedyLInfPointCollector::getSetupInfo(bool comment)
-{
-    string com;
-    if(comment)  {
-        com = "# ";
-    } else  {
-        com = "";
     }
     return com + "LInfPointCollector";
 }

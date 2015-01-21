@@ -75,6 +75,248 @@ unsigned int MeshMachine::getNodeDistance(int node1, int node2) const
     return dist;
 }
 
+std::list<int>* MeshMachine::getFreeAtL1Distance(int center, int dist) const
+{
+    int centerX = xOf(center);
+    int centerY = yOf(center);
+    int centerZ = zOf(center);
+    std::list<int>* nodeList = new std::list<int>();
+    if(dist < 1){
+        return nodeList;
+    }
+    for(int x = std::max(centerX - dist, 0); x <= std::min(centerX + dist, xdim - 1); x++){
+        int yRange = dist - abs(centerX - x);
+        for(int y = std::max(centerY - yRange, 0); y <= std::min(centerY + yRange, ydim - 1); y++){
+            int zRange = yRange - abs(centerY - y);
+            int z = centerZ - zRange;
+            appendIfFree(x, y, z, nodeList);
+            if(zRange != 0){
+                z = centerZ + zRange;
+                appendIfFree(x, y, z, nodeList);
+            }
+        }
+    }
+    return nodeList;
+}
+
+std::list<int>* MeshMachine::getFreeAtLInfDistance(int center, int dist) const
+{
+    const int centerX = xOf(center);
+    const int centerY = yOf(center);
+    const int centerZ = zOf(center);
+    int x, y, z;
+    std::list<int>* nodeList = new std::list<int>();
+    if(dist < 1){
+        return nodeList;
+    }
+    
+    //first scan the sides
+    
+    //go backward in x
+    x = centerX - dist;
+    //scan all y except edges & corners
+    for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+        y = centerY + yDist;
+        //scan all z except edges & corners
+        for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+            z = centerZ + zDist;
+            appendIfFree(x, y, z, nodeList);
+        }
+    }
+    //go backward in y
+    y = centerY - dist;
+    //scan all x except edges & corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        //scan all z except edges & corners
+        for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+            z = centerZ + zDist;
+            appendIfFree(x, y, z, nodeList);
+        }
+    }
+    //go backward in z
+    z = centerZ - dist;
+    //scan all x except edges & corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        //scan all y except edges & corners
+        for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+            y = centerY + yDist;
+            appendIfFree(x, y, z, nodeList);
+        }
+    }
+    //go forward in z
+    z = centerZ + dist;
+    //scan all x except edges & corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        //scan all y except edges & corners
+        for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+            y = centerY + yDist;
+            appendIfFree(x, y, z, nodeList);
+        }
+    }
+    //go forward in y
+    y = centerY + dist;
+    //scan all x except edges & corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        //scan all z except edges & corners
+        for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+            z = centerZ + zDist;
+            appendIfFree(x, y, z, nodeList);
+        }
+    }
+    //go forward in x
+    x = centerX + dist;
+    //scan all y except edges & corners
+    for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+        y = centerY + yDist;
+        //scan all z except edges & corners
+        for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+            z = centerZ + zDist;
+            appendIfFree(x, y, z, nodeList);
+        }
+    }
+    
+    //now do edges
+    
+    //backward in x
+    x = centerX - dist;
+    //backward in y
+    y = centerY - dist;
+    //scan all z except corners
+    for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+        z = centerZ + zDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //backward in z
+    z = centerZ - dist;
+    //scan all y except corners
+    for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+        y = centerY + yDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in z
+    z = centerZ + dist;
+    //scan all y except corners
+    for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+        y = centerY + yDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in y
+    y = centerY + dist;
+    //scan all z except corners
+    for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+        z = centerZ + zDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    
+    //backward in y
+    y = centerY - dist;
+    //backward in z
+    z = centerZ - dist;
+    //scan all x except corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in z
+    z = centerZ + dist;
+    //scan all x except corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in y
+    y = centerY + dist;
+    //backward in z
+    z = centerZ - dist;
+    //scan all x except corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in z
+    z = centerZ + dist;
+    //scan all x except corners
+    for(int xDist = -(dist - 1); xDist <= (dist - 1); xDist++){
+        x = centerX + xDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    
+    //forward in x
+    x = centerX + dist;
+    //backward in y
+    y = centerY - dist;
+    //scan all z except corners
+    for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+        z = centerZ + zDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //backward in z
+    z = centerZ - dist;
+    //scan all y except corners
+    for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+        y = centerY + yDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in z
+    z = centerZ + dist;
+    //scan all y except corners
+    for(int yDist = -(dist - 1); yDist <= (dist - 1); yDist++){
+        y = centerY + yDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    //forward in y
+    y = centerY + dist;
+    //scan all z except corners
+    for(int zDist = -(dist - 1); zDist <= (dist - 1); zDist++){
+        z = centerZ + zDist;
+        appendIfFree(x, y, z, nodeList);
+    }
+    
+    //now do corners
+    
+    //backward in x
+    x = centerX - dist;
+    y = centerY - dist; //backward in y
+    z = centerZ - dist; //backward in z
+    appendIfFree(x, y, z, nodeList);
+    z = centerZ + dist; //forward in z
+    appendIfFree(x, y, z, nodeList);
+    y = centerY + dist; //forward in y
+    z = centerZ - dist; //backward in z
+    appendIfFree(x, y, z, nodeList);
+    z = centerZ + dist; //forward in z
+    appendIfFree(x, y, z, nodeList);
+    
+    //forward in x
+    x = centerX + dist;
+    y = centerY - dist; //backward in y
+    z = centerZ - dist; //backward in z
+    appendIfFree(x, y, z, nodeList);
+    z = centerZ + dist; //forward in z
+    appendIfFree(x, y, z, nodeList);
+    y = centerY + dist; //forward in y
+    z = centerZ - dist; //backward in z
+    appendIfFree(x, y, z, nodeList);
+    z = centerZ + dist; //forward in z
+    appendIfFree(x, y, z, nodeList);
+    
+    return nodeList;
+}
+
+void MeshMachine::appendIfFree(int x, int y, int z, std::list<int>* nodeList) const
+{
+    if(x >= 0 && x < xdim && y >= 0 && y < ydim && z >= 0 && z < zdim){
+        int tempNode = indexOf(x,y,z);
+        if(isFree(tempNode)){
+            nodeList->push_back(tempNode);
+        }
+    }
+}
+
 unsigned int MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) const
 {
     int num = locs -> size();
@@ -232,6 +474,7 @@ unsigned int MeshMachine::getLinkIndex(int x, int y, int z, int dimension) const
             break;
         default:
             schedout.fatal(CALL_INFO, 1, "Link index requested for non-existing dimension.\n");
+            linkNo = 0; //avoids compilation warning
     }
     return linkNo;
 }

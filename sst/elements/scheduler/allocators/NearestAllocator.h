@@ -78,9 +78,7 @@ namespace SST {
                 void genAlgAllocator(MeshMachine* m);
 
                 void MMAllocator(MeshMachine* m); 
-
-                void OldMC1x1Allocator(MeshMachine* m); 
-
+                
                 void MC1x1Allocator(MeshMachine* m); 
 
                 void HybridAllocator(MeshMachine* m);
