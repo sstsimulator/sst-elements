@@ -36,6 +36,8 @@
 #include "mpi/motifs/emberfini.h"
 #include "mpi/motifs/emberbarrier.h"
 #include "mpi/motifs/emberallreduce.h"
+#include "mpi/motifs/emberalltoall.h"
+#include "mpi/motifs/emberalltoallv.h"
 #include "mpi/motifs/emberreduce.h"
 #include "mpi/motifs/emberallpingpong.h"
 #include "mpi/motifs/embernull.h"
@@ -160,6 +162,16 @@ load_Allreduce( Component* comp, Params& params ) {
 }
 
 static Module*
+load_Alltoall( Component* comp, Params& params ) {
+	return new EmberAlltoallGenerator(comp, params);
+}
+
+static Module*
+load_Alltoallv( Component* comp, Params& params ) {
+	return new EmberAlltoallvGenerator(comp, params);
+}
+
+static Module*
 load_Reduce( Component* comp, Params& params ) {
 	return new EmberReduceGenerator(comp, params);
 }
@@ -221,6 +233,8 @@ static const ElementInfoParam component_params[] = {
     { "Recvsize_bin_width", "Bin width of the recv sizes (bytes) histogram", "64" },
     { "Sendsize_bin_width", "Bin width of the send sizes (bytes) histogram", "64" },
     { "Allreduce_bin_width", "Bin width of the allreduce time histogram", "5" },
+    { "Alltoall_bin_width", "Bin width of the alltoall time histogram", "5" },
+    { "Alltoallv_bin_width", "Bin width of the alltoallv time histogram", "5" },
     { "Reduce_bin_width", "Bin width of the reduce time histogram", "5" },
     { "Commsplit_bin_width", "Bin width of the comm_split time histogram", "5" },
     { "Commcreate_bin_width", "Bin width of the comm_create time histogram", "5" },
@@ -274,32 +288,44 @@ static const ElementInfoParam allpingpong_params[] = {
 };
 
 static const ElementInfoParam barrier_params[] = {
-	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
+	{	"arg.iterations",		"Sets the number of barrier operations to perform", 	"1024"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam alltoall_params[] = {
+	{	"arg.iterations",		"Sets the number of alltoall operations to perform", 	"1"},
+	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam alltoallv_params[] = {
+	{	"arg.iterations",		"Sets the number of alltoallv operations to perform", 	"1"},
+	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam allreduce_params[] = {
-	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.iterations",		"Sets the number of allreduce operations to perform", 	"1"},
 	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam reduce_params[] = {
-	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.iterations",		"Sets the number of reduce operations to perform", 	"1"},
 	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
 	{	"arg.root",			"Sets the root of the reduction",		 	"0"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam halo1d_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"iterations",		"Sets the number of halo1d operations to perform", 	"10"},
 	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"1000"},
 	{	"messagesize",		"Sets the message size (in bytes)",		 	"128"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam halo2d_params[] = {
-	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"arg.iterations",		"Sets the number of halo2d operations to perform", 	"10"},
 	{	"arg.computenano",		"Sets the number of nanoseconds to compute for", 	"10"},
 	{	"arg.messagesizex",		"Sets the message size in X-dimension (in bytes)",	"128"},
 	{	"arg.messagesizey",		"Sets the message size in Y-dimension (in bytes)",	"128"},
@@ -310,7 +336,7 @@ static const ElementInfoParam halo2d_params[] = {
 };
 
 static const ElementInfoParam halo3d_params[] = {
-	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"10"},
+	{	"arg.iterations",		"Sets the number of halo3d operations to perform", 	"10"},
 	{	"arg.computetime",		"Sets the number of nanoseconds to compute for", 	"10"},
 	{	"arg.flopspercell",		"Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)", 	"26"},
 	{	"arg.peflops",		"Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
@@ -419,9 +445,9 @@ static const ElementInfoParam nullmotif_params[] = {
 };
 
 static const ElementInfoParam msgrate_params[] = {
-	{	"iterations",		"Sets the number of ping pong operations to perform", 	"1"},
-	{	"msgSize",		"Sets the size of the message in bytes",	 	"0"},
-	{	"numMsgs",		"Sets the size of the message in bytes",	 	"128"},
+	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.msgSize",		"Sets the size of the message in bytes",	 	"0"},
+	{	"arg.numMsgs",		"Sets the size of the message in bytes",	 	"128"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -614,6 +640,22 @@ static const ElementInfoModule modules[] = {
 	load_NASLU,
 	naslu_params,
         "SST::Ember::EmberGenerator"
+    },
+    { 	"AlltoallMotif",
+	"Performs a Alltoall operation with type set to float64 and operation SUM",
+	NULL,
+	NULL,
+	load_Alltoall,
+	alltoall_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"AlltoallvMotif",
+	"Performs a Alltoallv operation with type set to float64 and operation SUM",
+	NULL,
+	NULL,
+	load_Alltoallv,
+	alltoall_params,
+    "SST::Ember::EmberGenerator"
     },
     { 	"AllreduceMotif",
 	"Performs a Allreduce operation with type set to float64 and operation SUM",
