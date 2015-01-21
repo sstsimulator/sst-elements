@@ -41,7 +41,11 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_size = m_info->getGroup( m_event->group )->getSize();
     m_rank = m_info->getGroup( m_event->group )->getMyRank();
 
-    memcpy( recvChunkPtr(m_rank), sendChunkPtr(m_rank),recvChunkSize(m_rank));
+    void* recv = recvChunkPtr(m_rank);
+    void* send = sendChunkPtr(m_rank);
+    if ( recv && send ) {
+        memcpy( recv, send, recvChunkSize(m_rank));
+    }
 
     handleEnterEvent( retval );
 }
