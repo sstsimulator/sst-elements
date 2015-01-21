@@ -48,9 +48,8 @@ bool EmberAlltoallvGenerator::generate( std::queue<EmberEvent*>& evQ) {
         GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
     }
 
-    enQ_compute( evQ, 11000 );
     enQ_alltoallv( evQ, m_sendBuf, &m_sendCnts[0], &m_sendDsp[0], DOUBLE, 
-                    m_recvBuf, &m_recvCnts[0], &m_recvDsp[0], DOUBLE, GroupWorld );
+        m_recvBuf, &m_recvCnts[0], &m_recvDsp[0], DOUBLE, GroupWorld );
 
     if ( ++m_loopIndex == m_iterations ) {
         return true;
