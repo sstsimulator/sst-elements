@@ -63,6 +63,8 @@ class API : public ProtocolAPI {
 
     void send( void* buf, size_t len, nid_t dest, uint64_t tag, 
                                         FunctorBase_0<bool>* = NULL );
+    void send( void* buf, size_t len, MP::RankID dest, MP::Communicator grp,
+                            uint64_t tag, FunctorBase_0<bool>* = NULL );
     void isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq*, 
                                         FunctorBase_0<bool>* = NULL );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag,
@@ -75,6 +77,8 @@ class API : public ProtocolAPI {
                                         FunctorBase_0<bool>* = NULL );
     void irecv( void* buf, size_t len, nid_t src, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
+    void irecv( void* buf, size_t len, MP::RankID src, MP::Communicator grp,
+                    uint64_t tag, CommReq*, FunctorBase_0<bool>* = NULL );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
 

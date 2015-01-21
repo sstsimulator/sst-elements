@@ -62,6 +62,17 @@ void API::send( void* buf, size_t len, nid_t dest, uint64_t tag,
                 tag, MP::GroupWorld, NULL, functor );
 }
 
+void API::send( void* buf, size_t len, MP::RankID dest, MP::Communicator grp,
+                            uint64_t tag, FunctorBase_0<bool>* functor ) 
+{
+    std::vector<IoVec> ioVec(1);
+    ioVec[0].ptr = buf;
+    ioVec[0].len = len;
+
+    m_xxx->sendv( true, ioVec, MP::CHAR, dest,
+                tag, grp, NULL, functor );
+}
+
 void API::isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* req,
                                             FunctorBase_0<bool>* functor ) 
 {
@@ -106,6 +117,16 @@ void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag,
     ioVec[0].len = len;
     m_xxx->recvv( false, ioVec, MP::CHAR, src,
                 tag, MP::GroupWorld, req, functor );
+}
+
+void API::irecv( void* buf, size_t len, MP::RankID src, MP::Communicator grp,
+                        uint64_t tag, CommReq* req, FunctorBase_0<bool>* functor )
+{
+    std::vector<IoVec> ioVec(1);
+    ioVec[0].ptr = buf;
+    ioVec[0].len = len;
+    m_xxx->recvv( false, ioVec, MP::CHAR, src,
+                tag, grp, req, functor );
 }
 
 void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,

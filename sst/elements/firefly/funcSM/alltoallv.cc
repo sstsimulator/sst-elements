@@ -52,7 +52,7 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
 {
-    int node;
+   MP:: RankID rank;
     switch ( m_state ) {
       case PostRecv:
 
@@ -64,22 +64,22 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
             break;
         }
 
-        node = mod((long) m_rank - m_count, m_size);
+        rank = mod((long) m_rank - m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", m_count, node );
+        m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", m_count, rank );
 
-        proto()->irecv( recvChunkPtr(node), recvChunkSize(node), 
-                        node, genTag(), &m_recvReq ); 
+        proto()->irecv( recvChunkPtr(rank), recvChunkSize(rank), 
+                        rank, m_event->group, genTag(), &m_recvReq ); 
         m_state = Send;
         break;
 
       case Send:
-        node = mod((long) m_rank + m_count, m_size);
+        rank = mod((long) m_rank + m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", m_count, node );
+        m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", m_count, rank );
 
-        proto()->send( sendChunkPtr(node), sendChunkSize(node), 
-                                            node, genTag() ); 
+        proto()->send( sendChunkPtr(rank), sendChunkSize(rank), 
+                                            rank, m_event->group, genTag() ); 
         m_state = WaitRecv;
         break;
 

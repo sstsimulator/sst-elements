@@ -60,7 +60,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return CtrlMsg::AlltoallvTag | (( m_seq & 0xff) << 8 );
     }
 
-    unsigned char* sendChunkPtr( int rank ) {
+    unsigned char* sendChunkPtr( MP::RankID rank ) {
         unsigned char* ptr = (unsigned char*) m_event->sendbuf;
         if ( ! ptr ) return NULL;
         if ( m_event->sendcnts ) {
@@ -74,7 +74,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return ptr;
     }
 
-    size_t  sendChunkSize( int rank ) {
+    size_t  sendChunkSize( MP::RankID rank ) {
         size_t size;
         if ( m_event->sendcnts ) {
             size = m_info->sizeofDataType( m_event->sendtype ) *
@@ -87,7 +87,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    unsigned char* recvChunkPtr( int rank ) {
+    unsigned char* recvChunkPtr( MP::RankID rank ) {
         unsigned char* ptr = (unsigned char*) m_event->recvbuf;
         if ( ! ptr ) return NULL;
         if ( m_event->recvcnts ) {
@@ -101,7 +101,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return ptr;
     }
 
-    size_t  recvChunkSize( int rank ) {
+    size_t  recvChunkSize( MP::RankID rank ) {
         size_t size;
         if ( m_event->recvcnts ) {
             size = m_info->sizeofDataType( m_event->recvtype ) *
@@ -121,7 +121,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     unsigned int        m_count; 
     int                 m_seq;
     unsigned int        m_size;
-    int                 m_rank;
+    MP::RankID          m_rank;
 };
         
 }
