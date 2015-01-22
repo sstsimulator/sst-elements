@@ -334,113 +334,93 @@ unsigned int MeshMachine::pairwiseL1Distance(std::vector<MeshLocation*>* locs) c
 
 AllocInfo* MeshMachine::getBaselineAllocation(Job* job)
 {
-    int numNodes = ceil( (double) job->getProcsNeeded() / coresPerNode);
-    int xSize, ySize, zSize;
+    std::vector<int> dims(3);
+    dims[0] = xdim;
+    dims[1] = ydim;
+    dims[2] = zdim;
+
+    std::vector<int> machDims(dims);
+    int nodesNeeded = (int) ceil((float) job->getProcsNeeded() / coresPerNode);
+    if(nodesNeeded > numNodes){
+        schedout.fatal(CALL_INFO, 1, "Baseline allocation requested for %d nodes for a %ld-node machine.", nodesNeeded, numNodes);
+    }
+
+    //optimization: return here if one node
+    if(nodesNeeded == 1){
+        AllocInfo* ai = new AllocInfo(job, *this);
+        ai->nodeIndices[0] = 0;
+        return ai;
+    }
+
     //dimensions if we fit job in a cube
-    xSize = (int)ceil( (float)cbrt((float)numNodes) ); 
-    ySize = xSize;
-    zSize = xSize;
+    int cubicDim = (int)ceil( (float) pow((float)nodesNeeded, 1.0/dims.size()) ); 
+
     //restrict dimensions
-    if(xSize > xdim) {
-        xSize = xdim;
-        ySize = (int)ceil( (float)std::sqrt( ((float)numNodes) / xdim ) );
-        zSize = ySize;
-        if( ySize > ydim ) {
-            ySize = ydim;
-            zSize = (int)ceil( ((float)numNodes) / (xdim * ydim) );
-        } else if ( zSize > zdim ) {
-            zSize = zdim;
-            ySize = (int)ceil( ((float)numNodes) / (xdim * zdim) );
-        }
-    } else if(ySize > ydim) {
-        ySize = ydim;
-        xSize = (int)ceil( (float)std::sqrt( ((float)numNodes) / ydim ) );
-        zSize = xSize;
-        if( xSize > xdim ) {
-            xSize = xdim;
-            zSize = (int)ceil( ((float)numNodes) / (xdim * ydim) );
-        } else if ( zSize > zdim ) {
-            zSize = zdim;
-            xSize = (int)ceil( ((float)numNodes) / (ydim * zdim) );
-        }
-    } else if(zSize > zdim) {
-        zSize = zdim;
-        ySize = (int)ceil( (float)std::sqrt( ((float)numNodes) / zdim ) );
-        xSize = ySize;
-        if( ySize > ydim ){
-            ySize = ydim;
-            xSize = (int)ceil( ((float)numNodes) / (zdim * ydim) );
-        } else if ( xSize > xdim ) {
-            xSize = xdim;
-            ySize = (int)ceil( ((float)numNodes) / (xdim * zdim) );
+    for(unsigned int i = 0; i < dims.size(); i++){
+        if(cubicDim < machDims[i]){
+            machDims[i] = cubicDim;
         }
     }
-    //order dimensions from shortest to longest
-    int state = 0; //keeps order mapping
-    if(xSize <= ySize && ySize <= zSize) {
-        state = 0;
-    } else if(ySize <= xSize && xSize <= zSize) {
-        state = 1;
-        std::swap(xSize, ySize);
-    } else if(zSize <= ySize && ySize <= xSize) {
-        state = 2;
-        std::swap(xSize, zSize);
-    } else if(xSize <= zSize && zSize <= ySize) {
-        state = 3;
-        std::swap(zSize, ySize);
-    } else if(ySize <= zSize && zSize <= xSize) {
-        state = 4;
-        std::swap(xSize, ySize);
-        std::swap(ySize, zSize);
-    } else if(zSize <= xSize && xSize <= ySize) {
-        state = 5;
-        std::swap(xSize, ySize);
-        std::swap(xSize, zSize);
+
+    int readyNodes = 1;
+    for(unsigned int i = 0; i < dims.size(); i++){
+        readyNodes *= machDims[i];
+    }
+
+    //make sure there are sufficient nodes
+    //increase the dimensions starting from the first
+    for(unsigned int i = 0; i < dims.size() && readyNodes < nodesNeeded; i++){
+        while(machDims[i] < dims[i] && readyNodes < nodesNeeded){
+            readyNodes = readyNodes / machDims[i] * (machDims[i] + 1);
+            machDims[i]++;
+        }
     }
    
-    //Fill given space with snake-shaped order, use shortest dim first
-    int nodeCount = 0;
-    bool done = false;
-    bool xFwd = true;
-    bool yFwd = true;
-    int i, j;
-    std::vector<MeshLocation> nodes;
-    for(int k = 0; k < zSize && !done; k++){
-        for(int yVal = 0; yVal < ySize && !done; yVal++){
-            if(yFwd){
-                j = yVal;
-            } else {
-                j = ySize - yVal - 1;
-            }
-            for(int xVal = 0; xVal < xSize && !done; xVal++){
-                if(xFwd){
-                    i = xVal;
-                } else {
-                    i = xSize - xVal - 1;
-                }
-                //use state not to mix dimension of the actual machine
-                switch(state) {
-                case 0: nodes.push_back(MeshLocation(i,j,k)); break;
-                case 1: nodes.push_back(MeshLocation(j,i,k)); break;
-                case 2: nodes.push_back(MeshLocation(k,j,i)); break;
-                case 3: nodes.push_back(MeshLocation(i,k,j)); break;
-                case 4: nodes.push_back(MeshLocation(k,i,j)); break;
-                case 5: nodes.push_back(MeshLocation(j,k,i)); break;
-                default: schedout.fatal(CALL_INFO, 0, "Unexpected error.\n");
-                }
-                nodeCount++;
-                if(nodeCount == numNodes){
-                    done = true;
-                }
-            }
-            xFwd = !xFwd;
-        }
-        yFwd = !yFwd;
-    }
-    //create allocInfo
+    //Fill given space with snake-shaped order
     AllocInfo* allocInfo = new AllocInfo(job, *this);
-    for(int i = 0; i < numNodes; i++){
-        allocInfo->nodeIndices[i] = nodes.at(i).toInt(*this);
+    std::vector<int> curLocation(machDims.size(), 0);
+    std::vector<bool> ifFwd(machDims.size(), true); //whether to go forward
+    int curDim = 0; //currently moving direction
+    readyNodes = 0;
+    //find the last dimension with multiple nodes
+    int lastDim = machDims.size() - 1;
+    while(lastDim >= 0 && machDims[lastDim] == 1){
+        lastDim--;
+    }
+    //fill
+    while(readyNodes < nodesNeeded){
+        //add current location
+        MeshLocation curMeshLoc(curLocation[0], curLocation[1], curLocation[2]);
+        allocInfo->nodeIndices[readyNodes] = curMeshLoc.toInt(*this);
+        readyNodes++;
+        //check if last location
+        if(readyNodes == nodesNeeded){
+            break;
+        }
+        //move to next location
+        //check if we need to change the dimension
+        while(  ( ifFwd[curDim] && curLocation[curDim] == (machDims[curDim] - 1))
+             || (!ifFwd[curDim] && curLocation[curDim] == 0) ){
+            //we are at the end of a dimension
+            //change this dimensions direction
+            ifFwd[curDim] = !ifFwd[curDim];
+            //check next dimension
+            if(curDim != lastDim){
+                curDim++;
+            } else {
+                break;
+            }
+        }
+        //return to the current dimension
+        while(curDim >= 0){  
+            if(machDims[curDim] != 1) {
+                if(ifFwd[curDim]) curLocation[curDim] += 1;
+                else              curLocation[curDim] -= 1;
+                break;
+            }
+            curDim--;
+        }
+        curDim = 0;
     }
     return allocInfo;
 }
