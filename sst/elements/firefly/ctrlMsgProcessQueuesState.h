@@ -285,6 +285,7 @@ class ProcessQueuesState : StateBase< T1 >
     void processPioSendFini( _CommReq* );
 
     bool enterSend( _CommReq* );
+    bool enterRecv( _CommReq* );
     bool enterSendLoop( _CommReq* );
     bool enterWait0( std::deque< FuncCtxBase* >& );
     void processQueues( std::deque< FuncCtxBase* >& );
@@ -559,12 +560,29 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
 
     m_pstdRcvQ.push_front( req );
 
-    if ( req->isBlocking() ) {
-        enterWait( new WaitReq( req ), exitFunctor );
-    } else {
-        setExit( exitFunctor );
-        exit();
+    size_t length = req->getLength( );
+    int delay = 0;
+    if ( length > obj().shortMsgLength() ) {
+        delay += obj().regRegionDelay( length );
     }
+    FunctorStatic_0< ProcessQueuesState, _CommReq*, bool >*  functor;
+    functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
+          ( this, &ProcessQueuesState::enterRecv, req );  
+
+    setExit( exitFunctor );
+
+    obj().schedFunctor( functor, delay );
+}
+
+template< class T1 >
+bool ProcessQueuesState<T1>::enterRecv( _CommReq* req )
+{
+    if ( ! req->isBlocking() ) {
+        exit();
+    } else {
+        enterWait( new WaitReq( req ), clearExit() );
+    }
+    return true;
 }
 
 template< class T1 >
@@ -732,9 +750,6 @@ bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
 
             dbg().verbose(CALL_INFO,2,0,"receive short|loop message\n"); 
             delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
-        } else {
-            dbg().verbose(CALL_INFO,1,0,"receive long message\n"); 
-            delay += obj().regRegionDelay( length );
         }
     }
 
@@ -974,7 +989,12 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
     
     delete stack.back();
     stack.pop_back();
-    req->setDone( obj().recvReqFiniDelay() );
+    int delay = obj().recvReqFiniDelay();
+
+    // time to unregister memory
+    delay += obj().regRegionDelay( req->getLength() );
+
+    req->setDone( delay );
 
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;
@@ -1002,12 +1022,14 @@ template< class T1 >
 void ProcessQueuesState<T1>::processLongAck( GetInfo* info )
 {
     dbg().verbose(CALL_INFO,1,0,"acked\n");
-#if BGQ 
-    // fix this with a module
-    info->req->setDone(obj().sendReqFiniDelay() + 500);
-#else
-    info->req->setDone(obj().sendReqFiniDelay());
+    int delay =  obj().sendReqFiniDelay();
+#if 0 
+    // time to unregister memory
+    if ( info->req->getLength() > obj().shortMsgLength() ) { 
+        delay += obj().regRegionDelay( info->req->getLength() );
+    }
 #endif
+    info->req->setDone( delay );
     delete info;
     return;
 }
@@ -1137,7 +1159,6 @@ int ProcessQueuesState<T1>::copyIoVec(
             } 
         }
     }
-    //return obj().memcpyDelay( (copied * 5)/64 );
     return obj().rxMemcpyDelay( copied );
 }
 
