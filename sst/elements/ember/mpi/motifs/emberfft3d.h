@@ -40,10 +40,30 @@ private:
 	uint32_t m_nsCompute;
 	uint32_t m_nsCopyTime;
 
+    unsigned char* m_myData; 
+
+    std::vector< uint32_t >  m_sendCnts;
+    std::vector< uint32_t >  m_recvCnts;
+    std::vector< uint32_t >  m_sendDsp;
+    std::vector< uint32_t >  m_recvDsp;
+
     Communicator    m_rowComm;
     Communicator    m_colComm;
     std::vector<int>    m_rowGrpRanks;
     std::vector<int>    m_colGrpRanks;
+
+    std::vector<int>    m_rowSendCnts;
+    std::vector<int>    m_rowSendDsp;
+    std::vector<int>    m_rowRecvCnts;
+    std::vector<int>    m_rowRecvDsp;
+
+    std::vector<int>    m_colSendCnts;
+    std::vector<int>    m_colSendDsp;
+    std::vector<int>    m_colRecvCnts;
+    std::vector<int>    m_colRecvDsp;
+
+    void*               m_sendBuf;
+    void*               m_recvBuf;
 };
 
 }
