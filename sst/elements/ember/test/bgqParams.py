@@ -4,7 +4,7 @@ debug = 0
 networkParams = {
     "topology" : "merlin." + "torus",
     "packetSize" : "2048B",
-    "link_bw" : "1.77GB/s",
+    "link_bw" : "1.8GB/s",
     "flitSize" : "8B",
     "buffer_size" : "14KB",
 }
@@ -41,7 +41,7 @@ hermesParams = {
     "hermesParams.functionSM.defaultVerbose" : 2,
     "hermesParams.ctrlMsg.debug" : 0,
     "hermesParams.ctrlMsg.verboseLevel" : 2,
-    "hermesParams.ctrlMsg.shortMsgLength" : 5000,
+    "hermesParams.ctrlMsg.shortMsgLength" : 4200,
     "hermesParams.ctrlMsg.matchDelay_ns" : 260,
 
     "hermesParams.ctrlMsg.txSetupMod" : "firefly.LatencyMod",
@@ -72,7 +72,7 @@ hermesParams = {
 
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
 
-    "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 1500,
+    "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 0,
     "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 0,
     "hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
     "hermesParams.loadMap.0.start" : 0,
