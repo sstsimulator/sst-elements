@@ -42,6 +42,7 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 
 	m_nsCopyTime = (uint32_t) params.find_integer("arg.copytime", 0);
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+    assert( 1 == m_iterations ); 
 }
 
 
@@ -56,9 +57,9 @@ void EmberFFT3DGenerator::configure()
 
     unsigned myRow = rank() / npCol; 
     unsigned myCol = rank() % npCol; 
-    printf("%d: nx=%d ny=%d nx=%d npRow=%d npCol=%d myRow=%d myCol=%d\n", 
-            rank(),
-            m_nx, m_ny, m_nz, m_npRow, npCol, myRow, myCol );
+    m_output->verbose(CALL_INFO, 2, 0, "%d: nx=%d ny=%d nx=%d npRow=%d "
+        "npCol=%d myRow=%d myCol=%d\n", 
+            rank(), m_nx, m_ny, m_nz, m_npRow, npCol, myRow, myCol );
 
     m_rowGrpRanks.resize(  npCol );
     m_rowSendCnts.resize(npCol);
@@ -72,7 +73,8 @@ void EmberFFT3DGenerator::configure()
         m_rowSendDsp[col] = col * numElements;
         m_rowRecvCnts[col] = numElements;
         m_rowRecvDsp[col] = col * numElements;
-//       printf("%d: %d\n",rank(), m_rowGrpRanks[col] );   
+        m_output->verbose(CALL_INFO, 2, 0,"%d: %d\n",
+                                        rank(), m_rowGrpRanks[col] );   
     }
 
     m_colGrpRanks.resize(  m_npRow );
@@ -80,13 +82,15 @@ void EmberFFT3DGenerator::configure()
     m_rowSendDsp.resize( m_npRow );
     m_rowRecvCnts.resize( m_npRow );
     m_rowRecvDsp.resize( m_npRow );
+
     for ( unsigned row = 0; row < m_npRow; row++ ) {
         m_colGrpRanks[row] = myCol + row * npCol;
         m_rowSendCnts[row] = numElements;
         m_rowSendDsp[row] = row * numElements;
         m_rowRecvCnts[row] = numElements;
         m_rowRecvDsp[row] = row * numElements;
-//        printf("%d: %d\n",rank(), m_colGrpRanks[row] );
+        m_output->verbose(CALL_INFO, 2, 0,"%d: %d\n",
+                                        rank(), m_colGrpRanks[row] );
     }
 
     m_sendBuf =   memAlloc( numElements * COMPLEX );
@@ -97,6 +101,16 @@ bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     GEN_DBG( 1, "loop=%d\n", m_loopIndex );
 
+    if (  m_loopIndex == (signed) m_iterations ) {
+        if ( 0 == rank() ) {
+            m_output->output("%s: fwd time %f sec\n", m_name.c_str(), 
+                (double)(m_forwardStop - m_forwardStart) / 1000000000.0 );
+            m_output->output("%s: bwd time %f sec\n", m_name.c_str(), 
+                (double)(m_backwardStop - m_forwardStop) / 1000000000.0 );
+        }
+        return true;
+    }
+
     if (  m_loopIndex < 0 ) {
         enQ_commCreate( evQ, GroupWorld, m_rowGrpRanks, &m_rowComm ); 
         enQ_commCreate( evQ, GroupWorld, m_colGrpRanks, &m_colComm ); 
@@ -104,42 +118,46 @@ bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ )
         return false;
     }
 
-    //int compute = 0;
+    enQ_getTime( evQ, &m_forwardStart );
 
-    // do two real transforms at a time, using Hermitian symmetry
-    
-    // do 1D FFT
-    
-    // untangle data
-    // rearrange data so that x will be distributed and y will end up local after
-    // alltoallv i.e. current local index (x) must be varying slowest in sent array 
-    // transpose data 
-    
-    enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], DOUBLE,
-                        m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], DOUBLE,
+    enQ_compute( evQ, calcFwdFFT1() );
+
+    enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], COMPLEX,
+                        m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], COMPLEX,
                         m_rowComm );
   
-    // reorder data so that y varies fastest for y-transform
+    enQ_compute( evQ, calcFwdFFT2() );
     
-    // do 1D FFT
-    
-    // rearrange data so that y will be distributed and z will end up
-    // local after alltoallv i.e. current local index (y) must be
-    // varying slowest in sent array
-    
-    enQ_alltoallv( evQ, m_sendBuf, &m_colSendCnts[0], &m_colSendDsp[0], DOUBLE,
-                        m_recvBuf, &m_colRecvCnts[0], &m_colRecvDsp[0], DOUBLE,
+    enQ_alltoallv( evQ, m_sendBuf, &m_colSendCnts[0], &m_colSendDsp[0], COMPLEX,
+                        m_recvBuf, &m_colRecvCnts[0], &m_colRecvDsp[0], COMPLEX,
                         m_colComm );
     
-    // reorder data so that z varies fastest for z-transform 
+    enQ_compute( evQ, calcFwdFFT3() );
     
-    // do 1D FFT
+    enQ_barrier( evQ, GroupWorld ); 
+    enQ_getTime( evQ, &m_forwardStop );
+
+    enQ_compute( evQ, calcBwdFFT1() );
+
+    enQ_alltoallv( evQ, m_sendBuf, &m_colSendCnts[0], &m_colSendDsp[0], COMPLEX,
+                        m_recvBuf, &m_colRecvCnts[0], &m_colRecvDsp[0], COMPLEX,
+                        m_colComm );
+    
+    enQ_compute( evQ, calcBwdFFT2() );
+
+    enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], COMPLEX,
+                        m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], COMPLEX,
+                        m_rowComm );
+
+    enQ_compute( evQ, calcBwdFFT3() );
+
+    enQ_barrier( evQ, GroupWorld ); 
+    enQ_getTime( evQ, &m_backwardStop );
 
     if ( ++m_loopIndex == (signed) m_iterations ) {
         enQ_commDestroy( evQ, m_rowComm ); 
         enQ_commDestroy( evQ, m_colComm ); 
-        return true;
-    } else {
-        return false;
     }
+
+    return false;
 }

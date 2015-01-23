@@ -27,6 +27,26 @@ public:
 	bool generate( std::queue<EmberEvent*>& evQ );
 
 private:
+    uint32_t calcFwdFFT1() {
+        return 10000;
+    }
+    uint32_t calcFwdFFT2() {
+        return 10000;
+    }
+    uint32_t calcFwdFFT3() {
+        return 1000*20;
+    }
+
+    uint32_t calcBwdFFT1() {
+        return 1000;
+    }
+    uint32_t calcBwdFFT2() {
+        return 1000;
+    }
+    uint32_t calcBwdFFT3() {
+        return 1000;
+    }
+
 	int32_t m_loopIndex;
 
 	uint32_t m_iterations;
@@ -41,6 +61,10 @@ private:
 	uint32_t m_nsCopyTime;
 
     unsigned char* m_myData; 
+
+    uint64_t    m_forwardStart;
+    uint64_t    m_forwardStop;
+    uint64_t    m_backwardStop;
 
     std::vector< uint32_t >  m_sendCnts;
     std::vector< uint32_t >  m_recvCnts;
