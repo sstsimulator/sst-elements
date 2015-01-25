@@ -43,6 +43,8 @@ public:
 
 		q->push(new MemoryOpRequest(readAddr  + (nextItem * reqLength), reqLength, READ)  );
 		q->push(new MemoryOpRequest(writeAddr + (nextItem * reqLength), reqLength, WRITE) );
+
+		nextItem++;
 	}
 
 	bool isFinished() {

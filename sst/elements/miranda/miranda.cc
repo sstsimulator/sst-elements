@@ -100,7 +100,7 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
 static const ElementInfoParam copyGen_params[] = {
     { "read_start_address",  "Sets the start read address for this generator", "0" },
     { "write_start_address", "Sets the start target address for writes for the generator", "1024" },
-    { "request_width",       "Sets the size of each requests", "8" },
+    { "request_side",        "Sets the size of each request in bytes", "8" },
     { "request_count",       "Sets the number of items to be copied", "128" },
     { "verbose",             "Sets the verbosity of the output", "0" },
     { NULL, NULL, NULL }
