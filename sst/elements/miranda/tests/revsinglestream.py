@@ -11,8 +11,9 @@ comp_cpu.addParams({
 	"clock" : "2GHz",
 	"generator" : "miranda.ReverseSingleStreamGenerator",
 	"generatorParams.verbose" : 1,
-        "generatorParams.start_at" : 4096,
+        "generatorParams.start_at" : 65536,
         "generatorParams.stop_at" : 0,
+        "generatorParams.stride" : 8,
 	"printStats" : 1,
 })
 
