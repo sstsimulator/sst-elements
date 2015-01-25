@@ -14,5 +14,8 @@ AC_DEFUN([SST_memHierarchy_CONFIG], [
   # Use GOBLIN HMC Sim
   SST_CHECK_GOBLIN_HMCSIM([],[],[AC_MSG_ERROR([HybridSim requested but could not be found])])
 
+  # Use NVDIMM Sim
+  SST_CHECK_NVDIMMSIM([],[],[AC_MSG_ERROR([HybridSim requested but could not be found])])
+
   AS_IF([test "$mh_happy" = "yes"], [$1], [$2])
 ])
