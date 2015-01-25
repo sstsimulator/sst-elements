@@ -21,6 +21,7 @@ typedef enum {
 class GeneratorRequest {
 public:
 	GeneratorRequest() {}
+	virtual ~GeneratorRequest() {}
 	virtual ReqOperation getOperation() const = 0;
 };
 
@@ -33,6 +34,7 @@ public:
 		const ReqOperation cOpType) :
 		GeneratorRequest(),
 		addr(cAddr), length(cLength), op(cOpType) {}
+	~MemoryOpRequest() {}
 	ReqOperation getOperation() const { return op; }
 	bool isRead() const { return op == READ; }
 	bool isWrite() const { return op == WRITE; }
@@ -48,6 +50,7 @@ protected:
 class FenceOpRequest : public GeneratorRequest {
 public:
 	FenceOpRequest() : GeneratorRequest() {}
+	~FenceOpRequest() {}
 	ReqOperation getOperation() const { return REQ_FENCE; }
 };
 

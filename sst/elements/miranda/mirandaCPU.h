@@ -64,6 +64,7 @@ private:
 	Statistic<uint64_t>* statBytesRead;
 	Statistic<uint64_t>* statBytesWritten;
 	Statistic<uint64_t>* statReqLatency;
+	Statistic<uint64_t>* statTime;
 };
 
 }

@@ -220,6 +220,7 @@ static const ElementInfoStatistic basecpu_stats[] = {
 	{ "total_req_latency",  "Running total of all latency for all requests",                2 },
         { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        1 },
         { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    1 },
+        { "time",               "Nanoseconds spent issuing requests",                           1 },
 	{ NULL,			NULL,								0 }
 };
 

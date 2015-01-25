@@ -88,6 +88,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	statBytesRead 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_read") );
 	statBytesWritten 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_write") );
 	statReqLatency 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_req_latency") );
+	statTime                = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "time") );
 
 	reqMaxPerCycle = 2;
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
@@ -217,6 +218,9 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	if(reqGen->isFinished()) {
 		if( (pendingRequests.size() == 0) && (0 == requestsPending) ) {
 			out->verbose(CALL_INFO, 4, 0, "Request generator complete and no requests pending, simulation can halt.\n");
+
+			// Tell the statistics engine how long we have executed for
+			statTime->addData(getCurrentSimTimeNano());
 
 			// Deregister here
 			primaryComponentOKToEndSim();
