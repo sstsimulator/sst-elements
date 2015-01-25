@@ -23,7 +23,8 @@ libmiranda_la_SOURCES = \
 	generators/stencil3dbench.cc \
 	generators/gupsgen.h \
 	generators/gupsgen.cc \
-	generators/nullgen.h
+	generators/nullgen.h \
+	generators/copygen.h
 
 EXTRA_DIST = \
 	tests/randomgen.py \

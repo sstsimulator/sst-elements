@@ -22,6 +22,7 @@
 #include "generators/revsinglestream.h"
 #include "generators/stencil3dbench.h"
 #include "generators/nullgen.h"
+#include "generators/copygen.h"
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -32,6 +33,10 @@ static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
 
 static Module* load_GUPSGenerator(Component* owner, Params& params) {
 	return new GUPSGenerator(owner, params);
+}
+
+static Module* load_CopyGenerator(Component* owner, Params& params) {
+	return new CopyGenerator(owner, params);
 }
 
 static Module* load_RevSingleStreamGenerator(Component* owner, Params& params) {
@@ -89,6 +94,15 @@ static const ElementInfoParam revSingleStreamGen_params[] = {
     { "verbose",          "Sets the verbosity of the output", "0" },
     { "datawidth",        "Sets the width of the memory operation", "8" },
     { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" },
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoParam copyGen_params[] = {
+    { "read_start_address",  "Sets the start read address for this generator", "0" },
+    { "write_start_address", "Sets the start target address for writes for the generator", "1024" },
+    { "request_width",       "Sets the size of each requests", "8" },
+    { "request_count",       "Sets the number of items to be copied", "128" },
+    { "verbose",             "Sets the verbosity of the output", "0" },
     { NULL, NULL, NULL }
 };
 
@@ -173,6 +187,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_RandomGenerator,
 		randomGen_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"CopyGenerator",
+		"Creates a single copy of stream of reads/writes replicating an array copy pattern",
+		NULL,
+		NULL,
+		load_CopyGenerator,
+		copyGen_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
