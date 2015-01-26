@@ -96,7 +96,7 @@ void streamCPU::handleEvent(Event *ev)
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
-			_abort(streamCPU, "Event (%"PRIx64", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
+			_abort(streamCPU, "Event (%" PRIx64 ", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);

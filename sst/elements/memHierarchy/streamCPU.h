@@ -36,9 +36,9 @@ public:
 	streamCPU(SST::ComponentId_t id, SST::Params& params);
 	void init();
 	void finish() {
-		out.output("streamCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned\n",
+		out.output("streamCPU Finished after %" PRIu64 " issued reads, %" PRIu64 " returned\n",
 				num_reads_issued, num_reads_returned);
-        out.output("Completed @ %"PRIu64" ns\n", getCurrentSimTimeNano());
+        out.output("Completed @ %" PRIu64 " ns\n", getCurrentSimTimeNano());
 	}
 
 private:
