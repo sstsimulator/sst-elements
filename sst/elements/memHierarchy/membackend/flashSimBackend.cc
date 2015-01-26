@@ -9,20 +9,23 @@ FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBac
     std::string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
         _abort(MemController, "Model must define a 'device_ini' file parameter\n");
-    std::string systemIniFilename = params.find_string("system_ini", NO_STRING_DEFINED);
-    if(NO_STRING_DEFINED == systemIniFilename)
-        _abort(MemController, "Model must define a 'system_ini' file parameter\n");
 
     maxPendingRequests = (uint32_t) params.find_integer("max_pending_reqs", 32);
     pendingRequests = 0;
 
     // Create the acutal memory system
-    memSystem = new FDSim::FlashDIMM(1, deviceIniFilename, systemIniFilename, "", "");
+    memSystem = new FDSim::FlashDIMM(1, deviceIniFilename, "", "", "");
 
     FDSim::Callback_t* readDataCB  = new FDSim::Callback<FlashDIMMSimMemory, void, uint, uint64_t, uint64_t>(this, &FlashDIMMSimMemory::FlashDIMMSimDone);
     FDSim::Callback_t* writeDataCB = new FDSim::Callback<FlashDIMMSimMemory, void, uint, uint64_t, uint64_t>(this, &FlashDIMMSimMemory::FlashDIMMSimDone);
 
     memSystem->RegisterCallbacks(readDataCB, writeDataCB);
+
+    std::string traceOutput = params.find_string("trace", "");
+    if("" != traceOutput) {
+	output->verbose(CALL_INFO, 1, 0, "Set FlashDIMM trace output to: %s\n", traceOutput.c_str());
+	memSystem->SetOutputFileName(traceOutput);
+    }
 
     output->verbose(CALL_INFO, 2, 0, "Flash DIMM Backend Initialization complete.\n");
 }

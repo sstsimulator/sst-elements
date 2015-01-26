@@ -247,9 +247,9 @@ static Module* create_Mem_FDSim(Component* comp, Params& params){
 }
 
 static const ElementInfoParam fdsimMem_params[] = {
-    { "device_ini",       "Name of HybridSim Device config file", NULL },
-    { "system_ini",       "Name of HybridSim Device system file", NULL },
-    { "max_pending_reqs", "Sets the maximum number of requests that can be outstanding", NULL },
+    { "device_ini",       "Name of HybridSim Device config file", "" },
+    { "trace",            "Sets the name of a file to record trace output", "" },
+    { "max_pending_reqs", "Sets the maximum number of requests that can be outstanding", "32" },
     { NULL, NULL, NULL }
 };
 
