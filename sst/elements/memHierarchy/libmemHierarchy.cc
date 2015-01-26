@@ -42,14 +42,15 @@
 #include "membackend/hybridSimBackend.h"
 #endif
 
+#ifdef HAVE_FDSIM
+#include "membackend/flashSimBackend.h"
+#endif
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-
 static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
-
-
 
 static Component* create_Cache(ComponentId_t id, Params& params)
 {
@@ -239,6 +240,21 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 };
 #endif
 
+#ifdef HAVE_FDSIM
+
+static Module* create_Mem_FDSim(Component* comp, Params& params){
+    return new FlashDIMMSimMemory(comp, params);
+}
+
+static const ElementInfoParam fdsimMem_params[] = {
+    { "device_ini",       "Name of HybridSim Device config file", NULL },
+    { "system_ini",       "Name of HybridSim Device system file", NULL },
+    { "max_pending_reqs", "Sets the maximum number of requests that can be outstanding", NULL },
+    { NULL, NULL, NULL }
+};
+
+#endif
+
 static const ElementInfoParam vaultsimMem_params[] = {
     {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
     {NULL, NULL, NULL}
@@ -348,6 +364,17 @@ static const ElementInfoModule modules[] = {
         NULL, /* ModuleAlloc */
         create_Mem_GOBLINHMCSim, /* Module Alloc w/ params */
         goblin_hmcsim_Mem_params,
+        "SST::MemHierarchy::MemBackend"
+    },
+#endif
+#ifdef HAVE_FDSIM
+    {
+        "flashDIMMSim",
+        "FlashDIMM Simulator driven memory timings",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_Mem_FDSim, /* Module Alloc w/ params */
+        fdsimMem_params,
         "SST::MemHierarchy::MemBackend"
     },
 #endif

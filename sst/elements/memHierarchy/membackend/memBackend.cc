@@ -15,15 +15,19 @@
 #include "memoryController.h"
 #include "util.h"
 
-
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-MemBackend::MemBackend(Component *comp, Params &params) : Module(){
+MemBackend::MemBackend(Component *comp, Params &params) : Module() {
     ctrl = dynamic_cast<MemController*>(comp);
     if (!ctrl)
         _abort(MemBackend, "MemBackends expect to be loaded into MemControllers.\n");
+
+    uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+    output = new SST::Output("MemoryBackend[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
 }
 
 
+MemBackend::~MemBackend() {
+	delete output;
+}

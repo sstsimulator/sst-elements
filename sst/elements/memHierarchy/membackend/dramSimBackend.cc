@@ -37,7 +37,7 @@ bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
     if(!ok) return false;
     ok = memSystem->addTransaction(req->isWrite_, addr);
     if(!ok) return false;  // This *SHOULD* always be ok
-    ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
     dramReqs[addr].push_back(req);
     return true;
 }
@@ -58,7 +58,7 @@ void DRAMSimMemory::finish(){
 
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
     std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
-    ctrl->dbg.debug(_L10_, "Memory Request for %"PRIx64" Finished [%zu reqs]\n", (Addr)addr, reqs.size());
+    ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
     MemController::DRAMReq *req = reqs.front();
     reqs.pop_front();

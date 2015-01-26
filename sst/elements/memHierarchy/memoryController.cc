@@ -179,7 +179,7 @@ void MemController::addRequest(MemEvent* _ev){
     requests_.push_back(req);
     requestQueue_.push_back(req);
     
-    dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %"PRIx64", Size: %zu, %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
+    dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %zu, %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
 }
 
 
@@ -227,7 +227,7 @@ void MemController::performRequest(DRAMReq* _req){
     Addr localAddr;
 
     if(_req->cmd_ == PutM){  /* Write request to memory */
-        dbg.debug(_L10_,"WRITE.  Addr = %"PRIx64", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), noncacheable ? "true" : "false");
+        dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), noncacheable ? "true" : "false");
 	for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
             memBuffer_[localBaseAddr + i] = _req->reqEvent_->getPayload()[i];
 	}
@@ -235,7 +235,7 @@ void MemController::performRequest(DRAMReq* _req){
         Addr localAbsAddr = convertAddressToLocalAddress(_req->reqEvent_->getAddr());
         
         if(noncacheable && _req->cmd_ == GetX) {
-            dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %"PRIx64", Request size = %i\n", localAbsAddr, _req->reqEvent_->getSize());
+            dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, _req->reqEvent_->getSize());
             for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
                 memBuffer_[localAbsAddr + i] = _req->reqEvent_->getPayload()[i];
         }
@@ -245,7 +245,7 @@ void MemController::performRequest(DRAMReq* _req){
         
     	_req->respEvent_ = _req->reqEvent_->makeResponse();
         assert(_req->respEvent_->getSize() == _req->reqEvent_->getSize());
-            dbg.debug(_L10_, "READ.  Addr = %"PRIx64", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
+            dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
 	for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++)
             _req->respEvent_->getPayload()[i] = memBuffer_[localAddr + i];
         
@@ -279,7 +279,7 @@ void MemController::handleMemResponse(DRAMReq* _req){
     _req->amtProcessed_ += requestSize_;
     if (_req->amtProcessed_ >= _req->size_) _req->status_ = DRAMReq::RETURNED;
 
-    dbg.debug(_L10_, "Finishing processing.  BaseAddr = %"PRIx64" %s\n", _req->baseAddr_, _req->status_ == DRAMReq::RETURNED ? "RETURNED" : "");
+    dbg.debug(_L10_, "Finishing processing.  BaseAddr = %" PRIx64 " %s\n", _req->baseAddr_, _req->status_ == DRAMReq::RETURNED ? "RETURNED" : "");
 
     if(DRAMReq::RETURNED == _req->status_) sendResponse(_req);
 }
@@ -344,10 +344,10 @@ void MemController::finish(void){
     out.output("--- Main Memory Stats\n");
     out.output("--- Name: %s\n", getName().c_str());
     out.output("--------------------------------------------------------------------\n");
-    out.output("- GetS received (read):  %"PRIu64"\n", GetSReqReceived_);
-    out.output("- GetX received (read):  %"PRIu64"\n", GetXReqReceived_);
-    out.output("- GetSEx received (read):  %"PRIu64"\n", GetSExReqReceived_);
-    out.output("- PutM received (write):  %"PRIu64"\n", PutMReqReceived_);
+    out.output("- GetS received (read):  %" PRIu64 "\n", GetSReqReceived_);
+    out.output("- GetX received (read):  %" PRIu64 "\n", GetXReqReceived_);
+    out.output("- GetSEx received (read):  %" PRIu64 "\n", GetSExReqReceived_);
+    out.output("- PutM received (write):  %" PRIu64 "\n", PutMReqReceived_);
     out.output("- Avg. Requests out: %.3f\n",float(numReqOutstanding_)/float(numCycles_));
 
 }

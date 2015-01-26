@@ -21,7 +21,7 @@ void SimpleMemory::handleSelfEvent(SST::Event *event){
 
 bool SimpleMemory::issueRequest(MemController::DRAMReq *req){
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-    ctrl->dbg.debug(_L10_, "Issued transaction for address %"PRIx64"\n", (Addr)addr);
+    ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
     self_link->send(1, new MemCtrlEvent(req));
     return true;
 }

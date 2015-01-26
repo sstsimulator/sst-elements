@@ -127,3 +127,12 @@ libmemHierarchy_la_LDFLAGS += $(GOBLIN_HMCSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(GOBLIN_HMCSIM_LIB)
 AM_CPPFLAGS += $(GOBLIN_HMCSIM_CPPFLAGS) -DHAVE_GOBLIN_HMCSIM
 endif
+
+if HAVE_FDSIM
+libmemHierarchy_la_SOURCES += \
+	membackend/flashSimBackend.cc \
+	membackend/flashSimBackend.h
+libmemHierarchy_la_LDFLAGS += $(FDSIM_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(FDSIM_LIB)
+AM_CPPFLAGS += $(FDSIM_CPPFLAGS) $(FDSIM_CXXFLAGS)
+endif
