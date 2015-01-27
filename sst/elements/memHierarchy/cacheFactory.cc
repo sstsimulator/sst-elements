@@ -143,6 +143,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     int cacheSliceCount         = _params.find_integer("num_cache_slices", 1);
     int sliceID                 = _params.find_integer("slice_id", 0);
     string sliceAllocPolicy     = _params.find_string("slice_allocation_policy", "rr");
+    bool snoopL1Invs    = false;
+    if (L1_) snoopL1Invs = (_params.find_integer("snoop_l1_invalidations", 0)) ? true : false;
     
     /* --------------- Check parameters -------------*/
     if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "Invalid param: access_latency_cycles - must be at least 1\n");
@@ -282,7 +284,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
     topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, topNetworkLink_) :
-                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_);
+                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, snoopL1Invs);
     bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, L1_, bottomNetworkLink_, groupStats_, cf_.statGroupIds_);
    
     /*---------------  Misc --------------- */

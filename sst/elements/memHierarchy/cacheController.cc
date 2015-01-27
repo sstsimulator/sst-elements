@@ -147,7 +147,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
         if(!processRequestInMSHR(_baseAddr, _event))                 /* L1s wont stall because they don't have any sharers */
             return;
     }
-    topCC_->handleInvalidate(lineIndex, _event->getRqstr(), _cmd, _mshrHit); /* Invalidate upper levels */
+    topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), _cmd, _mshrHit); /* Invalidate upper levels */
     if(invalidatesInProgress(lineIndex)) return;
     
     bottomCC_->handleInvalidate(_event, cacheLine, _cmd);               /* Invalidate this cache line */
@@ -181,7 +181,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
     /* L1s wont stall because they don't have any sharers */
     if(!L1_ && !processRequestInMSHR(_baseAddr, _event)) return;
 
-    topCC_->handleInvalidate(lineIndex, _event->getRqstr(), cmd, _mshrHit);
+    topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), cmd, _mshrHit);
     if(invalidatesInProgress(lineIndex)) return;
     
     bottomCC_->handleFetchInvalidate(_event, cacheLine, cmd, _mshrHit);

@@ -36,7 +36,7 @@ public:
     #include "ccLine.h"
     
     TopCacheController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency,
-                       uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks)
+                       uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, bool _snoopL1Invs)
                        : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_                 = true;
@@ -44,6 +44,7 @@ public:
         NACKsSent_          = 0;
         dummyCCLine_        = new CCLine(_dbg);
         topNetworkLink_     = NULL;
+        snoopL1Invs_        = _snoopL1Invs;
     }
     
     /** Upon a request, this function returns true if a response was sent back.
@@ -71,7 +72,16 @@ public:
     virtual bool isCoherenceMiss(MemEvent* event, CacheLine * line) { return false; }
 
     /* Incoming Inv/InvX/FetchInv/FetchInvX received.  TopCC sends invalidates up the hierarchy if necessary */
-    virtual void handleInvalidate(int lineIndex, string _origRqstr, Command cmd, bool _mshrHit){return;}
+    virtual void handleInvalidate(int lineIndex, MemEvent* event, string _origRqstr, Command cmd, bool _mshrHit) {
+        if (L1_ && snoopL1Invs_) {
+            MemEvent* snoop = new MemEvent((Component*)owner_, event->getAddr(), event->getBaseAddr(), Inv);
+            uint64_t deliveryTime = (_mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+            Response resp = {snoop, deliveryTime, true};
+            addToOutgoingQueue(resp);
+        }
+        
+        return;
+    }
 
     /** Create MemEvent and send Response to HgLvl caches */
     void sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic = false);
@@ -104,7 +114,8 @@ public:
     vector<Link*>*  highNetPorts_;
     uint            NACKsSent_;
     CCLine*         dummyCCLine_;
-    
+    bool            snoopL1Invs_;
+
     virtual void profileReqSent(Command _cmd, bool _eviction) {
         if (_cmd == NACK) NACKsSent_++;   
     }
@@ -120,12 +131,13 @@ class MESITopCC : public TopCacheController{
 public:
     MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines,
               uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
-              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, _childrenLinks),
+              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, _childrenLinks, false),
               numLines_(_numLines), lowNetworkNodeCount_(0){
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);
         
         L1_                     = false;
+        snoopL1Invs_            = false;
         invReqsSent_            = 0;
         evictionInvReqsSent_    = 0;
         invXReqsSent_           = 0;
@@ -161,7 +173,7 @@ public:
     virtual void handleEviction(int lineIndex, string origRqstr, State state);
     
     /* Incoming Inv/FetchInv received.  TopCC sends invalidates up the hierarchy if necessary */
-    virtual void handleInvalidate(int lineIndex, string origRqstr, Command cmd, bool mshrHit);
+    virtual void handleInvalidate(int lineIndex, MemEvent* event, string origRqstr, Command cmd, bool mshrHit);
     
     /** Determines whether the Inv request will ultimately require an MSHR entry (ie. request will stall) */
     virtual bool willRequestPossiblyStall(int lineIndex, MemEvent* event);

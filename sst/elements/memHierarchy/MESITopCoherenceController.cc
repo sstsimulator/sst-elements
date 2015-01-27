@@ -249,7 +249,7 @@ bool MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId){
  *  For data invalidations -> sendInvalidates
  *  For write permission invalidation -> sendInvalidateX
  */
-void MESITopCC::handleInvalidate(int _lineIndex, string _origRqstr, Command _cmd, bool _mshrHit){
+void MESITopCC::handleInvalidate(int _lineIndex, MemEvent* event, string _origRqstr, Command _cmd, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(ccLine->isShareless() && !ccLine->ownerExists()) return;
     
