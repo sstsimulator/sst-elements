@@ -193,6 +193,7 @@ static Module* create_Mem_SimpleSim(Component* comp, Params& params){
 }
 
 static const ElementInfoParam simpleMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
     {"access_time",     "Constant latency of memory operation.", "100 ns"},
     {NULL, NULL}
 };
@@ -205,6 +206,7 @@ static Module* create_Mem_DRAMSim(Component* comp, Params& params){
 
 
 static const ElementInfoParam dramsimMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
     {"device_ini",      "Name of DRAMSim Device config file", NULL},
     {"system_ini",      "Name of DRAMSim Device system file", NULL},
     {NULL, NULL, NULL}
@@ -219,6 +221,7 @@ static Module* create_Mem_HybridSim(Component* comp, Params& params){
 
 
 static const ElementInfoParam hybridsimMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
     {"device_ini",      "Name of HybridSim Device config file", NULL},
     {"system_ini",      "Name of HybridSim Device system file", NULL},
     {NULL, NULL, NULL}
@@ -248,6 +251,7 @@ static Module* create_Mem_FDSim(Component* comp, Params& params){
 
 static const ElementInfoParam fdsimMem_params[] = {
     { "device_ini",       "Name of HybridSim Device config file", "" },
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
     { "trace",            "Sets the name of a file to record trace output", "" },
     { "max_pending_reqs", "Sets the maximum number of requests that can be outstanding", "32" },
     { NULL, NULL, NULL }
@@ -256,6 +260,7 @@ static const ElementInfoParam fdsimMem_params[] = {
 #endif
 
 static const ElementInfoParam vaultsimMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
     {"access_time",     "When not using DRAMSim, latency of memory operation.", "100 ns"},
     {NULL, NULL, NULL}
 };
