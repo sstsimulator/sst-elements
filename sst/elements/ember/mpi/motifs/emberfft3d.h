@@ -81,11 +81,15 @@ private:
     std::vector<int>    m_rowRecvCnts;
     std::vector<int>    m_rowRecvDsp;
 
-    std::vector<int>    m_colSendCnts;
-    std::vector<int>    m_colSendDsp;
-    std::vector<int>    m_colRecvCnts;
-    std::vector<int>    m_colRecvDsp;
+    std::vector<int>    m_colSendCnts_f;
+    std::vector<int>    m_colSendDsp_f;
+    std::vector<int>    m_colRecvCnts_f;
+    std::vector<int>    m_colRecvDsp_f;
 
+    std::vector<int>    m_colSendCnts_b;
+    std::vector<int>    m_colSendDsp_b;
+    std::vector<int>    m_colRecvCnts_b;
+    std::vector<int>    m_colRecvDsp_b;
     void*               m_sendBuf;
     void*               m_recvBuf;
 };
