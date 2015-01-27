@@ -116,8 +116,10 @@ class DirectoryController : public Component {
     Output::output_location_t               printStatsLoc;
     
     /* Network connections */
+    bool        directMemoryLink; // true if we have a direct memory connection, false if we are connected to mem via the network
     SST::Link*  memLink;
     MemNIC*     network;
+    string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
     
     
     /** Find directory entry by base address */
@@ -224,6 +226,7 @@ class DirectoryController : public Component {
         /* These items are bookkeeping for in-progress commands */
 	ProcessFunc         nextFunc;
         std::string         waitingOn; // waiting to hear from this source
+        std::string         waitingOnType; // waiting to hear from this source
         Command             nextCommand;  // Command which we're waiting for
 	uint32_t            waitingAcks;
         uint32_t            reqSize;

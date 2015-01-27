@@ -177,6 +177,10 @@ static const ElementInfoParam memctrl_params[] = {
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
     {"listener%(listenercount)d", "Loads a listener module into the controller", ""},
+    {"direct_link", "Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
+    {"network_bw",          "Network link bandwidth.", NULL},
+    {"network_address",     "Network address of component.", ""},
+    {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {NULL, NULL, NULL}
 };
 
@@ -184,6 +188,7 @@ static const ElementInfoParam memctrl_params[] = {
 static const ElementInfoPort memctrl_ports[] = {
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
     {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
+    {"network",         "Network link to another component", net_port_events},
     {NULL, NULL, NULL}
 };
 
@@ -297,6 +302,8 @@ static const ElementInfoParam dirctrl_params[] = {
     {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},
     {"mshr_num_entries",    "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
+    {"direct_mem_link",     "Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
+    {"net_memory_name",     "For directories connected to a memory over the network: name of the memory this directory owns", ""},
     {NULL, NULL, NULL}
 };
 

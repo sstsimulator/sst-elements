@@ -38,7 +38,9 @@ public:
         TypeCache,              // cache - connected to network below & talks to dir 
         TypeNetworkCache,       // cache - connected to network above & below, talks to cache above, dir below; associated with a particular set of addresses
         TypeCacheToCache,       // cache - connected to network below & talks to cache 
-        TypeDirectoryCtrl,      // directory - connected to network above & talks to cache; associated with a particular set of addresses
+        TypeDirectoryCtrl,      // directory - connected to cache via network, direct link to memory; associated with a particular set of addresses
+        TypeNetworkDirectory,   // directory - connected to cache and memory via network; associated with a particular set of addresses
+        TypeMemory,             // memory - connected to directory or cache via network
         TypeDMAEngine,
         TypeOther
     };
@@ -153,6 +155,8 @@ public:
                 break;
             case TypeNetworkCache:
             case TypeDirectoryCtrl:
+            case TypeNetworkDirectory:
+            case TypeMemory:
                 ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeStart);
                 ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeEnd);
                 ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.interleaveSize);
@@ -220,12 +224,13 @@ public:
     void init(unsigned int phase);
     void finish(void);
     bool clock(void);
-
+    bool isValidDestination(std::string target);
 
     void send(MemEvent *ev);
     MemEvent* recv(void);
     void sendInitData(MemEvent *ev);
     MemEvent* recvInitData(void);
+    bool initDataReady();
     const std::vector<PeerInfo_t>& getPeerInfo(void) const { return peers; }
     // translate a memory address to a network target (string)
     std::string findTargetDestination(Addr addr);

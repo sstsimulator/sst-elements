@@ -28,6 +28,7 @@
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/bus.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
+#include "sst/elements/memHierarchy/memNIC.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -128,6 +129,8 @@ private:
     
     bool        divertDCLookups_;
     SST::Link*  lowNetworkLink_;
+    MemNIC*     networkLink_;
+    bool        isNetworkConnected_;
     MemBackend* backend_;
     int         protocol_;
     dramReq_t   requestQueue_;

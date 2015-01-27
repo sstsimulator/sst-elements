@@ -41,9 +41,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     registerTimeBase("1 ns", true);
 
-    memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
-    assert(memLink);
-
 
     entryCacheMaxSize = (size_t)params.find_integer("entry_cache_size", 32768);
     entryCacheSize = 0;
@@ -63,6 +60,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
     if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n");
     mshr            = new   MSHR(&dbg, mshrSize); 
+    
+    int directMem = params.find_integer("direct_mem_link",1);
+    directMemoryLink = (directMem == 1) ? true : false;
 
     if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
@@ -72,21 +72,46 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (protocol == "mesi") protocol = "MESI";
     if (protocol == "msi") protocol = "MSI";
 
-    MemNIC::ComponentInfo myInfo;
-    myInfo.link_port                        = "network";
-    myInfo.link_bandwidth                   = net_bw;
-    myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
-    myInfo.name                             = getName();
-    myInfo.network_addr                     = addr;
-    myInfo.type                             = MemNIC::TypeDirectoryCtrl;
-    network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+    /* Set up links/network to cache & memory */
+    if (directMemoryLink) {
+        memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
+        assert(memLink);
 
-    MemNIC::ComponentTypeInfo typeInfo;
-    typeInfo.addrRange.rangeStart      = addrRangeStart;
-    typeInfo.addrRange.rangeEnd        = addrRangeEnd;
-    typeInfo.addrRange.interleaveSize  = interleaveSize;
-    typeInfo.addrRange.interleaveStep  = interleaveStep;
-    network->addTypeInfo(typeInfo);
+        MemNIC::ComponentInfo myInfo;
+        myInfo.link_port                        = "network";
+        myInfo.link_bandwidth                   = net_bw;
+        myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
+        myInfo.name                             = getName();
+        myInfo.network_addr                     = addr;
+        myInfo.type                             = MemNIC::TypeDirectoryCtrl;
+        network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+
+        MemNIC::ComponentTypeInfo typeInfo;
+        typeInfo.addrRange.rangeStart      = addrRangeStart;
+        typeInfo.addrRange.rangeEnd        = addrRangeEnd;
+        typeInfo.addrRange.interleaveSize  = interleaveSize;
+        typeInfo.addrRange.interleaveStep  = interleaveStep;
+        network->addTypeInfo(typeInfo);
+    } else {
+        memoryName  = params.find_string("net_memory_name", "");
+        if (memoryName == "") dbg.fatal(CALL_INFO,-1,"Param not specified: net_memory_name - name of the memory owned by this directory controller\n");
+
+        MemNIC::ComponentInfo myInfo;
+        myInfo.link_port                        = "network";
+        myInfo.link_bandwidth                   = net_bw;
+        myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
+        myInfo.name                             = getName();
+        myInfo.network_addr                     = addr;
+        myInfo.type                             = MemNIC::TypeNetworkDirectory;
+        network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        
+        MemNIC::ComponentTypeInfo typeInfo;
+        typeInfo.addrRange.rangeStart      = addrRangeStart;
+        typeInfo.addrRange.rangeEnd        = addrRangeEnd;
+        typeInfo.addrRange.interleaveSize  = interleaveSize;
+        typeInfo.addrRange.interleaveStep  = interleaveStep;
+        network->addTypeInfo(typeInfo);
+    }
 
 
     registerClock(params.find_string("clock", "1GHz"), new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
@@ -148,8 +173,9 @@ DirectoryController::~DirectoryController(){
 void DirectoryController::handlePacket(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
-    
-    if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+     
+    if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) handleMemoryResponse(event);
+    else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%"PRIx64", Addr = 0x%"PRIx64"\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
         profileRequestRecv(ev,NULL);
         Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
@@ -158,7 +184,12 @@ void DirectoryController::handlePacket(SST::Event *event){
         ev->setBaseAddr(localBaseAddr);
         ev->setAddr(localAddr);
         profileRequestSent(ev);
-        memLink->send(ev);
+        if (directMemoryLink) {
+            memLink->send(ev);
+        } else {
+            ev->setDst(memoryName);
+            network->send(ev);
+        }
     } else {
         workQueue.push_back(ev);
     }
@@ -437,7 +468,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             network->send(ev);
             return;
         }
-        dbg.fatal(CALL_INFO, -1, "Received unexpected noncacheable response from memory%s\n");
+        dbg.fatal(CALL_INFO, -1, "Received unexpected noncacheable response from memory\n");
     }
 
 
@@ -495,7 +526,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             (entry->nextCommand == FetchResp && cmd == PutM) ||
             (entry->nextCommand == FetchXResp && cmd == PutM) ||
             (entry->nextCommand == GetSResp && cmd == PutS)) &&
-            ("N/A" == entry->waitingOn || entry->waitingOn == ev->getSrc())){
+            ("N/A" == entry->waitingOnType || entry->waitingOn == ev->getSrc())){
             
             dbg.debug(_L10_, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
             profileResponseRecv(ev);
@@ -518,7 +549,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             advanceEntry(entry, ev);
             delete ev;
             return make_pair<bool, bool>(true,true);
-        } else if(entry->waitingOn == "memory" && cmd == PutS && entry->nextCommand == GetSResp) {
+        } else if(entry->waitingOnType == "memory" && cmd == PutS && entry->nextCommand == GetSResp) {
 	    dbg.debug(_L10_, "Replacement during a GetS for a different cache, handling replacement immediately.\n");
 	    return make_pair<bool,bool>(false,false); // not a conflicting request
 	}
@@ -605,6 +636,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 
 	entry->nextFunc    = &DirectoryController::finishFetch;
         entry->waitingOn   = dest;
+        entry->waitingOnType = dest;
         entry->lastRequest = ev->getID();
         
         profileRequestSent(ev);
@@ -622,6 +654,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
              entry->nextFunc = &DirectoryController::getExclusiveDataForRequest;
              entry->nextCommand = PutS;
              entry->waitingOn = "N/A";
+             entry->waitingOnType = "N/A";
              entry->lastRequest = DirEntry::NO_LAST_REQUEST;
              dbg.debug(_L10_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %"PRIx64".\n", entry->baseAddr);
         } else getExclusiveDataForRequest(entry, NULL);
@@ -781,9 +814,16 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry){
     dirEntryMiss[me->getID()] = entry->baseAddr;
     entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn     = "memory";
+    entry->waitingOnType = "memory";
     entry->lastRequest   = me->getID();
     profileRequestSent(me);
-    memLink->send(me);
+    if (directMemoryLink) {
+        memLink->send(me);
+    } else {
+        entry->waitingOn = memoryName;
+        me->setDst(memoryName);
+        network->send(me);
+    }
     dbg.debug(_L10_, "Requesting Entry from memory for 0x%"PRIx64"(%"PRIu64", %d); next cmd: %s\n", entry->baseAddr, me->getID().first, me->getID().second, CommandString[entry->nextCommand]);
 }
 
@@ -798,7 +838,13 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
     entry->waitingOn     = "memory";
     entry->lastRequest   = ev->getID();
     profileRequestSent(ev);
-    memLink->send(ev);
+    if (directMemoryLink) {
+        memLink->send(ev);
+    } else {
+        entry->waitingOn = memoryName;
+        ev->setDst(memoryName);
+        network->send(ev);
+    }
     dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%"PRIx64", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
 }
 
@@ -855,7 +901,12 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
     MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, PutM, cacheLineSize);
     me->setSize(entrySize);
     profileRequestSent(me);
-    memLink->send(me);
+    if (directMemoryLink) {
+        memLink->send(me);
+    } else {
+        me->setDst(memoryName);
+        network->send(me);
+    }
 }
 
 
@@ -868,7 +919,12 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     ev->setSize(data_event->getPayload().size());
     ev->setPayload(data_event->getPayload());
     profileRequestSent(ev);
-    memLink->send(ev);
+    if (directMemoryLink) {
+        memLink->send(ev);
+    } else {
+        ev->setDst(memoryName);
+        network->send(ev);
+    }
     
     dbg.debug(_L10_, "Writing back data. Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     return ev->getID();
@@ -986,6 +1042,9 @@ const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
 void DirectoryController::init(unsigned int phase){
     network->init(phase);
 
+    if (!directMemoryLink && network->initDataReady() && !network->isValidDestination(memoryName)) {
+        dbg.fatal(CALL_INFO,-1,"Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s\n",memoryName.c_str());
+    }
     /* Pass data on to memory */
     while(MemEvent *ev = network->recvInitData()){
         dbg.debug(_L10_, "Found Init Info for address 0x%"PRIx64"\n", ev->getAddr());
@@ -993,7 +1052,12 @@ void DirectoryController::init(unsigned int phase){
             ev->setBaseAddr(convertAddressToLocalAddress(ev->getBaseAddr()));
             ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
             dbg.debug(_L10_, "Sending Init Data for address 0x%"PRIx64" to memory\n", ev->getAddr());
-            memLink->sendInitData(ev);
+            if (directMemoryLink) {
+                memLink->sendInitData(ev);
+            } else {
+                ev->setDst(memoryName);
+                network->sendInitData(ev);
+            }
         }
         else delete ev;
     }

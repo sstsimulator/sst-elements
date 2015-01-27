@@ -33,6 +33,7 @@
 #include "membackend/memBackend.h"
 #include "bus.h"
 #include "cacheListener.h"
+#include "memNIC.h"
 
 #define NO_STRING_DEFINED "N/A"
 
@@ -69,7 +70,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
+    int  directLink         = params.find_integer("direct_link",1);
 
+    isNetworkConnected_     = directLink ? false : true;
+    int addr = params.find_integer("network_address");
+    std::string net_bw = params.find_string("network_bw");
+    
     const uint32_t listenerCount  = (uint32_t) params.find_integer("listenercount", 0);
     char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
     char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
@@ -107,8 +113,26 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     // Ensure we can extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
     backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, backendParams));
-
+    
+    if (!isNetworkConnected_) {
     lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+    } else {
+        MemNIC::ComponentInfo myInfo;
+        myInfo.link_port        = "network";
+        myInfo.link_bandwidth   = net_bw;
+        myInfo.num_vcs          = params.find_integer("network_num_vc", 3);
+        myInfo.name             = getName();
+        myInfo.network_addr     = addr;
+        myInfo.type             = MemNIC::TypeMemory;
+        networkLink_ = new MemNIC(this, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
+
+        MemNIC::ComponentTypeInfo typeInfo;
+        typeInfo.addrRange.rangeStart       = rangeStart_;
+        typeInfo.addrRange.rangeEnd         = memSize_;
+        typeInfo.addrRange.interleaveSize   = interleaveSize_;
+        typeInfo.addrRange.interleaveStep   = interleaveStep_;
+        networkLink_->addTypeInfo(typeInfo);
+    }
     memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
 
     if(!memBuffer_)         dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
@@ -133,7 +157,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 void MemController::handleEvent(SST::Event* _event){
     MemEvent *ev = static_cast<MemEvent*>(_event);
     dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_,"Memory Controller - Event Received. Cmd = %s\n", CommandString[ev->getCmd()]);
+    dbg.debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
     Command cmd = ev->getCmd();
 
     // Notify our listeners that we have received an event
@@ -186,6 +210,7 @@ void MemController::addRequest(MemEvent* _ev){
 
 bool MemController::clock(Cycle_t _cycle){
     backend_->clock();
+    if (isNetworkConnected_) networkLink_->clock();
 
     while ( !requestQueue_.empty()) {
         DRAMReq *req = requestQueue_.front();
@@ -228,10 +253,11 @@ void MemController::performRequest(DRAMReq* _req){
 
     if(_req->cmd_ == PutM){  /* Write request to memory */
         dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), noncacheable ? "true" : "false");
-	for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
+	for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++) 
             memBuffer_[localBaseAddr + i] = _req->reqEvent_->getPayload()[i];
+        
 	}
-    else{
+    else {
         Addr localAbsAddr = convertAddressToLocalAddress(_req->reqEvent_->getAddr());
         
         if(noncacheable && _req->cmd_ == GetX) {
@@ -246,13 +272,13 @@ void MemController::performRequest(DRAMReq* _req){
     	_req->respEvent_ = _req->reqEvent_->makeResponse();
         assert(_req->respEvent_->getSize() == _req->reqEvent_->getSize());
             dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
-	for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++)
+        for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++) 
             _req->respEvent_->getPayload()[i] = memBuffer_[localAddr + i];
         
         if (noncacheable) _req->respEvent_->setFlag(MemEvent::F_NONCACHEABLE);
         
         if(_req->reqEvent_->getCmd() == GetX) _req->respEvent_->setGrantedState(M);
-        else{
+        else {
             if(protocol_) _req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
             else _req->respEvent_->setGrantedState(S);
         }
@@ -261,8 +287,10 @@ void MemController::performRequest(DRAMReq* _req){
 
 
 void MemController::sendResponse(DRAMReq* _req){
-    if(_req->reqEvent_->getCmd() != PutM)
-        lowNetworkLink_->send(_req->respEvent_);
+    if(_req->reqEvent_->getCmd() != PutM) {
+        if (isNetworkConnected_) networkLink_->send(_req->respEvent_);
+        else lowNetworkLink_->send(_req->respEvent_);
+    }
     _req->status_ = DRAMReq::DONE;
 }
 
@@ -296,34 +324,58 @@ MemController::~MemController(){
 
 
 void MemController::init(unsigned int _phase){
-	SST::Event *ev = NULL;
-    while ( NULL != (ev = lowNetworkLink_->recvInitData())) {
-        MemEvent *me = dynamic_cast<MemEvent*>(ev);
-        if(!me){
-            delete ev;
-            return;
-        }
-        /* Push data to memory */
-        if (GetX == me->getCmd()) {
-            if(isRequestAddressValid(me)) {
-                Addr localAddr = convertAddressToLocalAddress(me->getAddr());
-                for ( size_t i = 0 ; i < me->getSize() ; i++)
-                    memBuffer_[localAddr + i] = me->getPayload()[i];
+    if (!isNetworkConnected_) {
+        SST::Event *ev = NULL;
+        while (NULL != (ev = lowNetworkLink_->recvInitData())) {
+            MemEvent *me = dynamic_cast<MemEvent*>(ev);
+            if (!me) {
+                delete ev;
+                return;
             }
+            /* Push data to memory */
+            if (GetX == me->getCmd()) {
+                dbg.debug(_L10_,"Memory init %s - Received GetX for %"PRIx64"\n", getName().c_str(), me->getAddr());
+                if(isRequestAddressValid(me)) {
+                    Addr localAddr = convertAddressToLocalAddress(me->getAddr());
+                    for ( size_t i = 0 ; i < me->getSize() ; i++) {
+                        memBuffer_[localAddr + i] = me->getPayload()[i];
+                    }
+                }
+            } else {
+                Output out("", 0, 0, Output::STDERR);
+                out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());
+            }
+            delete ev;
         }
-        else {
-            Output out("", 0, 0, Output::STDERR);
-            out.debug(_L10_,"Memory received unexpected Init Command: %d\n", me->getCmd());
-        }
-        delete ev;
-    }
+    } else {
+        networkLink_->init(_phase);
 
+        while (MemEvent *ev = networkLink_->recvInitData()) {
+            /* Push data to memory */
+            if (ev->getDst() == getName()) {
+                if (GetX == ev->getCmd()) {
+                    dbg.debug(_L10_,"Memory init %s - Received GetX for %"PRIx64"\n", getName().c_str(), ev->getAddr());
+                    if(isRequestAddressValid(ev)) {
+                        Addr localAddr = convertAddressToLocalAddress(ev->getAddr());
+                        for ( size_t i = 0 ; i < ev->getSize() ; i++) {
+                            memBuffer_[localAddr + i] = ev->getPayload()[i];
+                        }
+                    }
+                } else {
+                    Output out("", 0, 0, Output::STDERR);
+                    out.debug(_L10_,"Memory received unexpected Init Command: %d\n", ev->getCmd());
+                }
+            }
+            delete ev; 
+        }
+    }
 }
 
 
 
 void MemController::setup(void){
     backend_->setup();
+    if (isNetworkConnected_) networkLink_->setup();
 }
 
 
@@ -338,6 +390,7 @@ void MemController::finish(void){
     }
 
     backend_->finish();
+    if (isNetworkConnected_) networkLink_->finish();
 
     Output out("", 0, 0, statsOutputTarget_);
     out.output("\n--------------------------------------------------------------------\n");

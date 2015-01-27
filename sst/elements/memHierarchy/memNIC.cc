@@ -33,6 +33,10 @@ int MemNIC::addrForDest(const std::string &target) const
   return addrIter->second;
 }
 
+bool MemNIC::isValidDestination(std::string target) {
+    return (addrMap.find(target) != addrMap.end());
+}
+
 /* Get size in bytes for a MemEvent */
 int MemNIC::getFlitSize(MemEvent *ev)
 {
@@ -109,7 +113,7 @@ void MemNIC::init(unsigned int phase)
         InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
         if ( imre ) {
             addrMap[imre->name] = imre->address;
-
+            
             ComponentInfo peerCI;
             peerCI.name = imre->name;
             peerCI.network_addr = imre->address;
@@ -117,7 +121,7 @@ void MemNIC::init(unsigned int phase)
             peers.push_back(std::make_pair(peerCI, imre->compInfo));
 
             // save a copy for lookups later if we should be sending requests to this entity
-            if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && peerCI.type == MemNIC::TypeDirectoryCtrl) { // cache -> dir
+            if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && (peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory)) { // cache -> dir
                 destinations[imre->compInfo.addrRange] = imre->name;
             } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
                 destinations[imre->compInfo.addrRange] = imre->name;
@@ -154,6 +158,10 @@ MemEvent* MemNIC::recvInitData(void)
         return ev;
     }
     return NULL;
+}
+
+bool MemNIC::initDataReady() {
+    return (initQueue.size() > 0);
 }
 
 std::string MemNIC::findTargetDestination(Addr addr)
@@ -223,7 +231,7 @@ MemEvent* MemNIC::recv(void)
                     peers.push_back(std::make_pair(peerCI, imre->compInfo));
 
                 // Save any new address ranges.
-                if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && peerCI.type == MemNIC::TypeDirectoryCtrl) { // cache -> dir
+                if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && (peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory)) { // cache -> dir
                     destinations[imre->compInfo.addrRange] = imre->name;
                 } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
                     destinations[imre->compInfo.addrRange] = imre->name;
