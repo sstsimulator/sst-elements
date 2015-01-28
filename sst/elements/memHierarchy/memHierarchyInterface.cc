@@ -115,7 +115,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *_ev){
         updateRequest(req, _ev);
     }
     else{
-        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %"PRIx64", respID = %"PRIx64"\n", CommandString[_ev->getCmd()], _ev->getAddr(), _ev->getResponseToID().first); //TODO
+        fprintf(stderr, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[_ev->getCmd()], _ev->getAddr(), _ev->getResponseToID().first); //TODO
         assert(0);
     }
     return req;

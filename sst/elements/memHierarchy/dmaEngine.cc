@@ -82,8 +82,8 @@ void DMAEngine::finish(void)
 {
     Output out("", 0, 0, statsOutputTarget);
     out.output("DMA Controller %s stats:\n"
-            "\t # Transfers:        %"PRIu64"\n"
-            "\t Bytes Transferred:  %"PRIu64"\n",
+            "\t # Transfers:        %" PRIu64 "\n"
+            "\t Bytes Transferred:  %" PRIu64 "\n",
             getName().c_str(),
             numTransfers,
             bytesTransferred);
@@ -106,7 +106,7 @@ bool DMAEngine::clock(Cycle_t cycle)
         /* Process network packet */
         Request* req = findRequest(me->getResponseToID());
         if ( NULL == req ) {
-            dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%"PRIx64", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
+            dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%" PRIx64 ", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
         }
         processPacket(req, me);
     }
@@ -149,7 +149,7 @@ void DMAEngine::startRequest(Request *req)
 {
     assert(0);
     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
-    dbg.debug(_L10_, "Received request to transfer from %#"PRIx64" to 0x%"PRIx64"\n",
+    dbg.debug(_L10_, "Received request to transfer from %#" PRIx64 " to 0x%" PRIx64 "\n",
             req->getSrc(), req->getDst());
     ++numTransfers;
     Addr ptr = req->getSrc();
@@ -190,11 +190,11 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
             // Done with this request.
             activeRequests.erase(req);
             commandLink->send(req->command);
-            dbg.debug(_L10_, "Request to transfer 0x%"PRIx64" to 0x%"PRIx64" is complete.\n", req->getSrc(), req->getDst());
+            dbg.debug(_L10_, "Request to transfer 0x%" PRIx64 " to 0x%" PRIx64 " is complete.\n", req->getSrc(), req->getDst());
             delete req;
         }
     } else {
-	dbg.fatal(CALL_INFO, 1, "Received unexpected message %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
+	dbg.fatal(CALL_INFO, 1, "Received unexpected message %s 0x%" PRIx64 " from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
     }
     */
 }

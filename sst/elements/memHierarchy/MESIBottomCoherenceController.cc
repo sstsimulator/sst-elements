@@ -388,7 +388,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     
     Response fwdReq = {forwardEvent, deliveryTime, false};
     addToOutgoingQueue(fwdReq);
-    d_->debug(_L3_,"BCC - Forwarding request at cycle = %"PRIu64"\n", deliveryTime);
+    d_->debug(_L3_,"BCC - Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
 
@@ -401,7 +401,7 @@ void MESIBottomCC::resendEvent(MemEvent* _event){
     Response resp = {_event, deliveryTime, false};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"BCC - Sending request: Addr = %"PRIx64", BaseAddr = %"PRIx64", Cmd = %s\n",
+    d_->debug(_L3_,"BCC - Sending request: Addr = %" PRIx64 ", BaseAddr = %" PRIx64 ", Cmd = %s\n",
              _event->getAddr(), _event->getBaseAddr(), CommandString[_event->getCmd()]);
 }
 
@@ -418,7 +418,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
     Response resp  = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"BCC - Sending Response at cycle = %"PRIu64", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
+    d_->debug(_L3_,"BCC - Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
 }
 
 
@@ -438,7 +438,7 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine, string _or
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"BCC - Sending Writeback at cycle = %"PRIu64", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
+    d_->debug(_L3_,"BCC - Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
 }
 
 
@@ -454,7 +454,7 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
     Response resp = {NACKevent, deliveryTime, true};
     inc_NACKsSent();
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"BCC - Sending NACK at cycle = %"PRIu64"\n", deliveryTime);
+    d_->debug(_L3_,"BCC - Sending NACK at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
 /********************
@@ -511,64 +511,64 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
             dbg->output(CALL_INFO,"--- Group Statistics, Group ID = %i\n", _groupIds[i]);
             dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
         }
-        dbg->output(CALL_INFO,"- Total data requests:                           %"PRIu64"\n", totalRequests);
-        dbg->output(CALL_INFO,"     GetS:                                       %"PRIu64"\n", 
+        dbg->output(CALL_INFO,"- Total data requests:                           %" PRIu64 "\n", totalRequests);
+        dbg->output(CALL_INFO,"     GetS:                                       %" PRIu64 "\n", 
                 _ctrlStats[_groupIds[i]].newReqGetSHits_ + _ctrlStats[_groupIds[i]].newReqGetSMisses_ + 
                 _ctrlStats[_groupIds[i]].blockedReqGetSHits_ + _ctrlStats[_groupIds[i]].blockedReqGetSMisses_);                                  
-        dbg->output(CALL_INFO,"     GetX:                                       %"PRIu64"\n", 
+        dbg->output(CALL_INFO,"     GetX:                                       %" PRIu64 "\n", 
                 _ctrlStats[_groupIds[i]].newReqGetXHits_ + _ctrlStats[_groupIds[i]].newReqGetXMisses_ + 
                 _ctrlStats[_groupIds[i]].blockedReqGetXHits_ + _ctrlStats[_groupIds[i]].blockedReqGetXMisses_);                                  
-        dbg->output(CALL_INFO,"     GetSEx:                                     %"PRIu64"\n", 
+        dbg->output(CALL_INFO,"     GetSEx:                                     %" PRIu64 "\n", 
                 _ctrlStats[_groupIds[i]].newReqGetSExHits_ + _ctrlStats[_groupIds[i]].newReqGetSExMisses_ + 
                 _ctrlStats[_groupIds[i]].blockedReqGetSExHits_ + _ctrlStats[_groupIds[i]].blockedReqGetSExMisses_);                                  
-        dbg->output(CALL_INFO,"- Total misses:                                  %"PRIu64"\n", totalMisses);
+        dbg->output(CALL_INFO,"- Total misses:                                  %" PRIu64 "\n", totalMisses);
         // Report misses at the time a request was handled -> "blocked" indicates request was blocked by another pending request before being handled
-        dbg->output(CALL_INFO,"     GetS, miss on arrival:                      %"PRIu64"\n", _ctrlStats[_groupIds[i]].newReqGetSMisses_);
-        dbg->output(CALL_INFO,"     GetS, miss after being blocked:             %"PRIu64"\n", _ctrlStats[_groupIds[i]].blockedReqGetSMisses_);
-        dbg->output(CALL_INFO,"     GetX, miss on arrival:                      %"PRIu64"\n", _ctrlStats[_groupIds[i]].newReqGetXMisses_);
-        dbg->output(CALL_INFO,"     GetX, miss after being blocked:             %"PRIu64"\n", _ctrlStats[_groupIds[i]].blockedReqGetXMisses_);
-        dbg->output(CALL_INFO,"     GetSEx, miss on arrival:                    %"PRIu64"\n", _ctrlStats[_groupIds[i]].newReqGetSExMisses_);
-        dbg->output(CALL_INFO,"     GetSEx, miss after being blocked:           %"PRIu64"\n", _ctrlStats[_groupIds[i]].blockedReqGetSExMisses_);
-        dbg->output(CALL_INFO,"- Total hits:                                    %"PRIu64"\n", totalHits);
-        dbg->output(CALL_INFO,"     GetS, hit on arrival:                       %"PRIu64"\n", _ctrlStats[_groupIds[i]].newReqGetSHits_);
-        dbg->output(CALL_INFO,"     GetS, hit after being blocked:              %"PRIu64"\n", _ctrlStats[_groupIds[i]].blockedReqGetSHits_);
-        dbg->output(CALL_INFO,"     GetX, hit on arrival:                       %"PRIu64"\n", _ctrlStats[_groupIds[i]].newReqGetXHits_);
-        dbg->output(CALL_INFO,"     GetX, hit after being blocked:              %"PRIu64"\n", _ctrlStats[_groupIds[i]].blockedReqGetXHits_);
-        dbg->output(CALL_INFO,"     GetSEx, hit on arrival:                     %"PRIu64"\n", _ctrlStats[_groupIds[i]].newReqGetSExHits_);
-        dbg->output(CALL_INFO,"     GetSEx, hit after being blocked:            %"PRIu64"\n", _ctrlStats[_groupIds[i]].blockedReqGetSExHits_);
+        dbg->output(CALL_INFO,"     GetS, miss on arrival:                      %" PRIu64 "\n", _ctrlStats[_groupIds[i]].newReqGetSMisses_);
+        dbg->output(CALL_INFO,"     GetS, miss after being blocked:             %" PRIu64 "\n", _ctrlStats[_groupIds[i]].blockedReqGetSMisses_);
+        dbg->output(CALL_INFO,"     GetX, miss on arrival:                      %" PRIu64 "\n", _ctrlStats[_groupIds[i]].newReqGetXMisses_);
+        dbg->output(CALL_INFO,"     GetX, miss after being blocked:             %" PRIu64 "\n", _ctrlStats[_groupIds[i]].blockedReqGetXMisses_);
+        dbg->output(CALL_INFO,"     GetSEx, miss on arrival:                    %" PRIu64 "\n", _ctrlStats[_groupIds[i]].newReqGetSExMisses_);
+        dbg->output(CALL_INFO,"     GetSEx, miss after being blocked:           %" PRIu64 "\n", _ctrlStats[_groupIds[i]].blockedReqGetSExMisses_);
+        dbg->output(CALL_INFO,"- Total hits:                                    %" PRIu64 "\n", totalHits);
+        dbg->output(CALL_INFO,"     GetS, hit on arrival:                       %" PRIu64 "\n", _ctrlStats[_groupIds[i]].newReqGetSHits_);
+        dbg->output(CALL_INFO,"     GetS, hit after being blocked:              %" PRIu64 "\n", _ctrlStats[_groupIds[i]].blockedReqGetSHits_);
+        dbg->output(CALL_INFO,"     GetX, hit on arrival:                       %" PRIu64 "\n", _ctrlStats[_groupIds[i]].newReqGetXHits_);
+        dbg->output(CALL_INFO,"     GetX, hit after being blocked:              %" PRIu64 "\n", _ctrlStats[_groupIds[i]].blockedReqGetXHits_);
+        dbg->output(CALL_INFO,"     GetSEx, hit on arrival:                     %" PRIu64 "\n", _ctrlStats[_groupIds[i]].newReqGetSExHits_);
+        dbg->output(CALL_INFO,"     GetSEx, hit after being blocked:            %" PRIu64 "\n", _ctrlStats[_groupIds[i]].blockedReqGetSExHits_);
         dbg->output(CALL_INFO,"- Hit ratio:                                     %.3f%%\n", hitRatio);
         dbg->output(CALL_INFO,"- Miss ratio:                                    %.3f%%\n", 100 - hitRatio);
         dbg->output(CALL_INFO,"------------ Coherence transitions for misses -------------\n");
-        dbg->output(CALL_INFO,"- GetS   I->S:                                   %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetS_IS);
+        dbg->output(CALL_INFO,"- GetS   I->S:                                   %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetS_IS);
         if (!L1_) {
-            dbg->output(CALL_INFO,"- GetS   M(present at another cache):            %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetS_M);
+            dbg->output(CALL_INFO,"- GetS   M(present at another cache):            %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetS_M);
         }
-        dbg->output(CALL_INFO,"- GetX   I->M:                                   %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetX_IM);
-        dbg->output(CALL_INFO,"- GetX   S->M:                                   %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetX_SM);
+        dbg->output(CALL_INFO,"- GetX   I->M:                                   %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetX_IM);
+        dbg->output(CALL_INFO,"- GetX   S->M:                                   %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetX_SM);
         if (!L1_) {
-            dbg->output(CALL_INFO,"- GetX   M(present at another cache):            %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetX_M);
+            dbg->output(CALL_INFO,"- GetX   M(present at another cache):            %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetX_M);
         }
-        dbg->output(CALL_INFO,"- GetSEx I->M:                                   %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetSE_IM);
-        dbg->output(CALL_INFO,"- GetSEx S->M:                                   %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetSE_SM);
+        dbg->output(CALL_INFO,"- GetSEx I->M:                                   %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetSE_IM);
+        dbg->output(CALL_INFO,"- GetSEx S->M:                                   %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetSE_SM);
         if (!L1_) {
-            dbg->output(CALL_INFO,"- GetSEx M(present at another cache):            %"PRIu64"\n", _ctrlStats[_groupIds[i]].GetSE_M);
+            dbg->output(CALL_INFO,"- GetSEx M(present at another cache):            %" PRIu64 "\n", _ctrlStats[_groupIds[i]].GetSE_M);
         }
         dbg->output(CALL_INFO,"------------ Replacements and evictions -------------------\n");
         
         if(!L1_){
-            dbg->output(CALL_INFO,"- PutS received:                                 %"PRIu64"\n", stats_[_groupIds[i]].PUTSReqsReceived_);
-            dbg->output(CALL_INFO,"- PutM received:                                 %"PRIu64"\n", stats_[_groupIds[i]].PUTMReqsReceived_);
-            dbg->output(CALL_INFO,"- PutX received:                                 %"PRIu64"\n", stats_[_groupIds[i]].PUTXReqsReceived_);
+            dbg->output(CALL_INFO,"- PutS received:                                 %" PRIu64 "\n", stats_[_groupIds[i]].PUTSReqsReceived_);
+            dbg->output(CALL_INFO,"- PutM received:                                 %" PRIu64 "\n", stats_[_groupIds[i]].PUTMReqsReceived_);
+            dbg->output(CALL_INFO,"- PutX received:                                 %" PRIu64 "\n", stats_[_groupIds[i]].PUTXReqsReceived_);
         }
-        dbg->output(CALL_INFO,"- PUTM sent due to [inv, evictions]:             [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(CALL_INFO,"- PUTE sent due to [inv, evictions]:             [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(CALL_INFO,"- PUTX sent due to [inv, evictions]:             [%"PRIu64", %"PRIu64"]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
+        dbg->output(CALL_INFO,"- PUTM sent due to [inv, evictions]:             [%" PRIu64 ", %" PRIu64 "]\n", stats_[_groupIds[i]].InvalidatePUTMReqSent_, stats_[_groupIds[i]].EvictionPUTSReqSent_);
+        dbg->output(CALL_INFO,"- PUTE sent due to [inv, evictions]:             [%" PRIu64 ", %" PRIu64 "]\n", stats_[_groupIds[i]].InvalidatePUTEReqSent_, stats_[_groupIds[i]].EvictionPUTMReqSent_);
+        dbg->output(CALL_INFO,"- PUTX sent due to [inv, evictions]:             [%" PRIu64 ", %" PRIu64 "]\n", stats_[_groupIds[i]].InvalidatePUTXReqSent_, stats_[_groupIds[i]].EvictionPUTEReqSent_);
         dbg->output(CALL_INFO,"------------ Other stats ----------------------------------\n");
-        dbg->output(CALL_INFO,"- Inv stalled because LOCK held:                 %"PRIu64"\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
-        dbg->output(CALL_INFO,"- Requests received (incl coherence traffic):    %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
-        dbg->output(CALL_INFO,"- Requests handled by MSHR (MSHR hits):          %"PRIu64"\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
-        dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, BottomCC):              %"PRIu64"\n", stats_[_groupIds[i]].NACKsSent_);
-        dbg->output(CALL_INFO,"- Avg Updgrade Latency (cyc):                    %"PRIu64"\n", _updgradeLatency);
+        dbg->output(CALL_INFO,"- Inv stalled because LOCK held:                 %" PRIu64 "\n", _ctrlStats[_groupIds[i]].InvWaitingForUserLock_);
+        dbg->output(CALL_INFO,"- Requests received (incl coherence traffic):    %" PRIu64 "\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
+        dbg->output(CALL_INFO,"- Requests handled by MSHR (MSHR hits):          %" PRIu64 "\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
+        dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, BottomCC):              %" PRIu64 "\n", stats_[_groupIds[i]].NACKsSent_);
+        dbg->output(CALL_INFO,"- Avg Updgrade Latency (cyc):                    %" PRIu64 "\n", _updgradeLatency);
     }
 
 }

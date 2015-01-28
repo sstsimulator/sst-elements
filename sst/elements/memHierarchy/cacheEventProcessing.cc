@@ -129,7 +129,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     /* Set requestor field if this is the first cache that's seen this event */
     if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
-    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %"PRIx64", Addr: %"PRIx64", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %"PRIu64", %s%s \n",
+    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %" PRIu64 ", %s%s \n",
                    this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
     
     if(noncacheable || cf_.allNoncacheableRequests_){

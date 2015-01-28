@@ -106,7 +106,7 @@ bool MSHR::insert(Addr _baseAddr, MemEvent* _event){
     _event->setInMSHR(true);
     bool ret = insert(_baseAddr, mshrType(_event));
     if(LIKELY(ret)){
-        d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %"PRIx64", event Addr = %"PRIx64", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
+        d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
      }
     else d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
     return ret;
@@ -115,7 +115,7 @@ bool MSHR::insert(Addr _baseAddr, MemEvent* _event){
 bool MSHR::insert(Addr _keyAddr, Addr _pointerAddr){
     bool ret = insert(_keyAddr, mshrType(_pointerAddr));
     if(LIKELY(ret)) {
-	d_->debug(_L9_, "MSHR: Inserted pointer.  Key Addr = %"PRIx64", Pointer Addr = %"PRIx64"\n", _keyAddr, _pointerAddr);
+	d_->debug(_L9_, "MSHR: Inserted pointer.  Key Addr = %" PRIx64 ", Pointer Addr = %" PRIx64 "\n", _keyAddr, _pointerAddr);
     } else
         d_->debug(_L9_, "MSHR Full. Pointer could not be inserted.\n");
 
@@ -174,7 +174,7 @@ MemEvent* MSHR::removeFront(Addr _baseAddr){
     
     size_--;
     
-    d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %"PRIx64"\n", _baseAddr);
+    d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %" PRIx64 "\n", _baseAddr);
     return ret;
 }
 

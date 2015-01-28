@@ -343,7 +343,7 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, string _origR
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L7_,"TCC - Invalidate sent: Delivery = %"PRIu64", Current = %"PRIu64", Addr = %"PRIx64", Dst = %s\n", deliveryTime, timestamp_, _cLine->getBaseAddr(),  destination.c_str());
+    d_->debug(_L7_,"TCC - Invalidate sent: Delivery = %" PRIu64 ", Current = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s\n", deliveryTime, timestamp_, _cLine->getBaseAddr(),  destination.c_str());
 }
 
 
@@ -381,7 +381,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit
     addToOutgoingQueue(resp);
     profileReqSent(InvX, false, 1);
     
-    d_->debug(_L7_,"InvalidateX sent: Addr = %"PRIx64", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
+    d_->debug(_L7_,"InvalidateX sent: Addr = %" PRIx64 ", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
 }
 
 
@@ -455,7 +455,7 @@ void TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"TCC - Sending Response at cycle = %"PRIu64". Current Time = %"PRIu64", Addr = %"PRIx64", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    d_->debug(_L3_,"TCC - Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
 }
 
 
@@ -484,7 +484,7 @@ void TopCacheController::resendEvent(MemEvent *_event){
     Response resp       = {_event, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"TCC - Sending Event To HgLvLCache at cycle = %"PRIu64". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
+    d_->debug(_L3_,"TCC - Sending Event To HgLvLCache at cycle = %" PRIu64 ". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
 }
 
 

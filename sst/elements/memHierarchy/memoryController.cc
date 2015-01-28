@@ -334,7 +334,7 @@ void MemController::init(unsigned int _phase){
             }
             /* Push data to memory */
             if (GetX == me->getCmd()) {
-                dbg.debug(_L10_,"Memory init %s - Received GetX for %"PRIx64"\n", getName().c_str(), me->getAddr());
+                dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
                 if(isRequestAddressValid(me)) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++) {
@@ -354,7 +354,7 @@ void MemController::init(unsigned int _phase){
             /* Push data to memory */
             if (ev->getDst() == getName()) {
                 if (GetX == ev->getCmd()) {
-                    dbg.debug(_L10_,"Memory init %s - Received GetX for %"PRIx64"\n", getName().c_str(), ev->getAddr());
+                    dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), ev->getAddr());
                     if(isRequestAddressValid(ev)) {
                         Addr localAddr = convertAddressToLocalAddress(ev->getAddr());
                         for ( size_t i = 0 ; i < ev->getSize() ; i++) {

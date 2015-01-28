@@ -102,7 +102,7 @@ void Bus::sendSingleEvent(SST::Event* _ev){
     MemEvent *event = static_cast<MemEvent*>(_ev);
     dbg_.debug(_L3_,"\n\n");
     dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %"PRIx64", BsAddr: %"PRIx64", Src: %s, Dst: %s, LinkID: %ld \n",
+    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %" PRIx64 ", BsAddr: %" PRIx64 ", Src: %s, Dst: %s, LinkID: %ld \n",
                    this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
 
     LinkId_t dstLinkId = lookupNode(event->getDst());

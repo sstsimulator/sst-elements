@@ -117,7 +117,10 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, !L1);
 
-    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines, lineSize, mshrSize, L1, bottomNetwork, topNetwork, statGroupIds, noncacheableRequests, maxWaitTime};
+    CacheConfig config = {frequency, cacheArray, protocol, dbg, replManager, numLines,
+	static_cast<uint>(lineSize),
+	static_cast<uint>(mshrSize), L1, bottomNetwork, topNetwork, statGroupIds,
+	static_cast<bool>(noncacheableRequests), maxWaitTime};
     return new Cache(_id, _params, config);
 }
 

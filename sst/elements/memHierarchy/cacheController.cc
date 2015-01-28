@@ -221,10 +221,10 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
 
 
 void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(blockedEventException){
-    d_->debug(_L10_,"Replacement cache needs to be evicted. WbAddr: %"PRIx64", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
+    d_->debug(_L10_,"Replacement cache needs to be evicted. WbAddr: %" PRIx64 ", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
     
     if(_wbCacheLine->isLocked()){
-        d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %"PRIx64"\n", _wbCacheLine->getBaseAddr());
+        d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %" PRIx64 "\n", _wbCacheLine->getBaseAddr());
         _wbCacheLine->setEventsWaitingForLock(true);
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw blockedEventException();
@@ -348,7 +348,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
     for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
         if((*it).elem.type() == typeid(Addr)){                          /* Pointer Type */
             Addr pointerAddr = boost::get<Addr>((*it).elem);
-            d_->debug(_L6_,"Pointer Addr: %"PRIx64"\n", pointerAddr);
+            d_->debug(_L6_,"Pointer Addr: %" PRIx64 "\n", pointerAddr);
             if(!mshr_->isHit(pointerAddr)){                             /* Entry has been already been processed, delete mshr entry */
                 mshrEntry.erase(it);
                 continue;
@@ -385,7 +385,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
 
 
 bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Addr _addr, vector<mshrType>::iterator _it, int _i){
-    d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %"PRIx64", addr: %"PRIx64", dst: %s\n",
+    d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %" PRIx64 ", addr: %" PRIx64 ", dst: %s\n",
                   _i, CommandString[_event->getCmd()], toBaseAddr(_event->getAddr()), _event->getAddr(), _event->getDst().c_str());
     d_->debug(_L3_,"--------------------------------------\n");
     
@@ -477,7 +477,7 @@ MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
 
 void Cache::updateUpgradeLatencyAverage(SimTime_t start){
     uint64_t latency = timestamp_ - start;
-    d_->debug(_INFO_,"Latency = %"PRIu64"\n", latency);
+    d_->debug(_INFO_,"Latency = %" PRIu64 "\n", latency);
     totalUpgradeLatency_ += latency;
     upgradeCount_++;
 }

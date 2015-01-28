@@ -170,7 +170,7 @@ std::string MemNIC::findTargetDestination(Addr addr)
             i != destinations.end() ; ++i ) {
         if ( i->first.contains(addr) ) return i->second;
     }
-    dbg.fatal(CALL_INFO,-1,"MemNIC %s cannot find a target for address 0x%"PRIx64"\n",comp->getName().c_str(),addr);
+    dbg.fatal(CALL_INFO,-1,"MemNIC %s cannot find a target for address 0x%" PRIx64 "\n",comp->getName().c_str(),addr);
     return "";
 }
 
@@ -185,7 +185,7 @@ bool MemNIC::clock(void)
             bool sent = link_control->send(head, 0);
             if ( sent ) {
                 if ( head->hasClientData() ) {
-                    dbg.debug(_L10_, "Sent message ((%"PRIx64", %d) %s %"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
+                    dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
                 }
                 sendQueue.pop_front();
             }

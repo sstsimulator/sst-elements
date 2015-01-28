@@ -176,7 +176,7 @@ void DirectoryController::handlePacket(SST::Event *event){
      
     if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) handleMemoryResponse(event);
     else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
-        dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%"PRIx64", Addr = 0x%"PRIx64"\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
+        dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 "\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
         profileRequestRecv(ev,NULL);
         Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
         Addr localBaseAddr   = convertAddressToLocalAddress(ev->getBaseAddr());
@@ -329,7 +329,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
 bool DirectoryController::processPacket(MemEvent *ev){
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%"PRIx64", Src = %s\n",
+    dbg.debug(_L10_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s\n",
             getName().c_str(), ev->getID().first, ev->getID().second, CommandString[ev->getCmd()],
             ev->getBaseAddr(), ev->getSrc().c_str());
     assert(isRequestAddressValid(ev));
@@ -359,14 +359,14 @@ bool DirectoryController::processPacket(MemEvent *ev){
         if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
             mshrHits++;
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-            dbg.debug(_L10_, "Inserting conflicting request in mshr. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            dbg.debug(_L10_, "Inserting conflicting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
             if (!inserted) {
                 dbg.debug(_L10_, "MSHR is full. NACKing request\n");
                 mshrNACKRequest(ev);
                 return true;
             }
         } else {
-            dbg.debug(_L10_, "Conflicting request already in mshr. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            dbg.debug(_L10_, "Conflicting request already in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
         }
     }
     if(ret.first == true) return ret.second;
@@ -395,7 +395,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
                 if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
                     mshrHits++;
                     bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-                    dbg.debug(_L10_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+                    dbg.debug(_L10_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
                     if (!inserted) {
                         dbg.debug(_L10_, "MSHR is full. NACKing request\n");
                         mshrNACKRequest(ev);
@@ -403,7 +403,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
                     }
                     entry->activeReq = ev;
                 }
-                dbg.debug(_L10_, "Entry %"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
+                dbg.debug(_L10_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
                 entry->nextFunc = &DirectoryController::handlePutM;
                 requestDirEntryFromMemory(entry);
             }
@@ -423,7 +423,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
                 mshrHits++;
                 bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-                dbg.debug(_L10_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+                dbg.debug(_L10_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
                 if (!inserted) {
                     dbg.debug(_L10_, "MSHR is full. NACKing request\n");
                     mshrNACKRequest(ev);
@@ -437,7 +437,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
                 handleDataRequest(entry, ev);
             }
             else{
-                dbg.debug(_L10_, "Entry %"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
+                dbg.debug(_L10_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
                 entry->nextFunc = &DirectoryController::handleDataRequest;
                 requestDirEntryFromMemory(entry);
             }
@@ -456,7 +456,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
 void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
+    dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
             Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;
@@ -528,10 +528,10 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             (entry->nextCommand == GetSResp && cmd == PutS)) &&
             ("N/A" == entry->waitingOnType || entry->waitingOn == ev->getSrc())){
             
-            dbg.debug(_L10_, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
+            dbg.debug(_L10_, "Incoming command matches for 0x%" PRIx64 " in progress.\n", entry->baseAddr);
             profileResponseRecv(ev);
             if(ev->getResponseToID() != entry->lastRequest){
-                dbg.debug(_L10_, "This isn't a response to our request, but it fulfills the need.  Placing(%"PRIu64", %d) into list of ignorable responses.\n", 
+                dbg.debug(_L10_, "This isn't a response to our request, but it fulfills the need.  Placing(%" PRIu64 ", %d) into list of ignorable responses.\n", 
                         entry->lastRequest.first, entry->lastRequest.second);
             }
             advanceEntry(entry, ev);
@@ -540,7 +540,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
         
         } else if ((entry->nextCommand == FetchResp || entry->nextCommand == FetchXResp) && cmd == PutE) {    // exclusive replacement raced with a fetch, re-direct to memory
 
-            dbg.debug(_L10_, "Entry %"PRIx64" request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
+            dbg.debug(_L10_, "Entry %" PRIx64 " request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
             profileResponseRecv(ev);
             assert(entry->findOwner() == node_name_to_id(ev->getSrc()));
             int id = node_name_to_id(ev->getSrc());
@@ -554,7 +554,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
 	    return make_pair<bool,bool>(false,false); // not a conflicting request
 	}
         else{
-            dbg.debug(_L10_, "Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", 
+            dbg.debug(_L10_, "Incoming command [%s,%s] doesn't match for 0x%" PRIx64 " [%s,%s] in progress.\n", 
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
             if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
                 assert(entry->nextCommand != NULLCMD);
@@ -572,12 +572,12 @@ void DirectoryController::printStatus(Output &out){
     out.output("\t# Entries in cache:  %zu\n", entryCacheSize);
     out.output("\t# Requests in queue:  %zu\n", workQueue.size());
     for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
-        out.output("\t\t(%"PRIu64", %d)\n", (*i)->getID().first, (*i)->getID().second);
+        out.output("\t\t(%" PRIu64 ", %d)\n", (*i)->getID().first, (*i)->getID().second);
     }
     out.output("\tRequests in Progress:\n");
     for(std::map<Addr, DirEntry*>::iterator i = directory.begin() ; i != directory.end() ; ++i){
         if(i->second->inProgress())
-            out.output("\t\t0x%"PRIx64"\t\t(%"PRIu64", %d)\n",i->first, i->second->activeReq->getID().first, i->second->activeReq->getID().second);
+            out.output("\t\t0x%" PRIx64 "\t\t(%" PRIu64 ", %d)\n",i->first, i->second->activeReq->getID().first, i->second->activeReq->getID().second);
     }
 
 }
@@ -593,7 +593,7 @@ DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr baseAddr){
 
 
 DirectoryController::DirEntry* DirectoryController::createDirEntry(Addr baseAddr, Addr addr, uint32_t reqSize){
-    dbg.debug(_L10_, "Creating Directory Entry for 0x%"PRIx64"\n", baseAddr);
+    dbg.debug(_L10_, "Creating Directory Entry for 0x%" PRIx64 "\n", baseAddr);
     DirEntry *entry = new DirEntry(baseAddr, addr, reqSize, numTargets);
     entry->cacheIter = entryCache.end();
     directory[baseAddr] = entry;
@@ -656,7 +656,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
              entry->waitingOn = "N/A";
              entry->waitingOnType = "N/A";
              entry->lastRequest = DirEntry::NO_LAST_REQUEST;
-             dbg.debug(_L10_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %"PRIx64".\n", entry->baseAddr);
+             dbg.debug(_L10_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->baseAddr);
         } else getExclusiveDataForRequest(entry, NULL);
 
     } else {                                                    //Handle GetS requests
@@ -720,7 +720,7 @@ void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
     profileResponseSent(ev);
     sendEventToCaches(ev);
     
-    dbg.debug(_L10_, "Sending requested data for 0x%"PRIx64" to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
+    dbg.debug(_L10_, "Sending requested data for 0x%" PRIx64 " to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
 
     updateEntryToMemory(entry);
 
@@ -824,7 +824,7 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry){
         me->setDst(memoryName);
         network->send(me);
     }
-    dbg.debug(_L10_, "Requesting Entry from memory for 0x%"PRIx64"(%"PRIu64", %d); next cmd: %s\n", entry->baseAddr, me->getID().first, me->getID().second, CommandString[entry->nextCommand]);
+    dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d); next cmd: %s\n", entry->baseAddr, me->getID().first, me->getID().second, CommandString[entry->nextCommand]);
 }
 
 
@@ -845,7 +845,7 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
         ev->setDst(memoryName);
         network->send(ev);
     }
-    dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%"PRIx64", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
+    dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
 }
 
 void DirectoryController::updateCacheEntry(DirEntry *entry){
@@ -861,7 +861,7 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
 
         /* Find out if we're no longer cached, and just remove */
         if((!entry->activeReq) && (0 == entry->countRefs())){
-            dbg.debug(_L10_, "Entry for 0x%"PRIx64" has no references - purging\n", entry->baseAddr);
+            dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->baseAddr);
             directory.erase(entry->baseAddr);
             delete entry;
             return;
@@ -876,7 +876,7 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
                 // If the oldest entry is still in progress, everything is in progress
                 if(oldEntry->inProgress()) break;
 
-                dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%"PRIx64"\n", oldEntry->baseAddr);
+                dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->baseAddr);
                 entryCache.pop_back();
                 --entryCacheSize;
                 oldEntry->cacheIter = entryCache.end();
@@ -926,7 +926,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
         network->send(ev);
     }
     
-    dbg.debug(_L10_, "Writing back data. Cmd = %s, BaseAddr = 0x%"PRIx64", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
+    dbg.debug(_L10_, "Writing back data. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     return ev->getID();
 }
 
@@ -939,14 +939,14 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
         if (mshr->elementIsHit(entry->activeReq->getBaseAddr(),entry->activeReq)) {
             mshr->removeElement(entry->activeReq->getBaseAddr(),entry->activeReq);
-            dbg.debug(_L10_, "Removing request from mshr. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", CommandString[entry->activeReq->getCmd()], entry->activeReq->getBaseAddr(), entry->activeReq->getAddr(), mshr->getSize());
+            dbg.debug(_L10_, "Removing request from mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[entry->activeReq->getCmd()], entry->activeReq->getBaseAddr(), entry->activeReq->getAddr(), mshr->getSize());
             if (mshr->isHit(entry->activeReq->getBaseAddr())) {
 	    vector<mshrType> replayEntries = mshr->removeAll(entry->activeReq->getBaseAddr());
 	    for(vector<mshrType>::reverse_iterator it = replayEntries.rbegin(); it != replayEntries.rend(); it++) {
 		MemEvent *ev = boost::get<MemEvent*>((*it).elem);
                 std::list<MemEvent*>::iterator insert_it = workQueue.begin();
 		insert_it++;
-		dbg.debug(_L10_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%"PRIx64", Addr = 0x%"PRIx64", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+		dbg.debug(_L10_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
 	        workQueue.insert(insert_it,ev);
 }
 }
@@ -959,7 +959,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
 
 void DirectoryController::sendEventToCaches(MemEvent *ev){
-    dbg.debug(_L10_, "Sending Event. Cmd = %s, BaseAddr = 0x%"PRIx64", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
+    dbg.debug(_L10_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
     network->send(ev);
 }
 
@@ -996,7 +996,7 @@ Addr DirectoryController::convertAddressFromLocalAddress(Addr addr){
         res = res + addrRangeStart;
 
     }
-    dbg.debug(_L10_, "Converted ACTUAL memory address 0x%"PRIx64" to physical address 0x%"PRIx64"\n", addr, res);
+    dbg.debug(_L10_, "Converted ACTUAL memory address 0x%" PRIx64 " to physical address 0x%" PRIx64 "\n", addr, res);
     return res;
 }
 
@@ -1011,7 +1011,7 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
         Addr offset = a % interleaveStep;
         res         = lookupBaseAddr +(step * interleaveSize) + offset;
     }
-    dbg.debug(_L10_, "Converted physical address 0x%"PRIx64" to ACTUAL memory address 0x%"PRIx64"\n", addr, res);
+    dbg.debug(_L10_, "Converted physical address 0x%" PRIx64 " to ACTUAL memory address 0x%" PRIx64 "\n", addr, res);
     return res;
 }
 
@@ -1047,11 +1047,11 @@ void DirectoryController::init(unsigned int phase){
     }
     /* Pass data on to memory */
     while(MemEvent *ev = network->recvInitData()){
-        dbg.debug(_L10_, "Found Init Info for address 0x%"PRIx64"\n", ev->getAddr());
+        dbg.debug(_L10_, "Found Init Info for address 0x%" PRIx64 "\n", ev->getAddr());
         if(isRequestAddressValid(ev)){
             ev->setBaseAddr(convertAddressToLocalAddress(ev->getBaseAddr()));
             ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
-            dbg.debug(_L10_, "Sending Init Data for address 0x%"PRIx64" to memory\n", ev->getAddr());
+            dbg.debug(_L10_, "Sending Init Data for address 0x%" PRIx64 " to memory\n", ev->getAddr());
             if (directMemoryLink) {
                 memLink->sendInitData(ev);
             } else {
@@ -1074,32 +1074,32 @@ void DirectoryController::finish(void){
     out.output("--- Directory Controller\n");
     out.output("--- Name: %s\n", getName().c_str());
     out.output("--------------------------------------------------------------------\n");
-    out.output("- Total requests received:  %"PRIu64"\n", numReqsProcessed);
-    out.output("- GetS recieved:            %"PRIu64"\n", GetSReqReceived);
-    out.output("- GetX received:            %"PRIu64"\n", GetXReqReceived);
-    out.output("- GetSEx recieved:          %"PRIu64"\n", GetSExReqReceived);
-    out.output("- PutM received:            %"PRIu64"\n", PutMReqReceived);
-    out.output("- PutE received:            %"PRIu64"\n", PutEReqReceived);
-    out.output("- PutS received:            %"PRIu64"\n", PutSReqReceived);
-    out.output("- NACK received:            %"PRIu64"\n", NACKReceived);
-    out.output("- FetchResp received:       %"PRIu64"\n", FetchRespReceived);
-    out.output("- FetchXResp received:      %"PRIu64"\n", FetchRespXReceived);
-    out.output("- PutM response received:   %"PRIu64"\n", PutMRespReceived);
-    out.output("- PutE response received:   %"PRIu64"\n", PutERespReceived);
-    out.output("- PutS response received:   %"PRIu64"\n", PutSRespReceived);
-    out.output("- Data reads issued:        %"PRIu64"\n", dataReads);
-    out.output("- Data writes issued:       %"PRIu64"\n", dataWrites);
-    out.output("- Dir entry reads:          %"PRIu64"\n", dirEntryReads);
-    out.output("- Dir entry writes:         %"PRIu64"\n", dirEntryWrites);
-    out.output("- Inv sent:                 %"PRIu64"\n", InvSent);
-    out.output("- FetchInv sent:            %"PRIu64"\n", FetchInvSent);
-    out.output("- FetchInvX sent:           %"PRIu64"\n", FetchInvXSent);
-    out.output("- GetSResp sent:            %"PRIu64"\n", GetSRespSent);
-    out.output("- GetXResp sent:            %"PRIu64"\n", GetXRespSent);
-    out.output("- NACKs sent:               %"PRIu64"\n", NACKSent);
-    out.output("- Avg Req Time:             %"PRIu64" ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
-    out.output("- Entry Cache Hits:         %"PRIu64"\n", numCacheHits);
-    out.output("- MSHR hits:                %"PRIu64"\n", mshrHits);
+    out.output("- Total requests received:  %" PRIu64 "\n", numReqsProcessed);
+    out.output("- GetS recieved:            %" PRIu64 "\n", GetSReqReceived);
+    out.output("- GetX received:            %" PRIu64 "\n", GetXReqReceived);
+    out.output("- GetSEx recieved:          %" PRIu64 "\n", GetSExReqReceived);
+    out.output("- PutM received:            %" PRIu64 "\n", PutMReqReceived);
+    out.output("- PutE received:            %" PRIu64 "\n", PutEReqReceived);
+    out.output("- PutS received:            %" PRIu64 "\n", PutSReqReceived);
+    out.output("- NACK received:            %" PRIu64 "\n", NACKReceived);
+    out.output("- FetchResp received:       %" PRIu64 "\n", FetchRespReceived);
+    out.output("- FetchXResp received:      %" PRIu64 "\n", FetchRespXReceived);
+    out.output("- PutM response received:   %" PRIu64 "\n", PutMRespReceived);
+    out.output("- PutE response received:   %" PRIu64 "\n", PutERespReceived);
+    out.output("- PutS response received:   %" PRIu64 "\n", PutSRespReceived);
+    out.output("- Data reads issued:        %" PRIu64 "\n", dataReads);
+    out.output("- Data writes issued:       %" PRIu64 "\n", dataWrites);
+    out.output("- Dir entry reads:          %" PRIu64 "\n", dirEntryReads);
+    out.output("- Dir entry writes:         %" PRIu64 "\n", dirEntryWrites);
+    out.output("- Inv sent:                 %" PRIu64 "\n", InvSent);
+    out.output("- FetchInv sent:            %" PRIu64 "\n", FetchInvSent);
+    out.output("- FetchInvX sent:           %" PRIu64 "\n", FetchInvXSent);
+    out.output("- GetSResp sent:            %" PRIu64 "\n", GetSRespSent);
+    out.output("- GetXResp sent:            %" PRIu64 "\n", GetXRespSent);
+    out.output("- NACKs sent:               %" PRIu64 "\n", NACKSent);
+    out.output("- Avg Req Time:             %" PRIu64 " ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
+    out.output("- Entry Cache Hits:         %" PRIu64 "\n", numCacheHits);
+    out.output("- MSHR hits:                %" PRIu64 "\n", mshrHits);
 }
 
 
