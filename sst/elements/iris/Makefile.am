@@ -35,7 +35,6 @@ libiris_la_SOURCES = \
 	ex_macsim_component.h
 
 EXTRA_DIST = \
-	test_v2.xml \
 	test_v2.py
 
 sstdir = $(includedir)/sst/elements/iris

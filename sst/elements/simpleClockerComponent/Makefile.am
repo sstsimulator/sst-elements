@@ -12,6 +12,6 @@ libsimpleClockerComponent_la_SOURCES = \
 	simpleClocker.h \
 	simpleClocker.cc
 EXTRA_DIST = \
-	test.xml
+	test.py
 
 libsimpleClockerComponent_la_LDFLAGS = -module -avoid-version

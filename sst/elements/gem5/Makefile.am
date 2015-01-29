@@ -2,7 +2,6 @@
 #
 #
 
-# EXTRA_DIST = m5.xml
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libgem5.la

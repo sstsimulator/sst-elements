@@ -40,8 +40,6 @@ libsst_mcopteron_la_SOURCES = \
 	mcopteron/mersenne.h
 
 EXTRA_DIST = \
-	test1.xml \
-        test2.xml \
 	test1.py \
         test2.py \
         cpuconfig.ini \
