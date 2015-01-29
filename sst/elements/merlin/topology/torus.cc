@@ -73,17 +73,17 @@ topo_torus::topo_torus(Component* comp, Params& params) :
     if ( n_ports == -1 )
         _abort(Topology, "Router must have 'num_ports' parameter set\n");
 
-    int needed_ports = num_local_ports;
+    int needed_ports = 0;
     for ( int i = 0 ; i < dimensions ; i++ ) {
         needed_ports += 2 * dim_width[i];
     }
 
 
-    if ( n_ports != needed_ports ) {
-        _abort(Topology, "Number of ports should be %d for this configuration\n", needed_ports);
+    if ( n_ports < (needed_ports+num_local_ports) ) {
+        _abort(Topology, "Number of ports should be %d for this configuration\n", needed_ports+num_local_ports);
     }
 
-    local_port_start = n_ports-num_local_ports;// Local delivery is on the last ports
+    local_port_start = needed_ports;// Local delivery is on the last ports
 
     id_loc = new int[dimensions];
     idToLocation(router_id, id_loc);
@@ -221,7 +221,11 @@ internal_router_event* topo_torus::process_InitData_input(RtrEvent* ev)
 Topology::PortState
 topo_torus::getPortState(int port) const
 {
-    if (port >= local_port_start) return R2N;
+    if (port >= local_port_start) {
+        if ( port < (local_port_start + num_local_ports) )
+            return R2N;
+        return UNCONNECTED;
+    }
     return R2R;
 }
 
