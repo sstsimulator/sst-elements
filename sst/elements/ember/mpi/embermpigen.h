@@ -162,7 +162,7 @@ protected:
     inline void enQ_barrier( Queue&, Communicator );
     inline void enQ_fini( Queue& );
     inline void enQ_init( Queue& );
-    inline void enQ_compute( Queue&, uint32_t nanoSecondDelay );
+    inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
     inline void enQ_rank( Queue&, Communicator, uint32_t* rankPtr);
     inline void enQ_size( Queue&, Communicator, int* sizePtr);
     inline void enQ_send( Queue&, Addr payload, uint32_t count,
@@ -281,7 +281,7 @@ void EmberMessagePassingGenerator::enQ_size( Queue& q, Communicator comm,
                                     m_histoV[Size], comm, sizePtr ) );
 }
 
-void EmberMessagePassingGenerator::enQ_compute( Queue& q, uint32_t delay )
+void EmberMessagePassingGenerator::enQ_compute( Queue& q, uint64_t delay )
 {
     q.push( new EmberComputeEvent( m_output,
                                 m_histoV[Compute], delay, m_computeDistrib ) );

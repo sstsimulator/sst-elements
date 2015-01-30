@@ -253,6 +253,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
     istringstream buffer( name.substr( 7, 7 ) ); 
     buffer >> yy;
     std::string zz; 
+    --yy;
 
     if ( name.size() > 8 ) {
         zz = name.substr( 9 );
@@ -260,7 +261,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
 
     if ( ! xx.compare("fwd_fft") ) {
         switch ( yy ) {
-          case 1:
+          case 0:
             if ( ! zz.compare( 0,3, "pre" )  ) {
                 m_fwdTime[yy] += calcFwd1Pre( data, zz.substr(3), value );
             } else if ( ! zz.compare( 0,4, "post" )  ) {
@@ -269,7 +270,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
                 m_fwdTime[yy] += calcFwd1( data, zz, value );
             } 
             break;
-          case 2:
+          case 1:
             if ( ! zz.compare( 0,3, "pre" )  ) {
                 m_fwdTime[yy] += calcFwd2Pre( data, zz.substr(3), value );
             } else if ( ! zz.compare( 0,4, "post" )  ) {
@@ -278,7 +279,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
                 m_fwdTime[yy] += calcFwd2( data, zz, value );
             }
             break;
-          case 3:
+          case 2:
             if ( ! zz.compare( 0,3, "pre" )  ) {
                 m_fwdTime[yy] += calcFwd3Pre( data, zz.substr(3), value );
             } else if ( ! zz.compare( 0,4, "post" )  ) {
@@ -291,7 +292,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
         }
     } else {
         switch ( yy ) {
-          case 1:
+          case 0:
             if ( ! zz.compare( 0,3, "pre" )  ) {
                 m_bwdTime[yy] += calcBwd1Pre( data, zz.substr(3), value );
             } else if ( ! zz.compare( 0,4, "post" )  ) {
@@ -300,7 +301,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
                 m_bwdTime[yy] += calcBwd1( data, zz, value );
             } 
             break;
-          case 2:
+          case 1:
             if ( ! zz.compare( 0,3, "pre" )  ) {
                 m_bwdTime[yy] += calcBwd2Pre( data, zz.substr(3), value );
             } else if ( ! zz.compare( 0,4, "post" )  ) {
@@ -309,7 +310,7 @@ void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
                 m_bwdTime[yy] += calcBwd2( data, zz, value );
             }
             break;
-          case 3:
+          case 2:
             if ( ! zz.compare( 0,3, "pre" )  ) {
                 m_bwdTime[yy] += calcBwd3Pre( data, zz.substr(3), value );
             } else if ( ! zz.compare( 0,4, "post" )  ) {
