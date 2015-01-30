@@ -29,8 +29,6 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "\n");
-
         EmberEvent::issue( time );
         m_api.init( functor );
     }

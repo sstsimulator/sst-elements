@@ -38,8 +38,6 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "Issuing allreduce\n");
-
         EmberEvent::issue( time );
 
         m_api.allreduce( m_mydata, m_result, m_count, m_dtype, m_op,

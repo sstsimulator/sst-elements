@@ -34,8 +34,6 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "\n");
-
         EmberEvent::issue( time );
         m_api.comm_create( m_oldComm, m_ranks.size(), &m_ranks[0], 
                                                     m_newComm, functor );

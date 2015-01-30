@@ -41,8 +41,6 @@ public:
 
     void issue( uint64_t time, FOO* functor ) {
 
-        m_output->verbose(CALL_INFO, 2, 0, "Issuing alltoall\n");
-
         EmberEvent::issue( time );
 
         m_api.alltoall( m_senddata, m_sendcnts, m_senddtype,
