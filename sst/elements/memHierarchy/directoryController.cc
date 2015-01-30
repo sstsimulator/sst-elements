@@ -87,10 +87,11 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.addrRange.rangeStart      = addrRangeStart;
-        typeInfo.addrRange.rangeEnd        = addrRangeEnd;
-        typeInfo.addrRange.interleaveSize  = interleaveSize;
-        typeInfo.addrRange.interleaveStep  = interleaveStep;
+        typeInfo.rangeStart     = addrRangeStart;
+        typeInfo.rangeEnd       = addrRangeEnd;
+        typeInfo.interleaveSize = interleaveSize;
+        typeInfo.interleaveStep = interleaveStep;
+        typeInfo.blocksize      = 0;
         network->addTypeInfo(typeInfo);
     } else {
         memoryName  = params.find_string("net_memory_name", "");
@@ -106,10 +107,11 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         
         MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.addrRange.rangeStart      = addrRangeStart;
-        typeInfo.addrRange.rangeEnd        = addrRangeEnd;
-        typeInfo.addrRange.interleaveSize  = interleaveSize;
-        typeInfo.addrRange.interleaveStep  = interleaveStep;
+        typeInfo.rangeStart     = addrRangeStart;
+        typeInfo.rangeEnd       = addrRangeEnd;
+        typeInfo.interleaveSize = interleaveSize;
+        typeInfo.interleaveStep = interleaveStep;
+        typeInfo.blocksize      = 0;
         network->addTypeInfo(typeInfo);
     }
 
@@ -1112,8 +1114,8 @@ void DirectoryController::setup(void){
         dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->first.network_addr, i->first.name.c_str(), i->first.type);
         if(MemNIC::TypeCache == i->first.type || MemNIC::TypeNetworkCache == i->first.type){
             numTargets++;
-            if(blocksize)   assert(blocksize == i->second.cache.blocksize);
-            else            blocksize = i->second.cache.blocksize;
+            if(blocksize)   assert(blocksize == i->second.blocksize);
+            else            blocksize = i->second.blocksize;
         }
     }
     if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"Directory Controller %s is unable to see any caches\n",getName().c_str());

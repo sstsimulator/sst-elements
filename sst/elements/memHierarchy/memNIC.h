@@ -45,28 +45,23 @@ public:
         TypeOther
     };
 
-    union ComponentTypeInfo {
-        struct {
-            uint32_t blocksize;
-            uint32_t num_blocks;
-        } cache;
-        struct AddrRange {
-            uint64_t rangeStart;
-            uint64_t rangeEnd;
-            uint64_t interleaveSize;
-            uint64_t interleaveStep;
-            bool contains(uint64_t addr) const {
-                if ( addr >= rangeStart && addr < rangeEnd ) {
-                    if ( interleaveSize == 0 ) return true;
-                    uint64_t offset = (addr - rangeStart) % interleaveStep;
-                    return (offset < interleaveSize);
-                }
-                return false;
+    struct ComponentTypeInfo {
+        uint64_t rangeStart;
+        uint64_t rangeEnd;
+        uint64_t interleaveSize;
+        uint64_t interleaveStep;
+        uint32_t blocksize;    
+        bool contains(uint64_t addr) const {
+            if ( addr >= rangeStart && addr < rangeEnd ) {
+                if ( interleaveSize == 0 ) return true;
+                uint64_t offset = (addr - rangeStart) % interleaveStep;
+                return (offset < interleaveSize);
             }
-            bool operator<(const AddrRange &o) const {
-                return (rangeStart < o.rangeStart);
-            }
-        } addrRange;
+            return false;
+        }
+        bool operator<(const ComponentTypeInfo &o) const {
+            return (rangeStart < o.rangeStart);
+        }
     };
 
     struct ComponentInfo {
@@ -147,24 +142,11 @@ public:
             ar & BOOST_SERIALIZATION_NVP(compType);
             ar & BOOST_SERIALIZATION_NVP(address);
             ar & BOOST_SERIALIZATION_NVP(name);
-            switch ( compType ) {
-            case TypeCacheToCache:
-            case TypeCache:
-                ar & BOOST_SERIALIZATION_NVP(compInfo.cache.blocksize);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.cache.num_blocks);
-                break;
-            case TypeNetworkCache:
-            case TypeDirectoryCtrl:
-            case TypeNetworkDirectory:
-            case TypeMemory:
-                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeStart);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.rangeEnd);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.interleaveSize);
-                ar & BOOST_SERIALIZATION_NVP(compInfo.addrRange.interleaveStep);
-                break;
-            default:
-                _abort(MemNIC, "Don't know how to serialize this type [%d].\n", compType);
-            }
+            ar & BOOST_SERIALIZATION_NVP(compInfo.rangeStart);
+            ar & BOOST_SERIALIZATION_NVP(compInfo.rangeEnd);
+            ar & BOOST_SERIALIZATION_NVP(compInfo.interleaveSize);
+            ar & BOOST_SERIALIZATION_NVP(compInfo.interleaveStep);
+            ar & BOOST_SERIALIZATION_NVP(compInfo.blocksize);
         }
     };
 
@@ -191,7 +173,7 @@ private:
     /* Built during init -> available in Setup and later */
     std::vector<PeerInfo_t> peers;
     /* Built during init -> available for lookups later */
-    std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string> destinations;
+    std::map<MemNIC::ComponentTypeInfo, std::string> destinations;
 
 
     /* Translates a MemEvent string destination to an network address

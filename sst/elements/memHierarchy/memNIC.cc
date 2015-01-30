@@ -122,9 +122,9 @@ void MemNIC::init(unsigned int phase)
 
             // save a copy for lookups later if we should be sending requests to this entity
             if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && (peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory)) { // cache -> dir
-                destinations[imre->compInfo.addrRange] = imre->name;
+                destinations[imre->compInfo] = imre->name;
             } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
-                destinations[imre->compInfo.addrRange] = imre->name;
+                destinations[imre->compInfo] = imre->name;
             }
         } else {
             initQueue.push_back(static_cast<MemRtrEvent*>(ev));
@@ -166,7 +166,7 @@ bool MemNIC::initDataReady() {
 
 std::string MemNIC::findTargetDestination(Addr addr)
 {
-    for ( std::map<MemNIC::ComponentTypeInfo::AddrRange, std::string>::const_iterator i = destinations.begin() ;
+    for ( std::map<MemNIC::ComponentTypeInfo, std::string>::const_iterator i = destinations.begin() ;
             i != destinations.end() ; ++i ) {
         if ( i->first.contains(addr) ) return i->second;
     }
@@ -232,9 +232,9 @@ MemEvent* MemNIC::recv(void)
 
                 // Save any new address ranges.
                 if ((ci.type == MemNIC::TypeCache || ci.type == MemNIC::TypeNetworkCache) && (peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory)) { // cache -> dir
-                    destinations[imre->compInfo.addrRange] = imre->name;
+                    destinations[imre->compInfo] = imre->name;
                 } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
-                    destinations[imre->compInfo.addrRange] = imre->name;
+                    destinations[imre->compInfo] = imre->name;
                 }
             }
         }

@@ -203,8 +203,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         myInfo.type = MemNIC::TypeCache; 
 
         MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.cache.blocksize = cf_.lineSize_;
-        typeInfo.cache.num_blocks = cf_.numLines_;
+        typeInfo.blocksize = cf_.lineSize_;
 
         bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
@@ -221,8 +220,7 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         myInfo.type = MemNIC::TypeCacheToCache; 
 
         MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.cache.blocksize = cf_.lineSize_;
-        typeInfo.cache.num_blocks = cf_.numLines_;
+        typeInfo.blocksize = cf_.lineSize_;
 
         bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
@@ -250,10 +248,11 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
                 interleaveStep = cacheSliceCount*cf_.lineSize_;
             }
         }
-        typeInfo.addrRange.rangeStart      = addrRangeStart;
-        typeInfo.addrRange.rangeEnd        = addrRangeEnd;
-        typeInfo.addrRange.interleaveSize  = interleaveSize;
-        typeInfo.addrRange.interleaveStep  = interleaveStep;
+        typeInfo.rangeStart     = addrRangeStart;
+        typeInfo.rangeEnd       = addrRangeEnd;
+        typeInfo.interleaveSize = interleaveSize;
+        typeInfo.interleaveStep = interleaveStep;
+        typeInfo.blocksize      = cf_.lineSize_;
         
         bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);

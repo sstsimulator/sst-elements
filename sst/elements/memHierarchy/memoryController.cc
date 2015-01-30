@@ -127,10 +127,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         networkLink_ = new MemNIC(this, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
         MemNIC::ComponentTypeInfo typeInfo;
-        typeInfo.addrRange.rangeStart       = rangeStart_;
-        typeInfo.addrRange.rangeEnd         = memSize_;
-        typeInfo.addrRange.interleaveSize   = interleaveSize_;
-        typeInfo.addrRange.interleaveStep   = interleaveStep_;
+        typeInfo.rangeStart       = rangeStart_;
+        typeInfo.rangeEnd         = memSize_;
+        typeInfo.interleaveSize   = interleaveSize_;
+        typeInfo.interleaveStep   = interleaveStep_;
         networkLink_->addTypeInfo(typeInfo);
     }
     memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);

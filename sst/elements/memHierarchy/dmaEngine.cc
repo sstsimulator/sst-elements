@@ -66,7 +66,7 @@ void DMAEngine::setup(void)
             break;
         case MemNIC::TypeCache:
             if ( !blocksizeSet ) {
-                blocksize = i->second.cache.blocksize;
+                blocksize = i->second.blocksize;
                 blocksizeSet = true;
             }
         default:
