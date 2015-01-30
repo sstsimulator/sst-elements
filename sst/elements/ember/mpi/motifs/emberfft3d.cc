@@ -13,20 +13,28 @@
 
 #include "emberfft3d.h"
 
+#include <iostream>
+#include <fstream>
+
 using namespace SST::Ember;
 
 EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params), 
+    m_fwdTime(3,0),
+    m_bwdTime(3,0),
 	m_loopIndex(-1)
 {
 	m_name = "FFT3D";
 
-	m_nx  = (uint32_t) params.find_integer("arg.nx", 100);
-	m_ny  = (uint32_t) params.find_integer("arg.ny", 100);
-	m_nz  = (uint32_t) params.find_integer("arg.nz", 100);
+	m_data.np0 = (uint32_t) params.find_integer("arg.nx", 100);
+	m_data.np1  = (uint32_t) params.find_integer("arg.ny", 100);
+	m_data.np2  = (uint32_t) params.find_integer("arg.nz", 100);
 
-	m_npRow = (uint32_t) params.find_integer("arg.npRow", 0);
-    assert( 0 < m_npRow );
+    m_data.nprow = (uint32_t) params.find_integer("arg.npRow", 0);
+    assert( 0 < m_data.nprow );
+
+    m_configFileName = params.find_string("arg.configFile");
+    assert( ! m_configFileName.empty() );
 
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
     assert( 1 == m_iterations ); 
@@ -35,105 +43,102 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 
 void EmberFFT3DGenerator::configure()
 {
-    unsigned int npCol = size() / m_npRow; 
+    m_data.npcol = size() / m_data.nprow; 
 
-    assert(  (m_nx % npCol) == 0 ); 
-    assert(  (m_nz % npCol) == 0 ); 
-    assert(  (m_ny % m_npRow) == 0 ); 
+    assert(  (m_data.np0 % m_data.npcol) == 0 ); 
+    assert(  (m_data.np1 % m_data.npcol) == 0 ); 
+    assert(  (m_data.np2 % m_data.nprow) == 0 ); 
 
-    unsigned myRow = rank() % m_npRow; 
-    unsigned myCol = rank() / m_npRow; 
+    unsigned myRow = rank() % m_data.nprow; 
+    unsigned myCol = rank() / m_data.nprow; 
     m_output->verbose(CALL_INFO, 2, 0, "%d: nx=%d ny=%d nx=%d npRow=%d "
-        "npCol=%d myRow=%d myCol=%d\n", 
-            rank(), m_nx, m_ny, m_nz, m_npRow, npCol, myRow, myCol );
+        "m_data.npcol=%d myRow=%d myCol=%d\n", 
+            rank(), m_data.np0, m_data.np1, m_data.np2, 
+                m_data.nprow, m_data.npcol, myRow, myCol );
 
-    m_rowGrpRanks.resize( npCol);
-    m_colGrpRanks.resize(  m_npRow );
+    m_rowGrpRanks.resize( m_data.npcol );
+    m_colGrpRanks.resize( m_data.nprow );
     std::ostringstream tmp; 
     for ( unsigned int i = 0; i < m_colGrpRanks.size(); i++ ) {
-        m_rowGrpRanks[i] = myRow + i * m_npRow;
+        m_rowGrpRanks[i] = myRow + i * m_data.nprow;
         tmp << m_rowGrpRanks[i] << " " ;
     }
     m_output->verbose(CALL_INFO, 2, 0,"row grp [%s]\n", tmp.str().c_str() );
     tmp.str("");
     tmp.clear();
     for ( unsigned int i = 0; i < m_rowGrpRanks.size(); i++ ) {
-        m_colGrpRanks[i] = myCol * m_npRow + i;
+        m_colGrpRanks[i] = myCol * m_data.nprow + i;
         tmp << m_colGrpRanks[i] << " " ;
     }
     m_output->verbose(CALL_INFO, 2, 0,"col grp [%s]\n", tmp.str().c_str() );
 
-    std::vector<int> np0loc_row(m_npRow);
-    std::vector<int> np1loc_row(m_npRow);
-    std::vector<int> np1loc_col(npCol);
-    std::vector<int> np2loc_col(npCol);
+    m_data.np0loc_row.resize(m_data.nprow);
+    m_data.np1loc_row.resize(m_data.nprow);
+    m_data.np1loc_col.resize(m_data.npcol);
+    m_data.np2loc_col.resize(m_data.npcol);
 
-    int np0loc_;
-    int np0half_;
-    int np1locf_;
-    int np1locb_;
-    int np2loc_;
     {
-        const int np0half = m_nx/2 + 1;
-        np0half_ = np0half;
-        const int np0loc = np0half/m_npRow;
+        const int np0half = m_data.np0/2 + 1;
+        m_data.np0half = np0half;
+        const int np0loc = np0half/m_data.nprow;
 
-        for ( unsigned int i = 0; i < m_npRow; i++ ) {
-            np0loc_row[i] = np0loc; 
+        for ( unsigned int i = 0; i < m_data.nprow; i++ ) {
+            m_data.np0loc_row[i] = np0loc; 
         }
-        for ( unsigned int i = 0; i < np0half % m_npRow; ++i ) {
-            ++np0loc_row[i];
+        for ( unsigned int i = 0; i < np0half % m_data.nprow; ++i ) {
+            ++m_data.np0loc_row[i];
         }
-        np0loc_ = np0loc_row[ myRow ];
+        m_data.np0loc = m_data.np0loc_row[ myRow ];
     }
 
     {
-        const int np1loc = m_ny/m_npRow;
-        for ( unsigned int i = 0; i < m_npRow; i++ ) {
-            np1loc_row[i] = np1loc; 
+        const int np1loc = m_data.np1/m_data.nprow;
+        for ( unsigned int i = 0; i < m_data.nprow; i++ ) {
+            m_data.np1loc_row[i] = np1loc; 
         }
-        for ( unsigned int i = 0; i < m_ny % m_npRow; i++ ) {
-            ++np1loc_row[i];
+        for ( unsigned int i = 0; i < m_data.np1 % m_data.nprow; i++ ) {
+            ++m_data.np1loc_row[i];
         }
-        np1locf_ = np1loc_row[myRow];
+        m_data.np1locf = m_data.np1loc_row[myRow];
     }
 
     {
-        const int np1loc = m_ny/npCol;
-        for ( unsigned int i=0; i < npCol; i++ ) {
-            np1loc_col[i] = np1loc;
+        const int np1loc = m_data.np1/m_data.npcol;
+        for ( unsigned int i=0; i < m_data.npcol; i++ ) {
+            m_data.np1loc_col[i] = np1loc;
         }
-        for ( unsigned int i = 0; i < m_ny % npCol; i++ ) {
-            ++np1loc_col[i];
+        for ( unsigned int i = 0; i < m_data.np1 % m_data.npcol; i++ ) {
+            ++m_data.np1loc_col[i];
         }
-        np1locb_ = np1loc_row[myCol];
+        m_data.np1locb = m_data.np1loc_row[myCol];
     }
     
     {
-        const int np2loc = m_nz/npCol;
-        for ( unsigned int i=0; i < npCol; i++ ) {
-            np2loc_col[i] = np2loc;
+        const int np2loc = m_data.np2/m_data.npcol;
+        for ( unsigned int i=0; i < m_data.npcol; i++ ) {
+            m_data.np2loc_col[i] = np2loc;
         }
-        for ( unsigned int i=0; i < m_nz % npCol; i++ ) {
-            ++np2loc_col[i];
+        for ( unsigned int i=0; i < m_data.np2 % m_data.npcol; i++ ) {
+            ++m_data.np2loc_col[i];
         }
-        np2loc_ = np2loc_col[myCol];
+        m_data.np2loc = m_data.np2loc_col[myCol];
     }
+    m_data.ntrans = m_data.np1locf * m_data.np2loc;
 
     m_output->verbose(CALL_INFO, 2, 0, "np0half=%d np0loc=%d np1locf_=%d "
             "np1locb_%d np2loc_=%d\n", 
-        np0half_, np0loc_, np1locf_, np1locb_, np2loc_ );
+        m_data.np0half, m_data.np0loc, m_data.np1locf, m_data.np1locb, m_data.np2loc );
 
-    m_rowSendCnts.resize(npCol);
-    m_rowSendDsp.resize(npCol);
-    m_rowRecvCnts.resize(npCol);
-    m_rowRecvDsp.resize(npCol);
+    m_rowSendCnts.resize(m_data.npcol);
+    m_rowSendDsp.resize(m_data.npcol);
+    m_rowRecvCnts.resize(m_data.npcol);
+    m_rowRecvDsp.resize(m_data.npcol);
 
     int soffset = 0, roffset = 0;
-    for ( unsigned i = 0; i < npCol; i++ ) {
+    for ( unsigned i = 0; i < m_data.npcol; i++ ) {
 
-        int sendblk = 2* np0loc_ * np1loc_col[i] * np2loc_;
-        int recvblk = 2* np0loc_ * np1locb_ * np2loc_col[i];
+        int sendblk = 2*m_data.np0loc * m_data.np1loc_col[i] *m_data.np2loc;
+        int recvblk = 2*m_data.np0loc *m_data.np1locb * m_data.np2loc_col[i];
 
         m_output->verbose(CALL_INFO, 2, 0,"row, sendblk=%d soffset=%d "
                 "recvblk=%d roffset=%d\n",sendblk,soffset,recvblk,roffset);
@@ -145,16 +150,16 @@ void EmberFFT3DGenerator::configure()
         roffset += recvblk;
     }
 
-    m_colSendCnts_f.resize( m_npRow );
-    m_colSendDsp_f.resize( m_npRow );
-    m_colRecvCnts_f.resize( m_npRow );
-    m_colRecvDsp_f.resize( m_npRow );
+    m_colSendCnts_f.resize( m_data.nprow );
+    m_colSendDsp_f.resize( m_data.nprow );
+    m_colRecvCnts_f.resize( m_data.nprow );
+    m_colRecvDsp_f.resize( m_data.nprow );
 
     soffset = roffset = 0;
-    for ( unsigned i = 0; i < m_npRow; i++ ) {
+    for ( unsigned i = 0; i < m_data.nprow; i++ ) {
 
-        int sendblk = 2 * np0loc_row[i] * np1locf_ * np2loc_;
-        int recvblk = 2 * np0loc_ * np1loc_row[i] * np2loc_;
+        int sendblk = 2 * m_data.np0loc_row[i] *m_data.np1locf *m_data.np2loc;
+        int recvblk = 2 *m_data.np0loc * m_data.np1loc_row[i] *m_data.np2loc;
         m_output->verbose(CALL_INFO, 2, 0,"col_f, sendblk=%d soffset=%d "
                 "recvblk=%d roffset=%d\n",sendblk,soffset,recvblk,roffset);
 
@@ -166,16 +171,16 @@ void EmberFFT3DGenerator::configure()
         roffset += recvblk;
     }
 
-    m_colSendCnts_b.resize( m_npRow );
-    m_colSendDsp_b.resize( m_npRow );
-    m_colRecvCnts_b.resize( m_npRow );
-    m_colRecvDsp_b.resize( m_npRow );
+    m_colSendCnts_b.resize( m_data.nprow );
+    m_colSendDsp_b.resize( m_data.nprow );
+    m_colRecvCnts_b.resize( m_data.nprow );
+    m_colRecvDsp_b.resize( m_data.nprow );
 
     soffset = roffset = 0;
-    for ( unsigned i = 0; i < m_npRow; i++ ) {
+    for ( unsigned i = 0; i < m_data.nprow; i++ ) {
 
-        int sendblk = 2 * np0loc_ * np1loc_row[i] * np2loc_;
-        int recvblk = 2 * np0loc_row[i] * np1locf_ * np2loc_;
+        int sendblk = 2 *m_data.np0loc * m_data.np1loc_row[i] *m_data.np2loc;
+        int recvblk = 2 * m_data.np0loc_row[i] *m_data.np1locf *m_data.np2loc;
 
         m_output->verbose(CALL_INFO, 2, 0,"col_b, sendblk=%d soffset=%d "
                 "recvblk=%d roffset=%d\n",sendblk,soffset,recvblk,roffset);
@@ -188,14 +193,134 @@ void EmberFFT3DGenerator::configure()
         roffset += recvblk;
     }
 
-    int size1 = m_nx * np1locf_ * np2loc_;
-    int size2 = m_ny * m_nx * np2loc_  / m_npRow;
-    int size3 = m_nz * np1locb_ * m_nx / m_npRow;
+    int size1 = m_data.np0 *m_data.np1locf *m_data.np2loc;
+    int size2 = m_data.np1 * m_data.np0 *m_data.np2loc  / m_data.nprow;
+    int size3 = m_data.np2 *m_data.np1locb * m_data.np0 / m_data.nprow;
     int maxsize = (size1 > size2 ? size1 : size2);
     maxsize = (maxsize > size3 ? maxsize : size3);
     m_sendBuf =   memAlloc( maxsize * COMPLEX );
     m_recvBuf =   memAlloc( maxsize * COMPLEX );
     m_output->verbose(CALL_INFO, 2, 0,"maxsize=%d\n",maxsize);
+
+    printf("%s\n",m_configFileName.c_str());
+    printf("np0=%d np1=%d np2=%d nprow=%d npcol=%d\n",
+                m_data.np0, m_data.np1, m_data.np2, m_data.nprow, m_data.npcol );
+    printf("np0half=%d np1loc=%d np1locf=%d no1locb=%d np2loc=%d\n",
+        m_data.np0half, m_data.np0loc, m_data.np1locf, m_data.np1locb, m_data.np2loc );
+
+#if 0
+    m_output->verbose(CALL_INFO, 2, 0,"forward nx=%d dist=%d time=%u\n", 
+                        nxt_f, m_data.np0, m_fft1_f );
+    m_output->verbose(CALL_INFO, 2, 0,"forward ny=%d dist=%d time=%u\n",
+                        nyt, m_data.np1, m_fft2_f ); 
+    m_output->verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
+                        nzt, m_data.np2, m_fft3_f ); 
+    m_output->verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
+                        nzt, m_data.np2, m_fft1_b );
+    m_output->verbose(CALL_INFO, 2, 0,"forward ny=%d dist=%d time=%u\n", 
+                        nyt, m_data.np1, m_fft2_b );
+    m_output->verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
+                        nxt_b, m_data.np0, m_fft3_b );
+#endif
+
+    std::ifstream file;
+    file.open(m_configFileName.c_str()); 
+    assert( file.is_open() );
+    std::string line;
+    while (  getline( file, line) ) {
+        std::string::iterator end_pos = std::remove(
+                                    line.begin(), line.end(),' ');
+
+        line.erase(end_pos, line.end());
+        if ( line.empty() || ! line.compare(0,1,"#") ) {
+            continue;
+        }
+        std::size_t pos = line.find(','); 
+        std::string name = line.substr( 0, pos );
+        float value;
+        istringstream buffer( line.substr( pos + 1 ) );
+        buffer >> value;
+        //cout << name << " " << value << "\n";
+        initTime(m_data, name, value );
+    }
+    file.close();
+}
+
+void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
+{
+    std::string xx = name.substr(0,7); 
+    int yy; 
+    istringstream buffer( name.substr( 7, 7 ) ); 
+    buffer >> yy;
+    std::string zz; 
+
+    if ( name.size() > 8 ) {
+        zz = name.substr( 9 );
+    }        
+
+    if ( ! xx.compare("fwd_fft") ) {
+        switch ( yy ) {
+          case 1:
+            if ( ! zz.compare( 0,3, "pre" )  ) {
+                m_fwdTime[yy] += calcFwd1Pre( data, zz.substr(3), value );
+            } else if ( ! zz.compare( 0,4, "post" )  ) {
+                m_fwdTime[yy] += calcFwd1Post( data, zz.substr(4), value );
+            } else {
+                m_fwdTime[yy] += calcFwd1( data, zz, value );
+            } 
+            break;
+          case 2:
+            if ( ! zz.compare( 0,3, "pre" )  ) {
+                m_fwdTime[yy] += calcFwd2Pre( data, zz.substr(3), value );
+            } else if ( ! zz.compare( 0,4, "post" )  ) {
+                m_fwdTime[yy] += calcFwd2Post( data, zz.substr(4), value );
+            } else {
+                m_fwdTime[yy] += calcFwd2( data, zz, value );
+            }
+            break;
+          case 3:
+            if ( ! zz.compare( 0,3, "pre" )  ) {
+                m_fwdTime[yy] += calcFwd3Pre( data, zz.substr(3), value );
+            } else if ( ! zz.compare( 0,4, "post" )  ) {
+                m_fwdTime[yy] += calcFwd3Post( data, zz.substr(4), value );
+            } else {
+                m_fwdTime[yy] += calcFwd3( data, zz, value );
+            }
+            break;
+          break;
+        }
+    } else {
+        switch ( yy ) {
+          case 1:
+            if ( ! zz.compare( 0,3, "pre" )  ) {
+                m_bwdTime[yy] += calcBwd1Pre( data, zz.substr(3), value );
+            } else if ( ! zz.compare( 0,4, "post" )  ) {
+                m_bwdTime[yy] += calcBwd1Post( data, zz.substr(4), value );
+            } else {
+                m_bwdTime[yy] += calcBwd1( data, zz, value );
+            } 
+            break;
+          case 2:
+            if ( ! zz.compare( 0,3, "pre" )  ) {
+                m_bwdTime[yy] += calcBwd2Pre( data, zz.substr(3), value );
+            } else if ( ! zz.compare( 0,4, "post" )  ) {
+                m_bwdTime[yy] += calcBwd2Post( data, zz.substr(4), value );
+            } else {
+                m_bwdTime[yy] += calcBwd2( data, zz, value );
+            }
+            break;
+          case 3:
+            if ( ! zz.compare( 0,3, "pre" )  ) {
+                m_bwdTime[yy] += calcBwd3Pre( data, zz.substr(3), value );
+            } else if ( ! zz.compare( 0,4, "post" )  ) {
+                m_bwdTime[yy] += calcBwd3Post( data, zz.substr(4), value );
+            } else {
+                m_bwdTime[yy] += calcBwd3( data, zz, value );
+            }
+            break;
+          break;
+        }
+    }    
 }
 
 bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ ) 
