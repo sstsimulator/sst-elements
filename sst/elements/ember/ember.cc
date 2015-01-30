@@ -275,8 +275,7 @@ static const ElementInfoParam fft3d_params[] = {
     { "arg.ny",         "Sets the size of a block in Y", "8" },
     { "arg.nz",         "Sets the size of a block in Z", "8" },
     { "arg.npRow",      "Sets the number of rows in the PE decomposition", "0" },
-	{ "arg.copytime",    "Sets the time spent copying data between messages",	"5"},
-	{ "arg.peflops",     "Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+    { "arg.configFile",  "", "" },
 	{	NULL,	NULL,	NULL	}
 };
 
