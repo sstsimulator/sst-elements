@@ -44,7 +44,7 @@ private:
 		return m_generator->generate( evQueue );
 	}
 	void handleEvent(SST::Event* ev);
-	void issueNextEvent(uint32_t nanoSecDelay);
+	void issueNextEvent(uint64_t nanoSecDelay);
     bool completeFunctor( int retval, EmberEvent* ev ); 
 
 	Hermes::OS*	m_os;

@@ -184,9 +184,9 @@ void EmberEngine::setup() {
 	issueNextEvent(0);
 }
 
-void EmberEngine::issueNextEvent(uint32_t nanoDelay) {
+void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
-    output.verbose(CALL_INFO, 8, 0, "Engine issuing next event with delay %" PRIu32 "\n", nanoDelay);
+    output.verbose(CALL_INFO, 8, 0, "Engine issuing next event with delay %" PRIu64 "\n", nanoDelay);
 
     while ( evQueue.empty() ) {
 
