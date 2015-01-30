@@ -51,22 +51,24 @@ void EmberFFT3DGenerator::configure()
 
     unsigned myRow = rank() % m_data.nprow; 
     unsigned myCol = rank() / m_data.nprow; 
-    m_output->verbose(CALL_INFO, 2, 0, "%d: nx=%d ny=%d nx=%d npRow=%d "
-        "m_data.npcol=%d myRow=%d myCol=%d\n", 
+    m_output->verbose(CALL_INFO, 2, 0, "%d: nx=%d ny=%d nx=%d nprow=%d "
+        "npcol=%d myRow=%d myCol=%d\n", 
             rank(), m_data.np0, m_data.np1, m_data.np2, 
                 m_data.nprow, m_data.npcol, myRow, myCol );
 
     m_rowGrpRanks.resize( m_data.npcol );
     m_colGrpRanks.resize( m_data.nprow );
+
     std::ostringstream tmp; 
-    for ( unsigned int i = 0; i < m_colGrpRanks.size(); i++ ) {
+
+    for ( unsigned int i = 0; i < m_rowGrpRanks.size(); i++ ) {
         m_rowGrpRanks[i] = myRow + i * m_data.nprow;
         tmp << m_rowGrpRanks[i] << " " ;
     }
     m_output->verbose(CALL_INFO, 2, 0,"row grp [%s]\n", tmp.str().c_str() );
     tmp.str("");
     tmp.clear();
-    for ( unsigned int i = 0; i < m_rowGrpRanks.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_colGrpRanks.size(); i++ ) {
         m_colGrpRanks[i] = myCol * m_data.nprow + i;
         tmp << m_colGrpRanks[i] << " " ;
     }
@@ -110,7 +112,7 @@ void EmberFFT3DGenerator::configure()
         for ( unsigned int i = 0; i < m_data.np1 % m_data.npcol; i++ ) {
             ++m_data.np1loc_col[i];
         }
-        m_data.np1locb = m_data.np1loc_row[myCol];
+        m_data.np1locb = m_data.np1loc_col[myCol];
     }
     
     {
@@ -196,16 +198,17 @@ void EmberFFT3DGenerator::configure()
     int size1 = m_data.np0 *m_data.np1locf *m_data.np2loc;
     int size2 = m_data.np1 * m_data.np0 *m_data.np2loc  / m_data.nprow;
     int size3 = m_data.np2 *m_data.np1locb * m_data.np0 / m_data.nprow;
+
     int maxsize = (size1 > size2 ? size1 : size2);
     maxsize = (maxsize > size3 ? maxsize : size3);
     m_sendBuf =   memAlloc( maxsize * COMPLEX );
     m_recvBuf =   memAlloc( maxsize * COMPLEX );
     m_output->verbose(CALL_INFO, 2, 0,"maxsize=%d\n",maxsize);
 
-    printf("%s\n",m_configFileName.c_str());
-    printf("np0=%d np1=%d np2=%d nprow=%d npcol=%d\n",
+    m_output->verbose(CALL_INFO, 2, 0,"%s\n",m_configFileName.c_str());
+    m_output->verbose(CALL_INFO, 2, 0,"np0=%d np1=%d np2=%d nprow=%d npcol=%d\n",
                 m_data.np0, m_data.np1, m_data.np2, m_data.nprow, m_data.npcol );
-    printf("np0half=%d np1loc=%d np1locf=%d no1locb=%d np2loc=%d\n",
+    m_output->verbose(CALL_INFO, 2, 0,"np0half=%d np1loc=%d np1locf=%d no1locb=%d np2loc=%d\n",
         m_data.np0half, m_data.np0loc, m_data.np1locf, m_data.np1locb, m_data.np2loc );
 
 #if 0
@@ -240,7 +243,6 @@ void EmberFFT3DGenerator::configure()
         float value;
         istringstream buffer( line.substr( pos + 1 ) );
         buffer >> value;
-        //cout << name << " " << value << "\n";
         initTime(m_data, name, value );
     }
     file.close();
