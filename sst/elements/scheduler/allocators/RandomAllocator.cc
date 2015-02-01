@@ -12,23 +12,24 @@
 #include "sst_config.h"
 #include "RandomAllocator.h"
 
+#include "sst/core/rng/mersenne.h"
+
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
 
-
 RandomAllocator::RandomAllocator(Machine* mesh) : Allocator(*mesh)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
-    mMachine = dynamic_cast<MeshMachine*>(mesh);
-    if (mMachine == NULL) {
-        schedout.fatal(CALL_INFO, 1, "Random Allocator requires Mesh");
-    }
-    srand(0);
+    rng = new SST::RNG::MersenneRNG();
+}
+
+RandomAllocator::~RandomAllocator()
+{
+    delete rng;
 }
 
 std::string RandomAllocator::getParamHelp()
@@ -58,22 +59,12 @@ AllocInfo* RandomAllocator::allocate(Job* job){
     //figure out which processors to use
     int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
     
-    std::vector<int>* freeNodes = mMachine->getFreeNodes();
-    std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
-    for(unsigned int i = 0; i < freeNodes->size(); i++){
-        available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    }   
-    delete freeNodes;
-    
+    std::vector<int>* freeNodes = machine.getFreeNodes();    
     for (int i = 0; i < nodesNeeded; i++) {
-        int num = rand() % available -> size();
-        retVal -> nodeIndices[i] = (*available)[num] -> toInt(*mMachine);
-        available -> erase(available -> begin() + num);
+        int num = rng->generateNextInt32() % freeNodes -> size();
+        retVal->nodeIndices[i] = freeNodes->at(num);
+        freeNodes->erase(freeNodes->begin() + num);
     }
-    for (int i = 0; i < (int)available -> size(); i++) {
-        delete available -> at(i);
-    }
-    available -> clear();
-    delete available;
+    delete freeNodes;
     return retVal;
 }

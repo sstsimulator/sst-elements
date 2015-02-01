@@ -39,7 +39,7 @@
 
 //#include "sst/core/serialization.h"
 
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 
 namespace SST {
     namespace Scheduler {
@@ -60,8 +60,12 @@ namespace SST {
             public:
                 LInfComparator(int x, int y, int z) 
                 {
+                    std::vector<int> tempVec(3);
+                    tempVec[0] = x;
+                    tempVec[1] = y;
+                    tempVec[2] = z;
                     //constructor that takes coordinates of reference point
-                    pt = new MeshLocation(x, y, z);
+                    pt = new MeshLocation(tempVec);
                 }
 
                 bool operator()(MeshLocation* L1, MeshLocation* L2) 
@@ -83,8 +87,8 @@ namespace SST {
             //a way to generate possible center points
 
             protected:
-                MeshMachine* machine;  //the machine we're generating for
-                CenterGenerator(MeshMachine* m) 
+                StencilMachine* machine;  //the machine we're generating for
+                CenterGenerator(StencilMachine* m) 
                 {
                     machine = m;
                 }
@@ -99,7 +103,7 @@ namespace SST {
             //generated list is all free locations
 
             public:
-                FreeCenterGenerator(MeshMachine* m) : CenterGenerator(m) { }
+                FreeCenterGenerator(StencilMachine* m) : CenterGenerator(m) { }
 
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available); 
 
@@ -110,8 +114,8 @@ namespace SST {
             //find the free nodes with best cooling properties
 
             public:
-                CoolingGenerator(MeshMachine* m) : CenterGenerator(m) { } 
-                std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);//, MeshMachine* m); 
+                CoolingGenerator(StencilMachine* m) : CenterGenerator(m) { } 
+                std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);//, StencilMachine* m); 
                 std::string getSetupInfo(bool comment); 
         };
 
@@ -120,7 +124,7 @@ namespace SST {
             //(including the free locations themselves)
 
             public:
-                IntersectionCenterGen(MeshMachine* m) : CenterGenerator(m) { }
+                IntersectionCenterGen(StencilMachine* m) : CenterGenerator(m) { }
 
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available); 
 
@@ -132,7 +136,7 @@ namespace SST {
             //generated list is all locations 
             public:
 
-                AllCenterGenerator(MeshMachine* m) : CenterGenerator(m) { }
+                AllCenterGenerator(StencilMachine* m) : CenterGenerator(m) { }
                 
                 std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);
 
@@ -155,7 +159,7 @@ namespace SST {
             //a way to gather nearest free processors to a given center
 
             public:
-                virtual std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const MeshMachine & mach) = 0;
+                virtual std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const StencilMachine & mach) = 0;
                 virtual std::string getSetupInfo(bool comment) = 0;
                 //returns num nearest locations to center from available
                 //may reorder available and return it
@@ -165,7 +169,7 @@ namespace SST {
         class L1PointCollector : public PointCollector {
             //collects points nearest to center in terms of L1 distance
             public:
-                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const MeshMachine & mach); 
+                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const StencilMachine & mach); 
 
                 std::string getSetupInfo(bool comment);
 
@@ -174,7 +178,7 @@ namespace SST {
         class LInfPointCollector : public PointCollector{
 
             public:
-                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const MeshMachine & mach); 
+                std::vector<MeshLocation*>* getNearest(MeshLocation* center, int num, const StencilMachine & mach); 
 
                 std::string getSetupInfo(bool comment);
 
@@ -185,7 +189,7 @@ namespace SST {
         class Scorer {
             //a way to evaluate a possible allocation; low is better
             public:
-                virtual std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs,int num, MeshMachine* mach) = 0;
+                virtual std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, StencilMachine* mach) = 0;
                 virtual std::string getSetupInfo(bool comment) = 0;
                 //returns score associated with first num members of procs
                 //center is the center point used to select these
@@ -196,11 +200,8 @@ namespace SST {
             //evaluates by sum of pairwise L1 distances
 
             public:
-                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach) 
-                {
-                    //returns pairwise L1 dist between first num members of procs
-                    return new std::pair<long,long>(mach -> pairwiseL1Distance(procs),0);
-                }
+                //returns pairwise L1 dist between given procs
+                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, StencilMachine* mach);
                 std::string getSetupInfo(bool comment);
         };
 
@@ -222,7 +223,7 @@ namespace SST {
 
                 //Takes mesh center, available processors sorted by correct comparator,
                 //and number of processors needed and returns tiebreak value.
-                long getTiebreak(MeshLocation* center, std::vector<MeshLocation*>* avail, int num, MeshMachine* mesh);
+                long getTiebreak(MeshLocation* center, std::vector<MeshLocation*>* avail, StencilMachine* mesh);
 
                 Tiebreaker(long ms, long af, long wf, long bf) ;
 
@@ -251,7 +252,7 @@ namespace SST {
                 Tiebreaker* tiebreaker;
 
             public:
-                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach) ;
+                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, StencilMachine* mach) ;
 
                 LInfDistFromCenterScorer(Tiebreaker* tb);
 
@@ -267,11 +268,9 @@ namespace SST {
         class L1DistFromCenterScorer : public Scorer {
             //evaluates by sum of L1 distance from center
             public:
-                L1DistFromCenterScorer()
-                {
-                }
+                L1DistFromCenterScorer() { }
 
-                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, int num, MeshMachine* mach);
+                std::pair<long,long>* valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, StencilMachine* mach);
 
                 std::string getSetupInfo(bool comment)
                 {

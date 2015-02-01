@@ -22,7 +22,7 @@
 #include "FST.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "output.h"
 #include "Scheduler.h"
 #include "TaskMapInfo.h"
@@ -122,9 +122,8 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, Tas
                 if (logName == supportedLogs[i].logName) {
                     found = true;
 
-                    if ((NULL == (MeshMachine*)machine) && ((ALLOC == i) || (VISUAL == i))) {
-                        //error(string(logName) + " log only implemented for meshes");
-                        schedout.fatal(CALL_INFO, 1, "%s log only implemented for meshes", string(logName).c_str());
+                    if ((NULL == (StencilMachine*)machine) && ((ALLOC == i) || (VISUAL == i))) {
+                        schedout.fatal(CALL_INFO, 1, "%s log only implemented for mesh/torus", string(logName).c_str());
                     }
 
                     initializeLog(logName);
@@ -145,9 +144,8 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, Tas
                 if (logName == supportedLogsFST[i].logName) {
                     found = true;
 
-                    if ((NULL == (MeshMachine*)machine) && ((ALLOC == i) || (VISUAL == i))) {
-                        //error(string(logName) + " log only implemented for meshes");
-                        schedout.fatal(CALL_INFO, 1, "%s log only implemented for meshes", string(logName).c_str());
+                    if ((NULL == (StencilMachine*)machine) && ((ALLOC == i) || (VISUAL == i))) {
+                        schedout.fatal(CALL_INFO, 1, "%s log only implemented for mesh/torus", string(logName).c_str());
                     }
 
                     initializeLog(logName);

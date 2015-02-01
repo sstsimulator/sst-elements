@@ -39,17 +39,7 @@
 #include <set>
 #include <algorithm>  //for std::stable_sort
 
-
-
-
-
-
-#include <iostream>
-
-
-
-
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 
 using namespace std;
 using namespace SST::Scheduler;
@@ -99,14 +89,14 @@ vector<MeshLocation*>* IntersectionCenterGen::getCenters(vector<MeshLocation*>* 
 
     //no duplicate values
     for (vector<MeshLocation*>::iterator loc = available -> begin(); loc != available -> end(); ++loc) {
-        if (!contains(&X,(*loc) -> x)) {
-            X.push_back((*loc) -> x);
+        if (!contains(&X,(*loc) -> dims[0])) {
+            X.push_back((*loc) -> dims[0]);
         }
-        if (!contains(&Y,(*loc) -> y)) {
-            Y.push_back((*loc) -> y);
+        if (!contains(&Y,(*loc) -> dims[1])) {
+            Y.push_back((*loc) -> dims[1]);
         }
-        if (!contains(&Z,(*loc) -> z)) {
-            Z.push_back((*loc) -> z);
+        if (!contains(&Z,(*loc) -> dims[2])) {
+            Z.push_back((*loc) -> dims[2]);
         }
     }
 
@@ -115,7 +105,11 @@ vector<MeshLocation*>* IntersectionCenterGen::getCenters(vector<MeshLocation*>* 
         for (vector<int>::iterator ind_y = Y.begin(); ind_y != Y.end(); ind_y++) { 
             for (vector<int>::iterator ind_z = Z.begin(); ind_z != Z.end(); ind_z++) {
                 //Get an intersection with current x, y and z values
-                MeshLocation* val = new MeshLocation(*(ind_x), *(ind_y), *(ind_z) );                                                                  
+                vector<int> tempVec(3);
+                tempVec[0] = *(ind_x);
+                tempVec[1] = *(ind_y);
+                tempVec[2] = *(ind_z);
+                MeshLocation* val = new MeshLocation(tempVec);                                                                  
                 retVal->push_back(val); //Add to the return value list
             }
         }
@@ -139,30 +133,33 @@ string IntersectionCenterGen::getSetupInfo(bool comment)
 vector<MeshLocation*>* AllCenterGenerator::getCenters(vector<MeshLocation*>* available) {
     vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
 
-    int xdim = machine -> getXDim();
-    int ydim = machine -> getYDim();
-    int zdim = machine -> getZDim();
+    int xdim = machine -> dims[0];
+    int ydim = machine -> dims[1];
+    int zdim = machine -> dims[2];
     for(int i = 0; i < xdim; i++) {
         for(int j = 0; j < ydim; j++) {
             for(int k = 0; k < zdim; k++) {
-                retVal -> push_back(new MeshLocation(i,j,k));
+                vector<int> tempVec(3);
+                tempVec[0] = i;
+                tempVec[1] = j;
+                tempVec[2] = k;
+                retVal -> push_back(new MeshLocation(tempVec));
             }
         }
     }
     return retVal;
 }
 
-
 //Point Collectors:
 
-vector<MeshLocation*>* L1PointCollector::getNearest(MeshLocation* center, int num, const MeshMachine & mach) 
+vector<MeshLocation*>* L1PointCollector::getNearest(MeshLocation* center, int num, const StencilMachine & mach) 
 {
     //get sufficient nodes
     int found = 1;
     int dist = 1;
     std::list<int>* nodeList = new std::list<int>();
-    while(found < num && dist <= (mach.getXDim() + mach.getYDim() + mach.getZDim())){
-        std::list<int>* tempList = mach.getFreeAtL1Distance(center->toInt(mach), dist);
+    while(found < num && dist <= (mach.dims[0] + mach.dims[1] + mach.dims[2])){
+        std::list<int>* tempList = mach.getFreeAtDistance(center->toInt(mach), dist);
         found += tempList->size();
         nodeList->insert(nodeList->end(), tempList->begin(), tempList->end());
         delete tempList;
@@ -193,13 +190,13 @@ string  L1PointCollector::getSetupInfo(bool comment)
     return com + "L1PointCollector";
 }
 
-vector<MeshLocation*>* LInfPointCollector::getNearest(MeshLocation* center, int num, const MeshMachine & mach) 
+vector<MeshLocation*>* LInfPointCollector::getNearest(MeshLocation* center, int num, const StencilMachine & mach) 
 {
     //get sufficient nodes
     int found = 1;
     int dist = 1;
     std::list<int>* nodeList = new std::list<int>();
-    while(found < num && dist <= (mach.getXDim() + mach.getYDim() + mach.getZDim())){
+    while(found < num && dist <= (mach.dims[0] + mach.dims[1] + mach.dims[2])){
         std::list<int>* tempList = mach.getFreeAtLInfDistance(center->toInt(mach), dist);
         found += tempList->size();
         nodeList->insert(nodeList->end(), tempList->begin(), tempList->end());
@@ -244,10 +241,22 @@ string PairwiseL1DistScorer::getSetupInfo(bool comment)
     return com + "PairwiseL1DistScorer";
 }
 
+std::pair<long,long>* PairwiseL1DistScorer::valueOf(MeshLocation* center, std::vector<MeshLocation*>* procs, StencilMachine* mach) 
+{
+    long retVal = 0;
+    for (unsigned int i = 0; i < procs->size(); i++) {
+        for (unsigned int j = i + 1; j < procs->size(); j++) {
+            retVal += procs->at(i)->L1DistanceTo(*(procs->at(j)));
+        }
+    }
+    return new std::pair<long,long>(retVal,0);
+}
+
 //Takes mesh center, available processors sorted by correct comparator,
 //and number of processors needed and returns tiebreak value.
-long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail, int num, MeshMachine* mesh)
+long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail, StencilMachine* mesh)
 {
+    int num = avail->size();
     long ret = 0;
 
     lastTieInfo = "0\t0\t0";
@@ -256,7 +265,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
         return 0;
     }
 
-    LInfComparator* lc = new LInfComparator(center -> x,center -> y,center -> z);
+    LInfComparator* lc = new LInfComparator(center -> dims[0],center -> dims[1],center -> dims[2]);
     stable_sort(avail -> begin(), avail -> end(),*lc);
     delete lc;
     if (maxshells == 0) {
@@ -270,7 +279,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
     long lastshell=center -> LInfDistanceTo(*((*avail)[num-1]));
     long lastlook=lastshell + maxshells;
     lastTieInfo="";
-    long ydim = mesh -> getYDim();
+    int ydim = mesh -> dims[1];
 
     //Add to score for nearby available processors.
     if(availFactor != 0) {
@@ -287,14 +296,14 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
 
     //Subtract from score for nearby walls
     if (wallFactor != 0) {
-        long xdim = mesh -> getXDim();
-        long zdim = mesh -> getZDim();
+        int xdim = mesh -> dims[0];
+        int zdim = mesh -> dims[2];
         for (int i = 0; i < num; i++) {
-            long dist = center -> LInfDistanceTo(*((*avail)[i]));
+            int dist = center -> LInfDistanceTo(*((*avail)[i]));
             //if(dist == lastshell)
-            if( (((*avail)[i] -> x == 0 || (*avail)[i] -> x == xdim-1) && xdim > 2) || 
-                (((*avail)[i] -> y == 0 || (*avail)[i] -> y == ydim-1) && ydim > 2) || 
-                (((*avail)[i] -> z == 0 || (*avail)[i] -> z == zdim-1) && zdim > 2)) {
+            if( ((avail->at(i)->dims[0] == 0 || avail->at(i)->dims[0] == xdim-1) && xdim > 2) || 
+                ((avail->at(i)->dims[1] == 0 || avail->at(i)->dims[1] == ydim-1) && ydim > 2) || 
+                ((avail->at(i)->dims[2] == 0 || avail->at(i)->dims[2] == zdim-1) && zdim > 2)) {
                 //NOTE: After removing if statement above, is this right?
                 wscore -= wallFactor * (lastlook - dist + 1);
                 ret -= wallFactor * (lastlook - dist + 1);
@@ -311,7 +320,7 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
         }   
         delete usedNodes;
         
-        LInfComparator* lc = new LInfComparator(center -> x,center -> y,center -> z);
+        LInfComparator* lc = new LInfComparator(center -> dims[0],center -> dims[1],center -> dims[2]);
         stable_sort(used -> begin(), used -> end(),*lc);
         delete lc;
         for (vector<MeshLocation*>::iterator it = used -> begin(); it != used -> end(); ++it){
@@ -337,9 +346,9 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
     //Only works for 2D now.
     long cscore = 0;
     if (curveFactor != 0) {
-        long centerLine = center -> x / curveWidth;
+        long centerLine = center -> dims[0] / curveWidth;
         long tsc = ydim * centerLine;
-        tsc += (centerLine % 2 == 0) ? (center->y) : (ydim - center -> y);
+        tsc += (centerLine % 2 == 0) ? (center->dims[1]) : (ydim - center -> dims[1]);
         cscore += curveFactor * tsc;
         ret += cscore;
     }
@@ -371,14 +380,14 @@ string Tiebreaker::getInfo()
 }
 
 
-pair<long,long>* LInfDistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MeshMachine* mach) {
+pair<long,long>* LInfDistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, StencilMachine* mach) {
     //returns the sum of the LInf distances of the num closest processors
 
     long retVal = 0;
-    for (int i = 0; i < num; i++) 
+    for (unsigned int i = 0; i < procs->size(); i++) 
         retVal += center -> LInfDistanceTo(*((*procs)[i]));
 
-    long tiebreak = tiebreaker -> getTiebreak(center,procs,num, mach);
+    long tiebreak = tiebreaker -> getTiebreak(center,procs, mach);
 
     return new pair<long,long>(retVal,tiebreak);
 }
@@ -402,11 +411,11 @@ string  LInfDistFromCenterScorer::getSetupInfo(bool comment)
     return ret.str();
 }
 
-pair<long,long>* L1DistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MeshMachine* mach) 
+pair<long,long>* L1DistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, StencilMachine* mach) 
 {
     //returns sum of L1 distances from center
     long retVal = 0;
-    for (int i = 0; i < num; i++)
+    for (unsigned int i = 0; i < procs->size(); i++)
         retVal += center -> L1DistanceTo(*(procs->at(i)));
     return new pair<long,long>(retVal,0);
 }

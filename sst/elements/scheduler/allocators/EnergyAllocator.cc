@@ -32,20 +32,14 @@
 #include "EnergyAllocClasses.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
 
-EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, Machine* mach) : Allocator(*mach)
+EnergyAllocator::EnergyAllocator(std::vector<std::string>* params, const Machine & mach) : Allocator(mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     configName = "Energy";
-        
-    mMachine = dynamic_cast<MeshMachine*>(mach);
-    if(mMachine == NULL){
-        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a mesh machine");
-    }
 }
 
 
@@ -69,22 +63,16 @@ std::string EnergyAllocator::getSetupInfo(bool comment) const
 
 AllocInfo* EnergyAllocator::allocate(Job* job)
 {
-    std::vector<int>* freeNodes = mMachine->getFreeNodes();
-    std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
-    for(unsigned int i = 0; i < freeNodes->size(); i++){
-        available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    }   
-    delete freeNodes;
-    
+    std::vector<int>* available = machine.getFreeNodes();    
     return allocate(job, available);
 }
 
 //Allocates job if possible.
 //Returns information on the allocation or null if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation).
-AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
+AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<int>* available) 
 {
-    if (!canAllocate(*job, available)) {
+    if (!canAllocate(*job)) {
         return NULL;
     }
 
@@ -95,16 +83,15 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<MeshLocation*>* avail
     //optimization: if exactly enough procs are free, just return them
     if ((unsigned int) nodesNeeded == available -> size()) {
         for (int i = 0; i < nodesNeeded; i++) {
-            retVal -> nodeIndices[i] = (*available)[i] -> toInt(*mMachine);
+            retVal -> nodeIndices[i] = available->at(i);
         }
         delete available;
         return retVal;
     }
 
-    std::vector<MeshLocation*>* ret = EnergyHelpers::getEnergyNodes(available, nodesNeeded, *mMachine);
+    std::vector<int>* ret = EnergyHelpers::getEnergyNodes(available, nodesNeeded, machine);
     for (int i = 0; i < nodesNeeded; i++) {
-        retVal->nodeIndices[i] = ret->at(i)->toInt(*mMachine);
-        delete (*available)[i];
+        retVal->nodeIndices[i] = ret->at(i);
     }
     delete available;
     return retVal;

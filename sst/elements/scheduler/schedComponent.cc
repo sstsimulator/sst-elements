@@ -30,7 +30,7 @@
 #include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "misc.h"
 #include "Scheduler.h"
 #include "Statistics.h"
@@ -91,7 +91,6 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         _abort(event_test,"couldn't find trace name\n");
     }
 
-
     //set up output
     schedout.init("", 8, 0, Output::STDOUT);
 
@@ -149,6 +148,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     theTaskMapper = factory.getTaskMapper(params, machine);
     FSTtype = factory.getFST(params);
     timePerDistance = factory.getTimePerDistance(params);
+
     string trace = params["traceName"].c_str();
     if (FSTtype > 0) {
         calcFST = new FST(FSTtype);  //must call calcFST -> setup() once we know the number of jobs (in other words, in setup())
@@ -156,7 +156,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         calcFST = NULL;
     }
 
-    if (NULL == dynamic_cast<MeshMachine*>(machine)) {
+    if (NULL == dynamic_cast<StencilMachine*>(machine)) {
         char timestring[] = "time";
         stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
     } else {
@@ -407,7 +407,6 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
     }  
 }
 
-
 void schedComponent::handleJobArrivalEvent(Event *ev) 
 {    
     schedout.debug(CALL_INFO, 4, 0, "arrival event\n");
@@ -525,14 +524,12 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     schedout.debug(CALL_INFO, 4, 0, "finishing arrival event\n");
 }
 
-
 void schedComponent::finish() 
 {
     scheduler -> done();
     stats -> done();
     theAllocator -> done();
 }
-
 
 void schedComponent::startJob(Job* job) 
 {
@@ -548,18 +545,18 @@ void schedComponent::startJob(Job* job)
     
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;
-    unsigned long actualRunningTime = job->getActualTime();   
+    unsigned long actualRunningTime = job->getActualTime();
     
-    MeshMachine* mMachine = dynamic_cast<MeshMachine*>(machine);
+    StencilMachine* sMachine = dynamic_cast<StencilMachine*>(machine);
 
     if (timePerDistance -> at(0) != 0
-          && NULL != mMachine
+          && NULL != sMachine
           && NULL != ai ) {
         double randomNumber = (rng->nextUniform() * 2 - 1) * timePerDistance->at(2);
 
         //calculate baseline hopBytes
-        AllocInfo* baselineAlloc = mMachine->getBaselineAllocation(job);
-        SimpleTaskMapper baselineMapper = SimpleTaskMapper(*mMachine);
+        AllocInfo* baselineAlloc = sMachine->getBaselineAllocation(job);
+        SimpleTaskMapper baselineMapper = SimpleTaskMapper(*sMachine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
         double baselineHopBytes = baselineMap->getHopBytes();
         delete baselineMap;
@@ -595,7 +592,6 @@ void schedComponent::startJob(Job* job)
         logJobStart(itmi);
     }
 }
-
 
 void schedComponent::logJobStart(ITMI itmi)
 {

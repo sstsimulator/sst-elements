@@ -21,19 +21,20 @@
 #include <vector>
 
 #include "sst/core/serialization.h"
+ #include "sst/core/rng/sstrand.h"
 
 #include "Allocator.h"
 
 namespace SST {
     namespace Scheduler {
         class Machine;
-        class MeshMachine;
         class Job;
 
         class RandomAllocator : public Allocator {
 
             public:
-                RandomAllocator(Machine* mesh);
+                RandomAllocator(Machine* mach);
+                ~RandomAllocator();
 
                 RandomAllocator Make(std::vector<std::string*>* params);
 
@@ -44,7 +45,8 @@ namespace SST {
                 AllocInfo* allocate(Job* job);
                 
             private:
-                MeshMachine *mMachine;
+                SST::RNG::SSTRandom* rng;  //random number generator
+
         };
 
     }

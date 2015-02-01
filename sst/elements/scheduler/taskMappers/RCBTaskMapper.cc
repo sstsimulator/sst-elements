@@ -16,7 +16,7 @@
 
 #include "AllocInfo.h"
 #include "Job.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "SimpleTaskMapper.h"
 #include "TaskCommInfo.h"
 #include "TaskMapInfo.h"
@@ -25,9 +25,11 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-RCBTaskMapper::RCBTaskMapper(const MeshMachine & inMach) : TaskMapper(inMach), mMachine(inMach)
+RCBTaskMapper::RCBTaskMapper(const StencilMachine & inMach) : TaskMapper(inMach), mMachine(inMach)
 {
-
+    if(inMach.numDims() != 3){
+        schedout.fatal(CALL_INFO, 1, "RCB task mapper requires a 3D mesh/torus.");
+    }
 }
 
 std::string RCBTaskMapper::getSetupInfo(bool comment) const
@@ -227,7 +229,7 @@ int RCBTaskMapper::Grouper<T>::sort_compByDim(T first, T second, int dim)
 }
 
 RCBTaskMapper::Rotator::Rotator(const RCBTaskMapper & rcb,
-                                const MeshMachine & mach) : rcb(rcb), mach(mach)
+                                const StencilMachine & mach) : rcb(rcb), mach(mach)
 {
     indMap = NULL;
     locs = NULL;
@@ -236,7 +238,7 @@ RCBTaskMapper::Rotator::Rotator(const RCBTaskMapper & rcb,
 RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
                                 Grouper<int> *jobLocs,
                                 const RCBTaskMapper & rcb,
-                                const MeshMachine & mach) : rcb(rcb), mach(mach)
+                                const StencilMachine & mach) : rcb(rcb), mach(mach)
 {
     //register yourself
     meshLocs->rotator = this;
@@ -251,9 +253,9 @@ RCBTaskMapper::Rotator::Rotator(Grouper<MeshLocation> *meshLocs,
     for(int i = 0; i < size; i++){
         MeshLocation curLoc = meshLocs->elements->at(i);
         indMap[curLoc.toInt(mach)] = i; //overwriting the same location is fine
-        locs[0][i] = curLoc.x;
-        locs[1][i] = curLoc.y;
-        locs[2][i] = curLoc.z;
+        locs[0][i] = curLoc.dims[0];
+        locs[1][i] = curLoc.dims[1];
+        locs[2][i] = curLoc.dims[2];
     }
 
     //apply rotation where needed
@@ -344,9 +346,9 @@ RCBTaskMapper::Dims RCBTaskMapper::Rotator::getDims(MeshLocation loc) const
 {
     Dims outDims;
     if(indMap == NULL){ //support for Grouper initialization
-        outDims.val[0] = loc.x;
-        outDims.val[1] = loc.y;
-        outDims.val[2] = loc.z;
+        outDims.val[0] = loc.dims[0];
+        outDims.val[1] = loc.dims[1];
+        outDims.val[2] = loc.dims[2];
     } else {
         outDims.val[0] = locs[0][indMap[loc.toInt(mach)]];
         outDims.val[1] = locs[1][indMap[loc.toInt(mach)]];

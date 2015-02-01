@@ -13,7 +13,6 @@
 #define SST_SCHEDULER_TASKMAPPER_H__
 
 #include <string>
-#include <boost/bimap/bimap.hpp>
 
 #include "Machine.h"
 

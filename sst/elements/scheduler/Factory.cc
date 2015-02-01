@@ -19,11 +19,12 @@
 
 #include <sst/core/params.h>
 
+#include "InputParser.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "Mesh3DMachine.h"
 #include "schedComponent.h"
 #include "SimpleMachine.h"
-#include "InputParser.h"
+#include "StencilMachine.h"
  
 #include "allocators/NearestAllocator.h"
 #include "allocators/OctetMBSAllocator.h"
@@ -71,6 +72,7 @@ const Factory::schedTableEntry Factory::schedTable[] = {
 const Factory::machTableEntry Factory::machTable[] = {
     {SIMPLEMACH, "simple"},
     {MESH, "mesh"},
+    {TORUS, "torus"},
 };
 
 const Factory::allocTableEntry Factory::allocTable[] = {
@@ -255,25 +257,25 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
             //Mesh Machine
         case MESH:
             {
-                schedout.debug(CALL_INFO, 4, 0, "Mesh Machine\n");
-
+                schedout.debug(CALL_INFO, 4, 0, "Mesh 3D Machine\n");
+                
                 if (schedparams -> size() != 3 && schedparams -> size() != 4) {
                     schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Mesh Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
                 }
-                int x = strtol(schedparams -> at(1).c_str(), NULL, 0); 
-                int y = strtol(schedparams -> at(2).c_str(), NULL, 0); 
-                int z;
+
+                std::vector<int> dims(3);
+                dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0); 
+                dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0); 
                 if (schedparams -> size() == 4) {
-                    z = strtol(schedparams -> at(3).c_str(), NULL, 0); 
+                    dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0); 
                 } else {
-                    z = 1;
+                    dims[2] = 1;
                 }
-                if (x * y * z != numNodes) {
+                if (dims[0] * dims[1] * dims[2] != numNodes) {
                     schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of nodes");
                 }
-                retMachine = new MeshMachine(x, y, z, coresPerNode, D_matrix);
+                retMachine = new Mesh3DMachine(dims, coresPerNode, D_matrix);
                 break;
-
             }
         default:
             schedout.fatal(CALL_INFO, 1, "Cannot parse name of machine");
@@ -287,7 +289,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
-    MeshMachine *mMachine = dynamic_cast<MeshMachine*>(m);
+    StencilMachine *mMachine = dynamic_cast<StencilMachine*>(m);
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
@@ -346,7 +348,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
             schedout.debug(CALL_INFO, 4, 0, "Energy-Aware Allocator\n");
             nearestparams = new vector<string>;
             nearestparams -> push_back("Energy");
-            return new EnergyAllocator(nearestparams, m);
+            return new EnergyAllocator(nearestparams, *m);
             break;
         case HYBRID:
             schedout.debug(CALL_INFO, 4, 0, "Hybrid Allocator\n");
@@ -451,17 +453,17 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
         taskMapper = new SimpleTaskMapper(*mach);
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Task Mapper\n");
     } else {
-        MeshMachine *mMachine = dynamic_cast<MeshMachine*>(mach);
+        StencilMachine *sMachine = dynamic_cast<StencilMachine*>(mach);
         vector<string>* taskmapparams = parseparams(params["taskMapper"]);
         switch (taskmappername( taskmapparams->at(0) )){
         case SIMPLEMAP:
             taskMapper = new SimpleTaskMapper(*mach);
             break;
         case RCBMAP:
-            if(mMachine == NULL){
-                schedout.fatal(CALL_INFO, 1, "RCB Mapper requires mesh machine\n");
+            if(sMachine == NULL){
+                schedout.fatal(CALL_INFO, 1, "RCB Mapper requires mesh/torus machine\n");
             }
-            taskMapper = new RCBTaskMapper(*mMachine);
+            taskMapper = new RCBTaskMapper(*sMachine);
             break;
         case RANDOMMAP:
             taskMapper = new RandomTaskMapper(*mach);
@@ -473,14 +475,14 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             taskMapper = new TopoMapper(*mach, TopoMapper::RCM);
             break;  
         case NEARESTAMT:
-            if(mMachine == NULL){
+            if(sMachine == NULL){
                 schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
             }
             if(params.find("allocator") != params.end()
               && allocatorname(parseparams(params["allocator"])->at(0)) == NEARESTAMAP ){
-                taskMapper = new NearestAllocMapper(*mMachine, true);
+                taskMapper = new NearestAllocMapper(*sMachine, true);
             } else {
-                taskMapper = new NearestAllocMapper(*mMachine, false);
+                taskMapper = new NearestAllocMapper(*sMachine, false);
             }
             break;  
         case SPECTRALAMT:

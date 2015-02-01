@@ -28,7 +28,7 @@
 #include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "output.h"
 
 using namespace SST::Scheduler;

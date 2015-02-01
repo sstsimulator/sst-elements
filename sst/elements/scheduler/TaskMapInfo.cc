@@ -144,7 +144,7 @@ void TaskMapInfo::updateNetworkMetrics()
             //add communication to the traffic
             if(nodeIter < it->first){ //avoid duplicates
                 //get used links
-                std::vector<unsigned int> route = machine.getRoute(nodeIter, it->first, it->second);
+                std::vector<int> route = machine.getRoute(nodeIter, it->first, it->second);
                 //iterate through the links to populate traffic
                 for(unsigned int linkIt = 0; linkIt < route.size(); linkIt++){
                     if(traffic.count(route[linkIt]) == 0){ // no existing communication there

@@ -28,21 +28,16 @@
 #include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
-#include "MeshMachine.h"
 #include "output.h"
-
-#define DEBUG false
+#include "StencilMachine.h"
 
 using namespace SST::Scheduler;
 using namespace std;
-
 
 BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): LinearAllocator(params, mach) 
 {
     schedout.init("", 8, 0, Output::STDOUT);
     schedout.debug(CALL_INFO, 0, 0, "Constructing BestFitAllocator\n");
-    mMachine = dynamic_cast<MeshMachine*>(mach);
-    if (NULL == mMachine) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
 }
 
 string BestFitAllocator::getSetupInfo(bool comment) const
@@ -62,8 +57,6 @@ string BestFitAllocator::getSetupInfo(bool comment) const
 //allocation)
 AllocInfo* BestFitAllocator::allocate(Job* job) 
 {
-    //schedout.debug(CALL_INFO, 7, 0, "Allocating %s nodes: \n", job -> toString().c_str());
-
     //check if we have enough free nodes
     if (!canAllocate(*job)) return NULL;
 
@@ -96,17 +89,12 @@ AllocInfo* BestFitAllocator::allocate(Job* job)
             delete intervals -> at(i);
         }
     }
-    
-    
 
     if (bestInterval == -1) {
         //no single interval is big enough; minimize the span
         return minSpanAllocate(job);
     } else {
         AllocInfo* retVal = new AllocInfo(job, machine);
-        if(mMachine == NULL){
-            schedout.fatal(CALL_INFO, 1, "Best Fit Allocator requires MeshMachine");
-        }
         int j;
         for (j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
             if (j < num) {

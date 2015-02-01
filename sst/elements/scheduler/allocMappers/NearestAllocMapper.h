@@ -24,7 +24,7 @@ namespace SST {
 
         class AllocInfo;
         class Job;
-        class MeshMachine;
+        class StencilMachine;
 
         class NearestAllocMapper : public AllocMapper {
             public:
@@ -35,7 +35,7 @@ namespace SST {
                 
                 //add O(VE + V^2 lg V) if center task is not provided
 
-                NearestAllocMapper(const MeshMachine & mach,
+                NearestAllocMapper(const Machine & mach,
                                    bool allocateAndMap,
                                    NodeGenType nodeGen = EXHAUST_NODE);
                 ~NearestAllocMapper();
@@ -44,8 +44,6 @@ namespace SST {
 
             private:
                 NodeGenType nodeGen;
-
-                const MeshMachine & mMachine;
                 long int lastNode;
                 std::list<long> radiusToVolume;
 

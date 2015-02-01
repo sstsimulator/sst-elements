@@ -20,7 +20,6 @@
 #include "Job.h"
 #include "FibonacciHeap.h"
 #include "Machine.h"
-#include "MeshMachine.h"
 #include "TaskCommInfo.h"
 #include "output.h"
 
@@ -30,10 +29,10 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-NearestAllocMapper::NearestAllocMapper(const MeshMachine & mach,
+NearestAllocMapper::NearestAllocMapper(const Machine & mach,
                                        bool allocateAndMap,
                                        NodeGenType inNodeGen)
-    : AllocMapper(mach, allocateAndMap), mMachine(mach)
+    : AllocMapper(mach, allocateAndMap)
 {
     nodeGen = inNodeGen;
     lastNode = 0;
@@ -382,18 +381,17 @@ double NearestAllocMapper::dijkstraWithLimit(const vector<map<int,int> > & graph
 
 std::list<int>* NearestAllocMapper::closestNodes(const long int srcNode, const int initDist) const
 {
-    int delta = initDist - 1;  //L1 distance to search for
-    int largestDelta = mMachine.getXDim() + mMachine.getYDim() + mMachine.getZDim();
+    int delta = initDist - 1;  //distance to search for
     std::list<int>* outList = new std::list<int>();
     while(outList->size() == 0){
-        //increase L1 distance of the search
+        //increase distance of the search
         delta++;
-        if(delta > largestDelta){
+        if(delta > machine.numNodes){
             //no available node found - this is an exception when allocating the last node in machine
             break;
         }
         delete outList;
-        outList = mMachine.getFreeAtL1Distance(srcNode, delta);
+        outList = machine.getFreeAtDistance(srcNode, delta);
         //eliminate those which are not free in the temporary list
         list<int>::iterator it = outList->begin();
         while(it != outList->end()){

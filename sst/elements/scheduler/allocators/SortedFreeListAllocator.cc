@@ -24,7 +24,7 @@
 #include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
@@ -55,7 +55,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
     if (!canAllocate(*job)) {
         return NULL;
     }
-    
+
     std::vector<int>* freeNodes = machine.getFreeNodes();
     std::vector<MeshLocation*>* freeprocs = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
@@ -71,9 +71,8 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
     for (int i = 0; i < (int)freeprocs -> size(); i++) {
         if (i < nodesNeeded) {
             retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt(*mMachine);
-        } else {
-            delete freeprocs -> at(i);
         }
+        delete freeprocs -> at(i);
     }
     delete freeprocs;
     return retVal;

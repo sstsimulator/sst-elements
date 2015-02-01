@@ -33,7 +33,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "output.h"
 
 #define DEBUG false
@@ -243,15 +243,15 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
 
 LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool SORT = false, bool hilbert = true) 
 {
-    MeshMachine* m = dynamic_cast<MeshMachine*>(mach);
+    StencilMachine* m = dynamic_cast<StencilMachine*>(mach);
     //if (NULL == m) error("Linear Allocators Require Mesh Machine");
-    if (NULL == m) schedout.fatal(CALL_INFO, 1, "Linear Allocators Require Mesh Machine");
+    if (NULL == m) schedout.fatal(CALL_INFO, 1, "Linear Allocators Require Mesh/torus Machine");
 
     if (SORT) {
         set<int> dimordering;
-        set<int>::iterator xit = dimordering.insert(m -> getXDim()).first;
-        set<int>::iterator yit = dimordering.insert(m -> getYDim()).first;
-        set<int>::iterator zit = dimordering.insert(m -> getZDim()).first;
+        set<int>::iterator xit = dimordering.insert(m -> dims[0]).first;
+        set<int>::iterator yit = dimordering.insert(m -> dims[1]).first;
+        set<int>::iterator zit = dimordering.insert(m -> dims[2]).first;
         set<int>::iterator it = dimordering.begin();
         xpos = distance(dimordering.begin(), xit);
         ypos = distance(dimordering.begin(), yit);
@@ -263,9 +263,9 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
         xpos = 0;
         ypos = 1;
         zpos = 2;
-        xdim = m -> getXDim();
-        ydim = m -> getYDim();
-        zdim = m -> getZDim();
+        xdim = m -> dims[0];
+        ydim = m -> dims[1];
+        zdim = m -> dims[2];
     }
 
     if (hilbert) {
@@ -624,9 +624,9 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
 int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L) 
 {
     int coordinates[3];
-    coordinates[xpos] = L->x;
-    coordinates[ypos] = L->y;
-    coordinates[zpos] = L->z;
+    coordinates[xpos] = L->dims[0];
+    coordinates[ypos] = L->dims[1];
+    coordinates[zpos] = L->dims[2];
     return rank[coordinates[0] + coordinates[1] * xdim + coordinates[2] * xdim * ydim];
 }
 
@@ -635,10 +635,9 @@ int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L)
 LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach) : Allocator(*mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    mMachine = dynamic_cast<MeshMachine*>(mach);
-    if (NULL == mMachine) {
-        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MeshMachine* machine");
-        //error("Linear allocators require a MeshMachine* machine");
+    mMachine = dynamic_cast<StencilMachine*>(mach);
+    if (NULL == mMachine || mMachine->numDims() != 3) {
+        schedout.fatal(CALL_INFO, 1, "Linear allocators require a 3D mesh/torus machine");
     }
 
     bool sort, hilbert;
@@ -686,7 +685,7 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
 {
     set<MeshLocation*, MeshLocationOrdering>* avail = new set<MeshLocation*,MeshLocationOrdering>(*ordering);
     //add all free nodes to avail
-        std::vector<int>* freeNodes = mMachine->getFreeNodes();
+    std::vector<int>* freeNodes = mMachine->getFreeNodes();
     std::vector<MeshLocation*>* machfree = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         machfree->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);

@@ -27,7 +27,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "MBSAllocInfo.h"
 #include "output.h"
 
@@ -37,13 +37,18 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-OctetMBSAllocator::OctetMBSAllocator(MeshMachine* m, int x, int y, int z) : MBSAllocator(m)
+OctetMBSAllocator::OctetMBSAllocator(StencilMachine* m, int x, int y, int z) : MBSAllocator(m)
 {
     //we don't do anything special in construction
 
     //create the starting blocks
     schedout.debug(CALL_INFO, 1, 0, "Initializing OctetMBSAllocator\n");
-    initialize(new MeshLocation(x,y,z), new MeshLocation(0,0,0));
+    std::vector<int> tempVec(3);
+    tempVec[0] = x;
+    tempVec[1] = y;
+    tempVec[2] = z;
+    std::vector<int> tempVec2(3,0);
+    initialize(new MeshLocation(tempVec), new MeshLocation(tempVec2));
     //if (DEBUG) printFBR("Post Initialize:");
 }
 
@@ -62,9 +67,12 @@ OctetMBSAllocator::OctetMBSAllocator(vector<string>* params, Machine *mach) : MB
 {
     //create the starting blocks
     schedout.debug(CALL_INFO, 1, 0, "Initializing OctetMBSAllocator\n");
-    initialize(
-               new MeshLocation(meshMachine -> getXDim(),meshMachine -> getYDim(),meshMachine -> getZDim()), 
-               new MeshLocation(0,0,0));
+    std::vector<int> tempVec(3);
+    tempVec[0] = mMachine->dims[0];
+    tempVec[1] = mMachine->dims[1];
+    tempVec[2] = mMachine->dims[2];
+    std::vector<int> tempVec2(3,0);
+    initialize(new MeshLocation(tempVec), new MeshLocation(tempVec2));
 
     //if (DEBUG) printFBR("Post Initialize:");
 }
@@ -75,13 +83,17 @@ void OctetMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     //System->out->println("Initializing a "+dim->x+"x"+dim->y+"x"+dim->z+" region at "+off);
 
     //figure out the largest cube possible
-    int constraintSide = MIN(MIN(dim -> x, dim -> y), dim -> z);
+    int constraintSide = MIN(MIN(dim->dims[0], dim->dims[1]), dim->dims[2]);
     int maxSize = (int) (log((double) constraintSide) / log(2.0));
     int sideLen = (int) (1 << maxSize); // 2 ^ maxSize
 
     //Start creating our cube
-    MeshLocation* blockDim = new MeshLocation(sideLen,sideLen,sideLen);
-    int blockSize = blockDim -> x * blockDim -> y * blockDim -> z;
+    std::vector<int> tempVec(3);
+    tempVec[0] = sideLen;
+    tempVec[1] = sideLen;
+    tempVec[2] = sideLen;
+    MeshLocation* blockDim = new MeshLocation(tempVec);
+    int blockSize = blockDim->dims[0] * blockDim->dims[1] * blockDim->dims[2];
 
     //see if we have already made one of these size blocks
     int rank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), (blockSize)));
@@ -90,19 +102,44 @@ void OctetMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     }
 
     //add this block to the FBR
-    Block* block = new Block(new MeshLocation(off -> x,off -> y,off -> z),new MeshLocation(blockDim -> x,blockDim -> y,blockDim -> z)); //Do I need to make a new dim object?
+    tempVec[0] = off->dims[0];
+    tempVec[1] = off->dims[1];
+    tempVec[2] = off->dims[2];
+    std::vector<int> tempVec2(3,0);
+    tempVec2[0] = blockDim->dims[0];
+    tempVec2[1] = blockDim->dims[1];
+    tempVec2[2] = blockDim->dims[2];
+    Block* block = new Block(new MeshLocation(tempVec),new MeshLocation(tempVec2)); //Do I need to make a new dim object?
     FBR -> at(rank) -> insert(block);
     if (block -> size() > 1) createChildren(block);
 
     //initialize the 3 remaining regions
-    if (dim -> x - sideLen > 0) {
-        initialize(new MeshLocation(dim -> x -sideLen,sideLen,sideLen), new MeshLocation(off -> x + sideLen,off -> y,off -> z));
+    if (dim->dims[0] - sideLen > 0) {
+        tempVec[0] = dim->dims[0] - sideLen;
+        tempVec[1] = sideLen;
+        tempVec[2] = sideLen;
+        tempVec2[0] = off->dims[0] + sideLen;
+        tempVec2[1] = off->dims[1];
+        tempVec2[2] = off->dims[2];
+        initialize(new MeshLocation(tempVec), new MeshLocation(tempVec2));
     }
-    if (dim -> y - sideLen > 0) {
-        initialize(new MeshLocation(dim -> x,dim -> y - sideLen,sideLen), new MeshLocation(off -> x,off -> y + sideLen,off -> z));
+    if (dim->dims[1] - sideLen > 0) {
+        tempVec[0] = dim->dims[0];
+        tempVec[1] = dim->dims[1] - sideLen;
+        tempVec[2] = sideLen;
+        tempVec2[0] = off->dims[0];
+        tempVec2[1] = off->dims[1] + sideLen;
+        tempVec2[2] = off->dims[2];
+        initialize(new MeshLocation(tempVec), new MeshLocation(tempVec2));
     }
-    if (dim -> z - sideLen > 0) {
-        initialize(new MeshLocation(dim -> x,dim -> y,dim -> z - sideLen), new MeshLocation(off -> x,off -> y,off -> z + sideLen));
+    if (dim->dims[2] - sideLen > 0) {
+        tempVec[0] = dim->dims[0];
+        tempVec[1] = dim->dims[1];
+        tempVec[2] = dim->dims[2] - sideLen;
+        tempVec2[0] = off->dims[0];
+        tempVec2[1] = off->dims[1];
+        tempVec2[2] = off->dims[2] + sideLen;
+        initialize(new MeshLocation(tempVec), new MeshLocation(tempVec2));
     }
 }
 
@@ -113,24 +150,39 @@ set<Block*, Block>* OctetMBSAllocator::splitBlock(Block* b)
     set<Block*, Block>* children = new set<Block*, Block>(*BComp);
 
     //determine the size (blocks should be cubes, thus dimension->x=dimension->y=dimension->z)
-    int size = (int) (log(b -> dimension -> x) / log(2));
+    int size = (int) (log(b -> dimension->dims[0]) / log(2));
 
     //we want one size smaller, but they need to be
     if (size - 1 >= 0) {
         //determine new sideLen
         int sideLen = (int) (1 << (size - 1)); // 2^size - 1
-        MeshLocation* dim = new MeshLocation(sideLen,sideLen,sideLen);
+        std::vector<int> tempVec(3);
+        tempVec[0] = sideLen;
+        tempVec[1] = sideLen;
+        tempVec[2] = sideLen;
+        MeshLocation* dim = new MeshLocation(tempVec);
 
         //Bottom layer of the cube
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z), dim, b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y + sideLen, b -> location -> z),dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y+sideLen, b -> location -> z), dim, b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y, b -> location -> z), dim, b));
+        tempVec[0] = b -> location->dims[0];
+        tempVec[1] = b -> location->dims[1];
+        tempVec[2] = b -> location->dims[2];
+        children -> insert(new Block(new MeshLocation(tempVec), dim, b));
+        tempVec[1] = b -> location->dims[1] + sideLen;
+        children -> insert(new Block(new MeshLocation(tempVec),dim,b));
+        tempVec[0] = b -> location->dims[0] + sideLen;
+        children -> insert(new Block(new MeshLocation(tempVec), dim, b));
+        tempVec[1] = b -> location->dims[1];
+        children -> insert(new Block(new MeshLocation(tempVec), dim, b));
         //Top layer of the cube
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z + sideLen),dim, b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y + sideLen, b -> location -> z + sideLen), dim, b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y + sideLen, b -> location -> z + sideLen), dim, b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y, b -> location -> z + sideLen), dim, b));
+        tempVec[0] = b -> location->dims[0];
+        tempVec[2] = b -> location->dims[2] + sideLen;
+        children -> insert(new Block(new MeshLocation(tempVec),dim, b));
+        tempVec[1] = b -> location->dims[1] + sideLen;
+        children -> insert(new Block(new MeshLocation(tempVec), dim, b));
+        tempVec[0] = b -> location->dims[0] + sideLen;
+        children -> insert(new Block(new MeshLocation(tempVec), dim, b));
+        tempVec[1] = b -> location->dims[1];
+        children -> insert(new Block(new MeshLocation(tempVec), dim, b));
     }
 
     //if (DEBUG) printf("Made blocks for splitBlock(%s)\n", b -> toString().c_str());

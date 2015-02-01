@@ -23,25 +23,20 @@
 #include <vector>
 #include <string>
 
-#include "sst/core/serialization.h"
-
 #include "Allocator.h"
-
 
 namespace SST {
     namespace Scheduler {
         class Job;
         class Machine;
-        class MeshMachine;
 
         class EnergyAllocator : public Allocator {
 
             private:
                 std::string configName;
-                MeshMachine* mMachine;
 
             public:
-                EnergyAllocator(std::vector<std::string>* params, Machine* mach);
+                EnergyAllocator(std::vector<std::string>* params, const Machine & mach);
 
                 std::string getParamHelp();
 
@@ -49,7 +44,7 @@ namespace SST {
 
                 AllocInfo* allocate(Job* job);
 
-                AllocInfo* allocate(Job* job, std::vector<MeshLocation*>* available); 
+                AllocInfo* allocate(Job* job, std::vector<int>* available); 
         };
 
     }

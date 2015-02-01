@@ -218,19 +218,15 @@ bool JobParser::newJobLine(std::string line)
                 commInfo.commType = TaskCommInfo::COORDINATE;
                 //read task communication file name
                 is >> nextStr;
-                //nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
                 commInfo.commFile = nextStr;
-                //std::cout << commInfo.commFile << "\n";
                 //read coordinates file name
                 is >> nextStr;
-                //nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
                 commInfo.coordFile = nextStr;
             } else if(nextStr.compare("center") == 0){
                 is >> commInfo.centerTask;
             } else if(nextStr.compare("comm") == 0){
                 commInfo.commType = TaskCommInfo::CUSTOM;
                 is >> nextStr;
-                //nextStr = folderPath.string() + '/' + nextStr;//get file name as a path
                 commInfo.commFile = nextStr;
             } else {
                 schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());

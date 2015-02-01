@@ -27,7 +27,7 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "MBSAllocInfo.h"
 #include "output.h"
 
@@ -43,13 +43,6 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-
-RoundUpMBSAllocator::RoundUpMBSAllocator(MeshMachine* m, int x, int y, int z) : GranularMBSAllocator(m, x, y, z) 
-{
-    mMachine = m;
-    schedout.init("", 8, ~0, Output::STDOUT);
-}
-
 std::string RoundUpMBSAllocator::getSetupInfo(bool comment) const
 {
     string com;
@@ -61,7 +54,7 @@ std::string RoundUpMBSAllocator::getSetupInfo(bool comment) const
     return com + "Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
 }
 
-RoundUpMBSAllocator::RoundUpMBSAllocator(vector<string>* params, MeshMachine* mach) : GranularMBSAllocator(params, mach)
+RoundUpMBSAllocator::RoundUpMBSAllocator(vector<string>* params, StencilMachine* mach) : GranularMBSAllocator(params, mach)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
     //constructor is the same as GranularMBSAllocator

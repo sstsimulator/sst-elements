@@ -18,14 +18,11 @@
 #ifndef SST_SCHEDULER_BESTFITALLOCATOR_H__
 #define SST_SCHEDULER_BESTFITALLOCATOR_H__
 
-#include "sst/core/serialization.h"
-
 #include "LinearAllocator.h"
 
 namespace SST {
     namespace Scheduler {
 
-        class MeshMachine;
         class Machine;
         class Job;
         class AllocInfo;
@@ -33,22 +30,12 @@ namespace SST {
         class BestFitAllocator : public LinearAllocator {
             public:
 
-                BestFitAllocator(MeshMachine* m, std::string filename) ;
-
                 BestFitAllocator(std::vector<std::string>* params, Machine* mach) ;
-
-                std::string getParamHelp(){
-                    return "[<file>]\n\tfile: Path to file giving the curve";
-                }
 
                 std::string getSetupInfo(bool comment) const;
 
                 AllocInfo* allocate(Job* job) ;
-            
-            private:
-                MeshMachine* mMachine;
         };
-
     }
 }
 #endif

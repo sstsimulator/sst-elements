@@ -27,21 +27,20 @@
 
 namespace SST {
     namespace Scheduler {
-        class MeshMachine;
+        class StencilMachine;
         class Machine;
         class Block;
         class MeshLocation;
 
-
         class OctetMBSAllocator : public MBSAllocator {
             public:
 
-                OctetMBSAllocator(MeshMachine* m, int x, int y, int z);
+                OctetMBSAllocator(StencilMachine* m, int x, int y, int z);
                 OctetMBSAllocator(std::vector<std::string>* params, Machine* m);
 
                 std::string getSetupInfo(bool comment) const;
 
-                static OctetMBSAllocator Make(std::vector<std::string>* params, MeshMachine* mach);
+                static OctetMBSAllocator Make(std::vector<std::string>* params, StencilMachine* mach);
 
                 void initialize(MeshLocation* dim, MeshLocation* off);
 

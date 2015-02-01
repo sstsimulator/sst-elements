@@ -28,14 +28,14 @@
 #include "Allocator.h" 
 #include "MBSAllocInfo.h" //necessary due to virtual class
 
-
 namespace SST {
     namespace Scheduler {
         class Block;
-        class MeshMachine;
         class MBSMeshAllocInfo;
         class MeshLocation;
         class Job;
+        class Machine;
+        class StencilMachine;
 
         class MBSAllocator : public Allocator {
 
@@ -44,14 +44,13 @@ namespace SST {
                 std::vector<int>* ordering;
 
                 //We know it must be a mesh, so make it one so we can access the goods.
-                MeshMachine* meshMachine;
-
+                StencilMachine *mMachine;
 
             public:
-                MBSAllocator(Machine* mach);
-                MBSAllocator(MeshMachine* m, int x, int y, int z);
+                MBSAllocator(Machine * mach);
+                MBSAllocator(StencilMachine* m, int x, int y, int z);
 
-                MBSAllocator(std::vector<std::string>* params, Machine* mach);
+                MBSAllocator(std::vector<std::string>* params, Machine *mach);
 
                 std::string getSetupInfo(bool comment) const;
 

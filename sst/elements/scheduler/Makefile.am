@@ -26,9 +26,11 @@ libscheduler_la_SOURCES = \
     FST.h \
     InputParser.cc \
     InputParser.h \
-    MeshMachine.cc \
-    MeshMachine.h \
+    Mesh3DMachine.cc \
+    Mesh3DMachine.h \
     output.h \
+    StencilMachine.cc \
+    StencilMachine.h \
     TaskCommInfo.cc \
     TaskCommInfo.h \
     TaskMapInfo.cc \

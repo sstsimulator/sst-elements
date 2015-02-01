@@ -44,11 +44,10 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "output.h"
 #include "NearestAllocClasses.h"
 #include "EnergyAllocClasses.h"
-
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -56,9 +55,9 @@ using namespace std;
 NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* mach) : Allocator(*mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    mMachine = (MeshMachine*) mach;
-    if (NULL == mMachine) {
-        schedout.fatal(CALL_INFO, 1, "Nearest allocators require a Mesh machine");
+    mMachine = (StencilMachine*) mach;
+    if (NULL == mMachine || mMachine->numDims() != 3) {
+        schedout.fatal(CALL_INFO, 1, "Nearest allocators require a 3D mesh or torus machine");
     }
 
     if (params -> at(0) == "MM") {
@@ -108,7 +107,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         if (pcstr == ("l1")) {
             sc = new L1DistFromCenterScorer();
         } else if(pcstr == ("linf")) {
-            if (mMachine -> getXDim() > 1 && mMachine -> getYDim() > 1 && mMachine -> getZDim() > 1) {
+            if (mMachine -> dims[0] > 1 && mMachine -> dims[1] > 1 && mMachine -> dims[2] > 1) {
                 schedout.fatal(CALL_INFO, 1, "\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
             }
             long TB = 0;
@@ -235,7 +234,18 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
         //need to call LP to get possCenters
         //if done using only energy, just return the LP results by copying possCenters
         //otherwise, we'll use it as the actual centers
-        possCenters = EnergyHelpers::getEnergyNodes(available, nodesNeeded, *mMachine);
+
+        //convert to machine indices and back
+        std::vector<int> availableInds(available->size());
+        for(unsigned int i = 0; i < available->size(); i++){
+            availableInds[i] = available->at(i)->toInt(*mMachine);
+        }
+        std::vector<int>* possCenterInds = EnergyHelpers::getEnergyNodes( & availableInds, nodesNeeded, *mMachine);
+        possCenters = new std::vector<MeshLocation*>(possCenterInds->size());
+        for(unsigned int i = 0; i < possCenterInds->size(); i++){
+            possCenters->at(i) = new MeshLocation(possCenterInds->at(i), *mMachine);
+        }
+        delete possCenterInds;
     } else { 
         possCenters = centerGenerator -> getCenters(available);
     }
@@ -245,7 +255,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
     for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {        
         nearest = pointCollector -> getNearest(*center, nodesNeeded, *mMachine);        
-        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, nodesNeeded, mMachine); 
+        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, mMachine); 
         if (val -> first < bestVal -> first || 
             (val -> first == bestVal -> first && val -> second < bestVal -> second) ) {
             delete bestVal;
@@ -272,14 +282,13 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     //clear memory
     delete alloc;
     delete bestAllocs;
-    possCenters -> clear();
     delete possCenters;
     delete bestVal;
     
     return retVal;
 }
 
-void NearestAllocator::genAlgAllocator(MeshMachine* m) {
+void NearestAllocator::genAlgAllocator(StencilMachine* m) {
     configName = "genAlg";
     mMachine = m;
     centerGenerator = new FreeCenterGenerator(m);
@@ -287,7 +296,7 @@ void NearestAllocator::genAlgAllocator(MeshMachine* m) {
     scorer = new PairwiseL1DistScorer();
 }
 
-void NearestAllocator::MMAllocator(MeshMachine* m) {
+void NearestAllocator::MMAllocator(StencilMachine* m) {
     configName = "MM";
     mMachine = m;
     centerGenerator = new IntersectionCenterGen(m);
@@ -295,7 +304,7 @@ void NearestAllocator::MMAllocator(MeshMachine* m) {
     scorer = new PairwiseL1DistScorer();
 }
 
-void NearestAllocator::MC1x1Allocator(MeshMachine* m) {
+void NearestAllocator::MC1x1Allocator(StencilMachine* m) {
     configName = "MC1x1";
     mMachine = m;
     centerGenerator = new FreeCenterGenerator(m);
@@ -303,7 +312,7 @@ void NearestAllocator::MC1x1Allocator(MeshMachine* m) {
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
 } 
 
-void NearestAllocator::HybridAllocator(MeshMachine* m) {
+void NearestAllocator::HybridAllocator(StencilMachine* m) {
     configName = "Hybrid";
     mMachine = m;
     centerGenerator = NULL;

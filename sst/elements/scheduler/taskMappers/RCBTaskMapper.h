@@ -22,7 +22,7 @@ namespace SST {
 
         class AllocInfo;
         class Job;
-        class MeshMachine;
+        class StencilMachine;
         class MeshLocation;
         class TaskCommInfo;
         class TaskMapInfo;
@@ -33,7 +33,7 @@ namespace SST {
 
             public:
 
-                RCBTaskMapper(const MeshMachine & inMach);
+                RCBTaskMapper(const StencilMachine & inMach);
 
                 ~RCBTaskMapper() { };
 
@@ -73,11 +73,11 @@ namespace SST {
                 //helps for rotations of the nodes
                 class Rotator {
                     public:
-                        Rotator(const RCBTaskMapper & rcb, const MeshMachine & mach); //dummy rotator for Grouper initialization
+                        Rotator(const RCBTaskMapper & rcb, const StencilMachine & mach); //dummy rotator for Grouper initialization
                         Rotator(Grouper<MeshLocation> *meshLocs, 
                                 Grouper<int> *jobLocs,
                                 const RCBTaskMapper & rcb,
-                                const MeshMachine & mach );
+                                const StencilMachine & mach );
                         ~Rotator();
 
                         //returns the dimensions (size) of the structure
@@ -96,12 +96,12 @@ namespace SST {
 
                     private:
                         const RCBTaskMapper & rcb;
-                        const MeshMachine & mach;
+                        const StencilMachine & mach;
                         int** locs;
                         int* indMap; // the mesh locations may not be ordered. This saves the loc indexes
                 };
 
-                const MeshMachine & mMachine;
+                const StencilMachine & mMachine;
                 std::vector<MeshLocation> nodeLocs;
                 TaskCommInfo *tci;
                 Job* job;

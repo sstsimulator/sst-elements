@@ -36,7 +36,7 @@
 #include <set>
 #include <sstream>
 
-#include "MeshMachine.h"
+#include "Mesh3DMachine.h"
 
 namespace SST {
     namespace Scheduler {
@@ -75,14 +75,16 @@ namespace SST {
                  */
                 std::set<MeshLocation*, MeshLocation>* processors()
                 {
-                    MeshLocation* MLComp = new MeshLocation(0,0,0);
+                    std::vector<int> tempLoc(3,0);
+                    MeshLocation* MLComp = new MeshLocation(tempLoc);
                     std::set<MeshLocation*, MeshLocation>* processors = new std::set<MeshLocation*, MeshLocation>(*MLComp);
-                    for (int i = 0;i < dimension -> x;i++) {
-                        for (int j = 0;j < dimension -> y;j++) {
-                            for (int k = 0;k < dimension -> z;k++) {
-                                processors -> insert(new MeshLocation(location -> x+i,
-                                                                      location -> y+j,
-                                                                      location -> z+k));
+                    for (int i = 0; i < dimension->dims[0]; i++) {
+                        for (int j = 0; j < dimension->dims[1]; j++) {
+                            for (int k = 0; k < dimension->dims[2]; k++) {
+                                tempLoc[0] = location->dims[0] + i;
+                                tempLoc[1] = location->dims[1] + j;
+                                tempLoc[2] = location->dims[2] + k;
+                                processors -> insert(new MeshLocation(tempLoc));
                             }
                         }
                     }
@@ -94,7 +96,7 @@ namespace SST {
                  */
                 int size()
                 {
-                    return dimension -> x*dimension -> y*dimension -> z;
+                    return dimension->dims[0] * dimension->dims[1] * dimension->dims[2];
                 }
 
                 std::set<Block*, Block>* getChildren()
@@ -115,7 +117,7 @@ namespace SST {
                 {
                     if (b1 -> size() == b2 -> size()){
                         if (b1 -> location -> equals(*(b2->location))){
-                            return (*b1 -> dimension)(b1 -> dimension, b2 -> dimension);
+                            return (*b1->dimension)(b1->dimension,b2->dimension);
                         }
                         return (*b1 -> location)(b1 -> location, b2 -> location);
                     }
@@ -137,7 +139,7 @@ namespace SST {
                 std::string toString()
                 {
                     std::stringstream ret;
-                    ret << "Block[" << dimension -> x << "x" <<dimension -> y << "x" << dimension -> z << "]@" << location -> toString();
+                    ret << "Block[" << dimension->dims[0] << "x" << dimension->dims[1] << "x" << dimension->dims[2] << "]@" << location -> toString();
                     return ret.str();
                 }
         };

@@ -29,7 +29,7 @@
 
 namespace SST {
     namespace Scheduler {
-        class MeshMachine;
+        class StencilMachine;
         class Job;
         class MBSMeshAllocInfo;
         class Block;
@@ -43,11 +43,9 @@ namespace SST {
         class RoundUpMBSAllocator : public GranularMBSAllocator {
             public:
 
-                RoundUpMBSAllocator(MeshMachine* m, int x, int y, int z);
-
                 std::string getSetupInfo(bool comment) const;
 
-                RoundUpMBSAllocator(std::vector<std::string>* params, MeshMachine* mach);
+                RoundUpMBSAllocator(std::vector<std::string>* params, StencilMachine* mach);
 
                 MBSMeshAllocInfo* allocate(Job* job);
 
@@ -68,7 +66,7 @@ namespace SST {
                  * @return what you need to send the Mesh object, to actually allocate the processors
                  */
             private:
-                MeshMachine* mMachine;
+                StencilMachine* mMachine;
                 MBSMeshAllocInfo* processRequest(std::map<int,int>* RBR, Job* job);
 
                 /**

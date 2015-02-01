@@ -39,17 +39,24 @@ std::string SimpleMachine::getSetupInfo(bool comment)
         com="";
     }
     char mesg[100];
-    sprintf(mesg, "SimpleMachine with %ld nodes, %d cores per node", numNodes, coresPerNode);
+    sprintf(mesg, "SimpleMachine with %d nodes, %d cores per node", numNodes, coresPerNode);
     return com + mesg;
 }
 
-unsigned int SimpleMachine::getNodeDistance(int node1, int node2) const
+std::list<int>* SimpleMachine::getFreeAtDistance(int center, int distance) const
+{
+    std::list<int>* retList = new std::list<int>();
+    retList->push_back(0);
+    return retList;
+}
+
+int SimpleMachine::getNodeDistance(int node1, int node2) const
 {
     return 1;
 }
 
-std::vector<unsigned int> SimpleMachine::getRoute(int node1, int node2, double commWeight) const
+std::vector<int> SimpleMachine::getRoute(int node1, int node2, double commWeight) const
 {
-    std::vector<unsigned int> dummy(1, 0);
+    std::vector<int> dummy(1, 0);
     return dummy;
 }

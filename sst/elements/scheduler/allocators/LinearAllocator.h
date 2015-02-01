@@ -35,7 +35,7 @@ namespace SST {
 
         //forward declared classes
         class Machine;
-        class MeshMachine;
+        class StencilMachine;
         class Job;
         class MeshLocation;
 
@@ -120,7 +120,7 @@ namespace SST {
                 std::vector<std::vector<MeshLocation*>*>* getIntervals();
                 AllocInfo* minSpanAllocate(Job* job);
                 MeshLocationOrdering* ordering;
-                MeshMachine *mMachine;
+                StencilMachine *mMachine;
 
             public:
                 LinearAllocator(std::vector<std::string>* params, Machine* m);

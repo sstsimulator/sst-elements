@@ -29,22 +29,13 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "MBSAllocInfo.h"
 #include "output.h"
 
 #define DEBUG false
 
 using namespace SST::Scheduler;
-
-GranularMBSAllocator::GranularMBSAllocator(MeshMachine* m, int x, int y, int z) : MBSAllocator(m)
-{
-    schedout.init("", 8, 0, Output::STDOUT);
-    //create the starting blocks
-    schedout.debug(CALL_INFO, 1, 0, "Initializing GranularMBSAllocator\n");
-    initialize(new MeshLocation(x,y,z), new MeshLocation(0,0,0));
-    //if (DEBUG) printFBR("Post Initialize:");
-}
 
 std::string GranularMBSAllocator::getSetupInfo(bool comment) const
 {
@@ -57,27 +48,35 @@ std::string GranularMBSAllocator::getSetupInfo(bool comment) const
     return com + "Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
 }
 
-GranularMBSAllocator::GranularMBSAllocator(std::vector<std::string>* params, Machine* mach) : MBSAllocator(mach)
+GranularMBSAllocator::GranularMBSAllocator(std::vector<std::string>* params, Machine *mach) : MBSAllocator(mach)
 {
-
-    //create the starting blocks
-    initialize(
-               new MeshLocation(meshMachine -> getXDim(),meshMachine -> getYDim(),meshMachine -> getZDim()), 
-               new MeshLocation(0,0,0));
-
-    //if (DEBUG) printFBR("Post Initialize:");
-
+    mMachine = dynamic_cast<StencilMachine*>(mach);
+    if (NULL == mMachine || mMachine->numDims() != 3) {
+        schedout.fatal(CALL_INFO, 1, "Granular MBS Allocator requires 3D mesh/torus machine.");
+    }
+    
+    std::vector<int> tempVec1(3);
+    tempVec1[0] = mMachine->dims[0];
+    tempVec1[1] = mMachine->dims[1];
+    tempVec1[2] = mMachine->dims[2];
+    std::vector<int> tempVec2(3, 0);
+    initialize(new MeshLocation(tempVec1), 
+               new MeshLocation(tempVec2));
 }
 
 void GranularMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 {
     //add all the 1x1x1's to the std::set of blocks
     int rank = createRank(1);
-    MeshLocation* sizeOneDim = new MeshLocation(1,1,1);
-    for (int i = 0;i < dim -> x; i++){
-        for (int j = 0;j < dim -> y; j++){
-            for (int k = 0;k < dim -> z; k++){
-                this -> FBR -> at(rank) -> insert(new Block(new MeshLocation(i,j,k), sizeOneDim));
+    std::vector<int> tempVec(3, 1);
+    MeshLocation* sizeOneDim = new MeshLocation(tempVec);
+    for (int i = 0; i < dim->dims[0]; i++){
+        tempVec[0] = i;
+        for (int j = 0;j < dim->dims[1]; j++){
+            tempVec[1] = j;
+            for (int k = 0;k < dim->dims[2]; k++){
+                tempVec[2] = k;
+                this -> FBR -> at(rank) -> insert(new Block(new MeshLocation(tempVec), sizeOneDim));
             }
         }
     }
@@ -85,8 +84,6 @@ void GranularMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     //iterate over all the ranks
     while(mergeAll()){
     }
-
-    //printf("\n");
 }
 
 /**
@@ -181,17 +178,29 @@ Block* GranularMBSAllocator::nextBlock(int d, Block* first)
  */
 Block* GranularMBSAllocator::lookX(Block* b)
 {
-    return new Block(new MeshLocation(b -> location -> x+b -> dimension -> x,b -> location -> y,b -> location -> z),b -> dimension); //TODO:  do we want to copy the dimensio as well?
+    std::vector<int> tempVec(3);
+    tempVec[0] = b -> location->dims[0] + b -> dimension->dims[0];
+    tempVec[1] = b -> location->dims[1];
+    tempVec[2] = b -> location->dims[2];
+    return new Block(new MeshLocation(tempVec),b -> dimension); //TODO:  do we want to copy the dimensio as well?
 }
 
 Block* GranularMBSAllocator::lookY(Block* b)
 {
-    return new Block(new MeshLocation(b -> location -> x,b -> location -> y+b -> dimension -> y,b -> location -> z),b -> dimension);
+    std::vector<int> tempVec(3);
+    tempVec[0] = b -> location->dims[0];
+    tempVec[1] = b -> location->dims[1] + b -> dimension->dims[1];
+    tempVec[2] = b -> location->dims[2];
+    return new Block(new MeshLocation(tempVec),b -> dimension);
 }
 
 Block* GranularMBSAllocator::lookZ(Block* b)
 {
-    return new Block(new MeshLocation(b -> location -> x,b -> location -> y,b -> location -> z+b -> dimension -> z),b -> dimension);
+    std::vector<int> tempVec(3);
+    tempVec[0] = b -> location->dims[0];
+    tempVec[1] = b -> location->dims[1];
+    tempVec[2] = b -> location->dims[2] + b -> dimension->dims[2];
+    return new Block(new MeshLocation(tempVec),b -> dimension);
 }
 
 /**
@@ -240,29 +249,32 @@ Block* GranularMBSAllocator::mergeBlocks(Block* first, Block* second)
         schedout.fatal(CALL_INFO, 1, "merging two idential blocks, or blocks of different sizes");
     }
     //do some std::setup
-    MeshLocation* dimension = new MeshLocation(0,0,0);
+    std::vector<int> tempVec(3,0);
+    MeshLocation* dimension = new MeshLocation(tempVec);
     MeshLocation* location = second->location;
     if ((*dimension)(first -> location,second -> location))  {
         location = first -> location;
     }
     //determine whether we need to change the x dimension
-    if (first -> location -> x == second -> location -> x){
-        dimension -> x = first -> dimension -> x;
+    if (first -> location->dims[0] == second -> location->dims[0]){
+        tempVec[0] = first -> dimension->dims[0];
     } else {
-        dimension -> x = first -> dimension -> x + second -> dimension -> x;
+        tempVec[0] = first -> dimension->dims[0] + second -> dimension->dims[0];
     }
     //determine whether we need to change the y dimension
-    if (first -> location -> y == second -> location -> y){
-        dimension -> y = first -> dimension -> y;
+    if (first -> location->dims[1] == second -> location->dims[1]){
+        tempVec[1] = first -> dimension->dims[1];
     } else {
-        dimension -> y = first -> dimension -> y + second -> dimension -> y;
+        tempVec[1] = first -> dimension->dims[1] + second -> dimension->dims[1];
     }
     //determine whether we need to change the z dimension
-    if (first -> location -> z == second -> location -> z){
-        dimension -> z = first -> dimension -> z;
+    if (first -> location->dims[2] == second -> location->dims[2]){
+        tempVec[2] = first -> dimension->dims[2];
     } else {
-        dimension -> z = first -> dimension -> z+second -> dimension -> z;
+        tempVec[2] = first -> dimension->dims[2]+second -> dimension->dims[2];
     }
+    delete dimension;
+    dimension = new MeshLocation(tempVec);
     Block* toReturn = new Block(location,dimension);
     toReturn -> addChild(first);
     toReturn -> addChild(second);

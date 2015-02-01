@@ -45,7 +45,7 @@ namespace SST {
         class CenterGenerator;
         class PointCollector;
         class Scorer;
-        class MeshMachine;
+        class StencilMachine;
 
         class NearestAllocator : public Allocator {
 
@@ -61,7 +61,7 @@ namespace SST {
 
                 std::string configName;
 
-                MeshMachine *mMachine;
+                StencilMachine *mMachine;
 
             public:
 
@@ -75,13 +75,13 @@ namespace SST {
 
                 AllocInfo* allocate(Job* job, std::vector<MeshLocation*>* available); 
 
-                void genAlgAllocator(MeshMachine* m);
+                void genAlgAllocator(StencilMachine* m);
 
-                void MMAllocator(MeshMachine* m); 
+                void MMAllocator(StencilMachine* m); 
                 
-                void MC1x1Allocator(MeshMachine* m); 
+                void MC1x1Allocator(StencilMachine* m); 
 
-                void HybridAllocator(MeshMachine* m);
+                void HybridAllocator(StencilMachine* m);
         };
 
     }

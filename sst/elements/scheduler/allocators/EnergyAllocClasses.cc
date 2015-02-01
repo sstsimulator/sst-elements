@@ -24,12 +24,12 @@
 
 #include "Job.h" 
 #include "Machine.h"
-#include "MeshMachine.h"
 #include "output.h"
 
 namespace SST {
     namespace Scheduler {
         namespace EnergyHelpers {
+
             void roundallocarray(double * x, int processors, int numneeded, int* newx)
             {
                 //rounds off the solution stored in x with the given number of processors
@@ -54,7 +54,7 @@ namespace SST {
                 }
             }
 
-            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, const MeshMachine & machine)
+            void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, const Machine & machine)
             {     
 
 #ifdef HAVE_GLPK
@@ -187,7 +187,7 @@ namespace SST {
                 
                 delete [] D;
                 delete [] ia;
-                delete[] ja;
+                delete [] ja;
                 delete [] ar;
 #else
                 schedout.init("", 10, 0, Output::STDOUT);
@@ -195,9 +195,10 @@ namespace SST {
 #endif
             }
 
-            std::vector<MeshLocation*>* getEnergyNodes(std::vector<MeshLocation*>* available, int numProcs, const MeshMachine & machine)
+            std::vector<int>* getEnergyNodes(std::vector<int>* available, int numProcs, const Machine & machine)
             { 
-                std::vector<MeshLocation*>* ret = new std::vector<MeshLocation*>();
+                std::cout << "Getting energy nodes\n";
+                std::vector<int>* ret = new std::vector<int>();
 
                 int numNodes = machine.numNodes;
                 int* oldx = new int[numNodes];
@@ -207,15 +208,16 @@ namespace SST {
                     newx[x] = 0;
                 }
                 for (unsigned int x = 0; x < available -> size(); x++) { 
-                    oldx[(*available)[x]->toInt(machine)] = 0;
+                    oldx[available->at(x)] = 0;
                 }
                 
                 hybridalloc(oldx, newx, numNodes, numProcs, machine);
                 for (int x = 0; x < numNodes; x++) {
                     if (newx[x] == 1 && oldx[x] == 0) {
-                        ret -> push_back(new MeshLocation(x, machine));
+                        ret -> push_back(x);
                     }
                 }
+                std::cout << "Got energy nodes\n";
                 return ret;
             }
         }

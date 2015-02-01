@@ -25,56 +25,64 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "Machine.h"
-#include "MeshMachine.h"
+#include "StencilMachine.h"
 #include "MBSAllocInfo.h"
 #include "output.h"
 
 #define MIN(a,b)  ((a)<(b)?(a):(b))
 #define DEBUG false
 
-
 using namespace SST::Scheduler;
-
 
 //this constructor doesn't call initialize() and is for derived classes
 MBSAllocator::MBSAllocator(Machine* mach) : Allocator(*mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    meshMachine = dynamic_cast<MeshMachine*>(mach);
-    if (NULL == meshMachine) {
-        schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
+    mMachine = dynamic_cast<StencilMachine*>(mach);
+    if (NULL == mMachine || mMachine->numDims() != 3) {
+        schedout.fatal(CALL_INFO, 1, "MBS Allocator requires 3D mesh/torus machine.");
     }
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 }
 
-MBSAllocator::MBSAllocator(MeshMachine* m, int x, int y, int z) : Allocator(*m)
+MBSAllocator::MBSAllocator(StencilMachine* m, int x, int y, int z) : Allocator(*m)
 {
     schedout.init("", 8, 0, Output::STDOUT);
-    meshMachine = m;
+    mMachine = m;
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 
     //create the starting blocks
     schedout.debug(CALL_INFO, 1, 0, "Initializing MBSAllocator:");
-    initialize(new MeshLocation(x,y,z),new MeshLocation(0,0,0));
+    std::vector<int> tempVec1(3);
+    tempVec1[0] = x;
+    tempVec1[1] = y;
+    tempVec1[2] = z;
+    std::vector<int> tempVec2(3, 0);
+    initialize(new MeshLocation(tempVec1), 
+               new MeshLocation(tempVec2));
     //if (DEBUG) printFBR("Post Initialize:");
 }
 
 MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach) : Allocator(*mach)
 { 
-    meshMachine = dynamic_cast<MeshMachine*>(mach);
-    if (NULL == meshMachine) {
-        schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
+    mMachine = dynamic_cast<StencilMachine*>(mach);
+    if (NULL == mMachine || mMachine->numDims() != 3) {
+        schedout.fatal(CALL_INFO, 1, "MBS Allocator requires 3D mesh/torus machine.");
     }
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 
     //create the starting blocks
     schedout.debug(CALL_INFO, 1, 0, "Initializing MBSAllocator:");
-    initialize(
-               new MeshLocation(meshMachine -> getXDim(),meshMachine -> getYDim(),meshMachine -> getZDim()), 
-               new MeshLocation(0,0,0));
+    std::vector<int> tempVec1(3);
+    tempVec1[0] = mMachine->dims[0];
+    tempVec1[1] = mMachine->dims[1];
+    tempVec1[2] = mMachine->dims[2];
+    std::vector<int> tempVec2(3, 0);
+    initialize(new MeshLocation(tempVec1), 
+               new MeshLocation(tempVec2));
 
 }
 
@@ -101,16 +109,21 @@ std::string MBSAllocator::getParamHelp()
  */
 void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 {
-    //if (DEBUG) printf("Initializing a %dx%dx%d region at %s\n", dim -> x, dim -> y, dim -> z, off -> toString().c_str());
-    schedout.debug(CALL_INFO, 7, 0, "Initializing a %dx%dx%d region at %s\n", dim -> x, dim -> y, dim -> z, off -> toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Initializing a %dx%dx%d region at %s\n", dim->dims[0], dim->dims[1], dim->dims[2], off -> toString().c_str());
 
     //Figure out the largest possible block possible
-    int maxSize = (int) (log((double) MIN(dim -> x,dim -> y)) / log(2.0));
+    int maxSize = (int) (log((double) MIN(dim->dims[0],dim->dims[1])) / log(2.0));
     int sideLen = (int) (1 << maxSize); //supposed to be 2^maxSize
     //create a flat square
-    MeshLocation* blockDim = new MeshLocation(sideLen,sideLen,1);
-    int size = blockDim -> x * blockDim -> y;
-    size *= blockDim -> z;
+    std::vector<int> tempVec1(3);
+    std::vector<int> tempVec2(3);
+    tempVec1[0] = sideLen;
+    tempVec1[1] = sideLen;
+    tempVec1[2] = 1;
+    
+    MeshLocation* blockdim = new MeshLocation(tempVec1);
+    int size = blockdim->dims[0] * blockdim->dims[1];
+    size *= blockdim->dims[2];
 
     //see if we have already made one of these size blocks
     int rank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), size));
@@ -119,8 +132,14 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     }
 
     //add block to the set at the given rank, determined by lookup
-    for (int i = 0; i < dim -> z; i++) {
-        Block* block = new Block(new MeshLocation(off -> x,off -> y,i),new MeshLocation(blockDim -> x,blockDim -> y,blockDim -> z)); 
+    for (int i = 0; i < dim->dims[2]; i++) {
+        tempVec1[0] = off->dims[0];
+        tempVec1[1] = off->dims[1];
+        tempVec1[2] = i;
+        tempVec2[0] = blockdim->dims[0];
+        tempVec2[1] = blockdim->dims[1];
+        tempVec2[2] = blockdim->dims[2];
+        Block* block = new Block(new MeshLocation(tempVec1),new MeshLocation(tempVec2)); 
         FBR -> at(rank) -> insert(block);
         createChildren(block);
 
@@ -129,13 +148,25 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     }
 
     //initialize the two remaining rectangles of the region
-    if (dim -> x - sideLen > 0) {
-        initialize(new MeshLocation(dim -> x  - sideLen, dim-> y, dim -> z),new MeshLocation(off -> x + sideLen, off -> y, 1));
+    if (dim->dims[0] - sideLen > 0) {
+        tempVec1[0] = dim->dims[0] - sideLen;
+        tempVec1[1] = dim->dims[1];
+        tempVec1[2] = dim->dims[2];
+        tempVec2[0] = off->dims[0] + sideLen;
+        tempVec2[1] = off->dims[1];
+        tempVec2[2] = 1;
+        initialize(new MeshLocation(tempVec1),new MeshLocation(tempVec2));
     }
-    if (dim -> y - sideLen > 0) {
-        initialize(new MeshLocation(sideLen, dim -> y - sideLen, dim-> z),new MeshLocation(off -> x, off -> y + sideLen,1));
+    if (dim->dims[1] - sideLen > 0) {
+        tempVec1[0] = sideLen;
+        tempVec1[1] = dim->dims[1] - sideLen;
+        tempVec1[2] = dim->dims[2];
+        tempVec2[0] = off->dims[0];
+        tempVec2[1] = off->dims[1] + sideLen;
+        tempVec2[2] = 1;
+        initialize(new MeshLocation(tempVec1),new MeshLocation(tempVec2));
     }
-    delete blockDim;
+    delete blockdim;
 
 }
 
@@ -194,7 +225,7 @@ void MBSAllocator::createChildren(Block* b){
         b -> addChild(next);
 
         //make sure the proper rank exists, in both ordering and FBR
-        int size = next -> dimension -> x * next -> dimension -> y*next -> dimension -> z;
+        int size = next -> dimension->dims[0] * next -> dimension->dims[1]*next -> dimension->dims[2];
         createRank(size);
 
         if (next -> size() > 1) {
@@ -214,16 +245,32 @@ std::set<Block*, Block>* MBSAllocator::splitBlock (Block* b)
     delete BCComp;
 
     //determine the size (blocks should be cubes, thus dimension->x=dimension->y)
-    int size = (int) (log((double) b -> dimension -> x)/log(2));
+    int size = (int) (log((double) b -> dimension->dims[0])/log(2));
     //we want one size smaller, but they need to be
     if(size - 1 >= 0){
         int sideLen =  1 << (size - 1);
-        MeshLocation* dim = new MeshLocation(sideLen,sideLen,1 /*sideLen*/);
+        std::vector<int> tempVec1(3);
+        tempVec1[0] = sideLen;
+        tempVec1[1] = sideLen;
+        tempVec1[2] = 1;
+        MeshLocation* dim = new MeshLocation(tempVec1);
 
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z), dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y+sideLen, b -> location -> z), dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x+sideLen, b -> location -> y+sideLen, b -> location -> z), dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x+sideLen, b -> location -> y, b -> location -> z), dim,b));
+        tempVec1[0] = b -> location->dims[0];
+        tempVec1[1] = b -> location->dims[1];
+        tempVec1[2] = b -> location->dims[2];
+        children -> insert(new Block(new MeshLocation(tempVec1), dim,b));
+        tempVec1[0] = b -> location->dims[0];
+        tempVec1[1] = b -> location->dims[1] + sideLen;
+        tempVec1[2] = b -> location->dims[2];
+        children -> insert(new Block(new MeshLocation(tempVec1), dim,b));
+        tempVec1[0] = b -> location->dims[0] + sideLen;
+        tempVec1[1] = b -> location->dims[1] + sideLen;
+        tempVec1[2] = b -> location->dims[2];
+        children -> insert(new Block(new MeshLocation(tempVec1), dim,b));
+        tempVec1[0] = b -> location->dims[0] + sideLen;
+        tempVec1[1] = b -> location->dims[1];
+        tempVec1[2] = b -> location->dims[2];
+        children -> insert(new Block(new MeshLocation(tempVec1), dim,b));
     }
     //if (DEBUG) printf("Made blocks for splitBlock(%s)\n", b -> toString().c_str());
     schedout.debug(CALL_INFO, 7, 0, "Made blocks for splitBlock(%s)\n", b -> toString().c_str());
@@ -264,7 +311,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
             //processors() is sorted by MeshLocation comparator
             for (int i = allocated; it != newBlockprocs -> end();i++){
                 retVal -> nodes -> at(i) = *(it);
-                retVal -> nodeIndices[i] = (*it) -> toInt(*meshMachine);
+                retVal -> nodeIndices[i] = (*it) -> toInt(*mMachine);
                 it++;
                 allocated++;
             }
