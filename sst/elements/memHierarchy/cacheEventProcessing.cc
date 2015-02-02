@@ -36,6 +36,12 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
     int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
+    if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
+        if(mshr_->isFull() || (!L1_ && !_mshrHit && mshr_->isAlmostFull()  && !(cacheHit == 0))){ 
+                return; // profile later, this event is getting NACKed 
+        }
+    }
+
 
     switch(cmd) {
         case GetS:
@@ -43,15 +49,25 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
                 if (cacheHit == 0) stats_[0].newReqGetSHits_++;
                 else {
                     stats_[0].newReqGetSMisses_++;
-                    if (cacheHit == 1 || cacheHit == 2) stats_[0].GetS_IS++;
-                    else if (cacheHit == 3) stats_[0].GetS_M++;
+                    if (cacheHit == 1 || cacheHit == 2) {
+                        stats_[0].GetS_IS++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 0));
+                    } else if (cacheHit == 3) {
+                        stats_[0].GetS_M++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 1));
+                    }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
                 if (cacheHit == 0) stats_[0].blockedReqGetSHits_++;
                 else {
                     stats_[0].blockedReqGetSMisses_++;
-                    if (cacheHit == 1 || cacheHit == 2) stats_[0].GetS_IS++;
-                    else if (cacheHit == 3) stats_[0].GetS_M++;
+                    if (cacheHit == 1 || cacheHit == 2) {
+                        stats_[0].GetS_IS++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 0));
+                    } else if (cacheHit == 3) {
+                        stats_[0].GetS_M++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 1));
+                    }
                 }
             }
             break;
@@ -60,17 +76,31 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
                 if (cacheHit == 0) stats_[0].newReqGetXHits_++;
                 else {
                     stats_[0].newReqGetXMisses_++;
-                    if (cacheHit == 1) stats_[0].GetX_IM++;
-                    else if (cacheHit == 2) stats_[0].GetX_SM++;
-                    else if (cacheHit == 3) stats_[0].GetX_M++;
+                    if (cacheHit == 1) {
+                        stats_[0].GetX_IM++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
+                    } else if (cacheHit == 2) {
+                        stats_[0].GetX_SM++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 3));
+                    } else if (cacheHit == 3) {
+                        stats_[0].GetX_M++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 4));
+                    }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
                 if (cacheHit == 0) stats_[0].blockedReqGetXHits_++;
                 else {
                     stats_[0].blockedReqGetXMisses_++;
-                    if (cacheHit == 1) stats_[0].GetX_IM++;
-                    else if (cacheHit == 2) stats_[0].GetX_SM++;
-                    else if (cacheHit == 3) stats_[0].GetX_M++;
+                    if (cacheHit == 1) {
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
+                        stats_[0].GetX_IM++;
+                    } else if (cacheHit == 2) {
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 3));
+                        stats_[0].GetX_SM++;
+                    } else if (cacheHit == 3) {
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 4));
+                        stats_[0].GetX_M++;
+                    }
                 }
             }
             break;
@@ -79,17 +109,31 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
                 if (cacheHit == 0) stats_[0].newReqGetSExHits_++;
                 else {
                     stats_[0].newReqGetSExMisses_++;
-                    if (cacheHit == 1) stats_[0].GetSE_IM++;
-                    else if (cacheHit == 2) stats_[0].GetSE_SM++;
-                    else if (cacheHit == 3) stats_[0].GetSE_M++;
+                    if (cacheHit == 1) {
+                        stats_[0].GetSE_IM++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
+                    } else if (cacheHit == 2) { 
+                        stats_[0].GetSE_SM++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 6));
+                    } else if (cacheHit == 3) {
+                        stats_[0].GetSE_M++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 7));
+                    }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
                 if (cacheHit == 0) stats_[0].blockedReqGetSExHits_++;
                 else {
                     stats_[0].blockedReqGetSExMisses_++;
-                    if (cacheHit == 1) stats_[0].GetSE_IM++;
-                    else if (cacheHit == 2) stats_[0].GetSE_SM++;
-                    else if (cacheHit == 3) stats_[0].GetSE_M++;
+                    if (cacheHit == 1) {
+                        stats_[0].GetSE_IM++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
+                    } else if (cacheHit == 2) {
+                        stats_[0].GetSE_SM++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 6));
+                    } else if (cacheHit == 3) {
+                        stats_[0].GetSE_M++;
+                        missTypeList.insert(std::pair<MemEvent*,int>(event, 7));
+                    }
                 }
             }
             break;
@@ -148,6 +192,10 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
                 sendNACK(event);
                 break;
             }
+            
+            // track times in our separate queue
+            if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
+
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 if(processRequestInMSHR(baseAddr, event)){
                     d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
@@ -312,7 +360,9 @@ void Cache::finish(){
     if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
     else averageLatency = 0;
 
-    bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency);
+    bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
+            missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
+            missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
     topCC_->printStats(statsFile_);
     listener_->printStats(*d_);
     delete cf_.cacheArray_;

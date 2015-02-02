@@ -330,10 +330,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 }
 
 bool DirectoryController::processPacket(MemEvent *ev){
-    dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s\n",
+    dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
+    dbg.debug(_L3_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n",
             getName().c_str(), ev->getID().first, ev->getID().second, CommandString[ev->getCmd()],
-            ev->getBaseAddr(), ev->getSrc().c_str());
+            ev->getBaseAddr(), ev->getSrc().c_str(),getCurrentSimTimeNano());
     assert(isRequestAddressValid(ev));
     Command cmd = ev->getCmd();
     
@@ -457,8 +457,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
 
 void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
-    dbg.debug(_L10_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L10_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u \n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
+    dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
+    dbg.debug(_L3_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = " PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize(),getCurrentSimTimeNano());
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
             Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;

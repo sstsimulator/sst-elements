@@ -141,6 +141,7 @@ public:
         invReqsSent_            = 0;
         evictionInvReqsSent_    = 0;
         invXReqsSent_           = 0;
+        evictionRequiredInv     = 0;
         protocol_               = _protocol;
         ccLines_.resize(numLines_);
         topNetworkLink_         = _topNetworkLink;
@@ -221,6 +222,7 @@ private:
     map<int, string>    lowNetworkIdMap_;
     int                 protocol_;
     vector<CCLine*>     ccLines_;
+    uint                evictionRequiredInv;
 
     int sendInvalidates(int lineIndex, string srcNode, string origRqstr, bool _mshrHit);
     void sendInvalidateX(int lineIndex, string _origRqstr, bool _mshrHit);

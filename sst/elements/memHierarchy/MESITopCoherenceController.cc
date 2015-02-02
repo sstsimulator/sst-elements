@@ -283,6 +283,7 @@ void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     sendEvictionInvalidates(_lineIndex, _origRqstr, false);
     
     if(ccLine->inTransition()){
+        evictionRequiredInv++;
         d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of upper level caches. St = %s, OwnerExists = %s \n",
                         BccLineString[_state], ccLine->ownerExists() ? "True" : "False");
     }
@@ -412,6 +413,7 @@ void MESITopCC::printStats(int _stats){
     dbg->output(CALL_INFO,"- InvalidateX sent                                %u\n", invXReqsSent_);
     dbg->output(CALL_INFO,"- Invalidates sent (non-eviction):                %u\n", invReqsSent_);
     dbg->output(CALL_INFO,"- Invalidates sent due to evictions:              %u\n", evictionInvReqsSent_);
+    dbg->output(CALL_INFO,"- Instances where evction caused invalidation:    %u\n", evictionRequiredInv);
 }
 
 

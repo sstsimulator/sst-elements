@@ -217,7 +217,8 @@ private:
     
     /** Udpate the upgrade latency stats */
     void updateUpgradeLatencyAverage(SimTime_t start);
-    
+    void recordLatency(MemEvent * event);
+
     /** Get the front elevemnt of a MSHR entry */
     MemEvent* getOrigReq(const vector<mshrType> _mshrEntry);
     
@@ -341,6 +342,8 @@ private:
     TimeConverter*          defaultTimeBase_;
     std::map<string, LinkId_t>     nameMap_;
     std::map<LinkId_t, SST::Link*> linkIdMap_;
+    std::map<MemEvent*,uint64> startTimeList;
+    std::map<MemEvent*,int> missTypeList;
     
     /* Profiling */
     bool                    groupStats_;
@@ -348,6 +351,14 @@ private:
     uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
     uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
     uint64                  upgradeCount_;
+    uint64                  missLatency_GetS_IS;
+    uint64                  missLatency_GetS_M;
+    uint64                  missLatency_GetX_IM;
+    uint64                  missLatency_GetX_SM;
+    uint64                  missLatency_GetX_M;
+    uint64                  missLatency_GetSEx_IM;
+    uint64                  missLatency_GetSEx_SM;
+    uint64                  missLatency_GetSEx_M;
 
 };
 

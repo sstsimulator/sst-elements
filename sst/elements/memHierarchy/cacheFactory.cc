@@ -266,15 +266,25 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     /* ------------- Member variables intialization ------------- */
     
     configureLinks();
-    groupStats_            = (cf_.statGroupIds_.size() < 2) ? false : true;
-    clockOn_               = true;
-    idleCount_             = 0;
-    memNICIdleCount_       = 0;
-    memNICIdle_            = false;
-    timestamp_             = 0;
-    totalUpgradeLatency_   = 0;
-    upgradeCount_          = 0;
-    
+    groupStats_             = (cf_.statGroupIds_.size() < 2) ? false : true;
+    clockOn_                = true;
+    idleCount_              = 0;
+    memNICIdleCount_        = 0;
+    memNICIdle_             = false;
+    timestamp_              = 0;
+    totalUpgradeLatency_    = 0;
+    upgradeCount_           = 0;
+    missLatency_GetS_IS     = 0;
+    missLatency_GetS_M      = 0;
+    missLatency_GetX_IM     = 0;
+    missLatency_GetX_SM     = 0;
+    missLatency_GetX_M      = 0;
+    missLatency_GetSEx_IM   = 0;
+    missLatency_GetSEx_SM   = 0;
+    missLatency_GetSEx_M    = 0;
+
+
+
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {
             if (i > 0 && (cf_.statGroupIds_[i] == 0 || cf_.statGroupIds_[i] == -1)) 

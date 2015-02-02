@@ -488,7 +488,9 @@ string MESIBottomCC::getDestination(Addr baseAddr) {
 /*
  *  Print stats
  */
-void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency){
+void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlStats> _ctrlStats, uint64_t _upgradeLatency, 
+        uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM,
+        uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M){
     Output* dbg = new Output();
     dbg->init("", 0, 0, (Output::output_location_t)_stats);
     dbg->output(CALL_INFO,"\n------------------------------------------------------------------------\n");
@@ -568,7 +570,24 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
         dbg->output(CALL_INFO,"- Requests received (incl coherence traffic):    %" PRIu64 "\n", _ctrlStats[_groupIds[i]].TotalRequestsReceived_);
         dbg->output(CALL_INFO,"- Requests handled by MSHR (MSHR hits):          %" PRIu64 "\n", _ctrlStats[_groupIds[i]].TotalMSHRHits_);
         dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, BottomCC):              %" PRIu64 "\n", stats_[_groupIds[i]].NACKsSent_);
-        dbg->output(CALL_INFO,"- Avg Updgrade Latency (cyc):                    %" PRIu64 "\n", _updgradeLatency);
+        dbg->output(CALL_INFO,"------------ Latency stats --------------------------------\n");
+        dbg->output(CALL_INFO,"- Avg Miss Latency (cyc):                        %" PRIu64 "\n", _upgradeLatency);
+        if (_ctrlStats[_groupIds[0]].GetS_IS > 0) 
+            dbg->output(CALL_INFO,"- Latency GetS   I->S                            %" PRIu64 "\n", (lat_GetS_IS / _ctrlStats[_groupIds[0]].GetS_IS));
+        if (!L1_ && _ctrlStats[_groupIds[0]].GetS_M > 0) 
+            dbg->output(CALL_INFO,"- Latency GetS   M                               %" PRIu64 "\n", (lat_GetS_M / _ctrlStats[_groupIds[0]].GetS_M));
+        if (_ctrlStats[_groupIds[0]].GetX_IM > 0)
+            dbg->output(CALL_INFO,"- Latency GetX   I->M                            %" PRIu64 "\n", (lat_GetX_IM / _ctrlStats[_groupIds[0]].GetX_IM));
+        if (_ctrlStats[_groupIds[0]].GetX_SM > 0)
+            dbg->output(CALL_INFO,"- Latency GetX   S->M                            %" PRIu64 "\n", (lat_GetX_SM / _ctrlStats[_groupIds[0]].GetX_SM));
+        if (!L1_ && _ctrlStats[_groupIds[0]].GetX_M > 0) 
+            dbg->output(CALL_INFO,"- Latency GetX   M                               %" PRIu64 "\n", (lat_GetX_M / _ctrlStats[_groupIds[0]].GetX_M));
+        if (_ctrlStats[_groupIds[0]].GetSE_IM > 0)
+            dbg->output(CALL_INFO,"- Latency GetSEx I->M                            %" PRIu64 "\n", (lat_GetSEx_IM / _ctrlStats[_groupIds[0]].GetSE_IM));
+        if (_ctrlStats[_groupIds[0]].GetSE_SM > 0)
+            dbg->output(CALL_INFO,"- Latency GetSEx S->M                            %" PRIu64 "\n", (lat_GetSEx_SM / _ctrlStats[_groupIds[0]].GetSE_SM));
+        if (!L1_ && _ctrlStats[_groupIds[0]].GetSE_M > 0)
+            dbg->output(CALL_INFO,"- Latency GetSEx M                               %" PRIu64 "\n", (lat_GetSEx_M / _ctrlStats[_groupIds[0]].GetSE_M));
     }
 
 }

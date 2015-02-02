@@ -119,7 +119,7 @@ public:
     void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
 
     /** Print statistics at the end of simulation */
-    void printStats(int _statsFile, vector<int> _statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency);
+    void printStats(int _statsFile, vector<int> _statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency, uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM, uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M);
     
     /** Sets the name of the next level cache */
     void setNextLevelCache(vector<string> * _nlc);
