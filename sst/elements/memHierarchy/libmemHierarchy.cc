@@ -31,7 +31,7 @@
 #include "membackend/vaultSimBackend.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
-#include "membackend/GOBLINHMCBackend.h"
+#include "membackend/goblinHMCBackend.h"
 #endif
 
 #ifdef HAVE_LIBDRAMSIM
@@ -245,7 +245,19 @@ static Module* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
 }
 
 static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
-    {NULL, NULL, NULL}
+	{ "verbose",		"Sets the verbosity of the backend output", "0" },
+	{ "device_count",	"Sets the number of HMCs being simulated, default=1, max=8", "1" },
+	{ "link_count", 	"Sets the number of links being simulated, min=4, max=8, default=4", "4" },
+	{ "vault_count",	"Sets the number of vaults being simulated, min=16, max=32, default=16", "16" },
+	{ "queue_depth",	"Sets the depth of the HMC request queue, min=2, max=65536, default=2", "2" },
+	{ "trace-banks", 	"Decides where tracing for memory banks is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+	{ "trace-queue", 	"Decides where tracing for queues is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+	{ "trace-commands", 	"Decides where tracing for commands is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+	{ "trace-latency", 	"Decides where tracing for latency is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+	{ "trace-stals", 	"Decides where tracing for memory stalls is enabled, \"yes\" or \"no\", default=\"no\"", "no" },
+	{ "tag_count",		"Sets the number of inflight tags that can be pending at any point in time", "16" },
+	{ "capacity_per_device", "Sets the capacity of the device being simulated in GB, min=2, max=8, default is 4", "4" },
+	{ NULL, NULL, NULL }
 };
 #endif
 
