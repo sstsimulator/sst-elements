@@ -232,6 +232,7 @@ static const ElementInfoStatistic basecpu_stats[] = {
 };
 
 static const ElementInfoParam basecpu_params[] = {
+     { "max_reqs_cycle",   "Maximum number of requests the CPU can issue per cycle (this is for all reads and writes)", "2" },
      { "max_reorder_lookups", "Maximum number of operations the CPU is allowed to lookup for memory reorder", "16" },
      { "cache_line_size",  "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64" },
      { "maxmemreqpending", "Set the maximum number of requests allowed to be pending", "16" },

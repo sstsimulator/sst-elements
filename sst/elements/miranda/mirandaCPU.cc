@@ -95,7 +95,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
         statMaxIssuePerCycle    = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_issue") );
 	statCyclesHitReorderLimit = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_reorder") );
 
-	reqMaxPerCycle = 2;
+	reqMaxPerCycle = (uint32_t) params.find_integer("max_reqs_cycle", 2);
 
 	out->verbose(CALL_INFO, 1, 0, "Miranda CPU Configuration:\n");
 	out->verbose(CALL_INFO, 1, 0, "- Max reorder lookups             %" PRIu32 "\n", maxOpLookup);
