@@ -42,12 +42,13 @@ void GUPSGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 " at address %" PRIu64 "\n", issueCount, addr);
 
-	q->push_back(new MemoryOpRequest(addr, reqLength, READ));
-	q->push_back(new MemoryOpRequest(addr, reqLength, WRITE));
+	MemoryOpRequest* readAddr = new MemoryOpRequest(addr, reqLength, READ);
+	MemoryOpRequest* writeAddr = new MemoryOpRequest(addr, reqLength, WRITE);
 
-	if(issueOpFences) {
-                q->push_back(new FenceOpRequest());
-        }
+	writeAddr->addDependency(readAddr->getRequestID());
+
+	q->push_back(readAddr);
+	q->push_back(writeAddr);
 
 	issueCount--;
 }
