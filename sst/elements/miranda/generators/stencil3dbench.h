@@ -33,6 +33,7 @@ private:
 	uint32_t startZ;
 	uint32_t endZ;
 
+	uint32_t currentZ;
 	uint32_t currentItr;
 	uint32_t maxItr;
 
