@@ -83,6 +83,9 @@ public:
         }
 
         void resize(const uint32_t newSize) {
+		printf("Resizing MirandaQueue from: %" PRIu32 " to %" PRIu32 "\n",
+			curSize, newSize);
+
                	QueueType * newQ = (QueueType *) malloc(sizeof(QueueType) * newSize);
                	for(uint32_t i = 0; i < curSize; ++i) {
                        	newQ[i] = theQ[i];

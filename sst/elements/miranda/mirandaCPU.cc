@@ -149,7 +149,7 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 			cpuReq->getOriginalReqID(), cpuReq->countParts(), cpuReq->getIssueTime(), getCurrentSimTimeNano());
 
 		statReqLatency->addData((getCurrentSimTimeNano() - cpuReq->getIssueTime()));
-		requestsInFlight.erase(reqID);
+		requestsInFlight.erase(reqFind);
 
 		// Tell the CPU request one more of its parts are satisfied
 		cpuReq->decPartCount();
@@ -316,6 +316,9 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 
 						// Keep record we will delete fence at i
 						delReqs.push_back(i);
+
+						// Delete the fence
+						delete nxtRq;
     	                            	} else {
                                       		out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
                                 	}
