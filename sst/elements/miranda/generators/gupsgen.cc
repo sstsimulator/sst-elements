@@ -13,7 +13,8 @@ GUPSGenerator::GUPSGenerator( Component* owner, Params& params ) :
 
 	out = new Output("GUPSGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	issueCount = (uint64_t) params.find_integer("count", 1000);
+	iterations = (uint64_t) params.find_integer("iterations", 1);
+	issueCount = ((uint64_t) params.find_integer("count", 1000)) * iterations;
 	reqLength  = (uint64_t) params.find_integer("length", 8);
 	maxAddr    = (uint64_t) params.find_integer("max_address", 524288);
 
@@ -31,8 +32,7 @@ GUPSGenerator::~GUPSGenerator() {
 	delete rng;
 }
 
-void GUPSGenerator::generate(MirandaRequestQueue* q) {
-	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
+void GUPSGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 
 	const uint64_t rand_addr = rng->generateNextUInt64();
 	// Ensure we have a reqLength aligned request
@@ -40,11 +40,13 @@ void GUPSGenerator::generate(MirandaRequestQueue* q) {
 	const uint64_t addr = (addr_under_limit < reqLength) ? addr_under_limit :
 		(rand_addr % maxAddr) - (rand_addr % reqLength);
 
-	q->push(new MemoryOpRequest(addr, reqLength, READ));
-	q->push(new MemoryOpRequest(addr, reqLength, WRITE));
+	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 " at address %" PRIu64 "\n", issueCount, addr);
+
+	q->push_back(new MemoryOpRequest(addr, reqLength, READ));
+	q->push_back(new MemoryOpRequest(addr, reqLength, WRITE));
 
 	if(issueOpFences) {
-                q->push(new FenceOpRequest());
+                q->push_back(new FenceOpRequest());
         }
 
 	issueCount--;

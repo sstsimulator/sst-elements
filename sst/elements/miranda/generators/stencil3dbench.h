@@ -15,7 +15,7 @@ class Stencil3DBenchGenerator : public RequestGenerator {
 public:
 	Stencil3DBenchGenerator( Component* owner, Params& params );
 	~Stencil3DBenchGenerator();
-	void generate(MirandaRequestQueue* q);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 

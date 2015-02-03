@@ -18,7 +18,7 @@ class GUPSGenerator : public RequestGenerator {
 public:
 	GUPSGenerator( Component* owner, Params& params );
 	~GUPSGenerator();
-	void generate(MirandaRequestQueue* q);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
@@ -27,6 +27,7 @@ private:
 	uint64_t start;
 	uint64_t maxAddr;
 	uint64_t issueCount;
+	uint64_t iterations;
 	SSTRandom* rng;
 	Output*  out;
 	bool issueOpFences;

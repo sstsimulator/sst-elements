@@ -15,7 +15,7 @@ class STREAMBenchGenerator : public RequestGenerator {
 public:
 	STREAMBenchGenerator( Component* owner, Params& params );
 	~STREAMBenchGenerator();
-	void generate(MirandaRequestQueue* q);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
@@ -27,6 +27,7 @@ private:
 	uint64_t start_c;
 
 	uint64_t n;
+	uint64_t n_per_call;
 	uint64_t i;
 
 	Output*  out;

@@ -36,13 +36,13 @@ public:
 		delete out;
 	}
 
-	void generate(MirandaRequestQueue* q) {
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 		if(nextItem == itemCount) {
 			return;
 		}
 
-		q->push(new MemoryOpRequest(readAddr  + (nextItem * reqLength), reqLength, READ)  );
-		q->push(new MemoryOpRequest(writeAddr + (nextItem * reqLength), reqLength, WRITE) );
+		q->push_back(new MemoryOpRequest(readAddr  + (nextItem * reqLength), reqLength, READ)  );
+		q->push_back(new MemoryOpRequest(writeAddr + (nextItem * reqLength), reqLength, WRITE) );
 
 		nextItem++;
 	}

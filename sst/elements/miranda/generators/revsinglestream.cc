@@ -34,10 +34,10 @@ ReverseSingleStreamGenerator::~ReverseSingleStreamGenerator() {
 	delete out;
 }
 
-void ReverseSingleStreamGenerator::generate(std::queue<GeneratorRequest*>* q) {
+void ReverseSingleStreamGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request at address: %" PRIu64 "\n", nextIndex);
 
-	q->push(new MemoryOpRequest(nextIndex * datawidth, datawidth, READ));
+	q->push_back(new MemoryOpRequest(nextIndex * datawidth, datawidth, READ));
 
 	// What is the next address?
 	nextIndex = nextIndex - stride;

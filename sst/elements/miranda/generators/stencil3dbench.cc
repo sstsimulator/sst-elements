@@ -29,7 +29,7 @@ Stencil3DBenchGenerator::~Stencil3DBenchGenerator() {
 	delete out;
 }
 
-void Stencil3DBenchGenerator::generate(std::queue<GeneratorRequest*>* q) {
+void Stencil3DBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 2, 0, "Enqueue iteration: %" PRIu32 "...\n", currentItr);
 	out->verbose(CALL_INFO, 4, 0, "Itr: Z:[%" PRIu32 ",%" PRIu32 "], Y:[%" PRIu32 ",%" PRIu32 "], X:[%" PRIu32 ",%" PRIu32 "]\n",
 		(startZ + 1), (endZ - 1), 1, (nY - 1), 1, (nX - 1));
@@ -39,43 +39,43 @@ void Stencil3DBenchGenerator::generate(std::queue<GeneratorRequest*>* q) {
 	for(uint32_t curZ = (startZ + 1); curZ < (endZ - 1); curZ++) {
 		for(uint32_t curY = 1; curY < (nY - 1); curY++) {
 			for(uint32_t curX = 1; curX < (nX - 1); curX++) {
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY - 1, curZ - 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY - 1, curZ - 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY - 1, curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY - 1, curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY - 1, curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY - 1, curZ - 1), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY    , curZ - 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY    , curZ - 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY    , curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY    , curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY    , curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY    , curZ - 1), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY + 1, curZ - 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, curZ - 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY + 1, curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, curZ - 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, curZ - 1), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY - 1, curZ    ), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY - 1, curZ    ), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY - 1, curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY - 1, curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY - 1, curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY - 1, curZ    ), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY    , curZ    ), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY    , curZ    ), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY    , curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY    , curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY    , curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY    , curZ    ), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY + 1, curZ    ), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, curZ    ), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY + 1, curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, curZ    ), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, curZ    ), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY - 1, curZ + 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY - 1, curZ + 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY - 1, curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY - 1, curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY - 1, curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY - 1, curZ + 1), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY    , curZ + 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY    , curZ + 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY    , curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY    , curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY    , curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY    , curZ + 1), datawidth, READ));
 
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY + 1, curZ + 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, curZ + 1), datawidth, READ));
-				q->push(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX - 1, curY + 1, curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX,     curY + 1, curZ + 1), datawidth, READ));
+				q->push_back(new MemoryOpRequest(datawidth * convertPositionToIndex(curX + 1, curY + 1, curZ + 1), datawidth, READ));
 
-				q->push(new MemoryOpRequest( (nX * nY * nZ * datawidth) +
+				q->push_back(new MemoryOpRequest( (nX * nY * nZ * datawidth) +
 					                            datawidth * convertPositionToIndex(curX    , curY    , curZ    ), datawidth, WRITE));
 
 				countReqGen += 28;

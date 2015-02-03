@@ -31,7 +31,7 @@ RandomGenerator::~RandomGenerator() {
 	delete rng;
 }
 
-void RandomGenerator::generate(std::queue<GeneratorRequest*>* q) {
+void RandomGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
 	out->verbose(CALL_INFO, 4, 0, "Generating next request number: %" PRIu64 "\n", issueCount);
 
 	const uint64_t rand_addr = rng->generateNextUInt64();
@@ -43,10 +43,10 @@ void RandomGenerator::generate(std::queue<GeneratorRequest*>* q) {
 	const double op_decide = rng->nextUniform();
 
 	// Populate request
-	q->push(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
+	q->push_back(new MemoryOpRequest(addr, reqLength, (op_decide < 0.5) ? READ : WRITE));
 
 	if(issueOpFences) {
-		q->push(new FenceOpRequest());
+		q->push_back(new FenceOpRequest());
 	}
 
 	issueCount--;

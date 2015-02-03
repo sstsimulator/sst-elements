@@ -37,6 +37,8 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	cache_link = dynamic_cast<SimpleMem*>( loadModuleWithComponent(interfaceName,
 		this, interfaceParams) );
 
+	maxOpLookup = (uint64_t) params.find_integer("max_reorder_lookups", 16);
+
 	if(NULL == cache_link) {
 		out->fatal(CALL_INFO, -1, "Error loading memory interface module.\n");
 	} else {
@@ -87,10 +89,20 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	statCyclesWithoutIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_no_issue") );
 	statBytesRead 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_read") );
 	statBytesWritten 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_write") );
-	statReqLatency 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_req_latency") );
+	statReqLatency 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "req_latency") );
 	statTime                = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "time") );
+	statCyclesHitFence      = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_hit_fence") );
+        statMaxIssuePerCycle    = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_issue") );
+	statCyclesHitReorderLimit = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_reorder") );
 
 	reqMaxPerCycle = 2;
+
+	out->verbose(CALL_INFO, 1, 0, "Miranda CPU Configuration:\n");
+	out->verbose(CALL_INFO, 1, 0, "- Max reorder lookups             %" PRIu32 "\n", maxOpLookup);
+	out->verbose(CALL_INFO, 1, 0, "- Clock:                          %s\n", cpuClock.c_str());
+	out->verbose(CALL_INFO, 1, 0, "- Cache line size:                %" PRIu64 " bytes\n", cacheLine);
+	out->verbose(CALL_INFO, 1, 0, "- Max requests per cycle:         %" PRIu32 "\n", reqMaxPerCycle);
+
 	out->verbose(CALL_INFO, 1, 0, "Configuration completed.\n");
 }
 
@@ -108,6 +120,9 @@ RequestGenCPU::~RequestGenCPU() {
 	delete statBytesRead;
 	delete statBytesWritten;
 	delete statReqLatency;
+	delete statCyclesHitFence;
+	delete statCyclesHitReorderLimit;
+	delete statMaxIssuePerCycle;
 }
 
 void RequestGenCPU::finish() {
@@ -123,16 +138,38 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 	out->verbose(CALL_INFO, 2, 0, "Recv event for processing from interface\n");
 
 	SimpleMem::Request::id_t reqID = ev->id;
-	std::map<SimpleMem::Request::id_t, uint64_t>::iterator reqFind = requestsInFlight.find(reqID);
+	std::map<SimpleMem::Request::id_t, CPURequest*>::iterator reqFind = requestsInFlight.find(reqID);
 
 	if(reqFind == requestsInFlight.end()) {
 		out->fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
 	} else{
-		statReqLatency->addData((getCurrentSimTimeNano() - reqFind->second));
+		CPURequest* cpuReq = reqFind->second;
+
+		out->verbose(CALL_INFO, 4, 0, "Miranda request located ID=%" PRIu64 ", contains %" PRIu32 " parts, issue time=%" PRIu64 ", time now=%" PRIu64 "\n",
+			cpuReq->getOriginalReqID(), cpuReq->countParts(), cpuReq->getIssueTime(), getCurrentSimTimeNano());
+
+		statReqLatency->addData((getCurrentSimTimeNano() - cpuReq->getIssueTime()));
 		requestsInFlight.erase(reqID);
+
+		// Tell the CPU request one more of its parts are satisfied
+		cpuReq->decPartCount();
 
 		// Decrement pending requests, we have recv'd a response
 		requestsPending--;
+
+		// If all the parts of this request are now completed then we will mark it for
+		// deletion and update any pending requests which are depending on us
+		if(cpuReq->completed()) {
+			out->verbose(CALL_INFO, 4, 0, "-> Entry has all parts satisfied, removing ID=%" PRIu64 ", total processing time: %" PRIu64 "ns\n",
+				cpuReq->getOriginalReqID(), (getCurrentSimTimeNano() - cpuReq->getIssueTime()));
+
+			// Notify every pending request that there may be a satisfied dependency
+			for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
+				pendingRequests.at(i)->satisfyDependency(cpuReq->getOriginalReqID());
+			}
+
+			delete cpuReq;
+		}
 
 		delete ev;
 	}
@@ -179,8 +216,13 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			upperAddress, upperLength);
 
-		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqLower->id, getCurrentSimTimeNano()) );
-		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(reqUpper->id, getCurrentSimTimeNano()) );
+		CPURequest* newCPUReq = new CPURequest(req->getRequestID());
+		newCPUReq->incPartCount();
+		newCPUReq->incPartCount();
+		newCPUReq->setIssueTime(getCurrentSimTimeNano());
+
+		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqLower->id, newCPUReq) );
+		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(reqUpper->id, newCPUReq) );
 
 		out->verbose(CALL_INFO, 4, 0, "Issuing requesting into cache link...\n");
 		cache_link->sendRequest(reqLower);
@@ -201,7 +243,11 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			reqAddress, reqLength);
 
-		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, uint64_t>(request->id, getCurrentSimTimeNano()) );
+		CPURequest* newCPUReq = new CPURequest(req->getRequestID());
+		newCPUReq->incPartCount();
+		newCPUReq->setIssueTime(getCurrentSimTimeNano());
+
+		requestsInFlight.insert( std::pair<SimpleMem::Request::id_t, CPURequest*>(request->id, newCPUReq) );
 		cache_link->sendRequest(request);
 
 		requestsPending++;
@@ -236,46 +282,74 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	if(requestsPending < maxRequestsPending) {
 		statCyclesWithIssue->addData(1);
 
-		for(uint32_t reqThisCycle = 0; reqThisCycle < reqMaxPerCycle; ++reqThisCycle) {
-			if(requestsPending < maxRequestsPending) {
-				out->verbose(CALL_INFO, 2, 0, "Will attempt to issue as free slots in load/store unit.\n");
+		uint32_t reqsIssuedThisCycle = 0;
+		std::vector<uint32_t> delReqs;
 
-				if(pendingRequests.size() == 0) {
-					if(! reqGen->isFinished()) {
-						reqGen->generate(&pendingRequests);
-					}
+		if(pendingRequests.size() < reqMaxPerCycle) {
+			if(! reqGen->isFinished()) {
+				reqGen->generate(&pendingRequests);
+			}
+		} 
 
-					if(pendingRequests.size() == 0) {
-						break;
-					}
-				} else {
-					out->verbose(CALL_INFO, 4, 0, "Issuing request cycle %" PRIu64 ", pending requests: %" PRIu64 ".\n",
-						(uint64_t) cycle, (uint64_t) pendingRequests.size());
-
-					GeneratorRequest* nxtRq = pendingRequests.front();
-					
-					if(nxtRq->getOperation() == REQ_FENCE) {
-                        // Check do we have pending requests, need to wait for these
-                        // complete before we are allowed to continue
-                        if(requestsInFlight.size() == 0) {
-                            pendingRequests.pop();
-                            delete nxtRq;
-                        }
-					} else {
-                        // Clear the operation and issue it
-                        pendingRequests.pop();
-                        
-						MemoryOpRequest* memOpRq = dynamic_cast<MemoryOpRequest*>(nxtRq);
-						issueRequest(memOpRq);
-                        
-                        delete nxtRq;
-					}
-				}
-			} else {
-				out->verbose(CALL_INFO, 2, 0, "Unable to issue as all resources are now full, continue next cycle.\n");
+		for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
+			if(reqsIssuedThisCycle == reqMaxPerCycle) {
+				statMaxIssuePerCycle->addData(1);
 				break;
 			}
+
+			// Only a certain number of lookups are allowed, if we exceed this then we
+			// must exit the issue loop
+			if(i == maxOpLookup) {
+				out->verbose(CALL_INFO, 2, 0, "Hit maximum reorder limit this cycle, no further operations will issue.\n");
+				statCyclesHitReorderLimit->addData(1);
+				break;
+			}
+
+			if(requestsPending < maxRequestsPending) {
+                               	out->verbose(CALL_INFO, 4, 0, "Will attempt to issue as free slots in the load/store unit.\n");
+
+				GeneratorRequest* nxtRq = pendingRequests.at(i);
+
+				if(nxtRq->getOperation() == REQ_FENCE) {
+					if(0 == requestsInFlight.size()) {
+                                               	out->verbose(CALL_INFO, 4, 0, "Fence operation completed, no pending requests, will be retired.\n");
+
+						// Keep record we will delete fence at i
+						delReqs.push_back(i);
+    	                            	} else {
+                                      		out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
+                                	}
+
+					statCyclesHitFence->addData(1);
+
+					// Fence operations do now allow anything else to complete in this cycle
+					break;
+                        	} else {
+                                	if(nxtRq->canIssue()) {
+                                       		reqsIssuedThisCycle++;
+
+                                      		out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
+                                                nxtRq->getRequestID(), reqsIssuedThisCycle);
+
+						// Keep record we will delete at index i
+						delReqs.push_back(i);
+
+                                                MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
+                                                issueRequest(memOpReq);
+
+                                                delete nxtRq;
+                                        } else {
+                                                out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " in queue, has dependencies which are not satisfied, wait.\n",
+                                                        nxtRq->getRequestID());
+                                        }
+                                }
+                        } else {
+                                out->verbose(CALL_INFO, 4, 0, "All load/store slots occupied, no more issues will be attempted.\n");
+                                break;
+                        }
 		}
+
+		pendingRequests.erase(delReqs);
 	} else {
 		out->verbose(CALL_INFO, 4, 0, "Will not issue, not free slots in load/store unit.\n");
 		statCyclesWithoutIssue->addData(1);

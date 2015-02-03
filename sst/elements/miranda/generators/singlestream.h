@@ -15,7 +15,7 @@ class SingleStreamGenerator : public RequestGenerator {
 public:
 	SingleStreamGenerator( Component* owner, Params& params );
 	~SingleStreamGenerator();
-	void generate(MirandaRequestQueue* q);
+	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 

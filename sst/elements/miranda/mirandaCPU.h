@@ -25,6 +25,23 @@ using namespace SST::Statistics;
 namespace SST {
 namespace Miranda {
 
+class CPURequest {
+public:
+	CPURequest(const uint64_t origID) :
+		originalID(origID), issueTime(0), outstandingParts(0) {}
+	void incPartCount() { outstandingParts++; }
+	void decPartCount() { outstandingParts--; }
+	bool completed() const { return 0 == outstandingParts; }
+	void setIssueTime(const uint64_t now) { issueTime = now; }
+	uint64_t getIssueTime() const { return issueTime; }
+	uint64_t getOriginalReqID() const { return originalID; }
+	uint32_t countParts() const { return outstandingParts; }
+protected:
+	uint64_t originalID;
+	uint64_t issueTime;
+	uint32_t outstandingParts;
+};
+
 class RequestGenCPU : public SST::Component {
 public:
 
@@ -45,15 +62,16 @@ private:
     	Output* out;
 
 	RequestGenerator* reqGen;
-	std::map<SimpleMem::Request::id_t, SimTime_t> requestsInFlight;
+	std::map<SimpleMem::Request::id_t, CPURequest*> requestsInFlight;
     	SimpleMem* cache_link;
 
-	MirandaRequestQueue pendingRequests;
+	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 
 	uint32_t maxRequestsPending;
 	uint32_t requestsPending;
 	uint32_t reqMaxPerCycle;
 	uint64_t cacheLine;
+	uint32_t maxOpLookup;
 
 	Statistic<uint64_t>* statReadReqs;
 	Statistic<uint64_t>* statWriteReqs;
@@ -65,8 +83,12 @@ private:
 	Statistic<uint64_t>* statBytesWritten;
 	Statistic<uint64_t>* statReqLatency;
 	Statistic<uint64_t>* statTime;
+	Statistic<uint64_t>* statCyclesHitFence;
+	Statistic<uint64_t>* statCyclesHitReorderLimit;
+	Statistic<uint64_t>* statMaxIssuePerCycle;
 };
 
 }
 }
 #endif /* _RequestGenCPU_H */
+
