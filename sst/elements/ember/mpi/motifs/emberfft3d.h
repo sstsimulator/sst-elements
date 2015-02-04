@@ -87,6 +87,8 @@ private:
     uint64_t    m_forwardStart;
     uint64_t    m_forwardStop;
     uint64_t    m_backwardStop;
+    uint64_t    m_forwardTotal;
+    uint64_t    m_backwardTotal;
 
     std::vector< uint32_t >  m_sendCnts;
     std::vector< uint32_t >  m_recvCnts;

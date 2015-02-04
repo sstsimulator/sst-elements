@@ -22,7 +22,12 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 	EmberMessagePassingGenerator(owner, params), 
     m_fwdTime(3,0),
     m_bwdTime(3,0),
-	m_loopIndex(-1)
+	m_loopIndex(-1),
+	m_forwardStart(0),
+	m_forwardStop(0),
+	m_backwardStop(0),
+	m_forwardTotal(0),
+	m_backwardTotal(0)
 {
 	m_name = "FFT3D";
 
@@ -37,7 +42,6 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
     assert( ! m_configFileName.empty() );
 
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-    assert( 1 == m_iterations ); 
 }
 
 
@@ -330,12 +334,15 @@ bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     GEN_DBG( 1, "loop=%d\n", m_loopIndex );
 
+    m_forwardTotal += (m_forwardStop - m_forwardStart);
+    m_backwardTotal += (m_backwardStop - m_forwardStop);
+
     if (  m_loopIndex == (signed) m_iterations ) {
         if ( 0 == rank() ) {
             m_output->output("%s: fwd time %f sec\n", m_name.c_str(), 
-                (double)(m_forwardStop - m_forwardStart) / 1000000000.0 );
+                ((double) m_forwardTotal / 1000000000.0) / m_iterations );
             m_output->output("%s: bwd time %f sec\n", m_name.c_str(), 
-                (double)(m_backwardStop - m_forwardStop) / 1000000000.0 );
+                ((double) m_backwardTotal / 1000000000.0) / m_iterations );
         }
         return true;
     }
