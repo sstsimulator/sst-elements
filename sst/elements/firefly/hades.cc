@@ -163,11 +163,14 @@ void Hades::initAdjacentMap( std::istream& nidList, Group* group, int numCores )
 		tmp += c;
 	
 		if ( c == ',' || nidList.peek() == EOF ) {
-			int pos = tmp.find("-");
+			if ( ! tmp.compare("Null") ) {
+				continue;
+			}
+			size_t pos = tmp.find("-");
 			int startNid;
 			int endNid;
 			std::istringstream ( tmp.substr(0, pos ) ) >> startNid;
-			if ( EOF != pos ) { 
+			if ( std::string::npos != pos ) { 
 				std::istringstream ( tmp.substr( pos + 1 ) ) >> endNid; 
 			} else {
 				endNid = startNid;
