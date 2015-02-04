@@ -2,6 +2,7 @@
 import sys,getopt
 import defaultParams
 import chamaOpenIBParams
+import chamaPSMParams
 import bgqParams
 
 import sst
@@ -13,6 +14,8 @@ from loadInfo import *
 import networkConfig 
 from networkConfig import *
 
+from random import sample 
+
 loadFile = ""
 workList = []
 numCores = 1
@@ -22,7 +25,9 @@ shape    = ""
 loading  = 0
 radix    = 0
 emberVerbose = 0
+numNodes = 0
 platform = "default"
+random = False
 
 motifDefaults = { 
 'cmd' : "",
@@ -48,12 +53,12 @@ if 1 == len(sys.argv) :
 
     topology = "torus"
     shape    = "4x4x4"
-    platform = "chamaOpenIB"
+    platform = "chamaPSM"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
-					"radix=","loading=","debug=","platform=",
-					"numCores=","loadFile=","cmdLine=","printStats=",
+					"radix=","loading=","debug=","platform=","numNodes=",
+					"numCores=","loadFile=","cmdLine=","printStats=","random=",
 					"emberVerbose=","netBW=","netPktSize=","netFlitSize="])
 
 except getopt.GetopError as err:
@@ -67,6 +72,8 @@ for o, a in opts:
         platform = a
     elif o in ("--numCores"):
         numCores = a
+    elif o in ("--numNodes"):
+        numNodes = a
     elif o in ("--debug"):
         debug = a
     elif o in ("--loadFile"):
@@ -91,6 +98,9 @@ for o, a in opts:
         netFlitSize = a
     elif o in ("--netPktSize"):
         netPktSize = a
+    elif o in ("--random"):
+        if a == "True":
+            random = True
     else:
         assert False, "unhandle option" 
 
@@ -99,6 +109,11 @@ if platform == "default":
     networkParams = defaultParams.networkParams
     hermesParams = defaultParams.hermesParams
     emberParams = defaultParams.emberParams 
+elif platform == "chamaPSM":
+    nicParams = chamaPSMParams.nicParams
+    networkParams = chamaPSMParams.networkParams
+    hermesParams = chamaPSMParams.hermesParams
+    emberParams = chamaPSMParams.emberParams 
 elif platform == "chamaOpenIB":
     nicParams = chamaOpenIBParams.nicParams
     networkParams = chamaOpenIBParams.networkParams
@@ -135,6 +150,20 @@ elif "fattree" == topology:
 else:
 	sys.exit("how did we get here")
 
+if int(numNodes) > int(topoInfo.getNumNodes()):
+    sys.exit("need more nodes")
+
+if random:
+	nidList=""
+	print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
+	nids = sample( xrange(int(topoInfo.getNumNodes())-1), int(numNodes))
+	while nids:
+		nidList += str(nids.pop(0)) 
+		if nids:
+			nidList +=","
+				
+	for x in workList:
+		x['cmd'] = "-nidList=" + nidList + " " + x['cmd']
 
 nicParams['debug'] = debug
 nicParams['verboseLevel'] = 1 
@@ -162,7 +191,7 @@ epParams = {}
 epParams.update(emberParams)
 epParams.update(hermesParams)
 
-loadInfo = LoadInfo( nicParams, epParams, topoInfo.getNumNodes(), numCores )
+loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores )
 
 if len(loadFile) > 0:
 	if len(workList) > 0:
