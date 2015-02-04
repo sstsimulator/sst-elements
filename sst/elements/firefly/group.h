@@ -73,7 +73,9 @@ class DenseGroup : public Group
         for ( iter = m_map.begin(); iter != m_map.end(); ++iter ) {
             std::map<int,int>::iterator next = iter;
             ++next;
-
+            if( next == m_map.end() ) {
+                break;
+            }
             if ( from == next->first ) {
                 assert( -1 == next->second );
                 if ( to == iter->second + ( next->first - iter->first ) ) {
