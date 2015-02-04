@@ -23,23 +23,30 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
     m_name = "Alltoall";
 
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-	m_count      = (uint32_t) params.find_integer("arg.count", 1);
+	m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
+	m_bytes      = (uint32_t) params.find_integer("arg.bytes", 1);
     m_sendBuf = NULL;
     m_recvBuf = NULL;
 }
 
 bool EmberAlltoallGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
+    if ( m_loopIndex == m_iterations ) {
+        if ( 0 == rank() ) {
+            m_output->output( "ranks %d, bytes %d, timePer %f\n", size(), m_bytes, 
+                    ((double)(m_stopTime-m_startTime)/(double)m_iterations) / 1000000000.0  );
+        }
+        return true;
+    }
     if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        enQ_getTime( evQ, &m_startTime );
     }
 
-    enQ_compute( evQ, 11000 );
-    enQ_alltoall( evQ, m_sendBuf, m_count, DOUBLE, m_recvBuf, m_count, DOUBLE, GroupWorld );
+    enQ_compute( evQ, m_compute );
+    enQ_alltoall( evQ, m_sendBuf, m_bytes, CHAR, m_recvBuf, m_bytes, CHAR, GroupWorld );
 
     if ( ++m_loopIndex == m_iterations ) {
-        return true;
-    } else {
-        return false;
+        enQ_getTime( evQ, &m_stopTime );
     }
+    return false;
 }
