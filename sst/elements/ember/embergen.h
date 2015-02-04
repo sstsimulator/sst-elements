@@ -28,7 +28,7 @@ namespace Ember {
 
 #define GEN_DBG( lvl, fmt , args... ) \
  {\
-    assert(m_output); \
+    if( m_output ) \
     m_output->verbosePrefix(  m_outputPrefix.c_str(), CALL_INFO, lvl, 0, \
                     fmt, ##args); \
  }

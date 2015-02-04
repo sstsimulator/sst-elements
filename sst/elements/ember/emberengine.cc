@@ -132,7 +132,6 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 
     // get the api the motif uses
     std::string api = params.find_string("api" );
-	assert( !api.empty() );
 
 	output.verbose(CALL_INFO, 2, 0, "api=`%s` motif=`%s`\n", 
 										api.c_str(), gentype.c_str());
@@ -150,13 +149,15 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		}
 	}
 
-    ApiInfo* info = apiMap.find(api)->second;
-    gen->initOutput( &output );
+    if ( ! api.empty() ) {
+        ApiInfo* info = apiMap.find(api)->second;
+        gen->initOutput( &output );
 
-    gen->initAPI( info->api );
-    gen->initData( &info->data );
-    info->data->jobId = jobId;
-    info->data->motifNum = motifNum;
+        gen->initAPI( info->api );
+        gen->initData( &info->data );
+  	    info->data->jobId = jobId;
+   	    info->data->motifNum = motifNum;
+    }
 
     return gen;
 }
