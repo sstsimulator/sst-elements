@@ -55,7 +55,7 @@ class LoadInfo:
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
 		nullMotif = [{
-			'cmd' : "Null",
+			'cmd' : "-nidList=Null Null",
 			'printStats' : 0,
 			'api': "",
 			'spyplotmode': 0
