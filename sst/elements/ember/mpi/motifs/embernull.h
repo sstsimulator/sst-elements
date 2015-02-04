@@ -18,24 +18,18 @@
 namespace SST {
 namespace Ember {
 
-class EmberNullGenerator : public EmberGenerator {
+class EmberNullGenerator : public EmberMessagePassingGenerator {
 
 public:
 	EmberNullGenerator(SST::Component* owner, Params& params) :
-		EmberGenerator(owner, params) {}
-
-	void configureEnvironment(const SST::Output* output, uint32_t rank,
-											uint32_t worldSize) 
-	{}
-    void generate(const SST::Output* output, const uint32_t phase,
-		std::queue<EmberEvent*>* evQ) 
-	{
-#if 0
-		evQ->push( new EmberStopEvent() );
-#endif
+		EmberMessagePassingGenerator(owner, params) {
+		m_name = "Null";
 	}
-	void finish(const SST::Output* output) 
-	{}
+
+    bool generate( std::queue<EmberEvent*>& evQ) 
+	{
+		return true;
+	}
 };
 
 }
