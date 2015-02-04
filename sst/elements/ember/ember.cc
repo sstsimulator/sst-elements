@@ -293,13 +293,15 @@ static const ElementInfoParam barrier_params[] = {
 
 static const ElementInfoParam alltoall_params[] = {
 	{	"arg.iterations",		"Sets the number of alltoall operations to perform", 	"1"},
-	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"arg.bytes",		"Sets the number of bytes per rank",	 	"1"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
 static const ElementInfoParam alltoallv_params[] = {
 	{	"arg.iterations",		"Sets the number of alltoallv operations to perform", 	"1"},
-	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"arg.bytes",		"Sets the number of bytes per rank",	 	"1"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
