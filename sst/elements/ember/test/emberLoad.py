@@ -150,6 +150,9 @@ elif "fattree" == topology:
 else:
 	sys.exit("how did we get here")
 
+if int(numNodes) == 0:
+    numNodes = int(topoInfo.getNumNodes())
+
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes")
 
