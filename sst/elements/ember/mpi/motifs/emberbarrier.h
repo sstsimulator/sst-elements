@@ -25,8 +25,12 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ );
 
 private:
-	uint32_t m_loopIndex;
-	uint32_t m_iterations;
+    uint32_t m_loopIndex;
+    uint32_t m_iterations;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
+    uint64_t m_compute;
+    
 };
 
 }

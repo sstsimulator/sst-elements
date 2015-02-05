@@ -22,20 +22,29 @@ EmberBarrierGenerator::EmberBarrierGenerator(SST::Component* owner,
 {
     m_name = "Barrier";
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+    m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 }
 
 bool EmberBarrierGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
-    if ( m_loopIndex == 0 ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+    if ( m_loopIndex == m_iterations ) {
+        if ( 0 == rank() ) {
+            double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
+            latency /= 1000000000.0;
+            m_output->output( "ranks %d, timePer %.3f us\n",
+                    size(), latency * 1000000.0  );
+        }
+        return true;
+    }
+    if ( 0 == m_loopIndex ) {
+        enQ_getTime( evQ, &m_startTime );
     }
 
-    enQ_compute( evQ, 11000 );
+    enQ_compute( evQ, m_compute );
     enQ_barrier( evQ, GroupWorld ); 
 
     if ( ++m_loopIndex == m_iterations ) {
-        return true; 
-    } else {
-        return false; 
+        enQ_getTime( evQ, &m_stopTime );
     }
+    return false;
 }
