@@ -157,6 +157,7 @@ if random:
 	nidList=""
 	print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 	nids = sample( xrange(int(topoInfo.getNumNodes())-1), int(numNodes))
+	nids.sort()
 	while nids:
 		nidList += str(nids.pop(0)) 
 		if nids:
