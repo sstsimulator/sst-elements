@@ -230,7 +230,7 @@ comp_l3cache.addParams({
       "statistics" : "1",
       "debug" : "",
       "network_address" : "1",
-      "network_bw" : "1GB/s",
+      "network_bw" : "25GB/s",
       "directory_at_next_level" : "1"
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -250,7 +250,7 @@ comp_dirctrl.addParams({
       "debug" : "",
       "network_address" : "0",
       "entry_cache_size" : "8192",
-      "network_bw" : "1GB/s",
+      "network_bw" : "25GB/s",
       "addr_range_start" : "0x0",
       "backing_store_size" : "0x1000000",
       "addr_range_end" : "0x1F000000"
