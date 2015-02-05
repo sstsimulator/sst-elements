@@ -288,6 +288,7 @@ static const ElementInfoParam allpingpong_params[] = {
 
 static const ElementInfoParam barrier_params[] = {
 	{	"arg.iterations",		"Sets the number of barrier operations to perform", 	"1024"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
