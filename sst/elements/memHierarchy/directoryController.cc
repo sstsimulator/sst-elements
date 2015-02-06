@@ -381,7 +381,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             assert(entry);
             requesting_node = node_name_to_id(ev->getSrc());
             entry->removeSharer(requesting_node);
-            if(entry->countRefs() == 0) resetEntry(entry);
+            if(entry->countRefs() == 0 && !entry->inProgress()) resetEntry(entry);
             if(mshr->elementIsHit(ev->getBaseAddr(),ev)) mshr->removeElement(ev->getBaseAddr(),ev);
             delete ev;
             break;
@@ -556,15 +556,14 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
         } else if(entry->waitingOnType == "memory" && cmd == PutS && entry->nextCommand == GetSResp) {
 	    dbg.debug(_L4_, "Replacement during a GetS for a different cache, handling replacement immediately.\n");
 	    return make_pair<bool,bool>(false,false); // not a conflicting request
-	}
-        else{
+        } else {
             dbg.debug(_L4_, "Incoming command [%s,%s] doesn't match for 0x%" PRIx64 " [%s,%s] in progress.\n", 
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
             if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
                 assert(entry->nextCommand != NULLCMD);
             }
             return make_pair<bool, bool>(true, false);
-        }
+        } 
     return make_pair<bool, bool>(false, false);
 
 }
@@ -840,12 +839,14 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
     memReqs[ev->getID()] = entry->baseAddr;
     entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
     entry->waitingOn     = "memory";
+    entry->waitingOnType = "memory";
     entry->lastRequest   = ev->getID();
     profileRequestSent(ev);
     if (directMemoryLink) {
         memLink->send(ev);
     } else {
         entry->waitingOn = memoryName;
+        entry->waitingOnType = "memory";
         ev->setDst(memoryName);
         network->send(ev);
     }
