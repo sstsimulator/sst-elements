@@ -200,6 +200,7 @@ private:
     
     /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
     bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
+    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event);
     
     /** Determines what CC will send the NACK. */
     void sendNACK(MemEvent* _event);
@@ -246,8 +247,8 @@ private:
     bool clockTick(Cycle_t time) {
         timestamp_++;
         if(cf_.bottomNetwork_ != "") memNICIdle_ = bottomNetworkLink_->clock();
-        topCC_->sendOutgoingCommands();
-        bottomCC_->sendOutgoingCommands();
+        topCC_->sendOutgoingCommands(getCurrentSimTimeNano());
+        bottomCC_->sendOutgoingCommands(getCurrentSimTimeNano());
         if ( cf_.maxWaitTime > 0 ) {
             checkMaxWait();
         }

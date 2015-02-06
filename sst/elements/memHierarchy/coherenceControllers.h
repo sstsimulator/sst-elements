@@ -57,7 +57,7 @@ public:
     uint64_t   tagLatency_;
     uint64_t   mshrLatency_;
     string     name_;
-    virtual void sendOutgoingCommands() = 0;
+    virtual void sendOutgoingCommands(SimTime_t curTime) = 0;
     list<Response> outgoingEventQueue_;
     
     bool queueBusy(){

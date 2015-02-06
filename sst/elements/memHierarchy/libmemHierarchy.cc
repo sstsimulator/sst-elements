@@ -81,7 +81,7 @@ static const ElementInfoParam cache_params[] = {
     {"slice_id",                "Optional, int      - For distributed, shared caches, unique ID for this cache slice", "0"},
     {"slice_allocation_policy", "Optional, string   - Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
     {"statistics",              "Optional, int      - Print cache stats at end of simulation. Options: 0[off], 1[on]", "0"},
-    {"network_bw",              "Optional, int      - Network link bandwidth.", "0"},
+    {"network_bw",              "Optional, int      - Network link bandwidth.", "1GB/s"},
     {"network_address",         "Optional, int      - When connected to a network, the network address of this cache.", "0"},
     {"network_num_vc",          "Optional, int      - When connected to a network, the number of VCS on the on-chip network.", "3"},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},

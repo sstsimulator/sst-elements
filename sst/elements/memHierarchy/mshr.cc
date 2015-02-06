@@ -112,6 +112,19 @@ bool MSHR::insert(Addr _baseAddr, MemEvent* _event){
     return ret;
 }
 
+bool MSHR::insertInv(Addr _baseAddr, MemEvent* _event){
+    _event->setInMSHR(true);
+    bool ret = insertInv(_baseAddr, mshrType(_event));
+    if(LIKELY(ret)){
+        d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
+     }
+    else d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
+    return ret;
+}
+
+
+
+
 bool MSHR::insert(Addr _keyAddr, Addr _pointerAddr){
     bool ret = insert(_keyAddr, mshrType(_pointerAddr));
     if(LIKELY(ret)) {
@@ -128,6 +141,16 @@ bool MSHR::insert(Addr _baseAddr, mshrType _mshrEntry){
     if(_mshrEntry.elem.type() == typeid(MemEvent*)) size_++;
     return true;
 }
+
+bool MSHR::insertInv(Addr _baseAddr, mshrType _mshrEntry){
+    if(size_ >= maxSize_) return false;
+    if (map_[_baseAddr].size() > 1) {
+        map_[_baseAddr].insert((map_[_baseAddr].begin()+1),_mshrEntry);
+    } else map_[_baseAddr].push_back(_mshrEntry);
+    if(_mshrEntry.elem.type() == typeid(MemEvent*)) size_++;
+    return true;
+}
+
 
 bool MSHR::insertAll(Addr _baseAddr, vector<mshrType> _events){
     if(_events.empty()) return false;

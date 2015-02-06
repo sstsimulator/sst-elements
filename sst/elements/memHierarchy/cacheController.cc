@@ -90,6 +90,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         int lineIndex = cf_.cacheArray_->find(_baseAddr, updateLine);   /* Update cacheline only if it's NOT mshrHit */
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
+            d_->debug(_L3_,"-- Cache Miss --\n");
             allocateCacheLine(_event, _baseAddr, lineIndex);            /* Function may except here to wait for eviction */
         }
         
@@ -120,6 +121,7 @@ void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAd
         int lineIndex = cf_.cacheArray_->find(_baseAddr, updateLine);
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
+            d_->debug(_L3_,"-- Cache Miss --\n");
             checkCacheMissValidity(_event);
             allocateCacheLine(_event, _baseAddr, lineIndex);
         }
@@ -147,7 +149,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     int lineIndex = cacheLine->getIndex();
 
     if(!L1_){
-        if(!processRequestInMSHR(_baseAddr, _event))                 /* L1s wont stall because they don't have any sharers */
+        if(!processInvRequestInMSHR(_baseAddr, _event))                 /* L1s wont stall because they don't have any sharers */
             return;
     }
     topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), _cmd, _mshrHit); /* Invalidate upper levels */
@@ -182,7 +184,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
     int lineIndex = cacheLine->getIndex();
 
     /* L1s wont stall because they don't have any sharers */
-    if(!L1_ && !processRequestInMSHR(_baseAddr, _event)) return;
+    if(!L1_ && !processInvRequestInMSHR(_baseAddr, _event)) return;
 
     topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), cmd, _mshrHit);
     if(invalidatesInProgress(lineIndex)) return;
@@ -224,7 +226,7 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
 
 
 void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(blockedEventException){
-    d_->debug(_L10_,"Replacement cache needs to be evicted. WbAddr: %" PRIx64 ", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
+    d_->debug(_L4_,"Evicting 0x%" PRIx64 ", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
     
     if(_wbCacheLine->isLocked()){
         d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %" PRIx64 "\n", _wbCacheLine->getBaseAddr());
@@ -308,7 +310,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     }
 
     if(_cacheLine->isLocked()){                                 /* If user-locked then wait this lock is released to activate this event. */
-        if(!processRequestInMSHR(_baseAddr, _event)) {
+        if(!processInvRequestInMSHR(_baseAddr, _event)) {
             return false;
         }
         incInvalidateWaitingForUserLock(groupId);               /* Requests is in MSHR.  Stall and wait for the atomic modet to be 'cleared' */
@@ -320,7 +322,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     
     CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
     if(ccLine->getState() != V){                                /* Check if invalidates are already in progress (A writeback is going on?) */
-        processRequestInMSHR(_baseAddr, _event);                /* Whether a NACK was sent or not, request needs to stall */
+        processInvRequestInMSHR(_baseAddr, _event);                /* Whether a NACK was sent or not, request needs to stall */
         return false;
     }
     
@@ -498,7 +500,6 @@ void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Com
 
 bool Cache::isCacheMiss(int _lineIndex){
     if(_lineIndex == -1){
-        d_->debug(_L3_,"-- Cache Miss --\n");
         return true;
     }
     else return false;
@@ -569,9 +570,18 @@ CacheArray::CacheLine* Cache::getCacheLine(int _lineIndex){
 bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
     if (mshr_->insert(_baseAddr, _event)) {
         _event->setStartTime(timestamp_);
-        if (_event->getCmd() == GetS || _event->getCmd() == GetX || _event->getCmd() == GetSEx) {
+        return true;
+    } else {
+        sendNACK(_event);
+        return false;
+    }
+}
 
-        }
+
+/* Invalidations/fetches will wait for the current outstanding transaction, but no waiting ones! */
+bool Cache::processInvRequestInMSHR(Addr _baseAddr, MemEvent* _event){
+    if (mshr_->insertInv(_baseAddr, _event)) {
+        _event->setStartTime(timestamp_);
         return true;
     } else {
         sendNACK(_event);

@@ -178,7 +178,7 @@ void DirectoryController::handlePacket(SST::Event *event){
      
     if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) handleMemoryResponse(event);
     else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
-        dbg.debug(_L10_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 "\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
+        dbg.debug(_L5_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 "\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
         profileRequestRecv(ev,NULL);
         Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
         Addr localBaseAddr   = convertAddressToLocalAddress(ev->getBaseAddr());
@@ -331,9 +331,9 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
 bool DirectoryController::processPacket(MemEvent *ev){
     dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L3_, "Directory Controller: %s, Proc Pkt: id (%" PRIu64 ",%d) Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n",
-            getName().c_str(), ev->getID().first, ev->getID().second, CommandString[ev->getCmd()],
-            ev->getBaseAddr(), ev->getSrc().c_str(),getCurrentSimTimeNano());
+    dbg.debug(_L3_, "EVENT: %s, Received: Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, id (%" PRIu64 ",%d), Time = %" PRIu64 "\n",
+            getName().c_str(),  CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), 
+            ev->getID().first, ev->getID().second, getCurrentSimTimeNano());
     assert(isRequestAddressValid(ev));
     Command cmd = ev->getCmd();
     
@@ -361,14 +361,14 @@ bool DirectoryController::processPacket(MemEvent *ev){
         if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
             mshrHits++;
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-            dbg.debug(_L10_, "Inserting conflicting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            dbg.debug(_L8_, "Inserting conflicting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
             if (!inserted) {
-                dbg.debug(_L10_, "MSHR is full. NACKing request\n");
+                dbg.debug(_L8_, "MSHR is full. NACKing request\n");
                 mshrNACKRequest(ev);
                 return true;
             }
         } else {
-            dbg.debug(_L10_, "Conflicting request already in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            dbg.debug(_L8_, "Conflicting request already in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
         }
     }
     if(ret.first == true) return ret.second;
@@ -397,15 +397,15 @@ bool DirectoryController::processPacket(MemEvent *ev){
                 if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
                     mshrHits++;
                     bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-                    dbg.debug(_L10_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+                    dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
                     if (!inserted) {
-                        dbg.debug(_L10_, "MSHR is full. NACKing request\n");
+                        dbg.debug(_L8_, "MSHR is full. NACKing request\n");
                         mshrNACKRequest(ev);
                         return true;
                     }
                     entry->activeReq = ev;
                 }
-                dbg.debug(_L10_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
+                dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
                 entry->nextFunc = &DirectoryController::handlePutM;
                 requestDirEntryFromMemory(entry);
             }
@@ -425,9 +425,9 @@ bool DirectoryController::processPacket(MemEvent *ev){
             if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
                 mshrHits++;
                 bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-                dbg.debug(_L10_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+                dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
                 if (!inserted) {
-                    dbg.debug(_L10_, "MSHR is full. NACKing request\n");
+                    dbg.debug(_L8_, "MSHR is full. NACKing request\n");
                     mshrNACKRequest(ev);
                     return true;
                 }
@@ -439,7 +439,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
                 handleDataRequest(entry, ev);
             }
             else{
-                dbg.debug(_L10_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
+                dbg.debug(_L8_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
                 entry->nextFunc = &DirectoryController::handleDataRequest;
                 requestDirEntryFromMemory(entry);
             }
@@ -458,11 +458,11 @@ bool DirectoryController::processPacket(MemEvent *ev){
 void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
-    dbg.debug(_L3_, "Directory Controller: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = " PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize(),getCurrentSimTimeNano());
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
             Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;
             Addr globalAddr = noncacheMemReqs[ev->getID()].second;
+            dbg.debug(_L3_, "EVENT: %s, Received: MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], globalBaseAddr, ev->getSize(),getCurrentSimTimeNano());
             ev->setBaseAddr(globalBaseAddr);
             ev->setAddr(globalAddr);
             noncacheMemReqs.erase(ev->getResponseToID());
@@ -470,16 +470,18 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             network->send(ev);
             return;
         }
-        dbg.fatal(CALL_INFO, -1, "Received unexpected noncacheable response from memory\n");
+        dbg.fatal(CALL_INFO, -1, "Received unexpected noncacheable response from memory for memory addr %" PRIx64 "\n",ev->getAddr());
     }
 
 
     if (ev->getBaseAddr() == 0 && dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end()) {    // directory entry miss
+        dbg.debug(_L3_, "EVENT: %s, Received:Cmd = %s, BaseAddr = 0x%" PRIx64 ", Src: Memory, Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize(),getCurrentSimTimeNano());
         dirEntryMiss.erase(ev->getResponseToID());
     }    
     
     if(memReqs.find(ev->getResponseToID()) != memReqs.end()){
         Addr targetBlock = memReqs[ev->getResponseToID()];
+        dbg.debug(_L3_, "RECV: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], targetBlock, ev->getSize(),getCurrentSimTimeNano());
         memReqs.erase(ev->getResponseToID());
         if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()){   // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
@@ -489,7 +491,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         }
         else  dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - response type not recognized: %s\n",CommandString[ev->getCmd()]);
     } else {
-        dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - matching request not found\n");
+        dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - matching request not found for memory address %" PRIx64 "\n",ev->getAddr());
     }
 
     delete ev;
@@ -504,7 +506,7 @@ void DirectoryController::mshrNACKRequest(MemEvent* ev) {
 
 void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent, MemEvent* _nackEvent){
     DirEntry *entry = getDirEntry(_origReqEvent->getBaseAddr());
-    dbg.debug(_L10_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n", 
+    dbg.debug(_L5_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n", 
 	_origReqEvent->getResponseToID().first, _origReqEvent->getResponseToID().second, _nackEvent->getResponseToID().first, 
 	_nackEvent->getResponseToID().second, entry->lastRequest.first, entry->lastRequest.second);
     
@@ -512,9 +514,9 @@ void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent, MemEvent*
     if ((_nackEvent->getResponseToID() == entry->lastRequest) || _origReqEvent->getCmd() == Inv) {
 	/* Re-send request */
 	sendEventToCaches(_origReqEvent);
-	dbg.debug(_L10_,"Orig Cmd NACKed, retry = %s \n", CommandString[_origReqEvent->getCmd()]);
+	dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[_origReqEvent->getCmd()]);
     } else {
-	dbg.debug(_L10_,"Orig Cmd NACKed, no retry = %s \n", CommandString[_origReqEvent->getCmd()]);
+	dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[_origReqEvent->getCmd()]);
     }
 }
 
@@ -523,17 +525,17 @@ void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent, MemEvent*
  *  Return value indicates (successful, erase packet from queue)
  */
 pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
-    dbg.debug(_L10_, "Entry found and in progress\n");
+    dbg.debug(_L5_, "Entry found and in progress\n");
         if((entry->nextCommand == cmd || 
             (entry->nextCommand == FetchResp && cmd == PutM) ||
             (entry->nextCommand == FetchXResp && cmd == PutM) ||
             (entry->nextCommand == GetSResp && cmd == PutS)) &&
             ("N/A" == entry->waitingOnType || entry->waitingOn == ev->getSrc())){
             
-            dbg.debug(_L10_, "Incoming command matches for 0x%" PRIx64 " in progress.\n", entry->baseAddr);
+            dbg.debug(_L4_, "Incoming command matches for 0x%" PRIx64 " in progress.\n", entry->baseAddr);
             profileResponseRecv(ev);
             if(ev->getResponseToID() != entry->lastRequest){
-                dbg.debug(_L10_, "This isn't a response to our request, but it fulfills the need.  Placing(%" PRIu64 ", %d) into list of ignorable responses.\n", 
+                dbg.debug(_L4_, "This isn't a response to our request, but it fulfills the need.  Placing(%" PRIu64 ", %d) into list of ignorable responses.\n", 
                         entry->lastRequest.first, entry->lastRequest.second);
             }
             advanceEntry(entry, ev);
@@ -542,7 +544,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
         
         } else if ((entry->nextCommand == FetchResp || entry->nextCommand == FetchXResp) && cmd == PutE) {    // exclusive replacement raced with a fetch, re-direct to memory
 
-            dbg.debug(_L10_, "Entry %" PRIx64 " request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
+            dbg.debug(_L4_, "Entry %" PRIx64 " request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
             profileResponseRecv(ev);
             assert(entry->findOwner() == node_name_to_id(ev->getSrc()));
             int id = node_name_to_id(ev->getSrc());
@@ -552,11 +554,11 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             delete ev;
             return make_pair<bool, bool>(true,true);
         } else if(entry->waitingOnType == "memory" && cmd == PutS && entry->nextCommand == GetSResp) {
-	    dbg.debug(_L10_, "Replacement during a GetS for a different cache, handling replacement immediately.\n");
+	    dbg.debug(_L4_, "Replacement during a GetS for a different cache, handling replacement immediately.\n");
 	    return make_pair<bool,bool>(false,false); // not a conflicting request
 	}
         else{
-            dbg.debug(_L10_, "Incoming command [%s,%s] doesn't match for 0x%" PRIx64 " [%s,%s] in progress.\n", 
+            dbg.debug(_L4_, "Incoming command [%s,%s] doesn't match for 0x%" PRIx64 " [%s,%s] in progress.\n", 
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
             if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
                 assert(entry->nextCommand != NULLCMD);
@@ -609,7 +611,7 @@ void DirectoryController::sendInvalidate(int target, DirEntry* entry){
     me->setDst(nodeid_to_name[target]);
     me->setAckNeeded();
     me->setRqstr(entry->activeReq->getRqstr());
-    dbg.debug(_L10_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
+    dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
     network->send(me);
 }
@@ -658,7 +660,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
              entry->waitingOn = "N/A";
              entry->waitingOnType = "N/A";
              entry->lastRequest = DirEntry::NO_LAST_REQUEST;
-             dbg.debug(_L10_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->baseAddr);
+             dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->baseAddr);
         } else getExclusiveDataForRequest(entry, NULL);
 
     } else {                                                    //Handle GetS requests
@@ -671,7 +673,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 
 
 void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
-    dbg.debug(_L10_, "Finishing Fetch. Writing data to memory. \n");
+    dbg.debug(_L4_, "Finishing Fetch. Writing data to memory. \n");
     int wb_id         = node_name_to_id(new_ev->getSrc());
     int req_id        = node_name_to_id(entry->activeReq->getSrc());
     Command cmd       = entry->activeReq->getCmd();
@@ -722,7 +724,7 @@ void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
     profileResponseSent(ev);
     sendEventToCaches(ev);
     
-    dbg.debug(_L10_, "Sending requested data for 0x%" PRIx64 " to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
+    dbg.debug(_L4_, "Sending requested data for 0x%" PRIx64 " to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
 
     updateEntryToMemory(entry);
 
@@ -766,7 +768,7 @@ void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
     if(ev->getCmd() == PutM || ev->getCmd() == GetSResp) {
         writebackData(entry->activeReq);
     } else if (ev->getCmd() != PutE) { // ok to drop a PutE -> block is not really dirty
-        dbg.debug(_L10_, "Alert! dropping PutM\n");
+        dbg.debug(_L4_, "Alert! dropping PutM\n");
     }
 	
     updateEntryToMemory(entry);
@@ -847,7 +849,7 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
         ev->setDst(memoryName);
         network->send(ev);
     }
-    dbg.debug(_L10_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
+    dbg.debug(_L5_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
 }
 
 void DirectoryController::updateCacheEntry(DirEntry *entry){
@@ -928,7 +930,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
         network->send(ev);
     }
     
-    dbg.debug(_L10_, "Writing back data. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
+    dbg.debug(_L5_, "Writing back data. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     return ev->getID();
 }
 
@@ -948,7 +950,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 		MemEvent *ev = boost::get<MemEvent*>((*it).elem);
                 std::list<MemEvent*>::iterator insert_it = workQueue.begin();
 		insert_it++;
-		dbg.debug(_L10_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+		dbg.debug(_L5_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
 	        workQueue.insert(insert_it,ev);
 }
 }
@@ -961,7 +963,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
 
 void DirectoryController::sendEventToCaches(MemEvent *ev){
-    dbg.debug(_L10_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
+    dbg.debug(_L3_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
     network->send(ev);
 }
 
