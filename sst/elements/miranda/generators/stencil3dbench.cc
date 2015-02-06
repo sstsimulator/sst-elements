@@ -146,7 +146,7 @@ void Stencil3DBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q
 
 	out->verbose(CALL_INFO, 4, 0, "Generated %" PRIu64 " requests this iteration.\n", countReqGen);
 
-	if(currentZ == (endZ - 1)) {
+	if(currentZ == (endZ - 2)) {
 		currentZ = startZ + 1;
 		currentItr++;
 	} else {
