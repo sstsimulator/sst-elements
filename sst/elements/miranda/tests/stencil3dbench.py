@@ -7,12 +7,12 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
-	"verbose" : 0,
+	"verbose" : 1,
 	"clock" : "2GHz",
 	"generator" : "miranda.Stencil3DBenchGenerator",
-	"generatorParams.verbose" : 4,
-	"generatorParams.nx" : 200,
-	"generatorParams.ny" : 200,
+	"generatorParams.verbose" : 1,
+	"generatorParams.nx" : 30,
+	"generatorParams.ny" : 20,
 	"generatorParams.nz" : 10,
 	"printStats" : 1,
 })
