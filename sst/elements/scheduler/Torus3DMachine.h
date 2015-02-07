@@ -13,8 +13,8 @@
  * Abstract base class for machines based on a mesh structure
  */
 
-#ifndef SST_SCHEDULER_MESH3DMACHINE_H__
-#define SST_SCHEDULER_MESH3DMACHINE_H__
+#ifndef SST_SCHEDULER_TORUS3DMACHINE_H__
+#define SST_SCHEDULER_TORUS3DMACHINE_H__
 
 #include <list>
 #include <string>
@@ -25,16 +25,16 @@
 namespace SST {
     namespace Scheduler {
 
-        class Mesh3DMachine : public StencilMachine {
+        class Torus3DMachine : public StencilMachine {
 
             private:
                 
                 //helper for getFreeAt... functions
                 void appendIfFree(std::vector<int> dims, std::list<int>* nodeList) const;
                 
-            public:                
-                Mesh3DMachine(std::vector<int> dims, int numCoresPerNode, double** D_matrix = NULL);
-                ~Mesh3DMachine() { };
+            public:
+                Torus3DMachine(std::vector<int> dims, int numCoresPerNode, double** D_matrix = NULL);
+                ~Torus3DMachine() { };
 
                 std::string getSetupInfo(bool comment);
                 
@@ -54,6 +54,15 @@ namespace SST {
                 //MeshMachine default routing is dimension ordered: first x, then y, then z, all in increasing direction
                 //@return vector of link indices
                 std::vector<int> getRoute(int node0, int node1, double commWeight) const;
+
+                //custom mod implementation to avoid negatives
+                int mod(const int a, const int b) const
+                {
+                    int ret = a % b;
+                    if(ret < 0)
+                        ret += b;
+                    return ret;
+                }
         };
     }
 }

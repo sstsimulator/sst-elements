@@ -193,7 +193,7 @@ AllocInfo* NearestAllocator::allocate(Job* job)
     std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    } 
+    }
     delete freeNodes;
     
     return allocate(job, available);

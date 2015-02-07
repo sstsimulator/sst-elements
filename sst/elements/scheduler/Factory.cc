@@ -25,6 +25,7 @@
 #include "schedComponent.h"
 #include "SimpleMachine.h"
 #include "StencilMachine.h"
+#include "Torus3DMachine.h"
  
 #include "allocators/NearestAllocator.h"
 #include "allocators/OctetMBSAllocator.h"
@@ -256,27 +257,47 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
 
             //Mesh Machine
         case MESH:
-            {
-                schedout.debug(CALL_INFO, 4, 0, "Mesh 3D Machine\n");
-                
-                if (schedparams -> size() != 3 && schedparams -> size() != 4) {
-                    schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Mesh Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
-                }
-
-                std::vector<int> dims(3);
-                dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0); 
-                dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0); 
-                if (schedparams -> size() == 4) {
-                    dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0); 
-                } else {
-                    dims[2] = 1;
-                }
-                if (dims[0] * dims[1] * dims[2] != numNodes) {
-                    schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of nodes");
-                }
-                retMachine = new Mesh3DMachine(dims, coresPerNode, D_matrix);
-                break;
+        {
+            schedout.debug(CALL_INFO, 4, 0, "Mesh 3D Machine\n");
+            
+            if (schedparams -> size() != 3 && schedparams -> size() != 4) {
+                schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Mesh 3D Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
             }
+
+            std::vector<int> dims(3);
+            dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0); 
+            dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0); 
+            if (schedparams -> size() == 4) {
+                dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0); 
+            } else {
+                dims[2] = 1;
+            }
+            if (dims[0] * dims[1] * dims[2] != numNodes) {
+                schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of nodes");
+            }
+            retMachine = new Mesh3DMachine(dims, coresPerNode, D_matrix);
+            break;
+        }
+        case TORUS:
+        {
+            if (schedparams -> size() != 3 && schedparams -> size() != 4) {
+                schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Torus 3D Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
+            }
+
+            std::vector<int> dims(3);
+            dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0); 
+            dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0); 
+            if (schedparams -> size() == 4) {
+                dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0); 
+            } else {
+                dims[2] = 1;
+            }
+            if (dims[0] * dims[1] * dims[2] != numNodes) {
+                schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of nodes");
+            }
+            retMachine = new Torus3DMachine(dims, coresPerNode, D_matrix);
+            break;
+        }
         default:
             schedout.fatal(CALL_INFO, 1, "Cannot parse name of machine");
         }

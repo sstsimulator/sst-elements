@@ -85,7 +85,7 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
     const int centerZ = coordOf(center,2);
     std::vector<int> curDims(3);
     std::list<int>* nodeList = new std::list<int>();
-    if(dist < 1){
+    if(dist < 1 || dist > dims[0] + dims[1] + dims[2]){
         return nodeList;
     }
     

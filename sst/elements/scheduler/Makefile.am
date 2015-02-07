@@ -2,22 +2,18 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS)
-
+    $(BOOST_CPPFLAGS) \
+    $(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
 libscheduler_la_SOURCES = \
     Allocator.h \
-    AllocInfo.h		exceptions.h \
     AllocInfo.cc \
-    Job.h	Machine.h Machine.cc \
-    Job.cc \
-    linkBuilder.h		misc.h			nodeComponent.h			schedComponent.h \
-    linkBuilder.cc		nodeComponent.cc	 	schedComponent.cc \
-    Scheduler.h 	SimpleMachine.h		Statistics.h \
-    schedLib.cc		SimpleMachine.cc	Statistics.cc \
+    AllocInfo.h \
+    AllocMapper.cc \
+    AllocMapper.h \
+    exceptions.h \
     Factory.cc \
     Factory.h \
     faultInjectionComponent.cc \
@@ -26,9 +22,26 @@ libscheduler_la_SOURCES = \
     FST.h \
     InputParser.cc \
     InputParser.h \
+    Job.cc \
+    Job.h \
+    linkBuilder.cc \
+    linkBuilder.h \
+    Machine.cc \
+    Machine.h \
     Mesh3DMachine.cc \
     Mesh3DMachine.h \
+    misc.h \
+    nodeComponent.cc \
+    nodeComponent.h \
     output.h \
+    schedComponent.cc \
+    schedComponent.h \
+    schedLib.cc \
+    Scheduler.h \
+    SimpleMachine.cc \
+    SimpleMachine.h \
+    Statistics.cc \
+    Statistics.h \
     StencilMachine.cc \
     StencilMachine.h \
     TaskCommInfo.cc \
@@ -36,8 +49,8 @@ libscheduler_la_SOURCES = \
     TaskMapInfo.cc \
     TaskMapInfo.h \
     TaskMapper.h \
-    AllocMapper.cc \
-    AllocMapper.h \
+    Torus3DMachine.cc \
+    Torus3DMachine.h \
     allocators/BestFitAllocator.cc \
     allocators/BestFitAllocator.h \
     allocators/ConstraintAllocator.cc \
@@ -103,11 +116,11 @@ libscheduler_la_SOURCES = \
     taskMappers/rcm.h
 
 EXTRA_DIST = \
-	simulations/DMatrix4_5_2 \
-	simulations/makeSDL.pl \
-	simulations/test_scheduler_Atlas.sim \
-	simulations/sphere3.mtx \
-	simulations/sphere3_coord.mtx
+    simulations/DMatrix4_5_2 \
+    simulations/makeSDL.pl \
+    simulations/test_scheduler_Atlas.sim \
+    simulations/sphere3.mtx \
+    simulations/sphere3_coord.mtx
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
 libscheduler_la_LIBADD =

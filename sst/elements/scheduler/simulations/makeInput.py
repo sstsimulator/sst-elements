@@ -108,7 +108,7 @@ if __name__ == '__main__':
   f.write('\n')
   
   f.write('# nodes\n')
-  if machine.split('[')[0] == 'mesh':
+  if machine.split('[')[0] == 'mesh' or machine.split('[')[0] == 'torus':
     nums = machine.split('[')[1]
     nums = nums.split(']')[0]
     nums = nums.split(',')
