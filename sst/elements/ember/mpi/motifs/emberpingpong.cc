@@ -40,8 +40,9 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
             double latency = ((totalTime/m_iterations)/2);
             double bandwidth = (double) m_messageSize / latency;
 
-            m_output->output("PingPong: total time %.3f us, loop %d, bufLen %d"
+            m_output->output("%s: total time %.3f us, loop %d, bufLen %d"
                     ", latency %.3f us. bandwidth %f GB/s\n",
+                                m_name.c_str(),
                                 totalTime * 1000000.0, m_iterations,
                                 m_messageSize,
                                 latency * 1000000.0,
