@@ -80,6 +80,10 @@ class EmberGenerator : public Module {
         assert(0);
     }
 
+    virtual bool primary( ) {
+        return true;
+    }
+
   protected:
     virtual void printHistogram( const Output* output, Histo* histo );
     virtual void* memAlloc( size_t );

@@ -63,6 +63,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 		motifParams[i] = params.find_prefix_params( "motif" + tmp.str() + "." );
 	} 
 
+    registerAsPrimaryComponent();
+
     // Init the first Motif
     m_generator = initMotif( motifParams[0], m_apiMap, m_jobId, currentMotif );
     assert( m_generator );
@@ -72,9 +74,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
     assert(selfEventLink);
 
-	// Make sure we don't stop the simulation until we are ready
-    registerAsPrimaryComponent();
-    primaryComponentDoNotEndSim();
 
 	// Create a time converter for our compute events
 	nanoTimeConverter =
@@ -158,6 +157,10 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
   	    info->data->jobId = jobId;
    	    info->data->motifNum = motifNum;
     }
+	// Make sure we don't stop the simulation until we are ready
+    if ( gen->primary() ) {	
+        primaryComponentDoNotEndSim();
+    }
 
     return gen;
 }
@@ -198,10 +201,12 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
         // if the event Queue is empty after a refill the motif is done
         if (  evQueue.empty() ) {
             m_generator->finish( &output, getCurrentSimTimeNano() );
+            if ( m_generator->primary() ) {	
+	            primaryComponentOKToEndSim();
+            }
             delete m_generator;
 
             if ( ++currentMotif == motifParams.size() ) {
-	            primaryComponentOKToEndSim();
                 return;
             } else {
                 m_generator = initMotif( motifParams[currentMotif],
