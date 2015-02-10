@@ -76,7 +76,9 @@ if __name__ == "__main__":
                     "filepath" : filename,
                     "separator" : ", "
                     })
-        sst.enableAllStatisticsWithRateForComponentType("merlin.hr_router",rate);
+##        sst.enableAllStatisticsWithRateForComponentType("merlin.hr_router",rate);
+        sst.enableAllStatisticsForComponentType("merlin.hr_router", {"type":"sst.AccumulatorStatistic",
+                                                                     "rate":rate});
         #stats.append("port%d_send_bit_count"%l)
         #stats.append("port%d_send_packet_count"%l)
         #stats.append("port%d_xbar_stalls"%l)

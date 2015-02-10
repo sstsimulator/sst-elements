@@ -71,7 +71,7 @@ static const ElementInfoPort hr_router_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoStatistic hr_router_statistics[] = {
+static const ElementInfoStatisticEnable hr_router_statistics[] = {
     { "port0_send_bit_count", "Count number of bits sent on link", 1},
     { "port1_send_bit_count", "Count number of bits sent on link", 1},
     { "port2_send_bit_count", "Count number of bits sent on link", 1},

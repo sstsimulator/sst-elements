@@ -20,7 +20,7 @@ comp_cpu.addParams({
 })
 
 # Enable statistics outputs
-comp_cpu.enableAllStatistics()
+comp_cpu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({

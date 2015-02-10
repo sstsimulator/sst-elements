@@ -84,59 +84,17 @@ simpleStatistics::simpleStatistics(ComponentId_t id, Params& params) : Component
 
     /////////////////////////////////////////
     // Create the Statistics objects
-
-    // Build the Histogram and Accumulator Statistic variables
-    HistogramStatistic<uint32_t, uint32_t>*  temp_histoU32; 
-    HistogramStatistic<uint64_t, uint32_t>*  temp_histoU64; 
-    HistogramStatistic<int32_t,  uint32_t>*  temp_histoI32; 
-    HistogramStatistic<int64_t,  uint32_t>*  temp_histoI64; 
-    AccumulatorStatistic<uint32_t>*          temp_accumU32; 
-    AccumulatorStatistic<uint64_t>*          temp_accumU64; 
-    AccumulatorStatistic<uint32_t>*          temp_accumU32_DUPLICATENAME; 
-    AccumulatorStatistic<uint64_t>*          temp_accum_NULLSTAT; 
-
-    // Instantiate the Histogram Statistic objects
-    temp_histoU32 = new HistogramStatistic<uint32_t, uint32_t>(this, "histo_U32", 0, 500000000, 50000000, false);
-    temp_histoU64 = new HistogramStatistic<uint64_t, uint32_t>(this, "histo_U64", 0, 500000000, 50000000);
-    temp_histoI32 = new HistogramStatistic<int32_t,  uint32_t>(this, "histo_I32", 0, 500000000, 50000000, false);
-    temp_histoI64 = new HistogramStatistic<int64_t,  uint32_t>(this, "histo_I64", 0, 500000000, 50000000);
-
-    // Build the Accumulator Statistic objects
-    temp_accumU32 = new AccumulatorStatistic<uint32_t>(this, "accum_U32");
-    temp_accumU64 = new AccumulatorStatistic<uint64_t>(this, "accum_U64");
-    
-    // Build some bad versions of Accumulator Statistic objects
-    temp_accumU32_DUPLICATENAME = new AccumulatorStatistic<uint32_t>(this, "accum_U32");  // duplicated stat name from above 
-    temp_accum_NULLSTAT = NULL;  // Statistic points to NULL
-
-////    // Register the Statistic Objects to dump at a period or events
-////    histoU32 = registerStatistic(temp_histoU32, UnitAlgebra("5 ns"));
-////    histoU64 = registerStatistic(temp_histoU64, UnitAlgebra("10 ns"));
-////    histoI32 = registerStatistic(temp_histoI32, UnitAlgebra("25 events")); 
-////    histoI64 = registerStatistic(temp_histoI64, UnitAlgebra("50 ns"));
-////    accumU32 = registerStatistic(temp_accumU32, UnitAlgebra("5 ns"));
-////    accumU64 = registerStatistic(temp_accumU64, UnitAlgebra("10 ns"));
-
-    
-//    // Register the Statistic Object to dump at end of Simulation (if enabled) 
-    // Register the Statistic Objects 
-    histoU32 = registerStatistic(temp_histoU32);
-    histoU64 = registerStatistic(temp_histoU64);
-    histoI32 = registerStatistic(temp_histoI32);
-    histoI64 = registerStatistic(temp_histoI64);
-    accumU32 = registerStatistic(temp_accumU32);
-    accumU64 = registerStatistic(temp_accumU64);
-        
+    histoU32 = registerStatistic<uint32_t>("histo_U32", "1");
+    histoU64 = registerStatistic<uint64_t>("histo_U64", "2");
+    histoI32 = registerStatistic<int32_t> ("histo_I32", "3");
+    histoI64 = registerStatistic<int64_t> ("histo_I64", "4");
+    accumU32 = registerStatistic<uint32_t>("accum_U32", "5");
+    accumU64 = registerStatistic<uint64_t>("accum_U64", "6");
     
     // Try to Register Illegal Statistic Objects
     printf("STATISTIC TESTING: TRYING TO REGISTER A DUPLICATE STAT NAME - SHOULD RETURN A NULLSTATISTIC\n");
-////    accumU32_NOTUSED = registerStatistic(temp_accumU32_DUPLICATENAME, UnitAlgebra("5 ns"));   // This stat should not be registered because it has a duplicated name
-    accumU32_NOTUSED = registerStatistic(temp_accumU32_DUPLICATENAME);   // This stat should not be registered because it has a duplicated name
+    accumU32_NOTUSED = registerStatistic<uint32_t>("accum_U32", "1");   // This stat should not be registered because it has a duplicated name
 
-    printf("STATISTIC TESTING: TRYING TO REGISTER A STATISTIC POINTING TO NULL - SHOULD RETURN A NULLSTATISTIC\n");
-////    accum_NOTUSED = registerStatistic(temp_accum_NULLSTAT, UnitAlgebra("5 ns"));  // This stat should not be registered because it point to null
-    accum_NOTUSED = registerStatistic(temp_accum_NULLSTAT);  // This stat should not be registered because it point to null
-    
     // Create the OneShot Callback Handlers
     callback1Handler = new OneShot::Handler<simpleStatistics, uint32_t>(this, &simpleStatistics::Oneshot1Callback, 1);
     callback2Handler = new OneShot::Handler<simpleStatistics>(this, &simpleStatistics::Oneshot2Callback);
@@ -260,7 +218,7 @@ static Component* create_simpleStatistics(SST::ComponentId_t id, SST::Params& pa
     return new simpleStatistics(id, params);
 }
 
-static const ElementInfoStatistic component_statistics[] = {
+static const ElementInfoStatisticEnable component_statistics[] = {
     { "histo_U32", "Test Histogram 1 - Collecting U32 Data", 1},   // Name, Desc, Enable Level 
     { "histo_U64", "Test Histogram 2 - Collecting U64 Data", 2}, 
     { "histo_I32", "Test Histogram 3 - Collecting IU32 Data", 3}, 

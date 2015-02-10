@@ -156,11 +156,13 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     // Register statistics
     std::string name("port");
     name = name + boost::lexical_cast<std::string>(port_number) + "_send_bit_count";
-    send_bit_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
+//    send_bit_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
+    send_bit_count = rif->registerStatistic<uint64_t>(name);
 
     name = "port";
     name = name + boost::lexical_cast<std::string>(port_number) + "_send_packet_count";
-    send_packet_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
+//    send_packet_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
+    send_packet_count = rif->registerStatistic<uint64_t>(name);
 }
 
 // void

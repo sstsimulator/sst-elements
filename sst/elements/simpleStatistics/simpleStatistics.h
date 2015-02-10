@@ -63,7 +63,6 @@ private:
   Statistic<uint32_t>*  accumU32; 
   Statistic<uint64_t>*  accumU64; 
   Statistic<uint32_t>*  accumU32_NOTUSED; 
-  Statistic<uint64_t>*  accum_NOTUSED; 
   
   // Variables to store OneShot Callback Handlers
   OneShot::HandlerBase* callback1Handler;
@@ -85,7 +84,6 @@ private:
     ar & BOOST_SERIALIZATION_NVP(accumU32); 
     ar & BOOST_SERIALIZATION_NVP(accumU64); 
     ar & BOOST_SERIALIZATION_NVP(accumU32_NOTUSED); 
-    ar & BOOST_SERIALIZATION_NVP(accum_NOTUSED); 
   }
 
   template<class Archive>
@@ -103,7 +101,6 @@ private:
     ar & BOOST_SERIALIZATION_NVP(accumU32); 
     ar & BOOST_SERIALIZATION_NVP(accumU64); 
     ar & BOOST_SERIALIZATION_NVP(accumU32_NOTUSED); 
-    ar & BOOST_SERIALIZATION_NVP(accum_NOTUSED); 
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER()

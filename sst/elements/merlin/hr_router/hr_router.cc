@@ -219,7 +219,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     for ( int i = 0; i < num_ports; i++ ) {
         std::string name("port");
         name = name + boost::lexical_cast<std::string>(i) + "_xbar_stalls";
-        xbar_stalls[i] = registerStatistic(new AccumulatorStatistic<uint64_t>(this, name));
+//        xbar_stalls[i] = registerStatistic(new AccumulatorStatistic<uint64_t>(this, name));
+        xbar_stalls[i] = registerStatistic<uint64_t>(name);
     }
 }
 

@@ -81,19 +81,33 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	cacheLine = (uint64_t) params.find_integer("cache_line_size", 64);
 
-	statReadReqs   		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "read_reqs") );
-	statWriteReqs  		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "write_reqs") );
-	statSplitReadReqs 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "split_read_reqs") );
-	statSplitWriteReqs 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "split_write_reqs") );
-	statCyclesWithIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_with_issue") );
-	statCyclesWithoutIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_no_issue") );
-	statBytesRead 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_read") );
-	statBytesWritten 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_write") );
-	statReqLatency 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "req_latency") );
-	statTime                = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "time") );
-	statCyclesHitFence      = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_hit_fence") );
-        statMaxIssuePerCycle    = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_issue") );
-	statCyclesHitReorderLimit = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_reorder") );
+//	statReadReqs   		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "read_reqs") );
+//	statWriteReqs  		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "write_reqs") );
+//	statSplitReadReqs 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "split_read_reqs") );
+//	statSplitWriteReqs 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "split_write_reqs") );
+//	statCyclesWithIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_with_issue") );
+//	statCyclesWithoutIssue 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_no_issue") );
+//	statBytesRead 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_read") );
+//	statBytesWritten 	= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "total_bytes_write") );
+//	statReqLatency 		= registerStatistic( new AccumulatorStatistic<uint64_t>(this, "req_latency") );
+//	statTime                = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "time") );
+//	statCyclesHitFence      = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_hit_fence") );
+//        statMaxIssuePerCycle    = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_issue") );
+//	statCyclesHitReorderLimit = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_reorder") );
+
+	statReadReqs   		      = registerStatistic<uint64_t>( "read_reqs" );
+	statWriteReqs  		      = registerStatistic<uint64_t>( "write_reqs" );
+	statSplitReadReqs 	      = registerStatistic<uint64_t>( "split_read_reqs" );
+	statSplitWriteReqs    	  = registerStatistic<uint64_t>( "split_write_reqs" );
+	statCyclesWithIssue 	  = registerStatistic<uint64_t>( "cycles_with_issue" );
+	statCyclesWithoutIssue 	  = registerStatistic<uint64_t>( "cycles_no_issue" );
+	statBytesRead 		      = registerStatistic<uint64_t>( "total_bytes_read" );
+	statBytesWritten 	      = registerStatistic<uint64_t>( "total_bytes_write" );
+	statReqLatency 		      = registerStatistic<uint64_t>( "req_latency" );
+	statTime                  = registerStatistic<uint64_t>( "time" );
+	statCyclesHitFence        = registerStatistic<uint64_t>( "cycles_hit_fence" );
+    statMaxIssuePerCycle      = registerStatistic<uint64_t>( "cycles_max_issue" );
+	statCyclesHitReorderLimit = registerStatistic<uint64_t>( "cycles_max_reorder" );
 
 	reqMaxPerCycle = (uint32_t) params.find_integer("max_reqs_cycle", 2);
 
