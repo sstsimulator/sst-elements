@@ -31,6 +31,7 @@
 #include "mpi/motifs/embersweep3d.h"
 #include "mpi/motifs/embernaslu.h"
 #include "mpi/motifs/emberpingpong.h"
+#include "mpi/motifs/emberTrafficGen.h"
 #include "mpi/motifs/emberring.h"
 #include "mpi/motifs/emberinit.h"
 #include "mpi/motifs/emberfini.h"
@@ -196,6 +197,11 @@ load_FFT3D( Component* comp, Params& params ) {
 	return new EmberFFT3DGenerator(comp, params);
 }
 
+static Module*
+load_TrafficGen( Component* comp, Params& params ) {
+	return new EmberTrafficGenGenerator(comp, params);
+}
+
 static const ElementInfoParam component_params[] = {
     { "module", "Sets the OS module", ""},
     { "printStats", "Prints the statistics from the component, used as a bit field, 1 = print end of run statisitics, 2 = print end of motif runs in multi motif runs, default 0 = print nothing.", "0"},
@@ -278,6 +284,13 @@ static const ElementInfoParam fft3d_params[] = {
     { "arg.configFile",  "", "" },
 	{	NULL,	NULL,	NULL	}
 };
+
+static const ElementInfoParam trafficGen_params[] = {
+	{ "arg.messageSize",	"Sets the size of exchange", 	"1"},
+	{ "arg.computeTime",	"Sets the time between exchange", 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
 
 static const ElementInfoParam allpingpong_params[] = {
     	{	"arg.messagesize",		"Sets the message size of the ping pong operation",	"128"},
@@ -509,6 +522,15 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_FFT3D,
 	fft3d_params,
+	"SST::Ember::EmberGenerator"
+    },
+    {
+	"TrafficGenMotif",
+	"Models network traffic",
+	NULL,
+	NULL,
+	load_TrafficGen,
+	trafficGen_params,
 	"SST::Ember::EmberGenerator"
     },
     {
