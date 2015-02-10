@@ -31,6 +31,8 @@ private:
     MessageResponse m_resp;
     void*    m_sendBuf;
     void*    m_recvBuf;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
 };
 
 }
