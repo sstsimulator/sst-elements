@@ -116,6 +116,7 @@ EXTRA_DIST = \
 	test/Tester.py \
 	test/defaultParams.py \
 	test/chamaOpenIBParams.py \
+	test/chamaPSMParams.py \
 	test/bgqParams.py
 
 if USE_EMBER_CONTEXTS
