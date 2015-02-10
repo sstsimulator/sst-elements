@@ -67,6 +67,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberring.cc  \
 	mpi/motifs/emberpingpong.cc \
 	mpi/motifs/emberpingpong.h \
+	mpi/motifs/emberTrafficGen.cc \
+	mpi/motifs/emberTrafficGen.h \
 	mpi/motifs/emberbarrier.cc \
 	mpi/motifs/emberbarrier.h \
 	mpi/motifs/emberallpingpong.cc \
