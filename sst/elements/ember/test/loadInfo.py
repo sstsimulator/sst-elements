@@ -85,7 +85,8 @@ class LoadInfo:
 		self.verifyLoadInfo()
 
 	def initWork(self, workList ):
-		self.map.append( self.foo( 0, self.readWorkList( workList ) ) )
+		for work in workList:
+			self.map.append( self.foo( 0, self.readWorkList( work ) ) )
 		self.verifyLoadInfo()
 
 	def readWorkList(self, workList ):

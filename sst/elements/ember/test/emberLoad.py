@@ -15,6 +15,8 @@ import networkConfig
 from networkConfig import *
 
 from random import sample 
+from random import shuffle 
+from sets import Set 
 
 loadFile = ""
 workList = []
@@ -28,6 +30,7 @@ emberVerbose = 0
 numNodes = 0
 platform = "default"
 random = False
+background = False 
 
 motifDefaults = { 
 'cmd' : "",
@@ -36,27 +39,26 @@ motifDefaults = {
 'spyplotmode': 0 
 }
 
-
+workFlow = []
 if 1 == len(sys.argv) :
     motif = dict.copy(motifDefaults)
     motif['cmd'] = "Init"
-    workList.append( motif )
+    workFlow.append( motif )
 
     motif = dict.copy(motifDefaults)
     motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
-    motif['spyplotmode'] = 0
-    workList.append( motif )
+    workFlow.append( motif )
 
     motif = dict.copy(motifDefaults)
     motif['cmd'] = "Fini"
-    workList.append( motif )
+    workFlow.append( motif )
 
     topology = "torus"
     shape    = "4x4x4"
     platform = "chamaPSM"
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
+    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","background=",
 					"radix=","loading=","debug=","platform=","numNodes=",
 					"numCores=","loadFile=","cmdLine=","printStats=","random=",
 					"emberVerbose=","netBW=","netPktSize=","netFlitSize="])
@@ -81,7 +83,7 @@ for o, a in opts:
     elif o in ("--cmdLine"):
     	motif = dict.copy(motifDefaults)
     	motif['cmd'] = a 
-    	workList.append( motif )
+    	workFlow.append( motif )
     elif o in ("--topo"):
         topology = a
     elif o in ("--radix"):
@@ -101,8 +103,13 @@ for o, a in opts:
     elif o in ("--random"):
         if a == "True":
             random = True
+    elif o in ("--background"):
+        if a == "True":
+            background = True
     else:
         assert False, "unhandle option" 
+
+workList.append( workFlow )
 
 if platform == "default":
     nicParams = defaultParams.nicParams
@@ -156,18 +163,53 @@ if int(numNodes) == 0:
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes")
 
+emptyNids = []
+
 if random:
 	nidList=""
 	print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 	nids = sample( xrange(int(topoInfo.getNumNodes())-1), int(numNodes))
 	nids.sort()
+
+	allNids = []
+	for num in range ( 0, int( topoInfo.getNumNodes()) ): 
+		allNids.append( num ) 
+
+	emptyNids = list( Set(allNids).difference( Set(nids) ) )
+
 	while nids:
 		nidList += str(nids.pop(0)) 
 		if nids:
 			nidList +=","
-				
-	for x in workList:
+    
+	for x in workList[0]:
 		x['cmd'] = "-nidList=" + nidList + " " + x['cmd']
+
+shuffle( emptyNids )
+
+XXX = []
+if background:
+    count = 0 
+    q, r = divmod( len(emptyNids), 2 )
+    q = 20 
+    while ( count < q ) :
+        workFlow = []
+        nidList = "-nidList=" + str(emptyNids[ count * 2 ] ) + "," + str(emptyNids[ count * 2 + 1])
+        motif = dict.copy(motifDefaults)
+        motif['cmd'] = nidList + " Init"
+        workFlow.append( motif )
+
+        motif = dict.copy(motifDefaults)
+        motif['cmd'] = nidList + " TrafficGen"
+        workFlow.append( motif )
+
+        motif = dict.copy(motifDefaults)
+        motif['cmd'] = nidList + " Fini"
+        workFlow.append( motif )
+
+        workList.append( workFlow )
+        count += 1
+
 
 nicParams['debug'] = debug
 nicParams['verboseLevel'] = 1 
