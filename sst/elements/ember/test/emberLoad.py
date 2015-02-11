@@ -29,8 +29,12 @@ radix    = 0
 emberVerbose = 0
 numNodes = 0
 platform = "default"
-random = False
-background = False 
+
+rndmPlacement = False
+bgPercentage = int(0)
+bgMean = 1000
+bgStddev = 300
+bgMsgSize = 1000
 
 motifDefaults = { 
 'cmd' : "",
@@ -58,10 +62,11 @@ if 1 == len(sys.argv) :
     platform = "chamaPSM"
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","background=",
+    opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
 					"radix=","loading=","debug=","platform=","numNodes=",
-					"numCores=","loadFile=","cmdLine=","printStats=","random=",
-					"emberVerbose=","netBW=","netPktSize=","netFlitSize="])
+					"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
+					"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
+                    "bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
 except getopt.GetopError as err:
     print str(err)
@@ -100,12 +105,17 @@ for o, a in opts:
         netFlitSize = a
     elif o in ("--netPktSize"):
         netPktSize = a
-    elif o in ("--random"):
+    elif o in ("--randomPlacement"):
         if a == "True":
-            random = True
-    elif o in ("--background"):
-        if a == "True":
-            background = True
+            rndmPlacement = True
+    elif o in ("--bgPercentage"):
+        bgPercentage = int(a)
+    elif o in ("--bgMean"):
+        bgMean = int(a) 
+    elif o in ("--bgStddev"):
+        bgStddev = int(a) 
+    elif o in ("--bgMsgSize"):
+        bgMsgSize = int(a) 
     else:
         assert False, "unhandle option" 
 
@@ -163,11 +173,13 @@ if int(numNodes) == 0:
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes")
 
+print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
+
 emptyNids = []
 
-if random:
+if rndmPlacement:
+	print "random placement"
 	nidList=""
-	print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 	nids = sample( xrange(int(topoInfo.getNumNodes())-1), int(numNodes))
 	nids.sort()
 
@@ -188,11 +200,18 @@ if random:
 shuffle( emptyNids )
 
 XXX = []
-if background:
+
+if bgPercentage > 0:
+    if bgPercentage > 100:
+        sys.exit( "fatal: bgPercentage " + str(bgPercentage) );
     count = 0 
-    q, r = divmod( len(emptyNids), 2 )
-    q = 20 
-    while ( count < q ) :
+    bgPercentage = float(bgPercentage) / 100.0
+    avail = int( topoInfo.getNumNodes() * bgPercentage ) 
+    bgMotifs, r = divmod( avail - int(numNodes), 2 )
+
+    print "netAlloced {0}%, bg motifs {1}, mean {2} ns, stddev {3} ns, msgsize {4} bytes".\
+                    format(int(bgPercentage*100),bgMotifs,bgMean,bgStddev,bgMsgSize)
+    while ( count < bgMotifs ) :
         workFlow = []
         nidList = "-nidList=" + str(emptyNids[ count * 2 ] ) + "," + str(emptyNids[ count * 2 + 1])
         motif = dict.copy(motifDefaults)
@@ -200,7 +219,8 @@ if background:
         workFlow.append( motif )
 
         motif = dict.copy(motifDefaults)
-        motif['cmd'] = nidList + " TrafficGen"
+        motif['cmd'] = nidList + " TrafficGen mean="+str(bgMean)+ " stddev=" + \
+                    str(bgStddev) + " messageSize="+str(bgMsgSize)
         workFlow.append( motif )
 
         motif = dict.copy(motifDefaults)
@@ -209,7 +229,6 @@ if background:
 
         workList.append( workFlow )
         count += 1
-
 
 nicParams['debug'] = debug
 nicParams['verboseLevel'] = 1 
