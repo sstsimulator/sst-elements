@@ -13,6 +13,8 @@
 #ifndef _H_EMBER_TRAFFIC_GEN
 #define _H_EMBER_TRAFFIC_GEN
 
+#include <sst/core/rng/gaussian.h>
+
 #include "mpi/embermpigen.h"
 
 namespace SST {
@@ -26,14 +28,16 @@ public:
     bool primary( ) {
         return false;
     }
+    void configure();
 
 private:
     MessageResponse m_resp;
     void*    m_sendBuf;
     void*    m_recvBuf;
+    MessageRequest m_req;
 
 	uint32_t m_messageSize;
-    uint32_t m_computeTime;
+    SSTGaussianDistribution* m_random;
 };
 
 }

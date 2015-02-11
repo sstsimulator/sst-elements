@@ -24,26 +24,41 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::Component* owner,
     m_name = "TrafficGen";
 
 	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
-	m_computeTime = (uint64_t) params.find_integer("arg.computeTime", 100000);
 
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
+
+    double mean = params.find_floating("arg.mean", 5000.0);
+    double stddev = params.find_floating("arg.stddev", 300.0 );
+    
+    m_random = new SSTGaussianDistribution( mean, stddev );
+}
+void EmberTrafficGenGenerator::configure()
+{
+    assert( 2 == size() );
+
+    if ( 0 == rank() ) {
+        m_output->verbose( CALL_INFO, 1,0, "compute time: mean %.3f ns,"
+        " stdDev %.3f ns\n", m_random->getMean(), m_random->getStandardDev());
+        m_output->verbose( CALL_INFO, 1.,0, "meesageSize %d\n", m_messageSize);
+    }
 }
 
 bool EmberTrafficGenGenerator::generate( std::queue<EmberEvent*>& evQ)
 { 
-    enQ_compute( evQ, m_computeTime );
-    if ( 0 == rank()) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 1, 
-                                                TAG, GroupWorld );
-        enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 1,
-                                                TAG, GroupWorld, &m_resp );
-	} else if ( 1 == rank()) {
-		enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 0, 
-                                                TAG, GroupWorld, &m_resp );
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 0,
-                                                TAG, GroupWorld );
-	}
+    double computeTime = m_random->getNextDouble(); 
+
+    if ( computeTime < 0 ) {
+        computeTime = 0.0;
+    }
+    m_output->verbose(CALL_INFO, 1, 0, "computeTime=%f\n", computeTime );
+    enQ_compute( evQ, computeTime * 1000 );
+
+    int other = (rank() + 1) % 2;
+    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, other, TAG,
+                                                GroupWorld, &m_req );
+    enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, other, TAG, GroupWorld );
+    enQ_wait( evQ, &m_req );
 
     return false;
 }
