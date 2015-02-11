@@ -169,14 +169,14 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     if(!(state == M || state == E)) respond = false;
     /* Invalidate any exclusive sharers before responding to GetX request */
     else if(ccLine->ownerExists()){
-        d_->debug(_L7_,"GetX Req recieived but exclusive cache exists \n");
+        d_->debug(_L7_,"GetX Req received but exclusive cache exists \n");
         assert(ccLine->isShareless());
         sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
         respond = false;
     }
     /* Sharers exist */
     else if(ccLine->numSharers() > 0){
-        d_->debug(_L7_,"GetX Req recieved but sharers exists \n");
+        d_->debug(_L7_,"GetX Req received but sharers exists \n");
         switch(cmd){
             case GetX:
                 sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);

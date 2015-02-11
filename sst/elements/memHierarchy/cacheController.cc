@@ -602,7 +602,7 @@ void Cache::sendNACK(MemEvent* _event){
  *  Response latency: MSHR latency because MSHR lookup to find event that was nacked. No cache access.
  */
 void Cache::processIncomingNACK(MemEvent* _origReqEvent){
-    d_->debug(_L3_,"NACK recieved.\n");
+    d_->debug(_L3_,"NACK received.\n");
 
     /* Determine what CC will retry sending the event */
     if(_origReqEvent->fromHighNetNACK())       topCC_->resendEvent(_origReqEvent);

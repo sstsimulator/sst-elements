@@ -1080,9 +1080,9 @@ void DirectoryController::finish(void){
     out.output("--- Name: %s\n", getName().c_str());
     out.output("--------------------------------------------------------------------\n");
     out.output("- Total requests received:  %" PRIu64 "\n", numReqsProcessed);
-    out.output("- GetS recieved:            %" PRIu64 "\n", GetSReqReceived);
+    out.output("- GetS received:            %" PRIu64 "\n", GetSReqReceived);
     out.output("- GetX received:            %" PRIu64 "\n", GetXReqReceived);
-    out.output("- GetSEx recieved:          %" PRIu64 "\n", GetSExReqReceived);
+    out.output("- GetSEx received:          %" PRIu64 "\n", GetSExReqReceived);
     out.output("- PutM received:            %" PRIu64 "\n", PutMReqReceived);
     out.output("- PutE received:            %" PRIu64 "\n", PutEReqReceived);
     out.output("- PutS received:            %" PRIu64 "\n", PutSReqReceived);

@@ -146,10 +146,10 @@ class DirectoryController : public Component {
     /** Function changes state of the cache line to indicate the new exclusive sharer */
     void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);
 
-    /** Handles recieved PutM requests */
+    /** Handles received PutM requests */
     void handlePutM(DirEntry *entry, MemEvent *ev);
 	
-    /** Handles recieved PutS requests */
+    /** Handles received PutS requests */
     void handlePutS(MemEvent *ev);
 
     /** Retry original request upon receiving a NACK */
