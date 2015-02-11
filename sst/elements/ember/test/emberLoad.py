@@ -16,7 +16,6 @@ from networkConfig import *
 
 from random import sample 
 from random import shuffle 
-from sets import Set 
 
 loadFile = ""
 workList = []
@@ -180,14 +179,14 @@ emptyNids = []
 if rndmPlacement:
 	print "random placement"
 	nidList=""
-	nids = sample( xrange(int(topoInfo.getNumNodes())-1), int(numNodes))
+	nids = sample( xrange( int(topoInfo.getNumNodes())), int(numNodes) )
 	nids.sort()
 
 	allNids = []
 	for num in range ( 0, int( topoInfo.getNumNodes()) ): 
 		allNids.append( num ) 
 
-	emptyNids = list( Set(allNids).difference( Set(nids) ) )
+	emptyNids = list( set(allNids).difference( set(nids) ) )
 
 	while nids:
 		nidList += str(nids.pop(0)) 
