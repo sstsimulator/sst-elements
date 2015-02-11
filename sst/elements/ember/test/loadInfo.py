@@ -47,7 +47,6 @@ class EmberEP( EndPoint ):
 class LoadInfo:
 
 	def __init__(self, nicParams, epParams, numNodes, numCores ):
-		print "system configuration: numNodes={0} coresPerNode={1}".format( numNodes, numCores )
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = int(numNodes)
