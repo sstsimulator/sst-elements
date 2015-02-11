@@ -38,9 +38,9 @@ void EmberTrafficGenGenerator::configure()
     assert( 2 == size() );
 
     if ( 0 == rank() ) {
-        m_output->verbose( CALL_INFO, 1,0, "compute time: mean %.3f ns,"
+        GEN_DBG( 1, "compute time: mean %.3f ns,"
         " stdDev %.3f ns\n", m_random->getMean(), m_random->getStandardDev());
-        m_output->verbose( CALL_INFO, 1.,0, "meesageSize %d\n", m_messageSize);
+        GEN_DBG( 1, "meesageSize %d\n", m_messageSize);
     }
 }
 
@@ -51,7 +51,7 @@ bool EmberTrafficGenGenerator::generate( std::queue<EmberEvent*>& evQ)
     if ( computeTime < 0 ) {
         computeTime = 0.0;
     }
-    m_output->verbose(CALL_INFO, 1, 0, "computeTime=%f\n", computeTime );
+    GEN_DBG( 1, "computeTime=%.3f ns\n", computeTime );
     enQ_compute( evQ, computeTime * 1000 );
 
     int other = (rank() + 1) % 2;

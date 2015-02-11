@@ -32,7 +32,7 @@ public:
 
     bool generate( std::queue<EmberEvent*>& evQ )
     {
-        GEN_DBG( 2, "\n");
+		GEN_DBG( 1,"\n");
 
 		if ( 0 == m_size ) {
         	enQ_init( evQ );
@@ -50,6 +50,8 @@ public:
         assert( ! *data );
         setData( new EmberMessagePassingGeneratorData ); 
         *data = getData(); 
+        setOutputPrefix();
+        configure();
     } 
 
 private:
