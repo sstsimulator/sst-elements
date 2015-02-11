@@ -227,7 +227,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
 bool EmberEngine::completeFunctor( int retval, EmberEvent* ev )
 {
-    output.verbose(CALL_INFO, 1, 0, "%s %s Event\n", 
+    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
               ev->stateName( ev->state() ).c_str(), ev->getName().c_str());
 
     if ( ev->complete( getCurrentSimTimeNano(), retval ) ) {
@@ -245,7 +245,7 @@ void EmberEngine::handleEvent(Event* ev) {
 	// handlers we have created
 	EmberEvent* eEv = static_cast<EmberEvent*>(ev);
 
-    output.verbose(CALL_INFO, 1, 0, "%s %s Event\n", 
+    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
               eEv->stateName( eEv->state() ).c_str(), eEv->getName().c_str());
 
     switch ( eEv->state() ) { 
