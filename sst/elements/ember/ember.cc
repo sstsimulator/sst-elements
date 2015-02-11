@@ -287,7 +287,8 @@ static const ElementInfoParam fft3d_params[] = {
 
 static const ElementInfoParam trafficGen_params[] = {
 	{ "arg.messageSize",	"Sets the size of exchange", 	"1"},
-	{ "arg.computeTime",	"Sets the time between exchange", 	"1"},
+	{ "arg.mean",	"Sets the mean time between exchange", 	"1"},
+	{ "arg.stddev",	"Sets the stddev of time between exchange", 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
