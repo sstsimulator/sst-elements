@@ -101,11 +101,18 @@ private:
     // is: 1 - adding new data to output buffers, or 2 - getting
     // credits back from the router.
     bool waiting;
-    Router* parent;
+    // Tracks whether we have packets while waiting.  If we do, that
+    // means we're blocked and we need to keep track of block time
+    bool have_packets;
+    SimTime_t start_block;
 
+    Router* parent;
+    bool connected;
+    
     // Statistics
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* send_packet_count;
+    Statistic<uint64_t>* output_port_stalls;
 public:
 
     void sendTopologyEvent(TopologyEvent* ev);

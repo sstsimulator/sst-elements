@@ -47,7 +47,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	ev->setVC(vc);
 
 	output_buf[vc].push(ev);
-	if ( waiting ) {
+	if ( waiting && !have_packets ) {
 	    // std::cout << "waking up the output" << std::endl;
 	    output_timing->send(1,NULL); 
 	    waiting = false;
@@ -116,6 +116,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     port_ret_credits(NULL),
     port_out_credits(NULL),
     waiting(true),
+    have_packets(false),
+    start_block(0),
     parent(rif)
 {
     // Configure the links.  output_timing will have a temporary time bases.  It will be
@@ -125,15 +127,19 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
         host_port = true;
         port_link = rif->configureLink(link_port_name, output_latency_timebase,
                                        new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
-        output_timing = rif->configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                               new Event::Handler<PortControl>(this,&PortControl::handle_output_n2r));
+        if ( port_link != NULL ) {
+            output_timing = rif->configureSelfLink(link_port_name + "_output_timing", "1GHz",
+                                                   new Event::Handler<PortControl>(this,&PortControl::handle_output_n2r));
+        }
         break;
     case Topology::R2R:
         host_port = false;
         port_link = rif->configureLink(link_port_name, output_latency_timebase,
                                        new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
-        output_timing = rif->configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                               new Event::Handler<PortControl>(this,&PortControl::handle_output_r2r));
+        if ( port_link != NULL ) {
+            output_timing = rif->configureSelfLink(link_port_name + "_output_timing", "1GHz",
+                                                   new Event::Handler<PortControl>(this,&PortControl::handle_output_r2r));
+        }
         break;
     default:
         host_port = false;
@@ -141,7 +147,13 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
         break;
     }
     
-    
+    if ( port_link == NULL ) {
+        connected = false;
+        return;
+    }
+
+    connected = true;
+
     if ( port_link && input_latency_timebase != "" ) {
         // std::cout << "Adding extra latency" << std::endl;
         port_link->addRecvLatency(input_latency_cycles,input_latency_timebase);
@@ -154,15 +166,12 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     curr_out_vc = 0;
 
     // Register statistics
-    std::string name("port");
-    name = name + boost::lexical_cast<std::string>(port_number) + "_send_bit_count";
-//    send_bit_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
-    send_bit_count = rif->registerStatistic<uint64_t>(name);
-
-    name = "port";
-    name = name + boost::lexical_cast<std::string>(port_number) + "_send_packet_count";
-//    send_packet_count = rif->registerStatistic(new AccumulatorStatistic<uint64_t>(rif, name));
-    send_packet_count = rif->registerStatistic<uint64_t>(name);
+    std::string port_name("port");
+    port_name = port_name + boost::lexical_cast<std::string>(port_number);
+    
+    send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
+    send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);
+    output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
 }
 
 // void
@@ -207,6 +216,7 @@ void
 PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in,
                      const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size)
 {
+    if ( !connected ) return;
     num_vcs = vcs;
     vc_heads = vc_heads_in;
     xbar_in_credits = xbar_in_credits_in;
@@ -428,6 +438,8 @@ PortControl::dumpState(std::ostream& stream)
 {
 	stream << "Router id: " << rtr_id << ", port " << port_number << ":" << std::endl;
 	stream << "  Waiting = " << waiting << std::endl;
+    stream << "  have_packets = " << have_packets << std::endl;
+    stream << "  start_block = " << start_block << std::endl;
 	stream << "  curr_out_vc = " << curr_out_vc << std::endl;
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    stream << "  VC " << i << " Information:" << std::endl;
@@ -446,7 +458,9 @@ PortControl::printStatus(Output& out)
 {
 	out.output("Router id: %d, port %d:\n",rtr_id, port_number);
 	out.output("  Waiting = %u\n", waiting);
-	out.output("  curr_out_vc = %d\n", curr_out_vc);
+    out.output("  have_packets = %u\n", have_packets);
+    out.output("  start_block = %" PRIu64 "\n", start_block);
+    out.output("  curr_out_vc = %d\n", curr_out_vc);
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    out.output("  VC %d Information:\n", i);
 	    out.output("    xbar_in_credits = %d\n", xbar_in_credits[i]);
@@ -508,6 +522,11 @@ PortControl::handle_input_n2r(Event* ev)
             // std::cout << output_timing << std::endl;
             output_timing->send(1,NULL); 
             waiting = false;
+            // If we were stalled waiting for credits and we had
+            // packets, we need to add stall time
+            if ( have_packets) {
+                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+            }
 	    }
 	}
     break;
@@ -573,6 +592,11 @@ PortControl::handle_input_r2r(Event* ev)
 	    if ( waiting ) {
             output_timing->send(1,NULL); 
             waiting = false;
+            // If we were stalled waiting for credits and we had
+            // packets, we need to add stall time
+            if ( have_packets) {
+                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+            }
 	    }
 	}
     break;
@@ -640,10 +664,12 @@ PortControl::handle_output_r2r(Event* ev) {
 	int vc_to_send = -1;
 	bool found = false;
 	internal_router_event* send_event = NULL;
-	
+    have_packets = false;
+    
 	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
 	    if ( output_buf[i].empty() ) continue;
-	    send_event = output_buf[i].front();
+        have_packets = true;
+        send_event = output_buf[i].front();
 	    // Check to see if the needed VC has enough space
         if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
 	    vc_to_send = i;
@@ -655,6 +681,7 @@ PortControl::handle_output_r2r(Event* ev) {
 	if (!found)  {
 	    for ( int i = 0; i < curr_out_vc; i++ ) {
             if ( output_buf[i].empty() ) continue;
+            have_packets = true;
             send_event = output_buf[i].front();
             // Check to see if the needed VC has enough space
             if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
@@ -718,6 +745,7 @@ PortControl::handle_output_r2r(Event* ev) {
 	    // we either get something new in the output buffers or
 	    // receive credits back from the router.  However, we need
 	    // to know that we got to this state.
+        start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
 	}
 }
@@ -746,9 +774,11 @@ PortControl::handle_output_n2r(Event* ev) {
 	int vc_to_send = -1;
 	bool found = false;
 	internal_router_event* send_event = NULL;
-	
+    have_packets = false;
+    
 	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
 	    if ( output_buf[i].empty() ) continue;
+        have_packets = true;
 	    send_event = output_buf[i].front();
 	    // Check to see if the needed VC has enough space
         if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
@@ -761,6 +791,7 @@ PortControl::handle_output_n2r(Event* ev) {
 	if (!found)  {
 	    for ( int i = 0; i < curr_out_vc; i++ ) {
             if ( output_buf[i].empty() ) continue;
+            have_packets = true;
             send_event = output_buf[i].front();
             // Check to see if the needed VC has enough space
             if ( port_out_credits[send_event->getVN()] < send_event->getFlitCount() ) continue;
@@ -826,6 +857,7 @@ PortControl::handle_output_n2r(Event* ev) {
 	    // we either get something new in the output buffers or
 	    // receive credits back from the router.  However, we need
 	    // to know that we got to this state.
+        start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
 	}
 }

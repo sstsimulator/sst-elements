@@ -217,10 +217,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // Register statistics
     xbar_stalls = new Statistic<uint64_t>*[num_ports];
     for ( int i = 0; i < num_ports; i++ ) {
-        std::string name("port");
-        name = name + boost::lexical_cast<std::string>(i) + "_xbar_stalls";
-//        xbar_stalls[i] = registerStatistic(new AccumulatorStatistic<uint64_t>(this, name));
-        xbar_stalls[i] = registerStatistic<uint64_t>(name);
+        std::string port_name("port");
+        port_name = port_name + boost::lexical_cast<std::string>(i);
+        xbar_stalls[i] = registerStatistic<uint64_t>("xbar_stalls",port_name);
     }
 }
 
@@ -501,9 +500,12 @@ hr_router::init_vcs()
     // }
 
     vc_heads = new internal_router_event*[num_ports*num_vcs];
-    for ( int i = 0; i < num_ports*num_vcs; i++ ) vc_heads[i] = NULL;
     xbar_in_credits = new int[num_ports*num_vcs];
-
+    for ( int i = 0; i < num_ports*num_vcs; i++ ) {
+        vc_heads[i] = NULL;
+        xbar_in_credits[i] = 0;
+    }
+    
     topo->setOutputBufferCreditArray(xbar_in_credits);
 
     for ( int i = 0; i < num_ports; i++ ) {

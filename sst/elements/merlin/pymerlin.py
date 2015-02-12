@@ -548,13 +548,12 @@ class EndPoint:
     def prepParams(self):
         pass
     def build(self, nID, link, extraKeys):
-        pass
-        
+        pass    
 
-
-
-class TestEndPoint:
+class TestEndPoint(EndPoint):
     def __init__(self):
+        self.enableAllStats = False;
+        self.statInterval = "0"
         self.nicKeys = ["topology", "num_peers", "link_bw"]
 
     def getName(self):
@@ -569,11 +568,18 @@ class TestEndPoint:
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
+        if self.enableAllStats:
+            print "Stats enabled!"
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic","rate":self.statInterval})
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
-
-
-class BisectionEndPoint:
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
+            
+class BisectionEndPoint(EndPoint):
     def __init__(self):
+        self.enableAllStats = False;
+        self.statInterval = "0"
         self.nicKeys = ["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size"]
 
     def getName(self):
@@ -588,11 +594,18 @@ class BisectionEndPoint:
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
 
 
-class TrafficGenEndPoint:
+class TrafficGenEndPoint(EndPoint):
     def __init__(self):
+        self.enableAllStats = False;
+        self.statInterval = "0"
         self.optionalKeys = ["delay_between_packets"]
         for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
             for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
@@ -627,6 +640,12 @@ class TrafficGenEndPoint:
                 nic.addParam(k, _params[k])
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
+        if self.enableAllStats:
+            nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
+
+    def enableAllStatistics(self,interval):
+        self.enableAllStats = True;
+        self.statInterval = interval;
 
 
 ############################################################################

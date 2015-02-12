@@ -16,7 +16,6 @@
 #include "merlin.h"
 #include "linkControl.h"
 
-
 using namespace SST;
 using namespace Merlin;
 
@@ -26,7 +25,7 @@ LinkControl::LinkControl(Params &params) :
     num_vns(0), id(-1),
     input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
-    curr_out_vn(0), waiting(true),
+    curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     receiveFunctor(NULL), sendFunctor(NULL),
     parent(NULL), network_initialized(false)
 {
@@ -84,6 +83,12 @@ LinkControl::configureLink(Component* rif, std::string port_name, const UnitAlge
     output_timing = rif->configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
+    // Register statistics
+    // packet_latency = rif->registerStatistic(new HistogramStatistic<uint32_t, uint32_t>(rif, "packet_latency", 0, 10000, 250));
+    packet_latency = rif->registerStatistic<uint64_t>("packet_latency");
+    send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count");
+    output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls");
+    
 }
 
 
@@ -238,7 +243,7 @@ bool LinkControl::send(RtrEvent* ev, int vn) {
     ev->vn = vn;
 
     output_buf[vn].push(ev);
-    if ( waiting ) {
+    if ( waiting && !have_packets ) {
         output_timing->send(1,NULL);
         waiting = false;
     }
@@ -324,6 +329,11 @@ void LinkControl::handle_input(Event* ev)
         if ( waiting ) {
             output_timing->send(1,NULL);
             waiting = false;
+            // If we were stalled waiting for credits and we had
+            // packets, we need to add stall time
+            if ( have_packets) {
+                output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
+            }
         }
     }
     else {
@@ -342,6 +352,7 @@ void LinkControl::handle_input(Event* ev)
             if ( !keep) receiveFunctor = NULL;
         }
         SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
+        packet_latency->addData(lat);
         stats.insertPacketLatency(lat);
     }
 }
@@ -360,9 +371,11 @@ void LinkControl::handle_output(Event* ev)
     int vn_to_send = -1;
     bool found = false;
     RtrEvent* send_event = NULL;
+    have_packets = false;
 
     for ( int i = curr_out_vn; i < num_vns; i++ ) {
         if ( output_buf[i].empty() ) continue;
+        have_packets = true;
         send_event = output_buf[i].front();
         // Check to see if the needed VN has enough space
         if ( rtr_credits[i] < send_event->getSizeInFlits() ) continue;
@@ -375,6 +388,7 @@ void LinkControl::handle_output(Event* ev)
     if (!found)  {
         for ( int i = 0; i < curr_out_vn; i++ ) {
             if ( output_buf[i].empty() ) continue;
+            have_packets = true;
             send_event = output_buf[i].front();
             // Check to see if the needed VN has enough space
             if ( rtr_credits[i] < send_event->getSizeInFlits() ) continue;
@@ -402,21 +416,25 @@ void LinkControl::handle_output(Event* ev)
         curr_out_vn = vn_to_send + 1;
         if ( curr_out_vn == num_vns ) curr_out_vn = 0;
 
+        // Add in inject time so we can track latencies
+        send_event->setInjectionTime(parent->getCurrentSimTimeNano());
+        
         // Subtract credits
         rtr_credits[vn_to_send] -= size;
         rtr_link->send(send_event);
         // std::cout << "Sent packet on vn " << vn_to_send << ", credits remaining: " << rtr_credits[vn_to_send] << std::endl;
-
+        
         if ( send_event->getTraceType() == RtrEvent::FULL ) {
             std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                                                                          << " ns: Sent an event to router from LinkControl in NIC: "
-                                                                          << parent->getName() << " on VN " << send_event->vn << " to dest " << send_event->dest
-                                                                          << "." << std::endl;
+                      << " ns: Sent an event to router from LinkControl in NIC: "
+                      << parent->getName() << " on VN " << send_event->vn << " to dest " << send_event->dest
+                      << "." << std::endl;
         }
-	if (sendFunctor != NULL ) {
-	    bool keep = (*sendFunctor)(vn_to_send);
-	    if ( !keep ) sendFunctor = NULL;
-	}
+        send_bit_count->addData(send_event->size_in_bits);
+        if (sendFunctor != NULL ) {
+            bool keep = (*sendFunctor)(vn_to_send);
+            if ( !keep ) sendFunctor = NULL;
+        }
     }
     else {
         // What do we do if there's nothing to send??  It could be
@@ -427,6 +445,7 @@ void LinkControl::handle_output(Event* ev)
         // receive credits back from the router.  However, we need
         // to know that we got to this state.
         // std::cout << "Waiting ..." << std::endl;
+        start_block = Simulation::getSimulation()->getCurrentSimCycle();
         waiting = true;
     }
 }

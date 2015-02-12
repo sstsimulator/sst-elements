@@ -22,6 +22,8 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/unitAlgebra.h>
 
+#include <sst/core/statapi/stataccumulator.h>
+
 #include <queue>
 #include <cstring>
 
@@ -149,6 +151,10 @@ private:
     // is: 1 - adding new data to output buffers, or 2 - getting
     // credits back from the router.
     bool waiting;
+    // Tracks whether we have packets while waiting.  If we do, that
+    // means we're blocked and we need to keep track of block time
+    bool have_packets;
+    SimTime_t start_block;
     
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
@@ -158,6 +164,10 @@ private:
     Component* parent;
 
     PacketStats stats;
+    // Statistics
+    Statistic<uint64_t>* packet_latency;
+    Statistic<uint64_t>* send_bit_count;
+    Statistic<uint64_t>* output_port_stalls;
 
 public:
     LinkControl(Params &params);
@@ -214,6 +224,8 @@ private:
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
+    
+    
 };
 
 }

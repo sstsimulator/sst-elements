@@ -43,13 +43,9 @@ if __name__ == "__main__":
         print "Bad answer. try again."
         sys.exit(1)
 
+
     endPoint = endpoints[ep];
 
-
-    topo.prepParams()
-    endPoint.prepParams()
-    topo.setEndPoint(endPoint)
-    topo.build()
 
     print "Set statistics load level (0 = off):"
     stats = int(raw_input())
@@ -76,7 +72,17 @@ if __name__ == "__main__":
                     "filepath" : filename,
                     "separator" : ", "
                     })
-##        sst.enableAllStatisticsWithRateForComponentType("merlin.hr_router",rate);
+
+        print "Calling enableAllStatistics"
+        endPoint.enableAllStatistics(rate)
+
+
+    topo.prepParams()
+    endPoint.prepParams()
+    topo.setEndPoint(endPoint)
+    topo.build()
+
+    if ( stats != 0 ):
         sst.enableAllStatisticsForComponentType("merlin.hr_router", {"type":"sst.AccumulatorStatistic",
                                                                      "rate":rate});
         #stats.append("port%d_send_bit_count"%l)
