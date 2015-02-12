@@ -73,7 +73,6 @@ if __name__ == "__main__":
                     "separator" : ", "
                     })
 
-        print "Calling enableAllStatistics"
         endPoint.enableAllStatistics(rate)
 
 

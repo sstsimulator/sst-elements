@@ -12,6 +12,7 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
+#include <sst/core/simulation.h>
 
 #include "merlin.h"
 #include "linkControl.h"
@@ -34,7 +35,7 @@ LinkControl::LinkControl(Params &params) :
 void
 LinkControl::configureLink(Component* rif, std::string port_name, const UnitAlgebra& link_bw_in,
                            int vns, const UnitAlgebra& in_buf_size,
-                           const UnitAlgebra& out_buf_size)
+                           const UnitAlgebra& out_buf_size, bool enable_stats)
 {
     num_vns = vns;
     parent = rif;
@@ -85,10 +86,19 @@ LinkControl::configureLink(Component* rif, std::string port_name, const UnitAlge
 
     // Register statistics
     // packet_latency = rif->registerStatistic(new HistogramStatistic<uint32_t, uint32_t>(rif, "packet_latency", 0, 10000, 250));
-    packet_latency = rif->registerStatistic<uint64_t>("packet_latency");
-    send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count");
-    output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls");
-    
+    if (enable_stats) {   
+        packet_latency = rif->registerStatistic<uint64_t>("packet_latency");
+        send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count");
+        output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls");
+    }
+    else {
+        Params empty;
+        std::string null_stat("sst.nullstatistic");
+        std::string empty_string("");
+        packet_latency = Simulation::getSimulation()->CreateStatistic<uint64_t>(rif, null_stat, empty_string, empty_string, empty);
+        send_bit_count = Simulation::getSimulation()->CreateStatistic<uint64_t>(rif, null_stat, empty_string, empty_string, empty);
+        output_port_stalls = Simulation::getSimulation()->CreateStatistic<uint64_t>(rif, null_stat, empty_string, empty_string, empty);
+    }
 }
 
 

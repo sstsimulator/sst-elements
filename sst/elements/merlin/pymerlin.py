@@ -569,7 +569,6 @@ class TestEndPoint(EndPoint):
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
         if self.enableAllStats:
-            print "Stats enabled!"
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic","rate":self.statInterval})
         #print "Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys))
     def enableAllStatistics(self,interval):

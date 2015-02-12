@@ -184,7 +184,7 @@ public:
 
     void configureLink(Component* rif, std::string port_name, const UnitAlgebra& link_bw_in,
                        int vns, const UnitAlgebra& in_buf_size,
-                       const UnitAlgebra& out_buf_size);
+                       const UnitAlgebra& out_buf_size, bool enable_stats = false);
     void setup();
     void init(unsigned int phase);
     void finish();
