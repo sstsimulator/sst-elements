@@ -21,7 +21,7 @@
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
-#define DBG( fmt, args... )m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
+#define DBG( fmt, args... )m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
 
 logicLayer::logicLayer( ComponentId_t id, Params& params ) :

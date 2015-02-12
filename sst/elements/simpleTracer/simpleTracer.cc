@@ -114,12 +114,12 @@ bool simpleTracer::clock(Cycle_t current){
 
         if(writeDebug_8 & writeTrace){
              fprintf(traceFile,"NB: Addr: 0x%" PRIu64, addr);
-             fprintf(traceFile, " timestamp: %"PRIu64, timestamp);
+             fprintf(traceFile, " timestamp: %" PRIu64, timestamp);
              fprintf(traceFile, " Cmd: %u", me->getCmd());
-             fprintf(traceFile, " ID: %"PRIu64"-%d", me->getID().first, me->getID().second);
-             fprintf(traceFile, " ResponseID: %"PRIu64"-%d", me->getResponseToID().first, me->getResponseToID().second);
-             //fprintf(traceFile, " @%"PRIu64, picoseconds);
-             fprintf(traceFile, " @%"PRIu64" ns", nanoseconds);
+             fprintf(traceFile, " ID: %" PRIu64 "-%d", me->getID().first, me->getID().second);
+             fprintf(traceFile, " ResponseID: %" PRIu64 "-%d", me->getResponseToID().first, me->getResponseToID().second);
+             //fprintf(traceFile, " @%" PRIu64, picoseconds);
+             fprintf(traceFile, " @%" PRIu64 " ns", nanoseconds);
              fprintf(traceFile, "\n");
         }
 
@@ -157,12 +157,12 @@ bool simpleTracer::clock(Cycle_t current){
 
         if(writeDebug_8 & writeTrace){
              fprintf(traceFile,"SB: Addr: 0x%" PRIu64, me->getAddr());
-             fprintf(traceFile, " timestamp: %"PRIu64, timestamp);
+             fprintf(traceFile, " timestamp: %" PRIu64, timestamp);
              fprintf(traceFile, " Cmd: %u", me->getCmd());
-             fprintf(traceFile, " ID: %"PRIu64"-%d", me->getID().first, me->getID().second);
-             fprintf(traceFile, " ResponseID: %"PRIu64"-%d", me->getResponseToID().first, me->getResponseToID().second);
-             //fprintf(traceFile, " @%"PRIu64, picoseconds);
-             fprintf(traceFile, " @%"PRIu64" ns", nanoseconds);
+             fprintf(traceFile, " ID: %" PRIu64 "-%d", me->getID().first, me->getID().second);
+             fprintf(traceFile, " ResponseID: %" PRIu64 "-%d", me->getResponseToID().first, me->getResponseToID().second);
+             //fprintf(traceFile, " @%" PRIu64, picoseconds);
+             fprintf(traceFile, " @%" PRIu64 " ns", nanoseconds);
              fprintf(traceFile, "\n");
         }
 
@@ -197,7 +197,7 @@ void simpleTracer::FinalStats(FILE *fp, unsigned int numBins){
     fprintf(fp, "- Total Events                       : %u\n", nbCount+sbCount);
     fprintf(fp, "-----------------------------------------------------------------\n\n");
     //fprintf(fp, "Additional Stats:\n");
-    //fprintf(fp, "- InFlightReqQueue Size              : %"PRIu64 "\n", InFlightReqQueue.size() );
+    //fprintf(fp, "- InFlightReqQueue Size              : %" PRIu64 "\n", InFlightReqQueue.size() );
     PrintAddrHistogram(fp, AddrHist);
     PrintAccessLatencyDistribution(fp, numBins);
 }
@@ -209,7 +209,7 @@ void simpleTracer::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> 
     fprintf(fp, "Address_Range: Count\n");
     for (unsigned int i=0; i<bucketList.size(); i++){
         if(bucketList.at(i) > 0){
-            fprintf(fp, "- [%u-%u]: %"PRIu64 "\n", (i*pageSize),(((i+1)*pageSize)-1), bucketList.at(i));
+            fprintf(fp, "- [%u-%u]: %" PRIu64 "\n", (i*pageSize),(((i+1)*pageSize)-1), bucketList.at(i));
             count += bucketList.at(i);
         }
     }

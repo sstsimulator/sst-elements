@@ -280,7 +280,7 @@ bool Ember3DCommDoublingGenerator::generate( std::queue<EmberEvent*>& evQ)
 	// If we set up any communication wait for them and continue
 	// If not, we exit by notifying engine of a finalize
 	if(next_request > 0) {
-		enQ_waitall( evQ, next_request, &requests[0], false );
+		enQ_waitall( evQ, next_request, &requests[0], NULL );
 		return false;
 	} else {
 		return true;

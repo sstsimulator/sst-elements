@@ -23,7 +23,7 @@ const int SM_MAX_DATA_FIELDS= 2;
 
 #define _sm_abort( name, fmt, args...)\
 {\
-    fprintf(stderr, "%s::%s():%d:ABORT: "fmt, #name, __FUNCTION__, __LINE__, ## args ); \
+    fprintf(stderr, "%s::%s():%d:ABORT: " fmt, #name, __FUNCTION__, __LINE__, ## args ); \
     exit(-1); \
 }
 

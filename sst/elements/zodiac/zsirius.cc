@@ -142,7 +142,7 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
-	zOut.verbose(CALL_INFO, 1, 0, "Completed simulation at: %"PRIu64"ns\n",
+	zOut.verbose(CALL_INFO, 1, 0, "Completed simulation at: %" PRIu64 "ns\n",
 		getCurrentSimTimeNano());
 	zOut.verbose(CALL_INFO, 1, 0, "Statistics for run are:\n");
 	zOut.verbose(CALL_INFO, 1, 0, "- Total Send Count:           %" PRIu64 "\n", zSendCount);
@@ -321,7 +321,7 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 	assert((zSEv->getLength() * 8) < emptyBufferSize);
 
 	zOut.verbose(__LINE__, __FILE__, "handleSendEvent",
-		2, 1, "Processing a Send event (length=%"PRIu32", tag=%d, dest=%"PRIu32")\n",
+		2, 1, "Processing a Send event (length=%" PRIu32 ", tag=%d, dest=%" PRIu32 ")\n",
 		zSEv->getLength(), zSEv->getMessageTag(), zSEv->getDestination());
 
 	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
@@ -342,7 +342,7 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 	memset(currentRecv, 1, sizeof(MessageResponse));
 
 	zOut.verbose(__LINE__, __FILE__, "handleRecvEvent",
-		2, 1, "Processing a Recv event (length=%"PRIu32", tag=%d, source=%"PRIu32")\n",
+		2, 1, "Processing a Recv event (length=%" PRIu32 ", tag=%d, source=%" PRIu32 ")\n",
 		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
 	msgapi->recv((Addr) emptyBuffer, zREv->getLength(),
@@ -384,7 +384,7 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 	reqMap.insert(std::pair<uint64_t, MessageRequest*>(zREv->getRequestID(), msgReq));
 
 	zOut.verbose(__LINE__, __FILE__, "handleIrecvEvent",
-		2, 1, "Processing a Irecv event (length=%"PRIu32", tag=%d, source=%"PRIu32")\n",
+		2, 1, "Processing a Irecv event (length=%" PRIu32 ", tag=%d, source=%" PRIu32 ")\n",
 		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
 	msgapi->irecv((Addr) emptyBuffer, zREv->getLength(),

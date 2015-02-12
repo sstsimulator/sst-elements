@@ -490,7 +490,7 @@ bool EmberHalo3D26Generator::generate( std::queue<EmberEvent*>& evQ) {
 		}
 
 		// Enqueue a wait all for all the communications we have set up
-		enQ_waitall( evQ, nextRequest, &requests[0], false );
+		enQ_waitall( evQ, nextRequest, &requests[0], NULL );
 
 		m_output->verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 " completed generation, %d events in queue\n",
 			rank(), (int)evQ.size());

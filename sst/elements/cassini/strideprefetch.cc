@@ -71,7 +71,7 @@ void StridePrefetcher::DetectStride() {
 
 				if(overrunPageBoundary) {
 					output->verbose(CALL_INFO, 2, 0, 
-						"Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 "), prefetchAddress=%" PRIu64 "\n",
+						"Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 "), prefetchAddress=%" PRIu64 "\n",
 						targetAddress, targetAddress + (strideReach * stride),
 						(strideReach * stride), stride, targetPrefetchAddress);
 
@@ -92,13 +92,13 @@ void StridePrefetcher::DetectStride() {
 					// we can safely prefetch without causing a page fault, otherwise we
 					// choose to not prefetch the address
 					if(targetAddressPhysPage == targetPrefetchAddressPage) {
-					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %"PRIx64", prefetch address: %"PRIx64" (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
 						ev = new MemEvent(owner, targetPrefetchAddress, targetPrefetchAddress, GetS);
 						prefetchOpportunities++;
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
-						output->verbose(CALL_INFO, 4, 0, "Target address: %"PRIx64", page=%"PRIx64", Prefetch address: %"PRIx64", page=%"PRIx64"\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
+						output->verbose(CALL_INFO, 4, 0, "Target address: %" PRIx64 ", page=%" PRIx64 ", Prefetch address: %" PRIx64 ", page=%" PRIx64 "\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
 
 						prefetchIssueCanceledByPageBoundary++;
 						ev = NULL;
@@ -121,7 +121,7 @@ void StridePrefetcher::DetectStride() {
 	bool inHistory = false;
 	const uint32_t currentHistCount = prefetchHistory->size();
 
-	output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %"PRIx64", valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
+	output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %" PRIx64 ", valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
 		currentHistCount);
 
 	for(uint32_t i = 0; i < currentHistCount; ++i) {
@@ -221,15 +221,15 @@ void StridePrefetcher::printStats(Output &out) {
 	out.output("--------------------------------------------------------------------\n");
 	out.output("Stride Prefetch Engine Statistics (Owner: %s):\n", owner->getName().c_str());
 	out.output("--------------------------------------------------------------------\n");
-	out.output("Cache Miss Events:                      %"PRIu64"\n", missEventsProcessed);
-	out.output("Cache Hit Events :                      %"PRIu64"\n", hitEventsProcessed);
+	out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
+	out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);
 	out.output("Cache Miss Rate (%%):                    %f\n", ((missEventsProcessed
                	/ ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
 	out.output("Cache Hit Rate (%%):                     %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
                        	hitEventsProcessed))) * 100.0));
-        out.output("Prefetches Opportunities:               %"PRIu64"\n", prefetchOpportunities);
-        out.output("Prefetches Issued:                      %"PRIu64"\n", prefetchEventsIssued);
-	out.output("Prefetches canceled by page boundary:   %"PRIu64"\n", prefetchIssueCanceledByPageBoundary);
-	out.output("Prefetches canceled by history:         %"PRIu64"\n", prefetchIssueCanceledByHistory);
+        out.output("Prefetches Opportunities:               %" PRIu64 "\n", prefetchOpportunities);
+        out.output("Prefetches Issued:                      %" PRIu64 "\n", prefetchEventsIssued);
+	out.output("Prefetches canceled by page boundary:   %" PRIu64 "\n", prefetchIssueCanceledByPageBoundary);
+	out.output("Prefetches canceled by history:         %" PRIu64 "\n", prefetchIssueCanceledByHistory);
 	out.output("--------------------------------------------------------------------\n");
 }

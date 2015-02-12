@@ -73,12 +73,12 @@ void NextBlockPrefetcher::printStats(Output& out) {
 	out.output("--------------------------------------------------------------------\n");
         out.output("Next Block Prefetch Engine Statistics (Owner: %s):\n", owner->getName().c_str());
         out.output("--------------------------------------------------------------------\n");
-        out.output("Cache Miss Events:                      %"PRIu64"\n", missEventsProcessed);
-        out.output("Cache Hit Events :                      %"PRIu64"\n", hitEventsProcessed);
+        out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
+        out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);
         out.output("Cache Miss Rate (%%):                    %f\n", ((missEventsProcessed
                 / ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
         out.output("Cache Hit Rate (%%):                     %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
                         hitEventsProcessed))) * 100.0));
-        out.output("Prefetches Issued:                      %"PRIu64"\n", prefetchEventsIssued);
+        out.output("Prefetches Issued:                      %" PRIu64 "\n", prefetchEventsIssued);
         out.output("--------------------------------------------------------------------\n");
 }

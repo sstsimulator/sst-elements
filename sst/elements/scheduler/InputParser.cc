@@ -148,15 +148,15 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
     uint64_t currentJobID;
     uint64_t lastJobID;
 
-    sscanf( ID, "%"PRIu64, &currentJobID );
-    sscanf( lastJobRead, "%"PRIu64, &lastJobID );
+    sscanf( ID, "%" PRIu64, &currentJobID );
+    sscanf( lastJobRead, "%" PRIu64, &lastJobID );
 
     if (lastJobRead[ 0 ] != '\0' && currentJobID <= lastJobID ){
         return false;       // We have read this job before, don't do it again.
     }
 
-    sscanf( tokens.at( 1 ).c_str(), "%"PRIu64, &duration );
-    sscanf( tokens.at( 2 ).c_str(), "%"PRIu64, &procs );
+    sscanf( tokens.at( 1 ).c_str(), "%" PRIu64, &duration );
+    sscanf( tokens.at( 2 ).c_str(), "%" PRIu64, &procs );
 
     strcpy( lastJobRead, ID );
 

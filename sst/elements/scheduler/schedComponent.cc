@@ -637,7 +637,7 @@ void schedComponent::logJobFinish(ITMI itmi)
     } 
 
     if (getCurrentSimTime() < itmi.tmi->job->getStartTime()) {
-        schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*itmi.tmi -> job -> getID()).c_str(), itmi.tmi -> job -> getStartTime(), getCurrentSimTime());
+        schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%" PRIu64 "\n", (*itmi.tmi -> job -> getID()).c_str(), itmi.tmi -> job -> getStartTime(), getCurrentSimTime());
     }
 }
 
@@ -662,7 +662,7 @@ void schedComponent::logJobFault(ITMI itmi, FaultEvent * faultEvent)
     } 
 
     if (getCurrentSimTime() < itmi.tmi->job->getStartTime()) {
-        schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*itmi.tmi -> job -> getID()).c_str(), itmi.tmi->job->getStartTime(), (uint64_t)getCurrentSimTime());
+        schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%" PRIu64 "\n", (*itmi.tmi -> job -> getID()).c_str(), itmi.tmi->job->getStartTime(), (uint64_t)getCurrentSimTime());
     }
 }
 

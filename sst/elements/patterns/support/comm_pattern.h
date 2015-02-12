@@ -62,7 +62,7 @@ class Comm_pattern : public Component {
 	    // Interface with SST
 
 	    // Create a time converter
-	    tc= registerTimeBase("1"TIME_BASE, true);
+	    tc= registerTimeBase("1" TIME_BASE, true);
 
 
             // Create a channel to receive messages from our NICs
