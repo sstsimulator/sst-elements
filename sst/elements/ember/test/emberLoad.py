@@ -14,8 +14,7 @@ from loadInfo import *
 import networkConfig 
 from networkConfig import *
 
-from random import sample 
-from random import shuffle 
+import random 
 
 loadFile = ""
 workList = []
@@ -178,8 +177,9 @@ emptyNids = []
 
 if rndmPlacement:
 	print "random placement"
+	random.seed( 0xf00dbeef )
 	nidList=""
-	nids = sample( xrange( int(topoInfo.getNumNodes())), int(numNodes) )
+	nids = random.sample( xrange( int(topoInfo.getNumNodes())), int(numNodes) )
 	nids.sort()
 
 	allNids = []
@@ -196,7 +196,7 @@ if rndmPlacement:
 	for x in workList[0]:
 		x['cmd'] = "-nidList=" + nidList + " " + x['cmd']
 
-shuffle( emptyNids )
+	random.shuffle( emptyNids )
 
 XXX = []
 
