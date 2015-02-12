@@ -39,7 +39,7 @@
 #endif
 
 #define db_RtrIF(fmt,args...) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
+    m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
 #define RTR_2_NIC_VC(vcc) ( vcc/2 )
 
 namespace SST {
@@ -127,7 +127,7 @@ public:
     void finish() 
     { 
         fprintf(stderr,"\n RtrIF Node %d\n", m_id );
-        fprintf(stderr," Total no of pkts recv %"PRIu64" \n",stat_total_pkts_recv); 
+        fprintf(stderr," Total no of pkts recv %" PRIu64 " \n",stat_total_pkts_recv); 
         fprintf(stderr," Avg pkt latency %0.2f \n",stat_avg_pkt_lat+0.0/stat_total_pkts_recv); 
 //        return 0; 
     }

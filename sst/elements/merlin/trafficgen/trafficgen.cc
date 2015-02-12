@@ -196,7 +196,7 @@ void TrafficGen::finish()
         out.output("id,#Sent,#Recv,#NIC_Recv,MinLat,MaxLat,AvgLat,StdDevLat\n");
     }
 
-    out.output("%d,%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%lg,%lg\n",
+    out.output("%d,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%lg,%lg\n",
             id, packets_sent, packets_recd, stats.getNumPkts(),
             stats.getMinLatency(), stats.getMaxLatency(),
             stats.getMeanLatency(), stats.getStdDevLatency());
