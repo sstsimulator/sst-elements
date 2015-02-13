@@ -95,15 +95,15 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 //        statMaxIssuePerCycle    = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_issue") );
 //	statCyclesHitReorderLimit = registerStatistic( new AccumulatorStatistic<uint64_t>(this, "cycles_max_reorder") );
 
-	statReadReqs   		      = registerStatistic<uint64_t>( "read_reqs" );
-	statWriteReqs  		      = registerStatistic<uint64_t>( "write_reqs" );
-	statSplitReadReqs 	      = registerStatistic<uint64_t>( "split_read_reqs" );
+	statReadReqs   		  	  = registerStatistic<uint64_t>( "read_reqs" );
+	statWriteReqs  		  	  = registerStatistic<uint64_t>( "write_reqs" );
+	statSplitReadReqs 	  	  = registerStatistic<uint64_t>( "split_read_reqs" );
 	statSplitWriteReqs    	  = registerStatistic<uint64_t>( "split_write_reqs" );
 	statCyclesWithIssue 	  = registerStatistic<uint64_t>( "cycles_with_issue" );
 	statCyclesWithoutIssue 	  = registerStatistic<uint64_t>( "cycles_no_issue" );
-	statBytesRead 		      = registerStatistic<uint64_t>( "total_bytes_read" );
-	statBytesWritten 	      = registerStatistic<uint64_t>( "total_bytes_write" );
-	statReqLatency 		      = registerStatistic<uint64_t>( "req_latency" );
+	statBytesRead 		  	  = registerStatistic<uint64_t>( "total_bytes_read" );
+	statBytesWritten 	  	  = registerStatistic<uint64_t>( "total_bytes_write" );
+	statReqLatency 		  	  = registerStatistic<uint64_t>( "req_latency" );
 	statTime                  = registerStatistic<uint64_t>( "time" );
 	statCyclesHitFence        = registerStatistic<uint64_t>( "cycles_hit_fence" );
     statMaxIssuePerCycle      = registerStatistic<uint64_t>( "cycles_max_issue" );
