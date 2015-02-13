@@ -16,6 +16,8 @@
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/output.h>
+#include <sst/core/statapi/stataccumulator.h>
+#include <sst/core/statapi/stathistogram.h>
 #include "vaultGlobals.h"
 
 using namespace std;
@@ -54,6 +56,9 @@ private:
   unsigned int LL_MASK;
   unsigned int llID;
   unsigned long long memOps;
+
+    Statistic<uint64_t>*  bwUsedToCpu[2]; 
+    Statistic<uint64_t>*  bwUsedToMem[2]; 
 };
 
 #endif

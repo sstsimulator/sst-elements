@@ -86,6 +86,12 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   registerClock( frequency, new Clock::Handler<logicLayer>(this, &logicLayer::clock) );
 
   dbg.output(CALL_INFO, "made logicLayer %d %p %p\n", llID, toMem, toCPU);
+
+  // register bandwidth stats
+  bwUsedToCpu[0] = registerStatistic<uint64_t>("BW_recv_from_CPU", "1");  
+  bwUsedToCpu[1] = registerStatistic<uint64_t>("BW_send_to_CPU", "1");
+  bwUsedToMem[0] = registerStatistic<uint64_t>("BW_recv_from_Mem", "1");
+  bwUsedToMem[1] = registerStatistic<uint64_t>("BW_send_to_Mem", "1");
 }
 
 int logicLayer::Finish() 
@@ -242,6 +248,11 @@ bool logicLayer::clock( Cycle_t current )
     dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n", 
 	       llID, tm[0], tm[1], tc[0], tc[1]);
   }
+  bwUsedToCpu[0]->addData(tc[0]);
+  bwUsedToCpu[1]->addData(tc[1]);
+  bwUsedToMem[0]->addData(tm[0]);
+  bwUsedToMem[1]->addData(tm[1]);
+  
 
   return false;
 }

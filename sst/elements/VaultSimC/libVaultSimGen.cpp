@@ -41,6 +41,19 @@ static const ElementInfoPort VaultSimC_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoStatisticEnable VaultSimC_statistics[] = {
+    { "Mem_Outstanding", "Number of memory requests outstanding each cycle", 1},
+    { NULL, NULL, 0}
+};
+
+static const ElementInfoStatisticEnable logicLayer_statistics[] = {
+    { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", 1}, 
+    { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", 2}, 
+    { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", 3}, 
+    { "BW_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", 4}, 
+    { NULL, NULL, 0 }
+};
+
 static const ElementInfoParam logicLayer_params[] = {
   {"clock",              "Logic Layer Clock Rate."},
   {"llID",               "Logic Layer ID (Unique id within chain)"},
@@ -80,7 +93,8 @@ static const ElementInfoComponent components[] = {
       VaultSimCAllocComponent,
       VaultSimC_params,
       VaultSimC_ports,
-      COMPONENT_CATEGORY_MEMORY
+      COMPONENT_CATEGORY_MEMORY,
+      VaultSimC_statistics
     },
     { "logicLayer",
       "Logic Layer Component",
@@ -88,7 +102,8 @@ static const ElementInfoComponent components[] = {
       create_logicLayer,
       logicLayer_params,
       logicLayer_ports,
-      COMPONENT_CATEGORY_MEMORY
+      COMPONENT_CATEGORY_MEMORY,
+      logicLayer_statistics
     },
     { "cpu",
       "simple CPU",

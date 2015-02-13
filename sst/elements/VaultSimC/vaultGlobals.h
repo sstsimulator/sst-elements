@@ -13,8 +13,8 @@
 #define VAULTGLOBALS_H
 
 static const unsigned int LL_SHIFT = 12; // min hash between cubes in 1024
-static const unsigned int VAULT_SHIFT = 4; // min hash for vaults in 256
-static const unsigned int VAULT_MASK = 0xf; // min hash for vaults in 256
+static const unsigned int VAULT_SHIFT = 4; // min hash for vaults in 16
+static const unsigned int VAULT_MASK = 0xf; // min hash for vaults in 16
 
 
 #endif

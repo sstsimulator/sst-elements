@@ -31,7 +31,7 @@ static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
-    IntrospectedComponent( id ) {
+    IntrospectedComponent( id ), numOutstanding(0) {
     dbg.init("@R:Vault::@p():@l " + getName() + ": ", 0, 0, 
              (Output::output_location_t)params.find_integer("debug", 0));  
     
@@ -93,6 +93,8 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     if ( !memBuffer ) {
         _abort(MemController, "Unable to MMAP backing store for Memory\n");
     }
+
+    memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }
 
     int VaultSimC::Finish() 
@@ -236,6 +238,8 @@ bool VaultSimC::clock_phx( Cycle_t current ) {
         }
     }
 
+
+    memOutStat->addData(transactionToMemEventMap.size());
     return false;
 }
 #else
@@ -252,6 +256,7 @@ bool VaultSimC::clock( Cycle_t current ) {
         }
         // handle event...
         delayLine->send(1, event);
+        numOutstanding++;
     }
 
     e = 0;
@@ -263,10 +268,12 @@ bool VaultSimC::clock( Cycle_t current ) {
         } else {
             MemEvent *respEvent = event->makeResponse();
             m_memChan->send(respEvent);
+            numOutstanding--;
             delete event;
         }
     }
 
+    memOutStat->addData(numOutstanding);
     return false;
 }
 

@@ -5,6 +5,12 @@ import sst
 sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "50us")
 
+#enable stat output
+sst.setStatisticLoadLevel(7)   
+sst.setStatisticOutput("sst.statOutputCSV", {"filepath" : "./TestOutput.csv",
+                                             "separator" : ", "
+                                             })         
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "VaultSimC.cpu")
 comp_cpu.addParams({
@@ -12,7 +18,7 @@ comp_cpu.addParams({
       "seed" : """100""",
       "threads" : """2""",
       "bwlimit" : """4""",
-      "clock" : """500Mhz"""
+      "clock" : """1500Mhz"""
 })
 comp_ll0 = sst.Component("ll0", "VaultSimC.logicLayer")
 comp_ll0.addParams({
@@ -21,20 +27,39 @@ comp_ll0.addParams({
       "vaults" : """8""",
       "terminal" : """1""",
       "llID" : """0""",
-      "LL_MASK" : """0"""
+      "LL_MASK" : """comp"""
 })
+comp_ll0.enableStatistics([
+        "BW_recv_from_CPU"], {
+        "type":"sst.AccumulatorStatistic",
+        "rate":"0 ns"})
+comp_ll0.enableStatistics([
+        "BW_send_to_CPU"], {
+        "type":"sst.AccumulatorStatistic",
+        "rate":"0 ns"})
+
 comp_c0_0 = sst.Component("c0.0", "VaultSimC.VaultSimC")
 comp_c0_0.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """0""",
       "numVaults2" : """3"""
 })
+comp_c0_0.enableStatistics([
+        "Mem_Outstanding"], {
+        "type":"sst.AccumulatorStatistic",
+        "rate":"0 ns"})
+
 comp_c0_1 = sst.Component("c0.1", "VaultSimC.VaultSimC")
 comp_c0_1.addParams({
       "clock" : """750Mhz""",
       "VaultID" : """1""",
       "numVaults2" : """3"""
 })
+comp_c0_1.enableStatistics([
+        "Mem_Outstanding"], {
+        "type":"sst.AccumulatorStatistic",
+        "rate":"0 ns"})
+
 comp_c0_2 = sst.Component("c0.2", "VaultSimC.VaultSimC")
 comp_c0_2.addParams({
       "clock" : """750Mhz""",

@@ -74,19 +74,23 @@ private: // functions
 #endif /* HAVE_LIBPHX */
     
 
-        uint8_t *memBuffer;
-        memChan_t* m_memChan;
-        size_t numVaults2;  // not clear if used
-        Output dbg;
+    uint8_t *memBuffer;
+    memChan_t* m_memChan;
+    size_t numVaults2;  // not clear if used
+    Output dbg;
+    int numOutstanding; //number of mem requests outstanding (non-phx)
 
-	unsigned vaultID;
-	size_t getInternalAddress(MemHierarchy::Addr in) {
-	  // calculate address
-	  size_t lower = in & VAULT_MASK;
-	  size_t upper = in >> (numVaults2 + VAULT_SHIFT);
-	  size_t out = (upper << VAULT_SHIFT) + lower;
-	  return out;
-	}
+    unsigned vaultID;
+    size_t getInternalAddress(MemHierarchy::Addr in) {
+        // calculate address
+        size_t lower = in & VAULT_MASK;
+        size_t upper = in >> (numVaults2 + VAULT_SHIFT);
+        size_t out = (upper << VAULT_SHIFT) + lower;
+        return out;
+    }
+
+    // statistics
+    Statistic<uint64_t>*  memOutStat;
 };
 
 #if HAVE_LIBPHX == 1
