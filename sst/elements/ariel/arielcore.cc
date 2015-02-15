@@ -43,12 +43,6 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	statSplitReadRequests = registerStatistic<uint64_t>( "split_read_requests" );
 	statSplitWriteRequests = registerStatistic<uint64_t>( "split_write_requests" );
 	statNoopCount     = registerStatistics<uint64_t>( "no_ops" );
-	
-	// read_requests = 0;
-	// write_requests = 0;
-	// split_read_requests = 0;
-	// split_write_requests = 0;
-	// noop_count = 0;
 
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
@@ -430,13 +424,6 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 }
 
 void ArielCore::printCoreStatistics() {
-	//output->verbose(CALL_INFO, 1, 0, "Core %" PRIu32 " Statistics:\n", coreID);
-	//output->verbose(CALL_INFO, 1, 0, "- Total Read Requests:         %" PRIu64 "\n", read_requests);
-	//output->verbose(CALL_INFO, 1, 0, "- Split Read Requests:         %" PRIu64 "\n", split_read_requests);
-	//output->verbose(CALL_INFO, 1, 0, "- Total Write Requests:        %" PRIu64 "\n", write_requests);
-	//output->verbose(CALL_INFO, 1, 0, "- Split Write Requests:        %" PRIu64 "\n", split_write_requests);
-	//output->verbose(CALL_INFO, 1, 0, "- Total Requests:              %" PRIu64 "\n", (read_requests + write_requests));
-	//output->verbose(CALL_INFO, 1, 0, "- No Mem Op Insts:             %" PRIu64 "\n", noop_count);
 }
 
 bool ArielCore::processNextEvent() {
