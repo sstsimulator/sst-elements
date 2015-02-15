@@ -38,12 +38,17 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
-	read_requests = 0;
-	write_requests = 0;
-	split_read_requests = 0;
-	split_write_requests = 0;
-	noop_count = 0;
-
+	statReadRequests  = registerStatistic<uint64_t>( "read_requests"  );
+	statWriteRequests = registerStatistic<uint64_t>( "write_requests" );
+	statSplitReadRequests = registerStatistic<uint64_t>( "split_read_requests" );
+	statSplitWriteRequests = registerStatistic<uint64_t>( "split_write_requests" );
+	statNoopCount     = registerStatistics<uint64_t>( "no_ops" );
+	
+	// read_requests = 0;
+	// write_requests = 0;
+	// split_read_requests = 0;
+	// split_write_requests = 0;
+	// noop_count = 0;
 
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
@@ -58,7 +63,15 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 }
 
 ArielCore::~ArielCore() {
-
+	delete statReadRequests;
+	delete statWriteRequests;
+	delete statSplitReadRequests;
+	delete statSplitWriteRequests;
+	delete statNoopCount;
+	
+	if(NULL != cacheLink) {
+		delete cacheLink;
+	}
 }
 
 void ArielCore::setCacheLink(SimpleMem* newLink) {
@@ -336,10 +349,10 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 
 		commitReadEvent(physLeftAddr, (uint32_t) leftSize);
 		commitReadEvent(physRightAddr, (uint32_t) rightSize);
-		split_read_requests++;
+		statSplitReadRequests->addData(1);
 	}
 
-	read_requests++;
+	statReadRequests->addData(1);
 }
 
 void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
@@ -403,10 +416,10 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
 		commitWriteEvent(physLeftAddr, (uint32_t) leftSize);
 		commitWriteEvent(physRightAddr, (uint32_t) rightSize);
-		split_write_requests++;	
+		statSplitWriteRequests->addData(1);	
 	}
 	
-	write_requests++;
+	statWriteRequests->addData(1);
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
@@ -417,13 +430,13 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 }
 
 void ArielCore::printCoreStatistics() {
-	output->verbose(CALL_INFO, 1, 0, "Core %" PRIu32 " Statistics:\n", coreID);
-	output->verbose(CALL_INFO, 1, 0, "- Total Read Requests:         %" PRIu64 "\n", read_requests);
-	output->verbose(CALL_INFO, 1, 0, "- Split Read Requests:         %" PRIu64 "\n", split_read_requests);
-	output->verbose(CALL_INFO, 1, 0, "- Total Write Requests:        %" PRIu64 "\n", write_requests);
-	output->verbose(CALL_INFO, 1, 0, "- Split Write Requests:        %" PRIu64 "\n", split_write_requests);
-	output->verbose(CALL_INFO, 1, 0, "- Total Requests:              %" PRIu64 "\n", (read_requests + write_requests));
-	output->verbose(CALL_INFO, 1, 0, "- No Mem Op Insts:             %" PRIu64 "\n", noop_count);
+	//output->verbose(CALL_INFO, 1, 0, "Core %" PRIu32 " Statistics:\n", coreID);
+	//output->verbose(CALL_INFO, 1, 0, "- Total Read Requests:         %" PRIu64 "\n", read_requests);
+	//output->verbose(CALL_INFO, 1, 0, "- Split Read Requests:         %" PRIu64 "\n", split_read_requests);
+	//output->verbose(CALL_INFO, 1, 0, "- Total Write Requests:        %" PRIu64 "\n", write_requests);
+	//output->verbose(CALL_INFO, 1, 0, "- Split Write Requests:        %" PRIu64 "\n", split_write_requests);
+	//output->verbose(CALL_INFO, 1, 0, "- Total Requests:              %" PRIu64 "\n", (read_requests + write_requests));
+	//output->verbose(CALL_INFO, 1, 0, "- No Mem Op Insts:             %" PRIu64 "\n", noop_count);
 }
 
 bool ArielCore::processNextEvent() {
@@ -448,7 +461,7 @@ bool ArielCore::processNextEvent() {
 	case NOOP:
 		if(verbosity > 8) output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID);
 
-		noop_count++;
+		statNoopCount->addData(1);
 		removeEvent = true;
 		break;
 

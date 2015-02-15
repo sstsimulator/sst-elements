@@ -110,12 +110,13 @@ class ArielCore {
 		FILE* traceFile;
 		TimeConverter* picoTimeConv;
 
+		Statistic<uint64_t>* statReadRequests;
+		Statistic<uint64_t>* statWriteRequests;
+		Statistic<uint64_t>* statSplitReadRequests;
+		Statistic<uint64_t>* statSplitWriteRequests;
+		Statistic<uint64_t>* statNoopCount;
+
 		uint64_t pending_transaction_count;
-		uint64_t read_requests;
-		uint64_t write_requests;
-		uint64_t split_read_requests;
-		uint64_t split_write_requests;
-		uint64_t noop_count;
 
 };
 
