@@ -73,10 +73,13 @@ public:
 
 			q->push_back(readResultCurrentValue);
 
-			for(uint64_t col = row; col < matrixNx; col++) {
+			for(uint64_t col = row; col < (row + matrixNNZPerRow); col++) {
 				if(col >= matrixNx) {
 					break;
 				}
+
+				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
+					row, col);
 
 				MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
 					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
