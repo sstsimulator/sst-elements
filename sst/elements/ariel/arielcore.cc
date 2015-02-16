@@ -38,11 +38,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
-	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests"  );
-	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests" );
-	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests" );
-	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
-	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
+	//statReadRequests  = own->registerStatistic<uint64_t>( "read_requests"  );
+	//statWriteRequests = own->registerStatistic<uint64_t>( "write_requests" );
+	//statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests" );
+	//statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
+	//statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
 
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
@@ -57,11 +57,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 }
 
 ArielCore::~ArielCore() {
-	delete statReadRequests;
-	delete statWriteRequests;
-	delete statSplitReadRequests;
-	delete statSplitWriteRequests;
-	delete statNoopCount;
+	//delete statReadRequests;
+	//delete statWriteRequests;
+	//delete statSplitReadRequests;
+	//delete statSplitWriteRequests;
+	//delete statNoopCount;
 
 	if(NULL != cacheLink) {
 		delete cacheLink;
@@ -344,10 +344,10 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		commitReadEvent(physLeftAddr, (uint32_t) leftSize);
 		commitReadEvent(physRightAddr, (uint32_t) rightSize);
 
-		statSplitReadRequests->addData(1);
+		//statSplitReadRequests->addData(1);
 	}
 
-	statReadRequests->addData(1);
+	//statReadRequests->addData(1);
 }
 
 void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
@@ -411,10 +411,10 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
 		commitWriteEvent(physLeftAddr, (uint32_t) leftSize);
 		commitWriteEvent(physRightAddr, (uint32_t) rightSize);
-		statSplitWriteRequests->addData(1);	
+		//statSplitWriteRequests->addData(1);	
 	}
 	
-	statWriteRequests->addData(1);
+	//statWriteRequests->addData(1);
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
@@ -449,7 +449,7 @@ bool ArielCore::processNextEvent() {
 	case NOOP:
 		if(verbosity > 8) output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID);
 
-		statNoopCount->addData(1);
+		//statNoopCount->addData(1);
 		removeEvent = true;
 		break;
 
