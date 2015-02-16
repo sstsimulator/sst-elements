@@ -23,6 +23,7 @@
 #include "generators/stencil3dbench.h"
 #include "generators/nullgen.h"
 #include "generators/copygen.h"
+#include "generators/spmvgen.h"
 
 using namespace SST;
 using namespace SST::Miranda;
@@ -57,6 +58,10 @@ static Module* load_EmptyGenerator(Component* owner, Params& params) {
 
 static Module* load_Stencil3DGenerator(Component* owner, Params& params) {
 	return new Stencil3DBenchGenerator(owner, params);
+}
+
+static Module* load_SPMVGenerator(Component* owner, Params& params) {
+	return new SPMVGenerator(owner, params);
 }
 
 static Component* load_MirandaBaseCPU(ComponentId_t id, Params& params) {
@@ -138,6 +143,10 @@ static const ElementInfoParam streamBench_params[] = {
     { NULL, NULL, NULL }
 };
 
+static const ElementInfoParam spmvBench_params[] = {
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoModule modules[] = {
 	{
 		"SingleStreamGenerator",
@@ -146,6 +155,15 @@ static const ElementInfoModule modules[] = {
 		NULL,
 		load_SingleStreamGenerator,
 		singleStreamGen_params,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"SPMVGenerator",
+		"Creates a diagonal matrix access pattern",
+		NULL,
+		NULL,
+		load_SPMVGenerator,
+		spmvBench_params,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
