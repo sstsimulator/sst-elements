@@ -21,7 +21,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     tunnel(tunnel), perform_checks(perform_address_checks),
     enableTracing((traceFilePrefix != ""))
 {
-    output = out;
+        output = out;
 	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	cacheLink = coreToCacheLink;
@@ -38,11 +38,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
-	statReadRequests  = registerStatistic<uint64_t>( "read_requests"  );
-	statWriteRequests = registerStatistic<uint64_t>( "write_requests" );
-	statSplitReadRequests = registerStatistic<uint64_t>( "split_read_requests" );
-	statSplitWriteRequests = registerStatistic<uint64_t>( "split_write_requests" );
-	statNoopCount     = registerStatistics<uint64_t>( "no_ops" );
+	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests"  );
+	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests" );
+	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests" );
+	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
+	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
 
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
@@ -62,7 +62,7 @@ ArielCore::~ArielCore() {
 	delete statSplitReadRequests;
 	delete statSplitWriteRequests;
 	delete statNoopCount;
-	
+
 	if(NULL != cacheLink) {
 		delete cacheLink;
 	}
@@ -343,6 +343,7 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 
 		commitReadEvent(physLeftAddr, (uint32_t) leftSize);
 		commitReadEvent(physRightAddr, (uint32_t) rightSize);
+
 		statSplitReadRequests->addData(1);
 	}
 
