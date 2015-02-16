@@ -63,10 +63,10 @@ nic::nic(ComponentId_t cid, Params& params) :
 
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
-    link_control = (Merlin::LinkControl*)loadModule("merlin.linkcontrol", params);
+    link_control = (Merlin::LinkControl*)loadModuleWithComponent("merlin.linkcontrol", this, params);
 
     UnitAlgebra buf_size("1kB");
-    link_control->configureLink(this, "rtr", link_bw, num_vns, buf_size, buf_size, true);
+    link_control->configure("rtr", link_bw, num_vns, buf_size, buf_size, true);
 
     last_target = id;
     next_seq = new int[num_peers];

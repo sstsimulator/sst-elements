@@ -14,6 +14,7 @@
 
 #include <sst/core/element.h>
 #include <sst/core/configGraph.h>
+#include <sst/core/subcomponent.h>
 
 #include "merlin.h"
 #include "linkControl.h"
@@ -314,9 +315,9 @@ load_singlerouter_topology(Component* comp, Params& params)
 
 
 static Module*
-load_linkcontrol(Params& params)
+load_linkcontrol(Component* parent, Params& params)
 {
-    return new LinkControl(params);
+    return new LinkControl(parent, params);
 }
 
 static const ElementInfoComponent components[] = {
@@ -416,8 +417,8 @@ static const ElementInfoModule modules[] = {
     { "linkcontrol",
       "Link Control module for building Merlin-enabled NICs",
       NULL,
-      load_linkcontrol,
       NULL,
+      load_linkcontrol,
       NULL,
       "SST::Merlin::LinkControl"
     },

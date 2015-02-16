@@ -17,6 +17,7 @@
 
 #include <sst/core/module.h>
 #include <sst/core/component.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -42,7 +43,7 @@ typedef std::queue<RtrEvent*> network_queue_t;
 
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
-class LinkControl : public Module {
+class LinkControl : public SubComponent {
 public:
     class PacketStats {
     private:
@@ -161,7 +162,7 @@ private:
     HandlerBase* receiveFunctor;
     HandlerBase* sendFunctor;
     
-    Component* parent;
+    // Component* parent;
 
     PacketStats stats;
     // Statistics
@@ -170,6 +171,7 @@ private:
     Statistic<uint64_t>* output_port_stalls;
 
 public:
+    LinkControl(Component* parent, Params &params);
     LinkControl(Params &params);
 
     ~LinkControl();
@@ -182,7 +184,7 @@ public:
     //                    int vns, int* in_buf_size, int* out_buf_size)
     // {std::cout << "Using old configureLink call, fix it!" << std::endl; exit(1);}
 
-    void configureLink(Component* rif, std::string port_name, const UnitAlgebra& link_bw_in,
+    void configure(std::string port_name, const UnitAlgebra& link_bw_in,
                        int vns, const UnitAlgebra& in_buf_size,
                        const UnitAlgebra& out_buf_size, bool enable_stats = false);
     void setup();

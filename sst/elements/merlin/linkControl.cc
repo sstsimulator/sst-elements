@@ -21,24 +21,24 @@ using namespace SST;
 using namespace Merlin;
 
 
-LinkControl::LinkControl(Params &params) :
+LinkControl::LinkControl(Component* parent, Params &params) :
+    SubComponent(parent),
     rtr_link(NULL), output_timing(NULL),
     num_vns(0), id(-1),
     input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     receiveFunctor(NULL), sendFunctor(NULL),
-    parent(NULL), network_initialized(false)
+    network_initialized(false)
 {
 }
     
 void
-LinkControl::configureLink(Component* rif, std::string port_name, const UnitAlgebra& link_bw_in,
-                           int vns, const UnitAlgebra& in_buf_size,
-                           const UnitAlgebra& out_buf_size, bool enable_stats)
+LinkControl::configure(std::string port_name, const UnitAlgebra& link_bw_in,
+                       int vns, const UnitAlgebra& in_buf_size,
+                       const UnitAlgebra& out_buf_size, bool enable_stats)
 {
     num_vns = vns;
-    parent = rif;
     link_bw = link_bw_in;
     if ( link_bw.hasUnits("B/s") ) {
         link_bw *= UnitAlgebra("8b/B");
@@ -78,26 +78,26 @@ LinkControl::configureLink(Component* rif, std::string port_name, const UnitAlge
     // Configure the links
     // For now give it a fake timebase.  Will give it the real timebase during init
     // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    rtr_link = rif->configureLink(port_name, "1GHz", new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
     // output_timing = rif->configureSelfLink(port_name + "_output_timing", time_base,
     //         new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
-    output_timing = rif->configureSelfLink(port_name + "_output_timing", "1GHz",
+    output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
     // Register statistics
     // packet_latency = rif->registerStatistic(new HistogramStatistic<uint32_t, uint32_t>(rif, "packet_latency", 0, 10000, 250));
     if (enable_stats) {   
-        packet_latency = rif->registerStatistic<uint64_t>("packet_latency");
-        send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count");
-        output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls");
+        packet_latency = parent->registerStatistic<uint64_t>("packet_latency");
+        send_bit_count = parent->registerStatistic<uint64_t>("send_bit_count");
+        output_port_stalls = parent->registerStatistic<uint64_t>("output_port_stalls");
     }
     else {
         Params empty;
         std::string null_stat("sst.nullstatistic");
         std::string empty_string("");
-        packet_latency = Simulation::getSimulation()->CreateStatistic<uint64_t>(rif, null_stat, empty_string, empty_string, empty);
-        send_bit_count = Simulation::getSimulation()->CreateStatistic<uint64_t>(rif, null_stat, empty_string, empty_string, empty);
-        output_port_stalls = Simulation::getSimulation()->CreateStatistic<uint64_t>(rif, null_stat, empty_string, empty_string, empty);
+        packet_latency = Simulation::getSimulation()->CreateStatistic<uint64_t>(parent, null_stat, empty_string, empty_string, empty);
+        send_bit_count = Simulation::getSimulation()->CreateStatistic<uint64_t>(parent, null_stat, empty_string, empty_string, empty);
+        output_port_stalls = Simulation::getSimulation()->CreateStatistic<uint64_t>(parent, null_stat, empty_string, empty_string, empty);
     }
 }
 

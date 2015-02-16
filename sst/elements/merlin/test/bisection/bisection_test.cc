@@ -62,9 +62,9 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     buffer_size = UnitAlgebra(buffer_size_s);
 
     // Create a LinkControl object
-    link_control = (Merlin::LinkControl*)loadModule("merlin.linkcontrol", params);
+    link_control = (Merlin::LinkControl*)loadModuleWithComponent("merlin.linkcontrol", this, params);
 
-    link_control->configureLink(this, "rtr", link_bw, num_vns, buffer_size, buffer_size, true);
+    link_control->configure("rtr", link_bw, num_vns, buffer_size, buffer_size, true);
 
     // Set up a receive functor that will handle all incoming packets
     link_control->setNotifyOnReceive(new LinkControl::Handler<bisection_test>(this,&bisection_test::receive_handler));
