@@ -24,7 +24,7 @@ libmiranda_la_SOURCES = \
 	generators/gupsgen.h \
 	generators/gupsgen.cc \
 	generators/nullgen.h \
-	generators/spvmgen.h \
+	generators/spmvgen.h \
 	generators/copygen.h
 
 EXTRA_DIST = \
