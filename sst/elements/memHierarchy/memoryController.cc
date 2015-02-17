@@ -156,9 +156,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     /* Clock Handler */
     registerClock(clock_freq, new Clock::Handler<MemController>(this, &MemController::clock));
-//    dbg.verbose(CALL_INFO, 1, 0, "Registering timebase for Memory Controller: %s\n", clock_freq.c_str());
-    printf("SETTING CLOCK FREQUENCY FOR MEMORY CONTROLLER TO: %s\n", clock_freq.c_str());
-
     registerTimeBase("1 ns", true);
 }
 
