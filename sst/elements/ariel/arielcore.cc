@@ -48,7 +48,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
-		Params interfaceParams = params.find_prefix_params("trace.");
+		Params interfaceParams = params.find_prefix_params("tracer.");
 		traceGen = dynamic_cast<ArielTraceGenerator*>( own->loadModuleWithComponent(traceGenName, own,
 			interfaceParams) );
 

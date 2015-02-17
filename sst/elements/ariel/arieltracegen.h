@@ -15,13 +15,13 @@ typedef enum {
 class ArielTraceGenerator : public Module {
 
 public:
-	ArielTraceGenerator();
-	~ArielTraceGenerator();
-	void publishEntry(const uint64_t picoS,
+	ArielTraceGenerator() {}
+	~ArielTraceGenerator() {}
+	virtual void publishEntry(const uint64_t picoS,
 		const uint64_t physAddr,
 		const uint32_t reqLength,
-		const ArielTraceEntryOperation op);
-	void setCoreID(uint32_t coreID);
+		const ArielTraceEntryOperation op) = 0;
+	virtual void setCoreID(uint32_t coreID) = 0;
 
 };
 

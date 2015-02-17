@@ -11,8 +11,10 @@ namespace ArielComponent {
 class ArielTextTraceGenerator : public ArielTraceGenerator {
 
 public:
-	ArielTextTraceGenerator(Component* owner, Params& params) {
-		std::string tracePrefix = params.find_string("trace_prefix", "ariel-core-");
+	ArielTextTraceGenerator(Component* owner, Params& params) :
+		ArielTraceGenerator() {
+
+		tracePrefix = params.find_string("trace_prefix", "ariel-core");
 		coreID = 0;
 	}
 
