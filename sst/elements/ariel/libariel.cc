@@ -17,6 +17,7 @@
 
 //#include "ariel.h"
 #include "arielcpu.h"
+#include "arieltexttracegen.h"
 
 using namespace SST;
 using namespace SST::ArielComponent;
@@ -24,7 +25,16 @@ using namespace SST::ArielComponent;
 static Component* create_Ariel(ComponentId_t id, Params& params)
 {
 	return new ArielCPU( id, params );
-}
+};
+
+static Module* load_TextTrace( Component* comp, Params& params) {
+	return new ArielTextTraceGenerator(comp, params);
+};
+
+static const ElementInfoParam ariel_text_trace_params[] = {
+    { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" },
+    { NULL, NULL, NULL }
+};
 
 static const ElementInfoParam ariel_params[] = {
     {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
@@ -58,7 +68,16 @@ static const ElementInfoPort ariel_ports[] = {
 };
 
 static const ElementInfoModule modules[] = {
-    {NULL, NULL, NULL, NULL, NULL, NULL}
+    {
+	"TextTraceGenerator",
+	"Provides tracing to text file capabilities",
+	NULL,
+	NULL,
+	load_TextTrace,
+	ariel_text_trace_params,
+	"SST::ArielComponent::ArielTraceGenerator"
+    },
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 
