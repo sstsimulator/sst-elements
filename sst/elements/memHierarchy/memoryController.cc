@@ -53,7 +53,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     dbg.debug(_L10_,"---");
     
     statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
-    unsigned int ramSize    = (unsigned int)params.find_integer("mem_size", 0);
+    unsigned int ramSize    = (unsigned int) params.find_integer("mem_size", 0);
     memSize_                = ramSize * (1024*1024ul);
     rangeStart_             = (Addr)params.find_integer("range_start", 0);
     interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
@@ -112,8 +112,15 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     // Ensure we can extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
+    unsigned int backendRamSize = params.find_integer("backend.mem_size", 0);
+    if(0 == ramSize && 0 != backendRamSize) {
+	ramSize = backendRamSize;
+    } else if(0 != ramSize && 0 != backendRamSize && ramSize != backendRamSize) {
+	_abort(MemController, "Error - mem_size is specified in the MemController and the backend but sizes are different.\n");
+    }
+
     backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, backendParams));
-    
+
     if (!isNetworkConnected_) {
     lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
     } else {
@@ -149,6 +156,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     /* Clock Handler */
     registerClock(clock_freq, new Clock::Handler<MemController>(this, &MemController::clock));
+//    dbg.verbose(CALL_INFO, 1, 0, "Registering timebase for Memory Controller: %s\n", clock_freq.c_str());
+    printf("SETTING CLOCK FREQUENCY FOR MEMORY CONTROLLER TO: %s\n", clock_freq.c_str());
+
     registerTimeBase("1 ns", true);
 }
 
