@@ -76,7 +76,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
 			link_bw.toString().c_str(),m_packetSizeInBytes);
 
-    m_linkControl = (Merlin::LinkControl*)loadModuleWithComponent(
+    m_linkControl = (Merlin::LinkControl*)loadSubComponent(
                     params.find_string("module"), this, params);
     assert( m_linkControl );
 

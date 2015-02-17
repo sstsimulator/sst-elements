@@ -58,7 +58,7 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
     last_recv_vc = 0;
 
     Params params; // LinkControl doesn't actually use the params
-    link_control = (Merlin::LinkControl*)comp->loadModuleWithComponent("merlin.linkcontrol", comp, params);
+    link_control = (Merlin::LinkControl*)comp->loadSubComponent("merlin.linkcontrol", comp, params);
     UnitAlgebra buf_size("1KB");
     link_control->configure(ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, buf_size, buf_size);
 

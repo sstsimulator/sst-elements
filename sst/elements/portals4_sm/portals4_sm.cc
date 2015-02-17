@@ -272,7 +272,8 @@ extern "C" {
 	NULL,  // events
 	NULL,  // introspectors
 	NULL,  // modules
-	partitioners,
-	generators,
+    NULL, // subcomponents
+    partitioners,
+	// generators,
     };
 }

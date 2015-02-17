@@ -62,7 +62,7 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     buffer_size = UnitAlgebra(buffer_size_s);
 
     // Create a LinkControl object
-    link_control = (Merlin::LinkControl*)loadModuleWithComponent("merlin.linkcontrol", this, params);
+    link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
 
     link_control->configure("rtr", link_bw, num_vns, buffer_size, buffer_size, true);
 

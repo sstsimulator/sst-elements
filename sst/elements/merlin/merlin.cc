@@ -314,7 +314,7 @@ load_singlerouter_topology(Component* comp, Params& params)
 }
 
 
-static Module*
+static SubComponent*
 load_linkcontrol(Component* parent, Params& params)
 {
     return new LinkControl(parent, params);
@@ -414,11 +414,15 @@ static const ElementInfoModule modules[] = {
       dragonfly_params,
       "SST::Merlin::Topology"
     },
+    { NULL, NULL, NULL, NULL, NULL, NULL }
+};
+
+static const ElementInfoSubComponent subcomponents[] = {
     { "linkcontrol",
       "Link Control module for building Merlin-enabled NICs",
       NULL,
-      NULL,
       load_linkcontrol,
+      NULL,
       NULL,
       "SST::Merlin::LinkControl"
     },
@@ -434,9 +438,10 @@ extern "C" {
         NULL,   // Events
         NULL,   // Introspectors
         modules,
+        subcomponents,
         NULL, // partitioners,
-        NULL, // generators,
-        genMerlinPyModule  // Python Module Generator
+        genMerlinPyModule,  // Python Module Generator
+        NULL // generators,
     };
 }
 

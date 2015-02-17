@@ -94,7 +94,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     UnitAlgebra buf_size(buf_len);
     
-    link_control = (Merlin::LinkControl*)loadModuleWithComponent("merlin.linkcontrol", this, params);
+    link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
     link_control->configure("rtr", link_bw, num_vns, buf_len, buf_len, true);
     // delete [] buf_size;
 
