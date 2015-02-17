@@ -37,11 +37,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
-	//statReadRequests  = own->registerStatistic<uint64_t>( "read_requests"  );
-	//statWriteRequests = own->registerStatistic<uint64_t>( "write_requests" );
-	//statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests" );
-	//statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
-	//statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
+	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests"  );
+	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests" );
+	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests" );
+	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
+	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
 
 	std::string traceGenName = params.find_string("tracegen");
 	enableTracing = ("" != traceGenName);
@@ -64,11 +64,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 }
 
 ArielCore::~ArielCore() {
-	//delete statReadRequests;
-	//delete statWriteRequests;
-	//delete statSplitReadRequests;
-	//delete statSplitWriteRequests;
-	//delete statNoopCount;
+	delete statReadRequests;
+	delete statWriteRequests;
+	delete statSplitReadRequests;
+	delete statSplitWriteRequests;
+	delete statNoopCount;
 
 	if(NULL != cacheLink) {
 		delete cacheLink;

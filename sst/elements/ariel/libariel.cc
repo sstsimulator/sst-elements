@@ -35,6 +35,15 @@ static Module* load_TextTrace( Component* comp, Params& params) {
 	return new ArielTextTraceGenerator(comp, params);
 };
 
+static const ElementInfoStatisticEnable ariel_statistics[] = {
+    { "read_requests",        "Stat read_requests", 3},   // Name, Desc, Enable Level 
+    { "write_requests",       "Stat write_requests", 3}, 
+    { "split_read_requests",  "Stat split_read_requests", 3}, 
+    { "split_write_requests", "Stat split_write_requests", 3},     
+    { "no_ops",               "Stat no_ops", 3}, 
+    { NULL, NULL, 0 }
+};
+
 static const ElementInfoParam ariel_text_trace_params[] = {
     { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" },
     { NULL, NULL, NULL }
@@ -114,7 +123,8 @@ static const ElementInfoComponent components[] = {
         create_Ariel,
 		ariel_params,
         ariel_ports,
-        COMPONENT_CATEGORY_PROCESSOR
+        COMPONENT_CATEGORY_PROCESSOR,
+        ariel_statistics
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0 }
 };
