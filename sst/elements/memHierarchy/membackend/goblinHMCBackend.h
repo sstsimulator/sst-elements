@@ -14,6 +14,24 @@
 namespace SST {
 namespace MemHierarchy {
 
+class HMCSimBackEndReq {
+	public:
+		HMCSimBackEndReq(MemController::DRAMReq* r, uint64_t sTime) :
+			req(r), startTime(sTime) {}
+		~HMCSimBackEndReq() {}
+
+		uint64_t getStartTime() const {
+			return startTime;
+		}
+
+		MemController::DRAMReq* getRequest() const {
+			return req;
+		}
+	private:
+		MemController::DRAMReq* req;
+		uint64_t startTime;
+};
+
 class GOBLINHMCSimBackend : public MemBackend {
 
 public:
@@ -26,6 +44,7 @@ public:
 	void clock();
 
 private:
+	Component* owner;
 	Output* output;
 	struct hmcsim_t the_hmc;
 
@@ -53,7 +72,7 @@ private:
 	uint64_t hmc_payload[16];
 
 	std::queue<uint16_t> tag_queue;
-	std::map<uint16_t, MemController::DRAMReq*> tag_req_map;
+	std::map<uint16_t, HMCSimBackEndReq*> tag_req_map;
 
 	void zeroPacket(uint64_t* packet) const;
 	void processResponses();

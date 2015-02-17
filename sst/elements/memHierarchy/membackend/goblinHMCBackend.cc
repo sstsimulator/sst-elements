@@ -4,7 +4,9 @@
 
 using namespace SST::MemHierarchy;
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemBackend(comp, params) {
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemBackend(comp, params),
+	owner(comp) {
+
 	int verbose = params.find_integer("verbose", 0);
 
 	output = new Output("HMCBackend[@p:@l]: ", verbose, 0, Output::STDOUT);
@@ -59,6 +61,24 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 		output->fatal(CALL_INFO, -1, "Unable to initialize HMC back end model, return code is %d\n", rc);
 	} else {
 		output->verbose(CALL_INFO, 1, 0, "Initialized successfully.\n");
+	}
+
+	for(uint32_t i = 0; i < hmc_link_count; ++i) {
+		output->verbose(CALL_INFO, 1, 0, "Configuring link: %" PRIu32 "...\n", i);
+		rc = hmcsim_link_config(&the_hmc,
+			hmc_dev_count+1,
+			0,
+			i,
+			i,
+			HMC_LINK_HOST_DEV);
+
+		if(0 == rc) {
+			output->verbose(CALL_INFO, 1, 0, "Successfully configured link.\n");
+		} else {
+			output->fatal(CALL_INFO, 1, 0, "Error configuring link %" PRIu32 ", code=%d\n", i, rc);
+		}
+
+		nextLink = 0;
 	}
 
 	output->verbose(CALL_INFO, 1, 0, "Populating tag entries allowed at the controller, max tag count is: %" PRIu32 "\n", hmc_tag_count);
@@ -143,8 +163,9 @@ bool GOBLINHMCSimBackend::issueRequest(MemController::DRAMReq* req) {
 		req_type = RD64;
 	}
 
-	const uint8_t           req_link   = 0; //(uint8_t) (nextLink);
-	//nextLink = (nextLink == hmc_link_count) ? 0 : nextLink + 1;
+	const uint8_t           req_link   = (uint8_t) (nextLink);
+	nextLink = nextLink + 1;
+	nextLink = (nextLink == hmc_link_count) ? 0 : nextLink;
 
 	uint64_t                req_header = (uint64_t) 0;
 	uint64_t                req_tail   = (uint64_t) 0;
@@ -183,10 +204,13 @@ bool GOBLINHMCSimBackend::issueRequest(MemController::DRAMReq* req) {
 	} else if(0 == rc) {
 		output->verbose(CALL_INFO, 4, 0, "Issue of request for address %" PRIu64 " successfully accepted by HMC.\n", addr);
 
+		// Create the request entry which we keep in a table
+		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(req, owner->getCurrentSimTimeNano());
+
 		// Add the tag and request into our table of pending
-		tag_req_map.insert( std::pair<uint16_t, MemController::DRAMReq*>(req_tag, req) );
+		tag_req_map.insert( std::pair<uint16_t, HMCSimBackEndReq*>(req_tag, reqEntry) );
 	} else {
-		output->fatal(CALL_INFO, -1, "Error issue request for address %" PRIu64 " into HMC.\n", addr);
+		output->fatal(CALL_INFO, -1, "Error issue request for address %" PRIu64 " into HMC on link %" PRIu8 "\n", addr, req_link);
 	}
 
 	return true;
@@ -261,15 +285,18 @@ void GOBLINHMCSimBackend::processResponses() {
 				if(HMC_OK == decode_rc) {
 					output->verbose(CALL_INFO, 4, 0, "Successfully decoded an HMC memory response for tag: %" PRIu16 "\n", resp_tag);
 
-					std::map<uint16_t, MemController::DRAMReq*>::iterator locate_tag = tag_req_map.find(resp_tag);
+					std::map<uint16_t, HMCSimBackEndReq*>::iterator locate_tag = tag_req_map.find(resp_tag);
 
 					if(locate_tag == tag_req_map.end()) {
 						output->fatal(CALL_INFO, -1, "Unable to find tag: %" PRIu16 " in the tag/request lookup table.\n", resp_tag);
 					} else {
-						MemController::DRAMReq* orig_req = locate_tag->second;
+						HMCSimBackEndReq* matchedReq = locate_tag->second;
 
-						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: %" PRIu64 "\n",
-							resp_tag, (orig_req->baseAddr_ + orig_req->amtInProcess_));
+						MemController::DRAMReq* orig_req = matchedReq->getRequest();
+
+						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: %" PRIu64 ", processing time: %" PRIu64 "ns\n",
+							resp_tag, (orig_req->baseAddr_ + orig_req->amtInProcess_),
+							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
 						ctrl->handleMemResponse(orig_req);
@@ -279,6 +306,9 @@ void GOBLINHMCSimBackend::processResponses() {
 
 						// Put the available tag back into the queue to be used
 						tag_queue.push(resp_tag);
+
+						// Delete our entry to free memory
+						delete matchedReq;
 					}
 				} else if(HMC_STALL == decode_rc) {
 					// Should this situation happen? We have pulled the request now we want it decoded, if it stalls is it lost?
@@ -316,10 +346,10 @@ void GOBLINHMCSimBackend::zeroPacket(uint64_t* packet) const {
 void GOBLINHMCSimBackend::printPendingRequests() {
 	output->verbose(CALL_INFO, 4, 0, "Pending requests:\n");
 
-	std::map<uint16_t, MemController::DRAMReq*>::iterator pending_itr;
+	std::map<uint16_t, HMCSimBackEndReq*>::iterator pending_itr;
 
 	for(pending_itr = tag_req_map.begin(); pending_itr != tag_req_map.end(); pending_itr++) {
 		output->verbose(CALL_INFO, 8, 0, "Tag: %8" PRIu16 " for address %" PRIu64 "\n",
-			pending_itr->first, pending_itr->second->addr_);
+			pending_itr->first, pending_itr->second->getRequest()->addr_);
 	}
 }
