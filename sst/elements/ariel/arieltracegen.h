@@ -9,7 +9,7 @@ namespace ArielComponent {
 
 typedef enum {
 	READ,
-	WEITE
+	WRITE
 } ArielTraceEntryOperation;
 
 class ArielTraceGenerator : public Module {
@@ -19,6 +19,7 @@ public:
 	~ArielTraceGenerator();
 	void publishEntry(const uint64_t picoS,
 		const uint64_t physAddr,
+		const uint32_t reqLength,
 		const ArielTraceEntryOperation op);
 	void setCoreID(uint32_t coreID);
 

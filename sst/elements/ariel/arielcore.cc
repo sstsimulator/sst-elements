@@ -17,9 +17,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
         uint32_t thisCoreID, uint32_t maxPendTrans,
         Output* out, uint32_t maxIssuePerCyc,
         uint32_t maxQLen, uint64_t cacheLineSz, SST::Component* own,
-        ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string traceFilePrefix) :
-    tunnel(tunnel), perform_checks(perform_address_checks),
-    enableTracing((traceFilePrefix != ""))
+        ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
+    tunnel(tunnel), perform_checks(perform_address_checks)
 {
         output = out;
 	verbosity = (uint32_t) output->getVerboseLevel();
@@ -44,16 +43,24 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	//statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
 	//statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
 
+	std::string traceGenName = params.find_string("tracegen");
+	enableTracing = ("" != traceGenName);
+
 	// If we enabled tracing then open up the correct file.
 	if(enableTracing) {
-		char* traceFilePath = (char*) malloc( sizeof(char) * (traceFilePrefix.size() + 20) );
-		sprintf(traceFilePath, "%s-%d.trace", traceFilePrefix.c_str(), (int) thisCoreID);
-		traceFile = fopen(traceFilePath, "wt");
-		free(traceFilePath);
+		Params interfaceParams = params.find_prefix_params("trace.");
+		traceGen = dynamic_cast<ArielTraceGenerator*>( own->loadModuleWithComponent(traceGenName, own,
+			interfaceParams) );
+
+		if(NULL == traceGen) {
+			output->fatal(CALL_INFO, -1, "Unable to load tracing module: \"%s\"\n",
+				traceGenName.c_str());
+		}
+
+		traceGen->setCoreID(coreID);
 	}
 
-	// Get a time converter from the core, we want nano seconds.
-	picoTimeConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ps");
+	currentCycles = 0;
 }
 
 ArielCore::~ArielCore() {
@@ -66,6 +73,10 @@ ArielCore::~ArielCore() {
 	if(NULL != cacheLink) {
 		delete cacheLink;
 	}
+
+	if(enableTracing) {
+		delete traceGen;
+	}
 }
 
 void ArielCore::setCacheLink(SimpleMem* newLink) {
@@ -76,10 +87,11 @@ void ArielCore::printTraceEntry(const bool isRead,
                        	const uint64_t address, const uint32_t length) {
 
 	if(enableTracing) {
-		uint64_t picoSeconds = (uint64_t) picoTimeConv->convertFromCoreTime(Simulation::getSimulation()->getCurrentSimCycle());
-
-		fprintf(traceFile, "%" PRIu64 " %c %" PRIu64 " %" PRIu32 "\n",
-			(uint64_t) picoSeconds, (isRead ? 'R' : 'W'), address, length);
+		if(isRead) {
+			traceGen->publishEntry(currentCycles, address, length, READ);
+		} else {
+			traceGen->publishEntry(currentCycles, address, length, WRITE);
+		}
 	}
 }
 
@@ -136,9 +148,6 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
 
 void ArielCore::finishCore() {
 	// Close the trace file if we did in fact open it.
-	if(enableTracing) {
-		fclose(traceFile);
-	}
 }
 
 void ArielCore::halt() {
@@ -550,5 +559,7 @@ void ArielCore::tick() {
 				break;
 			}
 		}
+
+		currentCycles++;
 	}
 }

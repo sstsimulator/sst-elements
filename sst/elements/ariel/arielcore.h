@@ -20,7 +20,7 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/element.h>
-
+#include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/timeLord.h>
@@ -44,6 +44,7 @@
 #include "arielswitchpool.h"
 
 #include "ariel_shmem.h"
+#include "arieltracegen.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -60,7 +61,7 @@ class ArielCore {
                 uint32_t thisCoreID, uint32_t maxPendTans,
                 Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen,
                 uint64_t cacheLineSz, SST::Component* owner,
-			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, const std::string tracePrefix);
+			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
 		~ArielCore();
 		bool isCoreHalted();
 		void tick();
@@ -106,9 +107,10 @@ class ArielCore {
 		ArielMemoryManager* memmgr;
 		uint32_t verbosity;
 		const uint32_t perform_checks;
-		const bool enableTracing;
-		FILE* traceFile;
-		TimeConverter* picoTimeConv;
+		bool enableTracing;
+		uint64_t currentCycles;
+
+		ArielTraceGenerator* traceGen;
 
 		Statistic<uint64_t>* statReadRequests;
 		Statistic<uint64_t>* statWriteRequests;

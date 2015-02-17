@@ -187,13 +187,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	const std::string tracePrefix = params.find_string("tracePrefix", "");
-	if("" == tracePrefix) {
-		output->verbose(CALL_INFO, 1, 0, "Core address tracing is not enabled.\n");
-	} else {
-		output->verbose(CALL_INFO, 1, 0, "Core address tracing is enabled, prefix is set to %s\n", tracePrefix.c_str());
-	}
-
 	output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
 	cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
@@ -207,7 +200,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 		cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output, 
 			maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
-			memmgr, perform_checks, tracePrefix);
+			memmgr, perform_checks, params);
         cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
 		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
