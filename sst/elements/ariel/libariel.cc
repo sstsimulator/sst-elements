@@ -19,6 +19,10 @@
 #include "arielcpu.h"
 #include "arieltexttracegen.h"
 
+#ifdef HAVE_LIBZ
+#include "arielgzbintracegen.h"
+#endif
+
 using namespace SST;
 using namespace SST::ArielComponent;
 
@@ -35,6 +39,17 @@ static const ElementInfoParam ariel_text_trace_params[] = {
     { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" },
     { NULL, NULL, NULL }
 };
+
+#ifdef HAVE_LIBZ
+static Module* load_CompressedBinaryTrace( Component* comp, Params& params) {
+	return new ArielCompressedBinaryTraceGenerator(comp, params);
+};
+
+static const ElementInfoParam ariel_gzbinary_trace_params[] = {
+    { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" },
+    { NULL, NULL, NULL }
+};
+#endif
 
 static const ElementInfoParam ariel_params[] = {
     {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
@@ -77,6 +92,17 @@ static const ElementInfoModule modules[] = {
 	ariel_text_trace_params,
 	"SST::ArielComponent::ArielTraceGenerator"
     },
+#ifdef HAVE_LIBZ
+    {
+	"CompressedBinaryTraceGenerator",
+	"Provides tracing to compressed file capabilities",
+	NULL,
+	NULL,
+	load_CompressedBinaryTrace,
+	ariel_gzbinary_trace_params,
+	"SST::ArielComponent::ArielTraceGenerator"
+    },
+#endif
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
