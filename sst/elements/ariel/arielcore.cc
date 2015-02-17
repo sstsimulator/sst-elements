@@ -37,11 +37,16 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
-	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests"  );
-	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests" );
-	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests" );
-	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests" );
-	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops" );
+	char* subID = (char*) malloc(sizeof(char) * 32);
+	sprintf(subID, "%" PRIu32, thisCoreID);
+
+	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests", subID);
+	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests", subID);
+	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID);
+	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID);
+	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID);
+
+	free(subID);
 
 	std::string traceGenName = params.find_string("tracegen");
 	enableTracing = ("" != traceGenName);
