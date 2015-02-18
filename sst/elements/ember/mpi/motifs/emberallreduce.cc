@@ -23,6 +23,7 @@ EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
     m_name = "Allreduce";
 
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+    m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
     m_sendBuf = NULL;
     m_recvBuf = NULL;
@@ -34,13 +35,25 @@ bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
         GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
     }
 
-    enQ_compute( evQ, 11000 );
+    if ( m_loopIndex == m_iterations ) {
+        if ( 0 == rank() ) {
+            double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
+            latency /= 1000000000.0;
+            m_output->output( "%s: ranks %d, loop %d, %d double(s), timePer %.3f us\n",
+                    m_name.c_str(), size(), m_iterations, m_count, latency * 1000000.0  );
+        }
+        return true;
+    }
+    if ( 0 == m_loopIndex ) {
+        enQ_getTime( evQ, &m_startTime );
+    }
+
+    enQ_compute( evQ, m_compute );
     enQ_allreduce( evQ, m_sendBuf, m_recvBuf, m_count, DOUBLE,
                                                      SUM, GroupWorld );
 
     if ( ++m_loopIndex == m_iterations ) {
-        return true;
-    } else {
-        return false;
+        enQ_getTime( evQ, &m_stopTime );
     }
+    return false;
 }
