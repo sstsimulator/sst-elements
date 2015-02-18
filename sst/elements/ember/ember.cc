@@ -323,6 +323,7 @@ static const ElementInfoParam alltoallv_params[] = {
 static const ElementInfoParam allreduce_params[] = {
 	{	"arg.iterations",		"Sets the number of allreduce operations to perform", 	"1"},
 	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
