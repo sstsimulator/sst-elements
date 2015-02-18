@@ -31,10 +31,6 @@ EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
 
 bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
-    if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
-    }
-
     if ( m_loopIndex == m_iterations ) {
         if ( 0 == rank() ) {
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;

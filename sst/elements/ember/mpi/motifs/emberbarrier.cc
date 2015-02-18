@@ -31,8 +31,8 @@ bool EmberBarrierGenerator::generate( std::queue<EmberEvent*>& evQ )
         if ( 0 == rank() ) {
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
             latency /= 1000000000.0;
-            m_output->output( "ranks %d, timePer %.3f us\n",
-                    size(), latency * 1000000.0  );
+            m_output->output( "%s: ranks %d, loop %d, timePer %.3f us\n",
+                    m_name.c_str(), size(), m_iterations, latency * 1000000.0  );
         }
         return true;
     }
