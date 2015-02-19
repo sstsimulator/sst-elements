@@ -1,6 +1,10 @@
 
 debug = 0
 
+topology="fattree"
+radix=18
+loading=9
+
 networkParams = {
     "topology" : "merlin." + "torus",
     "packetSize" : "2048B",

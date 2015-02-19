@@ -1,6 +1,9 @@
 
 debug = 0
 
+topology="torus"
+shape="4x4x4x4x2"
+
 networkParams = {
     "topology" : "merlin." + "torus",
     "packetSize" : "2048B",

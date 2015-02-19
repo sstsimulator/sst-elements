@@ -119,26 +119,38 @@ for o, a in opts:
 
 workList.append( workFlow )
 
+print "platform: {0}".format( platform)
+
 if platform == "default":
     nicParams = defaultParams.nicParams
     networkParams = defaultParams.networkParams
     hermesParams = defaultParams.hermesParams
     emberParams = defaultParams.emberParams 
+    topology = defaultParams.topology
+    shape = defaultParams.shape
 elif platform == "chamaPSM":
     nicParams = chamaPSMParams.nicParams
     networkParams = chamaPSMParams.networkParams
     hermesParams = chamaPSMParams.hermesParams
     emberParams = chamaPSMParams.emberParams 
+    topology = chamaPSMParams.topology
+    radix = chamaPSMParams.radix
+    loading = chamaPSMParams.loading
 elif platform == "chamaOpenIB":
     nicParams = chamaOpenIBParams.nicParams
     networkParams = chamaOpenIBParams.networkParams
     hermesParams = chamaOpenIBParams.hermesParams
     emberParams = chamaOpenIBParams.emberParams 
+    topology = chamaOpenIBParams.topology
+    radix = chamaOpenIBParams.radix
+    loading = chamaOpenIBParams.loading
 elif platform == "bgq":
     nicParams = bgqParams.nicParams
     networkParams = bgqParams.networkParams
     hermesParams = bgqParams.hermesParams
     emberParams = bgqParams.emberParams 
+    topology = bgqParams.topology
+    shape = bgqParams.shape
 else:
 	sys.exit("Must specify platform configuration")
 

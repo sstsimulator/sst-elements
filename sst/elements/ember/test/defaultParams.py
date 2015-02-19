@@ -1,5 +1,7 @@
 
 debug = 0
+topology="torus"
+shape="4x4x4"
 
 networkParams = {
     "topology" : "merlin." + "torus",
