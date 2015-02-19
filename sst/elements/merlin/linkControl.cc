@@ -87,9 +87,9 @@ LinkControl::configure(std::string port_name, const UnitAlgebra& link_bw_in,
     // Register statistics
     // packet_latency = rif->registerStatistic(new HistogramStatistic<uint32_t, uint32_t>(rif, "packet_latency", 0, 10000, 250));
     if (enable_stats) {   
-        packet_latency = parent->registerStatistic<uint64_t>("packet_latency");
-        send_bit_count = parent->registerStatistic<uint64_t>("send_bit_count");
-        output_port_stalls = parent->registerStatistic<uint64_t>("output_port_stalls");
+        packet_latency = registerStatistic<uint64_t>("packet_latency");
+        send_bit_count = registerStatistic<uint64_t>("send_bit_count");
+        output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
     }
     else {
         Params empty;

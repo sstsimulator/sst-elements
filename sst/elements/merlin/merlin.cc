@@ -130,12 +130,12 @@ static const ElementInfoPort bisection_test_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoStatisticEnable bisection_test_statistics[] = {
-    // This really belongs in LinkControl, but stats in modules don't work yet
-    { "packet_latency", "Histogram of latencies for received packets", 1},
-    { "send_bit_count", "Count number of bits sent on link", 1},
-    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
-};
+// static const ElementInfoStatisticEnable bisection_test_statistics[] = {
+//     // This really belongs in LinkControl, but stats in modules don't work yet
+//     { "packet_latency", "Histogram of latencies for received packets", 1},
+//     { "send_bit_count", "Count number of bits sent on link", 1},
+//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+// };
 
 // test_nic element info
 static Component*
@@ -163,12 +163,12 @@ static const ElementInfoPort test_nic_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoStatisticEnable test_nic_statistics[] = {
-    // This really belongs in LinkControl, but stats in modules don't work yet
-    { "packet_latency", "Histogram of latencies for received packets", 1},
-    { "send_bit_count", "Count number of bits sent on link", 1},
-    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
-};
+// static const ElementInfoStatisticEnable test_nic_statistics[] = {
+//     // This really belongs in LinkControl, but stats in modules don't work yet
+//     { "packet_latency", "Histogram of latencies for received packets", 1},
+//     { "send_bit_count", "Count number of bits sent on link", 1},
+//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+// };
 
 
 
@@ -227,12 +227,12 @@ static const ElementInfoPort traffic_generator_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoStatisticEnable traffic_generator_statistics[] = {
-    // This really belongs in LinkControl, but stats in modules don't work yet
-    { "packet_latency", "Histogram of latencies for received packets", 1},
-    { "send_bit_count", "Count number of bits sent on link", 1},
-    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
-};
+// static const ElementInfoStatisticEnable traffic_generator_statistics[] = {
+//     // This really belongs in LinkControl, but stats in modules don't work yet
+//     { "packet_latency", "Histogram of latencies for received packets", 1},
+//     { "send_bit_count", "Count number of bits sent on link", 1},
+//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+// };
 
 // MODULES
 
@@ -320,6 +320,13 @@ load_linkcontrol(Component* parent, Params& params)
     return new LinkControl(parent, params);
 }
 
+static const ElementInfoStatisticEnable linkcontrol_statistics[] = {
+    // This really belongs in LinkControl, but stats in modules don't work yet
+    { "packet_latency", "Histogram of latencies for received packets", 1},
+    { "send_bit_count", "Count number of bits sent on link", 1},
+    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+};
+
 static const ElementInfoComponent components[] = {
     { "portals_nic",
       "NIC with offloaded Portals4 implementation.",
@@ -350,7 +357,7 @@ static const ElementInfoComponent components[] = {
       bisection_test_params,
       bisection_test_ports,
       COMPONENT_CATEGORY_NETWORK,
-      bisection_test_statistics
+      NULL
     },
     { "test_nic",
       "Simple NIC to test base functionality.",
@@ -359,7 +366,7 @@ static const ElementInfoComponent components[] = {
       test_nic_params,
       test_nic_ports,
       COMPONENT_CATEGORY_NETWORK,
-      test_nic_statistics
+      NULL
     },
     { "trafficgen",
       "Pattern-based traffic generator.",
@@ -368,7 +375,7 @@ static const ElementInfoComponent components[] = {
       traffic_generator_params,
       traffic_generator_ports,
       COMPONENT_CATEGORY_NETWORK,
-      traffic_generator_statistics
+      NULL
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -423,7 +430,7 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       load_linkcontrol,
       NULL,
-      NULL,
+      linkcontrol_statistics,
       "SST::Merlin::LinkControl"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
