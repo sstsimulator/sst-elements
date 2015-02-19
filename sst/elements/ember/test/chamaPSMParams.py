@@ -68,8 +68,6 @@ hermesParams = {
     "hermesParams.ctrlMsg.txFiniModParams.range.0" : "0-:60ns",
     "hermesParams.ctrlMsg.rxFiniMod" : "firefly.LatencyMod",
     "hermesParams.ctrlMsg.rxFiniModParams.range.0" : "0-:120ns",
-    "hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 60,
-    "hermesParams.ctrlMsg.recvReqFiniDelay_ns" : 100,
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 1700,
     "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 8000,
     "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 120,
