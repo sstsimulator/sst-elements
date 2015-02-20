@@ -1,10 +1,7 @@
 
 debug = 0
-topology="torus"
-shape="4x4x4"
 
 networkParams = {
-    "topology" : "merlin." + "torus",
     "packetSize" : "2048B",
     "link_bw" : "4GB/s",
     "flitSize" : "8B",
@@ -15,7 +12,6 @@ nicParams = {
     "debug" : 0,
     "verboseLevel": 1,
     "module" : "merlin.linkcontrol",
-    "topology" : networkParams['topology'], 
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
     "buffer_size" : networkParams['buffer_size'],
@@ -62,7 +58,6 @@ hermesParams = {
 
     "hermesParams.ctrlMsg.txNicDelay_ns" : 0,
     "hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
-    "hermesParams.ctrlMsg.sendReqFiniDelay_ns" : 0,
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
     "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 3000,
     "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 100,
