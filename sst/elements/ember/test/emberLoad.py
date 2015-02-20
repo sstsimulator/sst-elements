@@ -126,34 +126,44 @@ if platform == "default":
     networkParams = defaultParams.networkParams
     hermesParams = defaultParams.hermesParams
     emberParams = defaultParams.emberParams 
-    topology = defaultParams.topology
-    shape = defaultParams.shape
+
 elif platform == "chamaPSM":
     nicParams = chamaPSMParams.nicParams
     networkParams = chamaPSMParams.networkParams
     hermesParams = chamaPSMParams.hermesParams
     emberParams = chamaPSMParams.emberParams 
+
+    if len(topology) or radix or loading:
+	    sys.exit("can't change the network for Chama PSM")
+
     topology = chamaPSMParams.topology
     radix = chamaPSMParams.radix
     loading = chamaPSMParams.loading
+
 elif platform == "chamaOpenIB":
     nicParams = chamaOpenIBParams.nicParams
     networkParams = chamaOpenIBParams.networkParams
     hermesParams = chamaOpenIBParams.hermesParams
     emberParams = chamaOpenIBParams.emberParams 
+
+    if len(topology) or radix or loading:
+	    sys.exit("can't change the network for Chama OpenIB")
+
     topology = chamaOpenIBParams.topology
     radix = chamaOpenIBParams.radix
     loading = chamaOpenIBParams.loading
+
 elif platform == "bgq":
     nicParams = bgqParams.nicParams
     networkParams = bgqParams.networkParams
     hermesParams = bgqParams.hermesParams
     emberParams = bgqParams.emberParams 
+
+    if len(topology) or len(shape):
+	    sys.exit("can't change the network for BG/Q")
+
     topology = bgqParams.topology
     shape = bgqParams.shape
-else:
-	sys.exit("Must specify platform configuration")
-
 
 if "" == topology:
 	sys.exit("What topo? [torus|fattree]")
