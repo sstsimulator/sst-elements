@@ -34,8 +34,7 @@ EXTRA_DIST = \
     tests/test_simpleRNGComponent_marsaglia.py \
     tests/test_simpleStatisticsComponent.py \
     tests/test_simpleTracerComponent_1.py \
-    tests/test_simpleTracerComponent_2.py \
-    support/simpleComponent_makeSDL.pl 
+    tests/test_simpleTracerComponent_2.py
 
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
 
