@@ -294,7 +294,7 @@ static const ElementInfoParam trafficGen_params[] = {
 
 
 static const ElementInfoParam allpingpong_params[] = {
-    	{	"arg.messagesize",		"Sets the message size of the ping pong operation",	"128"},
+    	{	"arg.messageSize",		"Sets the message size of the ping pong operation",	"128"},
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1024"},
 	{	"arg.computetime",		"Sets the time spent computing some values",	 	"1000"},
 	{	NULL,	NULL,	NULL	}

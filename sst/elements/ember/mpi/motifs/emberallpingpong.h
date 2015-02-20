@@ -29,6 +29,8 @@ private:
 	uint32_t m_iterations;
 	uint32_t m_messageSize;
 	uint32_t m_computeTime;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
 
     MessageResponse m_resp;
     void*    m_sendBuf;
