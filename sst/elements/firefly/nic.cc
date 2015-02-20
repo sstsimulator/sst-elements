@@ -48,17 +48,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
     m_txDelay =      params.find_integer( "txDelay_ns", 50 );
 
-    std::string topo  = params.find_string( "topology", "" );
-
-    if ( 0 == topo.compare("merlin.fattree") ) {
-    	m_dbg.verbose(CALL_INFO,1,0,"Fattree\n");
-
-    } else if ( 0 == topo.compare("merlin.torus") ) {
-    	m_dbg.verbose(CALL_INFO,1,0,"Torus\n");
-    } else {
-		assert(0);
-	}
-
     UnitAlgebra xxx( params.find_string( "packetSize" ) );
     if ( xxx.hasUnits( "B" ) ) {
         m_packetSizeInBytes = xxx.getRoundedValue(); 
