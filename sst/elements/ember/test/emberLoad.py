@@ -57,7 +57,7 @@ if 1 == len(sys.argv) :
 
     topology = "torus"
     shape    = "4x4x4"
-    platform = "chamaPSM"
+    platform = "default"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
