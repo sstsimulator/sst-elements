@@ -38,6 +38,7 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     ++m_seq;
     m_count = 1;
     m_state = PostRecv;
+    m_delay = true;
     m_size = m_info->getGroup( m_event->group )->getSize();
     m_rank = m_info->getGroup( m_event->group )->getMyRank();
 
@@ -46,8 +47,8 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     if ( recv && send ) {
         memcpy( recv, send, recvChunkSize(m_rank));
     }
-
-    handleEnterEvent( retval );
+    
+    retval.setDelay( recvChunkSize(m_rank)*300  );
 }
 
 void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
@@ -63,31 +64,53 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
             m_event = NULL;
             break;
         }
+        if ( m_delay ) {
+            retval.setDelay(m_irecvDelay);
+            m_delay = false;
+            break;
+        } else {
+            rank = mod((long) m_rank - m_count, m_size);
 
-        rank = mod((long) m_rank - m_count, m_size);
+            m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
+                                                        m_count, rank );
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d irecv src=%d\n", m_count, rank );
-
-        proto()->irecv( recvChunkPtr(rank), recvChunkSize(rank), 
+            proto()->irecv( recvChunkPtr(rank), recvChunkSize(rank), 
                         rank, m_event->group, genTag(), &m_recvReq ); 
-        m_state = Send;
+            m_state = Send;
+            m_delay = true;
+        }
         break;
 
       case Send:
-        rank = mod((long) m_rank + m_count, m_size);
+        if ( m_delay ) {
+            retval.setDelay(m_sendDelay);
+            m_delay = false;
+            break;
+        } else {
+            rank = mod((long) m_rank + m_count, m_size);
 
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", m_count, rank );
+            m_dbg.verbose(CALL_INFO,1,0,"count=%d send dest=%d\n", 
+                                                        m_count, rank );
 
-        proto()->send( sendChunkPtr(rank), sendChunkSize(rank), 
+            proto()->send( sendChunkPtr(rank), sendChunkSize(rank), 
                                             rank, m_event->group, genTag() ); 
-        m_state = WaitRecv;
+            m_state = WaitRecv;
+            m_delay = true;
+        }
         break;
 
       case WaitRecv:
-        m_dbg.verbose(CALL_INFO,1,0,"count=%d wait\n", m_count );
-        proto()->wait( &m_recvReq );
-        ++m_count;
-        m_state = PostRecv;
+        if ( m_delay ) {
+            retval.setDelay(m_waitDelay);
+            m_delay = false;
+            break;
+        } else {
+            m_dbg.verbose(CALL_INFO,1,0,"count=%d wait\n", m_count );
+            proto()->wait( &m_recvReq );
+            ++m_count;
+            m_state = PostRecv;
+            m_delay = true;
+        }
         break;
     }
 }
