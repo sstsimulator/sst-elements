@@ -24,9 +24,12 @@ libSysC_la_SOURCES = SysC.cc \
 	TLM/TLMsimplemem.h \
 	TLM/TLMsimplemem.cc 
 
-libSysC_la_LDFLAGS = -module -avoid-version -lm\
+libSysC_la_LDFLAGS = -module -avoid-version -lm \
 	$(SST_SYSTEMC_LDFLAGS) \
         $(SST_SYSTEMC_LIBS)
+
+libSysC_la_LIBADD = \
+	$(SST_SYSTEMC_LIB)
 
 #noinst_PROGRAMS = tests/SysCGeneratorAnouncerTest
 
