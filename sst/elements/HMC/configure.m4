@@ -2,17 +2,17 @@
 AC_DEFUN([SST_HMC_CONFIG], [
   sst_micron_hmcsim_happy="yes"
 
-  SST_CHECK_SYSTEMC([sst_micron_hmcsim_found_systemc_happy="yes"],
-	[sst_micron_hmcsim_found_systemc_happy="no"])
-
-  AS_IF([test "x$sst_micron_hmcsim_found_systemc_happy" = "xno"],
-	[AC_MSG_ERROR([SystemC header files count not be found for Micron HMCSim], [1])])
-
   AC_ARG_WITH([micron-hmcsim],
     [AS_HELP_STRING([--with-micron-hmcsim@<:@=DIR@:>@],
     [Use Micron's HMC Sim package installed in optionally specified DIR])])
 
+  SST_CHECK_SYSTEMC([sst_micron_hmcsim_found_systemc_happy="yes"],
+	[sst_micron_hmcsim_found_systemc_happy="no"])
+
   AS_IF([test "$with_micron_hmcsim" = "no"], [sst_micron_hmcsim_happy="no"])
+
+  AS_IF([test "x$with_micron_hmcsim" != "xno" -a "x$sst_micron_hmcsim_found_systemc_happy" = "xno"],
+	[AC_MSG_ERROR([SystemC header files count not be found for Micron HMCSim], [1])])
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
