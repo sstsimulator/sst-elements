@@ -36,16 +36,16 @@ class FunctionSMInterface : public Module {
             m_type = Exit;
             m_value = value;
         }
-        void setDelay( int value ) {
+        void setDelay( uint64_t value ) {
             m_type = Delay;
             m_value = value;
         }
         bool isExit() { return ( Exit == m_type); }
         bool isDelay() { return ( Delay == m_type); }
-        int value() { return m_value; }
+        uint64_t value() { return m_value; }
       private:
         enum { None, Delay, Exit } m_type;  
-        int m_value;
+        uint64_t m_value;
     };
 
     FunctionSMInterface( SST::Params& params ) :
