@@ -264,6 +264,10 @@ load_hermesCommDestroySM(Params& params)
 static const ElementInfoParam funcSMModule_params[] = {
     {"enterLatency", "Sets the time to enter a function", "30"},
     {"returnLatency", "Sets the time to leave a function", "30"},
+    {"irecvDelay", "Sets irecv delay", "0"},
+    {"sendDelay", "Sets send delay", "0"},
+    {"waitDelay", "Sets wait delay", "0"},
+    {"irecvDelay", "Sets irecv delay", "0"},
     {"debug", "Set the debug level", "0"},
     {"verbose", "Set the verbose level", "1"},
 	
@@ -285,6 +289,8 @@ static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
     {"matchDelay_ns","Sets the time to do a match", "100"},
     {"txSetupMod","Set the module used to calculate TX setup latency", ""},
     {"rxSetupMod","Set the module used to calculate RX setup latency", ""},
+    {"txFiniMod","Set the module used to calculate TX fini latency", ""},
+    {"rxFiniMod","Set the module used to calculate RX fini latency", ""},
     {"rxNicDelay_ns","", "0"},
     {"txNicDelay_ns","", "0"},
     {"sendReqFiniDelay_ns","", "0"},
