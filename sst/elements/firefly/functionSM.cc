@@ -210,11 +210,11 @@ void FunctionSM::handleEnterEvent( SST::Event* e )
 void FunctionSM::processRetval(  Retval& retval )
 {
     if ( retval.isExit() ) {
-        m_dbg.verbose(CALL_INFO,3,0,"Exit %d\n", retval.value() );
+        m_dbg.verbose(CALL_INFO,3,0,"Exit %lu\n", retval.value() );
         DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
         m_toDriverLink->send( m_sm->returnLatency(), x ); 
     } else if ( retval.isDelay() ) {
-        m_dbg.verbose(CALL_INFO,3,0,"Delay %d\n", retval.value() );
+        m_dbg.verbose(CALL_INFO,3,0,"Delay %lu\n", retval.value() );
         m_toMeLink->send( retval.value(), NULL ); 
     } else {
     }
