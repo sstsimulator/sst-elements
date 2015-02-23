@@ -32,6 +32,9 @@ template< class T >
 class WaitAnyState;
 
 template< class T >
+class WaitAllState;
+
+template< class T >
 class ProcessQueuesState;
 
 template< class T1, class T2 >
@@ -85,6 +88,7 @@ class XXX  {
         MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
 
     void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
+    void waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
 
     void send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
@@ -124,6 +128,8 @@ class XXX  {
     LatencyMod* m_rxMemcpyMod;
     LatencyMod* m_txSetupMod;
     LatencyMod* m_rxSetupMod;
+    LatencyMod* m_txFiniMod;
+    LatencyMod* m_rxFiniMod;
 
     int txMemcpyDelay( int bytes ) {
         return m_txMemcpyMod->getLatency( bytes );
@@ -165,12 +171,12 @@ class XXX  {
         return m_rxNicDelay;
     }
 
-    int sendReqFiniDelay() {
-        return m_sendReqFiniDelay;
+    int sendReqFiniDelay( int bytes ) {
+        return m_txFiniMod->getLatency( bytes );
     }
 
-    int recvReqFiniDelay() {
-        return m_recvReqFiniDelay;
+    int recvReqFiniDelay( int bytes ) {
+        return m_rxFiniMod->getLatency( bytes );
     }
 
     int sendAckDelay() {
@@ -183,8 +189,6 @@ class XXX  {
     int m_regRegionBaseDelay_ns;
     int m_regRegionPerPageDelay_ns;
     int m_regRegionXoverLength;
-    int m_sendReqFiniDelay;
-    int m_recvReqFiniDelay;
     int m_sendAckDelay;
 
   private:
@@ -229,6 +233,7 @@ class XXX  {
     SendState<XXX>*         m_sendState;
     RecvState<XXX>*         m_recvState;
     WaitAnyState<XXX>*      m_waitAnyState;
+    WaitAllState<XXX>*      m_waitAllState;
     Output::output_location_t   m_dbg_loc;
     int                         m_dbg_level;
     size_t                  m_shortMsgLength;
@@ -420,9 +425,9 @@ class WaitReq {
         MP::MessageResponse* tmp = (MP::MessageResponse*)resp;
         for ( int i = 0; i < count; i++ ) {
 			if ( resp ) {
-            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), &tmp[i] ) );
+                reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), &tmp[i] ) );
 			} else {
-            reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]) ) );
+                reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]) ) );
 			}
         }
     }

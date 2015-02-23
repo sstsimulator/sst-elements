@@ -20,6 +20,7 @@
 #include "ctrlMsgSendState.h"
 #include "ctrlMsgRecvState.h"
 #include "ctrlMsgWaitAnyState.h"
+#include "ctrlMsgWaitAllState.h"
 #include "ctrlMsgProcessQueuesState.h"
 #include "info.h"
 #include "loopBack.h"
@@ -34,6 +35,7 @@ XXX::XXX( Component* owner, Params& params ) :
     m_sendState( NULL ),
     m_recvState( NULL ),
     m_waitAnyState( NULL ),
+    m_waitAllState( NULL ),
     m_processQueuesState( NULL )
 {
     m_dbg_level = params.find_integer("verboseLevel",0);
@@ -82,8 +84,18 @@ XXX::XXX( Component* owner, Params& params ) :
     
     m_shortMsgLength = params.find_integer( "shortMsgLength", 4096 );
 
-    m_sendReqFiniDelay = params.find_integer( "sendReqFiniDelay_ns", 0 );
-    m_recvReqFiniDelay = params.find_integer( "recvReqFiniDelay_ns", 0 );
+    tmpName = params.find_string("txFiniMod","firefly.LatencyMod");
+    tmpParams = params.find_prefix_params("txFiniModParams.");
+    m_txFiniMod = dynamic_cast<LatencyMod*>( 
+            owner->loadModule( tmpName, tmpParams ) );  
+    assert( m_txFiniMod );
+    
+    tmpName = params.find_string("rxFiniMod","firefly.LatencyMod");
+    tmpParams = params.find_prefix_params("rxFiniModParams.");
+    m_rxFiniMod = dynamic_cast<LatencyMod*>( 
+            owner->loadModule( tmpName, tmpParams ) );  
+    assert( m_rxFiniMod );
+    
     m_sendAckDelay = params.find_integer( "sendAckDelay_ns", 0 );
 
     m_loopLink = owner->configureLink(
@@ -97,6 +109,7 @@ XXX::~XXX()
 	if ( m_sendState ) delete m_sendState;
 	if ( m_recvState ) delete m_recvState;
 	if ( m_waitAnyState) delete m_waitAnyState;
+	if ( m_waitAllState) delete m_waitAllState;
 	if ( m_processQueuesState) delete m_processQueuesState;
 
     delete m_txMemcpyMod;
@@ -142,6 +155,7 @@ void XXX::setup()
     m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_loc, *this );
+    m_waitAllState = new WaitAllState<XXX>( m_dbg_level, m_dbg_loc, *this );
     m_processQueuesState = new ProcessQueuesState<XXX>(
                         m_dbg_level, m_dbg_loc, *this );
 
@@ -227,6 +241,12 @@ void XXX::waitAny( std::vector<CommReq*>& reqs,
                                 FunctorBase_1<CommReq*,bool>* functor )
 {
     m_waitAnyState->enter( reqs, functor );
+}
+
+void XXX::waitAll( std::vector<CommReq*>& reqs,
+                                FunctorBase_1<CommReq*,bool>* functor )
+{
+    m_waitAllState->enter( reqs, functor );
 }
 
 void XXX::send(MP::Addr buf, uint32_t count,

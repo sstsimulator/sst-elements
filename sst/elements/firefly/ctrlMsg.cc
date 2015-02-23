@@ -148,6 +148,11 @@ void API::waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* fu
     m_xxx->waitAny( reqs, functor );
 }
 
+void API::waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* functor )
+{
+    m_xxx->waitAll( reqs, functor );
+}
+
 void API::send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, FunctorBase_0<bool>* func )
