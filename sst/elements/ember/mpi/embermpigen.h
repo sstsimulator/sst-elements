@@ -97,8 +97,9 @@ const uint32_t EMBER_SPYPLOT_SEND_BYTES = 2;
 
 class EmberMessagePassingGeneratorData : public EmberGeneratorData {
 public:
-	EmberMessagePassingGeneratorData() : size(0), rank(-1) {}
+	EmberMessagePassingGeneratorData() : size(0), jobId(-1), rank(-1) {}
     int                 size;
+    int                 jobId;
     uint32_t            rank;
 };
 
@@ -218,6 +219,7 @@ protected:
 
     void setOutputPrefix() {
 	char* prefix = (char*) malloc(sizeof(char) * 128);
+    
 	sprintf(prefix, "@t:%" PRIu32 ":%" PRIu32 ":EmberEngine:MPI:%s:@p:@l: ",
 		m_data->jobId, m_data->rank, m_name.c_str());
 
