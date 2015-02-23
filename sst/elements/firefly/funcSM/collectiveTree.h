@@ -147,7 +147,9 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
 
     CollectiveStartEvent*   m_event;
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
+    std::vector<CtrlMsg::CommReq*>  m_recvReqV_ptrs;
     std::vector<CtrlMsg::CommReq>  m_sendReqV;
+    std::vector<CtrlMsg::CommReq*>  m_sendReqV_ptrs;
     std::vector<void*>  m_bufV;
     size_t              m_bufLen;
     YYY*                m_yyy;

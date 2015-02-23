@@ -29,7 +29,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     ++m_seq;
 
-    m_yyy = new YYY( 8, m_info->getGroup(m_event->group)->getMyRank(),
+    m_yyy = new YYY( 2, m_info->getGroup(m_event->group)->getMyRank(),
                 m_info->getGroup(m_event->group)->getSize(), m_event->root ); 
 
     m_dbg.verbose(CALL_INFO,1,0,"%s group %d, root %d, size %d, rank %d\n",
@@ -42,8 +42,18 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"child[%d]=%d\n",i,m_yyy->calcChild(i));
     }
 
-    m_recvReqV.resize( m_yyy->numChildren() + 1);
-    m_sendReqV.resize( m_yyy->numChildren() + 1);
+    m_recvReqV.resize( m_yyy->numChildren() );
+    m_recvReqV_ptrs.resize( m_recvReqV.size() );
+    for ( unsigned i = 0; i < m_recvReqV.size(); i++ ) {
+        m_recvReqV_ptrs[i] = &m_recvReqV[i];
+    }
+
+    m_sendReqV.resize( m_yyy->numChildren() );
+    m_sendReqV_ptrs.resize( m_sendReqV.size() );
+    for ( unsigned i = 0; i < m_sendReqV.size(); i++ ) {
+        m_sendReqV_ptrs[i] = &m_sendReqV[i];
+    }
+
     m_bufV.resize( m_yyy->numChildren() + 1);
 
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
@@ -89,19 +99,12 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 m_dbg.verbose(CALL_INFO,1,0,"post irecv for child %d\n", child );
                 proto()->irecv( m_bufV[ child + 1 ], m_bufLen,
                         m_yyy->calcChild( child ), 
-                        genTag(), &m_recvReqV[ child + 1 ] );
+                        genTag(), &m_recvReqV[ child ] );
                 return;
 
               case WaitUpState::Waiting:
-                child = m_waitUpState.count;
-                ++m_waitUpState.count;
-
-                if ( m_waitUpState.count == m_yyy->numChildren() ) {
-                    m_waitUpState.state = WaitUpState::DoOp; 
-                }
-
-                m_dbg.verbose(CALL_INFO,1,0,"wait for child %d\n", child );
-                proto()->wait( &m_recvReqV[ child + 1 ] ); 
+                m_waitUpState.state = WaitUpState::DoOp; 
+                proto()->waitAll( m_recvReqV_ptrs ); 
                 return;
 
               case WaitUpState::DoOp:
@@ -150,25 +153,18 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 if ( m_sendDownState.count == m_yyy->numChildren() ) {
                     m_sendDownState.count = 0;
                     m_sendDownState.state = SendDownState::Waiting;
+				m_state = Exit;
                 }
 
                 m_dbg.verbose(CALL_INFO,1,0,"isend to child %d\n", child );
                 proto()->isend( m_event->result, m_bufLen,
                         m_yyy->calcChild( child ), 
-                        genTag(), &m_sendReqV[ child + 1 ] );
+                        genTag(), &m_sendReqV[ child ] );
 			
 				return;
 			  case SendDownState::Waiting:
-                child = m_sendDownState.count;
-                ++m_sendDownState.count;
-
-                if ( m_sendDownState.count == m_yyy->numChildren() ) {
-					m_state = Exit;
-                    m_waitUpState.state = WaitUpState::DoOp; 
-                }
-
-                m_dbg.verbose(CALL_INFO,1,0,"wait for child %d\n", child );
-                proto()->wait( &m_sendReqV[ child + 1 ] ); 
+				m_state = Exit;
+                proto()->waitAll( m_sendReqV_ptrs ); 
 				return;
 			}
         }
