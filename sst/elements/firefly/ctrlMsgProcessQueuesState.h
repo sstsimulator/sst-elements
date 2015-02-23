@@ -514,7 +514,7 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
         dbg().verbose(CALL_INFO,1,0,"Short %lu bytes dest %#x\n",length,nid); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
-        req->setDone(obj().sendReqFiniDelay());
+        req->setDone(obj().sendReqFiniDelay( length ));
 
     } else {
         dbg().verbose(CALL_INFO,1,0,"sending long message %lu bytes\n",length); 
@@ -782,7 +782,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         } else if ( length <= obj().shortMsgLength() ) { 
 		    dbg().verbose(CALL_INFO,1,0,"short\n");
-            req->setDone(obj().recvReqFiniDelay());
+            req->setDone(obj().recvReqFiniDelay( length ));
         } else {
 
             dbg().verbose(CALL_INFO,1,0,"long\n");
@@ -989,7 +989,7 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
     
     delete stack.back();
     stack.pop_back();
-    int delay = obj().recvReqFiniDelay();
+    int delay = obj().recvReqFiniDelay( req->getLength() );
 
     // time to unregister memory
     delay += obj().regRegionDelay( req->getLength() );
@@ -1022,7 +1022,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::processLongAck( GetInfo* info )
 {
     dbg().verbose(CALL_INFO,1,0,"acked\n");
-    int delay =  obj().sendReqFiniDelay();
+    int delay =  obj().sendReqFiniDelay( info->req->getLength() );
 #if 0 
     // time to unregister memory
     if ( info->req->getLength() > obj().shortMsgLength() ) { 
