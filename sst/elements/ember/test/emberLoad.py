@@ -16,6 +16,7 @@ from networkConfig import *
 
 import random 
 
+jobid = 0
 loadFile = ""
 workList = []
 numCores = 1
@@ -117,7 +118,8 @@ for o, a in opts:
     else:
         assert False, "unhandle option" 
 
-workList.append( workFlow )
+workList.append( [jobid, workFlow] )
+jobid += 1
 
 print "platform: {0}".format( platform)
 
@@ -215,14 +217,17 @@ if rndmPlacement:
 		if nids:
 			nidList +=","
     
-	for x in workList[0]:
+	tmp = workList[0]
+	tmp = tmp[1]
+
+	for x in tmp:
 		x['cmd'] = "-nidList=" + nidList + " " + x['cmd']
 
 	random.shuffle( emptyNids )
 
 XXX = []
 
-if bgPercentage > 0:
+if rndmPlacement and bgPercentage > 0:
     if bgPercentage > 100:
         sys.exit( "fatal: bgPercentage " + str(bgPercentage) );
     count = 0 
@@ -240,15 +245,17 @@ if bgPercentage > 0:
         workFlow.append( motif )
 
         motif = dict.copy(motifDefaults)
+        x,y = divmod( count , 60 )
         motif['cmd'] = nidList + " TrafficGen mean="+str(bgMean)+ " stddev=" + \
-                    str(bgStddev) + " messageSize="+str(bgMsgSize)
+                    str(bgStddev) + " messageSize="+str(bgMsgSize) + " startDelay=" + str( y * 500 )
         workFlow.append( motif )
 
         motif = dict.copy(motifDefaults)
         motif['cmd'] = nidList + " Fini"
         workFlow.append( motif )
 
-        workList.append( workFlow )
+        workList.append( [ jobid, workFlow ] )
+        jobid += 1
         count += 1
 
 nicParams['debug'] = debug
