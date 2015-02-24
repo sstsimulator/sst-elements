@@ -122,8 +122,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /*Parameter not needed since cache entries are always stored at address 0.
       Entries always kept in the cache, but memory is accessed to get performance metrics. */
 
-    lookupBaseAddr      = cacheLineSize;  /* Use to offset into main memory from where DirEntries are stored */
-    
     // Clear statistics counters
     numReqsProcessed    = 0;
     totalReqProcessTime = 0;
@@ -810,7 +808,7 @@ uint32_t DirectoryController::node_name_to_id(const std::string &name){
 
 
 void DirectoryController::requestDirEntryFromMemory(DirEntry *entry){
-    Addr entryAddr       = 0; /*  Offset into our buffer? */
+    Addr entryAddr       = 0; /* Dummy addr reused for dir cache misses */
     MemEvent *me         = new MemEvent(this, entryAddr, entryAddr, GetS, cacheLineSize);
     me->setSize(entrySize);
     memReqs[me->getID()] = entry->baseAddr;
@@ -903,7 +901,7 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry){
 
 void DirectoryController::sendEntryToMemory(DirEntry *entry){
     Addr entryAddr = 0; // Always use local address 0 for directory entries
-    MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, PutM, cacheLineSize);
+    MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, PutE, cacheLineSize); // MemController discards PutE's without writeback so this is safe
     me->setSize(entrySize);
     profileRequestSent(me);
     if (directMemoryLink) {
@@ -991,10 +989,10 @@ Addr DirectoryController::convertAddressFromLocalAddress(Addr addr){
     assert(interleaveStep <= interleaveSize); // one-to-one mapping required for this method
     Addr res = 0;
     if(0 == interleaveSize){
-        res = addr + addrRangeStart - lookupBaseAddr;
+        res = addr + addrRangeStart;
     }
     else {
-        Addr a 	    = addr - lookupBaseAddr;
+        Addr a 	    = addr;
         Addr step   = a / interleaveSize; 
         Addr offset = a % interleaveSize;
         res = (step * interleaveStep) + offset;
@@ -1008,13 +1006,13 @@ Addr DirectoryController::convertAddressFromLocalAddress(Addr addr){
 Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
     Addr res = 0;
     if(0 == interleaveSize){
-        res = lookupBaseAddr + addr - addrRangeStart;
+        res = addr - addrRangeStart;
     }
     else {
         Addr a      = addr - addrRangeStart;
         Addr step   = a / interleaveStep;
         Addr offset = a % interleaveStep;
-        res         = lookupBaseAddr +(step * interleaveSize) + offset;
+        res         = (step * interleaveSize) + offset;
     }
     dbg.debug(_L10_, "Converted physical address 0x%" PRIx64 " to ACTUAL memory address 0x%" PRIx64 "\n", addr, res);
     return res;

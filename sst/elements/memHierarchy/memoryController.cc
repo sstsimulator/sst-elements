@@ -168,23 +168,29 @@ void MemController::handleEvent(SST::Event* _event){
     Command cmd = ev->getCmd();
 
     // Notify our listeners that we have received an event
+    switch (cmd) {
+        case GetS:
+        case GetX:
+        case GetSEx:
+        case PutM:
+            // Notify listeners that we have equiv. of a read
+	    for(unsigned long int i = 0; i < listeners_.size(); ++i) {
+	        listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
+	    }
 
-    if(cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == PutM) {
-        // Notify listeners that we have equiv. of a read
-	const int listenerCount = listeners_.size();
-	for(int i = 0; i < listenerCount; ++i) {
-	    listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
-	}
+            if(cmd == GetS)         GetSReqReceived_++;
+            else if(cmd == GetX)    GetXReqReceived_++;
+            else if(cmd == GetSEx)  GetSExReqReceived_++;
+            else if(cmd == PutM)    PutMReqReceived_++;
 
-        if(cmd == GetS)         GetSReqReceived_++;
-        else if(cmd == GetX)    GetXReqReceived_++;
-        else if(cmd == GetSEx)  GetSExReqReceived_++;
-        else if(cmd == PutM)    PutMReqReceived_++;
-
-        addRequest(ev);
+            addRequest(ev);
+            break;
+        case PutS:
+        case PutE:
+            break;
+        default:
+            dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
     }
-    else if(cmd == PutS || cmd == PutE) return;
-    else dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
 
     delete _event;
 }

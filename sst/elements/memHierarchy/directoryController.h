@@ -53,7 +53,6 @@ class DirectoryController : public Component {
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    uint64_t    lookupBaseAddr;
     Addr        addrRangeStart;
     Addr        addrRangeEnd;
     Addr        interleaveSize;
