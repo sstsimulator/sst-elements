@@ -31,6 +31,7 @@
 #include "mpi/motifs/embersweep3d.h"
 #include "mpi/motifs/embernaslu.h"
 #include "mpi/motifs/emberpingpong.h"
+#include "mpi/motifs/emberbipingpong.h"
 #include "mpi/motifs/emberTrafficGen.h"
 #include "mpi/motifs/emberring.h"
 #include "mpi/motifs/emberinit.h"
@@ -65,6 +66,11 @@ create_EmberComponent(SST::ComponentId_t id,
 static Module*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
+}
+
+static Module*
+load_BiPingPong( Component* comp, Params& params ) {
+	return new EmberBiPingpongGenerator(comp, params);
 }
 
 static Module*
@@ -266,6 +272,12 @@ static const ElementInfoParam pingpong_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam bipingpong_params[] = {
+    	{	"arg.messageSize",		"Sets the message size of the operation",	"1024"},
+	{	"arg.iterations",		"Sets the number of operations to perform", 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
 static const ElementInfoParam amr3d_params[] = {
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
 	{	"arg.blockfile",		"File containing the 3D AMR blocks (from MiniAMR)", 	"blocks.amr"},
@@ -289,6 +301,7 @@ static const ElementInfoParam trafficGen_params[] = {
 	{ "arg.messageSize",	"Sets the size of exchange", 	"1"},
 	{ "arg.mean",	"Sets the mean time between exchange", 	"1"},
 	{ "arg.stddev",	"Sets the stddev of time between exchange", 	"1"},
+	{ "arg.startDelay",	"Sets the stddev of time between exchange", 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -506,6 +519,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_PingPong,
 	pingpong_params,
+    	"SST::Ember::EmberGenerator"
+    },
+    { 	"BiPingPongMotif",
+	"Performs a InOut Motif",
+	NULL,
+	NULL,
+	load_BiPingPong,
+	bipingpong_params,
     	"SST::Ember::EmberGenerator"
     },
     {

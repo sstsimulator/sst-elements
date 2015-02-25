@@ -135,10 +135,16 @@ protected:
 	int32_t convertPositionToRank( int32_t peX, int32_t peY, int32_t peZ, 
     	int32_t posX, int32_t posY, int32_t posZ);	
 
+	int jobId() { 
+		assert(m_data); 
+		return m_data->jobId;
+	}
+
 	int rank() { 
 		assert(m_data); 
 		return m_data->rank;
 	}
+
 	int size() { 
 		assert(m_data); 
 		return m_data->size;
