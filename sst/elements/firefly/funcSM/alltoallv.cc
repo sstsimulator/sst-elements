@@ -48,7 +48,7 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         memcpy( recv, send, recvChunkSize(m_rank));
     }
     
-    retval.setDelay( recvChunkSize(m_rank)*300  );
+    retval.setDelay( 0 );
 }
 
 void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
