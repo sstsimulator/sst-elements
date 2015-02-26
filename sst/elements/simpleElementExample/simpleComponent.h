@@ -88,7 +88,7 @@ private:
     ar & BOOST_SERIALIZATION_NVP(S);
     ar & BOOST_SERIALIZATION_NVP(E);
     ar & BOOST_SERIALIZATION_NVP(W);
-    //resture links
+    //restore links
     N->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
     S->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
     E->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));

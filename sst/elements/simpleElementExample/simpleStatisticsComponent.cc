@@ -93,7 +93,7 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     
     // Try to Register Illegal Statistic Objects
     printf("STATISTIC TESTING: TRYING TO REGISTER A DUPLICATE STAT NAME - SHOULD RETURN A NULLSTATISTIC\n");
-    accumU32_NOTUSED = registerStatistic<uint32_t>("accum_U32", "1");   // This stat should not be registered because it has a duplicated name
+    accumU32_NOTUSED = registerStatistic<uint32_t>("accum_U32", "5");   // This stat should not be registered because it has a duplicated name
 
     // Create the OneShot Callback Handlers
     callback1Handler = new OneShot::Handler<simpleStatisticsComponent, uint32_t>(this, &simpleStatisticsComponent::Oneshot1Callback, 1);
@@ -119,21 +119,29 @@ bool simpleStatisticsComponent::Clock1Tick(Cycle_t CycleNum)
     rng->nextUniform();
     uint32_t U32 = rng->generateNextUInt32();
     uint64_t U64 = rng->generateNextUInt64();
-    int32_t I32 = rng->generateNextInt32();
-    int64_t I64 = rng->generateNextInt64();
+    int32_t  I32 = rng->generateNextInt32();
+    int64_t  I64 = rng->generateNextInt64();
     rng_count++;
     
-//    std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
-//    nU << ", " << U32 << ", " << U64 << ", " << I32 <<
-//    ", " << I64 << std::endl;
+    // Scale the data 
+    uint32_t scaled_U32 = U32 / 10000000;
+    uint64_t scaled_U64 = U64 / 1000000000000000;
+    int32_t  scaled_I32 = I32 / 10000000;
+    int64_t  scaled_I64 = I64 / 1000000000000000;
+
+//    std::cout << "Raw Random: " << rng_count << " of " << rng_max_count << ": " <<
+//    rng << ", U32 = " << U32 << ", U64 = " << U64 << ", I32 = " << I32 << ", I64 = " << I64 << std::endl;
+
+//    std::cout << "Scaled Random: " << rng_count << " of " << rng_max_count << ": " <<
+//    rng << ", U32 = " << scaled_U32 << ", U64 = " << scaled_U64 << ", I32 = " << scaled_I32 << ", I64 = " << scaled_I64 << std::endl;
     
     // Save the Histogram Data
-    histoU32->addData(U32);
-    histoU64->addData(U64);
-    histoI32->addData(I32);
-    histoI64->addData(I64);
-    accumU32->addData(U32);
-    accumU64->addData(U64);
+    histoU32->addData(scaled_U32);
+    histoU64->addData(scaled_U64);
+    histoI32->addData(scaled_I32);
+    histoI64->addData(scaled_I64);
+    accumU32->addData(scaled_U32);
+    accumU64->addData(scaled_U64);
     
     
 ////////////////////////////////////////////////////////    

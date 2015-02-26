@@ -93,37 +93,37 @@ StatExample0.addParams({
 StatExample0.enableStatistics([
       "histo_U32"], {
       "type":"sst.HistogramStatistic",
-      "minvalue" : "0", 
-      "maxvalue" : "500000000", 
-      "binwidth" : "500000000", 
-      "IncludeOutOfBounds" : "0", 
+      "minvalue" : "10", 
+      "binwidth" : "10", 
+      "numbins"  : "41", 
+      "IncludeOutOfBounds" : "1", 
       "rate":"5 ns"})
 
 StatExample0.enableStatistics([
       "histo_U64"], {
       "type":"sst.HistogramStatistic",
-      "minvalue" : "0", 
-      "maxvalue" : "500000000", 
-      "binwidth" : "500000000", 
-      "IncludeOutOfBounds" : "0", 
+      "minvalue" : "1000", 
+      "binwidth" : "1000", 
+      "numbins"  : "17", 
+      "IncludeOutOfBounds" : "1", 
       "rate":"10 ns"})
             
 StatExample0.enableStatistics([
       "histo_I32"], {
       "type":"sst.HistogramStatistic",
-      "minvalue" : "0", 
-      "maxvalue" : "500000000", 
-      "binwidth" : "500000000", 
-      "IncludeOutOfBounds" : "0", 
+      "minvalue" : "-200", 
+      "binwidth" : "50", 
+      "numbins"  : "8", 
+      "IncludeOutOfBounds" : "1", 
       "rate":"25 events"})
 
 StatExample0.enableStatistics([
       "histo_I64"], {
       "type":"sst.HistogramStatistic",
-      "minvalue" : "0", 
-      "maxvalue" : "500000000", 
-      "binwidth" : "500000000", 
-      "IncludeOutOfBounds" : "0", 
+      "minvalue" : "-9000", 
+      "binwidth" : "1000", 
+      "numbins"  : "18", 
+      "IncludeOutOfBounds" : "1", 
       "rate":"50 ns"})
 
 StatExample0.enableStatistics([
@@ -193,37 +193,37 @@ StatExample0.enableStatistics([
 #### StatExample1.enableStatistics([
 ####       "histo_U32"], {
 ####       "type":"sst.HistogramStatistic",
-####       "minvalue" : "0", 
-####       "maxvalue" : "500000000", 
-####       "binwidth" : "500000000", 
-####       "IncludeOutOfBounds" : "0", 
+####       "minvalue" : "10", 
+####       "binwidth" : "10", 
+####       "numbins"  : "41", 
+####       "IncludeOutOfBounds" : "1", 
 ####       "rate":"5 ns"})
 #### 
 #### StatExample1.enableStatistics([
 ####       "histo_U64"], {
 ####       "type":"sst.HistogramStatistic",
-####       "minvalue" : "0", 
-####       "maxvalue" : "500000000", 
-####       "binwidth" : "500000000", 
-####       "IncludeOutOfBounds" : "0", 
+####       "minvalue" : "1000", 
+####       "binwidth" : "1000", 
+####       "numbins"  : "17", 
+####       "IncludeOutOfBounds" : "1", 
 ####       "rate":"10 ns"})
 ####             
 #### StatExample1.enableStatistics([
 ####       "histo_I32"], {
 ####       "type":"sst.HistogramStatistic",
-####       "minvalue" : "0", 
-####       "maxvalue" : "500000000", 
-####       "binwidth" : "500000000", 
-####       "IncludeOutOfBounds" : "0", 
+####       "minvalue" : "-200", 
+####       "binwidth" : "50", 
+####       "numbins"  : "8", 
+####       "IncludeOutOfBounds" : "1", 
 ####       "rate":"25 events"})
 #### 
 #### StatExample1.enableStatistics([
 ####       "histo_I64"], {
 ####       "type":"sst.HistogramStatistic",
-####       "minvalue" : "0", 
-####       "maxvalue" : "500000000", 
-####       "binwidth" : "500000000", 
-####       "IncludeOutOfBounds" : "0", 
+####       "minvalue" : "-9000", 
+####       "binwidth" : "1000", 
+####       "numbins"  : "18", 
+####       "IncludeOutOfBounds" : "1", 
 ####       "rate":"50 ns"})
 #### 
 #### StatExample1.enableStatistics([
@@ -283,24 +283,24 @@ StatExample0.enableStatistics([
 #### # Enable Single Statistic for Components defined by Name
 #### sst.enableStatisticForComponentName("simpleStatisticsTest0", "histo_U32", 
 ####                                    {"type":"sst.HistogramStatistic",
-####                                     "minvalue" : "0", 
-####                                     "maxvalue" : "500000000", 
-####                                     "binwidth" : "500000000", 
-####                                     "IncludeOutOfBounds" : "0", 
+####                                     "minvalue" : "10",
+####                                     "binwidth" : "10", 
+####                                     "numbins"  : "41", 
+####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"10 ns"})
 #### sst.enableStatisticForComponentName("simpleStatisticsTest1", "histo_I32", 
 ####                                    {"type":"sst.HistogramStatistic",
-####                                     "minvalue" : "0", 
-####                                     "maxvalue" : "500000000", 
-####                                     "binwidth" : "500000000", 
-####                                     "IncludeOutOfBounds" : "0", 
+####                                     "minvalue" : "-200", 
+####                                     "binwidth" : "50", 
+####                                     "numbins"  : "8", 
+####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"100 events"})
 #### sst.enableStatisticForComponentName("simpleStatisticsTest1", "histo_I64", 
 ####                                    {"type":"sst.HistogramStatistic",
-####                                     "minvalue" : "0", 
-####                                     "maxvalue" : "500000000", 
-####                                     "binwidth" : "500000000", 
-####                                     "IncludeOutOfBounds" : "0", 
+####                                     "minvalue" : "-9000", 
+####                                     "binwidth" : "1000", 
+####                                     "numbins"  : "18", 
+####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"20 ns"})
 #### sst.enableStatisticForComponentName("simpleStatisticsTest1", "accum_U64", 
 ####                                    {"type":"sst.AccumulatorStatistic",
@@ -313,24 +313,24 @@ StatExample0.enableStatistics([
 #### # Enable Single Statistic for Components defined by Type 
 #### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_U32", 
 ####                                    {"type":"sst.HistogramStatistic",
-####                                     "minvalue" : "0", 
-####                                     "maxvalue" : "500000000", 
-####                                     "binwidth" : "500000000", 
-####                                     "IncludeOutOfBounds" : "0", 
+####                                     "minvalue" : "10",
+####                                     "binwidth" : "10", 
+####                                     "numbins"  : "41", 
+####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"5 ns"})
 #### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_I32", 
 ####                                    {"type":"sst.HistogramStatistic",
-####                                     "minvalue" : "0", 
-####                                     "maxvalue" : "500000000", 
-####                                     "binwidth" : "500000000", 
-####                                     "IncludeOutOfBounds" : "0", 
+####                                     "minvalue" : "-200", 
+####                                     "binwidth" : "50", 
+####                                     "numbins"  : "8", 
+####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"100 events"})
 #### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_I64", 
 ####                                    {"type":"sst.HistogramStatistic",
-####                                     "minvalue" : "0", 
-####                                     "maxvalue" : "500000000", 
-####                                     "binwidth" : "500000000", 
-####                                     "IncludeOutOfBounds" : "0", 
+####                                     "minvalue" : "-9000", 
+####                                     "binwidth" : "1000", 
+####                                     "numbins"  : "18", 
+####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"20 ns"})
 #### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "accum_U64", 
 ####                                    {"type":"sst.AccumulatorStatistic",
