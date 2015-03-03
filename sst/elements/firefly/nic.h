@@ -523,9 +523,11 @@ public:
     void put( NicCmdEvent*, int );
     void regMemRgn( NicCmdEvent*, int );
     void processSend();
+    void schedSend( uint64_t delay = 0 );
     void processGet(SelfEvent& );
     SendEntry* processSend( SendEntry* );
     void moveDone( MerlinFireflyEvent* ); 
+    void checkRecv();
 
     MerlinFireflyEvent* getMerlinEvent(int vc ) {
         MerlinFireflyEvent* event = 

@@ -249,7 +249,6 @@ void Nic::handleSelfEvent( Event *e )
 
     switch ( event->type ) {
     case SelfEvent::MoveEvent:
-
         m_dbg.verbose(CALL_INFO,2,0,"MoveEvent\n");
         moveEvent( event->mEvent );
         break;
@@ -260,7 +259,6 @@ void Nic::handleSelfEvent( Event *e )
         break;
         
     case SelfEvent::NotifyNeedRecv:
-
         m_dbg.verbose(CALL_INFO,2,0,"NotifyNeedRecv\n");
 
         notifyNeedRecv( event->hdr.dst_vNicId, event->hdr.src_vNicId,
@@ -287,6 +285,13 @@ void Nic::handleSelfEvent( Event *e )
     if ( e ) {
         delete e;
     }
+}
+
+void Nic::schedSend( uint64_t delay ) {
+
+    SelfEvent* event = new SelfEvent;
+    event->type = SelfEvent::ProcessSend;
+    schedEvent( event, delay );
 }
 
 void Nic::processSend()
@@ -402,18 +407,9 @@ void Nic::processGet( SelfEvent& event )
                                     event.node, event.hdr.src_vNicId, 
                                     hdr.respKey, entry ) );
 
-    processSend();
+    schedSend();
 
-    // recv notifier is not currently installed, check for event 
-    MerlinFireflyEvent* mEvent = getMerlinEvent( 0 );
-
-    if ( mEvent ) {
-        m_dbg.verbose(CALL_INFO,2,0,"another event waiting\n");
-        processRecvEvent( mEvent );
-    } else {
-        m_dbg.verbose(CALL_INFO,2,0,"set recv notify\n");
-        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
-    }
+    checkRecv();
 }
 
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
@@ -427,7 +423,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
     
     m_sendQ.push_back( entry );
 
-    processSend();
+    schedSend();
 }
 
 void Nic::pioSend( NicCmdEvent *e, int vNicNum )
@@ -440,7 +436,7 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 
     m_sendQ.push_back( entry );
 
-    processSend();
+    schedSend();
 }
 
 void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
@@ -478,7 +474,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
 
     m_sendQ.push_back( new GetOrgnEntry( vNicNum, e, getKey) );
 
-    processSend();
+    schedSend();
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )
@@ -494,7 +490,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
                     ( this, &Nic::notifyPutDone, vNicNum, e->key) );
 
     m_sendQ.push_back( entry );
-    processSend();
+    schedSend();
 }
 
 void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
@@ -510,9 +506,7 @@ bool Nic::sendNotify(int)
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     
-    SelfEvent* event = new SelfEvent;
-    event->type = SelfEvent::ProcessSend;
-    schedEvent( event );
+    schedSend();
 
     // remove notifier
     return false;
@@ -531,6 +525,20 @@ bool Nic::recvNotify(int vc)
     return false;
 }
 
+void Nic::checkRecv()
+{
+    // recv notifier is not currently installed, check for event 
+    MerlinFireflyEvent* mEvent = getMerlinEvent( 0 );
+
+    if ( mEvent ) {
+        m_dbg.verbose(CALL_INFO,2,0,"another event waiting\n");
+        processRecvEvent( mEvent );
+    } else {
+        m_dbg.verbose(CALL_INFO,2,0,"set recv notify\n");
+        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    }
+}
+
 
 void Nic::processRecvEvent( MerlinFireflyEvent* event )
 {
@@ -546,16 +554,7 @@ void Nic::moveDone(  MerlinFireflyEvent* event )
     m_dbg.verbose(CALL_INFO,2,0,"done with network event\n" );
     delete event;
 
-    // recv notifier is not currently installed, check for event 
-    event = getMerlinEvent( 0 );
-
-    if ( event ) {
-        m_dbg.verbose(CALL_INFO,2,0,"another event waiting\n");
-        processRecvEvent( event );
-    } else {
-        m_dbg.verbose(CALL_INFO,2,0,"set recv notify\n");
-        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
-    }
+    checkRecv();
 }
 
 void Nic::processFirstEvent( MerlinFireflyEvent* event )
