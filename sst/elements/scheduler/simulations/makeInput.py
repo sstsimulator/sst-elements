@@ -72,7 +72,6 @@ if __name__ == '__main__':
   f.write('\n')
   f.write('# Define SST core options\n')
   f.write('sst.setProgramOption("run-mode", "both")\n')
-  f.write('sst.setProgramOption("partitioner", "self")\n')
   f.write('\n')
   f.write('# Define the simulation components\n')
   f.write('scheduler = sst.Component("myScheduler", \

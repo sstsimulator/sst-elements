@@ -38,7 +38,6 @@ else {
 
 <config>
     run-mode=both
-    partitioner=self
 </config>
 
 <sst>
