@@ -491,16 +491,18 @@ void Nic::RecvMachine::run()
             m_dbg.verbose(CALL_INFO,1,0,"event has %lu bytes\n",
                                                     m_mEvent->buf.size() );
 
-            if ( m_activeRecvM.find( m_mEvent->src ) == 
-                                        m_activeRecvM.end() ) {
+            // is there an active stream for this src node?
+            if ( m_activeRecvM.find( m_mEvent->src ) == m_activeRecvM.end() ) {
     
                 SelfEvent* event = new SelfEvent;
                 event->entry = NULL; 
 
-                m_nic.schedEvent( event, 
-                        processFirstEvent( *m_mEvent, m_state, event->entry ) );
+                // note that m_state and enry are set by this function
+                uint64_t delay = processFirstEvent( 
+                            *m_mEvent, m_state, event->entry );
 
                 m_dbg.verbose(CALL_INFO,1,0,"state=%d\n",m_state);
+
                 // if the packet was a "Get" it created a SendEntry,
                 // schedule the send and continue receiving packets
                 // else 
@@ -513,6 +515,9 @@ void Nic::RecvMachine::run()
                     clearNotify();
                     blocked = true;
                 } 
+
+                m_nic.schedEvent( event, delay ); 
+
                 break;
             }
             m_state = Move;
