@@ -147,7 +147,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
         case FetchInv:
         case FetchInvX:
         case Inv:
-        case InvX:
         case NACK:
         default:
             break;
@@ -175,7 +174,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
 
     d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %" PRIu64 ", %s%s \n",
                    this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
-    
+    cout << flush; 
     if(noncacheable || cf_.allNoncacheableRequests_){
         processNoncacheable(event, cmd, baseAddr);
         return;
@@ -217,7 +216,6 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
             processCacheReplacement(event, cmd, baseAddr, _mshrHit);
             break;
         case Inv:
-        case InvX:
             processCacheInvalidate(event, cmd, baseAddr, _mshrHit);
             break;
         case NACK:
@@ -228,6 +226,10 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
         case FetchInv:
         case FetchInvX:
             processFetch(event, baseAddr, _mshrHit);
+            break;
+        case FetchResp:
+        case FetchXResp:
+            processFetchResp(event, baseAddr);
             break;
         default:
             _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);

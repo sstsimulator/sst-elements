@@ -44,14 +44,15 @@ typedef uint64_t Addr;
     X(PutXE)           /* Clean downgrade from E->O/S:      Remove exclusive ownership, add as sharer (MSI/MESI) or non-exclusive owner (MOESI), don't writeback data */\
     /* Invalidates - sent by caches or directory controller */\
     X(Inv)             /* Other write request:  Invalidate cache line */\
-    X(InvX)            /* Other read request:   Downgrade cache line to O/S (Remove exclusivity) */\
     /* Invalidates - sent by directory controller */\
     X(FetchInv)        /* Other write request:  Invalidate cache line */\
     X(FetchInvX)       /* Other read request:   Downgrade cache line to O/S (Remove exclusivity) */\
     X(FetchResp)       /* response to a FetchInv or FetchInvX request */\
     X(FetchXResp)      /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\
-    X(NACK)
+    X(NACK)\
+    X(AckInv)\
+    X(AckPut)
 
 /** Valid commands for the MemEvent */
 typedef enum {
@@ -98,6 +99,7 @@ static const char* TccLineString[] __attribute__((unused)) = {
  */
 #define BCCLINE_TYPES \
     X(I)    /* Invalid */\
+    X(I_a)  /* Replaced, waiting for completion ack */\
     X(IS)   /* Invalid, have issued read request */\
     X(IM)   /* Invalid, have issued write request */\
     X(S)    /* Shared */\
@@ -304,8 +306,7 @@ public:
     }
     
    bool isLowNetEvent(){
-        if(cmd_ == Inv || cmd_ == InvX ||
-           cmd_ == FetchInv || cmd_ == FetchInvX){
+        if(cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX){
             return true;
         }
         return false;

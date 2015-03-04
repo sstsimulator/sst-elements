@@ -125,13 +125,14 @@ bool MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* Send Data in E state */
     if(protocol_ &&  !l->ownerExists() && l->isShareless() && (state == E || state == M)){
         l->setOwner(_sharerId);
+        d_->debug(_L7_, "New owner: %s\n", lowNetworkNodeLookupById(_sharerId).c_str());
         sendResponse(_event, E, data, _mshrHit);
         return true;
     }
     /* If exclusive owner exists, downgrade it to S state */
     else if(l->ownerExists()) {
         d_->debug(_L7_,"GetS request but exclusive cache exists \n");
-        sendInvalidateX(lineIndex, _event->getRqstr(), _mshrHit);
+        sendFetchInvX(lineIndex, _event->getRqstr(), _mshrHit);
         return false;
     }
     /* Send Data in S state */
@@ -171,7 +172,7 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     else if(ccLine->ownerExists()){
         d_->debug(_L7_,"GetX Req received but exclusive cache exists \n");
         assert(ccLine->isShareless());
-        sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
+        sendFetchInv(ccLine, _event->getRqstr(), _mshrHit);
         respond = false;
     }
     /* Sharers exist */
@@ -197,6 +198,7 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     
     if(respond){
         ccLine->setOwner(_sharerId);
+        d_->debug(_L7_, "New owner: %s\n", lowNetworkNodeLookupById(_sharerId).c_str());
         sendResponse(_event, M, _cacheLine->getData(), _mshrHit);
         return true;
     }
@@ -241,13 +243,10 @@ bool MESITopCC::handlePutSRequest(CCLine* _ccLine, int _sharerId){
 }
 
 
-
-
-
 /*
  * Send invalidation requests to appropriate handler
  *  For data invalidations -> sendInvalidates
- *  For write permission invalidation -> sendInvalidateX
+ *  For write permission invalidation -> sendFetchInvX
  */
 void MESITopCC::handleInvalidate(int _lineIndex, MemEvent* event, string _origRqstr, Command _cmd, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
@@ -258,9 +257,8 @@ void MESITopCC::handleInvalidate(int _lineIndex, MemEvent* event, string _origRq
         case FetchInv:
             sendInvalidates(_lineIndex, "", _origRqstr, _mshrHit);
             break;
-        case InvX:
         case FetchInvX:
-            sendInvalidateX(_lineIndex, _origRqstr, _mshrHit);
+            sendFetchInvX(_lineIndex, _origRqstr, _mshrHit);
             break;
         default:
             d_->fatal(CALL_INFO,-1,"TCC received an unrecognized invalidation request: %s\n",CommandString[_cmd]);
@@ -289,6 +287,21 @@ void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     }
 }
 
+void MESITopCC::handleFetchResp(MemEvent * event, CacheLine * _cacheLine) {
+    int lineIndex = _cacheLine->getIndex();
+    CCLine* ccLine = ccLines_[lineIndex];
+    
+    State st = _cacheLine->getState();
+    assert(st == M || st == E);
+
+    if(ccLine->ownerExists())  ccLine->clearOwner();
+    if (event->getCmd() == FetchXResp) {
+        int id = lowNetworkNodeLookupByName(event->getSrc());
+        ccLine->addSharer(id);
+    }
+    ccLine->setState(V);
+}
+
 /**********************************
  *  Methods for sending messages
  **********************************/
@@ -308,7 +321,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqst
     if (ccLine->ownerExists()) {
         sentInvalidates = 1;
         string ownerName = lowNetworkNodeLookupById(ccLine->ownerId_);
-        sendInvalidate(ccLine, ownerName, _origRqstr, acksNeeded, _mshrHit);
+        sendFetchInv(ccLine, _origRqstr, _mshrHit);
     } else {
         for(sharer = lowNetworkNameMap_.begin(); sharer != lowNetworkNameMap_.end(); sharer++) {
             int sharerId = sharer->second;
@@ -355,6 +368,23 @@ void MESITopCC::sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool 
 }
 
 
+void MESITopCC::sendFetchInv(CCLine* _cLine, string _origRqstr, bool mshrHit) {
+    string ownerName = lowNetworkNodeLookupById(_cLine->ownerId_);
+    MemEvent* fetchInv = new MemEvent((Component*) owner_, _cLine->getBaseAddr(), _cLine->getBaseAddr(), FetchInv);
+    fetchInv->setAckNeeded();
+    fetchInv->setDst(ownerName);
+    fetchInv->setRqstr(_origRqstr);
+        
+    _cLine->setState(Inv_A);
+
+    uint64_t deliveryTime = (mshrHit) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    Response resp = {fetchInv, deliveryTime, false};
+    addToOutgoingQueue(resp);
+
+    d_->debug(_L7_,"TCC - FetchInv sent: Delivery = %" PRIu64 ", Current = %" PRIu64 ", Addr = 0x%" PRIx64 ", Dst = %s\n",
+            deliveryTime, timestamp_, _cLine->getBaseAddr(), ownerName.c_str());
+}
+
 
 void MESITopCC::sendCCInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit){
     int invalidatesSent = sendInvalidates(_lineIndex, _srcNode, _origRqstr, _mshrHit);
@@ -363,7 +393,7 @@ void MESITopCC::sendCCInvalidates(int _lineIndex, string _srcNode, string _origR
 
 
 
-void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit){
+void MESITopCC::sendFetchInvX(int _lineIndex, string _origRqstr, bool _mshrHit){
     CCLine* ccLine = ccLines_[_lineIndex];
     if(!ccLine->ownerExists()) return;
     
@@ -371,7 +401,7 @@ void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit
     string ownerName = lowNetworkNodeLookupById(ccLine->getOwnerId());
 
     
-    MemEvent* invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), ccLine->getBaseAddr(), InvX);
+    MemEvent* invalidateEvent = new MemEvent((Component*)owner_, ccLine->getBaseAddr(), ccLine->getBaseAddr(), FetchInvX);
     invalidateEvent->setAckNeeded();
     invalidateEvent->setDst(ownerName);
     invalidateEvent->setRqstr(_origRqstr); 
@@ -380,12 +410,10 @@ void MESITopCC::sendInvalidateX(int _lineIndex, string _origRqstr, bool _mshrHit
 
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
-    profileReqSent(InvX, false, 1);
+    profileReqSent(FetchInvX, false, 1);
     
-    d_->debug(_L7_,"InvalidateX sent: Addr = %" PRIx64 ", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
+    d_->debug(_L7_,"FetchInvalidateX sent: Addr = %" PRIx64 ", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
 }
-
-
 
 
 /*---------------------------------------------------------------------------------------------------
@@ -440,7 +468,7 @@ void TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
     responseEvent->setDst(_event->getSrc());
     bool noncacheable = _event->queryFlag(MemEvent::F_NONCACHEABLE);
     
-    if(L1_ && !noncacheable){
+    if(L1_ && !noncacheable) {
         /* Only return the desire word */
         Addr base    = (_event->getAddr()) & ~(((Addr)lineSize_) - 1);
         Addr offset  = _event->getAddr() - base;
@@ -495,9 +523,6 @@ void MESITopCC::profileReqSent(Command _cmd, bool _eviction, int _num) {
         case Inv:
             if (_eviction) evictionInvReqsSent_ += _num;
             else invReqsSent_ += _num;
-            break;
-        case InvX:
-            invXReqsSent_ += _num;
             break;
         case NACK:
             NACKsSent_ += _num;

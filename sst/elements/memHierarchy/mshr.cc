@@ -221,7 +221,7 @@ bool MSHR::isHitAndStallNeeded(Addr _baseAddr, Command _cmd){
     MemEvent* frontEvent = boost::get<MemEvent*>(it->second.front().elem);
     
 
-    if(_cmd == GetX) return (frontEvent->getCmd() != Inv && frontEvent->getCmd() != InvX);  //An Inv is at the front of the queue, wait for Inv Responses from higher network
+    if(_cmd == GetX) return (frontEvent->getCmd() != Inv && frontEvent->getCmd() != FetchInv && frontEvent->getCmd() != FetchInvX);  //An Inv is at the front of the queue, wait for Inv Responses from higher network
     else{
         d_->debug(_L9_, "Blocking Request: MSHR entry exists and waiting to complete. TopOfQueue Request Cmd: %s\n", CommandString[frontEvent->getCmd()]);
         return true;

@@ -129,10 +129,9 @@ void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAd
         cacheLine = getCacheLine(lineIndex);
         handleIgnorableRequests(_event, cacheLine, _cmd);               /* If a PutS, handle immediately even if the cache line is in transition */
         
-        bottomCC_->handleRequest(_event, cacheLine, _cmd, _mshrHit);    /* upgrade or fetch line from lower level caches */
-        stallIfUpgradeInProgress(cacheLine);                            /* Stall if upgrade in progress */
+        bottomCC_->handleRequest(_event, cacheLine, _cmd, _mshrHit);    /* update cache line with new data */
         
-        bool done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Invalidate sharers, send respond to requestor if needed */
+        bool done = topCC_->handleRequest(_event, cacheLine, _mshrHit);  /* Update sharer/owner state */
         postRequestProcessing(_event, cacheLine, done, _mshrHit);
     }
     catch(blockedEventException const& e){
@@ -145,12 +144,11 @@ void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAd
 void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
     CacheLine* cacheLine = getCacheLine(_baseAddr);
     
-    if(!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
+    if (!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
     int lineIndex = cacheLine->getIndex();
 
-    if(!L1_){
-        if(!processInvRequestInMSHR(_baseAddr, _event))                 /* L1s wont stall because they don't have any sharers */
-            return;
+    if(!L1_ && !processInvRequestInMSHR(_baseAddr, _event)) {
+        return;
     }
     topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), _cmd, _mshrHit); /* Invalidate upper levels */
     if(invalidatesInProgress(lineIndex)) return;
@@ -195,6 +193,17 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
     delete _event;
 }
 
+
+void Cache::processFetchResp(MemEvent * _event, Addr _baseAddr) {
+    CacheLine* cacheLine = getCacheLine(_baseAddr);
+    int lineIndex = cacheLine->getIndex();
+
+    topCC_->handleFetchResp(_event, cacheLine);     // update sharer/owner state
+    bottomCC_->handleFetchResp(_event, cacheLine);  // update data
+    activatePrevEvents(_baseAddr);
+
+    delete _event;
+}
 
 /* ---------------------------------
    Writeback Related Functions

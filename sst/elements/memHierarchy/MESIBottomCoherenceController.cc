@@ -33,17 +33,17 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, st
     case S:
         inc_EvictionPUTSReqSent();
         sendWriteback(PutS, _wbCacheLine, _origRqstr);
-        _wbCacheLine->setState(I);
+        _wbCacheLine->setState(I);    // wait for ack
 	break;
     case E:
         inc_EvictionPUTEReqSent();
         sendWriteback(PutE, _wbCacheLine, _origRqstr);
-	_wbCacheLine->setState(I);
+	_wbCacheLine->setState(I);    // wait for ack
         break;
     case M:
         inc_EvictionPUTMReqSent();
 	sendWriteback(PutM, _wbCacheLine, _origRqstr);
-        _wbCacheLine->setState(I);
+        _wbCacheLine->setState(I);    // wait for ack
 	break;
     default:
 	d_->fatal(CALL_INFO,-1,"BCC is in an invalid state during eviction: %s\n", BccLineString[state]);
@@ -115,33 +115,54 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
     _cacheLine->atomicEnd();
     setGroupId(_event->getGroupId());
     
-    if(_cacheLine->inTransition()){
+    if (_cacheLine->inTransition()) {
         d_->debug(_L6_,"Cache line in transition.\n");
-        if(_event->getAckNeeded() && _cacheLine->getState() == SM){  //no need to send ACK if state = IM
+        if (_event->getAckNeeded() && _cacheLine->getState() == SM) {  //no need to send ACK if state = IM
             inc_InvalidatePUTSReqSent();
             _cacheLine->setState(IM); 
-            sendWriteback(PutS, _cacheLine, _event->getRqstr());
+            sendWriteback(PutS,_cacheLine, _event->getRqstr());
         }
         return;
     }
     
     switch(_cmd){
         case Inv:
-			processInvRequest(_event, _cacheLine);
+            processInvRequest(_event, _cacheLine);
             break;
-        case InvX:
-			processInvXRequest(_event, _cacheLine);
-            break;
-	    default:
+	default:
 	    d_->fatal(CALL_INFO,-1,"BCC received an unrecognized invalidation request: %s\n", CommandString[_cmd]);
 	}
 
 }
 
+/*
+ *  Data request for a different cache's request
+ */
+void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
+    _cacheLine->atomicEnd();
+    setGroupId(_event->getGroupId());
+    assert(!_cacheLine->inTransition());
+    assert(_cacheLine->getState() == M || _cacheLine->getState() == E);
+    Command cmd = _event->getCmd();
+    
+    sendResponse(_event, _cacheLine, _parentId, _mshrHit);
+    
+    switch(cmd){
+        case FetchInv:
+            _cacheLine->setState(I);
+            inc_FetchInvReqSent();
+            break;
+        case FetchInvX:
+            _cacheLine->setState(S);
+            inc_FetchInvXReqSent();
+            break;
+	    default:
+	    d_->fatal(CALL_INFO,-1,"BCC received an unrecognized fetch invalidate request: %s\n", CommandString[cmd]);
+	}
+}
 
 
 void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLine, MemEvent* _origRequest){
-   
     updateCoherenceState(_cacheLine,_responseEvent->getGrantedState());
 
     Command origCmd = _origRequest->getCmd();
@@ -149,6 +170,10 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
 	d_->fatal(CALL_INFO,-1,"BCC received a response to an invalid command type. Invalid command: %s\n", CommandString[origCmd]);
     }
 
+    _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
+}
+
+void MESIBottomCC::handleFetchResp(MemEvent * _responseEvent, CacheLine* _cacheLine) {
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
 }
 
@@ -176,27 +201,6 @@ void MESIBottomCC::updateCoherenceState(CacheLine* _cacheLine, State _grantedSta
 }
 
 
-void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
-    setGroupId(_event->getGroupId());
-    if(_cacheLine->inTransition() && !_event->getAckNeeded()) return;
-    
-    Command cmd = _event->getCmd();
-    sendResponse(_event, _cacheLine, _parentId, _mshrHit);
-    
-    switch(cmd){
-        case FetchInv:
-            _cacheLine->setState(I);
-            inc_FetchInvReqSent();
-            break;
-        case FetchInvX:
-            _cacheLine->setState(S);
-            inc_FetchInvXReqSent();
-            break;
-	    default:
-	    d_->fatal(CALL_INFO,-1,"BCC received an unrecognized fetch invalidate request: %s\n", CommandString[cmd]);
-	}
-    
-}
 
 
 /*---------------------------------------------------------------------------------------------------
@@ -261,38 +265,18 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
 void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     State state = _cacheLine->getState();
     
-    if(state == M || state == E){
+  /*  if (state == M || state == E) {
         if(state == M){
             inc_InvalidatePUTMReqSent();
-            sendWriteback(PutM, _cacheLine, _event->getRqstr());
+            sendFetchResp(_cacheLine, _event->getRqstr());
         }
         else{
             inc_InvalidatePUTEReqSent();
-            sendWriteback(PutE, _cacheLine, _event->getRqstr());
+            sendFetchResp(_cacheLine, _event->getRqstr());
         }
         _cacheLine->setState(I);
     }
-    else if(state == S){
-        if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine, _event->getRqstr());
-        _cacheLine->setState(I);
-    }
-    else d_->fatal(CALL_INFO,-1,"BCC received an invalidation but is not in a valid stable state: %s\n", BccLineString[state]);
-}
-
-
-/*
- *  Give up exclusive ownership of block and send writeback if dirty
- */
-void MESIBottomCC::processInvXRequest(MemEvent* _event, CacheLine* _cacheLine){
-    State state = _cacheLine->getState();
-    
-    if(state == M || state == E){
-        _cacheLine->setState(S);
-        inc_InvalidatePUTXReqSent();
-        if(state == E) sendWriteback(PutXE, _cacheLine, _event->getRqstr());
-        else           sendWriteback(PutX, _cacheLine, _event->getRqstr());
-    }
-    else if(state == S){
+    else*/ if(state == S){
         if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine, _event->getRqstr());
         _cacheLine->setState(I);
     }
@@ -413,6 +397,7 @@ void MESIBottomCC::resendEvent(MemEvent* _event){
 void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     MemEvent *responseEvent = _event->makeResponse();
     responseEvent->setPayload(*_cacheLine->getData());
+    responseEvent->setSize(_cacheLine->getLineSize());
 
     uint64 deliveryTime = _mshrHit ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     Response resp  = {responseEvent, deliveryTime, true};

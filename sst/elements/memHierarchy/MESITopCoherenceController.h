@@ -82,6 +82,7 @@ public:
         
         return;
     }
+    virtual void handleFetchResp(MemEvent * ev, CacheLine * line) { return; }
 
     /** Create MemEvent and send Response to HgLvl caches */
     void sendResponse(MemEvent* _event, State _newState, vector<uint8_t>* _data, bool _mshrHit, bool atomic = false);
@@ -207,7 +208,9 @@ public:
     /** Handle incoming GetS Request.
         Clear sharer */
     bool handlePutSRequest(CCLine* _ccLine, int _childId);
-    
+   
+    void handleFetchResp(MemEvent * _event, CacheLine* _cacheLine);
+
     /** Returns the state of the CCLine. */
     TCC_State getState(int lineIndex) { return ccLines_[lineIndex]->getState(); }
     
@@ -229,7 +232,8 @@ private:
     uint                evictionRequiredInv;
 
     int sendInvalidates(int lineIndex, string srcNode, string origRqstr, bool _mshrHit);
-    void sendInvalidateX(int lineIndex, string _origRqstr, bool _mshrHit);
+    void sendFetchInvX(int lineIndex, string _origRqstr, bool _mshrHit);
+    void sendFetchInv(CCLine* _cLine, string origRqstr, bool mshrHit);
     void sendInvalidate(CCLine* _cLine, string destination, string origRqstr, bool _acksNeeded, bool _mshrHit);
     
     void sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool _mshrHit);

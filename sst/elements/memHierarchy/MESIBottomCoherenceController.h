@@ -89,6 +89,8 @@ public:
     /** Does nothing except for update stats */
     void handlePutERequest(CacheLine* cacheLine);
     
+    void handleFetchResp(MemEvent * _responseEvent, CacheLine* _cacheLine);
+
     /** Handle Inv request.  Cache line is already in the correct state
         and/or has been upgraded */
     void processInvRequest(MemEvent* event, CacheLine* cacheLine);

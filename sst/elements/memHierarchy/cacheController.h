@@ -114,6 +114,8 @@ private:
     /** Function processes incomming GetS/GetX responses.  
         Redirects message to Top Controller */
     void processCacheResponse(MemEvent* ackEvent, Addr baseAddr);
+    
+    void processFetchResp(MemEvent* event, Addr baseAddr);
 
     /** Function processes incomming Fetch invalidate requests from the Directory Controller
         Fetches send data, while FetchInvalidates evict data to the directory controller */
