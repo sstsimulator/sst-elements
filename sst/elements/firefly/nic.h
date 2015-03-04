@@ -168,21 +168,21 @@ class Nic : public SST::Component  {
         unsigned short    src_vNicId;
     };
 
+    class Entry;
     class SelfEvent : public SST::Event {
       public:
         enum { MoveEvent, NotifyNeedRecv,
                 ProcessSend, Put, Get, MoveDone } type;
         ~SelfEvent() {}
 
-        int                 node;
         int                 tag;
         std::vector<IoVec>  iovec;
         void*               key;
         size_t              len;
         MerlinFireflyEvent* mEvent;
-
-        MsgHdr				hdr;
+        Entry*              entry;
     };
+    enum { RecvBlkdNet, RecvBlkdDelay, RecvBlkdDMA } m_recvState;
 
     class VirtNic {
         Nic& m_nic;
@@ -513,7 +513,8 @@ public:
     int getNum_vNics() { return m_num_vNics; }
 
   private:
-    bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
+    RecvEntry* findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
+    SendEntry* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
     void dmaSend( NicCmdEvent*, int );
@@ -523,6 +524,7 @@ public:
     void put( NicCmdEvent*, int );
     void regMemRgn( NicCmdEvent*, int );
     void processSend();
+    void processNetworkEvent( MerlinFireflyEvent* );
     void schedSend( uint64_t delay = 0 );
     void processGet(SelfEvent& );
     SendEntry* processSend( SendEntry* );
@@ -541,11 +543,17 @@ public:
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );
     }
-    
-    void processRecvEvent( MerlinFireflyEvent* );
-    void processFirstEvent( MerlinFireflyEvent* );
 
-    bool findRecv( int src, MsgHdr& );
+    void processNeedRecv( MerlinFireflyEvent* event ) {
+        MsgHdr& hdr = *(MsgHdr*) &event->buf[0];
+        notifyNeedRecv( hdr.dst_vNicId, hdr.src_vNicId,
+                     event->src, hdr.tag, hdr.len);
+        m_pendingNetworkEvent = event;
+    }
+    
+    uint64_t processFirstEvent( SelfEvent* );
+
+    RecvEntry* findRecv( int src, MsgHdr& );
     void moveEvent( MerlinFireflyEvent* );
 
     void notifySendDmaDone( int vNicNum, void* key ) {
@@ -599,7 +607,7 @@ public:
  
     int                     m_rxMatchDelay;
     int                     m_txDelay;
-    MerlinFireflyEvent*     m_pendingMerlinEvent;
+    MerlinFireflyEvent*     m_pendingNetworkEvent;
     int                     m_myNodeId;
     int                     m_num_vNics;
     SST::Link*              m_selfLink;
