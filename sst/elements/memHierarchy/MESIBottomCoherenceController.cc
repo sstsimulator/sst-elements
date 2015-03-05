@@ -175,6 +175,7 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
 
 void MESIBottomCC::handleFetchResp(MemEvent * _responseEvent, CacheLine* _cacheLine) {
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
+    if (_responseEvent->getDirty()) _cacheLine->setState(M);
 }
 
 
@@ -246,8 +247,9 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
     if(state == E) _cacheLine->setState(M);    /* set block to dirty */
     
     if(cmd == GetX){
-        if(L1_ && (!_event->isStoreConditional() || _cacheLine->isAtomic()))
+        if(L1_ && (!_event->isStoreConditional() || _cacheLine->isAtomic())) {
             _cacheLine->setData(_event->getPayload(), _event);
+        }
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
             assert(_cacheLine->isLocked());
             _cacheLine->decLock();
@@ -265,18 +267,7 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
 void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     State state = _cacheLine->getState();
     
-  /*  if (state == M || state == E) {
-        if(state == M){
-            inc_InvalidatePUTMReqSent();
-            sendFetchResp(_cacheLine, _event->getRqstr());
-        }
-        else{
-            inc_InvalidatePUTEReqSent();
-            sendFetchResp(_cacheLine, _event->getRqstr());
-        }
-        _cacheLine->setState(I);
-    }
-    else*/ if(state == S){
+    if(state == S){
         if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine, _event->getRqstr());
         _cacheLine->setState(I);
     }
@@ -317,7 +308,7 @@ void MESIBottomCC::handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine){
 void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine){
     State state = _cacheLine->getState();
     assert(state == M || state == E);
-    if(state == E && _event->getCmd() != PutXE) _cacheLine->setState(M);    // Update state if line was written
+    if((state == E && _event->getCmd() != PutXE) || _event->getDirty()) _cacheLine->setState(M);    // Update state if line was written
     if(_event->getCmd() != PutXE){
         _cacheLine->setData(_event->getPayload(), _event);                  //Only PutM/PutX write data in the cache line
         d_->debug(_L6_,"Data written to cache line\n");
@@ -398,6 +389,7 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
     MemEvent *responseEvent = _event->makeResponse();
     responseEvent->setPayload(*_cacheLine->getData());
     responseEvent->setSize(_cacheLine->getLineSize());
+    if (_cacheLine->getState() == M) responseEvent->setDirty(true);
 
     uint64 deliveryTime = _mshrHit ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
     Response resp  = {responseEvent, deliveryTime, true};
@@ -419,6 +411,7 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine, string _or
         newCommandEvent->setPayload(*_cacheLine->getData());
     }
     newCommandEvent->setRqstr(_origRqstr);
+    if (_cacheLine->getState() == M) newCommandEvent->setDirty(true);
     
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};

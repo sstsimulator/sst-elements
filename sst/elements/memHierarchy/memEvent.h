@@ -250,6 +250,7 @@ public:
         statsUpdated_     = false;
         initTime_         = 0;
         payload_.clear();
+        dirty_            = false;
     }
 
 
@@ -373,7 +374,7 @@ public:
     /** Returns true if this is a 'writeback' command type */
     static bool isWriteback(Command cmd){ return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
     bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
-    
+   
 
     
     /** Setter for GroupId */
@@ -385,7 +386,9 @@ public:
     void setAckNeeded(){ ackNeeded_ = true;}
      /** Getter for ackNeeded member variable */
     bool getAckNeeded(){ return ackNeeded_;}
-
+    
+    void setDirty(bool status){ dirty_ = status; }
+    bool getDirty() { return dirty_; }
 
     /** @return the source string - who sent this MemEvent */
     const std::string& getSrc(void) const { return src_; }
@@ -469,6 +472,7 @@ private:
     bool            blocked_;
     bool            statsUpdated_;
     SimTime_t       initTime_;
+    bool            dirty_;
 
 
     MemEvent() {} // For serialization only
@@ -502,6 +506,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(inMSHR_);
         ar & BOOST_SERIALIZATION_NVP(blocked_);
         ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
+        ar & BOOST_SERIALIZATION_NVP(dirty_);
     }
 };
 
