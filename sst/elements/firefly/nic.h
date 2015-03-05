@@ -179,59 +179,7 @@ class Nic : public SST::Component  {
         Entry*              entry;
     };
 
-    class VirtNic {
-        Nic& m_nic;
-      public:
-        VirtNic(Nic& nic, int _id, std::string portName) : m_nic(nic), id(_id) 
-        {
-            std::ostringstream tmp;
-            tmp <<  id;
-
-            m_toCoreLink = nic.configureLink( portName + tmp.str(), "1 ns",
-                new Event::Handler<Nic::VirtNic>(
-                    this, &Nic::VirtNic::handleCoreEvent ) );
-            assert( m_toCoreLink );
-        }
-		~VirtNic() {}
-
-        void handleCoreEvent( Event* ev ) {
-            m_nic.handleVnicEvent( ev, id );
-        }
-
-        void init( unsigned int phase ) {
-            if ( 0 == phase ) {
-                m_toCoreLink->sendInitData( new NicInitEvent(
-                        m_nic.getNodeId(), id, m_nic.getNum_vNics() ) );
-            }
-        }
-
-        Link* m_toCoreLink;
-        int id;
-        void notifyRecvDmaDone( int src_vNic, int src, int tag, size_t len,
-                                                            void* key ) {
-            m_toCoreLink->send(0,
-                new NicRespEvent( NicRespEvent::DmaRecv, src_vNic,
-                        src, tag, len, key ) );
-        }
-        void notifyNeedRecv( int src_vNic, int src, int tag, size_t len ) {
-            m_toCoreLink->send(0,
-                new NicRespEvent( NicRespEvent::NeedRecv, src_vNic,
-                        src, tag, len ) );
-        }
-        void notifySendDmaDone( void* key ) {
-            m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::DmaSend, key));
-        }
-        void notifySendPioDone( void* key ) {
-            m_toCoreLink->send(0,new NicRespEvent( NicRespEvent::PioSend, key));
-        }
-        void notifyPutDone( void* key ) {
-            m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Put, key ));
-        }
-        void notifyGetDone( void* key ) {
-            m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Get, key ));
-        }
-    };
-
+    #include "nicVirtNic.h" 
 
     class MemRgnEntry {
       public:
@@ -390,8 +338,6 @@ class Nic : public SST::Component  {
         NotifyFunctorBase<>* m_notifyFunctor;
     };
 
-
-public:
     class SendEntry: public Entry {
       public:
 
@@ -535,100 +481,8 @@ public:
         std::vector<IoVec>  m_putVec;
     };
 
-    class SendMachine {
-        enum State { Idle, Sending, WaitDelay, WaitTX, WaitDMA } m_state;
-      public:
-        SendMachine( Nic& nic, Output& output ) : m_state( Idle ), 
-            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50) { }
-        ~SendMachine();
-
-        void init( int txDelay, int packetSizeInBytes, int packetSizeInBits ) {
-            m_txDelay = txDelay;
-            m_packetSizeInBytes = packetSizeInBytes;
-            m_packetSizeInBits = packetSizeInBits;
-        }
-
-        void run( SendEntry* entry = NULL);  
-    
-      private:
-        SendEntry* processSend( SendEntry* );
-        bool copyOut( Output& dbg, MerlinFireflyEvent& event, 
-                                            Nic::Entry& entry );
-
-        Nic&        m_nic;
-        Output&     m_dbg;
-
-        std::deque<SendEntry*>  m_sendQ;
-        SendEntry*              m_currentSend;
-        int                     m_txDelay;
-	    unsigned int            m_packetSizeInBytes;
-	    int                     m_packetSizeInBits;
-    };
-
-    class RecvMachine {
-
-        enum State { NeedPkt, HavePkt, Move, WaitMove,
-                            Put, NeedRecv } m_state;
-        
-      public:
-        RecvMachine( Nic& nic, Output& output ) : m_state(NeedPkt), 
-            m_nic(nic), m_dbg(output), m_rxMatchDelay( 100 ) { }
-        ~RecvMachine();
-        void init( int numVnics, int rxMatchDelay ) {
-            m_recvM.resize( numVnics );
-            m_rxMatchDelay = rxMatchDelay;
-        }
-        void run();
-
-        void addDma( int vNic, int tag, RecvEntry* entry) {
-            m_recvM[ vNic ][ tag ].push_back( entry );
-            if ( HavePkt == m_state ) {
-                run();
-            }
-        }
-
-      private:
-        uint64_t processFirstEvent( MerlinFireflyEvent&, State&, Entry* & );
-        bool findRecv( int src, MsgHdr& );
-        SendEntry* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-        bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-        void moveEvent( MerlinFireflyEvent* );
-        size_t copyIn( Output& dbg, Nic::Entry& entry, 
-                    MerlinFireflyEvent& event );
-
-        void processNeedRecv( MerlinFireflyEvent* event ) {
-            MsgHdr& hdr = *(MsgHdr*) &event->buf[0];
-            m_nic.notifyNeedRecv( hdr.dst_vNicId, hdr.src_vNicId,
-                     event->src, hdr.tag, hdr.len);
-        }
-
-        MerlinFireflyEvent* getMerlinEvent(int vc ) {
-            MerlinFireflyEvent* event = 
-                static_cast<MerlinFireflyEvent*>( 
-                                    m_nic.m_linkControl->recv( vc ) );
-            if ( event ) {
-                event->src = m_nic.NetToId( event->src );
-            }
-            return event;
-        }
-        void setNotify() {
-            m_nic.m_linkControl->setNotifyOnReceive(
-                                    m_nic.m_recvNotifyFunctor );
-        }
-
-        void clearNotify() {
-            m_nic.m_linkControl->setNotifyOnReceive( NULL );
-        }
-
-        Nic&        m_nic;
-        Output&     m_dbg;
-
-        MerlinFireflyEvent* m_mEvent;
-        int                 m_rxMatchDelay;
-        std::map< int, RecvEntry* >     m_activeRecvM;
-
-        std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;
-    };
+    #include "nicSendMachine.h"
+    #include "nicRecvMachine.h"
 
     SendMachine m_sendMachine;
     RecvMachine m_recvMachine;

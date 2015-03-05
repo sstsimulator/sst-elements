@@ -70,6 +70,11 @@ libfirefly_la_SOURCES = \
 	virtNic.h \
 	virtNic.cc \
 	nic.h \
-	nic.cc
+	nic.cc \
+	nicVirtNic.h \
+	nicSendMachine.cc \
+	nicSendMachine.h \
+	nicRecvMachine.cc \
+	nicRecvMachine.h 
 
 libfirefly_la_LDFLAGS = -module -avoid-version
