@@ -106,96 +106,7 @@ Nic::~Nic()
     for ( int i = 0; i < m_num_vNics; i++ ) {
         delete m_vNicV[i];
     }
-
-#if 0
-    // move to RecvMachine
-    for ( unsigned i = 0; i < m_recvM.size(); i++ ) {
-        std::map< int, std::deque<RecvEntry*> >::iterator iter;
-
-        for ( iter = m_recvM[i].begin(); iter != m_recvM[i].end(); ++iter ) {
-            while ( ! (*iter).second.empty() ) {
-                delete (*iter).second.front();
-                (*iter).second.pop_front(); 
-            }
-        }
-    }
-
-    while ( ! m_activeRecvM.empty() ) {
-        delete m_activeRecvM.begin()->second;
-        m_activeRecvM.erase( m_activeRecvM.begin() );
-    }
-#endif
-
-#if 0
-    // move to SendMachine
-    while ( ! m_sendQ.empty() ) {
-        delete m_sendQ.front();
-        m_sendQ.pop_front();
-    }
-
-    if ( m_currentSend ) delete m_currentSend;
-#endif
 }
-
-Nic::VirtNic::VirtNic( Nic& nic, int _id, std::string portName ) : 
-    m_nic( nic ),
-    id( _id )
-{
-    std::ostringstream tmp;
-    tmp <<  id;
-
-    m_toCoreLink = nic.configureLink( portName + tmp.str(), "1 ns", 
-        new Event::Handler<Nic::VirtNic>(
-                    this, &Nic::VirtNic::handleCoreEvent ) );
-	assert( m_toCoreLink );
-}
-
-void Nic::VirtNic::init( unsigned int phase )
-{
-    if ( 0 == phase ) {
-        m_toCoreLink->sendInitData( new NicInitEvent( 
-                m_nic.getNodeId(), id, m_nic.getNum_vNics() ) );
-    }
-}
-
-void Nic::VirtNic::handleCoreEvent( Event* ev )
-{
-    m_nic.handleVnicEvent( ev, id );
-}
-
-void Nic::VirtNic::notifyRecvDmaDone( int src_vNic, int src, int tag,
-										size_t len, void* key )
-{
-    m_toCoreLink->send(0, 
-        new NicRespEvent( NicRespEvent::DmaRecv, src_vNic, src, tag, len, key ) );
-}
-
-void Nic::VirtNic::notifyNeedRecv( int src_vNic, int src, int tag, size_t len )
-{
-    m_toCoreLink->send(0, 
-            new NicRespEvent( NicRespEvent::NeedRecv, src_vNic, src, tag, len ) );
-}
-
-void Nic::VirtNic::notifySendDmaDone( void* key )
-{
-    m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::DmaSend, key ));
-}
-
-void Nic::VirtNic::notifySendPioDone( void* key )
-{
-    m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::PioSend, key ));
-}
-
-void Nic::VirtNic::notifyGetDone( void* key )
-{
-    m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Get, key ));
-}
-
-void Nic::VirtNic::notifyPutDone( void* key )
-{
-    m_toCoreLink->send(0, new NicRespEvent( NicRespEvent::Put, key ));
-}
-
 
 void Nic::init( unsigned int phase )
 {
@@ -255,9 +166,119 @@ void Nic::handleSelfEvent( Event *e )
         break;
     }
 
-    if ( e ) {
-        delete e;
+    delete e;
+}
+
+void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
+{
+    SendEntry* entry = new SendEntry( vNicNum, e );
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
+                    e->node, e->tag, e->iovec.size(), entry->totalBytes() );
+
+    entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
+                    ( this, &Nic::notifySendDmaDone, vNicNum, e->key) );
+    
+    m_sendMachine.run( entry );
+}
+
+void Nic::pioSend( NicCmdEvent *e, int vNicNum )
+{
+    SendEntry* entry = new SendEntry( vNicNum, e );
+    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
+        "vecLen=%lu totalBytes=%lu\n", vNicNum, e->node, e->dst_vNic,
+                    e->tag, e->iovec.size(), entry->totalBytes() );
+
+    entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
+                    ( this, &Nic::notifySendPioDone, vNicNum, e->key) );
+
+    m_sendMachine.run( entry );
+}
+
+void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
+{
+    RecvEntry* entry = new RecvEntry( vNicNum, e );
+
+    m_dbg.verbose(CALL_INFO,1,0,"vNicNum=%d src=%d tag=%#x length=%lu\n",
+                   vNicNum, e->node, e->tag, entry->totalBytes());
+
+    m_recvMachine.addDma( entry->local_vNic(), e->tag, entry );
+}
+
+
+void Nic::get( NicCmdEvent *e, int vNicNum )
+{
+    int getKey = genGetKey();
+
+    m_getOrgnM[ getKey ] = new PutRecvEntry( vNicNum, &e->iovec );
+
+        m_dbg.verbose(CALL_INFO,2,0,"%p %lu\n",m_getOrgnM[getKey],
+                            m_getOrgnM[ getKey ]->ioVec().size());
+
+    m_getOrgnM[ getKey ]->setNotifier( new NotifyFunctor_2< Nic, int, void* >
+            ( this, &Nic::notifyGetDone, vNicNum, e->key) );
+
+    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
+                        "vecLen=%lu totalBytes=%lu\n",
+                vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), 
+                m_getOrgnM[ getKey ]->totalBytes() );
+
+    m_sendMachine.run( new GetOrgnEntry( vNicNum, e, getKey) );
+}
+
+void Nic::put( NicCmdEvent *e, int vNicNum )
+{
+    SendEntry* entry = new SendEntry( vNicNum, e );
+    assert(0);
+    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
+                        "vecLen=%lu totalBytes=%lu\n",
+                vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(),
+                entry->totalBytes() );
+
+    entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
+                    ( this, &Nic::notifyPutDone, vNicNum, e->key) );
+
+    m_sendMachine.run( entry );
+}
+
+void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"rgnNum %d\n",e->tag);
+    
+    m_memRgnM[ vNicNum ][ e->tag ] = new MemRgnEntry( vNicNum, e->iovec );
+    delete e;
+}
+
+// Merlin stuff
+bool Nic::sendNotify(int)
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    
+    m_sendMachine.run();
+
+    // keep the current notifier because the sendMahcine may have changed it 
+    return true;
+}
+
+bool Nic::recvNotify(int vc)
+{
+    m_dbg.verbose(CALL_INFO,1,0,"network event available vc=%d\n",vc);
+    assert( 0 == vc );
+
+    m_recvMachine.run();
+
+    // keep the current notifier because the recvMahcine may have changed it 
+    return true;
+}
+
+Nic::SendMachine::~SendMachine() 
+{
+    // move to SendMachine
+    while ( ! m_sendQ.empty() ) {
+        delete m_sendQ.front();
+        m_sendQ.pop_front();
     }
+
+    if ( m_currentSend ) delete m_currentSend;
 }
 
 void Nic::SendMachine::run( SendEntry* entry )
@@ -368,105 +389,24 @@ Nic::SendEntry* Nic::SendMachine::processSend( SendEntry* entry )
     return entry;
 }
 
-void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
+Nic::RecvMachine::~RecvMachine()
 {
-    SendEntry* entry = new SendEntry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
-                    e->node, e->tag, e->iovec.size(), entry->totalBytes() );
+    // move to RecvMachine
+    for ( unsigned i = 0; i < m_recvM.size(); i++ ) {
+        std::map< int, std::deque<RecvEntry*> >::iterator iter;
 
-    entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
-                    ( this, &Nic::notifySendDmaDone, vNicNum, e->key) );
-    
-    m_sendMachine.run( entry );
-}
+        for ( iter = m_recvM[i].begin(); iter != m_recvM[i].end(); ++iter ) {
+            while ( ! (*iter).second.empty() ) {
+                delete (*iter).second.front();
+                (*iter).second.pop_front(); 
+            }
+        }
+    }
 
-void Nic::pioSend( NicCmdEvent *e, int vNicNum )
-{
-    SendEntry* entry = new SendEntry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
-        "vecLen=%lu totalBytes=%lu\n", vNicNum, e->node, e->dst_vNic,
-                    e->tag, e->iovec.size(), entry->totalBytes() );
-
-    entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
-                    ( this, &Nic::notifySendPioDone, vNicNum, e->key) );
-
-    m_sendMachine.run( entry );
-}
-
-void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
-{
-    RecvEntry* entry = new RecvEntry( vNicNum, e );
-
-    m_dbg.verbose(CALL_INFO,1,0,"vNicNum=%d src=%d tag=%#x length=%lu\n",
-                   vNicNum, e->node, e->tag, entry->totalBytes());
-
-    m_recvMachine.addDma( entry->local_vNic(), e->tag, entry );
-}
-
-
-void Nic::get( NicCmdEvent *e, int vNicNum )
-{
-    int getKey = genGetKey();
-
-    m_getOrgnM[ getKey ] = new PutRecvEntry( vNicNum, &e->iovec );
-
-        m_dbg.verbose(CALL_INFO,2,0,"%p %lu\n",m_getOrgnM[getKey],
-                            m_getOrgnM[ getKey ]->ioVec().size());
-
-    m_getOrgnM[ getKey ]->setNotifier( new NotifyFunctor_2< Nic, int, void* >
-            ( this, &Nic::notifyGetDone, vNicNum, e->key) );
-
-    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
-                        "vecLen=%lu totalBytes=%lu\n",
-                vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), 
-                m_getOrgnM[ getKey ]->totalBytes() );
-
-    m_sendMachine.run( new GetOrgnEntry( vNicNum, e, getKey) );
-}
-
-void Nic::put( NicCmdEvent *e, int vNicNum )
-{
-    SendEntry* entry = new SendEntry( vNicNum, e );
-    assert(0);
-    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
-                        "vecLen=%lu totalBytes=%lu\n",
-                vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(),
-                entry->totalBytes() );
-
-    entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
-                    ( this, &Nic::notifyPutDone, vNicNum, e->key) );
-
-    m_sendMachine.run( entry );
-}
-
-void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"rgnNum %d\n",e->tag);
-    
-    m_memRgnM[ vNicNum ][ e->tag ] = new MemRgnEntry( vNicNum, e->iovec );
-    delete e;
-}
-
-// Merlin stuff
-bool Nic::sendNotify(int)
-{
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    
-    m_sendMachine.run();
-
-    // keep the current notifier because the sendMahcine may have changed it 
-    return true;
-}
-
-bool Nic::recvNotify(int vc)
-{
-    m_dbg.verbose(CALL_INFO,1,0,"network event available vc=%d\n",vc);
-    assert( 0 == vc );
-
-    m_recvMachine.run();
-
-    // keep the current notifier because the recvMahcine may have changed it 
-    return true;
+    while ( ! m_activeRecvM.empty() ) {
+        delete m_activeRecvM.begin()->second;
+        m_activeRecvM.erase( m_activeRecvM.begin() );
+    }
 }
 
 void Nic::RecvMachine::run()
