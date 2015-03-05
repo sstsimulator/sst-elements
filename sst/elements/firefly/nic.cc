@@ -27,11 +27,9 @@ static void print( Output& dbg, char* buf, int len );
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
+    m_sendMachine( *this, m_dbg ),
     m_recvMachine( *this, m_dbg ),
-    m_currentSend( NULL ),
-    m_txDelay( 50 ),
     m_packetId(0),
-    m_ftRadix(0),
     m_getKey(10)
 {
     m_myNodeId = params.find_integer("nid", -1);
@@ -45,24 +43,25 @@ Nic::Nic(ComponentId_t id, Params &params) :
        (Output::output_location_t)params.find_integer("debug", 0));
 
     int rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
-    m_txDelay =      params.find_integer( "txDelay_ns", 50 );
+    int txDelay =      params.find_integer( "txDelay_ns", 50 );
 
     UnitAlgebra xxx( params.find_string( "packetSize" ) );
+    int packetSizeInBytes;
     if ( xxx.hasUnits( "B" ) ) {
-        m_packetSizeInBytes = xxx.getRoundedValue(); 
+        packetSizeInBytes = xxx.getRoundedValue(); 
     } else if ( xxx.hasUnits( "b" ) ) {
-        m_packetSizeInBytes = xxx.getRoundedValue() / 8; 
+        packetSizeInBytes = xxx.getRoundedValue() / 8; 
     } else {
         assert(0);
     }
-	m_packetSizeInBits = m_packetSizeInBytes * 8;
+	int packetSizeInBits = packetSizeInBytes * 8;
 
 	UnitAlgebra buf_size( params.find_string("buffer_size") );
 	UnitAlgebra link_bw( params.find_string("link_bw") );
 
     m_dbg.verbose(CALL_INFO,1,0,"id=%d buffer_size=%s link_bw=%s "
 			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
-			link_bw.toString().c_str(),m_packetSizeInBytes);
+			link_bw.toString().c_str(), packetSizeInBytes);
 
     m_linkControl = (Merlin::LinkControl*)loadSubComponent(
                     params.find_string("module"), this, params);
@@ -93,6 +92,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find_string("corePortName","core") ) );
     }
     m_recvMachine.init( m_vNicV.size(), rxMatchDelay );
+    m_sendMachine.init( txDelay, packetSizeInBytes, packetSizeInBits );
     m_memRgnM.resize( m_vNicV.size() );
 }
 
@@ -126,12 +126,15 @@ Nic::~Nic()
     }
 #endif
 
+#if 0
+    // move to SendMachine
     while ( ! m_sendQ.empty() ) {
         delete m_sendQ.front();
         m_sendQ.pop_front();
     }
 
     if ( m_currentSend ) delete m_currentSend;
+#endif
 }
 
 Nic::VirtNic::VirtNic( Nic& nic, int _id, std::string portName ) : 
@@ -236,15 +239,6 @@ void Nic::handleVnicEvent( Event* ev, int id )
     }
 }
 
-int Nic::IdToNet( int v )
-{
-    return v;
-}
-int Nic::NetToId( int v )
-{
-    return v;
-}
-
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
@@ -256,11 +250,8 @@ void Nic::handleSelfEvent( Event *e )
         break;
 
       case SelfEvent::RunSendMachine:
-        if ( event->entry ) {
-            m_sendQ.push_back( static_cast<SendEntry*>(event->entry) ); 
-        }
         m_dbg.verbose(CALL_INFO,2,0,"ProcessSend\n");
-        processSend();
+        m_sendMachine.run( static_cast<SendEntry*>(event->entry) );
         break;
     }
 
@@ -269,47 +260,63 @@ void Nic::handleSelfEvent( Event *e )
     }
 }
 
-void Nic::schedSend( uint64_t delay ) {
-
-    SelfEvent* event = new SelfEvent;
-    event->type = SelfEvent::RunSendMachine;
-    event->entry = NULL;
-    schedEvent( event, delay );
-}
-
-void Nic::processSend()
+void Nic::SendMachine::run( SendEntry* entry )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"number pending %lu\n", m_sendQ.size() );
+    if ( entry ) {
+        m_sendQ.push_back( entry );
+        if ( WaitTX == m_state || WaitDMA == m_state || WaitDelay == m_state ) {             return;
+        } 
+    }
 
-    if ( m_currentSend ) {
-        if ( m_linkControl->spaceToSend(0,m_packetSizeInBits) ) { 
+    bool blocked = false;
+    while ( ! blocked ) {
+
+        switch ( m_state ) {
+          case Idle:
+            assert ( ! m_sendQ.empty() );
+
+            m_currentSend = m_sendQ.front();
+            m_sendQ.pop_front();
+
+            m_nic.schedEvent(
+                    new SelfEvent( SelfEvent::RunSendMachine ), m_txDelay );
+
+            blocked = true;
+            m_state = WaitDelay;
+            break; 
+
+          case WaitTX:
+            m_nic.m_linkControl->setNotifyOnSend( NULL ); 
+            // fall through
+
+          case WaitDMA:
+          case WaitDelay:
+            m_state = Sending;
+            // fall through
+
+          case Sending:
             m_currentSend = processSend( m_currentSend );
+            if ( ! m_currentSend ) {
+                if ( m_sendQ.empty() ) {
+                    blocked = true;
+                } 
+                m_state = Idle;
+            } else {
+                m_nic.m_linkControl->setNotifyOnSend( 
+                                        m_nic.m_sendNotifyFunctor );
+                blocked = true;
+                m_state = WaitTX;
+                // we are out of here waiting for the send Notifier
+            }
+            break;    
         }
-        if ( m_currentSend && !
-                    m_linkControl->spaceToSend(0,m_packetSizeInBits) )
-        { 
-            m_dbg.verbose(CALL_INFO,2,0,"set send notify\n");
-            m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
-        }
-    }
-
-    if ( ! m_currentSend && ! m_sendQ.empty() ) {
-        m_currentSend = m_sendQ.front();
-        m_sendQ.pop_front();
-        m_dbg.verbose(CALL_INFO,2,0,"new Send\n");
-        schedSend( m_txDelay );
-    }
-
-    if ( ! m_currentSend ) {
-        m_dbg.verbose(CALL_INFO,2,0,"remove send notify\n");
-        m_linkControl->setNotifyOnSend( NULL );
     }
 }
 
-Nic::SendEntry* Nic::processSend( SendEntry* entry )
+Nic::SendEntry* Nic::SendMachine::processSend( SendEntry* entry )
 {
     bool ret = false;
-    while ( m_linkControl->spaceToSend(0,m_packetSizeInBits) && entry )  
+    while ( m_nic.m_linkControl->spaceToSend(0,m_packetSizeInBits) && entry )  
     {
         MerlinFireflyEvent* ev = new MerlinFireflyEvent;
 
@@ -334,8 +341,8 @@ Nic::SendEntry* Nic::processSend( SendEntry* entry )
         ret = copyOut( m_dbg, *ev, *entry ); 
 
         print(m_dbg, &ev->buf[0], ev->buf.size() );
-        ev->setDest( IdToNet( entry->node() ) );
-        ev->setSrc( IdToNet( m_myNodeId ) );
+        ev->setDest( m_nic.IdToNet( entry->node() ) );
+        ev->setSrc( m_nic.IdToNet( m_nic.m_myNodeId ) );
         ev->setPktSize();
 
         #if 0
@@ -345,7 +352,7 @@ Nic::SendEntry* Nic::processSend( SendEntry* entry )
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",
                                                         ev->buf.size());
         assert( ev->buf.size() );
-        bool sent = m_linkControl->send( ev, 0 );
+        bool sent = m_nic.m_linkControl->send( ev, 0 );
         assert( sent );
 
         if ( ret ) {
@@ -370,9 +377,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
                     ( this, &Nic::notifySendDmaDone, vNicNum, e->key) );
     
-    m_sendQ.push_back( entry );
-
-    schedSend();
+    m_sendMachine.run( entry );
 }
 
 void Nic::pioSend( NicCmdEvent *e, int vNicNum )
@@ -385,9 +390,7 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
                     ( this, &Nic::notifySendPioDone, vNicNum, e->key) );
 
-    m_sendQ.push_back( entry );
-
-    schedSend();
+    m_sendMachine.run( entry );
 }
 
 void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
@@ -418,9 +421,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), 
                 m_getOrgnM[ getKey ]->totalBytes() );
 
-    m_sendQ.push_back( new GetOrgnEntry( vNicNum, e, getKey) );
-
-    schedSend();
+    m_sendMachine.run( new GetOrgnEntry( vNicNum, e, getKey) );
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )
@@ -435,8 +436,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
                     ( this, &Nic::notifyPutDone, vNicNum, e->key) );
 
-    m_sendQ.push_back( entry );
-    schedSend();
+    m_sendMachine.run( entry );
 }
 
 void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
@@ -452,10 +452,10 @@ bool Nic::sendNotify(int)
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     
-    schedSend();
+    m_sendMachine.run();
 
-    // remove notifier
-    return false;
+    // keep the current notifier because the sendMahcine may have changed it 
+    return true;
 }
 
 bool Nic::recvNotify(int vc)
@@ -495,7 +495,6 @@ void Nic::RecvMachine::run()
             if ( m_activeRecvM.find( m_mEvent->src ) == m_activeRecvM.end() ) {
     
                 SelfEvent* event = new SelfEvent;
-                event->entry = NULL; 
 
                 // note that m_state and enry are set by this function
                 uint64_t delay = processFirstEvent( 
@@ -789,7 +788,8 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
     return ( entry.currentVec == entry.ioVec().size() ) ;
 }
 
-bool  Nic::copyOut( Output& dbg, MerlinFireflyEvent& event, Nic::Entry& entry )
+bool  Nic::SendMachine::copyOut( Output& dbg,
+                    MerlinFireflyEvent& event, Nic::Entry& entry )
 {
     dbg.verbose(CALL_INFO,3,0,"ioVec.size()=%lu\n", entry.ioVec().size() );
 
