@@ -4,6 +4,7 @@ debug = 0
 networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "4GB/s",
+    "link_lat" : "40ns",
     "flitSize" : "8B",
     "buffer_size" : "14KB",
 }

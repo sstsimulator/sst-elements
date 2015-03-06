@@ -9,6 +9,7 @@ networkParams = {
     "topology" : "merlin." + "fattree",
     "packetSize" : "2048B",
     "link_bw" : "3.85GB/s",
+    "link_lat" : "120ns",
     "flitSize" : "8B",
     "buffer_size" : "14KB",
 }

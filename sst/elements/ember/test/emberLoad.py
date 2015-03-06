@@ -269,7 +269,7 @@ emberParams['verbose'] = emberVerbose
 print "network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
 
-sst.merlin._params["link_lat"] = "40ns"
+sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
 sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
