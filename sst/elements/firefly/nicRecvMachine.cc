@@ -20,7 +20,6 @@ static void print( Output& dbg, char* buf, int len );
 
 Nic::RecvMachine::~RecvMachine()
 {
-    // move to RecvMachine
     for ( unsigned i = 0; i < m_recvM.size(); i++ ) {
         std::map< int, std::deque<RecvEntry*> >::iterator iter;
 
@@ -38,9 +37,10 @@ Nic::RecvMachine::~RecvMachine()
     }
 }
 
-void Nic::RecvMachine::run()
+void Nic::RecvMachine::run( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,1,0,"RecvMachine\n");
+
     bool blocked = false;
     do { 
         switch ( m_state ) {
@@ -94,12 +94,19 @@ void Nic::RecvMachine::run()
           case Put:
             m_dbg.verbose(CALL_INFO,1,0,"Move\n");
             assert( m_mEvent );
-            moveEvent( m_mEvent );
+            if ( ! moveEvent( m_mEvent ) ) {
+                clearNotify();
+                m_state = WaitWrite;
+                blocked = true;
+                break; 
+            } 
+
             m_state = NeedPkt; 
             break;
 
-          case WaitMove:
-            assert(0);
+          case WaitWrite:
+            m_state = Move;
+            break;
 
           case NeedRecv: 
             m_dbg.verbose(CALL_INFO,1,0,"NeedRecv\n"); 
@@ -261,10 +268,13 @@ bool Nic::RecvMachine::findRecv( int src, MsgHdr& hdr )
     return true;
 }
 
-void Nic::RecvMachine::moveEvent( MerlinFireflyEvent* event )
+bool Nic::RecvMachine::moveEvent( MerlinFireflyEvent* event )
 {
     int src = event->src;
     m_dbg.verbose(CALL_INFO,1,0,"event has %lu bytes\n", event->buf.size() );
+    if ( ! m_nic.m_arbitrateDMA->canIWrite( event->buf.size() ) ) {
+        return false;
+    }
 
     if ( 0 == m_activeRecvM[ src ]->currentVec && 
              0 == m_activeRecvM[ src ]->currentPos  ) {
@@ -277,7 +287,6 @@ void Nic::RecvMachine::moveEvent( MerlinFireflyEvent* event )
                         m_activeRecvM[ src ]->match_len() );
     }
     long tmp = event->buf.size();
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     if ( copyIn( m_dbg, *m_activeRecvM[ src ], *event ) || 
         m_activeRecvM[src]->match_len() == 
                         m_activeRecvM[src]->currentLen ) {
@@ -304,6 +313,7 @@ void Nic::RecvMachine::moveEvent( MerlinFireflyEvent* event )
         m_dbg.verbose(CALL_INFO,1,0,"network event is done\n");
         delete event;
     }
+    return true;
 }
 
 static void print( Output& dbg, char* buf, int len )

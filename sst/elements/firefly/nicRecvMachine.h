@@ -1,6 +1,17 @@
-    class RecvMachine {
+// Copyright 2009-2014 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2014, Sandia Corporation
+// All rights reserved.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
-        enum State { NeedPkt, HavePkt, Move, WaitMove,
+class RecvMachine {
+
+        enum State { NeedPkt, HavePkt, Move, WaitWrite,
                             Put, NeedRecv } m_state;
 
       public:
@@ -25,7 +36,7 @@
         bool findRecv( int src, MsgHdr& );
         SendEntry* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
         bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-        void moveEvent( MerlinFireflyEvent* );
+        bool moveEvent( MerlinFireflyEvent* );
         size_t copyIn( Output& dbg, Nic::Entry& entry,
                     MerlinFireflyEvent& event );
 
@@ -61,4 +72,4 @@
         std::map< int, RecvEntry* >     m_activeRecvM;
 
         std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;
-    };
+};

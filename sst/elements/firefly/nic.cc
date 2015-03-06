@@ -23,8 +23,6 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-static void print( Output& dbg, char* buf, int len );
-
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
     m_sendMachine( *this, m_dbg ),
@@ -94,6 +92,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_recvMachine.init( m_vNicV.size(), rxMatchDelay );
     m_sendMachine.init( txDelay, packetSizeInBytes, packetSizeInBits );
     m_memRgnM.resize( m_vNicV.size() );
+
+    float dmaBW  = params.find_floating( "dmaBW_GBs", 10.0 ); 
+    m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW, 100000 );
 }
 
 Nic::~Nic()

@@ -1,5 +1,16 @@
-    class SendMachine {
-        enum State { Idle, Sending, WaitDelay, WaitTX, WaitDMA } m_state;
+// Copyright 2009-2014 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2014, Sandia Corporation
+// All rights reserved.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.   
+
+class SendMachine {
+        enum State { Idle, Sending, WaitDelay, WaitTX, WaitRead } m_state;
       public:
         SendMachine( Nic& nic, Output& output ) : m_state( Idle ),
             m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50) { }
@@ -14,7 +25,7 @@
         void run( SendEntry* entry = NULL);
 
       private:
-        SendEntry* processSend( SendEntry* );
+        State processSend( SendEntry* );
         bool copyOut( Output& dbg, MerlinFireflyEvent& event,
                                             Nic::Entry& entry );
 
@@ -26,4 +37,4 @@
         int                     m_txDelay;
         unsigned int            m_packetSizeInBytes;
         int                     m_packetSizeInBits;
-    };
+};

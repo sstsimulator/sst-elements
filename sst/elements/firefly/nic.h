@@ -483,9 +483,7 @@ class Nic : public SST::Component  {
 
     #include "nicSendMachine.h"
     #include "nicRecvMachine.h"
-
-    SendMachine m_sendMachine;
-    RecvMachine m_recvMachine;
+    #include "nicArbitrateDMA.h"
 
 public:
 
@@ -549,6 +547,10 @@ public:
 
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
+
+    SendMachine m_sendMachine;
+    RecvMachine m_recvMachine;
+    ArbitrateDMA* m_arbitrateDMA;
 
     std::vector< std::map< int, MemRgnEntry* > > m_memRgnM;
     std::map< int, PutRecvEntry* > m_getOrgnM;

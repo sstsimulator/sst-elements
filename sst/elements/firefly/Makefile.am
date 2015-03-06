@@ -72,6 +72,7 @@ libfirefly_la_SOURCES = \
 	nic.h \
 	nic.cc \
 	nicVirtNic.h \
+	nicArbitrateDMA.h \
 	nicSendMachine.cc \
 	nicSendMachine.h \
 	nicRecvMachine.cc \

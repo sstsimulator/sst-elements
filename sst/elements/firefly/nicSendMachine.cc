@@ -20,7 +20,6 @@ static void print( Output& dbg, char* buf, int len );
 
 Nic::SendMachine::~SendMachine() 
 {
-    // move to SendMachine
     while ( ! m_sendQ.empty() ) {
         delete m_sendQ.front();
         m_sendQ.pop_front();
@@ -31,10 +30,13 @@ Nic::SendMachine::~SendMachine()
 
 void Nic::SendMachine::run( SendEntry* entry )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"SendMachine\n");
+
     if ( entry ) {
         m_sendQ.push_back( entry );
-        if ( WaitTX == m_state || WaitDMA == m_state || WaitDelay == m_state ) {             return;
-        } 
+        if ( WaitTX == m_state || WaitRead == m_state || WaitDelay == m_state ){
+            return;
+        }
     }
 
     bool blocked = false;
@@ -55,38 +57,46 @@ void Nic::SendMachine::run( SendEntry* entry )
             break; 
 
           case WaitTX:
-            m_nic.m_linkControl->setNotifyOnSend( NULL ); 
+            m_nic.m_linkControl->setNotifyOnSend( NULL );
             // fall through
 
-          case WaitDMA:
+          case WaitRead:
           case WaitDelay:
             m_state = Sending;
             // fall through
 
           case Sending:
-            m_currentSend = processSend( m_currentSend );
-            if ( ! m_currentSend ) {
+            m_state = processSend( m_currentSend );
+            if ( Idle == m_state ) {
+                m_currentSend = NULL;
                 if ( m_sendQ.empty() ) {
                     blocked = true;
-                } 
-                m_state = Idle;
+                }
             } else {
-                m_nic.m_linkControl->setNotifyOnSend( 
+                if ( WaitTX == m_state )  {
+                    m_nic.m_linkControl->setNotifyOnSend(
                                         m_nic.m_sendNotifyFunctor );
+                }
                 blocked = true;
-                m_state = WaitTX;
-                // we are out of here waiting for the send Notifier
             }
-            break;    
+            break;
         }
     }
 }
 
-Nic::SendEntry* Nic::SendMachine::processSend( SendEntry* entry )
+Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
 {
     bool ret = false;
-    while ( m_nic.m_linkControl->spaceToSend(0,m_packetSizeInBits) && entry )  
+    while ( entry ) 
     {
+        if ( ! m_nic.m_linkControl->spaceToSend(0,m_packetSizeInBits)  ) {
+            return WaitTX;
+        }
+
+        if ( ! m_nic.m_arbitrateDMA->canIRead( m_packetSizeInBits/8 ) ) {
+            return WaitRead;
+        }
+
         MerlinFireflyEvent* ev = new MerlinFireflyEvent;
 
         if ( 0 == entry->currentVec && 0 == entry->currentPos  ) {
@@ -134,7 +144,7 @@ Nic::SendEntry* Nic::SendMachine::processSend( SendEntry* entry )
             entry = NULL;
         }
     }
-    return entry;
+    return Idle;
 }
 
 static void print( Output& dbg, char* buf, int len )
