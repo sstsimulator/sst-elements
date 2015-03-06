@@ -317,7 +317,11 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
         d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
         return false;
     }
-
+    if (!_mshrHit && (_cacheLine->getState() == IM || _cacheLine->getState() == IS)) {
+        d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
+        return false;
+    }
+    
     if(_cacheLine->isLocked()){                                 /* If user-locked then wait this lock is released to activate this event. */
         if(!processInvRequestInMSHR(_baseAddr, _event)) {
             return false;
