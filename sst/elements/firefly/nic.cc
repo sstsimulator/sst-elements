@@ -94,7 +94,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find_floating( "dmaBW_GBs", 10.0 ); 
-    m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW, 100000 );
+    float dmaContentionMult = params.find_floating( "dmaContentionMult", 0.0 );
+    m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW,
+                                    dmaContentionMult, 100000 );
 }
 
 Nic::~Nic()

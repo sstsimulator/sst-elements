@@ -13,7 +13,8 @@ class SendMachine {
         enum State { Idle, Sending, WaitDelay, WaitTX, WaitRead } m_state;
       public:
         SendMachine( Nic& nic, Output& output ) : m_state( Idle ),
-            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50) { }
+            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50),
+            m_packetId(0) { }
         ~SendMachine();
 
         void init( int txDelay, int packetSizeInBytes, int packetSizeInBits ) {
@@ -37,4 +38,5 @@ class SendMachine {
         int                     m_txDelay;
         unsigned int            m_packetSizeInBytes;
         int                     m_packetSizeInBits;
+        int                     m_packetId;
 };

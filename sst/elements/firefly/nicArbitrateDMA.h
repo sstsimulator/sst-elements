@@ -19,8 +19,10 @@ class ArbitrateDMA {
 
   public:
     enum Type { Write, Read };
-    ArbitrateDMA( Nic& nic, Output& dbg, float GBs, int bufferSize ) : 
-        m_nic(nic), m_dbg(dbg), m_GBs(GBs), m_bufferSize( bufferSize ),
+    ArbitrateDMA( Nic& nic, Output& dbg, float GBs, float contentionMult, 
+                                    int bufferSize ) : 
+        m_nic(nic), m_dbg(dbg), m_GBs(GBs), m_contentionMult( contentionMult),
+        m_bufferSize( bufferSize ),
         m_xx(2) 
     {
         for ( unsigned i = 0; i < m_xx.size(); i++ ) {
@@ -81,6 +83,8 @@ class ArbitrateDMA {
 
         updateAvail( me );
 
+        adjustOther( other, bytes ); 
+
         uint64_t delay = 0;
         if ( me.avail - bytes < 0 ) {
             me.blocked = true;
@@ -92,9 +96,14 @@ class ArbitrateDMA {
         return delay;
     }
 
+    void adjustOther( XX& xx, int bytes ) {
+        xx.avail -= (float) bytes * m_contentionMult;
+    }
+
     Nic&        m_nic;
     Output&     m_dbg;
     float       m_GBs;
+    float       m_contentionMult;
     int         m_bufferSize;
 
     std::vector<XX> m_xx;

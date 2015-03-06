@@ -64,6 +64,7 @@ static const ElementInfoParam nic_params[] = {
 	{ "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
 	{ "txDelay_ns", "Sets the delay for a send", "100"},
 	{ "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
+	{ "dmaContentionMult", "set the DMA contention mult", "100"},
 	{ "topology", "Sets the network topology", "merlin.torus"},
 	{ "fattree:loading", "Sets the number of ports on edge router connected to nodes", "8"},
 	{ "fattree:radix", "Sets the number of ports on the network switches", "16"},
