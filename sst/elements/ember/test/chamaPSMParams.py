@@ -21,8 +21,10 @@ nicParams = {
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
     "buffer_size" : networkParams['buffer_size'],
-    "rxMatchDelay_ns" : 10,
+    "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
+    "dmaBW_GBs" : 4.0,
+    "dmaContentionMult" : 0.4,
 }
 
 emberParams = {
