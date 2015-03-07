@@ -117,6 +117,7 @@ class ArielCore {
 		Statistic<uint64_t>* statSplitReadRequests;
 		Statistic<uint64_t>* statSplitWriteRequests;
 		Statistic<uint64_t>* statNoopCount;
+		Statistic<uint64_t>* statInstructionCount;
 
 		uint64_t pending_transaction_count;
 

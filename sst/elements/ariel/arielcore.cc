@@ -40,11 +40,12 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "%" PRIu32, thisCoreID);
 
-	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests", subID);
-	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests", subID);
-	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID);
-	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID);
-	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID);
+	statReadRequests  = own->registerStatistic<uint64_t>( "read_requests", subID );
+	statWriteRequests = own->registerStatistic<uint64_t>( "write_requests", subID );
+	statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
+	statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
+	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
+	statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
 
 	free(subID);
 
@@ -74,6 +75,7 @@ ArielCore::~ArielCore() {
 	delete statSplitReadRequests;
 	delete statSplitWriteRequests;
 	delete statNoopCount;
+	delete statInstructionCount;
 
 	if(NULL != cacheLink) {
 		delete cacheLink;
@@ -258,6 +260,10 @@ bool ArielCore::refillQueue() {
                     break;
                 }
             }
+
+            // Add one to our instruction counts
+	    statInstructionCount->addData(1);
+
             break;
 
         case ARIEL_NOOP:
