@@ -79,7 +79,7 @@ void DMAEngine::finish() {
 
 void DMAEngine::issueNextCommand() {
 	if(NULL != currentState) {
-		if(currentState->issueCompleted() && pendingReqs->size() == 0) {
+		if(currentState->issueCompleted() && pendingReadReqs->size() == 0) {
 			// Return to the CPU links so they know this is done
 		} else {
 			// Operation is still pending, cannot issue the next command
@@ -165,8 +165,23 @@ void DMAEngine::handleDMACommandIssue(SST::Event* ev) {
 	cmdQ->push_back(dmaEv);
 }
 
-void handleMemorySystemEvent(Interfaces::SimpleMem::Request* ev) {
+void DMAEngine::issueWriteRequest(const uint64_t writeAddr,
+	const uint64_t length, char* payload) {
 
+}
+
+void DMAEngine::handleMemorySystemEvent(Interfaces::SimpleMem::Request* ev) {
+
+	std::map<SimpleMem::Request::id_t, DMAMemoryOperation*>::iterator findEv;
+	findEv = pendingReadReqs.find(ev->getId());
+
+	if(findEv == pendingReadReqs.end()) {
+		output->fatal(CALL_INFO, -1, "Recv event but unable to find ID in table.\n");
+	}
+
+	DMAOperation* completedOp = findEv->second;
+	issueWriteRequest(currentState->getDestAddr() + completedOp->getByteOffset(),
+		completedOp->getLength(), NULL);
 }
 
 

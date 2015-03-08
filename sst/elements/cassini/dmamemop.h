@@ -17,6 +17,7 @@ public:
 
 	~DMAMemoryOperation() {}
 	uint64_t getByteOffset() const { return offset; }
+	uint64_t getLength() const { return length; }
 	bool isRead() const { return isRead; }
 	bool isWrite() const { return isWrite; }
 

@@ -42,7 +42,9 @@ private:
 
 	SST::Link* cpuSideLinks;
 	SimpleMem* cache_link;
-	std::map<SimpleMem::Request::id_t, DMAMemoryOperation*> pendingReqs;
+
+	std::vector<SimpleMem::Request::id_t> pendingWriteReqs;
+	std::map<SimpleMem::Request::id_t, DMAMemoryOperation*> pendingReadReqs;
 
 	std::deque<DMACommand*> cmdQ;
 	DMAEngineState* currentState;

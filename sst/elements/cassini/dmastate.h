@@ -24,7 +24,7 @@ public:
                 return completedIssue;
         }
 
-	bool haveAllReadsIssued() const {
+	bool allReadsIssued() const {
 		return (issuedBytes == getCommandLength());
 	}
 
