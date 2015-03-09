@@ -67,15 +67,15 @@ comp_memory.addParams({
     "backend"               : "memHierarchy.simpleMem"
 })
 
-comp_tracer = sst.Component("tracer", "simpleElementExample.simpleTracerComponent")
+comp_tracer = sst.Component("tracer", "tracerComponent.tracerComponent")
 comp_tracer.addParams({
     "clock"      : "2 Ghz", 
     "debug"      : "8",
     "statistics" : "1",
     "pageSize"   : "4096",
     "accessLatencyBins" : "10",
-    "tracePrefix" : "test_simpleTracerComponent_2_mem_ref_trace.txt",
-    "statsPrefix" : "test_simpleTracerComponent_2_mem_ref_stats.txt",
+    "tracePrefix" : "test_tracerComponent_2_mem_ref_trace.txt",
+    "statsPrefix" : "test_tracerComponent_2_mem_ref_stats.txt",
  })
 
 # define the simulation links

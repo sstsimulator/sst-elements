@@ -63,7 +63,7 @@ comp_memory.addParams({
     "backend"               : "memHierarchy.simpleMem"
 })
 
-comp_tracer = sst.Component("tracer", "simpleElementExample.simpleTracerComponent")
+comp_tracer = sst.Component("tracer", "tracerComponent.tracerComponent")
 comp_tracer.addParams({
     "clock"      : "2 Ghz", 
     "debug"      : "0",

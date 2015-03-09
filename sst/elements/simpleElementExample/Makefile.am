@@ -20,9 +20,7 @@ libsimpleElementExample_la_SOURCES = \
 	simpleRNGComponent.h \
 	simpleRNGComponent.cc \
 	simpleStatisticsComponent.h \
-	simpleStatisticsComponent.cc \
-	simpleTracerComponent.h \
-	simpleTracerComponent.cc
+	simpleStatisticsComponent.cc 
 
 EXTRA_DIST = \
     README \
@@ -32,41 +30,12 @@ EXTRA_DIST = \
     tests/test_simpleDistribComponent_gaussian.py \
     tests/test_simpleRNGComponent_mersenne.py \
     tests/test_simpleRNGComponent_marsaglia.py \
-    tests/test_simpleStatisticsComponent.py \
-    tests/test_simpleTracerComponent_1.py \
-    tests/test_simpleTracerComponent_2.py
+    tests/test_simpleStatisticsComponent.py 
 
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
 
 ##########################################################################
 ##########################################################################
 ##########################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

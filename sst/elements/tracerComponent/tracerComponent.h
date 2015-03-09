@@ -1,30 +1,37 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
-// Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2014, Sandia Corporation
-// All rights reserved.
-// 
-// This file is part of the SST software package. For license
-// information, see the LICENSE file in the top level directory of the
-// distribution.
+#ifndef _TRACERCOMPONENT_H
+#define _TRACERCOMPONENT_H
 
-#ifndef _SIMPLETRACERCOMPONENT_H
-#define _SIMPLETRACERCOMPONENT_H
-
+#include <sst/core/output.h>
+#include <sst/core/debug.h>
+#include <sst/core/event.h>
+#include <sst/core/component.h>
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
+#include <sst/core/timeLord.h>
+#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/sst_types.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
+#include <assert.h>
+#include <errno.h>
+#include <execinfo.h>
+
+#include <iostream>
+#include <fstream>
+#include <map>
 
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 namespace SST{
-namespace SimpleTracerComponent {
+namespace TRACERCOMPONENT {
 
-class simpleTracerComponent : public SST::Component {
+class tracerComponent : public SST::Component {
 public:
-    simpleTracerComponent(SST::ComponentId_t id, Params& params);
-    ~simpleTracerComponent();
+    tracerComponent(SST::ComponentId_t id, Params& params);
+    ~tracerComponent();
     void finish();
 
 private:
@@ -65,13 +72,13 @@ private:
     TimeConverter* nanoTimeConv;
 
     // Serialization
-    simpleTracerComponent();                         // for serialization only
-    simpleTracerComponent(const simpleTracerComponent&);      // do not implement
-    void operator=(const simpleTracerComponent&);    // do not implement
-}; // class simpleTracerComponent
+    tracerComponent();                         // for serialization only
+    tracerComponent(const tracerComponent&);      // do not implement
+    void operator=(const tracerComponent&);    // do not implement
+}; // class tracerComponent
 
-} // namespace SimpleTracerComponent
+} // namespace TRACERCOMPONENT
 } // namespace SST
 
-#endif /* _SIMPLETRACERCOMPONENT_H */
+#endif //_TRACERCOMPONENT_H
 

@@ -17,7 +17,6 @@
 #include "simpleDistribComponent.h"
 #include "simpleRNGComponent.h"
 #include "simpleStatisticsComponent.h"
-#include "simpleTracerComponent.h"
 
 using namespace SST;
 using namespace SST::SimpleComponent;
@@ -25,7 +24,6 @@ using namespace SST::SimpleClockerComponent;
 using namespace SST::SimpleDistribComponent;
 using namespace SST::SimpleRNGComponent;
 using namespace SST::SimpleStatisticsComponent;
-using namespace SST::SimpleTracerComponent;
 
 static Component* create_simpleComponent(SST::ComponentId_t id, SST::Params& params) 
 {
@@ -51,12 +49,6 @@ static Component* create_simpleStatisticsComponent(SST::ComponentId_t id, SST::P
 {
     return new simpleStatisticsComponent(id, params);
 }
-
-static Component* create_simpleTracerComponent(SST::ComponentId_t id, SST::Params& params) 
-{
-    return new simpleTracerComponent(id, params);
-};
-
 
 static const ElementInfoParam simpleComponent_params[] = {
     { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
@@ -99,17 +91,6 @@ static const ElementInfoParam simpleStatisticsComponent_params[] = {
     { NULL, NULL }
 };
 
-static const ElementInfoParam simpleTracerComponent_params[] = {
-    {"clock", "Frequency, same as system clock frequency", "1 Ghz"},
-    {"statsPrefix", "writes stats to statsPrefix file", ""},
-    {"tracePrefix", "writes trace to tracePrefix tracing is enable", ""},
-    {"debug", "Print debug statements with increasing verbosity [0-10]", "0"},
-    {"statistics", "0-No-stats, 1-print-stats", "0"},
-    {"pageSize", "Page Size (bytes), used for selecting number of bins for address histogram ", "4096"},
-    {"accessLatencyBins", "Number of bins for access latency histogram" "10"},
-    {NULL, NULL}
-};
-
 static const ElementInfoStatisticEnable simpleStatisticsComponent_statistics[] = {
     { "histo_U32", "Test Histogram 1 - Collecting U32 Data", 1},   // Name, Desc, Enable Level 
     { "histo_U64", "Test Histogram 2 - Collecting U64 Data", 2}, 
@@ -129,15 +110,6 @@ static const ElementInfoPort simpleComponent_ports[] = {
     {"Wlink", "Link to the simpleComponent to the West",  simpleComponent_port_events},
     {NULL, NULL, NULL}
 };
-
-const char* simpleTracerComponent_memEvent_List[] = {"MemEvent", NULL};
-
-static const ElementInfoPort simpleTracerComponent_ports[] = {
-    {"northBus", "Connect towards cpu side", simpleTracerComponent_memEvent_List},
-    {"southBus", "Connect towards memory side", simpleTracerComponent_memEvent_List},
-    {NULL, NULL, NULL}
-};
-
 
 static const ElementInfoComponent simpleElementComponents[] = {
     { "simpleComponent",                                 // Name
@@ -184,15 +156,6 @@ static const ElementInfoComponent simpleElementComponents[] = {
       NULL,                                              // Ports
       COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
       simpleStatisticsComponent_statistics               // Statistics
-    },
-    { "simpleTracerComponent",                           // Name
-      "Simple Tracer And Stats Collector Component",     // Description
-      NULL,                                              // PrintHelp
-      create_simpleTracerComponent,                      // Allocator
-      simpleTracerComponent_params,                      // Parameters
-      simpleTracerComponent_ports,                       // Ports
-      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
-      NULL                                               // Statistics
     },
     { NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}
 };

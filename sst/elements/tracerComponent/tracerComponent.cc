@@ -1,30 +1,13 @@
-// Copyright 2009-2014 Sandia Corporation. Under the terms
-// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
-// Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2014, Sandia Corporation
-// All rights reserved.
-// 
-// This file is part of the SST software package. For license
-// information, see the LICENSE file in the top level directory of the
-// distribution.
-
 #include "sst_config.h"
-#include "sst/core/serialization.h"
+#include "sst/core/element.h"
 
-#include <sst/core/debug.h>
-#include <sst/core/timeLord.h>
-#include <sst/core/interfaces/simpleMem.h>
-#include <sst/core/timeConverter.h>
-#include <sst/elements/memHierarchy/memEvent.h>
-
-#include "simpleTracerComponent.h"
+#include "tracerComponent.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
-using namespace SST::SimpleTracerComponent;
+using namespace SST::TRACERCOMPONENT;
 
 /*
   USING debug = 1 to print all status messages,
@@ -32,11 +15,11 @@ using namespace SST::SimpleTracerComponent;
 */
 
 // Constructor
-simpleTracerComponent::simpleTracerComponent( ComponentId_t id, Params& params ): Component( id ) {
+tracerComponent::tracerComponent( ComponentId_t id, Params& params ): Component( id ) {
 
     //Get Input parameters
     unsigned int debug = params.find_integer("debug", 0);
-    out = new Output("simpleTracer[@f:@l:@p] ", debug, 0, Output::STDOUT);
+    out = new Output("tracerComponent[@f:@l:@p] ", debug, 0, Output::STDOUT);
     out->debug(CALL_INFO, 1, 0, "Debugging set at %d Level\n", debug);
 
     stats = params.find_integer("statistics", 0);
@@ -49,8 +32,8 @@ simpleTracerComponent::simpleTracerComponent( ComponentId_t id, Params& params )
     out->debug(CALL_INFO, 1, 0, "Number of access latency bins set to %d\n", accessLatBins);
 
     string frequency = params.find_string("clock", "1 Ghz");
-    out->debug(CALL_INFO, 1, 0, "Registering simpleTracer clock at %s\n", frequency.c_str());
-    registerClock( frequency, new Clock::Handler<simpleTracerComponent>(this, &simpleTracerComponent::clock) );
+    out->debug(CALL_INFO, 1, 0, "Registering tracerComponent clock at %s\n", frequency.c_str());
+    registerClock( frequency, new Clock::Handler<tracerComponent>(this, &tracerComponent::clock) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
     string tracePrefix = params.find_string("tracePrefix", "");
@@ -92,7 +75,7 @@ simpleTracerComponent::simpleTracerComponent( ComponentId_t id, Params& params )
     picoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ps");
     nanoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 
-    out->debug(CALL_INFO, 1, 0, "simpleTracer initialization complete\n");
+    out->debug(CALL_INFO, 1, 0, "tracerComponent initialization complete\n");
     nbCount = 0;
     sbCount = 0;
     timestamp = 0;
@@ -100,9 +83,9 @@ simpleTracerComponent::simpleTracerComponent( ComponentId_t id, Params& params )
 } // constructor 
 
 // destructor
-simpleTracerComponent::~simpleTracerComponent() {}
+tracerComponent::~tracerComponent() {}
 
-bool simpleTracerComponent::clock(Cycle_t current){
+bool tracerComponent::clock(Cycle_t current){
     timestamp++;
 
     unsigned int pageNum = 0; 
@@ -116,7 +99,7 @@ bool simpleTracerComponent::clock(Cycle_t current){
     while((ev = northBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){ 
-             _abort(simpleTracerComponent::clock, "\nsimpleTracer received bad event.\n");
+             _abort(tracerComponent::clock, "\ntracerComponent received bad event.\n");
         }
         addr = me->getAddr();
         nbCount++;
@@ -150,7 +133,7 @@ bool simpleTracerComponent::clock(Cycle_t current){
     while((ev = southBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){
-            _abort(simpleTracerComponent::clock, "\nsimpleTracer received bad event\n");
+            _abort(tracerComponent::clock, "\ntracerComponent received bad event\n");
         }
         addr = me->getAddr();
         sbCount++;
@@ -192,7 +175,7 @@ bool simpleTracerComponent::clock(Cycle_t current){
     return false;
 } //clock
 
-void simpleTracerComponent::finish(){
+void tracerComponent::finish(){
     if(stats){
         if(writeStats){
            FinalStats(statsFile, accessLatBins);
@@ -207,7 +190,7 @@ void simpleTracerComponent::finish(){
 } // finish()
 
 
-void simpleTracerComponent::FinalStats(FILE *fp, unsigned int numBins){
+void tracerComponent::FinalStats(FILE *fp, unsigned int numBins){
     // print stats
     fprintf(fp, "FINAL STATS:\n");
     fprintf(fp, "-----------------------------------------------------------------\n");
@@ -221,7 +204,7 @@ void simpleTracerComponent::FinalStats(FILE *fp, unsigned int numBins){
     PrintAccessLatencyDistribution(fp, numBins);
 }
 
-void simpleTracerComponent::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> bucketList){
+void tracerComponent::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> bucketList){
     unsigned int count = 0;
     fprintf(fp, "Address Histogram:\n");
     fprintf(fp, "-----------------------------------------------------------------\n");
@@ -237,7 +220,7 @@ void simpleTracerComponent::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarch
     fprintf(fp, "-----------------------------------------------------------------\n\n");
 }
 
-void simpleTracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins){
+void tracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins){
 // Prints Access Latency Distribution
     unsigned int count = 0;
     unsigned int minLat = 0;
@@ -288,5 +271,50 @@ void simpleTracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned in
     fprintf(fp, "-----------------------------------------------------------------\n");
     fprintf(fp, "- Total_Events_Latency: %u\n", count);
     fprintf(fp, "-----------------------------------------------------------------\n\n");
+}
+
+
+const char * memEvent_List[] = {"MemEvent", NULL};
+
+static Component* create_tracerComponent(SST::ComponentId_t id, SST::Params& params) {
+    return new tracerComponent(id, params);
+};
+
+static const ElementInfoParam component_params[] = {
+    {"clock", "Frequency, same as system clock frequency", "1 Ghz"},
+    {"statsPrefix", "writes stats to statsPrefix file", ""},
+    {"tracePrefix", "writes trace to tracePrefix tracing is enable", ""},
+    {"debug", "Print debug statements with increasing verbosity [0-10]", "0"},
+    {"statistics", "0-No-stats, 1-print-stats", "0"},
+    {"pageSize", "Page Size (bytes), used for selecting number of bins for address histogram ", "4096"},
+    {"accessLatencyBins", "Number of bins for access latency histogram" "10"},
+    {NULL, NULL}
+};
+
+static const ElementInfoPort component_ports[] = {
+    {"northBus", "Connect towards cpu side", memEvent_List},
+    {"southBus", "Connect towards memory side", memEvent_List},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoComponent components[] = {
+    {
+        "tracerComponent",
+        "Simple tracer and stats collector component",
+        NULL,
+        create_tracerComponent,
+        component_params,
+        component_ports,
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    },
+    {NULL, NULL, NULL, NULL}
+};
+
+extern "C" {
+    ElementLibraryInfo tracerComponent_eli = {
+        "tracerComponent", 
+        "Simple tracer and stats collector",
+        components,
+    };
 }
 
