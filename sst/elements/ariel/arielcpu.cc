@@ -198,7 +198,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	for(uint32_t i = 0; i < core_count; ++i) {
 		sprintf(link_buffer, "cache_link_%" PRIu32, i);
 
-		cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output, 
+		cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output,
 			maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
 			memmgr, perform_checks, params);
         cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
@@ -315,7 +315,8 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 	stopTicking = false;
 	output->verbose(CALL_INFO, 16, 0, "Main processor tick, will issue to individual cores...\n");
 
-    tunnel->updateTime(getCurrentSimTimeMicro());
+        tunnel->updateTime(getCurrentSimTimeMicro());
+	tunnel->incrementCycles();
 
 	// Keep ticking unless one of the cores says it is time to stop.
 	for(uint32_t i = 0; i < core_count; ++i) {

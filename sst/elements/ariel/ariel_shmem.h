@@ -63,6 +63,7 @@ struct ArielCommand {
 struct ArielSharedData {
     size_t numCores;
     uint64_t simTime;
+    uint64_t cycles;
     volatile uint32_t child_attached;
     uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t)];
 };
@@ -81,6 +82,7 @@ public:
     {
         sharedData->numCores = numCores;
         sharedData->simTime = 0;
+	sharedData->cycles = 0;
         sharedData->child_attached = 0;
     }
 
@@ -104,6 +106,15 @@ public:
     void updateTime(uint64_t newTime)
     {
         sharedData->simTime = newTime;
+    }
+
+    /** Increment current cycle count */
+    void incrementCycles() {
+	sharedData->cycles++;
+    }
+
+    uint64_t getCycles() const {
+	return sharedData->cycles;
     }
 
     /** Return the current time (in seconds) of the simulation */
