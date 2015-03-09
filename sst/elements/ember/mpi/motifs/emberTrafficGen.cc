@@ -12,6 +12,7 @@
 
 #include <sst_config.h>
 #include "emberTrafficGen.h"
+#include <sst/core/rng/marsaglia.h>
 
 using namespace SST::Ember;
 
@@ -28,19 +29,24 @@ EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::Component* owner,
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
 
-    double mean = params.find_floating("arg.mean", 5000.0);
-    double stddev = params.find_floating("arg.stddev", 300.0 );
-    
-    m_random = new SSTGaussianDistribution( mean, stddev );
+    m_mean = params.find_floating("arg.mean", 5000.0);
+    m_stddev = params.find_floating("arg.stddev", 300.0 );
+    m_startDelay = params.find_floating("arg.startDelay", .0 );
 }
+
 void EmberTrafficGenGenerator::configure()
 {
     assert( 2 == size() );
 
+    m_random = new SSTGaussianDistribution( m_mean, m_stddev, 
+                        //new RNG::MarsagliaRNG( 11 + rank(), 79  ) );
+                        new RNG::MarsagliaRNG( 11 + rank(), jobId()  ) );
+
     if ( 0 == rank() ) {
+        GEN_DBG( 1, "startDelay %.3f ns\n",m_startDelay);
         GEN_DBG( 1, "compute time: mean %.3f ns,"
         " stdDev %.3f ns\n", m_random->getMean(), m_random->getStandardDev());
-        GEN_DBG( 1, "meesageSize %d\n", m_messageSize);
+        GEN_DBG( 1, "messageSize %d\n", m_messageSize);
     }
 }
 
@@ -52,7 +58,8 @@ bool EmberTrafficGenGenerator::generate( std::queue<EmberEvent*>& evQ)
         computeTime = 0.0;
     }
     GEN_DBG( 1, "computeTime=%.3f ns\n", computeTime );
-    enQ_compute( evQ, computeTime * 1000 );
+    enQ_compute( evQ, (computeTime + m_startDelay) * 1000 );
+    m_startDelay = 0;
 
     int other = (rank() + 1) % 2;
     enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, other, TAG,

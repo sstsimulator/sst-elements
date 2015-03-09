@@ -32,6 +32,9 @@ public:
 
 private:
     MessageResponse m_resp;
+    double  m_mean;
+    double  m_stddev;
+    double  m_startDelay;
     void*    m_sendBuf;
     void*    m_recvBuf;
     MessageRequest m_req;
