@@ -285,7 +285,7 @@ class ProcessQueuesState : StateBase< T1 >
     void processPioSendFini( _CommReq* );
 
     bool enterSend( _CommReq* );
-    bool enterRecv( _CommReq* );
+    bool enterRecv2( _CommReq* );
     bool enterSendLoop( _CommReq* );
     bool enterWait0( std::deque< FuncCtxBase* >& );
     void processQueues( std::deque< FuncCtxBase* >& );
@@ -567,7 +567,7 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
     }
     FunctorStatic_0< ProcessQueuesState, _CommReq*, bool >*  functor;
     functor = new FunctorStatic_0< ProcessQueuesState, _CommReq*, bool > 
-          ( this, &ProcessQueuesState::enterRecv, req );  
+          ( this, &ProcessQueuesState::enterRecv2, req );  
 
     setExit( exitFunctor );
 
@@ -575,7 +575,7 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
 }
 
 template< class T1 >
-bool ProcessQueuesState<T1>::enterRecv( _CommReq* req )
+bool ProcessQueuesState<T1>::enterRecv2( _CommReq* req )
 {
     if ( ! req->isBlocking() ) {
         exit();
