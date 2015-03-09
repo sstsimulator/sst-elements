@@ -62,8 +62,8 @@ class ArbitrateDMA {
             xx.avail = m_bufferSize;
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %d, delta %lu ns, "
-            "added %d \n", xx.avail, delta, add ); 
+        m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %ld, delta %lu ns, "
+            "added %ld \n", xx.avail, delta, add ); 
 		assert( xx.avail >= 0 );
     }
 
