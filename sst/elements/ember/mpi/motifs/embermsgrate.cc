@@ -22,6 +22,10 @@ EmberMsgRateGenerator::EmberMsgRateGenerator(SST::Component* owner, Params& para
     m_startTime( 0 ),
     m_stopTime( 0 ),
     m_totalTime( 0 ),
+    m_totalPostTime( 0 ),
+    m_preWaitTime( 0 ),
+    m_recvStartTime( 0 ),
+    m_recvStopTime( 0 ),
     m_loopIndex( 0 )
 {
     m_name = "MsgRate";
@@ -39,18 +43,25 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
 
     // note that the first time through start and stop are 0
     m_totalTime += m_stopTime - m_startTime;
+    if ( 0 == rank() ) {
+        m_totalPostTime += m_preWaitTime - m_startTime;
+    } else {
+        m_totalPostTime += m_recvStopTime - m_recvStartTime;
+    }
 
     // if are done printout results and exit 
     if ( m_loopIndex == m_iterations  ) {
         int totalMsgs = m_numMsgs * m_iterations;
         double tmp = (double) m_totalTime / 1000000000.0;
+        double postingLat = m_totalPostTime / totalMsgs;
         m_output->output("MsgRate: %s msgSize %" PRIu32", totalTime %.6f "
-                "sec, %.3f msg/sec, %.3f MB/s\n",
+                "sec, %.3f msg/sec, %.3f MB/s, %.0f ns/%s\n",
                         0 == rank() ? "Send" : "Recv",
                         m_msgSize,
                         tmp,
                         totalMsgs / tmp,
-                        ((double)totalMsgs*m_msgSize/1000000.0)/tmp );
+                        ((double)totalMsgs*m_msgSize/1000000.0)/tmp,
+                        postingLat, 0 == rank() ? "isend":"irecv" );
 
         return true;
     }
@@ -68,16 +79,19 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
             enQ_isend( evQ, NULL, m_msgSize, CHAR, 1, TAG,
                                                 GroupWorld, &m_reqs[i] );
         }
+        enQ_getTime( evQ, &m_preWaitTime ); 
 
         enQ_waitall( evQ, m_numMsgs, &m_reqs[0],
                                         (MessageResponse**)&m_resp[0] ); 
         enQ_getTime( evQ, &m_stopTime ); 
     } else {
 
+        enQ_getTime( evQ, &m_recvStartTime ); 
         for ( unsigned int i = 0; i < m_numMsgs; i++ ) {
             enQ_irecv( evQ, NULL, m_msgSize, CHAR, 0, TAG, 
                                                 GroupWorld, &m_reqs[i] );
         }
+        enQ_getTime( evQ, &m_recvStopTime ); 
 
         enQ_barrier( evQ, GroupWorld );
         enQ_getTime( evQ, &m_startTime ); 

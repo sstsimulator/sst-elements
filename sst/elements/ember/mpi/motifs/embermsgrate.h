@@ -32,6 +32,10 @@ private:
     uint64_t m_startTime;
     uint64_t m_stopTime;
     uint64_t m_totalTime;
+    uint64_t m_totalPostTime;
+    uint64_t m_preWaitTime;
+    uint64_t m_recvStartTime;
+    uint64_t m_recvStopTime;
     uint32_t m_loopIndex;
 
     std::vector<MessageRequest>     m_reqs;
