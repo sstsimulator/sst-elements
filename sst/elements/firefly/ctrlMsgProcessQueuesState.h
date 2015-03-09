@@ -561,7 +561,7 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
     m_pstdRcvQ.push_front( req );
 
     size_t length = req->getLength( );
-    int delay = 0;
+    uint64_t delay = obj().rxPostDelay_ns( length );
     if ( length > obj().shortMsgLength() ) {
         delay += obj().regRegionDelay( length );
     }

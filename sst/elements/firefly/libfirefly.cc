@@ -293,6 +293,7 @@ static const ElementInfoParam ctrlMsgProtocolModule_params[] = {
     {"rxSetupMod","Set the module used to calculate RX setup latency", ""},
     {"txFiniMod","Set the module used to calculate TX fini latency", ""},
     {"rxFiniMod","Set the module used to calculate RX fini latency", ""},
+    {"rxPostMod","Set the module used to calculate RX post latency", ""},
     {"rxNicDelay_ns","", "0"},
     {"txNicDelay_ns","", "0"},
     {"sendReqFiniDelay_ns","", "0"},

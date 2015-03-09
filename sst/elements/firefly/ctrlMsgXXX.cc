@@ -75,9 +75,16 @@ XXX::XXX( Component* owner, Params& params ) :
     m_rxSetupMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
     assert( m_rxSetupMod );
-    
-    m_txNicDelay = params.find_integer( "txNicDelay_ns", 100 );
-    m_rxNicDelay = params.find_integer( "rxNicDelay_ns", 100 );
+
+    tmpName = params.find_string("rxPostMod");
+    tmpParams = params.find_prefix_params("rxPostModParams.");
+    m_rxPostMod = dynamic_cast<LatencyMod*>( 
+            owner->loadModule( tmpName, tmpParams ) );  
+    assert( m_rxPostMod );
+
+    m_txNicDelay = params.find_integer( "txNicDelay_ns", 0 );
+    m_rxNicDelay = params.find_integer( "rxNicDelay_ns", 0 );
+
     m_regRegionBaseDelay_ns = params.find_integer( "regRegionBaseDelay_ns", 0 );
     m_regRegionPerPageDelay_ns = params.find_integer( "regRegionPerPageDelay_ns", 0 );
     m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 4096 );
@@ -301,7 +308,7 @@ void XXX::waitAll( int count, MP::MessageRequest req[],
 	m_processQueuesState->waitAll( count, req, resp, func );
 }
 
-void XXX::schedFunctor( FunctorBase_0<bool>* functor, int delay )
+void XXX::schedFunctor( FunctorBase_0<bool>* functor, uint64_t delay )
 {
     m_delayLink->send( delay, new DelayEvent(functor) );
 }

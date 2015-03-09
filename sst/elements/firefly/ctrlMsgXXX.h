@@ -122,18 +122,24 @@ class XXX  {
 
     void passCtrlToFunction(int delay, FunctorBase_0<bool>* );
     void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
-    void schedFunctor( FunctorBase_0<bool>*, int delay = 0 );
+    void schedFunctor( FunctorBase_0<bool>*, uint64_t delay = 0 );
 
     LatencyMod* m_txMemcpyMod;
     LatencyMod* m_rxMemcpyMod;
     LatencyMod* m_txSetupMod;
     LatencyMod* m_rxSetupMod;
+    LatencyMod* m_rxPostMod;
     LatencyMod* m_txFiniMod;
     LatencyMod* m_rxFiniMod;
 
     int txMemcpyDelay( int bytes ) {
         return m_txMemcpyMod->getLatency( bytes );
     }
+
+    int rxPostDelay_ns( int bytes ) {
+        return m_rxPostMod->getLatency( bytes );
+    } 
+
     int rxMemcpyDelay( int bytes ) {
         return m_rxMemcpyMod->getLatency( bytes );
     } 
