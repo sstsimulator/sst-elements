@@ -137,7 +137,11 @@ class XXX  {
     }
 
     int rxPostDelay_ns( int bytes ) {
-        return m_rxPostMod->getLatency( bytes );
+        if ( m_rxPostMod ) {
+            return m_rxPostMod->getLatency( bytes );
+        } else {
+            return 0;
+        }
     } 
 
     int rxMemcpyDelay( int bytes ) {

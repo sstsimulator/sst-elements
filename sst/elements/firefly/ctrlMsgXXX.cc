@@ -30,6 +30,7 @@ using namespace SST::Firefly;
 using namespace SST;
 
 XXX::XXX( Component* owner, Params& params ) :
+    m_rxPostMod( NULL ),
     m_retLink( NULL ),
     m_info( NULL ),
     m_sendState( NULL ),
@@ -77,10 +78,11 @@ XXX::XXX( Component* owner, Params& params ) :
     assert( m_rxSetupMod );
 
     tmpName = params.find_string("rxPostMod");
-    tmpParams = params.find_prefix_params("rxPostModParams.");
-    m_rxPostMod = dynamic_cast<LatencyMod*>( 
+    if ( ! tmpName.empty() ) {
+        tmpParams = params.find_prefix_params("rxPostModParams.");
+        m_rxPostMod = dynamic_cast<LatencyMod*>( 
             owner->loadModule( tmpName, tmpParams ) );  
-    assert( m_rxPostMod );
+    }
 
     m_txNicDelay = params.find_integer( "txNicDelay_ns", 0 );
     m_rxNicDelay = params.find_integer( "rxNicDelay_ns", 0 );
