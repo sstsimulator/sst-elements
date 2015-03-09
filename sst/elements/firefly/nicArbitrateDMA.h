@@ -12,7 +12,7 @@
 class ArbitrateDMA {
 
     struct XX {
-        int         avail;
+        long         avail;
         SimTime_t   lastTime;
         bool        blocked;
     };
@@ -55,7 +55,7 @@ class ArbitrateDMA {
     void updateAvail( XX& xx ) {
         SimTime_t delta = m_nic.getCurrentSimTimeNano() - xx.lastTime; 
         xx.lastTime = m_nic.getCurrentSimTimeNano();
-        int add = (float) delta * m_GBs;  
+        long add = (float) delta * m_GBs;  
         xx.avail += add; 
 
         if ( xx.avail > m_bufferSize ) {
@@ -64,6 +64,7 @@ class ArbitrateDMA {
 
         m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %d, delta %lu ns, "
             "added %d \n", xx.avail, delta, add ); 
+		assert( xx.avail >= 0 );
     }
 
     void schedWakeup( Type type, uint64_t delay) {
