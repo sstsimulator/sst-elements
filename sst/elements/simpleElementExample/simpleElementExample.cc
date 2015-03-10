@@ -17,6 +17,7 @@
 #include "simpleDistribComponent.h"
 #include "simpleRNGComponent.h"
 #include "simpleStatisticsComponent.h"
+#include "simpleMessageGeneratorComponent.h"
 
 using namespace SST;
 using namespace SST::SimpleComponent;
@@ -24,30 +25,36 @@ using namespace SST::SimpleClockerComponent;
 using namespace SST::SimpleDistribComponent;
 using namespace SST::SimpleRNGComponent;
 using namespace SST::SimpleStatisticsComponent;
+using namespace SST::SimpleMessageGeneratorComponent;
 
 static Component* create_simpleComponent(SST::ComponentId_t id, SST::Params& params) 
 {
-    return new simpleComponent( id, params );
+    return new simpleComponent(id, params);
 }
 
 static Component* create_simpleClockerComponent(SST::ComponentId_t id, SST::Params& params) 
 {
-    return new simpleClockerComponent( id, params );
+    return new simpleClockerComponent(id, params);
 }
 
 static Component* create_simpleDistribComponent(SST::ComponentId_t id, SST::Params& params) 
 {
-    return new simpleDistribComponent( id, params );
+    return new simpleDistribComponent(id, params);
 }
 
 static Component* create_simpleRNGComponent(SST::ComponentId_t id, SST::Params& params) 
 {
-    return new simpleRNGComponent( id, params );
+    return new simpleRNGComponent(id, params);
 }
 
 static Component* create_simpleStatisticsComponent(SST::ComponentId_t id, SST::Params& params)
 {
     return new simpleStatisticsComponent(id, params);
+}
+
+static Component* create_simpleMessageGeneratorComponent(SST::ComponentId_t id, SST::Params& params)
+{
+    return new simpleMessageGeneratorComponent(id, params);
 }
 
 static const ElementInfoParam simpleComponent_params[] = {
@@ -101,6 +108,14 @@ static const ElementInfoStatisticEnable simpleStatisticsComponent_statistics[] =
     { NULL, NULL, 0 }
 };
 
+static const ElementInfoParam simpleMessageGeneratorComponent_params[] = {
+    { "printStats", "Prints the statistics from the component", "0"},
+    { "clock", "Sets the clock for the message generator", "1GHz" },
+    { "sendcount", "Sets the number of sends in the simulation.", "1000" },
+    { "outputinfo", "Sets the level of output information", "1" },
+    { NULL, NULL, NULL }
+};
+
 static const char* simpleComponent_port_events[] = { "simpleComponent.simpleComponentEvent", NULL };
 
 static const ElementInfoPort simpleComponent_ports[] = {
@@ -109,6 +124,13 @@ static const ElementInfoPort simpleComponent_ports[] = {
     {"Elink", "Link to the simpleComponent to the East",  simpleComponent_port_events},
     {"Wlink", "Link to the simpleComponent to the West",  simpleComponent_port_events},
     {NULL, NULL, NULL}
+};
+
+static const char * simpleMessageGeneratorComponent_port_events[] = {"simpleMessageGeneratorComponent.simpleMessage", NULL};
+
+static const ElementInfoPort simpleMessageGeneratorComponent_ports[] = {
+    { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", simpleMessageGeneratorComponent_port_events },
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoComponent simpleElementComponents[] = {
@@ -156,6 +178,15 @@ static const ElementInfoComponent simpleElementComponents[] = {
       NULL,                                              // Ports
       COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
       simpleStatisticsComponent_statistics               // Statistics
+    },
+    { "simpleMessageGeneratorComponent",                 // Name
+      "Messaging rate benchmark component",              // Description
+      NULL,                                              // PrintHelp
+      create_simpleMessageGeneratorComponent,            // Allocator
+      simpleMessageGeneratorComponent_params,            // Parameters
+      simpleMessageGeneratorComponent_ports,             // Ports
+      COMPONENT_CATEGORY_NETWORK,                        // Category
+      NULL                                               // Statistics
     },
     { NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}
 };

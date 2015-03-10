@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _MESSAGECOMPONENT_H
-#define _MESSAGECOMPONENT_H
+#ifndef _SIMPLEMESSAGEGENERATORCOMPONENT_H
+#define _SIMPLEMESSAGEGENERATORCOMPONENT_H
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -22,12 +22,12 @@
 #include <string>
 
 namespace SST {
-namespace MessageGenerator {
+namespace SimpleMessageGeneratorComponent {
 
-class messageGeneratorComponent : public SST::Component {
+class simpleMessageGeneratorComponent : public SST::Component {
 public:
 
-  messageGeneratorComponent(SST::ComponentId_t id, SST::Params& params);
+  simpleMessageGeneratorComponent(SST::ComponentId_t id, SST::Params& params);
   void setup()  { }
   void finish() 
   { 
@@ -37,9 +37,9 @@ public:
   }
 
 private:
-  messageGeneratorComponent();  // for serialization only
-  messageGeneratorComponent(const messageGeneratorComponent&); // do not implement
-  void operator=(const messageGeneratorComponent&); // do not implement
+  simpleMessageGeneratorComponent();  // for serialization only
+  simpleMessageGeneratorComponent(const simpleMessageGeneratorComponent&); // do not implement
+  void operator=(const simpleMessageGeneratorComponent&); // do not implement
 
   void handleEvent( SST::Event *ev );
   virtual bool tick( SST::Cycle_t );
@@ -76,7 +76,7 @@ private:
     ar & BOOST_SERIALIZATION_NVP(remote_component);
     ar & BOOST_SERIALIZATION_NVP(output_message_info);
 
-    remote_component->setFunctor(new SST::Event::Handler<messageGeneratorComponent>(this,&messageGeneratorComponent::handleEvent));
+    remote_component->setFunctor(new SST::Event::Handler<simpleMessageGeneratorComponent>(this,&simpleMessageGeneratorComponent::handleEvent));
   }
     
   BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -86,4 +86,4 @@ private:
 }
 }
 
-#endif /* _MESSAGECOMPONENT_H */
+#endif /* _SIMPLEMESSAGEGENERATORCOMPONENT_H */

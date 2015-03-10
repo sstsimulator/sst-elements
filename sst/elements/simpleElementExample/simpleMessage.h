@@ -15,7 +15,7 @@
 #include <sst/core/event.h>
 
 namespace SST {
-namespace MessageGenerator {
+namespace SimpleMessageGeneratorComponent {
 
 class simpleMessage : public SST::Event {
 public:

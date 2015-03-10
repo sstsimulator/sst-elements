@@ -20,7 +20,10 @@ libsimpleElementExample_la_SOURCES = \
 	simpleRNGComponent.h \
 	simpleRNGComponent.cc \
 	simpleStatisticsComponent.h \
-	simpleStatisticsComponent.cc 
+	simpleStatisticsComponent.cc \
+	simpleMessage.h \
+	simpleMessageGeneratorComponent.h \
+	simpleMessageGeneratorComponent.cc 
 
 EXTRA_DIST = \
     README \

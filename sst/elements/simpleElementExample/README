@@ -15,4 +15,5 @@ various component types:
 - simpleStatisticsComponent : Example on how to build/run statistics in components
                               along with example of OneShot operation.
 
+- simpleMessageGeneratorComponent : Example of a Messaging Rate benchmark component
 

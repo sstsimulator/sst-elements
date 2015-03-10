@@ -11,19 +11,16 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include "messageGeneratorComponent.h"
-
-#include <assert.h>
-
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 
 #include "simpleMessage.h"
+#include "simpleMessageGeneratorComponent.h"
 
 using namespace SST;
-using namespace SST::MessageGenerator;
+using namespace SST::SimpleMessageGeneratorComponent;
 
-messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params& params) :
+simpleMessageGeneratorComponent::simpleMessageGeneratorComponent(ComponentId_t id, Params& params) :
   Component(id) {
 
   if( params.find("clock") == params.end() ) {
@@ -54,24 +51,24 @@ messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params& p
   primaryComponentDoNotEndSim();
 
   remote_component = configureLink( "remoteComponent",
-  						new Event::Handler<messageGeneratorComponent>(this,
-  									&messageGeneratorComponent::handleEvent) );
+  						new Event::Handler<simpleMessageGeneratorComponent>(this,
+  									&simpleMessageGeneratorComponent::handleEvent) );
 
   assert(remote_component);
 
   //set our clock
   registerClock( clock_frequency_str, 
-		 new Clock::Handler<messageGeneratorComponent>(this, 
-						     &messageGeneratorComponent::tick ) );
+		 new Clock::Handler<simpleMessageGeneratorComponent>(this, 
+						     &simpleMessageGeneratorComponent::tick ) );
 }
 
-messageGeneratorComponent::messageGeneratorComponent() :
+simpleMessageGeneratorComponent::simpleMessageGeneratorComponent() :
     Component(-1)
 {
     // for serialization only
 }
 
-void messageGeneratorComponent::handleEvent(Event *event) {
+void simpleMessageGeneratorComponent::handleEvent(Event *event) {
 	message_counter_recv++;
 
 	if(output_message_info)
@@ -87,7 +84,7 @@ void messageGeneratorComponent::handleEvent(Event *event) {
 // each clock tick we do 'workPerCycle' iterations of a simple loop.
 // We have a 1/commFreq chance of sending an event of size commSize to
 // one of our neighbors.
-bool messageGeneratorComponent::tick( Cycle_t ) {
+bool simpleMessageGeneratorComponent::tick( Cycle_t ) {
 
 	simpleMessage* msg = new simpleMessage();
 	remote_component->send(msg); 
@@ -108,46 +105,5 @@ bool messageGeneratorComponent::tick( Cycle_t ) {
 // Element Libarary / Serialization stuff
     
 BOOST_CLASS_EXPORT(simpleMessage)
-BOOST_CLASS_EXPORT(messageGeneratorComponent)
+BOOST_CLASS_EXPORT(simpleMessageGeneratorComponent)
 
-static Component*
-create_messageGeneratorComponent(SST::ComponentId_t id,
-                  SST::Params& params)
-{
-    return new messageGeneratorComponent( id, params );
-}
-
-static const ElementInfoParam component_params[] = {
-    { "printStats", "Prints the statistics from the component", "0"},
-    { "clock", "Sets the clock for the message generator", "1GHz" },
-    { "sendcount", "Sets the number of sends in the simulation.", "1000" },
-    { "outputinfo", "Sets the level of output information", "1" },
-    { NULL, NULL, NULL }
-};
-
-static const char * port_events[] = {"messageGeneratorComponent.simpleMessage", NULL};
-
-static const ElementInfoPort ports[] = {
-    { "remoteComponent", "Sets the link for the message component, message components talk to each other exchanging simple messages", port_events },
-    { NULL, NULL, NULL }
-};
-
-static const ElementInfoComponent components[] = {
-    { "messageGeneratorComponent",
-      "Messaging rate benchmark component",
-      NULL,
-      create_messageGeneratorComponent,
-      component_params,
-      ports,
-      COMPONENT_CATEGORY_NETWORK
-    },
-    { NULL, NULL, NULL, NULL }
-};
-
-extern "C" {
-    ElementLibraryInfo messageGeneratorComponent_eli = {
-        "messageGeneratorComponent",
-        "Messaging rate benchmark component",
-        components,
-    };
-}
