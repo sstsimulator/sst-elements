@@ -364,10 +364,10 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		commitReadEvent(physLeftAddr, (uint32_t) leftSize);
 		commitReadEvent(physRightAddr, (uint32_t) rightSize);
 
-		//statSplitReadRequests->addData(1);
+		statSplitReadRequests->addData(1);
 	}
 
-	//statReadRequests->addData(1);
+	statReadRequests->addData(1);
 }
 
 void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
@@ -431,10 +431,10 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
 		commitWriteEvent(physLeftAddr, (uint32_t) leftSize);
 		commitWriteEvent(physRightAddr, (uint32_t) rightSize);
-		//statSplitWriteRequests->addData(1);	
+		statSplitWriteRequests->addData(1);
 	}
-	
-	//statWriteRequests->addData(1);
+
+	statWriteRequests->addData(1);
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
@@ -469,7 +469,7 @@ bool ArielCore::processNextEvent() {
 	case NOOP:
 		if(verbosity > 8) output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID);
 
-		//statNoopCount->addData(1);
+		statNoopCount->addData(1);
 		removeEvent = true;
 		break;
 
