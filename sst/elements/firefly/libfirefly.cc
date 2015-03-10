@@ -39,6 +39,7 @@
 #include <loopBack.h>
 #include <merlinEvent.h>
 #include <rangeLatMod.h>
+#include <scaleLatMod.h>
 
 using namespace Firefly;
 
@@ -156,6 +157,16 @@ load_latencyMod(Params& params)
 static const ElementInfoParam latencyModule_params[] = {
 	{"base", "base latency component", "1"},
 	{"op", "operation to perform", "1"},
+    {NULL, NULL}
+};
+
+static Module*
+load_scaleLatMod(Params& params)
+{
+    return new ScaleLatMod(params);
+}
+
+static const ElementInfoParam scaleLatModule_params[] = {
     {NULL, NULL}
 };
 
@@ -360,6 +371,15 @@ static const ElementInfoModule modules[] = {
       NULL,
       latencyModule_params,
       "SST::Firefly::LatencyMod"
+    },
+
+    { "ScaleLatMod",
+      "",
+      NULL,
+      load_scaleLatMod,
+      NULL,
+      scaleLatModule_params,
+      "SST::Firefly::ScaleLatMod"
     },
 
     { "Init",

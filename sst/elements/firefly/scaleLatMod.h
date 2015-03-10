@@ -10,17 +10,29 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_LATENCYMOD_H
-#define COMPONENTS_FIREFLY_LATENCYMOD_H
+#ifndef COMPONENTS_FIREFLY_SCALELATMOD_H
+#define COMPONENTS_FIREFLY_SCALELATMOD_H
 
-#include <sst/core/module.h>
+#include "latencyMod.h"
+#include <sst/core/component.h>
+#include <sst/core/params.h>
+#include <sst/core/unitAlgebra.h>
+
 
 namespace SST {
 namespace Firefly {
 
-class LatencyMod : public SST::Module {
+class ScaleLatMod : public LatencyMod { 
+
   public:
-    virtual size_t getLatency( size_t value ) = 0;
+
+    ScaleLatMod( Params& params) {
+    }
+    ~ScaleLatMod(){};
+
+    size_t getLatency( size_t value ) {
+        return 0;
+    }
 };
 
 }
