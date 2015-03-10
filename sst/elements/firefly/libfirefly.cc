@@ -38,7 +38,7 @@
 #include <ctrlMsg.h>
 #include <loopBack.h>
 #include <merlinEvent.h>
-#include <latencyMod.h>
+#include <rangeLatMod.h>
 
 using namespace Firefly;
 

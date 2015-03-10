@@ -24,6 +24,7 @@ libfirefly_la_SOURCES = \
 	ctrlMsgFunctors.h \
 	ctrlMsgProcessQueuesState.h \
 	latencyMod.h \
+	rangeLatMod.h \
 	loopBack.h \
 	loopBack.cc \
 	libfirefly.cc \
