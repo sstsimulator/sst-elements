@@ -39,5 +39,12 @@ AC_DEFUN([SST_HMC_CONFIG], [
   AC_SUBST([MICRON_HMCSIM_LIBS])
   AC_SUBST([MICRON_HMCSIM_LDFLAGS])
 
+  AS_IF([test "x$sst_micron_hmcsim_happy" = "xyes"], 
+	[AC_DEFINE_UNQUOTED([MICRON_HMCSIM_LIBDIR], ["$MICRON_HMCSIM_LIBDIR"],
+	[Path to the Micron HMCSim library]) ])
+  AS_IF([test "x$sst_micron_hmcsim_happy" = "xyes"], 
+	[AC_DEFINE([HAVE_MICRON_HMCSIM], [1],
+	[Defines if we have the Micron HMCSim component]) ])
+
   AS_IF([test "$sst_micron_hmcsim_happy" = "yes"], [$1], [$2])
 ])
