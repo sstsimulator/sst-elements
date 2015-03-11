@@ -36,8 +36,7 @@ comp_memory.addParams({
       "backend" : "memHierarchy.dramsim",
       "backend.system_ini" : "system.ini",
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend.mem_size" : "512",
-      "mem_size" : "512"
+      "backend.mem_size" : "512"
 })
 
 

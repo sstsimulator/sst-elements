@@ -44,7 +44,7 @@ comp_memory.addParams({
       "debug" : "",
       "backend.access_time" : "100 ns",
       "clock" : "1GHz",
-      "mem_size" : "512"
+      "backend.mem_size" : "512"
 })
 
 

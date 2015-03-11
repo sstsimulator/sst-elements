@@ -230,7 +230,6 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "debug" : "0",
       "coherence_protocol" : "MSI",
-      "mem_size" : "1024",
       "backend.mem_size" : "1024",
       "backend.access_time" : "25 ns",
       "clock" : "2GHz",

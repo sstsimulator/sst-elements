@@ -74,14 +74,13 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",
       "access_time" : "1000 ns",
-      "clock" : "1GHz",
-      "mem_size" : memSize
+      "backend.mem_size" : memSize,
+      "clock" : "1GHz"
 })
 if useDramSim == "yes":
     comp_memory.addParams({
           "backend.system_ini" : "system.ini",
           "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-	  "backend.mem_size" : memSize,
           "backend" : "memHierarchy.dramsim"
     })
 

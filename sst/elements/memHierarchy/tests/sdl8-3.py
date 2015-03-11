@@ -167,7 +167,7 @@ comp_memory.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "",
       "backend.access_time" : "100 ns",
-      "mem_size" : "512",
+      "backend.mem_size" : "512",
       "clock" : "1GHz",
       "request_width" : "64"
 })
