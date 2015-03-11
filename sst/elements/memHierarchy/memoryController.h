@@ -45,15 +45,15 @@ public:
         MemEvent*   respEvent_;
         int         respSize_;
         Command     cmd_;
-        size_t      size_;
-        size_t      amtInProcess_;
-        size_t      amtProcessed_;
+        uint64_t      size_;
+        uint64_t      amtInProcess_;
+        uint64_t      amtProcessed_;
         Status_t    status_;
         Addr        baseAddr_;
         Addr        addr_;
         bool        isWrite_;
 
-        DRAMReq(MemEvent *ev, const size_t busWidth, const size_t cacheLineSize) :
+        DRAMReq(MemEvent *ev, const uint64_t busWidth, const uint64_t cacheLineSize) :
             reqEvent_(new MemEvent(*ev)), respEvent_(NULL), amtInProcess_(0),
             amtProcessed_(0), status_(NEW){
             
@@ -66,7 +66,7 @@ public:
 
         ~DRAMReq() { delete reqEvent_; }
 
-        void setSize(size_t _size){ size_ = _size; }
+        void setSize(uint64_t _size){ size_ = _size; }
         void setAddr(Addr _baseAddr){ baseAddr_ = _baseAddr; }
 
     };
@@ -137,14 +137,14 @@ private:
     dramReq_t   requests_;
     int         backingFd_;
     uint8_t*    memBuffer_;
-    size_t      memSize_;
-    size_t      requestSize_;
+    uint64_t      memSize_;
+    uint64_t      requestSize_;
     Addr        rangeStart_;
-    size_t      numPages_;
+    uint64_t      numPages_;
     Addr        interleaveSize_;
     Addr        interleaveStep_;
-    size_t      cacheLineSize_;
-    size_t      requestWidth_;
+    uint64_t      cacheLineSize_;
+    uint64_t      requestWidth_;
     uint64_t    GetSReqReceived_;
     uint64_t    GetXReqReceived_;
     uint64_t    PutMReqReceived_;

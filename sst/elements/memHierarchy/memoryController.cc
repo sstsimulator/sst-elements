@@ -99,10 +99,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 	traceFP = NULL;
     }
 
-    uint32_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
+    const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
 
     if(params.find("mem_size") != params.end()) {
-	_abort(MemController, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.");
+	_abort(MemController, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n");
     }
 
     if(0 == backendRamSizeMB) {
@@ -110,7 +110,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     }
 
     // Convert into MBs
-    memSize_ = backendRamSizeMB * 1024 * 1024;
+    memSize_ = backendRamSizeMB * (1024*1024ul);
 
     requestWidth_           = cacheLineSize_;
     requestSize_            = cacheLineSize_;
