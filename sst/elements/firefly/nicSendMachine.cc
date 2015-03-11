@@ -128,6 +128,8 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         req->dest = m_nic.IdToNet( entry->node() );
         req->src = m_nic.IdToNet( m_nic.m_myNodeId );
         req->size_in_bits = ev->buf.size() * 8;
+        req->vn = 0;
+        req->payload = ev;
 
         #if 0
         req->setTraceType( SimpleNetwork::Request::FULL );
