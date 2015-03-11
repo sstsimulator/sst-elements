@@ -64,7 +64,7 @@ class ArbitrateDMA {
 
         m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %ld, delta %lu ns, "
             "added %ld \n", xx.avail, delta, add ); 
-		assert( xx.avail >= 0 );
+		//assert( xx.avail >= 0 );
     }
 
     void schedWakeup( Type type, uint64_t delay) {
