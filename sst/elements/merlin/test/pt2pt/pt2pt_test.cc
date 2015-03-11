@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace SST::Merlin;
+using namespace SST::Interfaces;
 
 pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     Component(cid),
@@ -66,7 +67,7 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     // Create a LinkControl object
     link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
     // link_control->configureLink(this, "rtr", tc, num_vns, buf_size, buf_size);
-    link_control->configure("rtr", link_bw, num_vns, buffer_size, buffer_size);
+    link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
 
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<pt2pt_test>(this,&pt2pt_test::clock_handler), false);
@@ -176,25 +177,29 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 	
         if ( link_control->spaceToSend(0,packet_size) ) {
             pt2pt_test_event* ev = new pt2pt_test_event();
+            SimpleNetwork::Request* req = new SimpleNetwork::Request();
+            req->payload = ev;
+            
             // if ( packets_sent == 0 ) ev->setTraceType(RtrEvent::FULL);
             // else ev->setTraceType(RtrEvent::NONE);
             if ( packets_sent == 0 ) {
                 ev->start_time = getCurrentSimTimeNano();
-                ev->setTraceType(RtrEvent::FULL);
+                req->setTraceType(SimpleNetwork::Request::FULL);
             }
-            ev->setTraceID(packets_sent);
-            ev->dest = 1;
-            ev->src = 0;
-            ev->vn = 0;
-            ev->size_in_bits = packet_size;
-            link_control->send(ev,0);
+            req->setTraceID(packets_sent);
+            req->dest = 1;
+            req->src = 0;
+            req->vn = 0;
+            req->size_in_bits = packet_size;
+            link_control->send(req,0);
             ++packets_sent;
         }
     }    
     else {
         // ID 1 is the receiver
-        pt2pt_test_event* rec_ev = static_cast<pt2pt_test_event*>(link_control->recv(0));
-        if ( rec_ev != NULL ) {
+        if ( link_control->requestToReceive(0) ) {
+            SimpleNetwork::Request* req = link_control->recv(0);
+            pt2pt_test_event* rec_ev = static_cast<pt2pt_test_event*>(req->payload);
             // cout << "received packet at " << getCurrentSimTimeNano() << endl;
             if ( packets_recd == 0 ) {
                 start_time = getCurrentSimTimeNano();
@@ -208,9 +213,11 @@ pt2pt_test::clock_handler(Cycle_t cycle)
                 // event handler that will compute the BW.
                 std::cout << getCurrentSimTimeNano() << ", " << packet_size << std::endl;
                 self_link->send(1,rec_ev); 
+                delete req;
                 return true;
             }
             else {
+                delete req;
                 delete rec_ev;
             }
         }

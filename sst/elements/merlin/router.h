@@ -21,6 +21,7 @@
 #include <sst/core/module.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/unitAlgebra.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
 using namespace SST;
 
@@ -100,8 +101,8 @@ private:
     void
     serialize(Archive & ar, const unsigned int version )
     {
-	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-	ar & BOOST_SERIALIZATION_NVP(type);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(type);
     }
 
 };
@@ -110,51 +111,59 @@ private:
 class RtrEvent : public BaseRtrEvent {
 
 public:
-    int dest;
-    int src;
-    int vn;
-    int size_in_bits;
+    SST::Interfaces::SimpleNetwork::Request* request;
+    // int dest;
+    // int src;
+    // int vn;
+    // int size_in_bits;
     
-    enum TraceType {NONE, ROUTE, FULL};
+    // enum TraceType {NONE, ROUTE, FULL};
     
-    RtrEvent() :
+    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
-        trace(NONE), injectionTime(0)
+        request(req),
+        injectionTime(0)
     {}
 
     inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
-    inline void setTraceID(int id) {traceID = id;}
-    inline void setTraceType(TraceType type) {trace = type;}
+    // inline void setTraceID(int id) {traceID = id;}
+    // inline void setTraceType(TraceType type) {trace = type;}
     virtual RtrEvent* clone(void) {
-        return new RtrEvent(*this);
+        RtrEvent *ret = new RtrEvent(*this);
+        ret->request = this->request->clone();
+        return ret;
     }
 
     inline SimTime_t getInjectionTime(void) const { return injectionTime; }
-    inline TraceType getTraceType() const {return trace;}
-    inline int getTraceID() const {return traceID;}
-
+    inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() const {return request->getTraceType();}
+    inline int getTraceID() const {return request->getTraceID();}
+    
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
     
 private:
-    TraceType trace;
-    int traceID;
+    // TraceType trace;
+    // int traceID;
     SimTime_t injectionTime;
     int size_in_flits;
+
+    RtrEvent() :
+        BaseRtrEvent(BaseRtrEvent::PACKET),
+        injectionTime(0)
+    {}
 
     friend class boost::serialization::access;
     template<class Archive>
     void
     serialize(Archive & ar, const unsigned int version )
     {
-	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-	ar & BOOST_SERIALIZATION_NVP(dest);
-	ar & BOOST_SERIALIZATION_NVP(src);
-	ar & BOOST_SERIALIZATION_NVP(vn);
-	ar & BOOST_SERIALIZATION_NVP(size_in_bits);
-	ar & BOOST_SERIALIZATION_NVP(size_in_flits);
-	ar & BOOST_SERIALIZATION_NVP(trace);
-	ar & BOOST_SERIALIZATION_NVP(traceID);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
+        ar & BOOST_SERIALIZATION_NVP(request);
+        // ar & BOOST_SERIALIZATION_NVP(dest);
+        // ar & BOOST_SERIALIZATION_NVP(src);
+        // ar & BOOST_SERIALIZATION_NVP(vn);
+        // ar & BOOST_SERIALIZATION_NVP(size_in_bits);
+        ar & BOOST_SERIALIZATION_NVP(size_in_flits);
     }
     
 };
@@ -169,8 +178,8 @@ class TopologyEvent : public BaseRtrEvent {
     void
     serialize(Archive & ar, const unsigned int version )
     {
-	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
-	ar & BOOST_SERIALIZATION_NVP(size_in_flits);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
+        ar & BOOST_SERIALIZATION_NVP(size_in_flits);
     }
     
 public:
@@ -281,18 +290,18 @@ public:
     inline void setVC(int vc_in) {vc = vc_in; return;}
     inline int getVC() {return vc;}
 
-    inline void setVN(int vn) {encap_ev->vn = vn; return;}
-    inline int getVN() {return encap_ev->vn;}
+    inline void setVN(int vn) {encap_ev->request->vn = vn; return;}
+    inline int getVN() {return encap_ev->request->vn;}
 
     inline int getFlitCount() {return encap_ev->getSizeInFlits();}
 
     inline void setEncapsulatedEvent(RtrEvent* ev) {encap_ev = ev;}
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
 
-    inline int getDest() {return encap_ev->dest;}
-    inline int getSrc() {return encap_ev->src;}
+    inline int getDest() {return encap_ev->request->dest;}
+    inline int getSrc() {return encap_ev->request->src;}
 
-    inline RtrEvent::TraceType getTraceType() {return encap_ev->getTraceType();}
+    inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
 
 

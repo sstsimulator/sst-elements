@@ -22,9 +22,13 @@
 
 
 namespace SST {
+
+namespace Interfaces {
+    class SimpleNetwork;
+}
+
 namespace Merlin {
 
-class LinkControl;
 
 class nic : public Component {
 
@@ -48,7 +52,7 @@ private:
     bool done;
     bool initialized;
     
-    LinkControl* link_control;
+    SST::Interfaces::SimpleNetwork* link_control;
 
     int last_target;
 

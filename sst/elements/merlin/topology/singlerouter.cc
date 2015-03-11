@@ -42,7 +42,7 @@ internal_router_event*
 topo_singlerouter::process_input(RtrEvent* ev)
 {
     internal_router_event* ire = new internal_router_event(ev);
-    ire->setVC(ev->vn);
+    ire->setVC(ev->request->vn);
     return ire;
 }
 

@@ -21,11 +21,12 @@
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/module.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
 
-#include <sst/elements/merlin/linkControl.h>
+//#include <sst/elements/merlin/linkControl.h>
 
 
 namespace SST {
@@ -80,16 +81,16 @@ public:
 
 
 public:
-    class MemRtrEvent : public Merlin::RtrEvent {
+    class MemRtrEvent : public Event {
     public:
         MemEvent *event;
 
         MemRtrEvent() {}
         MemRtrEvent(MemEvent *ev) :
-            Merlin::RtrEvent(), event(ev)
+            Event(), event(ev)
         { }
 
-        virtual RtrEvent* clone(void) {
+        virtual Event* clone(void) {
             MemRtrEvent *mre = new MemRtrEvent(*this);
             mre->event = new MemEvent(*event);
             return mre;
@@ -102,7 +103,7 @@ public:
             void
             serialize(Archive & ar, const unsigned int version )
             {
-                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
+                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
                 ar & BOOST_SERIALIZATION_NVP(event);
             }
     };
@@ -113,7 +114,8 @@ public:
         int address;
         ComponentType compType;
         ComponentTypeInfo compInfo;
-
+        int src;
+        
         InitMemRtrEvent() {}
         InitMemRtrEvent(const std::string &name, int addr, ComponentType type) :
             MemRtrEvent(), name(name), address(addr), compType(type)
@@ -127,7 +129,7 @@ public:
             src = addr;
         }
 
-        virtual RtrEvent* clone(void) {
+        virtual Event* clone(void) {
             return new InitMemRtrEvent(*this);
         }
 
@@ -138,7 +140,7 @@ public:
         void
         serialize(Archive & ar, const unsigned int version )
         {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
             ar & BOOST_SERIALIZATION_NVP(compType);
             ar & BOOST_SERIALIZATION_NVP(address);
             ar & BOOST_SERIALIZATION_NVP(name);
@@ -147,6 +149,7 @@ public:
             ar & BOOST_SERIALIZATION_NVP(compInfo.interleaveSize);
             ar & BOOST_SERIALIZATION_NVP(compInfo.interleaveStep);
             ar & BOOST_SERIALIZATION_NVP(compInfo.blocksize);
+            ar & BOOST_SERIALIZATION_NVP(src);
         }
     };
 
@@ -164,10 +167,11 @@ private:
     ComponentInfo ci;
     std::vector<ComponentTypeInfo> typeInfoList;
     Event::HandlerBase *recvHandler;
-    Merlin::LinkControl *link_control;
+    SST::Interfaces::SimpleNetwork *link_control;
 
     std::deque<MemRtrEvent*> initQueue;
-    std::deque<MemRtrEvent *> sendQueue;
+    // std::deque<MemRtrEvent *> sendQueue;
+    std::deque<SST::Interfaces::SimpleNetwork::Request *> sendQueue;
     int last_recv_vc;
     std::map<std::string, int> addrMap;
     /* Built during init -> available in Setup and later */

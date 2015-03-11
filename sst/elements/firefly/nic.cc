@@ -22,6 +22,7 @@
 
 using namespace SST;
 using namespace SST::Firefly;
+using namespace SST::Interfaces;
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
@@ -61,19 +62,19 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
-    m_linkControl = (Merlin::LinkControl*)loadSubComponent(
+    m_linkControl = (SimpleNetwork*)loadSubComponent(
                     params.find_string("module"), this, params);
     assert( m_linkControl );
 
-	m_linkControl->configure(params.find_string("rtrPortName","rtr"),
-                             link_bw, 1, buf_size, buf_size);
+	m_linkControl->initialize(params.find_string("rtrPortName","rtr"),
+                              link_bw, 1, buf_size, buf_size);
 
     m_recvNotifyFunctor =
-        new Merlin::LinkControl::Handler<Nic>(this,&Nic::recvNotify );
+        new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
     assert( m_recvNotifyFunctor );
 
     m_sendNotifyFunctor =
-        new Merlin::LinkControl::Handler<Nic>(this,&Nic::sendNotify );
+        new SimpleNetwork::Handler<Nic>(this,&Nic::sendNotify );
     assert( m_sendNotifyFunctor );
 
     m_selfLink = configureSelfLink("Nic::selfLink", "1 ns",

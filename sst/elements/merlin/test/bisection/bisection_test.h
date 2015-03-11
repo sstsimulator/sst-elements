@@ -63,12 +63,12 @@ private:
     
 };
 
-class bisection_test_event : public RtrEvent {
+class bisection_test_event : public Event {
 
  public:
     SimTime_t start_time;
 
-    virtual RtrEvent* clone(void)
+    virtual Event* clone(void)
     {
         return new bisection_test_event(*this);
     }

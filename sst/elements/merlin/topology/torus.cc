@@ -151,7 +151,7 @@ topo_torus::process_input(RtrEvent* ev)
 {
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(ev->vn * 2);
+    tt_ev->setVC(ev->request->vn * 2);
     
     // Need to figure out what the torus address is for easier
     // routing.
@@ -204,7 +204,7 @@ internal_router_event* topo_torus::process_InitData_input(RtrEvent* ev)
 {
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(ev->vn * 2);
+    tt_ev->setVC(ev->request->vn * 2);
     if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
         /* For broadcast, use dest_loc as src_loc */
         for ( int i = 0 ; i < dimensions ; i++ ) {

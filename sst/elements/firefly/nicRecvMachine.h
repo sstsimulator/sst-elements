@@ -32,28 +32,33 @@ class RecvMachine {
         }
 
       private:
-        uint64_t processFirstEvent( MerlinFireflyEvent&, State&, Entry* & );
+        uint64_t processFirstEvent( FireflyNetworkEvent&, State&, Entry* & );
         bool findRecv( int src, MsgHdr& );
         SendEntry* findGet( int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
         bool findPut(int src, MsgHdr& hdr, RdmaMsgHdr& rdmaHdr );
-        bool moveEvent( MerlinFireflyEvent* );
+        bool moveEvent( FireflyNetworkEvent* );
         size_t copyIn( Output& dbg, Nic::Entry& entry,
-                    MerlinFireflyEvent& event );
+                    FireflyNetworkEvent& event );
 
-        void processNeedRecv( MerlinFireflyEvent* event ) {
+        void processNeedRecv( FireflyNetworkEvent* event ) {
             MsgHdr& hdr = *(MsgHdr*) &event->buf[0];
             m_nic.notifyNeedRecv( hdr.dst_vNicId, hdr.src_vNicId,
                      event->src, hdr.tag, hdr.len);
         }
 
-        MerlinFireflyEvent* getMerlinEvent(int vc ) {
-            MerlinFireflyEvent* event =
-                static_cast<MerlinFireflyEvent*>(
-                                    m_nic.m_linkControl->recv( vc ) );
-            if ( event ) {
+        FireflyNetworkEvent* getNetworkEvent(int vc ) {
+            SST::Interfaces::SimpleNetwork::Request* req =
+                m_nic.m_linkControl->recv(vc);
+            if ( req ) {
+                FireflyNetworkEvent* event =
+                    static_cast<FireflyNetworkEvent*>(req->payload);
                 event->src = m_nic.NetToId( event->src );
+                delete req;
+                return event;
             }
-            return event;
+            else {
+                return NULL;
+            }
         }
         void setNotify() {
             m_nic.m_linkControl->setNotifyOnReceive(
@@ -67,7 +72,7 @@ class RecvMachine {
         Nic&        m_nic;
         Output&     m_dbg;
 
-        MerlinFireflyEvent* m_mEvent;
+        FireflyNetworkEvent* m_mEvent;
         int                 m_rxMatchDelay;
         std::map< int, RecvEntry* >     m_activeRecvM;
 

@@ -16,8 +16,9 @@
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
+#include <sst/core/link.h>
 
-#include "sst/elements/merlin/linkControl.h"
+//#include "sst/elements/merlin/linkControl.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
 
@@ -503,7 +504,7 @@ public:
     void get( NicCmdEvent*, int );
     void put( NicCmdEvent*, int );
     void regMemRgn( NicCmdEvent*, int );
-    void processNetworkEvent( MerlinFireflyEvent* );
+    void processNetworkEvent( FireflyNetworkEvent* );
 
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );
@@ -560,9 +561,12 @@ public:
     SST::Link*              m_selfLink;
 
     // the interface to to Merlin
-    Merlin::LinkControl*                m_linkControl;
-    Merlin::LinkControl::Handler<Nic> * m_recvNotifyFunctor;
-    Merlin::LinkControl::Handler<Nic> * m_sendNotifyFunctor;
+    // Merlin::LinkControl*                m_linkControl;
+    // Merlin::LinkControl::Handler<Nic> * m_recvNotifyFunctor;
+    // Merlin::LinkControl::Handler<Nic> * m_sendNotifyFunctor;
+    SST::Interfaces::SimpleNetwork*     m_linkControl;
+    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_recvNotifyFunctor;
+    SST::Interfaces::SimpleNetwork::Handler<Nic>* m_sendNotifyFunctor;
     bool sendNotify(int);
     bool recvNotify(int);
 

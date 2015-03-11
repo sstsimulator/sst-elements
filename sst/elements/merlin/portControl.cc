@@ -19,6 +19,7 @@
 
 using namespace SST;
 using namespace Merlin;
+using namespace Interfaces;
 
 void
 PortControl::sendTopologyEvent(TopologyEvent* ev)
@@ -536,7 +537,7 @@ PortControl::handle_input_n2r(Event* ev)
 	    // Simply put the event into the right virtual network queue
         
 	    // Need to process input and do the routing
-        int vn = event->vn;
+        int vn = event->request->vn;
         internal_router_event* rtr_event = topo->process_input(event);
         rtr_event->setCreditReturnVC(vn);
         int curr_vc = rtr_event->getVC();
@@ -550,12 +551,12 @@ PortControl::handle_input_n2r(Event* ev)
             parent->inc_vcs_with_data();
 	    }
 	    
-	    if ( event->getTraceType() != RtrEvent::NONE ) {
+	    if ( event->request->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
             std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                       << " ns: Received an event on port " << port_number
                       << " in router " << rtr_id << " ("
-                      << parent->getName() << ") on VC " << curr_vc << " from src " << event->src
-                      << " to dest " << event->dest << "." << std::endl;
+                      << parent->getName() << ") on VC " << curr_vc << " from src " << event->request->src
+                      << " to dest " << event->request->dest << "." << std::endl;
 	    }
         
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
@@ -621,7 +622,7 @@ PortControl::handle_input_r2r(Event* ev)
             parent->inc_vcs_with_data();
 	    }
 	    
-	    if ( event->getTraceType() != RtrEvent::NONE ) {
+	    if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
             std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                       << " ns: Received an event on port " << port_number
                       << " in router " << rtr_id << " ("
@@ -716,7 +717,7 @@ PortControl::handle_output_r2r(Event* ev) {
 	    port_out_credits[vc_to_send] -= size;
 	    output_buf_count[vc_to_send]++;
         
-	    if ( send_event->getTraceType() == RtrEvent::FULL ) {
+	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                       << " ns: Sent an event to router from PortControl in router: " << rtr_id
                       << " (" << parent->getName() << ") on VC " << send_event->getVC()
@@ -724,7 +725,7 @@ PortControl::handle_output_r2r(Event* ev) {
                       << " to dest " << send_event->getDest()
                       << "." << std::endl;
 	    }
-        send_bit_count->addData(send_event->getEncapsulatedEvent()->size_in_bits);
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
         send_packet_count->addData(1);
 
 	    if ( host_port ) {
@@ -827,7 +828,7 @@ PortControl::handle_output_n2r(Event* ev) {
 	    port_out_credits[send_event->getVN()] -= size;
 	    output_buf_count[vc_to_send]++;
         
-	    if ( send_event->getTraceType() == RtrEvent::FULL ) {
+	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                       << " ns: Sent an event to router from PortControl in router: " << rtr_id
                       << " (" << parent->getName() << ") on VC " << send_event->getVC()
@@ -836,7 +837,7 @@ PortControl::handle_output_n2r(Event* ev) {
                       << "." << std::endl;
 	    }
 #if 1        
-        send_bit_count->addData(send_event->getEncapsulatedEvent()->size_in_bits);
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
         send_packet_count->addData(1);
 #endif
 	    if ( host_port ) {

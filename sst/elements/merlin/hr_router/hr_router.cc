@@ -29,6 +29,7 @@
 #include "xbar_arb_lru.h"
 
 using namespace SST::Merlin;
+using namespace SST::Interfaces;
 
 int hr_router::num_routers = 0;
 int hr_router::print_debug = 0;
@@ -343,7 +344,7 @@ hr_router::clock_handler(Cycle_t cycle)
             // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
             // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
             
-            if ( ev->getTraceType() == RtrEvent::FULL ) {
+            if ( ev->getTraceType() == SimpleNetwork::Request::FULL ) {
                 std::cout << "TRACE(" << ev->getTraceID() << "): " << getCurrentSimTimeNano()
                           << " ns: Copying event (src = " << ev->getSrc() << ","
                           << " dest = "<< ev->getDest() << ") over crossbar in router " << id

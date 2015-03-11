@@ -11,18 +11,20 @@
 
 
 #include <sst_config.h>
+
+#include "linkControl.h"
+
 #include <sst/core/serialization.h>
 #include <sst/core/simulation.h>
 
 #include "merlin.h"
-#include "linkControl.h"
 
 using namespace SST;
 using namespace Merlin;
-
+using namespace Interfaces;
 
 LinkControl::LinkControl(Component* parent, Params &params) :
-    SubComponent(parent),
+    SST::Interfaces::SimpleNetwork(parent),
     rtr_link(NULL), output_timing(NULL),
     num_vns(0), id(-1),
     input_buf(NULL), output_buf(NULL),
@@ -33,10 +35,10 @@ LinkControl::LinkControl(Component* parent, Params &params) :
 {
 }
     
-void
-LinkControl::configure(std::string port_name, const UnitAlgebra& link_bw_in,
-                       int vns, const UnitAlgebra& in_buf_size,
-                       const UnitAlgebra& out_buf_size, bool enable_stats)
+bool
+LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
+                        int vns, const UnitAlgebra& in_buf_size,
+                        const UnitAlgebra& out_buf_size)
 {
     num_vns = vns;
     link_bw = link_bw_in;
@@ -85,20 +87,11 @@ LinkControl::configure(std::string port_name, const UnitAlgebra& link_bw_in,
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
     // Register statistics
-    // packet_latency = rif->registerStatistic(new HistogramStatistic<uint32_t, uint32_t>(rif, "packet_latency", 0, 10000, 250));
-    if (enable_stats) {   
-        packet_latency = registerStatistic<uint64_t>("packet_latency");
-        send_bit_count = registerStatistic<uint64_t>("send_bit_count");
-        output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
-    }
-    else {
-        Params empty;
-        std::string null_stat("sst.nullstatistic");
-        std::string empty_string("");
-        packet_latency = Simulation::getSimulation()->CreateStatistic<uint64_t>(parent, null_stat, empty_string, empty_string, empty);
-        send_bit_count = Simulation::getSimulation()->CreateStatistic<uint64_t>(parent, null_stat, empty_string, empty_string, empty);
-        output_port_stalls = Simulation::getSimulation()->CreateStatistic<uint64_t>(parent, null_stat, empty_string, empty_string, empty);
-    }
+    packet_latency = registerStatistic<uint64_t>("packet_latency");
+    send_bit_count = registerStatistic<uint64_t>("send_bit_count");
+    output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
+
+    return true;
 }
 
 
@@ -219,15 +212,26 @@ void LinkControl::init(unsigned int phase)
         // events get passed up to containing component by adding them
         // to init_events queue
         while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
-            credit_event* ce = dynamic_cast<credit_event*>(ev);
-            if ( ce != NULL ) {
-                if ( ce-> vc < num_vns ) {  // Ignore credit events for VNs I don't have
+            BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
+            switch (bev->getType()) {
+            case BaseRtrEvent::CREDIT:
+                {
+                credit_event* ce = static_cast<credit_event*>(bev);
+                if ( ce->vc < num_vns ) {  // Ignore credit events for VNs I don't have
                     rtr_credits[ce->vc] += ce->credits;
-                    // std::cout << "INIT: recieved credits: " << ce->credits << ", now have " << rtr_credits[ce->vc] << std::endl;
                 }
                 delete ev;
-            } else {
-                init_events.push_back(ev);
+                }
+                break;
+            case BaseRtrEvent::PACKET:
+                init_events.push_back(static_cast<RtrEvent*>(ev));
+                break;
+            default:
+                // This shouldn't happen.  Only RtrEvents (PACKET
+                // types) should not be handled in the LinkControl
+                // object.
+                merlin_abort_full.fatal(CALL_INFO, 1, "Reached state where a non-RtrEvent was not handled.");
+                break;
             }
         }
         break;
@@ -243,14 +247,15 @@ void LinkControl::finish(void)
 
 // Returns true if there is space in the output buffer and false
 // otherwise.
-bool LinkControl::send(RtrEvent* ev, int vn) {
-    int flits = (ev->size_in_bits + (flit_size - 1)) / flit_size;
+bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
+    RtrEvent* ev = new RtrEvent(req);
+    int flits = (ev->request->size_in_bits + (flit_size - 1)) / flit_size;
     ev->setSizeInFlits(flits);
 
     if ( outbuf_credits[vn] < flits ) return false;
 
     outbuf_credits[vn] -= flits;
-    ev->vn = vn;
+    ev->request->vn = vn;
 
     output_buf[vn].push(ev);
     if ( waiting && !have_packets ) {
@@ -260,7 +265,7 @@ bool LinkControl::send(RtrEvent* ev, int vn) {
 
     ev->setInjectionTime(parent->getCurrentSimTimeNano());
 
-    if ( ev->getTraceType() != RtrEvent::NONE ) {
+    if ( ev->getTraceType() != SimpleNetwork::Request::NONE ) {
         std::cout << "TRACE(" << ev->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                   << " ns: Sent on LinkControl in NIC: "
                   << parent->getName() << std::endl;
@@ -279,7 +284,7 @@ bool LinkControl::spaceToSend(int vn, int bits) {
 
 // Returns NULL if no event in input_buf[vn]. Otherwise, returns
 // the next event.
-RtrEvent* LinkControl::recv(int vn) {
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     if ( input_buf[vn].size() == 0 ) return NULL;
 
     RtrEvent* event = input_buf[vn].front();
@@ -295,26 +300,30 @@ RtrEvent* LinkControl::recv(int vn) {
     rtr_link->send(1,new credit_event(vn,in_ret_credits[vn]));
     in_ret_credits[vn] = 0;
 
-    if ( event->getTraceType() != RtrEvent::NONE ) {
+    if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
         std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                   << " ns: recv called on LinkControl in NIC: "
                   << parent->getName() << std::endl;
     }
 
-    return event;
+    SST::Interfaces::SimpleNetwork::Request* ret = event->request;
+    delete event;
+    return ret;
 }
 
-void LinkControl::sendInitData(RtrEvent *ev)
+void LinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    rtr_link->sendInitData(ev);
+    rtr_link->sendInitData(new RtrEvent(req));
 }
 
-Event* LinkControl::recvInitData()
+SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
 {
     if ( init_events.size() ) {
-        Event *ev = init_events.front();
+        RtrEvent *ev = init_events.front();
         init_events.pop_front();
-        return ev;
+        SST::Interfaces::SimpleNetwork::Request* ret = ev->request;
+        delete ev;
+        return ret;
     } else {
         return NULL;
     }
@@ -350,20 +359,20 @@ void LinkControl::handle_input(Event* ev)
         // std::cout << "LinkControl received an event" << std::endl;
         RtrEvent* event = static_cast<RtrEvent*>(ev);
         // Simply put the event into the right virtual network queue
-        input_buf[event->vn].push(event);
-        if ( event->getTraceType() == RtrEvent::FULL ) {
-            std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+        input_buf[event->request->vn].push(event);
+        if ( event->request->getTraceType() == SimpleNetwork::Request::FULL ) {
+            std::cout << "TRACE(" << event->request->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                       << " ns: Received an event on LinkControl in NIC: "
-                      << parent->getName() << " on VN " << event->vn << " from src " << event->src
+                      << parent->getName() << " on VN " << event->request->vn << " from src " << event->request->src
                       << "." << std::endl;
         }
         if ( receiveFunctor != NULL ) {
-            bool keep = (*receiveFunctor)(event->vn);
+            bool keep = (*receiveFunctor)(event->request->vn);
             if ( !keep) receiveFunctor = NULL;
         }
         SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
-        stats.insertPacketLatency(lat);
+        // stats.insertPacketLatency(lat);
     }
 }
 
@@ -414,7 +423,7 @@ void LinkControl::handle_output(Event* ev)
     if ( found ) {
         // Send the output to the network.
         // First set the virtual channel.
-        send_event->vn = vn_to_send;
+        send_event->request->vn = vn_to_send;
 
         // Need to return credits to the output buffer
         int size = send_event->getSizeInFlits();
@@ -434,13 +443,13 @@ void LinkControl::handle_output(Event* ev)
         rtr_link->send(send_event);
         // std::cout << "Sent packet on vn " << vn_to_send << ", credits remaining: " << rtr_credits[vn_to_send] << std::endl;
         
-        if ( send_event->getTraceType() == RtrEvent::FULL ) {
+        if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
                       << " ns: Sent an event to router from LinkControl in NIC: "
-                      << parent->getName() << " on VN " << send_event->vn << " to dest " << send_event->dest
+                      << parent->getName() << " on VN " << send_event->request->vn << " to dest " << send_event->request->dest
                       << "." << std::endl;
         }
-        send_bit_count->addData(send_event->size_in_bits);
+        send_bit_count->addData(send_event->request->size_in_bits);
         if (sendFunctor != NULL ) {
             bool keep = (*sendFunctor)(vn_to_send);
             if ( !keep ) sendFunctor = NULL;
@@ -461,23 +470,23 @@ void LinkControl::handle_output(Event* ev)
 }
 
 
-void LinkControl::PacketStats::insertPacketLatency(SimTime_t lat)
-{
-    numPkts++;
-    if ( 1 == numPkts ) {
-        minLat = lat;
-        maxLat = lat;
-        m_n = m_old = lat;
-        s_old = 0.0;
-    } else {
-        minLat = std::min(minLat, lat);
-        maxLat = std::max(maxLat, lat);
-        m_n = m_old + (lat - m_old) / numPkts;
-        s_n = s_old + (lat - m_old) * (lat - m_n);
+// void LinkControl::PacketStats::insertPacketLatency(SimTime_t lat)
+// {
+//     numPkts++;
+//     if ( 1 == numPkts ) {
+//         minLat = lat;
+//         maxLat = lat;
+//         m_n = m_old = lat;
+//         s_old = 0.0;
+//     } else {
+//         minLat = std::min(minLat, lat);
+//         maxLat = std::max(maxLat, lat);
+//         m_n = m_old + (lat - m_old) / numPkts;
+//         s_n = s_old + (lat - m_old) * (lat - m_n);
 
-        m_old = m_n;
-        s_old = s_n;
-    }
-}
+//         m_old = m_n;
+//         s_old = s_n;
+//     }
+// }
 
 

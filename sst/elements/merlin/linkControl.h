@@ -15,100 +15,98 @@
 #ifndef COMPONENTS_MERLIN_LINKCONTROL_H
 #define COMPONENTS_MERLIN_LINKCONTROL_H
 
-#include <sst/core/module.h>
-#include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
-#include <sst/core/event.h>
-#include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
 #include <sst/core/unitAlgebra.h>
 
-#include <sst/core/statapi/stataccumulator.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
-#include <queue>
-#include <cstring>
+#include <sst/core/statapi/statbase.h>
 
 #include "sst/elements/merlin/router.h"
+
+#include <queue>
 
 using namespace SST;
 
 namespace SST {
+
+class Component;
+
 namespace Merlin {
 
 // Whole class definition needs to be in the header file so that other
 // libraries can use the class to talk with the merlin routers.
 
-
 typedef std::queue<RtrEvent*> network_queue_t;
 
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
-class LinkControl : public SubComponent {
+class LinkControl : public SST::Interfaces::SimpleNetwork {
 public:
-    class PacketStats {
-    private:
-        uint64_t numPkts;
-        SimTime_t minLat;
-        SimTime_t maxLat;
-        double m_n, m_old, s_n, s_old;
-    public:
-        PacketStats() : numPkts(0), minLat(0), maxLat(0), m_n(0.0), m_old(0.0), s_n(0.0), s_old(0.0)
-        { }
-        void insertPacketLatency(SimTime_t lat);
-        uint64_t getNumPkts(void) const { return numPkts; }
-        SimTime_t getMinLatency(void) const { return minLat; }
-        SimTime_t getMaxLatency(void) const { return maxLat; }
-        double getMeanLatency(void) const { return m_n; }
-        double getVarianceLatency(void) const { return (m_n>1.0) ? (s_n/(m_n-1.0)) : 0.0; }
-        double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
-    };
+    // class PacketStats {
+    // private:
+    //     uint64_t numPkts;
+    //     SimTime_t minLat;
+    //     SimTime_t maxLat;
+    //     double m_n, m_old, s_n, s_old;
+    // public:
+    //     PacketStats() : numPkts(0), minLat(0), maxLat(0), m_n(0.0), m_old(0.0), s_n(0.0), s_old(0.0)
+    //     { }
+    //     void insertPacketLatency(SimTime_t lat);
+    //     uint64_t getNumPkts(void) const { return numPkts; }
+    //     SimTime_t getMinLatency(void) const { return minLat; }
+    //     SimTime_t getMaxLatency(void) const { return maxLat; }
+    //     double getMeanLatency(void) const { return m_n; }
+    //     double getVarianceLatency(void) const { return (m_n>1.0) ? (s_n/(m_n-1.0)) : 0.0; }
+    //     double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
+    // };
     
     
-    // Functor classes for handling callbacks
-    class HandlerBase {
-    public:
-        virtual bool operator()(int) = 0;
-        virtual ~HandlerBase() {}
-    };
+    // // Functor classes for handling callbacks
+    // class HandlerBase {
+    // public:
+    //     virtual bool operator()(int) = 0;
+    //     virtual ~HandlerBase() {}
+    // };
     
 
-    template <typename classT, typename argT = void>
-    class Handler : public HandlerBase {
-    private:
-        typedef bool (classT::*PtrMember)(int, argT);
-        classT* object;
-        const PtrMember member;
-        argT data;
+    // template <typename classT, typename argT = void>
+    // class Handler : public HandlerBase {
+    // private:
+    //     typedef bool (classT::*PtrMember)(int, argT);
+    //     classT* object;
+    //     const PtrMember member;
+    //     argT data;
         
-    public:
-        Handler( classT* const object, PtrMember member, argT data ) :
-            object(object),
-            member(member),
-            data(data)
-        {}
+    // public:
+    //     Handler( classT* const object, PtrMember member, argT data ) :
+    //         object(object),
+    //         member(member),
+    //         data(data)
+    //     {}
         
-        bool operator()(int vn) {
-            return (object->*member)(vn,data);
-        }
-    };
+    //     bool operator()(int vn) {
+    //         return (object->*member)(vn,data);
+    //     }
+    // };
     
-    template <typename classT>
-    class Handler<classT, void> : public HandlerBase {
-    private:
-        typedef bool (classT::*PtrMember)(int);
-        classT* object;
-        const PtrMember member;
+    // template <typename classT>
+    // class Handler<classT, void> : public HandlerBase {
+    // private:
+    //     typedef bool (classT::*PtrMember)(int);
+    //     classT* object;
+    //     const PtrMember member;
         
-    public:
-        Handler( classT* const object, PtrMember member ) :
-            object(object),
-            member(member)
-        {}
+    // public:
+    //     Handler( classT* const object, PtrMember member ) :
+    //         object(object),
+    //         member(member)
+    //     {}
         
-        bool operator()(int vn) {
-            return (object->*member)(vn);
-        }
-    };
+    //     bool operator()(int vn) {
+    //         return (object->*member)(vn);
+    //     }
+    // };
     
     
 private:
@@ -123,7 +121,7 @@ private:
     UnitAlgebra outbuf_size;
     int flit_size; // in bits
     
-    std::deque<Event*> init_events;
+    std::deque<RtrEvent*> init_events;
     
     // Number of virtual channels
     int num_vns;
@@ -164,7 +162,7 @@ private:
     
     // Component* parent;
 
-    PacketStats stats;
+    // PacketStats stats;
     // Statistics
     Statistic<uint64_t>* packet_latency;
     Statistic<uint64_t>* send_bit_count;
@@ -184,16 +182,16 @@ public:
     //                    int vns, int* in_buf_size, int* out_buf_size)
     // {std::cout << "Using old configureLink call, fix it!" << std::endl; exit(1);}
 
-    void configure(std::string port_name, const UnitAlgebra& link_bw_in,
-                       int vns, const UnitAlgebra& in_buf_size,
-                       const UnitAlgebra& out_buf_size, bool enable_stats = false);
+    bool initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
+                    int vns, const UnitAlgebra& in_buf_size,
+                    const UnitAlgebra& out_buf_size);
     void setup();
     void init(unsigned int phase);
     void finish();
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool send(RtrEvent* ev, int vn);
+    bool send(SST::Interfaces::SimpleNetwork::Request* req, int vn);
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
@@ -201,16 +199,16 @@ public:
 
     // Returns NULL if no event in input_buf[vn]. Otherwise, returns
     // the next event.
-    RtrEvent* recv(int vn);
+    SST::Interfaces::SimpleNetwork::Request* recv(int vn);
 
     // Returns true if there is an event in the input buffer and false 
     // otherwise.
-    inline bool eventToReceive( int vn ) { return ! input_buf[vn].empty(); }
+    bool requestToReceive( int vn ) { return ! input_buf[vn].empty(); }
 
-    void sendInitData(RtrEvent *ev);
-    Event* recvInitData();
+    void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
+    SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
-    const PacketStats& getPacketStats(void) const { return stats; }
+    // const PacketStats& getPacketStats(void) const { return stats; }
 
     inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
     inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }

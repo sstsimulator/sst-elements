@@ -28,6 +28,7 @@
 
 
 using namespace SST::Merlin;
+using namespace SST::Interfaces;
 
 #if ENABLE_FINISH_HACK
 int TrafficGen::count = 0;
@@ -95,7 +96,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     UnitAlgebra buf_size(buf_len);
     
     link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
-    link_control->configure("rtr", link_bw, num_vns, buf_len, buf_len, true);
+    link_control->initialize("rtr", link_bw, num_vns, buf_len, buf_len);
     // delete [] buf_size;
 
     packets_to_send = (uint64_t)params.find_integer("packets_to_send", 1000);
@@ -190,53 +191,53 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
 void TrafficGen::finish()
 {
     link_control->finish();
-    const LinkControl::PacketStats &stats = link_control->getPacketStats();
+//     const LinkControl::PacketStats &stats = link_control->getPacketStats();
 
-    if ( 0 == id ) {
-        out.output("id,#Sent,#Recv,#NIC_Recv,MinLat,MaxLat,AvgLat,StdDevLat\n");
-    }
+//     if ( 0 == id ) {
+//         out.output("id,#Sent,#Recv,#NIC_Recv,MinLat,MaxLat,AvgLat,StdDevLat\n");
+//     }
 
-    out.output("%d,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%lg,%lg\n",
-            id, packets_sent, packets_recd, stats.getNumPkts(),
-            stats.getMinLatency(), stats.getMaxLatency(),
-            stats.getMeanLatency(), stats.getStdDevLatency());
+//     out.output("%d,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%lg,%lg\n",
+//             id, packets_sent, packets_recd, stats.getNumPkts(),
+//             stats.getMinLatency(), stats.getMaxLatency(),
+//             stats.getMeanLatency(), stats.getStdDevLatency());
 
-#if ENABLE_FINISH_HACK
-    received += packets_recd;
-    if ( stats.getMinLatency() < min_lat ) min_lat = stats.getMinLatency();
-    if ( stats.getMaxLatency() > max_lat ) max_lat = stats.getMaxLatency();
-    mean_sum += (stats.getMeanLatency() * stats.getNumPkts());
-    count--;
+// #if ENABLE_FINISH_HACK
+//     received += packets_recd;
+//     if ( stats.getMinLatency() < min_lat ) min_lat = stats.getMinLatency();
+//     if ( stats.getMaxLatency() > max_lat ) max_lat = stats.getMaxLatency();
+//     mean_sum += (stats.getMeanLatency() * stats.getNumPkts());
+//     count--;
 
-    if ( count == 0 ) {
-        int output_recv = received;
-        uint32_t output_min = min_lat;
-        uint32_t output_max = max_lat;
-        uint32_t output_mean_sum = mean_sum;
-#if HAVE_MPI
-        boost::mpi::communicator world;
-        int input_recv = received;
-        uint32_t input_min = min_lat;
-        uint32_t input_max = max_lat;
-        uint32_t input_mean_sum = mean_sum;
-        all_reduce( world, &input_recv, 1, &output_recv, std::plus<int>() );        
-        all_reduce( world, &input_min, 1, &output_min, boost::mpi::minimum<uint32_t>() );        
-        all_reduce( world, &input_max, 1, &output_max, boost::mpi::maximum<uint32_t>() );        
-        all_reduce( world, &input_mean_sum, 1, &output_mean_sum, std::plus<uint32_t>() );        
-#endif
+//     if ( count == 0 ) {
+//         int output_recv = received;
+//         uint32_t output_min = min_lat;
+//         uint32_t output_max = max_lat;
+//         uint32_t output_mean_sum = mean_sum;
+// #if HAVE_MPI
+//         boost::mpi::communicator world;
+//         int input_recv = received;
+//         uint32_t input_min = min_lat;
+//         uint32_t input_max = max_lat;
+//         uint32_t input_mean_sum = mean_sum;
+//         all_reduce( world, &input_recv, 1, &output_recv, std::plus<int>() );        
+//         all_reduce( world, &input_min, 1, &output_min, boost::mpi::minimum<uint32_t>() );        
+//         all_reduce( world, &input_max, 1, &output_max, boost::mpi::maximum<uint32_t>() );        
+//         all_reduce( world, &input_mean_sum, 1, &output_mean_sum, std::plus<uint32_t>() );        
+// #endif
         
-        if ( Simulation::getSimulation()->getRank() == 0 ) {
-            out.output("Total packets received: %d\n",output_recv); 
-            SimTime_t finish = getCurrentSimTimeNano();
-            out.output("Rate: %lu Billion messages per second\n", (output_recv / finish));
+//         if ( Simulation::getSimulation()->getRank() == 0 ) {
+//             out.output("Total packets received: %d\n",output_recv); 
+//             SimTime_t finish = getCurrentSimTimeNano();
+//             out.output("Rate: %lu Billion messages per second\n", (output_recv / finish));
 
-            out.output("\nMin latency: %u ns\n",output_min);
-            out.output("Max latency: %u ns\n",output_max);
-            out.output("Mean latency: %u ns\n",output_mean_sum / output_recv);
+//             out.output("\nMin latency: %u ns\n",output_min);
+//             out.output("Max latency: %u ns\n",output_max);
+//             out.output("Mean latency: %u ns\n",output_mean_sum / output_recv);
 
-        }
-    }
-#endif
+//         }
+//     }
+// #endif
 }
 
 void TrafficGen::setup()
@@ -273,23 +274,26 @@ TrafficGen::clock_handler(Cycle_t cycle)
                 int target = getPacketDest();
 
 
-                RtrEvent* ev = new RtrEvent();
-
+                SimpleNetwork::Request* req = new SimpleNetwork::Request();
+                req->payload = NULL;
+                req->head = true;
+                req->tail = true;
+                
                 switch ( addressMode ) {
                 case SEQUENTIAL:
-                    ev->dest = target;
-                    ev->src = id;
+                    req->dest = target;
+                    req->src = id;
                     break;
                 case FATTREE_IP:
-                    ev->dest = fattree_ID_to_IP(target);
-                    ev->src = fattree_ID_to_IP(id);
+                    req->dest = fattree_ID_to_IP(target);
+                    req->src = fattree_ID_to_IP(id);
                     break;
                 }
-                ev->vn = 0;
+                req->vn = 0;
                 // ev->size_in_flits = packet_size;
-                ev->size_in_bits = packet_size;
+                req->size_in_bits = packet_size;
 
-                bool sent = link_control->send(ev,0);
+                bool sent = link_control->send(req,0);
                 assert( sent );
 
                 ++packets_sent;
@@ -354,10 +358,10 @@ int TrafficGen::IP_to_fattree_ID(int ip)
 bool
 TrafficGen::handle_receives(int vn)
 {
-    RtrEvent* ev = link_control->recv(vn);
-    if ( ev != NULL ) {
+    SimpleNetwork::Request* req = link_control->recv(vn);
+    if ( req != NULL ) {
         packets_recd++;
-        delete ev;
+        delete req;
     }
     return true;
 }

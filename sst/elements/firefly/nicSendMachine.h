@@ -27,7 +27,7 @@ class SendMachine {
 
       private:
         State processSend( SendEntry* );
-        bool copyOut( Output& dbg, MerlinFireflyEvent& event,
+        bool copyOut( Output& dbg, FireflyNetworkEvent& event,
                                             Nic::Entry& entry );
 
         Nic&        m_nic;

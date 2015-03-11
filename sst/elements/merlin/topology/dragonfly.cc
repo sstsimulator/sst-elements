@@ -96,7 +96,7 @@ void topo_dragonfly::route(int port, int vc, internal_router_event* ev)
 internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
 {
     dgnflyAddr dstAddr = {0, 0, 0, 0};
-    idToLocation(ev->dest, &dstAddr);
+    idToLocation(ev->request->dest, &dstAddr);
 
     switch (algorithm) {
     case MINIMAL:
@@ -114,12 +114,12 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
         break;
     }
 
-    DPRINTF("Init packet from %d to %d to %u:%u:%u:%u\n", ev->src, ev->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
+    // DPRINTF("Init packet from %d to %d to %u:%u:%u:%u\n", ev->request->src, ev->request->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
 
     topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);
-    td_ev->setVC(ev->vn * 3);
+    td_ev->setVC(ev->request->vn * 3);
     
     return td_ev;
 }
@@ -170,7 +170,7 @@ void topo_dragonfly::routeInitData(int port, internal_router_event* ev, std::vec
 internal_router_event* topo_dragonfly::process_InitData_input(RtrEvent* ev)
 {
     dgnflyAddr dstAddr;
-    idToLocation(ev->dest, &dstAddr);
+    idToLocation(ev->request->dest, &dstAddr);
     topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);

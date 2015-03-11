@@ -15,6 +15,7 @@
 
 using namespace SST;
 using namespace SST::Firefly;
+using namespace SST::Interfaces;
 
 static void print( Output& dbg, char* buf, int len );
 
@@ -97,8 +98,9 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
             return WaitRead;
         }
 
-        MerlinFireflyEvent* ev = new MerlinFireflyEvent;
-
+        FireflyNetworkEvent* ev = new FireflyNetworkEvent;
+        SimpleNetwork::Request* req = new SimpleNetwork::Request();
+        
         if ( 0 == entry->currentVec && 0 == entry->currentPos  ) {
             
             MsgHdr hdr;
@@ -120,18 +122,21 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         ret = copyOut( m_dbg, *ev, *entry ); 
 
         print(m_dbg, &ev->buf[0], ev->buf.size() );
-        ev->setDest( m_nic.IdToNet( entry->node() ) );
-        ev->setSrc( m_nic.IdToNet( m_nic.m_myNodeId ) );
-        ev->setPktSize();
+        // ev->setDest( m_nic.IdToNet( entry->node() ) );
+        // ev->setSrc( m_nic.IdToNet( m_nic.m_myNodeId ) );
+        // ev->setPktSize();
+        req->dest = m_nic.IdToNet( entry->node() );
+        req->src = m_nic.IdToNet( m_nic.m_myNodeId );
+        req->size_in_bits = ev->buf.size() * 8;
 
         #if 0
-        ev->setTraceType( Merlin::RtrEvent::FULL );
-        ev->setTraceID( m_packetId++ );
+        req->setTraceType( SimpleNetwork::Request::FULL );
+        req->setTraceID( m_packetId++ );
         #endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",
                                                         ev->buf.size());
         assert( ev->buf.size() );
-        bool sent = m_nic.m_linkControl->send( ev, 0 );
+        bool sent = m_nic.m_linkControl->send( req, 0 );
         assert( sent );
 
         if ( ret ) {
@@ -157,7 +162,7 @@ static void print( Output& dbg, char* buf, int len )
 }
 
 bool  Nic::SendMachine::copyOut( Output& dbg,
-                    MerlinFireflyEvent& event, Nic::Entry& entry )
+                    FireflyNetworkEvent& event, Nic::Entry& entry )
 {
     dbg.verbose(CALL_INFO,3,0,"ioVec.size()=%lu\n", entry.ioVec().size() );
 

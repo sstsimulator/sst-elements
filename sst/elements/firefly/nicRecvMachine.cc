@@ -47,7 +47,7 @@ void Nic::RecvMachine::run( )
           case NeedPkt:
             m_dbg.verbose(CALL_INFO,1,0,"NeedPkt\n");
 
-            m_mEvent = getMerlinEvent(0);
+            m_mEvent = getNetworkEvent(0);
             if ( ! m_mEvent ) {
                 m_dbg.verbose(CALL_INFO,1,0,"no packet available\n");
                 setNotify();
@@ -120,7 +120,7 @@ void Nic::RecvMachine::run( )
     } while ( ! blocked );
 }
 
-uint64_t Nic::RecvMachine::processFirstEvent( MerlinFireflyEvent& mEvent,
+uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
                         RecvMachine::State& state, Entry*& sEntry  )
 {
     int delay = 0;
@@ -268,7 +268,7 @@ bool Nic::RecvMachine::findRecv( int src, MsgHdr& hdr )
     return true;
 }
 
-bool Nic::RecvMachine::moveEvent( MerlinFireflyEvent* event )
+bool Nic::RecvMachine::moveEvent( FireflyNetworkEvent* event )
 {
     int src = event->src;
     m_dbg.verbose(CALL_INFO,1,0,"event has %lu bytes\n", event->buf.size() );
@@ -326,7 +326,7 @@ static void print( Output& dbg, char* buf, int len )
 }
 
 size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
-                                        MerlinFireflyEvent& event )
+                                        FireflyNetworkEvent& event )
 {
     dbg.verbose(CALL_INFO,3,0,"ioVec.size()=%lu\n", entry.ioVec().size() );
 

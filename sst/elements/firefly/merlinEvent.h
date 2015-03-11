@@ -13,47 +13,52 @@
 #ifndef COMPONENTS_FIREFLY_MERLINEVENT_H
 #define COMPONENTS_FIREFLY_MERLINEVENT_H
 
+#include <sst/core/interfaces/simpleNetwork.h>
+
 namespace SST {
 namespace Firefly {
 
 
-class MerlinFireflyEvent : public Merlin::RtrEvent {
+class FireflyNetworkEvent : public Event {
 
   public:
     uint16_t        seq;
     std::string     buf;
+    int             src;
 
-    MerlinFireflyEvent() {}
+    FireflyNetworkEvent() {}
 
-    MerlinFireflyEvent(const MerlinFireflyEvent *me) :
-        Merlin::RtrEvent()
+    FireflyNetworkEvent(const FireflyNetworkEvent *me) :
+        Event()
     {
         buf = me->buf;
         seq = me->seq;
+        src = me->src;
     }
 
-    MerlinFireflyEvent(const MerlinFireflyEvent &me) :
-        Merlin::RtrEvent()
+    FireflyNetworkEvent(const FireflyNetworkEvent &me) :
+        Event()
     {
         buf = me.buf;
         seq = me.seq;
+        src = me.src;
     }
 
-    virtual RtrEvent* clone(void)
+    virtual Event* clone(void)
     {
-        return new MerlinFireflyEvent(*this);
+        return new FireflyNetworkEvent(*this);
     }
 
-    void setDest( int _dest ) {
-        dest = _dest;
-    }
+    // void setDest( int _dest ) {
+    //     dest = _dest;
+    // }
 
-    void setSrc( int _src ) {
-        src = _src;
-    }
-    void setPktSize() {
-        size_in_bits = buf.size() * 8; 
-    }
+    // void setSrc( int _src ) {
+    //     src = _src;
+    // }
+    // void setPktSize() {
+    //     size_in_bits = buf.size() * 8; 
+    // }
 
   private:
 
@@ -62,9 +67,10 @@ class MerlinFireflyEvent : public Merlin::RtrEvent {
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(RtrEvent);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(seq);
         ar & BOOST_SERIALIZATION_NVP(buf);
+        ar & BOOST_SERIALIZATION_NVP(src);
     }
 };
 

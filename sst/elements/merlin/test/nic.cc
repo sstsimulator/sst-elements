@@ -17,14 +17,19 @@
 
 #include <sst/core/debug.h>
 #include <sst/core/element.h>
+#include <sst/core/event.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
 
-#include "sst/elements/merlin/linkControl.h"
+//#include "sst/elements/merlin/linkControl.h"
+#include <sst/core/interfaces/simpleNetwork.h>
 
+using namespace SST;
 using namespace SST::Merlin;
+using namespace SST::Interfaces;
+
 
 nic::nic(ComponentId_t cid, Params& params) :
     Component(cid),
@@ -63,10 +68,10 @@ nic::nic(ComponentId_t cid, Params& params) :
 
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
-    link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
+    link_control = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
 
     UnitAlgebra buf_size("1kB");
-    link_control->configure("rtr", link_bw, num_vns, buf_size, buf_size, true);
+    link_control->initialize("rtr", link_bw, num_vns, buf_size, buf_size);
 
     last_target = id;
     next_seq = new int[num_peers];
@@ -117,29 +122,29 @@ nic::init(unsigned int phase) {
         if ( link_control->isNetworkInitialized() ) {
             initialized = true;
             
-            RtrEvent *re = new RtrEvent();
-            re->src = id;
-            re->dest = INIT_BROADCAST_ADDR;
-
-            link_control->sendInitData(re);
+            SimpleNetwork::Request* req =
+                new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, id,
+                                           0, true, true);
+            link_control->sendInitData(req);
         }
     }
     else {
-        Event*ev = link_control->recvInitData();
-        if ( ev != NULL ) {
+        SimpleNetwork::Request* req = link_control->recvInitData();
+        if ( req != NULL ) {
             // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
-            delete ev;
+            delete req;
             initialized = true;
         }
     }
 }
 
-class MyRtrEvent : public RtrEvent {
+class MyRtrEvent : public Event {
 public:
     int seq;
     MyRtrEvent(int seq) : seq(seq)
     {}
-    virtual RtrEvent* clone(void)
+
+    Event* clone(void)
     {
         return new MyRtrEvent(*this);
     }
@@ -151,7 +156,7 @@ private:
 	void
 	serialize(Archive & ar, const unsigned int version )
 	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(RtrEvent);
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
 		ar & BOOST_SERIALIZATION_NVP(seq);
     }
 };
@@ -184,26 +189,28 @@ nic::clock_handler(Cycle_t cycle)
             last_target %= num_peers;
 
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
-
+            SimpleNetwork::Request* req = new SimpleNetwork::Request();
+            
             switch ( addressMode ) {
             case SEQUENTIAL:
-                ev->dest = last_target;
-                ev->src = id;
+                req->dest = last_target;
+                req->src = id;
                 break;
             case FATTREE_IP:
-                ev->dest = fattree_ID_to_IP(last_target);
-                ev->src = fattree_ID_to_IP(id);
+                req->dest = fattree_ID_to_IP(last_target);
+                req->src = fattree_ID_to_IP(id);
                 break;
             }
 
-            ev->vn = 0;
-            ev->size_in_bits = size_in_bits;
+            req->vn = 0;
+            req->size_in_bits = size_in_bits;
+            req->payload = ev;
             // if ( id == 0 ) {
             //     ev->setTraceType(RtrEvent::FULL);
             //     ev->setTraceID(packets_sent);
             // }
             
-            bool sent = link_control->send(ev,send_vc);
+            bool sent = link_control->send(req,send_vc);
             assert( sent );
             //std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
             packets_sent++;
@@ -219,15 +226,15 @@ nic::clock_handler(Cycle_t cycle)
 
     for ( int vn = 0 ; vn < num_vns ; vn++ ) {
         last_vn = (last_vn + 1) % num_vns; // round-robin
-        RtrEvent* rec_ev = link_control->recv(last_vn);
-        MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(rec_ev);
-        if ( ev == NULL && rec_ev != NULL ) {
-            _abort(nic, "Aieeee!\n");
-        }
-        if ( ev != NULL ) {
+        if ( link_control->requestToReceive(last_vn) ) {
+            SimpleNetwork::Request* req = link_control->recv(last_vn);
+            MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(req->payload);
+            if ( ev == NULL ) {
+                _abort(nic, "Aieeee!\n");
+            }
             // std::cout << id << " received a packet on VN" << last_vn << std::endl;
             packets_recd++;
-            int src = (addressMode == FATTREE_IP) ? IP_to_fattree_ID(ev->src) : ev->src;
+            int src = req->src;
 #if 0
             if ( next_seq[src] != ev->seq ) {
                 std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
@@ -237,6 +244,7 @@ nic::clock_handler(Cycle_t cycle)
             next_seq[src]++;
             //std::cout << cycle << ": " << id << " Received an event on vn " << rec_ev->vn << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
+            delete req;
             break;
         }
     }

@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace SST::Merlin;
+using namespace SST::Interfaces;
 
 bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     Component(cid),
@@ -64,7 +65,7 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     // Create a LinkControl object
     link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
 
-    link_control->configure("rtr", link_bw, num_vns, buffer_size, buffer_size, true);
+    link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
 
     // Set up a receive functor that will handle all incoming packets
     link_control->setNotifyOnReceive(new LinkControl::Handler<bisection_test>(this,&bisection_test::receive_handler));
@@ -111,11 +112,13 @@ bisection_test::send_handler(int vn)
     // Send as many packets as we can to fill linkControl buffers
     while ( link_control->spaceToSend(vn,packet_size) && (packets_sent < packets_to_send) ) {
         bisection_test_event* ev = new bisection_test_event();
-        ev->dest = partner_id;
-        ev->src = id;
-        ev->vn = vn;
-        ev->size_in_bits = packet_size;
-        link_control->send(ev,vn);
+        SimpleNetwork::Request* req = new SimpleNetwork::Request();
+        req->payload = ev;
+        req->dest = partner_id;
+        req->src = id;
+        req->vn = vn;
+        req->size_in_bits = packet_size;
+        link_control->send(req,vn);
         ++packets_sent;
     }
     if ( packets_sent == packets_to_send ) return false; // Done sending
@@ -125,8 +128,9 @@ bisection_test::send_handler(int vn)
 bool
 bisection_test::receive_handler(int vn)
 {
-    bisection_test_event* rec_ev = static_cast<bisection_test_event*>(link_control->recv(vn));
-    if ( rec_ev != NULL ) {
+    if ( link_control->requestToReceive(vn) ) {
+        SimpleNetwork::Request* req = link_control->recv(vn);
+        bisection_test_event* rec_ev = static_cast<bisection_test_event*>(req->payload);
         // cout << "received packet at " << getCurrentSimTimeNano() << endl;
         if ( packets_recd == 0 ) {
             start_time = getCurrentSimTimeNano();
@@ -141,9 +145,11 @@ bisection_test::receive_handler(int vn)
             // event handler that will compute the BW.
             // std::cout << getCurrentSimTimeNano() << ", " << packet_size << std::endl;
             self_link->send(1,rec_ev); 
+            delete req;
             return true;
         }
         else {
+            delete req;
             delete rec_ev;
         }
     }

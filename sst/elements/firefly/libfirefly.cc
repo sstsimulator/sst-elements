@@ -43,7 +43,7 @@
 
 using namespace Firefly;
 
-BOOST_CLASS_EXPORT(MerlinFireflyEvent)
+BOOST_CLASS_EXPORT(FireflyNetworkEvent)
 
 static const ElementInfoParam testDriver_params[] = {
 	{ NULL, NULL, NULL }

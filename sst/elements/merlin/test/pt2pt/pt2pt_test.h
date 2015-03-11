@@ -60,12 +60,12 @@ private:
     
 };
 
-class pt2pt_test_event : public RtrEvent {
+class pt2pt_test_event : public Event {
 
  public:
     SimTime_t start_time;
 
-    virtual RtrEvent* clone(void)
+    virtual Event* clone(void)
     {
         return new pt2pt_test_event(*this);
     }

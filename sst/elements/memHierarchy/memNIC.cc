@@ -23,6 +23,7 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 /* Translates a MemEvent string destination to a network address (integer) */
 int MemNIC::addrForDest(const std::string &target) const
@@ -58,9 +59,9 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
     last_recv_vc = 0;
 
     Params params; // LinkControl doesn't actually use the params
-    link_control = (Merlin::LinkControl*)comp->loadSubComponent("merlin.linkcontrol", comp, params);
+    link_control = (SimpleNetwork*)comp->loadSubComponent("merlin.linkcontrol", comp, params);
     UnitAlgebra buf_size("1KB");
-    link_control->configure(ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, buf_size, buf_size);
+    link_control->initialize(ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, buf_size, buf_size);
 
 }
 
@@ -94,23 +95,32 @@ void MemNIC::init(unsigned int phase)
     link_control->init(phase);
     if ( !phase ) {
         InitMemRtrEvent *ev;
+        SimpleNetwork::Request* req;
         if ( typeInfoList.empty() ) {
             ev = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type);
-            ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
-            link_control->sendInitData(ev);
+            req = new SimpleNetwork::Request();
+            req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
+            req->src = ci.network_addr;
+            req->payload = ev;
+            link_control->sendInitData(req);
         } else {
             for ( std::vector<ComponentTypeInfo>::iterator i = typeInfoList.begin() ;
                     i != typeInfoList.end() ; ++i ) {
                 ev = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, *i);
-                ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
-                link_control->sendInitData(ev);
+                req = new SimpleNetwork::Request();
+                req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
+                req->src = ci.network_addr;
+                req->payload = ev;
+                link_control->sendInitData(req);
             }
         }
         typeInfoSent = true;
         dbg.debug(_L10_, "Sent init data!\n");
     }
-    while ( SST::Event *ev = link_control->recvInitData() ) {
-        InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
+    // while ( SST::Event *ev = link_control->recvInitData() ) {
+    while ( SimpleNetwork::Request *req = link_control->recvInitData() ) {
+        // InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
+        InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(req->payload);
         if ( imre ) {
             addrMap[imre->name] = imre->address;
             
@@ -127,8 +137,9 @@ void MemNIC::init(unsigned int phase)
                 destinations[imre->compInfo] = imre->name;
             }
         } else {
-            initQueue.push_back(static_cast<MemRtrEvent*>(ev));
+            initQueue.push_back(static_cast<MemRtrEvent*>(req->payload));
         }
+        delete req;
     }
 
 }
@@ -143,9 +154,11 @@ void MemNIC::finish(void)
 void MemNIC::sendInitData(MemEvent *ev)
 {
     MemRtrEvent *mre = new MemRtrEvent(ev);
+    SimpleNetwork::Request* req = new SimpleNetwork::Request();
     /* TODO:  Better addressing */
-    mre->dest = Merlin::INIT_BROADCAST_ADDR;
-    link_control->sendInitData(mre);
+    req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
+    req->payload = mre;
+    link_control->sendInitData(req);
 }
 
 MemEvent* MemNIC::recvInitData(void)
@@ -180,12 +193,14 @@ bool MemNIC::clock(void)
     /* If stuff to send, and space to send it, send */
     bool empty = sendQueue.empty();
     if (!empty) {
-        MemRtrEvent *head = sendQueue.front();
+        // MemRtrEvent *head = sendQueue.front();
+        SimpleNetwork::Request *head = sendQueue.front();
         if ( link_control->spaceToSend(0, head->size_in_bits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
-                if ( head->hasClientData() ) {
-                    dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
+                if ( static_cast<MemRtrEvent*>(head->payload)->hasClientData() ) {
+                    MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->payload))->event);
+                    dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%d) [%s]\n", event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
                 }
                 sendQueue.pop_front();
             }
@@ -209,8 +224,10 @@ MemEvent* MemNIC::recv(void)
         // round-robin
         last_recv_vc = (last_recv_vc+1) % num_vcs;
 
-        MemRtrEvent *mre = (MemRtrEvent*)link_control->recv(last_recv_vc);
-        if ( NULL != mre ) {
+        SimpleNetwork::Request* req = link_control->recv(last_recv_vc);
+        if ( NULL != req ) {
+            MemRtrEvent *mre = static_cast<MemRtrEvent*>(req->payload);
+            delete req;
             if ( mre->hasClientData() ) {
                 MemEvent *deliverEvent = mre->event;
                 deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
@@ -245,13 +262,15 @@ MemEvent* MemNIC::recv(void)
 
 void MemNIC::send(MemEvent *ev)
 {
+    SimpleNetwork::Request* req = new SimpleNetwork::Request();
     MemRtrEvent *mre = new MemRtrEvent(ev);
-    mre->src = ci.network_addr;
-    mre->dest = addrForDest(ev->getDst());
-    mre->size_in_bits = 8 * getFlitSize(ev);
-    mre->vn = 0;
-
-    sendQueue.push_back(mre);
+    req->src = ci.network_addr;
+    req->dest = addrForDest(ev->getDst());
+    req->size_in_bits = 8 * getFlitSize(ev);
+    req->vn = 0;
+    req->payload = mre;
+    
+    sendQueue.push_back(req);
 }
 
 
@@ -259,9 +278,12 @@ void MemNIC::sendNewTypeInfo(const ComponentTypeInfo &cti)
 {
     for ( std::map<std::string, int>::const_iterator i = addrMap.begin() ; i != addrMap.end() ; ++i ) {
         InitMemRtrEvent *imre = new InitMemRtrEvent(comp->getName(), ci.network_addr, ci.type, cti);
-        imre->dest = i->second;
-        imre->size_in_bits = 128;  // 2* 64bit address (for a range)
-        imre->vn = 0;
-        sendQueue.push_back(imre);
+        SimpleNetwork::Request* req = new SimpleNetwork::Request();
+
+        req->dest = i->second;
+        req->size_in_bits = 128;  // 2* 64bit address (for a range)
+        req->vn = 0;
+        req->payload = imre;
+        sendQueue.push_back(req);
     }
 }
