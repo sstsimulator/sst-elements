@@ -33,7 +33,8 @@ EXTRA_DIST = \
     tests/test_simpleDistribComponent_gaussian.py \
     tests/test_simpleRNGComponent_mersenne.py \
     tests/test_simpleRNGComponent_marsaglia.py \
-    tests/test_simpleStatisticsComponent.py 
+    tests/test_simpleStatisticsComponent.py \
+    tests/test_simpleMessageGeneratorComponent.py
 
 libsimpleElementExample_la_LDFLAGS = -module -avoid-version
 
