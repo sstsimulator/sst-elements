@@ -53,15 +53,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     dbg.debug(_L10_,"---");
     
     statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
-    unsigned int ramSize    = (unsigned int) params.find_integer("mem_size", 0);
-    memSize_                = ramSize * (1024*1024ul);
     rangeStart_             = (Addr)params.find_integer("range_start", 0);
     interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize_         *= 1024;
     interleaveStep_         = (Addr)params.find_integer("interleave_step", 0);
     interleaveStep_         *= 1024;
-
-    if(0 == memSize_)       dbg.fatal(CALL_INFO,-1, "Invalid param: mem_size - must be greater than 0 and specified in MB\n");
 
     string memoryFile       = params.find_string("memory_file", NO_STRING_DEFINED);
     string clock_freq       = params.find_string("clock", "");
@@ -103,6 +99,19 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 	traceFP = NULL;
     }
 
+    uint32_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
+
+    if(params.find("mem_size") != params.end()) {
+	_abort(MemController, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.");
+    }
+
+    if(0 == backendRamSizeMB) {
+	_abort(MemController, "Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n");
+    }
+
+    // Convert into MBs
+    memSize_ = backendRamSizeMB * 1024 * 1024;
+
     requestWidth_           = cacheLineSize_;
     requestSize_            = cacheLineSize_;
     numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
@@ -112,13 +121,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     // Ensure we can extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
-    unsigned int backendRamSize = params.find_integer("backend.mem_size", 0);
-    if(0 == ramSize && 0 != backendRamSize) {
-	ramSize = backendRamSize;
-    } else if(0 != ramSize && 0 != backendRamSize && ramSize != backendRamSize) {
-	_abort(MemController, "Error - mem_size is specified in the MemController and the backend but sizes are different.\n");
-    }
-
     backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, backendParams));
 
     if (!isNetworkConnected_) {

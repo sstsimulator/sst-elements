@@ -161,7 +161,7 @@ static Component* create_MemController(ComponentId_t id, Params& params){
 }
 
 static const ElementInfoParam memctrl_params[] = {
-    {"mem_size",            "Size of physical memory in MB", "0"},
+    {"backend.mem_size",    "Size of physical memory in MB", "0"},
     {"range_start",         "Address Range where physical memory begins", "0"},
     {"interleave_size",     "Size of interleaved pages in KB.", "0"},
     {"interleave_step",     "Distance between sucessive interleaved pages on this controller in KB.", "0"},
