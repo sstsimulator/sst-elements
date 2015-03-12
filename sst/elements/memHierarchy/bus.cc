@@ -124,7 +124,7 @@ void Bus::sendSingleEvent(SST::Event* _ev){
 void Bus::mapNodeEntry(const std::string& _name, LinkId_t _id){
 	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(_name);
 	if (nameMap_.end() != it) {
-            dbg_.fatal(CALL_INFO, "Error: Bus attempting to map node that has already been mapped\n");
+            dbg_.fatal(CALL_INFO, -1, "Error: Bus attempting to map node that has already been mapped\n");
         }
     nameMap_[_name] = _id;
 }
@@ -132,7 +132,7 @@ void Bus::mapNodeEntry(const std::string& _name, LinkId_t _id){
 LinkId_t Bus::lookupNode(const std::string& _name){
 	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(_name);
     if (nameMap_.end() == it) {
-        dbg_.fatal(CALL_INFO, "Error: Bus lookup of node %s returned no mapping\n", _name.c_str());
+        dbg_.fatal(CALL_INFO, -1, "Error: Bus lookup of node %s returned no mapping\n", _name.c_str());
     }
     return it->second;
 }
