@@ -764,7 +764,7 @@ void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
 void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev){
     uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
 	
-    assert(entry->countRefs() <= 1);
+    
     if(! (entry->countRefs() <= 1)) {
 	dbg.fatal(CALL_INFO, -1, "%s Error: entry references count > 1\n", getName().c_str());
     }
