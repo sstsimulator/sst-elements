@@ -50,7 +50,9 @@ bool MSHR::exists(Addr _baseAddr){
 
 const vector<mshrType> MSHR::lookup(Addr _baseAddr){
     mshrTable::iterator it = map_.find(_baseAddr);
-    assert(it != map_.end());
+    if (it == map_.end()) {
+        d_->fatal(CALL_INFO,-1, "Error: mshr did not find entry with address 0x%" PRIx64 "\n", _baseAddr);
+    }
     vector<mshrType> res = it->second;
     return res;
 }
@@ -58,14 +60,20 @@ const vector<mshrType> MSHR::lookup(Addr _baseAddr){
 
 MemEvent* MSHR::lookupFront(Addr _baseAddr){
     mshrTable::iterator it = map_.find(_baseAddr);
-    assert(it != map_.end());
+    if (it == map_.end()) {
+        d_->fatal(CALL_INFO,-1, "Error: mshr did not find entry with address 0x%" PRIx64 "\n", _baseAddr);
+    }
     vector<mshrType> mshrEntry = it->second;
-    assert(mshrEntry.front().elem.type() == typeid(MemEvent*));
+    if (mshrEntry.front().elem.type() != typeid(MemEvent*)) {
+        d_->fatal(CALL_INFO,-1, "Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", _baseAddr);
+    }
     return boost::get<MemEvent*>(mshrEntry.front().elem);
 }
 
 bool MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr){
-    assert(_keyAddr != _pointerAddr);
+    if (_keyAddr == _pointerAddr) {
+        d_->fatal(CALL_INFO,-1, "Error: attempting to insert a self-pointer into the mshr. Addr = 0x%" PRIx64 "\n", _keyAddr);
+    }
     return insert(_keyAddr, _pointerAddr);
 }
 
@@ -172,7 +180,9 @@ bool MSHR::insertAll(Addr _baseAddr, vector<mshrType> _events){
 
 vector<mshrType> MSHR::removeAll(Addr _baseAddr){
     mshrTable::iterator it = map_.find(_baseAddr);
-    assert(it != map_.end());
+    if (it == map_.end()) {
+        d_->fatal(CALL_INFO,-1, "Error: mshr did not find entry with address 0x%" PRIx64 "\n", _baseAddr);
+    }
     vector<mshrType> res = it->second;
     map_.erase(it);
     
@@ -181,14 +191,25 @@ vector<mshrType> MSHR::removeAll(Addr _baseAddr){
         if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
     }
     
-    size_ -= trueSize; assert(size_ >= 0);
+    size_ -= trueSize; 
+    if (size_ < 0) {
+        d_->fatal(CALL_INFO, -1, "Error: mshr size < 0 after removing all elements for addr = 0x%" PRIx64 "\n", _baseAddr);
+    }
     return res;
 }
 
 MemEvent* MSHR::removeFront(Addr _baseAddr){
     mshrTable::iterator it = map_.find(_baseAddr);
-    assert(it != map_.end());
-    //assert(!it->second.empty()); assert(it->second.front().elem.type() == typeid(MemEvent*));
+    if (it == map_.end()) {
+        d_->fatal(CALL_INFO,-1, "Error: mshr did not find entry with address 0x%" PRIx64 "\n", _baseAddr);
+    }
+    //if (it->second.empty()) {
+    //  d_->fatal(CALL_INFO,-1, "Error: no front entry to remove in mshr for addr = 0x%" PRIx64 "\n", _baseAddr);
+    //}
+    //
+    // if (it->second.front().elem.type() != typeid(MemEvent*)) {
+    //     d_->fatal(CALL_INFO,-1, "Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", _baseAddr);
+    // }
     
     MemEvent* ret = boost::get<MemEvent*>(it->second.front().elem);
     
@@ -251,7 +272,10 @@ void MSHR::removeElement(Addr _baseAddr, mshrType _mshrEntry){
     res.erase(std::remove_if(res.begin(), res.end(), MSHREntryCompare(&_mshrEntry)), res.end());
 
     if(res.empty()) map_.erase(it);
-    size_--; assert(size_ >= 0);
+    size_--; 
+    if (size_ < 0) {
+        d_->fatal(CALL_INFO, -1, "Error: mshr size < 0 after removing element with address = 0x%" PRIx64 "\n", _baseAddr);
+    }
     d_->debug(_L9_, "MSHR Removed Event\n");
 }
 
