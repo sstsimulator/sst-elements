@@ -49,13 +49,17 @@ public:
     
     void setBaseAddr(Addr _baseAddr){
         baseAddr_ = _baseAddr;
-        assert(numSharers() == 0 && !ownerExists_ && state_ == V);
+        if (numSharers() != 0 || ownerExists_ || state_ != V) {
+            d_->fatal(CALL_INFO,-1,"Error setting base addr 0x%" PRIx64 " in ccLine\n",_baseAddr);
+        }
     }
     
     Addr getBaseAddr(){ return baseAddr_; }
     
     void setOwner(int _id) {
-        assert(numSharers_ == 0);
+        if(numSharers_ != 0) {
+            d_->fatal(CALL_INFO,-1,"Error: setting owner for 0x%" PRIx64 " but numSharers is %d\n", baseAddr_, numSharers_);
+        }
         ownerId_ = _id;
         ownerExists_ = true;
         d_->debug(CALL_INFO,L4,0, "Owner set.\n");
@@ -63,17 +67,26 @@ public:
     
     void clearOwner() {
         ownerExists_ = false;
-        assert(numSharers_ == 0);
+        if (numSharers_ != 0) {
+            d_->fatal(CALL_INFO, -1, "Error: clearing owner for 0x%" PRIx64 " but numSharers is %d\n", baseAddr_, numSharers_);
+        }
         ownerId_ = -1;
         d_->debug(CALL_INFO,L4,0,"Owner cleared.\n");
     }
     
     int getOwnerId(){
-        assert(ownerId_ != -1);
+        if (ownerId_ == -1) {
+            d_->fatal(CALL_INFO, -1, "Error: owner is not set in getOwnerId\n");
+        }
         return ownerId_;
     }
     
-    void setAcksNeeded(){ assert(acksNeeded_ == false); acksNeeded_ = true; }
+    void setAcksNeeded(){ 
+        if (acksNeeded_) {
+            d_->fatal(CALL_INFO, -1, "Error: setting acks needed but acks needed already set. Addr = 0x%" PRIx64 "\n", baseAddr_);
+        }
+        acksNeeded_ = true; 
+    }
     void clearAcksNeeded() { acksNeeded_ = false; }
     
     bool isValid(){ return getState() == V; }
@@ -91,7 +104,9 @@ public:
         for(int i = 0; i < 128; i++){
             sharers_[i] = false;
         }
-        assert(ownerExists_ == false);
+        if (ownerExists_) {
+            d_->fatal(CALL_INFO, -1, "Error: removing sharers but block is owned. Addr = 0x%" PRIx64 "\n", baseAddr_);
+        }
         numSharers_ = 0;
     }
     
@@ -100,13 +115,19 @@ public:
         for(int i = 0; i < 128; i++){
             if(sharers_[i]) count++;
         }
-        assert(count == numSharers_);
+        if (count != numSharers_) {
+            d_->fatal(CALL_INFO, -1, "Error: count sharers failed. Counted %u, numSharers is %u. Addr = 0x%" PRIx64 "\n", count, numSharers_, baseAddr_);
+        }
     }
     
     void removeSharer(int _id){
         if(_id == -1) return;
-        assert(numSharers_ > 0);
-        assert(sharers_[_id] == true);
+        if (numSharers_ == 0) {
+            d_->fatal(CALL_INFO, -1, "Error: no sharers to remove. Addr = 0x%" PRIx64 ". Sharer to be removed = %d\n", baseAddr_, _id);
+        }
+        if (sharers_[_id] != true) {
+            d_->fatal(CALL_INFO, -1, "Error: cannot remove sharer id %d, not a current sharer. Addr = 0x%" PRIx64 "\n", _id, baseAddr_);
+        }
         
         sharers_[_id] = false;
         numSharers_--;
@@ -114,7 +135,6 @@ public:
         d_->debug(CALL_INFO,L4,0, "Removed sharer. Number of sharers sharers = %u\n", numSharers_);
         
         updateState();
-        //assertSharers();
 
     }
     
@@ -125,9 +145,11 @@ public:
         numSharers_++;
         sharers_[_id] = true;
         d_->debug(CALL_INFO,L4,0, "Added sharer.  Number of sharers = %u\n", numSharers_);
-        assert(ownerExists_ == false);
+        if (ownerExists_) {
+            d_->fatal(CALL_INFO, -1, "Error: cannot add sharer, owner exists. Addr = 0x%" PRIx64 "\n", baseAddr_);
+            
+        }
 
-        //assertSharers();
     }
 
     void clear() {

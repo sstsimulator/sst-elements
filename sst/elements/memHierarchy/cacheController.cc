@@ -161,7 +161,11 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
 
 
 void Cache::processCacheResponse(MemEvent* _responseEvent, Addr _baseAddr){
-    CacheLine* cacheLine = getCacheLine(_baseAddr); assert(cacheLine);
+    CacheLine* cacheLine = getCacheLine(_baseAddr); 
+    if (!cacheLine) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: Cache miss on a cache response. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
+                this->getName().c_str(), CommandString[_responseEvent->getCmd()], _baseAddr, getCurrentSimTimeNano()); 
+    }
     
     MemEvent* origRequest = getOrigReq(mshr_->lookup(_baseAddr));
     
@@ -196,7 +200,6 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
 
 void Cache::processFetchResp(MemEvent * _event, Addr _baseAddr) {
     CacheLine* cacheLine = getCacheLine(_baseAddr);
-    int lineIndex = cacheLine->getIndex();
 
     topCC_->handleFetchResp(_event, cacheLine);     // update sharer/owner state
     bottomCC_->handleFetchResp(_event, cacheLine);  // update data
@@ -221,7 +224,10 @@ void Cache::allocateCacheLine(MemEvent* _event, Addr _baseAddr, int& _newCacheLi
     
     /* OK to change addr of topCC cache line, OK to replace cache line  */
     replaceCacheLine(wbCacheLine->getIndex(), _newCacheLineIndex, _baseAddr);    
-    assert(!mshr_->exists(_baseAddr));
+    if (mshr_->exists(_baseAddr)) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: Allocating a new cacheline for addr = 0x%" PRIx64 " but address already exists in mshr. Time = %" PRIu64 "\n",
+                this->getName().c_str(), _baseAddr, getCurrentSimTimeNano());
+    }
 }
 
 
@@ -375,7 +381,11 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             vector<mshrType> pointerMSHR = mshr_->removeAll(pointerAddr);
 
             for(vector<mshrType>::iterator it2 = pointerMSHR.begin(); it2 != pointerMSHR.end(); i++){
-                assert((*it2).elem.type() == typeid(MemEvent*));
+                
+                if ((*it2).elem.type() != typeid(MemEvent*)) {
+                    d_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 "\n",
+                            this->getName().c_str(), _baseAddr, getCurrentSimTimeNano());
+                }
                 cont = activatePrevEvent(boost::get<MemEvent*>((*it2).elem), pointerMSHR, pointerAddr, it2, i);
                 if(!cont) break;
             }
@@ -465,12 +475,16 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
     
     if(_requestCompleted){
         if(cmd != PutS && !(_cacheLine->inStableState() && ccLine->inStableState())) {    /* Sanity check cache state */
-            d_->fatal(CALL_INFO, -1, "Error: Finished handling request but cache line is not stable: cmd = %s, Bcc state = %s, Tcc state = %s\n",
-                    CommandString[cmd],BccLineString[_cacheLine->getState()],TccLineString[ccLine->getState()]);
+            d_->fatal(CALL_INFO, -1, "%s, Error: Finished handling request but cache line is not stable: cmd = %s, Bcc state = %s, Tcc state = %s. time = %" PRIu64 "\n",
+                    this->getName().c_str(), CommandString[cmd],BccLineString[_cacheLine->getState()],TccLineString[ccLine->getState()],getCurrentSimTimeNano());
         }
         /* Upon a PutS (due to invalidate, ie mshrEntry exists), only possible pending request should be a GetSEx request, make sure this is the case */
         if(cmd == PutS && mshr_->exists(baseAddr)){
-            assert(getOrigReq(mshr_->lookup(baseAddr))->getCmd() == GetSEx);
+            Command origCmd = getOrigReq(mshr_->lookup(baseAddr))->getCmd();
+            if (origCmd != GetSEx) {
+                d_->fatal(CALL_INFO, -1, "%s, Error: PutS is an mshr hit but request in mshr is not a GetSEx. Orig cmd: %s, Addr: 0x%" PRIx64 ", Time: %" PRIu64 "\n",
+                        this->getName().c_str(), CommandString[origCmd], baseAddr, getCurrentSimTimeNano());
+            }
         }
         /* MemHierarchy models a "blocking cache", it is important to 'replay' blocked
            events that were waiting for this event to complete */
@@ -502,7 +516,10 @@ void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Com
        In this case, it has to be a PutS requests because the only possible transition going on is SM.  We can just ignore
        the request after removing the sharer. */
     if(_cacheLine->inTransition()){
-        assert(_cmd == PutS);
+        if (_cmd != PutS) {
+            d_->fatal(CALL_INFO, -1, "%s, Error: Cacheline is in transition but incoming request from upper level cache is not a PutS. Cmd: %s, State: %s, Addr: 0x%" PRIx64 ", Time = %" PRIu64 "\n",
+                    this->getName().c_str(), CommandString[_cmd], BccLineString[_cacheLine->getState()], _event->getBaseAddr(), getCurrentSimTimeNano());
+        }
         topCC_->handleRequest(_event, _cacheLine, false);
         d_->debug(_L3_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
         throw ignoreEventException();
@@ -523,7 +540,10 @@ bool Cache::isCacheMiss(int _lineIndex){
    Extras
    --------------------------------------- */
 MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
-    assert(_mshrEntry.front().elem.type() == typeid(MemEvent*));
+    if (_mshrEntry.front().elem.type() != typeid(MemEvent*)) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
+                this->getName().c_str(), getCurrentSimTimeNano());
+    }
 
     return boost::get<MemEvent*>(_mshrEntry.front().elem);
 }
@@ -531,7 +551,7 @@ MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
 
 
 void Cache::updateUpgradeLatencyAverage(SimTime_t start){
-    uint64_t latency = timestamp_ - start;
+    uint64_t latency = timestamp_ - start + 1;
     d_->debug(_INFO_,"Latency = %" PRIu64 "\n", latency);
     totalUpgradeLatency_ += latency;
     upgradeCount_++;
@@ -629,7 +649,10 @@ void Cache::processIncomingNACK(MemEvent* _origReqEvent){
 
 void Cache::checkCacheMissValidity(MemEvent* _event) throw(ignoreEventException){
     Command cmd = _event->getCmd();
-    assert(cmd != PutM && cmd != PutE && cmd != PutX && cmd != PutXE);
+    if (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: Cache miss but command is %s. Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
+                this->getName().c_str(), CommandString[cmd], _event->getBaseAddr(), getCurrentSimTimeNano()); 
+    }
     if(cmd == PutS) throw ignoreEventException();
 }
 

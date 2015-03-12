@@ -69,7 +69,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 	
     /* Check parameter validity */
     if(! ("MESI" == protocol || "mesi" == protocol || "MSI" == protocol || "msi" == protocol) ) {
-	dbg.fatal(CALL_INFO, -1, "Unknown coherency protocol: %s\n", protocol.c_str());
+	dbg.fatal(CALL_INFO, -1, "Invalid param: coherence_protocol - must be 'MESI' or 'MSI'. You specified: %s\n", protocol.c_str());
     }
 
     if (protocol == "mesi") protocol = "MESI";
@@ -78,8 +78,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     /* Set up links/network to cache & memory */
     if (directMemoryLink) {
         memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
-        assert(memLink);
-
+        if (!memLink) {
+            dbg.fatal(CALL_INFO, -1, "Error creating link to memory from directory controller\n");
+        }
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port                        = "network";
         myInfo.link_bandwidth                   = net_bw;
@@ -177,6 +178,7 @@ void DirectoryController::handlePacket(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
      
+    dbg.debug(_L3_, "RECV %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
     if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) handleMemoryResponse(event);
     else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         dbg.debug(_L5_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 "\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
@@ -321,7 +323,7 @@ inline void DirectoryController::profileResponseRecv(MemEvent * event) {
 bool DirectoryController::clock(SST::Cycle_t cycle){
     network->clock();
 
-    if(!workQueue.empty()){
+    while(!workQueue.empty()){
         MemEvent *event = workQueue.front();
 	processPacket(event);
         workQueue.erase(workQueue.begin());
@@ -337,7 +339,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
             ev->getID().first, ev->getID().second, getCurrentSimTimeNano());
 
     if(! isRequestAddressValid(ev) ) {
-	dbg.fatal(CALL_INFO, -1, "Request does not contain a valid address\n");
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Time = %" PRIu64 "\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     Command cmd = ev->getCmd();
@@ -384,7 +387,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
     switch(cmd){
         case PutS:
 	    if(! entry) {
-		dbg.fatal(CALL_INFO, -1, "Entry is not valid in PUT-S\n");
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry is invalid for PutS. Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n", getName().c_str(), ev->getBaseAddr(), getCurrentSimTimeNano());
 	    }
 
             requesting_node = node_name_to_id(ev->getSrc());
@@ -397,7 +400,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
         case PutM:
         case PutE:
 	    if(! entry) {
-		dbg.fatal(CALL_INFO, -1, "Entry is not valid in PUT-E\n");
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry is invalid for %s. Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n", CommandString[cmd], getName().c_str(), ev->getBaseAddr(), getCurrentSimTimeNano());
 	    }
             
             if(entry->inController){
@@ -456,7 +459,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             break;
         default:
             /* Ignore unexpected */
-            dbg.fatal(CALL_INFO, -1, "Command not recognized: %s\n", CommandString[cmd]);
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Received unrecognized request: %s. Time = %" PRIu64 "\n", getName().c_str(), CommandString[cmd], getCurrentSimTimeNano());
             break;
     }
 
@@ -480,7 +483,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             network->send(ev);
             return;
         }
-        dbg.fatal(CALL_INFO, -1, "Received unexpected noncacheable response from memory for memory addr %" PRIx64 "\n",ev->getAddr());
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected noncacheable response from memory for memory addr 0x%" PRIx64 "\n",getName().c_str(), ev->getAddr());
     }
 
 
@@ -503,9 +506,9 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             entry->inController = true;
             advanceEntry(entry, ev);
         }
-        else  dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - response type not recognized: %s\n",CommandString[ev->getCmd()]);
+        else  dbg.fatal(CALL_INFO, -1, "%s Received unexpected response from memory - response type not recognized: %s\n",getName().c_str(), CommandString[ev->getCmd()]);
     } else {
-        dbg.fatal(CALL_INFO, -1, "Received unexpected response from memory - matching request not found for memory address %" PRIx64 "\n",ev->getAddr());
+        dbg.fatal(CALL_INFO, -1, "%s Received unexpected response from memory - matching request not found for memory address %" PRIx64 "\n",getName().c_str(), ev->getAddr());
     }
 
     delete ev;
@@ -562,7 +565,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             profileResponseRecv(ev);
 
 	    if(! (entry->findOwner() == node_name_to_id(ev->getSrc())) ) {
-		dbg.fatal(CALL_INFO, -1, "Error: find owner lookup failure.\n");
+		dbg.fatal(CALL_INFO, -1, "%s Error: find owner lookup failure.\n",getName().c_str());
 	    }
 
             int mapped_id = node_name_to_id(ev->getSrc());
@@ -579,7 +582,7 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
             if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
 		if(NULLCMD == entry->nextCommand) {
-		   dbg.fatal(CALL_INFO, -1, "Error next command is a NULLCMD\n");
+		   dbg.fatal(CALL_INFO, -1, "%s Error next command is a NULLCMD\n",getName().c_str());
 		}
             }
             return make_pair<bool, bool>(true, false);
@@ -617,7 +620,7 @@ DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr baseAddr){
 
 DirectoryController::DirEntry* DirectoryController::createDirEntry(Addr baseAddr, Addr addr, uint32_t reqSize){
     dbg.debug(_L10_, "Creating Directory Entry for 0x%" PRIx64 "\n", baseAddr);
-    DirEntry *entry = new DirEntry(baseAddr, addr, reqSize, numTargets);
+    DirEntry *entry = new DirEntry(baseAddr, addr, reqSize, numTargets, &dbg);
     entry->cacheIter = entryCache.end();
     directory[baseAddr] = entry;
     return entry;
@@ -633,6 +636,7 @@ void DirectoryController::sendInvalidate(int target, DirEntry* entry){
     dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
     network->send(me);
+    dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[me->getCmd()], me->getBaseAddr(), me->getDst().c_str(), getCurrentSimTimeNano());
 }
 
 
@@ -646,7 +650,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     uint32_t requesting_node = node_id(entry->activeReq->getSrc());
 
     if(entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)) {
-	dbg.fatal(CALL_INFO, -1, "Request is marked non-cachable but has reached processing\n");
+	dbg.fatal(CALL_INFO, -1, "%s Request is marked non-cachable but has reached processing\n",getName().c_str());
     }
 
     if(entry->isDirty()){                                       // Must do a fetch
@@ -670,7 +674,7 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 	sendEventToCaches(ev);
     } else if(cmd == GetX || cmd == GetSEx){
 	if(entry->waitingAcks != 0) {
-		dbg.fatal(CALL_INFO, -1, "There are waiting ACKs in GetX and GetSEx states\n");
+		dbg.fatal(CALL_INFO, -1, "%s There are waiting ACKs in GetX and GetSEx states\n",getName().c_str());
 	}
 
 	for(uint32_t i = 0 ; i < numTargets ; i++){             // Must send invalidates
@@ -762,7 +766,7 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 	
     assert(entry->countRefs() <= 1);
     if(! (entry->countRefs() <= 1)) {
-	dbg.fatal(CALL_INFO, -1, "Error: entry references count > 1\n");
+	dbg.fatal(CALL_INFO, -1, "%s Error: entry references count > 1\n", getName().c_str());
     }
 
     if(entry->countRefs() == 1) {
@@ -899,6 +903,7 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry){
         ev->setDst(memoryName);
         network->send(ev);
     }
+    dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], entry->baseAddr, getCurrentSimTimeNano());
     dbg.debug(_L5_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
 }
 
@@ -983,6 +988,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
         ev->setDst(memoryName);
         network->send(ev);
     }
+    dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], data_event->getBaseAddr(), getCurrentSimTimeNano());
     
     dbg.debug(_L5_, "Writing back data. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize());
     return ev->getID();
@@ -1018,6 +1024,7 @@ void DirectoryController::resetEntry(DirEntry *entry){
 
 void DirectoryController::sendEventToCaches(MemEvent *ev){
     dbg.debug(_L3_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
+    dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), getCurrentSimTimeNano());
     network->send(ev);
 }
 

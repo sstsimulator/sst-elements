@@ -162,6 +162,12 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     bool noncacheable   = event->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
     MemEvent* origEvent;
     
+    /* Set requestor field if this is the first cache that's seen this event */
+    if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
+
+    d_->debug(_L4_,"RECV %s \tCmd: %s, BsAddr:0x %" PRIx64 ", Rqstr: %s, Src: %s, cycles: %" PRIu64 " \n",
+            this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getRqstr().c_str(), event->getSrc().c_str(), timestamp_);
+    
     if(!_mshrHit){ 
         incTotalRequestsReceived(groupId);
         d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
@@ -169,10 +175,8 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     }
     else incTotalMSHRHits(groupId);
 
-    /* Set requestor field if this is the first cache that's seen this event */
-    if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
-    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: %" PRIu64 ", %s%s \n",
+    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s%s \n",
                    this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
     cout << flush; 
     if(noncacheable || cf_.allNoncacheableRequests_){
@@ -248,7 +252,9 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
         case GetSEx:
 	    if (_cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
             inserted = mshrNoncacheable_->insert(_baseAddr, _event);
-            assert(inserted);
+            if (!inserted) {
+                d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[_cmd], _baseAddr, getCurrentSimTimeNano());
+            }
             _event->setStartTime(timestamp_);
             if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
             else             bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
@@ -256,7 +262,10 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
         case GetSResp:
         case GetXResp:
             origRequest = mshrNoncacheable_->removeFront(_baseAddr);
-            assert(origRequest->getID().second == _event->getResponseToID().second);
+            if (origRequest->getID().second != _event->getResponseToID().second) {
+                d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
+                        getName().c_str(),CommandString[_cmd],_baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
+            }
             topCC_->sendResponse(origRequest, DUMMY, &_event->getPayload(), true);
             delete origRequest;
             break;

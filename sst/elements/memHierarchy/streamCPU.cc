@@ -57,7 +57,9 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 			new Event::Handler<streamCPU>(this,
 				&streamCPU::
 				handleEvent) );
-	assert(mem_link);
+	if (!mem_link) {
+            out.fatal(CALL_INFO, -1, "Error creating mem_link\n");   
+        }
 
 	addrOffset = (uint64_t) params.find_integer("addressoffset", 0);
 

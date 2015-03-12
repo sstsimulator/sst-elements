@@ -237,14 +237,16 @@ class DirectoryController : public Component {
 	MemEvent            *activeReq;
         std::list<DirEntry*>::iterator cacheIter;
 	std::vector<bool>   sharers;
+        Output * dbg;
 	
-        DirEntry(Addr _baseAddress, Addr _address, uint32_t _reqSize, uint32_t _bitlength){
+        DirEntry(Addr _baseAddress, Addr _address, uint32_t _reqSize, uint32_t _bitlength, Output * d){
             clearEntry();
             baseAddr     = _baseAddress;
             addr         = _address;
             reqSize      = _reqSize;
             sharers.resize(_bitlength);
             activeReq    = NULL;
+            dbg          = d;
 
         }
 
@@ -285,7 +287,9 @@ class DirectoryController : public Component {
         void setDirty(int id){
             dirty       = true;
             sharers[id] = true;
-            assert(countRefs() == 1);
+            if (countRefs() != 1) {
+                dbg->fatal(CALL_INFO,-1,"Attempting to set block to dirty but refs is not 1\n");
+            }
         }
         
         bool isDirty(){
@@ -295,27 +299,39 @@ class DirectoryController : public Component {
         void clearDirty(int id){
             dirty       = false;
             sharers[id] = false;
-            assert(countRefs() == 0);
+            if (countRefs() != 0) {
+                dbg->fatal(CALL_INFO,-1,"Replacing dirty block but refs is not 0\n");
+            }
         }
         
         void addSharer(int _id){
             sharers[_id]= true;
-            assert(!dirty);
+            if (dirty) {
+                dbg->fatal(CALL_INFO,-1,"Adding a sharer to a block which is dirty\n");
+            }
         }
         
         void removeSharer(int _id){
-            assert(sharers[_id]);
-            assert(!dirty);
+            if (!sharers[_id]) {
+                dbg->fatal(CALL_INFO,-1,"Removing a sharer which does not exist\n");
+            }
+            if (dirty) {
+                dbg->fatal(CALL_INFO,-1,"Attempting to remove a sharer from a block that is dirty\n");
+            }
             sharers[_id]= false;
         }
         
         uint32_t findOwner(void){
-            assert(dirty);
-            assert(countRefs() == 1);
+            if (!dirty) {
+                dbg->fatal(CALL_INFO,-1,"Looking up owner for a block that is not exclusive\n");
+            }
+            if (countRefs() != 1) {
+                dbg->fatal(CALL_INFO,-1,"Looking up owner for a block whose ref count is not 1\n");
+            }
             for (uint32_t i = 0; i < sharers.size(); i++) {
                 if (sharers[i]) return i;
             }
-            assert(0);   /* Should never be here */
+            dbg->fatal(CALL_INFO,-1,"Looking up owner and did not find one\n");
             return 0;
         }
 

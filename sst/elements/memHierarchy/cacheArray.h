@@ -72,11 +72,11 @@ public:
         unsigned int    userLock_;
         bool            LLSCAtomic_;
         bool            eventsWaitingForLock_;
-    
+        Output *        d_; 
     public:
         /** Constructor */
-        CacheLine(unsigned int _size, int _index) :
-                 state_(I), baseAddr_(0), size_(_size), index_(_index){
+        CacheLine(unsigned int _size, int _index, Output * _d) :
+                 state_(I), baseAddr_(0), size_(_size), index_(_index), d_(_d) {
             data_.resize(size_/sizeof(uint8_t));
             reset();
         }
@@ -103,7 +103,10 @@ public:
         
             /* Update a portion of the block */
             else {
-                assert(ev->getAddr() >= baseAddr_);
+                if (ev->getAddr() < baseAddr_) {
+                    d_->fatal(CALL_INFO, -1, "Error: updating cache data but event address is 0x%" PRIx64 " and cacheline address is 0x%" PRIx64 "\n",
+                            ev->getAddr(), baseAddr_);
+                }
                 Addr offset = ev->getAddr() - baseAddr_;
                 for(uint32_t i = 0; i < ev->getSize() ; i++ ) {
                     data_[offset + i] = ev->getPayload()[i];
@@ -136,8 +139,12 @@ public:
         unsigned int getLineSize(){ return size_; }
         
         void clear(){
-            assert(userLock_ == 0);
-            assert(eventsWaitingForLock_ == false);
+            if (userLock_ != 0) {
+                d_->fatal(CALL_INFO, -1, "Error: clearing cacheline but userLock is not 0. Address = 0x%" PRIx64 "\n", baseAddr_);
+            }
+            if (eventsWaitingForLock_) {
+                d_->fatal(CALL_INFO, -1, "Error: clearing cacheline but eventsWaitingForLock is true. Address = 0x%" PRIx64 "\n", baseAddr_);
+            }
             atomicEnd();
         }
         
@@ -183,7 +190,7 @@ protected:
         lines_.resize(numLines_);
 
         for(unsigned int i = 0; i < numLines_; i++){
-            lines_[i] = new CacheLine(lineSize_, i);
+            lines_[i] = new CacheLine(lineSize_, i, d_);
         }
         
         pMembers();

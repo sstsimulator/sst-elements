@@ -193,7 +193,9 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
     /* ---------------- Memory NICs --------------- */
     if (cf_.bottomNetwork_ == "directory" && cf_.topNetwork_ == "") { // cache with a dir below, direct connection to cache above
-        assert(isPortConnected("directory"));
+        if (!isPortConnected("directory")) {
+            d_->fatal(CALL_INFO,-1,"Error initializing memNIC for cache: directory port is not conected\n");
+        }
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
@@ -210,7 +212,9 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
         topNetworkLink_ = NULL;
     } else if (cf_.bottomNetwork_ == "cache" && cf_.topNetwork_ == "") { // cache with another cache below it on the network
-        assert(isPortConnected("cache"));
+        if (!isPortConnected("cache")) {
+            d_->fatal(CALL_INFO,-1,"Error initializing memNIC for cache: cache port is not conected\n");
+        }
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "cache";
         myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
@@ -227,7 +231,10 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         
         topNetworkLink_ = NULL;
     } else if (cf_.bottomNetwork_ == "directory" && cf_.topNetwork_ == "cache") {
-        assert(isPortConnected("directory"));
+        if (!isPortConnected("directory")) {
+            d_->fatal(CALL_INFO,-1,"Error initializing memNIC for cache: directory port is not conected\n");
+        }
+        
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = _params.find_string("network_bw", "1GB/s");
@@ -370,7 +377,9 @@ void Cache::intrapolateMSHRLatency(){
     for(uint64 idx = 47; idx < 68; idx++) y[idx] = 26;
     for(uint64 idx = 69; idx < N;  idx++) y[idx] = 32;
     
-    assert(accessLatency_ <= N);
+    if (accessLatency_ > N) {
+        d_->fatal(CALL_INFO, -1, "Error: cannot intrapolate MSHR latency if cache latency > 200. Cache latency: %d\n", accessLatency_);
+    }
     mshrLatency_ = y[accessLatency_];
 
 }
