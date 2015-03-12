@@ -137,7 +137,10 @@ bool MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     }
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
-        assert(!l->isSharer(_sharerId));
+	if(l->isSharer(_sharerId)) {
+	    d_->fatal(CALL_INFO, -1, "Invalid sharer ID in M S or E state\n");
+	}
+
         l->addSharer(_sharerId);
         sendResponse(_event, S, data, _mshrHit);
         return true;
@@ -171,7 +174,11 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* Invalidate any exclusive sharers before responding to GetX request */
     else if(ccLine->ownerExists()){
         d_->debug(_L7_,"GetX Req received but exclusive cache exists \n");
-        assert(ccLine->isShareless());
+
+	if(! ccLine->isShareless()) {
+		d_->fatal(CALL_INFO, -1, "Cache line is not shareless in M or E state\n");
+	}
+
         sendFetchInv(ccLine, _event->getRqstr(), _mshrHit);
         respond = false;
     }
@@ -209,8 +216,10 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
 /**
  *  Handles replacement & downgrade requests when cache has exclusive access (PutM, PutX, PutE, PutXE)
  */
-void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _sharerId){
-    assert(_state == M || _state == E);
+void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _sharerId) {
+    if(! (_state == M || _state == E) ) {
+	d_->fatal(CALL_INFO, -1, "State is not in M or E state\n");
+    }
 
     /* Remove exclusivity for all: PutM, PutX, PutE */
     if(_ccLine->ownerExists())  _ccLine->clearOwner();
@@ -271,9 +280,15 @@ void MESITopCC::handleInvalidate(int _lineIndex, MemEvent* event, string _origRq
  */
 void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     CCLine* ccLine = ccLines_[_lineIndex];
-    assert(!CacheArray::CacheLine::inTransition(_state));
-    assert(ccLine->valid());
-    
+
+    if(CacheArray::CacheLine::inTransition(_state)) {
+	d_->fatal(CALL_INFO, -1, "Cache line is in transition state\n");
+    }
+
+    if(! ccLine->valid()) {
+	d_->fatal(CALL_INFO, -1, "Cache line is invalid\n");
+    }
+
     /* if state is invalid OR, there's no sharers or owner, then no need to send invalidations */
     if(_state == I || (ccLine->isShareless() && !ccLine->ownerExists())) return;
     
@@ -292,7 +307,10 @@ void MESITopCC::handleFetchResp(MemEvent * event, CacheLine * _cacheLine) {
     CCLine* ccLine = ccLines_[lineIndex];
     
     State st = _cacheLine->getState();
-    assert(st == M || st == E);
+
+    if(! (st == M || st == E)) {
+	d_->fatal(CALL_INFO, -1, "Cache line is not in M or E state\n");
+    }
 
     if(ccLine->ownerExists())  ccLine->clearOwner();
     if (event->getCmd() == FetchXResp) {
@@ -549,7 +567,11 @@ int MESITopCC::lowNetworkNodeLookupByName(const std::string& _name){
 
 std::string MESITopCC::lowNetworkNodeLookupById(int _id){
     std::map<int, string>::iterator it = lowNetworkIdMap_.find(_id);
-    assert(lowNetworkIdMap_.end() != it);
+
+    if(! (lowNetworkIdMap_.end() != it)) {
+	d_->fatal(CALL_INFO, -1, "Low network node lookup failed\n");
+    }
+
     return it->second;
 }
 
