@@ -68,7 +68,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     numTargets = 0;
 	
     /* Check parameter validity */
-    assert(protocol == "MESI" || protocol == "mesi" || protocol == "MSI" || protocol == "msi");
+    if(! ("MESI" == protocol || "mesi" == protocol || "MSI" == protocol || "msi" == protocol) ) {
+	dbg.fatal(CALL_INFO, -1, "Unknown coherency protocol: %s\n", protocol.c_str());
+    }
+
     if (protocol == "mesi") protocol = "MESI";
     if (protocol == "msi") protocol = "MSI";
 
@@ -332,7 +335,11 @@ bool DirectoryController::processPacket(MemEvent *ev){
     dbg.debug(_L3_, "EVENT: %s, Received: Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, id (%" PRIu64 ",%d), Time = %" PRIu64 "\n",
             getName().c_str(),  CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), 
             ev->getID().first, ev->getID().second, getCurrentSimTimeNano());
-    assert(isRequestAddressValid(ev));
+
+    if(! isRequestAddressValid(ev) ) {
+	dbg.fatal(CALL_INFO, -1, "Request does not contain a valid address\n");
+    }
+
     Command cmd = ev->getCmd();
     
     if(NACK == cmd){
@@ -376,7 +383,10 @@ bool DirectoryController::processPacket(MemEvent *ev){
     profileRequestRecv(ev,entry);     // profile request
     switch(cmd){
         case PutS:
-            assert(entry);
+	    if(! entry) {
+		dbg.fatal(CALL_INFO, -1, "Entry is not valid in PUT-S\n");
+	    }
+
             requesting_node = node_name_to_id(ev->getSrc());
             entry->removeSharer(requesting_node);
             if(entry->countRefs() == 0 && !entry->inProgress()) resetEntry(entry);
@@ -386,7 +396,9 @@ bool DirectoryController::processPacket(MemEvent *ev){
             
         case PutM:
         case PutE:
-            assert(entry);
+	    if(! entry) {
+		dbg.fatal(CALL_INFO, -1, "Entry is not valid in PUT-E\n");
+	    }
             
             if(entry->inController){
                 entry->activeReq = ev;
@@ -483,7 +495,11 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         memReqs.erase(ev->getResponseToID());
         if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()){   // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
-            assert(entry);
+
+	    if(NULL == entry) {
+		dbg.fatal(CALL_INFO, -1, "Entry is not valid when getting directory entry.\n");
+	    }
+
             entry->inController = true;
             advanceEntry(entry, ev);
         }
@@ -544,9 +560,13 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
 
             dbg.debug(_L4_, "Entry %" PRIx64 " request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
             profileResponseRecv(ev);
-            assert(entry->findOwner() == node_name_to_id(ev->getSrc()));
-            int id = node_name_to_id(ev->getSrc());
-            entry->clearDirty(id);
+
+	    if(! (entry->findOwner() == node_name_to_id(ev->getSrc())) ) {
+		dbg.fatal(CALL_INFO, -1, "Error: find owner lookup failure.\n");
+	    }
+
+            int mapped_id = node_name_to_id(ev->getSrc());
+            entry->clearDirty(mapped_id);
             entry->nextFunc = &DirectoryController::handleDataRequest;
             advanceEntry(entry, ev);
             delete ev;
@@ -558,7 +578,9 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             dbg.debug(_L4_, "Incoming command [%s,%s] doesn't match for 0x%" PRIx64 " [%s,%s] in progress.\n", 
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
             if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
-                assert(entry->nextCommand != NULLCMD);
+		if(NULLCMD == entry->nextCommand) {
+		   dbg.fatal(CALL_INFO, -1, "Error next command is a NULLCMD\n");
+		}
             }
             return make_pair<bool, bool>(true, false);
         } 
@@ -622,7 +644,11 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     Command cmd        = entry->activeReq->getCmd();
     
     uint32_t requesting_node = node_id(entry->activeReq->getSrc());
-    assert(!entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)); 
+
+    if(entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)) {
+	dbg.fatal(CALL_INFO, -1, "Request is marked non-cachable but has reached processing\n");
+    }
+
     if(entry->isDirty()){                                       // Must do a fetch
 	MemEvent *ev;      
         if (cmd == GetS) { // Downgrade
@@ -643,7 +669,10 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
         profileRequestSent(ev);
 	sendEventToCaches(ev);
     } else if(cmd == GetX || cmd == GetSEx){
-	assert(0 == entry->waitingAcks);
+	if(entry->waitingAcks != 0) {
+		dbg.fatal(CALL_INFO, -1, "There are waiting ACKs in GetX and GetSEx states\n");
+	}
+
 	for(uint32_t i = 0 ; i < numTargets ; i++){             // Must send invalidates
 	    if(i == requesting_node) continue;
 	    if(entry->sharers[i]){
@@ -732,7 +761,15 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
     uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
 	
     assert(entry->countRefs() <= 1);
-    if(entry->countRefs() == 1) assert(entry->sharers[requesting_node]);
+    if(! (entry->countRefs() <= 1)) {
+	dbg.fatal(CALL_INFO, -1, "Error: entry references count > 1\n");
+    }
+
+    if(entry->countRefs() == 1) {
+	if(! entry->sharers[requesting_node]) {
+		dbg.fatal(CALL_INFO, -1, "Error: sharers for requested node are NULL\n");
+	}
+    }
 
     entry->clearSharers();
     
@@ -746,7 +783,11 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 
 void DirectoryController::handlePutS(MemEvent* ev){
     DirEntry *entry = getDirEntry(ev->getAddr());
-    assert(entry && entry->waitingAcks > 0);
+
+    if(! (entry && entry->waitingAcks > 0)) {
+	dbg.fatal(CALL_INFO, -1, "Error: entry is NULL or there are zero waiting ACKs\n");
+    }
+
     int requesting_node = node_name_to_id(ev->getSrc());
     entry->removeSharer(requesting_node);
     entry->waitingAcks--;
@@ -755,28 +796,35 @@ void DirectoryController::handlePutS(MemEvent* ev){
 
 
 
-void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev){
-    assert(entry->isDirty());
-    assert(entry->findOwner() == node_name_to_id(entry->activeReq->getSrc()));
-    int id = node_name_to_id(entry->activeReq->getSrc());
+void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev) {
+    if(! entry->isDirty()) {
+	dbg.fatal(CALL_INFO, -1, "Called a PUT-M but entry is not dirty.\n");
+    }
 
-    entry->clearDirty(id);
+    if(! (entry->findOwner() == node_name_to_id(entry->activeReq->getSrc()))) {
+	dbg.fatal(CALL_INFO, -1, "Error: unable to find owner in a PUT-M request\n");
+    }
+
+    int mapped_id = node_name_to_id(entry->activeReq->getSrc());
+    entry->clearDirty(mapped_id);
 
     if(ev->getCmd() == PutM || ev->getCmd() == GetSResp) {
         writebackData(entry->activeReq);
     } else if (ev->getCmd() != PutE) { // ok to drop a PutE -> block is not really dirty
         dbg.debug(_L4_, "Alert! dropping PutM\n");
     }
-	
-    updateEntryToMemory(entry);
 
+    updateEntryToMemory(entry);
 }
 
 
 
 /* Advance the processing of this directory entry */
-void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev){
-	assert(NULL != entry->nextFunc);
+void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev) {
+	if(NULL == entry->nextFunc) {
+		dbg.fatal(CALL_INFO, -1, "Next function in advance entry is NULL\n");
+	}
+
 	(this->*(entry->nextFunc))(entry, ev);
 }
 
@@ -798,10 +846,13 @@ uint32_t DirectoryController::node_id(const std::string &name){
 
 
 uint32_t DirectoryController::node_name_to_id(const std::string &name){
-   
-	std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
-    assert(node_lookup.end() != i);
-	uint32_t id = i->second;
+    std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
+
+    if(node_lookup.end() == i) {
+	dbg.fatal(CALL_INFO, -1, "Unable to lookup node to name by ID (name=%s)\n", name.c_str());
+    }
+
+    uint32_t id = i->second;
     return id;
 }
 
@@ -917,8 +968,12 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
 MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     Addr localBaseAddr = convertAddressToLocalAddress(data_event->getBaseAddr());
     MemEvent *ev       = new MemEvent(this, localBaseAddr, localBaseAddr, PutM, cacheLineSize);
-    
-    assert(data_event->getPayload().size() == cacheLineSize);
+
+    if(data_event->getPayload().size() != cacheLineSize) {
+	dbg.fatal(CALL_INFO, -1, "Write back of data request error, payload size %" PRIu32 " != cache line size: %" PRIu32 "\n",
+		(uint32_t) data_event->getPayload().size(), (uint32_t) cacheLineSize);
+    }
+
     ev->setSize(data_event->getPayload().size());
     ev->setPayload(data_event->getPayload());
     profileRequestSent(ev);
@@ -985,8 +1040,12 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev){
 
 }
 
-Addr DirectoryController::convertAddressFromLocalAddress(Addr addr){
-    assert(interleaveStep <= interleaveSize); // one-to-one mapping required for this method
+Addr DirectoryController::convertAddressFromLocalAddress(Addr addr) {
+    if(interleaveStep > interleaveSize) {
+	dbg.fatal(CALL_INFO, -1, "Error: interleaveStep (%" PRIu32 ") > interleaveSize (%" PRIu32 ")\n",
+		(uint32_t) interleaveStep, (uint32_t) interleaveSize);
+    }
+
     Addr res = 0;
     if(0 == interleaveSize){
         res = addr + addrRangeStart;
@@ -1115,7 +1174,12 @@ void DirectoryController::setup(void){
         dbg.debug(_L10_, "DC found peer %d(%s) of type %d.\n", i->first.network_addr, i->first.name.c_str(), i->first.type);
         if(MemNIC::TypeCache == i->first.type || MemNIC::TypeNetworkCache == i->first.type){
             numTargets++;
-            if(blocksize)   assert(blocksize == i->second.blocksize);
+            if(blocksize) {
+		if(blocksize != i->second.blocksize) {
+			dbg.fatal(CALL_INFO, -1, "Error: block size does not match blocksize=%" PRIu32 " != %" PRIu32 "\n",
+				(uint32_t) blocksize, (uint32_t) i->second.blocksize);
+		}
+	    }
             else            blocksize = i->second.blocksize;
         }
     }
