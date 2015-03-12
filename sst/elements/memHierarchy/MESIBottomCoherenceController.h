@@ -174,7 +174,10 @@ private:
     }
     
     uint32_t getGroupId(){
-        assert(groupId_ >= 1);
+	if(groupId_ < 1) {
+		d_->fatal(CALL_INFO, -1, "GroupID is less than 1\n");
+	}
+
         return groupId_;
     }
 

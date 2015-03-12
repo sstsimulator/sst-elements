@@ -141,8 +141,15 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
 void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     _cacheLine->atomicEnd();
     setGroupId(_event->getGroupId());
-    assert(!_cacheLine->inTransition());
-    assert(_cacheLine->getState() == M || _cacheLine->getState() == E);
+
+    if(_cacheLine->inTransition()) {
+	d_->fatal(CALL_INFO, -1, "Error: Cache line in transition.\n");
+    }
+
+    if(! (_cacheLine->getState() == M || _cacheLine->getState() == E) ) {
+	d_->fatal(CALL_INFO, -1, "Error: cache is not in M or E state\n");
+    }
+
     Command cmd = _event->getCmd();
     
     sendResponse(_event, _cacheLine, _parentId, _mshrHit);
@@ -251,7 +258,10 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
             _cacheLine->setData(_event->getPayload(), _event);
         }
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
-            assert(_cacheLine->isLocked());
+	    if(! _cacheLine->isLocked()) {
+		d_->fatal(CALL_INFO, -1, "Cache line is not locked but request says F_LOCKED\n");
+   	    }
+
             _cacheLine->decLock();
         }
     }
@@ -307,7 +317,11 @@ void MESIBottomCC::handlePutXRequest(MemEvent* _event, CacheLine* _cacheLine){
 
 void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cacheLine){
     State state = _cacheLine->getState();
-    assert(state == M || state == E);
+
+    if(! (state == M || state == E)) {
+	d_->fatal(CALL_INFO, -1, "Cache line is not in M or E state\n");
+    }
+
     if((state == E && _event->getCmd() != PutXE) || _event->getDirty()) _cacheLine->setState(M);    // Update state if line was written
     if(_event->getCmd() != PutXE){
         _cacheLine->setData(_event->getPayload(), _event);                  //Only PutM/PutX write data in the cache line
@@ -319,9 +333,12 @@ void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cach
 
 void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
     State state = _cacheLine->getState();
-    assert(state == E || state == M);
+
+    if(! (state == E || state == M)) {
+	d_->fatal(CALL_INFO, -1, "Cache line is not in M or E state\n");
+    }
+
     inc_PUTEReqsReceived();
-    
 }
 
 
