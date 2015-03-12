@@ -24,7 +24,6 @@
 #include "memoryController.h"
 #include "util.h"
 
-#include <assert.h>
 #include <sstream>
 #include <stdio.h>
 #include <fcntl.h>
@@ -153,8 +152,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     GetSExReqReceived_      = 0;
     numReqOutstanding_      = 0;
     numCycles_              = 0;
-    
-    assert(!protocolStr.empty());
+
+    if(protocolStr.empty()) {
+	dbg.fatal(CALL_INFO, -1, "Coherency protocol not specified, please specify MESI or MSI\n");
+    }
 
     /* Clock Handler */
     registerClock(clock_freq, new Clock::Handler<MemController>(this, &MemController::clock));
@@ -285,8 +286,14 @@ void MemController::performRequest(DRAMReq* _req){
         else             localAddr = localBaseAddr;
         
     	_req->respEvent_ = _req->reqEvent_->makeResponse();
-        assert(_req->respEvent_->getSize() == _req->reqEvent_->getSize());
-            dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
+
+	if(_req->respEvent_->getSize() != _req->reqEvent_->getSize()) {
+		dbg.fatal(CALL_INFO, -1, "Request and response sizes do not match: %" PRIu32 " != %" PRIu32 "\n",
+			(uint32_t) _req->respEvent_->getSize(), (uint32_t) _req->reqEvent_->getSize());
+        }
+
+        dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
+
         for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++) 
             _req->respEvent_->getPayload()[i] = memBuffer_[localAddr + i];
         
