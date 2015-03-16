@@ -2,12 +2,15 @@
 debug = 0
 
 topology="torus"
-shape="4x4x4x4x2"
+shape="4x4x4x4"
 
 networkParams = {
     "topology" : "merlin." + "torus",
-    "packetSize" : "2048B",
-    "link_bw" : "1.8GB/s",
+    "packetSize" : "512B",
+    "link_bw" : "1.77GB/s",
+    "link_lat" : "40ns",
+    "input_latency" : "10ns",
+    "output_latency" : "10ns",
     "flitSize" : "8B",
     "buffer_size" : "14KB",
 }
@@ -40,41 +43,47 @@ hermesParams = {
     "hermesParams.policy" : "adjacent",
     "hermesParams.functionSM.defaultEnterLatency" : 30000,
     "hermesParams.functionSM.defaultReturnLatency" : 30000,
+    #"hermesParams.functionSM.Alltoall.irecvDelay" : 2500000,
+    #"hermesParams.functionSM.Alltoall.sendDelay" : 2500000,
+    #"hermesParams.functionSM.Alltoall.waitDelay" : 1000000,
     "hermesParams.functionSM.defaultDebug" : 0,
     "hermesParams.functionSM.defaultVerbose" : 2,
     "hermesParams.ctrlMsg.debug" : 0,
     "hermesParams.ctrlMsg.verboseLevel" : 2,
     "hermesParams.ctrlMsg.shortMsgLength" : 4200,
-    "hermesParams.ctrlMsg.matchDelay_ns" : 260,
+    "hermesParams.ctrlMsg.matchDelay_ns" : 250,
 
     "hermesParams.ctrlMsg.txSetupMod" : "firefly.LatencyMod",
-    "hermesParams.ctrlMsg.txSetupModParams.range.0" : "0:1480ns",
-    "hermesParams.ctrlMsg.txSetupModParams.range.1" : "1-64:1780ns",
-    "hermesParams.ctrlMsg.txSetupModParams.range.2" : "65-256:2780ns",
-    "hermesParams.ctrlMsg.txSetupModParams.range.3" : "257-:3280ns",
+    "hermesParams.ctrlMsg.txSetupModParams.range.0" : "0-127:1100ns",
+    "hermesParams.ctrlMsg.txSetupModParams.range.1" : "128-511:1850ns",
+    "hermesParams.ctrlMsg.txSetupModParams.range.2" : "512-:2100ns",
+
+    "hermesParams.ctrlMsg.rxPostMod" : "firefly.LatencyMod",
+    "hermesParams.ctrlMsg.rxPostModParams.range.0" : "0-:300ns",
 
     "hermesParams.ctrlMsg.rxSetupMod" : "firefly.LatencyMod",
-    "hermesParams.ctrlMsg.rxSetupModParams.range.0" : "0-64:100ns",
-    "hermesParams.ctrlMsg.rxSetupModParams.range.1" : "65-256:1100ns",
-    "hermesParams.ctrlMsg.rxSetupModParams.range.2" : "257-:1600ns",
+    "hermesParams.ctrlMsg.rxSetupModParams.range.0" : "0:150ns",
+    "hermesParams.ctrlMsg.rxSetupModParams.range.1" : "1-127:530ns",
+    "hermesParams.ctrlMsg.rxSetupModParams.range.2" : "128-511:1100ns",
+    "hermesParams.ctrlMsg.rxSetupModParams.range.3" : "512-:2000ns",
 
-    "hermesParams.ctrlMsg.txMemcpyMod" : "firefly.LatencyMod",
-    "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
-    "hermesParams.ctrlMsg.txMemcpyModParams.base" : "120ns",
-    "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-:156ps",
+    "hermesParams.ctrlMsg.txMemcpyMod" : "firefly.ScaleLatMod",
+    "hermesParams.ctrlMsg.txMemcpyModParams.range.0" : "0-50000:450ps-80ps",
 
-    "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.LatencyMod",
-    "hermesParams.ctrlMsg.rxMemcpyModParams.op" : "Mult",
-    "hermesParams.ctrlMsg.rxMemcpyModParams.base" : "120ns",
-    "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:156ps",
+    "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.ScaleLatMod",
+    "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-50000:450ps-100ps",
 
     "hermesParams.ctrlMsg.txNicDelay_ns" : 0,
     "hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
 
     "hermesParams.ctrlMsg.txFiniMod" : "firefly.LatencyMod",
-    "hermesParams.ctrlMsg.txFiniModParams.range.0" : "0-:700ns",
+    "hermesParams.ctrlMsg.txFiniModParams.range.0" : "0-127:400ns",
+    "hermesParams.ctrlMsg.txFiniModParams.range.1" : "128-:900ns",
+
     "hermesParams.ctrlMsg.rxFiniMod" : "firefly.LatencyMod",
-    "hermesParams.ctrlMsg.rxFiniModParams.range.0" : "0-:300ns",
+    "hermesParams.ctrlMsg.rxFiniModParams.range.0" : "0:70ns",
+    "hermesParams.ctrlMsg.rxFiniModParams.range.1" : "1-127-:80ns",
+    "hermesParams.ctrlMsg.rxFiniModParams.range.2" : "128-:100ns",
 
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
 
