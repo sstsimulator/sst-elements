@@ -54,7 +54,8 @@ bool TopCacheController::handleRequest(MemEvent* _event, CacheLine* _cacheLine, 
             }
             break;
         default:
-            d_->fatal(CALL_INFO,-1,"TCC received an unrecognized request: %s\n",CommandString[cmd]);
+            d_->fatal(CALL_INFO,-1,"%s, Error: TCC received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    ((Component *)owner_)->getName().c_str(), CommandString[cmd], _event->getBaseAddr(), _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
     return false;
 }
@@ -102,7 +103,8 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
             return true;
             break;
         default:
-            d_->fatal(CALL_INFO,-1,"TCC received an unrecognized request: %s\n",CommandString[cmd]);
+            d_->fatal(CALL_INFO,-1,"%s, Error: TCC received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    ((Component *)owner_)->getName().c_str(), CommandString[cmd], _event->getBaseAddr(), _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     return false;
@@ -138,7 +140,8 @@ bool MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* Send Data in S state */
     else if(state == S || state == M || state == E){
 	if(l->isSharer(_sharerId)) {
-	    d_->fatal(CALL_INFO, -1, "Invalid sharer ID in M S or E state\n");
+	    d_->fatal(CALL_INFO, -1, "%s, Error: GetS request from requestor who is already a sharer. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                    ((Component *)owner_)->getName().c_str(), _event->getBaseAddr(), CommandString[_event->getCmd()], _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
 	}
 
         l->addSharer(_sharerId);
@@ -146,7 +149,9 @@ bool MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
         return true;
     }
     else{
-        d_->fatal(CALL_INFO,-1,"TCC is handling a GetS request but coherence state is not valid and stable: %s\n",BccLineString[state]);
+        d_->fatal(CALL_INFO,-1,"%s, Error: TCC is handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s, TCC state = %s. Time = %" PRIu64 "ns\n",
+                ((Component *)owner_)->getName().c_str(), _event->getBaseAddr(), CommandString[_event->getCmd()], _event->getSrc().c_str(), 
+                BccLineString[state], TccLineString[l->getState()], ((Component *)owner_)->getCurrentSimTimeNano());
     }
     return false;
 }
@@ -176,7 +181,9 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
         d_->debug(_L7_,"GetX Req received but exclusive cache exists \n");
 
 	if(! ccLine->isShareless()) {
-		d_->fatal(CALL_INFO, -1, "Cache line is not shareless in M or E state\n");
+		d_->fatal(CALL_INFO, -1, "%s, Error: handling request to owned block but sharers exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s, TCC state = %s. Time = %" PRIu64 "ns\n", 
+                        ((Component *)owner_)->getName().c_str(), _event->getBaseAddr(), CommandString[_event->getCmd()], _event->getSrc().c_str(), 
+                BccLineString[state], TccLineString[ccLine->getState()], ((Component *)owner_)->getCurrentSimTimeNano());
 	}
 
         sendFetchInv(ccLine, _event->getRqstr(), _mshrHit);
@@ -197,7 +204,8 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
                 respond = (invSent > 0) ? false : true;
                 break;
             default:
-                d_->fatal(CALL_INFO,-1,"TCC received an unrecognized GetX request: %s\n",CommandString[cmd]);
+                d_->fatal(CALL_INFO,-1,"%s, Error: TCC received an unrecognized GetX request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                        ((Component *)owner_)->getName().c_str(), CommandString[cmd], _event->getBaseAddr(), _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
         }
     }
     /* Sharers don't exist, no need to send invalidates */
@@ -218,7 +226,9 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
  */
 void MESITopCC::handlePutMRequest(CCLine* _ccLine, Command _cmd, State _state, int _sharerId) {
     if(! (_state == M || _state == E) ) {
-	d_->fatal(CALL_INFO, -1, "State is not in M or E state\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: Handling exclusive Put but state is not M or E. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s. Time = %" PRIu64 "ns\n",
+                ((Component *)owner_)->getName().c_str(), _ccLine->getBaseAddr(), CommandString[_cmd], lowNetworkNodeLookupById(_sharerId).c_str(), 
+                BccLineString[_state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     /* Remove exclusivity for all: PutM, PutX, PutE */
@@ -270,7 +280,8 @@ void MESITopCC::handleInvalidate(int _lineIndex, MemEvent* event, string _origRq
             sendFetchInvX(_lineIndex, _origRqstr, _mshrHit);
             break;
         default:
-            d_->fatal(CALL_INFO,-1,"TCC received an unrecognized invalidation request: %s\n",CommandString[_cmd]);
+            d_->fatal(CALL_INFO,-1,"%s, Error: TCC received an unrecognized invalidation request. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                    ((Component *)owner_)->getName().c_str(), event->getBaseAddr(), CommandString[_cmd], event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
 }
 
@@ -282,11 +293,13 @@ void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     CCLine* ccLine = ccLines_[_lineIndex];
 
     if(CacheArray::CacheLine::inTransition(_state)) {
-	d_->fatal(CALL_INFO, -1, "Cache line is in transition state\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: TCC Evicting cache line in transition state. Addr = 0x%" PRIx64 ", Rqstr = %s, Bcc state = %s. Time = %" PRIu64 "ns\n",
+                ((Component *)owner_)->getName().c_str(), ccLine->getBaseAddr(), _origRqstr.c_str(), BccLineString[_state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     if(! ccLine->valid()) {
-	d_->fatal(CALL_INFO, -1, "Cache line is invalid\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: TCC Evicting invalid cache line. Addr = 0x%" PRIx64 ", Rqstr = %s, TCC state = %s. Time = %" PRIu64 "ns\n",
+                ((Component *)owner_)->getName().c_str(), ccLine->getBaseAddr(), _origRqstr.c_str(), TccLineString[ccLine->getState()], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     /* if state is invalid OR, there's no sharers or owner, then no need to send invalidations */
@@ -309,7 +322,8 @@ void MESITopCC::handleFetchResp(MemEvent * event, CacheLine * _cacheLine) {
     State st = _cacheLine->getState();
 
     if(! (st == M || st == E)) {
-	d_->fatal(CALL_INFO, -1, "Cache line is not in M or E state\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: TCC - cache line is not in M or E state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s. Time = %" PRIu64 "ns\n",
+                ((Component *)owner_)->getName().c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(), BccLineString[st], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     if(ccLine->ownerExists())  ccLine->clearOwner();
@@ -569,7 +583,8 @@ std::string MESITopCC::lowNetworkNodeLookupById(int _id){
     std::map<int, string>::iterator it = lowNetworkIdMap_.find(_id);
 
     if(! (lowNetworkIdMap_.end() != it)) {
-	d_->fatal(CALL_INFO, -1, "Low network node lookup failed\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: TCC ID not found in list of network nodes. ID = %d. Time = %" PRIu64 "ns\n",
+                ((Component *)owner_)->getName().c_str(), _id, ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     return it->second;

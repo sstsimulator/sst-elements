@@ -58,7 +58,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
     int mshrSize    = params.find_integer("mshr_num_entries",-1);
     if (mshrSize == -1) mshrSize = HUGE_MSHR;
-    if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n");
+    if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n", getName().c_str());
     mshr            = new   MSHR(&dbg, mshrSize); 
     
     int directMem = params.find_integer("direct_mem_link",1);
@@ -69,7 +69,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 	
     /* Check parameter validity */
     if(! ("MESI" == protocol || "mesi" == protocol || "MSI" == protocol || "msi" == protocol) ) {
-	dbg.fatal(CALL_INFO, -1, "Invalid param: coherence_protocol - must be 'MESI' or 'MSI'. You specified: %s\n", protocol.c_str());
+	dbg.fatal(CALL_INFO, -1, "Invalid param(%s): coherence_protocol - must be 'MESI' or 'MSI'. You specified: %s\n", getName().c_str(), protocol.c_str());
     }
 
     if (protocol == "mesi") protocol = "MESI";
@@ -79,7 +79,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (directMemoryLink) {
         memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
         if (!memLink) {
-            dbg.fatal(CALL_INFO, -1, "Error creating link to memory from directory controller\n");
+            dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
         }
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port                        = "network";
@@ -99,7 +99,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network->addTypeInfo(typeInfo);
     } else {
         memoryName  = params.find_string("net_memory_name", "");
-        if (memoryName == "") dbg.fatal(CALL_INFO,-1,"Param not specified: net_memory_name - name of the memory owned by this directory controller\n");
+        if (memoryName == "") dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller\n", getName().c_str());
 
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port                        = "network";
@@ -339,7 +339,7 @@ bool DirectoryController::processPacket(MemEvent *ev){
             ev->getID().first, ev->getID().second, getCurrentSimTimeNano());
 
     if(! isRequestAddressValid(ev) ) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Time = %" PRIu64 "\n",
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
@@ -387,7 +387,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
     switch(cmd){
         case PutS:
 	    if(! entry) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry is invalid for PutS. Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n", getName().c_str(), ev->getBaseAddr(), getCurrentSimTimeNano());
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = PutS, Src = %s. Time = %" PRIu64 "ns\n", 
+                        getName().c_str(), ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
 	    }
 
             requesting_node = node_name_to_id(ev->getSrc());
@@ -400,7 +401,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
         case PutM:
         case PutE:
 	    if(! entry) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry is invalid for %s. Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n", CommandString[cmd], getName().c_str(), ev->getBaseAddr(), getCurrentSimTimeNano());
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                        getName().c_str(), ev->getBaseAddr(), CommandString[cmd], ev->getSrc().c_str(), getCurrentSimTimeNano());
 	    }
             
             if(entry->inController){
@@ -459,7 +461,8 @@ bool DirectoryController::processPacket(MemEvent *ev){
             break;
         default:
             /* Ignore unexpected */
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Received unrecognized request: %s. Time = %" PRIu64 "\n", getName().c_str(), CommandString[cmd], getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Received unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+                    getName().c_str(), CommandString[cmd], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
             break;
     }
 
@@ -475,7 +478,8 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
         if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
             Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;
             Addr globalAddr = noncacheMemReqs[ev->getID()].second;
-            dbg.debug(_L3_, "EVENT: %s, Received: MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], globalBaseAddr, ev->getSize(),getCurrentSimTimeNano());
+            dbg.debug(_L3_, "EVENT: %s, Received: MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", 
+                    getName().c_str(), CommandString[ev->getCmd()], globalBaseAddr, ev->getSize(),getCurrentSimTimeNano());
             ev->setBaseAddr(globalBaseAddr);
             ev->setAddr(globalAddr);
             noncacheMemReqs.erase(ev->getResponseToID());
@@ -483,7 +487,8 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             network->send(ev);
             return;
         }
-        dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected noncacheable response from memory for memory addr 0x%" PRIx64 "\n",getName().c_str(), ev->getAddr());
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected noncacheable response from memory. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], getCurrentSimTimeNano());
     }
 
 
@@ -500,15 +505,19 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             DirEntry *entry = getDirEntry(targetBlock);
 
 	    if(NULL == entry) {
-		dbg.fatal(CALL_INFO, -1, "Entry is not valid when getting directory entry.\n");
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Memory response received but directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n", 
+                        getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], getCurrentSimTimeNano());
 	    }
 
             entry->inController = true;
             advanceEntry(entry, ev);
+        } else  { 
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected response from memory - response type not recognized: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
+                getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), getCurrentSimTimeNano());
         }
-        else  dbg.fatal(CALL_INFO, -1, "%s Received unexpected response from memory - response type not recognized: %s\n",getName().c_str(), CommandString[ev->getCmd()]);
     } else {
-        dbg.fatal(CALL_INFO, -1, "%s Received unexpected response from memory - matching request not found for memory address %" PRIx64 "\n",getName().c_str(), ev->getAddr());
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected response from memory - matching request not found. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], getCurrentSimTimeNano());
     }
 
     delete ev;
@@ -565,7 +574,8 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
             profileResponseRecv(ev);
 
 	    if(! (entry->findOwner() == node_name_to_id(ev->getSrc())) ) {
-		dbg.fatal(CALL_INFO, -1, "%s Error: find owner lookup failure.\n",getName().c_str());
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Expected event from owner but received event from a different node. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                        getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
 	    }
 
             int mapped_id = node_name_to_id(ev->getSrc());
@@ -582,7 +592,8 @@ pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEnt
                     CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
             if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
 		if(NULLCMD == entry->nextCommand) {
-		   dbg.fatal(CALL_INFO, -1, "%s Error next command is a NULLCMD\n",getName().c_str());
+		   dbg.fatal(CALL_INFO, -1, "%s, Error: next command is a NULLCMD. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                           getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
 		}
             }
             return make_pair<bool, bool>(true, false);
@@ -650,7 +661,8 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
     uint32_t requesting_node = node_id(entry->activeReq->getSrc());
 
     if(entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)) {
-	dbg.fatal(CALL_INFO, -1, "%s Request is marked non-cachable but has reached processing\n",getName().c_str());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Request is marked non-cachable but has reached processing. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[entry->activeReq->getCmd()], entry->activeReq->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     if(entry->isDirty()){                                       // Must do a fetch
@@ -674,7 +686,8 @@ void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
 	sendEventToCaches(ev);
     } else if(cmd == GetX || cmd == GetSEx){
 	if(entry->waitingAcks != 0) {
-		dbg.fatal(CALL_INFO, -1, "%s There are waiting ACKs in GetX and GetSEx states\n",getName().c_str());
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Handling request but have not received all acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Acks = %d. Time = %" PRIu64 "ns\n",
+                        getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[cmd], entry->activeReq->getSrc().c_str(), entry->waitingAcks, getCurrentSimTimeNano());
 	}
 
 	for(uint32_t i = 0 ; i < numTargets ; i++){             // Must send invalidates
@@ -766,12 +779,14 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 	
     
     if(! (entry->countRefs() <= 1)) {
-	dbg.fatal(CALL_INFO, -1, "%s Error: entry references count > 1\n", getName().c_str());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: getting data for exclusive request but entry references count > 1. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Refs = %d. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[entry->activeReq->getCmd()], entry->activeReq->getSrc().c_str(), entry->countRefs(), getCurrentSimTimeNano());
     }
 
     if(entry->countRefs() == 1) {
 	if(! entry->sharers[requesting_node]) {
-		dbg.fatal(CALL_INFO, -1, "Error: sharers for requested node are NULL\n");
+		dbg.fatal(CALL_INFO, -1, "%s, Error: getting data for exclusive request but coherence state has not been updated with new accessor. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                        getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[entry->activeReq->getCmd()], entry->activeReq->getSrc().c_str(), getCurrentSimTimeNano());
 	}
     }
 
@@ -789,7 +804,8 @@ void DirectoryController::handlePutS(MemEvent* ev){
     DirEntry *entry = getDirEntry(ev->getAddr());
 
     if(! (entry && entry->waitingAcks > 0)) {
-	dbg.fatal(CALL_INFO, -1, "Error: entry is NULL or there are zero waiting ACKs\n");
+	dbg.fatal(CALL_INFO, -1, "%s, Error: handling PutS as ack but either directory entry does not exist or we are not expecting acks. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     int requesting_node = node_name_to_id(ev->getSrc());
@@ -802,11 +818,13 @@ void DirectoryController::handlePutS(MemEvent* ev){
 
 void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev) {
     if(! entry->isDirty()) {
-	dbg.fatal(CALL_INFO, -1, "Called a PUT-M but entry is not dirty.\n");
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Handling PutM but block is not exclusive. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     if(! (entry->findOwner() == node_name_to_id(entry->activeReq->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "Error: unable to find owner in a PUT-M request\n");
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
 
     int mapped_id = node_name_to_id(entry->activeReq->getSrc());
@@ -826,7 +844,8 @@ void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev) {
 /* Advance the processing of this directory entry */
 void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev) {
 	if(NULL == entry->nextFunc) {
-		dbg.fatal(CALL_INFO, -1, "Next function in advance entry is NULL\n");
+		dbg.fatal(CALL_INFO, -1, "%s, Error: Received new response event but next function is NULL. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                        getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
 	}
 
 	(this->*(entry->nextFunc))(entry, ev);
@@ -853,7 +872,8 @@ uint32_t DirectoryController::node_name_to_id(const std::string &name){
     std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
 
     if(node_lookup.end() == i) {
-	dbg.fatal(CALL_INFO, -1, "Unable to lookup node to name by ID (name=%s)\n", name.c_str());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Attempt to lookup node ID but name not found: %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), name.c_str(), getCurrentSimTimeNano());
     }
 
     uint32_t id = i->second;
@@ -975,8 +995,8 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     MemEvent *ev       = new MemEvent(this, localBaseAddr, localBaseAddr, PutM, cacheLineSize);
 
     if(data_event->getPayload().size() != cacheLineSize) {
-	dbg.fatal(CALL_INFO, -1, "Write back of data request error, payload size %" PRIu32 " != cache line size: %" PRIu32 "\n",
-		(uint32_t) data_event->getPayload().size(), (uint32_t) cacheLineSize);
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Writing back data request but payload does not match cache line size of %uB. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Size = %zu. Time = %" PRIu64 "ns\n",
+                getName().c_str(), cacheLineSize, ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), ev->getPayload().size(), getCurrentSimTimeNano());
     }
 
     ev->setSize(data_event->getPayload().size());
@@ -1049,8 +1069,8 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev){
 
 Addr DirectoryController::convertAddressFromLocalAddress(Addr addr) {
     if(interleaveStep > interleaveSize) {
-	dbg.fatal(CALL_INFO, -1, "Error: interleaveStep (%" PRIu32 ") > interleaveSize (%" PRIu32 ")\n",
-		(uint32_t) interleaveStep, (uint32_t) interleaveSize);
+	dbg.fatal(CALL_INFO, -1, "%s, Error: in address conversion, interleaveStep (%" PRIu32 ") > interleaveSize (%" PRIu32 "). Addr = 0x%" PRIx64 ". Time = %" PRIu64 "\n",
+		getName().c_str(), (uint32_t) interleaveStep, (uint32_t) interleaveSize, addr, getCurrentSimTimeNano());
     }
 
     Addr res = 0;
@@ -1112,7 +1132,7 @@ void DirectoryController::init(unsigned int phase){
     network->init(phase);
 
     if (!directMemoryLink && network->initDataReady() && !network->isValidDestination(memoryName)) {
-        dbg.fatal(CALL_INFO,-1,"Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s\n",memoryName.c_str());
+        dbg.fatal(CALL_INFO,-1,"%s, Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s\n",getName().c_str(), memoryName.c_str());
     }
     /* Pass data on to memory */
     while(MemEvent *ev = network->recvInitData()){
@@ -1183,14 +1203,14 @@ void DirectoryController::setup(void){
             numTargets++;
             if(blocksize) {
 		if(blocksize != i->second.blocksize) {
-			dbg.fatal(CALL_INFO, -1, "Error: block size does not match blocksize=%" PRIu32 " != %" PRIu32 "\n",
-				(uint32_t) blocksize, (uint32_t) i->second.blocksize);
+			dbg.fatal(CALL_INFO, -1, "%s, Error: block size does not match blocksize=%" PRIu32 " != %" PRIu32 "\n",
+				getName().c_str(), (uint32_t) blocksize, (uint32_t) i->second.blocksize);
 		}
 	    }
             else            blocksize = i->second.blocksize;
         }
     }
-    if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"Directory Controller %s is unable to see any caches\n",getName().c_str());
+    if(0 == numTargets) dbg.fatal(CALL_INFO,-1,"%s, Error: Did not find any caches during init\n",getName().c_str());
 
     network->clearPeerInfo();
     entrySize = (numTargets+1)/8 +1;

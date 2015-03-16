@@ -285,9 +285,9 @@ private:
         if ( oldReq ) {
             SimTime_t waitTime = curTime - oldReq->getInitializationTime();
             if ( waitTime > cf_.maxWaitTime ) {
-                d_->fatal(CALL_INFO, 1, "Maximum Cache Request time reached!\n"
-                        "Event: %s 0x%" PRIx64 " from %s, time = %" PRIu64 " ns\n",
-                        CommandString[oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
+                d_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
+                        "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
+                        getName().c_str(), CommandString[oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
             }
         }
     }
