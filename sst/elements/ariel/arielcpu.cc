@@ -349,4 +349,9 @@ void ArielCPU::emergencyShutdown() {
     tunnel->shutdown(true);
     unlink(shmem_region_name);
     kill(child_pid, SIGKILL);
+
+    /* Ask the cores to finish up.  This should flush logging */
+	for(uint32_t i = 0; i < core_count; ++i) {
+		cpu_cores[i]->finishCore();
+	}
 }

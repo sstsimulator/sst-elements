@@ -81,7 +81,7 @@ ArielCore::~ArielCore() {
 		delete cacheLink;
 	}
 
-	if(enableTracing) {
+	if(enableTracing && traceGen) {
 		delete traceGen;
 	}
 }
@@ -155,6 +155,11 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
 
 void ArielCore::finishCore() {
 	// Close the trace file if we did in fact open it.
+	if(enableTracing && traceGen) {
+		delete traceGen;
+        traceGen = NULL;
+	}
+
 }
 
 void ArielCore::halt() {
