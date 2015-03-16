@@ -46,7 +46,8 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, st
         _wbCacheLine->setState(I);    // wait for ack
 	break;
     default:
-	d_->fatal(CALL_INFO,-1,"BCC is in an invalid state during eviction: %s\n", BccLineString[state]);
+	d_->fatal(CALL_INFO,-1,"%s, Error: BCC is in an invalid state during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), BccLineString[state], _wbCacheLine->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
 }
 
@@ -88,7 +89,8 @@ void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Comman
         handlePutERequest(_cacheLine);
         break;
     default:
-	d_->fatal(CALL_INFO,-1,"BCC received an unrecognized request: %s\n", CommandString[_cmd]);
+	d_->fatal(CALL_INFO,-1,"%s, Error: BCC received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), CommandString[_cmd], _event->getBaseAddr(), _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
 }
 
@@ -130,7 +132,8 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
             processInvRequest(_event, _cacheLine);
             break;
 	default:
-	    d_->fatal(CALL_INFO,-1,"BCC received an unrecognized invalidation request: %s\n", CommandString[_cmd]);
+	    d_->fatal(CALL_INFO,-1,"%s, Error: BCC received an unrecognized invalidation request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+                    ownerName_.c_str(), CommandString[_cmd], _event->getBaseAddr(), _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
 	}
 
 }
@@ -143,11 +146,13 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
     setGroupId(_event->getGroupId());
 
     if(_cacheLine->inTransition()) {
-	d_->fatal(CALL_INFO, -1, "Error: Cache line in transition.\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: Cache line in transition. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s. Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), _event->getBaseAddr(), CommandString[_event->getCmd()], _event->getSrc().c_str(), BccLineString[_cacheLine->getState()], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     if(! (_cacheLine->getState() == M || _cacheLine->getState() == E) ) {
-	d_->fatal(CALL_INFO, -1, "Error: cache is not in M or E state\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: cache is not in M or E state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s. Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), _event->getBaseAddr(), CommandString[_event->getCmd()], _event->getSrc().c_str(), BccLineString[_cacheLine->getState()], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     Command cmd = _event->getCmd();
@@ -164,7 +169,8 @@ void MESIBottomCC::handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine
             inc_FetchInvXReqSent();
             break;
 	    default:
-	    d_->fatal(CALL_INFO,-1,"BCC received an unrecognized fetch invalidate request: %s\n", CommandString[cmd]);
+	    d_->fatal(CALL_INFO,-1,"%s, Error: BCC received an unrecognized fetch invalidate request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+                    ownerName_.c_str(), CommandString[cmd], _event->getAddr(), _event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
 	}
 }
 
@@ -174,7 +180,8 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
 
     Command origCmd = _origRequest->getCmd();
     if(!MemEvent::isDataRequest(origCmd)){
-	d_->fatal(CALL_INFO,-1,"BCC received a response to an invalid command type. Invalid command: %s\n", CommandString[origCmd]);
+	d_->fatal(CALL_INFO,-1,"%s, Error: BCC received a response to an invalid command type. Invalid command: %s. Addr = 0x%" PRIx64 ", Resp cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), CommandString[origCmd], _responseEvent->getBaseAddr(), CommandString[_responseEvent->getCmd()], _responseEvent->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
@@ -204,7 +211,8 @@ void MESIBottomCC::updateCoherenceState(CacheLine* _cacheLine, State _grantedSta
             _cacheLine->setState(M);
             break;
         default:
-	    d_->fatal(CALL_INFO,-1,"BCC is in an unrecognized state: %s\n", BccLineString[state]);
+	    d_->fatal(CALL_INFO,-1,"%s, Error: BCC is in an unrecognized state: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
+                    ownerName_.c_str(), BccLineString[state], _cacheLine->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
 }
 
@@ -259,7 +267,8 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
         }
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
 	    if(! _cacheLine->isLocked()) {
-		d_->fatal(CALL_INFO, -1, "Cache line is not locked but request says F_LOCKED\n");
+		d_->fatal(CALL_INFO, -1, "%s, Error: Unlock request to an already unlocked cache line. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
+                        ownerName_.c_str(), _event->getBaseAddr(), ((Component *)owner_)->getCurrentSimTimeNano());
    	    }
 
             _cacheLine->decLock();
@@ -280,8 +289,10 @@ void MESIBottomCC::processInvRequest(MemEvent* _event, CacheLine* _cacheLine){
     if(state == S){
         if(_event->getAckNeeded()) sendWriteback(PutS, _cacheLine, _event->getRqstr());
         _cacheLine->setState(I);
+    } else {
+        d_->fatal(CALL_INFO,-1,"%s, Error: BCC received an invalidation but is not in state S. Addr = 0x%" PRIx64 ", BCC State = %s. Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), _event->getBaseAddr(), BccLineString[state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
-    else d_->fatal(CALL_INFO,-1,"BCC received an invalidation but is not in a valid stable state: %s\n", BccLineString[state]);
 }
 
 
@@ -319,7 +330,8 @@ void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cach
     State state = _cacheLine->getState();
 
     if(! (state == M || state == E)) {
-	d_->fatal(CALL_INFO, -1, "Cache line is not in M or E state\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: Updating data but cache is not in E or M state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC State = %s. Time = %" PRIu64 "ns\n", 
+                ownerName_.c_str(), _event->getBaseAddr(), CommandString[_event->getCmd()], _event->getSrc().c_str(), BccLineString[state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     if((state == E && _event->getCmd() != PutXE) || _event->getDirty()) _cacheLine->setState(M);    // Update state if line was written
@@ -335,7 +347,8 @@ void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
     State state = _cacheLine->getState();
 
     if(! (state == E || state == M)) {
-	d_->fatal(CALL_INFO, -1, "Cache line is not in M or E state\n");
+	d_->fatal(CALL_INFO, -1, "%s, Error: PutE request but cache line is not in M or E state. Addr = 0x%" PRIx64 ", BCC State = %s. Time = %"PRIu64 "ns\n", 
+                ownerName_.c_str(), _cacheLine->getBaseAddr(), BccLineString[state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
     inc_PUTEReqsReceived();

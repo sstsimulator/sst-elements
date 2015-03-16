@@ -383,7 +383,7 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             for(vector<mshrType>::iterator it2 = pointerMSHR.begin(); it2 != pointerMSHR.end(); i++){
                 
                 if ((*it2).elem.type() != typeid(MemEvent*)) {
-                    d_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 "\n",
+                    d_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 " ns\n",
                             this->getName().c_str(), _baseAddr, getCurrentSimTimeNano());
                 }
                 cont = activatePrevEvent(boost::get<MemEvent*>((*it2).elem), pointerMSHR, pointerAddr, it2, i);
@@ -475,8 +475,8 @@ void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool 
     
     if(_requestCompleted){
         if(cmd != PutS && !(_cacheLine->inStableState() && ccLine->inStableState())) {    /* Sanity check cache state */
-            d_->fatal(CALL_INFO, -1, "%s, Error: Finished handling request but cache line is not stable: cmd = %s, Bcc state = %s, Tcc state = %s. time = %" PRIu64 "\n",
-                    this->getName().c_str(), CommandString[cmd],BccLineString[_cacheLine->getState()],TccLineString[ccLine->getState()],getCurrentSimTimeNano());
+            d_->fatal(CALL_INFO, -1, "%s, Error: Finished handling request but cache line is not stable. Addr = 0x%" PRIx64 ", Cmd = %s, Bcc state = %s, Tcc state = %s.Time = %" PRIu64 "\n",
+                    this->getName().c_str(), baseAddr, CommandString[cmd], BccLineString[_cacheLine->getState()], TccLineString[ccLine->getState()], getCurrentSimTimeNano());
         }
         /* Upon a PutS (due to invalidate, ie mshrEntry exists), only possible pending request should be a GetSEx request, make sure this is the case */
         if(cmd == PutS && mshr_->exists(baseAddr)){
