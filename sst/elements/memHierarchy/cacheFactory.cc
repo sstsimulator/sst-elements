@@ -203,6 +203,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         myInfo.name = getName();
         myInfo.network_addr = _params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache; 
+        myInfo.link_inbuf_size = _params.find_string("network_input_buffer_size", "1KB");
+        myInfo.link_outbuf_size = _params.find_string("network_output_buffer_size", "1KB");
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
@@ -222,6 +224,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         myInfo.name = getName();
         myInfo.network_addr = _params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCacheToCache; 
+        myInfo.link_inbuf_size = _params.find_string("network_input_buffer_size", "1KB");
+        myInfo.link_outbuf_size = _params.find_string("network_output_buffer_size", "1KB");
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
@@ -242,6 +246,8 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         myInfo.name = getName();
         myInfo.network_addr = _params.find_integer("network_address");
         myInfo.type = MemNIC::TypeNetworkCache; 
+        myInfo.link_inbuf_size = _params.find_string("network_input_buffer_size", "1KB");
+        myInfo.link_outbuf_size = _params.find_string("network_output_buffer_size", "1KB");
 
         MemNIC::ComponentTypeInfo typeInfo;
         uint64_t addrRangeStart = 0;

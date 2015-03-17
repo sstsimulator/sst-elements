@@ -88,6 +88,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.name                             = getName();
         myInfo.network_addr                     = addr;
         myInfo.type                             = MemNIC::TypeDirectoryCtrl;
+        myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
+        myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
         network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         MemNIC::ComponentTypeInfo typeInfo;
@@ -108,6 +110,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.name                             = getName();
         myInfo.network_addr                     = addr;
         myInfo.type                             = MemNIC::TypeNetworkDirectory;
+        myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
+        myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
         network = new MemNIC(this, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         
         MemNIC::ComponentTypeInfo typeInfo;

@@ -72,10 +72,12 @@ public:
         std::string name;
         int network_addr;
         ComponentType type;
+        std::string link_inbuf_size;
+        std::string link_outbuf_size;
 
         ComponentInfo() :
             link_port(""), num_vcs(0), link_bandwidth(""), name(""),
-            network_addr(0), type(TypeOther)
+            network_addr(0), type(TypeOther), link_inbuf_size(""), link_outbuf_size("")
         { }
     };
 

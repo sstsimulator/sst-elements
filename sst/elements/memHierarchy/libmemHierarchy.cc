@@ -84,6 +84,8 @@ static const ElementInfoParam cache_params[] = {
     {"network_bw",              "Optional, int      - Network link bandwidth.", "1GB/s"},
     {"network_address",         "Optional, int      - When connected to a network, the network address of this cache.", "0"},
     {"network_num_vc",          "Optional, int      - When connected to a network, the number of VCS on the on-chip network.", "3"},
+    {"network_input_buffer_size", "Optional, int      - Size of the network's input buffer.", "1KB"},
+    {"network_output_buffer_size","Optional, int      - Size of the network's output buffer.", "1KB"},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
     {"force_noncacheable_reqs", "Optional, int      - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "0"},
@@ -183,6 +185,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
     {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
+    {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
     {NULL, NULL, NULL}
 };
 
@@ -307,6 +311,8 @@ static const ElementInfoParam dirctrl_params[] = {
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
     {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
+    {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
     {"addr_range_end",      "End of Address Range, for this controller.", NULL},
     {"interleave_size",     "(optional) Size of interleaved pages in KB.", "0"},

@@ -60,8 +60,7 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 
     Params params; // LinkControl doesn't actually use the params
     link_control = (SimpleNetwork*)comp->loadSubComponent("merlin.linkcontrol", comp, params);
-    UnitAlgebra buf_size("1KB");
-    link_control->initialize(ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, buf_size, buf_size);
+    link_control->initialize(ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, UnitAlgebra(ci.link_inbuf_size), UnitAlgebra(ci.link_outbuf_size));
 
 }
 

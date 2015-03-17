@@ -132,6 +132,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         myInfo.name             = getName();
         myInfo.network_addr     = addr;
         myInfo.type             = MemNIC::TypeMemory;
+        myInfo.link_inbuf_size  = params.find_string("network_input_buffer_size", "1KB");
+        myInfo.link_outbuf_size = params.find_string("network_output_buffer_size", "1KB");
         networkLink_ = new MemNIC(this, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
         MemNIC::ComponentTypeInfo typeInfo;
