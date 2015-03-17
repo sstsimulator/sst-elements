@@ -153,7 +153,6 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 if ( m_sendDownState.count == m_yyy->numChildren() ) {
                     m_sendDownState.count = 0;
                     m_sendDownState.state = SendDownState::Waiting;
-				m_state = Exit;
                 }
 
                 m_dbg.verbose(CALL_INFO,1,0,"isend to child %d\n", child );
