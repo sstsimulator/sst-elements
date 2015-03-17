@@ -273,8 +273,8 @@ sst.merlin._params["link_lat"] = networkParams['link_lat']
 sst.merlin._params["link_bw"] = networkParams['link_bw']   
 sst.merlin._params["xbar_bw"] = networkParams['link_bw'] 
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
-sst.merlin._params["input_latency"] = "50ns"
-sst.merlin._params["output_latency"] = "50ns"
+sst.merlin._params["input_latency"] = networkParams['input_latency'] 
+sst.merlin._params["output_latency"] = networkParams['output_latency'] 
 sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
 sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
 

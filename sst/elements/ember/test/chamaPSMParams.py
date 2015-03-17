@@ -10,6 +10,8 @@ networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "3.85GB/s",
     "link_lat" : "120ns",
+    "input_latency" : "50ns",
+    "output_latency" : "50ns",
     "flitSize" : "8B",
     "buffer_size" : "14KB",
 }
