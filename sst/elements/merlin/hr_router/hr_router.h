@@ -68,6 +68,8 @@ private:
     std::string xbar_bw;
     TimeConverter* xbar_tc;
     Clock::Handler<hr_router>* my_clock_handler;
+
+    std::vector<std::string> inspector_names;
     
     bool clock_handler(Cycle_t cycle);
     bool debug_clock_handler(Cycle_t cycle);

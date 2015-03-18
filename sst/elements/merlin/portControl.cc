@@ -102,7 +102,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
                          int port_number, const UnitAlgebra& link_bw, const UnitAlgebra& flit_size,
                          Topology *topo, 
                          SimTime_t input_latency_cycles, std::string input_latency_timebase,
-                         SimTime_t output_latency_cycles, std::string output_latency_timebase) :
+                         SimTime_t output_latency_cycles, std::string output_latency_timebase,
+                         std::vector<std::string>& inspector_names) :
     rtr_id(rtr_id),
     num_vcs(-1),
     link_bw(link_bw),
@@ -173,6 +174,17 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
     send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);
     output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
+
+    // Create any NetworkInspectors
+    for ( int i = 0; i < inspector_names.size(); i++ ) {
+        Params empty;
+        SimpleNetwork::NetworkInspector* ni = dynamic_cast<SimpleNetwork::NetworkInspector*>(rif->loadSubComponent(inspector_names[i], rif, empty));
+        if ( ni == NULL ) {
+            merlin_abort.fatal(CALL_INFO,1,"NetworkInspector: %s, not found.\n",inspector_names[i].c_str());
+        }
+        ni->initialize(port_name);
+        network_inspectors.push_back(ni);
+    }
 }
 
 // void
@@ -298,6 +310,9 @@ PortControl::~PortControl() {
     //if ( xbar_in_credits != NULL ) delete [] xbar_in_credits;
     if ( port_ret_credits != NULL ) delete [] port_ret_credits;
     if ( port_out_credits != NULL ) delete [] port_out_credits;
+    for ( int i = 0; i < network_inspectors.size(); i++ ) {
+        delete network_inspectors[i];
+    }
 }
 
 void
@@ -727,6 +742,11 @@ PortControl::handle_output_r2r(Event* ev) {
 	    }
         send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
         send_packet_count->addData(1);
+
+        // Send the request to all the registered NetworkInspectors
+        for ( int i = 0; i < network_inspectors.size(); i++ ) {
+            network_inspectors[i]->inspectNetworkData(send_event->getEncapsulatedEvent()->request);
+        }
 
 	    if ( host_port ) {
             // std::cout << "Found an event to send on host port " << port_number << std::endl;

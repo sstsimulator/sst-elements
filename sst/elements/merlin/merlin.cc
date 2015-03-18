@@ -15,6 +15,7 @@
 #include <sst/core/element.h>
 #include <sst/core/configGraph.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
 #include "merlin.h"
 #include "linkControl.h"
@@ -39,6 +40,7 @@
 
 using namespace std;
 using namespace SST::Merlin;
+using namespace SST::Interfaces;
 
 static const char * router_events[] = {"merlin.RtrEvent","merlin.internal_router_event", "merlin.topologyevent", "merlin.credit_event", NULL};
 static const char * nic_events[] = {"merlin.RtrEvent", "merlin.credit_event", NULL};
@@ -63,6 +65,7 @@ static const ElementInfoParam hr_router_params[] = {
     {"output_latency", "Latency of packets exiting switch from output buffers.  Specified in s (can include SI prefix)."},
     {"input_buf_size", "Size of input buffers specified in b or B (can include SI prefix)."},
     {"output_buf_size", "Size of output buffers specified in b or B (can include SI prefix)."},
+    {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
     {"debug", "Turn on debugging for router. Set to 1 for on, 0 for off.", "0"},
     {NULL,NULL,NULL}
 };
@@ -321,10 +324,37 @@ load_linkcontrol(Component* parent, Params& params)
 }
 
 static const ElementInfoStatisticEnable linkcontrol_statistics[] = {
-    // This really belongs in LinkControl, but stats in modules don't work yet
     { "packet_latency", "Histogram of latencies for received packets", 1},
     { "send_bit_count", "Count number of bits sent on link", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+};
+
+class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
+private:
+    Statistic<uint64_t>* test_count;
+public:
+    TestNetworkInspector(Component* parent) :
+        SimpleNetwork::NetworkInspector(parent)
+    {}
+
+    void initialize(string id) {
+        test_count = registerStatistic<uint64_t>("test_count", id);
+    }
+
+    void inspectNetworkData(SimpleNetwork::Request* req) {
+        test_count->addData(1);
+    }
+};
+
+static SubComponent*
+load_test_network_inspector(Component* parent, Params& params)
+{
+    return new TestNetworkInspector(parent);
+}
+
+
+static const ElementInfoStatisticEnable test_network_inspector_statistics[] = {
+    { "test_count", "Count number of packets sent on link", 1},
 };
 
 static const ElementInfoComponent components[] = {
@@ -431,7 +461,15 @@ static const ElementInfoSubComponent subcomponents[] = {
       load_linkcontrol,
       NULL,
       linkcontrol_statistics,
-      "SST::Merlin::LinkControl"
+      "SST::Interfaces::SimpleNetwork"
+    },
+    { "test_network_inspector",
+      "Used to test NetworkInspector functionality.  Duplicates send_packet_count in hr_router.",
+      NULL,
+      load_test_network_inspector,
+      NULL,
+      test_network_inspector_statistics,
+      "SST::Interfaces::SimpleNetwork::NetworkInspector"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };

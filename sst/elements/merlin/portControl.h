@@ -138,7 +138,8 @@ public:
                 int port_number, const UnitAlgebra& link_bw, const UnitAlgebra& flit_size,
                 Topology *topo, 
                 SimTime_t input_latency_cycles, std::string input_latency_timebase,
-                SimTime_t output_latency_cycles, std::string output_latency_timebase);
+                SimTime_t output_latency_cycles, std::string output_latency_timebase,
+                std::vector<std::string>& inspector_names);
     // void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits,
     //              int* in_buf_size, int* out_buf_size);
     void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits,
@@ -158,6 +159,8 @@ public:
     // void setupVCs(int vcs, internal_router_event** vc_heads
     
 private:
+
+    std::vector<SST::Interfaces::SimpleNetwork::NetworkInspector*> network_inspectors;
 
     void dumpQueueState(port_queue_t& q, std::ostream& stream);
     void dumpQueueState(port_queue_t& q, Output& out);

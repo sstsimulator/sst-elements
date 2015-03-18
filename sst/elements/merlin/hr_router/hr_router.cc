@@ -20,6 +20,7 @@
 #include <sst/core/unitAlgebra.h>
 
 #include <sstream>
+#include <string>
 
 #include <signal.h>
 
@@ -30,9 +31,41 @@
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
+using namespace std;
 
 int hr_router::num_routers = 0;
 int hr_router::print_debug = 0;
+
+// Helper functions used only in this file
+static string trim(string str)
+{
+    // Find whitespace in front
+    int front_index = 0;
+    while ( isspace(str[front_index]) ) front_index++;
+    
+    // Find whitespace in back
+    int back_index = str.length() - 1;
+    while ( isspace(str[back_index]) ) back_index--;
+    
+    return str.substr(front_index,back_index-front_index+1);
+}
+
+static void split(string input, string delims, vector<string>& tokens) {
+    if ( input.length() == 0 ) return;
+    size_t start = 0;
+    size_t stop = 0;;
+    vector<string> ret;
+    
+    do {
+        stop = input.find_first_of(delims,start);
+        tokens.push_back(input.substr(start,stop-start));
+        start = stop + 1;
+    } while (stop != string::npos);
+
+    for ( int i = 0; i < tokens.size(); i++ ) {
+        tokens[i] = trim(tokens[i]);
+    }
+}
 
 hr_router::~hr_router()
 {
@@ -167,6 +200,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     
     progress_vcs = new int[num_ports];
 
+    std::string inspector_config = params.find_string("network_inspectors", "");
+    split(inspector_config,",",inspector_names);
+    
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
         out_port_busy[i] = 0;
@@ -180,7 +216,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         // ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo,
         //                            1, input_latency, 1, output_latency);
         ports[i] = new PortControl(this, id, port_name.str(), i, link_bw, flit_size, topo,
-                                   1, input_latency, 1, output_latency);
+                                   1, input_latency, 1, output_latency, inspector_names);
         
     }
     
