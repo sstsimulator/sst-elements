@@ -71,6 +71,8 @@ class DirectoryController : public Component {
     /* Statistics counters for profiling DC */
     uint64_t    numReqsProcessed;
     uint64_t    totalReqProcessTime;
+    uint64_t    totalReplProcessTime;
+    uint64_t    totalGetReqProcessTime;
     uint64_t    numCacheHits;
     uint64_t    mshrHits;
     // Received events - from caches

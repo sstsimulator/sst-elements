@@ -132,6 +132,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     // Clear statistics counters
     numReqsProcessed    = 0;
+    totalReplProcessTime = 0;
+    totalGetReqProcessTime = 0;
     totalReqProcessTime = 0;
     numCacheHits        = 0;
     mshrHits            = 0;
@@ -1024,6 +1026,12 @@ void DirectoryController::resetEntry(DirEntry *entry){
     if(entry->activeReq){
         ++numReqsProcessed;
         totalReqProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
+        Command cmd = entry->activeReq->getCmd();
+        if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
+            totalGetReqProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
+        } else if (cmd == PutE || cmd == PutS || cmd == PutM) {
+            totalReplProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime() + 1);
+        }
 
         if (mshr->elementIsHit(entry->activeReq->getBaseAddr(),entry->activeReq)) {
             mshr->removeElement(entry->activeReq->getBaseAddr(),entry->activeReq);
@@ -1161,7 +1169,8 @@ void DirectoryController::init(unsigned int phase){
 
 void DirectoryController::finish(void){
     network->finish();
-
+    uint64_t getReq = GetSReqReceived + GetXReqReceived + GetSExReqReceived;
+    uint64_t putReq = PutMReqReceived + PutEReqReceived + PutMReqReceived;
     Output out("", 0, 0, printStatsLoc);
     out.output("\n--------------------------------------------------------------------\n");
     out.output("--- Directory Controller\n");
@@ -1191,6 +1200,8 @@ void DirectoryController::finish(void){
     out.output("- GetXResp sent:            %" PRIu64 "\n", GetXRespSent);
     out.output("- NACKs sent:               %" PRIu64 "\n", NACKSent);
     out.output("- Avg Req Time:             %" PRIu64 " ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
+    out.output("- Avg 'Get' Req Time:       %" PRIu64 " ns\n", (getReq > 0) ? totalGetReqProcessTime / getReq : 0);
+    out.output("- Avg 'Put' Req Time:       %" PRIu64 " ns\n", (putReq > 0) ? totalReplProcessTime / putReq : 0);
     out.output("- Entry Cache Hits:         %" PRIu64 "\n", numCacheHits);
     out.output("- MSHR hits:                %" PRIu64 "\n", mshrHits);
 }
