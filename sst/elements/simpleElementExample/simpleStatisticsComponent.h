@@ -39,34 +39,22 @@ private:
   void operator=(const simpleStatisticsComponent&); // do not implement
 
   virtual bool Clock1Tick(SST::Cycle_t);
-  virtual bool Clock2Tick(SST::Cycle_t, uint32_t);
-  virtual bool Clock3Tick(SST::Cycle_t, uint32_t);
-
-  virtual void Oneshot1Callback(uint32_t);
-  virtual void Oneshot2Callback();
   
   SSTRandom* rng;
   std::string rng_type;
   int rng_max_count;
   int rng_count;
   
-  TimeConverter*      tc;
-  Clock::HandlerBase* Clock3Handler;
-
   // Histogram Statistics
-  Statistic<uint32_t>*  histoU32; 
-  Statistic<uint64_t>*  histoU64; 
-  Statistic<int32_t>*   histoI32; 
-  Statistic<int64_t>*   histoI64; 
+  Statistic<uint32_t>*  stat1_U32; 
+  Statistic<uint64_t>*  stat2_U64; 
+  Statistic<int32_t>*   stat3_I32; 
+  Statistic<int64_t>*   stat4_I64; 
 
   // Accumulator Statistics
-  Statistic<uint32_t>*  accumU32; 
-  Statistic<uint64_t>*  accumU64; 
-  Statistic<uint32_t>*  accumU32_NOTUSED; 
-  
-  // Variables to store OneShot Callback Handlers
-  OneShot::HandlerBase* callback1Handler;
-  OneShot::HandlerBase* callback2Handler;
+  Statistic<uint32_t>*  stat5_U32; 
+  Statistic<uint64_t>*  stat6_U64; 
+  Statistic<uint32_t>*  stat7_U32_NOTUSED; 
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -77,13 +65,13 @@ private:
     ar & BOOST_SERIALIZATION_NVP(rng_max_count);
     ar & BOOST_SERIALIZATION_NVP(rng_type);
 
-    ar & BOOST_SERIALIZATION_NVP(histoU32); 
-    ar & BOOST_SERIALIZATION_NVP(histoU64); 
-    ar & BOOST_SERIALIZATION_NVP(histoI32); 
-    ar & BOOST_SERIALIZATION_NVP(histoI64); 
-    ar & BOOST_SERIALIZATION_NVP(accumU32); 
-    ar & BOOST_SERIALIZATION_NVP(accumU64); 
-    ar & BOOST_SERIALIZATION_NVP(accumU32_NOTUSED); 
+    ar & BOOST_SERIALIZATION_NVP(stat1_U32); 
+    ar & BOOST_SERIALIZATION_NVP(stat2_U64); 
+    ar & BOOST_SERIALIZATION_NVP(stat3_I32); 
+    ar & BOOST_SERIALIZATION_NVP(stat4_I64); 
+    ar & BOOST_SERIALIZATION_NVP(stat5_U32); 
+    ar & BOOST_SERIALIZATION_NVP(stat6_U64); 
+    ar & BOOST_SERIALIZATION_NVP(stat7_U32_NOTUSED); 
   }
 
   template<class Archive>
@@ -94,13 +82,13 @@ private:
     ar & BOOST_SERIALIZATION_NVP(rng_max_count);
     ar & BOOST_SERIALIZATION_NVP(rng_type);
 
-    ar & BOOST_SERIALIZATION_NVP(histoU32); 
-    ar & BOOST_SERIALIZATION_NVP(histoU64); 
-    ar & BOOST_SERIALIZATION_NVP(histoI32); 
-    ar & BOOST_SERIALIZATION_NVP(histoI64); 
-    ar & BOOST_SERIALIZATION_NVP(accumU32); 
-    ar & BOOST_SERIALIZATION_NVP(accumU64); 
-    ar & BOOST_SERIALIZATION_NVP(accumU32_NOTUSED); 
+    ar & BOOST_SERIALIZATION_NVP(stat1_U32); 
+    ar & BOOST_SERIALIZATION_NVP(stat2_U64); 
+    ar & BOOST_SERIALIZATION_NVP(stat3_I32); 
+    ar & BOOST_SERIALIZATION_NVP(stat4_I64); 
+    ar & BOOST_SERIALIZATION_NVP(stat5_U32); 
+    ar & BOOST_SERIALIZATION_NVP(stat6_U64); 
+    ar & BOOST_SERIALIZATION_NVP(stat7_U32_NOTUSED); 
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER()

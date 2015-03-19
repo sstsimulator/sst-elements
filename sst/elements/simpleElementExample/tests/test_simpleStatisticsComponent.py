@@ -68,22 +68,22 @@ StatExample0.addParams({
 ## # Enable Individual Statistics for the Component with output at end of sim
 ## # Statistic defaults to Accumulator
 ## StatExample0.enableStatistics([
-##       "histo_U32",
-##       "histo_U64",
-##       "histo_I32",
-##       "histo_I64", 
-##       "accum_U32",
-##       "accum_U64"
+##       "stat1_U32",
+##       "stat2_U64",
+##       "stat3_I32",
+##       "stat4_I64", 
+##       "stat5_U32",
+##       "stat6_U64"
 ## ])
 
 ## # Enable Individual Statistics for the Component with the same rate
 ## StatExample0.enableStatistics([
-##       "histo_U32",
-##       "histo_U64",
-##       "histo_I32",
-##       "histo_I64", 
-##       "accum_U32",
-##       "accum_U64"
+##       "stat1_U32",
+##       "stat2_U64",
+##       "stat3_I32",
+##       "stat4_I64", 
+##       "stat5_U32",
+##       "stat6_U64"
 ## ], 
 ## { "type":"sst.AccumulatorStatistic",
 ##   "rate":"100 ns"}
@@ -91,7 +91,7 @@ StatExample0.addParams({
 
 # Enable Individual Statistics for the Component with separate rates
 StatExample0.enableStatistics([
-      "histo_U32"], {
+      "stat1_U32"], {
       "type":"sst.HistogramStatistic",
       "minvalue" : "10", 
       "binwidth" : "10", 
@@ -100,7 +100,7 @@ StatExample0.enableStatistics([
       "rate":"5 ns"})
 
 StatExample0.enableStatistics([
-      "histo_U64"], {
+      "stat2_U64"], {
       "type":"sst.HistogramStatistic",
       "minvalue" : "1000", 
       "binwidth" : "1000", 
@@ -109,7 +109,7 @@ StatExample0.enableStatistics([
       "rate":"10 ns"})
             
 StatExample0.enableStatistics([
-      "histo_I32"], {
+      "stat3_I32"], {
       "type":"sst.HistogramStatistic",
       "minvalue" : "-200", 
       "binwidth" : "50", 
@@ -118,7 +118,7 @@ StatExample0.enableStatistics([
       "rate":"25 events"})
 
 StatExample0.enableStatistics([
-      "histo_I64"], {
+      "stat4_I64"], {
       "type":"sst.HistogramStatistic",
       "minvalue" : "-9000", 
       "binwidth" : "1000", 
@@ -127,12 +127,12 @@ StatExample0.enableStatistics([
       "rate":"50 ns"})
 
 StatExample0.enableStatistics([
-      "accum_U32"], {
+      "stat5_U32"], {
       "type":"sst.AccumulatorStatistic",
       "rate":"5 ns"})
 
 StatExample0.enableStatistics([
-      "accum_U64"], {
+      "stat6_U64"], {
       "type":"sst.AccumulatorStatistic",
       "rate":"10 ns"})
 
@@ -168,22 +168,22 @@ StatExample0.enableStatistics([
 #### ## # Enable Individual Statistics for the Component with output at end of sim
 #### ## # Statistic defaults to Accumulator
 #### ## StatExample1.enableStatistics([
-#### ##       "histo_U32",
-#### ##       "histo_U64",
-#### ##       "histo_I32",
-#### ##       "histo_I64", 
-#### ##       "accum_U32",
-#### ##       "accum_U64"
+#### ##       "stat1_U32",
+#### ##       "stat2_U64",
+#### ##       "stat3_I32",
+#### ##       "stat4_I64", 
+#### ##       "stat5_U32",
+#### ##       "stat6_U64"
 #### ## ])
 #### 
 #### ## # Enable Individual Statistics for the Component with the same rate
 #### ## StatExample1.enableStatistics([
-#### ##       "histo_U32",
-#### ##       "histo_U64",
-#### ##       "histo_I32",
-#### ##       "histo_I64", 
-#### ##       "accum_U32",
-#### ##       "accum_U64"
+#### ##       "stat1_U32",
+#### ##       "stat2_U64",
+#### ##       "stat3_I32",
+#### ##       "stat4_I64", 
+#### ##       "stat5_U32",
+#### ##       "stat6_U64"
 #### ## ], 
 #### ## { "type":"sst.AccumulatorStatistic",
 #### ##   "rate":"100 ns"}
@@ -191,7 +191,7 @@ StatExample0.enableStatistics([
 #### 
 #### # Enable Individual Statistics for the Component with separate rates
 #### StatExample1.enableStatistics([
-####       "histo_U32"], {
+####       "stat1_U32"], {
 ####       "type":"sst.HistogramStatistic",
 ####       "minvalue" : "10", 
 ####       "binwidth" : "10", 
@@ -200,7 +200,7 @@ StatExample0.enableStatistics([
 ####       "rate":"5 ns"})
 #### 
 #### StatExample1.enableStatistics([
-####       "histo_U64"], {
+####       "stat2_U64"], {
 ####       "type":"sst.HistogramStatistic",
 ####       "minvalue" : "1000", 
 ####       "binwidth" : "1000", 
@@ -209,7 +209,7 @@ StatExample0.enableStatistics([
 ####       "rate":"10 ns"})
 ####             
 #### StatExample1.enableStatistics([
-####       "histo_I32"], {
+####       "stat3_I32"], {
 ####       "type":"sst.HistogramStatistic",
 ####       "minvalue" : "-200", 
 ####       "binwidth" : "50", 
@@ -218,7 +218,7 @@ StatExample0.enableStatistics([
 ####       "rate":"25 events"})
 #### 
 #### StatExample1.enableStatistics([
-####       "histo_I64"], {
+####       "stat4_I64"], {
 ####       "type":"sst.HistogramStatistic",
 ####       "minvalue" : "-9000", 
 ####       "binwidth" : "1000", 
@@ -227,12 +227,12 @@ StatExample0.enableStatistics([
 ####       "rate":"50 ns"})
 #### 
 #### StatExample1.enableStatistics([
-####       "accum_U32"], {
+####       "stat5_U32"], {
 ####       "type":"sst.AccumulatorStatistic",
 ####       "rate":"5 ns"})
 #### 
 #### StatExample1.enableStatistics([
-####       "accum_U64"], {
+####       "stat6_U64"], {
 ####       "type":"sst.AccumulatorStatistic",
 ####       "rate":"10 ns"})
 #### 
@@ -277,62 +277,62 @@ StatExample0.enableStatistics([
 
 
 #### # Enable Single Statistic for Components defined by Name with output at end of sim
-#### sst.enableStatisticForComponentName("simpleStatisticsTest0", "histo_U32")
-#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "histo_U64")
+#### sst.enableStatisticForComponentName("simpleStatisticsTest0", "stat1_U32")
+#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "stat2_U64")
 
 #### # Enable Single Statistic for Components defined by Name
-#### sst.enableStatisticForComponentName("simpleStatisticsTest0", "histo_U32", 
+#### sst.enableStatisticForComponentName("simpleStatisticsTest0", "stat1_U32", 
 ####                                    {"type":"sst.HistogramStatistic",
 ####                                     "minvalue" : "10",
 ####                                     "binwidth" : "10", 
 ####                                     "numbins"  : "41", 
 ####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"10 ns"})
-#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "histo_I32", 
+#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "stat3_I32", 
 ####                                    {"type":"sst.HistogramStatistic",
 ####                                     "minvalue" : "-200", 
 ####                                     "binwidth" : "50", 
 ####                                     "numbins"  : "8", 
 ####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"100 events"})
-#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "histo_I64", 
+#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "stat4_I64", 
 ####                                    {"type":"sst.HistogramStatistic",
 ####                                     "minvalue" : "-9000", 
 ####                                     "binwidth" : "1000", 
 ####                                     "numbins"  : "18", 
 ####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"20 ns"})
-#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "accum_U64", 
+#### sst.enableStatisticForComponentName("simpleStatisticsTest1", "stat6_U64", 
 ####                                    {"type":"sst.AccumulatorStatistic",
 ####                                     "rate":"30 ns"})
 
 #### # Enable Single Statistic for Components defined by Type with output at end of sim
-#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_U32")
-#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_U64")
+#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "stat1_U32")
+#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "stat2_U64")
 
 #### # Enable Single Statistic for Components defined by Type 
-#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_U32", 
+#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "stat1_U32", 
 ####                                    {"type":"sst.HistogramStatistic",
 ####                                     "minvalue" : "10",
 ####                                     "binwidth" : "10", 
 ####                                     "numbins"  : "41", 
 ####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"5 ns"})
-#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_I32", 
+#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "stat3_I32", 
 ####                                    {"type":"sst.HistogramStatistic",
 ####                                     "minvalue" : "-200", 
 ####                                     "binwidth" : "50", 
 ####                                     "numbins"  : "8", 
 ####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"100 events"})
-#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "histo_I64", 
+#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "stat4_I64", 
 ####                                    {"type":"sst.HistogramStatistic",
 ####                                     "minvalue" : "-9000", 
 ####                                     "binwidth" : "1000", 
 ####                                     "numbins"  : "18", 
 ####                                     "IncludeOutOfBounds" : "1", 
 ####                                     "rate":"20 ns"})
-#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "accum_U64", 
+#### sst.enableStatisticForComponentType("simpleStatistics.simpleStatistics", "stat6_U64", 
 ####                                    {"type":"sst.AccumulatorStatistic",
 ####                                     "rate":"30 ns"})
 

@@ -67,42 +67,29 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     primaryComponentDoNotEndSim();
 
     /////////////////////////////////////////
-    // Register the Clocks
+    // Register the Clock
 
     // First 1ns Clock 
     std::cout << "REGISTER CLOCK #1 at 1 ns" << std::endl;
     registerClock("1 ns", new Clock::Handler<simpleStatisticsComponent>(this, &simpleStatisticsComponent::Clock1Tick));
-    
-    // Second 5ns Clock 
-    std::cout << "REGISTER CLOCK #2 at 5 ns" << std::endl;
-    registerClock("5 ns", new Clock::Handler<simpleStatisticsComponent, uint32_t>(this, &simpleStatisticsComponent::Clock2Tick, 222));
-    
-    // Third 15ns Clock
-    std::cout << "REGISTER CLOCK #3 at 15 ns" << std::endl;
-    Clock3Handler = new Clock::Handler<simpleStatisticsComponent, uint32_t>(this, &simpleStatisticsComponent::Clock3Tick, 333);
-    tc = registerClock("15 ns", Clock3Handler);
 
     /////////////////////////////////////////
     // Create the Statistics objects
-    histoU32 = registerStatistic<uint32_t>("histo_U32", "1");
-    histoU64 = registerStatistic<uint64_t>("histo_U64", "2");
-    histoI32 = registerStatistic<int32_t> ("histo_I32", "3");
-    histoI64 = registerStatistic<int64_t> ("histo_I64", "4");
-    accumU32 = registerStatistic<uint32_t>("accum_U32", "5");
-    accumU64 = registerStatistic<uint64_t>("accum_U64", "6");
+    stat1_U32 = registerStatistic<uint32_t>("stat1_U32", "1");
+    stat2_U64 = registerStatistic<uint64_t>("stat2_U64", "2");
+    stat3_I32 = registerStatistic<int32_t> ("stat3_I32", "3");
+    stat4_I64 = registerStatistic<int64_t> ("stat4_I64", "4");
+    stat5_U32 = registerStatistic<uint32_t>("stat5_U32", "5");
+    stat6_U64 = registerStatistic<uint64_t>("stat6_U64", "6");
     
     // Try to Register Illegal Statistic Objects
     printf("STATISTIC TESTING: TRYING TO REGISTER A DUPLICATE STAT NAME - SHOULD RETURN A NULLSTATISTIC\n");
-    accumU32_NOTUSED = registerStatistic<uint32_t>("accum_U32", "5");   // This stat should not be registered because it has a duplicated name
+    stat7_U32_NOTUSED = registerStatistic<uint32_t>("stat5_U32", "5");   // This stat should not be registered because it has a duplicated name
 
-    // Create the OneShot Callback Handlers
-    callback1Handler = new OneShot::Handler<simpleStatisticsComponent, uint32_t>(this, &simpleStatisticsComponent::Oneshot1Callback, 1);
-    callback2Handler = new OneShot::Handler<simpleStatisticsComponent>(this, &simpleStatisticsComponent::Oneshot2Callback);
-    
     // Test Statistic functions for delayed output and collection and to disable Stat
-//    histoU32->disable();
-//    histoU32->delayOutput("10 ns");
-//    histoU32->delayCollection("10 ns"); 
+//    stat1_U32->disable();
+//    stat1_U32->delayOutput("10 ns");
+//    stat1_U32->delayCollection("10 ns"); 
 }
 
 simpleStatisticsComponent::simpleStatisticsComponent() :
@@ -114,7 +101,7 @@ simpleStatisticsComponent::simpleStatisticsComponent() :
 bool simpleStatisticsComponent::Clock1Tick(Cycle_t CycleNum) 
 {
     // NOTE: THIS IS THE 1NS CLOCK 
-    std::cout << "@ " << CycleNum << std::endl;
+//    std::cout << "@ " << CycleNum << std::endl;
     
     rng->nextUniform();
     uint32_t U32 = rng->generateNextUInt32();
@@ -135,80 +122,34 @@ bool simpleStatisticsComponent::Clock1Tick(Cycle_t CycleNum)
 //    std::cout << "Scaled Random: " << rng_count << " of " << rng_max_count << ": " <<
 //    rng << ", U32 = " << scaled_U32 << ", U64 = " << scaled_U64 << ", I32 = " << scaled_I32 << ", I64 = " << scaled_I64 << std::endl;
     
-    // Save the Histogram Data
-    histoU32->addData(scaled_U32);
-    histoU64->addData(scaled_U64);
-    histoI32->addData(scaled_I32);
-    histoI64->addData(scaled_I64);
-    accumU32->addData(scaled_U32);
-    accumU64->addData(scaled_U64);
+    // Add the Statistic Data
+    stat1_U32->addData(scaled_U32);
+    stat2_U64->addData(scaled_U64);
+    stat3_I32->addData(scaled_I32);
+    stat4_I64->addData(scaled_I64);
+    stat5_U32->addData(scaled_U32);
+    stat6_U64->addData(scaled_U64);
     
     
 ////////////////////////////////////////////////////////    
    
     if (CycleNum == 60) {
-        std::cout << "*** STATISTIC TESTING: DISABLE histoU32 OUTPUT FOR 15ns PERIOD" << std::endl;
-        histoU32->delayOutput("15 ns");
+        std::cout << "@ " << CycleNum << std::endl;
+        std::cout << "*** STATISTIC TESTING: DISABLE stat1_U32 OUTPUT FOR 15ns PERIOD" << std::endl;
+        stat1_U32->delayOutput("15 ns");
     }
-
     
 ////////////////////////////////////////////////////////    
-    
     
     // return false so we keep going or true to stop
     if(rng_count >= rng_max_count) {
         primaryComponentOKToEndSim();
-      
     	return true;
     } else {
     	return false;
     }
 }
 
-
-bool simpleStatisticsComponent::Clock2Tick(SST::Cycle_t CycleNum, uint32_t Param)
-{
-    // NOTE: THIS IS THE 5NS CLOCK 
-    std::cout << "  CLOCK #2 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;
-
-    // return false so we keep going or true to stop
-    if(rng_count >= rng_max_count) {
-    	return true;
-    } else {
-    	return false;
-    }
-}
-    
-bool simpleStatisticsComponent::Clock3Tick(SST::Cycle_t CycleNum, uint32_t Param)
-{
-    // NOTE: THIS IS THE 15NS CLOCK 
-    std::cout << "  CLOCK #3 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;    
-    
-    if ((CycleNum == 1) || (CycleNum == 4))  {
-
-      std::cout << "*** STATISTIC TESTING: REGISTERING ONESHOTS " << std::endl ;
-      registerOneShot("10ns", callback1Handler);
-      registerOneShot("18ns", callback2Handler);
-    }
-    
-    // return false so we keep going or true to stop
-    if(rng_count >= rng_max_count) {
-    	return true;
-    } else {
-    	return false;
-    }
-}
-
-void simpleStatisticsComponent::Oneshot1Callback(uint32_t Param)
-{
-    std::cout << "STATISTIC TESTING: --- ONESHOT #1 CALLBACK; Param = " << Param << std::endl;
-}
-    
-void simpleStatisticsComponent::Oneshot2Callback()
-{
-    std::cout << "STATISTIC TESTING: --- ONESHOT #2 CALLBACK" << std::endl;
-}
-    
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////

@@ -24,19 +24,33 @@ using namespace SST::SimpleClockerComponent;
 simpleClockerComponent::simpleClockerComponent(ComponentId_t id, Params& params) :
   Component(id) {
 
-  clock_frequency_str = params.find_string("clock", "1GHz");
-  clock_count = params.find_integer("clockcount", 1000);
+    clock_frequency_str = params.find_string("clock", "1GHz");
+    clock_count = params.find_integer("clockcount", 1000);
+    
+    std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
+    
+    // tell the simulator not to end without us
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
-  std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
-
-  // tell the simulator not to end without us
-  registerAsPrimaryComponent();
-  primaryComponentDoNotEndSim();
-
-  //set our clock
-  registerClock( clock_frequency_str,
+    //set our Main Clock
+     registerClock( clock_frequency_str,
 		 new Clock::Handler<simpleClockerComponent>(this,
 			&simpleClockerComponent::tick ) );
+  
+    // Set some other clocks
+    // Second Clock (5ns) 
+    std::cout << "REGISTER CLOCK #2 at 5 ns" << std::endl;
+    registerClock("5 ns", new Clock::Handler<simpleClockerComponent, uint32_t>(this, &simpleClockerComponent::Clock2Tick, 222));
+    
+    // Third Clock (15ns)
+    std::cout << "REGISTER CLOCK #3 at 15 ns" << std::endl;
+    Clock3Handler = new Clock::Handler<simpleClockerComponent, uint32_t>(this, &simpleClockerComponent::Clock3Tick, 333);
+    tc = registerClock("15 ns", Clock3Handler);
+
+    // Create the OneShot Callback Handlers
+    callback1Handler = new OneShot::Handler<simpleClockerComponent, uint32_t>(this, &simpleClockerComponent::Oneshot1Callback, 456);
+    callback2Handler = new OneShot::Handler<simpleClockerComponent>(this, &simpleClockerComponent::Oneshot2Callback);
 }
 
 simpleClockerComponent::simpleClockerComponent() :
@@ -57,7 +71,50 @@ bool simpleClockerComponent::tick( Cycle_t ) {
 	}
 }
 
-// Element Libarary / Serialization stuff
+bool simpleClockerComponent::Clock2Tick(SST::Cycle_t CycleNum, uint32_t Param)
+{
+    // NOTE: THIS IS THE 5NS CLOCK 
+    std::cout << "  CLOCK #2 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;
+
+    // return false so we keep going or true to stop
+    if (CycleNum == 15) {
+        return true;
+    } else {
+        return false;
+    }
+}
+    
+bool simpleClockerComponent::Clock3Tick(SST::Cycle_t CycleNum, uint32_t Param)
+{
+    // NOTE: THIS IS THE 15NS CLOCK 
+    std::cout << "  CLOCK #3 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;    
+    
+    if ((CycleNum == 1) || (CycleNum == 4))  {
+
+      std::cout << "*** REGISTERING ONESHOTS " << std::endl ;
+      registerOneShot("10ns", callback1Handler);
+      registerOneShot("18ns", callback2Handler);
+    }
+    
+    // return false so we keep going or true to stop
+    if (CycleNum == 15) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void simpleClockerComponent::Oneshot1Callback(uint32_t Param)
+{
+    std::cout << "-------- ONESHOT #1 CALLBACK; Param = " << Param << std::endl;
+}
+    
+void simpleClockerComponent::Oneshot2Callback()
+{
+    std::cout << "-------- ONESHOT #2 CALLBACK" << std::endl;
+}
+
+// Serialization 
 
 BOOST_CLASS_EXPORT(simpleClockerComponent)
 

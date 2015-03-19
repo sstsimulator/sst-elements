@@ -99,12 +99,12 @@ static const ElementInfoParam simpleStatisticsComponent_params[] = {
 };
 
 static const ElementInfoStatisticEnable simpleStatisticsComponent_statistics[] = {
-    { "histo_U32", "Test Histogram 1 - Collecting U32 Data", 1},   // Name, Desc, Enable Level 
-    { "histo_U64", "Test Histogram 2 - Collecting U64 Data", 2}, 
-    { "histo_I32", "Test Histogram 3 - Collecting IU32 Data", 3}, 
-    { "histo_I64", "Test Histogram 4 - Collecting I64 Data", 4},     
-    { "accum_U32", "Test Accumulator 1 - Collecting U32 Data", 5}, 
-    { "accum_U64", "Test Accumulator 1 - Collecting U64 Data", 6}, 
+    { "stat1_U32", "Test Statistic 1 - Collecting U32 Data", 1},   // Name, Desc, Enable Level 
+    { "stat2_U64", "Test Statistic 2 - Collecting U64 Data", 2}, 
+    { "stat3_I32", "Test Statistic 3 - Collecting I32 Data", 3}, 
+    { "stat4_I64", "Test Statistic 4 - Collecting I64 Data", 4},     
+    { "stat5_U32", "Test Statistic 5 - Collecting U32 Data", 5}, 
+    { "stat6_U64", "Test Statistic 6 - Collecting U64 Data", 6}, 
     { NULL, NULL, 0 }
 };
 
