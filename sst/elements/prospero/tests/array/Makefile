@@ -13,4 +13,4 @@ array.o: array.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm *.o array
+	rm -f *.o array
