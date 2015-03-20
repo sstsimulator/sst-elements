@@ -23,8 +23,10 @@ class EmberPingPongGenerator : public EmberMessagePassingGenerator {
 public:
 	EmberPingPongGenerator(SST::Component* owner, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
+    void configure();
 
 private:
+    MessageRequest  m_req;
     MessageResponse m_resp;
     void*    m_sendBuf;
     void*    m_recvBuf;
@@ -34,6 +36,11 @@ private:
     uint64_t m_startTime;
     uint64_t m_stopTime;
     uint32_t m_loopIndex;
+
+    int      m_rank2;
+    bool     m_blockingSend;
+    bool     m_blockingRecv;
+    bool     m_waitall;
 };
 
 }

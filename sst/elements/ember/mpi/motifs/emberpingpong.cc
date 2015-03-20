@@ -20,15 +20,33 @@ using namespace SST::Ember;
 EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, 
                                                     Params& params) :
 	EmberMessagePassingGenerator(owner, params),
-    m_loopIndex(0) 
+    m_loopIndex(0),
+    m_rank2(1),
+    m_blockingSend( true ),
+    m_blockingRecv( true ),
+    m_waitall( false )
 {
     m_name = "PingPong";
 
 	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+	m_rank2 = (uint32_t) params.find_integer("arg.rank2", 1);
 
     m_sendBuf = memAlloc(m_messageSize);
     m_recvBuf = memAlloc(m_messageSize);
+    m_blockingSend = (uint32_t) params.find_integer("arg.blockingSend", true);;
+    m_blockingRecv = (uint32_t) params.find_integer("arg.blockingRecv", true);;
+    m_waitall = (uint32_t) params.find_integer("arg.waitall", false);
+}
+
+void EmberPingPongGenerator::configure()
+{
+    if ( 0 == rank() )  {
+        printf("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
+    }
+    if ( ! ( 0 == rank() || m_rank2 == rank() )  ) {
+        m_loopIndex = m_iterations;
+    } 
 }
 
 bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
@@ -40,9 +58,9 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
             double latency = ((totalTime/m_iterations)/2);
             double bandwidth = (double) m_messageSize / latency;
 
-            m_output->output("%s: total time %.3f us, loop %d, bufLen %d"
+            m_output->output("%s: otherRank %d, total time %.3f us, loop %d, bufLen %d"
                     ", latency %.3f us. bandwidth %f GB/s\n",
-                                m_name.c_str(),
+                                m_name.c_str(), m_rank2,
                                 totalTime * 1000000.0, m_iterations,
                                 m_messageSize,
                                 latency * 1000000.0,
@@ -60,15 +78,56 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( 0 == rank()) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 1, 
+    
+        if ( m_blockingSend ) {
+            enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, m_rank2, 
                                                 TAG, GroupWorld );
-        enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 1,
+        } else {
+            enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, m_rank2, 
+                                                TAG, GroupWorld, &m_req );
+            if ( m_waitall ) {
+                enQ_waitall( evQ, 1, &m_req, (MessageResponse**)&m_resp );
+            } else {
+                enQ_wait( evQ, &m_req );
+            }
+        }
+        if ( m_blockingRecv ) {
+            enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, m_rank2,
                                                 TAG, GroupWorld, &m_resp );
-	} else if ( 1 == rank()) {
-		enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 0, 
+        } else {
+            enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, m_rank2,
+                                                TAG, GroupWorld, &m_req );
+            if ( m_waitall ) {
+                enQ_waitall( evQ, 1, &m_req, (MessageResponse**)&m_resp );
+            } else {
+                enQ_wait( evQ, &m_req );
+            }
+        } 
+	} else if ( m_rank2 == rank()) {
+        if ( m_blockingRecv ) {
+            enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 0,
                                                 TAG, GroupWorld, &m_resp );
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 0,
+        } else {
+		    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, 0, 
+                                                TAG, GroupWorld, &m_req );
+            if ( m_waitall ) {
+                enQ_waitall( evQ, 1, &m_req, (MessageResponse**)&m_resp );
+            } else {
+                enQ_wait( evQ, &m_req );
+            }
+        }
+        if ( m_blockingSend ) {
+            enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, 0,
                                                 TAG, GroupWorld );
+        } else {
+            enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, 0,
+                                                TAG, GroupWorld, &m_req );
+            if ( m_waitall ) {
+                enQ_waitall( evQ, 1, &m_req, (MessageResponse**)&m_resp );
+            } else {
+                enQ_wait( evQ, &m_req );
+            }
+        }
 	}
 
     if ( ++m_loopIndex == m_iterations ) {
