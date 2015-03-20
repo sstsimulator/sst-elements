@@ -33,7 +33,6 @@ class SendState : StateBase< T1 >
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::SendState::@p():@l ",
                             obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
-
     }
     void enter( bool blocking, std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
@@ -85,13 +84,13 @@ bool SendState<T1>::afterProcess()
 
     if ( m_blocking ) {
         if ( m_req->isDone() ) {
-            obj().passCtrlToFunction( 0, m_functor );
+            obj().passCtrlToFunction( obj().sendStateDelay(), m_functor );
             delete m_req;
         } else {
             obj().m_processQueuesState->enterWait( new WaitReq( m_req ), &m_unblock );
         }
     } else {
-        obj().passCtrlToFunction( 0, m_functor );
+        obj().passCtrlToFunction( obj().sendStateDelay(), m_functor );
     }
 
     return false;
@@ -101,7 +100,7 @@ template< class T1 >
 bool SendState<T1>::unblock()
 {
     dbg().verbose(CALL_INFO,1,0,"\n");
-    obj().passCtrlToFunction( 0, m_functor );
+    obj().passCtrlToFunction( obj().sendStateDelay(), m_functor );
     delete m_req;
     return false;
 }

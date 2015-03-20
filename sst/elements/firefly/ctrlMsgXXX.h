@@ -120,8 +120,8 @@ class XXX  {
 
     size_t shortMsgLength() { return m_shortMsgLength; }
 
-    void passCtrlToFunction(int delay, FunctorBase_0<bool>* );
-    void passCtrlToFunction(int delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
+    void passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* );
+    void passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
     void schedFunctor( FunctorBase_0<bool>*, uint64_t delay = 0 );
 
     LatencyMod* m_txMemcpyMod;
@@ -192,6 +192,25 @@ class XXX  {
     int sendAckDelay() {
         return m_sendAckDelay;
     }
+
+    uint64_t sendStateDelay() {
+        return m_sendStateDelay;
+    }
+
+    uint64_t recvStateDelay() {
+        return m_recvStateDelay;
+    }
+
+    uint64_t waitallStateDelay() {
+        return m_waitallStateDelay;
+    }
+    uint64_t waitanyStateDelay() {
+        return m_waitanyStateDelay;
+    }
+    uint64_t m_sendStateDelay;
+    uint64_t m_recvStateDelay;
+    uint64_t m_waitallStateDelay;
+    uint64_t m_waitanyStateDelay;
 
     int m_matchDelay_ns;
     int m_txNicDelay;

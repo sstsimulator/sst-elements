@@ -107,6 +107,11 @@ XXX::XXX( Component* owner, Params& params ) :
     
     m_sendAckDelay = params.find_integer( "sendAckDelay_ns", 0 );
 
+    m_sendStateDelay = params.find_integer( "sendStateDelay_ps", 0 );
+    m_recvStateDelay = params.find_integer( "recvStateDelay_ps", 0 );
+    m_waitallStateDelay = params.find_integer( "waitallStateDelay_ps", 0 );
+    m_waitanyStateDelay = params.find_integer( "waitanyStateDelay_ps", 0 );
+
     m_loopLink = owner->configureLink(
 			params.find_string("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
@@ -413,9 +418,9 @@ bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
     return true;
 }
 
-void XXX::passCtrlToFunction( int delay, FunctorBase_1<CommReq*, bool>* functor, CommReq* req )
+void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*, bool>* functor, CommReq* req )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%d functor=%p\n",
+    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%lu functor=%p\n",
                                 delay, functor);
 
     if ( functor ) {
@@ -425,9 +430,9 @@ void XXX::passCtrlToFunction( int delay, FunctorBase_1<CommReq*, bool>* functor,
     }
 }
 
-void XXX::passCtrlToFunction( int delay, FunctorBase_0<bool>* functor )
+void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%d functor=%p\n",
+    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%lu functor=%p\n",
                                 delay, functor);
 
     if ( functor ) {

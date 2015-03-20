@@ -48,9 +48,6 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         m_event( NULL ),
         m_seq( 0 )
     { 
-        m_irecvDelay = params.find_integer( "irecvDelay",0);
-        m_sendDelay = params.find_integer( "sendDelay",0);
-        m_waitDelay = params.find_integer( "waitDelay",0);
     }
 
 
@@ -127,10 +124,6 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     int                 m_seq;
     unsigned int        m_size;
     MP::RankID          m_rank;
-    bool                m_delay;
-    uint64_t            m_irecvDelay;
-    uint64_t            m_sendDelay;
-    uint64_t            m_waitDelay;
 };
         
 }

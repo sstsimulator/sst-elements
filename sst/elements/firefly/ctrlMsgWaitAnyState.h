@@ -73,14 +73,14 @@ bool WaitAnyState<T1>::unblock()
 
     for ( ; iter != m_reqs.end(); ++iter ) {
         if ( (*iter)->req->isDone() ) {
-            obj().passCtrlToFunction( 0, m_functor, (*iter) );
+            obj().passCtrlToFunction( obj().waitanyStateDelay(), m_functor, (*iter) );
             m_reqs.clear();
             delete (*iter)->req;
             return false;
         }
     }
     dbg().verbose(CALL_INFO,1,0,"no CommReq must be a CommEvent\n");
-    obj().passCtrlToFunction( 0, m_functor, NULL );
+    obj().passCtrlToFunction( obj().waitanyStateDelay(), m_functor, NULL );
     return false;
 }
 
