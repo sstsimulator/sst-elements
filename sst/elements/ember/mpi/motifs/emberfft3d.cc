@@ -42,6 +42,7 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
     assert( ! m_configFileName.empty() );
 
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
+    m_scale = (double) params.find_floating("arg.scale",1.0);
 }
 
 
@@ -339,9 +340,9 @@ bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 
     if (  m_loopIndex == (signed) m_iterations ) {
         if ( 0 == rank() ) {
-            m_output->output("%s: fwd time %f sec\n", m_name.c_str(), 
+            m_output->output("%s: nRanks=%d fwd time %f sec\n", m_name.c_str(), size(), 
                 ((double) m_forwardTotal / 1000000000.0) / m_iterations );
-            m_output->output("%s: bwd time %f sec\n", m_name.c_str(), 
+            m_output->output("%s: rRanks=%d bwd time %f sec\n", m_name.c_str(), size(),
                 ((double) m_backwardTotal / 1000000000.0) / m_iterations );
         }
         return true;
@@ -356,38 +357,38 @@ bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 
     enQ_getTime( evQ, &m_forwardStart );
 
-    enQ_compute( evQ, calcFwdFFT1() );
+    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT1() * m_scale ) );
 
     enQ_alltoallv( evQ, 
                 m_sendBuf, &m_colSendCnts_f[0], &m_colSendDsp_f[0], DOUBLE,
                 m_recvBuf, &m_colRecvCnts_f[0], &m_colRecvDsp_f[0], DOUBLE,
                 m_colComm );
   
-    enQ_compute( evQ, calcFwdFFT2() );
+    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT2() * m_scale ) );
     
     enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], DOUBLE,
                         m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], DOUBLE,
                         m_rowComm );
     
-    enQ_compute( evQ, calcFwdFFT3() );
+    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT3() * m_scale) );
     
     enQ_barrier( evQ, GroupWorld ); 
     enQ_getTime( evQ, &m_forwardStop );
 
-    enQ_compute( evQ, calcBwdFFT1() );
+    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT1() * m_scale ));
 
     enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], DOUBLE,
                         m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], DOUBLE,
                         m_rowComm );
     
-    enQ_compute( evQ, calcBwdFFT2() );
+    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT2() * m_scale ) );
 
     enQ_alltoallv( evQ, 
                 m_sendBuf, &m_colSendCnts_b[0], &m_colSendDsp_b[0], DOUBLE,
                 m_recvBuf, &m_colRecvCnts_b[0], &m_colRecvDsp_b[0], DOUBLE,
                 m_colComm );
 
-    enQ_compute( evQ, calcBwdFFT3() );
+    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT3() * m_scale ) );
 
     enQ_barrier( evQ, GroupWorld ); 
     enQ_getTime( evQ, &m_backwardStop );
