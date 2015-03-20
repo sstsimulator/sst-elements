@@ -35,7 +35,7 @@ bool EmberAlltoallGenerator::generate( std::queue<EmberEvent*>& evQ) {
         if ( 0 == rank() ) {
 			double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
 			latency /= 1000000000.0;
-            m_output->output( "%s: ranks %d, loop %d, bytes %d, timePer %.3f us\n", 
+            m_output->output( "%s: ranks %d, loop %d, bytes %d, latency %.3f us\n", 
 					m_name.c_str(), size(), m_iterations, m_bytes, latency * 1000000.0  );
         }
         return true;
