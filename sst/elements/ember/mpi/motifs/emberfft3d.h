@@ -116,6 +116,7 @@ private:
     std::vector<int>    m_colRecvDsp_b;
     void*               m_sendBuf;
     void*               m_recvBuf;
+    double              m_scale;
 };
 
 uint64_t EmberFFT3DGenerator::calcFwd1Pre( Data& data,
