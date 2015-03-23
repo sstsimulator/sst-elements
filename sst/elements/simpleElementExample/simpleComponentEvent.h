@@ -12,30 +12,28 @@
 #ifndef _SIMPLECOMPONENTEVENT_H
 #define _SIMPLECOMPONENTEVENT_H
 
-#include <sst/core/event.h>
-
 namespace SST {
 namespace SimpleComponent {
 
-class simpleComponentEvent : public SST::Event {
+class simpleComponentEvent : public SST::Event 
+{
 public:
-  typedef std::vector<char> dataVec;
-  simpleComponentEvent() : SST::Event() { }
-  dataVec payload;
+    typedef std::vector<char> dataVec;
+    simpleComponentEvent() : SST::Event() { }
+    dataVec payload;
 
 private:
     friend class boost::serialization::access;
     template<class Archive>
     void
-    serialize(Archive & ar, const unsigned int version )
+    serialize(Archive & ar, const unsigned int version)
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(payload);
     }
 };
 
-
-}
-}
+} // namespace SimpleComponent
+} // namespace SST
 
 #endif /* _SIMPLECOMPONENTEVENT_H */

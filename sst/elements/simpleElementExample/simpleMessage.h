@@ -12,26 +12,25 @@
 #ifndef _SIMPLEMESSAGE_H
 #define _SIMPLEMESSAGE_H
 
-#include <sst/core/event.h>
-
 namespace SST {
 namespace SimpleMessageGeneratorComponent {
 
-class simpleMessage : public SST::Event {
+class simpleMessage : public SST::Event 
+{
 public:
-  simpleMessage() : SST::Event() { }
+    simpleMessage() : SST::Event() { }
 
 private:
     friend class boost::serialization::access;
     template<class Archive>
     void
-    serialize(Archive & ar, const unsigned int version )
+    serialize(Archive & ar, const unsigned int version)
     {
-	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
     }
 };
 
-}
-}
+} // namespace SimpleMessageGeneratorComponent
+} // namespace SST
 
 #endif /* _SIMPLEMESSAGE_H */

@@ -12,65 +12,52 @@
 #include <assert.h>
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
-#include "sst/core/element.h"
-#include "sst/core/params.h"
-
 #include "simpleRNGComponent.h"
+
+#include "sst/core/rng/mersenne.h"
+#include "sst/core/rng/marsaglia.h"
 
 using namespace SST;
 using namespace SST::RNG;
 using namespace SST::SimpleRNGComponent;
 
 simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
-  Component(id) {
+  Component(id) 
+{
+    rng_count = 0;
+    rng_max_count = params.find_integer("count", 1000);
 
-  rng_count = 0;
-  rng_max_count = params.find_integer("count", 1000);
+    std::string rngType = params.find_string("rng", "mersenne");
+    
+    if (rngType == "mersenne") {
+        unsigned int seed =  params.find_integer("seed", 1447);
+        
+        std::cout << "Using Mersenne Random Number Generator with seed = " << seed << std::endl;
+        rng = new MersenneRNG(seed);
+    } else if (rngType == "marsaglia") {
+        unsigned int m_w = params.find_integer("seed_w", 0);
+        unsigned int m_z = params.find_integer("seed_z", 0);
+        
+        if(m_w == 0 || m_z == 0) {
+            std::cout << "Using Marsaglia Random Number Generator with no seeds ..." << std::endl;
+            rng = new MarsagliaRNG();
+        } else {
+            std::cout << "Using Marsaglia Random Number Generator with seeds m_z = " << m_z << ", m_w = " << m_w << std::endl;
+            rng = new MarsagliaRNG(m_z, m_w);
+        }
+        
+    } else {
+        std::cout << "RNG provided but unknown " << rngType << ", so using Mersenne with seed = 1447..." << std::endl;
+        rng = new MersenneRNG(1447);
+    }
 
-  if( params.find("rng") != params.end() ) {
-        rng_type = params["rng"];
+    // tell the simulator not to end without us
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
-	if( params["rng"] == "mersenne" ) {
-		std::cout << "Using Mersenne Random Number Generator..." << std::endl;
-		unsigned int seed = 1447;
-
-		if( params.find("seed") != params.end() ) {
-			seed = params.find_integer("seed");
-		}
-
-	  	rng = new MersenneRNG(seed);
-	} else if ( params["rng"] == "marsaglia" ) {
-		std::cout << "Using Marsaglia Random Number Generator..." << std::endl;
-
-  		unsigned int m_z = 0;
-  		unsigned int  m_w = 0;
-
-  		m_w = params.find_integer("seed_w", 0);
-  		m_z = params.find_integer("seed_z", 0);
-
-  		if(m_w == 0 || m_z == 0) {
-			rng = new MarsagliaRNG();
-  		} else {
-			rng = new MarsagliaRNG(m_z, m_w);
-  		}
-	} else {
-		std::cout << "RNG provided but unknown " << params["rng"] << ", so using Mersenne..." << std::endl;
-		rng = new MersenneRNG(1447);
-	}
-  } else {
-	std::cout << "No RNG provided, so using Mersenne..." << std::endl;
-	rng = new MersenneRNG(1447);
-  }
-
-  // tell the simulator not to end without us
-  registerAsPrimaryComponent();
-  primaryComponentDoNotEndSim();
-
-  //set our clock
-  registerClock( "1GHz", 
-		 new Clock::Handler<simpleRNGComponent>(this, 
-			&simpleRNGComponent::tick ) );
+    //set our clock
+    registerClock("1GHz", new Clock::Handler<simpleRNGComponent>(this, 
+			       &simpleRNGComponent::tick));
 }
 
 simpleRNGComponent::simpleRNGComponent() :
@@ -79,21 +66,22 @@ simpleRNGComponent::simpleRNGComponent() :
     // for serialization only
 }
 
-bool simpleRNGComponent::tick( Cycle_t ) {
-        double nU = rng->nextUniform();
-        uint32_t U32 = rng->generateNextUInt32();
-        uint64_t U64 = rng->generateNextUInt64();
-        int32_t I32 = rng->generateNextInt32();
-        int64_t I64 = rng->generateNextInt64();
-        rng_count++;
-
-        std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
-		nU << ", " << U32 << ", " << U64 << ", " << I32 <<
-		", " << I64 << std::endl;
+bool simpleRNGComponent::tick( Cycle_t ) 
+{
+    double nU = rng->nextUniform();
+    uint32_t U32 = rng->generateNextUInt32();
+    uint64_t U64 = rng->generateNextUInt64();
+    int32_t I32 = rng->generateNextInt32();
+    int64_t I64 = rng->generateNextInt64();
+    rng_count++;
+    
+    std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
+    nU << ", " << U32 << ", " << U64 << ", " << I32 <<
+    ", " << I64 << std::endl;
 
   	// return false so we keep going
   	if(rng_count == rng_max_count) {
-      primaryComponentOKToEndSim();
+  	    primaryComponentOKToEndSim();
   		return true;
   	} else {
   		return false;

@@ -9,21 +9,17 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <assert.h>
+//#include <assert.h>
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
-#include "sst/core/element.h"
-#include "sst/core/params.h"
-
 #include "simpleClockerComponent.h"
 
 using namespace SST;
 using namespace SST::SimpleClockerComponent;
 
 simpleClockerComponent::simpleClockerComponent(ComponentId_t id, Params& params) :
-  Component(id) {
-
+  Component(id) 
+{
     clock_frequency_str = params.find_string("clock", "1GHz");
     clock_count = params.find_integer("clockcount", 1000);
     
@@ -34,9 +30,8 @@ simpleClockerComponent::simpleClockerComponent(ComponentId_t id, Params& params)
     primaryComponentDoNotEndSim();
 
     //set our Main Clock
-     registerClock( clock_frequency_str,
-		 new Clock::Handler<simpleClockerComponent>(this,
-			&simpleClockerComponent::tick ) );
+    registerClock(clock_frequency_str, new Clock::Handler<simpleClockerComponent>(this,
+			      &simpleClockerComponent::tick));
   
     // Set some other clocks
     // Second Clock (5ns) 
@@ -59,23 +54,24 @@ simpleClockerComponent::simpleClockerComponent() :
     // for serialization only
 }
 
-bool simpleClockerComponent::tick( Cycle_t ) {
-	clock_count--;
-
-	// return false so we keep going
-	if(clock_count == 0) {
+bool simpleClockerComponent::tick( Cycle_t ) 
+{
+    clock_count--;
+    
+    // return false so we keep going
+    if(clock_count == 0) {
     primaryComponentOKToEndSim();
-		return true;
-	} else {
-		return false;
-	}
+        return true;
+    } else {
+        return false;
+    }
 }
 
 bool simpleClockerComponent::Clock2Tick(SST::Cycle_t CycleNum, uint32_t Param)
 {
     // NOTE: THIS IS THE 5NS CLOCK 
     std::cout << "  CLOCK #2 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;
-
+    
     // return false so we keep going or true to stop
     if (CycleNum == 15) {
         return true;
@@ -90,10 +86,9 @@ bool simpleClockerComponent::Clock3Tick(SST::Cycle_t CycleNum, uint32_t Param)
     std::cout << "  CLOCK #3 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;    
     
     if ((CycleNum == 1) || (CycleNum == 4))  {
-
-      std::cout << "*** REGISTERING ONESHOTS " << std::endl ;
-      registerOneShot("10ns", callback1Handler);
-      registerOneShot("18ns", callback2Handler);
+        std::cout << "*** REGISTERING ONESHOTS " << std::endl ;
+        registerOneShot("10ns", callback1Handler);
+        registerOneShot("18ns", callback2Handler);
     }
     
     // return false so we keep going or true to stop

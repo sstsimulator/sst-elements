@@ -10,6 +10,7 @@
 // distribution.
 
 #include "sst_config.h"
+
 #include "sst/core/element.h"
 
 #include "simpleComponent.h"
@@ -18,6 +19,7 @@
 #include "simpleRNGComponent.h"
 #include "simpleStatisticsComponent.h"
 #include "simpleMessageGeneratorComponent.h"
+
 
 using namespace SST;
 using namespace SST::SimpleComponent;
@@ -86,7 +88,7 @@ static const ElementInfoParam simpleRNGComponent_params[] = {
     { "seed", "The seed to use for the random number generator.", "11" },
     { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
     { "count", "The number of random numbers to generate, default is 1000", "1000" },
-    { NULL, NULL }
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoParam simpleStatisticsComponent_params[] = {
@@ -95,7 +97,7 @@ static const ElementInfoParam simpleStatisticsComponent_params[] = {
     { "seed", "The seed to use for the random number generator.", "11" },
     { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
     { "count", "The number of random numbers to generate, default is 1000", "1000" },
-    { NULL, NULL }
+    { NULL, NULL, NULL }
 };
 
 static const ElementInfoStatisticEnable simpleStatisticsComponent_statistics[] = {

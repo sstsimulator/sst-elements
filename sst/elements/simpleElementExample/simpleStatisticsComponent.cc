@@ -10,11 +10,10 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
-#include "sst/core/element.h"
-#include "sst/core/params.h"
-
 #include "simpleStatisticsComponent.h"
+
+#include "sst/core/rng/mersenne.h"
+#include "sst/core/rng/marsaglia.h"
 
 using namespace SST;
 using namespace SST::RNG;
@@ -27,41 +26,30 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     rng_count = 0;
     rng_max_count = params.find_integer("count", 1000);
 
-    if( params.find("rng") != params.end() ) {
-        rng_type = params["rng"];
- 
-        if( params["rng"] == "mersenne" ) {
-            std::cout << "Using Mersenne Random Number Generator..." << std::endl;
-            unsigned int seed = 1447;
-     
-            if( params.find("seed") != params.end() ) {
-                seed = params.find_integer("seed");
-            }
-     
-            rng = new MersenneRNG(seed);
- 	  	} else if ( params["rng"] == "marsaglia" ) {
- 	  	    std::cout << "Using Marsaglia Random Number Generator..." << std::endl;
- 
-            unsigned int m_z = 0;
-            unsigned int  m_w = 0;
-            
-            m_w = params.find_integer("seed_w", 0);
-            m_z = params.find_integer("seed_z", 0);
- 
-            if(m_w == 0 || m_z == 0) {
-                rng = new MarsagliaRNG();
- 			} else {
- 			    rng = new MarsagliaRNG(m_z, m_w);
- 			}
-   		} else {
-   		    std::cout << "RNG provided but unknown " << params["rng"] << ", so using Mersenne..." << std::endl;
-   		    rng = new MersenneRNG(1447);
- 	    }
- 	} else {
- 	    std::cout << "No rng parameter provided, so using Mersenne..." << std::endl;
- 	    rng = new MersenneRNG(1447);
- 	}
-
+    std::string rngType = params.find_string("rng", "mersenne");
+    
+    if (rngType == "mersenne") {
+        unsigned int seed =  params.find_integer("seed", 1447);
+        
+        std::cout << "Using Mersenne Random Number Generator with seed = " << seed << std::endl;
+        rng = new MersenneRNG(seed);
+    } else if (rngType == "marsaglia") {
+        unsigned int m_w = params.find_integer("seed_w", 0);
+        unsigned int m_z = params.find_integer("seed_z", 0);
+        
+        if(m_w == 0 || m_z == 0) {
+            std::cout << "Using Marsaglia Random Number Generator with no seeds ..." << std::endl;
+            rng = new MarsagliaRNG();
+        } else {
+            std::cout << "Using Marsaglia Random Number Generator with seeds m_z = " << m_z << ", m_w = " << m_w << std::endl;
+            rng = new MarsagliaRNG(m_z, m_w);
+        }
+        
+    } else {
+        std::cout << "RNG provided but unknown " << rngType << ", so using Mersenne with seed = 1447..." << std::endl;
+        rng = new MersenneRNG(1447);
+    }
+    
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -144,9 +132,9 @@ bool simpleStatisticsComponent::Clock1Tick(Cycle_t CycleNum)
     // return false so we keep going or true to stop
     if(rng_count >= rng_max_count) {
         primaryComponentOKToEndSim();
-    	return true;
+        return true;
     } else {
-    	return false;
+        return false;
     }
 }
 
