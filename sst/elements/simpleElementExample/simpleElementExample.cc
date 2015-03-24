@@ -100,7 +100,7 @@ static const ElementInfoParam simpleStatisticsComponent_params[] = {
     { NULL, NULL, NULL }
 };
 
-static const ElementInfoStatisticEnable simpleStatisticsComponent_statistics[] = {
+static const ElementInfoStatistic simpleStatisticsComponent_statistics[] = {
     { "stat1_U32", "Test Statistic 1 - Collecting U32 Data", 1},   // Name, Desc, Enable Level 
     { "stat2_U64", "Test Statistic 2 - Collecting U64 Data", 2}, 
     { "stat3_I32", "Test Statistic 3 - Collecting I32 Data", 3}, 

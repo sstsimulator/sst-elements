@@ -16,7 +16,7 @@ sst.setProgramOption("stopAtCycle", "200ns")
 ########################################################################
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in 
-# elementInfoStatisticEnable) lower or equal to the load can be enabled (default = 0)
+# elementInfoStatistic) lower or equal to the load can be enabled (default = 0)
 sst.setStatisticLoadLevel(7)   
 
 # Set the desired Statistic Output (sst.statOutputConsole is default)

@@ -41,12 +41,12 @@ static const ElementInfoPort VaultSimC_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoStatisticEnable VaultSimC_statistics[] = {
+static const ElementInfoStatistic VaultSimC_statistics[] = {
     { "Mem_Outstanding", "Number of memory requests outstanding each cycle", 1},
     { NULL, NULL, 0}
 };
 
-static const ElementInfoStatisticEnable logicLayer_statistics[] = {
+static const ElementInfoStatistic logicLayer_statistics[] = {
     { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", 1}, 
     { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", 2}, 
     { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", 3}, 

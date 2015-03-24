@@ -35,7 +35,7 @@ static Module* load_TextTrace( Component* comp, Params& params) {
 	return new ArielTextTraceGenerator(comp, params);
 };
 
-static const ElementInfoStatisticEnable ariel_statistics[] = {
+static const ElementInfoStatistic ariel_statistics[] = {
     { "read_requests",        "Stat read_requests", 1},   // Name, Desc, Enable Level 
     { "write_requests",       "Stat write_requests", 1}, 
     { "split_read_requests",  "Stat split_read_requests", 1}, 

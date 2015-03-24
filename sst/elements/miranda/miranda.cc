@@ -244,7 +244,7 @@ static const ElementInfoModule modules[] = {
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
-static const ElementInfoStatisticEnable basecpu_stats[] = {
+static const ElementInfoStatistic basecpu_stats[] = {
 	{ "split_read_reqs",	"Number of read requests split over a cache line boundary",	2 },
 	{ "split_write_reqs",	"Number of write requests split over a cache line boundary", 	2 },
 	{ "read_reqs", 		"Number of read requests issued", 				1 },

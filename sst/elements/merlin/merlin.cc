@@ -75,7 +75,7 @@ static const ElementInfoPort hr_router_ports[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoStatisticEnable hr_router_statistics[] = {
+static const ElementInfoStatistic hr_router_statistics[] = {
     { "send_bit_count", "Count number of bits sent on link", 1},
     { "send_packet_count", "Count number of packets sent on link", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
@@ -133,7 +133,7 @@ static const ElementInfoPort bisection_test_ports[] = {
     {NULL, NULL, NULL}
 };
 
-// static const ElementInfoStatisticEnable bisection_test_statistics[] = {
+// static const ElementInfoStatistic bisection_test_statistics[] = {
 //     // This really belongs in LinkControl, but stats in modules don't work yet
 //     { "packet_latency", "Histogram of latencies for received packets", 1},
 //     { "send_bit_count", "Count number of bits sent on link", 1},
@@ -166,7 +166,7 @@ static const ElementInfoPort test_nic_ports[] = {
     {NULL, NULL, NULL}
 };
 
-// static const ElementInfoStatisticEnable test_nic_statistics[] = {
+// static const ElementInfoStatistic test_nic_statistics[] = {
 //     // This really belongs in LinkControl, but stats in modules don't work yet
 //     { "packet_latency", "Histogram of latencies for received packets", 1},
 //     { "send_bit_count", "Count number of bits sent on link", 1},
@@ -230,7 +230,7 @@ static const ElementInfoPort traffic_generator_ports[] = {
     {NULL, NULL, NULL}
 };
 
-// static const ElementInfoStatisticEnable traffic_generator_statistics[] = {
+// static const ElementInfoStatistic traffic_generator_statistics[] = {
 //     // This really belongs in LinkControl, but stats in modules don't work yet
 //     { "packet_latency", "Histogram of latencies for received packets", 1},
 //     { "send_bit_count", "Count number of bits sent on link", 1},
@@ -323,7 +323,7 @@ load_linkcontrol(Component* parent, Params& params)
     return new LinkControl(parent, params);
 }
 
-static const ElementInfoStatisticEnable linkcontrol_statistics[] = {
+static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "packet_latency", "Histogram of latencies for received packets", 1},
     { "send_bit_count", "Count number of bits sent on link", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
@@ -353,7 +353,7 @@ load_test_network_inspector(Component* parent, Params& params)
 }
 
 
-static const ElementInfoStatisticEnable test_network_inspector_statistics[] = {
+static const ElementInfoStatistic test_network_inspector_statistics[] = {
     { "test_count", "Count number of packets sent on link", 1},
 };
 
