@@ -95,7 +95,7 @@ for o, a in opts:
     elif o in ("--loading"):
         loading = a
     elif o in ("--printStats"):
-        printStats = a
+        motifDefaults['printStats'] = a
     elif o in ("--emberVerbose"):
         emberVerbose = a
     elif o in ("--netBW"):
