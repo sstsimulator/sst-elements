@@ -269,6 +269,10 @@ static const ElementInfoPort component_ports[] = {
 static const ElementInfoParam pingpong_params[] = {
     	{	"arg.messageSize",		"Sets the message size of the ping pong operation",	"1024"},
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.rank2",		"Sets the 2nd rank to pingpong with (0 is the 1st)", 	"1"},
+	{	"arg.blockingSend",		"Sets the send mode", 	"1"},
+	{	"arg.blockingRecv",		"Sets the recv mode", 	"1"},
+	{	"arg.waitall",		    "Sets the wait mode", 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
 
