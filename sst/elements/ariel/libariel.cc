@@ -84,6 +84,7 @@ static const ElementInfoParam ariel_params[] = {
     {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
+    {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
     {NULL, NULL, NULL}
 };
 
