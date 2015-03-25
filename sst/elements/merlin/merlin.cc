@@ -327,6 +327,7 @@ static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "packet_latency", "Histogram of latencies for received packets", 1},
     { "send_bit_count", "Count number of bits sent on link", 1},
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+    {NULL, NULL, 0}
 };
 
 class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
