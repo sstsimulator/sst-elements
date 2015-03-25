@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _TRACERCOMPONENT_H
-#define _TRACERCOMPONENT_H
+#ifndef _CACHETRACER_H
+#define _CACHETRACER_H
 
 #include <sst/core/output.h>
 #include <sst/core/debug.h>
@@ -37,12 +37,12 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 namespace SST{
-namespace TRACERCOMPONENT {
+namespace CACHETRACER {
 
-class tracerComponent : public SST::Component {
+class cacheTracer : public SST::Component {
 public:
-    tracerComponent(SST::ComponentId_t id, Params& params);
-    ~tracerComponent();
+    cacheTracer(SST::ComponentId_t id, Params& params);
+    ~cacheTracer();
     void finish();
 
 private:
@@ -83,13 +83,13 @@ private:
     TimeConverter* nanoTimeConv;
 
     // Serialization
-    tracerComponent();                         // for serialization only
-    tracerComponent(const tracerComponent&);      // do not implement
-    void operator=(const tracerComponent&);    // do not implement
-}; // class tracerComponent
+    cacheTracer();                         // for serialization only
+    cacheTracer(const cacheTracer&);      // do not implement
+    void operator=(const cacheTracer&);    // do not implement
+}; // class cacheTracer
 
-} // namespace TRACERCOMPONENT
+} // namespace CACHETRACER
 } // namespace SST
 
-#endif //_TRACERCOMPONENT_H
+#endif //_CACHETRACER_H
 

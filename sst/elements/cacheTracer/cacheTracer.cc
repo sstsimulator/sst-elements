@@ -12,13 +12,13 @@
 #include "sst_config.h"
 #include "sst/core/element.h"
 
-#include "tracerComponent.h"
+#include "cacheTracer.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
-using namespace SST::TRACERCOMPONENT;
+using namespace SST::CACHETRACER;
 
 /*
   USING debug = 1 to print all status messages,
@@ -26,11 +26,11 @@ using namespace SST::TRACERCOMPONENT;
 */
 
 // Constructor
-tracerComponent::tracerComponent( ComponentId_t id, Params& params ): Component( id ) {
+cacheTracer::cacheTracer( ComponentId_t id, Params& params ): Component( id ) {
 
     //Get Input parameters
     unsigned int debug = params.find_integer("debug", 0);
-    out = new Output("tracerComponent[@f:@l:@p] ", debug, 0, Output::STDOUT);
+    out = new Output("cacheTracer[@f:@l:@p] ", debug, 0, Output::STDOUT);
     out->debug(CALL_INFO, 1, 0, "Debugging set at %d Level\n", debug);
 
     stats = params.find_integer("statistics", 0);
@@ -43,8 +43,8 @@ tracerComponent::tracerComponent( ComponentId_t id, Params& params ): Component(
     out->debug(CALL_INFO, 1, 0, "Number of access latency bins set to %d\n", accessLatBins);
 
     string frequency = params.find_string("clock", "1 Ghz");
-    out->debug(CALL_INFO, 1, 0, "Registering tracerComponent clock at %s\n", frequency.c_str());
-    registerClock( frequency, new Clock::Handler<tracerComponent>(this, &tracerComponent::clock) );
+    out->debug(CALL_INFO, 1, 0, "Registering cacheTracer clock at %s\n", frequency.c_str());
+    registerClock( frequency, new Clock::Handler<cacheTracer>(this, &cacheTracer::clock) );
     out->debug(CALL_INFO, 1, 0, "Clock registered\n");
 
     string tracePrefix = params.find_string("tracePrefix", "");
@@ -86,7 +86,7 @@ tracerComponent::tracerComponent( ComponentId_t id, Params& params ): Component(
     picoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ps");
     nanoTimeConv = SST::Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
 
-    out->debug(CALL_INFO, 1, 0, "tracerComponent initialization complete\n");
+    out->debug(CALL_INFO, 1, 0, "cacheTracer initialization complete\n");
     nbCount = 0;
     sbCount = 0;
     timestamp = 0;
@@ -94,9 +94,9 @@ tracerComponent::tracerComponent( ComponentId_t id, Params& params ): Component(
 } // constructor 
 
 // destructor
-tracerComponent::~tracerComponent() {}
+cacheTracer::~cacheTracer() {}
 
-bool tracerComponent::clock(Cycle_t current){
+bool cacheTracer::clock(Cycle_t current){
     timestamp++;
 
     unsigned int pageNum = 0; 
@@ -110,7 +110,7 @@ bool tracerComponent::clock(Cycle_t current){
     while((ev = northBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){ 
-             _abort(tracerComponent::clock, "\ntracerComponent received bad event.\n");
+             _abort(cacheTracer::clock, "\ncacheTracer received bad event.\n");
         }
         addr = me->getAddr();
         nbCount++;
@@ -144,7 +144,7 @@ bool tracerComponent::clock(Cycle_t current){
     while((ev = southBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){
-            _abort(tracerComponent::clock, "\ntracerComponent received bad event\n");
+            _abort(cacheTracer::clock, "\ncacheTracer received bad event\n");
         }
         addr = me->getAddr();
         sbCount++;
@@ -186,7 +186,7 @@ bool tracerComponent::clock(Cycle_t current){
     return false;
 } //clock
 
-void tracerComponent::finish(){
+void cacheTracer::finish(){
     if(stats){
         if(writeStats){
            FinalStats(statsFile, accessLatBins);
@@ -201,7 +201,7 @@ void tracerComponent::finish(){
 } // finish()
 
 
-void tracerComponent::FinalStats(FILE *fp, unsigned int numBins){
+void cacheTracer::FinalStats(FILE *fp, unsigned int numBins){
     // print stats
     fprintf(fp, "FINAL STATS:\n");
     fprintf(fp, "-----------------------------------------------------------------\n");
@@ -215,7 +215,7 @@ void tracerComponent::FinalStats(FILE *fp, unsigned int numBins){
     PrintAccessLatencyDistribution(fp, numBins);
 }
 
-void tracerComponent::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> bucketList){
+void cacheTracer::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Addr> bucketList){
     unsigned int count = 0;
     fprintf(fp, "Address Histogram:\n");
     fprintf(fp, "-----------------------------------------------------------------\n");
@@ -231,7 +231,7 @@ void tracerComponent::PrintAddrHistogram(FILE *fp, vector<SST::MemHierarchy::Add
     fprintf(fp, "-----------------------------------------------------------------\n\n");
 }
 
-void tracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins){
+void cacheTracer::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins){
 // Prints Access Latency Distribution
     unsigned int count = 0;
     unsigned int minLat = 0;
@@ -287,8 +287,8 @@ void tracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned int numB
 
 const char * memEvent_List[] = {"MemEvent", NULL};
 
-static Component* create_tracerComponent(SST::ComponentId_t id, SST::Params& params) {
-    return new tracerComponent(id, params);
+static Component* create_cacheTracer(SST::ComponentId_t id, SST::Params& params) {
+    return new cacheTracer(id, params);
 };
 
 static const ElementInfoParam component_params[] = {
@@ -310,10 +310,10 @@ static const ElementInfoPort component_ports[] = {
 
 static const ElementInfoComponent components[] = {
     {
-        "tracerComponent",
+        "cacheTracer",
         "Simple tracer and stats collector component",
         NULL,
-        create_tracerComponent,
+        create_cacheTracer,
         component_params,
         component_ports,
         COMPONENT_CATEGORY_UNCATEGORIZED
@@ -322,8 +322,8 @@ static const ElementInfoComponent components[] = {
 };
 
 extern "C" {
-    ElementLibraryInfo tracerComponent_eli = {
-        "tracerComponent", 
+    ElementLibraryInfo cacheTracer_eli = {
+        "cacheTracer", 
         "Simple tracer and stats collector",
         components,
     };

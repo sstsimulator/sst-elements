@@ -1,7 +1,7 @@
-README for tracerComponent
+README for cacheTracer
 ---------------------------------
 
-tracerComponent can be used to generate a trace of events between any CPU and 
+cacheTracer can be used to generate a trace of events between any CPU and 
 memHierarchy components. It has two ports namely "northBus" (connects to the 
 component on CPU side) and "southBus" (connects to the component towards the 
 memory). This component also keeps track of the addresses of the messages 
@@ -17,7 +17,7 @@ C. It assumes first message with a given event-ID would pass from northBus to
    nanoseconds(ns). At the end of the simulation, a histogram is build for all 
    the memEvents passing through it.
 
-Input parameters for TracerComponent
+Input parameters for cacheTracer
 ---------------------------------
 A. "clock" - Frequency of operation (should be set to be same as CPU frequency).
 B. "debug" - Print out debug info with increasing verbosity. To generate an 

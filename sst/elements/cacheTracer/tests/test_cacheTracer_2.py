@@ -1,7 +1,11 @@
-# Simple SST python tests to demonstrate use of trace 
+# Simple SST python tests to demonstrate use of simpleTrace.
+# This test generates a trace of all memory references going to memController
+# Generated Files are -trace: test-2_memory_references_trace.txt, 
+# stats: test-2_memory_references_stats.txt
+
 ## arch model
 #
-#  comp_cpu <-> comp_tracer <-> comp_l1cache <-> comp_l2cache <-> comp_memory
+#  comp_cpu <-> comp_l1cache <-> comp_l2cache <-> comp_tracer <-> comp_memory
 #
 ## 
 
@@ -14,7 +18,7 @@ sst.setProgramOption("stopAtCycle", "1ms")
 #define simulation components
 comp_cpu = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
-    "num_loadstore"  : "1000",
+    "num_loadstore"  : "100",
     "commFreq"       : "100",
     "memSize"        : "0x10000",
     "do_write"       : "1",
@@ -59,31 +63,31 @@ comp_memory.addParams({
     "coherence_protocol"    : "MSI",
     "request_width"         : "64",
     "debug"                 : "0",
-    "statistics"            : "0",
+    "statistics"            : "1",
     "backend"               : "memHierarchy.simpleMem"
 })
 
-comp_tracer = sst.Component("tracer", "tracerComponent.tracerComponent")
+comp_tracer = sst.Component("tracer", "cacheTracer.cacheTracer")
 comp_tracer.addParams({
     "clock"      : "2 Ghz", 
-    "debug"      : "0",
+    "debug"      : "8",
     "statistics" : "1",
-    "tracePrefix" : "",
-    "statsPrefix" : "",
     "pageSize"   : "4096",
     "accessLatencyBins" : "10",
+    "tracePrefix" : "test_cacheTracer_2_mem_ref_trace.txt",
+    "statsPrefix" : "test_cacheTracer_2_mem_ref_stats.txt",
  })
 
 # define the simulation links
-link_cpu_tracer = sst.Link("link_cpu_tracer")
-link_cpu_tracer.connect((comp_cpu, "mem_link", "100ps"), (comp_tracer, "northBus", "100ps"))
-
-link_tracer_l1cache = sst.Link("link_tracer_l1cache")
-link_tracer_l1cache.connect((comp_tracer, "southBus", "100ps"), (comp_l1cache, "high_network_0", "100ps"))
+link_cpu_l1cache = sst.Link("link_cpu_l1cache")
+link_cpu_l1cache.connect((comp_cpu, "mem_link", "100ps"),(comp_l1cache, "high_network_0", "100ps"))
 
 link_l1cache_l2cache = sst.Link("link_l1cache_l2cache")
 link_l1cache_l2cache.connect((comp_l1cache, "low_network_0", "100ps"), (comp_l2cache, "high_network_0", "100ps"))
 
-link_l2cache_mem = sst.Link("link_l2cache_mem")
-link_l2cache_mem.connect((comp_l2cache, "low_network_0", "100ps"), (comp_memory, "direct_link", "100ps"))
+link_l2cache_tracer = sst.Link("link_l2cache_tracer")
+link_l2cache_tracer.connect((comp_l2cache, "low_network_0", "100ps"), (comp_tracer, "northBus", "100ps"))
+
+link_tracer_mem = sst.Link("link_tracer_mem")
+link_tracer_mem.connect((comp_tracer, "southBus", "100ps"), (comp_memory, "direct_link", "100ps"))
 
