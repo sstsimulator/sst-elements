@@ -356,6 +356,7 @@ load_test_network_inspector(Component* parent, Params& params)
 
 static const ElementInfoStatistic test_network_inspector_statistics[] = {
     { "test_count", "Count number of packets sent on link", 1},
+    { NULL, NULL, 0 }
 };
 
 static const ElementInfoComponent components[] = {
