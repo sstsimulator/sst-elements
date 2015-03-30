@@ -32,7 +32,6 @@ public:
 
 private:
 	uint64_t reqLength;
-	uint64_t start;
 	uint64_t maxAddr;
 	uint64_t issueCount;
 	uint64_t nextAddr;
