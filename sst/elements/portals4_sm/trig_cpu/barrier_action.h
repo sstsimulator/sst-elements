@@ -21,6 +21,8 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
+#include <mpi.h>
+
 namespace SST {
 namespace Portals4_sm {
 
@@ -57,62 +59,68 @@ public:
 
 // 	printf("Current time: %lu\n", sim->getTimeLord()->getNano()->convertFromCoreTime(sim->getCurrentSimCycle()));
 
-#ifdef HAVE_MPI	
-	boost::mpi::communicator world;
-#endif
+// #ifdef HAVE_MPI	
+// 	boost::mpi::communicator world;
+// #endif
 
 	// Figure out how many still need to report
 	int value = wake_up.size() - num_reporting;
 	int out;
 
 #ifdef HAVE_MPI	
-	all_reduce( world, &value, 1, &out, std::plus<int>() );  
+	// all_reduce( world, &value, 1, &out, std::plus<int>() );  
+	MPI_Allreduce( &value, &out, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );  
 #else
         out = value;
 #endif	
 
 	if ( 0 == out ) {
 #ifdef HAVE_MPI
-            all_reduce(world, &add_count, 1, &out, std::plus<int>() );
+        // all_reduce(world, &add_count, 1, &out, std::plus<int>() );
+        MPI_Allreduce(&add_count, &out, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 #else
-            out = add_count;
+        out = add_count;
 #endif
-            if (0 != out) {
-                // Barrier is done, exchange data
-                SimTime_t total_num = wake_up.size();
-                SimTime_t total_num_a;
-                SimTime_t min_a;
-                SimTime_t max_a;
-                SimTime_t total_time_a;
-                int rank;
-
+        if (0 != out) {
+        // Barrier is done, exchange data
+        SimTime_t total_num = wake_up.size();
+        SimTime_t total_num_a;
+        SimTime_t min_a;
+        SimTime_t max_a;
+        SimTime_t total_time_a;
+        int rank;
+        
 #ifdef HAVE_MPI
-                all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
-                all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
-                all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
-                all_reduce( world, &total_time, 1, &total_time_a, std::plus<SimTime_t>() );
-                rank = world.rank();
+        // all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
+        // all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
+        // all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
+        // all_reduce( world, &total_time, 1, &total_time_a, std::plus<SimTime_t>() );
+        MPI_Allreduce( &total_num , &total_num_a, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Allreduce( &min, &min_a, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD );
+        MPI_Allreduce( &max, &max_a, 1, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD );
+        MPI_Allreduce( &total_time, &total_time_a, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 #else
-                max_a = max;
-                min_a = min;
-                total_time_a = total_time;
-                total_num_a = total_num;
-                rank = 0;
+        max_a = max;
+        min_a = min;
+        total_time_a = total_time;
+        total_num_a = total_num;
+        rank = 0;
 #endif
-                if ( rank == 0 ) {
-                    printf("Max time: %lu ns\n", (unsigned long) max_a);
-                    printf("Min time: %lu ns\n", (unsigned long) min_a);
-                    printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
-                    printf("Total num: %d\n", (int) total_num_a);
-                    fflush(NULL);
-                }
-                resetBarrier();
-                addTimeToOverallStats(max_a);
-            }
+        if ( rank == 0 ) {
+            printf("Max time: %lu ns\n", (unsigned long) max_a);
+            printf("Min time: %lu ns\n", (unsigned long) min_a);
+            printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
+            printf("Total num: %d\n", (int) total_num_a);
+            fflush(NULL);
+        }
+        resetBarrier();
+        addTimeToOverallStats(max_a);
+    }
 	    resetStats();
-            for ( unsigned int i = 0; i < wake_up.size(); i++ ) {
-                wake_up[i]->send(10,new trig_cpu_event); 
-            }
+        for ( unsigned int i = 0; i < wake_up.size(); i++ ) {
+            wake_up[i]->send(10,new trig_cpu_event); 
+        }
 	}
 	SimTime_t next = sim->getCurrentSimCycle() + 
 	    sim->getTimeLord()->getTimeConverter("1us")->getFactor();
