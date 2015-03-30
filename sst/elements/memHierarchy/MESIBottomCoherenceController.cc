@@ -347,7 +347,7 @@ void MESIBottomCC::handlePutERequest(CacheLine* _cacheLine){
     State state = _cacheLine->getState();
 
     if(! (state == E || state == M)) {
-	d_->fatal(CALL_INFO, -1, "%s, Error: PutE request but cache line is not in M or E state. Addr = 0x%" PRIx64 ", BCC State = %s. Time = %"PRIu64 "ns\n", 
+	d_->fatal(CALL_INFO, -1, "%s, Error: PutE request but cache line is not in M or E state. Addr = 0x%" PRIx64 ", BCC State = %s. Time = %" PRIu64 "ns\n", 
                 ownerName_.c_str(), _cacheLine->getBaseAddr(), BccLineString[state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
 
