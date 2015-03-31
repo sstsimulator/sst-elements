@@ -27,7 +27,7 @@ namespace Firefly {
 
 class RangeLatMod : public LatencyMod { 
 
-    static const double  linearX = (1/4);
+    static constexpr double  linearX = (1/4);
 
     struct Entry {
         size_t start;
