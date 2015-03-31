@@ -21,7 +21,9 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
+#ifdef HAVE_MPI
 #include <mpi.h>
+#endif
 
 namespace SST {
 namespace Portals4_sm {
