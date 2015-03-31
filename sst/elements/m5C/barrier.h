@@ -31,12 +31,14 @@
 #define BA_DBG(fmt,args...)
 #endif
 
+#include <mpi.h>
+
 namespace SST {
 namespace M5 {
 
 class BarrierAction : public SST::Action 
 {
-     boost::mpi::communicator world; 
+     //boost::mpi::communicator world; 
 
   public:
 
@@ -129,7 +131,8 @@ class BarrierAction : public SST::Action
         int value = m_writeFds.size() - m_numReporting ? 0 : 1 ;
         int out;
         
-        all_reduce( world, &value, 1, &out, std::plus<int>() );
+        //all_reduce( world, &value, 1, &out, std::plus<int>() );
+        MPI_Allreduce( &value, &out, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 
         if ( out == m_nRanks ) {
             BA_DBG("everyone is here\n");  
