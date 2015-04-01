@@ -20,14 +20,13 @@
 
 #include "ioVec.h"
 
-#define  RANGELATMOD_DBG 0
+#define RANGELATMOD_DBG  0
+#define LINEAR_X         0.25
 
 namespace SST {
 namespace Firefly {
 
-class RangeLatMod : public LatencyMod { 
-
-    static constexpr double  linearX = (1/4);
+class RangeLatMod : public LatencyMod {
 
     struct Entry {
         size_t start;
@@ -154,9 +153,9 @@ class RangeLatMod : public LatencyMod {
     }
     double calcLinear( size_t x, Entry* prev, Entry* mid, Entry* next  ) {
         double latency = 0;
-        if ( prev && ( -1 != (signed)mid->stop ) && x < mid->start + (mid->stop - mid->start) * linearX ) {
+        if ( prev && ( -1 != (signed)mid->stop ) && x < mid->start + (mid->stop - mid->start) * LINEAR_X ) {
             latency =  xxx( x, *prev, *mid );
-        } else if ( next && ( -1 != (signed)mid->stop ) && x > mid->start + (mid->stop - mid->start) * (1.0 - linearX ) ) {
+        } else if ( next && ( -1 != (signed)mid->stop ) && x > mid->start + (mid->stop - mid->start) * (1.0 - LINEAR_X ) ) {
             latency =  xxx(  x, *mid, *next );
         } else if ( mid ) {
             latency = mid->latency;
@@ -166,8 +165,8 @@ class RangeLatMod : public LatencyMod {
 
     double xxx( size_t x, Entry& one, Entry& two  )
     {
-        double start = one.start + (double) (one.stop - one.start) * (1.0 - linearX);
-        double stop = two.start + (double) (two.stop - two.start) * linearX;
+        double start = one.start + (double) (one.stop - one.start) * (1.0 - LINEAR_X);
+        double stop = two.start + (double) (two.stop - two.start) * LINEAR_X;
         double slope = (one.latency - two.latency)/(start - stop);
 
         return (slope * (x - start ) + one.latency);
