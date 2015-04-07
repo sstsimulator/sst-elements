@@ -102,9 +102,12 @@ void ArielCore::printTraceEntry(const bool isRead,
 	}
 }
 
-void ArielCore::commitReadEvent(const uint64_t address, const uint32_t length) {
+void ArielCore::commitReadEvent(const uint64_t address,
+	const uint64_t virtAddress, const uint32_t length) {
+
 	if(length > 0) {
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, address, length);
+	        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, address, length);
+		req->setVirtualAddress(virtAddress);
 
 		pending_transaction_count++;
 	        pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
@@ -118,10 +121,14 @@ void ArielCore::commitReadEvent(const uint64_t address, const uint32_t length) {
 	}
 }
 
-void ArielCore::commitWriteEvent(const uint64_t address, const uint32_t length) {
+void ArielCore::commitWriteEvent(const uint64_t address,
+	const uint64_t virtAddress, const uint32_t length) {
+
 	if(length > 0) {
-        SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
-        // TODO BJM:  DO we need to fill in dummy data?
+        	SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Write, address, length);
+		req->setVirtualAddress(virtAddress);
+
+	        // TODO BJM:  DO we need to fill in dummy data?
 
 		pending_transaction_count++;
 	        pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
@@ -331,7 +338,7 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, readAddress, readLength, physAddr);
 
-		commitReadEvent(physAddr, (uint32_t) readLength);
+		commitReadEvent(physAddr, readAddress, (uint32_t) readLength);
 	} else {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
@@ -366,8 +373,8 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 			}
 		}
 
-		commitReadEvent(physLeftAddr, (uint32_t) leftSize);
-		commitReadEvent(physRightAddr, (uint32_t) rightSize);
+		commitReadEvent(physLeftAddr, leftAddr, (uint32_t) leftSize);
+		commitReadEvent(physRightAddr, rightAddr, (uint32_t) rightSize);
 
 		statSplitReadRequests->addData(1);
 	}
@@ -399,7 +406,7 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, writeAddress, writeLength, physAddr);
 
-		commitWriteEvent(physAddr, (uint32_t) writeLength);
+		commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength);
 	} else {
 		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, writeAddress, writeLength);
@@ -434,8 +441,8 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 			}
 		}
 
-		commitWriteEvent(physLeftAddr, (uint32_t) leftSize);
-		commitWriteEvent(physRightAddr, (uint32_t) rightSize);
+		commitWriteEvent(physLeftAddr, leftAddr, (uint32_t) leftSize);
+		commitWriteEvent(physRightAddr, rightAddr, (uint32_t) rightSize);
 		statSplitWriteRequests->addData(1);
 	}
 

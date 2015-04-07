@@ -83,8 +83,8 @@ class ArielCore {
 		void handleFreeEvent(ArielFreeEvent* aFE);
 		void handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE);
 
-		void commitReadEvent(const uint64_t address, const uint32_t length);
-		void commitWriteEvent(const uint64_t address, const uint32_t length);
+		void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
+		void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
 
 		void printCoreStatistics();
 		void printTraceEntry(const bool isRead, const uint64_t address, const uint32_t length);
