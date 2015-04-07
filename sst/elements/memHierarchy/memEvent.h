@@ -143,8 +143,6 @@ public:
     static const uint32_t F_NONCACHEABLE  = 0x00000010;  /* Used to specify that this memory event should not be cached */
     static const uint32_t F_LLSC          = 0x00000100;  /* Load Link / Store Conditional */
 
-
-    
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
     /** Creates a new MemEvent - Genetic */
@@ -203,7 +201,7 @@ public:
         cmd_  = _cmd;
         initTime_ = _src->getCurrentSimTimeNano();
      }
-    
+
      void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size){
         initialize();
         src_      = _src->getName();
@@ -213,7 +211,7 @@ public:
         size_     = _size;
         initTime_ = _src->getCurrentSimTimeNano();
      }
-    
+
     void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data){
         initialize();
         src_         = _src->getName();
@@ -223,7 +221,7 @@ public:
         initTime_ = _src->getCurrentSimTimeNano();
         setPayload(_data);
     }
-    
+
     void initialize(){
         addr_             = 0;
         cmd_              = NULLCMD;
@@ -251,8 +249,9 @@ public:
         initTime_         = 0;
         payload_.clear();
         dirty_            = false;
+	instPtr_	  = 0;
+	vAddr_		  = 0;
     }
-
 
     /** return the original event that caused a NACK */
     MemEvent* getNACKedEvent() { return NACKedEvent_; }
@@ -272,6 +271,16 @@ public:
     void setAddr(Addr _addr) { addr_ = _addr; }
     /** Sets the Base Address of this MemEvent */
     void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
+
+    /** Sets the virtual address of this MemEvent */
+    void setVirtualAddr(Addr _newVA) { vAddr_ = _newVA; }
+    /** Gets the virtual address of this MemEvent */
+    uint64_t getVirtualAddress() { return vAddr_; }
+
+    /** Sets the instruction pointer of that caused this MemEvent */
+    void setInstructionPointer(Addr _newIP) { instPtr_ = _newIP; }
+    /** Get the instruction pointer of that caused this MemEvent */
+    uint64_t getInstructionPointer() { return instPtr_; }
 
     /** Returns the time (in nanoseconds) when this event was created */
     SimTime_t getInitializationTime(void) const { return initTime_; }
@@ -473,7 +482,8 @@ private:
     bool            statsUpdated_;
     SimTime_t       initTime_;
     bool            dirty_;
-
+    Addr	    instPtr_;
+    Addr 	    vAddr_;
 
     MemEvent() {} // For serialization only
 
@@ -507,6 +517,8 @@ private:
         ar & BOOST_SERIALIZATION_NVP(blocked_);
         ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
         ar & BOOST_SERIALIZATION_NVP(dirty_);
+        ar & BOOST_SERIALIZATION_NVP(instPtr_);
+        ar & BOOST_SERIALIZATION_NVP(vAddr_);
     }
 };
 
