@@ -273,7 +273,7 @@ public:
     void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
 
     /** Sets the virtual address of this MemEvent */
-    void setVirtualAddr(Addr _newVA) { vAddr_ = _newVA; }
+    void setVirtualAddress(Addr _newVA) { vAddr_ = _newVA; }
     /** Gets the virtual address of this MemEvent */
     uint64_t getVirtualAddress() { return vAddr_; }
 

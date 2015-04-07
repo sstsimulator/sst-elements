@@ -86,7 +86,10 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
         else if(_req->cmd == SimpleMem::Request::Write)
             me->setStoreConditional();
     }
-    
+
+    me->setVirtualAddress(_req->getVirtualAddress());
+    me->setInstructionPointer(_req->getInstructionPointer());
+
     //totalRequests_++;
     return me;
 }
