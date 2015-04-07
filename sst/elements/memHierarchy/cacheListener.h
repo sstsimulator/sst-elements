@@ -33,18 +33,43 @@ class Output;
 
 namespace MemHierarchy {
 
+enum NotifyAccessType{ READ, WRITE };
+enum NotifyResultType{ HIT, MISS };
+
+class CacheListenerNotification {
+public:
+	CacheListenerNotification(const Addr pAddr, const Addr vAddr,
+		const Addr iPtr, NotifyAccessType accessT,
+		NotifyResultType resultT) :
+		physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
+		access(accessT), result(resultT) {}
+
+	Addr getPhysicalAddress() const { return physAddr; }
+	Addr getVirtualAddress() const { return virtAddr; }
+	Addr getInstructionPointer() const { return instPtr; }
+	NotifyAccessType getAccessType() const { return access; }
+	NotifyResultType getResultType() const { return result; }
+private:
+	Addr physAddr;
+	Addr virtAddr;
+	Addr instPtr;
+	NotifyAccessType access;
+	NotifyResultType result;
+};
+
 class CacheListener : public Module {
 public:
-    enum NotifyAccessType{READ, WRITE};
-    enum NotifyResultType{HIT, MISS};
 
     CacheListener() {}
     virtual ~CacheListener() {}
 
     virtual void printStats(Output &out) {}
     virtual void setOwningComponent(const SST::Component* owner) {}
+
+    virtual void notifyAccess(const CacheListenerNotification& notify) {}
     virtual void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,
-				const Addr addr, const uint32_t size) {}
+			const Addr addr, const uint32_t size) {}
+
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 

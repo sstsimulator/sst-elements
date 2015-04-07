@@ -179,8 +179,13 @@ void MemController::handleEvent(SST::Event* _event){
         case GetSEx:
         case PutM:
             // Notify listeners that we have equiv. of a read
-	    for(unsigned long int i = 0; i < listeners_.size(); ++i) {
-	        listeners_[i]->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr(), ev->getSize());
+            if( ! listeners_.empty()) {
+		CacheListenerNotification notify(ev->getAddr(),	ev->getVirtualAddress(),
+			ev->getInstructionPointer(), READ, HIT);
+
+		for(unsigned long int i = 0; i < listeners_.size(); ++i) {
+	        	listeners_[i]->notifyAccess(notify);
+	    	}
 	    }
 
             if(cmd == GetS)         GetSReqReceived_++;
