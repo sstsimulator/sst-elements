@@ -13,6 +13,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization.h>
 #include <sst/core/element.h>
+#include <sst/core/subcomponent.h>
 
 #include "mirandaCPU.h"
 #include "generators/singlestream.h"
@@ -28,39 +29,39 @@
 using namespace SST;
 using namespace SST::Miranda;
 
-static Module* load_SingleStreamGenerator(Component* owner, Params& params) {
+static SubComponent* load_SingleStreamGenerator(Component* owner, Params& params) {
 	return new SingleStreamGenerator(owner, params);
 }
 
-static Module* load_GUPSGenerator(Component* owner, Params& params) {
+static SubComponent* load_GUPSGenerator(Component* owner, Params& params) {
 	return new GUPSGenerator(owner, params);
 }
 
-static Module* load_CopyGenerator(Component* owner, Params& params) {
+static SubComponent* load_CopyGenerator(Component* owner, Params& params) {
 	return new CopyGenerator(owner, params);
 }
 
-static Module* load_RevSingleStreamGenerator(Component* owner, Params& params) {
+static SubComponent* load_RevSingleStreamGenerator(Component* owner, Params& params) {
 	return new ReverseSingleStreamGenerator(owner, params);
 }
 
-static Module* load_RandomGenerator(Component* owner, Params& params) {
+static SubComponent* load_RandomGenerator(Component* owner, Params& params) {
 	return new RandomGenerator(owner, params);
 }
 
-static Module* load_STREAMGenerator(Component* owner, Params& params) {
+static SubComponent* load_STREAMGenerator(Component* owner, Params& params) {
 	return new STREAMBenchGenerator(owner, params);
 }
 
-static Module* load_EmptyGenerator(Component* owner, Params& params) {
+static SubComponent* load_EmptyGenerator(Component* owner, Params& params) {
 	return new EmptyGenerator(owner, params);
 }
 
-static Module* load_Stencil3DGenerator(Component* owner, Params& params) {
+static SubComponent* load_Stencil3DGenerator(Component* owner, Params& params) {
 	return new Stencil3DBenchGenerator(owner, params);
 }
 
-static Module* load_SPMVGenerator(Component* owner, Params& params) {
+static SubComponent* load_SPMVGenerator(Component* owner, Params& params) {
 	return new SPMVGenerator(owner, params);
 }
 
@@ -159,86 +160,86 @@ static const ElementInfoParam spmvBench_params[] = {
     { NULL, NULL, NULL }
 };
 
-static const ElementInfoModule modules[] = {
+static const ElementInfoSubComponent subcomponents[] = {
 	{
 		"SingleStreamGenerator",
 		"Creates a single stream of accesses to/from memory",
 		NULL,
-		NULL,
 		load_SingleStreamGenerator,
 		singleStreamGen_params,
+		NULL,	// Statistics
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"SPMVGenerator",
 		"Creates a diagonal matrix access pattern",
 		NULL,
-		NULL,
 		load_SPMVGenerator,
 		spmvBench_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"EmptyGenerator",
 		"Creates an empty generator which just completes and does not issue requests",
 		NULL,
-		NULL,
 		load_EmptyGenerator,
 		emptyGen_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"ReverseSingleStreamGenerator",
 		"Creates a single reverse ordering stream of accesses to/from memory",
 		NULL,
-		NULL,
 		load_RevSingleStreamGenerator,
 		revSingleStreamGen_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"STREAMBenchGenerator",
 		"Creates a representation of the STREAM benchmark",
 		NULL,
-		NULL,
 		load_STREAMGenerator,
 		streamBench_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"Stencil3DBenchGenerator",
 		"Creates a representation of a 3D 27pt stencil benchmark",
 		NULL,
-		NULL,
 		load_Stencil3DGenerator,
 		stencil3dGen_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"RandomGenerator",
 		"Creates a single random stream of accesses to/from memory",
 		NULL,
-		NULL,
 		load_RandomGenerator,
 		randomGen_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"CopyGenerator",
 		"Creates a single copy of stream of reads/writes replicating an array copy pattern",
 		NULL,
-		NULL,
 		load_CopyGenerator,
 		copyGen_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{
 		"GUPSGenerator",
 		"Creates a random stream of accesses to read-modify-write",
 		NULL,
-		NULL,
 		load_GUPSGenerator,
 		gupsGen_params,
+		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
@@ -297,10 +298,12 @@ extern "C" {
         "Miranda",
         "Address generator compatible with SST MemHierarchy",
         components,
-        NULL,
-        NULL,
-        modules,
-        NULL,
-        NULL
+        NULL, // events
+        NULL, // introspectors
+	NULL, // modules
+	subcomponents,
+        NULL, // partitioners
+        NULL, // python module generators
+	NULL  // generators
     };
 }
