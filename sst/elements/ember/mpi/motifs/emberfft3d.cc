@@ -27,7 +27,8 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 	m_forwardStop(0),
 	m_backwardStop(0),
 	m_forwardTotal(0),
-	m_backwardTotal(0)
+	m_backwardTotal(0),
+    m_transCostPer(6)
 {
 	m_name = "FFT3D";
 
@@ -35,14 +36,22 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 	m_data.np1  = (uint32_t) params.find_integer("arg.ny", 100);
 	m_data.np2  = (uint32_t) params.find_integer("arg.nz", 100);
 
+    assert( m_data.np0 == m_data.np1 );
+    assert( m_data.np1 == m_data.np2 );
+
     m_data.nprow = (uint32_t) params.find_integer("arg.npRow", 0);
     assert( 0 < m_data.nprow );
 
-    m_configFileName = params.find_string("arg.configFile");
-    assert( ! m_configFileName.empty() );
-
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-    m_scale = (double) params.find_floating("arg.scale",1.0);
+
+    m_nsPerElement = (float) params.find_integer("arg.nsPerElement",1);
+
+    m_transCostPer[0] = (float) params.find_floating("arg.fwd_fft1",1);
+    m_transCostPer[1] = (float) params.find_floating("arg.fwd_fft2",1);
+    m_transCostPer[2] = (float) params.find_floating("arg.fwd_fft3",1);
+    m_transCostPer[3] = (float) params.find_floating("arg.bwd_fft1",1);
+    m_transCostPer[4] = (float) params.find_floating("arg.bwd_fft2",1);
+    m_transCostPer[5] = (float) params.find_floating("arg.bwd_fft3",1);
 }
 
 
@@ -60,6 +69,9 @@ void EmberFFT3DGenerator::configure()
         "npcol=%d myRow=%d myCol=%d\n", 
             rank(), m_data.np0, m_data.np1, m_data.np2, 
                 m_data.nprow, m_data.npcol, myRow, myCol );
+
+    initTimes( size(), m_data.np0, m_data.np1, m_data.np2,   
+                    m_nsPerElement, m_transCostPer );
 
     m_rowGrpRanks.resize( m_data.npcol );
     m_colGrpRanks.resize( m_data.nprow );
@@ -210,7 +222,6 @@ void EmberFFT3DGenerator::configure()
     m_recvBuf =   memAlloc( maxsize * COMPLEX );
     m_output->verbose(CALL_INFO, 2, 0,"maxsize=%d\n",maxsize);
 
-    m_output->verbose(CALL_INFO, 2, 0,"%s\n",m_configFileName.c_str());
     m_output->verbose(CALL_INFO, 2, 0,"np0=%d np1=%d np2=%d nprow=%d npcol=%d\n",
                 m_data.np0, m_data.np1, m_data.np2, m_data.nprow, m_data.npcol );
     m_output->verbose(CALL_INFO, 2, 0,"np0half=%d np1loc=%d np1locf=%d no1locb=%d np2loc=%d\n",
@@ -231,104 +242,33 @@ void EmberFFT3DGenerator::configure()
                         nxt_b, m_data.np0, m_fft3_b );
 #endif
 
-    std::ifstream file;
-    file.open(m_configFileName.c_str()); 
-    assert( file.is_open() );
-    std::string line;
-    while (  getline( file, line) ) {
-        std::string::iterator end_pos = std::remove(
-                                    line.begin(), line.end(),' ');
-
-        line.erase(end_pos, line.end());
-        if ( line.empty() || ! line.compare(0,1,"#") ) {
-            continue;
-        }
-        std::size_t pos = line.find(','); 
-        std::string name = line.substr( 0, pos );
-        float value;
-        istringstream buffer( line.substr( pos + 1 ) );
-        buffer >> value;
-        initTime(m_data, name, value );
-    }
-    file.close();
 }
 
-void EmberFFT3DGenerator::initTime( Data& data, std::string name, float value )
+void EmberFFT3DGenerator::initTimes( int numPe, int x, int y, int z, float nsPerElement,
+                std::vector<float>& transCostPer )
 {
-    std::string xx = name.substr(0,7); 
-    int yy; 
-    istringstream buffer( name.substr( 7, 7 ) ); 
-    buffer >> yy;
-    std::string zz; 
-    --yy;
+#if 0
+    printf("%f\n",nsPerElement);
+    printf("%f\n",transCostPer[0]);
+    printf("%f\n",transCostPer[1]);
+    printf("%f\n",transCostPer[2]);
+    printf("%f\n",transCostPer[3]);
+    printf("%f\n",transCostPer[4]);
+    printf("%f\n",transCostPer[5]);
+#endif
 
-    if ( name.size() > 8 ) {
-        zz = name.substr( 9 );
-    }        
+    double cost = nsPerElement * x * ((y * z)/numPe); 
+    m_fwdTime[0] =  m_fwdTime[1] = m_fwdTime[2] = cost; 
+    m_bwdTime[0] =  m_bwdTime[1] = m_bwdTime[2] = cost; 
+    m_bwdTime[2] *= 2;
 
-    if ( ! xx.compare("fwd_fft") ) {
-        switch ( yy ) {
-          case 0:
-            if ( ! zz.compare( 0,3, "pre" )  ) {
-                m_fwdTime[yy] += calcFwd1Pre( data, zz.substr(3), value );
-            } else if ( ! zz.compare( 0,4, "post" )  ) {
-                m_fwdTime[yy] += calcFwd1Post( data, zz.substr(4), value );
-            } else {
-                m_fwdTime[yy] += calcFwd1( data, zz, value );
-            } 
-            break;
-          case 1:
-            if ( ! zz.compare( 0,3, "pre" )  ) {
-                m_fwdTime[yy] += calcFwd2Pre( data, zz.substr(3), value );
-            } else if ( ! zz.compare( 0,4, "post" )  ) {
-                m_fwdTime[yy] += calcFwd2Post( data, zz.substr(4), value );
-            } else {
-                m_fwdTime[yy] += calcFwd2( data, zz, value );
-            }
-            break;
-          case 2:
-            if ( ! zz.compare( 0,3, "pre" )  ) {
-                m_fwdTime[yy] += calcFwd3Pre( data, zz.substr(3), value );
-            } else if ( ! zz.compare( 0,4, "post" )  ) {
-                m_fwdTime[yy] += calcFwd3Post( data, zz.substr(4), value );
-            } else {
-                m_fwdTime[yy] += calcFwd3( data, zz, value );
-            }
-            break;
-          break;
-        }
-    } else {
-        switch ( yy ) {
-          case 0:
-            if ( ! zz.compare( 0,3, "pre" )  ) {
-                m_bwdTime[yy] += calcBwd1Pre( data, zz.substr(3), value );
-            } else if ( ! zz.compare( 0,4, "post" )  ) {
-                m_bwdTime[yy] += calcBwd1Post( data, zz.substr(4), value );
-            } else {
-                m_bwdTime[yy] += calcBwd1( data, zz, value );
-            } 
-            break;
-          case 1:
-            if ( ! zz.compare( 0,3, "pre" )  ) {
-                m_bwdTime[yy] += calcBwd2Pre( data, zz.substr(3), value );
-            } else if ( ! zz.compare( 0,4, "post" )  ) {
-                m_bwdTime[yy] += calcBwd2Post( data, zz.substr(4), value );
-            } else {
-                m_bwdTime[yy] += calcBwd2( data, zz, value );
-            }
-            break;
-          case 2:
-            if ( ! zz.compare( 0,3, "pre" )  ) {
-                m_bwdTime[yy] += calcBwd3Pre( data, zz.substr(3), value );
-            } else if ( ! zz.compare( 0,4, "post" )  ) {
-                m_bwdTime[yy] += calcBwd3Post( data, zz.substr(4), value );
-            } else {
-                m_bwdTime[yy] += calcBwd3( data, zz, value );
-            }
-            break;
-          break;
-        }
-    }    
+    m_fwdTime[0] *= transCostPer[0];  
+    m_fwdTime[1] *= transCostPer[1];  
+    m_fwdTime[2] *= transCostPer[2];  
+
+    m_bwdTime[0] *= transCostPer[3];  
+    m_bwdTime[1] *= transCostPer[4];  
+    m_bwdTime[2] *= transCostPer[5];  
 }
 
 bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ ) 
@@ -357,38 +297,38 @@ bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 
     enQ_getTime( evQ, &m_forwardStart );
 
-    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT1() * m_scale ) );
+    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT1() ) );
 
     enQ_alltoallv( evQ, 
                 m_sendBuf, &m_colSendCnts_f[0], &m_colSendDsp_f[0], DOUBLE,
                 m_recvBuf, &m_colRecvCnts_f[0], &m_colRecvDsp_f[0], DOUBLE,
                 m_colComm );
   
-    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT2() * m_scale ) );
+    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT2() ) );
     
     enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], DOUBLE,
                         m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], DOUBLE,
                         m_rowComm );
     
-    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT3() * m_scale) );
+    enQ_compute( evQ, (uint64_t) ((double) calcFwdFFT3()  ) );
     
     enQ_barrier( evQ, GroupWorld ); 
     enQ_getTime( evQ, &m_forwardStop );
 
-    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT1() * m_scale ));
+    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT1() ) );
 
     enQ_alltoallv( evQ, m_sendBuf, &m_rowSendCnts[0], &m_rowSendDsp[0], DOUBLE,
                         m_recvBuf, &m_rowRecvCnts[0], &m_rowRecvDsp[0], DOUBLE,
                         m_rowComm );
     
-    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT2() * m_scale ) );
+    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT2() ) );
 
     enQ_alltoallv( evQ, 
                 m_sendBuf, &m_colSendCnts_b[0], &m_colSendDsp_b[0], DOUBLE,
                 m_recvBuf, &m_colRecvCnts_b[0], &m_colRecvDsp_b[0], DOUBLE,
                 m_colComm );
 
-    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT3() * m_scale ) );
+    enQ_compute( evQ, (uint64_t) ((double) calcBwdFFT3() ) );
 
     enQ_barrier( evQ, GroupWorld ); 
     enQ_getTime( evQ, &m_backwardStop );

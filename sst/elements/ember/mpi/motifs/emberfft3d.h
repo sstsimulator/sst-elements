@@ -54,7 +54,9 @@ private:
     uint64_t calcBwdFFT1() { return m_bwdTime[0]; }
     uint64_t calcBwdFFT2() { return m_bwdTime[1]; }
     uint64_t calcBwdFFT3() { return m_bwdTime[2]; }
-    void initTime( Data&, std::string, float );
+
+    void initTimes( int numPe, int x, int y, int z, float nsPerElement,
+                std::vector<float>& transCostPer );
 
     inline uint64_t calcFwd1Pre( Data&, std::string, float );
     inline uint64_t calcFwd1( Data&, std::string, float );
@@ -75,8 +77,6 @@ private:
     inline uint64_t calcBwd3Pre( Data&, std::string, float );
     inline uint64_t calcBwd3( Data&, std::string, float );
     inline uint64_t calcBwd3Post( Data&, std::string, float );
-
-    std::string m_configFileName;
 
 	int32_t m_loopIndex;
 
@@ -116,7 +116,8 @@ private:
     std::vector<int>    m_colRecvDsp_b;
     void*               m_sendBuf;
     void*               m_recvBuf;
-    double              m_scale;
+    float              m_nsPerElement;
+    std::vector<float> m_transCostPer;
 };
 
 uint64_t EmberFFT3DGenerator::calcFwd1Pre( Data& data,
