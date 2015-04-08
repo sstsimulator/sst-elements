@@ -38,6 +38,9 @@ comp_l1cache.addParams({
       "cache_size" : "2KB"
 })
 
+# Enable statistics outputs
+comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
+
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MESI",

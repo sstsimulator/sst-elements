@@ -1,8 +1,8 @@
 import sst
 
 # Define SST core options
-sst.setProgramOption("timebase", "1ns")
-sst.setProgramOption("stopAtCycle", "0 ns")
+#sst.setProgramOption("timebase", "1ns")
+#sst.setProgramOption("stopAtCycle", "0 ns")
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
@@ -38,6 +38,9 @@ comp_l1cache.addParams({
       "L1" : "1",
       "cache_size" : "32KB"
 })
+
+# Enable statistics outputs
+comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({

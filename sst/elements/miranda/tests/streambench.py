@@ -14,7 +14,7 @@ comp_cpu.addParams({
 	"generator" : "miranda.STREAMBenchGenerator",
 	"clock" : "2.4GHz",
 	"generatorParams.verbose" : 0,
-	"generatorParams.n" : 10000,
+	"generatorParams.n" : 1000000,
         "generatorParams.operandwidth" : 16,
 	"printStats" : 1,
 })
@@ -37,6 +37,9 @@ comp_l1cache.addParams({
       "L1" : "1",
       "cache_size" : "32KB"
 })
+
+# Enable statistics outputs
+comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
