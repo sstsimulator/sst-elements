@@ -14,7 +14,8 @@
 #define _H_SST_MEM_H_REQUEST_GEN
 
 #include <stdint.h>
-#include <sst/core/module.h>
+//#include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
@@ -193,10 +194,10 @@ public:
 	ReqOperation getOperation() const { return REQ_FENCE; }
 };
 
-class RequestGenerator : public Module {
+class RequestGenerator : public SubComponent {
 
 public:
-	RequestGenerator( Component* owner, Params& params) {}
+	RequestGenerator( Component* owner, Params& params) : SubComponent(owner) {}
 	~RequestGenerator() {}
 	virtual void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }
 	virtual bool isFinished() { return true; }
