@@ -226,7 +226,7 @@ double McNiagara::make_cdf(double *buf, int length, int ignore_last_n, FILE * in
 ///
 int McNiagara::sample_hist(double *hist, int hist_length)
 {
-	register int i;
+	int i;
 	double r;
 
 	r = my_rand();
