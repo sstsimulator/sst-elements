@@ -164,13 +164,13 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
 
     /* --------------- Prefetcher ---------------*/
     if (prefetcher.empty()) {
-	listener_ = new CacheListener();
+	Params emptyParams;
+	listener_ = new CacheListener(this, emptyParams);
     } else {
 	Params prefetcherParams = _params.find_prefix_params("prefetcher." );
-	listener_ = dynamic_cast<CacheListener*>(loadModule(prefetcher, prefetcherParams));
+	listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));
     }
 
-    listener_->setOwningComponent(this);
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     /* ---------------- Latency ---------------- */
