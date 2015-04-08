@@ -62,7 +62,7 @@ ProsperoTraceEntry* ProsperoCompressedBinaryTraceReader::readNextEntry() {
 		return NULL;
 	}
 
-	int bytesRead = gzread(traceInput, buffer, (unsigned int) recordLength);
+	unsigned int bytesRead = gzread(traceInput, buffer, (unsigned int) recordLength);
 
 	if(bytesRead == recordLength) {
 		// We DID read an entry
