@@ -83,7 +83,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 		sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
 		Params listenerParams = params.find_prefix_params(nextListenerParams);
 
-		CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadModule(listenerMod, listenerParams));
+		CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadSubComponent(listenerMod, this, listenerParams));
 		listeners_.push_back(loadedListener);
 	    }
     }
