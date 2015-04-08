@@ -170,9 +170,11 @@ public:
         me->cmd_          = NACK;
         me->initTime_     = source->getCurrentSimTimeNano();
         me->rqstr_        = rqstr_;
+        me->instPtr_      = instPtr_;
+        me->vAddr_        = vAddr_;
         return me;
     }
-    
+
     /** Generate a new MemEvent, pre-populated as a response */
     MemEvent* makeResponse(){
         MemEvent *me      = new MemEvent(*this);
@@ -182,6 +184,8 @@ public:
         me->src_          = dst_;
         me->rqstr_        = rqstr_;
         me->prefetch_     = prefetch_;
+        me->instPtr_      = instPtr_;
+        me->vAddr_        = vAddr_;
         return me;
     }
 
@@ -191,8 +195,7 @@ public:
         me->setGrantedState(state);
         return me;
     }
-    
-    
+
     void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd){
         initialize();
         src_  = _src->getName();
