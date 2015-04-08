@@ -80,7 +80,7 @@ void StridePrefetcher::DetectStride() {
 					// Check next address is aligned to a cache line boundary
 					assert((targetAddress + (strideReach * stride)) % blockSize == 0);
 
-					ev = new MemEvent(owner, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), GetS);
+					ev = new MemEvent(parent, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), GetS);
 				} else {
 					const Addr targetAddressPhysPage = targetAddress / pageSize;
 					const Addr targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
@@ -94,7 +94,7 @@ void StridePrefetcher::DetectStride() {
 					if(targetAddressPhysPage == targetPrefetchAddressPage) {
 					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
-						ev = new MemEvent(owner, targetPrefetchAddress, targetPrefetchAddress, GetS);
+						ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, GetS);
 						prefetchOpportunities++;
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
@@ -148,7 +148,7 @@ void StridePrefetcher::DetectStride() {
 	        for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 	            // Create a new read request, we cannot issue a write because the data will get
 	            // overwritten and corrupt memory (even if we really do want to do a write)
-	            MemEvent* newEv = new MemEvent(owner, ev->getAddr(), ev->getAddr(), GetS);
+	            MemEvent* newEv = new MemEvent(parent, ev->getAddr(), ev->getAddr(), GetS);
             	    newEv->setSize(blockSize);
             	    newEv->setPrefetchFlag(true);
 
@@ -163,11 +163,15 @@ void StridePrefetcher::DetectStride() {
     }
 }
 
-StridePrefetcher::StridePrefetcher(Params& params) {
+StridePrefetcher::StridePrefetcher(Component* owner, Params& params) : CacheListener(owner, params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
 	verbosity = params.find_integer("verbose", 0);
-	output = new Output("StridePrefetcher: ", verbosity, 0, Output::STDOUT);
+
+	char* new_prefix = (char*) malloc(sizeof(char) * 128);
+        sprintf(new_prefix, "StridePrefetcher[%s | @f:@p:@l] ", parent->getName().c_str());
+	output = new Output(new_prefix, verbosity, 0, Output::STDOUT);
+	free(new_prefix);
 
 	recheckCountdown = 0;
         blockSize = (uint64_t) params.find_integer("cache_line_size", 64);
@@ -205,21 +209,13 @@ StridePrefetcher::~StridePrefetcher() {
 	free(recentAddrList);
 }
 
-void StridePrefetcher::setOwningComponent(const SST::Component* own) {
-	owner = own;
-
-	char* new_prefix = (char*) malloc(sizeof(char) * 128);
-	sprintf(new_prefix, "StridePrefetcher[%s | @f:@p:@l] ", owner->getName().c_str());
-	output->setPrefix(new_prefix);
-}
-
 void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 	registeredCallbacks.push_back(handler);
 }
 
 void StridePrefetcher::printStats(Output &out) {
 	out.output("--------------------------------------------------------------------\n");
-	out.output("Stride Prefetch Engine Statistics (Owner: %s):\n", owner->getName().c_str());
+	out.output("Stride Prefetch Engine Statistics (Owner: %s):\n", parent->getName().c_str());
 	out.output("--------------------------------------------------------------------\n");
 	out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
 	out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);

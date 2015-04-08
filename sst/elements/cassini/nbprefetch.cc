@@ -23,7 +23,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
-NextBlockPrefetcher::NextBlockPrefetcher(Params& params) {
+NextBlockPrefetcher::NextBlockPrefetcher(Component* owner, Params& params) : CacheListener(owner, params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
 	blockSize = (uint64_t) params.find_integer("cache_line_size", 64);
@@ -48,7 +48,7 @@ void NextBlockPrefetcher::notifyAccess(const NotifyAccessType notifyType, const 
 			// Create a new read request, we cannot issue a write because the data will get
 			// overwritten and corrupt memory (even if we really do want to do a write)
             
-            MemEvent* newEv = new MemEvent(owner, nextBlockAddr, nextBlockAddr, GetS);
+            MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, GetS);
             newEv->setSrc("Prefetcher");
             newEv->setSize(blockSize);
             newEv->setPrefetchFlag(true);
@@ -64,14 +64,9 @@ void NextBlockPrefetcher::registerResponseCallback(Event::HandlerBase *handler)
 	registeredCallbacks.push_back(handler);
 }
 
-void NextBlockPrefetcher::setOwningComponent(const SST::Component* own) 
-{
-	owner = own;
-}
-
 void NextBlockPrefetcher::printStats(Output& out) {
 	out.output("--------------------------------------------------------------------\n");
-        out.output("Next Block Prefetch Engine Statistics (Owner: %s):\n", owner->getName().c_str());
+        out.output("Next Block Prefetch Engine Statistics (Cache: %s):\n", parent->getName().c_str());
         out.output("--------------------------------------------------------------------\n");
         out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
         out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);

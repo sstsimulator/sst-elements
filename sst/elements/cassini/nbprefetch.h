@@ -32,16 +32,14 @@ namespace Cassini {
 
 class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
     public:
-	NextBlockPrefetcher(Params& params);
+	NextBlockPrefetcher(Component* owner, Params& params);
         ~NextBlockPrefetcher();
 
-	void setOwningComponent(const SST::Component* owner);
         void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size);
 	void registerResponseCallback(Event::HandlerBase *handler);
 	void printStats(Output& out);
 
     private:
-	const SST::Component* owner;
 	std::vector<Event::HandlerBase*> registeredCallbacks;
 	uint64_t blockSize;
 	uint64_t prefetchEventsIssued;

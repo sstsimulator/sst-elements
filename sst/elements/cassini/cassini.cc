@@ -22,8 +22,8 @@
 using namespace SST;
 using namespace SST::Cassini;
 
-static Module* load_NextBlockPrefetcher(Params& params){
-    return new NextBlockPrefetcher(params);
+static SubComponent* load_NextBlockPrefetcher(Component* owner, Params& params){
+    return new NextBlockPrefetcher(owner, params);
 }
 
 static const ElementInfoParam nextBlockPrefetcher_params[] = {
@@ -31,8 +31,8 @@ static const ElementInfoParam nextBlockPrefetcher_params[] = {
     {NULL, NULL, NULL}
 };
 
-static Module* load_StridePrefetcher(Params& params){
-    return new StridePrefetcher(params);
+static SubComponent* load_StridePrefetcher(Component* owner, Params& params){
+    return new StridePrefetcher(owner, params);
 }
 
 static const ElementInfoParam stridePrefetcher_params[] = {
@@ -47,8 +47,8 @@ static const ElementInfoParam stridePrefetcher_params[] = {
     { NULL, NULL, NULL }
 };
 
-static Module* load_AddrHistogrammer(Params& params){
-    return new AddrHistogrammer(params);
+static SubComponent* load_AddrHistogrammer(Component* owner, Params& params){
+    return new AddrHistogrammer(owner, params);
 }
 
 static const ElementInfoParam addrHistogrammer_params[] = {
@@ -58,29 +58,29 @@ static const ElementInfoParam addrHistogrammer_params[] = {
     {NULL, NULL, NULL}
 };
 
-static const ElementInfoModule modules[] = {
+static const ElementInfoSubComponent subcomponents[] = {
     { "NextBlockPrefetcher",
       "Creates a prefetch engine which automatically loads the next block",
       NULL,
       load_NextBlockPrefetcher,
-      NULL,
       nextBlockPrefetcher_params,
+      NULL,
       "SST::MemHierarchy::CacheListener"
     },
     { "StridePrefetcher",
       "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data",
       NULL,
       load_StridePrefetcher,
-      NULL,
       stridePrefetcher_params,
+      NULL,
       "SST::MemHierarchy::CacheListener"
     },
     { "AddrHistogrammer",
       "Creates a histogrammer which tracks the reads and writes leaving this cache",
       NULL,
       load_AddrHistogrammer,
-      NULL,
       addrHistogrammer_params,
+      NULL,
       "SST::MemHierarchy::CacheListener"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
@@ -93,7 +93,8 @@ extern "C" {
         NULL, //components,
         NULL,
         NULL,
-        modules,
+	NULL,
+        subcomponents,
         NULL,
         NULL,
     };

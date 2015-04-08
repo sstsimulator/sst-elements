@@ -34,17 +34,15 @@ namespace Cassini {
 
 class StridePrefetcher : public SST::MemHierarchy::CacheListener {
     public:
-	StridePrefetcher(Params& params);
+	StridePrefetcher(Component* owner, Params& params);
         ~StridePrefetcher();
 
-        void setOwningComponent(const SST::Component* owner);
         void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size);
         void registerResponseCallback(Event::HandlerBase *handler);
 	void printStats(Output &out);
 
     private:
 	Output* output;
-	const SST::Component* owner;
         std::vector<Event::HandlerBase*> registeredCallbacks;
 	std::deque<uint64_t>* prefetchHistory;
 	uint32_t prefetchHistoryCount;

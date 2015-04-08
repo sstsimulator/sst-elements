@@ -25,7 +25,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
-AddrHistogrammer::AddrHistogrammer(Params& params) {
+AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 	blockSize = (uint32_t) params.find_integer("cache_line_size", 64);
 	binWidth = (uint32_t) params.find_integer("histo_bin_width", 64);
@@ -67,10 +67,6 @@ void AddrHistogrammer::notifyAccess(const NotifyAccessType notifyType, const Not
 
 void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler) {
 	registeredCallbacks.push_back(handler);
-}
-
-void AddrHistogrammer::setOwningComponent(const SST::Component* own) {
-	owner = own;
 }
 
 // print the Histogram efficiently using string buffers

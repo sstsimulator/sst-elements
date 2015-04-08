@@ -22,7 +22,7 @@
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
-#include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 
 #include "memEvent.h"
 
@@ -57,14 +57,13 @@ private:
 	NotifyResultType result;
 };
 
-class CacheListener : public Module {
+class CacheListener : public SubComponent {
 public:
 
-    CacheListener() {}
+    CacheListener(Component* owner, Params& params) : SubComponent(owner) {}
     virtual ~CacheListener() {}
 
     virtual void printStats(Output &out) {}
-    virtual void setOwningComponent(const SST::Component* owner) {}
 
     virtual void notifyAccess(const CacheListenerNotification& notify) {}
     virtual void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,

@@ -32,10 +32,9 @@ namespace Cassini {
 
 class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
     public:
-	AddrHistogrammer(Params& params);
+	AddrHistogrammer(Component*, Params& params);
         ~AddrHistogrammer();
 
-	void setOwningComponent(const SST::Component* owner);
         void notifyAccess(const NotifyAccessType notifyType,
 		const NotifyResultType notifyResType,
 		const Addr addr, const uint32_t size);
@@ -43,15 +42,15 @@ class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
 	void printStats(Output& out);
 
     private:
-	const SST::Component* owner;
 	std::vector<Event::HandlerBase*> registeredCallbacks;
 	uint32_t blockSize;
 	uint32_t binWidth;
-    uint32_t verbosity;
-    Statistics::Histogram<uint32_t, uint32_t>* rdHisto;
-    Statistics::Histogram<uint32_t, uint32_t>* wrHisto;
-    Output *output;
-    void printHistogram(Statistics::Histogram<uint32_t, uint32_t> *, std::string);
+        uint32_t verbosity;
+        Statistics::Histogram<uint32_t, uint32_t>* rdHisto;
+        Statistics::Histogram<uint32_t, uint32_t>* wrHisto;
+        Output *output;
+
+	void printHistogram(Statistics::Histogram<uint32_t, uint32_t> *, std::string);
 };
 
 }
