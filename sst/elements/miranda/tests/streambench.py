@@ -14,7 +14,7 @@ comp_cpu.addParams({
 	"generator" : "miranda.STREAMBenchGenerator",
 	"clock" : "2.4GHz",
 	"generatorParams.verbose" : 0,
-	"generatorParams.n" : 1000000,
+	"generatorParams.n" : 10000,
         "generatorParams.operandwidth" : 16,
 	"printStats" : 1,
 })
