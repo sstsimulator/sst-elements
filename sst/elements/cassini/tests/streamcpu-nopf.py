@@ -4,6 +4,9 @@ import sst
 sst.setProgramOption("timebase", "1ns")
 sst.setProgramOption("stopAtCycle", "0 ns")
 
+# Tell SST what statistics handling we want
+sst.setStatisticLoadLevel(4)
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.streamCPU")
 comp_cpu.addParams({
