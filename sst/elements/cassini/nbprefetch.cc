@@ -27,9 +27,10 @@ NextBlockPrefetcher::NextBlockPrefetcher(Component* owner, Params& params) : Cac
 	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
 	blockSize = (uint64_t) params.find_integer("cache_line_size", 64);
-	prefetchEventsIssued = 0;
-	missEventsProcessed = 0;
-	hitEventsProcessed = 0;
+
+	statPrefetchEventsIssued = registerStatistic<uint64_t>("prefetches_issued");
+	statMissEventsProcessed  = registerStatistic<uint64_t>("miss_events_processed");
+	statHitEventsProcessed   = registerStatistic<uint64_t>("hit_events_processed");
 }
 
 NextBlockPrefetcher::~NextBlockPrefetcher() {}
@@ -37,43 +38,31 @@ NextBlockPrefetcher::~NextBlockPrefetcher() {}
 void NextBlockPrefetcher::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size)
 {
 	if(notifyResType == MISS) {
-	    missEventsProcessed++;
+	    	statMissEventsProcessed->addData(1);
 
-	    Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
-	    std::vector<Event::HandlerBase*>::iterator callbackItr;
-	    prefetchEventsIssued++;
+	    	Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
+	    	std::vector<Event::HandlerBase*>::iterator callbackItr;
+	    	statPrefetchEventsIssued->addData(1);
 
 		// Cycle over each registered call back and notify them that we want to issue a prefetch request
 		for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 			// Create a new read request, we cannot issue a write because the data will get
 			// overwritten and corrupt memory (even if we really do want to do a write)
-            
-            MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, GetS);
-            newEv->setSrc("Prefetcher");
-            newEv->setSize(blockSize);
-            newEv->setPrefetchFlag(true);
+            		MemEvent* newEv = new MemEvent(parent, nextBlockAddr, nextBlockAddr, GetS);
+            		newEv->setSrc("Prefetcher");
+            		newEv->setSize(blockSize);
+            		newEv->setPrefetchFlag(true);
 			(*(*callbackItr))(newEv);
 		}
 	} else {
-		hitEventsProcessed++;
+		statHitEventsProcessed->addData(1);
 	}
 }
 
-void NextBlockPrefetcher::registerResponseCallback(Event::HandlerBase *handler)  
-{
+void NextBlockPrefetcher::registerResponseCallback(Event::HandlerBase *handler) {
 	registeredCallbacks.push_back(handler);
 }
 
 void NextBlockPrefetcher::printStats(Output& out) {
-	out.output("--------------------------------------------------------------------\n");
-        out.output("Next Block Prefetch Engine Statistics (Cache: %s):\n", parent->getName().c_str());
-        out.output("--------------------------------------------------------------------\n");
-        out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
-        out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);
-        out.output("Cache Miss Rate (%%):                    %f\n", ((missEventsProcessed
-                / ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
-        out.output("Cache Hit Rate (%%):                     %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
-                        hitEventsProcessed))) * 100.0));
-        out.output("Prefetches Issued:                      %" PRIu64 "\n", prefetchEventsIssued);
-        out.output("--------------------------------------------------------------------\n");
+
 }

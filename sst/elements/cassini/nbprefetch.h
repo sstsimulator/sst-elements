@@ -42,9 +42,11 @@ class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
     private:
 	std::vector<Event::HandlerBase*> registeredCallbacks;
 	uint64_t blockSize;
-	uint64_t prefetchEventsIssued;
-	uint64_t missEventsProcessed;
-	uint64_t hitEventsProcessed;
+
+	Statistic<uint64_t>* statPrefetchEventsIssued;
+	Statistic<uint64_t>* statMissEventsProcessed;
+	Statistic<uint64_t>* statHitEventsProcessed;
+
 };
 
 }

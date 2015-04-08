@@ -75,7 +75,7 @@ void StridePrefetcher::DetectStride() {
 						targetAddress, targetAddress + (strideReach * stride),
 						(strideReach * stride), stride, targetPrefetchAddress);
 
-					prefetchOpportunities++;
+					statPrefetchOpportunities->addData(1);
 
 					// Check next address is aligned to a cache line boundary
 					assert((targetAddress + (strideReach * stride)) % blockSize == 0);
@@ -95,12 +95,12 @@ void StridePrefetcher::DetectStride() {
 					    output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
 							targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
 						ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, GetS);
-						prefetchOpportunities++;
+						statPrefetchOpportunities->addData(1);
 					} else {
 						output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
 						output->verbose(CALL_INFO, 4, 0, "Target address: %" PRIx64 ", page=%" PRIx64 ", Prefetch address: %" PRIx64 ", page=%" PRIx64 "\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
 
-						prefetchIssueCanceledByPageBoundary++;
+						statPrefetchIssueCanceledByPageBoundary->addData(1);
 						ev = NULL;
 					}
 				}
@@ -132,7 +132,7 @@ void StridePrefetcher::DetectStride() {
 	}
 
 	if(! inHistory) {
-	        prefetchEventsIssued++;
+		statPrefetchEventsIssued->addData(1);
 
 		// Remove the oldest cache line
 		if(currentHistCount == prefetchHistoryCount) {
@@ -157,7 +157,7 @@ void StridePrefetcher::DetectStride() {
 
         	delete ev;
 	} else {
-		prefetchIssueCanceledByHistory++;
+		statPrefetchIssueCanceledByHistory->addData(1);
 		output->verbose(CALL_INFO, 2, 0, "Prefetch canceled - same cache line is found in the recent prefetch history.\n");
 	}
     }
@@ -197,12 +197,13 @@ StridePrefetcher::StridePrefetcher(Component* owner, Params& params) : CacheList
         output->verbose(CALL_INFO, 1, 0, "StridePrefetcher created, cache line: %" PRIu64 ", page size: %" PRIu64 "\n",
 		blockSize, pageSize);
 
-        prefetchEventsIssued = 0;
         missEventsProcessed = 0;
         hitEventsProcessed = 0;
-	prefetchIssueCanceledByPageBoundary = 0;
-	prefetchIssueCanceledByHistory = 0;
-	prefetchOpportunities = 0;
+
+	statPrefetchOpportunities = registerStatistic<uint64_t>("prefetch_opportunities");
+	statPrefetchEventsIssued = registerStatistic<uint64_t>("prefetches_issued");
+	statPrefetchIssueCanceledByPageBoundary = registerStatistic<uint64_t>("prefetches_canceled_by_page_boundary");
+	statPrefetchIssueCanceledByHistory = registerStatistic<uint64_t>("prefetches_canceled_by_history");
 }
 
 StridePrefetcher::~StridePrefetcher() {
@@ -214,18 +215,4 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 }
 
 void StridePrefetcher::printStats(Output &out) {
-	out.output("--------------------------------------------------------------------\n");
-	out.output("Stride Prefetch Engine Statistics (Owner: %s):\n", parent->getName().c_str());
-	out.output("--------------------------------------------------------------------\n");
-	out.output("Cache Miss Events:                      %" PRIu64 "\n", missEventsProcessed);
-	out.output("Cache Hit Events :                      %" PRIu64 "\n", hitEventsProcessed);
-	out.output("Cache Miss Rate (%%):                    %f\n", ((missEventsProcessed
-               	/ ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
-	out.output("Cache Hit Rate (%%):                     %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
-                       	hitEventsProcessed))) * 100.0));
-        out.output("Prefetches Opportunities:               %" PRIu64 "\n", prefetchOpportunities);
-        out.output("Prefetches Issued:                      %" PRIu64 "\n", prefetchEventsIssued);
-	out.output("Prefetches canceled by page boundary:   %" PRIu64 "\n", prefetchIssueCanceledByPageBoundary);
-	out.output("Prefetches canceled by history:         %" PRIu64 "\n", prefetchIssueCanceledByHistory);
-	out.output("--------------------------------------------------------------------\n");
 }

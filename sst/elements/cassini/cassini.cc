@@ -58,6 +58,7 @@ static const ElementInfoStatistic stride_statistics[] = {
 	{ "prefetches_issued",			  "Counts number of prefetches issued",	1 },
 	{ "prefetches_canceled_by_page_boundary", "Counts number of prefetches which spanned over page boundaries and so did not issue", 1 },
 	{ "prefetches_canceled_by_history",       "Counts number of prefetches which did not get issued because of prefetch history", 1 },
+	{ "prefetch_opportunities",               "Counts the number of prefetch opportunities", 1 },
 	{ NULL, NULL, 0 }
 };
 

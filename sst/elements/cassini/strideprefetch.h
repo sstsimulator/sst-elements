@@ -57,13 +57,14 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 	uint32_t strideReach;
 	Addr getAddressByIndex(uint32_t index);
 	uint32_t recheckCountdown;
-        uint64_t prefetchEventsIssued;
         uint64_t missEventsProcessed;
         uint64_t hitEventsProcessed;
-	uint64_t prefetchIssueCanceledByPageBoundary;
 	uint32_t verbosity;
-	uint64_t prefetchIssueCanceledByHistory;
-	uint64_t prefetchOpportunities;
+
+	Statistic<uint64_t>* statPrefetchOpportunities;
+	Statistic<uint64_t>* statPrefetchEventsIssued;
+	Statistic<uint64_t>* statPrefetchIssueCanceledByPageBoundary;
+	Statistic<uint64_t>* statPrefetchIssueCanceledByHistory;
 };
 
 } //namespace Cassini
