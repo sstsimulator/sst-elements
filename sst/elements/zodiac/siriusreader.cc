@@ -16,6 +16,18 @@
 using namespace std;
 using namespace SST::Zodiac;
 
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable" 
+#pragma GCC diagnostic ignored "-Wunused-result" 
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+
+
 SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ, int verbose)
 {
 
@@ -45,7 +57,7 @@ void SiriusReader::close() {
 }
 
 uint32_t SiriusReader::generateNextEvents() {
-	int finalized_reached = 0;
+//	int finalized_reached = 0;
 
 	while((foundFinalize == false) && (eventQ->size() < qLimit)) {
 		generateNextEvent();
@@ -295,3 +307,12 @@ void SiriusReader::setOutput(Output* oput) {
 
 	output = oput;
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic pop
+#endif
+
