@@ -29,7 +29,7 @@ Routermodel::handle_port_events(Event *event, int in_port)
 {
 
 SimTime_t current_time;
-SimTime_t delay;
+SimTime_t delay = 0;
 SimTime_t link_time;
 SimTime_t blocked;
 int out_port;

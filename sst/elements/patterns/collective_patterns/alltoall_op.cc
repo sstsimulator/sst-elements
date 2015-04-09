@@ -162,7 +162,8 @@ Alltoall_op::state_SEND(state_event sm_event)
 
 alltoall_events_t e= (alltoall_events_t)sm_event.event;
 state_event send_event;
-int dest, src;
+//int dest, src;
+int dest;
 int offset;
 int len1, len2;
 
@@ -170,7 +171,7 @@ int len1, len2;
     switch (e)   {
 	case E_SEND_START:
 	    dest= (cp->my_rank + shift) % alltoall_nranks;
-	    src= ((cp->my_rank - shift) + alltoall_nranks) % alltoall_nranks;
+	    //src= ((cp->my_rank - shift) + alltoall_nranks) % alltoall_nranks;
 	    offset= (cp->my_rank * alltoall_msglen) - ((shift - 1) * alltoall_msglen);
 
 	    if (offset < 0)   {
@@ -227,7 +228,8 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 state_event send_event;
 int n;
 int s1_len, s2_len;
-int src, dest;
+//int src, dest;
+int dest;
 
 
     switch (e)   {
@@ -237,7 +239,7 @@ int src, dest;
 	    // we are n over the last power of two
 	    n= alltoall_nranks - cp->next_power2(alltoall_nranks) / 2;
 	    dest= (cp->my_rank + alltoall_nranks - n) % alltoall_nranks;
-	    src= (cp->my_rank + n + alltoall_nranks) % alltoall_nranks;
+	    //src= (cp->my_rank + n + alltoall_nranks) % alltoall_nranks;
 
 
 	    // Send one piece or two?

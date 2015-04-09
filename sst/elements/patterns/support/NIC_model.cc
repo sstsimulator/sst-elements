@@ -67,7 +67,8 @@ int64_t link_duration;
 // For now until we have figured this out and start moving latency back onto links
 assert(_m->get_LinkLatency(_nic) == 0); // For now
 
-	if (event_delay < 0)   {
+//	if (event_delay < 0)   {
+	if (false)   {      // NOTE: SimTime_t is unsigned and cannot be negative
 	    event_delay= 0;
 	}
 	send_link->send(event_delay, e); 
@@ -77,7 +78,8 @@ assert(_m->get_LinkLatency(_nic) == 0); // For now
 	// NIC is busy
 	event_delay= NextSendSlot - current_time + _m->get_NICgap(_nic) +
 	    nic_delay - link_duration - _m->get_LinkLatency(_nic);
-	if (event_delay < 0)   {
+//	if (event_delay < 0)   {
+	if (false)   {      // NOTE: SimTime_t is unsigned and cannot be negative
 	    event_delay= 0;
 	}
 	send_link->send(event_delay, e); 
