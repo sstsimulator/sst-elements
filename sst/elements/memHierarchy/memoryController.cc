@@ -181,7 +181,7 @@ void MemController::handleEvent(SST::Event* _event){
             // Notify listeners that we have equiv. of a read
             if( ! listeners_.empty()) {
 		CacheListenerNotification notify(ev->getAddr(),	ev->getVirtualAddress(),
-			ev->getInstructionPointer(), READ, HIT);
+			ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
 		for(unsigned long int i = 0; i < listeners_.size(); ++i) {
 	        	listeners_[i]->notifyAccess(notify);

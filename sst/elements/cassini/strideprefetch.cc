@@ -25,6 +25,13 @@
 using namespace SST;
 using namespace SST::Cassini;
 
+void StridePrefetcher::notifyAccess(const CacheListenerNotification& notify) {
+        notifyAccess(notify.getAccessType(),
+                notify.getResultType(),
+                notify.getPhysicalAddress(),
+                notify.getSize());
+}
+
 void StridePrefetcher::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size) {
 	// Put address into our recent address list
 	recentAddrList[nextRecentAddressIndex] = addr;

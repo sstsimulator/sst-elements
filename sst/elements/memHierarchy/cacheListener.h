@@ -39,9 +39,10 @@ enum NotifyResultType{ HIT, MISS };
 class CacheListenerNotification {
 public:
 	CacheListenerNotification(const Addr pAddr, const Addr vAddr,
-		const Addr iPtr, NotifyAccessType accessT,
+		const Addr iPtr, const uint32_t reqSize,
+		NotifyAccessType accessT,
 		NotifyResultType resultT) :
-		physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
+		size(reqSize), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
 		access(accessT), result(resultT) {}
 
 	Addr getPhysicalAddress() const { return physAddr; }
@@ -49,7 +50,9 @@ public:
 	Addr getInstructionPointer() const { return instPtr; }
 	NotifyAccessType getAccessType() const { return access; }
 	NotifyResultType getResultType() const { return result; }
+	uint32_t getSize() const { return size; }
 private:
+	uint32_t size;
 	Addr physAddr;
 	Addr virtAddr;
 	Addr instPtr;

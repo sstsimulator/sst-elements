@@ -35,6 +35,13 @@ NextBlockPrefetcher::NextBlockPrefetcher(Component* owner, Params& params) : Cac
 
 NextBlockPrefetcher::~NextBlockPrefetcher() {}
 
+void NextBlockPrefetcher::notifyAccess(const CacheListenerNotification& notify) {
+	notifyAccess(notify.getAccessType(),
+		notify.getResultType(),
+		notify.getPhysicalAddress(),
+		notify.getSize());
+}
+
 void NextBlockPrefetcher::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size)
 {
 	if(notifyResType == MISS) {

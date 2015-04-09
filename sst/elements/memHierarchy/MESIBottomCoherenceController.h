@@ -187,8 +187,13 @@ private:
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
         }
 
-        if(!(_event->isPrefetch()))
-        listener_->notifyAccess(WRITE, MISS, _event->getBaseAddr(), _event->getSize());
+        if(!(_event->isPrefetch())) {
+		CacheListenerNotification notify(_event->getBaseAddr(),
+			_event->getVirtualAddress(), _event->getInstructionPointer(),
+			_event->getSize(), WRITE, MISS);
+
+        	listener_->notifyAccess(notify);
+	}
 
         _event->setStatsUpdated(true);
     }
@@ -200,8 +205,14 @@ private:
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
         }
 
-        if(!(_event->isPrefetch())) // probably should be 'if (prefetching is on and not a prefetch miss)'
-        listener_->notifyAccess(WRITE, MISS, _event->getBaseAddr(), _event->getSize());
+        if(!(_event->isPrefetch())) {
+		// probably should be 'if (prefetching is on and not a prefetch miss)'
+		CacheListenerNotification notify(_event->getBaseAddr(),
+                        _event->getVirtualAddress(), _event->getInstructionPointer(),
+                        _event->getSize(), WRITE, MISS);
+
+                listener_->notifyAccess(notify);
+	}
 
         _event->setStatsUpdated(true);
     }
@@ -219,8 +230,13 @@ private:
             }
         }
 
-        if(!(_event->isPrefetch()))
-        listener_->notifyAccess(READ, HIT, _event->getBaseAddr(), _event->getSize());
+        if(!(_event->isPrefetch())) {
+		CacheListenerNotification notify(_event->getBaseAddr(),
+                        _event->getVirtualAddress(), _event->getInstructionPointer(),
+                        _event->getSize(), READ, HIT);
+
+                listener_->notifyAccess(notify);
+	}
 
         _event->setStatsUpdated(true);
     }
@@ -238,9 +254,14 @@ private:
             }
         }
 
-        if(!(_event->isPrefetch()))
-        listener_->notifyAccess(WRITE, HIT, _event->getBaseAddr(), _event->getSize());
- 
+        if(!(_event->isPrefetch())) {
+		CacheListenerNotification notify(_event->getBaseAddr(),
+                        _event->getVirtualAddress(), _event->getInstructionPointer(),
+                        _event->getSize(), WRITE, HIT);
+
+                listener_->notifyAccess(notify);
+	}
+
         _event->setStatsUpdated(true);
     }
 
@@ -251,8 +272,13 @@ private:
             if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
         }
 
-        if(!(_event->isPrefetch()))
-        listener_->notifyAccess(READ, MISS, _event->getBaseAddr(), _event->getSize());
+        if(!(_event->isPrefetch())) {
+		CacheListenerNotification notify(_event->getBaseAddr(),
+                        _event->getVirtualAddress(), _event->getInstructionPointer(),
+                        _event->getSize(), READ, MISS);
+
+                listener_->notifyAccess(notify);
+	}
 
         _event->setStatsUpdated(true);
     }
