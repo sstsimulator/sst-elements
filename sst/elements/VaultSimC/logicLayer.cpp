@@ -180,7 +180,8 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the CPU
   while((tc[0] < bwlimit) && (e = toCPU->recv())) {
     MemEvent *event  = dynamic_cast<MemEvent*>(e);
-    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
+//    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
+    dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID, 
 	       (void*)event->getAddr(), event->getID().first, event->getID().second);
     if (event == NULL) {
       _abort(logicLayer::clock, "logic layer got bad event\n");
@@ -190,7 +191,8 @@ bool logicLayer::clock( Cycle_t current )
     if (isOurs(event->getAddr())) {
       // it is ours!
       unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %lld\n", llID, event, 
+//      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %lld\n", llID, event, 
+      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %" PRIu64 "\n", llID, event, 
 		 current);
       m_memChans[vaultID]->send(event);      
     } else {
@@ -215,7 +217,8 @@ bool logicLayer::clock( Cycle_t current )
 
       tm[0]++;
       // pass along to the CPU
-      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%lld %d)\n", 
+//      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%lld %d)\n", 
+      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%" PRIu64 " %d)\n", 
 		 llID, event, event->getID().first, event->getID().second);
       toCPU->send( event );
       tc[1]++;
@@ -231,7 +234,8 @@ bool logicLayer::clock( Cycle_t current )
       if (event == NULL) {
         _abort(logicLayer::clock, "logic layer got bad event from vaults\n");
       }
-      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %lld, sends "
+//      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %lld, sends "
+      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %" PRIu64 ", sends "
 		 "towards cpu\n", llID, event, current);
       
       // send to CPU

@@ -125,7 +125,8 @@ bool cpu::clock( Cycle_t current )
   }
 
   if ((current & 0x3ff) == 0) {
-    printf("%lld: out:%d ops/cycle:%0.2f\n", current, outstanding, 
+//      printf("%lld: out:%d ops/cycle:%0.2f\n", current, outstanding,
+      printf("%" PRIu64 ": out:%d ops/cycle:%0.2f\n", current, outstanding, 
 	   double(memOps)/double(current));
   }
 
