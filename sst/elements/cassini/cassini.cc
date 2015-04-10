@@ -27,10 +27,10 @@ static SubComponent* load_NextBlockPrefetcher(Component* owner, Params& params){
 }
 
 static const ElementInfoStatistic nbprefetch_statistics[] = {
-	{ "prefetches_issued",		"Number of prefetch requests issued", 1 },
-	{ "miss_events_processed",	"Number of cache misses received",    2 },
-	{ "hit_events_processed",       "Number of cache hits received",      2 },
-	{ NULL, NULL, 0 }
+	{ "prefetches_issued",		"Number of prefetch requests issued", "prefetches", 1 },
+	{ "miss_events_processed",	"Number of cache misses received",    "misses",     2 },
+	{ "hit_events_processed",       "Number of cache hits received",      "hits",       2 },
+	{ NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoParam nextBlockPrefetcher_params[] = {
@@ -55,11 +55,11 @@ static const ElementInfoParam stridePrefetcher_params[] = {
 };
 
 static const ElementInfoStatistic stride_statistics[] = {
-	{ "prefetches_issued",			  "Counts number of prefetches issued",	1 },
-	{ "prefetches_canceled_by_page_boundary", "Counts number of prefetches which spanned over page boundaries and so did not issue", 1 },
-	{ "prefetches_canceled_by_history",       "Counts number of prefetches which did not get issued because of prefetch history", 1 },
-	{ "prefetch_opportunities",               "Counts the number of prefetch opportunities", 1 },
-	{ NULL, NULL, 0 }
+	{ "prefetches_issued",			  "Counts number of prefetches issued",	"prefetches", 1 },
+	{ "prefetches_canceled_by_page_boundary", "Counts number of prefetches which spanned over page boundaries and so did not issue", "prefetches", 1 },
+	{ "prefetches_canceled_by_history",       "Counts number of prefetches which did not get issued because of prefetch history", "prefetches", 1 },
+	{ "prefetch_opportunities",               "Counts the number of prefetch opportunities", "prefetches", 1 },
+	{ NULL, NULL, NULL, 0 }
 };
 
 static SubComponent* load_AddrHistogrammer(Component* owner, Params& params){

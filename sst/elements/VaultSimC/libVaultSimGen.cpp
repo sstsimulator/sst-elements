@@ -42,16 +42,16 @@ static const ElementInfoPort VaultSimC_ports[] = {
 };
 
 static const ElementInfoStatistic VaultSimC_statistics[] = {
-    { "Mem_Outstanding", "Number of memory requests outstanding each cycle", 1},
-    { NULL, NULL, 0}
+    { "Mem_Outstanding", "Number of memory requests outstanding each cycle", "reqs/cycle", 1},
+    { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoStatistic logicLayer_statistics[] = {
-    { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", 1}, 
-    { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", 2}, 
-    { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", 3}, 
-    { "BW_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", 4}, 
-    { NULL, NULL, 0 }
+    { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 1},
+    { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 2},
+    { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs/cycle", 3},
+    { "BW_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", "reqs/cycle", 4},
+    { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoParam logicLayer_params[] = {

@@ -246,20 +246,20 @@ static const ElementInfoSubComponent subcomponents[] = {
 };
 
 static const ElementInfoStatistic basecpu_stats[] = {
-	{ "split_read_reqs",	"Number of read requests split over a cache line boundary",	2 },
-	{ "split_write_reqs",	"Number of write requests split over a cache line boundary", 	2 },
-	{ "read_reqs", 		"Number of read requests issued", 				1 },
-	{ "write_reqs", 	"Number of write requests issued", 				1 },
-	{ "total_bytes_read",   "Count the total bytes requested by read operations",		1 },
-	{ "total_bytes_write",  "Count the total bytes requested by write operations",      	1 },
-	{ "req_latency",        "Running total of all latency for all requests",                2 },
-        { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        1 },
-        { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    1 },
-        { "time",               "Nanoseconds spent issuing requests",                           1 },
-	{ "cycles_hit_fence",   "Number of issue cycles which stop issue at a fence",           2 },
-	{ "cycles_max_reorder", "Number of issue cycles which hit maximum reorder lookup",      2 },
-	{ "cycles_max_issue",   "Cycles with maximum operation issue",                          2 },
-	{ NULL,			NULL,								0 }
+	{ "split_read_reqs",	"Number of read requests split over a cache line boundary",	"requests", 2 },
+	{ "split_write_reqs",	"Number of write requests split over a cache line boundary", 	"requests", 2 },
+	{ "read_reqs", 		"Number of read requests issued", 				"requests", 1 },
+	{ "write_reqs", 	"Number of write requests issued", 				"requests", 1 },
+	{ "total_bytes_read",   "Count the total bytes requested by read operations",		"bytes",    1 },
+	{ "total_bytes_write",  "Count the total bytes requested by write operations",      	"bytes",    1 },
+	{ "req_latency",        "Running total of all latency for all requests",                "ns",       2 },
+        { "cycles_with_issue",  "Number of cycles which CPU was able to issue requests",        "cycles",   1 },
+        { "cycles_no_issue",    "Number of cycles which CPU was not able to issue requests",    "cycles",   1 },
+        { "time",               "Nanoseconds spent issuing requests",                           "ns",       1 },
+	{ "cycles_hit_fence",   "Number of issue cycles which stop issue at a fence",           "cycles",   2 },
+	{ "cycles_max_reorder", "Number of issue cycles which hit maximum reorder lookup",      "cycles",   2 },
+	{ "cycles_max_issue",   "Cycles with maximum operation issue",                          "cycles",   2 },
+	{ NULL,			NULL,								NULL,       0 }
 };
 
 static const ElementInfoParam basecpu_params[] = {

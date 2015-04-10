@@ -36,13 +36,13 @@ static Module* load_TextTrace( Component* comp, Params& params) {
 };
 
 static const ElementInfoStatistic ariel_statistics[] = {
-    { "read_requests",        "Stat read_requests", 1},   // Name, Desc, Enable Level 
-    { "write_requests",       "Stat write_requests", 1}, 
-    { "split_read_requests",  "Stat split_read_requests", 1}, 
-    { "split_write_requests", "Stat split_write_requests", 1},
-    { "no_ops",               "Stat no_ops", 1},
-    { "instruction_count",    "Statistic for counting instructions", 1 },
-    { NULL, NULL, 0 }
+    { "read_requests",        "Stat read_requests", "requests", 1},   // Name, Desc, Enable Level 
+    { "write_requests",       "Stat write_requests", "requests", 1},
+    { "split_read_requests",  "Stat split_read_requests", "requests", 1},
+    { "split_write_requests", "Stat split_write_requests", "requests", 1},
+    { "no_ops",               "Stat no_ops", "instructions", 1},
+    { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
+    { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoParam ariel_text_trace_params[] = {
