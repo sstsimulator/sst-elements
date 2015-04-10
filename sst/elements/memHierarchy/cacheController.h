@@ -361,7 +361,43 @@ private:
     uint64                  missLatency_GetSEx_IM;
     uint64                  missLatency_GetSEx_SM;
     uint64                  missLatency_GetSEx_M;
-
+    
+    /* 
+     * Statistics API stats  - 
+     * Note: these duplicate some of the existing stats that are output 
+     * at the end of the run with the cache option "statistics". 
+     * Eventually the two statistics will merge. 
+     */
+    // Cache hits
+    Statistic<uint64_t>* statCacheHits;
+    Statistic<uint64_t>* statGetSHitOnArrival;
+    Statistic<uint64_t>* statGetXHitOnArrival;
+    Statistic<uint64_t>* statGetSExHitOnArrival;
+    Statistic<uint64_t>* statGetSHitAfterBlocked;
+    Statistic<uint64_t>* statGetXHitAfterBlocked;
+    Statistic<uint64_t>* statGetSExHitAfterBlocked;
+    // Cache misses
+    Statistic<uint64_t>* statCacheMisses;
+    Statistic<uint64_t>* statGetSMissOnArrival;
+    Statistic<uint64_t>* statGetXMissOnArrival;
+    Statistic<uint64_t>* statGetSExMissOnArrival;
+    Statistic<uint64_t>* statGetSMissAfterBlocked;
+    Statistic<uint64_t>* statGetXMissAfterBlocked;
+    Statistic<uint64_t>* statGetSExMissAfterBlocked;
+    // Events received
+    Statistic<uint64_t>* statGetS_recv;
+    Statistic<uint64_t>* statGetX_recv;
+    Statistic<uint64_t>* statGetSEx_recv;
+    Statistic<uint64_t>* statGetSResp_recv;
+    Statistic<uint64_t>* statGetXResp_recv;
+    Statistic<uint64_t>* statPutS_recv;
+    Statistic<uint64_t>* statPutM_recv;
+    Statistic<uint64_t>* statPutX_recv;
+    Statistic<uint64_t>* statPutE_recv;
+    Statistic<uint64_t>* statFetchInv_recv;
+    Statistic<uint64_t>* statFetchInvX_recv;
+    Statistic<uint64_t>* statInv_recv;
+    Statistic<uint64_t>* statNACK_recv;
 };
 
 /*  Implementation Details

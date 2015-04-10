@@ -109,8 +109,25 @@ protected:
     int        sentEvents_;
     bool       L1_;
     
+    // Statistics //
+    // Coherence events - GetS
+    Statistic<uint64_t>* statGetSHitS;
+    Statistic<uint64_t>* statGetSHitE;
+    Statistic<uint64_t>* statGetSHitM;
+    Statistic<uint64_t>* statGetSMissIS;
+    Statistic<uint64_t>* statGetXHitE;
+    Statistic<uint64_t>* statGetXHitM;
+    Statistic<uint64_t>* statGetXMissIM;
+    Statistic<uint64_t>* statGetXMissSM;
+    Statistic<uint64_t>* statGetXMissMM;    // other owner existed when GetX arrived
+    Statistic<uint64_t>* statGetSExHitE;
+    Statistic<uint64_t>* statGetSExHitM;
+    Statistic<uint64_t>* statGetSExMissIM;
+    Statistic<uint64_t>* statGetSExMissSM;
+    Statistic<uint64_t>* statGetSExMissMM;    // other owner existed when GetSEx arrived
+
     struct Stats{
-        uint64_t GETSMissIS_,
+        uint64_t GETSMissIS_,       //
                 GETSMissBlocked_,
                 GETXMissSM_,
                 GETXMissIM_,

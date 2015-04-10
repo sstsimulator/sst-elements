@@ -297,6 +297,34 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     missLatency_GetSEx_M    = 0;
 
 
+    /* Register statistics */
+    statCacheHits               = registerStatistic<uint64_t>("CacheHits");
+    statGetSHitOnArrival        = registerStatistic<uint64_t>("GetSHit_Arrival");   
+    statGetXHitOnArrival        = registerStatistic<uint64_t>("GetXHit_Arrival");
+    statGetSExHitOnArrival      = registerStatistic<uint64_t>("GetSExHit_Arrival"); 
+    statGetSHitAfterBlocked     = registerStatistic<uint64_t>("GetSHit_Blocked");
+    statGetXHitAfterBlocked     = registerStatistic<uint64_t>("GetXHit_Blocked");  
+    statGetSExHitAfterBlocked   = registerStatistic<uint64_t>("GetSExHit_Blocked");
+    statCacheMisses             = registerStatistic<uint64_t>("CacheMisses");
+    statGetSMissOnArrival       = registerStatistic<uint64_t>("GetSMiss_Arrival");
+    statGetXMissOnArrival       = registerStatistic<uint64_t>("GetXMiss_Arrival");
+    statGetSExMissOnArrival     = registerStatistic<uint64_t>("GetSExMiss_Arrival");
+    statGetSMissAfterBlocked    = registerStatistic<uint64_t>("GetSMiss_Blocked");
+    statGetXMissAfterBlocked    = registerStatistic<uint64_t>("GetXMiss_Blocked");
+    statGetSExMissAfterBlocked  = registerStatistic<uint64_t>("GetSExMiss_Blocked");
+    statGetS_recv               = registerStatistic<uint64_t>("GetS_recv");
+    statGetX_recv               = registerStatistic<uint64_t>("GetX_recv");
+    statGetSEx_recv             = registerStatistic<uint64_t>("GetSEx_recv");
+    statGetSResp_recv           = registerStatistic<uint64_t>("GetSResp_recv");
+    statGetXResp_recv           = registerStatistic<uint64_t>("GetXResp_recv");
+    statPutS_recv               = registerStatistic<uint64_t>("PutS_recv");
+    statPutM_recv               = registerStatistic<uint64_t>("PutM_recv");
+    statPutE_recv               = registerStatistic<uint64_t>("PutE_recv");
+    statPutX_recv               = registerStatistic<uint64_t>("PutX_recv");
+    statFetchInv_recv           = registerStatistic<uint64_t>("FetchInv_recv");
+    statFetchInvX_recv          = registerStatistic<uint64_t>("FetchInvX_recv");
+    statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
+    statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
 
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {

@@ -31,23 +31,28 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
+void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
     if (mshr_->isHitAndStallNeeded(event->getBaseAddr(), cmd)) return; // will block this event, profile it later
     int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
     if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
-        if(mshr_->isFull() || (!L1_ && !_mshrHit && mshr_->isAlmostFull()  && !(cacheHit == 0))){ 
+        if(mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))){ 
                 return; // profile later, this event is getting NACKed 
         }
     }
 
-
     switch(cmd) {
         case GetS:
-            if (!_mshrHit) {                // New event
-                if (cacheHit == 0) stats_[0].newReqGetSHits_++;
-                else {
+            statGetS_recv->addData(1);
+            if (!replay) {                // New event
+                if (cacheHit == 0) {
+                    statCacheHits->addData(1);
+                    statGetSHitOnArrival->addData(1);
+                    stats_[0].newReqGetSHits_++;
+                } else {
+                    statCacheMisses->addData(1);
+                    statGetSMissOnArrival->addData(1);
                     stats_[0].newReqGetSMisses_++;
                     if (cacheHit == 1 || cacheHit == 2) {
                         stats_[0].GetS_IS++;
@@ -58,8 +63,13 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
                     }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
-                if (cacheHit == 0) stats_[0].blockedReqGetSHits_++;
-                else {
+                if (cacheHit == 0) {
+                    statCacheHits->addData(1);
+                    statGetSHitAfterBlocked->addData(1);
+                    stats_[0].blockedReqGetSHits_++;
+                } else {
+                    statCacheMisses->addData(1);
+                    statGetSMissAfterBlocked->addData(1);
                     stats_[0].blockedReqGetSMisses_++;
                     if (cacheHit == 1 || cacheHit == 2) {
                         stats_[0].GetS_IS++;
@@ -72,9 +82,15 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
             }
             break;
         case GetX:
-            if (!_mshrHit) {                // New event
-                if (cacheHit == 0) stats_[0].newReqGetXHits_++;
-                else {
+            statGetX_recv->addData(1);
+            if (!replay) {                // New event
+                if (cacheHit == 0) {
+                    statCacheHits->addData(1);
+                    statGetXHitOnArrival->addData(1);
+                    stats_[0].newReqGetXHits_++;
+                } else {
+                    statCacheMisses->addData(1);
+                    statGetXMissOnArrival->addData(1);
                     stats_[0].newReqGetXMisses_++;
                     if (cacheHit == 1) {
                         stats_[0].GetX_IM++;
@@ -88,8 +104,13 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
                     }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
-                if (cacheHit == 0) stats_[0].blockedReqGetXHits_++;
-                else {
+                if (cacheHit == 0) {
+                    statCacheHits->addData(1);
+                    statGetXHitAfterBlocked->addData(1);
+                    stats_[0].blockedReqGetXHits_++;
+                } else {
+                    statCacheMisses->addData(1);
+                    statGetXMissAfterBlocked->addData(1);
                     stats_[0].blockedReqGetXMisses_++;
                     if (cacheHit == 1) {
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
@@ -105,9 +126,15 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
             }
             break;
         case GetSEx:
-            if (!_mshrHit) {                // New event
-                if (cacheHit == 0) stats_[0].newReqGetSExHits_++;
-                else {
+            statGetSEx_recv->addData(1);
+            if (!replay) {                // New event
+                if (cacheHit == 0) {
+                    statCacheHits->addData(1);
+                    statGetSExHitOnArrival->addData(1);
+                    stats_[0].newReqGetSExHits_++;
+                } else {
+                    statCacheMisses->addData(1);
+                    statGetSExMissOnArrival->addData(1);
                     stats_[0].newReqGetSExMisses_++;
                     if (cacheHit == 1) {
                         stats_[0].GetSE_IM++;
@@ -121,8 +148,13 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
                     }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
-                if (cacheHit == 0) stats_[0].blockedReqGetSExHits_++;
-                else {
+                if (cacheHit == 0) {
+                    statCacheHits->addData(1);
+                    statGetSExMissAfterBlocked->addData(1);
+                    stats_[0].blockedReqGetSExHits_++;
+                } else {
+                    statCacheMisses->addData(1);
+                    statGetSExMissAfterBlocked->addData(1);
                     stats_[0].blockedReqGetSExMisses_++;
                     if (cacheHit == 1) {
                         stats_[0].GetSE_IM++;
@@ -138,16 +170,35 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool _mshrHit) {
             }
             break;
         case GetSResp:
+            statGetSResp_recv->addData(1);
+            break;
         case GetXResp:
+            statGetXResp_recv->addData(1);
+            break;
         case PutS:
+            statPutS_recv->addData(1);
+            break;
         case PutE:
+            statPutE_recv->addData(1);
+            break;
         case PutX:
-        case PutXE:
+            statPutX_recv->addData(1);
+            break;
         case PutM:
+            statPutM_recv->addData(1);
+            break;
         case FetchInv:
+            statFetchInv_recv->addData(1);
+            break;
         case FetchInvX:
+            statFetchInvX_recv->addData(1);
+            break;
         case Inv:
+            statInv_recv->addData(1);
+            break;
         case NACK:
+            statNACK_recv->addData(1);
+            break;
         default:
             break;
 

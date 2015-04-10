@@ -102,8 +102,68 @@ static const ElementInfoPort cache_ports[] = {
     {NULL, NULL, NULL}
 };
 
-
-
+static const ElementInfoStatistic cache_statistics[] = {
+    /* Cache hits and misses */
+    {"CacheHits",           "Total number of cache hits", "count", 1},
+    {"CacheMisses",         "Total number of cache misses", "count", 1},
+    {"GetSHit_Arrival",     "GetS was handled at arrival and was a cache hit", "count", 1},
+    {"GetSHit_Blocked",     "GetS was blocked in MSHR at arrival and later was a cache hit", "count", 1},
+    {"GetXHit_Arrival",     "GetX was handled at arrival and was a cache hit", "count", 1},
+    {"GetXHit_Blocked",     "GetX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
+    {"GetSExHit_Arrival",   "GetSEx was handled at arrival and was a cache hit", "count", 1},
+    {"GetSExHit_Blocked",   "GetSEx was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
+    {"GetSMiss_Arrival",    "GetS was handled at arrival and was a cache miss", "count", 1},
+    {"GetSMiss_Blocked",    "GetS was blocked in MSHR at arrival and later was a cache miss", "count", 1},
+    {"GetXMiss_Arrival",    "GetX was handled at arrival and was a cache miss", "count", 1},
+    {"GetXMiss_Blocked",    "GetX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
+    {"GetSExMiss_Arrival",  "GetSEx was handled at arrival and was a cache miss", "count", 1},
+    {"GetSExMiss_Blocked",  "GetSEx was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
+    /* Coherence events - hits */
+    {"GetSHit_S",           "Coherence: GetS handled in state: S", "count", 2},
+    {"GetSHit_E",           "Coherence: GetS handled in state: E", "count", 2},
+    {"GetSHit_M",           "Coherence: GetS handled in state: M", "count", 2},
+    {"GetXHit_E",           "Coherence: GetX handled in state: E", "count", 2},
+    {"GetXHit_M",           "Coherence: GetX handled in state: M", "count", 2},
+    {"GetSExHit_E",         "Coherence: GetSEx handled in state: E", "count", 2},
+    {"GetSExHit_M",         "Coherence: GetSEx handled in state: M", "count", 2},
+    /* Coherence events - misses */
+    {"GetSMiss_IS",         "Coherence: GetS caused I->S transition", "count", 2},  // Name, description, unit, level
+    {"GetXMiss_IM",         "Coherence: GetX caused I->M transition", "count", 2},
+    {"GetXMiss_SM",         "Coherence: GetX caused S->M transition", "count", 2},
+    {"GetXMiss_MM",         "Coherence: GetX caused ownership transition (M->M)", "count", 2},
+    {"GetSExMiss_IM",       "Coherence: GetSEx caused I->M transition", "count", 2},
+    {"GetSExMiss_SM",       "Coherence: GetSEx caused S->M transition", "count", 2},
+    {"GetSExMiss_MM",       "Coherence: GetSEx caused ownership transition (M->M)", "count", 2},
+    {"SharedReadResponse",  "Coherence: Received shared response to a GetS request", "count", 1},
+    {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 1},
+    /* Event receives */
+    {"GetS_recv",               "Event received: GetS", "count", 1},
+    {"GetX_recv",               "Event received: GetX", "count", 1},
+    {"GetSEx_recv",             "Event received: GetSEx", "count", 1},
+    {"GetSResp_recv",           "Event received: GetSResp", "count", 1},
+    {"GetXResp_recv",           "Event received: GetXResp", "count", 1},
+    {"PutM_recv",               "Event received: PutM", "count", 1},
+    {"PutS_recv",               "Event received: PutS", "count", 1},
+    {"PutE_recv",               "Event received: PutE", "count", 1},
+    {"PutX_recv",               "Event received: PutX", "count", 1},
+    {"FetchInv_recv",           "Event received: FetchInv", "count", 1},
+    {"FetchInvX_recv",          "Event received: FetchInvX", "count", 1},
+    {"Inv_recv",                "Event received: Inv", "count", 1},
+    {"NACK_recv",               "Event: NACK received", "count", 1},
+    /* Event sends */
+    {"PutM_Sent_Evict",         "Event: PutM sent due to eviction", "count", 1},
+    {"PutS_Sent_Evict",         "Event: PutS sent due to eviction", "count", 1},
+    {"PutE_Sent_Evict",         "Event: PutE sent due to eviction", "count", 1},
+    {"PutM_Sent_Inv",           "Event: PutM sent due to invalidation", "count", 1},
+    {"PutS_Sent_Inv",           "Event: PutS sent due to invalidation", "count", 1},
+    {"PutE_Sent_Inv",           "Event: PutE sent due to invalidation", "count", 1},
+    {"PutX_Sent",               "Event: PutX sent", "count", 1},
+    {"Inv_Sent",                "Event: Inv sent", "count", 1},
+    {"FetchInv_Sent",           "Event: FetchInv sent", "count", 1},
+    {"FetchInvX_Sent",          "Event: FetchInvX sent", "count", 1},
+    {"NACK_Sent",               "Event: NACK sent", "count", 1},
+    {NULL, NULL, NULL, 0}
+};
 
 static Component* create_Bus(ComponentId_t id, Params& params)
 {
@@ -451,7 +511,8 @@ static const ElementInfoComponent components[] = {
         create_Cache,
         cache_params,
         cache_ports,
-        COMPONENT_CATEGORY_MEMORY
+        COMPONENT_CATEGORY_MEMORY,
+        cache_statistics
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",

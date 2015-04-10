@@ -42,6 +42,15 @@ public:
             for(unsigned int i = 0; i < statGroupIds_.size(); i++)
                 stats_[statGroupIds_[i]].initialize();
         }
+        statGetSMissIS = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSMiss_IS");
+        statGetXMissIM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetXMiss_IM");
+        statGetXMissSM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetXMiss_SM");
+    }
+
+    ~MESIBottomCC() {
+        delete statGetSMissIS;
+        delete statGetXMissIM;
+        delete statGetXMissSM;
     }
     
     
@@ -183,6 +192,7 @@ private:
 
    void inc_GETXMissSM(MemEvent* _event){
         if(!_event->statsUpdated()){
+            statGetXMissSM->addData(1);
             stats_[0].GETXMissSM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
         }
@@ -201,6 +211,7 @@ private:
 
     void inc_GETXMissIM(MemEvent* _event){
         if(!_event->statsUpdated()){
+            statGetXMissIM->addData(1);
             stats_[0].GETXMissIM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
         }
@@ -268,6 +279,7 @@ private:
 
     void inc_GETSMissIS(MemEvent* _event){
         if(!_event->statsUpdated()){
+            statGetSMissIS->addData(1);
             stats_[0].GETSMissIS_++;
             if(groupStats_) stats_[getGroupId()].GETSMissIS_++;
         }
