@@ -35,7 +35,6 @@ class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
 	NextBlockPrefetcher(Component* owner, Params& params);
         ~NextBlockPrefetcher();
 
-        void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType, const Addr addr, const uint32_t size);
 	void notifyAccess(const CacheListenerNotification& notify);
 	void registerResponseCallback(Event::HandlerBase *handler);
 	void printStats(Output& out);

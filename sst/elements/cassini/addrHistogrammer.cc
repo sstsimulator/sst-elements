@@ -48,9 +48,11 @@ AddrHistogrammer::~AddrHistogrammer() {
 }
 
 
-void AddrHistogrammer::notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,
-	const Addr addr, const uint32_t size)
-{
+void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
+	const NotifyAccessType notifyType = notify.getAccessType();
+	const NotifyResultType notifyResType = notify.getResultType();
+	const Addr addr = notify.getPhysicalAddress();
+
     if(notifyResType != MISS) return;
     Addr baseAddr = (addr - (addr % blockSize));
     switch (notifyType) {

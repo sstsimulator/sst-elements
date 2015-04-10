@@ -67,11 +67,7 @@ public:
     virtual ~CacheListener() {}
 
     virtual void printStats(Output &out) {}
-
     virtual void notifyAccess(const CacheListenerNotification& notify) {}
-    virtual void notifyAccess(const NotifyAccessType notifyType, const NotifyResultType notifyResType,
-			const Addr addr, const uint32_t size) {}
-
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 
