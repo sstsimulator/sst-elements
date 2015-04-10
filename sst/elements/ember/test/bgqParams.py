@@ -2,12 +2,14 @@
 debug = 0
 
 topology="torus"
-shape="4x4x4x4"
+shape="4x4x4x4x2"
+#shape="2x2x2"
 
 networkParams = {
     "topology" : "merlin." + "torus",
     "packetSize" : "512B",
     "link_bw" : "1.77GB/s",
+    "xbar_bw" : "1.77GB/s",
     "link_lat" : "40ns",
     "input_latency" : "10ns",
     "output_latency" : "10ns",
@@ -43,9 +45,17 @@ hermesParams = {
     "hermesParams.policy" : "adjacent",
     "hermesParams.functionSM.defaultEnterLatency" : 30000,
     "hermesParams.functionSM.defaultReturnLatency" : 30000,
-    #"hermesParams.functionSM.Alltoall.irecvDelay" : 2500000,
-    #"hermesParams.functionSM.Alltoall.sendDelay" : 2500000,
-    #"hermesParams.functionSM.Alltoall.waitDelay" : 1000000,
+
+    "hermesParams.functionSM.Send.returnLatency" : 1300000,
+    #"hermesParams.functionSM.Recv.returnLatency" : 1300000,
+    "hermesParams.functionSM.WaitAll.returnLatency" : 1300000,
+    "hermesParams.functionSM.Wait.returnLatency" : 1300000,
+
+    "hermesParams.ctrlMsg.sendStateDelay_ps" : 1300000,
+    "hermesParams.ctrlMsg.recvStateDelay_ps" : 1300000,
+    "hermesParams.ctrlMsg.waitallStateDelay_ps" : 1300000,
+    "hermesParams.ctrlMsg.waitanyStateDelay_ps" : 1300000,
+
     "hermesParams.functionSM.defaultDebug" : 0,
     "hermesParams.functionSM.defaultVerbose" : 2,
     "hermesParams.ctrlMsg.debug" : 0,
