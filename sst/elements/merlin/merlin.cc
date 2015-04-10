@@ -135,9 +135,10 @@ static const ElementInfoPort bisection_test_ports[] = {
 
 // static const ElementInfoStatistic bisection_test_statistics[] = {
 //     // This really belongs in LinkControl, but stats in modules don't work yet
-//     { "packet_latency", "Histogram of latencies for received packets", 1},
-//     { "send_bit_count", "Count number of bits sent on link", 1},
-//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+//     { "packet_latency", "Histogram of latencies for received packets", "unit", 1},
+//     { "send_bit_count", "Count number of bits sent on link", "unit", 1},
+//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "unit", 1},
+//    { NULL, NULL, NULL, 0 }
 // };
 
 // test_nic element info
@@ -168,9 +169,10 @@ static const ElementInfoPort test_nic_ports[] = {
 
 // static const ElementInfoStatistic test_nic_statistics[] = {
 //     // This really belongs in LinkControl, but stats in modules don't work yet
-//     { "packet_latency", "Histogram of latencies for received packets", 1},
-//     { "send_bit_count", "Count number of bits sent on link", 1},
-//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+//     { "packet_latency", "Histogram of latencies for received packets", "unit", 1},
+//     { "send_bit_count", "Count number of bits sent on link", "unit", 1},
+//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "unit", 1},
+//    { NULL, NULL, NULL, 0 }
 // };
 
 
@@ -232,9 +234,10 @@ static const ElementInfoPort traffic_generator_ports[] = {
 
 // static const ElementInfoStatistic traffic_generator_statistics[] = {
 //     // This really belongs in LinkControl, but stats in modules don't work yet
-//     { "packet_latency", "Histogram of latencies for received packets", 1},
-//     { "send_bit_count", "Count number of bits sent on link", 1},
-//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", 1},
+//     { "packet_latency", "Histogram of latencies for received packets", "unit", 1},
+//     { "send_bit_count", "Count number of bits sent on link", "unit", 1},
+//     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "unit", 1},
+//    { NULL, NULL, NULL, 0 }
 // };
 
 // MODULES

@@ -791,7 +791,8 @@ int McOpteron::init(string appDirectory, string definitionFilename,
 int McOpteron::readIMixFile(string filename, string newIMixFilename)
 {
    char line[128];
-   char mnemonic[24], iClass[24], op1[24], op2[24], op3[24];
+//   char mnemonic[24], iClass[24], op1[24], op2[24], op3[24];
+   char mnemonic[24], op1[24], op2[24], op3[24];
    unsigned int iOpSize, useDist, i;
    unsigned long long occurs, loads, stores, totalUses;
    unsigned int sourceOps, curSource; 
@@ -826,7 +827,7 @@ int McOpteron::readIMixFile(string filename, string newIMixFilename)
          break;
       iOpSize = 64;
       sourceOps = 0; 
-      iClass[0] = op1[0] = op2[0] = op3[0] = '\0';
+//      iClass[0] = op1[0] = op2[0] = op3[0] = '\0';
       //if (sscanf(line,"Instruction: %lg %s %u %s", &iProbability, mnemonic, 
       //           &iOpSize, iClass) != 4) {
       //   fprintf(stderr, "Unknown line (%s), skipping\n", line);
@@ -1044,6 +1045,8 @@ int McOpteron::readNewIMixFile(string filename)
    }
    while (!feof(inf))
       r = fgets(line, sizeof(line), inf);
+  
+   r = r;  // To avoid compilier warning
    fclose(inf);
    if (sscanf(line, "TOTAL %llu", &totalInstructions) != 1) {
       fprintf(stderr, "Total line in new imix not right! (%s), aborting...\n", line);
@@ -1436,13 +1439,13 @@ int McOpteron::simCycle()
    currentCycle++;
    if (Debug>=2) fprintf(stderr, "\n\n======= Simulating cycle %llu ====== \n\n",
                         currentCycle);
-   bool brMispredicted = false; 
+//   bool brMispredicted = false; 
   // Update reorder buffer (and fake buffer for FP memops)
    fakeIBuffer->updateStatusFake(currentCycle);
    // if we find a mis-predicted branch, apply penalty
    if(reorderBuffer->updateStatus(currentCycle)){
       if (Debug>=2) fprintf(stderr, "===Mispredicted Branch Occured, now purging queues===\n");
-      brMispredicted = true; 
+//      brMispredicted = true; 
       // empty fake ROB
       fakeIBuffer->cancelAllEntries(currentCycle);
       // empty ld-st queue
@@ -1481,16 +1484,16 @@ int McOpteron::simCycle()
    // if a br misprediction occured and queues were flushed,
    // apply penalty and fetch new instructions!
 #if 0 
-  if(brMispredicted) { 
-      if (Debug>=2) fprintf(stderr, "===Mispredicted Branch Occured, now purging queues===\n");
-      // clear fetch buffer
-      for(int i=0; i<fetchBuffSize; i++) 
-	   fetchedBuffer[i] = NULL;  
-      lastToken = 0; 
-      flushInstructions();
-      // ROB, ld-st queus, and fetch buffers should all be already cleared at this point
-      nextAvailableFetch = currentCycle + branchMissPenalty; 
-   }
+//  if(brMispredicted) { 
+//      if (Debug>=2) fprintf(stderr, "===Mispredicted Branch Occured, now purging queues===\n");
+//      // clear fetch buffer
+//      for(int i=0; i<fetchBuffSize; i++) 
+//	   fetchedBuffer[i] = NULL;  
+//      lastToken = 0; 
+//      flushInstructions();
+//      // ROB, ld-st queus, and fetch buffers should all be already cleared at this point
+//      nextAvailableFetch = currentCycle + branchMissPenalty; 
+//   }
 #endif
 
    // Update all functional units to see if any come free

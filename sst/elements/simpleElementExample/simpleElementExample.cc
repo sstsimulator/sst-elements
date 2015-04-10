@@ -107,7 +107,7 @@ static const ElementInfoStatistic simpleStatisticsComponent_statistics[] = {
     { "stat4_I64", "Test Statistic 4 - Collecting I64 Data", "units", 4},
     { "stat5_U32", "Test Statistic 5 - Collecting U32 Data", "units", 5},
     { "stat6_U64", "Test Statistic 6 - Collecting U64 Data", "units", 6},
-    { NULL, NULL, 0 }
+    { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoParam simpleMessageGeneratorComponent_params[] = {
