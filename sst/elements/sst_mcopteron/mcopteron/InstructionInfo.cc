@@ -58,7 +58,8 @@ void InstructionInfo::allocateHistograms(unsigned int s) {
    for( unsigned int h = 0 ; h < s ; h++ ) {
       depHistograms[h] = new double[HISTOGRAMSIZE];
       // initialize with zeros
-      memset(depHistograms[h], 0, sizeof(depHistograms[h]));
+//      memset(depHistograms[h], 0, sizeof(depHistograms[h]));
+      memset(depHistograms[h], 0, sizeof(double) * HISTOGRAMSIZE);
    }
 }
 
@@ -622,7 +623,8 @@ unsigned int InstructionInfo::findInstructionRecord(const char *mnemonic,
    char *searchName=0; 
    char *p;
    OperandSize opSize;
-   InstructionInfo *it = this, *first = 0;
+//   InstructionInfo *it = this, *first = 0;
+   InstructionInfo *it = this;
    if (!mnemonic) return 0;
    // convert all conditional jumps into a generic JCC
    if (mnemonic[0] == 'J' && strcmp(mnemonic,"JMP") && !strstr(mnemonic,"CXZ"))
@@ -652,7 +654,7 @@ unsigned int InstructionInfo::findInstructionRecord(const char *mnemonic,
     default: opSize = OPSIZE64; 
    }
    if (Debug>2) fprintf(stderr, "findII: searching for (%s)...", searchName);
-   first = 0;
+//   first = 0;
    int counter=0; 
    while (it) {
       // match based on mnemonic and opSize and add found record to result array

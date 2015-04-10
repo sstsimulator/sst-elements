@@ -17,6 +17,7 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 class Listener{
  public:
    virtual void notify(void *obj) {};
+   virtual ~Listener() {};
 };
 }//End namespace McOpteron
 #endif

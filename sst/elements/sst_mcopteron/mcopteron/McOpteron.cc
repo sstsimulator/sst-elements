@@ -397,7 +397,8 @@ int McOpteron::init(string appDirectory, string definitionFilename,
    //fname = (char*) malloc(strlen(appDirectory)+32);
    string fname;
    Debug=local_debug;		//Scoggin: Added to pass Debug around in library form
-   if (Debug>=0) {
+//   if (Debug>=0) {
+   if (true) {    // Changed to supress compilier warning: Debug>=0 is always true; because Debug is unsigned
       cerr<<endl<<"Initializing McOpteron model...."<<endl;//fprintf(stderr, "\nInitializing McOpteron model....\n");
       if(definitionFilename.size()) 
         cerr<<"Instruction Definition File: "<<definitionFilename<<endl;    
@@ -880,7 +881,8 @@ int McOpteron::readIMixFile(string filename, string newIMixFilename)
          depHistograms[h] = new double[HISTOGRAMSIZE];
 
 		// now read histogram for each input register
-		while(sourceOps !=0 && curSource>=0 && curSource<sourceOps) { 		
+//		while(sourceOps !=0 && curSource>=0 && curSource<sourceOps) { 		
+		while(sourceOps !=0 && curSource<sourceOps) {  // Changed to supress compilier warning: curSource>=0 is always true	because curSource is unsigned	
       i = 0; totalUses = 0;
       unsigned int nextSource, flag=0;
       // Now read in use distance histogram; it can have skipped entries
@@ -1046,7 +1048,8 @@ int McOpteron::readNewIMixFile(string filename)
    while (!feof(inf))
       r = fgets(line, sizeof(line), inf);
   
-   r = r;  // To avoid compilier warning
+   // Do Nothing to avoid r not used compiler warning
+   if (r == 0) r = 0;
    fclose(inf);
    if (sscanf(line, "TOTAL %llu", &totalInstructions) != 1) {
       fprintf(stderr, "Total line in new imix not right! (%s), aborting...\n", line);
