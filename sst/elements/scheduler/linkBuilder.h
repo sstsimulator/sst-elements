@@ -57,7 +57,7 @@ namespace SST {
                 nodeTypeMap nodes;
                 // node pointers are indexed by Type and then by ID
 
-                SST::Link* selfLink;
+//                SST::Link* selfLink;
                 std::vector<SST::Link *> nodeLinks;
         };
 

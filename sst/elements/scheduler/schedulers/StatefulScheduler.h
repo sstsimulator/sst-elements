@@ -244,7 +244,7 @@ namespace SST {
                         std::string getString();
                         EvenLessManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
                     private:
-                        int results;
+//                        int results;
                 };
                 //MANAGERS OVER***************************************************************
 
