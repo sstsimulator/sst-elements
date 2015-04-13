@@ -185,8 +185,9 @@ void DirectoryController::handlePacket(SST::Event *event){
     ev->setDeliveryTime(getCurrentSimTimeNano());
      
     dbg.debug(_L3_, "RECV %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
-    if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) handleMemoryResponse(event);
-    else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+    if (ev->getCmd() == GetSResp || ev->getCmd() == GetXResp) {
+        handleMemoryResponse(event);
+    } else if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         dbg.debug(_L5_,"Forwarding noncacheable event to memory: Cmd = %s, BsAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 "\n",CommandString[ev->getCmd()],ev->getBaseAddr(),ev->getAddr());
         profileRequestRecv(ev,NULL);
         Addr localAddr       = convertAddressToLocalAddress(ev->getAddr());
@@ -235,7 +236,7 @@ inline void DirectoryController::profileRequestRecv(MemEvent * event, DirEntry *
         break;
 
     }
-    if (!entry || entry->inController) {
+    if (!entry || entry->isCached()) {
         ++numCacheHits;
     }
 }
@@ -338,7 +339,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 	return false;
 }
 
-bool DirectoryController::processPacket(MemEvent *ev){
+void DirectoryController::processPacket(MemEvent * ev) {
     dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L3_, "EVENT: %s, Received: Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, id (%" PRIu64 ",%d), Time = %" PRIu64 "\n",
             getName().c_str(),  CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), 
@@ -350,136 +351,559 @@ bool DirectoryController::processPacket(MemEvent *ev){
     }
 
     Command cmd = ev->getCmd();
-    
-    if(NACK == cmd){
-        MemEvent* origEvent = ev->getNACKedEvent();
-        profileResponseRecv(ev);
-        processIncomingNACK(origEvent,ev);
-        delete ev;
-        return true;
-    }
-    
-    uint32_t requesting_node;
-    pair<bool, bool> ret = make_pair<bool, bool>(false, false);
-    DirEntry *entry = getDirEntry(ev->getBaseAddr());
-    
-    if(entry && entry->waitingAcks > 0 && PutS == ev->getCmd()){
-        profileResponseRecv(ev);
-        handlePutS(ev);
-        delete ev;
-        return true;
-    }
-    
-    if(entry && entry->inProgress()) ret = handleEntryInProgress(ev, entry, cmd);
-    if(ret.first == true && ret.second == false) { // new request which conflicts with current request
-        if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
-            mshrHits++;
-            bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-            dbg.debug(_L8_, "Inserting conflicting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-            if (!inserted) {
-                dbg.debug(_L8_, "MSHR is full. NACKing request\n");
-                mshrNACKRequest(ev);
-                return true;
-            }
-        } else {
-            dbg.debug(_L8_, "Conflicting request already in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-        }
-    }
-    if(ret.first == true) return ret.second;
-
-
-    /* New Request */
-    profileRequestRecv(ev,entry);     // profile request
-    switch(cmd){
-        case PutS:
-	    if(! entry) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = PutS, Src = %s. Time = %" PRIu64 "ns\n", 
-                        getName().c_str(), ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
-	    }
-
-            requesting_node = node_name_to_id(ev->getSrc());
-            entry->removeSharer(requesting_node);
-            if(entry->countRefs() == 0 && !entry->inProgress()) resetEntry(entry);
-            if(mshr->elementIsHit(ev->getBaseAddr(),ev)) mshr->removeElement(ev->getBaseAddr(),ev);
-            delete ev;
-            break;
-            
-        case PutM:
-        case PutE:
-	    if(! entry) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
-                        getName().c_str(), ev->getBaseAddr(), CommandString[cmd], ev->getSrc().c_str(), getCurrentSimTimeNano());
-	    }
-            
-            if(entry->inController){
-                entry->activeReq = ev;
-                handlePutM(entry, ev);
-            } else {
-                if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
-                    mshrHits++;
-                    bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-                    dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-                    if (!inserted) {
-                        dbg.debug(_L8_, "MSHR is full. NACKing request\n");
-                        mshrNACKRequest(ev);
-                        return true;
-                    }
-                    entry->activeReq = ev;
-                }
-                dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
-                entry->nextFunc = &DirectoryController::handlePutM;
-                requestDirEntryFromMemory(entry);
-            }
-            break;
-        
-        case GetX:
-        case GetSEx:
+    switch (cmd) {
         case GetS:
-           
-            /* Create directory entry if this is a new block */
-            if(!entry){
-                entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
-                entry->inController = true;
-            }
-
-            /* Insert event in mshrs */
-            if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
-                mshrHits++;
-                bool inserted = mshr->insert(ev->getBaseAddr(),ev);
-                dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-                if (!inserted) {
-                    dbg.debug(_L8_, "MSHR is full. NACKing request\n");
-                    mshrNACKRequest(ev);
-                    return true;
-                }
-            }
-            
-            entry->activeReq = ev; // should also be the top request in the mshrs for this addr
-
-            if(entry->inController){
-                handleDataRequest(entry, ev);
-            }
-            else{
-                dbg.debug(_L8_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->baseAddr);
-                entry->nextFunc = &DirectoryController::handleDataRequest;
-                requestDirEntryFromMemory(entry);
-            }
+            handleGetS(ev);
+            break;
+        case GetSEx:    // handled like GetX, this is a GetS-lock request
+        case GetX:
+            handleGetX(ev);
+            break;
+        case NACK:
+            handleNACK(ev);
+            break;
+        case PutS:
+            handlePutS(ev);
+            break;
+        case PutX:
+            handlePutX(ev);
+            break;
+        case PutE:
+            handlePutE(ev);
+            break;
+        case PutM:
+            handlePutM(ev);
+            break;
+        case FetchResp:
+            handleFetchResp(ev);
+            break;
+        case FetchXResp:
+            handleFetchXResp(ev);
             break;
         default:
-            /* Ignore unexpected */
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Received unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+            dbg.fatal(CALL_INFO, -1 , "%s, Error: Received unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), CommandString[cmd], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
-            break;
+    }
+}
+
+void DirectoryController::handleGetS(MemEvent * ev) {
+    /* Locate directory entry and allocate if needed */
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    if (!entry){
+        entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
+        entry->setCached(true);   // TODO fix this so new entries go to memory if the cache is not full map, little bit o cheatin here
     }
 
-    return true;
+    /* Put request in MSHR (all GetS requests need to be buffered while they wait for data) and stall if there are waiting requests ahead of us */
+    if (!(mshr->elementIsHit(ev->getBaseAddr(), ev))) {
+        bool conflict = mshr->isHit(ev->getBaseAddr());
+        if (!mshr->insert(ev->getBaseAddr(), ev)) {
+            mshrNACKRequest(ev);
+            return;
+        }
+        if (conflict) {
+            return; // stall event until conflicting request finishes
+        } else {
+            profileRequestRecv(ev, entry);
+        }
+    }
+
+    if (!entry->isCached()) {
+        dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        getDirEntryFromMemory(entry);
+        return;
+    }
+
+    State state = entry->getState();
+    switch (state) {
+        case I:
+            entry->setState(IS);
+            issueMemoryRequest(ev, entry);
+            break;
+        case S:
+            entry->setState(S_D);
+            issueMemoryRequest(ev, entry);
+            break;
+        case M:
+            entry->setState(M_InvX);
+            issueFetch(ev, entry, FetchInvX);
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "Directory %s received GetS but state is %s\n", getName().c_str(), BccLineString[state]);
+    }
+}
+
+void DirectoryController::handleGetX(MemEvent * ev) {
+    /* Locate directory entry and allocate if needed */
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    if (!entry){
+        entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
+        entry->setCached(true);   // TODO fix this so new entries go to memory if the cache is not full map, little bit o cheatin here
+    }
+
+    /* Put request in MSHR (all GetS requests need to be buffered while they wait for data) and stall if there are waiting requests ahead of us */
+    if (!(mshr->elementIsHit(ev->getBaseAddr(), ev))) {
+        bool conflict = mshr->isHit(ev->getBaseAddr());
+        if (!mshr->insert(ev->getBaseAddr(), ev)) {
+            mshrNACKRequest(ev);
+            return;
+        }
+        if (conflict) {
+            return; // stall event until conflicting request finishes
+        } else {
+            profileRequestRecv(ev, entry);
+        }
+    }
+
+    if (!entry->isCached()) {
+        dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        getDirEntryFromMemory(entry);
+        return;
+    }
+
+    State state = entry->getState();
+    switch (state) {
+        case I:
+            entry->setState(IM);
+            issueMemoryRequest(ev, entry);
+            break;
+        case S:
+            if (entry->getSharerCount() == 1 && entry->isSharer(node_id(ev->getSrc()))) {
+                entry->setState(SM);
+                issueMemoryRequest(ev, entry);
+            } else {
+                entry->setState(S_Inv);
+                issueInvalidates(ev, entry);
+            }
+            break;
+        case M:
+            entry->setState(M_Inv);
+            issueFetch(ev, entry, FetchInv);
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "Directory %s received %s but state is %s\n", getName().c_str(), CommandString[ev->getCmd()], BccLineString[state]);
+    }
+}
+
+void DirectoryController::issueInvalidates(MemEvent * ev, DirEntry * entry) {
+    for (uint32_t i = 0; i < numTargets; i++) {
+        if (i == node_name_to_id(ev->getSrc())) continue;
+        if (entry->isSharer(i)) {
+            sendInvalidate(i, ev, entry);
+            entry->incrementWaitingAcks();
+        }
+    }
+    entry->lastRequest = DirEntry::NO_LAST_REQUEST;
+    dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->getBaseAddr());
+}
+
+/* Send Fetch to owner */
+void DirectoryController::issueFetch(MemEvent * ev, DirEntry * entry, Command cmd) {
+    MemEvent * fetch = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), cmd, cacheLineSize);
+    fetch->setDst(nodeid_to_name[entry->getOwner()]);
+    entry->lastRequest = fetch->getID();
+    profileRequestSent(fetch);
+    sendEventToCaches(fetch);
+}
+
+/* Send Get* request to memory */
+void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
+    Addr localAddr          = convertAddressToLocalAddress(ev->getAddr());
+    Addr localBaseAddr      = convertAddressToLocalAddress(ev->getBaseAddr());
+    MemEvent *reqEv         = new MemEvent(this, localAddr, localBaseAddr, ev->getCmd(), cacheLineSize);
+    memReqs[reqEv->getID()] = ev->getBaseAddr();
+    entry->lastRequest      = reqEv->getID();
+    profileRequestSent(reqEv);
+    if (directMemoryLink) {
+        memLink->send(reqEv);
+    } else {
+        reqEv->setDst(memoryName);
+        network->send(reqEv);
+    }
+    dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[reqEv->getCmd()], entry->getBaseAddr(), getCurrentSimTimeNano());
+    dbg.debug(_L5_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[reqEv->getCmd()], reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
+}
+
+/* handle NACK */
+void DirectoryController::handleNACK(MemEvent * ev) {
+    MemEvent* origEvent = ev->getNACKedEvent();
+    profileResponseRecv(ev);
+    
+    DirEntry *entry = getDirEntry(origEvent->getBaseAddr());
+    dbg.debug(_L5_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n", 
+	origEvent->getResponseToID().first, origEvent->getResponseToID().second, ev->getResponseToID().first, 
+	ev->getResponseToID().second, entry->lastRequest.first, entry->lastRequest.second);
+    
+    /* Retry request if it has not already been handled */
+    if ((ev->getResponseToID() == entry->lastRequest) || origEvent->getCmd() == Inv) {
+	/* Re-send request */
+	sendEventToCaches(origEvent);
+	dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[origEvent->getCmd()]);
+    } else {
+	dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[origEvent->getCmd()]);
+    }
+    
+    delete ev;
+    return;
 }
 
 
+/* 
+ * Handle PutS request - either a request or a response to an Inv 
+ * Important: PutS are handled regardless of whether entry is "cached" because 
+ * the lack of AckPut messages in the protocol leads to races if we stall or NACK a PutS
+ * TODO fix by adding AckPut messages
+ */
+void DirectoryController::handlePutS(MemEvent * ev) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    if (!entry) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = PutS, Src = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+
+
+    entry->removeSharer(node_name_to_id(ev->getSrc()));
+    if (mshr->elementIsHit(ev->getBaseAddr(), ev)) mshr->removeElement(ev->getBaseAddr(), ev);
+    
+    State state = entry->getState();
+    Addr addr = entry->getBaseAddr();
+    switch (state) {
+        case S:
+            profileRequestRecv(ev, entry);
+            if (entry->getSharerCount() == 0) {
+                entry->setState(I);
+            }
+            postRequestProcessing(ev, entry);   // profile & delete ev
+            updateCache(entry);             // update dir cache
+            break;
+        case S_D:
+            profileRequestRecv(ev, entry);
+            postRequestProcessing(ev, entry);
+            break;
+        case S_Inv:
+            profileResponseRecv(ev);
+            entry->decrementWaitingAcks();
+            delete ev;
+            if (entry->getWaitingAcks() == 0) {
+                entry->setState(I);
+                replayWaitingEvents(addr);
+            }
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutS but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+}
+
+void DirectoryController::handlePutX(MemEvent * ev) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    
+    /* Error checking */
+    if (!entry) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+
+    /* Get entry from memory if needed */
+    if (!(entry->isCached())) {
+        if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
+            mshrHits++;
+            bool inserted = mshr->insert(ev->getBaseAddr(),ev);
+            dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            if (!inserted) {
+                dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                mshrNACKRequest(ev);
+                return;
+            }
+        }
+        dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        getDirEntryFromMemory(entry);
+        return;
+    } 
+
+    /* Handle request */
+    State state = entry->getState();
+    switch  (state) {
+        case M:
+            profileRequestRecv(ev, entry);
+            writebackData(ev);
+            entry->clearOwner();
+            entry->addSharer(node_name_to_id(ev->getSrc()));
+            entry->setState(S);
+            postRequestProcessing(ev, entry);   // profile & delete ev
+            updateCache(entry);             // update cache
+            break;
+        //case M_Inv:
+        case M_InvX:
+            handleFetchXResp(ev);
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+}
+
+void DirectoryController::handlePutE(MemEvent * ev) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    /* Error checking */
+    if (!entry) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+
+    if (!(entry->isCached())) {
+        if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
+            mshrHits++;
+            bool inserted = mshr->insert(ev->getBaseAddr(),ev);
+            dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            if (!inserted) {
+                dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                mshrNACKRequest(ev);
+                return;
+            }
+        }
+        dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        getDirEntryFromMemory(entry);
+        return;
+    } 
+
+    /* Update owner state */
+    profileRequestRecv(ev, entry);
+    entry->clearOwner();
+
+    State state = entry->getState();
+    switch  (state) {
+        case M:
+            entry->setState(I);
+            postRequestProcessing(ev, entry);  // profile & delete ev
+            updateCache(entry);         // update cache;
+            break;
+        case M_Inv:     /* If PutE comes with data then we can handle this immediately but otherwise */
+            entry->setState(IM);
+            issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
+            postRequestProcessing(ev, entry);  // profile & delete ev
+            break;
+        case M_InvX:
+            entry->setState(IS);
+            issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
+            postRequestProcessing(ev, entry);  // profile & delete ev
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+}
+
+void DirectoryController::handlePutM(MemEvent * ev) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    /* Error checking */
+    if (!entry) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+
+    if (!(entry->isCached())) {
+        if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
+            mshrHits++;
+            bool inserted = mshr->insert(ev->getBaseAddr(),ev);
+            dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            if (!inserted) {
+                dbg.debug(_L8_, "MSHR is full. NACKing request\n");
+                mshrNACKRequest(ev);
+                return;
+            }
+        }
+        dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
+        getDirEntryFromMemory(entry);
+        return;
+    } 
+
+    State state = entry->getState();
+    switch  (state) {
+        case M:
+            profileRequestRecv(ev, entry);
+            writebackData(ev);
+            entry->clearOwner();
+            entry->setState(I);
+            postRequestProcessing(ev, entry);  // profile & delete event
+            updateCache(entry);
+            break;
+        case M_Inv:
+        case M_InvX:
+            handleFetchResp(ev);
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+}
+
+/* Handle the incoming event as a fetch Response (FetchResp, FetchXResp, PutM, PutX) */
+void DirectoryController::handleFetchResp(MemEvent * ev) {
+    dbg.debug(_L4_, "Finishing Fetch.\n");
+    
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
+    
+    /* Error checking */
+    if (!entry) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+   
+    /* Profile response */
+    profileResponseRecv(ev);
+
+    /* Clear previous owner state and writeback block. */
+    entry->clearOwner();
+    if (reqEv->getCmd() != GetX) {  // GetX will be dirty anyways so don't bother with writeback
+        writebackData(ev);
+    }
+
+    MemEvent * respEv;
+    State state = entry->getState(); 
+    
+    /* Handle request */
+    switch (state) {
+        case M_Inv:     // GetX request
+            entry->setOwner(node_id(reqEv->getSrc()));
+            respEv = reqEv->makeResponse();
+            entry->setState(M);
+            break;
+        case M_InvX:    // GetS request
+            if (protocol == "MESI" && entry->getSharerCount() == 0) {
+                entry->setOwner(node_id(reqEv->getSrc()));
+                respEv = reqEv->makeResponse(E);
+                entry->setState(M);
+            } else {
+                entry->addSharer(node_id(reqEv->getSrc()));
+                respEv = reqEv->makeResponse();
+                entry->setState(S);
+            }
+            break;
+        default:
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), CommandString[ev->getCmd()], BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }   
+    respEv->setPayload(ev->getPayload());
+    profileResponseSent(respEv);
+    sendEventToCaches(respEv);
+    
+    delete ev;
+    
+    postRequestProcessing(reqEv, entry);
+    replayWaitingEvents(entry->getBaseAddr());
+    updateCache(entry);
+}
+
+void DirectoryController::handleFetchXResp(MemEvent * ev) {
+    dbg.debug(_L4_, "Finishing Fetch.\n");
+    
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
+    
+    /* Error checking */
+    if (!entry) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+   
+    /* Profile response */
+    profileResponseRecv(ev);
+
+    /* Clear previous owner state and writeback block. */
+    entry->clearOwner();
+    entry->addSharer(node_name_to_id(ev->getSrc()));
+    entry->setState(S);
+    writebackData(ev);
+
+    MemEvent * respEv = reqEv->makeResponse(); 
+    entry->addSharer(node_id(reqEv->getSrc()));
+    
+    respEv->setPayload(ev->getPayload());
+    profileResponseSent(respEv);
+    sendEventToCaches(respEv);
+    
+    delete ev;
+
+    postRequestProcessing(reqEv, entry);
+    replayWaitingEvents(entry->getBaseAddr());
+    updateCache(entry);
+
+}
+
+/* Handle GetSResp or GetXResp from memory */
+void DirectoryController::handleDataResponse(MemEvent * ev) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    
+    State state = entry->getState();
+
+    MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
+    dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[reqEv->getCmd()], reqEv->getBaseAddr());
+    //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[reqEv->getCmd()], reqEv->getSrc().c_str());
+
+    MemEvent * respEv;
+    switch (state) {
+        case IS:
+        case S_D:
+            if (protocol == "MESI" && entry->getSharerCount() == 0) {
+                respEv = reqEv->makeResponse(E);
+                entry->setState(M);
+                entry->setOwner(node_id(reqEv->getSrc()));
+            } else {
+                respEv = reqEv->makeResponse();
+                entry->setState(S);
+                entry->addSharer(node_id(reqEv->getSrc()));
+            }
+            break;
+        case IM:
+        case SM:
+            respEv = reqEv->makeResponse();
+            entry->setState(M);
+            entry->setOwner(node_id(reqEv->getSrc()));
+            entry->clearSharers();  // Case SM: new owner was a sharer
+            break;
+        default:
+            dbg.fatal(CALL_INFO,1,"Directory %s received Get Response for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), ev->getBaseAddr(), BccLineString[state]);
+    }
+
+    respEv->setSize(cacheLineSize);
+    respEv->setPayload(ev->getPayload());
+    profileResponseSent(respEv);
+    sendEventToCaches(respEv);
+    
+    dbg.debug(_L4_, "Sending requested data for 0x%" PRIx64 " to %s, granted state = %s\n", entry->getBaseAddr(), respEv->getDst().c_str(), BccLineString[respEv->getGrantedState()]);
+    
+    postRequestProcessing(reqEv, entry);
+    replayWaitingEvents(entry->getBaseAddr());
+    updateCache(entry);
+}
 
 void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
+    
     dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
+    
     if (ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
         if (noncacheMemReqs.find(ev->getResponseToID()) != noncacheMemReqs.end()) {
             Addr globalBaseAddr = noncacheMemReqs[ev->getID()].first;
@@ -499,28 +923,18 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
 
 
     if (ev->getBaseAddr() == 0 && dirEntryMiss.find(ev->getResponseToID()) != dirEntryMiss.end()) {    // directory entry miss
-        dbg.debug(_L3_, "EVENT: %s, Received:Cmd = %s, BaseAddr = 0x%" PRIx64 ", Src: Memory, Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getSize(),getCurrentSimTimeNano());
+        dbg.debug(_L3_, "EVENT: %s, Received DirEntry: BaseAddr = 0x%" PRIx64 ", Src: Memory, Size = %u, Time = %" PRIu64 "\n", 
+                getName().c_str(), ev->getBaseAddr(), ev->getSize(),getCurrentSimTimeNano());
+        ev->setBaseAddr(dirEntryMiss[ev->getResponseToID()]);
         dirEntryMiss.erase(ev->getResponseToID());
-    }    
-    
-    if(memReqs.find(ev->getResponseToID()) != memReqs.end()){
+        handleDirEntryMemoryResponse(ev);
+    } else if (memReqs.find(ev->getResponseToID()) != memReqs.end()){
+        ev->setBaseAddr(memReqs[ev->getResponseToID()]);
         Addr targetBlock = memReqs[ev->getResponseToID()];
         dbg.debug(_L3_, "RECV: %s, MemResp: Cmd = %s, BaseAddr = 0x%" PRIx64 ", Size = %u, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], targetBlock, ev->getSize(),getCurrentSimTimeNano());
         memReqs.erase(ev->getResponseToID());
-        if(GetSResp == ev->getCmd() || GetXResp == ev->getCmd()){   // Lookup complete, perform our work
-            DirEntry *entry = getDirEntry(targetBlock);
+        handleDataResponse(ev);
 
-	    if(NULL == entry) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Memory response received but directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n", 
-                        getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], getCurrentSimTimeNano());
-	    }
-
-            entry->inController = true;
-            advanceEntry(entry, ev);
-        } else  { 
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected response from memory - response type not recognized: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), getCurrentSimTimeNano());
-        }
     } else {
         dbg.fatal(CALL_INFO, -1, "%s, Error: Received unexpected response from memory - matching request not found. Addr = 0x%" PRIx64 ", Cmd = %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], getCurrentSimTimeNano());
@@ -529,86 +943,65 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
     delete ev;
 }
 
+/* Handle response for directory entry */
+void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
+    Addr dirAddr = ev->getBaseAddr();
+
+    DirEntry * entry = getDirEntry(dirAddr);
+    entry->setCached(true);
+
+    State st = entry->getState();
+    switch (st) {
+        case I_d:
+            entry->setState(I);
+            break;
+        case S_d:
+            entry->setState(S);
+        case M_d:
+            entry->setState(M);
+        default:
+            dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s\n", getName().c_str(), entry->getBaseAddr(), BccLineString[st]);
+    }
+    MemEvent * reqEv = mshr->lookupFront(dirAddr);
+    processPacket(reqEv);
+}
+
+/* Send request for directory entry to memory */
+void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
+    State st = entry->getState();
+    switch (st) {
+        case I:
+            entry->setState(I_d);
+            break;
+        case S:
+            entry->setState(S_d);
+        case M:
+            entry->setState(M_d);
+        default:
+            dbg.fatal(CALL_INFO,-1,"Direcctory Controller %s: cache miss for addr 0x%" PRIx64 " but state is %s\n",getName().c_str(),entry->getBaseAddr(), BccLineString[st]);
+    }
+    
+    Addr entryAddr       = 0; /* Dummy addr reused for dir cache misses */
+    MemEvent *me         = new MemEvent(this, entryAddr, entryAddr, GetS, cacheLineSize);
+    me->setSize(entrySize);
+    dirEntryMiss[me->getID()] = entry->getBaseAddr();
+    profileRequestSent(me);
+    if (directMemoryLink) {
+        memLink->send(me);
+    } else {
+        me->setDst(memoryName);
+        network->send(me);
+    }
+    dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d)\n", entry->getBaseAddr(), me->getID().first, me->getID().second);
+}
+
+
+
 void DirectoryController::mshrNACKRequest(MemEvent* ev) {
     MemEvent * nackEv = ev->makeNACKResponse(this,ev);
     profileResponseSent(nackEv);
     sendEventToCaches(nackEv);
 }
-
-
-void DirectoryController::processIncomingNACK(MemEvent* _origReqEvent, MemEvent* _nackEvent){
-    DirEntry *entry = getDirEntry(_origReqEvent->getBaseAddr());
-    dbg.debug(_L5_, "Orig resp ID = (%" PRIu64 ",%d), Nack resp ID = (%" PRIu64 ",%d), last req ID = (%" PRIu64 ",%d)\n", 
-	_origReqEvent->getResponseToID().first, _origReqEvent->getResponseToID().second, _nackEvent->getResponseToID().first, 
-	_nackEvent->getResponseToID().second, entry->lastRequest.first, entry->lastRequest.second);
-    
-    /* Retry request if it has not already been handled */
-    if ((_nackEvent->getResponseToID() == entry->lastRequest) || _origReqEvent->getCmd() == Inv) {
-	/* Re-send request */
-	sendEventToCaches(_origReqEvent);
-	dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[_origReqEvent->getCmd()]);
-    } else {
-	dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[_origReqEvent->getCmd()]);
-    }
-}
-
-
-/*
- *  Return value indicates (successful, erase packet from queue)
- */
-pair<bool, bool> DirectoryController::handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd){
-    dbg.debug(_L5_, "Entry found and in progress\n");
-        if((entry->nextCommand == cmd || 
-            (entry->nextCommand == FetchResp && cmd == PutM) ||
-            (entry->nextCommand == FetchXResp && cmd == PutM) ||
-            (entry->nextCommand == GetSResp && cmd == PutS)) &&
-            ("N/A" == entry->waitingOnType || entry->waitingOn == ev->getSrc())){
-            
-            dbg.debug(_L4_, "Incoming command matches for 0x%" PRIx64 " in progress.\n", entry->baseAddr);
-            profileResponseRecv(ev);
-            if(ev->getResponseToID() != entry->lastRequest){
-                dbg.debug(_L4_, "This isn't a response to our request, but it fulfills the need.  Placing(%" PRIu64 ", %d) into list of ignorable responses.\n", 
-                        entry->lastRequest.first, entry->lastRequest.second);
-            }
-            advanceEntry(entry, ev);
-            delete ev;
-            return make_pair<bool, bool>(true, true);
-        
-        } else if ((entry->nextCommand == FetchResp || entry->nextCommand == FetchXResp) && cmd == PutE) {    // exclusive replacement raced with a fetch, re-direct to memory
-
-            dbg.debug(_L4_, "Entry %" PRIx64 " request raced with replacement. Handling as a miss to memory.\n", entry->baseAddr);
-            profileResponseRecv(ev);
-
-	    if(! (entry->findOwner() == node_name_to_id(ev->getSrc())) ) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Expected event from owner but received event from a different node. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                        getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
-	    }
-
-            int mapped_id = node_name_to_id(ev->getSrc());
-            entry->clearDirty(mapped_id);
-            entry->nextFunc = &DirectoryController::handleDataRequest;
-            advanceEntry(entry, ev);
-            delete ev;
-            return make_pair<bool, bool>(true,true);
-        } else if(entry->waitingOnType == "memory" && cmd == PutS && entry->nextCommand == GetSResp) {
-	    dbg.debug(_L4_, "Replacement during a GetS for a different cache, handling replacement immediately.\n");
-	    return make_pair<bool,bool>(false,false); // not a conflicting request
-        } else {
-            dbg.debug(_L4_, "Incoming command [%s,%s] doesn't match for 0x%" PRIx64 " [%s,%s] in progress.\n", 
-                    CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
-            if (!(entry->activeReq->getCmd() == PutM || entry->activeReq->getCmd() == PutE || entry->activeReq->getCmd() == PutS)) {
-		if(NULLCMD == entry->nextCommand) {
-		   dbg.fatal(CALL_INFO, -1, "%s, Error: next command is a NULLCMD. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                           getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
-		}
-            }
-            return make_pair<bool, bool>(true, false);
-        } 
-    return make_pair<bool, bool>(false, false);
-
-}
-
-
 
 void DirectoryController::printStatus(Output &out){
     out.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
@@ -617,12 +1010,6 @@ void DirectoryController::printStatus(Output &out){
     for(std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i){
         out.output("\t\t(%" PRIu64 ", %d)\n", (*i)->getID().first, (*i)->getID().second);
     }
-    out.output("\tRequests in Progress:\n");
-    for(std::map<Addr, DirEntry*>::iterator i = directory.begin() ; i != directory.end() ; ++i){
-        if(i->second->inProgress())
-            out.output("\t\t0x%" PRIx64 "\t\t(%" PRIu64 ", %d)\n",i->first, i->second->activeReq->getID().first, i->second->activeReq->getID().second);
-    }
-
 }
 
 
@@ -637,226 +1024,23 @@ DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr baseAddr){
 
 DirectoryController::DirEntry* DirectoryController::createDirEntry(Addr baseAddr, Addr addr, uint32_t reqSize){
     dbg.debug(_L10_, "Creating Directory Entry for 0x%" PRIx64 "\n", baseAddr);
-    DirEntry *entry = new DirEntry(baseAddr, addr, reqSize, numTargets, &dbg);
+    DirEntry *entry = new DirEntry(baseAddr, addr, numTargets, &dbg);
     entry->cacheIter = entryCache.end();
     directory[baseAddr] = entry;
     return entry;
 }
 
 
-
-void DirectoryController::sendInvalidate(int target, DirEntry* entry){
-    MemEvent *me = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), Inv, cacheLineSize);
+void DirectoryController::sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry){
+    MemEvent *me = new MemEvent(this, entry->getBaseAddr(), entry->getBaseAddr(), Inv, cacheLineSize);
     me->setDst(nodeid_to_name[target]);
     me->setAckNeeded();
-    me->setRqstr(entry->activeReq->getRqstr());
+    me->setRqstr(reqEv->getRqstr());
     dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
     network->send(me);
     dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[me->getCmd()], me->getBaseAddr(), me->getDst().c_str(), getCurrentSimTimeNano());
 }
-
-
-/**
- *  Handle data request (Get) to directory controller from caches
- */
-void DirectoryController::handleDataRequest(DirEntry* entry, MemEvent *new_ev){
-    entry->reqSize     = entry->activeReq->getSize();
-    Command cmd        = entry->activeReq->getCmd();
-    
-    uint32_t requesting_node = node_id(entry->activeReq->getSrc());
-
-    if(entry->activeReq->queryFlag(MemEvent::F_NONCACHEABLE)) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Request is marked non-cachable but has reached processing. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[entry->activeReq->getCmd()], entry->activeReq->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-
-    if(entry->isDirty()){                                       // Must do a fetch
-	MemEvent *ev;      
-        if (cmd == GetS) { // Downgrade
-            ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInvX, cacheLineSize);
-            entry->nextCommand = FetchXResp;
-        } else { // Invalidate
-            ev = new MemEvent(this, entry->activeReq->getAddr(), entry->activeReq->getBaseAddr(), FetchInv, cacheLineSize);
-            entry->nextCommand = FetchResp;
-        }
-        std::string &dest = nodeid_to_name[entry->findOwner()];
-        ev->setDst(dest);
-
-	entry->nextFunc    = &DirectoryController::finishFetch;
-        entry->waitingOn   = dest;
-        entry->waitingOnType = dest;
-        entry->lastRequest = ev->getID();
-        
-        profileRequestSent(ev);
-	sendEventToCaches(ev);
-    } else if(cmd == GetX || cmd == GetSEx){
-	if(entry->waitingAcks != 0) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Handling request but have not received all acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Acks = %d. Time = %" PRIu64 "ns\n",
-                        getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[cmd], entry->activeReq->getSrc().c_str(), entry->waitingAcks, getCurrentSimTimeNano());
-	}
-
-	for(uint32_t i = 0 ; i < numTargets ; i++){             // Must send invalidates
-	    if(i == requesting_node) continue;
-	    if(entry->sharers[i]){
-                sendInvalidate(i, entry);
-                entry->waitingAcks++;
-            }
-	}
-        if( entry->waitingAcks > 0){
-             entry->nextFunc = &DirectoryController::getExclusiveDataForRequest;
-             entry->nextCommand = PutS;
-             entry->waitingOn = "N/A";
-             entry->waitingOnType = "N/A";
-             entry->lastRequest = DirEntry::NO_LAST_REQUEST;
-             dbg.debug(_L4_, "Sending Invalidates to fulfill request for exclusive, BsAddr = %" PRIx64 ".\n", entry->baseAddr);
-        } else getExclusiveDataForRequest(entry, NULL);
-
-    } else {                                                    //Handle GetS requests
-	entry->addSharer(requesting_node);
-	entry->nextFunc = &DirectoryController::sendResponse;
-	requestDataFromMemory(entry);
-    }
-}
-
-
-
-void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev){
-    dbg.debug(_L4_, "Finishing Fetch. Writing data to memory. \n");
-    int wb_id         = node_name_to_id(new_ev->getSrc());
-    int req_id        = node_name_to_id(entry->activeReq->getSrc());
-    Command cmd       = entry->activeReq->getCmd();
-    
-    entry->clearDirty(wb_id);
-    
-    if(cmd == GetX || cmd == GetSEx) entry->setDirty(req_id);
-    else {
-        entry->addSharer(req_id);
-        if (new_ev->getCmd() == FetchXResp) entry->addSharer(wb_id);    // responder kept a shared copy
-    }
-
-    MemEvent * ev;
-    if (cmd == GetS && protocol == "MESI" && entry->countRefs() == 1) {
-        ev = entry->activeReq->makeResponse(E);
-        entry->clearSharers();
-        entry->setDirty(req_id);
-    } else {
-        ev = entry->activeReq->makeResponse();
-    }
-    ev->setPayload(new_ev->getPayload());
-    profileResponseSent(ev);
-    sendEventToCaches(ev);
-    writebackData(new_ev);
-    updateEntryToMemory(entry);
-}
-
-
-
-void DirectoryController::sendResponse(DirEntry* entry, MemEvent *new_ev){
-    MemEvent *ev;
-    uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
-    
-    if (entry->activeReq->getCmd() == GetS) {                   // Handle GetS requests according to coherence protocol
-        if (protocol == "MESI" && entry->countRefs() == 1 && entry->sharers[requesting_node]) {    // Return block in E state if this is the only requestor
-            entry->clearSharers();
-            entry->setDirty(requesting_node);                   
-            ev = entry->activeReq->makeResponse(E);             
-        } else {                                                // Assume protocol is MSI, enough error checking already exists to make sure protocol is valid
-            ev = entry->activeReq->makeResponse();
-        }
-    } else {
-        ev = entry->activeReq->makeResponse();
-    }
-
-    ev->setSize(cacheLineSize);
-    ev->setPayload(new_ev->getPayload());
-    profileResponseSent(ev);
-    sendEventToCaches(ev);
-    
-    dbg.debug(_L4_, "Sending requested data for 0x%" PRIx64 " to %s, granted state = %s\n", entry->baseAddr, ev->getDst().c_str(), BccLineString[ev->getGrantedState()]);
-
-    updateEntryToMemory(entry);
-
-}
-
-
-void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev){
-    uint32_t requesting_node = node_name_to_id(entry->activeReq->getSrc());
-	
-    
-    if(! (entry->countRefs() <= 1)) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: getting data for exclusive request but entry references count > 1. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, Refs = %d. Time = %" PRIu64 "ns\n", 
-                getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[entry->activeReq->getCmd()], entry->activeReq->getSrc().c_str(), entry->countRefs(), getCurrentSimTimeNano());
-    }
-
-    if(entry->countRefs() == 1) {
-	if(! entry->sharers[requesting_node]) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: getting data for exclusive request but coherence state has not been updated with new accessor. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                        getName().c_str(), entry->activeReq->getBaseAddr(), CommandString[entry->activeReq->getCmd()], entry->activeReq->getSrc().c_str(), getCurrentSimTimeNano());
-	}
-    }
-
-    entry->clearSharers();
-    
-    entry->setDirty(requesting_node);
-
-    entry->nextFunc = &DirectoryController::sendResponse;
-    requestDataFromMemory(entry);
-}
-
-
-
-void DirectoryController::handlePutS(MemEvent* ev){
-    DirEntry *entry = getDirEntry(ev->getAddr());
-
-    if(! (entry && entry->waitingAcks > 0)) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: handling PutS as ack but either directory entry does not exist or we are not expecting acks. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-
-    int requesting_node = node_name_to_id(ev->getSrc());
-    entry->removeSharer(requesting_node);
-    entry->waitingAcks--;
-    if(0 == entry->waitingAcks) advanceEntry(entry);
-}
-
-
-
-void DirectoryController::handlePutM(DirEntry *entry, MemEvent *ev) {
-    if(! entry->isDirty()) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Handling PutM but block is not exclusive. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-
-    if(! (entry->findOwner() == node_name_to_id(entry->activeReq->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: received PutM from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-
-    int mapped_id = node_name_to_id(entry->activeReq->getSrc());
-    entry->clearDirty(mapped_id);
-
-    if(ev->getCmd() == PutM || ev->getCmd() == GetSResp) {
-        writebackData(entry->activeReq);
-    } else if (ev->getCmd() != PutE) { // ok to drop a PutE -> block is not really dirty
-        dbg.debug(_L4_, "Alert! dropping PutM\n");
-    }
-
-    updateEntryToMemory(entry);
-}
-
-
-
-/* Advance the processing of this directory entry */
-void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev) {
-	if(NULL == entry->nextFunc) {
-		dbg.fatal(CALL_INFO, -1, "%s, Error: Received new response event but next function is NULL. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                        getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
-	}
-
-	(this->*(entry->nextFunc))(entry, ev);
-}
-
 
 
 uint32_t DirectoryController::node_id(const std::string &name){
@@ -886,54 +1070,7 @@ uint32_t DirectoryController::node_name_to_id(const std::string &name){
     return id;
 }
 
-
-
-void DirectoryController::requestDirEntryFromMemory(DirEntry *entry){
-    Addr entryAddr       = 0; /* Dummy addr reused for dir cache misses */
-    MemEvent *me         = new MemEvent(this, entryAddr, entryAddr, GetS, cacheLineSize);
-    me->setSize(entrySize);
-    memReqs[me->getID()] = entry->baseAddr;
-    dirEntryMiss[me->getID()] = entry->baseAddr;
-    entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
-    entry->waitingOn     = "memory";
-    entry->waitingOnType = "memory";
-    entry->lastRequest   = me->getID();
-    profileRequestSent(me);
-    if (directMemoryLink) {
-        memLink->send(me);
-    } else {
-        entry->waitingOn = memoryName;
-        me->setDst(memoryName);
-        network->send(me);
-    }
-    dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d); next cmd: %s\n", entry->baseAddr, me->getID().first, me->getID().second, CommandString[entry->nextCommand]);
-}
-
-
-
-void DirectoryController::requestDataFromMemory(DirEntry *entry){
-    Addr localAddr       = convertAddressToLocalAddress(entry->activeReq->getAddr());
-    Addr localBaseAddr   = convertAddressToLocalAddress(entry->activeReq->getBaseAddr());
-    MemEvent *ev         = new MemEvent(this, localAddr, localBaseAddr, entry->activeReq->getCmd(), cacheLineSize);
-    memReqs[ev->getID()] = entry->baseAddr;
-    entry->nextCommand   = MemEvent::commandResponse(entry->activeReq->getCmd());
-    entry->waitingOn     = "memory";
-    entry->waitingOnType = "memory";
-    entry->lastRequest   = ev->getID();
-    profileRequestSent(ev);
-    if (directMemoryLink) {
-        memLink->send(ev);
-    } else {
-        entry->waitingOn = memoryName;
-        entry->waitingOnType = "memory";
-        ev->setDst(memoryName);
-        network->send(ev);
-    }
-    dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], entry->baseAddr, getCurrentSimTimeNano());
-    dbg.debug(_L5_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSize(), ev->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
-}
-
-void DirectoryController::updateCacheEntry(DirEntry *entry){
+void DirectoryController::updateCache(DirEntry *entry){
     if(0 == entryCacheMaxSize){
         sendEntryToMemory(entry);
     } else {
@@ -945,13 +1082,12 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
         }
 
         /* Find out if we're no longer cached, and just remove */
-        if((!entry->activeReq) && (0 == entry->countRefs())){
-            dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->baseAddr);
-            directory.erase(entry->baseAddr);
+        if (entry->getState() == I){
+            dbg.debug(_L10_, "Entry for 0x%" PRIx64 " has no references - purging\n", entry->getBaseAddr());
+            directory.erase(entry->getBaseAddr());
             delete entry;
             return;
         } else {
-
             entryCache.push_front(entry);
             entry->cacheIter = entryCache.begin();
             ++entryCacheSize;
@@ -959,24 +1095,17 @@ void DirectoryController::updateCacheEntry(DirEntry *entry){
             while(entryCacheSize > entryCacheMaxSize){
                 DirEntry *oldEntry = entryCache.back();
                 // If the oldest entry is still in progress, everything is in progress
-                if(oldEntry->inProgress()) break;
+                if(mshr->isHit(oldEntry->getBaseAddr())) break;
 
-                dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->baseAddr);
+                dbg.debug(_L10_, "entryCache too large.  Evicting entry for 0x%" PRIx64 "\n", oldEntry->getBaseAddr());
                 entryCache.pop_back();
                 --entryCacheSize;
                 oldEntry->cacheIter = entryCache.end();
-                oldEntry->inController = false;
+                oldEntry->setCached(false);
                 sendEntryToMemory(oldEntry);
             }
         }
     }
-}
-
-
-
-void DirectoryController::updateEntryToMemory(DirEntry *entry){
-    resetEntry(entry);
-    updateCacheEntry(entry);
 }
 
 
@@ -1020,39 +1149,33 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     return ev->getID();
 }
 
-
-
-void DirectoryController::resetEntry(DirEntry *entry){
-    if(entry->activeReq){
-        ++numReqsProcessed;
-        totalReqProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
-        Command cmd = entry->activeReq->getCmd();
-        if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
-            totalGetReqProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
-        } else if (cmd == PutE || cmd == PutS || cmd == PutM) {
-            totalReplProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime() + 1);
-        }
-
-        if (mshr->elementIsHit(entry->activeReq->getBaseAddr(),entry->activeReq)) {
-            mshr->removeElement(entry->activeReq->getBaseAddr(),entry->activeReq);
-            dbg.debug(_L10_, "Removing request from mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[entry->activeReq->getCmd()], entry->activeReq->getBaseAddr(), entry->activeReq->getAddr(), mshr->getSize());
-            if (mshr->isHit(entry->activeReq->getBaseAddr())) {
-	    vector<mshrType> replayEntries = mshr->removeAll(entry->activeReq->getBaseAddr());
-	    for(vector<mshrType>::reverse_iterator it = replayEntries.rbegin(); it != replayEntries.rend(); it++) {
-		MemEvent *ev = boost::get<MemEvent*>((*it).elem);
-                std::list<MemEvent*>::iterator insert_it = workQueue.begin();
-		insert_it++;
-		dbg.debug(_L5_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
-	        workQueue.insert(insert_it,ev);
-}
-}
-        }
-        delete entry->activeReq;
+void DirectoryController::postRequestProcessing(MemEvent * ev, DirEntry * entry) {
+    ++numReqsProcessed;
+    totalReqProcessTime += (getCurrentSimTimeNano() - ev->getDeliveryTime());
+    Command cmd = ev->getCmd();
+    if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
+        totalGetReqProcessTime += (getCurrentSimTimeNano() - ev->getDeliveryTime());
+    } else {
+        totalReplProcessTime += (getCurrentSimTimeNano() - ev->getDeliveryTime() + 1);
     }
+
+    delete ev;
     entry->setToSteadyState();
 }
 
+void DirectoryController::replayWaitingEvents(Addr addr) {
+    if (mshr->isHit(addr)) {
+        vector<mshrType> replayEntries = mshr->removeAll(addr);
+        for (vector<mshrType>::reverse_iterator it = replayEntries.rbegin(); it != replayEntries.rend(); it++) {
+            MemEvent *ev = boost::get<MemEvent*>((*it).elem);
+            std::list<MemEvent*>::iterator insert_it = workQueue.begin();
+            insert_it++;
+            dbg.debug(_L5_, "Reactivating event %p. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", ev, CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
+            workQueue.insert(insert_it,ev);
+        }
+    }
 
+}
 
 void DirectoryController::sendEventToCaches(MemEvent *ev){
     dbg.debug(_L3_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
@@ -1118,7 +1241,7 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr){
 
 
 
-static char dirEntStatus[1024] = {0};
+/*static char dirEntStatus[1024] = {0};
 const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
     DirEntry *entry = getDirEntry(baseAddr);
     if(!entry){
@@ -1136,7 +1259,7 @@ const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
 
     }
     return dirEntStatus;
-}
+}*/
 
 
 

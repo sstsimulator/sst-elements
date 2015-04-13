@@ -108,6 +108,13 @@ static const char* TccLineString[] __attribute__((unused)) = {
     X(O)    /* Owned, dirty */\
     X(OM)   /* Owned, have issued upgrade request */\
     X(M)    /* Exclusive, dirty */\
+    X(I_d)  /* I, waiting for dir entry from memory */\
+    X(S_d)  /* S, waiting for dir entry from memory */\
+    X(M_d)  /* M, waiting for dir entry from memory */\
+    X(M_Inv)    /* M, waiting for FetchResp from owner */\
+    X(M_InvX)   /* M, waiting for FetchXResp from owner */\
+    X(S_D)      /* S, waiting for data from memory for another GetS request */\
+    X(S_Inv)    /* S, waiting for Invalidation acks from sharers */\
     X(DUMMY) \
     X(NULLST)
 

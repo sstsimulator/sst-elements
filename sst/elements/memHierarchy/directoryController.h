@@ -129,38 +129,55 @@ class DirectoryController : public Component {
     /** Create directory entrye */
     DirEntry* createDirEntry(Addr baseTarget, Addr target, uint32_t reqSize);
 
-    /** Function processes an incoming request that has the same address as a request that is already in progress */
-    pair<bool, bool> handleEntryInProgress(MemEvent *ev, DirEntry *entry, Command cmd);
+    /** Handle incoming GetS request */
+    void handleGetS(MemEvent * ev);
     
-    /** Send invalidate to a sharer */
-    void sendInvalidate(int target, DirEntry* entry);
+    /** Handle incoming GetX/GetSEx request */
+    void handleGetX(MemEvent * ev);
 
-    /** Function gets called when the meta data (flags, state) for a particular request is in the directory controller*/
-    void handleDataRequest(DirEntry* entry, MemEvent *new_ev);
-	
-    /** Fetch response received.  Respond to the event that cause the Fetch in the first place */
-    void finishFetch(DirEntry* entry, MemEvent *new_ev);
-	
-    /** Send response to a previously received request */
-    void sendResponse(DirEntry* entry, MemEvent *new_ev);
-	
-    /** Function changes state of the cache line to indicate the new exclusive sharer */
-    void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);
+    /** Handle incoming PutS */
+    void handlePutS(MemEvent * ev);
 
-    /** Handles received PutM requests */
-    void handlePutM(DirEntry *entry, MemEvent *ev);
-	
-    /** Handles received PutS requests */
-    void handlePutS(MemEvent *ev);
+    /** Handle incoming PutE */
+    void handlePutE(MemEvent * ev);
 
-    /** Retry original request upon receiving a NACK */
-    void processIncomingNACK(MemEvent* _origReqEvent, MemEvent* _nackEvent);
+    /** Handle incoming PutM */
+    void handlePutM(MemEvent * ev);
+
+    /** Handle incoming PutX */
+    void handlePutX(MemEvent * ev);
+
+    /** Handle incoming FetchResp (or PutM that is treated as FetchResp) */
+    void handleFetchResp(MemEvent * ev);
+
+    /** Handle incoming FetchXResp (or PutX that is treated as FetchXResp) */
+    void handleFetchXResp(MemEvent * ev);
+
+    /** Handle incoming NACK */
+    void handleNACK(MemEvent * ev);
+
+    /** Identify and issue invalidates to sharers */
+    void issueInvalidates(MemEvent * ev, DirEntry * entry);
+    
+    void issueFetch(MemEvent * ev, DirEntry * entry, Command cmd);
+
+    /** Send invalidate to a specific sharer */
+    void sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry);
+
+    /** Send data request to memory */
+    void issueMemoryRequest(MemEvent * ev, DirEntry * entry);
+
+    /** Handle incoming data response from memory */
+    void handleDataResponse(MemEvent * ev);
+
+    /** Handle incoming dir entry response from memory */
+    void handleDirEntryMemoryResponse(MemEvent * ev);
+
+    /** Request dir entry from memory */
+    void getDirEntryFromMemory(DirEntry * entry);
 
     /** NACK incoming request because there are no available MSHRs */
     void mshrNACKRequest(MemEvent * event);
-
-    /** Advances or transitions an entry to the 'next state' by calling the handler that was previously assigned */
-    void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 
     /** Find link id by name.  Create map entry if not found */
     uint32_t node_id(const std::string &name);
@@ -171,25 +188,17 @@ class DirectoryController : public Component {
     /** Determines if directory controller has exceeded the max number of entries.  If so it 'deletes' entry (not really) 
         and sends the entry to main memory.  In reality the entry is always kept in DirController but this writeback 
         of entries is done to get performance stimation */
-    void updateCacheEntry(DirEntry *entry);
-	
-    /** Request directory entry from main memory.  Directory entrys are always kept in this component but this 
-        function is executed to get actual latency (dummy events are sent only for performance stimation) */
-    void requestDirEntryFromMemory(DirEntry *entry);
-    
-    
-    /** Requests data from Memory */
-    void requestDataFromMemory(DirEntry *entry);
-	
-    /** Write updated entry to memory */
-    void updateEntryToMemory(DirEntry *entry);
-    
+    void updateCache(DirEntry *entry);
+
+    /** Profile request and delete it */
+    void postRequestProcessing(MemEvent * ev, DirEntry * entry);
+
+    /** Replay any waiting events */
+    void replayWaitingEvents(Addr addr);
+
     /** Send entry to main memory. No payload is actually sent for reasons described in 'updateCacheEntry'. */
     void sendEntryToMemory(DirEntry *entry);
 	
-    /** Called to clear "active items" from an entry */
-    void resetEntry(DirEntry *entry);
-
     /** Sends MemEvent to a target */
     void sendEventToCaches(MemEvent *ev);
 
@@ -225,119 +234,112 @@ class DirectoryController : public Component {
         static const        MemEvent::id_type NO_LAST_REQUEST;
 
         /* These items are bookkeeping for in-progress commands */
-	ProcessFunc         nextFunc;
-        std::string         waitingOn; // waiting to hear from this source
-        std::string         waitingOnType; // waiting to hear from this source
-        Command             nextCommand;  // Command which we're waiting for
 	uint32_t            waitingAcks;
-        uint32_t            reqSize;
-        bool                inController; // Whether this is present in the controller, or needs to be fetched
-	bool                dirty;
+	bool                cached;
         Addr                baseAddr;
         Addr                addr;
+        State               state;
         MemEvent::id_type   lastRequest;  // ID of message we're wanting a response to
-	MemEvent            *activeReq;
         std::list<DirEntry*>::iterator cacheIter;
 	std::vector<bool>   sharers;
+        int                 owner;
         Output * dbg;
 	
-        DirEntry(Addr _baseAddress, Addr _address, uint32_t _reqSize, uint32_t _bitlength, Output * d){
+        DirEntry(Addr _baseAddress, Addr _address, uint32_t _bitlength, Output * d){
             clearEntry();
             baseAddr     = _baseAddress;
             addr         = _address;
-            reqSize      = _reqSize;
             sharers.resize(_bitlength);
-            activeReq    = NULL;
             dbg          = d;
-
+            state        = I;
+            cached       = false;
         }
 
         void clearEntry(){
             setToSteadyState();
             waitingAcks  = 0;
-            inController = true;
-            dirty        = false;
+            cached       = true;
             baseAddr     = 0;
             addr         = 0;
-            reqSize      = 0;
-            sharers.clear();
             clearSharers();
+            owner        = -1;
+        }
+
+        bool isCached() {
+            return cached;
         }
         
+        void setCached(bool cache) {
+            cached = cache;
+        }
+
+        Addr getBaseAddr() {
+            return baseAddr;
+        }
+
         void setToSteadyState(){
-            activeReq   = NULL;
-            nextFunc    = NULL;
-            nextCommand = NULLCMD;
             lastRequest = DirEntry::NO_LAST_REQUEST;
-            waitingOn   = "N/A";
         }
         
-	uint32_t countRefs(void){
-	    uint32_t count = 0;
-            for (uint32_t i = 0; i < sharers.size(); i++)
+        uint32_t getSharerCount(void) {
+            uint32_t count = 0;
+            for (uint32_t i = 0; i < sharers.size(); i++) {
                 if (sharers[i]) count++;
-            
-	    return count;
-	}
+            }
+            return count;
+        }
 
         void clearSharers(void){
             for (uint32_t i = 0; i < sharers.size(); i++)
                 sharers[i] = false;
         }
         
-        
-        void setDirty(int id){
-            dirty       = true;
-            sharers[id] = true;
-            if (countRefs() != 1) {
-                dbg->fatal(CALL_INFO,-1,"Attempting to set block to dirty but refs is not 1\n");
-            }
-        }
-        
-        bool isDirty(){
-            return dirty ? true : false;
-        }
-        
-        void clearDirty(int id){
-            dirty       = false;
-            sharers[id] = false;
-            if (countRefs() != 0) {
-                dbg->fatal(CALL_INFO,-1,"Replacing dirty block but refs is not 0\n");
-            }
-        }
-        
         void addSharer(int _id){
             sharers[_id]= true;
-            if (dirty) {
-                dbg->fatal(CALL_INFO,-1,"Adding a sharer to a block which is dirty\n");
-            }
         }
         
+        bool isSharer(int id) {
+            return sharers[id];
+        }
+
         void removeSharer(int _id){
             if (!sharers[_id]) {
                 dbg->fatal(CALL_INFO,-1,"Removing a sharer which does not exist\n");
             }
-            if (dirty) {
-                dbg->fatal(CALL_INFO,-1,"Attempting to remove a sharer from a block that is dirty\n");
-            }
             sharers[_id]= false;
         }
         
-        uint32_t findOwner(void){
-            if (!dirty) {
-                dbg->fatal(CALL_INFO,-1,"Looking up owner for a block that is not exclusive\n");
-            }
-            if (countRefs() != 1) {
-                dbg->fatal(CALL_INFO,-1,"Looking up owner for a block whose ref count is not 1\n");
-            }
-            for (uint32_t i = 0; i < sharers.size(); i++) {
-                if (sharers[i]) return i;
-            }
-            dbg->fatal(CALL_INFO,-1,"Looking up owner and did not find one\n");
-            return 0;
+        int getOwner(void) {
+            return owner;
+        }
+        
+        void setOwner(int id) {
+            owner = id;
         }
 
-	bool inProgress(void) { return activeReq != NULL; }
+        void clearOwner() {
+            owner = -1;
+        }
+
+        void incrementWaitingAcks() {
+            waitingAcks++;
+        }
+
+        void decrementWaitingAcks() {
+            waitingAcks--;
+        }
+            
+        uint32_t getWaitingAcks() {
+            return waitingAcks;
+        }
+
+        void setState(State nState) {
+            state = nState;
+        }
+
+        State getState() {
+            return state;
+        }
     };
 
 public:
@@ -360,7 +362,7 @@ public:
 	
     /** Handler that gets called by clock tick.  
         Function redirects request according to their type. */
-    bool processPacket(MemEvent *ev);
+    void processPacket(MemEvent *ev);
 	
     /** Clock handler */
     bool clock(SST::Cycle_t cycle);
