@@ -330,12 +330,12 @@ static const ElementInfoParam alltoall_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
-static const ElementInfoParam alltoallv_params[] = {
-	{	"arg.iterations",		"Sets the number of alltoallv operations to perform", 	"1"},
-	{	"arg.bytes",		"Sets the number of bytes per rank",	 	"1"},
-	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
-	{	NULL,	NULL,	NULL	}
-};
+//static const ElementInfoParam alltoallv_params[] = {
+//	{	"arg.iterations",		"Sets the number of alltoallv operations to perform", 	"1"},
+//	{	"arg.bytes",		"Sets the number of bytes per rank",	 	"1"},
+//	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
+//	{	NULL,	NULL,	NULL	}
+//};
 
 static const ElementInfoParam allreduce_params[] = {
 	{	"arg.iterations",		"Sets the number of allreduce operations to perform", 	"1"},
@@ -351,12 +351,12 @@ static const ElementInfoParam reduce_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
-static const ElementInfoParam halo1d_params[] = {
-	{	"iterations",		"Sets the number of halo1d operations to perform", 	"10"},
-	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"1000"},
-	{	"messagesize",		"Sets the message size (in bytes)",		 	"128"},
-	{	NULL,	NULL,	NULL	}
-};
+//static const ElementInfoParam halo1d_params[] = {
+//	{	"iterations",		"Sets the number of halo1d operations to perform", 	"10"},
+//	{	"computenano",		"Sets the number of nanoseconds to compute for", 	"1000"},
+//	{	"messagesize",		"Sets the message size (in bytes)",		 	"128"},
+//	{	NULL,	NULL,	NULL	}
+//};
 
 static const ElementInfoParam halo2d_params[] = {
 	{	"arg.iterations",		"Sets the number of halo2d operations to perform", 	"10"},

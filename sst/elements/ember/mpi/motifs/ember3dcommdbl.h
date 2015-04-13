@@ -35,7 +35,7 @@ private:
 
 	uint32_t computeBetweenSteps;
 	uint32_t items_per_node;
-	uint32_t iterations;
+//	uint32_t iterations;
 	MessageRequest* requests;
 	uint32_t next_request;
 

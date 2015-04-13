@@ -82,7 +82,7 @@ private:
 
 	uint32_t m_iterations;
 
-    unsigned char* m_myData; 
+//    unsigned char* m_myData; 
 
     uint64_t    m_forwardStart;
     uint64_t    m_forwardStop;

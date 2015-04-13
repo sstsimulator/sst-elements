@@ -79,7 +79,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	uint32_t line = 0;
 
 
-	for(uint32_t currentRank = 0; currentRank < size(); ++currentRank) {
+	for(int32_t currentRank = 0; currentRank < size(); ++currentRank) {
 		out->verbose(CALL_INFO, 4, 0, "Loading block information for rank %" PRIu32 " out of %" PRIu32 "... \n", currentRank, size());
 		line++;
 
@@ -139,7 +139,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 		out->verbose(CALL_INFO, 8, 0, "Wiring block %" PRIu32 "...\n", currentBlock->getBlockID());
 
-		const uint32_t blockLevel = currentBlock->getRefinementLevel();
+		const int32_t blockLevel = currentBlock->getRefinementLevel();
 		uint32_t blockXPos = 0;
 		uint32_t blockYPos = 0;
 		uint32_t blockZPos = 0;
@@ -150,7 +150,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			blockLevel, blockXPos, blockYPos, blockZPos);
 
 		// Patch up X-Up
-		const uint32_t blockXUp = currentBlock->getRefineXUp();
+		const int32_t blockXUp = currentBlock->getRefineXUp();
 
 		if(blockXUp == -2) {
 			// Boundary condition, no communication
@@ -247,7 +247,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 		//////////////////////////////////////////////////////////////////////////////////////////////////
 
 		// Patch up X-Down
-		const uint32_t blockXDown = currentBlock->getRefineXDown();
+		const int32_t blockXDown = currentBlock->getRefineXDown();
 
 		if(blockXDown == -2) {
 			// Boundary condition, no communication
@@ -342,7 +342,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Patch up Y-Up
-        const uint32_t blockYUp = currentBlock->getRefineYUp();
+        const int32_t blockYUp = currentBlock->getRefineYUp();
 
         if(blockYUp == -2) {
             // Boundary condition, no communication
@@ -439,7 +439,7 @@ void Ember3DAMRGenerator::loadBlocks() {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Patch up Y-Down
 
-        const uint32_t blockYDown = currentBlock->getRefineYDown();
+        const int32_t blockYDown = currentBlock->getRefineYDown();
 
         if(blockYDown == -2) {
             // Boundary condition, no communication
@@ -535,7 +535,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	//////////////////////////////////////////////////////////////////////////////////////////////////
         // Patch up Z-Up
 
-        const uint32_t blockZUp = currentBlock->getRefineZUp();
+        const int32_t blockZUp = currentBlock->getRefineZUp();
 
         if(blockZUp == -2) {
             // Boundary condition, no communication
@@ -629,7 +629,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Patch up Z-Down
-        const uint32_t blockZDown = currentBlock->getRefineZDown();
+        const int32_t blockZDown = currentBlock->getRefineZDown();
 
         if(blockZDown == -2) {
             // Boundary condition, no communication
@@ -761,7 +761,7 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 	const uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
 	char* bufferPtr = (char*) blockMessageBuffer;
 
-	const uint32_t thisRank = rank();
+	const int32_t thisRank = rank();
 
 	for(uint32_t i = 0; i < 4; ++i) {
 		if(blockComm[i] >= 0) {
@@ -801,7 +801,7 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 
 void Ember3DAMRGenerator::aggregateCommBytes(Ember3DAMRBlock* curBlock, std::map<int32_t, uint32_t>& blockToMessageSize) {
 
-	const uint32_t thisRank = rank();
+	const int32_t thisRank = rank();
 
 	curBlock->print();
 
@@ -942,7 +942,7 @@ void Ember3DAMRGenerator::calcBlockLocation(const uint32_t blockID, const uint32
 
 	const uint32_t blocksXLevel = blocksX * power2(blockLevel);
 	const uint32_t blocksYLevel = blocksY * power2(blockLevel);
-	const uint32_t blocksZLevel = blocksZ * power2(blockLevel);
+//	const uint32_t blocksZLevel = blocksZ * power2(blockLevel);
 	const uint32_t block_plane = indexDiff % (blocksXLevel * blocksYLevel);
 
 	*posZ = indexDiff / (blocksXLevel * blocksYLevel);
@@ -1019,7 +1019,7 @@ void Ember3DAMRGenerator::printBlockMap() {
 
 	assert(map_output_file != NULL);
 
-	for(int i = 0; i < localBlocks.size(); ++i) {
+	for(unsigned int i = 0; i < localBlocks.size(); ++i) {
 		fprintf(map_output_file, "Block: %" PRIu32 "\n", localBlocks[i]->getBlockID());
 	}
 

@@ -54,7 +54,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     assert( ! m_apiMap.empty() );
 
 	motifParams.resize( params.find_integer("motif_count", 1) );
-	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
+//	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
+//                                    "to be simulated.\n", motifParams.size());
+	output.verbose(CALL_INFO, 2, 0, "Identified %ld motifs "
                                     "to be simulated.\n", motifParams.size());
 	
 	for ( unsigned int i = 0;  i < motifParams.size(); i++ ) {

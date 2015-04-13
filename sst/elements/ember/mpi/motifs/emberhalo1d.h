@@ -29,7 +29,7 @@ private:
 	uint32_t nsCompute;
 	uint32_t messageSize;
 	uint32_t iterations;
-	uint32_t wrapAround;
+//	uint32_t wrapAround;
 
 };
 

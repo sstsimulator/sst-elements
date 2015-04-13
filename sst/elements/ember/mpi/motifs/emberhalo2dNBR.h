@@ -31,7 +31,7 @@ private:
 	uint32_t sizeX;
 	uint32_t sizeY;
 	uint32_t nsCompute;
-	uint32_t nsCopyTime;
+//	uint32_t nsCopyTime;
 	uint32_t messageSizeX;
 	uint32_t messageSizeY;
 	uint32_t iterations;

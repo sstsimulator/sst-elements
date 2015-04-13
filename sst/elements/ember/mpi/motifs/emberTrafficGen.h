@@ -31,7 +31,7 @@ public:
     void configure();
 
 private:
-    MessageResponse m_resp;
+//    MessageResponse m_resp;
     double  m_mean;
     double  m_stddev;
     double  m_startDelay;

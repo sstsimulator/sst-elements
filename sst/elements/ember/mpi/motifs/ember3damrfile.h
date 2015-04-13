@@ -116,8 +116,8 @@ public:
 	uint32_t getMaxRefinement() const { return (uint32_t) maxRefinementLevel; }
 
 private:
-	Output* output;
 	char* amrFilePath;
+	Output* output;
 	FILE* amrFile;
 
 	int totalBlockCount;

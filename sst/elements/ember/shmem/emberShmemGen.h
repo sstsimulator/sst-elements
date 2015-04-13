@@ -62,7 +62,7 @@ protected:
 		return m_data;
 	}
 
-    void initOutput( ) {
+    void initOutput( Output* output ) {
 #if 0
         std::ostringstream prefix;
         prefix << "@t:" << m_data->jobId << ":" << (signed) m_data->rank 
