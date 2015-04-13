@@ -75,6 +75,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (protocol == "mesi") protocol = "MESI";
     if (protocol == "msi") protocol = "MSI";
 
+    /* Get latencies */
+    accessLatency   = (uint64_t)params.find_integer("access_latency_cycles", 0);
+    mshrLatency     = (uint64_t)params.find_integer("mshr_latency_cycles", 0);
+
     /* Set up links/network to cache & memory */
     if (directMemoryLink) {
         memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
@@ -122,13 +126,12 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         typeInfo.blocksize      = 0;
         network->addTypeInfo(typeInfo);
     }
-
+    
 
     registerClock(params.find_string("clock", "1GHz"), new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
 
-
-    /*Parameter not needed since cache entries are always stored at address 0.
-      Entries always kept in the cache, but memory is accessed to get performance metrics. */
+    // Timestamp - aka cycle count
+    timestamp = 0;
 
     // Clear statistics counters
     numReqsProcessed    = 0;
@@ -327,7 +330,22 @@ inline void DirectoryController::profileResponseRecv(MemEvent * event) {
     }
 }   
 
+/**
+ *  Called each cycle. Handle any waiting events in the queue.
+ */
 bool DirectoryController::clock(SST::Cycle_t cycle){
+    timestamp++;
+    while (!netMsgQueue.empty() && netMsgQueue.begin()->first <= timestamp) {
+        MemEvent * ev = netMsgQueue.begin()->second;
+        network->send(ev);
+        netMsgQueue.erase(netMsgQueue.begin());
+    }
+    while (!memMsgQueue.empty() && memMsgQueue.begin()->first <= timestamp) {
+        MemEvent * ev = memMsgQueue.begin()->second;
+        memLink->send(ev);
+        memMsgQueue.erase(memMsgQueue.begin());
+    }
+
     network->clock();
 
     while(!workQueue.empty()){
@@ -503,7 +521,7 @@ void DirectoryController::issueFetch(MemEvent * ev, DirEntry * entry, Command cm
     fetch->setDst(nodeid_to_name[entry->getOwner()]);
     entry->lastRequest = fetch->getID();
     profileRequestSent(fetch);
-    sendEventToCaches(fetch);
+    sendEventToCaches(fetch, timestamp + accessLatency);
 }
 
 /* Send Get* request to memory */
@@ -514,11 +532,14 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     memReqs[reqEv->getID()] = ev->getBaseAddr();
     entry->lastRequest      = reqEv->getID();
     profileRequestSent(reqEv);
+    
+    uint64_t deliveryTime = timestamp + accessLatency;
+
     if (directMemoryLink) {
-        memLink->send(reqEv);
+        memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, reqEv));
     } else {
         reqEv->setDst(memoryName);
-        network->send(reqEv);
+        netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, reqEv));
     }
     dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[reqEv->getCmd()], entry->getBaseAddr(), getCurrentSimTimeNano());
     dbg.debug(_L5_, "Requesting data from memory.  Cmd = %s, BaseAddr = x%" PRIx64 ", Size = %u, noncacheable = %s\n", CommandString[reqEv->getCmd()], reqEv->getBaseAddr(), reqEv->getSize(), reqEv->queryFlag(MemEvent::F_NONCACHEABLE) ? "true" : "false");
@@ -537,7 +558,7 @@ void DirectoryController::handleNACK(MemEvent * ev) {
     /* Retry request if it has not already been handled */
     if ((ev->getResponseToID() == entry->lastRequest) || origEvent->getCmd() == Inv) {
 	/* Re-send request */
-	sendEventToCaches(origEvent);
+	sendEventToCaches(origEvent, timestamp + mshrLatency);
 	dbg.debug(_L5_,"Orig Cmd NACKed, retry = %s \n", CommandString[origEvent->getCmd()]);
     } else {
 	dbg.debug(_L5_,"Orig Cmd NACKed, no retry = %s \n", CommandString[origEvent->getCmd()]);
@@ -745,8 +766,8 @@ void DirectoryController::handlePutM(MemEvent * ev) {
             handleFetchResp(ev);
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles.\n",
+                    getName().c_str(), BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
     }
 }
 
@@ -759,12 +780,12 @@ void DirectoryController::handleFetchResp(MemEvent * ev) {
     
     /* Error checking */
     if (!entry) {
-        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
-                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
     }
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
     }
    
     /* Profile response */
@@ -798,12 +819,12 @@ void DirectoryController::handleFetchResp(MemEvent * ev) {
             }
             break;
         default:
-            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    getName().c_str(), CommandString[ev->getCmd()], BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
+            dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received %s but state is %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
+                    getName().c_str(), CommandString[ev->getCmd()], BccLineString[state], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
     }   
     respEv->setPayload(ev->getPayload());
     profileResponseSent(respEv);
-    sendEventToCaches(respEv);
+    sendEventToCaches(respEv, timestamp + mshrLatency);
     
     delete ev;
     
@@ -820,12 +841,12 @@ void DirectoryController::handleFetchXResp(MemEvent * ev) {
     
     /* Error checking */
     if (!entry) {
-        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n", 
-                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+        dbg.fatal(CALL_INFO, -1, "%s, Error: Directory entry does not exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n", 
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp);
     }
     if (!((uint32_t)entry->getOwner() == node_name_to_id(ev->getSrc()))) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: received FetchResp from a node who does not own the block. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles\n",
+                getName().c_str(), ev->getBaseAddr(), CommandString[ev->getCmd()], ev->getSrc().c_str(), getCurrentSimTimeNano(), timestamp );
     }
    
     /* Profile response */
@@ -842,7 +863,7 @@ void DirectoryController::handleFetchXResp(MemEvent * ev) {
     
     respEv->setPayload(ev->getPayload());
     profileResponseSent(respEv);
-    sendEventToCaches(respEv);
+    sendEventToCaches(respEv, timestamp + mshrLatency);
     
     delete ev;
 
@@ -890,7 +911,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     respEv->setSize(cacheLineSize);
     respEv->setPayload(ev->getPayload());
     profileResponseSent(respEv);
-    sendEventToCaches(respEv);
+    sendEventToCaches(respEv, timestamp + mshrLatency);
     
     dbg.debug(_L4_, "Sending requested data for 0x%" PRIx64 " to %s, granted state = %s\n", entry->getBaseAddr(), respEv->getDst().c_str(), BccLineString[respEv->getGrantedState()]);
     
@@ -914,6 +935,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event){
             ev->setAddr(globalAddr);
             noncacheMemReqs.erase(ev->getResponseToID());
             profileResponseSent(ev);
+            
             network->send(ev);
             return;
         }
@@ -986,11 +1008,13 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
     me->setSize(entrySize);
     dirEntryMiss[me->getID()] = entry->getBaseAddr();
     profileRequestSent(me);
+    
+    uint64_t deliveryTime = timestamp + accessLatency;
     if (directMemoryLink) {
-        memLink->send(me);
+        memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     } else {
         me->setDst(memoryName);
-        network->send(me);
+        netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     }
     dbg.debug(_L10_, "Requesting Entry from memory for 0x%" PRIx64 "(%" PRIu64 ", %d)\n", entry->getBaseAddr(), me->getID().first, me->getID().second);
 }
@@ -1000,7 +1024,7 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
 void DirectoryController::mshrNACKRequest(MemEvent* ev) {
     MemEvent * nackEv = ev->makeNACKResponse(this,ev);
     profileResponseSent(nackEv);
-    sendEventToCaches(nackEv);
+    sendEventToCaches(nackEv, timestamp + 1);
 }
 
 void DirectoryController::printStatus(Output &out){
@@ -1038,7 +1062,10 @@ void DirectoryController::sendInvalidate(int target, MemEvent * reqEv, DirEntry*
     me->setRqstr(reqEv->getRqstr());
     dbg.debug(_L4_, "Sending Invalidate.  Dst: %s\n", nodeid_to_name[target].c_str());
     profileRequestSent(me);
-    network->send(me);
+    
+    uint64_t deliveryTime = timestamp + accessLatency;
+    netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
+    
     dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[me->getCmd()], me->getBaseAddr(), me->getDst().c_str(), getCurrentSimTimeNano());
 }
 
@@ -1115,11 +1142,14 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
     MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, PutE, cacheLineSize); // MemController discards PutE's without writeback so this is safe
     me->setSize(entrySize);
     profileRequestSent(me);
+
+    uint64_t deliveryTime = timestamp + accessLatency;
+
     if (directMemoryLink) {
-        memLink->send(me);
+        memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     } else {
         me->setDst(memoryName);
-        network->send(me);
+        netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     }
 }
 
@@ -1137,11 +1167,13 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     ev->setSize(data_event->getPayload().size());
     ev->setPayload(data_event->getPayload());
     profileRequestSent(ev);
+    
+    uint64_t deliveryTime = timestamp + accessLatency;
     if (directMemoryLink) {
-        memLink->send(ev);
+        memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, ev));
     } else {
         ev->setDst(memoryName);
-        network->send(ev);
+        netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, ev));
     }
     dbg.debug(_L3_, "SEND: %s \tMemReq. Cmd = %s, BaseAddr = 0x%" PRIx64 ",  Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], data_event->getBaseAddr(), getCurrentSimTimeNano());
     
@@ -1177,10 +1209,10 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
 
 }
 
-void DirectoryController::sendEventToCaches(MemEvent *ev){
+void DirectoryController::sendEventToCaches(MemEvent *ev, uint64_t deliveryTime){
     dbg.debug(_L3_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
     dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), getCurrentSimTimeNano());
-    network->send(ev);
+    netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, ev));
 }
 
 

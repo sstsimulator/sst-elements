@@ -387,6 +387,8 @@ static const ElementInfoParam dirctrl_params[] = {
     {"mshr_num_entries",    "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
     {"direct_mem_link",     "Specifies whether directory has a direct connection to memory (1) or is connected via a network (0)","1"},
     {"net_memory_name",     "For directories connected to a memory over the network: name of the memory this directory owns", ""},
+    {"access_latency_cycles", "Latency of directory access in cycles", "0"},
+    {"mshr_latency_cycles", "Latency of mshr access in cycles", "0"},
     {NULL, NULL, NULL}
 };
 

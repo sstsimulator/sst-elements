@@ -61,12 +61,16 @@ class DirectoryController : public Component {
     string      protocol;
     
     /* MSHRs */
-    uint64_t    mshrLatency;
     MSHR*       mshr;
     
     /* Directory cache */
     size_t      entryCacheMaxSize;
     size_t      entryCacheSize;
+    
+    /* Timestamp & latencies */
+    uint64_t    timestamp;
+    uint64_t    accessLatency;
+    uint64_t    mshrLatency;
 
     /* Statistics counters for profiling DC */
     uint64_t    numReqsProcessed;
@@ -122,6 +126,8 @@ class DirectoryController : public Component {
     MemNIC*     network;
     string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
     
+    std::multimap<uint64_t,MemEvent*>   netMsgQueue;
+    std::multimap<uint64_t,MemEvent*>   memMsgQueue;
     
     /** Find directory entry by base address */
     DirEntry* getDirEntry(Addr target);
@@ -200,7 +206,7 @@ class DirectoryController : public Component {
     void sendEntryToMemory(DirEntry *entry);
 	
     /** Sends MemEvent to a target */
-    void sendEventToCaches(MemEvent *ev);
+    void sendEventToCaches(MemEvent *ev, uint64_t deliveryTime);
 
     /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
     MemEvent::id_type writebackData(MemEvent *data_event);
@@ -233,16 +239,15 @@ class DirectoryController : public Component {
     struct DirEntry {
         static const        MemEvent::id_type NO_LAST_REQUEST;
 
-        /* These items are bookkeeping for in-progress commands */
-	uint32_t            waitingAcks;
-	bool                cached;
-        Addr                baseAddr;
+	uint32_t            waitingAcks;    // Number of acks we are waiting for
+	bool                cached;         // whether block is cached or not
+        Addr                baseAddr;       // block address
         Addr                addr;
-        State               state;
-        MemEvent::id_type   lastRequest;  // ID of message we're wanting a response to
+        State               state;          // state
+        MemEvent::id_type   lastRequest;    // ID of message we're wanting a response to  - used to track whether a NACK needs to be retried
         std::list<DirEntry*>::iterator cacheIter;
-	std::vector<bool>   sharers;
-        int                 owner;
+	std::vector<bool>   sharers;        // set of sharers for block
+        int                 owner;          // owner of block
         Output * dbg;
 	
         DirEntry(Addr _baseAddress, Addr _address, uint32_t _bitlength, Output * d){
