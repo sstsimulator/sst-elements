@@ -73,7 +73,7 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_waitUpState.init();
     m_sendDownState.init();
     if ( m_event->type == CollectiveStartEvent::Bcast ) {
-        m_state = SendDown;
+        m_state = WaitDown; 
     } else {
         m_state = WaitUp;
     }
