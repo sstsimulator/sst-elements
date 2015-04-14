@@ -42,17 +42,12 @@ bool EmberBcastGenerator::generate( std::queue<EmberEvent*>& evQ) {
         return true;
     }
 
-
     if ( 0 == m_loopIndex ) {
         enQ_getTime( evQ, &m_startTime );
     }
 
-    
-    if ( 0 == rank() ) {
-        enQ_compute( evQ, 1000000 );
-    } else  {
-        enQ_compute( evQ, m_compute );
-    }
+    enQ_compute( evQ, m_compute );
+
     enQ_bcast( evQ, m_sendBuf, m_count, DOUBLE, m_root, GroupWorld );
 
     if ( ++m_loopIndex == m_iterations ) {
