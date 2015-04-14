@@ -36,7 +36,7 @@ private:
 
     int down_route_factor;
 
-    int levels;
+//    int levels;
     int id;
     int up_ports;
     int down_ports;

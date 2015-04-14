@@ -40,7 +40,7 @@ int TrafficGen::mean_sum = 0;
 
 TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     Component(cid),
-    last_vc(0),
+//    last_vc(0),
     packets_sent(0),
     packets_recd(0),
     done(false),

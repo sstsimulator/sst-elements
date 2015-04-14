@@ -191,7 +191,7 @@ private:
     int ft_radix;
     int num_peers;
     int num_vns;
-    int last_vc;
+//    int last_vc;
 
     uint64_t packets_sent;
     uint64_t packets_recd;

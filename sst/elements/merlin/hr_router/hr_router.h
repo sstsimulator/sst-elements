@@ -40,8 +40,8 @@ private:
     static int print_debug;
     int id;
     int num_ports;
+//    int requested_vns;
     int num_vcs;
-    int requested_vns;
     bool vcs_initialized;
         
     Topology* topo;

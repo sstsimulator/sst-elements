@@ -153,6 +153,7 @@ bisection_test::receive_handler(int vn)
             delete rec_ev;
         }
     }
+    return false;
 }
 
 

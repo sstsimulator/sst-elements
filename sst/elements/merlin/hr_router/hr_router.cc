@@ -62,7 +62,7 @@ static void split(string input, string delims, vector<string>& tokens) {
         start = stop + 1;
     } while (stop != string::npos);
 
-    for ( int i = 0; i < tokens.size(); i++ ) {
+    for ( unsigned int i = 0; i < tokens.size(); i++ ) {
         tokens[i] = trim(tokens[i]);
     }
 }
@@ -84,7 +84,7 @@ hr_router::~hr_router()
 
 hr_router::hr_router(ComponentId_t cid, Params& params) :
     Router(cid),
-    requested_vns(0),
+//    requested_vns(0),
     num_vcs(-1),
     vcs_initialized(false)
 {

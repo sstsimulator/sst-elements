@@ -89,8 +89,8 @@ private:
     // you,
     int* xbar_in_credits;
 
-    int* port_out_credits;
     int* port_ret_credits;
+    int* port_out_credits;
     
     // Doing a round robin on the output.  Need to keep track of the
     // current virtual channel.

@@ -176,7 +176,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
 
     // Create any NetworkInspectors
-    for ( int i = 0; i < inspector_names.size(); i++ ) {
+    for ( unsigned int i = 0; i < inspector_names.size(); i++ ) {
         Params empty;
         SimpleNetwork::NetworkInspector* ni = dynamic_cast<SimpleNetwork::NetworkInspector*>(rif->loadSubComponent(inspector_names[i], rif, empty));
         if ( ni == NULL ) {
@@ -310,7 +310,7 @@ PortControl::~PortControl() {
     //if ( xbar_in_credits != NULL ) delete [] xbar_in_credits;
     if ( port_ret_credits != NULL ) delete [] port_ret_credits;
     if ( port_out_credits != NULL ) delete [] port_out_credits;
-    for ( int i = 0; i < network_inspectors.size(); i++ ) {
+    for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
         delete network_inspectors[i];
     }
 }
@@ -744,7 +744,7 @@ PortControl::handle_output_r2r(Event* ev) {
         send_packet_count->addData(1);
 
         // Send the request to all the registered NetworkInspectors
-        for ( int i = 0; i < network_inspectors.size(); i++ ) {
+        for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
             network_inspectors[i]->inspectNetworkData(send_event->getEncapsulatedEvent()->request);
         }
 

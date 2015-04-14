@@ -39,7 +39,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
         // cout << "sub: " << sub << endl;
         
         // Get the up and down
-        int comma = sub.find(',');
+        size_t comma = sub.find(',');
         string down;
         string up;
         if ( comma == string::npos ) {
