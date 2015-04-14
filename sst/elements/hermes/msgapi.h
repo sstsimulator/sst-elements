@@ -53,9 +53,10 @@ typedef MessageRequestBase* MessageRequest;
 
 
 enum ReductionOperation {
-	SUM,
-	MIN,
-	MAX
+    NOP,
+    SUM,
+    MIN,
+    MAX
 };
 
 typedef Arg_FunctorBase< int, bool > Functor; 
@@ -104,6 +105,10 @@ class Interface : public Hermes::Interface {
 
     virtual void reduce(Addr mydata, Addr result, uint32_t count, 
         PayloadDataType dtype, ReductionOperation op, RankID root, 
+        Communicator group, Functor*) {}
+
+    virtual void bcast(Addr mydata, uint32_t count, 
+        PayloadDataType dtype, RankID root, 
         Communicator group, Functor*) {}
 
     virtual void allgather(
