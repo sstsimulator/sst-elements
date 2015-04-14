@@ -121,11 +121,12 @@ class SendStartEvent : public Event {
 class CollectiveStartEvent : public Event {
 
   public:
+    enum Type { Allreduce, Reduce, Bcast };
     CollectiveStartEvent(
                 MP::Addr _mydata, MP::Addr _result, uint32_t _count,
                 MP::PayloadDataType _dtype, MP::ReductionOperation _op,
                 MP::RankID _root, MP::Communicator _group,
-                bool _all ) :
+                Type _type ) :
         mydata(_mydata),
         result(_result),
         count(_count),
@@ -133,9 +134,21 @@ class CollectiveStartEvent : public Event {
         op(_op),
         root(_root),
         group(_group),
-        all( _all ) 
+        type( _type ) 
     {}
     
+    const char* typeName() {
+        switch( type ) {
+          case Allreduce:
+            return "Allreduce";
+          case Reduce:
+            return "Reduce";
+          case Bcast:
+            return "Bcast";
+        }
+        return NULL;
+    }
+
     MP::Addr mydata;
     MP::Addr result;
     uint32_t count;
@@ -143,7 +156,7 @@ class CollectiveStartEvent : public Event {
     MP::ReductionOperation op;
     MP::RankID  root;
     MP::Communicator group;
-    bool  all;
+    Type  type;
 };
 
 class GatherBaseStartEvent : public Event {

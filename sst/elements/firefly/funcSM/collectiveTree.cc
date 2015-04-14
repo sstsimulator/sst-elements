@@ -33,9 +33,9 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
                 m_info->getGroup(m_event->group)->getSize(), m_event->root ); 
 
     m_dbg.verbose(CALL_INFO,1,0,"%s group %d, root %d, size %d, rank %d\n",
-                    m_event->all ? "ALL ": "",
-                    m_event->group, m_event->root, m_yyy->size(), 
-                    m_yyy->myRank());
+                m_event->typeName(),
+                m_event->group, m_event->root, m_yyy->size(), 
+                m_yyy->myRank());
     
     m_dbg.verbose(CALL_INFO,1,0,"parent %d \n",m_yyy->parent());
     for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
@@ -72,7 +72,11 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_waitUpState.init();
     m_sendDownState.init();
-    m_state = WaitUp;
+    if ( m_event->type == CollectiveStartEvent::Bcast ) {
+        m_state = SendDown;
+    } else {
+        m_state = WaitUp;
+    }
     handleEnterEvent( retval );
 }
 
@@ -83,6 +87,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
     switch ( m_state ) {
     case WaitUp:
+        // if I have children they are sending me messages
         if (  m_yyy->numChildren() ) {
 
             switch ( m_waitUpState.state ) {
@@ -119,9 +124,17 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
         m_state = SendUp;
 
     case SendUp:
+        // if I'm not the root I need to send to my parent
         if ( -1 != m_yyy->parent() ) {
             void *ptr;
-            m_state = WaitDown;
+
+            // if this is an Allreduce I need wait for the fanout else 
+            // my job is done
+            if ( m_event->type == CollectiveStartEvent::Allreduce)  {
+                m_state = WaitDown;
+            } else {
+                m_state = Exit;
+            }
 
             ptr = m_yyy->numChildren() ?  m_event->result : m_event->mydata;
 
@@ -132,7 +145,8 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
         }
 
     case WaitDown:
-        if ( m_event->all && -1 != m_yyy->parent() ) {
+        // if I have a parent I need to wait for the fanout message
+        if ( -1 != m_yyy->parent() ) {
             m_state = SendDown;
 
             m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
@@ -143,7 +157,8 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
         }
 
     case SendDown:
-        if ( m_event->all && m_yyy->numChildren() ) {
+        // if I have children I need to fanout data to my children
+        if ( m_yyy->numChildren() ) {
 
 			switch ( m_sendDownState.state ) {
 			  case SendDownState::Sending:

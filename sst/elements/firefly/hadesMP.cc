@@ -87,7 +87,8 @@ void HadesMP::allreduce(Addr mydata, Addr result, uint32_t count,
     dbg().verbose(CALL_INFO,1,0,"in=%p out=%p count=%d dtype=%d\n",
                 mydata,result,count,dtype);
     functionSM().start( FunctionSM::Allreduce, retFunc,
-    new CollectiveStartEvent(mydata, result, count, dtype, op, 0, group, true));
+    new CollectiveStartEvent(mydata, result, count, dtype, op, 0, group, 
+                            CollectiveStartEvent::Allreduce));
 }
 
 void HadesMP::reduce(Addr mydata, Addr result, uint32_t count,
@@ -98,7 +99,20 @@ void HadesMP::reduce(Addr mydata, Addr result, uint32_t count,
                 mydata,result,count,dtype);
     functionSM().start( FunctionSM::Reduce, retFunc,
         new CollectiveStartEvent(mydata, result, count, 
-                        dtype, op, root, group, false) );
+                        dtype, op, root, group, 
+                            CollectiveStartEvent::Reduce) );
+}
+
+void HadesMP::bcast(Addr mydata, uint32_t count,
+        PayloadDataType dtype, RankID root,
+        Communicator group, Functor* retFunc)
+{
+    dbg().verbose(CALL_INFO,1,0,"in=%p ount=%d dtype=%d \n",
+                mydata,count,dtype);
+    functionSM().start( FunctionSM::Reduce, retFunc,
+        new CollectiveStartEvent(mydata, NULL, count, 
+                        dtype, NOP, root, group, 
+                            CollectiveStartEvent::Bcast) );
 }
 
 void HadesMP::allgather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,

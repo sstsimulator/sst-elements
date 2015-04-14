@@ -49,6 +49,9 @@ T doOp( T x, T y, MP::ReductionOperation op )
       case MP::MAX: 
         retval = max( x, y );
         break;
+      case MP::NOP: 
+        assert(0);
+        break;
     } 
 //    printf("%x %x %x\n",retval,x,y);
     return retval;

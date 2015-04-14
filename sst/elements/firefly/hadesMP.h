@@ -75,6 +75,10 @@ class HadesMP : public MP::Interface
         MP::ReductionOperation op, MP::RankID root,
         MP::Communicator group, MP::Functor*);
 
+    virtual void bcast(MP::Addr mydata,
+        uint32_t count, MP::PayloadDataType dtype, MP::RankID root,
+        MP::Communicator group, MP::Functor*);
+
     virtual void allgather( MP::Addr sendbuf, uint32_t sendcnt, 
         MP::PayloadDataType sendtype,
         MP::Addr recvbuf, uint32_t recvcnt, 
