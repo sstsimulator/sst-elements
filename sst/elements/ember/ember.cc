@@ -70,7 +70,7 @@ load_PingPong( Component* comp, Params& params ) {
 
 static Module*
 load_BiPingPong( Component* comp, Params& params ) {
-	return new EmberBiPingpongGenerator(comp, params);
+	return new EmberBiPingPongGenerator(comp, params);
 }
 
 static Module*

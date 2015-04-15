@@ -18,10 +18,10 @@
 namespace SST {
 namespace Ember {
 
-class EmberBiPingpongGenerator : public EmberMessagePassingGenerator {
+class EmberBiPingPongGenerator : public EmberMessagePassingGenerator {
 
 public:
-	EmberBiPingpongGenerator(SST::Component* owner, Params& params);
+	EmberBiPingPongGenerator(SST::Component* owner, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:

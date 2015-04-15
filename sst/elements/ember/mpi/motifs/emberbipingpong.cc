@@ -17,12 +17,12 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberBiPingpongGenerator::EmberBiPingpongGenerator(SST::Component* owner, 
+EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::Component* owner, 
                                                     Params& params) :
 	EmberMessagePassingGenerator(owner, params),
     m_loopIndex(0) 
 {
-    m_name = "BiPingpong";
+    m_name = "BiPingPong";
 
 	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
@@ -31,7 +31,7 @@ EmberBiPingpongGenerator::EmberBiPingpongGenerator(SST::Component* owner,
     m_recvBuf = memAlloc(m_messageSize);
 }
 
-bool EmberBiPingpongGenerator::generate( std::queue<EmberEvent*>& evQ)
+bool EmberBiPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
 { 
     if ( m_loopIndex == m_iterations ) {
         if ( 0 == rank()) {
