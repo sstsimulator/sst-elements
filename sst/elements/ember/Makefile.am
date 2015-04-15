@@ -43,6 +43,7 @@ libember_la_SOURCES = \
 	mpi/emberalltoallvev.h \
 	mpi/emberalltoallev.h \
 	mpi/emberredev.h \
+	mpi/emberbcastev.h \
 	mpi/emberMPIEvent.h \
 	mpi/emberrankev.h \
 	mpi/embersizeev.h \
@@ -82,6 +83,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberalltoallv.cc \
 	mpi/motifs/emberalltoallv.h \
 	mpi/motifs/emberreduce.cc \
+	mpi/motifs/emberbcast.h \
+	mpi/motifs/emberbcast.cc \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
 	mpi/motifs/emberhalo3d.cc \

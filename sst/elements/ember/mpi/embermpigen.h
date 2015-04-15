@@ -38,6 +38,7 @@
 #include "emberCommCreateEv.h"
 #include "emberCommDestroyEv.h"
 #include "emberallredev.h"
+#include "emberbcastev.h"
 #include "emberredev.h"
 
 using namespace Hermes::MP;
@@ -65,6 +66,7 @@ namespace Ember {
     NAME( Alltoall ) \
     NAME( Allreduce ) \
     NAME( Reduce ) \
+    NAME( Bcast) \
     NAME( Gettime ) \
     NAME( Commsplit ) \
     NAME( Commcreate ) \
@@ -202,6 +204,8 @@ protected:
     inline void enQ_reduce( Queue&, Addr mydata, Addr result, uint32_t count,
                 PayloadDataType dtype, ReductionOperation op,
                 int root, Communicator group );
+    inline void enQ_bcast( Queue&, Addr mydata, uint32_t count,
+                PayloadDataType dtype, int root, Communicator group );
     inline void enQ_alltoall( Queue&, 
         Addr sendData, int sendCnts, PayloadDataType senddtype,
         Addr recvData, int recvCnts, PayloadDataType recvdtype,
@@ -211,6 +215,8 @@ protected:
         Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
         Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group );
+
+    inline int sizeofDataType( PayloadDataType );
 
 	// deprecated
 	inline void enQ_send( Queue&, uint32_t dst, uint32_t nBytes, int tag,
@@ -255,6 +261,11 @@ private:
 static inline MP::Interface* cast( Hermes::Interface *in )
 {
     return static_cast<MP::Interface*>(in);
+}
+
+int EmberMessagePassingGenerator::sizeofDataType( PayloadDataType type )
+{
+    return cast(m_api)->sizeofDataType( type );
 }
 
 void EmberMessagePassingGenerator::enQ_barrier( Queue& q, Communicator com )
@@ -429,6 +440,13 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
     q.push( new EmberReduceEvent( *cast(m_api), m_output, 
         m_histoV[Reduce], memAddr(mydata), memAddr(result), 
 					count, dtype, op, root, group ) );
+}
+
+void EmberMessagePassingGenerator::enQ_bcast( Queue& q, Addr mydata,
+    uint32_t count, PayloadDataType dtype, int root, Communicator group )
+{
+    q.push( new EmberBcastEvent( *cast(m_api), m_output, 
+        m_histoV[Reduce], memAddr(mydata), count, dtype, root, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_alltoall( Queue& q, 

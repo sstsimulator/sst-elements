@@ -41,6 +41,7 @@
 #include "mpi/motifs/emberalltoall.h"
 #include "mpi/motifs/emberalltoallv.h"
 #include "mpi/motifs/emberreduce.h"
+#include "mpi/motifs/emberbcast.h"
 #include "mpi/motifs/emberallpingpong.h"
 #include "mpi/motifs/embernull.h"
 #include "mpi/motifs/embermsgrate.h"
@@ -184,6 +185,11 @@ load_Reduce( Component* comp, Params& params ) {
 }
 
 static Module*
+load_Bcast( Component* comp, Params& params ) {
+	return new EmberBcastGenerator(comp, params);
+}
+
+static Module*
 load_Null( Component* comp, Params& params ) {
 	return new EmberNullGenerator(comp, params);
 }
@@ -248,6 +254,7 @@ static const ElementInfoParam component_params[] = {
     { "Alltoall_bin_width", "Bin width of the alltoall time histogram", "5" },
     { "Alltoallv_bin_width", "Bin width of the alltoallv time histogram", "5" },
     { "Reduce_bin_width", "Bin width of the reduce time histogram", "5" },
+    { "Bcast_bin_width", "Bin width of the bcast time histogram", "5" },
     { "Commsplit_bin_width", "Bin width of the comm_split time histogram", "5" },
     { "Commcreate_bin_width", "Bin width of the comm_create time histogram", "5" },
     { "Commdestroy_bin_width", "Bin width of the comm_destroy time histogram", "5" },
@@ -297,7 +304,13 @@ static const ElementInfoParam fft3d_params[] = {
     { "arg.ny",         "Sets the size of a block in Y", "8" },
     { "arg.nz",         "Sets the size of a block in Z", "8" },
     { "arg.npRow",      "Sets the number of rows in the PE decomposition", "0" },
-    { "arg.configFile",  "", "" },
+    { "arg.nsPerElement",  "", "" },
+    { "arg.fwd_fft1",  "", "" },
+    { "arg.fwd_fft2",  "", "" },
+    { "arg.fwd_fft3",  "", "" },
+    { "arg.bwd_fft1",  "", "" },
+    { "arg.bwd_fft2",  "", "" },
+    { "arg.bwd_fft3",  "", "" },
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -347,9 +360,19 @@ static const ElementInfoParam allreduce_params[] = {
 static const ElementInfoParam reduce_params[] = {
 	{	"arg.iterations",		"Sets the number of reduce operations to perform", 	"1"},
 	{	"arg.count",		"Sets the number of elements to reduce",	 	"1"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
 	{	"arg.root",			"Sets the root of the reduction",		 	"0"},
 	{	NULL,	NULL,	NULL	}
 };
+
+static const ElementInfoParam bcast_params[] = {
+	{	"arg.iterations",		"Sets the number of bcast operations to perform", 	"1"},
+	{	"arg.count",		"Sets the number of elements to bcast",	 	"1"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
+	{	"arg.root",			"Sets the root of the reduction",		 	"0"},
+	{	NULL,	NULL,	NULL	}
+};
+
 
 //static const ElementInfoParam halo1d_params[] = {
 //	{	"iterations",		"Sets the number of halo1d operations to perform", 	"10"},
@@ -722,6 +745,14 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_Reduce,
 	reduce_params,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"BcastMotif",
+	"Performs a broadcast operation with type set to float64 from a user-specified reduction-tree root",
+	NULL,
+	NULL,
+	load_Bcast,
+	bcast_params,
     "SST::Ember::EmberGenerator"
     },
     { 	"InitMotif",
