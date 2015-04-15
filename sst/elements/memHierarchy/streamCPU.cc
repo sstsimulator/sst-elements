@@ -103,7 +103,7 @@ void streamCPU::handleEvent(Event *ev)
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
 
-			out.verbose(CALL_INFO, 1, 0, "Received MemEvent (response to: %10" PRIu64 ", Addr=%15" PRIu64 ", Took: %7" PRIu64 "ns, %6" PRIu32 " pending requests).\n",
+			out.verbose(CALL_INFO, 1, 0, "Received MemEvent (response to: %10" PRIu64 ", Addr=%15" PRIu64 ", Took: %7" PRIu64 "ns, %6lu pending requests).\n",
 				event->getResponseToID().first, event->getAddr(), et, requests.size());
 			num_reads_returned++;
 		}

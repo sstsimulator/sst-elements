@@ -69,8 +69,8 @@ private:
     Output                          dbg_;
 	int                             numHighNetPorts_,
                                     numLowNetPorts_,
-                                    numHighNetPortsX_,
-                                    numLowNetPortsX_,
+//                                    numHighNetPortsX_,
+//                                    numLowNetPortsX_,
                                     maxNumPorts_,
                                     broadcast_,
                                     latency_,

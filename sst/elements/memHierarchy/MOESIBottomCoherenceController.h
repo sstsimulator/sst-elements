@@ -36,12 +36,15 @@ public:
                  MESIBottomCC(_cache, _ownerName, _dbg, _parentLinks, _listener, _lineSize,
                  _accessLatency, _tagLatency, _mshrLatency, _L1, _directoryLink, _groupStats, _statGroupIds) {}
 
+    virtual void handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, string _origRqstr);
     virtual void handleEviction(CacheLine* wbCacheLine);
+    virtual void handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd, bool _mshrHit);
     virtual void handleRequest(MemEvent* event, CacheLine* cacheLine, Command cmd);
     virtual void handleResponse(MemEvent* ackEvent, CacheLine* cacheLine, MemEvent* _origRequest);
     virtual void handleWritebackOnAccess(Addr lineAddr, CacheLine* cacheLine, Command type);
     virtual void handleInvalidate(MemEvent *event, CacheLine* cacheLine, Command cmd);
     virtual void handleFetch(MemEvent *event, CacheLine* cacheLine, int _parentId);
+    virtual void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit);
     virtual void handleFetchInvalidate(MemEvent* _event, CacheLine* _cacheLine, int _parentId);
 
 };

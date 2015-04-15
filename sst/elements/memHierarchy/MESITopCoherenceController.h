@@ -121,7 +121,8 @@ public:
     CCLine*         dummyCCLine_;
     bool            snoopL1Invs_;
 
-    virtual void profileReqSent(Command _cmd, bool _eviction) {
+//    virtual void profileReqSent(Command _cmd, bool _eviction) {
+    void profileReqSent(Command _cmd, bool _eviction) {
         if (_cmd == NACK) NACKsSent_++;   
     }
     
@@ -239,7 +240,7 @@ private:
     void sendEvictionInvalidates(int _lineIndex, string _origRqstr, bool _mshrHit);
     void sendCCInvalidates(int _lineIndex, string _srcNode, string _origRqstr, bool _mshrHit);
     
-    void profileReqSent(Command _cmd, bool _eviction, int _num);
+    virtual void profileReqSent(Command _cmd, bool _eviction, int _num);
     };
 
 }}

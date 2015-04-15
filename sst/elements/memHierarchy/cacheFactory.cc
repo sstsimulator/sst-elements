@@ -107,7 +107,7 @@ Cache* Cache::cacheFactory(ComponentId_t _id, Params &_params){
     else
         dbg->fatal(CALL_INFO,-1, "Invalid param: coherence_protocol - must be 'msi' or 'mesi'\n");
 
-    ReplacementMgr* replManager;
+    ReplacementMgr* replManager = NULL;
     if (boost::iequals(replacement, "lru"))         replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
     else if (boost::iequals(replacement, "lfu"))    replManager = new LFUReplacementMgr(dbg, numLines, associativity);
     else if (boost::iequals(replacement, "random")) replManager = new RandomReplacementMgr(dbg, associativity);
@@ -380,10 +380,18 @@ void Cache::configureLinks(){
             } else break;
         }
     }
-    
+
+// Ignore some bogus gcc warnings    
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress"
+#endif
     if(cf_.bottomNetwork_ == "") BOOST_ASSERT_MSG(lowNetExists, buf);
     if(cf_.topNetwork_ == "") BOOST_ASSERT_MSG(highNetCount > 0,  buf2);
     if(cf_.topNetwork_ == "") BOOST_ASSERT_MSG(highNetCount < 2,  buf3);
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic pop
+#endif
     selfLink_ = configureSelfLink("Self", "50ps", new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
 }
 
@@ -412,7 +420,7 @@ void Cache::intrapolateMSHRLatency(){
     for(uint64 idx = 69; idx < N;  idx++) y[idx] = 32;
     
     if (accessLatency_ > N) {
-        d_->fatal(CALL_INFO, -1, "Error: cannot intrapolate MSHR latency if cache latency > 200. Cache latency: %d\n", accessLatency_);
+        d_->fatal(CALL_INFO, -1, "Error: cannot intrapolate MSHR latency if cache latency > 200. Cache latency: %" PRIu64 "\n", accessLatency_);
     }
     mshrLatency_ = y[accessLatency_];
 

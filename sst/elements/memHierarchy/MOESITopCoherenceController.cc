@@ -56,9 +56,9 @@ bool MOESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _ms
 }
 
 bool MOESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, bool _mshrHit) {
-    State state             = _cacheLine->getState();
-    vector<uint8_t>* data   = _cacheLine->getData();
-    int lineIndex           = _cacheLine->getIndex();
+//    State state             = _cacheLine->getState();
+//    vector<uint8_t>* data   = _cacheLine->getData();
+//    int lineIndex           = _cacheLine->getIndex();
     //CCLine* l               = ccLines_[lineIndex];      // owner/sharer data
 
     /* We own the block and no other cache has it -> send block in E state */

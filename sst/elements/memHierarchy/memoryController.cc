@@ -226,7 +226,7 @@ void MemController::addRequest(MemEvent* _ev){
     requests_.push_back(req);
     requestQueue_.push_back(req);
     
-    dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %zu, %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
+    dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
 }
 
 

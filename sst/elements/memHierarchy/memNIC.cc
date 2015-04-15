@@ -199,7 +199,7 @@ bool MemNIC::clock(void)
             if ( sent ) {
                 if ( static_cast<MemRtrEvent*>(head->payload)->hasClientData() ) {
                     MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->payload))->event);
-                    dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%d) [%s]\n", event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
+                    dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
                 }
                 sendQueue.pop_front();
             }

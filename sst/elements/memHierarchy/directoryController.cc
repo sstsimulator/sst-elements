@@ -797,7 +797,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev) {
         writebackData(ev);
     }
 
-    MemEvent * respEv;
+    MemEvent * respEv = NULL;
     State state = entry->getState(); 
     
     /* Handle request */
@@ -883,7 +883,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[reqEv->getCmd()], reqEv->getBaseAddr());
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[reqEv->getCmd()], reqEv->getSrc().c_str());
 
-    MemEvent * respEv;
+    MemEvent * respEv = NULL;
     switch (state) {
         case IS:
         case S_D:
