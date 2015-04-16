@@ -32,7 +32,55 @@ using namespace SST::MemHierarchy;
 
 
 void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
-    if (mshr_->isHitAndStallNeeded(event->getBaseAddr(), cmd)) return; // will block this event, profile it later
+    if (!replay) {
+        switch (cmd) {
+            case GetS:
+                statGetS_recv->addData(1);
+                break;
+            case GetX:
+                statGetX_recv->addData(1);
+                break;
+            case GetSEx:
+                statGetSEx_recv->addData(1);
+                break;
+            case GetSResp:
+                statGetSResp_recv->addData(1);
+                break;
+            case GetXResp:
+                statGetXResp_recv->addData(1);
+                break;
+            case PutS:
+                statPutS_recv->addData(1);
+                return;
+            case PutE:
+                statPutE_recv->addData(1);
+                return;
+            case PutX:
+                statPutX_recv->addData(1);
+                return;
+            case PutM:
+                statPutM_recv->addData(1);
+                return;
+            case FetchInv:
+                statFetchInv_recv->addData(1);
+                return;
+            case FetchInvX:
+                statFetchInvX_recv->addData(1);
+                return;
+            case Inv:
+                statInv_recv->addData(1);
+                return;
+            case NACK:
+                statNACK_recv->addData(1);
+                return;
+            default:
+                return;
+        }
+    }
+    if (cmd != GetS && cmd != GetX && cmd != GetSEx) return;
+
+    // Data request profiling only
+    if (mshr_->isHitAndStallNeeded(event->getBaseAddr(), cmd)) return;   // will block this event, profile it later
     int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
@@ -44,7 +92,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
 
     switch(cmd) {
         case GetS:
-            statGetS_recv->addData(1);
             if (!replay) {                // New event
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
@@ -82,7 +129,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
             }
             break;
         case GetX:
-            statGetX_recv->addData(1);
             if (!replay) {                // New event
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
@@ -126,7 +172,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
             }
             break;
         case GetSEx:
-            statGetSEx_recv->addData(1);
             if (!replay) {                // New event
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
@@ -169,39 +214,8 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
                 }
             }
             break;
-        case GetSResp:
-            statGetSResp_recv->addData(1);
-            break;
-        case GetXResp:
-            statGetXResp_recv->addData(1);
-            break;
-        case PutS:
-            statPutS_recv->addData(1);
-            break;
-        case PutE:
-            statPutE_recv->addData(1);
-            break;
-        case PutX:
-            statPutX_recv->addData(1);
-            break;
-        case PutM:
-            statPutM_recv->addData(1);
-            break;
-        case FetchInv:
-            statFetchInv_recv->addData(1);
-            break;
-        case FetchInvX:
-            statFetchInvX_recv->addData(1);
-            break;
-        case Inv:
-            statInv_recv->addData(1);
-            break;
-        case NACK:
-            statNACK_recv->addData(1);
-            break;
         default:
             break;
-
     }
 }
 

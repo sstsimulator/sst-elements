@@ -551,9 +551,11 @@ void MESIBottomCC::printStats(int _stats, vector<int> _groupIds, map<int, CtrlSt
     dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
 
     for(unsigned int i = 0; i < _groupIds.size(); i++){
-        uint64_t totalMisses = stats_[_groupIds[i]].GETXMissIM_      + stats_[_groupIds[i]].GETXMissSM_ + stats_[_groupIds[i]].GETSMissIS_ +
-                               stats_[_groupIds[i]].GETSMissBlocked_ + stats_[_groupIds[i]].GETXMissBlocked_;
-        uint64_t totalHits = stats_[_groupIds[i]].GETSHit_ + stats_[_groupIds[i]].GETXHit_;
+        uint64_t totalMisses =  _ctrlStats[_groupIds[i]].newReqGetSMisses_ + _ctrlStats[_groupIds[i]].newReqGetXMisses_ + _ctrlStats[_groupIds[i]].newReqGetSExMisses_ +
+                                _ctrlStats[_groupIds[i]].blockedReqGetSMisses_ + _ctrlStats[_groupIds[i]].blockedReqGetXMisses_ + _ctrlStats[_groupIds[i]].blockedReqGetSExMisses_;
+        uint64_t totalHits =    _ctrlStats[_groupIds[i]].newReqGetSHits_ + _ctrlStats[_groupIds[i]].newReqGetXHits_ + _ctrlStats[_groupIds[i]].newReqGetSExHits_ +
+                                _ctrlStats[_groupIds[i]].blockedReqGetSHits_ + _ctrlStats[_groupIds[i]].blockedReqGetXHits_ + _ctrlStats[_groupIds[i]].blockedReqGetSExHits_;
+
         uint64_t totalRequests = totalHits + totalMisses;
         double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
         

@@ -45,12 +45,16 @@ public:
         statGetSMissIS = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSMiss_IS");
         statGetXMissIM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetXMiss_IM");
         statGetXMissSM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetXMiss_SM");
+        statGetSExMissIM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSExMiss_IM");
+        statGetSExMissSM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSExMiss_SM");
     }
 
     ~MESIBottomCC() {
         delete statGetSMissIS;
         delete statGetXMissIM;
         delete statGetXMissSM;
+        delete statGetSExMissIM;
+        delete statGetSExMissSM;
     }
     
     
@@ -195,7 +199,8 @@ private:
 
    void inc_GETXMissSM(MemEvent* _event){
         if(!_event->statsUpdated()){
-            statGetXMissSM->addData(1);
+            if (_event->getCmd() == GetX)   statGetXMissSM->addData(1);
+            else statGetSExMissSM->addData(1);
             stats_[0].GETXMissSM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissSM_++;
         }
@@ -214,7 +219,8 @@ private:
 
     void inc_GETXMissIM(MemEvent* _event){
         if(!_event->statsUpdated()){
-            statGetXMissIM->addData(1);
+            if (_event->getCmd() == GetX)   statGetXMissIM->addData(1);
+            else statGetSExMissIM->addData(1);
             stats_[0].GETXMissIM_++;
             if(groupStats_) stats_[getGroupId()].GETXMissIM_++;
         }
