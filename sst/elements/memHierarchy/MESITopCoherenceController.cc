@@ -80,7 +80,7 @@ bool MESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _msh
     CCLine* ccLine = ccLines_[_cacheLine->getIndex()];
 
     if(ccLine->inTransition() && !_event->isWriteback()){
-        d_->debug(_L7_,"TopCC: Stalling request, ccLine in transition \n");
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_,"TopCC: Stalling request, ccLine in transition \n");
         return false;
     }
 
@@ -127,13 +127,13 @@ bool MESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     /* Send Data in E state */
     if(protocol_ &&  !l->ownerExists() && l->isShareless() && (state == E || state == M)){
         l->setOwner(_sharerId);
-        d_->debug(_L7_, "New owner: %s\n", lowNetworkNodeLookupById(_sharerId).c_str());
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_, "New owner: %s\n", lowNetworkNodeLookupById(_sharerId).c_str());
         sendResponse(_event, E, data, _mshrHit);
         return true;
     }
     /* If exclusive owner exists, downgrade it to S state */
     else if(l->ownerExists()) {
-        d_->debug(_L7_,"GetS request but exclusive cache exists \n");
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_,"GetS request but exclusive cache exists \n");
         sendFetchInvX(lineIndex, _event->getRqstr(), _mshrHit);
         return false;
     }
@@ -178,7 +178,7 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     if(!(state == M || state == E)) respond = false;
     /* Invalidate any exclusive sharers before responding to GetX request */
     else if(ccLine->ownerExists()){
-        d_->debug(_L7_,"GetX Req received but exclusive cache exists \n");
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_,"GetX Req received but exclusive cache exists \n");
 
 	if(! ccLine->isShareless()) {
 		d_->fatal(CALL_INFO, -1, "%s, Error: handling request to owned block but sharers exist. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, BCC state = %s, TCC state = %s. Time = %" PRIu64 "ns\n", 
@@ -191,7 +191,7 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     }
     /* Sharers exist */
     else if(ccLine->numSharers() > 0){
-        d_->debug(_L7_,"GetX Req received but sharers exists \n");
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_,"GetX Req received but sharers exists \n");
         switch(cmd){
             case GetX:
                 sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
@@ -213,7 +213,7 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
     
     if(respond){
         ccLine->setOwner(_sharerId);
-        d_->debug(_L7_, "New owner: %s\n", lowNetworkNodeLookupById(_sharerId).c_str());
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_, "New owner: %s\n", lowNetworkNodeLookupById(_sharerId).c_str());
         sendResponse(_event, M, _cacheLine->getData(), _mshrHit);
         return true;
     }
@@ -310,7 +310,7 @@ void MESITopCC::handleEviction(int _lineIndex, string _origRqstr, State _state){
     
     if(ccLine->inTransition()){
         evictionRequiredInv++;
-        d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of upper level caches. St = %s, OwnerExists = %s \n",
+        if (DEBUG_ALL || DEBUG_ADDR == ccLine->getBaseAddr()) d_->debug(_L7_,"TopCC: Stalling request. Eviction requires invalidation of upper level caches. St = %s, OwnerExists = %s \n",
                         BccLineString[_state], ccLine->ownerExists() ? "True" : "False");
     }
 }
@@ -373,7 +373,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqst
     
     ccLine->acksNeeded_ = false;
     
-    d_->debug(_L7_,"Number of invalidates sent: %u, number of sharers = %u\n", sentInvalidates,  ccLine->numSharers());
+    if (DEBUG_ALL || DEBUG_ADDR == ccLine->getBaseAddr()) d_->debug(_L7_,"Number of invalidates sent: %u, number of sharers = %u\n", sentInvalidates,  ccLine->numSharers());
     return sentInvalidates;
 }
 
@@ -389,7 +389,7 @@ void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, string _origR
     Response resp = {invalidateEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L7_,"TCC - Invalidate sent: Delivery = %" PRIu64 ", Current = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s\n", deliveryTime, timestamp_, _cLine->getBaseAddr(),  destination.c_str());
+    if (DEBUG_ALL || DEBUG_ADDR == _cLine->getBaseAddr()) d_->debug(_L7_,"TCC - Invalidate sent: Delivery = %" PRIu64 ", Current = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s\n", deliveryTime, timestamp_, _cLine->getBaseAddr(),  destination.c_str());
 }
 
 
@@ -413,7 +413,7 @@ void MESITopCC::sendFetchInv(CCLine* _cLine, string _origRqstr, bool mshrHit) {
     Response resp = {fetchInv, deliveryTime, false};
     addToOutgoingQueue(resp);
 
-    d_->debug(_L7_,"TCC - FetchInv sent: Delivery = %" PRIu64 ", Current = %" PRIu64 ", Addr = 0x%" PRIx64 ", Dst = %s\n",
+    if (DEBUG_ALL || DEBUG_ADDR == _cLine->getBaseAddr()) d_->debug(_L7_,"TCC - FetchInv sent: Delivery = %" PRIu64 ", Current = %" PRIu64 ", Addr = 0x%" PRIx64 ", Dst = %s\n",
             deliveryTime, timestamp_, _cLine->getBaseAddr(), ownerName.c_str());
 }
 
@@ -444,7 +444,7 @@ void MESITopCC::sendFetchInvX(int _lineIndex, string _origRqstr, bool _mshrHit){
     addToOutgoingQueue(resp);
     profileReqSent(FetchInvX, false, 1);
     
-    d_->debug(_L7_,"FetchInvalidateX sent: Addr = %" PRIx64 ", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
+    if (DEBUG_ALL || DEBUG_ADDR == ccLine->getBaseAddr()) d_->debug(_L7_,"FetchInvalidateX sent: Addr = %" PRIx64 ", Dst = %s\n", ccLine->getBaseAddr(),  ownerName.c_str());
 }
 
 
@@ -473,7 +473,7 @@ void MESITopCC::printStats(int _stats){
     dbg->output(CALL_INFO,"- InvalidateX sent                                %u\n", invXReqsSent_);
     dbg->output(CALL_INFO,"- Invalidates sent (non-eviction):                %u\n", invReqsSent_);
     dbg->output(CALL_INFO,"- Invalidates sent due to evictions:              %u\n", evictionInvReqsSent_);
-    dbg->output(CALL_INFO,"- Instances where evction caused invalidation:    %u\n", evictionRequiredInv);
+    dbg->output(CALL_INFO,"- Instances where eviction caused invalidation:   %u\n", evictionRequiredInv);
 }
 
 
@@ -517,7 +517,7 @@ void TopCacheController::sendResponse(MemEvent *_event, State _newState, std::ve
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"TCC - Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L3_,"TCC - Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, _event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), BccLineString[responseEvent->getGrantedState()]);
 }
 
 
@@ -533,7 +533,7 @@ void TopCacheController::sendNACK(MemEvent *_event){
     addToOutgoingQueue(resp);
     
     profileReqSent(NACK,false);
-    d_->debug(_L3_,"TCC - Sending NACK\n");
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L3_,"TCC - Sending NACK\n");
 }
 
 
@@ -546,7 +546,7 @@ void TopCacheController::resendEvent(MemEvent *_event){
     Response resp       = {_event, deliveryTime, true};
     addToOutgoingQueue(resp);
     
-    d_->debug(_L3_,"TCC - Sending Event To HgLvLCache at cycle = %" PRIu64 ". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L3_,"TCC - Sending Event To HgLvLCache at cycle = %" PRIu64 ". Cmd = %s\n", deliveryTime, CommandString[_event->getCmd()]);
 }
 
 
