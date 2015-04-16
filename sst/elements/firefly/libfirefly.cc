@@ -45,9 +45,9 @@ using namespace Firefly;
 
 BOOST_CLASS_EXPORT(FireflyNetworkEvent)
 
-static const ElementInfoParam testDriver_params[] = {
-	{ NULL, NULL, NULL }
-};
+//static const ElementInfoParam testDriver_params[] = {
+//	{ NULL, NULL, NULL }
+//};
 
 static SST::Component*
 create_nic(SST::ComponentId_t id, SST::Params& params)

@@ -404,7 +404,7 @@ class Nic : public SST::Component  {
         size_t match_len() { return totalBytes(); }
 
       private:
-        void* m_key;
+//        void* m_key;
         std::vector<IoVec> m_recvVec;
     };
 

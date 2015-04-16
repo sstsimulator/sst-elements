@@ -21,7 +21,7 @@ namespace Firefly {
 
 class RecvFuncSM :  public FunctionSMInterface
 {
-    enum { Wait, Exit } m_state;
+//    enum { Wait, Exit } m_state;
 
   public:
     RecvFuncSM( SST::Params& params );

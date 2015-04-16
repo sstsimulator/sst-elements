@@ -281,7 +281,7 @@ class _CommReq : public MP::MessageRequestBase {
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag,
         MP::Communicator group ) : 
         m_type( type ),
-        m_buf( NULL ),
+//        m_buf( NULL ),
         m_ioVec( _ioVec ),
         m_resp( NULL ),
         m_done( false ),
@@ -307,7 +307,7 @@ class _CommReq : public MP::MessageRequestBase {
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag, 
         MP::Communicator group, MP::MessageResponse* resp = NULL ) :
         m_type( type ),
-        m_buf( buf ),
+//        m_buf( buf ),
         m_resp( resp ),
         m_done( false ),
         m_destRank( MP::AnySrc ),
@@ -397,7 +397,7 @@ class _CommReq : public MP::MessageRequestBase {
 
     MatchHdr            m_hdr; 
     Type                m_type;
-    MP::Addr        m_buf;
+//    MP::Addr        m_buf;
     std::vector<IoVec>  m_ioVec;
     MP::MessageResponse* m_resp;
     bool                m_done;

@@ -38,7 +38,7 @@ T sum( T x, T y )
 template< class T>
 T doOp( T x, T y, MP::ReductionOperation op )
 {
-    T retval;
+    T retval = 0;
     switch( op ) {
       case MP::SUM: 
         retval = sum( x, y );

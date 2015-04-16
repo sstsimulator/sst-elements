@@ -62,14 +62,14 @@ class ArbitrateDMA {
             xx.avail = m_bufferSize;
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %ld, delta %lu ns, "
+        m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %ld, delta %" PRIu64 " ns, "
             "added %ld \n", xx.avail, delta, add ); 
 		//assert( xx.avail >= 0 );
     }
 
     void schedWakeup( Type type, uint64_t delay) {
         SelfEvent* event = new SelfEvent;
-        m_dbg.verbose(CALL_INFO,1,0,"wakeup %s in %lu ns\n",
+        m_dbg.verbose(CALL_INFO,1,0,"wakeup %s in %" PRIu64 " ns\n",
                     Read == type ? "Send":"Recv", delay);
         if ( Read == type ) {
             event->type = SelfEvent::RunSendMachine;

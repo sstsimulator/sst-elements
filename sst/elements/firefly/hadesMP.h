@@ -123,6 +123,10 @@ class HadesMP : public MP::Interface
         MP::Communicator group, MP::MessageResponse* resp,
         MP::Functor*);
 
+    // Added (but unused) to avoid compile warning on overloaded virtual function
+    virtual void probe( int source, uint32_t tag, 
+        MP::Communicator group, MP::MessageResponse* resp, MP::Functor* ) {} 
+
     virtual void wait(MP::MessageRequest req,
         MP::MessageResponse* resp, MP::Functor*);
 
@@ -134,6 +138,10 @@ class HadesMP : public MP::Interface
 
     virtual void test(MP::MessageRequest req, int& flag, 
         MP::MessageResponse* resp, MP::Functor*);
+
+    // Added (but unused) to avoid compile warning on overloaded virtual function
+    virtual void test(MP::MessageRequest* req, int& flag, MP::MessageResponse* resp,
+        MP::Functor* ) {};
 
     virtual void comm_split( MP::Communicator, int color, int key,
         MP::Communicator*, MP::Functor* );

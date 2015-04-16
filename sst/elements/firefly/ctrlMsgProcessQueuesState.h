@@ -863,7 +863,7 @@ bool ProcessQueuesState<T1>::dmaRecvFini( ShortRecvBuffer* buf, nid_t nid,
 {
     dbg().verbose(CALL_INFO,1,0,"ShortMsgQ nid=%#x tag=%#x length=%lu\n",
                                                     nid, tag, length );
-    dbg().verbose(CALL_INFO,1,0,"ShortMsgQ rank=%d tag=%#lx count=%d "
+    dbg().verbose(CALL_INFO,1,0,"ShortMsgQ rank=%d tag=%#" PRIx64 " count=%d "
                             "dtypeSize=%d\n", buf->hdr.rank, buf->hdr.tag,
                             buf->hdr.count, buf->hdr.dtypeSize );
 
@@ -1098,7 +1098,7 @@ template< class T1 >
 bool ProcessQueuesState<T1>::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
                                     uint64_t ignore )
 {
-    dbg().verbose(CALL_INFO,1,0,"want tag %#lx %#lx\n", wantHdr.tag, hdr.tag );
+    dbg().verbose(CALL_INFO,1,0,"want tag %#" PRIx64 " %#" PRIx64 "\n", wantHdr.tag, hdr.tag );
     if ( ( AnyTag != wantHdr.tag ) && 
             ( ( wantHdr.tag & ~ignore) != ( hdr.tag & ~ignore ) ) ) {
         return false;

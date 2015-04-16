@@ -420,7 +420,7 @@ bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
 
 void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*, bool>* functor, CommReq* req )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%lu functor=%p\n",
+    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%" PRIu64 " functor=%p\n",
                                 delay, functor);
 
     if ( functor ) {
@@ -432,7 +432,7 @@ void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*, bool>* fun
 
 void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%lu functor=%p\n",
+    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%" PRIu64 " functor=%p\n",
                                 delay, functor);
 
     if ( functor ) {

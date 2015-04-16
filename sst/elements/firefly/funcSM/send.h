@@ -21,7 +21,7 @@ namespace Firefly {
 
 class SendFuncSM :  public FunctionSMInterface
 {
-    enum { Wait, Exit } m_state;
+//    enum { Wait, Exit } m_state;
 
   public:
     SendFuncSM( SST::Params& params );
