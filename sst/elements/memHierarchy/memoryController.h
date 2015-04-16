@@ -133,8 +133,8 @@ private:
     bool        isNetworkConnected_;
     MemBackend* backend_;
     int         protocol_;
-    dramReq_t   requestQueue_;
-    dramReq_t   requests_;
+    dramReq_t   requestQueue_;      // Requests waiting to be issued
+    set<DRAMReq*>   requestPool_;   // All requests that are in flight at the memory controller (including those waiting to be issued) 
     int         backingFd_;
     uint8_t*    memBuffer_;
     uint64_t      memSize_;

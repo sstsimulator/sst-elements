@@ -223,7 +223,7 @@ void MemController::addRequest(MemEvent* _ev){
     Command cmd   = _ev->getCmd();
     DRAMReq* req = new DRAMReq(_ev, requestWidth_, cacheLineSize_);
     
-    requests_.push_back(req);
+    requestPool_.insert(req);
     requestQueue_.push_back(req);
     
     dbg.debug(_L10_,"Creating DRAM Request. BsAddr = %" PRIx64 ", Size: %" PRIu64 ", %s\n", req->baseAddr_, req->size_, CommandString[cmd]);
@@ -251,20 +251,10 @@ bool MemController::clock(Cycle_t _cycle){
         }
     }
 
-    /* Clean out old requests */
-    while (!requests_.empty()) {
-        DRAMReq *req = requests_.front();
-        if(DRAMReq::DONE == req->status_) {
-            requests_.pop_front();
-            delete req;
-        }
-        else break;
-    }
-
-    numReqOutstanding_ += requests_.size();
+    numReqOutstanding_ += requestPool_.size();
     numCycles_++;
 
-	return false;
+    return false;
 }
 
 
@@ -321,6 +311,9 @@ void MemController::sendResponse(DRAMReq* _req){
         else lowNetworkLink_->send(_req->respEvent_);
     }
     _req->status_ = DRAMReq::DONE;
+    
+    requestPool_.erase(_req);
+    delete _req;
 }
 
 
@@ -344,9 +337,9 @@ void MemController::handleMemResponse(DRAMReq* _req){
 
 
 MemController::~MemController(){
-    while ( requests_.size()) {
-        DRAMReq *req = requests_.front();
-        requests_.pop_front();
+    while ( requestPool_.size()) {
+        DRAMReq *req = *(requestPool_.begin());
+        requestPool_.erase(req);
         delete req;
     }
 }
