@@ -60,6 +60,9 @@ public:
     virtual void sendOutgoingCommands(SimTime_t curTime) = 0;
     list<Response> outgoingEventQueue_;
     
+    bool        DEBUG_ALL;
+    Addr        DEBUG_ADDR;
+
     bool queueBusy(){
         return (!outgoingEventQueue_.empty());
     }
@@ -96,11 +99,13 @@ public:
     void setName(string _name){ name_ = _name; }
     
 protected:
-    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency):
+    CoherencyController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency, bool debugAll, Addr debugAddr):
                         timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(_cache), d_(_dbg), lineSize_(_lineSize), sentEvents_(0){
         accessLatency_  = _accessLatency;
         tagLatency_     = _tagLatency;
         mshrLatency_    = _mshrLatency;
+        DEBUG_ALL       = debugAll;
+        DEBUG_ADDR      = debugAddr;
     }
     ~CoherencyController(){}
     const Cache* owner_;

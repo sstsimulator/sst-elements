@@ -34,7 +34,7 @@ public:
                  uint64 _accessLatency, uint64 _tagLatency, uint64 _mshrLatency, bool _L1, MemNIC* _directoryLink,
                  bool _groupStats, vector<int> _statGroupIds) :
                  MESIBottomCC(_cache, _ownerName, _dbg, _parentLinks, _listener, _lineSize,
-                 _accessLatency, _tagLatency, _mshrLatency, _L1, _directoryLink, _groupStats, _statGroupIds) {}
+                 _accessLatency, _tagLatency, _mshrLatency, _L1, _directoryLink, _groupStats, _statGroupIds, true, 0) {}
 
     virtual void handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, string _origRqstr);
     virtual void handleEviction(CacheLine* wbCacheLine);

@@ -147,7 +147,7 @@ private:
 
     /** Check whether or not replacement candidate is in transition
        If so, we cannot writeback cacheline, postpone current request */
-    inline bool isCandidateInTransition(CacheLine* wbCacheLine);
+    inline bool isCandidateInTransition(CacheLine* wbCacheLine, Addr requestAddr);
 
     /** Check if invalidates are in progress */
     bool invalidatesInProgress(int lineIndex);
@@ -219,7 +219,7 @@ private:
     void pMembers();
     
     /** Udpate the upgrade latency stats */
-    void updateUpgradeLatencyAverage(SimTime_t start);
+    void updateUpgradeLatencyAverage(SimTime_t start, Addr requestAddr);
     void recordLatency(MemEvent * event);
 
     /** Get the front elevemnt of a MSHR entry */
@@ -346,6 +346,8 @@ private:
     std::map<LinkId_t, SST::Link*> linkIdMap_;
     std::map<MemEvent*,uint64> startTimeList;
     std::map<MemEvent*,int> missTypeList;
+    bool                    DEBUG_ALL;
+    Addr                    DEBUG_ADDR;
     
     /* Profiling */
     bool                    groupStats_;

@@ -88,6 +88,7 @@ static const ElementInfoParam cache_params[] = {
     {"network_output_buffer_size","Optional, int      - Size of the network's output buffer.", "1KB"},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
+    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"force_noncacheable_reqs", "Optional, int      - Used for verification purposes. All requests are considered to be 'noncacheable'. Options: 0[off], 1[on]", "0"},
     {"maxRequestDelay",         "Optional, int      - Set an error timeout if memory requests take longer than this in ns (0: disable)", "0"},
     {"snoop_l1_invalidations",  "Optional, int      - Forward invalidations from L1s to processors. Options: 0[off], 1[on]", "0"},
@@ -178,6 +179,7 @@ static const ElementInfoParam bus_params[] = {
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
+    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {NULL, NULL}
 };
 
@@ -236,6 +238,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
+    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
@@ -381,6 +384,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"entry_cache_size",    "Size (in # of entries) the controller will cache.", "0"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
+    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
     {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},

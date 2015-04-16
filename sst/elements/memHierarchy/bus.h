@@ -67,7 +67,9 @@ private:
 
 
     Output                          dbg_;
-	int                             numHighNetPorts_,
+    bool                            DEBUG_ALL;
+    Addr                            DEBUG_ADDR;
+    int                             numHighNetPorts_,
                                     numLowNetPorts_,
 //                                    numHighNetPortsX_,
 //                                    numLowNetPortsX_,

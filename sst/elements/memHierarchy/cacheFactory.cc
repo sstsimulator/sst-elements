@@ -148,6 +148,10 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     string sliceAllocPolicy     = _params.find_string("slice_allocation_policy", "rr");
     bool snoopL1Invs    = false;
     if (L1_) snoopL1Invs = (_params.find_integer("snoop_l1_invalidations", 0)) ? true : false;
+    int dAddr           = _params.find_integer("debug_addr",-1);
+    if (dAddr != -1) DEBUG_ALL = false;
+    else DEBUG_ALL = true;
+    DEBUG_ADDR = (Addr)dAddr;
     
     /* --------------- Check parameters -------------*/
     if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "Invalid param: access_latency_cycles - must be at least 1\n");
@@ -336,9 +340,9 @@ Cache::Cache(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
         
     /* --------------- Coherence Controllers --------------- */
     sharersAware_ = (L1_) ? false : true;
-    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, topNetworkLink_) :
-                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, snoopL1Invs);
-    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, L1_, bottomNetworkLink_, groupStats_, cf_.statGroupIds_);
+    topCC_ = (!L1_) ? new MESITopCC(this, d_, cf_.protocol_, cf_.numLines_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR) :
+                      new TopCacheController(this, d_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, highNetPorts_, snoopL1Invs, DEBUG_ALL, DEBUG_ADDR);
+    bottomCC_ = new MESIBottomCC(this, this->getName(), d_, lowNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, L1_, bottomNetworkLink_, groupStats_, cf_.statGroupIds_, DEBUG_ALL, DEBUG_ADDR);
    
     /*---------------  Misc --------------- */
     cf_.rm_->setTopCC(topCC_);  cf_.rm_->setBottomCC(bottomCC_);

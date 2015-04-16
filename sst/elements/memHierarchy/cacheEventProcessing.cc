@@ -216,19 +216,19 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     /* Set requestor field if this is the first cache that's seen this event */
     if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
-    d_->debug(_L4_,"RECV %s \tCmd: %s, BsAddr:0x %" PRIx64 ", Rqstr: %s, Src: %s, cycles: %" PRIu64 " \n",
-            this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getRqstr().c_str(), event->getSrc().c_str(), timestamp_);
     
     if(!_mshrHit){ 
         incTotalRequestsReceived(groupId);
-        d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
         cout << flush;
     }
     else incTotalMSHRHits(groupId);
 
-
-    d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s%s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
+        d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s%s \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), 
+                   event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
+    }
     cout << flush; 
     if(noncacheable || cf_.allNoncacheableRequests_){
         processNoncacheable(event, cmd, baseAddr);
@@ -252,7 +252,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
 
             if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
                 if(processRequestInMSHR(baseAddr, event)){
-                    d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+                    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                     event->setBlocked(true);
                 }
                 break;

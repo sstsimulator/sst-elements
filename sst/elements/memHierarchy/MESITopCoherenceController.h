@@ -36,8 +36,8 @@ public:
     #include "ccLine.h"
     
     TopCacheController(const Cache* _cache, Output* _dbg, uint _lineSize, uint64_t _accessLatency,
-                       uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, bool _snoopL1Invs)
-                       : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency){
+                       uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, bool _snoopL1Invs, bool debugAll, Addr debugAddr)
+                       : CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, debugAll, debugAddr){
         d_->debug(_INFO_,"--------------------------- Initializing [TopCC] ...\n\n");
         L1_                 = true;
         highNetPorts_       = _childrenLinks;
@@ -94,9 +94,12 @@ public:
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
             
-           d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
-                   CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
-            
+            if (DEBUG_ALL || DEBUG_ADDR == outgoingEvent->getBaseAddr()) {
+            d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                   CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
+                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+            }
+
             if (topNetworkLink_) {
                 topNetworkLink_->send(outgoingEvent);
             } else {
@@ -136,8 +139,8 @@ class MESITopCC : public TopCacheController{
 
 public:
     MESITopCC(const SST::MemHierarchy::Cache* _cache, Output* _dbg, uint _protocol, uint _numLines,
-              uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink) :
-              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, _childrenLinks, false),
+              uint _lineSize, uint64_t _accessLatency, uint64_t _tagLatency, uint64_t _mshrLatency, vector<Link*>* _childrenLinks, MemNIC* _topNetworkLink, bool debugAll, Addr debugAddr) :
+              TopCacheController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, _childrenLinks, false, debugAll, debugAddr),
               numLines_(_numLines), lowNetworkNodeCount_(0){
         d_->debug(_INFO_,"--------------------------- Initializing [MESITopCC] ...\n");
         d_->debug(_INFO_, "CCLines:  %d \n", numLines_);

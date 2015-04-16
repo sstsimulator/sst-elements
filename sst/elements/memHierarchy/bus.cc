@@ -100,18 +100,20 @@ void Bus::broadcastEvent(SST::Event* _ev){
 
 void Bus::sendSingleEvent(SST::Event* _ev){
     MemEvent *event = static_cast<MemEvent*>(_ev);
-    dbg_.debug(_L3_,"\n\n");
-    dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
-    dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %" PRIx64 ", BsAddr: %" PRIx64 ", Src: %s, Dst: %s, LinkID: %ld \n",
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
+        dbg_.debug(_L3_,"\n\n");
+        dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
+        dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %" PRIx64 ", BsAddr: %" PRIx64 ", Src: %s, Dst: %s, LinkID: %ld \n",
                    this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
-
+    }
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
     MemEvent* forwardEvent = new MemEvent(*event);
-    dbg_.debug(_L3_,"BCmd = %s \n", CommandString[forwardEvent->getCmd()]);
-    dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
-    dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
-
+    if (DEBUG_ALL || DEBUG_ADDR == forwardEvent->getBaseAddr()) {
+        dbg_.debug(_L3_,"BCmd = %s \n", CommandString[forwardEvent->getCmd()]);
+        dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
+        dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
+    }
     dstLink->send(forwardEvent);
     
     delete event;
@@ -173,11 +175,19 @@ void Bus::configureParameters(SST::Params& _params){
     if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
     
     dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)_params.find_integer("debug", 0));
+    int dAddr         = _params.find_integer("debug_addr", -1);
+    if (dAddr == -1) {
+        DEBUG_ADDR = (Addr) dAddr;
+        DEBUG_ALL = true;
+    } else {
+        DEBUG_ADDR = (Addr) dAddr;
+        DEBUG_ALL = false;
+    }
     numHighNetPorts_  = 0;
     numLowNetPorts_   = 0;
     maxNumPorts_      = 500;
     
-	latency_      = _params.find_integer("bus_latency_cycles", 1);
+    latency_      = _params.find_integer("bus_latency_cycles", 1);
     idleMax_      = _params.find_integer("idle_max", 6);
     busFrequency_ = _params.find_string("bus_frequency", "Invalid");
     broadcast_    = _params.find_integer("broadcast", 0);

@@ -90,7 +90,7 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
         int lineIndex = cf_.cacheArray_->find(_baseAddr, updateLine);   /* Update cacheline only if it's NOT mshrHit */
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
-            d_->debug(_L3_,"-- Cache Miss --\n");
+            if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L3_,"-- Cache Miss --\n");
             allocateCacheLine(_event, _baseAddr, lineIndex);            /* Function may except here to wait for eviction */
         }
         
@@ -121,7 +121,7 @@ void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAd
         int lineIndex = cf_.cacheArray_->find(_baseAddr, updateLine);
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
-            d_->debug(_L3_,"-- Cache Miss --\n");
+            if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L3_,"-- Cache Miss --\n");
             checkCacheMissValidity(_event);
             allocateCacheLine(_event, _baseAddr, lineIndex);
         }
@@ -241,15 +241,15 @@ CacheArray::CacheLine* Cache::findReplacementCacheLine(Addr _baseAddr){
 
 
 void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requestBaseAddr) throw(blockedEventException){
-    d_->debug(_L4_,"Evicting 0x%" PRIx64 ", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L4_,"Evicting 0x%" PRIx64 ", St: %s\n", _wbCacheLine->getBaseAddr(), BccLineString[_wbCacheLine->getState()]);
     
     if(_wbCacheLine->isLocked()){
-        d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %" PRIx64 "\n", _wbCacheLine->getBaseAddr());
+        if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L8_, "Warning: Replacement cache line is user-locked. WbCLine Addr: %" PRIx64 "\n", _wbCacheLine->getBaseAddr());
         _wbCacheLine->setEventsWaitingForLock(true);
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw blockedEventException();
     }
-    else if(isCandidateInTransition(_wbCacheLine)){
+    else if(isCandidateInTransition(_wbCacheLine, _requestBaseAddr)){
         mshr_->insertPointer(_wbCacheLine->getBaseAddr(), _requestBaseAddr);
         throw blockedEventException();
     }
@@ -258,10 +258,10 @@ void Cache::candidacyCheck(MemEvent* _event, CacheLine* _wbCacheLine, Addr _requ
 
 
 
-bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine){
+bool Cache::isCandidateInTransition(CacheLine* _wbCacheLine, Addr debugAddr){
     CCLine* wbCCLine = topCC_->getCCLine(_wbCacheLine->getIndex());
     if(wbCCLine->inTransition() || CacheLine::inTransition(_wbCacheLine->getState())){
-        d_->debug(_L3_,"Stalling request: Replacement cache line in transition.\n");
+        if (DEBUG_ALL || DEBUG_ADDR == debugAddr) d_->debug(_L3_,"Stalling request: Replacement cache line in transition.\n");
         return true;
     }
     return false;
@@ -307,7 +307,7 @@ bool Cache::invalidatesInProgress(int _lineIndex){
     
     CCLine* ccLine = topCC_->getCCLine(_lineIndex);
     if(ccLine->inTransition()){
-        d_->debug(_L7_,"Invalidate request forwared to HiLv caches.\n");
+        if (DEBUG_ALL || DEBUG_ADDR == ccLine->getBaseAddr()) d_->debug(_L7_,"Invalidate request forwared to HiLv caches.\n");
         return true;
     }
     return false;
@@ -320,11 +320,11 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     /* Scenario where this 'if' occurs:  HiLv$ evicts a shared line (S->I), sends PutS to LowLv$.
        Simultaneously, LowLv$ sends an Inv to HiLv$. Thus, HiLv$ sends an Inv an already invalidated line */
     if(!_cacheLine || (_cacheLine->getState() == I && !_mshrHit)){
-        d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
+        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
         return false;
     }
     if (!_mshrHit && (_cacheLine->getState() == IM || _cacheLine->getState() == IS)) {
-        d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
+        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_WARNING_,"Ignoring Request: Cache Line doesn't exist or invalid.\n");
         return false;
     }
     
@@ -334,7 +334,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
         }
         incInvalidateWaitingForUserLock(groupId);               /* Requests is in MSHR.  Stall and wait for the atomic modet to be 'cleared' */
         _cacheLine->setEventsWaitingForLock(true);
-        d_->debug(_L8_,"Stalling request:  Cache line is in atomic mode.\n");
+        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L8_,"Stalling request:  Cache line is in atomic mode.\n");
         
         return false;
     }
@@ -367,12 +367,12 @@ void Cache::activatePrevEvents(Addr _baseAddr){
     vector<mshrType> mshrEntry = mshr_->removeAll(_baseAddr);
     bool cont;
     int i = 0;
-    d_->debug(_L3_,"---------Replaying Events--------- Size: %lu\n", mshrEntry.size());
+    if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L3_,"---------Replaying Events--------- Size: %lu\n", mshrEntry.size());
     
     for(vector<mshrType>::iterator it = mshrEntry.begin(); it != mshrEntry.end(); i++){
         if((*it).elem.type() == typeid(Addr)){                          /* Pointer Type */
             Addr pointerAddr = boost::get<Addr>((*it).elem);
-            d_->debug(_L6_,"Pointer Addr: %" PRIx64 "\n", pointerAddr);
+            if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L6_,"Pointer Addr: %" PRIx64 "\n", pointerAddr);
             if(!mshr_->isHit(pointerAddr)){                             /* Entry has been already been processed, delete mshr entry */
                 mshrEntry.erase(it);
                 continue;
@@ -403,23 +403,23 @@ void Cache::activatePrevEvents(Addr _baseAddr){
             else{
                 /* only update upgrade latency on first replayed event. Other "MSHR hits" 
                    are not really upgrades, they are just blocked events */
-                if(i == 0) updateUpgradeLatencyAverage(start);
+                if(i == 0) updateUpgradeLatencyAverage(start, _baseAddr);
             }
         }
     }
-    d_->debug(_L3_,"---------end---------\n");
+    if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L3_,"---------end---------\n");
 }
 
 
 
 bool Cache::activatePrevEvent(MemEvent* _event, vector<mshrType>& _mshrEntry, Addr _addr, vector<mshrType>::iterator _it, int _i){
-    d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %" PRIx64 ", addr: %" PRIx64 ", dst: %s\n",
+    if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %" PRIx64 ", addr: %" PRIx64 ", dst: %s\n",
                   _i, CommandString[_event->getCmd()], toBaseAddr(_event->getAddr()), _event->getAddr(), _event->getDst().c_str());
-    d_->debug(_L3_,"--------------------------------------\n");
+    if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"--------------------------------------\n");
     
     this->processEvent(_event, true);
     
-    d_->debug(_L3_,"--------------------------------------\n");
+    if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"--------------------------------------\n");
     _mshrEntry.erase(_it);
     
     /* If the event we just ran 'blocked', then there is not reason to activate other events. */
@@ -521,7 +521,7 @@ void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Com
                     this->getName().c_str(), CommandString[_cmd], BccLineString[_cacheLine->getState()], _event->getBaseAddr(), getCurrentSimTimeNano());
         }
         topCC_->handleRequest(_event, _cacheLine, false);
-        d_->debug(_L3_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L3_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
         throw ignoreEventException();
     }
 }
@@ -550,9 +550,9 @@ MemEvent* Cache::getOrigReq(const vector<mshrType> _mshrEntry){
 
 
 
-void Cache::updateUpgradeLatencyAverage(SimTime_t start){
+void Cache::updateUpgradeLatencyAverage(SimTime_t start, Addr debugAddr){
     uint64_t latency = timestamp_ - start + 1;
-    d_->debug(_INFO_,"Latency = %" PRIu64 "\n", latency);
+    if (DEBUG_ALL || DEBUG_ADDR == debugAddr) d_->debug(_INFO_,"Latency = %" PRIu64 "\n", latency);
     totalUpgradeLatency_ += latency;
     upgradeCount_++;
 }
@@ -635,7 +635,7 @@ void Cache::sendNACK(MemEvent* _event){
  *  Response latency: MSHR latency because MSHR lookup to find event that was nacked. No cache access.
  */
 void Cache::processIncomingNACK(MemEvent* _origReqEvent){
-    d_->debug(_L3_,"NACK received.\n");
+    if (DEBUG_ALL || DEBUG_ADDR == _origReqEvent->getBaseAddr()) d_->debug(_L3_,"NACK received.\n");
 
     /* Determine what CC will retry sending the event */
     if(_origReqEvent->fromHighNetNACK())       topCC_->resendEvent(_origReqEvent);

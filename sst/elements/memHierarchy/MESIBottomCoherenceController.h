@@ -29,8 +29,8 @@ public:
     /** Constructor for MESIBottomCC. */
     MESIBottomCC(const Cache* _cache, string _ownerName, Output* _dbg, vector<Link*>* _parentLinks, CacheListener* _listener, 
             unsigned int _lineSize, uint64 _accessLatency, uint64 _tagLatency, uint64 _mshrLatency, bool _L1, 
-            MemNIC* _bottomNetworkLink, bool _groupStats, vector<int> _statGroupIds) :
-                 CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency), lowNetPorts_(_parentLinks),
+            MemNIC* _bottomNetworkLink, bool _groupStats, vector<int> _statGroupIds, bool debugAll, Addr debugAddr) :
+                 CoherencyController(_cache, _dbg, _lineSize, _accessLatency, _tagLatency, _mshrLatency, debugAll, debugAddr), lowNetPorts_(_parentLinks),
                  listener_(_listener), ownerName_(_ownerName) {
         d_->debug(_INFO_,"--------------------------- Initializing [BottomCC] ... \n\n");
         L1_                 = _L1;
@@ -150,8 +150,11 @@ public:
         
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
-            d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
-                   CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+            if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
+                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                   CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
+                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+            }
 
             if(bottomNetworkLink_) {
                 outgoingEvent->setDst(bottomNetworkLink_->findTargetDestination(outgoingEvent->getBaseAddr()));

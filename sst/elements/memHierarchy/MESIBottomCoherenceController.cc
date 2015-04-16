@@ -60,8 +60,7 @@ void MESIBottomCC::handleEviction(CacheLine* _wbCacheLine, uint32_t _groupId, st
 void MESIBottomCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, Command _cmd, bool _mshrHit){
     bool upgrade;
     setGroupId(_event->getGroupId());
-    d_->debug(_L6_,"BottomCC State = %s\n", BccLineString[_cacheLine->getState()]);
-    
+    if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr())   d_->debug(_L6_,"BottomCC State = %s\n", BccLineString[_cacheLine->getState()]);
     switch(_cmd){
     case GetS:
         handleGetSRequest(_event, _cacheLine);
@@ -118,7 +117,7 @@ void MESIBottomCC::handleInvalidate(MemEvent* _event, CacheLine* _cacheLine, Com
     setGroupId(_event->getGroupId());
     
     if (_cacheLine->inTransition()) {
-        d_->debug(_L6_,"Cache line in transition.\n");
+        if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L6_,"Cache line in transition.\n");
         if (_event->getAckNeeded() && _cacheLine->getState() == SM) {  //no need to send ACK if state = IM
             inc_InvalidatePUTSReqSent();
             _cacheLine->setState(IM); 
@@ -185,10 +184,24 @@ void MESIBottomCC::handleResponse(MemEvent* _responseEvent, CacheLine* _cacheLin
     }
 
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
+    /*if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) {
+        d_->debug(_L6_,"Data written to cache line: 0x");
+        for (unsigned int i = 0; i < _cacheLine->getLineSize(); i++) {
+            printf("%02x", (_cacheLine->getData())->at(i));
+        }
+        printf("\n");
+    }*/
 }
 
 void MESIBottomCC::handleFetchResp(MemEvent * _responseEvent, CacheLine* _cacheLine) {
     _cacheLine->setData(_responseEvent->getPayload(), _responseEvent);
+    /*if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) {
+    d_->debug(_L6_,"Data written to cache line: 0x");
+        for (unsigned int i = 0; i < _cacheLine->getLineSize(); i++) {
+        printf("%02x", (_cacheLine->getData())->at(i));
+    }
+    printf("\n");
+    }*/
     if (_responseEvent->getDirty()) _cacheLine->setState(M);
 }
 
@@ -264,6 +277,14 @@ void MESIBottomCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, bo
     if(cmd == GetX){
         if(L1_ && (!_event->isStoreConditional() || _cacheLine->isAtomic())) {
             _cacheLine->setData(_event->getPayload(), _event);
+            
+   /* if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) {
+            d_->debug(_L6_,"Data written to cache line: 0x");
+            for (unsigned int i = 0; i < _cacheLine->getLineSize(); i++) {
+                printf("%02x", (_cacheLine->getData())->at(i));
+            }
+            printf("\n");
+        }*/
         }
         if(L1_ && _event->queryFlag(MemEvent::F_LOCKED)){
 	    if(! _cacheLine->isLocked()) {
@@ -337,7 +358,13 @@ void MESIBottomCC::updateCacheLineRxWriteback(MemEvent* _event, CacheLine* _cach
     if((state == E && _event->getCmd() != PutXE) || _event->getDirty()) _cacheLine->setState(M);    // Update state if line was written
     if(_event->getCmd() != PutXE){
         _cacheLine->setData(_event->getPayload(), _event);                  //Only PutM/PutX write data in the cache line
-        d_->debug(_L6_,"Data written to cache line\n");
+    /*if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) {
+        d_->debug(_L6_,"Data written to cache line: 0x");
+        for (unsigned int i = 0; i < _cacheLine->getLineSize(); i++) {
+            printf("%02x", (_cacheLine->getData())->at(i));
+        }
+        printf("\n");
+    }*/
     }
 }
 
@@ -393,7 +420,7 @@ void MESIBottomCC::forwardMessage(MemEvent* _event, Addr _baseAddr, unsigned int
     
     Response fwdReq = {forwardEvent, deliveryTime, false};
     addToOutgoingQueue(fwdReq);
-    d_->debug(_L3_,"BCC - Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L3_,"BCC - Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
 
@@ -405,9 +432,9 @@ void MESIBottomCC::resendEvent(MemEvent* _event){
     uint64 deliveryTime =  timestamp_ + mshrLatency_;
     Response resp = {_event, deliveryTime, false};
     addToOutgoingQueue(resp);
-    
-    d_->debug(_L3_,"BCC - Sending request: Addr = %" PRIx64 ", BaseAddr = %" PRIx64 ", Cmd = %s\n",
-             _event->getAddr(), _event->getBaseAddr(), CommandString[_event->getCmd()]);
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L3_,"BCC - Sending request: Addr = %" PRIx64 ", BaseAddr = %" PRIx64 ", Cmd = %s\n",             
+                _event->getAddr(), _event->getBaseAddr(), CommandString[_event->getCmd()]);
+
 }
 
 
@@ -418,6 +445,13 @@ void MESIBottomCC::resendEvent(MemEvent* _event){
 void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _parentId, bool _mshrHit){
     MemEvent *responseEvent = _event->makeResponse();
     responseEvent->setPayload(*_cacheLine->getData());
+    /*if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) { 
+    d_->debug(_L6_,"Reading data from cache line: 0x");
+    for (unsigned int i = 0; i < _cacheLine->getLineSize(); i++) {
+        printf("%02x", (_cacheLine->getData())->at(i));
+    }
+    printf("\n");
+    }*/
     responseEvent->setSize(_cacheLine->getLineSize());
     if (_cacheLine->getState() == M) responseEvent->setDirty(true);
 
@@ -425,7 +459,9 @@ void MESIBottomCC::sendResponse(MemEvent* _event, CacheLine* _cacheLine, int _pa
     Response resp  = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
     
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) { 
     d_->debug(_L3_,"BCC - Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
+    }
 }
 
 
@@ -439,6 +475,13 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine, string _or
     if(_cmd == PutM || _cmd == PutX){
         newCommandEvent->setSize(_cacheLine->getLineSize());
         newCommandEvent->setPayload(*_cacheLine->getData());
+   /* if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) { 
+        d_->debug(_L6_,"Reading data from cache line: 0x");
+        for (unsigned int i = 0; i < _cacheLine->getLineSize(); i++) {
+            printf("%02x", (_cacheLine->getData())->at(i));
+        }
+        printf("\n");
+    }*/
     }
     newCommandEvent->setRqstr(_origRqstr);
     if (_cacheLine->getState() == M) newCommandEvent->setDirty(true);
@@ -446,7 +489,7 @@ void MESIBottomCC::sendWriteback(Command _cmd, CacheLine* _cacheLine, string _or
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"BCC - Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
+    if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L3_,"BCC - Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[_cmd]);
 }
 
 
@@ -462,7 +505,7 @@ void MESIBottomCC::sendNACK(MemEvent* _event){
     Response resp = {NACKevent, deliveryTime, true};
     inc_NACKsSent();
     addToOutgoingQueue(resp);
-    d_->debug(_L3_,"BCC - Sending NACK at cycle = %" PRIu64 "\n", deliveryTime);
+    if (DEBUG_ALL || DEBUG_ADDR == _event->getBaseAddr()) d_->debug(_L3_,"BCC - Sending NACK at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
 /********************
