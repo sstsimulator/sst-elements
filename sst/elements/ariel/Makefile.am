@@ -58,19 +58,21 @@ fesimple.dylib: fesimple.o
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o fesimple.so fesimple.o  \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread
+	-lpin -lxed -lpindwarf -lpthread
 
 fesimple.o: frontend/simple/fesimple.cc
-	$(CXX) -fPIC -O3 \
-	-fomit-frame-pointer \
+	$(CXX) -O3 \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
+	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
 	-I$(PINTOOL_DIR)/source/include/pin \
 	-I$(PINTOOL_DIR)/ \
 	-I$(PINTOOL_DIR)/extras/components/include \
 	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
 	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-fomit-frame-pointer -fno-stack-protector \
+	-stdlib=libstdc++ \
 	-o fesimple.o -c \
 	frontend/simple/fesimple.cc
 
