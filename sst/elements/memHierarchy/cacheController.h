@@ -75,9 +75,6 @@ public:
         to an upgrade needed, cache line being locked, etc */
     class blockedEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to 'stall'. Request will be processed at a later time\n"; } };
     
-    /** Ignore Event Exception.  Exception thrown when the event received is considered to be irrelevant (ie Invalidate received when cacheline was alread invalid (due to eviction) */
-    class ignoreEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to be ignored. Request is irrelevant or out-of-date\n"; }};
-
 private:
     struct CacheConfig;
     
@@ -173,7 +170,7 @@ private:
 
     /** Most requests are stalled in the MSHR if the cache line is 'blocking'.  However, this does not happen for
         writebacks.  This funciton handles the case where the cache line is 'blocking' and an incomming PutS request is received. */
-    void handleIgnorableRequests(MemEvent* _event, CacheLine* cacheLine, Command cmd) throw (ignoreEventException);
+    bool handleIgnorableRequests(MemEvent* _event, CacheLine* cacheLine, Command cmd);
 
     /** After BCC is executed, this function checks if an upgrade request was sent to LwLv caches.  If so, this request
         needs to stall */
@@ -192,7 +189,7 @@ private:
     inline TopCacheController::CCLine* getCCLine(int index);
 
     /** Make sure that this request is not a dirty writeback.  Cache miss cannot occur on a dirty writeback  */
-    inline void checkCacheMissValidity(MemEvent* event) throw(ignoreEventException);
+    inline bool checkCacheMissValidity(MemEvent* event);
     
     /** Check whether this request will hit or miss in the cache - including correct coherence permission */
     int isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);

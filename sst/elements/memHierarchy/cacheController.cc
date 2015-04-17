@@ -104,13 +104,13 @@ void Cache::processCacheRequest(MemEvent* _event, Command _cmd, Addr _baseAddr, 
 
         } else {
             recordLatency(_event);
+            delete _event;
         }
     }
     catch(blockedEventException const& e){
 
         processRequestInMSHR(_baseAddr, _event);                        /* This request needs to stall until another pending request finishes.  This event is now in the  MSHR waiting to 'reactive' upon completion of the outstanding request in progress  */
     }
-    catch(ignoreEventException const& e){}
 }
 
 void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAddr, bool _mshrHit){
@@ -122,12 +122,12 @@ void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAd
         
         if(isCacheMiss(lineIndex)){                                     /* Miss.  If needed, evict candidate */
             if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L3_,"-- Cache Miss --\n");
-            checkCacheMissValidity(_event);
+            if (!checkCacheMissValidity(_event)) return;
             allocateCacheLine(_event, _baseAddr, lineIndex);
         }
         
         cacheLine = getCacheLine(lineIndex);
-        handleIgnorableRequests(_event, cacheLine, _cmd);               /* If a PutS, handle immediately even if the cache line is in transition */
+        if (handleIgnorableRequests(_event, cacheLine, _cmd)) return;               /* If a PutS, handle immediately even if the cache line is in transition */
         
         bottomCC_->handleRequest(_event, cacheLine, _cmd, _mshrHit);    /* update cache line with new data */
         
@@ -137,7 +137,6 @@ void Cache::processCacheReplacement(MemEvent* _event, Command _cmd, Addr _baseAd
     catch(blockedEventException const& e){
         processRequestInMSHR(_baseAddr, _event);                        /* Request needs to stall until another pending request finishes.  Buffer in MSHR  */
     }
-    catch(ignoreEventException const& e){}
 }
 
 
@@ -511,7 +510,7 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* _cacheLine){
 
 
 
-void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Command _cmd) throw(ignoreEventException){
+bool Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Command _cmd) {
     /* If cache line is in transition, that means this requests is a writeback from a lower level cache.
        In this case, it has to be a PutS requests because the only possible transition going on is SM.  We can just ignore
        the request after removing the sharer. */
@@ -522,8 +521,10 @@ void Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Com
         }
         topCC_->handleRequest(_event, _cacheLine, false);
         if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L3_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
-        throw ignoreEventException();
+        delete _event;
+        return true;
     }
+    return false;
 }
 
 
@@ -647,13 +648,17 @@ void Cache::processIncomingNACK(MemEvent* _origReqEvent){
 
 
 
-void Cache::checkCacheMissValidity(MemEvent* _event) throw(ignoreEventException){
+bool Cache::checkCacheMissValidity(MemEvent* _event) {
     Command cmd = _event->getCmd();
     if (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE) {
         d_->fatal(CALL_INFO, -1, "%s, Error: Cache miss but command is %s. Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                 this->getName().c_str(), CommandString[cmd], _event->getBaseAddr(), getCurrentSimTimeNano()); 
     }
-    if(cmd == PutS) throw ignoreEventException();
+    if(cmd == PutS) {
+        delete _event;
+        return false;        
+    }
+    return true;
 }
 
 
@@ -687,6 +692,4 @@ void Cache::incInvalidateWaitingForUserLock(int _groupId){
         stats_[_groupId].InvWaitingForUserLock_++;
     }
 }
-
-//HOOK'em Horns!
 
