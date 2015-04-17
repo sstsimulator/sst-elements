@@ -142,7 +142,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
                 "or Ember to use\n");
 	} else {
 		gen = dynamic_cast<EmberGenerator*>(
-                loadModuleWithComponent(gentype, this, params ) );
+                loadSubComponent(gentype, this, params ) );
 
 		if(NULL == gen) {
 			output.fatal(CALL_INFO, -1, "Error: Could not load the "

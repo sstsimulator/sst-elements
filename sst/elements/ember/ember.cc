@@ -19,12 +19,12 @@
 
 #include "sst/core/element.h"
 #include "sst/core/params.h"
+#include "sst/core/subcomponent.h"
 
 #include "embermap.h"
 #include "emberlinearmap.h"
 #include "mpi/motifs/emberhalo2d.h"
 #include "mpi/motifs/emberhalo2dNBR.h"
-//#include "motifs/emberhalo3dnb.h"
 #include "mpi/motifs/emberhalo3d.h"
 #include "mpi/motifs/emberhalo3dsv.h"
 #include "mpi/motifs/embersweep2d.h"
@@ -64,17 +64,17 @@ create_EmberComponent(SST::ComponentId_t id,
     return new EmberEngine( id, params );
 }
 
-static Module*
+static SubComponent*
 load_PingPong( Component* comp, Params& params ) {
 	return new EmberPingPongGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_BiPingPong( Component* comp, Params& params ) {
 	return new EmberBiPingPongGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_3DAMR( Component* comp, Params& params) {
 	return new Ember3DAMRGenerator(comp, params);
 }
@@ -89,17 +89,17 @@ load_GaussDistrib( Component* comp, Params& params) {
 	return new EmberGaussianDistribution(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_AllPingPong( Component* comp, Params& params ) {
 	return new EmberAllPingPongGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Barrier( Component* comp, Params& params ) {
 	return new EmberBarrierGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Ring( Component* comp, Params& params ) {
 	return new EmberRingGenerator(comp, params);
 }
@@ -109,107 +109,107 @@ load_LinearNodeMap( Component* comp, Params& params ) {
 	return new EmberLinearRankMap(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_CommDoubling( Component* comp, Params& params ) {
 	return new Ember3DCommDoublingGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Init( Component* comp, Params& params ) {
 	return new EmberInitGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Fini( Component* comp, Params& params ) {
 	return new EmberFiniGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Halo2D( Component* comp, Params& params ) {
 	return new EmberHalo2DGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Halo2DNBR( Component* comp, Params& params ) {
 	return new EmberHalo2DNBRGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Halo3D26( Component* comp, Params& params ) {
 	return new EmberHalo3D26Generator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Halo3DSV( Component* comp, Params& params ) {
         return new EmberHalo3DSVGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Halo3D( Component* comp, Params& params ) {
 	return new EmberHalo3DGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Sweep2D( Component* comp, Params& params ) {
 	return new EmberSweep2DGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Sweep3D( Component* comp, Params& params ) {
 	return new EmberSweep3DGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_NASLU( Component* comp, Params& params ) {
 	return new EmberNASLUGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Allreduce( Component* comp, Params& params ) {
 	return new EmberAllreduceGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Alltoall( Component* comp, Params& params ) {
 	return new EmberAlltoallGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Alltoallv( Component* comp, Params& params ) {
 	return new EmberAlltoallvGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Reduce( Component* comp, Params& params ) {
 	return new EmberReduceGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Bcast( Component* comp, Params& params ) {
 	return new EmberBcastGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Null( Component* comp, Params& params ) {
 	return new EmberNullGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_MsgRate( Component* comp, Params& params ) {
 	return new EmberMsgRateGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_Comm( Component* comp, Params& params ) {
 	return new EmberCommGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_FFT3D( Component* comp, Params& params ) {
 	return new EmberFFT3DGenerator(comp, params);
 }
 
-static Module*
+static SubComponent*
 load_TrafficGen( Component* comp, Params& params ) {
 	return new EmberTrafficGenGenerator(comp, params);
 }
@@ -539,59 +539,231 @@ static const ElementInfoParam linearMapper_params[] = {
 	{	NULL, NULL, NULL 	}
 };
 
-static const ElementInfoModule modules[] = {
+static const ElementInfoSubComponent subcomponents[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
 	NULL,
-	NULL,
 	load_PingPong,
 	pingpong_params,
+	NULL,
     	"SST::Ember::EmberGenerator"
     },
     { 	"BiPingPongMotif",
 	"Performs a InOut Motif",
 	NULL,
-	NULL,
 	load_BiPingPong,
 	bipingpong_params,
+	NULL,
     	"SST::Ember::EmberGenerator"
     },
     {
 	"CommDoubleMotif",
 	"Performs a communication doubling pattern based on a research scientific analytics problem",
 	NULL,
-	NULL,
 	load_CommDoubling,
 	commdbl_params,
+	NULL,
 	"SST::Ember::EmberGenerator"
     },
     {
 	"FFT3DMotif",
 	"Models an FFT",
 	NULL,
-	NULL,
 	load_FFT3D,
 	fft3d_params,
+	NULL,
 	"SST::Ember::EmberGenerator"
     },
     {
 	"TrafficGenMotif",
 	"Models network traffic",
 	NULL,
-	NULL,
 	load_TrafficGen,
 	trafficGen_params,
+	NULL,
 	"SST::Ember::EmberGenerator"
     },
     {
 	"3DAMRMotif",
 	"Models an adaptive refinement step from MiniAMR",
 	NULL,
-	NULL,
 	load_3DAMR,
 	amr3d_params,
+	NULL,
 	"SST::Ember::EmberGenerator"
     },
+    { 	"RingMotif",
+	"Performs a Ring Motif",
+	NULL,
+	load_Ring,
+	ring_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"BarrierMotif",
+	"Performs a Barrier Motif",
+	NULL,
+	load_Barrier,
+	barrier_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"AllPingPongMotif",
+	"Performs a All Ping Pong Motif",
+	NULL,
+	load_AllPingPong,
+	allpingpong_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo2DMotif",
+	"Performs a 2D halo exchange Motif",
+	NULL,
+	load_Halo2D,
+	halo2d_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo2DNBRMotif",
+	"Performs a 2D halo exchange Motif with non-blocking receives",
+	NULL,
+	load_Halo2DNBR,
+	halo2d_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo3DMotif",
+	"Performs a 3D blocking motif",
+	NULL,
+	load_Halo3D,
+	halo3d_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo3DSVMotif",
+	"Performs a 3D blocking motif with single variable commmunication",
+	NULL,
+	load_Halo3DSV,
+	halo3dsv_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"Halo3D26Motif",
+	"Performs a 3D 26-non-blocking motif",
+	NULL,
+	load_Halo3D26,
+	halo3d26_params,
+	NULL,
+        "SST::Ember::EmberGenerator"
+    },
+    { 	"Sweep2DMotif",
+	"Performs a 2D sweep exchange Motif with multiple vertex communication ordering",
+	NULL,
+	load_Sweep2D,
+	sweep2d_params,
+	NULL,
+        "SST::Ember::EmberGenerator"
+    },
+    { 	"Sweep3DMotif",
+	"Performs a 3D sweep communication motif from all 8 vertices",
+	NULL,
+	load_Sweep3D,
+	sweep3d_params,
+	NULL,
+        "SST::Ember::EmberGenerator"
+    },
+    { 	"NASLUMotif",
+	"Performs a NAS-LU communication motif from 2 (opposite) vertices",
+	NULL,
+	load_NASLU,
+	naslu_params,
+	NULL,
+        "SST::Ember::EmberGenerator"
+    },
+    { 	"AlltoallMotif",
+	"Performs a Alltoall operation with type set to float64 and operation SUM",
+	NULL,
+	load_Alltoall,
+	alltoall_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"AlltoallvMotif",
+	"Performs a Alltoallv operation with type set to float64 and operation SUM",
+	NULL,
+	load_Alltoallv,
+	alltoall_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"AllreduceMotif",
+	"Performs a Allreduce operation with type set to float64 and operation SUM",
+	NULL,
+	load_Allreduce,
+	allreduce_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"ReduceMotif",
+	"Performs a reduction operation with type set to float64 and operation SUM from a user-specified reduction-tree root",
+	NULL,
+	load_Reduce,
+	reduce_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"BcastMotif",
+	"Performs a broadcast operation with type set to float64 from a user-specified reduction-tree root",
+	NULL,
+	load_Bcast,
+	bcast_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"InitMotif",
+	"Performs a communication Initialization Motif",
+	NULL,
+	load_Init,
+	init_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"FiniMotif",
+	"Performs a communication finalize Motif",
+	NULL,
+	load_Fini,
+	fini_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"NullMotif",
+	"Performs an idle on the node, no traffic can be generated.",
+	NULL,
+	load_Null,
+	nullmotif_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"MsgRateMotif",
+	"Performs a message rate test.",
+	NULL,
+	load_MsgRate,
+	msgrate_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"CommMotif",
+	"Performs a comm_split test.",
+	NULL,
+	load_Comm,
+	comm_params,
+	NULL,
+    "SST::Ember::EmberGenerator"
+    },
+    {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
+};
+
+static const ElementInfoModule modules[] = {
     {
 	"ConstDistrib",
 	"Constant compute distribution model",
@@ -619,182 +791,6 @@ static const ElementInfoModule modules[] = {
 	linearMapper_params,
 	"SST::Ember::EmberRankMap"
     },
-    { 	"RingMotif",
-	"Performs a Ring Motif",
-	NULL,
-	NULL,
-	load_Ring,
-	ring_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"BarrierMotif",
-	"Performs a Barrier Motif",
-	NULL,
-	NULL,
-	load_Barrier,
-	barrier_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"AllPingPongMotif",
-	"Performs a All Ping Pong Motif",
-	NULL,
-	NULL,
-	load_AllPingPong,
-	allpingpong_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"Halo2DMotif",
-	"Performs a 2D halo exchange Motif",
-	NULL,
-	NULL,
-	load_Halo2D,
-	halo2d_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"Halo2DNBRMotif",
-	"Performs a 2D halo exchange Motif with non-blocking receives",
-	NULL,
-	NULL,
-	load_Halo2DNBR,
-	halo2d_params,
-    "SST::Ember::EmberGenerator"
-    },
-//    { 	"Halo3DNB26Motif",
-//	"Performs a 3D halo exchange Motif with non-blocking receives, over 26-communication neighbors",
-//	NULL,
-//	NULL,
-//	load_Halo3DNB26,
-//	NULL,
-//    "SST::Ember::EmberGenerator"
-//    },
-    { 	"Halo3DMotif",
-	"Performs a 3D blocking motif",
-	NULL,
-	NULL,
-	load_Halo3D,
-	halo3d_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"Halo3DSVMotif",
-	"Performs a 3D blocking motif with single variable commmunication",
-	NULL,
-	NULL,
-	load_Halo3DSV,
-	halo3dsv_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"Halo3D26Motif",
-	"Performs a 3D 26-non-blocking motif",
-	NULL,
-	NULL,
-	load_Halo3D26,
-	halo3d26_params,
-        "SST::Ember::EmberGenerator"
-    },
-    { 	"Sweep2DMotif",
-	"Performs a 2D sweep exchange Motif with multiple vertex communication ordering",
-	NULL,
-	NULL,
-	load_Sweep2D,
-	sweep2d_params,
-        "SST::Ember::EmberGenerator"
-    },
-    { 	"Sweep3DMotif",
-	"Performs a 3D sweep communication motif from all 8 vertices",
-	NULL,
-	NULL,
-	load_Sweep3D,
-	sweep3d_params,
-        "SST::Ember::EmberGenerator"
-    },
-    { 	"NASLUMotif",
-	"Performs a NAS-LU communication motif from 2 (opposite) vertices",
-	NULL,
-	NULL,
-	load_NASLU,
-	naslu_params,
-        "SST::Ember::EmberGenerator"
-    },
-    { 	"AlltoallMotif",
-	"Performs a Alltoall operation with type set to float64 and operation SUM",
-	NULL,
-	NULL,
-	load_Alltoall,
-	alltoall_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"AlltoallvMotif",
-	"Performs a Alltoallv operation with type set to float64 and operation SUM",
-	NULL,
-	NULL,
-	load_Alltoallv,
-	alltoall_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"AllreduceMotif",
-	"Performs a Allreduce operation with type set to float64 and operation SUM",
-	NULL,
-	NULL,
-	load_Allreduce,
-	allreduce_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"ReduceMotif",
-	"Performs a reduction operation with type set to float64 and operation SUM from a user-specified reduction-tree root",
-	NULL,
-	NULL,
-	load_Reduce,
-	reduce_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"BcastMotif",
-	"Performs a broadcast operation with type set to float64 from a user-specified reduction-tree root",
-	NULL,
-	NULL,
-	load_Bcast,
-	bcast_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"InitMotif",
-	"Performs a communication Initialization Motif",
-	NULL,
-	NULL,
-	load_Init,
-	init_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"FiniMotif",
-	"Performs a communication finalize Motif",
-	NULL,
-	NULL,
-	load_Fini,
-	fini_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"NullMotif",
-	"Performs an idle on the node, no traffic can be generated.",
-	NULL,
-	NULL,
-	load_Null,
-	nullmotif_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"MsgRateMotif",
-	"Performs a message rate test.",
-	NULL,
-	NULL,
-	load_MsgRate,
-	msgrate_params,
-    "SST::Ember::EmberGenerator"
-    },
-    { 	"CommMotif",
-	"Performs a comm_split test.",
-	NULL,
-	NULL,
-	load_Comm,
-	comm_params,
-    "SST::Ember::EmberGenerator"
-    },
     {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
 };
 
@@ -817,6 +813,7 @@ extern "C" {
 	NULL, 		// Events
 	NULL,		// Introspector
 	modules,
+	subcomponents,
 	NULL,
 	NULL
     };

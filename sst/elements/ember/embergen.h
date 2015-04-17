@@ -15,6 +15,7 @@
 
 #include <sst/core/output.h>
 #include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/params.h>
 #include <queue>
 
@@ -40,10 +41,11 @@ class EmberGeneratorData {
     virtual ~EmberGeneratorData() {}  
 };
 
-class EmberGenerator : public Module {
+class EmberGenerator : public SubComponent {
 
   public:
     EmberGenerator( Component* owner, Params& params ) :
+	SubComponent(owner),
         m_name("???"),
         m_output( NULL ),
         m_dataMode( NoBacking )
