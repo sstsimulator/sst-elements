@@ -99,10 +99,15 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	std::string ariel_tool = params.find_string("arieltool", "");
+        char* tool_path = (char*) malloc(sizeof(char) * 1024);
+        sprintf(tool_path, "%s/libexec/fesimple.so");
+
+	std::string ariel_tool = params.find_string("arieltool", tool_path);
 	if("" == ariel_tool) {
 		output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
 	}
+
+        free(tool_path);
 
 	std::string executable = params.find_string("executable", "");
 	if("" == executable) {
