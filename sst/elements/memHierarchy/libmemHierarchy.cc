@@ -262,7 +262,7 @@ static const ElementInfoPort memctrl_ports[] = {
 };
 
 
-static Module* create_Mem_SimpleSim(Component* comp, Params& params){
+static SubComponent* create_Mem_SimpleSim(Component* comp, Params& params){
     return new SimpleMemory(comp, params);
 }
 
@@ -274,7 +274,7 @@ static const ElementInfoParam simpleMem_params[] = {
 
 
 #if defined(HAVE_LIBDRAMSIM)
-static Module* create_Mem_DRAMSim(Component* comp, Params& params){
+static SubComponent* create_Mem_DRAMSim(Component* comp, Params& params){
     return new DRAMSimMemory(comp, params);
 }
 
@@ -289,7 +289,7 @@ static const ElementInfoParam dramsimMem_params[] = {
 #endif
 
 #if defined(HAVE_LIBHYBRIDSIM)
-static Module* create_Mem_HybridSim(Component* comp, Params& params){
+static SubComponent* create_Mem_HybridSim(Component* comp, Params& params){
     return new HybridSimMemory(comp, params);
 }
 
@@ -303,12 +303,12 @@ static const ElementInfoParam hybridsimMem_params[] = {
 
 #endif
 
-static Module* create_Mem_VaultSim(Component* comp, Params& params){
+static SubComponent* create_Mem_VaultSim(Component* comp, Params& params){
     return new VaultSimMemory(comp, params);
 }
 
 #ifdef HAVE_GOBLIN_HMCSIM
-static Module* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
+static SubComponent* create_Mem_GOBLINHMCSim(Component* comp, Params& params){
     return new GOBLINHMCSimBackend(comp, params);
 }
 
@@ -334,7 +334,7 @@ static const ElementInfoParam goblin_hmcsim_Mem_params[] = {
 
 #ifdef HAVE_FDSIM
 
-static Module* create_Mem_FDSim(Component* comp, Params& params){
+static SubComponent* create_Mem_FDSim(Component* comp, Params& params){
     return new FlashDIMMSimMemory(comp, params);
 }
 
@@ -424,15 +424,14 @@ static const ElementInfoPort dmaengine_ports[] = {
     {NULL, NULL, NULL}
 };
 
-
-static const ElementInfoModule modules[] = {
+static const ElementInfoSubComponent subcomponents[] = {
     {
         "simpleMem",
         "Simple constant-access time memory",
         NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
         create_Mem_SimpleSim, /* Module Alloc w/ params */
         simpleMem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #if defined(HAVE_LIBDRAMSIM)
@@ -440,9 +439,9 @@ static const ElementInfoModule modules[] = {
         "dramsim",
         "DRAMSim-driven memory timings",
         NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
         create_Mem_DRAMSim, /* Module Alloc w/ params */
         dramsimMem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
@@ -451,9 +450,9 @@ static const ElementInfoModule modules[] = {
         "hybridsim",
         "HybridSim-driven memory timings",
         NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
         create_Mem_HybridSim, /* Module Alloc w/ params */
         hybridsimMem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
@@ -462,9 +461,9 @@ static const ElementInfoModule modules[] = {
         "goblinHMCSim",
         "GOBLIN HMC Simulator driven memory timings",
         NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
         create_Mem_GOBLINHMCSim, /* Module Alloc w/ params */
         goblin_hmcsim_Mem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
@@ -473,9 +472,9 @@ static const ElementInfoModule modules[] = {
         "flashDIMMSim",
         "FlashDIMM Simulator driven memory timings",
         NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
         create_Mem_FDSim, /* Module Alloc w/ params */
         fdsimMem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
@@ -483,11 +482,15 @@ static const ElementInfoModule modules[] = {
         "vaultsim",
         "VaultSim Memory timings",
         NULL, /* Advanced help */
-        NULL, /* ModuleAlloc */
         create_Mem_VaultSim, /* Module Alloc w/ params */
         vaultsimMem_params,
+        NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
+    {NULL, NULL, NULL, NULL, NULL, NULL}
+};
+
+static const ElementInfoModule modules[] = {
     {
         "memInterface",
         "Simplified interface to Memory Hierarchy",
@@ -582,9 +585,12 @@ extern "C" {
 		"memHierarchy",
 		"Cache Hierarchy",
 		components,
-        memHierarchy_events, /* Events */
-        NULL, /* Introspectors */
-        modules,
+        	memHierarchy_events, /* Events */
+        	NULL, /* Introspectors */
+        	modules,
+		subcomponents,
+		NULL,
+		NULL
 	};
 }
 

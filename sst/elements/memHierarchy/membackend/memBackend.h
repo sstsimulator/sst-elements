@@ -28,7 +28,7 @@ namespace MemHierarchy {
 
 class MemController;
 
-class MemBackend : public Module {
+class MemBackend : public SubComponent {
 public:
     MemBackend();
     MemBackend(Component *comp, Params &params);

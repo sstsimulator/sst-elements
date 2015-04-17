@@ -120,7 +120,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     // Ensure we can extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
-    backend_                = dynamic_cast<MemBackend*>(loadModuleWithComponent(backendName, this, backendParams));
+    backend_                = dynamic_cast<MemBackend*>(loadSubComponent(backendName, this, backendParams));
 
     if (!isNetworkConnected_) {
     lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
