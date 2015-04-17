@@ -49,7 +49,7 @@ const char* SST::SS_router::LinkNames[] = {
 // When tokens are returned, this might cause an output queue to become ready to accept data
 void SS_router::updateToken_flits( int link, int vc, int flits )
 {
-    m_dbg.output(CALL_INFO, "%lld: link %d return %d flit token to rtr %d, vc %d\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": link %d return %d flit token to rtr %d, vc %d\n",
               cycle(), link, flits, routerID, vc);
 
     int old_tokens = outLCB[link].vcTokens[vc];
@@ -593,7 +593,7 @@ bool SS_router::route(rtrP* rp)
         }
     }
 
-    m_dbg.output(CALL_INFO, "%lld: router %d parcel final dest %d (inc vc %d) local dest :%d:%d:\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d parcel final dest %d (inc vc %d) local dest :%d:%d:\n",
               cycle(), routerID, key.first, key.second, localDest.first,
               localDest.second);
 

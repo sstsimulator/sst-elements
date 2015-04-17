@@ -56,7 +56,7 @@ void SS_router::InLCB ( RtrEvent *e, int ilink, int ivc, int flits) {
         inLCB[ilink].dataQ.push_back(rp);
     }
 
-    m_dbg.output(CALL_INFO, "%lld: router %d put parcel in iLCB %d, size %d, internal_busy? %d\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d put parcel in iLCB %d, size %d, internal_busy? %d\n",
               cycle(), routerID, ilink, inLCB[ilink].size_flits,
               inLCB[ilink].internal_busy);
 }
@@ -110,11 +110,11 @@ void SS_router::LCBtoInQ_readyNext (rtrP *rp) {
     m_dbg.output(CALL_INFO, "\n");
     inLCB[rp->ilink].internal_busy = false;
 
-    m_dbg.output(CALL_INFO, "%lld: router %d iLCB %d ready next, parcel done\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d iLCB %d ready next, parcel done\n",
               cycle(), routerID, rp->ilink );
 
     if (inLCB[rp->ilink].readyInternal()) {
-        m_dbg.output(CALL_INFO, "%lld: router %d iLCB %d back in ready iLCB list\n", cycle(), routerID, rp->ilink);
+        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d iLCB %d back in ready iLCB list\n", cycle(), routerID, rp->ilink);
         //ready_iLCB_count++;
         ready_iLCB = true;
     }
@@ -135,7 +135,7 @@ void SS_router::LCBtoInQ_done (rtrP *rp, int ivc, int ilink) {
     inQ->vcQ[ivc].push_back(rp);
 
     //If this input Q was previously empty, put it in the ready pile
-    m_dbg.output(CALL_INFO, "%lld: router %d add inQ %d to ready list, vc %d -- %d ready vcQs\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d add inQ %d to ready list, vc %d -- %d ready vcQs\n",
               cycle(), routerID, rp->ilink, rp->ivc, inQ->ready_vcQs);
 
     if (inQ->ready())
@@ -145,7 +145,7 @@ void SS_router::LCBtoInQ_done (rtrP *rp, int ivc, int ilink) {
     //ready_inQs_count++;
     //}
 
-    m_dbg.output(CALL_INFO, "%lld: router %d finish move from iLCB to inQ %d:%d\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d finish move from iLCB to inQ %d:%d\n",
               cycle(), routerID, rp->ilink, rp->ivc);
 }
 
@@ -174,7 +174,7 @@ void SS_router::InQtoOutQ_start (rtrP *rp) {
     outputQ[rp->olink][rp->ilink].size_flits[rp->ovc] += rp->flits;
     inputQ[rp->ilink].head_busy = true;
 
-    m_dbg.output(CALL_INFO, "%lld: router %d starting move from inQ %d:%d to oQ %d:%d, arrive time %lld\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d starting move from inQ %d:%d to oQ %d:%d, arrive time %lld\n",
               cycle(), routerID, rp->ilink, rp->ivc, rp->olink, rp->ovc, event->cycle);
 }
 
@@ -190,7 +190,7 @@ void SS_router::InQtoOutQ_readyNext (rtrP *rp) {
 
     //if (inputQ[rp->ilink].ready_vcQs > 0) {
     if (inputQ[rp->ilink].ready()) {
-        m_dbg.output(CALL_INFO, "%lld: router %d inQ %d has %d ready vcQs, adding to ready list after move parcel\n",
+        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d inQ %d has %d ready vcQs, adding to ready list after move parcel\n",
                   cycle(), routerID, rp->ilink, inputQ[rp->ilink].ready_vcQs );
         //ready_inQs_count++;
         ready_inQ = true;
@@ -225,7 +225,7 @@ void SS_router::InQtoOutQ_done (rtrP *rp, int ovc, int ilink, int olink) {
     //ready_oLCB_count++;
     //}
 
-    m_dbg.output(CALL_INFO, "%lld: router %d moved parcel from InQ :%d:%d to oQ %d:%d, oLCB rdy\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d moved parcel from InQ :%d:%d to oQ %d:%d, oLCB rdy\n",
               cycle(), routerID, ilink, rp->ivc, rp->olink, rp->ovc);
 }
 
@@ -247,7 +247,7 @@ void SS_router::OutQtoLCB_start (rtrP *rp) {
     oLCB->internal_busy = true;
 
 //#define DBprintf if (routerID == 446 && rp->ovc == 0 && cycle() >=42000) printf
-    m_dbg.output(CALL_INFO, "%lld: router %d starting move parcel from oQ %d:%d (size %d) to oLCB, outq rdy on %lld, tokens at %d\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d starting move parcel from oQ %d:%d (size %d) to oLCB, outq rdy on %" PRId64 ", tokens at %d\n",
               cycle(), routerID, rp->olink, rp->ovc,
               outputQ[rp->olink][rp->ilink].size_flits[rp->ovc], cycle() + rp->flits, outLCB[rp->olink].vcTokens[rp->ovc]);
 
@@ -268,7 +268,7 @@ void SS_router::OutQtoLCB_start (rtrP *rp) {
     push_heap(rtrEventQ.begin(), rtrEventQ.end(), rtrEvent_gt);
 
 
-    m_dbg.output(CALL_INFO, "%lld: router %d (%d:%d) tokens %d after send parcel\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d (%d:%d) tokens %d after send parcel\n",
               cycle(), routerID, rp->olink, rp->ovc,
               outLCB[rp->olink].vcTokens[rp->ovc] );
 }
@@ -282,12 +282,12 @@ void SS_router::OutQtoLCB_readyNext (rtrP *rp, int olink, int ilink, int ovc, in
 
     oLCB->internal_busy = false;
 
-    m_dbg.output(CALL_INFO, "%lld: router %d OutQ %d:%d finished moving parcel, will be at LCB on %lld\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d OutQ %d:%d finished moving parcel, will be at LCB on %" PRId64 "\n",
               cycle(), routerID, olink, ovc, cycle() + oLCBLat);
 
     //if (!wasReady && oLCB->readyInternal()) {
     if (oLCB->ready_vc_count > 0) {
-        m_dbg.output(CALL_INFO, "%lld: router %d put LCB %d back in ready list\n", cycle(), routerID, olink);
+        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d put LCB %d back in ready list\n", cycle(), routerID, olink);
         //ready_oLCB_count++;
         ready_oLCB = true;
     }
@@ -309,7 +309,7 @@ void SS_router::OutQtoLCB_done (rtrP *rp) {
     //ready_oLCB_count++;
     //}
 
-    m_dbg.output(CALL_INFO, "%lld: router %d finish move parcel from oQ :%d:%d:%d to oLCB size %d, %d datum, %d vc_rr, oLCB rdy\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d finish move parcel from oQ :%d:%d:%d to oLCB size %d, %d datum, %d vc_rr, oLCB rdy\n",
               cycle(), routerID, rp->olink, rp->ilink, rp->ovc, oLCB->size_flits,
               (int)oLCB->dataQ.size(), (int)oLCB->ready_vc_count);
 }
@@ -345,7 +345,7 @@ void SS_router::LCBxfer_start (int dir) {
     //send event to the next router
     dest->send( iLCBLat, rp->event );     
 
-    m_dbg.output(CALL_INFO, "%lld: router %d start xfer parcel (from %d to %d), oLCB %d size %d, %d datum, %d vc_rr, %d tokens\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d start xfer parcel (from %d to %d), oLCB %d size %d, %d datum, %d vc_rr, %d tokens\n",
               cycle(), routerID, np->srcNum, np->destNum, rp->olink, oLCB->size_flits,
               (int)oLCB->dataQ.size(), (int)oLCB->ready_vc_count, oLCB->vcTokens[rp->ovc]);
 
@@ -371,7 +371,7 @@ void SS_router::LCBxfer_done (rtrP *rp, int olink, int flits) {
 
 #ifdef ERRCHK
     if (oLCB->dataQ.front() != rp)
-        printf ("%lld: Error: router %d got oLCB complete parcel %p but %p is front of data q\n",
+        printf ("%" PRId64 ": Error: router %d got oLCB complete parcel %p but %p is front of data q\n",
                 cycle(), routerID, rp->p, oLCB->dataQ.front());
 #endif
 
@@ -383,7 +383,7 @@ void SS_router::LCBxfer_done (rtrP *rp, int olink, int flits) {
     oLCB->size_flits -= flits;
     oLCB->external_busy = false;
 
-    m_dbg.output(CALL_INFO, "%lld: router %d finish xfer parcel (size %d), oLCB %d size %d, %d datum, %d vc_rr\n",
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d finish xfer parcel (size %d), oLCB %d size %d, %d datum, %d vc_rr\n",
               cycle(), routerID, flits, rp->olink, oLCB->size_flits,
               (int)oLCB->dataQ.size(), (int)oLCB->ready_vc_count);
 

@@ -34,7 +34,7 @@ void SS_router::advanceEventQ () {
     rtrP *rp;
 
     //Handle events from inputDelay
-    m_dbg.output(CALL_INFO, "%lld: router %d event Q size %ld\n", cycle(), routerID, rtrEventQ.size());
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d event Q size %ld\n", cycle(), routerID, rtrEventQ.size());
 
     while ( (!rtrEventQ.empty()) && (rtrEventQ[0]->cycle <= cycle()))  {
         event = rtrEventQ[0];
@@ -43,7 +43,7 @@ void SS_router::advanceEventQ () {
 
         rp = event->rp;
 
-        m_dbg.output(CALL_INFO, "%lld: router %d event parcel - type %d, cycle %lld\n",  cycle(), routerID,
+        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d event parcel - type %d, cycle %lld\n",  cycle(), routerID,
                   event->type, event->cycle);
 
         switch (event->type) {
@@ -110,7 +110,7 @@ void SS_router::iLCBtoIn () {
             iLCB = &(inLCB[i]);
 
             LCBtoInQ_start (iLCB->dataQ.front());
-            m_dbg.output(CALL_INFO, "%lld: router %d iLCB %d internal busy\n", cycle(), routerID, iLCB->link);
+            m_dbg.output(CALL_INFO, "%" PRId64 ": router %d iLCB %d internal busy\n", cycle(), routerID, iLCB->link);
             iLCB->internal_busy = true;
             iLCB->dataQ.pop_front();
         }
@@ -128,7 +128,7 @@ void SS_router::iLCBtoIn () {
 // it ready, it can transfer data. This prevents a starvation situation.
 void SS_router::arbitrateInToOut () {
 
-    m_dbg.output(CALL_INFO, "%lld: router %d arbitrate In to Out\n", cycle(), routerID);
+    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d arbitrate In to Out\n", cycle(), routerID);
 
     int ilink, ivc;
     inQ_t *inQ;
@@ -144,14 +144,14 @@ void SS_router::arbitrateInToOut () {
             inQ = &(inputQ[i]);
             ilink = inQ->link;
 
-            m_dbg.output(CALL_INFO, "%lld: router %d has input Q %d ready, %d ready rr Qs\n",
+            m_dbg.output(CALL_INFO, "%" PRId64 ": router %d has input Q %d ready, %d ready rr Qs\n",
                       cycle(), routerID, ilink, inQ->ready_vcQs);
 
 //#define DBprintf if (((routerID==446) || (routerID==447) || (routerID==439) || (routerID==431) || (routerID==423) || (routerID==415) || (routerID==407) || (routerID==399)) && cycle() >= 42000) printf
             //Find a VC that is ready and has room to flow.  Start with the skipped queues.
             max_count = ROUTER_NUM_VCS + inQ->skipQs.size();
             //#define DBprintf if (routerID == 357 && cycle() > 30000) printf
-            m_dbg.output(CALL_INFO, "%lld: router %d has %d ready rr Qs, %ld skipped queues on iQ %d\n", cycle(), routerID,
+            m_dbg.output(CALL_INFO, "%" PRId64 ": router %d has %d ready rr Qs, %ld skipped queues on iQ %d\n", cycle(), routerID,
                       inQ->ready_vcQs, inQ->skipQs.size(), i);
             while (!queue_selected && max_count > 0) {
                 if (max_count > ROUTER_NUM_VCS) {
@@ -161,13 +161,13 @@ void SS_router::arbitrateInToOut () {
                     rp = theQ->front();
                     if (outputQ[rp->olink][ilink].size_flits[rp->ovc] + rp->flits <= rtrOutput_maxQSize_flits[rp->olink]) {
                         queue_selected = 1;
-                        m_dbg.output(CALL_INFO, "%lld: router %d skipped VC %d unblocked and selected for output %d:%d:%d\n", cycle(), routerID,
+                        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d skipped VC %d unblocked and selected for output %d:%d:%d\n", cycle(), routerID,
                                   ivc, rp->olink, rp->ovc, ilink);
                     }
                     else {
                         inQ->skipQs.push(ivc);
                         in_queue |= 1 << ivc;
-                        m_dbg.output(CALL_INFO, "%lld: router %d skipped VC %d blocked and requeued with %d in output queue %d:%d:%d\n",
+                        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d skipped VC %d blocked and requeued with %d in output queue %d:%d:%d\n",
                                   cycle(), routerID, ivc, outputQ[rp->olink][ilink].size_flits[rp->ovc], rp->olink, rp->ovc,
                                   ilink);
                     }
@@ -183,7 +183,7 @@ void SS_router::arbitrateInToOut () {
                         //if (cycle() == 824 && routerID == 357) printf ("and it has data\n");
                         if (outputQ[rp->olink][ilink].size_flits[rp->ovc] + rp->flits <= rtrOutput_maxQSize_flits[rp->olink]) {
                             queue_selected = 1;
-                            m_dbg.output(CALL_INFO, "%lld: router %d regular VC %d unblocked and selected for output %d:%d:%d\n", cycle(), routerID,
+                            m_dbg.output(CALL_INFO, "%" PRId64 ": router %d regular VC %d unblocked and selected for output %d:%d:%d\n", cycle(), routerID,
                                       ivc, rp->olink, rp->ovc, ilink);
                         }
                         else {
@@ -192,7 +192,7 @@ void SS_router::arbitrateInToOut () {
                             if (!(in_queue & (1 << ivc))) {
                                 inQ->skipQs.push(ivc);
                                 in_queue |= (1 << ivc);
-                                m_dbg.output(CALL_INFO, "%lld: router %d regular VC %d blocked and queued with %d in output queue %d:%d:%d\n",
+                                m_dbg.output(CALL_INFO, "%" PRId64 ": router %d regular VC %d blocked and queued with %d in output queue %d:%d:%d\n",
                                           cycle(), routerID, ivc, outputQ[rp->olink][ilink].size_flits[rp->ovc], rp->olink,
                                           rp->ovc, ilink);
                             }
@@ -344,7 +344,7 @@ void SS_router::arbitrateOutToLCB () {
             }
 
             //VC is ready.  Choose an output queue.
-            m_dbg.output(CALL_INFO, "%lld: router %d vc %d ready\n", cycle(), routerID, ovc);
+            m_dbg.output(CALL_INFO, "%" PRId64 ": router %d vc %d ready\n", cycle(), routerID, ovc);
 
             int *rr = &(oLCB->ilink_rr[ovc]);
             oLCB->ilink_rr[ovc] = (oLCB->ilink_rr[ovc] + 1) % ROUTER_NUM_INQS;
@@ -353,7 +353,7 @@ void SS_router::arbitrateOutToLCB () {
             //If the output queue has data, it MUST be able to flow.  We have
             //MaxPacketSize flits available
             while ((oQs[*rr].vcQ[ovc].empty()) && (max_count > 0)) {
-                m_dbg.output(CALL_INFO, "%lld: router %d oLCB %d VC %d input %d empty\n",
+                m_dbg.output(CALL_INFO, "%" PRId64 ": router %d oLCB %d VC %d input %d empty\n",
                           cycle(), routerID, oLCB->link, ovc, *rr);
                 *rr = (*rr + 1) % ROUTER_NUM_INQS;
                 max_count--;
@@ -400,7 +400,7 @@ void SS_router::arbitrateOutToLCB () {
             while (again) {
                 again = false;
 
-                m_dbg.output(CALL_INFO, "%lld: router %d oLCB %d ready to move internal Data\n",
+                m_dbg.output(CALL_INFO, "%" PRId64 ": router %d oLCB %d ready to move internal Data\n",
                           cycle(), routerID, outLCB[i].link);
 
                 oLCB = &(outLCB[i]);
@@ -410,7 +410,7 @@ void SS_router::arbitrateOutToLCB () {
                          (oLCB->stall4tokens[oLCB->vc_rr] > 0)  ||
                          (oLCB->vcTokens[oLCB->vc_rr] < ed_NIC::MaxPacketSize))
                         && (max_count > 0)) {
-                    m_dbg.output(CALL_INFO, "%lld: router %d oLCB %d VC %d stalled: outQ count %d, stall 4 %d\n",
+                    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d oLCB %d VC %d stalled: outQ count %d, stall 4 %d\n",
                               cycle(), routerID, oLCB->link, oLCB->vc_rr, oLCB->ready_outQ_count[oLCB->vc_rr],
                               oLCB->stall4tokens[oLCB->vc_rr]);
                     oLCB->vc_rr = (oLCB->vc_rr + 1) % ROUTER_NUM_VCS;
@@ -419,7 +419,7 @@ void SS_router::arbitrateOutToLCB () {
 
                 if (max_count == 0) {
                     break;
-                    printf ("%lld: Error: router %d LCB %d had %d ready vcs, but no ready output queues\n",
+                    printf ("%" PRId64 ": Error: router %d LCB %d had %d ready vcs, but no ready output queues\n",
                             cycle(), routerID, oLCB->link, oLCB->ready_vc_count);
                 }
 
@@ -434,14 +434,14 @@ void SS_router::arbitrateOutToLCB () {
                 // have enough tokens, then get all the way down to the bottom and
                 // do nothing, when another queue may be ok to send
                 while ((oQs[*rr].vcQ[ovc].empty()) && (max_count > 0)) {
-                    m_dbg.output(CALL_INFO, "%lld: router %d oLCB %d VC %d input %d empty\n",
+                    m_dbg.output(CALL_INFO, "%" PRId64 ": router %d oLCB %d VC %d input %d empty\n",
                               cycle(), routerID, oLCB->link, ovc, *rr);
                     *rr = (*rr + 1) % ROUTER_NUM_INQS;
                     max_count--;
                 }
 
                 if (max_count == 0) {
-                    printf ("%lld: Error: router %d LCB %d had vc %d ready count %d, but no ready output queues\n",
+                    printf ("%" PRId64 ": Error: router %d LCB %d had vc %d ready count %d, but no ready output queues\n",
                             cycle(), routerID, oLCB->link, ovc, oLCB->ready_outQ_count[ovc]);
                 }
 
@@ -449,11 +449,11 @@ void SS_router::arbitrateOutToLCB () {
                 theQ = &(oQs[ilink].vcQ[ovc]);
 
                 //#ifdef ERRCHK
-                m_dbg.output(CALL_INFO, "%lld: router %d has output Q %d:%d:%d ready, size %d\n",
+                m_dbg.output(CALL_INFO, "%" PRId64 ": router %d has output Q %d:%d:%d ready, size %d\n",
                           cycle(), routerID, oLCB->link, ilink, ovc, (int)theQ->size());
 
                 rp = theQ->front();
-                m_dbg.output(CALL_INFO, "%lld: router %d out Q %d:%d:%d trying to send %p to oLCB\n", cycle(),
+                m_dbg.output(CALL_INFO, "%" PRId64 ": router %d out Q %d:%d:%d trying to send %p to oLCB\n", cycle(),
                           routerID, oLCB->link, ilink, ovc, rp->p);
 
                 if (oLCB->size_flits + rp->flits <= oLCB_maxSize_flits) {
@@ -461,14 +461,14 @@ void SS_router::arbitrateOutToLCB () {
 
                     //if (oLCB->vcTokens[ovc] >= rp->flits) {
                     if (oLCB->vcTokens[ovc] < rp->flits) {
-                        printf ("%lld: Error router %d OVC not enough flits\n");
+                        printf ("%" PRId64 ": Error router %d OVC not enough flits\n");
                         oLCB->stall4tokens[ovc] = rp->flits - oLCB->vcTokens[ovc];
                         oLCB->ready_vc_count--;
                         if (oLCB->ready_vc_count > 0)
                             again = true;
                     } else {
                         oLCB->vc_rr = (oLCB->vc_rr + 1) % ROUTER_NUM_VCS;
-                        m_dbg.output(CALL_INFO, "%lld: router %d oQ %d:%d:%d ok to send %p, %d flits, %d tokens\n",
+                        m_dbg.output(CALL_INFO, "%" PRId64 ": router %d oQ %d:%d:%d ok to send %p, %d flits, %d tokens\n",
                                   cycle(), routerID, oLCB->link, ilink, ovc, rp->p,
                                   rp->flits, oLCB->vcTokens[ovc]);
 
@@ -530,7 +530,7 @@ void SS_router::DebugEvent() {
   for (olink = 0; olink < ROUTER_NUM_OUTQS; olink++)
     for (ovc = 0; ovc < ROUTER_NUM_VCS; ovc++) {
       if (outLCB[olink].vcTokens[ovc] > rtrInput_maxQSize_flits)
-	printf ("%lld: DEBUG rtr %d too many tokens (%d) on %d:%d\n",
+	printf ("%" PRId64 ": DEBUG rtr %d too many tokens (%d) on %d:%d\n",
 		cycle(), routerID, outLCB[olink].vcTokens[ovc], olink, ovc);
 
     }
@@ -546,11 +546,11 @@ void SS_router::DebugEvent() {
   }
 
   if (sum1 != ready_inQs_count)
-    printf ("%lld: DEBUG rtr %d has %d ready inQs count = %d\n", cycle(),
+    printf ("%" PRId64 ": DEBUG rtr %d has %d ready inQs count = %d\n", cycle(),
 	    routerID, sum1, ready_inQs_count);
 
   if (sum2 != ready_iLCB_count)
-    printf ("%lld: DEBUG rtr %d has %d ready iLCB count = %d\n", cycle(),
+    printf ("%" PRId64 ": DEBUG rtr %d has %d ready iLCB count = %d\n", cycle(),
 	    routerID, sum2, ready_iLCB_count);
 
 
@@ -559,12 +559,12 @@ void SS_router::DebugEvent() {
      if (ready_oLCB[olink] != NULL)
       sum1++;
      else if (!outLCB[olink].sleeping())
-       printf ("%lld: DEBUG router %d oLCB %d not sleeping not ready\n", cycle(),
+       printf ("%" PRId64 ": DEBUG router %d oLCB %d not sleeping not ready\n", cycle(),
 	       routerID, olink);
   }
 
   if (sum1 != ready_oLCB_count)
-    printf ("%lld: DEBUG rtr %d has %d ready oLCB count = %d\n", cycle(),
+    printf ("%" PRId64 ": DEBUG rtr %d has %d ready oLCB count = %d\n", cycle(),
 	    routerID, sum2, ready_oLCB_count);
 
 }
