@@ -34,9 +34,9 @@ public:
         return true;
     }
 
-    void finish(const SST::Output* output, uint64_t time ) {
+    void completed(const SST::Output* output, uint64_t time ) {
         delete getData();
-        EmberMessagePassingGenerator::finish(output,time);
+        EmberMessagePassingGenerator::completed(output,time);
     }
 };
 

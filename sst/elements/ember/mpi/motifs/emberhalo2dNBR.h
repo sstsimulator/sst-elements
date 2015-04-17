@@ -24,7 +24,7 @@ public:
 	EmberHalo2DNBRGenerator(SST::Component* owner, Params& params);
 	void configure();
 	bool generate( std::queue<EmberEvent*>& evQ);
-    void finish(const SST::Output* output, uint64_t );
+    void completed(const SST::Output* output, uint64_t );
 
 private:
 	uint32_t m_loopIndex;

@@ -47,7 +47,7 @@ EmberHalo2DNBRGenerator::EmberHalo2DNBRGenerator(SST::Component* owner, Params& 
 	messageCount = 0;
 }
 
-void EmberHalo2DNBRGenerator::finish(const SST::Output* output, uint64_t) {
+void EmberHalo2DNBRGenerator::completed(const SST::Output* output, uint64_t) {
 	output->verbose(CALL_INFO, 2, 0, "Generator finishing, sent: %" PRIu32 " messages.\n", messageCount);
 }
 

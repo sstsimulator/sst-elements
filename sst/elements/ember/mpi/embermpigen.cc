@@ -110,7 +110,7 @@ int32_t EmberMessagePassingGenerator::convertPositionToRank(
     return m_rankMap->convertPositionToRank(peX, peY, peZ, posX, posY, posZ);
 }
 
-void EmberMessagePassingGenerator::finish(const SST::Output* output, 
+void EmberMessagePassingGenerator::completed(const SST::Output* output, 
         uint64_t time ) 
 {
     GEN_DBG( 1, "%s\n",m_name.c_str());

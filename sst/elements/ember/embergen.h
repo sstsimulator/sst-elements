@@ -78,7 +78,7 @@ class EmberGenerator : public SubComponent {
         assert(0);
     }
 
-	virtual void finish( const SST::Output* output, uint64_t time) { 
+    virtual void completed( const SST::Output* output, uint64_t time) {
         assert(0);
     }
 

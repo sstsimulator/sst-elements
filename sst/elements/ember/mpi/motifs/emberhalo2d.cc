@@ -104,7 +104,7 @@ void EmberHalo2DGenerator::configure()
 		(sendNorth ? "Y" : "N"), procNorth);
 }
 
-void EmberHalo2DGenerator::finish(const SST::Output* output, uint64_t ) {
+void EmberHalo2DGenerator::completed(const SST::Output* output, uint64_t ) {
     output->verbose(CALL_INFO, 2, 0, "Generator finishing, sent: %" PRIu32 " messages.\n", messageCount);
 }
 

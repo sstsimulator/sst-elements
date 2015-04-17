@@ -202,7 +202,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
         // if the event Queue is empty after a refill the motif is done
         if (  evQueue.empty() ) {
-            m_generator->finish( &output, getCurrentSimTimeNano() );
+            m_generator->completed( &output, getCurrentSimTimeNano() );
             if ( m_generator->primary() ) {	
 	            primaryComponentOKToEndSim();
             }
