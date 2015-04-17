@@ -31,7 +31,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
 
 	Params readerParams = params.find_prefix_params("readerParams.");
-	reader = dynamic_cast<ProsperoTraceReader*>( loadModuleWithComponent(traceModule, this, readerParams) );
+	reader = dynamic_cast<ProsperoTraceReader*>( loadSubComponent(traceModule, this, readerParams) );
 
 	if(NULL == reader) {
 		output->fatal(CALL_INFO, -1, "Failed to load reader module: %s\n", traceModule.c_str());
