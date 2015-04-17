@@ -571,7 +571,7 @@ public:
                                     read_pt,
                                     ev.hdr_data,
                                     0,
-                                    NULL);
+                                    0);
                         crReturn();
 
                     } else if (!PTL_IS_SHORT_MSG(ev.match_bits) && (protocol == rndv)) {
@@ -593,7 +593,7 @@ public:
                                     read_pt,
                                     ev.hdr_data,
                                     0,
-                                    NULL);
+                                    0);
                         crReturn();
 
                     } else if (!PTL_IS_SHORT_MSG(ev.match_bits) && 
@@ -619,7 +619,7 @@ public:
                                             read_pt,
                                             ev.hdr_data,
                                             0,
-                                            NULL);
+                                            0);
                                 crReturn();
                                 
                             } else {
@@ -646,7 +646,7 @@ public:
                                         read_pt,
                                         ev.hdr_data,
                                         0,
-                                        NULL);
+                                        0);
                             crReturn();
                         }
 
@@ -700,7 +700,7 @@ public:
                                     read_pt,
                                     ev.hdr_data,
                                     0,
-                                    NULL);
+                                    0);
                         crReturn();
                     }
                 } else if (ev.type == PTL_EVENT_REPLY) {
@@ -784,7 +784,7 @@ public:
 
                 cur_len = len + pert;
                 /* tlast is shared at the bottom, so is always the same on both nodes */
-                nrepeat = MAX((.005 / (((double) cur_len / MAX(1, (cur_len - inc + 1.0))) * tlast)), 8);
+                nrepeat = MAX((.005 / (((double) cur_len / (MAX(1, (cur_len - inc + 1.0)))) * tlast)), 8);
 
                 crFuncCall(barrier);
 

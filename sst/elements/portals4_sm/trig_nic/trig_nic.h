@@ -87,7 +87,7 @@ private:
     // because we are doing credits from the host, which mimicks
     // having a max size for the PIO_Q, but we'll never check that
     // here.
-    int dma_q_max_size;
+//    int dma_q_max_size;
 
     typedef union {
 	int64_t int_val;

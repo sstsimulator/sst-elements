@@ -374,7 +374,8 @@ private:
 		     void* start, void* user_ptr,
 		     ptl_hdr_data_t hdr_data, ptl_ni_fail_t ni_fail_type) {
 		     // ptl_op_t atomic_operation, ptl_datatype_t atomic_type) {
-	if ( event->type != type && type != PTL_UNDEF ) {
+//	if ( event->type != type && type != PTL_UNDEF ) {  // NOTE: type != PTL_UNDEF is always true PTL_UNDEF defined to be ~0 which is -1. type is an enum that is 0 or more.
+	if ( event->type != type && true ) {  
 	    printf("type\n"); return false; }
 	if ( event->initiator != initiator && ~initiator != 0 ) {
 	    printf("initiator\n"); return false; }

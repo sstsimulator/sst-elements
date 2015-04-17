@@ -97,9 +97,9 @@ trig_nic::trig_nic( ComponentId_t id, Params& params ) :
 bool trig_nic::clock_handler ( Cycle_t cycle ) {
 //     printf("clock_handler()\n");
     // All we do is look at the two queues and copy stuff across
-    bool work_done = false;
+//    bool work_done = false;
     if ( !toNicQ_empty( 0 ) ) {
-	work_done = true;
+//	work_done = true;
         RtrEvent* event = toNicQ_front( 0 );
         toNicQ_pop( 0 );
 
@@ -153,7 +153,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 
 
     if ( adv_pio ) {
-	work_done = true;
+//	work_done = true;
         trig_nic_event* ev = pio_q.front();
 	if ( ev->ptl_op == PTL_NO_OP || ev->ptl_op == PTL_DMA ) {
 	    if ( ev->head_packet ) {
@@ -238,7 +238,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     
     // Check to see if we have anything in the dma_q to send out
     if ( adv_dma ) {
-	work_done = true;
+//	work_done = true;
 	    
 	// See if there is room in the output q
 	if (rtr_q_size < rtr_q_max_size) {
@@ -328,7 +328,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
         }
     }
     if ( nextToRtr != NULL ) {
-	work_done = true;
+//	work_done = true;
 
 	// 	printf("OK, really sending an event to router\n");
         if ( send2Rtr(nextToRtr) ) {

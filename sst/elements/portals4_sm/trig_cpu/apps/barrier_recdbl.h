@@ -27,7 +27,9 @@ public:
         int adj;
 
         /* Initialization case */
-        for (adj = 0x1; adj <= num_nodes ; adj  <<= 1); adj = adj >> 1;
+        for (adj = 0x1; adj <= num_nodes ; adj  <<= 1)
+            ; 
+        adj = adj >> 1;
         if (adj != num_nodes) {
             printf("recursive_doubling requires power of 2 nodes (%d)\n",
                    num_nodes);
