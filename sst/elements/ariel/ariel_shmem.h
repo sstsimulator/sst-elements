@@ -35,6 +35,7 @@ enum ArielShmemCmd_t {
 
 struct ArielCommand {
     ArielShmemCmd_t command;
+    uint64_t instPtr;
     union {
         struct {
             uint32_t size;
