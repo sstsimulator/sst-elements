@@ -42,3 +42,63 @@ sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
 	ariel_shmem.h \
 	arieltracegen.h
+
+libexec_PROGRAMS =
+
+if SST_COMPILE_OSX
+
+libexec_PROGRAMS += fesimple.dylib
+
+fesimple.dylib: fesimple.o
+	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
+	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+	-L$(PINTOOL_DIR)/intel64/lib \
+	-L$(PINTOOL_DIR)/intel64/lib-ext \
+	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
+	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	-o fesimple.so fesimple.o  \
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt
+
+fesimple.o: frontend/simple/fesimple.cc
+	$(CXX) -fPIC -O3 \
+	-fomit-frame-pointer \
+	$(CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_OSX \
+	-I$(PINTOOL_DIR)/source/include/pin \
+	-I$(PINTOOL_DIR)/ \
+	-I$(PINTOOL_DIR)/extras/components/include \
+	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-o fesimple.o -c \
+	frontend/simple/fesimple.cc
+
+elif
+
+libexec_PROGRAMS += fesimple.so
+
+fesimple.so: fesimple.o
+	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
+	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+	-L$(PINTOOL_DIR)/intel64/lib \
+	-L$(PINTOOL_DIR)/intel64/lib-ext \
+	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
+	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	-o fesimple.so fesimple.o  \
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt
+
+fesimple.o: frontend/simple/fesimple.cc
+	$(CXX) -fPIC -O3 \
+	-fomit-frame-pointer \
+	$(CPPFLAGS) \
+	$(BOOST_CPPFLAGS) \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
+	-I$(PINTOOL_DIR)/source/include/pin \
+	-I$(PINTOOL_DIR)/ \
+	-I$(PINTOOL_DIR)/extras/components/include \
+	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	-o fesimple.o -c \
+	frontend/simple/fesimple.cc
+
+endif
