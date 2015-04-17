@@ -50,21 +50,22 @@ if SST_COMPILE_OSX
 libexec_PROGRAMS += fesimple.dylib
 
 fesimple.dylib: fesimple.o
-	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
-	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+	$(CXX) -shared \
+	-Wl,-exported_symbols_list \
+	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
+	-stdlib=libstdc++ \
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
-	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o fesimple.so fesimple.o  \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread
 
 fesimple.o: frontend/simple/fesimple.cc
 	$(CXX) -fPIC -O3 \
 	-fomit-frame-pointer \
 	$(CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
-	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_OSX \
+	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
 	-I$(PINTOOL_DIR)/source/include/pin \
 	-I$(PINTOOL_DIR)/ \
 	-I$(PINTOOL_DIR)/extras/components/include \
@@ -73,7 +74,7 @@ fesimple.o: frontend/simple/fesimple.cc
 	-o fesimple.o -c \
 	frontend/simple/fesimple.cc
 
-elif
+else
 
 libexec_PROGRAMS += fesimple.so
 
