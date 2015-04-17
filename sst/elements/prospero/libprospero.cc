@@ -29,16 +29,16 @@ static Component* create_ProsperoCPU(ComponentId_t id, Params& params) {
 	return new ProsperoComponent( id, params );
 }
 
-static Module* create_TextTraceReader(Component* comp, Params& params) {
+static SubComponent* create_TextTraceReader(Component* comp, Params& params) {
 	return new ProsperoTextTraceReader(comp, params);
 }
 
-static Module* create_BinaryTraceReader(Component* comp, Params& params) {
+static SubComponent* create_BinaryTraceReader(Component* comp, Params& params) {
 	return new ProsperoBinaryTraceReader(comp, params);
 }
 
 #ifdef HAVE_LIBZ
-static Module* create_CompressedBinaryTraceReader(Component* comp, Params& params) {
+static SubComponent* create_CompressedBinaryTraceReader(Component* comp, Params& params) {
 	return new ProsperoCompressedBinaryTraceReader(comp, params);
 }
 #endif
@@ -76,23 +76,23 @@ static const ElementInfoPort prospero_ports[] = {
     { NULL, NULL, NULL }
 };
 
-static const ElementInfoModule modules[] = {
+static const ElementInfoSubComponent subcomponents[] = {
  	{
 		"ProsperoTextTraceReader",
 		"Reads a trace from a text file",
 		NULL,
-		NULL,
 		create_TextTraceReader,
 		prosperoTextReader_params,
+		NULL,
 		"SST::Prospero::ProsperoTraceReader"
 	},
  	{
 		"ProsperoBinaryTraceReader",
 		"Reads a trace from a binary file",
 		NULL,
-		NULL,
 		create_BinaryTraceReader,
 		prosperoBinaryReader_params,
+		NULL,
 		"SST::Prospero::ProsperoTraceReader"
 	},
 #ifdef HAVE_LIBZ
@@ -100,13 +100,13 @@ static const ElementInfoModule modules[] = {
 		"ProsperoCompressedBinaryTraceReader",
 		"Reads a trace from a compressed binary file",
 		NULL,
-		NULL,
 		create_CompressedBinaryTraceReader,
 		prosperoCompressedBinaryReader_params,
+		NULL,
 		"SST::Prospero::ProsperoTraceReader"
 	},
 #endif
-    	{NULL, NULL, NULL, NULL, NULL, NULL}
+    	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 static const ElementInfoComponent components[] = {
@@ -127,9 +127,10 @@ extern "C" {
 		"prospero",
 		"Trace-based CPU models",
 		components,
-        	NULL, /* Events */
-        	NULL, /* Introspectors */
-        	modules,
+        	NULL, // Events
+        	NULL, // Introspectors
+        	NULL, // Modules
+		subcomponents,
 		NULL,
 		NULL
 	};

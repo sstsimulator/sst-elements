@@ -15,7 +15,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/output.h>
-#include <sst/core/module.h>
+#include <sst/core/subcomponent.h>
 #include <sst/core/params.h>
 
 namespace SST {
@@ -50,10 +50,10 @@ private:
 	const ProsperoTraceEntryOperation op;
 };
 
-class ProsperoTraceReader : public Module {
+class ProsperoTraceReader : public SubComponent {
 
 public:
-	ProsperoTraceReader( Component* owner, Params& params ) {};
+	ProsperoTraceReader( Component* owner, Params& params ) : SubComponent(owner) {};
 	~ProsperoTraceReader() { };
 	virtual ProsperoTraceEntry* readNextEntry() { return NULL; };
 	void setOutput(Output* out) { output = out; }
