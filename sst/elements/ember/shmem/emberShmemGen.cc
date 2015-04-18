@@ -35,8 +35,8 @@ EmberShmemGenerator::~EmberShmemGenerator()
     GEN_DBG( 1, "\n");
 }
 
-void EmberShmemGenerator::finish(const SST::Output* output, 
-        uint64_t time ) 
+void EmberShmemGenerator::completed(const SST::Output* output,
+        uint64_t time )
 {
     GEN_DBG( 1, "\n");
 }

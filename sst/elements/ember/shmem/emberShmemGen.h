@@ -46,7 +46,7 @@ public:
 
 	EmberShmemGenerator( Component* owner, Params& params );
 	~EmberShmemGenerator();
-    virtual void finish( const SST::Output*, uint64_t time );
+    virtual void completed( const SST::Output*, uint64_t time );
 
 protected:
 
