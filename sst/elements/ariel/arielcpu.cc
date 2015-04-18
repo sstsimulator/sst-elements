@@ -102,9 +102,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         char* tool_path = (char*) malloc(sizeof(char) * 1024);
 
 #ifdef SST_COMPILE_MACOSX
-        sprintf(tool_path, "%s/libexec/fesimple.so");
+        sprintf(tool_path, "%s/libexec/fesimple.dylib", SST_INSTALL_PREFIX);
 #else
-        sprintf(tool_path, "%s/libexec/fesimple.dylib");
+        sprintf(tool_path, "%s/libexec/fesimple.so", SST_INSTALL_PREFIX);
 #endif
 
 	std::string ariel_tool = params.find_string("arieltool", tool_path);
