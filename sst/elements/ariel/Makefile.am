@@ -49,6 +49,8 @@ if SST_COMPILE_OSX
 
 libexec_PROGRAMS += fesimple.dylib
 
+fesimple_dylib_SOURCES = frontend/simple/fesimple.cc
+
 fesimple.dylib: fesimple.o
 	$(CXX) -shared \
 	-Wl,-exported_symbols_list \
@@ -79,6 +81,8 @@ fesimple.o: frontend/simple/fesimple.cc
 else
 
 libexec_PROGRAMS += fesimple.so
+
+fesimple_so_SOURCES = frontend/simple/fesimple.cc
 
 fesimple.so: fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
