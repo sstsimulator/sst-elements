@@ -751,7 +751,7 @@ void Ember3DAMRGenerator::configure()
 
 	loadBlocks();
 
-	printf("Completed loading blocks in rank %" PRIu32 "\n", (uint32_t) rank();
+	printf("Completed loading blocks in rank %" PRIu32 "\n", (uint32_t) rank());
 
 	free(blockFilePath);
 
