@@ -750,6 +750,9 @@ void Ember3DAMRGenerator::configure()
 	free(newPrefix);
 
 	loadBlocks();
+
+	printf("Completed loading blocks in rank %" PRIu32 "\n", (uint32_t) rank();
+
 	free(blockFilePath);
 
 	out->verbose(CALL_INFO, 2, 0, "Motif configuration is complete.\n");
