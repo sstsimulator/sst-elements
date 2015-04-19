@@ -109,9 +109,10 @@ libember_la_SOURCES = \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h
 
-bin_PROGRAMS = sstspygen
+bin_PROGRAMS = sst-spygen sst-meshconvert
 
-sstspygen_SOURCES = tools/spygen/spygen.cc
+sst_spygen_SOURCES = tools/spygen/spygen.cc
+sst_meshconvert_SOURCES = tools/meshconverter/meshconverter.cc
 
 libember_la_LDFLAGS = -module -avoid-version
 
