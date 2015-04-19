@@ -31,9 +31,9 @@ char* readLine(FILE* input) {
 }
 
 void readNextMeshLine(FILE* mesh, uint32_t* blockID, uint32_t* refineLev,
-                int32_t* xDown, int32_t* xUp,
-                int32_t* yDown, int32_t* yUp,
-                int32_t* zDown, int32_t* zUp) {
+                int8_t* xDown, int8_t* xUp,
+                int8_t* yDown, int8_t* yUp,
+                int8_t* zDown, int8_t* zUp) {
 
         char* nextLine = readLine(mesh);
 
@@ -48,12 +48,12 @@ void readNextMeshLine(FILE* mesh, uint32_t* blockID, uint32_t* refineLev,
 
         *blockID   = (uint32_t) atoi(blockIDStr);
         *refineLev = (uint32_t) atoi(refineLevelStr);
-        *xDown     = (int32_t) atoi(xDStr);
-        *xUp       = (int32_t) atoi(xUStr);
-        *yDown     = (int32_t) atoi(yDStr);
-        *yUp       = (int32_t) atoi(yUStr);
-        *zDown     = (int32_t) atoi(zDStr);
-        *zUp       = (int32_t) atoi(zUStr);
+        *xDown     = (int8_t) atoi(xDStr);
+        *xUp       = (int8_t) atoi(xUStr);
+        *yDown     = (int8_t) atoi(yDStr);
+        *yUp       = (int8_t) atoi(yUStr);
+        *zDown     = (int8_t) atoi(zDStr);
+        *zUp       = (int8_t) atoi(zUStr);
 
 	free(nextLine);
 }
@@ -103,12 +103,12 @@ int main(int argc, char* argv[]) {
 	uint32_t blocksOnNode = 0;
 	uint32_t nextBlockID = 0;
 	uint32_t nextBlockRefineLevel = 0;
-	int32_t  blockXDown = 0;
-	int32_t  blockXUp = 0;
-	int32_t  blockYDown = 0;
-	int32_t  blockYUp = 0;
-	int32_t  blockZDown = 0;
-	int32_t  blockZUp = 0;
+	int8_t  blockXDown = 0;
+	int8_t  blockXUp = 0;
+	int8_t  blockYDown = 0;
+	int8_t  blockYUp = 0;
+	int8_t  blockZDown = 0;
+	int8_t  blockZUp = 0;
 
 	for(uint32_t i = 0; i < rankCount; i++) {
 		printf("Processing rank %" PRIu32 "...\n", i);
