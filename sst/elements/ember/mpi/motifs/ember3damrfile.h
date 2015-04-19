@@ -32,11 +32,11 @@ public:
 
 	}
 
-    virtual void readNodeMeshLine(uint32_t* blockCount);
+    virtual void readNodeMeshLine(uint32_t* blockCount) = 0;
 	virtual void readNextMeshLine(uint32_t* blockID, uint32_t* refineLev,
 		int32_t* xDown, int32_t* xUp,
 		int32_t* yDown, int32_t* yUp,
-        int32_t* zDown, int32_t* zUp);
+        int32_t* zDown, int32_t* zUp) = 0;
 
 	uint32_t getBlocksX() const { return (uint32_t) blocksX; }
 	uint32_t getBlocksY() const { return (uint32_t) blocksY; }

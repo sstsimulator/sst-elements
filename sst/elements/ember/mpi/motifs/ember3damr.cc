@@ -771,6 +771,8 @@ void Ember3DAMRGenerator::configure()
 	// Clear system wide block wire up map
 	blockToNodeMap.clear();
 
+	printf("Done loading mesh on rank: %" PRIu32 "\n", rank());
+
 	out->verbose(CALL_INFO, 2, 0, "Motif configuration is complete.\n");
 }
 
