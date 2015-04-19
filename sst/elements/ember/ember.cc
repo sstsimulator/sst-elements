@@ -295,6 +295,7 @@ static const ElementInfoParam amr3d_params[] = {
 	{       "arg.nx", 		        "Sets the size of a block in X", "8" },
         {       "arg.ny",                       "Sets the size of a block in Y", "8" },
         {       "arg.nz",                       "Sets the size of a block in Z", "8" },
+        {       "arg.filetype",                 "Mesh file type, set to \'binary\' or \'text\'", "text" },
         {       "arg.fieldspercell",            "Sets the number of fields per mesh cell", "8" },
 	{	NULL,	NULL,	NULL	}
 };

@@ -27,7 +27,11 @@ public:
 		amrFilePath(amrPath),
 		output(out) {
 	}
-    
+
+	virtual ~EmberAMRFile() {
+
+	}
+
     virtual void readNodeMeshLine(uint32_t* blockCount);
 	virtual void readNextMeshLine(uint32_t* blockID, uint32_t* refineLev,
 		int32_t* xDown, int32_t* xUp,

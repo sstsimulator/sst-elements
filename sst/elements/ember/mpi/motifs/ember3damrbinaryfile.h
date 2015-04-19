@@ -62,6 +62,10 @@ namespace SST {
                              totalBlockCount, maxRefinementLevel, blocksX, blocksY, blocksZ);
             }
             
+            ~EmberAMRBinaryFile() {
+                
+            }
+            
             void readNodeMeshLine(uint32_t* blockCount) {
                 fread(blockCount, sizeof(uint32_t), 1, amrFile);
             }

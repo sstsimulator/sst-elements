@@ -55,6 +55,10 @@ namespace SST {
                              totalBlockCount, maxRefinementLevel, blocksX, blocksY, blocksZ);
             }
             
+            ~EmberAMRTextFile() {
+                
+            }
+            
             char* readLine() {
                 char* theLine = (char*) malloc(sizeof(char) * 64);
                 int nextIndex = 0;
