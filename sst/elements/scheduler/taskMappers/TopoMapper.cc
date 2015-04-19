@@ -16,7 +16,7 @@
 #ifdef HAVE_METIS
 #include "metis.h"
 #endif
-#include "rcm.h"
+#include "Rcm.h"
 
 #include <climits>
 #include <numeric>
@@ -171,7 +171,7 @@ TaskMapInfo* TopoMapper::mapTasks(AllocInfo* allocInfo)
 
     vector<int> nodeTopGraphMap(nodeTopGraph.size()); // mapping from nodeTopGraph to nodeGraph
 
-    if(algorithmType == RCM){
+    if(algorithmType == R_C_M){
 
         mapRCM(&nodeTopGraph, &nodeTopGraphMap);
 
@@ -269,87 +269,31 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
 
     vector<vector<int> > rtg;
     vector<int> rtg2ptgmap(phyGraph.size()); // map to translate rtg vertices to nodeGraph vertices
-    int use_rtg = 0; // decide which graph to use for RCM of nodeGraph
+    vector<int> rcm_nodeGraph_map(phyGraph.size());
+    RCM rcm;
 
-    // if cardinalities don't match
-    if(phyGraph.size() != commGraph.size()) {
-        // as a simple fix, just remove all unused (numCores == 0) vertices
-        // (and all neighboring edges) from nodeGraph
-        // to remove from nodeGraph, we build a new graph called rtg (RCM Topology Graph)
-        vector<int> rtgmap(phyGraph.size(), -1); // new numbers in rtg
-        int cnt = 0;
-        for(unsigned int i = 0; i < phyGraph.size(); ++i) {
-            if(numCores[i] != 0) {
-                rtgmap[i] = cnt;
-                rtg2ptgmap[cnt] = i;
-                cnt++;
-            }
-        }
-        for(unsigned int i = 0; i < phyGraph.size(); ++i){
-            if(numCores[i] != 0) {
-                // translate all adjacent vertices!
-                vector<int> adj;
-                for(unsigned int j=0; j<phyGraph[i].size(); ++j) {
-                    if(rtgmap[j] != -1){
-                        adj.push_back(rtgmap[j]);
-                    }
-                }
-                rtg.push_back(adj);
-            }
-        }
-        use_rtg = 1;
+    int ptgn = 0;
+    for(unsigned int i = 0; i < phyGraph.size(); ++i){
+        ptgn += phyGraph[i].size();
     }
-
-    vector<int> rcm_nodeGraph_map;
-    if(use_rtg) {
-        rcm_nodeGraph_map.resize(rtg.size());
-        int rtgn = 0;
-        for(unsigned int i = 0; i < rtg.size(); ++i){
-            rtgn += rtg[i].size();
+    vector<int> xadj(phyGraph.size()+1); // CSR index
+    vector<int> adjncy(ptgn); // CSR list
+    for(unsigned int i=0; i < (phyGraph.size()+1); i++){
+        if(i==0){
+            xadj[i]=0;
+        } else {
+            xadj[i] = xadj[i-1]+phyGraph[i-1].size();
         }
-        vector<int> xadj(rtg.size()+1); // CSR index
-        vector<int> adjncy(rtgn); // CSR list
-        for(unsigned int i = 0; i < (rtg.size()+1); i++){
-            if(i == 0) {
-                xadj[i] = 0;
-            } else {
-                xadj[i] = xadj[i-1] + rtg[i-1].size();
-            }
-        }
-        int pos = 0;
-        for(unsigned int i = 0; i < rtg.size(); i++){
-            for(unsigned int j = 0; j < rtg[i].size(); ++j){
-                adjncy[pos++] = rtg[i][j];
-            }
-        }
-        vector<signed char> mask(rtg.size(), 1);
-        vector<int> degs(rtg.size());
-        genrcmi(rtg.size(), 0, &xadj[0], &adjncy[0], &rcm_nodeGraph_map[0], &mask[0], &degs[0]);
-    } else {
-        rcm_nodeGraph_map.resize(phyGraph.size());
-        int ptgn = 0;
-        for(unsigned int i = 0; i < phyGraph.size(); ++i){
-            ptgn += phyGraph[i].size();
-        }
-        vector<int> xadj(phyGraph.size()+1); // CSR index
-        vector<int> adjncy(ptgn); // CSR list
-        for(unsigned int i=0; i < (phyGraph.size()+1); i++){
-            if(i==0){
-                xadj[i]=0;
-            } else {
-                xadj[i] = xadj[i-1]+phyGraph[i-1].size();
-            }
-        }
-        int pos=0;
-        for(unsigned int i=0; i<phyGraph.size(); i++){
-            for(unsigned int j=0; j<phyGraph[i].size(); ++j){
-                adjncy[pos++] = phyGraph[i][j];
-            }
-        }
-        vector<signed char> mask(phyGraph.size(), 1);
-        vector<int> degs(phyGraph.size());
-        genrcmi(phyGraph.size(), 0, &xadj[0], &adjncy[0], &rcm_nodeGraph_map[0], &mask[0], &degs[0]);
     }
+    int pos=0;
+    for(unsigned int i=0; i<phyGraph.size(); i++){
+        for(unsigned int j=0; j<phyGraph[i].size(); ++j){
+            adjncy[pos++] = phyGraph[i][j];
+        }
+    }
+    vector<signed char> mask(phyGraph.size(), 1);
+    vector<int> degs(phyGraph.size());
+    rcm.genrcm((int)phyGraph.size(), &xadj[0], &adjncy[0], &rcm_nodeGraph_map[0], &mask[0], &degs[0]);
 
     vector<int> rcm_commGraph_map(commGraph.size());
     {
@@ -375,18 +319,12 @@ int TopoMapper::mapRCM(std::vector<std::vector<int> > *commGraph_ref,
 
         vector<signed char> mask(commGraph.size(), 1);
         vector<int> degs(commGraph.size());
-        genrcmi(commGraph.size(), 0, &xadj[0], &adjncy[0], &rcm_commGraph_map[0], &mask[0], &degs[0]);
+        rcm.genrcm((int)commGraph.size(), &xadj[0], &adjncy[0], &rcm_commGraph_map[0], &mask[0], &degs[0]);
     }
 
     // translate mappings
-    if(use_rtg) {
-        for(unsigned int i=0; i<commGraph.size(); ++i){
-            mapping[rcm_commGraph_map[i]] = rtg2ptgmap[rcm_nodeGraph_map[i]]; // not 100% sure that this is right
-        }
-    } else {
-        for(unsigned int i=0; i<commGraph.size(); ++i) {
-            mapping[rcm_commGraph_map[i]] = rcm_nodeGraph_map[i]; // not sure either
-        }
+    for(unsigned int i=0; i<commGraph.size(); ++i) {
+        mapping[rcm_commGraph_map[i]] = rcm_nodeGraph_map[i];
     }
 
     return 0;

@@ -493,7 +493,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             taskMapper = new TopoMapper(*mach, TopoMapper::RECURSIVE);
             break;
         case RCMMAP:
-            taskMapper = new TopoMapper(*mach, TopoMapper::RCM);
+            taskMapper = new TopoMapper(*mach, TopoMapper::R_C_M);
             break;  
         case NEARESTAMT:
             if(sMachine == NULL){

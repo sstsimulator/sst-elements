@@ -30,7 +30,7 @@ namespace SST {
             public:
 
                 enum AlgorithmType{
-                    RCM = 0, //reverse Cuthill Mckee algorithm
+                    R_C_M = 0, //reverse Cuthill Mckee algorithm
                     RECURSIVE = 1,
                     //GREEDY = 2, //not implemented
                 };

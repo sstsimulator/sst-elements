@@ -125,7 +125,7 @@ namespace SST {
                 static const int numSchedTableEntries = 6;
                 static const int numFSTTableEntries = 3;
                 static const int numAllocTableEntries = 18;
-                static const int numTaskMapTableEntries = 8;
+                static const int numTaskMapTableEntries = 7;
                 
                 static const machTableEntry machTable[3];
                 static const schedTableEntry schedTable[6];
