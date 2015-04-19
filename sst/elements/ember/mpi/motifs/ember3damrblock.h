@@ -33,15 +33,19 @@ class Ember3DAMRBlock {
                         const int32_t ref_z_up,
                         const int32_t ref_z_down ) :
 
-                        blockID(id),
-                        refinementLevel(refLevel),
-                        refine_x_up(ref_x_up),
-                        refine_x_down(ref_x_down),
-                        refine_y_up(ref_y_up),
-                        refine_y_down(ref_y_down),
-                        refine_z_up(ref_z_up),
-                        refine_z_down(ref_z_down) {
+                        blockID(id)
+			{
 
+			// Set local copy of our variables
+			refinementLevel = (uint8_t) refLevel;
+			refine_x_up   = (int8_t) ref_x_up;
+			refine_x_down = (int8_t) ref_x_down;
+			refine_y_up   = (int8_t) ref_y_up;
+			refine_y_down = (int8_t) ref_y_down;
+			refine_z_up   = (int8_t) ref_z_up;
+			refine_z_down = (int8_t) ref_z_down;
+
+			// Maintain list of block communication ranks
                         commXUp   = (int32_t*) malloc(sizeof(int32_t) * 4);
                         commXDown = (int32_t*) malloc(sizeof(int32_t) * 4);
                         commYUp   = (int32_t*) malloc(sizeof(int32_t) * 4);
@@ -69,7 +73,7 @@ class Ember3DAMRBlock {
                 }
 
                 uint32_t getRefinementLevel() const {
-                        return refinementLevel;
+                        return (uint32_t) refinementLevel;
                 }
 
                 uint32_t getBlockID() const {
@@ -77,27 +81,27 @@ class Ember3DAMRBlock {
                 }
 
 		int32_t getRefineXUp() const {
-                        return refine_x_up;
+                        return (int32_t) refine_x_up;
                 }
 
                 int32_t getRefineXDown() const {
-                        return refine_x_down;
+                        return (int32_t) refine_x_down;
                 }
 
                 int32_t getRefineYUp() const {
-                        return refine_y_up;
+                        return (int32_t) refine_y_up;
                 }
 
                 int32_t getRefineYDown() const {
-                        return refine_y_down;
+                        return (int32_t) refine_y_down;
                 }
 
                 int32_t getRefineZUp() const {
-                        return refine_z_up;
+                        return (int32_t) refine_z_up;
                 }
 
                 int32_t getRefineZDown() const {
-                        return refine_z_down;
+                        return (int32_t) refine_z_down;
                 }
 
                 int32_t* getCommXUp() const {
@@ -167,31 +171,31 @@ class Ember3DAMRBlock {
                 }
 
 		void print() {
-			printf("BlockID %" PRIu32 " @ Level: %" PRIu32 "\n", blockID, refinementLevel);
-			printf("Refine X up:   %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
+			printf("BlockID %" PRIu32 " @ Level: %" PRIu8 "\n", blockID, refinementLevel);
+			printf("Refine X up:   %7" PRId8 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_x_up, commXUp[0], commXUp[1], commXUp[2], commXUp[3]);
-			printf("Refine X down: %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
+			printf("Refine X down: %7" PRId8 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_x_down, commXDown[0], commXDown[1], commXDown[2], commXDown[3]);
-			printf("Refine Y up:   %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Y up:   %7" PRId8 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_y_up, commYUp[0], commYUp[1], commYUp[2], commYUp[3]);
-			printf("Refine Y down: %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Y down: %7" PRId8 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_y_down, commYDown[0], commYDown[1], commYDown[2], commYDown[3]);
-			printf("Refine Z up:   %7" PRId32 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Z up:   %7" PRId8 ", X={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%" PRId32 "}\n",
 				refine_z_up, commZUp[0], commZUp[1], commZUp[2], commZUp[3]);
-			printf("Refine Z down: %" PRId32 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
+			printf("Refine Z down: %" PRId8 ", X={ %" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 "}\n",
 				refine_z_down, commZDown[0], commZDown[1], commZDown[2], commZDown[3]);
 		}
 
         private:
                 uint32_t blockID;
-                uint32_t refinementLevel;
+                uint8_t refinementLevel;
 
-                int32_t refine_x_up;
-                int32_t refine_x_down;
-                int32_t refine_y_up;
-                int32_t refine_y_down;
-                int32_t refine_z_up;
-                int32_t refine_z_down;
+                int8_t refine_x_up;
+                int8_t refine_x_down;
+                int8_t refine_y_up;
+                int8_t refine_y_down;
+                int8_t refine_z_up;
+                int8_t refine_z_down;
 
                 int32_t* commXUp;
                 int32_t* commXDown;
