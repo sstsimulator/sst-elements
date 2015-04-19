@@ -22,13 +22,13 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 {
 	m_name = "3DAMR";
 
-	int verbose = params.find_integer("verbose", 128);
+	int verbose = params.find_integer("verbose", 0);
 	out = new Output("AMR3D [@p:@l]: ", verbose, 0, Output::STDOUT);
 
 	// Get block sizes
-	blockNx = (uint32_t) params.find_integer("arg.nx", 30);
-	blockNy = (uint32_t) params.find_integer("arg.ny", 30);
-	blockNz = (uint32_t) params.find_integer("arg.nz", 30);
+	blockNx = (uint32_t) params.find_integer("arg.nx", 8);
+	blockNy = (uint32_t) params.find_integer("arg.ny", 8);
+	blockNz = (uint32_t) params.find_integer("arg.nz", 8);
 
 	items_per_cell = (uint32_t) params.find_integer("arg.fieldspercell", 1);
 
