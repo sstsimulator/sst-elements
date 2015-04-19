@@ -44,12 +44,12 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
         blockFilePath[blockpath.size()] = '\0';
 
 	out->verbose(CALL_INFO, 2, 0, "Block file to load mesh %s\n", blockFilePath);
-    
-    if("binary" == params.find_string("arg.filetype") ) {
-        meshType = 2;
-    } else {
-        meshType = 1;
-    }
+
+        if("binary" == params.find_string("arg.filetype") ) {
+        	meshType = 2;
+        } else {
+        	meshType = 1;
+    	}
 
 	// Set the iteration count to zero, first loop
 	iteration = 0;
@@ -770,8 +770,6 @@ void Ember3DAMRGenerator::configure()
 
 	// Clear system wide block wire up map
 	blockToNodeMap.clear();
-
-	printf("Done loading mesh on rank: %" PRIu32 "\n", rank());
 
 	out->verbose(CALL_INFO, 2, 0, "Motif configuration is complete.\n");
 }
