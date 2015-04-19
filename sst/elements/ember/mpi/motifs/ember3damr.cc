@@ -13,6 +13,8 @@
 
 #include "ember3damr.h"
 #include "ember3damrfile.h"
+#include "ember3damrtextfile.h"
+#include "ember3damrbinaryfile.h"
 
 using namespace SST::Ember;
 using namespace SST::Hermes::MP;
@@ -42,6 +44,12 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
         blockFilePath[blockpath.size()] = '\0';
 
 	out->verbose(CALL_INFO, 2, 0, "Block file to load mesh %s\n", blockFilePath);
+    
+    if("binary" == params.find_string("arg.filetype") ) {
+        meshType = 2;
+    } else {
+        meshType = 1;
+    }
 
 	// Set the iteration count to zero, first loop
 	iteration = 0;
@@ -55,13 +63,19 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 void Ember3DAMRGenerator::loadBlocks() {
 	out->verbose(CALL_INFO, 2, 0, "Loading AMR block information from %s ...\n", blockFilePath);
 
-	EmberAMRFile amrFile(blockFilePath, out);
+    EmberAMRFile* amrFile;
+    
+    if(2 == meshType) {
+        amrFile = new EmberAMRBinaryFile(blockFilePath, out);
+    } else {
+        amrFile = new EmberAMRTextFile(blockFilePath, out);
+    }
 
-	maxLevel   = amrFile.getMaxRefinement();
-	blockCount = amrFile.getBlockCount();
-	blocksX    = amrFile.getBlocksX();
-	blocksY    = amrFile.getBlocksY();
-	blocksZ    = amrFile.getBlocksZ();
+	maxLevel   = amrFile->getMaxRefinement();
+	blockCount = amrFile->getBlockCount();
+	blocksX    = amrFile->getBlocksX();
+	blocksY    = amrFile->getBlocksY();
+	blocksZ    = amrFile->getBlocksZ();
 
 	out->verbose(CALL_INFO, 2, 0, "Loaded AMR block information: %" PRIu32 " blocks, %" PRIu32 " max refinement, blocks (X=%" PRIu32 ",Y=%" PRIu32 ",Z=%" PRIu32 ")\n",
 		blockCount, maxLevel, blocksX, blocksY, blocksZ);
@@ -85,7 +99,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 		int otherRankBlocks = 0;
 
-		amrFile.readNodeMeshLine(&blocksOnRank);
+		amrFile->readNodeMeshLine(&blocksOnRank);
 		out->verbose(CALL_INFO, 16, 0, "Processing node %" PRIu32 ", node header says there are %" PRIu32 " blocks on this node.\n",
 			currentRank, blocksOnRank);
 
@@ -93,7 +107,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
 				line++;
 
-				amrFile.readNextMeshLine(&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+				amrFile->readNextMeshLine(&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
 				out->verbose(CALL_INFO, 32, 0, "Read mesh block: %" PRIu32 " level=%" PRIu32 ", (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
 					blockID, blockLevel, xDown, xUp, yDown, yUp, zDown, zUp);
 
@@ -103,7 +117,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 			for(uint32_t lineID = 0; lineID < blocksOnRank; ++lineID) {
 				line++;
 
-				amrFile.readNextMeshLine(&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+				amrFile->readNextMeshLine(&blockID, &blockLevel, &xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
 				out->verbose(CALL_INFO, 32, 0, "Read mesh block: %" PRIu32 " level=%" PRIu32 ", (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
 					blockID, blockLevel, xDown, xUp, yDown, yUp, zDown, zUp);
 
