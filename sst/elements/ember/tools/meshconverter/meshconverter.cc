@@ -67,13 +67,13 @@ int main(int argc, char* argv[]) {
 
 	uint32_t rankCount = (uint32_t) atoi(argv[1]);
 
-	FILE* inMesh = fopen(argv[1], "rt");
+	FILE* inMesh = fopen(argv[2], "rt");
 	if(NULL == inMesh) {
 		fprintf(stderr, "Unable to open input mesh: %s\n", argv[2]);
 		exit(-1);
 	}
 
-	FILE* outMesh = fopen(argv[2], "wb");
+	FILE* outMesh = fopen(argv[3], "wb");
 	if(NULL == outMesh) {
 		fprintf(stderr, "Unable to open output mesh: %s\n", argv[3]);
 		exit(-1);
