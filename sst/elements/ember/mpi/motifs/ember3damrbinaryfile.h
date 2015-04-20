@@ -18,6 +18,12 @@
 #include <string.h>
 #include "ember3damrfile.h"
 
+// To clean up warnings on not using return results on freads() below
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+#endif
+
 namespace SST {
     namespace Ember {
         
@@ -107,5 +113,9 @@ namespace SST {
         
     }
 }
+
+#if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#pragma GCC diagnostic pop
+#endif
 
 #endif
