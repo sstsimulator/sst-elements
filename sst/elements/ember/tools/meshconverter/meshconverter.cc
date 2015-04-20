@@ -129,7 +129,9 @@ int main(int argc, char* argv[]) {
 				&blockZUp);
 
 			fwrite(&nextBlockID, sizeof(nextBlockID), 1, outMesh);
-			fwrite(&nextBlockRefineLevel, sizeof(nextBlockRefineLevel), 1, outMesh);
+
+			int8_t nextBlockRefineLevel_8 = (int8_t) nextBlockRefineLevel;
+			fwrite(&nextBlockRefineLevel_8, sizeof(nextBlockRefineLevel_8), 1, outMesh);
 			fwrite(&blockXDown, sizeof(blockXDown), 1, outMesh);
 			fwrite(&blockXUp, sizeof(blockXUp), 1, outMesh);
 			fwrite(&blockYDown, sizeof(blockYDown), 1, outMesh);
