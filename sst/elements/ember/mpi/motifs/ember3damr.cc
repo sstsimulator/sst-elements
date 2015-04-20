@@ -24,7 +24,7 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 {
 	m_name = "3DAMR";
 
-	int verbose = params.find_integer("verbose", 0);
+	int verbose = params.find_integer("arg.verbose", 0);
 	out = new Output("AMR3D [@p:@l]: ", verbose, 0, Output::STDOUT);
 
 	// Get block sizes
