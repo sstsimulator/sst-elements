@@ -297,6 +297,7 @@ static const ElementInfoParam amr3d_params[] = {
         {       "arg.nz",                       "Sets the size of a block in Z", "8" },
         {       "arg.filetype",                 "Mesh file type, set to \'binary\' or \'text\'", "text" },
         {       "arg.fieldspercell",            "Sets the number of fields per mesh cell", "8" },
+        {       "arg.verbose",                  "Sets the verbosity of the output", "0" },
 	{	NULL,	NULL,	NULL	}
 };
 static const ElementInfoParam fft3d_params[] = {
