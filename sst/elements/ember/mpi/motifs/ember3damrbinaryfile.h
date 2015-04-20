@@ -74,24 +74,25 @@ namespace SST {
                                   int32_t* xDown, int32_t* xUp,
                                   int32_t* yDown, int32_t* yUp,
                                   int32_t* zDown, int32_t* zUp) {
-                
                 int8_t temp = 0;
-                
+
                 fread(blockID, sizeof(uint32_t), 1, amrFile);
-                fread(refineLev, sizeof(uint32_t), 1, amrFile);
-                
+
+		fread(&temp, sizeof(temp), 1, amrFile);
+		*refineLev = (uint32_t) temp;
+
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *xDown = (int32_t) temp;
-                
+
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *xUp = (int32_t) temp;
-                
+
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *yDown = (int32_t) temp;
-                
+
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *yUp = (int32_t) temp;
-                
+
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *zDown = (int32_t) temp;
                 
