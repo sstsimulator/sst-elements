@@ -53,6 +53,9 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 
 	// Set the iteration count to zero, first loop
 	iteration = 0;
+	nextBlockToBeProcessed = 0;
+	nextRequestID = 0;
+
 	maxIterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	out->verbose(CALL_INFO, 2, 0, "Motif will run %" PRIu32 " iterations\n", maxIterations);
 
@@ -151,7 +154,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	for(uint32_t i = 0; i < localBlocks.size(); ++i) {
 		Ember3DAMRBlock* currentBlock = localBlocks[i];
 
-		out->verbose(CALL_INFO, 8, 0, "Wiring block %" PRIu32 "...\n", currentBlock->getBlockID());
+		out->verbose(CALL_INFO, 16, 0, "Wiring block %" PRIu32 "...\n", currentBlock->getBlockID());
 
 		const int32_t blockLevel = currentBlock->getRefinementLevel();
 		uint32_t blockXPos = 0;
@@ -737,6 +740,9 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 	out->verbose(CALL_INFO, 2, 0, "Maximum requests from rank %" PRIu32 " will be set up: %" PRIu32 "\n", (uint32_t) rank(), maxRequests);
 	requests   = (MessageRequest*)   malloc( sizeof(MessageRequest) * maxRequests * 2);
+	maxRequestCount = maxRequests * 2;
+	//requests = (MessageRequest*) malloc( sizeof(MessageRequest) * localBlocks.size() * 4 * 2);
+	//maxRequestCount = localBlocks.size() * 2 * 4;
 
 	out->verbose(CALL_INFO, 2, 0, "Requests allocated at: %p\n", requests);
 
@@ -797,6 +803,11 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
                                         theBlock->getRefineZDown(),
                                         theBlock->getRefineZUp());
 
+
+				if( (*nextReq) >= (maxRequestCount - 1) ) {
+					out->fatal(CALL_INFO, -1, "Error: max requests at: %" PRIu32 ", current total: %" PRIu32 "\n", maxRequestCount, (*nextReq));
+				}
+
 				enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
 				(*nextReq) = (*nextReq) + 1;
@@ -809,6 +820,10 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 					theBlock->getRefineYUp(),
 					theBlock->getRefineZDown(),
 					theBlock->getRefineZUp());
+
+				if( (*nextReq) >= (maxRequestCount - 1) ) {
+					out->fatal(CALL_INFO, -1, "Error: max requests at: %" PRIu32 ", current total: %" PRIu32 "\n", maxRequestCount, (*nextReq));
+				}
 
 				enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
 					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
@@ -876,44 +891,52 @@ void Ember3DAMRGenerator::aggregateBlockCommunication(const std::vector<Ember3DA
 
 bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
-	uint32_t nextReq = 0;
-
 	if(iteration < maxIterations) {
+		enQ_compute( evQ, 5 );
+
 		out->verbose(CALL_INFO, 8, 0, "Executing iteration: %" PRIu32 " on rank %" PRIu32 ", local blocks count: %" PRIu32 "\n", iteration,
 			(uint32_t) rank(), (uint32_t) localBlocks.size());
 
-		for(uint32_t i = 0; i < localBlocks.size(); ++i) {
-			Ember3DAMRBlock* currentBlock = localBlocks[i];
+//		for(uint32_t i = 0; i < localBlocks.size(); ++i) {
+			Ember3DAMRBlock* currentBlock = localBlocks[nextBlockToBeProcessed];
 
 			out->verbose(CALL_INFO, 16, 0, "Creating communication events for block %" PRIu32 "\n", currentBlock->getBlockID());
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing X-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommXDown(), &nextReq, blockNy * blockNz, 1001, currentBlock);
+			postBlockCommunication(evQ, currentBlock->getCommXDown(), &nextRequestID, blockNy * blockNz, 1001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing X-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommXUp(),   &nextReq, blockNy * blockNz, 1001, currentBlock);
+			postBlockCommunication(evQ, currentBlock->getCommXUp(),   &nextRequestID, blockNy * blockNz, 1001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Y-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommYDown(), &nextReq, blockNx * blockNz, 2001, currentBlock);
+			postBlockCommunication(evQ, currentBlock->getCommYDown(), &nextRequestID, blockNx * blockNz, 2001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Y-Up direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommYUp(),   &nextReq, blockNx * blockNz, 2001, currentBlock);
+			postBlockCommunication(evQ, currentBlock->getCommYUp(),   &nextRequestID, blockNx * blockNz, 2001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Z-Down direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommZDown(), &nextReq, blockNx * blockNy, 4001, currentBlock);
+			postBlockCommunication(evQ, currentBlock->getCommZDown(), &nextRequestID, blockNx * blockNy, 4001, currentBlock);
 
 			out->verbose(CALL_INFO, 32, 0, "-> Processing Z-Up direction...\n");
-			postBlockCommunication(evQ, currentBlock->getCommZUp(),   &nextReq, blockNx * blockNy, 4001, currentBlock);
+			postBlockCommunication(evQ, currentBlock->getCommZUp(),   &nextRequestID, blockNx * blockNy, 4001, currentBlock);
 
 			out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " complete.\n", currentBlock->getBlockID());
-		}
+//		}
 
-		if(nextReq > 0) {
-			out->verbose(CALL_INFO, 2, 0, "Enqueued %" PRIu32 " events, issuing wait all against them on rank %" PRIu32 "\n",
-				(uint32_t) nextReq, (uint32_t) rank());
-			enQ_waitall( evQ, nextReq, &requests[0] );
-		} else {
-			out->verbose(CALL_INFO, 2, 0, "Enqueued no communication events, stepping over wait-all issue.\n");
+		nextBlockToBeProcessed++;
+
+		if(nextBlockToBeProcessed == localBlocks.size()) {
+			if(nextRequestID > 0) {
+				out->verbose(CALL_INFO, 2, 0, "Enqueued %" PRIu32 " events, issuing wait all against them on rank %" PRIu32 "\n",
+					(uint32_t) nextRequestID, (uint32_t) rank());
+				enQ_waitall( evQ, nextRequestID, &requests[0] );
+			} else {
+				out->verbose(CALL_INFO, 2, 0, "Enqueued no communication events, stepping over wait-all issue.\n");
+			}
+
+			iteration++;
+			nextBlockToBeProcessed = 0;
+			nextRequestID = 0;
 		}
 /*
 		std::map<int32_t, uint32_t> messageSizeMap;
@@ -930,7 +953,7 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 				(uint32_t) rank(), messageSizeItr->first, messageSizeItr->second);
 		}
 */
-		iteration++;
+//		iteration++;
 		return false;
 	} else {
 		out->verbose(CALL_INFO, 2, 0, "Completed %" PRIu32 " iterations, will now complete and unload.\n", iteration);

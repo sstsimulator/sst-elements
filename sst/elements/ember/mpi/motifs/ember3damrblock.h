@@ -186,6 +186,22 @@ class Ember3DAMRBlock {
 				refine_z_down, commZDown[0], commZDown[1], commZDown[2], commZDown[3]);
 		}
 
+		void printFile(FILE* f) {
+			fprintf(f, "Block ID %" PRIu32 " @ Level: %" PRIu32 "\n", blockID, refinementLevel);
+			fprintf(f, "- Refine X up:   Refinement: %7" PRId32 ", Comm={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%7" PRId32 "}\n",
+				refine_x_up, commXUp[0], commXUp[1], commXUp[2], commXUp[3]);
+			fprintf(f, "- Refine X down: Refinement: %7" PRId32 ", Comm={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%7" PRId32 "}\n",
+				refine_x_down, commXDown[0], commXDown[1], commXDown[2], commXDown[3]);
+			fprintf(f, "- Refine Y up:   Refinement: %7" PRId32 ", Comm={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%7" PRId32 "}\n",
+				refine_y_up, commYUp[0], commYUp[1], commYUp[2], commYUp[3]);
+			fprintf(f, "- Refine Y down: Refinement: %7" PRId32 ", Comm={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%7" PRId32 "}\n",
+				refine_y_down, commYDown[0], commYDown[1], commYDown[2], commYDown[3]);
+			fprintf(f, "- Refine Z up:   Refinement: %7" PRId32 ", Comm={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%7" PRId32 "}\n",
+				refine_z_up, commZUp[0], commZUp[1], commZUp[2], commZUp[3]);
+			fprintf(f, "- Refine Z down: Refinement: %7" PRId32 ", Comm={ %7" PRId32 ",%7" PRId32 ",%7" PRId32 ",%7" PRId32 "}\n",
+				refine_z_down, commZDown[0], commZDown[1], commZDown[2], commZDown[3]);
+		}
+
         private:
                 uint32_t blockID;
                 uint8_t refinementLevel;

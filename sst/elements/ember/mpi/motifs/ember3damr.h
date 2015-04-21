@@ -61,6 +61,9 @@ private:
 
 	uint32_t iteration;
 	uint32_t maxIterations;
+	uint32_t nextBlockToBeProcessed;
+	uint32_t nextRequestID;
+	uint32_t maxRequestCount;
 
         uint32_t blockCount;
         uint32_t maxLevel;
