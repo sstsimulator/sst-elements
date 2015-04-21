@@ -69,3 +69,24 @@ class FattreeInfo(TopoInfo):
                         total_hosts = total_hosts * int(links[0])
 
                 return total_hosts
+
+class DragonFlyInfo(TopoInfo):
+	def __init__( self, shape ):
+		radix, lcl, glbl, nRtrs = shape.split(':')
+		self.params = {}
+		hostsPerGroup = int(nRtrs) * int(glbl)
+		self.params["router_radix"] = radix
+		self.params["dragonfly:shape"] = "" 
+		self.params["dragonfly:hosts_per_router"] = lcl
+		self.params["dragonfly:routers_per_group"] = nRtrs
+		self.params["dragonfly:intergroup_per_router"] = glbl
+		self.params["dragonfly:num_groups"] =  hostsPerGroup + 1
+		self.params["dragonfly:algorithm"] =  "minimal" 
+
+		self.numNodes = (hostsPerGroup + 1) * hostsPerGroup 
+                
+	def getNetworkParams(self):
+		return self.params
+
+	def getNumNodes(self):
+		return self.numNodes 

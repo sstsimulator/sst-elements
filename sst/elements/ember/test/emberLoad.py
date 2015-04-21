@@ -20,7 +20,7 @@ jobid = 0
 loadFile = ""
 workList = []
 numCores = 1
-debug    = 0 
+debug    = 0
 topology = ""
 shape    = ""
 loading  = 0
@@ -186,6 +186,10 @@ elif "fattree" == topology:
 	topoInfo = FattreeInfo(radix,loading,shape)
 	topo = topoFatTree()
 	print "network: topology=fattree radix={0} loading={1}".format(radix,loading)
+elif "dragonfly" == topology:
+	topoInfo = DragonFlyInfo(shape)
+	topo = topoDragonFly()
+	print "network: topology=dragonfly shape={0}".format(shape)
 else:
 	sys.exit("how did we get here")
 
