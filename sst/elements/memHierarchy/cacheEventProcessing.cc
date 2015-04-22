@@ -31,7 +31,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
+void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall) {
     if (!replay) {
         switch (cmd) {
             case GetS:
@@ -80,7 +80,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay) {
     if (cmd != GetS && cmd != GetX && cmd != GetSEx) return;
 
     // Data request profiling only
-    if (mshr_->isHitAndStallNeeded(event->getBaseAddr(), cmd)) return;   // will block this event, profile it later
+    if (mshr_->isHit(event->getBaseAddr()) && canStall) return;   // will block this event, profile it later
     int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
@@ -248,14 +248,22 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
         processNoncacheable(event, cmd, baseAddr);
         return;
     }
-    profileEvent(event, cmd, _mshrHit);
+    
+    // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
+    CacheLine * cacheLine = NULL;
+    int lineIndex = cf_.cacheArray_->find(baseAddr, false);
+    if (lineIndex != -1) cacheLine = cf_.cacheArray_->lines_[lineIndex];
+    
+    bool canStall = !L1_ || event->getCmd() != GetX || cacheLine == NULL || !(cacheLine->isLocked());
+    profileEvent(event, cmd, _mshrHit, canStall);
 
     switch(cmd){
         case GetS:
         case GetX:
         case GetSEx:
             // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
-            if(mshr_->isFull() || (!L1_ && !_mshrHit && mshr_->isAlmostFull()  && (!(isCacheHit(event,cmd,baseAddr) == 0) || mshr_->isHitAndStallNeeded(baseAddr, cmd)))){ 
+            
+            if (!_mshrHit && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 sendNACK(event);
                 break;
@@ -264,7 +272,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
             // track times in our separate queue
             if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
 
-            if(mshr_->isHitAndStallNeeded(baseAddr, cmd)){
+            if(mshr_->isHit(baseAddr) && canStall) {
                 if(processRequestInMSHR(baseAddr, event)){
                     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                     event->setBlocked(true);

@@ -199,7 +199,7 @@ private:
     
     /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
     bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
-    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event);
+    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, int index);
     
     /** Determines what CC will send the NACK. */
     void sendNACK(MemEvent* _event);
@@ -235,7 +235,7 @@ private:
 
     /** Add requests to the 'retry queue.'  This event will be reissued at a later time */
     void retryRequestLater(MemEvent* event);
-    void profileEvent(MemEvent* event, Command cmd, bool mshrHit);
+    void profileEvent(MemEvent* event, Command cmd, bool mshrHit, bool canStall);
     void incTotalRequestsReceived(int _groupId);
     void incTotalMSHRHits(int _groupId);
     void incInvalidateWaitingForUserLock(int _groupId);

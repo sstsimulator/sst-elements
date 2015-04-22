@@ -146,7 +146,7 @@ void Cache::processCacheInvalidate(MemEvent* _event, Command _cmd, Addr _baseAdd
     if (!shouldInvRequestProceed(_event, cacheLine, _baseAddr, _mshrHit)) return;
     int lineIndex = cacheLine->getIndex();
 
-    if(!L1_ && !processInvRequestInMSHR(_baseAddr, _event)) {
+    if(!L1_ && !processInvRequestInMSHR(_baseAddr, _event, 0)) {    // Insert inv in the front of the mshr -> we are handling it now
         return;
     }
     topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), _cmd, _mshrHit); /* Invalidate upper levels */
@@ -185,7 +185,7 @@ void Cache::processFetch(MemEvent* _event, Addr _baseAddr, bool _mshrHit){
     int lineIndex = cacheLine->getIndex();
 
     /* L1s wont stall because they don't have any sharers */
-    if(!L1_ && !processInvRequestInMSHR(_baseAddr, _event)) return;
+    if(!L1_ && !processInvRequestInMSHR(_baseAddr, _event, 0)) return;  // Insert inv in the front of the mshr
 
     topCC_->handleInvalidate(lineIndex, _event, _event->getRqstr(), cmd, _mshrHit);
     if(invalidatesInProgress(lineIndex)) return;
@@ -328,7 +328,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     }
     
     if(_cacheLine->isLocked()){                                 /* If user-locked then wait this lock is released to activate this event. */
-        if(!processInvRequestInMSHR(_baseAddr, _event)) {
+        if(!processInvRequestInMSHR(_baseAddr, _event, 0)) {    // Insert inv in the front of the mshr
             return false;
         }
         incInvalidateWaitingForUserLock(groupId);               /* Requests is in MSHR.  Stall and wait for the atomic modet to be 'cleared' */
@@ -340,7 +340,7 @@ bool Cache::shouldInvRequestProceed(MemEvent* _event, CacheLine* _cacheLine, Add
     
     CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
     if(ccLine->getState() != V){                                /* Check if invalidates are already in progress (A writeback is going on?) */
-        processInvRequestInMSHR(_baseAddr, _event);                /* Whether a NACK was sent or not, request needs to stall */
+        processInvRequestInMSHR(_baseAddr, _event, 1);          /* Whether a NACK was sent or not, request needs to stall. Insert inv behind the currently being handled event */
         return false;
     }
     
@@ -466,25 +466,12 @@ void Cache::recordLatency(MemEvent* _event) {
     startTimeList.erase(_event);
 }
 
-
 void Cache::postRequestProcessing(MemEvent* _event, CacheLine* _cacheLine, bool _requestCompleted, bool _mshrHit) throw(blockedEventException){
     Command cmd    = _event->getCmd();
     Addr baseAddr  = _cacheLine->getBaseAddr();
-    CCLine* ccLine = topCC_->getCCLine(_cacheLine->getIndex());
     
     if(_requestCompleted){
-        if(cmd != PutS && !(_cacheLine->inStableState() && ccLine->inStableState())) {    /* Sanity check cache state */
-            d_->fatal(CALL_INFO, -1, "%s, Error: Finished handling request but cache line is not stable. Addr = 0x%" PRIx64 ", Cmd = %s, Bcc state = %s, Tcc state = %s.Time = %" PRIu64 "\n",
-                    this->getName().c_str(), baseAddr, CommandString[cmd], BccLineString[_cacheLine->getState()], TccLineString[ccLine->getState()], getCurrentSimTimeNano());
-        }
-        /* Upon a PutS (due to invalidate, ie mshrEntry exists), only possible pending request should be a GetSEx request, make sure this is the case */
-        if(cmd == PutS && mshr_->exists(baseAddr)){
-            Command origCmd = getOrigReq(mshr_->lookup(baseAddr))->getCmd();
-            if (origCmd != GetSEx) {
-                d_->fatal(CALL_INFO, -1, "%s, Error: PutS is an mshr hit but request in mshr is not a GetSEx. Orig cmd: %s, Addr: 0x%" PRIx64 ", Time: %" PRIu64 "\n",
-                        this->getName().c_str(), CommandString[origCmd], baseAddr, getCurrentSimTimeNano());
-            }
-        }
+
         /* MemHierarchy models a "blocking cache", it is important to 'replay' blocked
            events that were waiting for this event to complete */
         if(!_mshrHit && MemEvent::isWriteback(cmd)) activatePrevEvents(baseAddr);
@@ -519,8 +506,21 @@ bool Cache::handleIgnorableRequests(MemEvent* _event, CacheLine* _cacheLine, Com
             d_->fatal(CALL_INFO, -1, "%s, Error: Cacheline is in transition but incoming request from upper level cache is not a PutS. Cmd: %s, State: %s, Addr: 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                     this->getName().c_str(), CommandString[_cmd], BccLineString[_cacheLine->getState()], _event->getBaseAddr(), getCurrentSimTimeNano());
         }
-        topCC_->handleRequest(_event, _cacheLine, false);
         if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L3_,"Sharer removed while cache line was in transition. Cmd = %s, St = %s\n", CommandString[_cmd], BccLineString[_cacheLine->getState()]);
+        if (topCC_->handleRequest(_event, _cacheLine, false)) {
+            // retry waiting if this was a response to an inv
+            vector<mshrType> waitingReqs = mshr_->lookup(_event->getBaseAddr());
+            if (waitingReqs.front().elem.type() == typeid(MemEvent*)) {
+                MemEvent * topEvent = mshr_->lookupFront(_event->getBaseAddr());
+                if (topEvent->getCmd() == Inv) {
+                    activatePrevEvents(_event->getBaseAddr());
+                }
+            } else {
+                activatePrevEvents(_event->getBaseAddr());
+            }
+            
+        }
+        recordLatency(_event);
         delete _event;
         return true;
     }
@@ -613,8 +613,8 @@ bool Cache::processRequestInMSHR(Addr _baseAddr, MemEvent* _event){
 
 
 /* Invalidations/fetches will wait for the current outstanding transaction, but no waiting ones! */
-bool Cache::processInvRequestInMSHR(Addr _baseAddr, MemEvent* _event){
-    if (mshr_->insertInv(_baseAddr, _event)) {
+bool Cache::processInvRequestInMSHR(Addr _baseAddr, MemEvent* _event, int index){
+    if (mshr_->insertInv(_baseAddr, _event, index)) {
         _event->setStartTime(timestamp_);
         return true;
     } else {

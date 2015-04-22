@@ -55,7 +55,7 @@ public:
     bool insertAll(Addr, vector<mshrType>);                 
     bool insert(Addr baseAddr, MemEvent* event);            
     bool insertPointer(Addr keyAddr, Addr pointerAddr);     
-    bool insertInv(Addr baseAddr, MemEvent* event);            
+    bool insertInv(Addr baseAddr, MemEvent* event, int index);            
     
     MemEvent* removeFront(Addr _baseAddr);                  
     void removeElement(Addr baseAddr, MemEvent* event);     
@@ -72,7 +72,7 @@ public:
     // used internally
     bool insert(Addr baseAddr, Addr pointer);               // internal
     bool insert(Addr baseAddr, mshrType mshrEntry);         // internal
-    bool insertInv(Addr baseAddr, mshrType mshrEntry);         // internal
+    bool insertInv(Addr baseAddr, mshrType mshrEntry, int index);         // internal
     void removeElement(Addr baseAddr, mshrType mshrEntry);  // internal
     
 

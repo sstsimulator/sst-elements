@@ -194,10 +194,6 @@ bool MESITopCC::handleGetXRequest(MemEvent* _event, CacheLine* _cacheLine, int _
         if (DEBUG_ALL || DEBUG_ADDR == _cacheLine->getBaseAddr()) d_->debug(_L7_,"GetX Req received but sharers exists \n");
         switch(cmd){
             case GetX:
-                sendCCInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
-                ccLine->removeAllSharers();   //Weak consistency model, no need to wait for InvAcks to proceed with request
-                respond = true;
-                break;
             case GetSEx:
                 ccLine->setAcksNeeded();
                 invSent = sendInvalidates(lineIndex, _event->getSrc(), _event->getRqstr(), _mshrHit);
@@ -348,7 +344,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqst
     map<string, int>::iterator sharer;
     int requestingId = _srcNode.empty() ? -1 : lowNetworkNodeLookupByName(_srcNode);
     
-    bool acksNeeded = (ccLine->ownerExists() || ccLine->acksNeeded_);
+    bool acksNeeded = true; //(ccLine->ownerExists() || ccLine->acksNeeded_);
     
     if (ccLine->ownerExists()) {
         sentInvalidates = 1;
@@ -381,7 +377,7 @@ int MESITopCC::sendInvalidates(int _lineIndex, string _srcNode, string _origRqst
 
 void MESITopCC::sendInvalidate(CCLine* _cLine, string destination, string _origRqstr, bool _acksNeeded, bool _mshrHit){
     MemEvent* invalidateEvent = new MemEvent((Component*)owner_, _cLine->getBaseAddr(), _cLine->getBaseAddr(), Inv);
-    if(_acksNeeded) invalidateEvent->setAckNeeded();            //TODO: add comment as to why this is needed (ie weak vs strong consistency)
+    invalidateEvent->setAckNeeded();            //TODO: add comment as to why this is needed (ie weak vs strong consistency)
     invalidateEvent->setDst(destination);
     invalidateEvent->setRqstr(_origRqstr);
 

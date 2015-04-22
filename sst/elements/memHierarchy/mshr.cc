@@ -121,9 +121,9 @@ bool MSHR::insert(Addr _baseAddr, MemEvent* _event){
     return ret;
 }
 
-bool MSHR::insertInv(Addr _baseAddr, MemEvent* _event){
+bool MSHR::insertInv(Addr _baseAddr, MemEvent* _event, int index){
     _event->setInMSHR(true);
-    bool ret = insertInv(_baseAddr, mshrType(_event));
+    bool ret = insertInv(_baseAddr, mshrType(_event), index);
     if(LIKELY(ret)){
         d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].size());
      }
@@ -151,11 +151,16 @@ bool MSHR::insert(Addr _baseAddr, mshrType _mshrEntry){
     return true;
 }
 
-bool MSHR::insertInv(Addr _baseAddr, mshrType _mshrEntry){
+bool MSHR::insertInv(Addr _baseAddr, mshrType _mshrEntry, int index){
     if(size_ >= maxSize_) return false;
-    if (map_[_baseAddr].size() > 1) {
-        map_[_baseAddr].insert((map_[_baseAddr].begin()+1),_mshrEntry);
-    } else map_[_baseAddr].push_back(_mshrEntry);
+    // Insert invalidations at front of mshr if we are handling immediately (index), otherwise just behind front event
+    if (index == 0) {
+        map_[_baseAddr].insert(map_[_baseAddr].begin(), _mshrEntry);
+    } else if (map_[_baseAddr].size() > 1) {
+        map_[_baseAddr].insert((map_[_baseAddr].begin()+1), _mshrEntry);
+    } else {
+        map_[_baseAddr].push_back(_mshrEntry);
+    }
     if(_mshrEntry.elem.type() == typeid(MemEvent*)) size_++;
     return true;
 }
@@ -295,17 +300,27 @@ bool MSHR::elementIsHit(Addr _baseAddr, MemEvent *_event) {
 
 
 
-/*
+
 void MSHR::printEntry(Addr baseAddr){
     mshrTable::iterator it = map_.find(baseAddr);
     if(it == map_.end()) return;
-    int i = 0;
-    for(vector<MemEvent*>::iterator it = map_[baseAddr].begin(); it != map_[baseAddr].end(); ++it, ++i) {
-        MemEvent* event = (MemEvent*)(*it);
-        d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, baseAddr, event->getAddr(), CommandString[event->getCmd()]);
+    
+    vector<mshrType>& res = it->second;
+    d_->debug(_L10_, "\tMSHR entries for 0x%" PRIx64 "\n", baseAddr);
+    
+    for (vector<mshrType>::iterator itv = res.begin(); itv != res.end(); itv++) {
+        if (itv->elem.type() == typeid(Addr)) {
+            Addr ptrAddr = boost::get<Addr>(itv->elem);
+            d_->debug(_L10_, "\tPtr 0x%" PRIx64 "\n", ptrAddr);
+        } else {
+            MemEvent * ev = boost::get<MemEvent*>(itv->elem);
+            d_->debug(_L10_, "\tEvt %s, %s\n", ev->getSrc().c_str(), CommandString[ev->getCmd()]);
+
+        }
     }
+
 }
-*/
+
 
 
 
