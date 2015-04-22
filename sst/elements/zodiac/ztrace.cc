@@ -54,4 +54,4 @@ bool ZodiacTraceReader::clockTic( Cycle_t ) {
   return false;
 }
 
-BOOST_CLASS_EXPORT(ZodiacTraceReader)
+BOOST_CLASS_EXPORT(SST::Zodiac::ZodiacTraceReader)

@@ -89,4 +89,4 @@ bool ZodiacOTFTraceReader::clockTic( Cycle_t ) {
   }
 }
 
-BOOST_CLASS_EXPORT(ZodiacOTFTraceReader)
+BOOST_CLASS_EXPORT(SST::Zodiac::ZodiacOTFTraceReader)

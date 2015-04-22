@@ -545,6 +545,6 @@ void nodeComponent::logFault(FaultEvent * faultEvent)
 
 // Element Libarary / Serialization stuff
 
-    BOOST_CLASS_EXPORT(JobStartEvent)
-BOOST_CLASS_EXPORT(nodeComponent)
+BOOST_CLASS_EXPORT(SST::Scheduler::JobStartEvent)
+BOOST_CLASS_EXPORT(SST::Scheduler::nodeComponent)
 

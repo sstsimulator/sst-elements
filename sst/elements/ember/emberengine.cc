@@ -279,4 +279,4 @@ EmberEngine::EmberEngine() :
     // for serialization only
 }
 
-BOOST_CLASS_EXPORT(EmberEngine)
+BOOST_CLASS_EXPORT(SST::Ember::EmberEngine)

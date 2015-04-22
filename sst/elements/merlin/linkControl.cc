@@ -19,9 +19,10 @@
 
 #include "merlin.h"
 
-using namespace SST;
-using namespace Merlin;
+namespace SST {
 using namespace Interfaces;
+
+namespace Merlin {
 
 LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
@@ -489,4 +490,5 @@ void LinkControl::handle_output(Event* ev)
 //     }
 // }
 
-
+} // namespace Merlin
+} // namespace SST

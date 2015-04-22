@@ -14,8 +14,8 @@
 #include "sst_config.h"
 #include "simpleClockerComponent.h"
 
-using namespace SST;
-using namespace SST::SimpleClockerComponent;
+namespace SST {
+namespace SimpleClockerComponent {
 
 simpleClockerComponent::simpleClockerComponent(ComponentId_t id, Params& params) :
   Component(id) 
@@ -110,7 +110,8 @@ void simpleClockerComponent::Oneshot2Callback()
 }
 
 // Serialization 
-
-BOOST_CLASS_EXPORT(simpleClockerComponent)
+} // namespace simpleClockerComponent
+} // namespace SST
+BOOST_CLASS_EXPORT(SST::SimpleClockerComponent::simpleClockerComponent)
 
 

@@ -668,6 +668,6 @@ void schedComponent::logJobFault(ITMI itmi, FaultEvent * faultEvent)
 
 // Element Libarary / Serialization stuff
 
-//BOOST_CLASS_EXPORT(ArrivalEvent)
-BOOST_CLASS_EXPORT(schedComponent)
+//BOOST_CLASS_EXPORT(SST::Scheduler::ArrivalEvent)
+BOOST_CLASS_EXPORT(SST::Scheduler::schedComponent)
 

@@ -88,8 +88,8 @@ public:
 
 protected:
     BaseRtrEvent(RtrEventType type) :
-	Event(),
-	type(type)
+        Event(),
+        type(type)
     {}
 
 private:
@@ -112,12 +112,6 @@ class RtrEvent : public BaseRtrEvent {
 
 public:
     SST::Interfaces::SimpleNetwork::Request* request;
-    // int dest;
-    // int src;
-    // int vn;
-    // int size_in_bits;
-    
-    // enum TraceType {NONE, ROUTE, FULL};
     
     RtrEvent(SST::Interfaces::SimpleNetwork::Request* req) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
@@ -150,7 +144,9 @@ private:
     RtrEvent() :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         injectionTime(0)
-    {}
+    {
+        // request = new SST::Interfaces::SimpleNetwork::Request();
+    }
 
     friend class boost::serialization::access;
     template<class Archive>
@@ -159,10 +155,6 @@ private:
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseRtrEvent);
         ar & BOOST_SERIALIZATION_NVP(request);
-        // ar & BOOST_SERIALIZATION_NVP(dest);
-        // ar & BOOST_SERIALIZATION_NVP(src);
-        // ar & BOOST_SERIALIZATION_NVP(vn);
-        // ar & BOOST_SERIALIZATION_NVP(size_in_bits);
         ar & BOOST_SERIALIZATION_NVP(size_in_flits);
     }
     
@@ -264,7 +256,9 @@ class internal_router_event : public BaseRtrEvent {
 public:
     internal_router_event() :
         BaseRtrEvent(BaseRtrEvent::INTERNAL)
-    {}
+    {
+        encap_ev = NULL;
+    }
     internal_router_event(RtrEvent* ev) :
         BaseRtrEvent(BaseRtrEvent::INTERNAL)
     {encap_ev = ev;}

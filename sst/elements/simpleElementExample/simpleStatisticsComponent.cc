@@ -145,6 +145,6 @@ bool simpleStatisticsComponent::Clock1Tick(Cycle_t CycleNum)
 
 // Serialization
 
-BOOST_CLASS_EXPORT(simpleStatisticsComponent)
+BOOST_CLASS_EXPORT(SST::SimpleStatisticsComponent::simpleStatisticsComponent)
 
 

@@ -26,9 +26,10 @@
 //#include "sst/elements/merlin/linkControl.h"
 #include <sst/core/interfaces/simpleNetwork.h>
 
-using namespace SST;
-using namespace SST::Merlin;
+namespace SST {
 using namespace SST::Interfaces;
+
+namespace Merlin {
 
 
 nic::nic(ComponentId_t cid, Params& params) :
@@ -162,7 +163,6 @@ private:
 };
 
 
-BOOST_CLASS_EXPORT(MyRtrEvent)
 
 
 bool
@@ -296,3 +296,8 @@ int nic::IP_to_fattree_ID(int ip)
 
     return id;
 }
+
+} // namespace Merlin
+} // namespace SST
+
+BOOST_CLASS_EXPORT(SST::Merlin::MyRtrEvent)

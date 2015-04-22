@@ -594,9 +594,9 @@ extern "C" {
 	};
 }
 
-BOOST_CLASS_EXPORT(MemEvent)
-BOOST_CLASS_EXPORT(DMACommand)
+BOOST_CLASS_EXPORT(SST::MemHierarchy::MemEvent)
+BOOST_CLASS_EXPORT(SST::MemHierarchy::DMACommand)
 
 
-BOOST_CLASS_EXPORT(MemNIC::MemRtrEvent)
-BOOST_CLASS_EXPORT(MemNIC::InitMemRtrEvent)
+BOOST_CLASS_EXPORT(SST::MemHierarchy::MemNIC::MemRtrEvent)
+BOOST_CLASS_EXPORT(SST::MemHierarchy::MemNIC::InitMemRtrEvent)

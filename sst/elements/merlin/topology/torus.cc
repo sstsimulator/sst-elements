@@ -297,5 +297,5 @@ topo_torus::getEndpointID(int port)
 }
 
 
-BOOST_CLASS_EXPORT(topo_torus_event)
+BOOST_CLASS_EXPORT(SST::Merlin::topo_torus_event)
 

@@ -68,4 +68,4 @@ bool ZodiacDUMPITraceReader::clockTic( Cycle_t ) {
   return false;
 }
 
-BOOST_CLASS_EXPORT(ZodiacDUMPITraceReader)
+BOOST_CLASS_EXPORT(SST::Zodiac::ZodiacDUMPITraceReader)

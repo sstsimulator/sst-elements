@@ -163,6 +163,6 @@ bool streamCPU::clockTic( Cycle_t )
 
 // Element Libarary / Serialization stuff
 
-BOOST_CLASS_EXPORT(streamCPU)
+BOOST_CLASS_EXPORT(SST::MemHierarchy::streamCPU)
 
 

@@ -525,4 +525,4 @@ void ZodiacSiriusTraceReader::enqueueNextEvent() {
 	}
 }
 
-BOOST_CLASS_EXPORT(ZodiacSiriusTraceReader)
+BOOST_CLASS_EXPORT(SST::Zodiac::ZodiacSiriusTraceReader)

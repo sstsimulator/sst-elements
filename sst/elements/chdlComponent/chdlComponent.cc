@@ -421,9 +421,9 @@ bool chdlComponent::clockTick(Cycle_t c) {
   return false;
 }
 
-BOOST_CLASS_EXPORT(reqdata);
-BOOST_CLASS_EXPORT(respdata);
-BOOST_CLASS_EXPORT(chdlComponent);
+BOOST_CLASS_EXPORT(SST::ChdlComponent::reqdata);
+BOOST_CLASS_EXPORT(SST::ChdlComponent::respdata);
+BOOST_CLASS_EXPORT(SST::ChdlComponent::chdlComponent);
 
 static Component* create_chdlComponent(ComponentId_t id, Params &p) {
   return new chdlComponent(id, p);

@@ -258,8 +258,8 @@ int qsimComponent::magic_cb(int c, uint64_t a) {
   return 0;
 }
 
-BOOST_CLASS_EXPORT(IPIEvent);
-BOOST_CLASS_EXPORT(qsimComponent);
+BOOST_CLASS_EXPORT(SST::QsimComponent::IPIEvent);
+BOOST_CLASS_EXPORT(SST::QsimComponent::qsimComponent);
 
 static Component* create_qsimComponent(ComponentId_t id, Params &p) {
   return new qsimComponent(id, p);

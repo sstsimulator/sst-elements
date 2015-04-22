@@ -26,8 +26,6 @@
 
 #include <queue>
 
-using namespace SST;
-
 namespace SST {
 
 class Component;

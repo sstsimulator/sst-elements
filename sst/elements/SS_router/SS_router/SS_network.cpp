@@ -54,4 +54,4 @@ Network::Network( SST::Params params )
            _size,_xDimSize,_yDimSize,_zDimSize);
 #endif
 }
-BOOST_CLASS_EXPORT(RtrEvent)
+BOOST_CLASS_EXPORT(SST::SS_router::RtrEvent)
