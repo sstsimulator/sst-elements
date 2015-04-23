@@ -41,7 +41,7 @@ class RecvMachine {
                     FireflyNetworkEvent& event );
 
         void processNeedRecv( FireflyNetworkEvent* event ) {
-            MsgHdr& hdr = *(MsgHdr*) &event->buf[0];
+            MsgHdr& hdr = *(MsgHdr*) event->bufPtr();
             m_nic.notifyNeedRecv( hdr.dst_vNicId, hdr.src_vNicId,
                      event->src, hdr.tag, hdr.len);
         }

@@ -58,7 +58,7 @@ void Nic::RecvMachine::run( )
 
           case HavePkt:
             m_dbg.verbose(CALL_INFO,1,0,"event has %lu bytes\n",
-                                                    m_mEvent->buf.size() );
+                                                    m_mEvent->bufSize() );
 
             // is there an active stream for this src node?
             if ( m_activeRecvM.find( m_mEvent->src ) == m_activeRecvM.end() ) {
@@ -125,7 +125,7 @@ uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
 {
     int delay = 0;
         
-    MsgHdr& hdr = *(MsgHdr*) &mEvent.buf[0];
+    MsgHdr& hdr = *(MsgHdr*) mEvent.bufPtr();
 
     if ( MsgHdr::Msg == hdr.op ) {
         m_dbg.verbose(CALL_INFO,2,0,"Msg Op\n");
@@ -133,7 +133,7 @@ uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
         delay = m_rxMatchDelay;
 
         if ( findRecv( mEvent.src, hdr ) ) {
-            mEvent.buf.erase(0, sizeof(MsgHdr) );
+            mEvent.bufPop( sizeof(MsgHdr) );
             state = Move;
         } else {
             state = NeedRecv;
@@ -141,7 +141,7 @@ uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
 
     } else if ( MsgHdr::Rdma == hdr.op ) {
 
-        RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*)&mEvent.buf[ sizeof(MsgHdr) ];
+        RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) mEvent.bufPtr( sizeof(MsgHdr) );
 
         switch ( rdmaHdr.op  ) {
 
@@ -162,7 +162,7 @@ uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
             assert(0);
         }
 
-        mEvent.buf.erase(0, sizeof(MsgHdr) + sizeof(rdmaHdr) );
+        mEvent.bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
     }
 
     return delay;
@@ -271,8 +271,8 @@ bool Nic::RecvMachine::findRecv( int src, MsgHdr& hdr )
 bool Nic::RecvMachine::moveEvent( FireflyNetworkEvent* event )
 {
     int src = event->src;
-    m_dbg.verbose(CALL_INFO,1,0,"event has %lu bytes\n", event->buf.size() );
-    if ( ! m_nic.m_arbitrateDMA->canIWrite( event->buf.size() ) ) {
+    m_dbg.verbose(CALL_INFO,1,0,"event has %lu bytes\n", event->bufSize() );
+    if ( ! m_nic.m_arbitrateDMA->canIWrite( event->bufSize() ) ) {
         return false;
     }
 
@@ -286,7 +286,7 @@ bool Nic::RecvMachine::moveEvent( FireflyNetworkEvent* event )
                         m_activeRecvM[ src ]->match_tag(),
                         m_activeRecvM[ src ]->match_len() );
     }
-    long tmp = event->buf.size();
+    long tmp = event->bufSize();
     if ( copyIn( m_dbg, *m_activeRecvM[ src ], *event ) || 
         m_activeRecvM[src]->match_len() == 
                         m_activeRecvM[src]->currentLen ) {
@@ -294,22 +294,22 @@ bool Nic::RecvMachine::moveEvent( FireflyNetworkEvent* event )
                             src, m_activeRecvM[ src ]->src_vNic() );
 
         m_dbg.verbose(CALL_INFO,2,0,"copyIn %lu bytes\n",
-                                            tmp - event->buf.size());
+                                            tmp - event->bufSize());
 
         m_activeRecvM[src]->notify();
 
         delete m_activeRecvM[src];
         m_activeRecvM.erase(src);
 
-        if ( ! event->buf.empty() ) {
+        if ( ! event->bufEmpty() ) {
             m_dbg.fatal(CALL_INFO,-1,
-                "buffer not empty, %lu bytes remain\n",event->buf.size());
+                "buffer not empty, %lu bytes remain\n",event->bufSize());
         }
     }
 
-    m_dbg.verbose(CALL_INFO,2,0,"copyIn %lu bytes\n", tmp - event->buf.size());
+    m_dbg.verbose(CALL_INFO,2,0,"copyIn %lu bytes\n", tmp - event->bufSize());
 
-    if ( event->buf.empty() ) {
+    if ( 0 == event->bufSize() ) {
         m_dbg.verbose(CALL_INFO,1,0,"network event is done\n");
         delete event;
     }
@@ -336,7 +336,7 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
 
         if ( entry.ioVec()[entry.currentVec].len ) {
             size_t toLen = entry.ioVec()[entry.currentVec].len - entry.currentPos;
-            size_t fromLen = event.buf.size();
+            size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
             char* toPtr = (char*) entry.ioVec()[entry.currentVec].ptr +
@@ -346,14 +346,17 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
 
             entry.currentLen += len;
             if ( entry.ioVec()[entry.currentVec].ptr ) {
-                memcpy( toPtr, &event.buf[0], len );
+                void *buf = event.bufPtr();
+                if ( buf ) {
+                    memcpy( toPtr, buf, len );
+                }
                 print( dbg, toPtr, len );
             }
 
-            event.buf.erase(0,len);
+            event.bufPop(len);
 
             entry.currentPos += len;
-            if ( 0 == event.buf.size() &&
+            if ( event.bufEmpty() &&
                     entry.currentPos != entry.ioVec()[entry.currentVec].len )
             {
                 dbg.verbose(CALL_INFO,3,0,"event buffer empty\n");

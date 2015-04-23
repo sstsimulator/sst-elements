@@ -19,14 +19,46 @@ namespace SST {
 namespace Firefly {
 
 
+#define FOO 0 
 class FireflyNetworkEvent : public Event {
 
   public:
     uint16_t        seq;
-    std::string     buf;
     int             src;
 
-    FireflyNetworkEvent() {}
+    FireflyNetworkEvent( size_t reserve = 1000 ) : offset(0), bufLen(0) {
+        buf.reserve( reserve );
+        assert( 0 == buf.size() );
+    }
+
+    size_t bufSize() {
+        return bufLen - offset;
+    }
+
+    bool bufEmpty() {
+        return ( bufLen == offset );
+    }
+    void* bufPtr( size_t len = 0 ) {  
+        if ( offset + len < buf.size() ) {
+            return &buf[offset + len]; 
+        } else {
+            return NULL;
+        }
+    } 
+
+    void bufPop( size_t len ) {
+
+        offset += len;
+        assert( offset <= bufLen );
+    }
+    
+    void bufAppend( const void* ptr , size_t len ) {
+        if ( ptr ) {
+            buf.resize( bufLen + len);
+            memcpy( &buf[bufLen], (const char*) ptr, len );
+        }
+        bufLen += len;
+    } 
 
     FireflyNetworkEvent(const FireflyNetworkEvent *me) :
         Event()
@@ -62,6 +94,10 @@ class FireflyNetworkEvent : public Event {
 
   private:
 
+    std::vector<unsigned char>     buf;
+    size_t          offset;
+    size_t          bufLen;
+
     friend class boost::serialization::access;
     template<class Archive>
     void
@@ -69,6 +105,7 @@ class FireflyNetworkEvent : public Event {
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(seq);
+        ar & BOOST_SERIALIZATION_NVP(bufLen);
         ar & BOOST_SERIALIZATION_NVP(buf);
         ar & BOOST_SERIALIZATION_NVP(src);
     }

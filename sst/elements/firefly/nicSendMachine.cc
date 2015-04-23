@@ -116,18 +116,16 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
                     hdr.src_vNicId,entry->node(), 
                     hdr.dst_vNicId, hdr.tag, entry->totalBytes()) ;
 
-            ev->buf.insert( ev->buf.size(), (const char*) &hdr, 
-                                       sizeof(hdr) );
+            ev->bufAppend( &hdr, sizeof(hdr) );
         }
         ret = copyOut( m_dbg, *ev, *entry ); 
 
-        print(m_dbg, &ev->buf[0], ev->buf.size() );
         // ev->setDest( m_nic.IdToNet( entry->node() ) );
         // ev->setSrc( m_nic.IdToNet( m_nic.m_myNodeId ) );
         // ev->setPktSize();
         req->dest = m_nic.IdToNet( entry->node() );
         req->src = m_nic.IdToNet( m_nic.m_myNodeId );
-        req->size_in_bits = ev->buf.size() * 8;
+        req->size_in_bits = ev->bufSize() * 8;
         req->vn = 0;
         req->payload = ev;
 
@@ -136,8 +134,8 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         req->setTraceID( m_packetId++ );
         #endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",
-                                                        ev->buf.size());
-        assert( ev->buf.size() );
+                                                        ev->bufSize());
+        assert( ev->bufSize() );
         bool sent = m_nic.m_linkControl->send( req, 0 );
         assert( sent );
 
@@ -169,14 +167,14 @@ bool  Nic::SendMachine::copyOut( Output& dbg,
     dbg.verbose(CALL_INFO,3,0,"ioVec.size()=%lu\n", entry.ioVec().size() );
 
     for ( ; entry.currentVec < entry.ioVec().size() &&
-                event.buf.size() <  m_packetSizeInBytes;
+                event.bufSize() <  m_packetSizeInBytes;
                 entry.currentVec++, entry.currentPos = 0 ) {
 
         dbg.verbose(CALL_INFO,3,0,"vec[%lu].len %lu\n",entry.currentVec,
                     entry.ioVec()[entry.currentVec].len );
 
         if ( entry.ioVec()[entry.currentVec].len ) {
-            size_t toLen = m_packetSizeInBytes - event.buf.size();
+            size_t toLen = m_packetSizeInBytes - event.bufSize();
             size_t fromLen = entry.ioVec()[entry.currentVec].len -
                                                         entry.currentPos;
 
@@ -190,13 +188,13 @@ bool  Nic::SendMachine::copyOut( Output& dbg,
                                                         entry.currentPos;
 
             if ( entry.ioVec()[entry.currentVec].ptr ) {
-                event.buf.insert( event.buf.size(), from, len );
+                event.bufAppend( from, len );
             } else {
-                event.buf.insert( event.buf.size(), len, 0 );
+                event.bufAppend( NULL, len );
             }
 
             entry.currentPos += len;
-            if ( event.buf.size() == m_packetSizeInBytes &&
+            if ( event.bufSize() == m_packetSizeInBytes &&
                     entry.currentPos != entry.ioVec()[entry.currentVec].len ) {
                 break;
             }
