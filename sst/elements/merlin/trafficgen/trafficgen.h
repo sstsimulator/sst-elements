@@ -17,9 +17,13 @@
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/discrete_distribution.hpp>
-#include <boost/random/normal_distribution.hpp>
+//#include <boost/random/discrete_distribution.hpp>
+//#include <boost/random/normal_distribution.hpp>
 #include <boost/random/binomial_distribution.hpp>
+
+#include <sst/core/rng/mersenne.h>
+#include <sst/core/rng/gaussian.h>
+#include <sst/core/rng/discrete.h>
 
 #include <sst/core/component.h>
 #include <sst/core/debug.h>
@@ -48,7 +52,7 @@ private:
     static int max_lat;
     static int mean_sum;
 #endif
-    
+
     class Generator {
     public:
         virtual int getNextValue(void) = 0;
@@ -81,12 +85,14 @@ private:
                 _abort(TrafficGen, "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
-        virtual int getNextValue(void)
+
+	int getNextValue(void)
         {
             int neighbor = dist->getNextValue();
             return neighbors[neighbor];
         }
-        virtual void seed(uint32_t val)
+
+        void seed(uint32_t val)
         {
             dist->seed(val);
         }
@@ -94,69 +100,113 @@ private:
 
 
     class UniformDist : public Generator {
-        boost::random::mt19937 gen;
-        boost::random::uniform_int_distribution<> dist;
+	MersenneRNG* gen;
+	SSTDiscreteDistribution* dist;
+
     public:
-        UniformDist(int min, int max) :
-            dist(min, max)
-        { }
-        virtual int getNextValue(void)
+        UniformDist(int min, int max)
         {
-            return dist(gen);
+		gen = new MersenneRNG();
+
+		const int size = max - min;
+		std::vector<double> probabilities(size);
+		double sum = 1.0;
+
+		for(int i = 0; i < size; i++) {
+			const double prob_i = 1.0 / size;
+			probabilities[i] = prob_i;
+
+			sum = sum - prob_i;
+		}
+
+		probabilities[size - 1] = sum;
+		dist = new SSTDiscreteDistribution(&probabilities[0], size, gen);
+	}
+
+	~UniformDist() {
+		delete dist;
+		delete gen;
+	}
+
+        int getNextValue(void)
+        {
+            return (int) dist->getNextDouble();
         }
-        virtual void seed(uint32_t val)
+
+        void seed(uint32_t val)
         {
-            gen.seed(val);
+	    delete gen;
+	    gen = new MersenneRNG((unsigned int) val);
         }
     };
 
 
     class DiscreteDist : public Generator {
-        boost::random::mt19937 gen;
-        boost::random::discrete_distribution<> dist;
+	MersenneRNG* gen;
+	SSTDiscreteDistribution* dist;
         int minValue;
     public:
-        DiscreteDist(int min, int max, int target, float targetProb) : minValue(min)
+        DiscreteDist(int min, int max, int target, double targetProb) : minValue(min)
         {
             int size = max - min;
-            float dfltP = (1.0 - targetProb) / (size -1);
-            std::vector<float> probs(size);
+            double dfltP = (1.0 - targetProb) / (size - 1);
+            std::vector<double> probs(size);
             for ( int i = 0 ; i < size ; i++ ) {
                 probs[i] = dfltP;
             }
             probs[target] = targetProb;
-            dist = boost::random::discrete_distribution<>(probs.begin(), probs.end());
+
+	    gen = new MersenneRNG();
+	    dist = new SSTDiscreteDistribution(&probs[0], size, gen);
         }
-        virtual int getNextValue(void)
+
+	~DiscreteDist() {
+		delete dist;
+		delete gen;
+	}
+
+        int getNextValue(void)
         {
-            return dist(gen) + minValue;
+            return ((int) dist->getNextDouble()) + minValue;
         }
-        virtual void seed(uint32_t val)
+
+        void seed(uint32_t val)
         {
-            gen.seed(val);
+	    delete gen;
+	    gen = new MersenneRNG((unsigned int) val);
         }
     };
 
     class NormalDist : public Generator {
-        boost::random::mt19937 gen;
-        boost::random::normal_distribution<> dist;
+	SSTGaussianDistribution* dist;
+	MersenneRNG* gen;
+
         int minValue;
         int maxValue;
     public:
-        NormalDist(int min, int max, float mean, float stddev) : minValue(min), maxValue(max)
+        NormalDist(int min, int max, double mean, double stddev) : minValue(min), maxValue(max)
         {
-            dist = boost::random::normal_distribution<>(mean, stddev);
+	    gen = new MersenneRNG();
+	    dist = new SSTGaussianDistribution(mean, stddev);
         }
-        virtual int getNextValue(void)
+
+	~NormalDist() {
+		delete dist;
+		delete gen;
+	}
+
+        int getNextValue(void)
         {
             for (;;) {
-                int val = (int)dist(gen);
+                int val = (int) dist->getNextDouble();
                 if ( val < maxValue && val >= minValue ) return val;
             }
         }
-        virtual void seed(uint32_t val)
+
+        void seed(uint32_t val)
         {
-            gen.seed(val);
+	    delete gen;
+	    gen = new MersenneRNG((unsigned int) val);
         }
     };
 

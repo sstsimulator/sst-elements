@@ -22,11 +22,6 @@
 
 #include "sst/elements/merlin/linkControl.h"
 
-#ifdef HAVE_MPI
-#include <boost/mpi.hpp>
-#endif
-
-
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
 
@@ -191,53 +186,6 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
 void TrafficGen::finish()
 {
     link_control->finish();
-//     const LinkControl::PacketStats &stats = link_control->getPacketStats();
-
-//     if ( 0 == id ) {
-//         out.output("id,#Sent,#Recv,#NIC_Recv,MinLat,MaxLat,AvgLat,StdDevLat\n");
-//     }
-
-//     out.output("%d,%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%lg,%lg\n",
-//             id, packets_sent, packets_recd, stats.getNumPkts(),
-//             stats.getMinLatency(), stats.getMaxLatency(),
-//             stats.getMeanLatency(), stats.getStdDevLatency());
-
-// #if ENABLE_FINISH_HACK
-//     received += packets_recd;
-//     if ( stats.getMinLatency() < min_lat ) min_lat = stats.getMinLatency();
-//     if ( stats.getMaxLatency() > max_lat ) max_lat = stats.getMaxLatency();
-//     mean_sum += (stats.getMeanLatency() * stats.getNumPkts());
-//     count--;
-
-//     if ( count == 0 ) {
-//         int output_recv = received;
-//         uint32_t output_min = min_lat;
-//         uint32_t output_max = max_lat;
-//         uint32_t output_mean_sum = mean_sum;
-// #if HAVE_MPI
-//         boost::mpi::communicator world;
-//         int input_recv = received;
-//         uint32_t input_min = min_lat;
-//         uint32_t input_max = max_lat;
-//         uint32_t input_mean_sum = mean_sum;
-//         all_reduce( world, &input_recv, 1, &output_recv, std::plus<int>() );        
-//         all_reduce( world, &input_min, 1, &output_min, boost::mpi::minimum<uint32_t>() );        
-//         all_reduce( world, &input_max, 1, &output_max, boost::mpi::maximum<uint32_t>() );        
-//         all_reduce( world, &input_mean_sum, 1, &output_mean_sum, std::plus<uint32_t>() );        
-// #endif
-        
-//         if ( Simulation::getSimulation()->getRank() == 0 ) {
-//             out.output("Total packets received: %d\n",output_recv); 
-//             SimTime_t finish = getCurrentSimTimeNano();
-//             out.output("Rate: %lu Billion messages per second\n", (output_recv / finish));
-
-//             out.output("\nMin latency: %u ns\n",output_min);
-//             out.output("Max latency: %u ns\n",output_max);
-//             out.output("Mean latency: %u ns\n",output_mean_sum / output_recv);
-
-//         }
-//     }
-// #endif
 }
 
 void TrafficGen::setup()
