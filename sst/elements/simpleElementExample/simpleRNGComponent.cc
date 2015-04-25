@@ -16,6 +16,7 @@
 
 #include "sst/core/rng/mersenne.h"
 #include "sst/core/rng/marsaglia.h"
+#include "sst/core/rng/xorshift.h"
 
 using namespace SST;
 using namespace SST::RNG;
@@ -28,16 +29,16 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
     rng_max_count = params.find_integer("count", 1000);
 
     std::string rngType = params.find_string("rng", "mersenne");
-    
+
     if (rngType == "mersenne") {
         unsigned int seed =  params.find_integer("seed", 1447);
-        
+
         std::cout << "Using Mersenne Random Number Generator with seed = " << seed << std::endl;
         rng = new MersenneRNG(seed);
     } else if (rngType == "marsaglia") {
         unsigned int m_w = params.find_integer("seed_w", 0);
         unsigned int m_z = params.find_integer("seed_z", 0);
-        
+
         if(m_w == 0 || m_z == 0) {
             std::cout << "Using Marsaglia Random Number Generator with no seeds ..." << std::endl;
             rng = new MarsagliaRNG();
@@ -45,7 +46,9 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
             std::cout << "Using Marsaglia Random Number Generator with seeds m_z = " << m_z << ", m_w = " << m_w << std::endl;
             rng = new MarsagliaRNG(m_z, m_w);
         }
-        
+    } else if (rngType == "xorshift") {
+	uint32_t seed = (uint32_t) params.find_integer("seed", 57);
+	rng = new XORShiftRNG(seed);
     } else {
         std::cout << "RNG provided but unknown " << rngType << ", so using Mersenne with seed = 1447..." << std::endl;
         rng = new MersenneRNG(1447);
