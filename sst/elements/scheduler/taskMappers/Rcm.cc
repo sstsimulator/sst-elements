@@ -25,11 +25,8 @@
  */
 
 #include "Rcm.h"
-#include <stdlib.h>
-#include <string.h>
 
 using namespace SST::Scheduler;
-using namespace std;
 
 void RCM::genrcm(const int n, const int *xadj, const int *adj, int *perm,
                  signed char *mask, int *deg)

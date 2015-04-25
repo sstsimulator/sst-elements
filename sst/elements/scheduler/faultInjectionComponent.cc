@@ -91,7 +91,7 @@ faultInjectionComponent::faultInjectionComponent() : Component( -1 ){}
 
 void faultInjectionComponent::setup(){
 	for( std::vector<SST::Link *>::iterator nodeIter = nodeLinks.begin(); nodeIter != nodeLinks.end(); nodeIter ++ ){
-		SST::Event * getID = new CommunicationEvent( RETRIEVE_ID, (void*)(!NULL) );
+		SST::Event * getID = new CommunicationEvent( RETRIEVE_ID);
 		(*nodeIter)->send( getID );
 	}
 
