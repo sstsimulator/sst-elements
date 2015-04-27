@@ -28,29 +28,35 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
     rng_count = 0;
     rng_max_count = params.find_integer("count", 1000);
 
+    uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+    output = new Output("RNGComponent", verbose, 0, Output::STDOUT);
+
     std::string rngType = params.find_string("rng", "mersenne");
 
     if (rngType == "mersenne") {
-        unsigned int seed =  params.find_integer("seed", 1447);
+        const uint32_t seed = (uint32_t) params.find_integer("seed", 1447);
 
-        std::cout << "Using Mersenne Random Number Generator with seed = " << seed << std::endl;
+	output->verbose(CALL_INFO, 1, 0, "Using Mersenne Generator with seed: %" PRIu32 "\n", seed);
         rng = new MersenneRNG(seed);
     } else if (rngType == "marsaglia") {
-        unsigned int m_w = params.find_integer("seed_w", 0);
-        unsigned int m_z = params.find_integer("seed_z", 0);
+        const uint32_t m_w = (uint32_t) params.find_integer("seed_w", 0);
+        const uint32_t m_z = (uint32_t) params.find_integer("seed_z", 0);
 
         if(m_w == 0 || m_z == 0) {
-            std::cout << "Using Marsaglia Random Number Generator with no seeds ..." << std::endl;
+	    output->verbose(CALL_INFO, 1, 0, "Using Marsaglia Generator with no seeds...\n");
             rng = new MarsagliaRNG();
         } else {
-            std::cout << "Using Marsaglia Random Number Generator with seeds m_z = " << m_z << ", m_w = " << m_w << std::endl;
+	    output->verbose(CALL_INFO, 1, 0, "Using Marsaglia Generator with seeds: Z=%" PRIu32 ", W=%" PRIu32 "\n",
+		m_w, m_z);
             rng = new MarsagliaRNG(m_z, m_w);
         }
     } else if (rngType == "xorshift") {
 	uint32_t seed = (uint32_t) params.find_integer("seed", 57);
+	output->verbose(CALL_INFO, 1, 0, "Using XORShift Generator with seed: %" PRIu32 "\n", seed);
 	rng = new XORShiftRNG(seed);
     } else {
-        std::cout << "RNG provided but unknown " << rngType << ", so using Mersenne with seed = 1447..." << std::endl;
+	output->verbose(CALL_INFO, 1, 0, "Generator: %s is unknown, using Mersenne with standard seed\n",
+		rngType.c_str());
         rng = new MersenneRNG(1447);
     }
 
@@ -59,8 +65,12 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
     primaryComponentDoNotEndSim();
 
     //set our clock
-    registerClock("1GHz", new Clock::Handler<simpleRNGComponent>(this, 
+    registerClock("1GHz", new Clock::Handler<simpleRNGComponent>(this,
 			       &simpleRNGComponent::tick));
+}
+
+simpleRNGComponent::~simpleRNGComponent() {
+	delete output;
 }
 
 simpleRNGComponent::simpleRNGComponent() :
@@ -77,12 +87,11 @@ bool simpleRNGComponent::tick( Cycle_t )
     int32_t I32 = rng->generateNextInt32();
     int64_t I64 = rng->generateNextInt64();
     rng_count++;
-    
-    std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
-    nU << ", " << U32 << ", " << U64 << ", " << I32 <<
-    ", " << I64 << std::endl;
 
-  	// return false so we keep going
+    output->verbose(CALL_INFO, 1, 0, "Random: %" PRIu32 " of %" PRIu32 " %18.15f %" PRIu32 ", %" PRIu64 ", %" PRId32 ", %" PRId64 "\n",
+	rng_count, rng_max_count, nU, U32, U64, I32, I64);
+
+   // return false so we keep going
   	if(rng_count == rng_max_count) {
   	    primaryComponentOKToEndSim();
   		return true;

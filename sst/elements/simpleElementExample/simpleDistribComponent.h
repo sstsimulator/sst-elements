@@ -56,6 +56,7 @@ private:
     int  rng_max_count;
     int  rng_count;
     bool bin_results;
+    std::string dist_type;
     
     std::map<int64_t, uint64_t>* bins;
     

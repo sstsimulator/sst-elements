@@ -29,10 +29,13 @@ EXTRA_DIST = \
     README \
     tests/test_simpleComponent.py \
     tests/test_simpleClockerComponent.py \
+    test/test_simpleDistribComponent_discrete.py \
     tests/test_simpleDistribComponent_expon.py \
     tests/test_simpleDistribComponent_gaussian.py \
+    tests/test_simpleDistribComponent_poisson.py \
     tests/test_simpleRNGComponent_mersenne.py \
     tests/test_simpleRNGComponent_marsaglia.py \
+    tests/test_simpleRNGComponent_xorshift.py \
     tests/test_simpleStatisticsComponent.py \
     tests/test_simpleMessageGeneratorComponent.py
 

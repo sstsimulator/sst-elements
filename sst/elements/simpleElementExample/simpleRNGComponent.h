@@ -25,6 +25,7 @@ class simpleRNGComponent : public SST::Component
 {
 public:
     simpleRNGComponent(SST::ComponentId_t id, SST::Params& params);
+    ~simpleRNGComponent();
     void setup()  { }
     void finish() { }
 
@@ -34,7 +35,8 @@ private:
     void operator=(const simpleRNGComponent&); // do not implement
     
     virtual bool tick(SST::Cycle_t);
-    
+
+    Output* output;
     SSTRandom*  rng;
     std::string rng_type;
     int rng_max_count;
