@@ -16,7 +16,7 @@
 #define COMPONENTS_MERLIN_GENERATORS_TRAFFICEGEN_H
 
 #include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
+//#include <boost/random/uniform_int_distribution.hpp>
 //#include <boost/random/discrete_distribution.hpp>
 //#include <boost/random/normal_distribution.hpp>
 #include <boost/random/binomial_distribution.hpp>
@@ -24,6 +24,7 @@
 #include <sst/core/rng/mersenne.h>
 #include <sst/core/rng/gaussian.h>
 #include <sst/core/rng/discrete.h>
+#include <sst/core/rng/expon.h>
 
 #include <sst/core/component.h>
 #include <sst/core/debug.h>
@@ -97,6 +98,34 @@ private:
             dist->seed(val);
         }
     };
+    
+    class ExponentialDist : public Generator {
+        MersenneRNG* gen;
+        SSTExponentialDistribution* dist;
+        
+    public:
+        ExponentialDist(int lambda)
+        {
+            gen = new MersenneRNG();
+	    dist = new SSTExponentialDistribution((double) lambda);
+        }
+
+        ~ExponentialDist() {
+            delete dist;
+            delete gen;
+        }
+
+        int getNextValue(void)
+        {
+            return (int) dist->getNextDouble();
+        }
+
+        void seed(uint32_t val)
+        {
+            delete gen;
+            gen = new MersenneRNG((unsigned int) val);
+        }
+    };
 
 
     class UniformDist : public Generator {
@@ -108,7 +137,7 @@ private:
         {
 		gen = new MersenneRNG();
 
-		const int size = max - min;
+		const int size = std::max(1, max - min);
 		std::vector<double> probabilities(size);
 		double sum = 1.0;
 
@@ -148,7 +177,7 @@ private:
     public:
         DiscreteDist(int min, int max, int target, double targetProb) : minValue(min)
         {
-            int size = max - min;
+            int size = std::max(max - min, 1);
             double dfltP = (1.0 - targetProb) / (size - 1);
             std::vector<double> probs(size);
             for ( int i = 0 ; i < size ; i++ ) {
