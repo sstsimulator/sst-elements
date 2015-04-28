@@ -50,7 +50,7 @@ class Topo:
 class topoSimple(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Simple"
     def prepParams(self):
@@ -76,7 +76,7 @@ class topoSimple(Topo):
 class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Torus"
     def prepParams(self):
@@ -182,7 +182,7 @@ class topoTorus(Topo):
 class topoMesh(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Mesh"
     def prepParams(self):
@@ -296,7 +296,7 @@ class topoMesh(Topo):
 class topoFatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
+        self.rtrKeys = ["topology", "xbar_arb", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
         self.nicKeys = ["link_bw"]
         self.ups = []
         self.downs = []
@@ -464,7 +464,7 @@ class topoFatTree(Topo):
 class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
     def getName(self):
         return "Dragonfly"
 

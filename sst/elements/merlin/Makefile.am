@@ -33,6 +33,7 @@ libmerlin_la_SOURCES = \
 	topology/singlerouter.cc \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
+	hr_router/xbar_arb_age.h \
 	hr_router/xbar_arb_lru.h \
 	hr_router/xbar_arb_rr.h \
 	trafficgen/trafficgen.h \

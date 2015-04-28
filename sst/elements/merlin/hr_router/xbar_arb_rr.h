@@ -46,8 +46,8 @@ private:
     // PortControl** ports;
     
 public:
-    xbar_arb_rr() :
-        XbarArbitration(),
+    xbar_arb_rr(Component* parent) :
+        XbarArbitration(parent),
         rr_vcs(NULL)
     {
     }

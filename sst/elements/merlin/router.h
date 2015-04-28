@@ -354,9 +354,11 @@ public:
 
 class PortControl;
 
-    class XbarArbitration : public Module {
+class XbarArbitration : public SubComponent {
 public:
-    XbarArbitration() {}
+    XbarArbitration(Component* parent) :
+        SubComponent(parent)
+    {}
     virtual ~XbarArbitration() {}
 
 #if VERIFY_DECLOCKING

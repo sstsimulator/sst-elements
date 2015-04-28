@@ -28,6 +28,7 @@
 #include "portControl.h"
 #include "xbar_arb_rr.h"
 #include "xbar_arb_lru.h"
+#include "xbar_arb_age.h"
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -125,6 +126,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
     }
 
+    std::string xbar_arb = params.find_string("xbar_arb","merlin.xbar_arb_lru");
+    
     // Parse all the timing parameters
     std::string link_bw_s = params.find_string("link_bw");
     if ( link_bw_s == "" ) {
@@ -223,7 +226,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // Get the Xbar arbitration
     // arb = new xbar_arb_rr(num_ports,num_vcs);
     // arb = new xbar_arb_rr();
-    arb = new xbar_arb_lru();
+    Params empty_params; // Empty params sent to subcomponents
+    arb = static_cast<XbarArbitration*>(loadSubComponent(xbar_arb, this, empty_params));
     
     if ( params.find_integer("debug", 0) ) {
         if ( num_routers == 0 ) {
@@ -528,6 +532,7 @@ hr_router::reportSetVCs(int port, int vcs)
 void
 hr_router::init_vcs()
 {
+
     // int in_buf_sizes[num_vcs];
     // int out_buf_sizes[num_vcs];
 

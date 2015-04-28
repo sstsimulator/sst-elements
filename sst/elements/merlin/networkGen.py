@@ -19,7 +19,8 @@ if __name__ == "__main__":
     endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint()), (3, BisectionEndPoint())])
     statoutputs = dict([(1,"sst.statOutputConsole"), (2,"sst.statOutputCSV"), (3,"sst.statOutputTXT")]) 
 
-
+    
+    
     print "Merlin SDL Generator\n"
 
 
@@ -46,7 +47,9 @@ if __name__ == "__main__":
 
     endPoint = endpoints[ep];
 
+    sst.merlin._params["xbar_arb"] = "merlin.xbar_arb_age"
 
+    
     print "Set statistics load level (0 = off):"
     stats = int(raw_input())
     if ( stats != 0 ):

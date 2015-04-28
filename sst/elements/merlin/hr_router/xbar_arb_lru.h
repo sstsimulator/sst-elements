@@ -36,18 +36,20 @@ private:
     int rr_port_shadow;
 #endif
 
-    // typedef std::forward_list<std::pair<int,int> > priority_list_t;
-    typedef std::vector<std::pair<int,int> > priority_list_t;
-    priority_list_t priority;
-    std::vector<std::pair<int,int> > used;
+    typedef std::pair<uint16_t,uint16_t> priority_entry_t;
+    priority_entry_t* priority[2];
+    priority_entry_t* cur_list;
+    priority_entry_t* next_list;
+    
+    int total_entries;
     
     internal_router_event** vc_heads;
 
     // PortControl** ports;
     
 public:
-    xbar_arb_lru() :
-        XbarArbitration()
+    xbar_arb_lru(Component* parent) :
+        XbarArbitration(parent)
     {
     }
 
@@ -58,14 +60,20 @@ public:
         num_ports = num_ports_s;
         num_vcs = num_vcs_s;
 
-        // std::cout << num_ports << " " << num_vcs << std::endl;
+        total_entries = num_ports * num_vcs;
+
+        priority[0] = new priority_entry_t[total_entries];
+        priority[1] = new priority_entry_t[total_entries];
+        cur_list = priority[0];
+        next_list = priority[1];
         
+        int index = 0;
         for ( int i = 0; i < num_ports; i++ ) {
             for ( int j = 0; j < num_vcs; j++ ) {
-                priority.push_back(std::pair<int,int>(i,j));
+                cur_list[index++] = priority_entry_t(i,j);
             }
         }
-        
+
         
         vc_heads = new internal_router_event*[num_vcs];
     }
@@ -84,16 +92,32 @@ public:
 
         for ( int i = 0; i < num_ports; i++ ) progress_vc[i] = -1;
 
+        // std::cout << "---------" << std::endl;
+        // for ( int i = 0; i < total_entries; i++ ) {
+        //     std::cout << priority[cur_list][i].first << ", " << priority[cur_list][i].second << std::endl;
+        // }
+        // std::cout << "---------" << std::endl;
+
         // Run through the priority list
-        for ( priority_list_t::iterator it = priority.begin(); it != priority.end(); ) {
+        // for ( priority_list_t::iterator it = priority.begin(); it != priority.end(); ) {
+        // int sat_index = total_entries - 1;
+        // int unsat_index = 0;
+
+        priority_entry_t* sat_list = &next_list[total_entries-1];
+        priority_entry_t* unsat_list = next_list;
         
-            const std::pair<int,int>& check = *it;
+        for ( int i = 0; i < total_entries; i++ ) {
+                    
+            // const priority_entry_t& check = priority[cur_list][i];
+            const priority_entry_t& check = cur_list[i];
 
             /* std::cout << check.first << ", " << check.second << std::endl; */
             
             int port = check.first;
             int vc = check.second;
 
+            // std::cout << check.first << ", " << check.second << std::endl;
+            
             vc_heads = ports[port]->getVCHeads();
 	    
             // if the output of this port is busy or if there is no
@@ -116,26 +140,41 @@ public:
                     in_port_busy[port] = src_event->getFlitCount();
                     out_port_busy[next_port] = src_event->getFlitCount();
                     
-                    // Need to remove this port/vc pair from the priority list
-                    // and set aside.
-                    used.push_back(check);
-                    it = priority.erase(it);
+
+                    // Copy data to new list
+                    // std::cout << "putting at bottom of list" << std::endl;
+                    // next_list[sat_index--] = check;
+                    *sat_list = check;
+                    --sat_list;
                 }
                 else {
+                    // std::cout << "putting at top of list" << std::endl;
+                    // next_list[unsat_index++] = check;
+                    *unsat_list = check;
+                    ++unsat_list;
                     progress_vc[port] = -2;
-                    ++it;
                 }
             }
             else {
-                ++it;
+                // std::cout << "putting at top of list" << std::endl;
+                // next_list[unsat_index++] = check;
+                *unsat_list = check;
+                ++unsat_list;
             }
         }
 
-        // Put the used port/vc pairs back into priority list in reverse order
-        for ( int i = used.size() - 1; i >= 0; --i ) {
-            priority.push_back(used[i]);
-        }
-        used.clear();
+        // std::cout << "+++++++++" << std::endl;
+        // for ( int i = 0; i < total_entries; i++ ) {
+        //     std::cout << priority[next_list][i].first << ", " << priority[cur_list][i].second << std::endl;
+        // }
+        // std::cout << "+++++++++" << std::endl;
+
+        // cur_list ^= next_list;
+        // next_list ^= cur_list;
+        // cur_list ^= next_list;
+        priority_entry_t* tmp = cur_list;
+        cur_list = next_list;
+        next_list = tmp;
         return;
     }
     

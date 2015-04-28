@@ -31,6 +31,10 @@
 #include "topology/fattree.h"
 #include "topology/dragonfly.h"
 
+#include "hr_router/xbar_arb_rr.h"
+#include "hr_router/xbar_arb_lru.h"
+#include "hr_router/xbar_arb_age.h"
+
 #include "trafficgen/trafficgen.h"
 
 #include "pymodule.h"
@@ -58,6 +62,7 @@ static const ElementInfoParam hr_router_params[] = {
     {"num_ports", "Number of ports that the router has"},
     {"num_vcs", "DEPRECATED", ""},
     {"topology", "Name of the topology module that should be loaded to control routing."},
+    {"xbar_arb", "Arbitration unit to be used for crossbar.","merlin.xbar_arb_lru"},
     {"link_bw", "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
     {"flit_size", "Flit size specified in either b or B (can include SI prefix)."},
     {"xbar_bw", "Bandwidth of the crossbar specified in either b/s or B/s (can include SI prefix)."},
@@ -301,6 +306,54 @@ static const ElementInfoParam dragonfly_params[] = {
 };
 
 
+// Crossbar arbitration units
+
+// round_robin
+static SubComponent*
+load_xbar_arb_rr(Component* comp, Params& params)
+{
+    return new xbar_arb_rr(comp);
+}
+
+static const ElementInfoStatistic xbar_arb_rr_statistics[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoParam xbar_arb_rr_params[] = {
+    {NULL,NULL,NULL}
+};
+
+// least recently used
+static SubComponent*
+load_xbar_arb_lru(Component* comp, Params& params)
+{
+    return new xbar_arb_lru(comp);
+}
+
+static const ElementInfoStatistic xbar_arb_lru_statistics[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoParam xbar_arb_lru_params[] = {
+    {NULL,NULL,NULL}
+};
+
+// age based
+static SubComponent*
+load_xbar_arb_age(Component* comp, Params& params)
+{
+    return new xbar_arb_age(comp);
+}
+
+static const ElementInfoStatistic xbar_arb_age_statistics[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoParam xbar_arb_age_params[] = {
+    {NULL,NULL,NULL}
+};
+
+
 
 static Component*
 create_portals_nic(SST::ComponentId_t id,
@@ -475,6 +528,30 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       test_network_inspector_statistics,
       "SST::Interfaces::SimpleNetwork::NetworkInspector"
+    },
+    { "xbar_arb_rr",
+      "Round robin arbitration unit for hr_router",
+      NULL,
+      load_xbar_arb_rr,
+      xbar_arb_rr_params,
+      xbar_arb_rr_statistics,
+      "Merlin::XbarArbitration"
+    },
+    { "xbar_arb_lru",
+      "Least recently used arbitration unit for hr_router",
+      NULL,
+      load_xbar_arb_lru,
+      xbar_arb_lru_params,
+      xbar_arb_lru_statistics,
+      "Merlin::XbarArbitration"
+    },
+    { "xbar_arb_age",
+      "Round robin arbitration unit for hr_router",
+      NULL,
+      load_xbar_arb_age,
+      xbar_arb_age_params,
+      xbar_arb_age_statistics,
+      "Merlin::XbarArbitration"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };
