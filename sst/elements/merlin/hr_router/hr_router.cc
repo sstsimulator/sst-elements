@@ -277,17 +277,20 @@ hr_router::notifyEvent()
     Cycle_t next_cycle = reregisterClock( xbar_tc, my_clock_handler); 
 #endif
 
-    int elapsed_cycles = next_cycle - unclocked_cycle;
+    int64_t elapsed_cycles = next_cycle - unclocked_cycle;
+
 
 #if !VERIFY_DECLOCKING
     // Fix up the busy variables
     for ( int i = 0; i < num_ports; i++ ) {
     	// Should stop at zero, need to find a clean way to do this
     	// with no branch.  For now it should work.
-    	in_port_busy[i] -= elapsed_cycles;
-    	out_port_busy[i] -= elapsed_cycles;
-    	if ( in_port_busy[i] < 0 ) in_port_busy[i] = 0;
-    	if ( out_port_busy[i] < 0 ) out_port_busy[i] = 0;
+        int64_t tmp = in_port_busy[i] - elapsed_cycles;
+    	if ( tmp < 0 ) in_port_busy[i] = 0;
+        else in_port_busy[i] = tmp;
+        tmp = out_port_busy[i] - elapsed_cycles;
+    	if ( tmp < 0 ) out_port_busy[i] = 0;
+        else out_port_busy[i] = tmp;
     }
 #endif
     // Report skipped cycles to arbitration unit.
@@ -318,8 +321,8 @@ hr_router::printStatus(Output& out)
     out.output("Router id: %d\n", id);
     for ( int i = 0; i < num_ports; i++ ) {
         ports[i]->printStatus(out);
-        out.output("  Output_busy: %u\n", out_port_busy[i]);
-        out.output("  Input_Busy: %u\n",in_port_busy[i]);
+        out.output("  Output_busy: %d\n", out_port_busy[i]);
+        out.output("  Input_Busy: %d\n",in_port_busy[i]);
     }
 }
 
