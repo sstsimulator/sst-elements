@@ -88,6 +88,7 @@ static const ElementInfoParam simpleRNGComponent_params[] = {
     { "seed", "The seed to use for the random number generator.", "11" },
     { "rng", "The random number generator to use (Marsaglia or Mersenne), default is Mersenne", "Mersenne"},
     { "count", "The number of random numbers to generate, default is 1000", "1000" },
+    { "verbose", "Sets the output verbosity of the component", "0" },
     { NULL, NULL, NULL }
 };
 
