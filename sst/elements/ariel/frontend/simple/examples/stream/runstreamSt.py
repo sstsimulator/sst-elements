@@ -16,9 +16,9 @@ ariel.addParams({
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",
-        "executable" : sst_root + "/tools/ariel/fesimple/examples/stream/stream",
+        "executable" : sst_root + "/sst/elements/ariel/frontend/simple/examples/stream/stream",
         "arielmode" : "1",
-        "arieltool" : sst_root + "/tools/ariel/fesimple/fesimple.so",
+        "arieltool" : sst_root + "/sst/elements/ariel/fesimple.so",
         "memorylevels" : "1",
         "defaultlevel" : "0"
         })
