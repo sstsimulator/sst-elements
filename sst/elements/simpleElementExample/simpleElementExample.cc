@@ -79,6 +79,8 @@ static const ElementInfoParam simpleDistribComponent_params[] = {
 	{ "stddev", "Standard deviation to use for the distribution", "0.2"},
 	{ "lambda", "Lambda value to use for the exponential distribution", "1.0"},
 	{ "binresults", "Print the results, only if value is \"1\"", "1"},
+	{ "probcount", "Number of probabilities in discrete distribution"},
+	{ "prob%(probcount)d", "Probability values for discrete distribution"},
   	{ NULL, NULL, NULL }
 };
 
