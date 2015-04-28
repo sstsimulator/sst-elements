@@ -54,6 +54,8 @@ class topoSimple(Topo):
     def getName(self):
         return "Simple"
     def prepParams(self):
+        if "xbar_arb" not in _params:
+            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.singlerouter"
         _params["debug"] = debug
         _params["num_ports"] = int(_params["router_radix"])
@@ -80,6 +82,8 @@ class topoTorus(Topo):
     def getName(self):
         return "Torus"
     def prepParams(self):
+        if "xbar_arb" not in _params:
+            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         self.nd = int(_params["num_dims"])
         peers = 1
         radix = 0
@@ -186,6 +190,8 @@ class topoMesh(Topo):
     def getName(self):
         return "Mesh"
     def prepParams(self):
+        if "xbar_arb" not in _params:
+            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         self.nd = int(_params["num_dims"])
         peers = 1
         radix = 0
@@ -309,6 +315,8 @@ class topoFatTree(Topo):
         return "Fat Tree"
 
     def prepParams(self):
+        if "xbar_arb" not in _params:
+            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         self.shape = _params["fattree:shape"]
         
         levels = self.shape.split(":")
@@ -469,6 +477,8 @@ class topoDragonFly(Topo):
         return "Dragonfly"
 
     def prepParams(self):
+        if "xbar_arb" not in _params:
+            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.dragonfly"
         _params["debug"] = debug
         _params["num_vns"] = 1
