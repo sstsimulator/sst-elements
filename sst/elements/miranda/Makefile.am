@@ -18,6 +18,7 @@ libmiranda_la_SOURCES = \
 	generators/streambench.h \
 	generators/streambench.cc \
 	generators/revsinglestream.h \
+	generators/inorderstreambench.h \
 	generators/revsinglestream.cc \
 	generators/stencil3dbench.h \
 	generators/stencil3dbench.cc \

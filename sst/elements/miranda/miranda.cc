@@ -20,6 +20,7 @@
 #include "generators/randomgen.h"
 #include "generators/gupsgen.h"
 #include "generators/streambench.h"
+#include "generators/inorderstreambench.h"
 #include "generators/revsinglestream.h"
 #include "generators/stencil3dbench.h"
 #include "generators/nullgen.h"
@@ -51,6 +52,10 @@ static SubComponent* load_RandomGenerator(Component* owner, Params& params) {
 
 static SubComponent* load_STREAMGenerator(Component* owner, Params& params) {
 	return new STREAMBenchGenerator(owner, params);
+}
+
+static SubComponent* load_InOrderSTREAMGenerator(Component* owner, Params& params) {
+	return new InOrderSTREAMBenchGenerator(owner, params);
 }
 
 static SubComponent* load_EmptyGenerator(Component* owner, Params& params) {
@@ -144,6 +149,17 @@ static const ElementInfoParam streamBench_params[] = {
     { NULL, NULL, NULL }
 };
 
+static const ElementInfoParam inOrderStreamBench_params[] = {
+    { "verbose",          "Sets the verbosity output of the generator", "0" },
+    { "n",                "Sets the number of elements in the STREAM arrays", "10000" },
+    { "block_per_call",   "Sets the number of iterations to generate per call to the generation function", "1"},
+    { "operandwidth",     "Sets the length of the request, default=8 (i.e. one double)", "8" },
+    { "start_a",          "Sets the start address of the array a", "0" },
+    { "start_b",          "Sets the start address of the array b", "1024" },
+    { "start_c",          "Sets the start address of the array c", "2048" },
+    { NULL, NULL, NULL }
+};
+
 static const ElementInfoParam spmvBench_params[] = {
     { "matrix_nx",	"Sets the horizontal dimension of the matrix", "10" },
     { "matrix_ny",	"Sets the vertical dimension of the matrix (the number of rows)", "10" },
@@ -203,6 +219,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 		NULL,
 		load_STREAMGenerator,
 		streamBench_params,
+		NULL,
+		"SST::Miranda::RequestGenerator"
+	},
+	{
+		"InOrderSTREAMBenchGenerator",
+		"Creates a representation of the STREAM benchmark for in-order CPUs",
+		NULL,
+		load_InOrderSTREAMGenerator,
+		inOrderStreamBench_params,
 		NULL,
 		"SST::Miranda::RequestGenerator"
 	},
