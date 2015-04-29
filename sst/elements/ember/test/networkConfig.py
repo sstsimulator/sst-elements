@@ -14,10 +14,10 @@ class TorusInfo(TopoInfo):
 		width = 1
 		local_ports = 1
 
-		if 2 == len( args ):
+		if len( args ) > 1:
 			local_ports = int( args[1] )
 
-		if 3 == len( args ):
+		if len( args ) > 2:
 			width = int( args[2] )
 		
 		self.params = {}
