@@ -22,8 +22,7 @@ networks.append(net);
 
 net = { 'topo' : 'fattree',
         'args' : [  
-                    ['--radix',   ['16']],
-                    ['--loading', ['8']]
+                    ['--shape',   ['9,9:9,9:18']],
                  ]
       }
 

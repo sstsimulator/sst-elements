@@ -7,13 +7,25 @@ class TopoInfo:
 		pass
 
 class TorusInfo(TopoInfo):
-	def __init__( self, shape ):
+	def __init__( self, config ):
+
+		args = config.split(':')
+		shape = args[0]
+		width = 1
+		local_ports = 1
+
+		if 2 == len( args ):
+			local_ports = int( args[1] )
+
+		if 3 == len( args ):
+			width = int( args[2] )
+		
 		self.params = {}
 		self.params["num_dims"] = self.calcNumDim(shape)
 		self.params["torus:shape"] = shape
-		self.params["torus:width"] = self.calcWidth(shape)
-		self.params["torus:local_ports"] = 1
-		self.numNodes = self.calcNumNodes( shape )
+		self.params["torus:width"] = self.calcWidth(shape,width)
+		self.params["torus:local_ports"] = local_ports 
+		self.numNodes = self.calcNumNodes( shape ) * local_ports
 
 	def getNetworkParams(self):
 		return self.params
@@ -31,28 +43,21 @@ class TorusInfo(TopoInfo):
 			num = num * int(d)
 		return num
 
-	def calcWidth(self,shape):
+	def calcWidth(self,shape,width):
 		tmp = len( shape.split( 'x' ) ) - 1
-		retval = "1"
+		retval = str(width) 
 		count = 0
 		while ( count < tmp ):
-			retval += "x1"
+			retval += "x" + str(width)
 			count  += 1
 		return retval
 
 
 class FattreeInfo(TopoInfo):
-	def __init__( self, radix, loading, shape  ):
+	def __init__( self, shape ):
 		self.params = {}
-                my_shape = shape
-		if ( "" == my_shape ):
-                        my_radix = int(radix)
-			my_shape = "%s,%d:%d,%d:%d"%(loading,my_radix/2,my_radix/2,my_radix/2,my_radix)
-#                        self.params["router_radix"] = int(radix) 
-#                        self.params["fattree:hosts_per_edge_rtr"] = int(loading) 
-#                        self.numNodes = int(radix) * int(radix)/2 * int(loading)
-		self.numNodes = self.calcNumNodes(my_shape)
-		self.params["fattree:shape"] = my_shape
+		self.numNodes = self.calcNumNodes(shape)
+		self.params["fattree:shape"] = shape
                 
 	def getNetworkParams(self):
 		return self.params

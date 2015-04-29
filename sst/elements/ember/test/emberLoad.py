@@ -1,6 +1,7 @@
 
 import sys,getopt
 import defaultParams
+import defaultSim
 import chamaOpenIBParams
 import chamaPSMParams
 import bgqParams
@@ -16,18 +17,23 @@ from networkConfig import *
 
 import random 
 
-jobid = 0
-loadFile = ""
-workList = []
-numCores = 1
 debug    = 0
-topology = ""
-shape    = ""
-loading  = 0
-radix    = 0
 emberVerbose = 0
+
+jobid = 0
+loadFile = '' 
+workList = []
+workFlow = []
+numCores = 1
 numNodes = 0
-platform = "default"
+
+platform = 'default'
+
+netFlitSize = '' 
+netBW = '' 
+netPktSize = '' 
+netTopo = ''
+netShape = ''
 
 rndmPlacement = False
 bgPercentage = int(0)
@@ -36,36 +42,18 @@ bgStddev = 300
 bgMsgSize = 1000
 
 motifDefaults = { 
-'cmd' : "",
-'printStats' : 0, 
-'api': "HadesMP",
-'spyplotmode': 0 
+	'cmd' : "",
+	'printStats' : 0, 
+	'api': "HadesMP",
+	'spyplotmode': 0 
 }
-
-workFlow = []
-if 1 == len(sys.argv) :
-    motif = dict.copy(motifDefaults)
-    motif['cmd'] = "Init"
-    workFlow.append( motif )
-
-    motif = dict.copy(motifDefaults)
-    motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
-    workFlow.append( motif )
-
-    motif = dict.copy(motifDefaults)
-    motif['cmd'] = "Fini"
-    workFlow.append( motif )
-
-    topology = "torus"
-    shape    = "4x4x4"
-    platform = "default"
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
-					"radix=","loading=","debug=","platform=","numNodes=",
-					"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
-					"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-                    "bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
+		"debug=","platform=","numNodes=",
+		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
+		"emberVerbose=","netBW=","netPktSize=","netFlitSize=","netPktSize",
+		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
 except getopt.GetopError as err:
     print str(err)
@@ -73,7 +61,7 @@ except getopt.GetopError as err:
 
 for o, a in opts:
     if o in ("--shape"):
-        shape = a
+        netShape = a
     elif o in ("--platform"):
         platform = a
     elif o in ("--numCores"):
@@ -89,11 +77,7 @@ for o, a in opts:
     	motif['cmd'] = a 
     	workFlow.append( motif )
     elif o in ("--topo"):
-        topology = a
-    elif o in ("--radix"):
-        radix = a
-    elif o in ("--loading"):
-        loading = a
+        netTopo = a
     elif o in ("--printStats"):
         motifDefaults['printStats'] = a
     elif o in ("--emberVerbose"):
@@ -118,11 +102,16 @@ for o, a in opts:
     else:
         assert False, "unhandle option" 
 
+if 1 == len(sys.argv):
+	workFlow, numNodes, numCores = defaultSim.getWorkFlow( motifDefaults )
+	platform, netTopo, netShape = defaultSim.getNetwork( )
+
 workList.append( [jobid, workFlow] )
 jobid += 1
 
-print "platform: {0}".format( platform)
+print "platform: {0}".format( platform )
 
+platNetConfig = {}
 if platform == "default":
     nicParams = defaultParams.nicParams
     networkParams = defaultParams.networkParams
@@ -134,64 +123,63 @@ elif platform == "chamaPSM":
     networkParams = chamaPSMParams.networkParams
     hermesParams = chamaPSMParams.hermesParams
     emberParams = chamaPSMParams.emberParams 
-
-    if len(topology) or radix or loading:
-	    sys.exit("can't change the network for Chama PSM")
-
-    topology = chamaPSMParams.topology
-    radix = chamaPSMParams.radix
-    loading = chamaPSMParams.loading
+    platNetConfig = chamaPSMParams.netConfig
 
 elif platform == "chamaOpenIB":
     nicParams = chamaOpenIBParams.nicParams
     networkParams = chamaOpenIBParams.networkParams
     hermesParams = chamaOpenIBParams.hermesParams
     emberParams = chamaOpenIBParams.emberParams 
-
-    if len(topology) or radix or loading:
-	    sys.exit("can't change the network for Chama OpenIB")
-
-    topology = chamaOpenIBParams.topology
-    radix = chamaOpenIBParams.radix
-    loading = chamaOpenIBParams.loading
+    platNetConfig = chamaOpenIBParams.netConfig
 
 elif platform == "bgq":
     nicParams = bgqParams.nicParams
     networkParams = bgqParams.networkParams
     hermesParams = bgqParams.hermesParams
     emberParams = bgqParams.emberParams 
+    platNetConfig = bgqParams.netConfig
 
-    if len(topology) or len(shape):
-	    sys.exit("can't change the network for BG/Q")
+if netBW:
+	networkParams['link_bw'] = netBW
 
-    topology = bgqParams.topology
-    shape = bgqParams.shape
+if netFlitSize:
+	networkParams['flitSize'] = netFlitSize
 
-if "" == topology:
-	sys.exit("What topo? [torus|fattree]")
+if netPktSize:
+	networkParams['packetSize'] = netPktSize
 
-if "torus" == topology:
-	if "" == shape:
-		sys.exit("What torus shape? (e.x. 4, 2x2, 4x4x8)")
-	topoInfo = TorusInfo(shape)
+if "" == netTopo:
+	if platNetConfig['topology']:
+		netTopo = platNetConfig['topology']
+	else:
+		sys.exit("What topo? [torus|fattree|dragonfly]")
+
+if "" == netShape:
+	if platNetConfig['shape']:
+		netShape = platNetConfig['shape']
+	else:
+		sys.exit("Error: " + netTopo + " needs shape")
+
+if "torus" == netTopo:
+
+	topoInfo = TorusInfo(netShape)
 	topo = topoTorus()
-	print "network: topology=torus shape={0}".format(shape)
 
-elif "fattree" == topology:
-	if "" == shape: # use shape if defined, otherwise use radix as legacy mode
-		if 0 == radix: 
-			sys.exit("Must either specify shape or radix/loading.")
-		if 0 == loading:
-			sys.exit("Must either specify shape or radix/loading.")
-	topoInfo = FattreeInfo(radix,loading,shape)
+elif "fattree" == netTopo:
+
+	topoInfo = FattreeInfo(netShape)
 	topo = topoFatTree()
-	print "network: topology=fattree radix={0} loading={1}".format(radix,loading)
-elif "dragonfly" == topology:
-	topoInfo = DragonFlyInfo(shape)
+
+elif "dragonfly" == netTopo:
+		
+	topoInfo = DragonFlyInfo(netShape)
 	topo = topoDragonFly()
-	print "network: topology=dragonfly shape={0}".format(shape)
+
 else:
 	sys.exit("how did we get here")
+
+print "network: topology={0} shape={1}".format(netTopo,netShape)
+
 
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())

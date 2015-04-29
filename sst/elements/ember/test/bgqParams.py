@@ -1,9 +1,11 @@
 
 debug = 0
 
-topology="torus"
-shape="4x4x4x4x2"
-#shape="2x2x2"
+netConfig = {
+	"topology":	"torus",
+	"shape":	"4x4x4x4x2"
+	#shape="2x2x2"
+}
 
 networkParams = {
     "topology" : "merlin." + "torus",

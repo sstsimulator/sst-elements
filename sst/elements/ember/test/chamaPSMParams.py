@@ -1,9 +1,13 @@
 
 debug = 0
 
-topology="fattree"
-radix=18
-loading=9
+netConfig = {
+	'topology': 'fattree',
+	'shape' : '9,9:9,9:18'
+	#'radix':    18,
+	#'loading':  9.
+	#'shape' : '18,18:18,18:36'
+}
 
 networkParams = {
     "topology" : "merlin." + "fattree",
