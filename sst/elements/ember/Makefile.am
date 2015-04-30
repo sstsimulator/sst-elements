@@ -124,6 +124,7 @@ EXTRA_DIST = \
 	test/CrossProduct.py \
 	test/networkConfig.py \
 	test/Tester.py \
+	test/defaultSim.py \
 	test/defaultParams.py \
 	test/chamaOpenIBParams.py \
 	test/chamaPSMParams.py \
