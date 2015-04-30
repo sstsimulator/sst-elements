@@ -34,6 +34,7 @@ netBW = ''
 netPktSize = '' 
 netTopo = ''
 netShape = ''
+netArb = ''
 
 rndmPlacement = False
 bgPercentage = int(0)
@@ -53,6 +54,7 @@ try:
 		"debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=","netPktSize",
+		"netArb=",		
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
 except getopt.GetopError as err:
@@ -88,6 +90,8 @@ for o, a in opts:
         netFlitSize = a
     elif o in ("--netPktSize"):
         netPktSize = a
+    elif o in ("--netArb"):
+        netArb = a
     elif o in ("--randomPlacement"):
         if a == "True":
             rndmPlacement = True
@@ -178,7 +182,7 @@ elif "dragonfly" == netTopo:
 else:
 	sys.exit("how did we get here")
 
-print "network: topology={0} shape={1}".format(netTopo,netShape)
+print "network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,netArb)
 
 
 if int(numNodes) == 0:
@@ -269,6 +273,9 @@ sst.merlin._params["input_latency"] = networkParams['input_latency']
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
 sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
 sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
+
+if netArb:
+	sst.merlin._params["xbar_arb"] = "merlin." + netArb 
 
 sst.merlin._params.update( topoInfo.getNetworkParams() )
 
