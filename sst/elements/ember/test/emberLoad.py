@@ -182,15 +182,17 @@ elif "dragonfly" == netTopo:
 else:
 	sys.exit("how did we get here")
 
-print "network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,netArb)
-
+if netArb:
+	print "network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,netArb)
+else:
+	print "network: topology={0} shape={1}".format(netTopo,netShape)
 
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())
 
 if int(numNodes) > int(topoInfo.getNumNodes()):
-    sys.exit("need more nodes")
-
+    sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
+ 
 print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 
 emptyNids = []
