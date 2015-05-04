@@ -164,7 +164,6 @@ private:
 
         void seed(uint32_t val)
         {
-	    delete gen;
 	    gen = new MersenneRNG((unsigned int) val);
         }
     };
@@ -201,7 +200,6 @@ private:
 
         void seed(uint32_t val)
         {
-	    delete gen;
 	    gen = new MersenneRNG((unsigned int) val);
         }
     };
@@ -234,7 +232,6 @@ private:
 
         void seed(uint32_t val)
         {
-	    delete gen;
 	    gen = new MersenneRNG((unsigned int) val);
         }
     };
