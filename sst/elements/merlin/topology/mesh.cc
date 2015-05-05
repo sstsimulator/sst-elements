@@ -311,7 +311,4 @@ topo_mesh::getEndpointID(int port)
 }
 
 
-BOOST_CLASS_EXPORT(SST::Merlin::topo_mesh_event)
-
 BOOST_CLASS_EXPORT(SST::Merlin::topo_mesh_init_event)
-

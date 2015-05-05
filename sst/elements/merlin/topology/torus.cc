@@ -295,7 +295,3 @@ topo_torus::getEndpointID(int port)
     if ( !isHostPort(port) ) return -1;
     return (router_id * num_local_ports) + (port - local_port_start);
 }
-
-
-BOOST_CLASS_EXPORT(SST::Merlin::topo_torus_event)
-

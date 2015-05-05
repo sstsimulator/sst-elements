@@ -576,6 +576,5 @@ BOOST_CLASS_EXPORT(SST::Merlin::BaseRtrEvent)
 BOOST_CLASS_EXPORT(SST::Merlin::RtrEvent)
 BOOST_CLASS_EXPORT(SST::Merlin::RtrInitEvent)
 BOOST_CLASS_EXPORT(SST::Merlin::credit_event)
-BOOST_CLASS_EXPORT(SST::Merlin::internal_router_event)
 BOOST_CLASS_EXPORT(SST::Merlin::TopologyEvent)
 

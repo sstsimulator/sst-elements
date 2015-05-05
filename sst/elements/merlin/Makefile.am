@@ -10,6 +10,7 @@ comp_LTLIBRARIES = libmerlin.la
 libmerlin_la_SOURCES = \
 	merlin.h \
 	merlin.cc \
+	boostExports.cc \
 	router.h \
 	linkControl.h \
 	linkControl.cc \
