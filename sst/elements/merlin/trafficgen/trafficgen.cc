@@ -158,6 +158,8 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
             params.find_integer(prefix + ":RangeMin", 0),
             params.find_integer(prefix + ":RangeMax", INT_MAX));
 
+    uint32_t rng_seed = (uint32_t) params.find_integer(prefix + ":Seed", 1010101);
+
     if ( !pattern.compare("NearestNeighbor") ) {
         std::string shape = params.find_string(prefix + ":NearestNeighbor:3DSize");
         int maxX, maxY, maxZ;
@@ -183,6 +185,9 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
         _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
     }
+
+    gen->seed(rng_seed);
+
     return gen;
 }
 
