@@ -423,7 +423,7 @@ void MemController::finish(void){
     out.output("- GetX received (read):  %" PRIu64 "\n", GetXReqReceived_);
     out.output("- GetSEx received (read):  %" PRIu64 "\n", GetSExReqReceived_);
     out.output("- PutM received (write):  %" PRIu64 "\n", PutMReqReceived_);
-    out.output("- Avg. Requests out: %.3f\n",float(numReqOutstanding_)/float(numCycles_));
+    out.output("- Avg. Requests outstanding/cycle: %.3f\n",float(numReqOutstanding_)/float(numCycles_));
 
 }
 
