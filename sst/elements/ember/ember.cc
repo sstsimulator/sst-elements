@@ -464,9 +464,9 @@ static const ElementInfoParam sweep3d_params[] = {
 	{	"arg.ny",			"Sets the problem size in the Y-dimension",	"50"},
 	{	"arg.nz",			"Sets the problem size in the Z-dimension",	"50"},
 	{	"arg.kba",			"Sets the KBA (Nz-K blocking factor, default is 1 (no blocking))", "1"},
-	{	"arg.computetime",		"Sets the compute time per KBA-data block in nanoseconds", "1000"},
-	{	"arg.fields_per_cell",	"Sets the number of fields at each cell point", "8"},
-	{	"arg.datatype_width",	"Sets the width of the datatype used at the cell", "8"},
+	{	"arg.computetime",		"Sets the compute time per nx * ny block in picoseconds", "1000"},
+	{	"arg.fields_per_cell",	        "Sets the number of fields at each cell point", "8"},
+	{	"arg.datatype_width",	        "Sets the width of the datatype used at the cell", "8"},
 	{	NULL,	NULL,	NULL	}
 };
 

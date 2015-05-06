@@ -41,8 +41,11 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % kba == 0);
 
+	// Specify the compute time in pico-seconds
 	uint64_t compTime = (uint64_t) params.find_integer("arg.computetime", 1000);
-	nsCompute = (uint64_t) (nx * ny * compTime);
+
+	// Convert down to nanoseconds
+	nsCompute = (uint64_t) ((nx * ny * compTime) / 1000);
 }
 
 void EmberSweep3DGenerator::configure() 
