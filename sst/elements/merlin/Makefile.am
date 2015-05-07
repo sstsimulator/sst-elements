@@ -36,6 +36,7 @@ libmerlin_la_SOURCES = \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_age.h \
 	hr_router/xbar_arb_lru.h \
+	hr_router/xbar_arb_rand.h \
 	hr_router/xbar_arb_rr.h \
 	trafficgen/trafficgen.h \
 	trafficgen/trafficgen.cc \

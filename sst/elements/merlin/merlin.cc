@@ -34,6 +34,7 @@
 #include "hr_router/xbar_arb_rr.h"
 #include "hr_router/xbar_arb_lru.h"
 #include "hr_router/xbar_arb_age.h"
+#include "hr_router/xbar_arb_rand.h"
 
 #include "trafficgen/trafficgen.h"
 
@@ -356,6 +357,21 @@ static const ElementInfoParam xbar_arb_age_params[] = {
     {NULL,NULL,NULL}
 };
 
+// random
+static SubComponent*
+load_xbar_arb_rand(Component* comp, Params& params)
+{
+    return new xbar_arb_rand(comp);
+}
+
+static const ElementInfoStatistic xbar_arb_rand_statistics[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoParam xbar_arb_rand_params[] = {
+    {NULL,NULL,NULL}
+};
+
 
 
 static Component*
@@ -560,6 +576,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       load_xbar_arb_age,
       xbar_arb_age_params,
       xbar_arb_age_statistics,
+      "Merlin::XbarArbitration"
+    },
+    { "xbar_arb_rand",
+      "Random arbitration arbitration unit for hr_router",
+      NULL,
+      load_xbar_arb_rand,
+      xbar_arb_rand_params,
+      xbar_arb_rand_statistics,
       "Merlin::XbarArbitration"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }
