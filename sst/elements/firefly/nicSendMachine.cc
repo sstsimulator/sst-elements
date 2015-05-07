@@ -31,6 +31,9 @@ Nic::SendMachine::~SendMachine()
 
 void Nic::SendMachine::run( SendEntry* entry )
 {
+#ifdef NIC_SEND_DEBUG
+    ++m_runCount;
+#endif
     m_dbg.verbose(CALL_INFO,1,0,"SendMachine\n");
 
     if ( entry ) {
@@ -105,6 +108,9 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
             
             MsgHdr hdr;
 
+#ifdef NIC_SEND_DEBUG
+            ++m_msgCount;
+#endif
             hdr.op= entry->getOp();
             hdr.tag = entry->tag();
             hdr.len = entry->totalBytes();

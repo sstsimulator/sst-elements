@@ -112,6 +112,12 @@ Nic::~Nic()
     }
 }
 
+void Nic::printStatus(Output &out)
+{
+    m_sendMachine.printStatus( out );
+    m_recvMachine.printStatus( out );
+}
+
 void Nic::init( unsigned int phase )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
@@ -165,9 +171,11 @@ void Nic::handleSelfEvent( Event *e )
         break;
 
       case SelfEvent::RunSendMachine:
-        m_dbg.verbose(CALL_INFO,2,0,"ProcessSend\n");
         m_sendMachine.run( static_cast<SendEntry*>(event->entry) );
         break;
+
+      default:
+        assert(0);
     }
 
     delete e;

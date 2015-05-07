@@ -41,6 +41,9 @@ void Nic::RecvMachine::run( )
 {
     m_dbg.verbose(CALL_INFO,1,0,"RecvMachine\n");
 
+#ifdef NIC_RECV_DEBUG
+    ++m_runCount;
+#endif
     bool blocked = false;
     do { 
         switch ( m_state ) {
@@ -78,6 +81,7 @@ void Nic::RecvMachine::run( )
                 if ( event->entry ) {
                     event->type = SelfEvent::RunSendMachine;
                     m_state = NeedPkt;
+                    delete m_mEvent;
                 } else {
                     event->type = SelfEvent::RunRecvMachine;
                     clearNotify();
@@ -127,6 +131,9 @@ uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
         
     MsgHdr& hdr = *(MsgHdr*) mEvent.bufPtr();
 
+#ifdef NIC_RECV_DEBUG
+    ++m_msgCount;
+#endif
     if ( MsgHdr::Msg == hdr.op ) {
         m_dbg.verbose(CALL_INFO,2,0,"Msg Op\n");
 

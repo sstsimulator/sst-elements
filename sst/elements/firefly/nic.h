@@ -494,6 +494,7 @@ public:
     void init( unsigned int phase );
     int getNodeId() { return m_myNodeId; }
     int getNum_vNics() { return m_num_vNics; }
+    void printStatus(Output &out);
 
   private:
     void handleSelfEvent( Event* );
