@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     endPoint = endpoints[ep];
 
-#    sst.merlin._params["xbar_arb"] = "merlin.xbar_arb_age"
+    sst.merlin._params["xbar_arb"] = "merlin.xbar_arb_age"
 
     
     print "Set statistics load level (0 = off):"

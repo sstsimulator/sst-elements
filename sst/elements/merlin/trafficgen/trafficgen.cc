@@ -262,7 +262,6 @@ TrafficGen::clock_handler(Cycle_t cycle)
         packet_delay = getDelayNextPacket();
     }
 
-
     return false;
 }
 

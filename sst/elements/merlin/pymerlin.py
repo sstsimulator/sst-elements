@@ -27,7 +27,6 @@ class Params(dict):
 _params = Params()
 debug = 0
 
-
 class Topo:
     def __init__(self):
         def epFunc(epID):
@@ -564,13 +563,14 @@ class TestEndPoint(EndPoint):
     def __init__(self):
         self.enableAllStats = False;
         self.statInterval = "0"
-        self.nicKeys = ["topology", "num_peers", "link_bw"]
+        self.nicKeys = ["topology", "num_peers", "link_bw", "checkerboard"]
 
     def getName(self):
         return "Test End Point"
 
     def prepParams(self):
-        pass
+        if "checkerboard" not in _params:
+            _params["checkerboard"] = "1"
 
     def build(self, nID, link, extraKeys):
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
@@ -589,13 +589,14 @@ class BisectionEndPoint(EndPoint):
     def __init__(self):
         self.enableAllStats = False;
         self.statInterval = "0"
-        self.nicKeys = ["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size"]
+        self.nicKeys = ["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size", "checkerboard"]
 
     def getName(self):
         return "Bisection Test End Point"
 
     def prepParams(self):
-        pass
+        if "checkerboard" not in _params:
+            _params["checkerboard"] = "1"
 
     def build(self, nID, link, extraKeys):
         nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
@@ -619,10 +620,12 @@ class TrafficGenEndPoint(EndPoint):
         for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
             for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
                 self.optionalKeys.append("%s:%s"%(genType, tag))
-        self.nicKeys = ["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"]
+        self.nicKeys = ["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax", "checkerboard"]
     def getName(self):
         return "Pattern-based traffic generator"
     def prepParams(self):
+        if "checkerboard" not in _params:
+            _params["checkerboard"] = "1"
         _params["PacketDest:RangeMin"] = 0
         _params["PacketDest:RangeMax"] = int(_params["num_peers"])
 

@@ -376,11 +376,17 @@ load_singlerouter_topology(Component* comp, Params& params)
 }
 
 
+
 static SubComponent*
 load_linkcontrol(Component* parent, Params& params)
 {
     return new LinkControl(parent, params);
 }
+
+static const ElementInfoParam linkcontrol_params[] = {
+    {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+    { NULL, NULL, NULL }
+};
 
 static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
@@ -520,7 +526,7 @@ static const ElementInfoSubComponent subcomponents[] = {
       "Link Control module for building Merlin-enabled NICs",
       NULL,
       load_linkcontrol,
-      NULL,
+      linkcontrol_params,
       linkcontrol_statistics,
       "SST::Interfaces::SimpleNetwork"
     },

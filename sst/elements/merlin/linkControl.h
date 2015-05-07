@@ -122,8 +122,12 @@ private:
     std::deque<RtrEvent*> init_events;
     
     // Number of virtual channels
-    int num_vns;
+    int req_vns;
+    int total_vns;
+    int checker_board_factor;
+
     int id;
+
     
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual channel abstraction.
@@ -168,7 +172,6 @@ private:
 
 public:
     LinkControl(Component* parent, Params &params);
-    LinkControl(Params &params);
 
     ~LinkControl();
 

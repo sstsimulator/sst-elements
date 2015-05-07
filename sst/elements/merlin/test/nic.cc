@@ -70,7 +70,7 @@ nic::nic(ComponentId_t cid, Params& params) :
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
     link_control = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
-
+    
     UnitAlgebra buf_size("1kB");
     link_control->initialize("rtr", link_bw, num_vns, buf_size, buf_size);
 
@@ -232,7 +232,7 @@ nic::clock_handler(Cycle_t cycle)
             if ( ev == NULL ) {
                 _abort(nic, "Aieeee!\n");
             }
-            // std::cout << id << " received a packet on VN" << last_vn << std::endl;
+            // std::cout << id << " received a packet on VN" << last_vn << " from " << req->src << std::endl;
             packets_recd++;
             int src = req->src;
 #if 0
