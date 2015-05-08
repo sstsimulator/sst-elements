@@ -47,8 +47,10 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % kba == 0);
 
+	const double NANO_SECONDS = 1000000000;
+
 	nsCompute = (uint64_t) params.find_integer("arg.computetime",
-		compute_time_d / node_flops);
+		*compute_time_d / node_flops) * NANO_SECONDS);
 
 	assert(nsCompute != 0);
 }
