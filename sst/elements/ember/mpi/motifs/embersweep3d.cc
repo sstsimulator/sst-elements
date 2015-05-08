@@ -50,7 +50,7 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 	const double NANO_SECONDS = 1000000000;
 
 	nsCompute = (uint64_t) params.find_integer("arg.computetime",
-		*compute_time_d / node_flops) * NANO_SECONDS);
+		(compute_time_d / node_flops) * NANO_SECONDS);
 
 	assert(nsCompute != 0);
 }
