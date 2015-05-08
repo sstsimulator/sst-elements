@@ -467,6 +467,8 @@ static const ElementInfoParam sweep3d_params[] = {
 	{	"arg.computetime",		"Sets the compute time per nx * ny block in picoseconds", "1000"},
 	{	"arg.fields_per_cell",	        "Sets the number of fields at each cell point", "8"},
 	{	"arg.datatype_width",	        "Sets the width of the datatype used at the cell", "8"},
+	{       "arg.nodeflops",                "Sets the FLOP/s count for the MPI rank", "1000000000"},
+	{       "arg.flops_per_cell",           "Sets the number of FLOPs per cell", "275" },
 	{	NULL,	NULL,	NULL	}
 };
 

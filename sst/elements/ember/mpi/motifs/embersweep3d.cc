@@ -38,17 +38,22 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
 	data_width = (uint32_t) params.find_integer("arg.datatype_width", 8);
 	fields_per_cell = (uint32_t) params.find_integer("arg.fields_per_cell", 8);
 
+	double flops_per_cell = params.find_floating("arg.flops_per_cell", 275.0);
+	double node_flops = params.find_floating("arg.nodeflops", 1000000000);
+
+	const double mesh_slice_size = (double) (nx * ny);
+	double compute_time_d = mesh_slice_size * flops_per_cell;
+
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % kba == 0);
 
-	// Specify the compute time in pico-seconds
-	uint64_t compTime = (uint64_t) params.find_integer("arg.computetime", 1000);
+	nsCompute = (uint64_t) params.find_integer("arg.computetime",
+		compute_time_d / node_flops);
 
-	// Convert down to nanoseconds
-	nsCompute = (uint64_t) ((nx * ny * compTime) / 1000);
+	assert(nsCompute != 0);
 }
 
-void EmberSweep3DGenerator::configure() 
+void EmberSweep3DGenerator::configure()
 {
 	// Check that we are using all the processors or else lock up will happen :(.
 	if( (px * py) != (signed) size() ) {
