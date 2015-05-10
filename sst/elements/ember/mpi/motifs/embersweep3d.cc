@@ -95,7 +95,7 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 		GEN_DBG( 2, "rank=%d size=%d\n", rank(), size());
 	}
 
-	for(uint32_t repeat = 0; repeat < 2; ++repeat) {
+	//for(uint32_t repeat = 0; repeat < 2; ++repeat) {
 		// Sweep from (0, 0) outwards towards (Px, Py)
 		for(uint32_t i = 0; i < nz; i+= kba) {
 			if(x_down >= 0) {
@@ -179,9 +179,9 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
             	enQ_send( evQ, y_down, (ny * kba * data_width * fields_per_cell), 4000, GroupWorld );
 			}
         }
-	}
+	//}
 
-    if ( ++m_loopIndex == iterations ) {
+    if ( ++m_loopIndex == (iterations * 2) ) {
         return true;
     } else {
         return false;
