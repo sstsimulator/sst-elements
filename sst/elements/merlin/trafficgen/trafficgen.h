@@ -25,6 +25,7 @@
 #include <sst/core/rng/gaussian.h>
 #include <sst/core/rng/discrete.h>
 #include <sst/core/rng/expon.h>
+#include <sst/core/rng/uniform.h>
 
 #include <sst/core/component.h>
 #include <sst/core/debug.h>
@@ -130,26 +131,15 @@ private:
 
     class UniformDist : public Generator {
 	MersenneRNG* gen;
-	SSTDiscreteDistribution* dist;
+	SSTUniformDistribution* dist;
 
     public:
         UniformDist(int min, int max)
         {
 		gen = new MersenneRNG();
 
-		const int size = std::max(1, max - min);
-		std::vector<double> probabilities(size);
-		double sum = 1.0;
-
-		for(int i = 0; i < size; i++) {
-			const double prob_i = 1.0 / size;
-			probabilities[i] = prob_i;
-
-			sum = sum - prob_i;
-		}
-
-		probabilities[size - 1] = sum;
-		dist = new SSTDiscreteDistribution(&probabilities[0], size, gen);
+		int size = std::max(1, max-min);
+		dist = new SSTUniformDistribution(size, gen);
 	}
 
 	~UniformDist() {
