@@ -44,7 +44,7 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 
-    m_nsPerElement = (float) params.find_integer("arg.nsPerElement",1);
+    m_nsPerElement = (float) params.find_floating("arg.nsPerElement",1);
 
     m_transCostPer[0] = (float) params.find_floating("arg.fwd_fft1",1);
     m_transCostPer[1] = (float) params.find_floating("arg.fwd_fft2",1);
@@ -258,6 +258,13 @@ void EmberFFT3DGenerator::initTimes( int numPe, int x, int y, int z, float nsPer
 #endif
 
     double cost = nsPerElement * x * ((y * z)/numPe); 
+	if ( 0 == rank() ) {
+	   	m_output->output("%s: nsPerElement=%.5f %.2f %.2f %.2f"
+			" %.2f %.2f %.2f\n", m_name.c_str(), nsPerElement, 	
+			transCostPer[0], transCostPer[1], transCostPer[2],
+			transCostPer[3], transCostPer[4], transCostPer[5]);
+	}
+	assert( cost > 0.0 );
     m_fwdTime[0] =  m_fwdTime[1] = m_fwdTime[2] = cost; 
     m_bwdTime[0] =  m_bwdTime[1] = m_bwdTime[2] = cost; 
     m_bwdTime[2] *= 2;
