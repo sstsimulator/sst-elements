@@ -21,7 +21,8 @@ using namespace SST::Ember;
 
 EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params),
-    m_loopIndex(0)
+    m_loopIndex(0),
+    m_InnerLoopIndex(0)
 {
     m_name = "Sweep3D";
 
@@ -76,7 +77,7 @@ void EmberSweep3DGenerator::configure()
 	y_up   = (myY != (py - 1)) ? rank() + px : -1;
 	y_down = (myY != 0) ? rank() - px : -1;
 
-	if(0 == rank()) {
+	/**if(0 == rank()) {
 		m_output->output( "%s nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 
 			", kba=%" PRIu32 ", (nx/kba)=%" PRIu32 "\n",
 			m_name.c_str(), nx, ny, nz, kba, (nz / kba));
@@ -87,15 +88,20 @@ void EmberSweep3DGenerator::configure()
 			", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%" 
 			PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
 			m_name.c_str(), rank(), myX, myY, x_up, x_down, y_up, y_down);
+	*/
 }
 
 bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
-	if( 0 == m_loopIndex) {
+	if( 0 == m_loopIndex && 0 == m_InnerLoopIndex ) {
 		GEN_DBG( 2, "rank=%d size=%d\n", rank(), size());
 	}
 
 	//for(uint32_t repeat = 0; repeat < 2; ++repeat) {
+	
+	switch(m_InnerLoopIndex) {
+	
+	case 0:
 		// Sweep from (0, 0) outwards towards (Px, Py)
 		for(uint32_t i = 0; i < nz; i+= kba) {
 			if(x_down >= 0) {
@@ -116,7 +122,10 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
        		    enQ_send( evQ, y_up, (ny * kba * data_width * fields_per_cell), 1000, GroupWorld );
 			}
 		}
+		
+		break;
 
+	case 1:
 		// Sweep from (Px, 0) outwards towards (0, Py)
 		for(uint32_t i = 0; i < nz; i+= kba) {
 			if(x_up >= 0) {
@@ -137,7 +146,10 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 				enQ_send( evQ, y_up, (ny * kba * data_width * fields_per_cell), 2000, GroupWorld );
 			}
 		}
+		
+		break;
 
+	case 2:
 		// Sweep from (Px,Py) outwards towards (0,0)
 		for(uint32_t i = 0; i < nz; i+= kba) {
 			if(x_up >= 0) {
@@ -158,7 +170,10 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 				enQ_send( evQ, y_down, (ny * kba * data_width * fields_per_cell), 3000, GroupWorld );
         	}
 		}
-
+		
+		break;
+		
+	case 3:
 		// Sweep from (0, Py) outwards towards (Px, 0)
 		for(uint32_t i = 0; i < nz; i+= kba) {
 			if(x_down >= 0) {
@@ -179,11 +194,19 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
             	enQ_send( evQ, y_down, (ny * kba * data_width * fields_per_cell), 4000, GroupWorld );
 			}
         }
+        
+        break;
+	}
 	//}
-
-    if ( ++m_loopIndex == (iterations * 2) ) {
-        return true;
+	
+	if( ++m_InnerLoopIndex == 4 ) {
+    	if ( ++m_loopIndex == (iterations * 2) ) {
+        	return true;
+    	} else {
+    		m_InnerLoopIndex = 0;
+        	return false;
+    	}
     } else {
-        return false;
+    	return false;
     }
 }

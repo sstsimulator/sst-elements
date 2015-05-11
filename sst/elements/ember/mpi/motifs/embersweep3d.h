@@ -27,6 +27,7 @@ public:
 
 private:
     uint32_t m_loopIndex;
+    uint8_t  m_InnerLoopIndex;
 
 	int32_t px;
 	int32_t py;
