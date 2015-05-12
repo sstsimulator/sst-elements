@@ -14,7 +14,8 @@ class SendMachine {
       public:
         SendMachine( Nic& nic, Output& output ) : m_state( Idle ),
 //            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50), m_packetId(0) { }
-            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50)
+            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50),
+			m_packetId( 0 )
 #ifdef NIC_SEND_DEBUG
             , m_msgCount(0), m_runCount(0) 
 #endif
@@ -72,7 +73,7 @@ class SendMachine {
         int                     m_txDelay;
         unsigned int            m_packetSizeInBytes;
         int                     m_packetSizeInBits;
-//        int                     m_packetId;
+        int                     m_packetId;
 #ifdef NIC_SEND_DEBUG
         unsigned int                m_msgCount;
         unsigned int                m_runCount;

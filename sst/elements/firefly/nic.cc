@@ -28,7 +28,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
     m_sendMachine( *this, m_dbg ),
     m_recvMachine( *this, m_dbg ),
-    m_packetId(0),
     m_getKey(10)
 {
     m_myNodeId = params.find_integer("nid", -1);
@@ -43,6 +42,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     int rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find_integer( "txDelay_ns", 50 );
+
+    m_tracedNode =     params.find_integer( "tracedNode", -1 );
+    m_tracedPkt  =     params.find_integer( "tracedPkt", -1 );
 
     UnitAlgebra xxx( params.find_string( "packetSize" ) );
     int packetSizeInBytes;

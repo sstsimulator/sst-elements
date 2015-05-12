@@ -574,8 +574,10 @@ public:
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
 
-    int  m_packetId;
     uint16_t m_getKey;
+  public:
+	int m_tracedPkt;
+	int m_tracedNode;
 }; 
 
 } // namesapce Firefly 

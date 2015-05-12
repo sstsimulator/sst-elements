@@ -135,10 +135,12 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         req->vn = 0;
         req->payload = ev;
 
-        #if 0
-        req->setTraceType( SimpleNetwork::Request::FULL );
-        req->setTraceID( m_packetId++ );
-        #endif
+       	if ( m_nic.m_tracedPkt == m_packetId && 
+				m_nic.m_tracedNode ==  m_nic.getNodeId() ) { 
+        	req->setTraceType( SimpleNetwork::Request::FULL );
+        	req->setTraceID( m_packetId );
+		}
+		++m_packetId;
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",
                                                         ev->bufSize());
         assert( ev->bufSize() );
