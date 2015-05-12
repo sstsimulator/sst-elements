@@ -172,17 +172,20 @@ void Hades::initAdjacentMap( std::istream& nidList, Group* group, int numCores )
 			std::istringstream ( tmp.substr(0, pos ) ) >> startNid;
 			if ( std::string::npos != pos ) { 
 				std::istringstream ( tmp.substr( pos + 1 ) ) >> endNid; 
+				endNid = ((endNid + 1) * numCores ) -1;
 			} else {
-				endNid = startNid;
+				endNid = (startNid + numCores) - 1;
 			}
 			size_t len = ( endNid - startNid ) + 1;
     		m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%d\n",
 					nid, startNid, endNid);
+
             if ( numCores > 1 ) {
     		    m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%lu\n",
-					nid, startNid*numCores, len*numCores - 1);
+					nid, startNid*numCores, endNid*numCores );
             }
-			group->initMapping( nid, startNid * numCores, len * numCores );
+
+			group->initMapping( nid, startNid * numCores, len );
 			nid += len;
 			tmp.clear();
 		}
