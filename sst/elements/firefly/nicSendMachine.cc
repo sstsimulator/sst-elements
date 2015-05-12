@@ -135,8 +135,8 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         req->vn = 0;
         req->payload = ev;
 
-       	if ( m_nic.m_tracedPkt == m_packetId && 
-				m_nic.m_tracedNode ==  m_nic.getNodeId() ) { 
+       	if ( (m_nic.m_tracedPkt == m_packetId || m_nic.m_tracedPkt == -2) 
+				&& m_nic.m_tracedNode ==  m_nic.getNodeId() ) { 
         	req->setTraceType( SimpleNetwork::Request::FULL );
         	req->setTraceID( m_packetId );
 		}
