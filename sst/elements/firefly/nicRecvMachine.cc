@@ -87,7 +87,6 @@ void Nic::RecvMachine::run( )
                     clearNotify();
                     blocked = true;
                 } 
-
                 m_nic.schedEvent( event, delay ); 
 
                 break;
@@ -162,7 +161,7 @@ uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
           case RdmaMsgHdr::Get:
             m_dbg.verbose(CALL_INFO,2,0,"Get Op\n");
             sEntry = findGet( mEvent.src, hdr, rdmaHdr );
-            delay = 200; // host read  delay
+            delay = m_hostReadDelay; // host read  delay
             break;
 
           default:

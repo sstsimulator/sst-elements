@@ -42,6 +42,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     int rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find_integer( "txDelay_ns", 50 );
+    int hostReadDelay = params.find_integer( "hostReadDelay_ns", 200 );
 
     m_tracedNode =     params.find_integer( "tracedNode", -1 );
     m_tracedPkt  =     params.find_integer( "tracedPkt", -1 );
@@ -92,11 +93,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
         m_vNicV.push_back( new VirtNic( *this, i,
 			params.find_string("corePortName","core") ) );
     }
-    m_recvMachine.init( m_vNicV.size(), rxMatchDelay );
+    m_recvMachine.init( m_vNicV.size(), rxMatchDelay, hostReadDelay );
     m_sendMachine.init( txDelay, packetSizeInBytes, packetSizeInBits );
     m_memRgnM.resize( m_vNicV.size() );
 
-    float dmaBW  = params.find_floating( "dmaBW_GBs", 10.0 ); 
+    float dmaBW  = params.find_floating( "dmaBW_GBs", 0.0 ); 
     float dmaContentionMult = params.find_floating( "dmaContentionMult", 0.0 );
     m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW,
                                     dmaContentionMult, 100000 );

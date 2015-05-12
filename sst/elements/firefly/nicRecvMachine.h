@@ -16,15 +16,17 @@ class RecvMachine {
 
       public:
         RecvMachine( Nic& nic, Output& output ) : m_state(NeedPkt),
-            m_nic(nic), m_dbg(output), m_rxMatchDelay( 100 )
+            m_nic(nic), m_dbg(output), m_rxMatchDelay( 100 ),
+            m_hostReadDelay( 200 )
 #ifdef NIC_RECV_DEBUG
             , m_msgCount(0), m_runCount(0) 
 #endif
         { }
         ~RecvMachine();
-        void init( int numVnics, int rxMatchDelay ) {
+        void init( int numVnics, int rxMatchDelay, int hostReadDelay ) {
             m_recvM.resize( numVnics );
             m_rxMatchDelay = rxMatchDelay;
+            m_hostReadDelay = hostReadDelay;
         }
         void run();
 
@@ -108,6 +110,7 @@ class RecvMachine {
 
         FireflyNetworkEvent* m_mEvent;
         int                 m_rxMatchDelay;
+        int                 m_hostReadDelay;
         std::map< int, RecvEntry* >     m_activeRecvM;
 
         std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;

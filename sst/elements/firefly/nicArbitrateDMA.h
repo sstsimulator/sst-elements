@@ -82,6 +82,8 @@ class ArbitrateDMA {
 
     uint64_t foo( XX& me, XX& other, int bytes ) {
 
+        if ( 0.0 == m_GBs ) return 0;
+
         updateAvail( me );
 
         adjustOther( other, bytes ); 

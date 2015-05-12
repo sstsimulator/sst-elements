@@ -66,6 +66,7 @@ static const ElementInfoParam nic_params[] = {
 	{ "debug", "Sets the messaging API of the end point", "0"},
 	{ "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
 	{ "txDelay_ns", "Sets the delay for a send", "100"},
+	{ "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
 	{ "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
 	{ "dmaContentionMult", "set the DMA contention mult", "100"},
 	{ "topology", "Sets the network topology", "merlin.torus"},
