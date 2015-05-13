@@ -898,6 +898,8 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 			(uint32_t) rank(), (uint32_t) localBlocks.size());
 
 //		for(uint32_t i = 0; i < localBlocks.size(); ++i) {
+			out->verbose(CALL_INFO, 8, 0, "Loading information for block: %" PRIu32 " out of %" PRIu64 "\n",
+				nextBlockToBeProcessed, localBlocks.size());
 			Ember3DAMRBlock* currentBlock = localBlocks[nextBlockToBeProcessed];
 
 			out->verbose(CALL_INFO, 16, 0, "Creating communication events for block %" PRIu32 "\n", currentBlock->getBlockID());

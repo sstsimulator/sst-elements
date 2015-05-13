@@ -63,9 +63,17 @@ namespace SST {
           
                     totalBlockCount = (int) meshBlockCount;
                     maxRefinementLevel = (int) meshMaxRefineLevel;
-                
-                out->verbose(CALL_INFO, 8, 0, "Read mesh header info: blocks=%" PRIu32 ", max-lev: %" PRIu32 " bkX=%" PRIu32 ", blkY=%" PRIu32 ", blkZ=%" PRIu32 "\n",
+
+                    out->verbose(CALL_INFO, 8, 0, "Read mesh header info: blocks=%" PRIu32 ", max-lev: %" PRIu32 " bkX=%" PRIu32 ", blkY=%" PRIu32 ", blkZ=%" PRIu32 "\n",
                              totalBlockCount, maxRefinementLevel, blocksX, blocksY, blocksZ);
+
+		    rankIndexOffset = ftell(amrFile);
+
+		    const uint64_t meshStartIndex = rankIndexOffset + (rankCount * sizeof(uint64_t));
+
+		    out->verbose(CALL_INFO, 8, 0, "Set mesh file seek to: %" PRIu64 "\n", meshStartIndex);
+		    fseek(amrFile, (long)(meshStartIndex), SEEK_SET);
+
             }
             
             ~EmberAMRBinaryFile() {
@@ -75,7 +83,16 @@ namespace SST {
             void readNodeMeshLine(uint32_t* blockCount) {
                 fread(blockCount, sizeof(uint32_t), 1, amrFile);
             }
-            
+
+	    void locateRankEntries(uint32_t rank) {
+		fseek(amrFile, (long) (rankIndexOffset + (rank * sizeof(uint64_t))), SEEK_SET);
+
+		uint64_t rankStart = 0;
+		fread(&rankStart, sizeof(rankStart), 1, amrFile);
+
+		fseek(amrFile, (long) (rankStart), SEEK_SET);
+	    }
+
             void readNextMeshLine(uint32_t* blockID, uint32_t* refineLev,
                                   int32_t* xDown, int32_t* xUp,
                                   int32_t* yDown, int32_t* yUp,
@@ -106,8 +123,13 @@ namespace SST {
                 *zUp = (int32_t) temp;
             }
 
+	    virtual bool isBinary() {
+		return true;
+	    }
+
         private:
             uint32_t rankCount;
+	    uint64_t rankIndexOffset;
             FILE* amrFile;
         };
         

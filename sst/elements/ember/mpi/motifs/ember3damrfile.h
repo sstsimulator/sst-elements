@@ -45,6 +45,11 @@ public:
 	uint32_t getBlockCount() const { return (uint32_t) totalBlockCount; }
 	uint32_t getMaxRefinement() const { return (uint32_t) maxRefinementLevel; }
 
+	virtual bool isBinary() { return false; }
+        virtual void locateRankEntries(uint32_t rank) {
+        	output->fatal(CALL_INFO, -1, "Called locate on an AMR file which does not support seek operations.\n");
+	}
+
 protected:
 	char* amrFilePath;
 	Output* output;
