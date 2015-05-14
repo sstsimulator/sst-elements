@@ -58,6 +58,10 @@ namespace SST {
             ~EmberAMRTextFile() {
                 
             }
+
+            bool isBinary() {
+		return false;
+ 	    }
             
             char* readLine() {
                 char* theLine = (char*) malloc(sizeof(char) * 64);

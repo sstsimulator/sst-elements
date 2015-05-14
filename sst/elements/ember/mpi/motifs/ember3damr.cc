@@ -19,6 +19,8 @@
 using namespace SST::Ember;
 using namespace SST::Hermes::MP;
 
+static std::map<uint32_t, int32_t>  blockToNodeMap;
+
 Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params)
 {
@@ -66,12 +68,17 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 void Ember3DAMRGenerator::loadBlocks() {
 	out->verbose(CALL_INFO, 2, 0, "Loading AMR block information from %s ...\n", blockFilePath);
 
-    EmberAMRFile* amrFile;
+    EmberAMRBinaryFile* amrFile;
     
     if(2 == meshType) {
         amrFile = new EmberAMRBinaryFile(blockFilePath, out);
+
+	if(blockToNodeMap.empty()) {
+		amrFile->populateGlobalBlocks(&blockToNodeMap);
+	}
     } else {
-        amrFile = new EmberAMRTextFile(blockFilePath, out);
+//        amrFile = new EmberAMRTextFile(blockFilePath, out);
+	out->fatal(CALL_INFO, -1, "Binary mesh files are the only type currently supported, use ssh-meshconvert\n");
     }
 
 	maxLevel   = amrFile->getMaxRefinement();
@@ -96,6 +103,7 @@ void Ember3DAMRGenerator::loadBlocks() {
 	uint32_t line = 0;
 
 
+	/*
 	for(int32_t currentRank = 0; currentRank < size(); ++currentRank) {
 		out->verbose(CALL_INFO, 4, 0, "Loading block information for rank %" PRIu32 " out of %" PRIu32 "... \n", currentRank, size());
 		line++;
@@ -138,7 +146,8 @@ void Ember3DAMRGenerator::loadBlocks() {
 
 		out->verbose(CALL_INFO, 4, 0, "Rank %" PRIu32 " loaded %d for rank %" PRIu32 "\n",
 			rank(), otherRankBlocks, currentRank);
-	}
+	}*/
+	amrFile->populateLocalBlocks(&localBlocks , rank());
 
 	out->verbose(CALL_INFO, 2, 0, "Rank %" PRIu32 ", loaded %" PRIu32 " blocks locally and %" PRIu32 " remotely, stopped at line: %" PRIu32 ".\n", (uint32_t) rank(),
 		(uint32_t) localBlocks.size(), (uint32_t) blockToNodeMap.size(), line);
@@ -169,10 +178,14 @@ void Ember3DAMRGenerator::loadBlocks() {
 		// Patch up X-Up
 		const int32_t blockXUp = currentBlock->getRefineXUp();
 
+		out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " has X+:%" PRId32 "\n", currentBlock->getBlockID(), blockXUp);
+
 		if(blockXUp == -2) {
+			out->verbose(CALL_INFO, 16, 0, "BLOCK IS -2\n");
 			// Boundary condition, no communication
 			currentBlock->setCommXUp(-1, -1, -1, -1);
 		} else if(blockLevel > blockXUp) {
+			out->verbose(CALL_INFO, 16, 0, "BLOCK IS NOT -2, WILL BE PROCESSED\n");
 			// Communication to a coarser level (my refinement is higher than block next to me)
 			const uint32_t commToBlock = calcBlockID((blockXPos / 2) + 1,
 				blockYPos / 2, blockZPos / 2, blockXUp);
@@ -266,10 +279,18 @@ void Ember3DAMRGenerator::loadBlocks() {
 		// Patch up X-Down
 		const int32_t blockXDown = currentBlock->getRefineXDown();
 
+		out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " has X-:%" PRId32 "\n", currentBlock->getBlockID(), blockXDown);
+
 		if(blockXDown == -2) {
 			// Boundary condition, no communication
 			currentBlock->setCommXDown(-1, -1, -1, -1);
 		} else if(blockLevel > blockXDown) {
+			out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " calculating X down, (%" PRIu32 "/2-1=%d" PRId32 ", %" PRIu32 "/2=%d" PRId32 ", %" PRIu32 "/2=%" PRId32 "\n",
+				currentBlock->getBlockID(), blockXPos,
+				(int32_t) (blockXPos/2)-1,
+				blockYPos, blockYPos/2,
+				blockZPos, blockZPos/2);
+
 			// Communication to a coarser level (my refinement is higher than block next to me)
 			const uint32_t commToBlock = calcBlockID((blockXPos / 2) - 1,
 				blockYPos / 2, blockZPos / 2, blockXDown);
@@ -286,6 +307,12 @@ void Ember3DAMRGenerator::loadBlocks() {
 				maxRequests++;
 			}
 		} else if(blockLevel < blockXDown) {
+			out->verbose(CALL_INFO, 16, 0, "Block %" PRIu32 " calculating X down with refinement, (%" PRIu32 "/2-1=%d" PRId32 ", %" PRIu32 "/2=%d" PRId32 ", %" PRIu32 "/2=%" PRId32 "\n",
+				currentBlock->getBlockID(), blockXPos,
+				(int32_t) (blockXPos*22)-1,
+				blockYPos, blockYPos*22,
+				blockZPos, blockZPos*22);
+
 			// Communication to a finer level (my refinement is less than block next to me)
 			const uint32_t x1 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2,     blockZPos * 2,     blockXDown);
 			const uint32_t x2 = calcBlockID(blockXPos * 2 - 1, blockYPos * 2 + 1, blockZPos * 2,     blockXDown);
@@ -775,7 +802,7 @@ void Ember3DAMRGenerator::configure()
 	free(blockFilePath);
 
 	// Clear system wide block wire up map
-	blockToNodeMap.clear();
+	//blockToNodeMap.clear();
 
 	out->verbose(CALL_INFO, 2, 0, "Motif configuration is complete.\n");
 }

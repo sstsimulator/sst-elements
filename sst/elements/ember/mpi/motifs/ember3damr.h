@@ -54,7 +54,7 @@ private:
 
 	void* blockMessageBuffer;
 
-        std::map<uint32_t, int32_t>  blockToNodeMap;
+//        static std::map<uint32_t, int32_t>  blockToNodeMap;
         char* blockFilePath;
 
 	Output* out;

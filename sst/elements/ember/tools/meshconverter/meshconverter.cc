@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <map>
 
 void usage() {
 	printf("Usage: meshconverter <number ranks> <file in> <file out>\n");
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
 		usage();
 	}
 
+	std::map<uint32_t, uint64_t> rankIndexMap;
 	uint32_t rankCount = (uint32_t) atoi(argv[1]);
 
 	FILE* inMesh = fopen(argv[2], "rt");
@@ -100,6 +102,19 @@ int main(int argc, char* argv[]) {
 	fwrite(&blocksY, sizeof(blocksY), 1, outMesh);
 	fwrite(&blocksZ, sizeof(blocksZ), 1, outMesh);
 
+	const size_t  rankIndexOffset = ftell(outMesh);
+	const uint64_t defaultIndex = (uint64_t) -1;
+	uint64_t nextFileIndex = rankIndexOffset;
+
+	// Output the initial rank start index, all set to (uint64_t) -1
+	for(uint32_t i = 0; i < rankCount; i++) {
+		fwrite(&defaultIndex, sizeof(defaultIndex), 1, outMesh);
+		nextFileIndex += sizeof(defaultIndex);
+	}
+
+	printf("Generating block information at index: %" PRIu64 "\n",
+		(uint64_t) ftell(outMesh));
+
 	uint32_t blocksOnNode = 0;
 	uint32_t nextBlockID = 0;
 	uint32_t nextBlockRefineLevel = 0;
@@ -116,7 +131,15 @@ int main(int argc, char* argv[]) {
 		char* strBlocksOnNode = readLine(inMesh);
 		blocksOnNode = (uint32_t) atoi(strBlocksOnNode);
 
+		// Update the rank index
+		fseek(outMesh, rankIndexOffset + (i * sizeof(uint64_t)), SEEK_SET);
+		fwrite(&nextFileIndex, sizeof(nextFileIndex), 1, outMesh);
+
+		// Return back to original position
+		fseek(outMesh, nextFileIndex, SEEK_SET);
+
 		fwrite(&blocksOnNode, sizeof(blocksOnNode), 1, outMesh);
+		nextFileIndex += sizeof(blocksOnNode);
 
 		for(uint32_t j = 0; j < blocksOnNode; j++) {
 			readNextMeshLine(inMesh, &nextBlockID,
@@ -129,6 +152,7 @@ int main(int argc, char* argv[]) {
 				&blockZUp);
 
 			fwrite(&nextBlockID, sizeof(nextBlockID), 1, outMesh);
+			nextFileIndex += sizeof(nextBlockID);
 
 			int8_t nextBlockRefineLevel_8 = (int8_t) nextBlockRefineLevel;
 			fwrite(&nextBlockRefineLevel_8, sizeof(nextBlockRefineLevel_8), 1, outMesh);
@@ -138,6 +162,11 @@ int main(int argc, char* argv[]) {
 			fwrite(&blockYUp, sizeof(blockYUp), 1, outMesh);
 			fwrite(&blockZDown, sizeof(blockZDown), 1, outMesh);
 			fwrite(&blockZUp, sizeof(blockZUp), 1, outMesh);
+
+			nextFileIndex += sizeof(nextBlockRefineLevel_8) +
+				sizeof(blockXDown) + sizeof(blockXUp) +
+				sizeof(blockYDown) + sizeof(blockYUp) +
+				sizeof(blockZDown) + sizeof(blockZUp);
 		}
 	}
 

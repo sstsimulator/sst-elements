@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ember3damrfile.h"
+#include "ember3damrblock.h"
 
 // To clean up warnings on not using return results on freads() below
 #if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
@@ -79,7 +80,81 @@ namespace SST {
             ~EmberAMRBinaryFile() {
                 
             }
-            
+
+	    void populateGlobalBlocks(std::map<uint32_t, int32_t>* globalBlockMap) {
+		fseek(amrFile, rankIndexOffset + (rankCount * sizeof(uint64_t)), SEEK_SET);
+
+		for(uint32_t i = 0; i < rankCount; ++i) {
+			uint32_t blocksOnNode = 0;
+			uint32_t blockID;
+			uint32_t refineLevel;
+			int32_t  xDown;
+			int32_t  xUp;
+			int32_t  yDown;
+			int32_t  yUp;
+			int32_t  zDown;
+			int32_t  zUp;
+
+			readNodeMeshLine(&blocksOnNode);
+
+			for(uint32_t j = 0; j < blocksOnNode; j++) {
+				readNextMeshLine(&blockID, &refineLevel,
+					&xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+
+				auto block_present = globalBlockMap->find(blockID);
+
+				if(block_present != globalBlockMap->end()) {
+					output->fatal(CALL_INFO, -1, "Block ID: %" PRIu32 " already in map.\n", blockID);
+				}
+
+				globalBlockMap->insert(std::pair<uint32_t, int32_t>(blockID, (int32_t) i));
+			}
+		}
+            }
+
+	    void populateLocalBlocks(std::vector<Ember3DAMRBlock*>* localBlocks, uint32_t rank) {
+		const uint64_t seekOffset = rankIndexOffset + (rank * sizeof(uint64_t));
+
+		output->verbose(CALL_INFO, 16, 0, "Seek file offet: Base=%" PRIu64 ", Rank=%" PRIu32 ", Offset=%" PRIu64 ", File Seek=%" PRIu64 "\n",
+			rankIndexOffset, rank, (rank * sizeof(uint64_t)), seekOffset);
+
+		fseek(amrFile, seekOffset, SEEK_SET);
+
+		uint64_t rankBlocksIndex = 0;
+		fread(&rankBlocksIndex, sizeof(rankBlocksIndex), 1, amrFile);
+
+		output->verbose(CALL_INFO, 16, 0, "Rank Offset: %" PRIu64 ", seeking in file...\n", rankBlocksIndex);
+
+		fseek(amrFile, rankBlocksIndex, SEEK_SET);
+
+		uint32_t blocksOnNode = 0;
+		readNodeMeshLine(&blocksOnNode);
+
+		output->verbose(CALL_INFO, 16, 0, "Rank has %" PRIu32 " blocks on the the node.\n", blocksOnNode);
+
+		uint32_t blockID;
+                       	uint32_t refineLevel;
+                       	int32_t  xDown;
+                       	int32_t  xUp;
+                       	int32_t  yDown;
+                       	int32_t  yUp;
+                       	int32_t  zDown;
+                       	int32_t  zUp;
+
+		for(uint32_t i = 0; i < blocksOnNode; ++i) {
+			readNextMeshLine(&blockID, &refineLevel,
+                             	&xDown, &xUp, &yDown, &yUp, &zDown, &zUp);
+
+			output->verbose(CALL_INFO, 32, 0, "Read Block: %" PRIu32 " X-:%" PRId32 ", X+:%" PRId32 ", Y-:%" PRId32 ", Y+:%" PRId32 " Z-:%" PRId32 " Z+:%" PRId32 "\n",
+				blockID, xDown, xUp, yDown, yUp, zDown, zUp);
+
+			Ember3DAMRBlock* newBlock = new Ember3DAMRBlock(blockID,
+				refineLevel, xDown, xUp, yDown, yUp, zDown, zUp);
+
+			localBlocks->push_back(newBlock);
+		}
+	    }
+
             void readNodeMeshLine(uint32_t* blockCount) {
                 fread(blockCount, sizeof(uint32_t), 1, amrFile);
             }
