@@ -26,12 +26,13 @@ class Ember3DAMRBlock {
                 Ember3DAMRBlock(
                         const uint32_t id,
                         const uint32_t refLevel,
-                        const int32_t ref_x_up,
                         const int32_t ref_x_down,
-                        const int32_t ref_y_up,
+                        const int32_t ref_x_up,
                         const int32_t ref_y_down,
-                        const int32_t ref_z_up,
-                        const int32_t ref_z_down ) :
+                        const int32_t ref_y_up,
+                        const int32_t ref_z_down,
+                        const int32_t ref_z_up
+                         ) :
 
                         blockID(id)
 			{
