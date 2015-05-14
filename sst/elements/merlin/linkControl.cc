@@ -328,6 +328,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->request;
     ret->vn = ret->vn / checker_board_factor;
+    event->request = NULL;
     delete event;
     return ret;
 }
@@ -343,6 +344,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recvInitData()
         RtrEvent *ev = init_events.front();
         init_events.pop_front();
         SST::Interfaces::SimpleNetwork::Request* ret = ev->request;
+        ev->request = NULL;
         delete ev;
         return ret;
     } else {

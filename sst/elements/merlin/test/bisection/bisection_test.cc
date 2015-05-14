@@ -113,7 +113,7 @@ bisection_test::send_handler(int vn)
     while ( link_control->spaceToSend(vn,packet_size) && (packets_sent < packets_to_send) ) {
         bisection_test_event* ev = new bisection_test_event();
         SimpleNetwork::Request* req = new SimpleNetwork::Request();
-        req->payload = ev;
+        req->givePayload(ev);
         req->dest = partner_id;
         req->src = id;
         req->vn = vn;
@@ -130,7 +130,7 @@ bisection_test::receive_handler(int vn)
 {
     if ( link_control->requestToReceive(vn) ) {
         SimpleNetwork::Request* req = link_control->recv(vn);
-        bisection_test_event* rec_ev = static_cast<bisection_test_event*>(req->payload);
+        bisection_test_event* rec_ev = static_cast<bisection_test_event*>(req->takePayload());
         // cout << "received packet at " << getCurrentSimTimeNano() << endl;
         if ( packets_recd == 0 ) {
             start_time = getCurrentSimTimeNano();

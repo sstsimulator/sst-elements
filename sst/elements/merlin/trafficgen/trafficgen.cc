@@ -231,7 +231,7 @@ TrafficGen::clock_handler(Cycle_t cycle)
 
 
                 SimpleNetwork::Request* req = new SimpleNetwork::Request();
-                req->payload = NULL;
+                // req->givePayload(NULL);
                 req->head = true;
                 req->tail = true;
                 

@@ -100,7 +100,7 @@ void MemNIC::init(unsigned int phase)
             req = new SimpleNetwork::Request();
             req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
             req->src = ci.network_addr;
-            req->payload = ev;
+            req->givePayload(ev);
             link_control->sendInitData(req);
         } else {
             for ( std::vector<ComponentTypeInfo>::iterator i = typeInfoList.begin() ;
@@ -109,7 +109,7 @@ void MemNIC::init(unsigned int phase)
                 req = new SimpleNetwork::Request();
                 req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
                 req->src = ci.network_addr;
-                req->payload = ev;
+                req->givePayload(ev);
                 link_control->sendInitData(req);
             }
         }
@@ -119,7 +119,8 @@ void MemNIC::init(unsigned int phase)
     // while ( SST::Event *ev = link_control->recvInitData() ) {
     while ( SimpleNetwork::Request *req = link_control->recvInitData() ) {
         // InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
-        InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(req->payload);
+        Event* payload = req->takePayload();
+        InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(payload);
         if ( imre ) {
             addrMap[imre->name] = imre->address;
             
@@ -136,7 +137,7 @@ void MemNIC::init(unsigned int phase)
                 destinations[imre->compInfo] = imre->name;
             }
         } else {
-            initQueue.push_back(static_cast<MemRtrEvent*>(req->payload));
+            initQueue.push_back(static_cast<MemRtrEvent*>(payload));
         }
         delete req;
     }
@@ -156,7 +157,7 @@ void MemNIC::sendInitData(MemEvent *ev)
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
     /* TODO:  Better addressing */
     req->dest = SimpleNetwork::INIT_BROADCAST_ADDR;
-    req->payload = mre;
+    req->givePayload(mre);
     link_control->sendInitData(req);
 }
 
@@ -197,8 +198,8 @@ bool MemNIC::clock(void)
         if ( link_control->spaceToSend(0, head->size_in_bits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
-                if ( static_cast<MemRtrEvent*>(head->payload)->hasClientData() ) {
-                    MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->payload))->event);
+                if ( static_cast<MemRtrEvent*>(head->inspectPayload())->hasClientData() ) {
+                    MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->inspectPayload()))->event);
                     dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
                 }
                 sendQueue.pop_front();
@@ -225,7 +226,7 @@ MemEvent* MemNIC::recv(void)
 
         SimpleNetwork::Request* req = link_control->recv(last_recv_vc);
         if ( NULL != req ) {
-            MemRtrEvent *mre = static_cast<MemRtrEvent*>(req->payload);
+            MemRtrEvent *mre = static_cast<MemRtrEvent*>(req->takePayload());
             delete req;
             if ( mre->hasClientData() ) {
                 MemEvent *deliverEvent = mre->event;
@@ -267,7 +268,7 @@ void MemNIC::send(MemEvent *ev)
     req->dest = addrForDest(ev->getDst());
     req->size_in_bits = 8 * getFlitSize(ev);
     req->vn = 0;
-    req->payload = mre;
+    req->givePayload(mre);
     
     sendQueue.push_back(req);
 }
@@ -282,7 +283,7 @@ void MemNIC::sendNewTypeInfo(const ComponentTypeInfo &cti)
         req->dest = i->second;
         req->size_in_bits = 128;  // 2* 64bit address (for a range)
         req->vn = 0;
-        req->payload = imre;
+        req->givePayload(imre);
         sendQueue.push_back(req);
     }
 }

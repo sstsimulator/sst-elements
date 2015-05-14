@@ -178,7 +178,7 @@ pt2pt_test::clock_handler(Cycle_t cycle)
         if ( link_control->spaceToSend(0,packet_size) ) {
             pt2pt_test_event* ev = new pt2pt_test_event();
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
-            req->payload = ev;
+            req->givePayload(ev);
             
             // if ( packets_sent == 0 ) ev->setTraceType(RtrEvent::FULL);
             // else ev->setTraceType(RtrEvent::NONE);
@@ -199,7 +199,7 @@ pt2pt_test::clock_handler(Cycle_t cycle)
         // ID 1 is the receiver
         if ( link_control->requestToReceive(0) ) {
             SimpleNetwork::Request* req = link_control->recv(0);
-            pt2pt_test_event* rec_ev = static_cast<pt2pt_test_event*>(req->payload);
+            pt2pt_test_event* rec_ev = static_cast<pt2pt_test_event*>(req->takePayload());
             // cout << "received packet at " << getCurrentSimTimeNano() << endl;
             if ( packets_recd == 0 ) {
                 start_time = getCurrentSimTimeNano();

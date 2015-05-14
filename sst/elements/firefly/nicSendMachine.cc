@@ -133,7 +133,7 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         req->src = m_nic.IdToNet( m_nic.m_myNodeId );
         req->size_in_bits = ev->bufSize() * 8;
         req->vn = 0;
-        req->payload = ev;
+        req->givePayload(ev);
 
        	if ( (m_nic.m_tracedPkt == m_packetId || m_nic.m_tracedPkt == -2) 
 				&& m_nic.m_tracedNode ==  m_nic.getNodeId() ) { 

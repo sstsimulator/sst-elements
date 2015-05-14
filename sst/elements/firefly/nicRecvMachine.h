@@ -85,9 +85,10 @@ class RecvMachine {
             SST::Interfaces::SimpleNetwork::Request* req =
                 m_nic.m_linkControl->recv(vc);
             if ( req ) {
-                if ( NULL == req->payload ) return NULL;
+                Event* payload = req->takePayload();
+                if ( NULL == payload ) return NULL;
                 FireflyNetworkEvent* event =
-                    static_cast<FireflyNetworkEvent*>(req->payload);
+                    static_cast<FireflyNetworkEvent*>(payload);
                 event->src = m_nic.NetToId( req->src );
                 delete req;
                 return event;

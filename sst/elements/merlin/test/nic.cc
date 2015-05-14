@@ -204,7 +204,7 @@ nic::clock_handler(Cycle_t cycle)
 
             req->vn = 0;
             req->size_in_bits = size_in_bits;
-            req->payload = ev;
+            req->givePayload(ev);
             // if ( id == 0 ) {
             //     ev->setTraceType(RtrEvent::FULL);
             //     ev->setTraceID(packets_sent);
@@ -228,7 +228,7 @@ nic::clock_handler(Cycle_t cycle)
         last_vn = (last_vn + 1) % num_vns; // round-robin
         if ( link_control->requestToReceive(last_vn) ) {
             SimpleNetwork::Request* req = link_control->recv(last_vn);
-            MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(req->payload);
+            MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(req->takePayload());
             if ( ev == NULL ) {
                 _abort(nic, "Aieeee!\n");
             }

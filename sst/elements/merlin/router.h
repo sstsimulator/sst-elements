@@ -119,6 +119,11 @@ public:
         injectionTime(0)
     {}
 
+    ~RtrEvent()
+    {
+        delete request;
+    }
+    
     inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
     // inline void setTraceID(int id) {traceID = id;}
     // inline void setTraceType(TraceType type) {trace = type;}
