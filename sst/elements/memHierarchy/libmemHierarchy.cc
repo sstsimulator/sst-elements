@@ -29,6 +29,7 @@
 #include "membackend/memBackend.h"
 #include "membackend/simpleMemBackend.h"
 #include "membackend/vaultSimBackend.h"
+#include "networkMemInspector.h"
 
 #ifdef HAVE_GOBLIN_HMCSIM
 #include "membackend/goblinHMCBackend.h"
@@ -424,6 +425,11 @@ static const ElementInfoPort dmaengine_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static SubComponent* load_networkMemoryInspector(Component* parent, 
+                                                 Params& params) {
+    return new networkMemInspector(parent);
+}
+
 static const ElementInfoSubComponent subcomponents[] = {
     {
         "simpleMem",
@@ -486,6 +492,14 @@ static const ElementInfoSubComponent subcomponents[] = {
         vaultsimMem_params,
         NULL, /* statistics */
         "SST::MemHierarchy::MemBackend"
+    },
+    { "networkMemoryInspector",
+      "Used to classify memory traffic going through a network router",
+      NULL,
+      load_networkMemoryInspector,
+      NULL,
+      networkMemoryInspector_statistics,
+      "SST::Interfaces::SimpleNetwork::NetworkInspector"
     },
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
@@ -590,7 +604,8 @@ extern "C" {
         	modules,
 		subcomponents,
 		NULL,
-		NULL
+		NULL, 
+                NULL
 	};
 }
 

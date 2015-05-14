@@ -16,6 +16,8 @@
 #include <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
+#include "sst/core/element.h"
+
 
 namespace SST { namespace MemHierarchy {
 
@@ -52,7 +54,8 @@ typedef uint64_t Addr;
     /* Others */\
     X(NACK)\
     X(AckInv)\
-    X(AckPut)
+    X(AckPut)\
+    X(LAST_CMD)
 
 /** Valid commands for the MemEvent */
 typedef enum {
@@ -66,6 +69,14 @@ static const char* CommandString[] __attribute__((unused)) = {
 #define X(x) #x ,
     X_TYPES
 #undef X
+};
+
+// statistics for the network memory inspector
+static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
+#define X(x) { #x, #x, "memEvents", 1},
+    X_TYPES
+#undef X
+    { NULL, NULL, NULL, 0 }
 };
 
 #undef X_TYPES

@@ -55,6 +55,8 @@ libmemHierarchy_la_SOURCES = \
 	util.h \
 	dmaEngine.h \
 	dmaEngine.cc \
+	networkMemInspector.h \
+	networkMemInspector.cc \
 	libmemHierarchy.cc
 
 EXTRA_DIST = \
