@@ -139,6 +139,11 @@ public:
     
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
+
+    virtual void print(const std::string& header, Output &out) const {
+        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d\n",
+                header.c_str(), getDeliveryTime(), getPriority());
+    }
     
 private:
     // TraceType trace;
@@ -193,6 +198,12 @@ public:
     inline void setSizeInFlits(int size) { size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
+    virtual void print(const std::string& header, Output &out) const {
+        out.output("%s TopologyEvent to be delivered at %" PRIu64 " with priority %d\n",
+                header.c_str(), getDeliveryTime(), getPriority());
+    }
+
+    
 };
 
 class credit_event : public BaseRtrEvent {
@@ -205,6 +216,11 @@ public:
 	vc(vc),
 	credits(credits)
     {}
+
+    virtual void print(const std::string& header, Output &out) const {
+        out.output("%s credit_event to be delivered at %" PRIu64 " with priority %d\n",
+                header.c_str(), getDeliveryTime(), getPriority());
+    }
 
 private:
     credit_event() :
@@ -237,6 +253,13 @@ public:
     RtrInitEvent() :
         BaseRtrEvent(BaseRtrEvent::INITIALIZATION)
     {}
+
+    virtual void print(const std::string& header, Output &out) const {
+        out.output("%s RtrInitEvent to be delivered at %" PRIu64 " with priority %d\n",
+                header.c_str(), getDeliveryTime(), getPriority());
+        out.output("%s     command: %d, int_value = %d, ua_value = %s\n",
+                   header.c_str(), command, int_value, ua_value.toStringBestSI().c_str());
+    }
 
 private:
 	friend class boost::serialization::access;
@@ -303,6 +326,10 @@ public:
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
 
+    virtual void print(const std::string& header, Output &out) const {
+        out.output("%s internal_router_event to be delivered at %" PRIu64 " with priority %d\n",
+                header.c_str(), getDeliveryTime(), getPriority());
+    }
 
 private:
 	friend class boost::serialization::access;
