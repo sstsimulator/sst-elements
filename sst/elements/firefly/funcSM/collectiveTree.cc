@@ -170,6 +170,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 				return;
 			  case SendDownState::Waiting:
 				m_state = Exit;
+                m_dbg.verbose(CALL_INFO,1,0,"wait on sends to children\n" );
                 proto()->waitAll( m_sendReqV_ptrs ); 
 				return;
 			}

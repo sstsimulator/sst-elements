@@ -69,6 +69,7 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
 
     m_req = new _CommReq( blocking ? _CommReq::Recv: _CommReq::Irecv,
         ioVec, obj().info()->sizeofDataType(dtype), src, tag, group );
+    dbg().verbose(CALL_INFO,1,0,"new CommReq %p\n",m_req );
     if ( ! blocking ) {
         commReq->req = m_req;
     }
@@ -84,6 +85,7 @@ bool RecvState<T1>::afterProcess()
     if ( m_blocking ) {
         if ( m_req->isDone() ) {
             obj().passCtrlToFunction( obj().recvStateDelay(), m_functor );
+            dbg().verbose(CALL_INFO,1,0,"delete CommReq %p\n",m_req );
             delete m_req;
         } else {
             obj().m_processQueuesState->enterWait( new WaitReq(m_req), &m_unblock );
@@ -98,8 +100,8 @@ bool RecvState<T1>::afterProcess()
 template< class T1 >
 bool RecvState<T1>::unblock()
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
     obj().passCtrlToFunction( obj().recvStateDelay(), m_functor );
+    dbg().verbose(CALL_INFO,1,0,"delete CommReq %p\n",m_req );
     delete m_req;
     return false;
 }

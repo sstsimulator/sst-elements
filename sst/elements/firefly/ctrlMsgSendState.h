@@ -69,7 +69,7 @@ void SendState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
     m_req = new _CommReq( blocking ? _CommReq::Send : _CommReq::Isend,
         ioVec, obj().info()->sizeofDataType(dtype), dest, tag, group );
     
-    dbg().verbose(CALL_INFO,1,0,"%p\n",m_req );
+    dbg().verbose(CALL_INFO,1,0,"new CommReq %p\n",m_req );
     if ( ! blocking ) { 
         commReq->req = m_req;
     }
@@ -85,8 +85,10 @@ bool SendState<T1>::afterProcess()
     if ( m_blocking ) {
         if ( m_req->isDone() ) {
             obj().passCtrlToFunction( obj().sendStateDelay(), m_functor );
+            dbg().verbose(CALL_INFO,2,0,"delete CommReq %p\n",m_req);
             delete m_req;
         } else {
+            dbg().verbose(CALL_INFO,2,0,"setblock %p\n",m_req);
             obj().m_processQueuesState->enterWait( new WaitReq( m_req ), &m_unblock );
         }
     } else {
@@ -99,7 +101,7 @@ bool SendState<T1>::afterProcess()
 template< class T1 >
 bool SendState<T1>::unblock()
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,2,0,"delete CommReq %p\n",m_req);
     obj().passCtrlToFunction( obj().sendStateDelay(), m_functor );
     delete m_req;
     return false;
