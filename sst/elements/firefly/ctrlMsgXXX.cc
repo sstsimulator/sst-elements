@@ -130,6 +130,12 @@ XXX::~XXX()
     delete m_rxMemcpyMod;
     delete m_txSetupMod;
     delete m_rxSetupMod;
+    delete m_rxFiniMod;
+    delete m_txFiniMod;
+
+    if ( m_rxPostMod ) {
+        delete m_rxPostMod;
+    }
 }
 
 void XXX::init( Info* info, VirtNic* nic )

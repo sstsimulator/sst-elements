@@ -113,6 +113,7 @@ Nic::~Nic()
     for ( int i = 0; i < m_num_vNics; i++ ) {
         delete m_vNicV[i];
     }
+	delete m_arbitrateDMA;
 }
 
 void Nic::printStatus(Output &out)
