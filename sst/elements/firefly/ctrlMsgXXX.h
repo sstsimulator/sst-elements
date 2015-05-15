@@ -227,7 +227,8 @@ class XXX  {
         DelayEvent( FunctorBase_0<bool>* _functor) :
             Event(), 
             functor0( _functor ),
-            functor1( NULL )
+            functor1( NULL ),
+            req( NULL )
         {}
 
         DelayEvent( FunctorBase_1<CommReq*,bool>* _functor, CommReq* _req) :

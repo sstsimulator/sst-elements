@@ -55,10 +55,12 @@ void WaitAllState<T1>::enter( std::vector<CommReq*>& reqs,
 
     m_reqs = reqs;
     m_functor = functor;
+    dbg().verbose(CALL_INFO,1,0,"%lu\n",m_reqs.size());
 
     std::vector<_CommReq*> tmp;
     std::vector<CommReq*>::iterator iter = reqs.begin();
     for ( ; iter != reqs.end(); ++iter ) {
+        dbg().verbose(CALL_INFO,2,0,"CommReq %p\n",(*iter)->req);
         tmp.push_back( (*iter)->req );
     }
 
@@ -68,18 +70,16 @@ void WaitAllState<T1>::enter( std::vector<CommReq*>& reqs,
 template< class T1 >
 bool WaitAllState<T1>::unblock()
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
-    std::vector<CommReq*>::iterator iter = m_reqs.begin();
+    dbg().verbose(CALL_INFO,1,0,"%lu\n",m_reqs.size());
 
-    for ( ; iter != m_reqs.end(); ++iter ) {
-        if ( (*iter)->req->isDone() ) {
-            obj().passCtrlToFunction( obj().waitallStateDelay(), m_functor, (*iter) );
-            m_reqs.clear();
-            delete (*iter)->req;
-            return false;
+    for ( int i = 0; i < m_reqs.size(); i++ ) {
+        if ( m_reqs[i]->req->isDone() ) {
+            dbg().verbose(CALL_INFO,2,0,"delete CommReq %p\n",m_reqs[i]->req);
+            delete m_reqs[i]->req;
+        } else {
+            assert(0);
         }
     }
-    dbg().verbose(CALL_INFO,1,0,"no CommReq must be a CommEvent\n");
     obj().passCtrlToFunction( obj().waitallStateDelay(), m_functor, NULL );
     return false;
 }
