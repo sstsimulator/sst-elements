@@ -89,6 +89,14 @@ EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
     for ( int i = 0; i < NUM_EVENTS; i++ ) {
         delete m_histoV[i];
     }
+
+	if ( m_spyinfo )
+		delete m_spyinfo;
+
+	delete m_histoM[ "SendSize" ];
+	delete m_histoM[ "RecvSize" ];
+	delete m_rankMap;
+	delete m_computeDistrib;
 }
 
 void EmberMessagePassingGenerator::getPosition( int32_t rank, int32_t px, 
