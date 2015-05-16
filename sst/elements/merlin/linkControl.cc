@@ -164,12 +164,14 @@ void LinkControl::init(unsigned int phase)
         ev = rtr_link->recvInitData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
+        delete ev;
 
         // Get the flit size from the router
         ev = rtr_link->recvInitData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         UnitAlgebra flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
+        delete ev;
         
         // Need to reset the time base of the output link
         UnitAlgebra link_clock = link_bw / flit_size_ua;
@@ -205,6 +207,7 @@ void LinkControl::init(unsigned int phase)
         }
 
         id = init_ev->int_value;
+        delete ev;
         
         // Need to send available credits to other side of link
         for ( int i = 0; i < total_vns; i++ ) {

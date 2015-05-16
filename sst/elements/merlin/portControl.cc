@@ -365,6 +365,7 @@ PortControl::init(unsigned int phase) {
         // std::cout << link_clock.toStringBestSI() << std::endl;
         TimeConverter* tc = parent->getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
+        delete ev;
         
         // Get initialization event from endpoint, but only if I am a host port
         if ( topo->isHostPort(port_number) ) {
@@ -373,6 +374,7 @@ PortControl::init(unsigned int phase) {
             // Need to notify the router about the number of VNs requested
             parent->reportRequestedVNs(port_number,init_ev->int_value);
             remote_rdy_for_credits = true;
+            delete ev;
         }
         }
         break;
@@ -419,7 +421,7 @@ PortControl::init(unsigned int phase) {
                         // I have not yet been intiialized, so report VCs to router
                         parent->reportSetVCs(port_number,init_ev->int_value);
                     }
-                    
+                    delete init_ev;
                 }
                 else {
                     init_events.push_back(ev);
