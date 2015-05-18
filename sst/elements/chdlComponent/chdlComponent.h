@@ -15,10 +15,13 @@
 #include <string>
 #include <map>
 #include <queue>
-#include <vector>
 
+// TODO: perhaps CHDL shouldn't have things with names that conflict with C
+// standard library macros. "assert" causes a problem here if the inclusion
+// order isn't just so.
+#undef assert
 #include <chdl/chdl.h>
-#include <chdl/loader.h>
+#undef assert
 
 #include <sst/core/sst_types.h>
 //#include <sst/core/serialization/element.h>
@@ -38,9 +41,8 @@ class Params;
 
 namespace ChdlComponent {
   struct reqdata {
-    std::vector<uint64_t> data;
-    uint64_t mask, addr, id;
-    bool ready, valid, wr, llsc;
+    uint64_t addr, data, id, size;
+    bool valid, wr, llsc, locked, uncached;
 
     friend class boost::serialization::access;
     template<class Archive>
@@ -49,17 +51,17 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(addr);
       ar & BOOST_SERIALIZATION_NVP(data);
       ar & BOOST_SERIALIZATION_NVP(id);
-      ar & BOOST_SERIALIZATION_NVP(mask);
+      ar & BOOST_SERIALIZATION_NVP(size);
       ar & BOOST_SERIALIZATION_NVP(valid);
       ar & BOOST_SERIALIZATION_NVP(wr);
       ar & BOOST_SERIALIZATION_NVP(llsc);
-      ar & BOOST_SERIALIZATION_NVP(ready);
+      ar & BOOST_SERIALIZATION_NVP(locked);
+      ar & BOOST_SERIALIZATION_NVP(uncached);
     }
   };
 
   struct respdata {
-    uint64_t id;
-    std::vector<uint64_t> data;
+    uint64_t data, id;
     bool ready, valid, wr, llsc, llsc_suc;
 
     friend class boost::serialization::access;
@@ -73,7 +75,6 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(wr);
       ar & BOOST_SERIALIZATION_NVP(llsc);
       ar & BOOST_SERIALIZATION_NVP(llsc_suc);
-      ar & BOOST_SERIALIZATION_NVP(ready);
     }
   };
 
@@ -90,6 +91,7 @@ namespace ChdlComponent {
     template <class Archive>
       void save(Archive &ar, const unsigned version) const
     {
+      #if 0
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(memLink);
       ar & BOOST_SERIALIZATION_NVP(clockFreq);
@@ -101,6 +103,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(idMap);
       ar & BOOST_SERIALIZATION_NVP(portMap);
       ar & BOOST_SERIALIZATION_NVP(ports);
+      ar & BOOST_SERIALIZATION_NVP(counters);
       ar & BOOST_SERIALIZATION_NVP(cd);
       ar & BOOST_SERIALIZATION_NVP(debugLevel);
       ar & BOOST_SERIALIZATION_NVP(tog);
@@ -110,14 +113,15 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(dumpVcd);
       ar & BOOST_SERIALIZATION_NVP(stopSim);
       ar & BOOST_SERIALIZATION_NVP(registered);
+      #endif
 
-      // TODO: Also, somehow, save the CHDL simulator state and the counter
-      // names/nodes.
+      // TODO: Also, somehow, save the CHDL simulator state
     }
 
     template <class Archive>
       void load(Archive &ar, const unsigned version)
     {
+      #if 0
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(memLink);
       ar & BOOST_SERIALIZATION_NVP(clockFreq);
@@ -129,6 +133,7 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(idMap);
       ar & BOOST_SERIALIZATION_NVP(portMap);
       ar & BOOST_SERIALIZATION_NVP(ports);
+      ar & BOOST_SERIALIZATION_NVP(counters);
       ar & BOOST_SERIALIZATION_NVP(cd);
       ar & BOOST_SERIALIZATION_NVP(debugLevel);
       ar & BOOST_SERIALIZATION_NVP(tog);
@@ -138,37 +143,33 @@ namespace ChdlComponent {
       ar & BOOST_SERIALIZATION_NVP(dumpVcd);
       ar & BOOST_SERIALIZATION_NVP(stopSim);
       ar & BOOST_SERIALIZATION_NVP(registered);
+      #endif
 
-      // TODO: Also, somehow, load the CHDL simulator state and the counter
-      // names/nodes
+      // TODO: Also, somehow, load the CHDL simulator state
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 
   private:
+    void init_io_pre(const std::string &port);
+    void init_io(const std::string &port, std::vector<chdl::node> &v);
+
     void consoleOutput(char c);
 
     void handleEvent(Interfaces::SimpleMem::Request *);
     bool clockTick(Cycle_t);
 
-    uint32_t mmio_rd(uint64_t addr);
-    void mmio_wr(uint32_t data, uint64_t addr);
-    void mmio_rd(std::vector<uint8_t> &d, uint64_t addr);
-    void mmio_wr(const std::vector<uint8_t> &d, uint64_t addr);
-
     Interfaces::SimpleMem *memLink;
 
     std::string clockFreq, netlFile, memFile, outputBuffer;
 
-    std::vector<reqdata> req, req_copy;
+    std::vector<reqdata> req;
     std::vector<respdata> resp;
-
-    std::map<std::string, unsigned> ports;
-    std::vector<std::queue<Interfaces::SimpleMem::Request *> > resp_q;
-    std::vector<unsigned> responses_this_cycle, byte_sz, data_sz;
     std::map<unsigned long, unsigned long> idMap, portMap;
+    std::map<std::string, unsigned> ports;
     std::map<std::string, unsigned long *> counters;
-    
+    std::vector<std::queue<Interfaces::SimpleMem::Request *> > resp_q;
+
     chdl::cdomain_handle_t cd;
 
     int debugLevel, tog, core_id, core_count;
@@ -176,6 +177,8 @@ namespace ChdlComponent {
     Output out;
     std::ofstream vcd;
     bool dumpVcd, stopSim, registered;
+
+    std::vector<unsigned> responses_this_cycle;
 };
 
 }}
