@@ -147,6 +147,7 @@ public:
 
     ~PortControl();
     void setup();
+    void finish();
     void init(unsigned int phase);
     
 

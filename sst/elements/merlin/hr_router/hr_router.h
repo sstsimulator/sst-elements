@@ -83,7 +83,7 @@ public:
     
     void init(unsigned int phase);
     void setup();
-    void finish() {}
+    void finish();
 
     void notifyEvent();
     int const* getOutputBufferCredits() {return xbar_in_credits;}

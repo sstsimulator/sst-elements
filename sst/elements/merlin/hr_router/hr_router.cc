@@ -413,10 +413,16 @@ hr_router::clock_handler(Cycle_t cycle)
 
 void hr_router::setup()
 {
-    // for ( int i = 0; i < num_ports; i++ ) {
-    // 	ports[i]->Setup();
-    // }
-//    return 0;
+    for ( int i = 0; i < num_ports; i++ ) {
+    	ports[i]->setup();
+    }
+}
+
+void hr_router::finish()
+{
+    for ( int i = 0; i < num_ports; i++ ) {
+    	ports[i]->finish();
+    }
 }
 
 void

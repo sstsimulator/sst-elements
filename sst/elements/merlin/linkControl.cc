@@ -251,7 +251,19 @@ void LinkControl::init(unsigned int phase)
 
 void LinkControl::finish(void)
 {
-
+    // Clean up all the events left in the queues.  This will help
+    // track down real memory leaks as all this events won't be in the
+    // way.
+    for ( int i = 0; i < req_vns; i++ ) {
+        while ( !input_buf[i].empty() ) {
+            delete input_buf[i].front();
+            input_buf[i].pop();
+        }
+        while ( !output_buf[i].empty() ) {
+            delete output_buf[i].front();
+            output_buf[i].pop();
+        }
+    }
 }
 
 

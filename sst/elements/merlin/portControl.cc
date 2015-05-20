@@ -323,6 +323,23 @@ PortControl::setup() {
     }
 }
 
+void
+PortControl::finish() {
+    // Clean up all the events left in the queues.  This will help
+    // track down real memory leaks as all this events won't be in the
+    // way.
+    for ( int i = 0; i < num_vcs; i++ ) {
+        while ( !input_buf[i].empty() ) {
+            delete input_buf[i].front();
+            input_buf[i].pop();
+        }
+        while ( !output_buf[i].empty() ) {
+            delete output_buf[i].front();
+            output_buf[i].pop();
+        }
+    }
+}
+
 
 void
 PortControl::init(unsigned int phase) {

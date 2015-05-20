@@ -46,7 +46,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 {
 
     out.init(getName() + ": ", 0, 0, Output::STDOUT);
-
+    
     id = params.find_integer("id");
     if ( id == -1 ) {
         _abort(TrafficGen, "id must be set!\n");
@@ -100,7 +100,6 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     packetDestGen = buildGenerator("PacketDest", params);
     assert(packetDestGen);
     packetDestGen->seed(id);
-
 
     /* Packet size */
     // base_packet_size = params.find_integer("packet_size", 64); // In Bits
@@ -186,7 +185,7 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
         _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
     }
 
-    gen->seed(rng_seed);
+    if ( gen ) gen->seed(rng_seed);
 
     return gen;
 }
