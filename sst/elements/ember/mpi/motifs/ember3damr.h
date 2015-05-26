@@ -92,6 +92,7 @@ private:
         int32_t  y_up;
         int32_t  z_down;
         int32_t  z_up;
+	bool printMaps;
     
     int8_t meshType;
 

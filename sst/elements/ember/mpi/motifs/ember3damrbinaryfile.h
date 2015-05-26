@@ -78,7 +78,7 @@ namespace SST {
             }
             
             ~EmberAMRBinaryFile() {
-                
+        	fclose(amrFile);        
             }
 
 	    void populateGlobalBlocks(std::map<uint32_t, int32_t>* globalBlockMap) {

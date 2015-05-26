@@ -53,6 +53,13 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
         	meshType = 1;
     	}
 
+	printMaps = params.find_string("arg.printmap", "no") == "yes";
+	if(printMaps) {
+		out->verbose(CALL_INFO, 16, 0, "Configured to print rank to block maps\n");
+	} else {
+		out->verbose(CALL_INFO, 16, 0, "Configured not to print rank to block mapping.\n");
+	}
+
 	// Set the iteration count to zero, first loop
 	iteration = 0;
 	nextBlockToBeProcessed = 0;
@@ -68,8 +75,8 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 void Ember3DAMRGenerator::loadBlocks() {
 	out->verbose(CALL_INFO, 2, 0, "Loading AMR block information from %s ...\n", blockFilePath);
 
-    EmberAMRBinaryFile* amrFile;
-    
+    EmberAMRBinaryFile* amrFile = NULL;
+
     if(2 == meshType) {
         amrFile = new EmberAMRBinaryFile(blockFilePath, out);
 
@@ -156,9 +163,11 @@ void Ember3DAMRGenerator::loadBlocks() {
 	uint32_t maxRequests = 0;
 
 	// Print out the block map to file if we are running in verbose mode.
-	if(out->getVerboseLevel() >= 8) {
+//	if(out->getVerboseLevel() >= 8) {
+	if(printMaps) {
 		printBlockMap();
 	}
+//	}
 
 	for(uint32_t i = 0; i < localBlocks.size(); ++i) {
 		Ember3DAMRBlock* currentBlock = localBlocks[i];
@@ -777,6 +786,8 @@ void Ember3DAMRGenerator::loadBlocks() {
 	blockMessageBuffer = memAlloc( sizeof(double) * maxFaceDim * maxFaceDim * localBlocks.size() * 2);
 
         out->verbose(CALL_INFO, 2, 0, "Blocks on rank %" PRIu32 " count is: %" PRIu32 "\n", (uint32_t) rank(), (uint32_t) localBlocks.size());
+
+	delete amrFile;
 }
 
 void Ember3DAMRGenerator::configure()
@@ -830,14 +841,13 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
                                         theBlock->getRefineZDown(),
                                         theBlock->getRefineZUp());
 
-
-				if( (*nextReq) >= (maxRequestCount - 1) ) {
+				if( (*nextReq) < maxRequestCount ) {
+					enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
+						items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
+					(*nextReq) = (*nextReq) + 1;
+				} else {
 					out->fatal(CALL_INFO, -1, "Error: max requests at: %" PRIu32 ", current total: %" PRIu32 "\n", maxRequestCount, (*nextReq));
 				}
-
-				enQ_irecv( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
-					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
-				(*nextReq) = (*nextReq) + 1;
 
 				out->verbose(CALL_INFO, 32, 0, "Enqueue non-blocking send to: %" PRIu32 " from rank %" PRIu32 ", size: %" PRIu32 " doubles, tag: %" PRIu32 ", blockID=%" PRIu32 " (%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ")\n",
 					blockComm[i], rank(), items_per_cell * faceSize, msgTag, theBlock->getBlockID(),
@@ -848,13 +858,14 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 					theBlock->getRefineZDown(),
 					theBlock->getRefineZUp());
 
-				if( (*nextReq) >= (maxRequestCount - 1) ) {
+				if( (*nextReq) < maxRequestCount) {
+					enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
+						items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
+					(*nextReq) = (*nextReq) + 1;
+				} else {
 					out->fatal(CALL_INFO, -1, "Error: max requests at: %" PRIu32 ", current total: %" PRIu32 "\n", maxRequestCount, (*nextReq));
 				}
 
-				enQ_isend( evQ, &bufferPtr[(*nextReq) * maxFaceDim * maxFaceDim],
-					items_per_cell * faceSize, DOUBLE, blockComm[i], msgTag, GroupWorld, &requests[(*nextReq)]);
-				(*nextReq) = (*nextReq) + 1;
 			}
 		}
 	}

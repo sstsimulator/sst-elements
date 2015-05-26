@@ -291,6 +291,7 @@ static const ElementInfoParam bipingpong_params[] = {
 
 static const ElementInfoParam amr3d_params[] = {
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
+	{	"arg.printmap",			"Prints a map of blocks to ranks (=\"no\" or \"yes\")", "no" },
 	{	"arg.blockfile",		"File containing the 3D AMR blocks (from MiniAMR)", 	"blocks.amr"},
 	{       "arg.nx", 		        "Sets the size of a block in X", "8" },
         {       "arg.ny",                       "Sets the size of a block in Y", "8" },
