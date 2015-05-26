@@ -996,7 +996,15 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 //		iteration++;
 		return false;
 	} else {
-		out->verbose(CALL_INFO, 2, 0, "Completed %" PRIu32 " iterations, will now complete and unload.\n", iteration);
+		char* timeBuffer = (char*) malloc(sizeof(char) * 64);
+		sprintf(timeBuffer, "%" PRIu64 "ns", getCurrentSimTimeNano());
+		UnitAlgebra timeUA(timeBuffer);
+
+		out->verbose(CALL_INFO, 2, 0, "Completed %" PRIu32 " iterations @ time=%s, will now complete and unload.\n", 
+			iteration, timeUA.toString().c_str());
+
+		free(timeBuffer);
+
 		return true;
 	}
 }
