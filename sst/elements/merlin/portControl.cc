@@ -48,7 +48,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	ev->setVC(vc);
 
 	output_buf[vc].push(ev);
-	if ( waiting && !have_packets ) {
+	if ( waiting ) {
 	    // std::cout << "waking up the output" << std::endl;
 	    output_timing->send(1,NULL); 
 	    waiting = false;
