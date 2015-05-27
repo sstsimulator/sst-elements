@@ -241,7 +241,7 @@ private:
 class RtrInitEvent : public BaseRtrEvent {
 public:
 
-    enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE };
+    enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE, REPORT_PORT };
 
     // int num_vns;
     // int id;

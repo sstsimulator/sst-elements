@@ -271,6 +271,7 @@ void LinkControl::finish(void)
 // otherwise.
 bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= req_vns ) return false;
+    req->vn = vn;
     RtrEvent* ev = new RtrEvent(req);
     int flits = (ev->request->size_in_bits + (flit_size - 1)) / flit_size;
     ev->setSizeInFlits(flits);

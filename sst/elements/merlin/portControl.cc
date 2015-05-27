@@ -17,6 +17,10 @@
 
 #include <boost/lexical_cast.hpp>
 
+#define TRACK 0
+#define TRACK_ID 131
+#define TRACK_PORT 4
+
 using namespace SST;
 using namespace Merlin;
 using namespace Interfaces;
@@ -41,6 +45,12 @@ PortControl::sendTopologyEvent(TopologyEvent* ev)
 bool
 PortControl::send(internal_router_event* ev, int vc)
 {
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "send start:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 	// std::cout << "sending event on port " << port_number << " and VC " << vc << std::endl;
 	if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
     
@@ -49,10 +59,17 @@ PortControl::send(internal_router_event* ev, int vc)
 
 	output_buf[vc].push(ev);
 	if ( waiting ) {
+	// if ( waiting && !have_packets ) {
 	    // std::cout << "waking up the output" << std::endl;
 	    output_timing->send(1,NULL); 
 	    waiting = false;
 	}
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "send end:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 	return true;
 }
 
@@ -66,6 +83,12 @@ PortControl::spaceToSend(int vc, int flits)
 internal_router_event*
 PortControl::recv(int vc)
 {
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "recv start:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 	// if ( input_buf[vc].size() == 0 ) return NULL;
 	if ( input_buf[vc].empty() ) return NULL;
 
@@ -91,6 +114,12 @@ PortControl::recv(int vc)
 	port_link->send(1,new credit_event(vc_return,port_ret_credits[vc_return])); 
 	port_ret_credits[vc_return] = 0;
     
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "recv start:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
     return event;
 }
 // time_base is a frequency which represents the bandwidth of the link in flits/second.
@@ -367,6 +396,18 @@ PortControl::init(unsigned int phase) {
             ev->int_value = topo->getEndpointID(port_number);
             port_link->sendInitData(ev);
         }
+        else {
+            // Report router ID and port number to other side of link
+            init_ev = new RtrInitEvent();
+            init_ev->command = RtrInitEvent::REPORT_ID;
+            init_ev->int_value = rtr_id;
+            port_link->sendInitData(init_ev);
+            
+            init_ev = new RtrInitEvent();
+            init_ev->command = RtrInitEvent::REPORT_PORT;
+            init_ev->int_value = port_number;
+            port_link->sendInitData(init_ev);
+        }
         break;
     case 1:
         {
@@ -392,6 +433,23 @@ PortControl::init(unsigned int phase) {
             parent->reportRequestedVNs(port_number,init_ev->int_value);
             remote_rdy_for_credits = true;
             delete ev;
+
+            // Set remote_rtr_id and remote_port_number to -1
+            // indicating this is a host port
+            remote_rtr_id = -1;
+            remote_port_number = -1;
+        } else {
+            // If not a host port, the other side sent us their rtr_id
+            // and port_number
+            ev = port_link->recvInitData();
+            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            remote_rtr_id = init_ev->int_value;
+            delete init_ev;
+
+            ev = port_link->recvInitData();
+            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            remote_port_number = init_ev->int_value;
+            delete init_ev;
         }
         }
         break;
@@ -489,23 +547,31 @@ PortControl::dumpState(std::ostream& stream)
 }
 
 void
-PortControl::printStatus(Output& out)
+PortControl::printStatus(Output& out, int out_port_busy, int in_port_busy)
 {
-	out.output("Router id: %d, port %d:\n",rtr_id, port_number);
+	out.output("Start Port %d\n",port_number);
+	out.output("  Remote id = %d\n", remote_rtr_id);
+	out.output("  Remote port = %d\n", remote_port_number);
+    out.output("  Output_busy = %d\n", out_port_busy);
+    out.output("  Input_Busy = %d\n",in_port_busy);
 	out.output("  Waiting = %u\n", waiting);
     out.output("  have_packets = %u\n", have_packets);
     out.output("  start_block = %" PRIu64 "\n", start_block);
     out.output("  curr_out_vc = %d\n", curr_out_vc);
 	for ( int i = 0; i < num_vcs; i++ ) {
-	    out.output("  VC %d Information:\n", i);
+	    out.output("  Start VC %d\n", i);
 	    out.output("    xbar_in_credits = %d\n", xbar_in_credits[i]);
 	    out.output("    port_out_credits = %d\n", port_out_credits[i]);
 	    out.output("    port_ret_credits = %d\n", port_ret_credits[i]);
-	    out.output("    Input Buffer:\n");
+	    out.output("    Start Input Buffer\n");
 	    dumpQueueState(input_buf[i],out);
-	    out.output("    Output Buffer:\n");
+	    out.output("    End Input Buffer\n");
+	    out.output("    Start Output Buffer\n");
 	    dumpQueueState(output_buf[i],out);
+	    out.output("    End Output Buffer\n");
+        out.output("  End VC %d\n", i);
     }
+    out.output("End Port %d\n", port_number);
 }
 
 void
@@ -610,6 +676,13 @@ PortControl::handle_input_n2r(Event* ev)
 void
 PortControl::handle_input_r2r(Event* ev)
 {
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "handle_input_r2r start:" << std::endl;
+        ev->print("  ", Simulation::getSimulation()->getSimulationOutput());
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 	// Check to see if this is a credit or data packet
 	// credit_event* ce = dynamic_cast<credit_event*>(ev);
 	// if ( ce != NULL ) {
@@ -673,10 +746,22 @@ PortControl::handle_input_r2r(Event* ev)
 	default:
 	    break;
 	}
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "handle_input_r2r end:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 }
 
 void
 PortControl::handle_output_r2r(Event* ev) {
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "handle_output_r2r start:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 	// The event is an empty event used just for timing.
 
 	// ***** Need to add in logic for when to return credits *****
@@ -788,6 +873,12 @@ PortControl::handle_output_r2r(Event* ev) {
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
 	    waiting = true;
 	}
+#if TRACK
+    if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
+        std::cout << "handle_output_r2r end:" << std::endl;
+        printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
+    }
+#endif
 }
 
 void

@@ -64,6 +64,9 @@ private:
     int port_number;
     bool host_port;
     bool remote_rdy_for_credits;
+
+    int remote_rtr_id;
+    int remote_port_number;
     
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual network abstraction.
@@ -155,7 +158,7 @@ public:
     Event* recvInitData();
     
     void dumpState(std::ostream& stream);
-    void printStatus(Output& out);
+    void printStatus(Output& out, int out_port_busy, int in_port_busy);
     
     // void setupVCs(int vcs, internal_router_event** vc_heads
     

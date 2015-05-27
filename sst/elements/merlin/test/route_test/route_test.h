@@ -12,8 +12,8 @@
 // distribution.
 
 
-#ifndef COMPONENTS_MERLIN_TEST_NIC_H
-#define COMPONENTS_MERLIN_TEST_NIC_H
+#ifndef COMPONENTS_MERLIN_TEST_ROUTE_TEST_H
+#define COMPONENTS_MERLIN_TEST_ROUTE_TEST_H
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
@@ -30,34 +30,23 @@ namespace Interfaces {
 namespace Merlin {
 
 
-class nic : public Component {
+class route_test : public Component {
 
 private:
 
     int id;
-    int ft_loading;
-    int ft_radix;
     int num_peers;
-    int num_vns;
-    int last_vn;
+    bool sending;
 
-    int num_msg;
-    int packets_sent;
-    int packets_recd;
-    int stalled_cycles;
 
     bool done;
     bool initialized;
     
     SST::Interfaces::SimpleNetwork* link_control;
 
-    int last_target;
-    
-    int *next_seq;
-
 public:
-    nic(ComponentId_t cid, Params& params);
-    ~nic();
+    route_test(ComponentId_t cid, Params& params);
+    ~route_test();
 
     void init(unsigned int phase);
     void setup(); 
@@ -66,11 +55,11 @@ public:
 
 private:
     bool clock_handler(Cycle_t cycle);
-    int fattree_ID_to_IP(int id);
-    int IP_to_fattree_ID(int id);
+
+    bool handle_event(int vn);
 };
 
 }
 }
 
-#endif // COMPONENTS_MERLIN_TEST_NIC_H
+#endif // COMPONENTS_MERLIN_TEST_ROUTE_TEST_H

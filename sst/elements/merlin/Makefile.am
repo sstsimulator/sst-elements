@@ -18,6 +18,8 @@ libmerlin_la_SOURCES = \
 	portControl.cc \
 	test/nic.h \
 	test/nic.cc \
+	test/route_test/route_test.h \
+	test/route_test/route_test.cc \
 	test/pt2pt/pt2pt_test.h \
 	test/pt2pt/pt2pt_test.cc \
 	test/bisection/bisection_test.h \

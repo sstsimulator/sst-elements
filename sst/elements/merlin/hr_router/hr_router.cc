@@ -318,12 +318,11 @@ hr_router::dumpState(std::ostream& stream)
 void
 hr_router::printStatus(Output& out)
 {
-    out.output("Router id: %d\n", id);
+    out.output("Start Router:  id = %d\n", id);
     for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->printStatus(out);
-        out.output("  Output_busy: %d\n", out_port_busy[i]);
-        out.output("  Input_Busy: %d\n",in_port_busy[i]);
+        ports[i]->printStatus(out, out_port_busy[i], in_port_busy[i]);
     }
+    out.output("End Router: id = %d\n", id);
 }
 
 bool

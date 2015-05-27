@@ -563,7 +563,7 @@ class TestEndPoint(EndPoint):
     def __init__(self):
         self.enableAllStats = False;
         self.statInterval = "0"
-        self.nicKeys = ["topology", "num_peers", "link_bw", "checkerboard"]
+        self.nicKeys = ["topology", "num_peers", "num_messages", "link_bw", "checkerboard"]
 
     def getName(self):
         return "Test End Point"
@@ -571,6 +571,8 @@ class TestEndPoint(EndPoint):
     def prepParams(self):
         if "checkerboard" not in _params:
             _params["checkerboard"] = "1"
+        if "num_messages" not in _params:
+            _params["num_messages"] = "10"
 
     def build(self, nID, link, extraKeys):
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")

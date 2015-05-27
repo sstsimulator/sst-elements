@@ -22,6 +22,7 @@
 
 #include "hr_router/hr_router.h"
 #include "test/nic.h"
+#include "test/route_test/route_test.h"
 #include "test/pt2pt/pt2pt_test.h"
 #include "test/bisection/bisection_test.h"
 
@@ -159,6 +160,7 @@ create_test_nic(SST::ComponentId_t id,
 static const ElementInfoParam test_nic_params[] = {
     {"id","Network ID of endpoint."},
     {"num_peers","Total number of endpoints in network."},
+    {"num_messages","Total number of messages to send to each endpoint."},
     {"num_vns","Number of requested virtual networks."},
     {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
     {"topology", "Name of the topology module that should be loaded to control routing."},
@@ -169,6 +171,27 @@ static const ElementInfoParam test_nic_params[] = {
 };
 
 static const ElementInfoPort test_nic_ports[] = {
+    {"rtr",  "Port that hooks up to router.", nic_events},
+    {NULL, NULL, NULL}
+};
+
+// router_test element info
+static Component*
+create_route_test(SST::ComponentId_t id,
+		SST::Params& params)
+{
+    return new route_test( id, params );
+}
+
+
+static const ElementInfoParam route_test_params[] = {
+    {"id","Network ID of endpoint."},
+    {"num_peers","Total number of endpoints in network."},
+    {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+    {NULL,NULL,NULL}
+};
+
+static const ElementInfoPort route_test_ports[] = {
     {"rtr",  "Port that hooks up to router.", nic_events},
     {NULL, NULL, NULL}
 };
@@ -478,6 +501,15 @@ static const ElementInfoComponent components[] = {
       create_test_nic,
       test_nic_params,
       test_nic_ports,
+      COMPONENT_CATEGORY_NETWORK,
+      NULL
+    },
+    { "route_test",
+      "Simple NIC to test routing.",
+      NULL,
+      create_route_test,
+      route_test_params,
+      route_test_ports,
       COMPONENT_CATEGORY_NETWORK,
       NULL
     },

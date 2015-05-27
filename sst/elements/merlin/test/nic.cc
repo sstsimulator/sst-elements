@@ -65,8 +65,8 @@ nic::nic(ComponentId_t cid, Params& params) :
     // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
     UnitAlgebra link_bw(link_bw_s);
     
-    addressMode = SEQUENTIAL;
-
+    num_msg = params.find_integer("num_messages",10);
+    
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
     link_control = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
@@ -104,12 +104,8 @@ void nic::setup()
 {
     link_control->setup();
     if ( link_control->getEndpointID() != id ) {
-        if ( addressMode == FATTREE_IP ) {
-            if ( IP_to_fattree_ID(link_control->getEndpointID()) != id ) {
-                std::cout << "NIC ids don't match: param = " << id << ", LinkControl = "
+        std::cout << "NIC ids don't match: param = " << id << ", LinkControl = "
                           << link_control->getEndpointID() << std::endl;
-            }
-        }
     }
     if ( !initialized ) {
         std::cout << "Nic " << id << ": Broadcast failed!" << std::endl;  
@@ -168,7 +164,6 @@ private:
 bool
 nic::clock_handler(Cycle_t cycle)
 {
-    static const int num_msg = 10;
     static const int send_vc = 0;
     static const int size_in_bits = 400;
     int expected_recv_count = (num_peers-1)*num_msg;
@@ -191,16 +186,8 @@ nic::clock_handler(Cycle_t cycle)
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
             
-            switch ( addressMode ) {
-            case SEQUENTIAL:
-                req->dest = last_target;
-                req->src = id;
-                break;
-            case FATTREE_IP:
-                req->dest = fattree_ID_to_IP(last_target);
-                req->src = fattree_ID_to_IP(id);
-                break;
-            }
+            req->dest = last_target;
+            req->src = id;
 
             req->vn = 0;
             req->size_in_bits = size_in_bits;
