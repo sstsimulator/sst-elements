@@ -40,73 +40,7 @@ typedef std::queue<RtrEvent*> network_queue_t;
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
 class LinkControl : public SST::Interfaces::SimpleNetwork {
-public:
-    // class PacketStats {
-    // private:
-    //     uint64_t numPkts;
-    //     SimTime_t minLat;
-    //     SimTime_t maxLat;
-    //     double m_n, m_old, s_n, s_old;
-    // public:
-    //     PacketStats() : numPkts(0), minLat(0), maxLat(0), m_n(0.0), m_old(0.0), s_n(0.0), s_old(0.0)
-    //     { }
-    //     void insertPacketLatency(SimTime_t lat);
-    //     uint64_t getNumPkts(void) const { return numPkts; }
-    //     SimTime_t getMinLatency(void) const { return minLat; }
-    //     SimTime_t getMaxLatency(void) const { return maxLat; }
-    //     double getMeanLatency(void) const { return m_n; }
-    //     double getVarianceLatency(void) const { return (m_n>1.0) ? (s_n/(m_n-1.0)) : 0.0; }
-    //     double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
-    // };
-    
-    
-    // // Functor classes for handling callbacks
-    // class HandlerBase {
-    // public:
-    //     virtual bool operator()(int) = 0;
-    //     virtual ~HandlerBase() {}
-    // };
-    
 
-    // template <typename classT, typename argT = void>
-    // class Handler : public HandlerBase {
-    // private:
-    //     typedef bool (classT::*PtrMember)(int, argT);
-    //     classT* object;
-    //     const PtrMember member;
-    //     argT data;
-        
-    // public:
-    //     Handler( classT* const object, PtrMember member, argT data ) :
-    //         object(object),
-    //         member(member),
-    //         data(data)
-    //     {}
-        
-    //     bool operator()(int vn) {
-    //         return (object->*member)(vn,data);
-    //     }
-    // };
-    
-    // template <typename classT>
-    // class Handler<classT, void> : public HandlerBase {
-    // private:
-    //     typedef bool (classT::*PtrMember)(int);
-    //     classT* object;
-    //     const PtrMember member;
-        
-    // public:
-    //     Handler( classT* const object, PtrMember member ) :
-    //         object(object),
-    //         member(member)
-    //     {}
-        
-    //     bool operator()(int vn) {
-    //         return (object->*member)(vn);
-    //     }
-    // };
-    
-    
 private:
     // Link to router
     Link* rtr_link;
@@ -178,11 +112,6 @@ public:
     // Must be called before any other functions to configure the link.
     // Preferably during the owning component's constructor
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-
-    // void configureLink(Component* rif, std::string port_name, TimeConverter* time_base,
-    //                    int vns, int* in_buf_size, int* out_buf_size)
-    // {std::cout << "Using old configureLink call, fix it!" << std::endl; exit(1);}
-
     bool initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                     int vns, const UnitAlgebra& in_buf_size,
                     const UnitAlgebra& out_buf_size);

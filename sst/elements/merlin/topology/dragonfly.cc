@@ -191,7 +191,8 @@ Topology::PortState topo_dragonfly::getPortState(int port) const
 int
 topo_dragonfly::getEndpointID(int port)
 {
-    return -1;
+    return (group_id * (params.a /*rtr_per_group*/ * params.p /*hosts_per_rtr*/)) +
+        (router_id * params.p /*hosts_per_rtr*/) + port;
 }
 
 
