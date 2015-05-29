@@ -443,14 +443,14 @@ load_reorderlinkcontrol(Component* parent, Params& params)
 }
 
 static const ElementInfoParam reorderlinkcontrol_params[] = {
-    {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+    // {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
     { NULL, NULL, NULL }
 };
 
 static const ElementInfoStatistic reorderlinkcontrol_statistics[] = {
-    { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
-    { "send_bit_count", "Count number of bits sent on link", "bits", 1},
-    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+    // { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
+    // { "send_bit_count", "Count number of bits sent on link", "bits", 1},
+    // { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
     { NULL, NULL, NULL, 0 }
 };
 

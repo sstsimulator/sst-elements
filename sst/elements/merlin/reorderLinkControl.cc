@@ -29,7 +29,7 @@ ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     receiveFunctor(NULL)
 {
-    link_control = new LinkControl(parent,params);
+    link_control = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent("merlin.linkcontrol", params));
 }
 
 ReorderLinkControl::~ReorderLinkControl() {

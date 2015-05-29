@@ -31,8 +31,6 @@ class Component;
 
 namespace Merlin {
 
-class LinkControl;
-
 // Need our own version of Request to add a sequence number
 class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
 public:
@@ -114,7 +112,7 @@ public:
     
 private:
     int vns;
-    LinkControl* link_control;
+    SST::Interfaces::SimpleNetwork* link_control;
 
 
     UnitAlgebra link_bw;
