@@ -19,6 +19,7 @@
 
 #include "merlin.h"
 #include "linkControl.h"
+#include "reorderLinkControl.h"
 
 #include "hr_router/hr_router.h"
 #include "test/nic.h"
@@ -415,7 +416,7 @@ load_singlerouter_topology(Component* comp, Params& params)
 }
 
 
-
+// LinkControl Info
 static SubComponent*
 load_linkcontrol(Component* parent, Params& params)
 {
@@ -433,6 +434,26 @@ static const ElementInfoStatistic linkcontrol_statistics[] = {
     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
     { NULL, NULL, NULL, 0 }
 };
+
+// ReorderLinkControlInfo
+static SubComponent*
+load_reorderlinkcontrol(Component* parent, Params& params)
+{
+    return new ReorderLinkControl(parent, params);
+}
+
+static const ElementInfoParam reorderlinkcontrol_params[] = {
+    {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+    { NULL, NULL, NULL }
+};
+
+static const ElementInfoStatistic reorderlinkcontrol_statistics[] = {
+    { "packet_latency", "Histogram of latencies for received packets", "latency", 1},
+    { "send_bit_count", "Count number of bits sent on link", "bits", 1},
+    { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+    { NULL, NULL, NULL, 0 }
+};
+
 
 class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
 private:
@@ -576,6 +597,15 @@ static const ElementInfoSubComponent subcomponents[] = {
       load_linkcontrol,
       linkcontrol_params,
       linkcontrol_statistics,
+      "SST::Interfaces::SimpleNetwork"
+    },
+    { "reorderlinkcontrol",
+      "Link Control module that can handle out of order packet arrival.  "
+      "Events are sequenced and order is reconstructed on receive.",
+      NULL,
+      load_reorderlinkcontrol,
+      reorderlinkcontrol_params,
+      reorderlinkcontrol_statistics,
       "SST::Interfaces::SimpleNetwork"
     },
     { "test_network_inspector",

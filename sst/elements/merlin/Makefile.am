@@ -16,6 +16,8 @@ libmerlin_la_SOURCES = \
 	linkControl.cc \
 	portControl.h \
 	portControl.cc \
+	reorderLinkControl.h \
+	reorderLinkControl.cc \
 	test/nic.h \
 	test/nic.cc \
 	test/route_test/route_test.h \

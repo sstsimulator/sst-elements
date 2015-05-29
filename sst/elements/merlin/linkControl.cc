@@ -479,7 +479,7 @@ void LinkControl::handle_output(Event* ev)
 
         // Send an event to wake up again after this packet is sent.
         output_timing->send(size,NULL);
-
+        
         curr_out_vn = vn_to_send + 1;
         if ( curr_out_vn == total_vns ) curr_out_vn = 0;
 

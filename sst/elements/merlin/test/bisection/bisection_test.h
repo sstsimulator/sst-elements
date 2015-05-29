@@ -20,11 +20,12 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+#include <sst/core/interfaces/simpleNetwork.h>
+
 
 namespace SST {
 namespace Merlin {
 
-class LinkControl;
 
 class bisection_test : public Component {
 
@@ -43,7 +44,7 @@ private:
     int packet_size;
     UnitAlgebra buffer_size;
     
-    LinkControl* link_control;
+    SST::Interfaces::SimpleNetwork* link_control;
     Link* self_link;
 
 public:

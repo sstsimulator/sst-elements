@@ -18,7 +18,6 @@
 #include <sst/core/unitAlgebra.h>
 
 #include "sst/elements/merlin/merlin.h"
-#include "sst/elements/merlin/linkControl.h"
 #include "sst/elements/merlin/test/bisection/bisection_test.h"
 
 using namespace std;
@@ -36,15 +35,15 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     // cout << "id: " << id << endl;
 
     num_peers = params.find_integer("num_peers");
-    cout << "num_peers: " << num_peers << endl;
+//    cout << "num_peers: " << num_peers << endl;
 
     // num_vns = params.find_int("num_vns",1);;
     num_vns = 1;
-    cout << "num_vns: " << num_vns << endl;
+//    cout << "num_vns: " << num_vns << endl;
 
     string link_bw_s = params.find_string("link_bw","2GB/s");
     UnitAlgebra link_bw(link_bw_s);
-    cout << "link_bw: " << link_bw.toStringBestSI() << endl;
+//    cout << "link_bw: " << link_bw.toStringBestSI() << endl;
     
     string packet_size_s = params.find_string("packet_size","512b");
     UnitAlgebra packet_size_ua(packet_size_s);
@@ -57,21 +56,21 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     packet_size = packet_size_ua.getRoundedValue();
     
     packets_to_send = params.find_integer("packets_to_send",32);
-    cout << "packets_to_send = " << packets_to_send << endl;
+//    cout << "packets_to_send = " << packets_to_send << endl;
     
     string buffer_size_s = params.find_string("buffer_size","128B");
     buffer_size = UnitAlgebra(buffer_size_s);
 
     // Create a LinkControl object
-    link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
+    link_control = (SST::Interfaces::SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
 
     link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
 
     // Set up a receive functor that will handle all incoming packets
-    link_control->setNotifyOnReceive(new LinkControl::Handler<bisection_test>(this,&bisection_test::receive_handler));
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<bisection_test>(this,&bisection_test::receive_handler));
 
     // Set up a send functor that will handle sending packets
-    link_control->setNotifyOnSend(new LinkControl::Handler<bisection_test>(this,&bisection_test::send_handler));
+    link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler<bisection_test>(this,&bisection_test::send_handler));
     
 
     self_link = configureSelfLink("complete_link", "2GHz",
@@ -121,14 +120,17 @@ bisection_test::send_handler(int vn)
         link_control->send(req,vn);
         ++packets_sent;
     }
-    if ( packets_sent == packets_to_send ) return false; // Done sending
+    if ( packets_sent == packets_to_send ) {
+        return false; // Done sending
+    }
     return true;
 }
 
 bool
 bisection_test::receive_handler(int vn)
 {
-    if ( link_control->requestToReceive(vn) ) {
+    // std::cout << "receive_handler: " << link_control->requestToReceive(vn) <<  std::endl;
+    while ( link_control->requestToReceive(vn) ) {
         SimpleNetwork::Request* req = link_control->recv(vn);
         bisection_test_event* rec_ev = static_cast<bisection_test_event*>(req->takePayload());
         // cout << "received packet at " << getCurrentSimTimeNano() << endl;
@@ -137,7 +139,8 @@ bisection_test::receive_handler(int vn)
             // latency = start_time - rec_ev->start_time;
         }
         ++packets_recd;
-        // cout << id << ": " << packets_recd << endl;
+
+        // std::cout << id << ", " << packets_recd << std::endl;
         
         if ( packets_recd == packets_to_send ) {
             // Need to send this event to a self link to account
@@ -153,7 +156,7 @@ bisection_test::receive_handler(int vn)
             delete rec_ev;
         }
     }
-    return false;
+    return true;
 }
 
 
