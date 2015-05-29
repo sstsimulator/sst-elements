@@ -67,10 +67,14 @@ static SubComponent* load_AddrHistogrammer(Component* owner, Params& params){
 }
 
 static const ElementInfoParam addrHistogrammer_params[] = {
-    {"verbose",                     "Controls the verbosity of the cassini components", ""},
-    {"cache_line_size",             "The size of the cache line that this prefetcher is attached to, default is 64-bytes", "64"},
-    {"histo_bin_width",             "The width of bins in the histograms tracking the reads and writes leaving this cache, default is 64-bytes", "64"},
-    {NULL, NULL, NULL}
+	 {"addr_cutoff",                 "Address above this cutoff won't be profiled. Helps to avoid a huge table to track the barren vastness of virtual addresses between the heap and stack regions", "16 GB"},
+	 {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic addrHistogrammer_statistics[] = {
+	 { "histogram_reads",     "Histogram of page read counts", "counts", 1 },
+	 { "histogram_writes",    "Histogram of page write counts", "counts", 1 },
+	 { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoSubComponent subcomponents[] = {
@@ -95,7 +99,7 @@ static const ElementInfoSubComponent subcomponents[] = {
       NULL,
       load_AddrHistogrammer,
       addrHistogrammer_params,
-      NULL,
+      addrHistogrammer_statistics,
       "SST::MemHierarchy::CacheListener"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }

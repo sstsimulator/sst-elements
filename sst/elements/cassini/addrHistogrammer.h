@@ -19,7 +19,6 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include <sst/core/stats/histo/histo.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/elements/memHierarchy/cacheListener.h>
 
@@ -33,22 +32,18 @@ namespace Cassini {
 class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
     public:
 	AddrHistogrammer(Component*, Params& params);
-        ~AddrHistogrammer();
+        ~AddrHistogrammer() {};
 
 	void notifyAccess(const CacheListenerNotification& notify);
 	void registerResponseCallback(Event::HandlerBase *handler);
-	void printStats(Output& out);
-
+	
     private:
 	std::vector<Event::HandlerBase*> registeredCallbacks;
-	uint32_t blockSize;
-	uint32_t binWidth;
-        uint32_t verbosity;
-        Statistics::Histogram<uint32_t, uint32_t>* rdHisto;
-        Statistics::Histogram<uint32_t, uint32_t>* wrHisto;
-        Output *output;
-
-	void printHistogram(Statistics::Histogram<uint32_t, uint32_t> *, std::string);
+	Addr cutoff; // Don't bin addresses above the cutoff. Helps avoid creating
+	             //  histogram entries for the vast address range between the
+	             //  heap and the stack.
+        Statistic<Addr>* rdHisto;
+        Statistic<Addr>* wrHisto;
 };
 
 }

@@ -20,108 +20,45 @@
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 #include "sst/core/serialization.h"
+#include <sst/core/unitAlgebra.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
 AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
-	Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
-	blockSize = (uint32_t) params.find_integer("cache_line_size", 64);
-	binWidth = (uint32_t) params.find_integer("histo_bin_width", 64);
-    // Get the level of verbosity the user is asking to print out, default is 1
-    // which means don't print much.
-    verbosity = (uint32_t) params.find_integer("verbose", 0);
+    std::string cutoff_s = params.find_string("addr_cutoff", "16GiB");
+    UnitAlgebra cutoff_u(cutoff_s);
+    cutoff = cutoff_u.getRoundedValue();
     
-    rdHisto = new Statistics::Histogram<uint32_t,uint32_t>("Histogram of reads",binWidth);
-    wrHisto = new Statistics::Histogram<uint32_t,uint32_t>("Histogram of writes",binWidth);
+    rdHisto = registerStatistic<Addr>("histogram_reads");
+    wrHisto = registerStatistic<Addr>("histogram_writes");
 
-    output = new Output();
-    output->init("", verbosity, (uint32_t) 0, Output::FILE);
-}
-
-
-AddrHistogrammer::~AddrHistogrammer() {
-    delete rdHisto;
-    delete wrHisto;
-    delete output;
 }
 
 
 void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
-	const NotifyAccessType notifyType = notify.getAccessType();
-	const NotifyResultType notifyResType = notify.getResultType();
-	const Addr addr = notify.getPhysicalAddress();
-
-    if(notifyResType != MISS) return;
-    Addr baseAddr = (addr - (addr % blockSize));
+    const NotifyAccessType notifyType = notify.getAccessType();
+    const NotifyResultType notifyResType = notify.getResultType();
+    //const Addr addr = notify.getPhysicalAddress();
+    const Addr vaddr = notify.getVirtualAddress();
+    
+    if(notifyResType != MISS || vaddr > cutoff) return;
+    
+    // // Remove the offset within a bin
+    // Addr baseAddr = vaddr & binMask;
     switch (notifyType) {
       case READ:
         // Add to the read histogram
-        rdHisto->add(baseAddr);
+        rdHisto->addData(vaddr);
         return;
       case WRITE:
         // Add to the write hitogram
-        wrHisto->add(baseAddr);
+        wrHisto->addData(vaddr);
         return;
     }
 }
 
 void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler) {
 	registeredCallbacks.push_back(handler);
-}
-
-// print the Histogram efficiently using string buffers
-void AddrHistogrammer::printHistogram(Statistics::Histogram<uint32_t, uint32_t> *histo, std::string RdWr) {
-    uint32_t binstart = histo->getBinStart();
-    uint32_t binend   = histo->getBinEnd();
-    uint32_t binwidth = histo->getBinWidth();
-    uint32_t nbins    = histo->getBinCount();
-    
-    // The output method in the Output class performs an fflush for every
-    //  single invocation when the target is a FILE.  Since we don't care
-    //  so much about the ordering of the prints between different processes
-    //  here, we want to minimize the number of calls to output.  We pack
-    //  all the print statements in a string buffer, and call output just once.
-    std::string prefix = "addrHistogrammer (" + RdWr +"):";
-    
-    // compute the size of the string buffer
-    int addrlen  = 20; // We are assuming the worst case address length.
-                       // 2^64 is twenty chars wide in ASCII
-    int countlen = 10; // Counts are assumed to be 32-bit integers.
-                       // It takes 10 ASCII characters to represent 2^32
-    int nspaces  =  5; // Spaces between the addresses and count
-    int nbrackets=  2; // Number of brackets
-    int linelen  = prefix.length() + 2*addrlen + countlen + nspaces + nbrackets + 1;
-                  // Length of the prefix + 2 addresses + 1 count + spaces + brackets + newline
-    int buflen   = linelen * nbins;
-    
-    std::string strbuf;
-    strbuf.reserve(buflen);
-    std::stringstream ss(strbuf); // Initialize the stringstream to be the size of the buffer
-                                  // Yes it's a wasteful copy, but far better than file flushes
-    ss.seekp(0);                  // Reset the output stream to the first char in the buffer
-    
-    //ss << "Histogram Min: %" << binstart << "\n";
-    //ss << "Histogram Max: %" << binend   << "\n";
-    //ss << "Histogram Bin: %" << binwidth << "\n";
-    
-    for(uint32_t i = binstart; i <= binend; i += binwidth) {
-        if( histo->getBinCountByBinStart(i) > 0 ) {
-            ss << prefix << " [" << i << ", " << (i + binwidth) << "]   "
-                << histo->getBinCountByBinStart(i) << "\n";
-        }
-    }
-    
-    output->output(1,"addrHistogrammer.cc","printHistogram","%s",ss.str().c_str());
-        // Both str() and c_str() create new objects or arrays and involve data
-        //  copies, but definitely better than fflushes.
-}
-
-// Called during Cache::finish
-void AddrHistogrammer::printStats(Output& dbg) {
-    //output->output(1,"addrHistogrammer.cc","printStats","Reads: Address - Address+binWidth    Count\n");
-    //output->output(1,"addrHistogrammer.cc","printStats","Writes: Address - Address+binWidth    Count\n");
-    AddrHistogrammer::printHistogram(rdHisto, "read");
-    AddrHistogrammer::printHistogram(wrHisto, "write");
 }
