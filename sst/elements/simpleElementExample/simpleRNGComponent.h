@@ -13,7 +13,7 @@
 #define _SIMPLERNGCOMPONENT_H
 
 #include "sst/core/component.h"
-#include "sst/core/rng/sstrand.h"
+#include "sst/core/rng/sstrng.h"
 
 using namespace SST;
 using namespace SST::RNG;
