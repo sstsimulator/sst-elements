@@ -15,7 +15,7 @@
 
 #include <sst/core/introspectedComponent.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include <sst/core/rng/sstrand.h>
+#include <sst/core/rng/sstrng.h>
 #include <sst/core/output.h>
 
 using namespace std;

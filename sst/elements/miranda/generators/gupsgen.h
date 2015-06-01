@@ -15,7 +15,7 @@
 
 #include <sst/elements/miranda/mirandaGenerator.h>
 #include <sst/core/output.h>
-#include <sst/core/rng/sstrand.h>
+#include <sst/core/rng/sstrng.h>
 
 #include <queue>
 

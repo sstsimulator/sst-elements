@@ -19,7 +19,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/rng/sstrand.h>
+#include <sst/core/rng/sstrng.h>
 
 #include "output.h"
 

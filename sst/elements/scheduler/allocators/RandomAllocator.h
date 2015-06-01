@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "sst/core/serialization.h"
- #include "sst/core/rng/sstrand.h"
+#include "sst/core/rng/sstrng.h"
 
 #include "Allocator.h"
 
