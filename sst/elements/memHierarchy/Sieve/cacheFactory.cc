@@ -51,8 +51,8 @@ Sieve* Sieve::cacheFactory(ComponentId_t _id, Params &_params){
     ReplacementMgr* replManager = replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, false);
 
-    CacheConfig config = {cacheArray, dbg, replManager, numLines, static_cast<uint>(lineSize)};
-    return new Cache(_id, _params, config);
+    CacheConfig config = {cacheArray, dbg, replManager};
+    return new Sieve(_id, _params, config);
 }
 
 
@@ -61,15 +61,6 @@ Sieve::Sieve(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     cf_ = _config;
     d_  = cf_.dbg_;
     d_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
-    errorChecking();
-    
-    d2_ = new Output();
-    d2_->init("", _params.find_integer("debug_level", 0), 0,(Output::output_location_t)_params.find_integer("debug", 0));
-
-    int dAddr           = _params.find_integer("debug_addr",-1);
-    if (dAddr != -1) DEBUG_ALL = false;
-    else DEBUG_ALL = true;
-    DEBUG_ADDR = (Addr)dAddr;
 }
 
 
