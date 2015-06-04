@@ -62,7 +62,8 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     buffer_size = UnitAlgebra(buffer_size_s);
 
     // Create a LinkControl object
-    link_control = (SST::Interfaces::SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
+    std::string networkIF = params.find_string("networkIF","merlin.linkcontrol");
+    link_control = (SST::Interfaces::SimpleNetwork*)loadSubComponent(networkIF, this, params);
 
     link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
 
@@ -117,6 +118,8 @@ bisection_test::send_handler(int vn)
         req->src = id;
         req->vn = vn;
         req->size_in_bits = packet_size;
+        // req->setTraceID(id);
+        // req->setTraceType(SST::Interfaces::SimpleNetwork::Request::FULL);
         link_control->send(req,vn);
         ++packets_sent;
     }

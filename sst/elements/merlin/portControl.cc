@@ -728,6 +728,7 @@ PortControl::handle_input_r2r(Event* ev)
             vc_heads[curr_vc] = event;
             parent->inc_vcs_with_data();
 	    }
+        // std::cout << "Got to here 3" << std::endl; 
 	    
 	    if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
             std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
@@ -748,7 +749,6 @@ PortControl::handle_input_r2r(Event* ev)
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "handle_input_r2r end:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -758,7 +758,6 @@ void
 PortControl::handle_output_r2r(Event* ev) {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "handle_output_r2r start:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
@@ -875,7 +874,6 @@ PortControl::handle_output_r2r(Event* ev) {
 	}
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-        std::cout << "handle_output_r2r end:" << std::endl;
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif

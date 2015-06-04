@@ -29,7 +29,8 @@ ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     receiveFunctor(NULL)
 {
-    link_control = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent("merlin.linkcontrol", params));
+    std::string networkIF = params.find_string("rlc:networkIF", "merlin.linkcontrol");
+    link_control = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent(networkIF, params));
 }
 
 ReorderLinkControl::~ReorderLinkControl() {
@@ -40,7 +41,8 @@ bool
 ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                                int vns, const UnitAlgebra& in_buf_size,
                                const UnitAlgebra& out_buf_size)
-{    
+{
+    std::cout << "ReorderLinkControl" << std::endl;
     this->vns = vns;
     
     // Don't need output buffers, sends will go directly to
@@ -96,6 +98,7 @@ void ReorderLinkControl::finish(void)
 // otherwise.
 bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= vns ) return false;
+    if ( !link_control->spaceToSend(vn, req->size_in_bits) ) return false;
     
     ReorderRequest* my_req = new ReorderRequest(req);
     delete req;

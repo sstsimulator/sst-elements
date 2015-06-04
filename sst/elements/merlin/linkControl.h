@@ -61,7 +61,14 @@ private:
     int checker_board_factor;
 
     int id;
+    int rr;
 
+    typedef enum {
+        DETERMINISTIC,   /*!< Hashes based on src and dest */
+        ROUNDROBIN,      /*!< Round robins through VNs */
+    } cb_alg_t;
+
+    cb_alg_t cb_alg;
     
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual channel abstraction.

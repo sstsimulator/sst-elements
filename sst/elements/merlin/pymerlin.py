@@ -21,14 +21,21 @@ class Params(dict):
         val = raw_input()
         self[key] = val
         return val
-    def subset(self, keys):
-        return dict((k, self[k]) for k in keys)
-
+    def subset(self, keys, optKeys = []):
+        ret = dict((k, self[k]) for k in keys)
+        ret.update(dict((k, self[k]) for k in keys and self))
+        return ret
+    # Needed to avoid asking for input when a key isn't present
+#    def optional_subset(self, keys):
+#        return 
+    
 _params = Params()
 debug = 0
 
 class Topo:
     def __init__(self):
+        self.topoKeys = []
+        self.topoOptKeys = []
         def epFunc(epID):
             return None
         self._getEndPoint = epFunc
@@ -49,12 +56,13 @@ class Topo:
 class topoSimple(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"])
+        self.topoOptKeys.extend(["xbar_arb"])
     def getName(self):
         return "Simple"
     def prepParams(self):
-        if "xbar_arb" not in _params:
-            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.singlerouter"
         _params["debug"] = debug
         _params["num_ports"] = int(_params["router_radix"])
@@ -65,7 +73,8 @@ class topoSimple(Topo):
         rtr = sst.Component("router", "merlin.hr_router")
         _params["topology"] = "merlin.singlerouter"
         _params["debug"] = debug
-        rtr.addParams(_params.subset(self.rtrKeys))
+#        rtr.addParams(_params.subset(self.rtrKeys))
+        rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
         rtr.addParam("id", 0)
 
         for l in xrange(_params["num_ports"]):
@@ -77,12 +86,13 @@ class topoSimple(Topo):
 class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoKeys.extend(["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"])
+        self.topoOptKeys.extend(["xbar_arb"])
     def getName(self):
         return "Torus"
     def prepParams(self):
-        if "xbar_arb" not in _params:
-            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         self.nd = int(_params["num_dims"])
         peers = 1
         radix = 0
@@ -152,7 +162,7 @@ class topoTorus(Topo):
             mylocstr = self.formatShape(mydims)
 
             rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
-            rtr.addParams(_params.subset(self.rtrKeys))
+            rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
             rtr.addParam("id", i)
 
             port = 0
@@ -185,12 +195,13 @@ class topoTorus(Topo):
 class topoMesh(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb"]
     def getName(self):
         return "Mesh"
     def prepParams(self):
-        if "xbar_arb" not in _params:
-            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         self.nd = int(_params["num_dims"])
         peers = 1
         radix = 0
@@ -260,7 +271,7 @@ class topoMesh(Topo):
             mylocstr = self.formatShape(mydims)
 
             rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
-            rtr.addParams(_params.subset(self.rtrKeys))
+            rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
             rtr.addParam("id", i)
 
             port = 0
@@ -301,7 +312,8 @@ class topoMesh(Topo):
 class topoFatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "xbar_arb", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
+        self.topoKeys = ["topology", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
+        self.topoOptKeys = ["xbar_arb", "fattree:routing_alg", "fattree:adaptive_threshold"]
         self.nicKeys = ["link_bw"]
         self.ups = []
         self.downs = []
@@ -314,8 +326,14 @@ class topoFatTree(Topo):
         return "Fat Tree"
 
     def prepParams(self):
-        if "xbar_arb" not in _params:
-            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+#        if "xbar_arb" in _params:
+#            self.rtrKeys.append("xbar_arb")
+            #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+#        if "fattree:routing_alg" in _params:
+#            self.rtrKeys.append("fattree:routing_alg")
+#        if "fattree:adaptive_threshold" in _params:
+#            self.rtrKeys.append("fattree:adaptive_threshold")
+            
         self.shape = _params["fattree:shape"]
         
         levels = self.shape.split(":")
@@ -365,18 +383,21 @@ class topoFatTree(Topo):
             # create all the nodes
             for i in xrange(self.downs[0]):
                 node_id = id * self.downs[0] + i
-#                print "group: %d, id: %d, node_id: %d"%(group, id, node_id)
+                #print "group: %d, id: %d, node_id: %d"%(group, id, node_id)
                 hlink = sst.Link("hostlink_%d"%node_id)
                 host_links.append(hlink)
-#                print "Instancing node " + str(node_id)
-                self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys))
+                #print "Instancing node " + str(node_id)
+                #self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys, []))
+                #self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys, []))
+                self._getEndPoint(node_id).build(node_id, hlink, {})
 
             # Create the edge router
             rtr_id = id
 #            print "Instancing router " + str(rtr_id)
             rtr = sst.Component("rtr_l0_g%d_r0"%(group), "merlin.hr_router")
             # Add parameters
-            rtr.addParams(_params.subset(self.rtrKeys))
+            rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+#            rtr.addParams(_params.optional_subset(self.optRtrKeys))
             rtr.addParam("id",rtr_id)
             rtr.addParam("num_ports",self.ups[0] + self.downs[0])
             # Add links
@@ -413,7 +434,8 @@ class topoFatTree(Topo):
 #            print "Instancing router " + str(rtr_id)
             rtr = sst.Component("rtr_l%d_g%d_r%d"%(level,group,i), "merlin.hr_router")
             # Add parameters
-            rtr.addParams(_params.subset(self.rtrKeys))
+            rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+#            rtr.addParams(_params.optional_subset(self.optRtrKeys))
             rtr.addParam("id",rtr_id)
             rtr.addParam("num_ports",self.ups[level] + self.downs[level])
             # Add links
@@ -450,7 +472,8 @@ class topoFatTree(Topo):
                 rtr_id = self.start_ids[len(self.ups)] + i
 #                print "Instancing router " + str(rtr_id)
                 rtr = sst.Component("rtr_l%d_g0_r%d"%(len(self.ups),i),"merlin.hr_router")
-                rtr.addParams(_params.subset(self.rtrKeys))
+                rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
+#                rtr.addParams(_params.optional_subset(self.optRtrKeys))
                 rtr.addParam("id", rtr_id)
                 rtr.addParam("num_ports",radix)
 
@@ -471,7 +494,8 @@ class topoFatTree(Topo):
 class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.rtrKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoOptKeys = ["xbar_arb"]
     def getName(self):
         return "Dragonfly"
 
@@ -494,7 +518,7 @@ class topoDragonFly(Topo):
             sys.exit(1)
         if _params["dragonfly:num_groups"] > 2:
             foo = _params["dragonfly:algorithm"]
-            self.rtrKeys.append("dragonfly:algorithm")
+            self.topoKeys.append("dragonfly:algorithm")
 
 
     def build(self):
@@ -513,7 +537,7 @@ class topoDragonFly(Topo):
             # GROUP ROUTERS
             for r in xrange(_params["dragonfly:routers_per_group"]):
                 rtr = sst.Component("rtr:G%dR%d"%(g, r), "merlin.hr_router")
-                rtr.addParams(_params.subset(self.rtrKeys))
+                rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
                 rtr.addParam("id", router_num)
 
                 port = 0
@@ -551,6 +575,11 @@ class topoDragonFly(Topo):
 ############################################################################
 
 class EndPoint:
+    def __init__(self):
+        self.epKeys = []
+        self.epOptKeys = []
+        self.enableAllStats = False
+        self.statInterval = "0"
     def getName(self):
         print "Not implemented"
         sys.exit(1)
@@ -561,22 +590,26 @@ class EndPoint:
 
 class TestEndPoint(EndPoint):
     def __init__(self):
-        self.enableAllStats = False;
-        self.statInterval = "0"
-        self.nicKeys = ["topology", "num_peers", "num_messages", "link_bw", "checkerboard"]
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        #self.nicKeys = ["topology", "num_peers", "num_messages", "link_bw", "checkerboard"]
+        self.epKeys.extend(["topology", "num_peers", "link_bw"])
+        self.epOptKeys.extend(["checkerboard", "num_messages"])
 
     def getName(self):
         return "Test End Point"
 
     def prepParams(self):
-        if "checkerboard" not in _params:
-            _params["checkerboard"] = "1"
-        if "num_messages" not in _params:
-            _params["num_messages"] = "10"
+        #if "checkerboard" not in _params:
+        #    _params["checkerboard"] = "1"
+        #if "num_messages" not in _params:
+        #    _params["num_messages"] = "10"
+        pass
 
     def build(self, nID, link, extraKeys):
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
-        nic.addParams(_params.subset(self.nicKeys))
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
@@ -589,20 +622,23 @@ class TestEndPoint(EndPoint):
             
 class BisectionEndPoint(EndPoint):
     def __init__(self):
-        self.enableAllStats = False;
-        self.statInterval = "0"
-        self.nicKeys = ["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size", "checkerboard"]
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
+        self.epKeys.extend(["num_peers", "link_bw", "packet_size", "packets_to_send", "buffer_size"])
+        self.epOptKeys.extend(["checkerboard", "rlc:networkIF"])
 
     def getName(self):
         return "Bisection Test End Point"
 
     def prepParams(self):
-        if "checkerboard" not in _params:
-            _params["checkerboard"] = "1"
-
+        #if "checkerboard" not in _params:
+        #    _params["checkerboard"] = "1"
+        pass
+        
     def build(self, nID, link, extraKeys):
         nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
-        nic.addParams(_params.subset(self.nicKeys))
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
@@ -616,18 +652,21 @@ class BisectionEndPoint(EndPoint):
 
 class TrafficGenEndPoint(EndPoint):
     def __init__(self):
-        self.enableAllStats = False;
-        self.statInterval = "0"
+        EndPoint.__init__(self)
+        #self.enableAllStats = False;
+        #self.statInterval = "0"
         self.optionalKeys = ["delay_between_packets"]
         for genType in ["PacketDest", "PacketSize", "PacketDelay"]:
             for tag in ["pattern", "RangeMin", "RangeMax", "HotSpot:target", "HotSpot:targetProbability", "Normal:Mean", "Normal:Sigma", "Binomial:Mean", "Binomial:Sigma"]:
                 self.optionalKeys.append("%s:%s"%(genType, tag))
-        self.nicKeys = ["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax", "checkerboard"]
+        self.epKeys.extend(["topology", "num_peers", "link_bw", "packets_to_send", "packet_size", "message_rate", "PacketDest:pattern", "PacketDest:RangeMin", "PacketDest:RangeMax"])
+        self.epOptKeys.extend("checkerboard")
+        self.epOptKeys.extend(self.optionalKeys)
     def getName(self):
         return "Pattern-based traffic generator"
     def prepParams(self):
-        if "checkerboard" not in _params:
-            _params["checkerboard"] = "1"
+        #if "checkerboard" not in _params:
+        #    _params["checkerboard"] = "1"
         _params["PacketDest:RangeMin"] = 0
         _params["PacketDest:RangeMax"] = int(_params["num_peers"])
 
@@ -647,11 +686,11 @@ class TrafficGenEndPoint(EndPoint):
 
     def build(self, nID, link, extraKeys):
         nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
-        nic.addParams(_params.subset(self.nicKeys))
-        nic.addParams(_params.subset(extraKeys))
-        for k in self.optionalKeys:
-            if k in _params:
-                nic.addParam(k, _params[k])
+        nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
+        nic.addParams(_params.subset(extraKeys, {}))
+        #for k in self.optionalKeys:
+        #    if k in _params:
+        #        nic.addParam(k, _params[k])
         nic.addParam("id", nID)
         nic.addLink(link, "rtr", _params["link_lat"])
         if self.enableAllStats:

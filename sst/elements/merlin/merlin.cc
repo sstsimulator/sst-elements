@@ -133,6 +133,7 @@ static const ElementInfoParam bisection_test_params[] = {
     {"packet_size","Packet size specified in either b or B (can include SI prefix).","64B"},
     {"packets_to_send","Number of packets to send in the test.", "32"},
     {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix).", "128B"},
+    {"networkIF","Network interface to use.  Must inherit from SimpleNetwork", "merlin.linkcontrol"},
     {NULL,NULL,NULL}
 };
 
@@ -314,6 +315,8 @@ load_fattree_topology(Component* comp, Params& params)
 
 static const ElementInfoParam fattree_params[] = {
     {"fattree:shape","Shape of the fattree"},
+    {"fattree:routing_alg","Routing algorithm to use. [deterministic | adaptive]","deterministic"},
+    {"fattree:adaptive_threshold","Threshold used to determine if a packet will adaptively route."},
     {NULL,NULL,NULL}
 };
 
@@ -425,6 +428,7 @@ load_linkcontrol(Component* parent, Params& params)
 
 static const ElementInfoParam linkcontrol_params[] = {
     {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+    {"checkerboard_alg","Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic"},
     { NULL, NULL, NULL }
 };
 
@@ -443,7 +447,7 @@ load_reorderlinkcontrol(Component* parent, Params& params)
 }
 
 static const ElementInfoParam reorderlinkcontrol_params[] = {
-    // {"checkerboard","Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+    {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
     { NULL, NULL, NULL }
 };
 

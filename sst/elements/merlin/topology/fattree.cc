@@ -60,12 +60,23 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
 }
 
 topo_fattree::topo_fattree(Component* comp, Params& params) :
-    Topology()
+    Topology(),
+    num_vcs(-1),
+    allow_adaptive(false)
 {
     num_ports = params.find_integer("num_ports");
     string shape = params.find_string("fattree:shape");
     id = params.find_integer("id");
 
+    string routing_alg = params.find_string("fattree:routing_alg", "deterministic");
+    if ( routing_alg == "adaptive" ) {
+        allow_adaptive = true;
+    }
+
+    adaptive_threshold = params.find_floating("fattree:adaptive_threshold", 0.5);
+    // std::cout << "routing_alg: " << routing_alg << std::endl;
+    // std::cout << "adaptive_threshold: " << adaptive_threshold << std::endl;
+    
     int levels = std::count(shape.begin(), shape.end(), ':') + 1;
     int* ups = new int[levels];
     int* downs= new int[levels];
@@ -143,20 +154,62 @@ topo_fattree::~topo_fattree()
 {
 }
 
-
-
-void topo_fattree::route(int port, int vc, internal_router_event* ev)
-{
-    // cout << "route()" << endl;
+void topo_fattree::route(int port, int vc, internal_router_event* ev)  {
     int dest = ev->getDest();
+    // Down routes
     if ( dest >= low_host && dest <= high_host ) {
-        // cout << "id: " << id << ", dest = " << dest << ", next port = " << (dest / down_route_factor) << endl
         ev->setNextPort((dest - low_host) / down_route_factor);
     }
+    // Up routes
     else {
         ev->setNextPort(down_ports + ((dest/down_route_factor) % up_ports));
-        // cout << "id: " << id << ", dest = " << dest << ", next port = " << (down_ports + (dest % up_ports)) << endl;
     }
+}
+
+
+void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
+{
+    int dest = ev->getDest();
+    // Down routes are always deterministic and are already done in route
+    if ( dest >= low_host && dest <= high_host ) {
+        return;
+    }
+    // Up routes can be adaptive, so things can change from the normal path
+    else {
+        // If we're not adaptive, then we're already routed
+        if ( !allow_adaptive ) return;
+
+        // If the port we're supposed to be going to has a buffer with
+        // fewer credits than the threshold, adaptively route
+        int next_port = ev->getNextPort();
+        int vc = ev->getVC();
+        int index  = next_port*num_vcs + vc;
+        if ( outputCredits[index] >= thresholds[index] ) return;
+        
+        // std::cout << "Going to adaptively route" << std::endl;
+        // std::cout << down_ports << ", " << num_vcs << ", " << vc << ", " << num_ports << std::endl;
+
+        // Send this on the least loaded port.  For now, just look at
+        // current VC, later we may look at overall port loading.  Set
+        // the max to be the "natural" port and only adaptively route
+        // if it's not the best one (ties go to natural port)
+        int max = outputCredits[index];
+        // If all ports have zero credits left, then we just set
+        // it to the port that it would normally go to without
+        // adaptive routing.
+        // int port = down_ports + ((dest/down_route_factor) % up_ports);
+        int port = next_port;
+        for ( int i = (down_ports * num_vcs) + vc; i < num_ports * num_vcs; i += num_vcs ) {
+            if ( outputCredits[i] > max ) {
+                max = outputCredits[i];
+                port = i / num_vcs;
+                // std::cout << port << std::endl;
+            }
+        }
+        // std::cout << "Port: " << port << std::endl;
+        ev->setNextPort(port);
+    }
+    // cout << "id: " << id << ", dest = " << dest << ", next port = " << (down_ports + (dest % up_ports)) << endl;
 }
 
 
@@ -255,4 +308,20 @@ Topology::PortState topo_fattree::getPortState(int port) const
     } else {
         return R2R;
     }
+}
+
+void topo_fattree::setOutputBufferCreditArray(int const* array, int vcs) {
+        num_vcs = vcs;
+        outputCredits = array;
+        // std::cout << "id = " << id << std::endl;
+        // for ( int i = 0; i < num_ports; i++ ) {
+        //     for ( int j = 0; j < num_vcs; j++ ) {
+        //         std::cout << "Port " << i << ", VC " << j << " credits = " << outputCredits[i*num_vcs+j] << std::endl;
+        //     }
+        // }
+        thresholds = new int[num_vcs * num_ports];
+        for ( int i = 0; i < num_vcs * num_ports; i++ ) {
+            thresholds[i] = outputCredits[i] * adaptive_threshold;
+        }
+        
 }

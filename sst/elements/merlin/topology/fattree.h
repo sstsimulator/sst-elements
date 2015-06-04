@@ -41,7 +41,13 @@ private:
     int up_ports;
     int down_ports;
     int num_ports;
-
+    int num_vcs;
+    
+    int const* outputCredits;
+    int* thresholds;
+    bool allow_adaptive;
+    double adaptive_threshold;
+    
     void parseShape(const std::string &shape, int *downs, int *ups) const;
 
     
@@ -50,6 +56,7 @@ public:
     ~topo_fattree();
 
     virtual void route(int port, int vc, internal_router_event* ev);
+    virtual void reroute(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
@@ -59,8 +66,10 @@ public:
 
     virtual PortState getPortState(int port) const;
 
+    virtual void setOutputBufferCreditArray(int const* array, int vcs);
 
-private:
+    virtual int computeNumVCs(int vns) {return vns;}
+    
 };
 
 }

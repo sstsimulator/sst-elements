@@ -357,7 +357,6 @@ hr_router::clock_handler(Cycle_t cycle)
         return true;
 #endif
     }
-
     // Loop through all the events at the heads of the queues and call
     // route
     int index = 0;
@@ -556,11 +555,11 @@ hr_router::init_vcs()
         xbar_in_credits[i] = 0;
     }
     
-    topo->setOutputBufferCreditArray(xbar_in_credits);
-
     for ( int i = 0; i < num_ports; i++ ) {
         ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],input_buf_size,output_buf_size);
     }    
+
+    topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
 
     // Now that we have the number of VCs we can finish initializing
     // arbitration logic

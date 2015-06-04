@@ -41,18 +41,20 @@ public:
         seq(0)
         {}
 
-    ReorderRequest(SST::Interfaces::SimpleNetwork::nid_t dest, SST::Interfaces::SimpleNetwork::nid_t src,
-                   size_t size_in_bits, bool head, bool tail, uint32_t seq, Event* payload = NULL) :
-        Request(dest, src, size_in_bits, head, tail, payload ),
-        seq(seq)
-        {
-        }
+    // ReorderRequest(SST::Interfaces::SimpleNetwork::nid_t dest, SST::Interfaces::SimpleNetwork::nid_t src,
+    //                size_t size_in_bits, bool head, bool tail, uint32_t seq, Event* payload = NULL) :
+    //     Request(dest, src, size_in_bits, head, tail, payload ),
+    //     seq(seq)
+    //     {
+    //     }
 
     ReorderRequest(SST::Interfaces::SimpleNetwork::Request* req, uint32_t seq = 0) :
         Request(req->dest, req->src, req->size_in_bits, req->head, req->tail),
         seq(seq)
         {
             givePayload(req->takePayload());
+            trace = req->getTraceType();
+            traceID = req->getTraceID();
         }
 
     ~ReorderRequest() {}

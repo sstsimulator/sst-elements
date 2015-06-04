@@ -28,13 +28,23 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     rtr_link(NULL), output_timing(NULL),
     req_vns(0), total_vns(0), checker_board_factor(1), id(-1),
-    input_buf(NULL), output_buf(NULL),
+    rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     receiveFunctor(NULL), sendFunctor(NULL),
     network_initialized(false)
 {
     checker_board_factor = params.find_integer("checkerboard", 1);
+    std::string checkerboard_alg = params.find_string("checkerboard_alg","deterministic");
+    if ( checkerboard_alg == "roundrobin" ) {
+        cb_alg = ROUNDROBIN;
+    }
+    else if ( checkerboard_alg == "deterministic" ) {
+        cb_alg = DETERMINISTIC;
+    }
+    else {
+        merlin_abort.fatal(CALL_INFO,-1,"Unknown checkerboard_alg requested: %s\n",checkerboard_alg.c_str());
+    }
 }
     
 bool
@@ -282,11 +292,25 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // ev->request->vn = vn;
 
     // Determine which actual VN to put packet into.  This is based on
-    // the checker_board_factor.  We will add src and dest and mod by
-    // checker_board_factor to get the VN offset.
-    int vn_offset = (req->src + req->dest) % checker_board_factor;
+    // the checker_board_factor.
+    int vn_offset;
+    switch ( cb_alg ) {
+    case DETERMINISTIC:
+        // We will add src and dest and mod by checker_board_factor to
+        // get the VN offset.
+        vn_offset = (req->src + req->dest) % checker_board_factor;
+        break;
+    case ROUNDROBIN:
+        vn_offset = rr % checker_board_factor;
+        rr = (rr == (checker_board_factor)) ? 0 : rr + 1;
+        break;
+    default:
+        // Should never happen, checked in constructor
+        break;
+    }    
     ev->request->vn = vn * checker_board_factor + vn_offset;
-
+    
+    
     // printf("%d: Send message to %llu on VN: %d, which is actually VN:%d --> %llu",id,req->dest,vn,req->vn,req->dest+req->src);
     // std::cout << std::endl;
     
@@ -402,7 +426,7 @@ void LinkControl::handle_input(Event* ev)
         int actual_vn = event->request->vn / checker_board_factor;
         // std::cout << event->request->vn << ", " << actual_vn << std::endl;
 
-        // printf("%d: Received event from %llu on VN: %d, which is actually %d", id, event->request->src, event->request->vn, actual_vn);
+        // printf("%d: Received event from %llu on VN: %d, which is actually %d\n", id, event->request->src, event->request->vn, actual_vn);
         // std::cout << std::endl;
 
         input_buf[actual_vn].push(event);
@@ -503,7 +527,7 @@ void LinkControl::handle_output(Event* ev)
         }
         send_bit_count->addData(send_event->request->size_in_bits);
         if (sendFunctor != NULL ) {
-            bool keep = (*sendFunctor)(vn_to_send);
+            bool keep = (*sendFunctor)(vn_to_send / checker_board_factor);
             if ( !keep ) sendFunctor = NULL;
         }
     }
