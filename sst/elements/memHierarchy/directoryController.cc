@@ -1363,7 +1363,7 @@ void DirectoryController::init(unsigned int phase){
 void DirectoryController::finish(void){
     network->finish();
     uint64_t getReq = GetSReqReceived + GetXReqReceived + GetSExReqReceived;
-    uint64_t putReq = PutMReqReceived + PutEReqReceived + PutMReqReceived;
+    uint64_t putReq = PutMReqReceived + PutEReqReceived + PutSReqReceived;
     Output out("", 0, 0, printStatsLoc);
     out.output("\n--------------------------------------------------------------------\n");
     out.output("--- Directory Controller\n");
