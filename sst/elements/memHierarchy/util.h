@@ -24,6 +24,8 @@
 #include <assert.h>
 #include "sst/core/debug.h"
 
+#include "memEvent.h"
+
 namespace SST {
 namespace MemHierarchy {
 
