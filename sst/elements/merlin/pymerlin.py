@@ -86,7 +86,7 @@ class topoSimple(Topo):
 class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys.extend(["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"])
+        self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"])
         self.topoOptKeys.extend(["xbar_arb"])
     def getName(self):
         return "Torus"
@@ -195,7 +195,7 @@ class topoTorus(Topo):
 class topoMesh(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
         self.topoOptKeys = ["xbar_arb"]
     def getName(self):
         return "Mesh"
@@ -494,14 +494,14 @@ class topoFatTree(Topo):
 class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
-        self.topoKeys = ["topology", "xbar_arb", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
+        self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","input_latency","output_latency","input_buf_size","output_buf_size"]
         self.topoOptKeys = ["xbar_arb"]
     def getName(self):
         return "Dragonfly"
 
     def prepParams(self):
-        if "xbar_arb" not in _params:
-            _params["xbar_arb"] = "merlin.xbar_arb_lru"
+#        if "xbar_arb" not in _params:
+#            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.dragonfly"
         _params["debug"] = debug
         _params["num_vns"] = 1
