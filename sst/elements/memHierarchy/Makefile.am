@@ -16,6 +16,9 @@ libmemHierarchy_la_SOURCES = \
 	cacheEventProcessing.cc \
 	cacheController.cc \
 	cacheFactory.cc \
+    Sieve/cacheController.h \
+    Sieve/cacheController.cc \
+    Sieve/cacheFactory.cc \
 	ccLine.h \
 	replacementManager.h \
 	bus.h \

@@ -14,10 +14,11 @@
  */
 
 
-#include <sst_config.h>
-#include "util.h"
-#include "../cacheListener.h"
 #include <sst/core/params.h>
+//#include <sst_config.h>
+#include "../util.h"
+#include "../hash.h"
+#include "cacheController.h"
 
 
 namespace SST{ namespace MemHierarchy{
@@ -47,8 +48,10 @@ Sieve* Sieve::cacheFactory(ComponentId_t _id, Params &_params){
     
     long cacheSize = SST::MemHierarchy::convertToBytes(sizeStr);
     uint numLines = cacheSize/lineSize;
-    
-    ReplacementMgr* replManager = replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
+
+    /* ---------------- Initialization ----------------- */
+    HashFunction* ht = new PureIdHashFunction;
+    ReplacementMgr* replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, false);
 
     CacheConfig config = {cacheArray, dbg, replManager};
@@ -61,6 +64,12 @@ Sieve::Sieve(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     cf_ = _config;
     d_  = cf_.dbg_;
     d_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
+    
+    cpu_link = configureLink("cpu_link", "50ps",
+               new Event::Handler<Sieve>(this, &Sieve::processEvent));
+    if (!cpu_link) {
+        d_->fatal(CALL_INFO, -1, "%s, Error creating link to CPU from Sieve", getName().c_str());
+    }
 }
 
 

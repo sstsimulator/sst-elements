@@ -13,30 +13,20 @@
  * File:   cacheController.h
  */
 
-#ifndef _CACHECONTROLLER_H_
-#define _CACHECONTROLLER_H_
-
-#include <boost/assert.hpp>
-#include <queue>
-#include <map>
+#ifndef _SIEVECONTROLLER_H_
+#define _SIEVECONTROLLER_H_
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
 
 #include "../cacheArray.h"
 #include "../replacementManager.h"
-#include "coherenceControllers.h"
-#include "util.h"
+#include "../util.h"
 #include "../cacheListener.h"
-#include <boost/assert.hpp>
-#include <string>
-#include <sstream>
 
-#define assert_msg BOOST_ASSERT_MSG
 
 namespace SST { namespace MemHierarchy {
 
@@ -50,7 +40,7 @@ public:
     using uint = unsigned int;
     using uint64 = uint64_t;
 
-    SST::link cpu_link;
+    SST::Link* cpu_link;
     virtual void init(unsigned int);
     virtual void finish(void);
     
@@ -70,7 +60,7 @@ private:
     Sieve(ComponentId_t _id, Params &_params, CacheConfig _config);
     
     /** Handler for incoming link events.  */
-    void processEvent(MemEvent* event);
+    void processEvent(SST::Event* event);
     
     struct CacheConfig{
         CacheArray* cacheArray_;
@@ -107,4 +97,7 @@ private:
         - Class member variables have a suffix "_", while function parameters have it as a preffix.
 
 */
+
+}}
+
 #endif

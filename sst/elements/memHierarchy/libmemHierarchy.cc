@@ -18,6 +18,7 @@
 #include "memEvent.h"
 #include "memNIC.h"
 #include "cacheController.h"
+#include "Sieve/cacheController.h"
 #include "bus.h"
 #include "trivialCPU.h"
 #include "streamCPU.h"
@@ -166,6 +167,30 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"NACK_Sent",               "Event: NACK sent", "count", 1},
     {NULL, NULL, NULL, 0}
 };
+
+
+static Component* create_Sieve(ComponentId_t id, Params& params)
+{
+	return Sieve::cacheFactory(id, params);
+}
+
+static const ElementInfoParam sieve_params[] = {
+    /* Required */
+    {"cache_size",              "Required, string   - Cache size with units. Eg. 4KB or 1MB"},
+    {"associativity",           "Required, int      - Associativity of the cache. In set associative mode, this is the number of ways."},
+    {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
+    /* Not required */
+    {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
+    {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoPort sieve_ports[] = {
+    {"cpu_link", "Connection to the CPU", memEvent_port_events},
+    {NULL, NULL, NULL}
+};
+
+
 
 static Component* create_Bus(ComponentId_t id, Params& params)
 {
@@ -536,6 +561,14 @@ static const ElementInfoComponent components[] = {
         cache_ports,
         COMPONENT_CATEGORY_MEMORY,
         cache_statistics
+	},
+    { "Sieve",
+		"Simple Cache Filtering Component",
+		NULL,
+        create_Sieve,
+        sieve_params,
+        sieve_ports,
+        COMPONENT_CATEGORY_MEMORY
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",

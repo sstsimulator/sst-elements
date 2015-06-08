@@ -11,37 +11,24 @@
 
 /*
  * File:   cache.cc
- * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
  */
 
 
-#include <sst_config.h>
-#include <sst/core/serialization.h>
-#include <sst/core/params.h>
-#include <sst/core/simulation.h>
+//#include <sst_config.h>
+//#include <sst/core/serialization.h>
+//#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
-
-#include <csignal>
-#include <boost/variant.hpp>
 
 #include "cacheController.h"
 #include "../memEvent.h"
-#include <vector>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-Sieve::Sieve(Component *comp, Params &params) {
-    cpu_link = configureLink("cpu_link",
-               new Event::Handler<Sieve>(this, &Sieve::processEvent));
-}
-
-
 void Sieve::processEvent(SST::Event* _ev) {
-    Command cmd     = event->getCmd();
     MemEvent* event = static_cast<MemEvent*>(_ev);
+    Command cmd     = event->getCmd();
     
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
@@ -50,8 +37,15 @@ void Sieve::processEvent(SST::Event* _ev) {
         
     if (lineIndex == -1) {                                     /* Miss.  If needed, evict candidate */
         // d_->debug(_L3_,"-- Cache Miss --\n");
-        int wbLineIndex = cf_.cacheArray_->preReplace(_baseAddr);       // Find a replacement candidate
-        cf_.cacheArray_->replace(_baseAddr, wbLineIndex);
+        int wbLineIndex = cf_.cacheArray_->preReplace(baseAddr);       // Find a replacement candidate
+        cf_.cacheArray_->replace(baseAddr, wbLineIndex);
+        
+        auto cmdT = (GetS == cmd) ? READ : WRITE;
+        // Notify listener (AddrHistogrammer) on a MISS
+        //CacheListenerNotification notify(event->getBaseAddr(),
+		//	event->getVirtualAddress(), event->getInstructionPointer(),
+		//	event->getSize(), cmdT, MISS);
+        //listener_->notifyAccess(notify);
     }
         
     MemEvent * responseEvent;
@@ -61,9 +55,12 @@ void Sieve::processEvent(SST::Event* _ev) {
         responseEvent = event->makeResponse(M);
     }
 
-    // TODO does ariel care about payload?
+    // Sieve cannot work with Gem5 because we do not have a backing store.
+    // It is meant for other processor models, particularly Ariel.
+    // Currently, Ariel does not care about the payload.  Therefore,
+    // there is no need to construct the payload.
     
-    responseEvent->setDst(_event->getSrc());
+    responseEvent->setDst(event->getSrc());
     cpu_link->send(responseEvent);
     
     //d_->debug(_L3_,"%s, Sending Response, Addr = %" PRIx64 "\n", getName().c_str(), _event->getAddr());
@@ -76,8 +73,7 @@ void Sieve::init(unsigned int phase) {
         cpu_link->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
     }
 
-    SST::Event *ev;
-    while (ev = cpu_link->recvInitData()) {
+    while (SST::Event* ev = cpu_link->recvInitData()) {
         delete ev;
     }
 }
