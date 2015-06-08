@@ -74,7 +74,7 @@ void Sieve::init(unsigned int phase) {
     }
 
     while (SST::Event* ev = cpu_link->recvInitData()) {
-        delete ev;
+        //if (ev) delete ev;
     }
 }
 

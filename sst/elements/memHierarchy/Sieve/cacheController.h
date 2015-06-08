@@ -36,9 +36,9 @@ using namespace std;
 class Sieve : public SST::Component {
 public:
 
-    using CacheLine = CacheArray::CacheLine;
-    using uint = unsigned int;
-    using uint64 = uint64_t;
+    typedef CacheArray::CacheLine CacheLine;
+    typedef unsigned int uint;
+    typedef uint64_t uint64;
 
     SST::Link* cpu_link;
     virtual void init(unsigned int);
