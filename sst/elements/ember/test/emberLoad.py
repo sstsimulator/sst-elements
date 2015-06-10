@@ -37,6 +37,7 @@ netShape = ''
 netArb = ''
 
 rndmPlacement = False
+#rndmPlacement = True 
 bgPercentage = int(0)
 bgMean = 1000
 bgStddev = 300
@@ -199,10 +200,11 @@ emptyNids = []
 
 if rndmPlacement:
 	print "random placement"
+	hermesParams["hermesParams.mapType"] = 'random'
 	random.seed( 0xf00dbeef )
 	nidList=""
 	nids = random.sample( xrange( int(topoInfo.getNumNodes())), int(numNodes) )
-	nids.sort()
+	#nids.sort()
 
 	allNids = []
 	for num in range ( 0, int( topoInfo.getNumNodes()) ): 
