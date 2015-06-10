@@ -21,7 +21,8 @@ AC_DEFUN([SST_chdlComponent_CONFIG],[
      CHDL_CXXFLAGS="-std=c++11"
      CXXFLAGS="$CHDL_CXXFLAGS $CXXFLAGS"
      CHDL_LDFLAGS="-L$with_chdl/lib"
-     LDFLAGS="$CHDL_LDFLAGS $LDFLAGS"],
+     LDFLAGS="$CHDL_LDFLAGS $LDFLAGS"
+     CHDL_LIBDIR="$with_chdl/lib"],
     [CHDL_CPPFLAGS=
      CHDL_CXXFLAGS=
      CHDL_LDFLAGS=])
@@ -41,6 +42,12 @@ AC_DEFUN([SST_chdlComponent_CONFIG],[
   AC_SUBST([CHDL_CXXFLGAS])
   AC_SUBST([CHDL_LDFLAGS])
   AC_SUBST([CHDL_LIBS])
+  AM_CONDITIONAL([HAVE_CHDL], [test "$sst_check_chdl_happy" = "yes"])
+  AS_IF([test "$sst_check_chdl_happy" = "yes"],
+        [AC_DEFINE([HAVE_CHDL], [1], [Set to 1 if chdl was found])])
+  AC_DEFINE_UNQUOTED([CHDL_LIBDIR], ["$CHDL_LIBDIR"], [Path to chdl library])
+
+
 
   AS_IF([test "$sst_check_chdl_happy" = "yes"], [$1], [$2])
 ])
