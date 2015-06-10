@@ -14,8 +14,8 @@
  */
 
 
+#include <sst_config.h>
 #include <sst/core/params.h>
-//#include <sst_config.h>
 #include "../util.h"
 #include "../hash.h"
 #include "cacheController.h"
@@ -53,7 +53,7 @@ Sieve* Sieve::cacheFactory(ComponentId_t _id, Params &_params){
     HashFunction* ht = new PureIdHashFunction;
     ReplacementMgr* replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
     CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, false);
-
+    
     CacheConfig config = {cacheArray, dbg, replManager};
     return new Sieve(_id, _params, config);
 }
@@ -64,6 +64,21 @@ Sieve::Sieve(ComponentId_t _id, Params &_params, CacheConfig _config) : Componen
     cf_ = _config;
     d_  = cf_.dbg_;
     d_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
+    
+    /* --------------- Prefetcher ---------------*/
+    string prefetcher   = _params.find_string("prefetcher");
+    if (prefetcher.empty()) {
+	  Params emptyParams;
+	  listener_ = new CacheListener(this, emptyParams);
+    } else {
+      if (prefetcher != std::string("cassini.AddrHistogrammer")) {
+          d_->fatal(CALL_INFO, -1, "%s, Sieve does not support prefetching. It can only support "
+              "profiling through Cassini's AddrHistogrammer.",
+              getName().c_str());
+      }
+	  Params prefetcherParams = _params.find_prefix_params("prefetcher." );
+	  listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));
+    }
     
     cpu_link = configureLink("cpu_link", "50ps",
                new Event::Handler<Sieve>(this, &Sieve::processEvent));

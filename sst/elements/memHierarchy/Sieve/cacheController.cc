@@ -14,7 +14,7 @@
  */
 
 
-//#include <sst_config.h>
+#include <sst_config.h>
 //#include <sst/core/serialization.h>
 //#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
@@ -41,11 +41,13 @@ void Sieve::processEvent(SST::Event* _ev) {
         cf_.cacheArray_->replace(baseAddr, wbLineIndex);
         
         auto cmdT = (GetS == cmd) ? READ : WRITE;
+        //std::cout << "VA: = " << event->getVirtualAddress() << "\n";
+        //exit(0);
         // Notify listener (AddrHistogrammer) on a MISS
-        //CacheListenerNotification notify(event->getBaseAddr(),
-		//	event->getVirtualAddress(), event->getInstructionPointer(),
-		//	event->getSize(), cmdT, MISS);
-        //listener_->notifyAccess(notify);
+        CacheListenerNotification notify(event->getBaseAddr(),
+			event->getVirtualAddress(), event->getInstructionPointer(),
+			event->getSize(), cmdT, MISS);
+        listener_->notifyAccess(notify);
     }
         
     MemEvent * responseEvent;
@@ -74,7 +76,7 @@ void Sieve::init(unsigned int phase) {
     }
 
     while (SST::Event* ev = cpu_link->recvInitData()) {
-        //if (ev) delete ev;
+        if (ev) delete ev;
     }
 }
 
