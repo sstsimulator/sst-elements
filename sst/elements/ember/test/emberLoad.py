@@ -5,6 +5,7 @@ import defaultSim
 import chamaOpenIBParams
 import chamaPSMParams
 import bgqParams
+import exaParams
 
 import sst
 from sst.merlin import *
@@ -34,10 +35,10 @@ netBW = ''
 netPktSize = '' 
 netTopo = ''
 netShape = ''
-netArb = ''
+rtrArb = ''
 
 rndmPlacement = False
-#rndmPlacement = True 
+#rndmPlacement = True
 bgPercentage = int(0)
 bgMean = 1000
 bgStddev = 300
@@ -55,7 +56,7 @@ try:
 		"debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=","netPktSize",
-		"netArb=",		
+		"rtrArb=",		
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
 except getopt.GetopError as err:
@@ -91,8 +92,8 @@ for o, a in opts:
         netFlitSize = a
     elif o in ("--netPktSize"):
         netPktSize = a
-    elif o in ("--netArb"):
-        netArb = a
+    elif o in ("--rtrArb"):
+        rtrArb = a
     elif o in ("--randomPlacement"):
         if a == "True":
             rndmPlacement = True
@@ -144,6 +145,13 @@ elif platform == "bgq":
     emberParams = bgqParams.emberParams 
     platNetConfig = bgqParams.netConfig
 
+elif platform == "exa":
+    nicParams = exaParams.nicParams
+    networkParams = exaParams.networkParams
+    hermesParams = exaParams.hermesParams
+    emberParams = exaParams.emberParams 
+    platNetConfig = exaParams.netConfig
+
 if netBW:
 	networkParams['link_bw'] = netBW
 
@@ -183,8 +191,8 @@ elif "dragonfly" == netTopo:
 else:
 	sys.exit("how did we get here")
 
-if netArb:
-	print "network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,netArb)
+if rtrArb:
+	print "network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,rtrArb)
 else:
 	print "network: topology={0} shape={1}".format(netTopo,netShape)
 
@@ -199,8 +207,11 @@ print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 emptyNids = []
 
 if rndmPlacement:
+
 	print "random placement"
+
 	hermesParams["hermesParams.mapType"] = 'random'
+
 	random.seed( 0xf00dbeef )
 	nidList=""
 	nids = random.sample( xrange( int(topoInfo.getNumNodes())), int(numNodes) )
@@ -278,8 +289,8 @@ sst.merlin._params["output_latency"] = networkParams['output_latency']
 sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
 sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
 
-if netArb:
-	sst.merlin._params["xbar_arb"] = "merlin." + netArb 
+if rtrArb:
+	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 
 
 sst.merlin._params.update( topoInfo.getNetworkParams() )
 

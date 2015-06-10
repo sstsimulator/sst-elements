@@ -2,22 +2,21 @@
 debug = 0
 
 netConfig = {
-	'topology': 'fattree',
-	'shape' : '9,9:9,9:18'
-	#'radix':    18,
-	#'loading':  9.
-	#'shape' : '18,18:18,18:36'
+    "topology": "",
+    "shape":    ""
 }
 
 networkParams = {
-    "topology" : "merlin." + "fattree",
+    "topology" : netConfig['topology'],
     "packetSize" : "2048B",
-    "link_bw" : "3.85GB/s",
-    "link_lat" : "120ns",
-    "input_latency" : "50ns",
-    "output_latency" : "50ns",
-    "flitSize" : "8B",
-    "buffer_size" : "14KB",
+    "link_bw" : "125GB/s",
+    #"link_bw" : "42.5GB/s",
+    #"link_bw" : "5GB/s",
+    "link_lat" : "30ns",
+    "input_latency" : "30ns",
+    "output_latency" : "30ns",
+    "flitSize" : "64B",
+    "buffer_size" : "28KB",
 }
 
 nicParams = {
@@ -30,9 +29,10 @@ nicParams = {
     "buffer_size" : networkParams['buffer_size'],
     "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
-    "dmaBW_GBs" : 4.0,
-    "dmaContentionMult" : 0.4,
-    "nic2host_lat" : "150ns",
+    "hostReadDelay_ns" : 200,
+    "tracedNode" : 100,
+    "tracedPkt" : -1,
+    "nic2host_lat" : "1ns",
 }
 
 emberParams = {
@@ -82,9 +82,9 @@ hermesParams = {
     "hermesParams.ctrlMsg.rxFiniMod" : "firefly.LatencyMod",
     "hermesParams.ctrlMsg.rxFiniModParams.range.0" : "0-:80ns",
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 1700,
-    "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 8000,
-    "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 120,
-    "hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
+    #"hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 8000,
+    #"hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 120,
+    #"hermesParams.ctrlMsg.regRegionXoverLength" : 4096,
     "hermesParams.loadMap.0.start" : 0,
     "hermesParams.loadMap.0.len" : 2,
 }
