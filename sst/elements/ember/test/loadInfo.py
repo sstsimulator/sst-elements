@@ -20,7 +20,9 @@ class EmberEP( EndPoint ):
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
-        nic.addLink( link, "rtr", "10ns" )
+        nic.addLink( link, "rtr", sst.merlin._params["link_lat"] )
+
+        link.setNoCut()
 
         loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
         loopBack.addParam( "numCores", self.numCores )
@@ -37,8 +39,8 @@ class EmberEP( EndPoint ):
                                             "_Link"  )
             loopLink.setNoCut() 
 
-            ep.addLink(nicLink, "nic", "150ns")
-            nic.addLink(nicLink, "core" + str(x), "150ns")
+            ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
+            nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
 
             ep.addLink(loopLink, "loop", "1ns")
             loopBack.addLink(loopLink, "core" + str(x), "1ns")

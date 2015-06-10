@@ -20,6 +20,7 @@ nicParams = {
     "buffer_size" : networkParams['buffer_size'],
     "rxMatchDelay_ns" : 100,
     "txDelay_ns" : 50,
+    "nic2host_lat" : "150ns",
 }
 
 emberParams = {

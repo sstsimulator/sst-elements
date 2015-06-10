@@ -32,6 +32,7 @@ nicParams = {
     "txDelay_ns" : 50,
     "dmaBW_GBs" : 4.0,
     "dmaContentionMult" : 0.4,
+    "nic2host_lat" : "150ns", 
 }
 
 emberParams = {
