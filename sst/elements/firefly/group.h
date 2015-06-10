@@ -39,6 +39,28 @@ class Group : public MapBase
     int                 m_myRank;
 };
 
+class RandomGroup : public Group 
+{
+  public:
+    RandomGroup()  {} 
+
+    int getSize() { return m_map.size(); }
+
+    void initMapping( int from, int to, int range ) {
+		
+        if ( m_map.size() < from + range ) {
+            m_map.resize(from + range);	
+        }	
+        for ( int i=0; i < range; i++ ) {
+            m_map[from+i] = to+i;
+        }
+    }
+
+    int getMapping( int from ) { return m_map[from]; }
+  private:
+    std::vector<int> m_map;
+};
+
 class IdentityGroup : public Group 
 {
   public:

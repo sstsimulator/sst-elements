@@ -30,7 +30,7 @@ class Info {
 		}
 	}
 
-    enum GroupType { Dense, Identity }; 
+    enum GroupType { Dense, Identity, Random }; 
     MP::Communicator newGroup( MP::Communicator groupID, 
                 GroupType type = Dense ) {
 
@@ -41,6 +41,9 @@ class Info {
             break;
           case Identity:
             m_groupMap[groupID] = new IdentityGroup();
+            break;
+          case Random:
+            m_groupMap[groupID] = new RandomGroup();
             break;
         }
         return groupID;

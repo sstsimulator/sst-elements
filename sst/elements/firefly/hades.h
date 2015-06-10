@@ -59,6 +59,7 @@ class Hades : public OS
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
     std::string                          m_nidListString;
+    Info::GroupType                      m_gt;
 };
 
 } // namesapce Firefly 

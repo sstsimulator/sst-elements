@@ -33,7 +33,8 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     m_virtNic(NULL),
-	m_functionSM( NULL )
+	m_functionSM( NULL ),
+    m_gt( Info::Dense )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc = 
@@ -56,6 +57,17 @@ Hades::Hades( Component* owner, Params& params ) :
     m_dbg.verbose(CALL_INFO,1,0,"nidListString `%s`\n", 
                                             m_nidListString.c_str());
 
+    std::string gt = params.find_string("mapType");
+
+    if ( 0 == gt.compare( "dense" )  ) {
+        m_gt = Info::Dense;
+    } else if ( 0 == gt.compare( "identity" ) ) {
+        m_gt = Info::Identity;
+    } else if ( 0 == gt.compare( "random" ) ) {
+        m_gt = Info::Random;
+    } else if ( ! gt.empty() ) {
+        assert(0);
+    }
 #if 0
 	if ( ! nidListString.empty() ) {
 
@@ -117,8 +129,9 @@ void Hades::_componentSetup()
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	if ( ! m_nidListString.empty() ) {
-  	    Group* group = m_info.getGroup( 
-                    m_info.newGroup( MP::GroupWorld, Info::Dense ) );
+        Info::GroupType gt;
+		
+  	    Group* group = m_info.getGroup( m_info.newGroup( MP::GroupWorld, m_gt ) );
 
 		std::istringstream iss( m_nidListString );
 
