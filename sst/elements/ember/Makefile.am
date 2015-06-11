@@ -120,6 +120,7 @@ libember_la_LDFLAGS = -module -avoid-version
 
 EXTRA_DIST = \
 	test/emberLoad.py \
+	test/exaParams.py \
 	test/loadInfo.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
