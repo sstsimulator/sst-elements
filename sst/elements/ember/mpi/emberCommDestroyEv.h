@@ -21,9 +21,10 @@ namespace Ember {
 class EmberCommDestroyEvent : public EmberMPIEvent {
 
 public:
-    EmberCommDestroyEvent( MP::Interface& api, Output* output, Histo* histo,
+    EmberCommDestroyEvent( MP::Interface& api, Output* output,
+                          EmberEventTimeStatistic* stat,
         Communicator comm )
-      : EmberMPIEvent( api, output, histo ),
+      : EmberMPIEvent( api, output, stat ),
         m_comm( comm)
     {}
     ~EmberCommDestroyEvent() {}

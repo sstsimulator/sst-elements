@@ -22,9 +22,10 @@ namespace Ember {
 class EmberComputeEvent : public EmberEvent {
 
 public:
-	EmberComputeEvent( Output* output, Histo* histo, uint64_t nanoSecondDelay,
+	EmberComputeEvent( Output* output,
+                      EmberEventTimeStatistic* stat, uint64_t nanoSecondDelay,
                 EmberComputeDistribution* dist) :
-        EmberEvent(output, histo),
+        EmberEvent(output, stat),
         m_nanoSecondDelay( nanoSecondDelay ),
         m_computeDistrib(dist)
     {}  

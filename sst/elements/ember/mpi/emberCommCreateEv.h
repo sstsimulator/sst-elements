@@ -21,9 +21,10 @@ namespace Ember {
 class EmberCommCreateEvent : public EmberMPIEvent {
 
 public:
-    EmberCommCreateEvent( MP::Interface& api, Output* output, Histo* histo,
+    EmberCommCreateEvent( MP::Interface& api, Output* output,
+                         EmberEventTimeStatistic* stat,
         Communicator oldComm, std::vector<int>& ranks, Communicator* newComm ) 
-      : EmberMPIEvent( api, output, histo ),
+      : EmberMPIEvent( api, output, stat ),
         m_oldComm( oldComm), 
         m_ranks(ranks), 
         m_newComm(newComm)

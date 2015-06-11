@@ -21,9 +21,10 @@ namespace Ember {
 class EmberCommSplitEvent : public EmberMPIEvent {
 
 public:
-    EmberCommSplitEvent( MP::Interface& api, Output* output, Histo* histo,
+    EmberCommSplitEvent( MP::Interface& api, Output* output,
+                        EmberEventTimeStatistic* stat,
           Communicator oldComm, int color, int key, Communicator* newComm ) 
-      : EmberMPIEvent( api, output, histo ),
+      : EmberMPIEvent( api, output, stat ),
         m_oldComm( oldComm), 
         m_color(color), 
         m_key(key), 

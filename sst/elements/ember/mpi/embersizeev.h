@@ -21,9 +21,10 @@ namespace Ember {
 class EmberSizeEvent : public EmberMPIEvent {
 
 public:
-	EmberSizeEvent( MP::Interface& api, Output* output, Histo* histo,
+	EmberSizeEvent( MP::Interface& api, Output* output,
+                   EmberEventTimeStatistic* stat,
             Communicator comm, int* sizePtr ) :
-        EmberMPIEvent( api, output, histo ),
+        EmberMPIEvent( api, output, stat ),
         m_comm( comm ),
         m_sizePtr( sizePtr )
     {}

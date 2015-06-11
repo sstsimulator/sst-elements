@@ -87,7 +87,6 @@ class EmberGenerator : public SubComponent {
     }
 
   protected:
-    virtual void printHistogram( const Output* output, Histo* histo );
     virtual void* memAlloc( size_t );
     virtual void memFree( void* );
 	virtual void* memAddr( void * addr ) {
@@ -98,7 +97,7 @@ class EmberGenerator : public SubComponent {
 
     std::string m_name;
     Output* 	m_output;
-    string  	m_outputPrefix;
+    std::string  	m_outputPrefix;
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 };

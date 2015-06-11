@@ -43,18 +43,4 @@ void EmberGenerator::memFree( void* ptr )
     } 
 }
 
-void EmberGenerator::printHistogram(const Output* output, Histo* histo )
-{
-    output->output("Histogram Min: %" PRIu32 "\n", histo->getBinStart());
-    output->output("Histogram Max: %" PRIu32 "\n", histo->getBinEnd());
-    output->output("Histogram Bin: %" PRIu32 "\n", histo->getBinWidth());
-    for(uint32_t i = histo->getBinStart(); i <= histo->getBinEnd();
-                                            i += histo->getBinWidth()) {
-
-        if( histo->getBinCountByBinStart(i) > 0 ) {
-            output->output(" [%" PRIu32 ", %" PRIu32 "]   %" PRIu32 "\n",
-                i, (i + histo->getBinWidth()), histo->getBinCountByBinStart(i));
-        }
-    }
-}
 

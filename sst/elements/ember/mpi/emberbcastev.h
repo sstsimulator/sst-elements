@@ -20,10 +20,11 @@ namespace Ember {
 
 class EmberBcastEvent : public EmberMPIEvent {
 public:
-    EmberBcastEvent( MP::Interface& api, Output* output, Histo* histo,
+    EmberBcastEvent( MP::Interface& api, Output* output,
+                    EmberEventTimeStatistic* stat,
             Addr mydata, uint32_t count, PayloadDataType dtype,
             int root, Communicator group ) :
-        EmberMPIEvent( api, output, histo ),
+        EmberMPIEvent( api, output, stat ),
         m_mydata(mydata),
         m_count(count),
         m_dtype(dtype),

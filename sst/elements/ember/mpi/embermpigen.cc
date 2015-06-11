@@ -31,7 +31,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 {
     m_printStats = (uint32_t) (params.find_integer("printStats", 0));
 
-    m_histoV.resize( NUM_EVENTS );
+    m_Stats.resize( NUM_EVENTS );
     int userBinWidth = 5;
     for ( int i = 0; i < NUM_EVENTS; i++ ) {
 
@@ -40,16 +40,17 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
         userBinWidth = (uint64_t) params.find_integer(name, userBinWidth);
         std::string histoName( m_eventName[i]);
         histoName += " Time"; 
-        m_histoV[i] = new Histogram<uint32_t, uint32_t>(
-                                    histoName, userBinWidth );
+       // INIT STATS HERE
+        //m_histoV[i] = new Histogram<uint32_t, uint32_t>(
+          //                          histoName, userBinWidth );
     }
 
 	// we should have a list that describes the adhoc histograms and 
     // iterator over it but since we currently only have 2 ...
-	m_histoM[ "SendSize" ] = new Histogram<uint32_t, uint32_t>(
-                                    "Send Sizes in Bytes", userBinWidth ); 
-	m_histoM[ "RecvSize" ] = new Histogram<uint32_t, uint32_t>(
-                                    "Recv Sizes in Bytes", userBinWidth ); 
+	//m_histoM[ "SendSize" ] = new Histogram<uint32_t, uint32_t>(
+    //                                "Send Sizes in Bytes", userBinWidth );
+	//m_histoM[ "RecvSize" ] = new Histogram<uint32_t, uint32_t>(
+    //                                "Recv Sizes in Bytes", userBinWidth );
 
     Params distribParams = params.find_prefix_params("distribParams.");
     string distribModule = params.find_string("distribModule",
@@ -87,14 +88,14 @@ EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
     GEN_DBG( 2, "\n");
     for ( int i = 0; i < NUM_EVENTS; i++ ) {
-        delete m_histoV[i];
+        delete m_Stats[i];
     }
 
 	if ( m_spyinfo )
 		delete m_spyinfo;
 
-	delete m_histoM[ "SendSize" ];
-	delete m_histoM[ "RecvSize" ];
+	//delete m_histoM[ "SendSize" ];
+	//delete m_histoM[ "RecvSize" ];
 	delete m_rankMap;
 	delete m_computeDistrib;
 }
@@ -144,7 +145,7 @@ void EmberMessagePassingGenerator::completed(const SST::Output* output,
     output->output("rank %" PRIu32 ": Motif `%s` completed at: %" PRIu64 
                     " ns\n", m_data->rank, m_name.c_str(), time ); 
 
-    for ( int i = 0; i < NUM_EVENTS; i++ ) {
+    /*for ( int i = 0; i < NUM_EVENTS; i++ ) {
 
         Histo* histo = m_histoV[i];
         if ( histo->getItemCount() ) {
@@ -177,7 +178,7 @@ void EmberMessagePassingGenerator::completed(const SST::Output* output,
             	(histo->getValuesSummed() / histo->getItemCount()));
 
 
-
+*/
 
 #if 0
         //This code calls getCurrentSimTimeNano(). What does this time mean
@@ -196,11 +197,11 @@ void EmberMessagePassingGenerator::completed(const SST::Output* output,
                 (histoRecv->getValuesSummed() + histoIRecv->getValuesSummed()) / 1000000000.0)));
 #endif
 
-    	    if ( m_printStats > 1 ) {
-        	    printHistogram(output, histo);
-    	    }
-        } 
-	}
+ //   	    if ( m_printStats > 1 ) {
+   //     	    printHistogram(output, histo);
+  //  	    }
+//        }
+//	}
 
 }
 

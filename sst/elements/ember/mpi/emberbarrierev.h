@@ -20,9 +20,10 @@ namespace Ember {
 
 class EmberBarrierEvent : public EmberMPIEvent {
   public:
-    EmberBarrierEvent( MP::Interface& api, Output* output, Histo* histo, 
+    EmberBarrierEvent( MP::Interface& api, Output* output,
+                      EmberEventTimeStatistic* stat,
                                                     Communicator comm ) :
-        EmberMPIEvent( api, output, histo ), m_comm(comm) {}
+        EmberMPIEvent( api, output, stat ), m_comm(comm) {}
 
     ~EmberBarrierEvent() {}
 

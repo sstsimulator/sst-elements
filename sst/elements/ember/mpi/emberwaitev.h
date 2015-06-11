@@ -21,9 +21,10 @@ namespace Ember {
 class EmberWaitEvent : public EmberMPIEvent {
 
 public:
-	EmberWaitEvent( MP::Interface& api, Output* output, Histo* histo,
+	EmberWaitEvent( MP::Interface& api, Output* output,
+                   EmberEventTimeStatistic* stat,
        		MessageRequest* req, MessageResponse* resp = NULL ) :
-       	EmberMPIEvent( api, output, histo ),
+       	EmberMPIEvent( api, output, stat ),
        	m_req( req ),
 		m_respPtr( resp )
     { }

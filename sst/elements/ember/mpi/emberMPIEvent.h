@@ -13,7 +13,8 @@
 #ifndef _H_EMBER_MPI_EVENT
 #define _H_EMBER_MPI_EVENT
 
-#include "emberevent.h" 
+#include <sst/core/statapi/statbase.h>
+#include "emberevent.h"
 
 using namespace Hermes;
 using namespace Hermes::MP;
@@ -21,12 +22,15 @@ using namespace Hermes::MP;
 namespace SST {
 namespace Ember {
 
+    typedef Statistic<uint32_t> EmberEventTimeStatistic;
+    
 class EmberMPIEvent : public EmberEvent {
 
   public:
 
-    EmberMPIEvent( MP::Interface& api, Output* output, Histo* histo = NULL):
-        EmberEvent( output, histo ), m_api( api )
+    EmberMPIEvent( MP::Interface& api, Output* output,
+                  EmberEventTimeStatistic* stat = NULL):
+        EmberEvent( output, stat ), m_api( api )
     {
         m_state = IssueFunctor;
     }

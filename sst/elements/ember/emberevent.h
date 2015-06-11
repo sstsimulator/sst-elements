@@ -14,7 +14,7 @@
 #define _H_EMBER_EVENT
 
 #include <sst/core/event.h>
-#include <sst/core/stats/histo/histo.h>
+#include <sst/core/statapi/statbase.h>
 #include <sst/elements/hermes/msgapi.h>
 
 namespace SST {
@@ -31,7 +31,7 @@ typedef Hermes::MP::Functor FOO;
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(STRING) #STRING,
 
-typedef Statistics::Histogram<uint32_t, uint32_t> Histo;
+typedef Statistic<uint32_t> EmberEventTimeStatistic;
 
 class EmberEvent : public SST::Event {
 
@@ -41,11 +41,11 @@ public:
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
 
-	EmberEvent( Output* output, Histo* histo = NULL) : 
-        m_state(Issue), m_output(output), m_histo(histo), m_completeDelayNS(0)
+	EmberEvent( Output* output, EmberEventTimeStatistic* stat = NULL) :
+        m_state(Issue), m_output(output), m_evStat(stat), m_completeDelayNS(0)
 	{}
 	EmberEvent( ) : 
-        m_state(Issue), m_output(NULL), m_histo(NULL), m_completeDelayNS(0) {}
+        m_state(Issue), m_output(NULL), m_evStat(NULL), m_completeDelayNS(0) {}
 	~EmberEvent() {} 
 
 	virtual std::string getName() { return "?????"; };
@@ -66,8 +66,9 @@ public:
         if ( m_output ) {
             m_output->verbose(CALL_INFO, 3, 0, "%s\n",getName().c_str());
         }
-        if ( m_histo ) {
-            m_histo->add( time - m_issueTime );
+        
+        if ( m_evStat ) {
+            m_evStat->addData( time - m_issueTime );
         }  
         return true; 
     }
@@ -82,7 +83,7 @@ public:
   protected:
     static const char*  m_enumName[];
     Output*             m_output;
-    Histo*              m_histo;
+    EmberEventTimeStatistic*  m_evStat;
     uint64_t            m_completeDelayNS;
     uint64_t            m_issueTime;
 };

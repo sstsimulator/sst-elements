@@ -21,10 +21,11 @@ namespace Ember {
 class EmberRecvEvent : public EmberMPIEvent {
 
   public:
-	EmberRecvEvent( MP::Interface& api, Output* output, Histo* histo,
+	EmberRecvEvent( MP::Interface& api, Output* output,
+                   EmberEventTimeStatistic* stat,
         Addr payload, uint32_t count, PayloadDataType dtype, RankID src, 
         uint32_t tag, Communicator group, MessageResponse* resp ) :
-        EmberMPIEvent( api, output, histo ),
+        EmberMPIEvent( api, output, stat ),
         m_payload(payload),
         m_count(count),
         m_dtype(dtype),

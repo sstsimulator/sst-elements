@@ -20,12 +20,13 @@ namespace Ember {
 
 class EmberAlltoallEvent : public EmberMPIEvent {
 public:
-    EmberAlltoallEvent( MP::Interface& api, Output* output, Histo* histo,
+    EmberAlltoallEvent( MP::Interface& api, Output* output,
+                       EmberEventTimeStatistic* stat,
         Addr sendData, int sendCnts, PayloadDataType senddtype,
         Addr recvData, int recvCnts, PayloadDataType recvdtype, 
         Communicator group ) :
 
-        EmberMPIEvent( api, output, histo ),
+        EmberMPIEvent( api, output, stat ),
         m_senddata(sendData),
         m_sendcnts(sendCnts),
         m_senddtype(senddtype),
