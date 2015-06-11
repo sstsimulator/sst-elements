@@ -544,13 +544,38 @@ static const ElementInfoParam linearMapper_params[] = {
 	{	NULL, NULL, NULL 	}
 };
 
+static const ElementInfoStatistic emberMotifTime_statistics[] = {
+    { "time-Init", "Time spent in Init event",          "ns",  0},
+    { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
+    { "time-Rank", "Time spent in Rank event",          "ns", 0},
+    { "time-Size", "Time spent in Size event",          "ns", 0},
+    { "time-Send", "Time spent in Recv event",          "ns", 0},
+    { "time-Recv", "Time spent in Recv event",          "ns", 0},
+    { "time-Irecv", "Time spent in Irecv event",        "ns", 0},
+    { "time-Isend", "Time spent in Isend event",        "ns", 0},
+    { "time-Wait", "Time spent in Wait event",          "ns", 0},
+    { "time-Waitall", "Time spent in Waitall event",    "ns", 0},
+    { "time-Waitany", "Time spent in Waitany event",    "ns", 0},
+    { "time-Compute", "Time spent in Compute event",    "ns", 0},
+    { "time-Barrier", "Time spent in Barrier event",    "ns", 0},
+    { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 0},
+    { "time-Alltoall", "Time spent in Alltoall event",  "ns", 0},
+    { "time-Allreduce", "Time spent in Allreduce event", "ns", 0},
+    { "time-Reduce", "Time spent in Reduce event",      "ns", 0},
+    { "time-Bcast", "Time spent in Bcast event",        "ns", 0},
+    { "time-Gettime", "Time spent in Gettime event",    "ns", 0},
+    { "time-Commsplit", "Time spent in Commsplit event", "ns", 0},
+    { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
+    { NULL, NULL, NULL, 0 }
+};
+
 static const ElementInfoSubComponent subcomponents[] = {
     { 	"PingPongMotif",
 	"Performs a Ping-Pong Motif",
 	NULL,
 	load_PingPong,
 	pingpong_params,
-	NULL,
+	emberMotifTime_statistics,
     	"SST::Ember::EmberGenerator"
     },
     { 	"BiPingPongMotif",
@@ -558,7 +583,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_BiPingPong,
 	bipingpong_params,
-	NULL,
+	emberMotifTime_statistics,
     	"SST::Ember::EmberGenerator"
     },
     {
@@ -567,7 +592,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_CommDoubling,
 	commdbl_params,
-	NULL,
+	emberMotifTime_statistics,
 	"SST::Ember::EmberGenerator"
     },
     {
@@ -576,7 +601,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_FFT3D,
 	fft3d_params,
-	NULL,
+	emberMotifTime_statistics,
 	"SST::Ember::EmberGenerator"
     },
     {
@@ -585,7 +610,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_TrafficGen,
 	trafficGen_params,
-	NULL,
+	emberMotifTime_statistics,
 	"SST::Ember::EmberGenerator"
     },
     {
@@ -594,7 +619,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_3DAMR,
 	amr3d_params,
-	NULL,
+	emberMotifTime_statistics,
 	"SST::Ember::EmberGenerator"
     },
     { 	"RingMotif",
@@ -602,7 +627,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Ring,
 	ring_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"BarrierMotif",
@@ -610,7 +635,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Barrier,
 	barrier_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"AllPingPongMotif",
@@ -618,7 +643,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_AllPingPong,
 	allpingpong_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo2DMotif",
@@ -626,7 +651,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Halo2D,
 	halo2d_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo2DNBRMotif",
@@ -634,7 +659,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Halo2DNBR,
 	halo2d_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo3DMotif",
@@ -642,7 +667,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Halo3D,
 	halo3d_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo3DSVMotif",
@@ -650,7 +675,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Halo3DSV,
 	halo3dsv_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"Halo3D26Motif",
@@ -658,7 +683,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Halo3D26,
 	halo3d26_params,
-	NULL,
+	emberMotifTime_statistics,
         "SST::Ember::EmberGenerator"
     },
     { 	"Sweep2DMotif",
@@ -666,7 +691,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Sweep2D,
 	sweep2d_params,
-	NULL,
+	emberMotifTime_statistics,
         "SST::Ember::EmberGenerator"
     },
     { 	"Sweep3DMotif",
@@ -674,7 +699,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Sweep3D,
 	sweep3d_params,
-	NULL,
+	emberMotifTime_statistics,
         "SST::Ember::EmberGenerator"
     },
     { 	"NASLUMotif",
@@ -682,7 +707,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_NASLU,
 	naslu_params,
-	NULL,
+	emberMotifTime_statistics,
         "SST::Ember::EmberGenerator"
     },
     { 	"AlltoallMotif",
@@ -690,7 +715,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Alltoall,
 	alltoall_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"AlltoallvMotif",
@@ -698,7 +723,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Alltoallv,
 	alltoall_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"AllreduceMotif",
@@ -706,7 +731,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Allreduce,
 	allreduce_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"ReduceMotif",
@@ -714,7 +739,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Reduce,
 	reduce_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"BcastMotif",
@@ -722,7 +747,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Bcast,
 	bcast_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"InitMotif",
@@ -730,7 +755,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Init,
 	init_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"FiniMotif",
@@ -738,7 +763,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Fini,
 	fini_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"NullMotif",
@@ -746,7 +771,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Null,
 	nullmotif_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"MsgRateMotif",
@@ -754,7 +779,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_MsgRate,
 	msgrate_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     { 	"CommMotif",
@@ -762,7 +787,7 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Comm,
 	comm_params,
-	NULL,
+	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
@@ -800,14 +825,17 @@ static const ElementInfoModule modules[] = {
 };
 
 static const ElementInfoComponent components[] = {
-    { "EmberEngine",
-      "Base communicator motif engine.",
-      NULL,
-      create_EmberComponent,
-      component_params,
-      component_ports
+    {
+        "EmberEngine",
+        "Base communicator motif engine.",
+        NULL,
+        create_EmberComponent,
+        component_params,
+        component_ports,
+        COMPONENT_CATEGORY_UNCATEGORIZED,
+        NULL
     },
-    { NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}
 };
 
 extern "C" {

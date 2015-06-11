@@ -30,21 +30,20 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     m_spyinfo( NULL )
 {
     m_printStats = (uint32_t) (params.find_integer("printStats", 0));
-
+    
     m_Stats.resize( NUM_EVENTS );
-    int userBinWidth = 5;
-    for ( int i = 0; i < NUM_EVENTS; i++ ) {
-
-        std::string name( m_eventName[i] );
-        name += "_bin_width";
-        userBinWidth = (uint64_t) params.find_integer(name, userBinWidth);
-        std::string histoName( m_eventName[i]);
-        histoName += " Time"; 
-       // INIT STATS HERE
-        //m_histoV[i] = new Histogram<uint32_t, uint32_t>(
-          //                          histoName, userBinWidth );
+    
+    char* nameBuffer = (char*) malloc(sizeof(char) * 256);
+    
+    for(int i = 0; i < NUM_EVENTS; i++) {
+        std::string baseEventName( m_eventName[i] );
+        
+        sprintf(nameBuffer, "time-%s", baseEventName.c_str());
+        m_Stats[i] = registerStatistic<uint32_t>(nameBuffer, "0");
     }
-
+    
+    free(nameBuffer);
+    
 	// we should have a list that describes the adhoc histograms and 
     // iterator over it but since we currently only have 2 ...
 	//m_histoM[ "SendSize" ] = new Histogram<uint32_t, uint32_t>(
