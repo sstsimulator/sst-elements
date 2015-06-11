@@ -24,13 +24,10 @@ const char* EmberMessagePassingGenerator::m_eventName[] = {
 EmberMessagePassingGenerator::EmberMessagePassingGenerator( 
             Component* owner, Params& params) :
     EmberGenerator(owner, params), 
-    m_printStats( 0 ),
     m_spyplotMode( EMBER_SPYPLOT_NONE ),
 	m_data( NULL ),
     m_spyinfo( NULL )
 {
-    m_printStats = (uint32_t) (params.find_integer("printStats", 0));
-    
     m_Stats.resize( NUM_EVENTS );
     
     char* nameBuffer = (char*) malloc(sizeof(char) * 256);
@@ -133,75 +130,6 @@ void EmberMessagePassingGenerator::completed(const SST::Output* output,
         generateSpyplotRank( filenameBuffer );
 	free(filenameBuffer);
     }
-
-	//
-	// NOTE THAT WE RETURN HERE! BE CAREFUL WHAT YOU PUT AFTER THIS POINT
-	// 	
-    if ( ! (m_printStats & (uint32_t) 1) ) {
-		return;
-	}
-
-    output->output("rank %" PRIu32 ": Motif `%s` completed at: %" PRIu64 
-                    " ns\n", m_data->rank, m_name.c_str(), time ); 
-
-    /*for ( int i = 0; i < NUM_EVENTS; i++ ) {
-
-        Histo* histo = m_histoV[i];
-        if ( histo->getItemCount() ) {
-            output->output("- Histogram of %s:\n", histo->getName() );
-            output->output("--> Total time:     %" PRIu32 "\n",
-                                                histo->getValuesSummed());
-            output->output("--> Item count:     %" PRIu32 "\n",
-                                                histo->getItemCount());
-            output->output("--> Average:        %" PRIu32 "\n",
-        			histo->getItemCount() == 0 ? 0 :
-                    (histo->getValuesSummed() / histo->getItemCount()));
-            if ( m_printStats > 1 ) {
-                printHistogram(output, histo);
-            }
-        }
-    }
-	
-	std::map<std::string, Histo*>::iterator iter = m_histoM.begin();	
-
-	for ( ; iter != m_histoM.end(); ++iter ) { 
-		Histo* histo = iter->second;
-        if ( histo->getItemCount() ) {
-    	    output->output("- Histogram of %s:\n", histo->getName() );
-    	    output->output("--> Total bytes:    %" PRIu32 "\n",
-												histo->getValuesSummed());
-    	    output->output("--> Item count:     %" PRIu32 "\n",
-												histo->getItemCount());
-    	    output->output("--> Average:        %" PRIu32 "\n",
-            	histo->getItemCount() == 0 ? 0 :
-            	(histo->getValuesSummed() / histo->getItemCount()));
-
-
-*/
-
-#if 0
-        //This code calls getCurrentSimTimeNano(). What does this time mean
-        //to a motif when it's start time is not 0
-
-        output->output("--> Avr B/W:        %.2f GB/s (Duration of Run)\n",
-            (histoSendSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double) getCurrentSimTimeNano()) / 1000000000.0));
-        output->output("--> Avr B/W:        %.2f GB/s (During Critical Path Send Operations)\n",
-            (histoSendSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double)
-                (histoSend->getValuesSummed() + histoISend->getValuesSummed()) / 1000000000.0)));
-
-        output->output("--> Avr B/W:        %.2f GB/s (Duration of Run)\n",
-            (histoRecvSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double) getCurrentSimTimeNano()) / 1000000000.0));
-        output->output("--> Avr B/W:        %.2f GB/s (During Critical Path Recv Operations)\n",
-            (histoRecvSizes->getValuesSummed() / (1024.0 * 1024.0 * 1024.0)) / (((double)
-                (histoRecv->getValuesSummed() + histoIRecv->getValuesSummed()) / 1000000000.0)));
-#endif
-
- //   	    if ( m_printStats > 1 ) {
-   //     	    printHistogram(output, histo);
-  //  	    }
-//        }
-//	}
-
 }
 
 void EmberMessagePassingGenerator::updateSpyplot(

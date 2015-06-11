@@ -216,8 +216,6 @@ load_TrafficGen( Component* comp, Params& params ) {
 
 static const ElementInfoParam component_params[] = {
     { "module", "Sets the OS module", ""},
-    { "printStats", "Prints the statistics from the component, used as a bit field, 1 = print end of run statisitics, 2 = print end of motif runs in multi motif runs, default 0 = print nothing.", "0"},
-
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "jobId", "Sets the job id", "-1"},
 

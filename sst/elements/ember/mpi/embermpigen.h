@@ -247,7 +247,6 @@ private:
     void updateSpyplot( RankID remoteRank, size_t bytesSent );
     void generateSpyplotRank( const char* filename );
 
-    int                 m_printStats;
     uint32_t            m_spyplotMode;
     static const char*  m_eventName[];
 
