@@ -21,6 +21,7 @@ import random
 debug    = 0
 emberVerbose = 0
 
+statNodeList = []
 jobid = 0
 loadFile = '' 
 workList = []
@@ -310,7 +311,7 @@ else:
 		if len(loadFile) > 0:
 			sys.exit("Error: can't specify both loadFile and cmdLine");
 
-		loadInfo.initWork( workList )
+		loadInfo.initWork( workList, statNodeList )
 	else:
 		sys.exit("Error: need a loadFile or cmdLine")
 

@@ -3,11 +3,12 @@ import sst
 from sst.merlin import *
 
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode ):
+    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes ):
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
         self.driverParams['jobId'] = jobId
+        self.statNodes = statNodes
 
     def getName( self ):
         return "EmberEP"
@@ -31,6 +32,13 @@ class EmberEP( EndPoint ):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
                                             "_EmberEP", "ember.EmberEngine")
             ep.addParams(self.driverParams)
+
+            for id in self.statNodes:
+                if nodeID == id:
+                    print "printStats for node {0}".format(id)
+                    ep.addParams( {'motif1.printStats': 1} )
+                    self.statNodes.pop()
+
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
             nicLink.setNoCut()
@@ -62,15 +70,15 @@ class LoadInfo:
 			'spyplotmode': 0
 		}]
 
-		self.nullEP, nidlist = self.foo( -1, self.readWorkList( nullMotif ) )
+		self.nullEP, nidlist = self.foo( -1, self.readWorkList( nullMotif ), [] )
 		self.nullEP.prepParams()
 
-	def foo( self, jobId, x ):
+	def foo( self, jobId, x, statList ):
 		nidList, ranksPerNode, params = x
 
 		params.update( self.epParams )
 		params['hermesParams.nidListString'] = nidList 
-		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode )
+		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statList )
 
 		ep.prepParams()
 		return (ep, nidList)
@@ -80,14 +88,14 @@ class LoadInfo:
 		jobId = 0
 		for line in iter(fo.readline,b''):
 			if  line[0] != '#' and False == line.isspace():
-				self.map.append( self.foo( jobId, self.readWorkList( extra, [line] ) ) )
+				self.map.append( self.foo( jobId, self.readWorkList( extra, [line] ), [] ) )
 				jobId += 1
 		fo.close()
 		self.verifyLoadInfo()
 
-	def initWork(self, workList ):
+	def initWork(self, workList, statList ):
 		for jobid, work in workList:
-			self.map.append( self.foo( jobid, self.readWorkList( work ) ) )
+			self.map.append( self.foo( jobid, self.readWorkList( work ), statList ) )
 		self.verifyLoadInfo()
 
 	def readWorkList(self, workList ):
