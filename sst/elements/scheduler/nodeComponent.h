@@ -77,6 +77,7 @@ namespace SST {
             SST::Link * failureInjector;
             SST::Link * SelfLink;
             SST::Link * FaultLink;
+            SST::Link * NicLink;
 
             std::vector<SST::Link*> ParentFaultLinks;
             std::vector<SST::Link*> ChildFaultLinks;

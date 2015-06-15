@@ -33,6 +33,7 @@
 #include "events/JobStartEvent.h"
 #include "events/JobKillEvent.h"
 #include "events/ObjectRetrievalEvent.h"
+#include "events/MPIEvent.h"
 
 #include "output.h"
 #include "misc.h"
@@ -108,6 +109,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     failureInjector = configureLink("faultInjector", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ));
     SelfLink = configureSelfLink("linkToSelf", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleSelfEvent));
     FaultLink = configureSelfLink("SelfFaultLink", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleFaultEvent));
+    NicLink = configureLink("NicLink", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent));
 
     SST::Link * tmp;
     char port[16];
@@ -385,6 +387,16 @@ void nodeComponent::handleEvent(Event *ev) {
             schedout.fatal(CALL_INFO, 1, "Error?! Already running a job, but given a new one!\n");
             //internal_error("Error?! Already running a job, but given a new one!\n");
         }
+        //Fulya: create and send MPIEvent to the NIC
+        /*
+        schedout.output("\nCurrent sim time Default: %" PRIu64 "\n", getCurrentSimTime());
+        schedout.output("Current sim time Micro: %" PRIu64 "\n", getCurrentSimTimeMicro());
+        schedout.output("Current sim time Nano: %" PRIu64 "\n", getCurrentSimTimeNano());       
+        MPIEvent *MPIev = new MPIEvent(START, event ->time, jobNum, 1, 1, 400, this->nodeNum, this->nodeNum + 1);
+        NicLink -> send(MPIev);
+        schedout.output("Sent out the MPI event to Node%d. Src:%d Dest:%d.\n", this->nodeNum, this->nodeNum, this->nodeNum + 1);
+        */
+        //end->Fulya
     } else if(dynamic_cast<FaultEvent*>(ev)){
 
         handleFaultEvent(ev);
@@ -392,6 +404,15 @@ void nodeComponent::handleEvent(Event *ev) {
     } else if (dynamic_cast<JobKillEvent*>(ev)) { 
         handleJobKillEvent(dynamic_cast<JobKillEvent*>(ev));
         delete ev;
+    } else if (dynamic_cast<MPIEvent*>(ev)) {
+        MPIEvent *MPIev = dynamic_cast<MPIEvent*>(ev);
+        if (MPIev->MPItype == FINISH) {
+            schedout.output("Node%d received MPI FINISH event from NIC%d!\n", this->nodeNum, MPIev->src_node);
+            schedout.output("Current time is %" PRIu64 "\n", getCurrentSimTime());
+            delete MPIev;
+        } else {
+            schedout.fatal(CALL_INFO, 1, "Error! Bad MPI event type received at Node%d\n", this->nodeNum);
+        }
     } else {
         //char errorMessage[1024];
         //snprintf(errorMessage, 1023,"Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );

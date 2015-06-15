@@ -15,11 +15,12 @@
 #include "nodeComponent.h"
 #include "schedComponent.h"
 #include "faultInjectionComponent.h"
+#include "nicComponent.h"
 
 using namespace SST::Scheduler;
 
 
-static const char * node_events[] = {"FaultEvent","JobKillEvent","JobStartEvent",NULL};
+static const char * node_events[] = {"FaultEvent","JobKillEvent","JobStartEvent","MPIEvent",NULL};
 
 static const char * fault_events[] = {"faultActivationEvents",NULL};
 
@@ -28,6 +29,8 @@ static const char * link_events[] = {NULL};
 static const char * builder_events[] = {"ObjectRetrievalEvent", NULL};
 
 static const char * sched_events[] = {"ArrivalEvent","CompletionEvent","FaultEvent","FinalTimeEvent", "JobKillEvent", "JobStartEvent",NULL};
+
+static const char * nic_events[] = {"MPIEvent",NULL};
 
     static SST::Component*
 create_schedComponent(SST::ComponentId_t id, 
@@ -51,6 +54,14 @@ static SST::Component * create_faultInjectionComponent( SST::ComponentId_t id, S
     return new faultInjectionComponent(id, params);
 }
 
+    static SST::Component*
+create_nicComponent(SST::ComponentId_t id, 
+                     SST::Params& params)
+{
+    return new nicComponent( id, params );
+}
+
+
 //name, description, events
 static const SST::ElementInfoPort sched_ports[] = {
     {"Scheduler",
@@ -72,6 +83,10 @@ static const SST::ElementInfoPort node_ports[] = {
     },
     {"nodeLink%(number of node)d",
      "Each node has an associated port to send events",
+     node_events
+    },
+    {"NicLink",
+     "Each node has an associated port to send events to its associated NIC component",
      node_events
     },
     {"faultInjector",
@@ -104,6 +119,18 @@ static const SST::ElementInfoPort fault_ports[] = {
 
 static const SST::ElementInfoPort link_ports[] = {
     {NULL,NULL,NULL}
+};
+
+static const SST::ElementInfoPort nic_ports[] = {
+    {"rtr",
+      "NIC port that hooks up to router",
+      nic_events
+    },
+    {"node",
+     "NIC port that hooks up to the node",
+     nic_events
+    },
+    {NULL,NULL,NULL} 
 };
 
 static const SST::ElementInfoParam sched_params[] = {
@@ -258,6 +285,33 @@ static const SST::ElementInfoParam link_params[] = {
     {NULL,NULL,NULL} 
 };
 
+static const SST::ElementInfoParam nic_params[] = {
+    { "id",
+        "Network ID of endpoint",
+        NULL
+    },
+    { "num_peers",
+        "Total number of endpoints in network",
+        NULL
+    },
+    { "num_messages",
+        "Total number of messages to send to each endpoint",
+        NULL
+    },
+    { "num_vns",
+        "Number of requested virtual networks",
+        NULL
+    },
+    { "link_bw",
+        "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)",
+        NULL
+    },
+    { "topology",
+        "Name of the topology module that should be loaded to control routing",
+        NULL
+    },
+    {NULL,NULL,NULL}
+};
 
 static const SST::ElementInfoComponent components[] = {
     { "schedComponent",
@@ -292,6 +346,14 @@ static const SST::ElementInfoComponent components[] = {
         fault_ports,
         COMPONENT_CATEGORY_UNCATEGORIZED 
     },
+    { "nicComponent",
+        "Simple NIC to communicate through a merlin router",
+        NULL,
+        create_nicComponent,
+        nic_params,
+        nic_ports,
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    },
     { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -314,7 +376,10 @@ static const SST::ElementInfoEvent events[] = {
     },
     {"JobStartEvent",
      "Tells a node to begin executing a job"
-    }, 
+    },
+    {"MPIEvent",
+     "Drives the NIC component"
+    },
     {NULL,NULL,NULL,NULL}
 };
 

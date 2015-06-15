@@ -11,7 +11,8 @@
 
 #ifndef SCHEDULER_TIME_BASE
 
-#define SCHEDULER_TIME_BASE "1 us"
+#define SCHEDULER_TIME_BASE "1 us" //original
+//#define SCHEDULER_TIME_BASE "1 ns"
 
 #endif
 
