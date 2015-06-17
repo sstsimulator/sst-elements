@@ -19,6 +19,7 @@
 #include "simpleRNGComponent.h"
 #include "simpleStatisticsComponent.h"
 #include "simpleMessageGeneratorComponent.h"
+#include "simpleLookupTableComponent.h"
 
 
 using namespace SST;
@@ -28,6 +29,7 @@ using namespace SST::SimpleDistribComponent;
 using namespace SST::SimpleRNGComponent;
 using namespace SST::SimpleStatisticsComponent;
 using namespace SST::SimpleMessageGeneratorComponent;
+using namespace SST::SimpleElementExample;
 
 static Component* create_simpleComponent(SST::ComponentId_t id, SST::Params& params) 
 {
@@ -58,6 +60,12 @@ static Component* create_simpleMessageGeneratorComponent(SST::ComponentId_t id, 
 {
     return new simpleMessageGeneratorComponent(id, params);
 }
+
+static Component* create_simpleLookupTableComponent(SST::ComponentId_t id, SST::Params& params)
+{
+    return new SimpleLookupTableComponent(id, params);
+}
+
 
 static const ElementInfoParam simpleComponent_params[] = {
     { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
@@ -138,6 +146,13 @@ static const ElementInfoPort simpleMessageGeneratorComponent_ports[] = {
     { NULL, NULL, NULL }
 };
 
+
+static const ElementInfoParam simpleLookupTableComponent_params[] = {
+    { "filename", "Filename to load as the table", "0"},
+    { NULL, NULL, NULL }
+};
+
+
 static const ElementInfoComponent simpleElementComponents[] = {
     { "simpleComponent",                                 // Name
       "Simple Demo Component",                           // Description
@@ -191,6 +206,15 @@ static const ElementInfoComponent simpleElementComponents[] = {
       simpleMessageGeneratorComponent_params,            // Parameters
       simpleMessageGeneratorComponent_ports,             // Ports
       COMPONENT_CATEGORY_NETWORK,                        // Category
+      NULL                                               // Statistics
+    },
+    { "simpleLookupTableComponent",                      // Name
+      "Demonstrates using a Shared Lookup Table",        // Description
+      NULL,                                              // PrintHelp
+      create_simpleLookupTableComponent,                 // Allocator
+      simpleLookupTableComponent_params,                 // Parameters
+      NULL,                                              // Ports
+      COMPONENT_CATEGORY_UNCATEGORIZED,                  // Category
       NULL                                               // Statistics
     },
     { NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}

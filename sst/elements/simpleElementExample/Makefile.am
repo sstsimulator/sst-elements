@@ -23,7 +23,9 @@ libsimpleElementExample_la_SOURCES = \
 	simpleStatisticsComponent.cc \
 	simpleMessage.h \
 	simpleMessageGeneratorComponent.h \
-	simpleMessageGeneratorComponent.cc 
+	simpleMessageGeneratorComponent.cc \
+	simpleLookupTableComponent.h \
+	simpleLookupTableComponent.cc
 
 EXTRA_DIST = \
     README \
