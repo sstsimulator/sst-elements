@@ -108,6 +108,8 @@ public:
     int getMessageSize(void) { return msg_size; }
     int getChunkSize(void) { return chunk_size; }
 
+protected:
+    Output &out;
 private:
     trig_cpu();                      // Don't implement
     trig_cpu(const trig_cpu& c);     // Don't implement

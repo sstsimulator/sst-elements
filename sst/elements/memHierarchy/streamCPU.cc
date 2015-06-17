@@ -34,13 +34,13 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 
 	// get parameters
 	if ( params.find("commFreq") == params.end() ) {
-		_abort(event_test,"couldn't find communication frequency\n");
+		out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
 	}
 	commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
 
 	maxAddr = (uint32_t)params.find_integer("memSize", -1) -1;
 	if ( !maxAddr ) {
-		_abort(streamCPU, "Must set memSize\n");
+		out.fatal(CALL_INFO, -1, "Must set memSize\n");
 	}
 
 	do_write = (bool)params.find_integer("do_write", 1);
@@ -98,7 +98,7 @@ void streamCPU::handleEvent(Event *ev)
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
-			_abort(streamCPU, "Event (%" PRIx64 ", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
+			out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);

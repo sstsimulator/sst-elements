@@ -14,7 +14,6 @@
 #include "sst/core/serialization.h"
 #include "event_test.h"
 
-#include "sst/core/debug.h"
 #include "sst/core/element.h"
 #include "sst/core/params.h"
 #include "sst/core/simulation.h"
@@ -30,19 +29,21 @@ event_test::event_test(ComponentId_t id, Params& params) :
 {
     bool found;
 
+    Output &out = Simulation::getSimulation()->getSimulationOutput();
+
     my_id = params.find_integer("id", -1, found);
     if (!found) {
-        _abort(event_test,"couldn't find node id\n");
+        out.fatal(CALL_INFO, -1,"couldn't find node id\n");
     }
 
     count_to = params.find_integer("count_to", 0, found);
     if (!found) {
-        _abort(event_test,"couldn't find count_to\n");
+        out.fatal(CALL_INFO, -1,"couldn't find count_to\n");
     }
         
     latency = params.find_integer("latency", 0, found);
     if (!found) {
-        _abort(event_test,"couldn't find latency\n");
+        out.fatal(CALL_INFO, -1,"couldn't find latency\n");
     }
     
     registerAsPrimaryComponent();
@@ -80,7 +81,8 @@ void event_test::setup()
 		printf("Sending initial event\n");
 	}
 	else if ( my_id != 1) {
-		_abort(event_test,"event_test class only works with two instances\n");	
+        Output &out = Simulation::getSimulation()->getSimulationOutput();
+		out.fatal(CALL_INFO, -1,"event_test class only works with two instances\n");	
 	}
 //	return 0;
 }

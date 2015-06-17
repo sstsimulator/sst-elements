@@ -12,7 +12,6 @@
 #include "sst/core/serialization.h"
 #include "hr_router.h"
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>

@@ -560,9 +560,9 @@ void Cache::updateUpgradeLatencyAverage(SimTime_t start, Addr debugAddr){
 
 
 void Cache::errorChecking(){    
-    if(cf_.MSHRSize_ <= 0)             _abort(Cache, "MSHR size not specified correctly. \n");
-    if(cf_.numLines_ <= 0)             _abort(Cache, "Number of lines not set correctly. \n");
-    if(!isPowerOfTwo(cf_.lineSize_))   _abort(Cache, "Cache line size is not a power of two. \n");
+    if(cf_.MSHRSize_ <= 0)             d_->fatal(CALL_INFO, -1, "MSHR size not specified correctly. \n");
+    if(cf_.numLines_ <= 0)             d_->fatal(CALL_INFO, -1, "Number of lines not set correctly. \n");
+    if(!isPowerOfTwo(cf_.lineSize_))   d_->fatal(CALL_INFO, -1, "Cache line size is not a power of two. \n");
 }
 
 
@@ -628,7 +628,7 @@ void Cache::sendNACK(MemEvent* _event){
     if(_event->isHighNetEvent())        topCC_->sendNACK(_event);
     else if(_event->isLowNetEvent())    bottomCC_->sendNACK(_event);
     else
-        _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_event->getCmd()]);
+        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[_event->getCmd()]);
 }
 
 
@@ -642,7 +642,7 @@ void Cache::processIncomingNACK(MemEvent* _origReqEvent){
     if(_origReqEvent->fromHighNetNACK())       topCC_->resendEvent(_origReqEvent);
     else if(_origReqEvent->fromLowNetNACK())   bottomCC_->resendEvent(_origReqEvent);
     else
-        _abort(Cache, "Command type not recognized, Cmd = %s\n", CommandString[_origReqEvent->getCmd()]);
+        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[_origReqEvent->getCmd()]);
     
 }
 

@@ -166,15 +166,15 @@ void Bus::configureLinks(){
             dbg_.output(CALL_INFO, "Port %lu = Link %d\n", lowNetPorts_[i]->getId(), i);
         }
 	}
-    if(numLowNetPorts_ < 1 || numHighNetPorts_ < 1) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
+    if(numLowNetPorts_ < 1 || numHighNetPorts_ < 1) dbg_.fatal(CALL_INFO, -1,"couldn't find number of Ports (numPorts)\n");
 
 }
 
 void Bus::configureParameters(SST::Params& _params){
     int debugLevel = _params.find_integer("debug_level", 0);
-    if(debugLevel < 0 || debugLevel > 10)     _abort(Cache, "Debugging level must be betwee 0 and 10. \n");
     
     dbg_.init("--->  ", debugLevel, 0, (Output::output_location_t)_params.find_integer("debug", 0));
+    if(debugLevel < 0 || debugLevel > 10)     dbg_.fatal(CALL_INFO, -1, "Debugging level must be betwee 0 and 10. \n");
     int dAddr         = _params.find_integer("debug_addr", -1);
     if (dAddr == -1) {
         DEBUG_ADDR = (Addr) dAddr;
@@ -193,7 +193,7 @@ void Bus::configureParameters(SST::Params& _params){
     broadcast_    = _params.find_integer("broadcast", 0);
     fanout_       = _params.find_integer("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
 
-    if(busFrequency_ == "Invalid") _abort(Bus, "Bus Frequency was not specified\n");
+    if(busFrequency_ == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
     
      /* Multiply Frequency times two.  This is because an SST Bus components has
         2 SST Links (highNEt & LowNet) and thus it takes a least 2 cycles for any

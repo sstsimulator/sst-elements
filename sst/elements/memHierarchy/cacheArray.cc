@@ -74,11 +74,11 @@ void CacheArray::pMembers(){
 }
 
 void CacheArray::errorChecking(){
-    if(0 == cacheSize_ || 0 == numSets_)    _abort(CacheArray, "Cache size and/or number of sets not greater than zero.\n");
-    if(!isPowerOfTwo(cacheSize_))           _abort(CacheArray, "Cache size is not a power of two. \n");
-    if(!isPowerOfTwo(numSets_))             _abort(CacheArray, "Number of sets is not a power of two \n");
-    if((numSets_ * associativity_) != numLines_) _abort(CacheArray, "Wrong configuration.  Make sure numSets * associativity = Size/cacheLineSize\n");
-    if(associativity_ < 1)                  _abort(CacheArray, "Associativity has to be greater than zero.\n");
+    if(0 == cacheSize_ || 0 == numSets_)    d_->fatal(CALL_INFO, -1, "Cache size and/or number of sets not greater than zero.\n");
+    if(!isPowerOfTwo(cacheSize_))           d_->fatal(CALL_INFO, -1, "Cache size is not a power of two. \n");
+    if(!isPowerOfTwo(numSets_))             d_->fatal(CALL_INFO, -1, "Number of sets is not a power of two \n");
+    if((numSets_ * associativity_) != numLines_) d_->fatal(CALL_INFO, -1, "Wrong configuration.  Make sure numSets * associativity = Size/cacheLineSize\n");
+    if(associativity_ < 1)                  d_->fatal(CALL_INFO, -1, "Associativity has to be greater than zero.\n");
 }
 
 }}

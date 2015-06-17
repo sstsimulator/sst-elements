@@ -38,7 +38,7 @@ using namespace SST;
 #if DBG_BIT_BUCKET
 #define _BIT_BUCKET_DBG(lvl, fmt, args...)\
     if (bit_bucket_debug >= lvl)   { \
-	printf("%d:Bit_bucket::%s():%d: " fmt, _debug_rank, __FUNCTION__, __LINE__, ## args); \
+	printf("%d:Bit_bucket::%s():%d: " fmt, 1, __FUNCTION__, __LINE__, ## args); \
     }
 #else
 #define _BIT_BUCKET_DBG(lvl, fmt, args...)
@@ -86,10 +86,11 @@ class Bit_bucket : public Component {
                 ++it;
             }
 
+        Output &output = Simulation::getSimulation()->getSimulationOutput();
 	    // Check the parameters
 	    if ((write_bw == 0) || (read_bw == 0))   {
 		_BIT_BUCKET_DBG(0, "You need to supply a write_bw and read_bw in the configuration!\n");
-		_ABORT(Bit_bucket, "Check the input XML file!\n");
+		output.fatal(CALL_INFO, -1, "Check the input XML file!\n");
 	    }
 
 
@@ -101,14 +102,14 @@ class Bit_bucket : public Component {
 		    (this, &Bit_bucket::handle_events));
 	    if (net == NULL)   {
 		_BIT_BUCKET_DBG(0, "Expected a link named \"STORAGE\" which is missing!\n");
-		_ABORT(Bit_bucket, "Check the input XML file!\n");
+		output.fatal(CALL_INFO, -1, "Check the input XML file!\n");
 	    }
 
             // Create a channel for "out of band" events sent to ourselves
 	    self_link= configureSelfLink("Me", new Event::Handler<Bit_bucket>
 		    (this, &Bit_bucket::handle_events));
 	    if (self_link == NULL)   {
-		_ABORT(Ghost_pattern, "That was no good!\n");
+		output.fatal(CALL_INFO, -1, "That was no good!\n");
 	    }
 
 	    net->setDefaultTimeBase(tc);

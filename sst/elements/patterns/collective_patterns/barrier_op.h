@@ -21,7 +21,8 @@ class Barrier_op   {
     public:
 	Barrier_op(Comm_pattern * const& current_pattern) :
 	    cp(current_pattern),
-	    no_data(0)
+	    no_data(0),
+        out(Simulation::getSimulation()->getSimulationOutput())
 	{
 	    done= false;
 	    state= START;
@@ -65,6 +66,8 @@ class Barrier_op   {
 	int done;
 	int receives;
 	Collective_topology *ctopo;
+
+    Output &out;
 
 	void state_INIT(state_event event);
 	void state_WAIT_CHILDREN(state_event event);

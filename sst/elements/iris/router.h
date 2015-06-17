@@ -180,6 +180,7 @@ class Router : public DES_Component
         bool currently_clocking;
         SST::Clock::Handler<Router>* clock_handler;
 
+        Output& output;
 
 }; /* -----  end of class Router  ----- */
 

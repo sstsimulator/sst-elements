@@ -110,7 +110,7 @@ state_event send_event;
 	    break;
 
 	default:
-	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -148,7 +148,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -212,7 +212,7 @@ int len1, len2;
 	    break;
 
 	default:
-	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -283,7 +283,7 @@ int dest;
 	    break;
 
 	default:
-	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -335,7 +335,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 

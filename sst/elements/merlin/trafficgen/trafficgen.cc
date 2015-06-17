@@ -49,23 +49,23 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     
     id = params.find_integer("id");
     if ( id == -1 ) {
-        _abort(TrafficGen, "id must be set!\n");
+        out.fatal(CALL_INFO, -1, "id must be set!\n");
     }
 
     num_peers = params.find_integer("num_peers");
     if ( num_peers == -1 ) {
-        _abort(TrafficGen, "num_peers must be set!\n");
+        out.fatal(CALL_INFO, -1, "num_peers must be set!\n");
     }
 
     // num_vns = params.find_integer("num_vns");
     // if ( num_vns == -1 ) {
-    //     _abort(TrafficGen, "num_vns must be set!\n");
+    //     out.fatal(CALL_INFO, -1, "num_vns must be set!\n");
     // }
     num_vns = 1;
     
     std::string link_bw_s = params.find_string("link_bw");
     if ( link_bw_s == "" ) {
-        _abort(TrafficGen, "link_bw must be set!\n");
+        out.fatal(CALL_INFO, -1, "link_bw must be set!\n");
     }
     // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
 
@@ -113,7 +113,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     }
 
     if ( !packet_size.hasUnits("b") ) {
-        _abort(TrafficGen, "packet_size must be specified in units of either B or b!\n");
+        out.fatal(CALL_INFO, -1, "packet_size must be specified in units of either B or b!\n");
     }
 
     base_packet_size = packet_size.getRoundedValue();
@@ -127,7 +127,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     UnitAlgebra packet_delay(packet_delay_s);
 
     if ( !packet_delay.hasUnits("s") ) {
-        _abort(TrafficGen, "packet_delay must be specified in units of s!\n");
+        out.fatal(CALL_INFO, -1, "packet_delay must be specified in units of s!\n");
     }
 
     base_packet_delay = packet_delay.getRoundedValue();
@@ -182,7 +182,7 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
         float probability = params.find_floating(prefix + ":Binomial:Sigma", 0.5f);
         gen = new BinomialDist(range.first, range.second, trials, probability);
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
-        _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
+        out.fatal(CALL_INFO, -1, "Unknown pattern '%s'\n", pattern.c_str());
     }
 
     if ( gen ) gen->seed(rng_seed);

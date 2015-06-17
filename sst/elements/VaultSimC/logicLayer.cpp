@@ -35,19 +35,19 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
 
   int ident = params.find_integer("llID", -1);
   if (-1 == ident) {
-    _abort(logicLayer::logicLayer, "no llID defined\n");
+    dbg.fatal(CALL_INFO, -1, "no llID defined\n");
   }
   llID = ident;
 
   bwlimit = params.find_integer( "bwlimit", -1 );
   if (-1 == bwlimit ) {
-    _abort(logicLayer::logicLayer, 
+    dbg.fatal(CALL_INFO, -1, 
 	   " no <bwlimit> tag defined for logiclayer\n");
   }
 
   int mask = params.find_integer( "LL_MASK", -1 );
   if ( -1 == mask ) {
-    _abort(logicLayer::logicLayer, 
+    dbg.fatal(CALL_INFO, -1, 
 	   " no <LL_MASK> tag defined for logiclayer\n");
   }
   LL_MASK = mask;
@@ -65,13 +65,13 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
 	m_memChans.push_back(chan);
 	dbg.output(" connected %s\n", bus_name);
       } else {
-	_abort(logicLayer::logicLayer, 
+	dbg.fatal(CALL_INFO, -1, 
 	       " could not find %s\n", bus_name);
       }
     }
     printf(" Connected %d Vaults\n", numVaults);
   } else {
-    _abort(logicLayer::logicLayer, 
+    dbg.fatal(CALL_INFO, -1, 
 	   " no <vaults> tag defined for LogicLayer\n");
   }
 
@@ -184,7 +184,7 @@ bool logicLayer::clock( Cycle_t current )
     dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID, 
 	       (void*)event->getAddr(), event->getID().first, event->getID().second);
     if (event == NULL) {
-      _abort(logicLayer::clock, "logic layer got bad event\n");
+      dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
     }
 
     tc[0]++;
@@ -212,7 +212,7 @@ bool logicLayer::clock( Cycle_t current )
     while((tm[0] < bwlimit) && (e = toMem->recv())) {
       MemEvent *event  = dynamic_cast<MemEvent*>(e);
       if (event == NULL) {
-	_abort(logicLayer::clock, "logic layer got bad event\n");
+	dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
       }
 
       tm[0]++;
@@ -232,7 +232,7 @@ bool logicLayer::clock( Cycle_t current )
     while ((e = m_memChan->recv())) {
       MemEvent *event  = dynamic_cast<MemEvent*>(e);
       if (event == NULL) {
-        _abort(logicLayer::clock, "logic layer got bad event from vaults\n");
+        dbg.fatal(CALL_INFO, -1, "logic layer got bad event from vaults\n");
       }
 //      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %lld, sends "
       dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %" PRIu64 ", sends "

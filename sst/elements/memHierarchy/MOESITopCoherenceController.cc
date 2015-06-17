@@ -50,7 +50,7 @@ bool MOESITopCC::handleRequest(MemEvent* _event, CacheLine* _cacheLine, bool _ms
         case PutXE:
             break;
         default:
-            _abort(MemHierarchy::CacheController, "Unrecognized command");
+            d_->fatal(CALL_INFO, -1, "Unrecognized command");
     }
     return ret;
 }

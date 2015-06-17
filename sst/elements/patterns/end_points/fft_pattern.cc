@@ -87,7 +87,7 @@ SimTime_t duration;
 	    break;
 
 	default:
-	    _abort(fft_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -130,7 +130,7 @@ state_event enter_scatter, exit_scatter;
 	    break;
 
 	default:
-	    _abort(fft_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -161,7 +161,7 @@ SimTime_t duration;
 	    break;
 
 	default:
-	    _abort(fft_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -195,7 +195,7 @@ SimTime_t duration;
 	    break;
 
 	default:
-	    _abort(fft_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -229,7 +229,7 @@ state_event enter_gather, exit_gather;
 	    break;
 
 	default:
-	    _abort(fft_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -261,7 +261,7 @@ fft_events_t e= (fft_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(fft_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 

@@ -58,6 +58,9 @@ private:
   coreVec_t coreAddr;
 
   SST::MemHierarchy::MemEvent *getInst(int cacheLevel, int app, int core);
+
+protected:
+  Output &out;
 };
 
 #endif

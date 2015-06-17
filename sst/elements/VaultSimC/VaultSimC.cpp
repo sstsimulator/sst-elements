@@ -41,7 +41,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     // number of bits to determin vault address
     int nv2 = params.find_integer( "numVaults2", -1 );
     if ( -1 == nv2) {
-        _abort(VaultSimC,"numVaults2 (number of bits to determine vault "
+        dbg.fatal(CALL_INFO, -1,"numVaults2 (number of bits to determine vault "
                "address) not set! Should be log2(number of vaults per cube)\n");
     } else {
         numVaults2 = nv2;
@@ -53,7 +53,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
   
     int vid = params.find_integer("VaultID", -1);
     if ( -1 == vid) {
-        _abort(VaultSimC,"not VaultID Set\n");
+        dbg.fatal(CALL_INFO, -1,"not VaultID Set\n");
     } else {
         vaultID = vid;
     }
@@ -66,7 +66,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     // Phx Library configuratoin
     m_memorySystem = new Vault(vaultID);
     if ( ! m_memorySystem ) {
-        _abort(VaultSimC,"MemorySystem() failed\n");
+        dbg.fatal(CALL_INFO, -1,"MemorySystem() failed\n");
     }
   
     PHXSim::VaultCompleteCB* readDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::readData);
@@ -91,7 +91,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
     memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, 
                                MAP_PRIVATE|MAP_ANON, -1, 0);
     if ( !memBuffer ) {
-        _abort(MemController, "Unable to MMAP backing store for Memory\n");
+        dbg.fatal(CALL_INFO, -1, "Unable to MMAP backing store for Memory\n");
     }
 
     memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
@@ -115,16 +115,16 @@ void VaultSimC::init(unsigned int phase)
                 //printf("Vault received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
                 uint32_t chunkSize = (1 << VAULT_SHIFT);
                 if (me->getSize() > chunkSize)
-                    _abort(VaultSimC::init, "vault got too large init\n");
+                    dbg.fatal(CALL_INFO, -1, "vault got too large init\n");
                 for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
                     memBuffer[getInternalAddress(me->getAddr() + i)] =
                         me->getPayload()[i];
                 }
             } else {
-                _abort(VaultSimC::init, "vault got bad init command\n");
+                dbg.fatal(CALL_INFO, -1, "vault got bad init command\n");
             }
         } else {
-            _abort(VaultSimC::init, "vault got bad init event\n");
+            dbg.fatal(CALL_INFO, -1, "vault got bad init event\n");
         }
         delete ev;
     }
@@ -143,7 +143,7 @@ void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
   
     t2MEMap_t::iterator mi = transactionToMemEventMap.find(bp.transactionID);
     if (mi == transactionToMemEventMap.end()) {
-        _abort(VaultSimC::readData, "can't find transaction\n");
+        dbg.fatal(CALL_INFO, -1, "can't find transaction\n");
     }
     MemEvent *parentEvent = mi->second;
     MemEvent *event = parentEvent->makeResponse(this);
@@ -175,7 +175,7 @@ void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
     // create response
     t2MEMap_t::iterator mi = transactionToMemEventMap.find(bp.transactionID);
     if (mi == transactionToMemEventMap.end()) {
-        _abort(VaultSimC::writeData, "can't find transaction\n");
+        dbg.fatal(CALL_INFO, -1, "can't find transaction\n");
     }
     MemEvent *parentEvent = mi->second;
     MemEvent *event = parentEvent->makeResponse(this);
@@ -203,7 +203,7 @@ bool VaultSimC::clock_phx( Cycle_t current ) {
         // process incoming events
         MemEvent *event  = dynamic_cast<MemEvent*>(e);
         if (event == NULL) {
-            _abort(VaultSimC::clock, "vault got bad event\n");
+            dbg.fatal(CALL_INFO, -1, "vault got bad event\n");
         }
     
         dbg.output(CALL_INFO, " Vault %d got a req for %p (%lld %d)\n",
@@ -232,7 +232,7 @@ bool VaultSimC::clock_phx( Cycle_t current ) {
                        (void*)m_transQ.front().address);           
             m_transQ.pop_front();
         } else {
-            //_abort(VaultSimC, "addTransaction failed\n");
+            //dbg.fatal(CALL_INFO, -1, "addTransaction failed\n");
             dbg.output(CALL_INFO, " addTransaction failed\n");
             ret = 0;
         }
@@ -252,7 +252,7 @@ bool VaultSimC::clock( Cycle_t current ) {
         // process incoming events
         MemEvent *event  = dynamic_cast<MemEvent*>(e);
         if (NULL == event) {
-            _abort(VaultSimC::clock, "vault got bad event\n");
+            dbg.fatal(CALL_INFO, -1, "vault got bad event\n");
         }
         // handle event...
         delayLine->send(1, event);
@@ -264,7 +264,7 @@ bool VaultSimC::clock( Cycle_t current ) {
         // process returned events
         MemEvent *event  = dynamic_cast<MemEvent*>(e);
         if (NULL == event) {
-            _abort(VaultSimC::clock, "vault got bad event from delay line\n");
+            dbg.fatal(CALL_INFO, -1, "vault got bad event from delay line\n");
         } else {
             MemEvent *respEvent = event->makeResponse();
             m_memChan->send(respEvent);

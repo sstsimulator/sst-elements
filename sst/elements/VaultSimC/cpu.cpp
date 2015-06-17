@@ -18,14 +18,14 @@
 #include "sst/core/serialization.h"
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include <sst/core/debug.h>
 #include <sst/core/rng/mersenne.h>
 
 using namespace SST;
 using namespace SST::RNG;
 
 cpu::cpu( ComponentId_t id, Params& params ) :
-  IntrospectedComponent( id ), outstanding(0), memOps(0), inst(0)
+  IntrospectedComponent( id ), outstanding(0), memOps(0), inst(0),
+    out(Simulation::getSimulation()->getSimulationOutput())
 {
   printf("making cpu\n");
 
@@ -36,7 +36,7 @@ cpu::cpu( ComponentId_t id, Params& params ) :
 
   threads = params.find_integer( "threads", 0 );
   if (0 == threads) {
-    _abort(cpu::cpu, "no <threads> tag defined for cpu\n");
+    out.fatal(CALL_INFO, -1, "no <threads> tag defined for cpu\n");
   } else {
     memSet_t blank;
     for (int i = 0; i < threads; ++i) {
@@ -47,12 +47,12 @@ cpu::cpu( ComponentId_t id, Params& params ) :
 
   app = params.find_integer( "app", -1 );
   if ( -1 == app ) {
-    _abort(cpu::cpu, " no <app> tag defined for cpu\n");
+    out.fatal(CALL_INFO, -1, " no <app> tag defined for cpu\n");
   }
 
   bwlimit = params.find_integer( "bwlimit", 0 );
   if (0 == bwlimit) {
-    _abort(cpu::cpu, " no <bwlimit> tag defined for cpu\n");
+    out.fatal(CALL_INFO, -1, " no <bwlimit> tag defined for cpu\n");
   }
 
   // connect chain
@@ -86,7 +86,7 @@ bool cpu::clock( Cycle_t current )
     SST::MemHierarchy::MemEvent *event = 
       dynamic_cast<SST::MemHierarchy::MemEvent*>(e);
     if (event == NULL) {
-      _abort(cpu::clock, "CPU got bad event\n");
+      out.fatal(CALL_INFO, -1, "CPU got bad event\n");
     }
     //printf("CPU got event %lld\n", current);
     memOps++;

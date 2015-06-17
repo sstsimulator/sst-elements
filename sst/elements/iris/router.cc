@@ -57,13 +57,13 @@ Router::Router (SST::ComponentId_t id, Params& params): DES_Component(id) ,
                 /*  Init stats */
                 stat_flits_in(0), stat_flits_out(0), stat_last_flit_cycle(0), 
                 heartbeat_interval(500)/* in cycles */, stat_avg_buffer_occ(0.0),
-                router_fastfwd(0), empty_cycles(0)
+                router_fastfwd(0), empty_cycles(0), output(Simulation::getSimulation()->getSimulationOutput())
 {
 
     currently_clocking = true;
     // get configuration parameters
     if ( params.find("id") == params.end() ) {
-        _abort(event_test,"Specify node_id for the router\n");
+        output.fatal(CALL_INFO, -1, "Specify node_id for the router\n");
     }
     node_id = strtol( params[ "id" ].c_str(), NULL, 0 );
 
@@ -447,7 +447,7 @@ Router::handle_link_arrival ( DES_Event* ev, int dir)
         clock_handler = new SST::Clock::Handler<Router>(this, &Router::tock);
         SST::TimeConverter* tc = registerClock(ROUTER_FREQ,clock_handler, true);
         if ( !tc)
-            _abort(event_test,"Failed to restart the clock\n");
+            output.fatal(CALL_INFO, -1, "Failed to restart the clock\n");
     }
 
     return ;

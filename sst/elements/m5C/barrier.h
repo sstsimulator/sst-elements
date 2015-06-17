@@ -22,7 +22,6 @@
 #include <fcntl.h>
 
 //#include <boost/filesystem.hpp>
-#include "sst/core/debug.h"
 
 #if 0 
 #define BA_DBG(fmt,args...) \
@@ -32,6 +31,10 @@
 #endif
 
 #include <mpi.h>
+
+#ifdef fatal
+#undef fatal
+#endif
 
 namespace SST {
 namespace M5 {
@@ -102,7 +105,7 @@ class BarrierAction : public SST::Action
         std::string name(buf);
         m_readFilename = name;
         int rc = mkfifo( buf, 0666 );
-        if(rc != 0) _abort(BarrierAction, "Unable to create temp file named: %s", buf);
+        if(rc != 0) Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Unable to create temp file named: %s", buf);
         m_readFd = open( buf, O_RDONLY | O_NONBLOCK );
         assert( m_readFd > -1 );
 
@@ -115,7 +118,7 @@ class BarrierAction : public SST::Action
             BA_DBG("filename=`%s`\n",buf);
             std::string name(buf);
             m_writeFilenames.push_back(name);
-            if(rc != 0) _abort(BarrierAction, "Unable to create temp file named: %s", buf);
+            if(rc != 0) Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Unable to create temp file named: %s", buf);
         }
     }
 

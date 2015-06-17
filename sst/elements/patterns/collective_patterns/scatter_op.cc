@@ -85,7 +85,7 @@ int msglen;
 	    break;
 
 	default:
-	    _abort(scatter_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -122,7 +122,7 @@ int msglen;
 	    break;
 
 	default:
-	    _abort(scatter_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 

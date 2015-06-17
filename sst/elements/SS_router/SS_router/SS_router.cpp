@@ -26,8 +26,6 @@
 
 #include <sstream>
 
-#include "sst/core/debug.h"
-
 #include "SS_router.h"
 #include "SS_routerInternals.cpp"
 #include "SS_routerEvent.cpp"
@@ -98,7 +96,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
 
     routerID = params.find_integer("id");
     if ( routerID == -1 ) {
-        _abort(SS_router,"couldn't find routerID\n" );
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find routerID\n" );
     }
 
     bool do_dbg = !params.find_string("debug", "no").compare("yes");
@@ -128,27 +126,27 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
 
     iLCBLat = params.find_integer("iLCBLat");
     if ( iLCBLat == -1 ) {
-        _abort(SS_router,"couldn't find iLCBLat\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find iLCBLat\n" );
     }
 
     oLCBLat = params.find_integer("oLCBLat");
     if ( oLCBLat == -1 ) {
-        _abort(SS_router,"couldn't find oLCBLat\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find oLCBLat\n" );
     }
 
     routingLat = params.find_integer("routingLat");
     if ( routingLat == -1 ) {
-        _abort(SS_router,"couldn't find routingLat\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find routingLat\n" );
     }
 
     iQLat = params.find_integer("iQLat");
     if ( iQLat == -1 ) {
-        _abort(SS_router,"couldn't find iQLat\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find iQLat\n" );
     }
 
     tmp = params.find_integer("OutputQSize_flits");
     if ( tmp == -1 ) {
-        _abort(SS_router,"couldn't find OutputQSize_flits\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find OutputQSize_flits\n" );
     }
 
     m_log.output("OutputQSize_flits=%d\n",tmp);
@@ -159,7 +157,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
 
     tmp = params.find_integer("InputQSize_flits");
     if ( tmp == -1 ) {
-        _abort(SS_router,"couldn't find InputQSize_flits\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find InputQSize_flits\n" );
     }
     m_log.output("InputQSize_flits=%d\n",tmp);
 
@@ -169,7 +167,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
 
     tmp = params.find_integer("Router2NodeQSize_flits");
     if ( tmp == -1 ) {
-        _abort(SS_router,"couldn't find Router2NodeQSize_flits\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find Router2NodeQSize_flits\n" );
     }
 
     m_log.output("Router2NodeQSize_flits=%d\n",tmp);
@@ -310,7 +308,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
     clock_handler = new Clock::Handler<SS_router>(this, &SS_router::clock);
     TimeConverter* tc = registerClock( frequency, clock_handler );
     if ( ! tc ) {
-        _abort(XbarV2,"couldn't register clock handler");
+        m_log.fatal(CALL_INFO, -1,"couldn't register clock handler");
     }
     currently_clocking = true;
 }
@@ -430,7 +428,7 @@ void SS_router::setupRoutingTable( Params params, int nodes,
     int tmp;
     tmp = params.find_integer("xDateline");
     if ( tmp == -1 ) {
-        _abort(SS_router,"couldn't find xDateline\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find xDateline\n" );
     }
     if ( tmp == calcXPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_X)] = true; 
@@ -438,7 +436,7 @@ void SS_router::setupRoutingTable( Params params, int nodes,
 
     tmp = params.find_integer("yDateline");
     if ( tmp == -1 ) {
-        _abort(SS_router,"couldn't find yDateline\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find yDateline\n" );
     }
     if ( tmp == calcYPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_Y)] = true; 
@@ -446,7 +444,7 @@ void SS_router::setupRoutingTable( Params params, int nodes,
 
     tmp = params.find_integer("zDateline");
     if ( tmp == -1 ) {
-        _abort(SS_router,"couldn't find zDateline\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find zDateline\n" );
     }
     if ( tmp == calcZPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_Z)] = true; 

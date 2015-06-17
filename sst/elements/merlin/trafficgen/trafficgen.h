@@ -28,7 +28,6 @@
 #include <sst/core/rng/uniform.h>
 
 #include <sst/core/component.h>
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -84,7 +83,8 @@ private:
                 break;
             }
             default:
-                _abort(TrafficGen, "Unsure how to deal with %d neighbors\n", numNeighbors);
+                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,
+                    "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
 

@@ -15,12 +15,10 @@
 #include <algorithm>
 #include <stdlib.h>
 
-#include <sst/core/debug.h>
 
 
 using namespace SST::Merlin;
 
-#define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_torus, fmt, ## args )
 
 topo_torus::topo_torus(Component* comp, Params& params) :
     Topology()
@@ -66,12 +64,12 @@ topo_torus::topo_torus(Component* comp, Params& params) :
 
     // int n_vc = params.find_integer("num_vcs");
     // if ( n_vc < 2 || (n_vc & 1) ) {
-    //     _abort(topo_torus, "Number of VC's must be a multiple of two for a torus\n");
+    //     output.fatal(CALL_INFO, -1, "Number of VC's must be a multiple of two for a torus\n");
     // }
 
     int n_ports = params.find_integer("num_ports");
     if ( n_ports == -1 )
-        _abort(Topology, "Router must have 'num_ports' parameter set\n");
+        output.fatal(CALL_INFO, -1, "Router must have 'num_ports' parameter set\n");
 
     int needed_ports = 0;
     for ( int i = 0 ; i < dimensions ; i++ ) {
@@ -80,7 +78,7 @@ topo_torus::topo_torus(Component* comp, Params& params) :
 
 
     if ( n_ports < (needed_ports+num_local_ports) ) {
-        _abort(Topology, "Number of ports should be %d for this configuration\n", needed_ports+num_local_ports);
+        output.fatal(CALL_INFO, -1, "Number of ports should be %d for this configuration\n", needed_ports+num_local_ports);
     }
 
     local_port_start = needed_ports;// Local delivery is on the last ports
@@ -117,7 +115,7 @@ topo_torus::route(int port, int vc, internal_router_event* ev)
                 int go_pos = (dist_pos <= dist_neg);
 
 
-                DPRINTF(" %d to %d:  Dist Neg: %d, Dist Pos: %d\n",
+                output.verbose(CALL_INFO, 1, 1, " %d to %d:  Dist Neg: %d, Dist Pos: %d\n",
                         id_loc[dim], tt_ev->dest_loc[dim], dist_neg, dist_pos);
 
                 int p = choose_multipath(
@@ -130,7 +128,7 @@ topo_torus::route(int port, int vc, internal_router_event* ev)
                 if ( id_loc[dim] == 0 && port < local_port_start ) { // Crossing dateline
                     int new_vc = vc ^ 1;
                     tt_ev->setVC(new_vc); // Toggle VC
-                    DPRINTF("Crossing dateline.  Changing from VC %d to %d\n", vc, new_vc);
+                    output.verbose(CALL_INFO, 1, 1, "Crossing dateline.  Changing from VC %d to %d\n", vc, new_vc);
                 }
 
                 break;

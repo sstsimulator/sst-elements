@@ -75,7 +75,7 @@ state_event barrier_event;
 	    break;
 
 	default:
-	    _abort(barrier_op, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_INIT()
@@ -115,7 +115,7 @@ state_event barrier_event;
 	    break;
 
 	default:
-	    _abort(barrier_op, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_WAIT_CHILDREN()
@@ -144,7 +144,7 @@ state_event barrier_event;
 	    break;
 
 	default:
-	    _abort(barrier_op, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_WAIT_PARENT()

@@ -48,12 +48,13 @@ trig_nic::trig_nic( ComponentId_t id, Params& params ) :
     clock_handler_ptr = new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler);
     registerClock( frequency, clock_handler_ptr, false  );
  
+    Output &out = Simulation::getSimulation()->getSimulationOutput();
     if ( params.find("latency") == params.end() ) {
-	_abort(trig_nic,"couldn't find NIC latency\n");
+	out.fatal(CALL_INFO, -1,"couldn't find NIC latency\n");
     }
 
     if ( params.find("timing_set") == params.end() ) {
-	_abort(trig_nic,"couldn't find timing set\n");
+	out.fatal(CALL_INFO, -1,"couldn't find timing set\n");
     }
     timing_set = strtol( params[ "timing_set" ].c_str(), NULL, 0 );
 

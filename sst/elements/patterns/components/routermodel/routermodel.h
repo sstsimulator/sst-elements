@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
@@ -38,7 +37,7 @@ using namespace SST;
 #if DBG_ROUTER_MODEL
 #define _ROUTER_MODEL_DBG(lvl, fmt, args...)\
     if (router_model_debug >= lvl)   { \
-	printf("%d:Routermodel::%s():%d: " fmt, _debug_rank, __FUNCTION__, __LINE__, ## args); \
+	printf("%d:Routermodel::%s():%d: " fmt, 1, __FUNCTION__, __LINE__, ## args); \
     }
 #else
 #define _ROUTER_MODEL_DBG(lvl, fmt, args...)
@@ -93,6 +92,7 @@ class Routermodel : public IntrospectedComponent {
     public:
         Routermodel(ComponentId_t id, Params& params) :
             IntrospectedComponent(id),
+            out(Simulation::getSimulation()->getSimulationOutput()),
             params(params),
             frequency("1ns")
         {
@@ -176,10 +176,10 @@ class Routermodel : public IntrospectedComponent {
 			_ROUTER_MODEL_DBG(2, "%s: Power modeling enabled, using ORION\n",
 			    component_name.c_str());
 		    } else   {
-			_abort(Routermodel, "Unknown power model!\n");
+			out.fatal(CALL_INFO, -1, "Unknown power model!\n");
 		    }
 #else
-		    _abort(Routermodel, "You can't specify a power model, if you have selected the plain router!");
+		    out.fatal(CALL_INFO, -1, "You can't specify a power model, if you have selected the plain router!");
 #endif
     		}
 
@@ -302,7 +302,7 @@ class Routermodel : public IntrospectedComponent {
 
 
 	    if (num_ports < 1)   {
-		_abort(Routermodel, "Need to define the num_ports parameter!\n");
+		out.fatal(CALL_INFO, -1, "Need to define the num_ports parameter!\n");
 	    }
 
 	    // Create a time converter for the NIC simulator.
@@ -343,7 +343,7 @@ class Routermodel : public IntrospectedComponent {
 		    if ((k->inflectionpoint < 0) || (k->latency < 0))   {
 			fprintf(stderr, "Invalid inflection point: index %d, len %" PRId64 "d, lat %" PRId64 "d\n",
 			    k->index, k->inflectionpoint, k->latency);
-			_abort(Routermodel, "Fix xml file!\n");
+			out.fatal(CALL_INFO, -1, "Fix xml file!\n");
 		    }
 		}
 
@@ -389,10 +389,10 @@ class Routermodel : public IntrospectedComponent {
 
 	    if (!aggregator)   {
 		_ROUTER_MODEL_DBG(2, "Router model component \"%s\" is on rank %d\n",
-		    component_name.c_str(), _debug_rank);
+		    component_name.c_str(), 1);
 	    } else   {
 		_ROUTER_MODEL_DBG(2, "Aggregator component \"%s\" is on rank %d\n",
-		    component_name.c_str(), _debug_rank);
+		    component_name.c_str(), 1);
 	    }
 
 	    if (!aggregator)   {
@@ -400,7 +400,7 @@ class Routermodel : public IntrospectedComponent {
 		self_link= configureSelfLink("Me", new Event::Handler<Routermodel>
 			(this, &Routermodel::handle_self_events));
 		if (self_link == NULL)   {
-		    _ABORT(Ghost_pattern, "That was no good!\n");
+		    out.fatal(CALL_INFO, -1, "That was no good!\n");
 		} else   {
 		    _ROUTER_MODEL_DBG(3, "Added a self link and a handler on router %s\n",
 			component_name.c_str());
@@ -472,12 +472,14 @@ class Routermodel : public IntrospectedComponent {
 	}
 
 
-	
+    protected:
+    Output &out;
 
     private:
 
 
-        Routermodel() {}; // For serialization only
+    // For serialization only
+        Routermodel() : out(Simulation::getSimulation()->getSimulationOutput()) { }
         Routermodel(const Routermodel &c);
 	int64_t get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len);
 

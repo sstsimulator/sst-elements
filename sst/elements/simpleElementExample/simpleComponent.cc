@@ -16,7 +16,6 @@
 #include "simpleComponentEvent.h"
 
 #include "sst/core/event.h"
-#include "sst/core/debug.h"
 
 using namespace SST;
 using namespace SST::SimpleComponent;
@@ -31,12 +30,12 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
     // get parameters
     workPerCycle = params.find_integer("workPerCycle", 0, found);
     if (!found) {
-        _abort(event_test,"couldn't find work per cycle\n");
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
     
     commFreq = params.find_integer("commFreq", 0, found);
     if (!found) {
-        _abort(event_test,"couldn't find communication frequency\n");
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
     }
     
     commSize = params.find_integer("commSize", 16);

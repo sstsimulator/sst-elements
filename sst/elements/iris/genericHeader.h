@@ -38,7 +38,6 @@
 #include	<cassert>
 
 // SST related
-#include	<sst/core/debug.h>
 #include        <sst/core/serialization.h>
 #include        <sst/core/component.h>
 #include        <sst/core/sst_types.h>

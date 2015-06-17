@@ -87,7 +87,7 @@ fprintf(stderr, "[%3d] Got the last receive: rcv_cnt %d\n", my_rank, rcv_cnt);
 	    break;
 
 	default:
-	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -152,7 +152,7 @@ state_event send_event;
 	    break;
 
 	default:
-	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -266,7 +266,7 @@ SimTime_t duration;
 	    break;
 
 	default:
-	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -304,7 +304,7 @@ double dummy= 1.0;
 	    break;
 
 	default:
-	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -364,7 +364,7 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 

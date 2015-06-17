@@ -192,7 +192,7 @@ Routermodel::handle_self_events(Event *event)
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
 
     if (e->entry_port < 0)   {
-	_abort(Routermodel, "Internal error: entry port not defined!\n");
+	out.fatal(CALL_INFO, -1, "Internal error: entry port not defined!\n");
     }
 
     handle_port_events(e, e->entry_port);

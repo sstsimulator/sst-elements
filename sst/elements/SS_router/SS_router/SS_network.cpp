@@ -26,7 +26,6 @@
 
 #include "SS_network.h"
 
-#include <sst/core/debug.h>
 #include <sst/core/params.h>
 
 using namespace SST::SS_router;
@@ -35,17 +34,17 @@ Network::Network( SST::Params params )
 {
     _xDimSize = params.find_integer("xDimSize");
     if ( _xDimSize == -1 ) {
-        _abort(Network,"couldn't find xDimSize\n" );
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find xDimSize\n" );
     } 
 
     _yDimSize = params.find_integer("yDimSize");
     if ( _yDimSize == -1 ) {
-        _abort(Network,"couldn't find yDimSize\n" );
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find yDimSize\n" );
     } 
 
     _zDimSize = params.find_integer("zDimSize");
     if ( _zDimSize == -1 ) {
-        _abort(Network,"couldn't find zDimSize\n" );
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find zDimSize\n" );
     } 
 
     _size = _xDimSize*_yDimSize*_zDimSize;

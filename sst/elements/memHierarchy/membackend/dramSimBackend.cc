@@ -19,15 +19,15 @@ using namespace SST::MemHierarchy;
 DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
-        _abort(MemController, "Model must define a 'device_ini' file parameter\n");
+        ctrl->dbg.fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
     std::string systemIniFilename = params.find_string("system_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == systemIniFilename)
-        _abort(MemController, "Model must define a 'system_ini' file parameter\n");
+        ctrl->dbg.fatal(CALL_INFO, -1, "Model must define a 'system_ini' file parameter\n");
 
 
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
     if(0 == ramSize) {
-	_abort(MemController, "DRAMSim backend.mem_size parameter set to zero. Not allowed, must be power of two.\n");
+	ctrl->dbg.fatal(CALL_INFO, -1, "DRAMSim backend.mem_size parameter set to zero. Not allowed, must be power of two.\n");
     }
 
     memSystem = DRAMSim::getMemorySystemInstance(

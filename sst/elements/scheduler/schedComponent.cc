@@ -19,7 +19,6 @@
 
 #include <iostream> //debug
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 
@@ -88,7 +87,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     lastfinaltime = ~0;
 
     if (params.find("traceName") == params.end()) {
-        _abort(event_test,"couldn't find trace name\n");
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find trace name\n");
     }
 
     //set up output

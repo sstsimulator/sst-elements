@@ -82,7 +82,7 @@ state_event send_event;
 	    // sent us events before we entered the state machine for allreduce.
 	    if (ctopo->is_leaf())   {
 		// This cannot happen
-		_abort(gather_pattern, "[%3d] Invalid event %d in state %d\n",
+		Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		    cp->my_rank, e, state);
 	    } else   {
 		// I must be an interior node or root
@@ -92,7 +92,7 @@ state_event send_event;
 
 
 	default:
-	    _abort(gather_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -130,7 +130,7 @@ int msglen;
 	    break;
 
 	default:
-	    _abort(gather_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 

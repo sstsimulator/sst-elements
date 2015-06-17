@@ -22,10 +22,10 @@
 #define SST_CORE_CPUNICEVENT_H
 
 #include <sst/core/serialization.h>
+#include <sst/core/simulation.h>
 
 #include <cstring>
 
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
 
 // We hardcode this here so we don't have to include netsim_internal.h
@@ -35,7 +35,7 @@ using namespace SST;
 
 class CPUNicEvent : public Event {
     public:
-        CPUNicEvent() : Event()   {
+        CPUNicEvent() : Event(), out(Simulation::getSimulation()->getSimulationOutput())   {
 	    params_present= false;
 	    params_len= 0;
 	    routine= -1;
@@ -81,7 +81,7 @@ class CPUNicEvent : public Event {
 	// Functions to attach and detach parameters
 	inline void AttachParams(const void *input, int len)   {
 	    if (len > CPUNICEVENT_MAX_PARAMS)   {
-		_ABORT(CPUNicEvent, "Only have room for %d bytes!!\n", CPUNICEVENT_MAX_PARAMS);
+		out.fatal(CALL_INFO, -1, "Only have room for %d bytes!!\n", CPUNICEVENT_MAX_PARAMS);
 	    }
 	    params_present= true;
 	    params_len= len;
@@ -90,14 +90,14 @@ class CPUNicEvent : public Event {
 
 	inline void DetachParams(void *output, int *len)   {
 	    if (!params_present)   {
-		_ABORT(CPUNicEvent, "No params present!\n");
+		out.fatal(CALL_INFO, -1, "No params present!\n");
 	    }
 	    if (*len > CPUNICEVENT_MAX_PARAMS)   {
-		_ABORT(CPUNicEvent, "Can't detach %d bytes. Only have %d bytes (%d max) of params!!\n",
+		out.fatal(CALL_INFO, -1, "Can't detach %d bytes. Only have %d bytes (%d max) of params!!\n",
 		    *len, params_len, CPUNICEVENT_MAX_PARAMS);
 	    }
 	    if ((int) params_len > *len)   {
-		_ABORT(CPUNicEvent, "Have %d bytes of params, but user only wants %d!\n",
+		out.fatal(CALL_INFO, -1, "Have %d bytes of params, but user only wants %d!\n",
 		    params_len, *len);
 	    }
 
@@ -118,7 +118,7 @@ class CPUNicEvent : public Event {
 	// Functions to attach and detach a message payload
 	inline void AttachPayload(const char *payload, int len)   {
 	    if (payload_present)   {
-		_ABORT(NicEvent, "Payload data already present!\n");
+		out.fatal(CALL_INFO, -1, "Payload data already present!\n");
 	    }
 	    payload_present= true;
 	    msg_payload.reserve(len);
@@ -128,10 +128,10 @@ class CPUNicEvent : public Event {
 
 	inline void DetachPayload(void *output, int *len)   {
 	    if (!payload_present)   {
-		_ABORT(CPUNicEvent, "No payload present!\n");
+		out.fatal(CALL_INFO, -1, "No payload present!\n");
 	    }
 	    if (*len > payload_len)   {
-		_ABORT(CPUNicEvent, "Have %d bytes of payload, but user wants %d!\n",
+		out.fatal(CALL_INFO, -1, "Have %d bytes of payload, but user wants %d!\n",
 		    payload_len, *len);
 	    }
 
@@ -158,6 +158,7 @@ class CPUNicEvent : public Event {
 	std::vector<uint8_t>msg_payload;
 	bool payload_present;
 	int payload_len;
+    Output &out;
 
         friend class boost::serialization::access;
         template<class Archive>

@@ -349,7 +349,7 @@ private:
 class Topology : public Module {
 public:
     enum PortState {R2R, R2N, UNCONNECTED};
-    Topology() {}
+    Topology() : output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
@@ -382,6 +382,8 @@ public:
     // topology object for the router
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) {};
     
+protected:
+    Output &output;
 };
 
 class PortControl;

@@ -109,7 +109,7 @@ state_event pp_event;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -210,7 +210,7 @@ double latency;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -243,7 +243,7 @@ state_event enter_barrier, exit_barrier;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -300,7 +300,7 @@ double check= 0.0;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 

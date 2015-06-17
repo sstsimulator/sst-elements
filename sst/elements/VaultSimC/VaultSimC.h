@@ -13,7 +13,6 @@
 #ifndef _VAULTSIMC_H
 #define _VAULTSIMC_H
 
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/elements/memHierarchy/memEvent.h>

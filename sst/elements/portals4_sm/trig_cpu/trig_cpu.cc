@@ -13,7 +13,6 @@
 #include <sst_config.h>
 #include "sst/core/serialization.h"
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
 
 #include "trig_cpu.h"
@@ -66,6 +65,7 @@ barrier_action* trig_cpu::barrier_act = NULL;
 
 trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     Component( id ),
+    out(Simulation::getSimulation()->getSimulationOutput()),
     delay_host_pio_write(8),
     delay_bus_xfer(16),
     latency_dma_mem_access(1), // latency built in already
@@ -76,69 +76,69 @@ trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     wc_buffers_max(8)
 {
     if ( params.find("nodes") == params.end() ) {
-        _abort(RtrIF,"couldn't find number of nodes\n");
+        out.fatal(CALL_INFO, -1,"couldn't find number of nodes\n");
     }
     num_nodes = strtol( params[ "nodes" ].c_str(), NULL, 0 );
     
     if ( params.find("id") == params.end() ) {
-        _abort(RtrIF,"couldn't find node id\n");
+        out.fatal(CALL_INFO, -1,"couldn't find node id\n");
     }
     my_id = strtol( params[ "id" ].c_str(), NULL, 0 );
 
     if ( params.find("timing_set") == params.end() ) {
-	_abort(trig_nic,"couldn't find timing set\n");
+	out.fatal(CALL_INFO, -1,"couldn't find timing set\n");
     }
     timing_set = strtol( params[ "timing_set" ].c_str(), NULL, 0 );
 
     setTimingParams(timing_set);
     if ( params.find("msgrate") == params.end() ) {
-        _abort(RtrIF,"couldn't find msgrate\n");
+        out.fatal(CALL_INFO, -1,"couldn't find msgrate\n");
     }
     std::string msg_rate = params[ "msgrate" ];
 
     if ( params.find("xDimSize") == params.end() ) {
-        _abort(RtrIF,"couldn't find xDimSize\n");
+        out.fatal(CALL_INFO, -1,"couldn't find xDimSize\n");
     }
     x_size = strtol( params[ "xDimSize" ].c_str(), NULL, 0 );
 
     if ( params.find("yDimSize") == params.end() ) {
-        _abort(RtrIF,"couldn't find yDimSize\n");
+        out.fatal(CALL_INFO, -1,"couldn't find yDimSize\n");
     }
     y_size = strtol( params[ "yDimSize" ].c_str(), NULL, 0 );
 
     if ( params.find("zDimSize") == params.end() ) {
-        _abort(RtrIF,"couldn't find zDimSize\n");
+        out.fatal(CALL_INFO, -1,"couldn't find zDimSize\n");
     }
     z_size = strtol( params[ "zDimSize" ].c_str(), NULL, 0 );
 
     if ( params.find("latency") == params.end() ) {
-        _abort(RtrIF,"couldn't find latency\n");
+        out.fatal(CALL_INFO, -1,"couldn't find latency\n");
     }
     latency = strtol( params[ "latency" ].c_str(), NULL, 0 );
     //     latency = latency / 2;
 
     if ( params.find("radix") == params.end() ) {
-	_abort(RtrIF,"couldn't find radix\n");
+	out.fatal(CALL_INFO, -1,"couldn't find radix\n");
     }
     radix = strtol( params[ "radix" ].c_str(), NULL, 0 );
 
     if ( params.find("msg_size") == params.end() ) {
-	_abort(RtrIF,"couldn't find msg_size\n");
+	out.fatal(CALL_INFO, -1,"couldn't find msg_size\n");
     }
     msg_size = strtol( params[ "msg_size" ].c_str(), NULL, 0 );
 
     if ( params.find("chunk_size") == params.end() ) {
-	_abort(RtrIF,"couldn't find chunk_size\n");
+	out.fatal(CALL_INFO, -1,"couldn't find chunk_size\n");
     }
     chunk_size = strtol( params[ "chunk_size" ].c_str(), NULL, 0 );
 
     if ( params.find("coalesce") == params.end() ) {
-	_abort(RtrIF,"couldn't find coalesce\n");
+	out.fatal(CALL_INFO, -1,"couldn't find coalesce\n");
     }
     enable_coalescing = (0 != (strtol( params[ "coalesce" ].c_str(), NULL, 0 )));
 
     if ( params.find("enable_putv") == params.end() ) {
-	_abort(RtrIF,"couldn't find coalesce\n");
+	out.fatal(CALL_INFO, -1,"couldn't find coalesce\n");
     }
     enable_putv = 0 != (strtol( params[ "enable_putv" ].c_str(), NULL, 0 ));
 
@@ -147,7 +147,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     TimeConverter* tc = registerTimeBase( "1ns" );
     
     if ( params.find("noiseRuns") == params.end() ) {
-	_abort(RtrIF,"couldn't find noiseRuns\n");
+	out.fatal(CALL_INFO, -1,"couldn't find noiseRuns\n");
     }
     noise_runs = strtol( params[ "noiseRuns" ].c_str(), NULL, 0 );
 
@@ -157,14 +157,14 @@ trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     }
     else {
         if ( params.find("noiseInterval") == params.end() ) {
-	    _abort(RtrIF,"couldn't find noiseInterval\n");
+	    out.fatal(CALL_INFO, -1,"couldn't find noiseInterval\n");
 	}
 	noise_interval =
 	    defaultTimeBase->convertFromCoreTime(registerTimeBase(params["noiseInterval"],
                                                                   false)->getFactor());
 	
 	if ( params.find("noiseDuration") == params.end() ) {
-	    _abort(RtrIF,"couldn't find noiseDuration\n");
+	    out.fatal(CALL_INFO, -1,"couldn't find noiseDuration\n");
 	}
 	noise_duration =
 	    defaultTimeBase->convertFromCoreTime(registerTimeBase(params["noiseDuration"],
@@ -173,7 +173,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     do_noise = false;
     
     if (params.find("application") == params.end()) {
-        _abort(RtrIF, "couldn't find application\n");
+        out.fatal(CALL_INFO, -1, "couldn't find application\n");
     }
     std::string application = params["application"];
 
@@ -256,7 +256,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     } else if (application == "eq_test" ) {
         app = new eq_test(this);
     } else {
-        _abort(RtrIF, "Invalid application: %s\n", application.c_str());
+        out.fatal(CALL_INFO, -1, "Invalid application: %s\n", application.c_str());
     }
     
     registerAsPrimaryComponent();

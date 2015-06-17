@@ -101,7 +101,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -134,7 +134,7 @@ state_event msgr_event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -165,7 +165,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -206,7 +206,7 @@ state_event enter_allreduce, exit_allreduce;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -251,7 +251,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -292,7 +292,7 @@ state_event msgr_event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -322,7 +322,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -376,7 +376,7 @@ state_event t3_event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -407,7 +407,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -436,7 +436,7 @@ state_event msgr_event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -466,7 +466,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -506,7 +506,7 @@ state_event enter_allreduce, exit_allreduce;
 	    break;
 
 	default:
-	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 

@@ -26,7 +26,6 @@
 #include "memEvent.h"
 #include <boost/assert.hpp>
 #include "sst/core/output.h"
-#include "sst/core/debug.h"
 
 namespace SST {
 

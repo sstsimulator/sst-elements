@@ -113,7 +113,7 @@ NInterface::NInterface (SST::ComponentId_t id, Params& params): DES_Component(id
 
     // get configuration parameters
     if ( params.find("id") == params.end() ) {
-        _abort(event_test,"Specify node_id for the router\n");
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1 ,"Specify node_id for the router\n");
     }
     node_id = strtol( params[ "id" ].c_str(), NULL, 0 );
 

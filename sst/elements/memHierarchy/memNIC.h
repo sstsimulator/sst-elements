@@ -17,7 +17,6 @@
 
 
 #include <sst/core/component.h>
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/output.h>
 #include <sst/core/module.h>

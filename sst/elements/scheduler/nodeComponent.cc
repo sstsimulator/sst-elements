@@ -23,7 +23,6 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <sst/core/debug.h>
 #include "sst/core/element.h"
 #include <sst/core/params.h>
 
@@ -96,7 +95,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     schedout.init("", 8, ~0, Output::STDOUT);
 
     if (params.find("nodeNum") == params.end()) {
-        _abort(event_test,"couldn't find the nodeNum param for this node\n");
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find the nodeNum param for this node\n");
     }
     nodeNum = strtol(params["nodeNum"].c_str(), NULL, 0);
     ID = params["id"];

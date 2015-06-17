@@ -15,12 +15,9 @@
 #include <algorithm>
 #include <stdlib.h>
 
-#include <sst/core/debug.h>
 
 using namespace SST::Merlin;
 using namespace std;
-
-#define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_fattree, fmt, ## args )
 
 
 void
@@ -279,7 +276,7 @@ void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vec
     //         }
     //         break;
     //     default:
-    //         _abort(topt_fattree, "Bad level %d\n", rtr_level);
+    //         output.fatal(CALL_INFO, -1, "Bad level %d\n", rtr_level);
     //     }
     // } else {
     //     route(inPort, 0, ev);

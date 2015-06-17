@@ -131,7 +131,7 @@ allreduce_events_t e= (allreduce_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -182,7 +182,7 @@ state_event send_event;
 	    break;
 
 	default:
-	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -243,7 +243,7 @@ allreduce_op_t op;
 		    break;
 
 		default:
-		    _abort(allreduce_pattern, "[%3d] Invalid operation %d\n", cp->my_rank, op);
+		    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid operation %d\n", cp->my_rank, op);
 	    }
 
 	    // Fake doing the operation on each double
@@ -262,7 +262,7 @@ allreduce_op_t op;
 	    break;
 
 	default:
-	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -341,7 +341,7 @@ allreduce_events_t e= (allreduce_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -396,7 +396,7 @@ std::list<int>::iterator it;
 	    break;
 
 	default:
-	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
+	    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 

@@ -22,7 +22,6 @@
 #include <boost/variant.hpp>
 #include <string>
 #include <assert.h>
-#include "sst/core/debug.h"
 
 #include "memEvent.h"
 
@@ -110,7 +109,9 @@ inline long convertToBytes(std::string componentSize){
     trim(componentSize);
     to_upper(componentSize);
 
-    if(componentSize.size() < 2) _abort(Cache, "Cache size is not correctly specified. \n");
+    Output &out = Simulation::getSimulation()->getSimulationOutput();
+
+    if(componentSize.size() < 2) out.fatal(CALL_INFO, -1, "Cache size is not correctly specified. \n");
     
     std::string value = componentSize.substr(0, componentSize.size() - 2);
     trim(value);
@@ -131,7 +132,7 @@ inline long convertToBytes(std::string componentSize){
         trim(valueStr2);
         return atol(valueStr2.c_str());
     }else{
-        _abort(Cache, "Cache size is not correctly specified. String: %s. \n", value.c_str());
+        out.fatal(CALL_INFO, -1, "Cache size is not correctly specified. String: %s. \n", value.c_str());
     }
 
     return 0L;

@@ -37,13 +37,13 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     out.init("", 0, 0, Output::STDOUT);
 
 	if ( params.find("commFreq") == params.end() ) {
-		_abort(event_test,"couldn't find communication frequency\n");
+		out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
 	}
 	commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
 
 	maxAddr = (uint64_t)params.find_integer("memSize", -1) -1;
 	if ( !maxAddr ) {
-		_abort(trivialCPU, "Must set memSize\n");
+		out.fatal(CALL_INFO, -1, "Must set memSize\n");
 	}
 
 	do_write = (bool)params.find_integer("do_write", 1);
@@ -60,7 +60,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 
     memory = dynamic_cast<Interfaces::SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
     if ( !memory ) {
-        _abort(TrivialCPU, "Unable to load Module as memory\n");
+        out.fatal(CALL_INFO, -1, "Unable to load Module as memory\n");
     }
     memory->initialize("mem_link",
 			new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
@@ -93,7 +93,7 @@ void trivialCPU::handleEvent(Interfaces::SimpleMem::Request *req)
 {
     std::map<uint64_t, SimTime_t>::iterator i = requests.find(req->id);
     if ( requests.end() == i ) {
-        _abort(trivialCPU, "Event (%" PRIx64 ") not found!\n", req->id);
+        out.fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", req->id);
     } else {
         SimTime_t et = getCurrentSimTime() - i->second;
         requests.erase(i);

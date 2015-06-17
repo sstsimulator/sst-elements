@@ -23,6 +23,10 @@
 #include <dll/memEvent.hh>
 #include <rawEvent.h>
 
+#ifdef fatal
+#undef fatal
+#endif
+
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -124,7 +128,7 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
 {
 	MemPkt* pkt = findMatchingEvent(e);
 	if ( !pkt ) {
-		_abort(Gem5Converter, "Trying to convert SST even for which no matching GEM5 event is found.\n");
+		dbg->fatal(CALL_INFO, -1, "Trying to convert SST even for which no matching GEM5 event is found.\n");
 	}
 
 	switch ( e->cmd ) {
@@ -141,7 +145,7 @@ MemPkt* PortLink::convertSSTtoGEM5( SimpleMem::Request *e )
             if(e)
             break;
         default:
-            _abort(Gem5Converter, "Trying to map SST cmd %d to GEM5\n", e->cmd);
+            dbg->fatal(CALL_INFO, -1, "Trying to map SST cmd %d to GEM5\n", e->cmd);
             break;
 	}
 
@@ -182,7 +186,7 @@ SimpleMem::Request* PortLink::convertGEM5toSST( MemPkt *pkt )
             req->setPayload(pkt->data, pkt->size);
             break;
         default:
-            _abort(Gem5Converter, "Don't know how to convert command %d to SST\n", pkt->cmd);
+            dbg->fatal(CALL_INFO, -1, "Don't know how to convert command %d to SST\n", pkt->cmd);
     }
     m_g5events[req->id] = pkt;
 

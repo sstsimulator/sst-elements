@@ -16,11 +16,9 @@
 
 #include <stdlib.h>
 
-#include <sst/core/debug.h>
 
 using namespace SST::Merlin;
 
-#define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_dragonfly, fmt, ## args )
 
 /*
  * Port Layout:
@@ -54,7 +52,7 @@ topo_dragonfly::topo_dragonfly(Component* comp, Params &p) :
     uint32_t id = p.find_integer("id");
     group_id = id / params.a;
     router_id = id % params.a;
-    DPRINTF("%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
+    output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
             group_id, router_id, id, params.p, params.a, params.k, params.h, params.g);
 }
 
@@ -88,7 +86,7 @@ void topo_dragonfly::route(int port, int vc, internal_router_event* ev)
         next_port = td_ev->dest.host;
     }
 
-    DPRINTF("%u:%u, Recv: %d/%d  Setting Next Port/VC:  %u/%u\n", group_id, router_id, port, vc, next_port, td_ev->getVC());
+    output.verbose(CALL_INFO, 1, 1, "%u:%u, Recv: %d/%d  Setting Next Port/VC:  %u/%u\n", group_id, router_id, port, vc, next_port, td_ev->getVC());
     td_ev->setNextPort(next_port);
 }
 
@@ -114,7 +112,7 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
         break;
     }
 
-    // DPRINTF("Init packet from %d to %d to %u:%u:%u:%u\n", ev->request->src, ev->request->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
+    // output.verbose(CALL_INFO, 1, 1, "Init packet from %d to %d to %u:%u:%u:%u\n", ev->request->src, ev->request->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
 
     topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
     td_ev->src_group = group_id;
@@ -220,7 +218,8 @@ uint32_t topo_dragonfly::router_to_group(uint32_t group) const
     } else if ( group > group_id ) {
         return (group-1) / params.h;
     } else {
-        _abort(topo_dragonfly, "Trying to find router to own group.\n");
+        output.fatal(CALL_INFO, -1, "Trying to find router to own group.\n");
+        return 0;
     }
 }
 

@@ -184,7 +184,7 @@ int payload_len;
 
 
     if (sst_event->dest != my_rank)   {
-	_abort(comm_pattern, "%s dest %d != my rank %d. Msg ID 0x%" PRIx64 "\n",
+	out.fatal(CALL_INFO, -1, "%s dest %d != my rank %d. Msg ID 0x%" PRIx64 "\n",
 	    err_str, sst_event->dest, my_rank, sst_event->msg_id);
     }
 

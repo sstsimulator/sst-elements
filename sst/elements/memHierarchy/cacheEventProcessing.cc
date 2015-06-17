@@ -309,7 +309,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
             processFetchResp(event, baseAddr);
             break;
         default:
-            _abort(MemHierarchy::Cache, "Command not supported, cmd = %s", CommandString[cmd]);
+            d_->fatal(CALL_INFO, -1, "Command not supported, cmd = %s", CommandString[cmd]);
     }
 }
 
@@ -343,7 +343,7 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
             delete origRequest;
             break;
         default:
-            _abort(MemHierarchy::Cache, "Command does not exist. Command: %s, Src: %s\n", CommandString[_cmd], _event->getSrc().c_str());
+            d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[_cmd], _event->getSrc().c_str());
             break;
     }
 }

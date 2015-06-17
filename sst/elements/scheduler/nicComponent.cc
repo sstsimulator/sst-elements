@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/params.h>
@@ -230,7 +229,7 @@ nicComponent::clock_handler(Cycle_t cycle)
             SimpleNetwork::Request* req = link_control->recv(last_vn);
             MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(req->takePayload());
             if ( ev == NULL ) {
-                _abort(nic, "Aieeee!\n");
+                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Aieeee!\n");
             }
             std::cout << id << " received a packet on VN" << last_vn << " from " << req->src << std::endl;
             packets_recd++;

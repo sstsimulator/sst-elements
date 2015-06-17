@@ -33,7 +33,8 @@ bool VaultSimMemory::issueRequest(MemController::DRAMReq *req){
         return false;
     }
     MemEvent::id_type reqID = req->reqEvent_->getID();
-    assert(outToCubes.find(reqID) == outToCubes.end());
+    if (outToCubes.find(reqID) != outToCubes.end())
+        ctrl->dbg.fatal(CALL_INFO, -1, "Assertion failed");
     outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
     MemEvent *outgoingEvent = new MemEvent(*req->reqEvent_); // we make a copy, because the dramreq keeps to 'original'
     cube_link->send(outgoingEvent); // send the event off
@@ -50,8 +51,8 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
       outToCubes.erase(ri);
       delete event;
     }
-    else _abort(MemController, "Could not match incoming request from cubes\n");
+    else ctrl->dbg.fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
   }
-  else _abort(MemController, "Recived wrong event type from cubes\n");
+  else ctrl->dbg.fatal(CALL_INFO, -1, "Recived wrong event type from cubes\n");
 
 }

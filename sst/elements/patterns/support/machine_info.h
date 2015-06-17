@@ -11,9 +11,9 @@
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/set.hpp>
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/params.h>
+#include <sst/core/simulation.h>
 
 // Storage for NIC parameters
 typedef struct   {
@@ -60,7 +60,7 @@ class MachineInfo   {
     public:
 	MachineInfo(SST::Params& params)   {
 	    if (!init(params))   {
-		_ABORT(MachineInfo, "Machine info initialization failed!\n");
+            SST::Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Machine info initialization failed!\n");
 	    }
 	}
 

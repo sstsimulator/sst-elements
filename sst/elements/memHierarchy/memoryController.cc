@@ -45,10 +45,10 @@ using namespace SST::MemHierarchy;
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     int debugLevel = params.find_integer("debug_level", 0);
-    if(debugLevel < 0 || debugLevel > 10)
-        _abort(MemController, "Debugging level must be between 0 and 10. \n");
     
     dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    if(debugLevel < 0 || debugLevel > 10)
+        dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
     
     statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
@@ -101,11 +101,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
 
     if(params.find("mem_size") != params.end()) {
-	_abort(MemController, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n");
+	dbg.fatal(CALL_INFO, -1, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n");
     }
 
     if(0 == backendRamSizeMB) {
-	_abort(MemController, "Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n");
+	dbg.fatal(CALL_INFO, -1, "Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n");
     }
 
     // Convert into MBs

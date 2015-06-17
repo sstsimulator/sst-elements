@@ -31,7 +31,7 @@ using namespace SST;
 #if DBG_COMM_PATTERN
 #define _COMM_PATTERN_DBG(lvl, fmt, args...)\
     if (comm_pattern_debug >= lvl)   { \
-	printf("%d:Comm_pattern::%s():%4d: " fmt, _debug_rank, __FUNCTION__, __LINE__, ## args); \
+	printf("%d:Comm_pattern::%s():%4d: " fmt, 1, __FUNCTION__, __LINE__, ## args); \
     }
 #else
 #define _COMM_PATTERN_DBG(lvl, fmt, args...)
@@ -44,7 +44,7 @@ class Comm_pattern : public Component {
 	// The constructor
         Comm_pattern(ComponentId_t id, Params& params) :
 	    // constructor initializer list
-            Component(id), params(params)
+            Component(id), out(Simulation::getSimulation()->getSimulationOutput()), params(params)
         {
 
 	    NIC_model *NICmodel[NUM_NIC_MODELS];
@@ -69,7 +69,7 @@ class Comm_pattern : public Component {
 	    self_link= configureSelfLink("Me", new Event::Handler<Comm_pattern>
 		    (this, &Comm_pattern::handle_self_events));
 	    if (self_link == NULL)   {
-		_ABORT(Comm_pattern, "That was no good!\n");
+		out.fatal(CALL_INFO, -1, "That was no good!\n");
 	    }
 
 
@@ -95,7 +95,7 @@ class Comm_pattern : public Component {
 			// Net and NoC are mandatory; Far is optional
 			_COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"%s\"\n",
 			    name);
-			_ABORT(Comm_pattern, "Check the input XML file! for %s\n", name);
+			out.fatal(CALL_INFO, -1, "Check the input XML file! for %s\n", name);
 		    }
 		}
 		model->set_send_link(link);
@@ -109,7 +109,7 @@ class Comm_pattern : public Component {
 		    (this, &Comm_pattern::handle_nvram_events));
 	    if (nvram == NULL)   {
 		_COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"NVRAM\"\n");
-		_ABORT(Comm_pattern, "Check the input XML file for NVRAM!\n");
+		out.fatal(CALL_INFO, -1, "Check the input XML file for NVRAM!\n");
 	    }
 
             // Create a handler for events from the storage network
@@ -117,7 +117,7 @@ class Comm_pattern : public Component {
 		    (this, &Comm_pattern::handle_storage_events));
 	    if (storage == NULL)   {
 		_COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"STORAGE\"\n");
-		_ABORT(Comm_pattern, "Check the input XML file! for STORAGE\n");
+		out.fatal(CALL_INFO, -1, "Check the input XML file! for STORAGE\n");
 	    }
 
 	    self_link->setDefaultTimeBase(tc);
@@ -166,6 +166,9 @@ class Comm_pattern : public Component {
 	    Comm_pattern * mySelf= (Comm_pattern *)obj;
 	    return mySelf->getComponentTime();
 	}
+
+    protected:
+    Output &out;
 
     private:
 

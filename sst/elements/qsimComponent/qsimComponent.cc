@@ -13,7 +13,6 @@
 #include "sst/core/serialization.h"
 #include "qsimComponent.h"
 
-#include <sst/core/debug.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 
@@ -54,10 +53,10 @@ qsimComponent::qsimComponent(ComponentId_t id, Params &p):
 
   bool found;
   stateFile = p.find_string("state", "", found);
-  if (!found) _abort(qsimComponent, "State file not provided\n");
+  if (!found) out.fatal(CALL_INFO, -1, "State file not provided\n");
 
   appFile = p.find_string("app", "", found);
-  if (!found) _abort(qsimComponent, "Application .tar file not provided\n");
+  if (!found) out.fatal(CALL_INFO, -1, "Application .tar file not provided\n");
 
   clockFreq = p.find_string("clock", "5GHz", found);
 
@@ -75,7 +74,7 @@ qsimComponent::qsimComponent(ComponentId_t id, Params &p):
   typedef SimpleMem::Handler<qsimComponent> qc_mh;
   if ( !memLink->initialize("memLink",
           new qc_mh(this, &qsimComponent::handleEvent)) ) {
-      _abort(qsimComponent, "Unable to load Link memLink\n");
+      out.fatal(CALL_INFO, -1, "Unable to load Link memLink\n");
   }
   if ( ! iMemLink->initialize("iMemLink", new qc_mh(this, &qsimComponent::handleEvent)) ) {
       delete iMemLink;
@@ -161,7 +160,7 @@ void qsimComponent::handleEvent(Event *event) {
       ipiRingOut->send(e);
     }
   } else {
-    _abort(qsimComponent, "Received unknown event type.\n");
+    out.fatal(CALL_INFO, -1, "Received unknown event type.\n");
   }
 }
 

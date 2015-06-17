@@ -46,11 +46,11 @@ iris_trig_nic::iris_trig_nic( ComponentId_t id, Params& params ) :
     registerClock( frequency, clock_handler_ptr, false  );
  
     if ( params.find("latency") == params.end() ) {
-	_abort(iris_trig_nic,"couldn't find NIC latency\n");
+	output.fatal(CALL_INFO, -1 ,"couldn't find NIC latency\n");
     }
 
     if ( params.find("timing_set") == params.end() ) {
-	_abort(iris_trig_nic,"couldn't find timing set\n");
+	output.fatal(CALL_INFO, -1, "couldn't find timing set\n");
     }
     timing_set = strtol( params[ "timing_set" ].c_str(), NULL, 0 );
 

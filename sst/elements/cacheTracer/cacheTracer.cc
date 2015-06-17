@@ -110,7 +110,7 @@ bool cacheTracer::clock(Cycle_t current){
     while((ev = northBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){ 
-             _abort(cacheTracer::clock, "\ncacheTracer received bad event.\n");
+            out->fatal(CALL_INFO, -1, "cacheTracer received bad event.\n");
         }
         addr = me->getAddr();
         nbCount++;
@@ -144,7 +144,7 @@ bool cacheTracer::clock(Cycle_t current){
     while((ev = southBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if (me == NULL){
-            _abort(cacheTracer::clock, "\ncacheTracer received bad event\n");
+            out->fatal(CALL_INFO, -1, "\ncacheTracer received bad event\n");
         }
         addr = me->getAddr();
         sbCount++;

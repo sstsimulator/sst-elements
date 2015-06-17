@@ -93,7 +93,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -132,7 +132,7 @@ state_event enter_barrier, exit_barrier;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -161,7 +161,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -194,7 +194,7 @@ state_event enter_alltoall, exit_alltoall;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -242,7 +242,7 @@ state_event enter_allreduce, exit_allreduce;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -263,7 +263,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    out.fatal(CALL_INFO, -1, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 

@@ -28,7 +28,6 @@
 #include <deque>
 #include <sstream>
 
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -45,17 +44,18 @@ public:
     RtrIF( ComponentId_t id, Params& params ) :
         Component(id),
         rtrCountP(0),
-        num_vcP(2)
+        num_vcP(2),
+        out(Simulation::getSimulation()->getSimulationOutput())
     {
         int num_tokens = 512;
 
 
         // if ( params.find( "id" ) == params.end() ) {
-        //     _abort(RtrIF,"couldn't find routerID\n" );
+        //     out.fatal(CALL_INFO, -1,"couldn't find routerID\n" );
         // }
         m_id = params.find_integer( "id" );
         if ( m_id == -1 ) {
-            _abort(RtrIF,"couldn't find routerID\n" );
+            out.fatal(CALL_INFO, -1,"couldn't find routerID\n" );
         }
 
         if ( params.find("clock") != params.end() ) {
@@ -87,19 +87,19 @@ public:
 
     bool toNicQ_empty(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) out.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         return toNicMapP[vc]->empty();
     }
 
     RtrEvent *toNicQ_front(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) out.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
     void toNicQ_pop(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) out.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits );
         toNicMapP[vc]->pop_front();
     }
@@ -107,7 +107,7 @@ public:
     bool send2Rtr( RtrEvent *event)
     {
         networkPacket* pkt = &event->packet;
-        if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
+        if ( pkt->vc >= (int) num_vcP ) out.fatal(CALL_INFO, -1,"vc=%d\n",pkt->vc);
 //  	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum,getCurrentSimTimeNano()); 
 
 // 	// Translate destination into x,y,z
@@ -129,7 +129,7 @@ public:
 private:
     bool rtrWillTake( int vc, int numFlits )
     {
-        if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= (int) num_vcP ) out.fatal(CALL_INFO, -1,"\n");
         return toRtrMapP[vc]->willTake( numFlits );
     }
     
@@ -150,7 +150,7 @@ private:
             break;
 
         default:
-            _abort(RtrIF,"unknown type %d\n",event->type);
+            out.fatal(CALL_INFO, -1,"unknown type %d\n",event->type);
         }
     }
 
@@ -176,7 +176,7 @@ private:
         pkt->vc = RTR_2_NIC_VC(pkt->vc);
 
         if ( pkt->vc >= (int) num_vcP ) {
-            _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc,pkt);
+            out.fatal(CALL_INFO, -1,"vc=%d pkt=%p\n",pkt->vc,pkt);
         }
 
         toNicMapP[pkt->vc]->push_back( event );
@@ -184,7 +184,7 @@ private:
 
     void returnTokens2Nic( int vc, uint32_t num )
     {
-        if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= (int) num_vcP ) out.fatal(CALL_INFO, -1,"\n");
         toRtrMapP[vc]->returnTokens( num );
     }
 
@@ -261,6 +261,7 @@ private:
 protected:
     int                     m_id;
     std::string             frequency;
+    Output &                out;
 };
 
 }

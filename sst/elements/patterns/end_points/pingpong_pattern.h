@@ -72,7 +72,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    }
 
 	    if (dest >= num_ranks)   {
-		_abort(pingpong_pattern, "[%3d] Invalid destination %d for %d ranks\n",
+		out.fatal(CALL_INFO, -1, "[%3d] Invalid destination %d for %d ranks\n",
 		    my_rank, dest, num_ranks);
 	    }
 

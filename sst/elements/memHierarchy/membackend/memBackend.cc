@@ -30,12 +30,13 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 MemBackend::MemBackend(Component *comp, Params &params) : SubComponent(comp) {
-    ctrl = dynamic_cast<MemController*>(comp);
-    if (!ctrl)
-        _abort(MemBackend, "MemBackends expect to be loaded into MemControllers.\n");
 
     uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
     output = new SST::Output("MemoryBackend[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
+
+    ctrl = dynamic_cast<MemController*>(comp);
+    if (!ctrl)
+        output->fatal(CALL_INFO, -1, "MemBackends expect to be loaded into MemControllers.\n");
 }
 
 MemBackend::~MemBackend() {
