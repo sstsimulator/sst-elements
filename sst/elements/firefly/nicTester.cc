@@ -11,7 +11,6 @@
 
 #include "sst_config.h"
 
-#include <sst/core/debug.h>
 #include <sst/core/params.h>
 #include <sst/core/link.h>
 
