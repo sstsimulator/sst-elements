@@ -397,7 +397,7 @@ GenericRC::push (const Flit* f)
     }
     else
     {
-        _abort("RC","InvalidFlitException fty: %d ", f->type);
+        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "InvalidFlitException fty: %d ", f->type);
     }
 
     return ;

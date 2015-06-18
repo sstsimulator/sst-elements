@@ -20,7 +20,7 @@ using namespace SST::MemHierarchy;
 HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string hybridIniFilename = params.find_string("system_ini", NO_STRING_DEFINED);
     if(hybridIniFilename == NO_STRING_DEFINED)
-        _abort(MemController, "XML must define a 'system_ini' file parameter\n");
+        ctrl->dbg.fatal(CALL_INFO, -1, "XML must define a 'system_ini' file parameter\n");
 
     memSystem = HybridSim::getMemorySystemInstance( 1, hybridIniFilename);
 

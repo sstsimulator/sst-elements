@@ -70,7 +70,7 @@ bool MOESITopCC::handleGetSRequest(MemEvent* _event, CacheLine* _cacheLine, bool
             //sendInvalidateX(lineIndex, _event->getRqstr(), _mshrHit);
         } else if (state == O) {
         } else {
-            _abort(MemHierarchy::CacheController, "Block has owner but is not in an owned state");
+            d_->fatal(CALL_INFO, -1, "Block has owner but is not in an owned state");
         }
     } else if (state == S || state == O) {
         //l->addSharer(_sharerId);

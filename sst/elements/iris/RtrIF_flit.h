@@ -86,6 +86,7 @@ public:
         Component(id),
         rtrCountP(0),
         num_vcP(2),
+        m_log(Simulation::getSimulation()->getSimulationOutput()),
         stat_avg_pkt_lat(0),
         stat_total_pkts_recv(0)
     {
@@ -93,7 +94,7 @@ public:
 
 
         if ( params.find( "id" ) == params.end() ) {
-            _abort(RtrIF,"couldn't find routerID\n" );
+            m_log.fatal(CALL_INFO, -1,"couldn't find routerID\n" );
         }
         m_id = params.find_integer("id");
 
@@ -126,19 +127,19 @@ public:
 
     bool toNicQ_empty(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         return toNicMapP[vc]->empty();
     }
 
     irisRtrEvent *toNicQ_front(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
     void toNicQ_pop(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits );
         toNicMapP[vc]->pop_front();
     }
@@ -146,7 +147,7 @@ public:
     bool send2Rtr( irisRtrEvent *event)
     {
         irisNPkt* pkt = &event->packet;
-        if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
+        if ( pkt->vc >= (int) num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",pkt->vc);
         pkt->sending_time=getCurrentSimTimeNano();
         //  	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum,getCurrentSimTimeNano()); 
 
@@ -173,7 +174,7 @@ public:
 private:
     bool rtrWillTake( int vc, int numFlits )
     {
-        if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= (int) num_vcP ) m_log.fatal(CALL_INFO, -1,"\n");
         return toRtrMapP[vc]->willTake( numFlits );
     }
 
@@ -202,7 +203,7 @@ private:
                 break;
 
             default:
-                _abort(RtrIF,"unknown type %d\n",event->type);
+                m_log.fatal(CALL_INFO, -1,"unknown type %d\n",event->type);
         }
     }
 
@@ -235,7 +236,7 @@ private:
         pkt->vc = RTR_2_NIC_VC(pkt->vc);
 
         if ( pkt->vc >= (int) num_vcP ) {
-            _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc,pkt);
+            m_log.fatal(CALL_INFO, -1,"vc=%d pkt=%p\n",pkt->vc,pkt);
         }
 
         toNicMapP[pkt->vc]->push_back( event );
@@ -243,7 +244,7 @@ private:
 
     void returnTokens2Nic( int vc, uint32_t num )
     {
-        if ( vc >= (int) num_vcP ) _abort(RtrIF," vc is %d and num_vcP is %d \n", vc, num_vcP);
+        if ( vc >= (int) num_vcP ) m_log.fatal(CALL_INFO, -1," vc is %d and num_vcP is %d \n", vc, num_vcP);
         toRtrMapP[vc]->returnTokens( num );
     }
 
@@ -330,6 +331,7 @@ private:
 protected:
     int                     m_id;
     std::string             frequency;
+    Output                 &m_log;
 
 private:
     uint64_t stat_avg_pkt_lat;

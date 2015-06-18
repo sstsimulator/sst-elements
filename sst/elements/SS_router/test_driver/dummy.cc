@@ -32,17 +32,17 @@ void RtrIF::dummyInit( Params params, std::string frequency )
 //                                                 ( this, &RtrIF::dummyLoad );
 
 //     if ( ! registerClock( frequency, clockHandler ) ) {
-//         _abort(XbarV2,"couldn't register clock handler");
+//         m_log.fatal(CALL_INFO, -1,"couldn't register clock handler");
 //     }
     registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::dummyLoad) );
  
     if ( params.find("nodes") == params.end() ) {
-	_abort(RtrIF,"couldn't find number of nodes\n");
+	m_log.fatal(CALL_INFO, -1,"couldn't find number of nodes\n");
     }
     m_num_nodes = params.find_integer( "nodes" );
 
     if ( params.find( "file" ) == params.end() ) {
-        _abort(RtrIF,"couldn't find file\n" );
+        m_log.fatal(CALL_INFO, -1,"couldn't find file\n" );
     }
 
 //     std::string file = params["file"];
@@ -50,12 +50,12 @@ void RtrIF::dummyInit( Params params, std::string frequency )
 
 //     m_dummyFd_in = open(file.c_str(), O_RDONLY );
 //     if ( m_dummyFd_in == -1 ) {
-//         _abort( RtrIF," couldn't open file \"%s\"\n", file.c_str() );
+//         m_log.fatal(CALL_INFO, -1," couldn't open file \"%s\"\n", file.c_str() );
 //     }
 
 //     struct stat buf;
 //     if ( fstat( m_dummyFd_in, &buf ) == -1 ) {
-//         _abort( RtrIF," couldn't stat file \"%s\"\n", file.c_str() );
+//         m_log.fatal(CALL_INFO, -1," couldn't stat file \"%s\"\n", file.c_str() );
 //     }
 //     m_dummySize = buf.st_size;
 //     m_dummyOffset = 0;
@@ -64,7 +64,7 @@ void RtrIF::dummyInit( Params params, std::string frequency )
 //     file = file + ".out";
 //     m_dummyFd_out = open(file.c_str(), O_CREAT|O_WRONLY, 0777 );
 //     if ( m_dummyFd_out == -1 ) {
-//         _abort( RtrIF," couldn't open file \"%s\"\n", file.c_str() );
+//         m_log.fatal(CALL_INFO, -1," couldn't open file \"%s\"\n", file.c_str() );
 //     }
 
     m_current_send_node = 0;

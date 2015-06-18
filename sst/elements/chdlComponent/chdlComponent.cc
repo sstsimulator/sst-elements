@@ -78,7 +78,7 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 
   bool found;
   netlFile = p.find_string("netlist", "", found);
-  if (!found) _abort(chdlComponent, "No netlist specified.\n");
+  if (!found) out.fatal(CALL_INFO, -1, "No netlist specified.\n");
 
   clockFreq = p.find_string("clockFreq", "2GHz");
   memFile = p.find_string("memInit", "");
@@ -98,7 +98,7 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 
   typedef SimpleMem::Handler<chdlComponent> mh;
   if (!memLink->initialize("memLink",new mh(this, &chdlComponent::handleEvent)))
-      _abort(chdlComponent, "Unable to initialize Link memLink\n");
+      out.fatal(CALL_INFO, -1, "Unable to initialize Link memLink\n");
 
   typedef Clock::Handler<chdlComponent> ch;
   registerClock(clockFreq, new ch(this, &chdlComponent::clockTick));
@@ -132,7 +132,7 @@ void chdlComponent::init_io_pre(const string &port) {
   tok(t, s, "_");
   if (!strncmp(t[0], "simplemem", 80)) {
     if (t.size() != 4)
-      _abort(chdlComponent, "Malformed IO port name in netlist: %s\n",
+      out.fatal(CALL_INFO, -1, "Malformed IO port name in netlist: %s\n",
              port.c_str());
 
     unsigned id;
@@ -161,7 +161,7 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
       else if (!strncmp(t[1], "llsc", 80)) Egress(req[id].llsc, v[0]);
       else if (!strncmp(t[1], "locked", 80)) Egress(req[id].locked, v[0]);
       else if (!strncmp(t[1], "uncached", 80)) Egress(req[id].uncached, v[0]);
-      else _abort(chdlComponent, "Invalid simplemem req port: %s\n", t[1]);
+      else out.fatal(CALL_INFO, -1, "Invalid simplemem req port: %s\n", t[1]);
     } else if (!strncmp(t[2], "resp", 80)) {
       if (id + 1 > resp.size())
         out.output("ERROR: id+1 exceeds resp.size().\n");
@@ -173,9 +173,9 @@ void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
       else if (!strncmp(t[1], "id", 80)) IngressInt(v, resp[id].id);
       else if (!strncmp(t[1], "llsc", 80)) IngressInt(v, resp[id].llsc);
       else if (!strncmp(t[1], "llscsuc", 80)) IngressInt(v, resp[id].llsc_suc);
-      else _abort(chdlComponent, "Invalid simplemem resp port: %s\n", t[1]);
+      else out.fatal(CALL_INFO, -1, "Invalid simplemem resp port: %s\n", t[1]);
     } else {
-      _abort(chdlComponent, "Malformed IO port name in netlist: %s\n",
+      out.fatal(CALL_INFO, -1, "Malformed IO port name in netlist: %s\n",
              port.c_str());
     }
   } else if (!strncmp(t[0], "counter", 80)) {
@@ -278,7 +278,7 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
     out.debug(_L2_, "I now has %u entries.\n", (unsigned)resp_q[port].size());
   } else {
     if (/*sp[0].ready*/1) resp[port].valid = true;
-    else _abort(chdlComponent, "response arrived when receiver not ready");
+    else out.fatal(CALL_INFO, -1, "response arrived when receiver not ready");
 
     resp[port].wr = req->cmd == SimpleMem::Request::WriteResp;
     if (!resp[port].wr) {

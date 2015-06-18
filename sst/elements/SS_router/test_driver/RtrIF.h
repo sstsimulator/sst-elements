@@ -93,8 +93,16 @@ public:
         int num_tokens = 512;
         std::string frequency;
 
+        bool do_dbg = !params.find_string("debug", "no").compare("yes");
+        bool do_log = !params.find_string("info", "no").compare("yes");
+        bool do_dummyDbg = !params.find_string("dummyDebug", "no").compare("yes");
+
+        m_dbg.init(idStr.str(), 0, 0, do_dbg ? Output::STDOUT : Output::FILE);
+        m_log.init(idStr.str(), 0, 0, do_log ? Output::STDOUT : Output::FILE);
+        m_dummyDbg.init(idStr.str(), 0, 0, do_dummyDebug ? Output::STDOUT : Output::FILE);
+
         if ( params.find( "id" ) == params.end() ) {
-            _abort(RtrIF,"couldn't find routerID\n" );
+            m_log.fatal(CALL_INFO, -1,"couldn't find routerID\n" );
         }
         m_id = params.find_integer( "id" );
 
@@ -110,13 +118,6 @@ public:
             num_tokens = params.find_integer( "Node2RouterQSize_flits" );
         }
 
-        bool do_dbg = !params.find_string("debug", "no").compare("yes");
-        bool do_log = !params.find_string("info", "no").compare("yes");
-        bool do_dummyDbg = !params.find_string("dummyDebug", "no").compare("yes");
-
-        m_dbg.init(idStr.str(), 0, 0, do_dbg ? Output::STDOUT : Output::FILE);
-        m_log.init(idStr.str(), 0, 0, do_log ? Output::STDOUT : Output::FILE);
-        m_dummyDbg.init(idStr.str(), 0, 0, do_dummyDebug ? Output::STDOUT : Output::FILE);
 
         m_log.output("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
         m_log.output("nic id=%d frequency=%s\n", m_id, frequency.c_str());
@@ -133,7 +134,7 @@ public:
 //                                                 ( this, &RtrIF::clock );
 
 //         if ( ! registerClock( frequency, clockHandler ) ) {
-//             _abort(XbarV2,"couldn't register clock handler");
+//             m_log.fatal(CALL_INFO, -1,"couldn't register clock handler");
 //         }
 	registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock) );
 
@@ -151,20 +152,20 @@ public:
 
     bool toNicQ_empty(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         return toNicMapP[vc]->empty();
     }
 
     RtrEvent *toNicQ_front(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         m_dbg.output(CALL_INFO, "vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
     void toNicQ_pop(unsigned int vc)
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",vc);
         m_dbg.output(CALL_INFO, "vc=%d\n",vc);
         returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits );
         toNicMapP[vc]->pop_front();
@@ -173,7 +174,7 @@ public:
     bool send2Rtr( RtrEvent *event)
     {
         networkPacket* pkt = &event->packet;
-        if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
+        if ( pkt->vc >= (int) num_vcP ) m_log.fatal(CALL_INFO, -1,"vc=%d\n",pkt->vc);
         bool retval = toRtrMapP[pkt->vc]->push( event );
         if ( retval )
             m_dbg.output(CALL_INFO, "vc=%d src=%d dest=%d pkt=%p\n",
@@ -196,7 +197,7 @@ private:
 
     bool rtrWillTake( unsigned int vc, int numFlits )
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"\n");
         m_dbg.output(CALL_INFO, "vc=%d numFlits=%d\n",vc,numFlits);
         return toRtrMapP[vc]->willTake( numFlits );
     }
@@ -219,7 +220,7 @@ private:
             break;
 
         default:
-            _abort(RtrIF,"unknown type %d\n",event->type);
+            m_log.fatal(CALL_INFO, -1,"unknown type %d\n",event->type);
         }
     }
 
@@ -241,7 +242,7 @@ private:
         pkt->vc = RTR_2_NIC_VC(pkt->vc);
 
         if ( pkt->vc >= (int) num_vcP ) {
-            _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc,pkt);
+            m_log.fatal(CALL_INFO, -1,"vc=%d pkt=%p\n",pkt->vc,pkt);
         }
 
         m_dbg.output(CALL_INFO, "vc=%d src=%d dest=%d pkt=%p\n",
@@ -251,7 +252,7 @@ private:
 
     void returnTokens2Nic( unsigned int vc, uint32_t num )
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= num_vcP ) m_log.fatal(CALL_INFO, -1,"\n");
         m_dbg.output(CALL_INFO, "vc=%d numFlits=%d\n", vc, num );
         toRtrMapP[vc]->returnTokens( num );
     }

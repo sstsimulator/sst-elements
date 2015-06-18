@@ -19,7 +19,7 @@ using namespace SST::MemHierarchy;
 FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBackend(comp, params){
     std::string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
-        _abort(MemController, "Model must define a 'device_ini' file parameter\n");
+        output->fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");
 
     maxPendingRequests = (uint32_t) params.find_integer("max_pending_reqs", 32);
     pendingRequests = 0;
