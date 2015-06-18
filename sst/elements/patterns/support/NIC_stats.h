@@ -8,7 +8,7 @@
 #ifndef _NIC_STATS_H_
 #define _NIC_STATS_H_
 
-#include <boost/serialization/set.hpp>
+#include <sst/core/serialization.h>
 #include "patterns.h"
 #include <sst/core/sst_types.h>
 #include "machine_info.h"
