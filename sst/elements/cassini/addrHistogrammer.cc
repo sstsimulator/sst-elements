@@ -43,7 +43,7 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
     //const Addr addr = notify.getPhysicalAddress();
     const Addr vaddr = notify.getVirtualAddress();
     
-    if(notifyResType != MISS || vaddr > cutoff) return;
+    if(notifyResType != MISS || vaddr >= cutoff) return;
     
     // // Remove the offset within a bin
     // Addr baseAddr = vaddr & binMask;

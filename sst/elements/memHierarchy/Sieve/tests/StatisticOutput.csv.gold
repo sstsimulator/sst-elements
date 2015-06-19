@@ -1,0 +1,3 @@
+ComponentName, StatisticName, StatisticSubId, StatisticType, SimTime, Rank, BinsMinValue.u64, BinsMaxValue.u64, BinWidth.u32, TotalNumBins.u32, Sum.u64, SumSQ.u64, NumActiveBins.u32, NumItemsCollected.u64, NumItemsBinned.u64, NumOutOfBounds-MinValue.u64, NumOutOfBounds-MaxValue.u64, Bin0:0-4095.u64, Bin1:4096-8191.u64, Bin2:8192-12287.u64, Bin3:12288-16383.u64, Bin4:16384-20479.u64, Bin5:20480-24575.u64
+sieve, histogram_reads, , Histogram, 5501, 0, 0, 24575, 4096, 6, 16395, 268468325, 2, 2, 2, 0, 0, 1, 0, 0, 0, 1, 0
+sieve, histogram_writes, , Histogram, 5501, 0, 0, 24575, 4096, 6, 12267, 83534309, 1, 2, 2, 0, 0, 0, 2, 0, 0, 0, 0
