@@ -265,10 +265,12 @@ void ProsperoComponent::issueRequest(const ProsperoTraceEntry* entry) {
 		SimpleMem::Request* reqLower = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			lowerAddress, lowerLength);
+        reqLower->setVirtualAddress(entryAddress);
 
 		SimpleMem::Request* reqUpper = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			upperAddress, upperLength);
+        reqUpper->setVirtualAddress((entryAddress - (entryAddress % cacheLineSize)) + cacheLineSize);
 
 		cache_link->sendRequest(reqLower);
 		cache_link->sendRequest(reqUpper);
@@ -288,6 +290,7 @@ void ProsperoComponent::issueRequest(const ProsperoTraceEntry* entry) {
 		SimpleMem::Request* request = new SimpleMem::Request(
 			isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
 			memMgr->translate(entryAddress), entryLength);
+        request->setVirtualAddress(entryAddress);
 		cache_link->sendRequest(request);
 
 		if(isRead) {
