@@ -63,6 +63,9 @@ libmemHierarchy_la_SOURCES = \
 	libmemHierarchy.cc
 
 EXTRA_DIST = \
+        Sieve/tests/StatisticOutput.csv.gold \
+        Sieve/tests/sieveprospero-0.trace \
+        Sieve/tests/trace-text.py \
 	tests/example.py \
 	tests/exampleM5.xml \
 	tests/sdl-1.py \
