@@ -61,7 +61,8 @@ class MemCtrlEvent : public SST::Event {
         }
     };
 
-    map<uint64_t, pageInfo> pageMap;
+    typedef map<uint64_t, pageInfo> pageMap_t;
+    pageMap_t pageMap;
     int maxFastPages;
     int pagesInFast;
 

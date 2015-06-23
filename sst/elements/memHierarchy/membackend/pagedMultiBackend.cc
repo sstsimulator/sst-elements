@@ -49,10 +49,10 @@ bool pagedMultiMemory::issueRequest(MemController::DRAMReq *req){
         } else {
             if (maxFastPages > 0) {
                 // we're full, search for someone to bump
-                for(auto &p : pageMap) {
-                    if ((p.first != pageAddr) && (p.second.inFast == 1)) {
-                        if(p.second.touched < page.touched) {
-                            p.second.inFast = 0; // rm old
+                for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
+                    if ((p->first != pageAddr) && (p->second.inFast == 1)) {
+                        if(p->second.touched < page.touched) {
+                            p->second.inFast = 0; // rm old
                             page.inFast = 1; // add new
                             fastSwaps->addData(1);
                             break;
@@ -97,9 +97,9 @@ void pagedMultiMemory::handleSelfEvent(SST::Event *event){
 }
 
 bool pagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
-    printf("Quantum\n");
-    for(auto &p : pageMap) {
-        p.second.touched = p.second.touched >> 1;
+    //printf("Quantum\n");
+    for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
+        p->second.touched = p->second.touched >> 1;
     }
     return false;
 }
