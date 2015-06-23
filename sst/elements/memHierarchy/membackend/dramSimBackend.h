@@ -33,11 +33,11 @@ namespace MemHierarchy {
 class DRAMSimMemory : public MemBackend {
 public:
     DRAMSimMemory(Component *comp, Params &params);
-    bool issueRequest(MemController::DRAMReq *req);
-    void clock();
-    void finish();
+    virtual bool issueRequest(MemController::DRAMReq *req);
+    virtual void clock();
+    virtual void finish();
 
-private:
+protected:
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
     DRAMSim::MultiChannelMemorySystem *memSystem;

@@ -38,6 +38,7 @@
 
 #ifdef HAVE_LIBDRAMSIM
 #include "membackend/dramSimBackend.h"
+#include "membackend/pagedMultiBackend.h"
 #endif
 
 #ifdef HAVE_LIBHYBRIDSIM
@@ -313,6 +314,28 @@ static const ElementInfoParam dramsimMem_params[] = {
     {NULL, NULL, NULL}
 };
 
+static SubComponent* create_Mem_pagedMulti(Component* comp, Params& params){
+    return new pagedMultiMemory(comp, params);
+}
+
+
+static const ElementInfoParam pagedMultiMem_params[] = {
+    { "verbose",          "Sets the verbosity of the backend output", "0" },
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim Device system file", NULL},
+    {"access_time", "Constant time memory access for \"fast\" memory", "35ns"},
+    {"max_fast_pages", "Number of 4KB \"fast\" (constant time) pages", "256"},
+    {"quantum", "time period for when page access counts is shifted", "1ms"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic pagedMultiMem_statistics[] = {
+    {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
+    {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
+    {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
+    { NULL, NULL, NULL, 0 }
+};
+
 #endif
 
 #if defined(HAVE_LIBHYBRIDSIM)
@@ -474,6 +497,15 @@ static const ElementInfoSubComponent subcomponents[] = {
         create_Mem_DRAMSim, /* Module Alloc w/ params */
         dramsimMem_params,
         NULL, /* statistics */
+        "SST::MemHierarchy::MemBackend"
+    },
+    {
+        "pagedMulti",
+        "DRAMSim-driven memory timings with a fixed timing multi-level memory using paging",
+        NULL, /* Advanced help */
+        create_Mem_pagedMulti, /* Module Alloc w/ params */
+        pagedMultiMem_params,
+        pagedMultiMem_statistics, /* statistics */
         "SST::MemHierarchy::MemBackend"
     },
 #endif
