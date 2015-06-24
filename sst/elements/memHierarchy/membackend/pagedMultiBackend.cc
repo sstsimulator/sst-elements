@@ -16,7 +16,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), pagesInFast(0) {
+pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) {
     string access       = params.find_string("access_time", "35ns");
     self_link = ctrl->configureSelfLink("Self", access,
                                         new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
@@ -32,6 +32,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     fastHits = registerStatistic<uint64_t>("fast_hits","1");
     fastSwaps = registerStatistic<uint64_t>("fast_swaps","1");
     fastAccesses = registerStatistic<uint64_t>("fast_acc","1");
+    tPages = registerStatistic<uint64_t>("t_pages","1");
 }
 
 
@@ -48,17 +49,22 @@ bool pagedMultiMemory::issueRequest(MemController::DRAMReq *req){
             pagesInFast++;
         } else {
             if (maxFastPages > 0) {
+	      if(page.touched > lastMin) {
                 // we're full, search for someone to bump
-                for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
-                    if ((p->first != pageAddr) && (p->second.inFast == 1)) {
-                        if(p->second.touched < page.touched) {
-                            p->second.inFast = 0; // rm old
-                            page.inFast = 1; // add new
-                            fastSwaps->addData(1);
-                            break;
-                        }
-                    }
+	        lastMin = INT_MAX;
+	        const auto endP = pageMap.end();
+                for (auto p = pageMap.begin(); p != endP; ++p) {
+		  if ((p->second.inFast == 1) && (p->first != pageAddr)) {
+		    lastMin = min(lastMin, int(p->second.touched));
+		    if(p->second.touched < page.touched) {
+		      p->second.inFast = 0; // rm old
+		      page.inFast = 1; // add new
+		      fastSwaps->addData(1);
+		      break;
+		    }
+		  }
                 }
+	      } 
             }
         }
     } else {
@@ -85,6 +91,7 @@ void pagedMultiMemory::clock(){
 
 
 void pagedMultiMemory::finish(){
+    printf("fast_t_pages: %llu\n", pageMap.size());
     DRAMSimMemory::finish();
 }
 

@@ -65,6 +65,7 @@ class MemCtrlEvent : public SST::Event {
     pageMap_t pageMap;
     int maxFastPages;
     int pagesInFast;
+    int lastMin;
 
     void handleSelfEvent(SST::Event *event);
     bool quantaClock(SST::Cycle_t _cycle);
@@ -74,6 +75,7 @@ class MemCtrlEvent : public SST::Event {
     Statistic<uint64_t> *fastHits;
     Statistic<uint64_t> *fastSwaps;
     Statistic<uint64_t> *fastAccesses;
+    Statistic<uint64_t> *tPages;
 };
 
 }

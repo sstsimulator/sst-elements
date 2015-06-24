@@ -333,6 +333,7 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
     {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
     {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
     {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
+    {"t_pages", "Number of total pages", "count", 1},
     { NULL, NULL, NULL, 0 }
 };
 
