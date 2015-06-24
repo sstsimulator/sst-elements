@@ -11,11 +11,9 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libchdlComponent.la
 libchdlComponent_la_SOURCES = \
 	chdlComponent.h \
-	chdlComponent.cc \
-	ldnetl.h \
-	ldnetl.cc
+	chdlComponent.cc
 
-EXTRA_DIST = gen_sdl.sh README test/acpu.nand
+EXTRA_DIST = README test/acpu.nand test/test.py
 
 libchdlComponent_la_LDFLAGS = -module -avoid-version $(CHDL_LDFLAGS)
-libchdlComponent_la_LIBADD = -lchdl
+libchdlComponent_la_LIBADD = -lchdl -lchdl-module

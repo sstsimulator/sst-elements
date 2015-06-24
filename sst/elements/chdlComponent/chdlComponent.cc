@@ -22,7 +22,6 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 
-#include "ldnetl.h"
 #include <cstring>
 
 #include <iostream>
@@ -68,6 +67,27 @@ template <typename T> void IngressInt(vector<node> &v, T &x) {
     v[i] = IngressFunc(GetBit(i, x));
 }
 
+// This is embarrassing, but I'd rather do this than strtok_r.
+static void tok(vector<char*> &out, char* in, const char* sep) {
+  char *s(in);
+  out.clear();
+  for (unsigned i = 0; in[i]; ++i) {
+    for (unsigned j = 0; sep[j]; ++j) {
+      if (in[i] == sep[j]) {
+        in[i] = 0;
+        out.push_back(s);
+        s = &in[i+1];
+      }
+    }
+  }
+  out.push_back(s);
+}
+
+template <typename T> void VecLit(vector<node> &v, T &x) {
+  for (unsigned i = 0; i < v.size(); ++i)
+    v[i] = Lit((x >> i)&1ull);
+}
+
 chdlComponent::chdlComponent(ComponentId_t id, Params &p):
   Component(id), tog(0), stopSim(0), registered(false)
 {
@@ -77,7 +97,7 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 
   bool found;
   netlFile = p.find_string("netlist", "", found);
-  if (!found) out.fatal(CALL_INFO, -1, "No netlist specified.\n");
+  if (!found) Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "No netlist specified.\n");
 
   clockFreq = p.find_string("clockFreq", "2GHz");
   memFile = p.find_string("memInit", "");
@@ -97,10 +117,29 @@ chdlComponent::chdlComponent(ComponentId_t id, Params &p):
 
   typedef SimpleMem::Handler<chdlComponent> mh;
   if (!memLink->initialize("memLink",new mh(this, &chdlComponent::handleEvent)))
-      out.fatal(CALL_INFO, -1, "Unable to initialize Link memLink\n");
+    Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, "Unable to initialize Link memLink\n");
 
   typedef Clock::Handler<chdlComponent> ch;
   registerClock(clockFreq, new ch(this, &chdlComponent::clockTick));
+
+  string memPorts = p.find_string("memPorts", "mem", found);
+  vector<char*> port_names;
+  char s[80];
+  strncpy(s, memPorts.c_str(), 80);
+  tok(port_names, s, ",");
+  unsigned next_id = 0;
+  for (auto x : port_names)
+    ports[x] = next_id++;
+
+  // Resize request and response vectors to accomodate all port IDs.
+  req.resize(next_id);
+  req_copy.resize(next_id);
+  resp.resize(next_id);
+  resp_q.resize(next_id);
+  responses_this_cycle.resize(next_id);
+  byte_sz.resize(next_id);
+  data_sz.resize(next_id);
+  // resp_eaten.resize(next_id);
 }
 
 // Used by serialization.
@@ -108,125 +147,87 @@ chdlComponent::chdlComponent(): Component(-1) {}
 
 void chdlComponent::setup() {}
 
-// This is embarrassing, but I'd rather do this than strtok_r.
-static void tok(vector<char*> &out, char* in, const char* sep) {
-  char *s(in);
-  out.clear();
-  for (unsigned i = 0; in[i]; ++i) {
-    for (unsigned j = 0; sep[j]; ++j) {
-      if (in[i] == sep[j]) {
-        in[i] = 0;
-        out.push_back(s);
-        s = &in[i+1];
-      }
-    }
-  }
-  out.push_back(s);
-}
-
-void chdlComponent::init_io_pre(const string &port) {
-  char s[80];
-  vector<char*> t;
-  strncpy(s, port.c_str(), 80);
-  tok(t, s, "_");
-  if (!strncmp(t[0], "simplemem", 80)) {
-    if (t.size() != 4)
-      out.fatal(CALL_INFO, -1, "Malformed IO port name in netlist: %s\n",
-             port.c_str());
-
-    unsigned id;
-    if (ports.find(t[3]) != ports.end()) id = ports[t[3]];
-    else { id = ports.size(); ports[t[3]] = id; }
-  }
-}
-
-void chdlComponent::init_io(const string &port, vector<chdl::node> &v) {
-  char s[80];
-  vector<char*> t;
-  strncpy(s, port.c_str(), 80);
-  tok(t, s, "_");
-
-  if (!strncmp(t[0], "simplemem", 80)) {
-    unsigned id(ports[t[3]]);
-    out.debug(_L0_, "Found a simplemem io: %s\n", port.c_str());
-    if (!strncmp(t[2], "req", 80)) {
-      if (!strncmp(t[1], "ready", 80)) v[0] = Lit(1);
-      else if (!strncmp(t[1], "valid", 80)) Egress(req[id].valid, v[0]);
-      else if (!strncmp(t[1], "addr", 80)) EgressInt(req[id].addr, v);
-      else if (!strncmp(t[1], "wr", 80)) Egress(req[id].wr, v[0]);
-      else if (!strncmp(t[1], "data", 80)) EgressInt(req[id].data, v);
-      else if (!strncmp(t[1], "size", 80)) EgressInt(req[id].size, v);
-      else if (!strncmp(t[1], "id", 80)) EgressInt(req[id].id, v);
-      else if (!strncmp(t[1], "llsc", 80)) Egress(req[id].llsc, v[0]);
-      else if (!strncmp(t[1], "locked", 80)) Egress(req[id].locked, v[0]);
-      else if (!strncmp(t[1], "uncached", 80)) Egress(req[id].uncached, v[0]);
-      else out.fatal(CALL_INFO, -1, "Invalid simplemem req port: %s\n", t[1]);
-    } else if (!strncmp(t[2], "resp", 80)) {
-      if (id + 1 > resp.size())
-        out.output("ERROR: id+1 exceeds resp.size().\n");
-
-      if (!strncmp(t[1], "ready", 80)) Egress(resp[id].ready, v[0]);
-      else if (!strncmp(t[1], "valid", 80)) v[0] = Ingress(resp[id].valid);
-      else if (!strncmp(t[1], "wr", 80)) v[0] = Ingress(resp[id].wr);
-      else if (!strncmp(t[1], "data", 80)) IngressInt(v, resp[id].data);
-      else if (!strncmp(t[1], "id", 80)) IngressInt(v, resp[id].id);
-      else if (!strncmp(t[1], "llsc", 80)) IngressInt(v, resp[id].llsc);
-      else if (!strncmp(t[1], "llscsuc", 80)) IngressInt(v, resp[id].llsc_suc);
-      else out.fatal(CALL_INFO, -1, "Invalid simplemem resp port: %s\n", t[1]);
-    } else {
-      out.fatal(CALL_INFO, -1, "Malformed IO port name in netlist: %s\n",
-             port.c_str());
-    }
-  } else if (!strncmp(t[0], "counter", 80)) {
-    counters[port] = new unsigned long();
-    EgressInt(*counters[port], v);
-  } else if (!strncmp(t[0], "id", 80) && t.size() == 1) {
-    for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1)
-      v[i] = Lit((core_id & mask) != 0);
-  } else if (!strncmp(t[0], "cores", 80) && t.size() == 1) {
-    for (unsigned i = 0, mask = 1; i < v.size(); ++i, mask <<= 1)
-      v[i] = Lit((core_count & mask) != 0);    
-  } else if (!strncmp(t[0], "stop", 80) &&
-             !strncmp(t[1], "sim", 80) && t.size() == 2)
-  {
-    out.output("Core %u found stop sim signal\n", core_id); 
-    Egress(stopSim, v[0]);
-  }
-}
-
 void chdlComponent::init(unsigned phase) {
   if (phase == 0) {
-    map<string, vector<node> > outputs;
-    map<string, vector<node> > inputs;
-    map<string, vector<tristatenode> > inout;
-
     cd = push_clock_domain();
-    ldnetl(outputs, inputs, inout, netlFile, dumpVcd);
+    iface_t iface(Load(netlFile));
 
-    out.debug(_L0_, "chdlComponent init: loaded design \"%s\"\n",
-              netlFile.c_str());
+    if (dumpVcd) iface.tap();
 
-    // Set up egress/ingress nodes for req and resp
-    for (auto x : inputs) init_io_pre(x.first);
-    for (auto x : outputs) init_io_pre(x.first);
+    // Connect the memory ports.
+    for (auto &p : ports) {
+      unsigned idx(p.second);
+      const string &s(p.first);
+      unsigned n(iface.out[s + "_req_contents_mask"].size()),
+               b(iface.out[s + "_req_contents_data_0"].size());
 
-    for (auto &p : ports)
-      out.debug(_L0_, "chdlComponent init: port \"%s\" id=%u\n",
-                 p.first.c_str(), p.second);
+      byte_sz[idx] = b;
+      data_sz[idx] = n;
+      if (n > 64) cout << "ERROR: max bytes per word (64) exceded.\n";
+      if (b % 8) cout << "ERROR: byte size must be multiple of 8.\n";
 
-    req.resize(ports.size());
-    resp.resize(ports.size());
-    resp_q.resize(ports.size());
-    responses_this_cycle.resize(ports.size());
+      // The request side
+      req[idx].ready = true;
+      iface.in[s + "_req_ready"][0] = Ingress(req[idx].ready);
+      Egress(req[idx].valid, iface.out[s + "_req_valid"][0]);
+      Egress(req[idx].wr, iface.out[s + "_req_contents_wr"][0]);
+      Egress(req[idx].llsc, iface.out[s + "_req_contents_llsc"][0]);
+      EgressInt(req[idx].addr, iface.out[s + "_req_contents_addr"]);
+      EgressInt(req[idx].mask, iface.out[s + "_req_contents_mask"]);
+      EgressInt(req[idx].id, iface.out[s + "_req_contents_id"]);
+      req[idx].data.resize(n);
+      for (unsigned i = 0; i < n; ++i) {
+        ostringstream oss; oss << s << "_req_contents_data_" << i;
+	EgressInt(req[idx].data[i], iface.out[oss.str()]);
+      }
 
-    for (auto x : inputs) init_io(x.first, x.second);
-    for (auto x : outputs) init_io(x.first, x.second);
+      // The response side
+      Egress(resp[idx].ready, iface.out[s + "_resp_ready"][0]);
+      iface.in[s + "_resp_valid"][0] = Ingress(resp[idx].valid);
+      iface.in[s + "_resp_contents_wr"][0] = Ingress(resp[idx].wr);
+      iface.in[s + "_resp_contents_llsc"][0] = Ingress(resp[idx].llsc);
+      iface.in[s + "_resp_contents_llsc_suc"][0] = Ingress(resp[idx].llsc_suc);
+      IngressInt(iface.in[s + "_resp_contents_id"], resp[idx].id);
+      resp[idx].data.resize(n);
+      for (unsigned i = 0; i < n; ++i) {
+	ostringstream oss; oss << s << "_resp_contents_data_" << i;
+	IngressInt(iface.in[oss.str()], resp[idx].data[i]);
+      }
+    }
+
+    // Find auxiliary I/O
+    for (auto &p : iface.out) {
+      char s[80];
+      vector<char*> t;
+      strncpy(s, p.first.c_str(), 80);
+      tok(t, s, "_");
+
+      // Counters
+      if (!strncmp(t[0], "counter", 80)) {
+        counters[p.first] = new unsigned long;
+	EgressInt(*counters[p.first], p.second);
+      } else if (
+        t.size() == 2 &&
+        !strncmp(t[0], "stop", 80) &&
+	!strncmp(t[1], "sim", 80)
+      ) {
+	// TODO: Implement stop_sim
+      }
+    }
+
+    for (auto &p : iface.in) {
+      // TODO: disable this? This displays inputs as taps in the VCD too.
+      for (unsigned i = 0; i < p.second.size(); ++i)
+        tap(p.first, p.second[i]);
+      
+      if (p.first == "id") {
+	VecLit(p.second, core_count);
+      } else if (p.first == "cores") {
+	VecLit(p.second, core_id);
+      }
+    }
 
     pop_clock_domain();
-
-    out.debug(_L0_, "chdlComponent init: initialized clock domain %u\n", cd);
-    out.debug(_L0_, "chdlComponent init: finished optimizing.\n");
-
   } else if (phase == 1) {
     if (dumpVcd) {
       print_vcd_header(vcd);
@@ -235,7 +236,7 @@ void chdlComponent::init(unsigned phase) {
     if (cd == 1) {
       optimize();
       for (unsigned i = 0; i < tickables().size(); ++i) {
-        out.output("cdomain %u: %lu\n", i, tickables()[i].size());
+        out.debug(_L1_, "cdomain %u: %lu regs.\n", i, tickables()[i].size());
       }
       #ifdef CHDL_TRANS
       init_trans();
@@ -271,19 +272,29 @@ void chdlComponent::finish() {
 void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
   unsigned port = portMap[req->id];
 
-  if (responses_this_cycle[port]) {
+  // TODO: valid is always cleared; we should check that the requester was
+  // actually ready.
+  if (responses_this_cycle[port] || resp[port].valid) {
     out.debug(_L2_, "Adding an entry to resp_q[%u]. ", port);
     resp_q[port].push(req);
     out.debug(_L2_, "I now has %u entries.\n", (unsigned)resp_q[port].size());
   } else {
-    if (/*sp[0].ready*/1) resp[port].valid = true;
-    else out.fatal(CALL_INFO, -1, "response arrived when receiver not ready");
-
     resp[port].wr = req->cmd == SimpleMem::Request::WriteResp;
+
+    resp[port].valid = true;
+
     if (!resp[port].wr) {
-      resp[port].data = 0;
-      for (unsigned i = 0; i < req->data.size(); ++i)
-        resp[port].data |= req->data[i] << 8*i;
+      if (req->addr & 0x80000000) mmio_rd(req->data, req->addr);
+
+      unsigned idx = 0;
+      for (unsigned i = 0; i < data_sz[port]; ++i) {
+	resp[port].data[i] = 0;
+        for (unsigned j = 0; j < byte_sz[port]; j += 8) {
+	  resp[port].data[i] <<= 8;
+	  resp[port].data[i] |= req->data[idx];
+	  idx++;
+	}
+      }
     }
     resp[port].id = idMap[req->id];
 
@@ -291,10 +302,9 @@ void chdlComponent::handleEvent(Interfaces::SimpleMem::Request *req) {
     resp[port].llsc_suc = ((req->flags & SimpleMem::Request::F_LLSC_RESP) != 0);
 
     out.debug(_L1_, "Response arrived on port %d for req %d, wr = %d, "
-                    "data = %u, size = %lu, datasize = %lu, flags = %x\n",
+                    "size = %lu, datasize = %lu, flags = %x\n",
                  int(port), int(req->id), resp[port].wr,
-                 (unsigned)resp[port].data, req->size, req->data.size(),
-                 req->flags);
+                 req->size, req->data.size(), req->flags);
 
     delete req;
 
@@ -324,35 +334,39 @@ bool chdlComponent::clockTick(Cycle_t c) {
   #endif
 
   if (tog) {
-    tog = !tog;
+    if (dumpVcd) print_taps(vcd, tick_arg);
+
     #ifdef CHDL_TRANS
     recompute_logic_trans(cd);
     tick_trans(cd);
-    for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
     tock_trans(cd);
     post_tock_trans(cd);
     #else
     for (auto &t : tickables()[cd]) t->tick(tick_arg);
-    for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
     for (auto &t : tickables()[cd]) t->tock(tick_arg);
     for (auto &t : tickables()[cd]) t->post_tock(tick_arg);
     #endif
+
+    if (dumpVcd) print_time(vcd);
+
+    for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
+    
     ++now[cd];
     if (cd == 1) ++now[0];
   } else {
-    tog = !tog;
+    // for (unsigned i = 0; i < resp.size(); ++i) resp[i].valid = 0;
+    
     for (unsigned i = 0; i < req.size(); ++i) {
       if (responses_this_cycle[i] == 0 && !resp_q[i].empty()) {
         // Handle enqueued event.
         handleEvent(resp_q[i].front());
         resp_q[i].pop();
-      } else if (responses_this_cycle[i] > 1)
+      } else if (responses_this_cycle[i] > 1) {
         out.output("ERROR: %u responses on port %u this cycle.\n",
                    responses_this_cycle[i], i);
+      }
       responses_this_cycle[i] = 0;
     }
-
-    if (dumpVcd) print_taps(vcd, tick_arg);
 
     #ifdef TRANS
     pre_tick(cd);
@@ -360,54 +374,68 @@ bool chdlComponent::clockTick(Cycle_t c) {
     for (auto &t : tickables()[cd]) t->pre_tick(tick_arg);
     #endif
 
-    // Handle requests
+    // Copy new requests
     for (unsigned i = 0; i < req.size(); ++i) {
-      if (req[i].valid) {
-
-        int flags = (req[i].uncached ? SimpleMem::Request::F_NONCACHEABLE : 0) |
-                    (req[i].locked ? SimpleMem::Request::F_LOCKED : 0) |
-                    (req[i].llsc ? SimpleMem::Request::F_LLSC : 0);
-
-        SimpleMem::Request *r;
-        if (req[i].wr) {
-          vector<uint8_t> dVec;
-          for (unsigned j = 0; j < req[i].size; ++j) {
-            dVec.push_back((req[i].data >> 8*j) & 0xff);
-          }
-          r = new SimpleMem::Request(
-            SimpleMem::Request::Write, req[i].addr, req[i].size, dVec, flags
-          );
-        } else {
-          r = new SimpleMem::Request(
-            SimpleMem::Request::Read, req[i].addr, req[i].size, flags
-          );
-        }
-
-        out.debug(_L0_, "Req %d on port %u to %08lx: ",
-                  (int)r->id, i, req[i].addr);
-
-        if (req[i].wr)
-          out.debug(_L0_, "Write %lu, ", req[i].data); 
-        else
-          out.debug(_L0_, "Read, ");
-
-        out.debug(_L0_, "flags=%x\n", flags);
-
-        if (req[i].wr && req[i].addr == 0x80000008) consoleOutput(req[i].data);
-
-        out.debug(_L3_, "SimpleMem %d = CHDL ID %d\n",
-                  (int)r->id, (int)req[i].id);
-        idMap[r->id] = req[i].id;
-
-        portMap[r->id] = i;
-
-        memLink->sendRequest(r);
-
-       
+      if (req[i].ready && req[i].valid) {
+	req_copy[i] = req[i];
       }
     }
+    
+    // Handle requests
+    for (unsigned i = 0; i < req.size(); ++i) {
+      if (req_copy[i].valid && (!req_copy[i].wr || (req_copy[i].mask != 0))) {
+        int flags = (req_copy[i].llsc ? SimpleMem::Request::F_LLSC : 0);
+	
+        uint64_t mask(req_copy[i].mask),
+	         mask_lsb_only(mask&-mask), mask_lsb_pos(LOG2(mask_lsb_only)),
+                 mask_msb_only((mask+mask_lsb_only) & -(mask+mask_lsb_only)),
+                 mask_msb_pos(LOG2(mask_msb_only)),
+                 mask_cluster((mask_lsb_only-1) ^ (mask_msb_only-1)),
+                 mask_cluster_len(mask_msb_pos - mask_lsb_pos);
 
-    if (dumpVcd) print_time(vcd);
+	req_copy[i].mask ^= mask_cluster;
+	
+	bool wr(req_copy[i].wr);
+        unsigned b(byte_sz[i]), n(data_sz[i]),
+	         req_size(wr ? b * mask_cluster_len / 8 : n * b / 8);
+	unsigned long addr(req_copy[i].addr * n * (b / 8));
+
+        // Generate SimpleMem Request
+	SimpleMem::Request *r;
+	if (wr) {
+	  // Write addresses are offset by the mask LSB.
+	  addr += mask_lsb_pos * b / 8;
+          vector<uint8_t> dVec(n * b / 8);
+
+	  unsigned idx = 0;
+	  for (unsigned j = 0; j < mask_cluster_len; ++j) {
+	    for (unsigned k = 0; k < b; k += 8) {
+	      dVec[idx] = (req_copy[i].data[j] >> k)&0xff;
+	      ++idx;
+	    }
+	  }
+
+          if (addr & 0x80000000) mmio_wr(dVec, addr);
+	  
+	  r = new SimpleMem::Request(
+	    SimpleMem::Request::Write, addr, req_size, dVec, flags
+	  );
+	} else {
+	  r = new SimpleMem::Request(
+            SimpleMem::Request::Read, addr, req_size, flags
+	  );
+	}
+
+	idMap[r->id] = req_copy[i].id;
+	portMap[r->id] = i;
+
+	memLink->sendRequest(r);
+
+	// Set valid bit based on whether req has been fully handled.
+	req_copy[i].valid = wr && (req_copy[i].mask != 0);
+	req[i].ready = !req_copy[i].valid;
+      }
+    }
 
     // If the CPU is exiting the simulation, unregister.
     if (stopSim && registered) {
@@ -417,7 +445,48 @@ bool chdlComponent::clockTick(Cycle_t c) {
     }
   }
 
+  tog = !tog;
+  
   return false;
+}
+
+uint32_t chdlComponent::mmio_rd(uint64_t addr) {
+  uint32_t data(0);
+
+  switch (addr) {
+    case 0x88000004: data = core_id; break;
+    case 0x88000008: data = core_count; break;
+  }
+  
+  out.debug(_L2_, "MMIO RD addr = 0x%08lx, data = 0x%08x", addr, data);
+  
+  return data;
+}
+
+void chdlComponent::mmio_wr(uint32_t data, uint64_t addr) {
+  out.debug(_L2_, "MMIO WR addr = 0x%08lx, data = 0x%08x", addr, data);
+
+  switch (addr) {
+    case 0x80000004: stopSim = true; break;
+    case 0x80000008: consoleOutput(data); break;
+  }
+}
+
+void chdlComponent::mmio_rd(vector<uint8_t> &d, uint64_t addr) {
+  // Assume addr aligned on 4-byte boundary
+  for (unsigned i = 0; i < d.size(); i += 4) {
+    uint32_t x(mmio_rd(addr + i));
+
+    for (unsigned j = 0; j < 4; ++j)
+      d[i + j] = (x >> (8 * j)) & 0xff;
+  }
+}
+
+void chdlComponent::mmio_wr(const vector<uint8_t> &d, uint64_t addr) {
+  for (unsigned i = 0; i < d.size(); i += 4) {
+    uint32_t x(d[i] | (d[i + 1] << 8) | (d[i + 2] << 16) | d[i + 3] << 24);
+    mmio_wr(x, addr + i);
+  }
 }
 
 BOOST_CLASS_EXPORT(SST::ChdlComponent::reqdata);
@@ -433,15 +502,16 @@ static const ElementInfoParam component_params[] = {
   {"netlist", "Filename of CHDL .nand netlist", ""},
   {"debug", "Destination for debugging output", "0"},
   {"debugLevel", "Level of verbosity of output", "1"},
+  {"memPorts", "Memory port names, comma-separated.", "mem"},
   {"memInit", "File containing initial memory contents", ""},
   {"id", "Device ID passed to \"id\" input, if present", "0"},
-  {"cores", "Number of devices IDs passed to \"cores\" input, if present", "0"},
+  {"cores", "Max device ID plus 1.", "0"},
   {"vcd", "Filename of .vcd waveform file for this component's taps", ""},
   {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort component_ports[] = {
-    {"memLink", "Main Memory Link", NULL},
+    {"memLink", "Main memory link", NULL},
     {NULL, NULL, NULL}
 };
 
