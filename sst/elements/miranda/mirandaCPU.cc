@@ -111,18 +111,18 @@ RequestGenCPU::~RequestGenCPU() {
 	delete reqGen;
 	delete out;
 
-	delete statReadReqs;
-	delete statWriteReqs;
-	delete statSplitReadReqs;
-	delete statSplitWriteReqs;
-	delete statCyclesWithIssue;
-	delete statCyclesWithoutIssue;
-	delete statBytesRead;
-	delete statBytesWritten;
-	delete statReqLatency;
-	delete statCyclesHitFence;
-	delete statCyclesHitReorderLimit;
-	delete statMaxIssuePerCycle;
+//	delete statReadReqs;
+//	delete statWriteReqs;
+//	delete statSplitReadReqs;
+//	delete statSplitWriteReqs;
+//	delete statCyclesWithIssue;
+//	delete statCyclesWithoutIssue;
+//	delete statBytesRead;
+//	delete statBytesWritten;
+//	delete statReqLatency;
+//	delete statCyclesHitFence;
+//	delete statCyclesHitReorderLimit;
+//	delete statMaxIssuePerCycle;
 }
 
 void RequestGenCPU::finish() {

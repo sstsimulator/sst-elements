@@ -70,9 +70,9 @@ simpleStatisticsComponent::simpleStatisticsComponent(ComponentId_t id, Params& p
     stat5_U32 = registerStatistic<uint32_t>("stat5_U32", "5");
     stat6_U64 = registerStatistic<uint64_t>("stat6_U64", "6");
     
-    // Try to Register Illegal Statistic Objects
-    printf("STATISTIC TESTING: TRYING TO REGISTER A DUPLICATE STAT NAME - SHOULD RETURN A NULLSTATISTIC\n");
-    stat7_U32_NOTUSED = registerStatistic<uint32_t>("stat5_U32", "5");   // This stat should not be registered because it has a duplicated name
+    // Try to Register A duplicate Statistic Name
+    //printf("STATISTIC TESTING: TRYING TO REGISTER A DUPLICATE STAT NAME - SHOULD RETURN THE PREVIOUSLY REGISTERED STATISTIC\n");
+    stat7_U32_NOTUSED = registerStatistic<uint32_t>("stat5_U32", "5");   // This registration will return the previously registered stat
 
     // Test Statistic functions for delayed output and collection and to disable Stat
 //    stat1_U32->disable();

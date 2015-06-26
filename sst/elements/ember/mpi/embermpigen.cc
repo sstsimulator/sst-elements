@@ -36,7 +36,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
         std::string baseEventName( m_eventName[i] );
         
         sprintf(nameBuffer, "time-%s", baseEventName.c_str());
-        // m_Stats[i] = registerStatistic<uint32_t>(nameBuffer, "0");
+        m_Stats[i] = registerStatistic<uint32_t>(nameBuffer, "0");
     }
     
     free(nameBuffer);
@@ -83,9 +83,9 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
     GEN_DBG( 2, "\n");
-    for ( int i = 0; i < NUM_EVENTS; i++ ) {
-        delete m_Stats[i];
-    }
+//    for ( int i = 0; i < NUM_EVENTS; i++ ) {
+//        delete m_Stats[i];
+//    }
 
 	if ( m_spyinfo )
 		delete m_spyinfo;

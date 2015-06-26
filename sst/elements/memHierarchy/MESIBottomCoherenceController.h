@@ -50,11 +50,11 @@ public:
     }
 
     ~MESIBottomCC() {
-        delete statGetSMissIS;
-        delete statGetXMissIM;
-        delete statGetXMissSM;
-        delete statGetSExMissIM;
-        delete statGetSExMissSM;
+//        delete statGetSMissIS;
+//        delete statGetXMissIM;
+//        delete statGetXMissSM;
+//        delete statGetSExMissIM;
+//        delete statGetSExMissSM;
     }
     
     

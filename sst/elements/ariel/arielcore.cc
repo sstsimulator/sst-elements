@@ -70,12 +70,12 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 }
 
 ArielCore::~ArielCore() {
-	delete statReadRequests;
-	delete statWriteRequests;
-	delete statSplitReadRequests;
-	delete statSplitWriteRequests;
-	delete statNoopCount;
-	delete statInstructionCount;
+//	delete statReadRequests;
+//	delete statWriteRequests;
+//	delete statSplitReadRequests;
+//	delete statSplitWriteRequests;
+//	delete statNoopCount;
+//	delete statInstructionCount;
 
 	if(NULL != cacheLink) {
 		delete cacheLink;
