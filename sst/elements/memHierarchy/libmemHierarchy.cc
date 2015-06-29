@@ -286,7 +286,7 @@ static const ElementInfoStatistic memctrl_statistics[] = {
     { "cycles_with_issue", "Total cycles with successful issue to back end", "cycles", 1 },
     { "cycles_attempted_issue_but_rejected", "Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
     { "total_cycles", "Total cycles called at the memory controller", "cycles", 1 },
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoPort memctrl_ports[] = {
