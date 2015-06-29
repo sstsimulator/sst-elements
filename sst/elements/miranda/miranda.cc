@@ -284,6 +284,7 @@ static const ElementInfoStatistic basecpu_stats[] = {
 	{ "cycles_hit_fence",   "Number of issue cycles which stop issue at a fence",           "cycles",   2 },
 	{ "cycles_max_reorder", "Number of issue cycles which hit maximum reorder lookup",      "cycles",   2 },
 	{ "cycles_max_issue",   "Cycles with maximum operation issue",                          "cycles",   2 },
+	{ "cycles",             "Cycles executed",                                              "cycles",   1 },
 	{ NULL,			NULL,								NULL,       0 }
 };
 
