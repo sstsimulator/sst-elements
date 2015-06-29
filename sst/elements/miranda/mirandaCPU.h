@@ -78,6 +78,7 @@ private:
 	Statistic<uint64_t>* statSplitReadReqs;
 	Statistic<uint64_t>* statSplitWriteReqs;
 	Statistic<uint64_t>* statCyclesWithIssue;
+	Statistic<uint64_t>* statMaxIssuePerCycle;
 	Statistic<uint64_t>* statCyclesWithoutIssue;
 	Statistic<uint64_t>* statBytesRead;
 	Statistic<uint64_t>* statBytesWritten;
@@ -85,7 +86,7 @@ private:
 	Statistic<uint64_t>* statTime;
 	Statistic<uint64_t>* statCyclesHitFence;
 	Statistic<uint64_t>* statCyclesHitReorderLimit;
-	Statistic<uint64_t>* statMaxIssuePerCycle;
+	Statistic<uint64_t>* statCycles;
 };
 
 }
