@@ -281,6 +281,13 @@ static const ElementInfoParam memctrl_params[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic memctrl_statistics[] = {
+    /* Cache hits and misses */
+    { "cycles_with_issue", "Total cycles with successful issue to back end", "cycles", 1 },
+    { "cycles_attempted_issue_but_rejected", "Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles", "Total cycles called at the memory controller", "cycles", 1 },
+    { NULL, NULL, NULL }
+};
 
 static const ElementInfoPort memctrl_ports[] = {
     {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
@@ -616,9 +623,10 @@ static const ElementInfoComponent components[] = {
 		"Memory Controller Component",
 		NULL,
 		create_MemController,
-        memctrl_params,
-        memctrl_ports,
-        COMPONENT_CATEGORY_MEMORY
+        	memctrl_params,
+        	memctrl_ports,
+        	COMPONENT_CATEGORY_MEMORY,
+		memctrl_statistics
 	},
 	{"DirectoryController",
 		"Coherencey Directory Controller Component",

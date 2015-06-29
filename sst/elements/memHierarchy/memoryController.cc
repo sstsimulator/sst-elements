@@ -159,6 +159,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 	dbg.fatal(CALL_INFO, -1, "Coherency protocol not specified, please specify MESI or MSI\n");
     }
 
+    cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
+    cyclesAttemptIssueButRejected = registerStatistic<uint64_t>(
+	"cycles_attempted_issue_but_rejected" );
+    totalCycles     = registerStatistic<uint64_t>( "total_cycles" );
+
     /* Clock Handler */
     registerClock(clock_freq, new Clock::Handler<MemController>(this, &MemController::clock));
     registerTimeBase("1 ns", true);
@@ -232,6 +237,8 @@ void MemController::addRequest(MemEvent* _ev){
 
 
 bool MemController::clock(Cycle_t _cycle){
+    totalCycles->addData(1);
+
     backend_->clock();
     if (isNetworkConnected_) networkLink_->clock();
 
@@ -240,7 +247,12 @@ bool MemController::clock(Cycle_t _cycle){
         req->status_ = DRAMReq::PROCESSING;
 
         bool issued = backend_->issueRequest(req);
-        if (!issued) break;
+        if (issued) {
+		cyclesWithIssue->addData(1);
+	} else {
+		cyclesAttemptIssueButRejected->addData(1);
+		break;
+	}
 
         req->amtInProcess_ += requestSize_;
 

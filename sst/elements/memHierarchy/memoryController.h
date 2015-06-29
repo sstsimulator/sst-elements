@@ -153,6 +153,10 @@ private:
     uint64_t    numCycles_;
     std::vector<CacheListener*> listeners_;
 
+    Statistic<uint64_t>* cyclesWithIssue;
+    Statistic<uint64_t>* cyclesAttemptIssueButRejected;
+    Statistic<uint64_t>* totalCycles;
+
     Output::output_location_t statsOutputTarget_;
 //#ifdef HAVE_LIBZ
 //    gzFile traceFP;
