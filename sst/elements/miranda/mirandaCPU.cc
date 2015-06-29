@@ -94,6 +94,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	statCyclesHitFence        = registerStatistic<uint64_t>( "cycles_hit_fence" );
         statMaxIssuePerCycle      = registerStatistic<uint64_t>( "cycles_max_issue" );
 	statCyclesHitReorderLimit = registerStatistic<uint64_t>( "cycles_max_reorder" );
+	statCycles                = registerStatistic<uint64_t>( "cycles" );
 
 	reqMaxPerCycle = (uint32_t) params.find_integer("max_reqs_cycle", 2);
 
@@ -123,6 +124,7 @@ RequestGenCPU::~RequestGenCPU() {
 //	delete statCyclesHitFence;
 //	delete statCyclesHitReorderLimit;
 //	delete statMaxIssuePerCycle;
+//	delete statCycles;
 }
 
 void RequestGenCPU::finish() {
@@ -261,6 +263,8 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 }
 
 bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
+	statCycles->addData(1);
+
 	if(reqGen->isFinished()) {
 		if( (pendingRequests.size() == 0) && (0 == requestsPending) ) {
 			out->verbose(CALL_INFO, 4, 0, "Request generator complete and no requests pending, simulation can halt.\n");
