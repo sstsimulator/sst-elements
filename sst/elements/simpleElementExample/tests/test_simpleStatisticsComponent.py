@@ -129,12 +129,16 @@ StatExample0.enableStatistics([
 StatExample0.enableStatistics([
       "stat5_U32"], {
       "type":"sst.AccumulatorStatistic",
-      "rate":"5 ns"})
+      "rate":"5 ns"
+      })
 
 StatExample0.enableStatistics([
       "stat6_U64"], {
       "type":"sst.AccumulatorStatistic",
-      "rate":"10 ns"})
+      "rate":"10 ns",
+      "startat":"35ns",
+      "stopat":"65ns"
+      })
 
 ########################################################################
 ########################################################################
