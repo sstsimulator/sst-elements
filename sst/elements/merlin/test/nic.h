@@ -19,13 +19,9 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-
+#include <sst/core/interfaces/simpleNetwork.h>
 
 namespace SST {
-
-namespace Interfaces {
-    class SimpleNetwork;
-}
 
 namespace Merlin {
 
@@ -35,8 +31,7 @@ class nic : public Component {
 private:
 
     int id;
-    int ft_loading;
-    int ft_radix;
+    int net_id;
     int num_peers;
     int num_vns;
     int last_vn;
@@ -55,6 +50,9 @@ private:
     
     int *next_seq;
 
+    int remap;
+    SST::Interfaces::SimpleNetwork::Mapping net_map;
+    
 public:
     nic(ComponentId_t cid, Params& params);
     ~nic();
@@ -66,8 +64,6 @@ public:
 
 private:
     bool clock_handler(Cycle_t cycle);
-    int fattree_ID_to_IP(int id);
-    int IP_to_fattree_ID(int id);
 };
 
 }

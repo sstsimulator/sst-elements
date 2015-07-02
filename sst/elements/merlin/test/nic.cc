@@ -40,8 +40,8 @@ nic::nic(ComponentId_t cid, Params& params) :
     done(false),
     initialized(false)
 {
-    id = params.find_integer("id");
-    if ( id == -1 ) {
+    net_id = params.find_integer("id");
+    if ( net_id == -1 ) {
     }
     // std::cout << "id: " << id << "\n";
     // std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
@@ -65,6 +65,9 @@ nic::nic(ComponentId_t cid, Params& params) :
     UnitAlgebra link_bw(link_bw_s);
     
     num_msg = params.find_integer("num_messages",10);
+
+    remap = params.find_integer("remap", 0);
+    id = (net_id + remap) % num_peers;
     
     // Create a LinkControl object
     // NOTE:  This MUST be the same length as 'num_vns'
@@ -102,24 +105,35 @@ void nic::finish()
 void nic::setup()
 {
     link_control->setup();
-    if ( link_control->getEndpointID() != id ) {
-        std::cout << "NIC ids don't match: param = " << id << ", LinkControl = "
+    if ( link_control->getEndpointID() != net_id ) {
+        std::cout << "NIC ids don't match: param = " << net_id << ", LinkControl = "
                           << link_control->getEndpointID() << std::endl;
     }
     if ( !initialized ) {
         std::cout << "Nic " << id << ": Broadcast failed!" << std::endl;  
     }
+
+    net_map.bind("global");
+    // if ( Simulation::getSimulation()->getRank() == 1 ) {
+    //     for ( int i = 0; i < num_peers; i++ ) {
+    //         std::cout << id << ": " << net_map[i] << std::endl;
+    //     }
+    // }
 }
 
 void
 nic::init(unsigned int phase) {
     link_control->init(phase);
+    if ( link_control->isNetworkInitialized() ) {
+        // Put my address into the network mapping
+        SST::Interfaces::SimpleNetwork::addMappingEntry("global", id, net_id);
+    }
     if ( id == 0 && !initialized ) {
         if ( link_control->isNetworkInitialized() ) {
             initialized = true;
             
             SimpleNetwork::Request* req =
-                new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, id,
+                new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, net_id,
                                            0, true, true);
             link_control->sendInitData(req);
         }
@@ -185,8 +199,9 @@ nic::clock_handler(Cycle_t cycle)
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
             
-            req->dest = last_target;
-            req->src = id;
+            req->dest = net_map[last_target];
+            // req->dest = last_target;
+            req->src = net_id;
 
             req->vn = 0;
             req->size_in_bits = size_in_bits;
@@ -220,6 +235,7 @@ nic::clock_handler(Cycle_t cycle)
             }
             // std::cout << id << " received a packet on VN" << last_vn << " from " << req->src << std::endl;
             packets_recd++;
+            // int src = net_map[req->src];
             int src = req->src;
 #if 0
             if ( next_seq[src] != ev->seq ) {
@@ -239,49 +255,6 @@ nic::clock_handler(Cycle_t cycle)
 }
 
 
-int nic::fattree_ID_to_IP(int id)
-{
-    union Addr {
-        uint8_t x[4];
-        int32_t s;
-    };
-
-    Addr addr;
-
-    int edge_switch = (id / ft_loading);
-    int pod = edge_switch / (ft_radix/2);
-    int subnet = edge_switch % (ft_radix/2);
-
-    addr.x[0] = 10;
-    addr.x[1] = pod;
-    addr.x[2] = subnet;
-    addr.x[3] = 2 + (id % ft_loading);
-
-#if 0
-    printf("Converted NIC id %d to %u.%u.%u.%u.\n", id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]\n);
-#endif
-
-    return addr.s;
-}
-
-
-int nic::IP_to_fattree_ID(int ip)
-{
-    union Addr {
-        uint8_t x[4];
-        int32_t s;
-    };
-
-    Addr addr;
-    addr.s = ip;
-
-    int id = 0;
-    id += addr.x[1] * (ft_radix/2) * ft_loading;
-    id += addr.x[2] * ft_loading;
-    id += addr.x[3] -2;
-
-    return id;
-}
 
 } // namespace Merlin
 } // namespace SST

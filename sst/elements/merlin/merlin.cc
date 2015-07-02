@@ -166,6 +166,7 @@ static const ElementInfoParam test_nic_params[] = {
     {"num_vns","Number of requested virtual networks."},
     {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
     {"topology", "Name of the topology module that should be loaded to control routing."},
+    {"remap", "Creates a logical to physical mapping shifted by remap amount.", "0"},
     // {"packet_size","Packet size specified in either b or B (can include SI prefix)."},
     // {"packets_to_send","Number of packets to send in the test."},
     // {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix)."},

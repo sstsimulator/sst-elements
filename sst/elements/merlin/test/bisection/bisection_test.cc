@@ -21,8 +21,10 @@
 #include "sst/elements/merlin/test/bisection/bisection_test.h"
 
 using namespace std;
-using namespace SST::Merlin;
+namespace SST {
 using namespace SST::Interfaces;
+
+namespace Merlin {
 
 bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     Component(cid),
@@ -199,3 +201,6 @@ bisection_test::handle_complete(Event* ev) {
     primaryComponentOKToEndSim();
 
 }
+}
+}
+BOOST_CLASS_EXPORT(SST::Merlin::bisection_test_event)

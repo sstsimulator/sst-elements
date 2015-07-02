@@ -73,6 +73,17 @@ class bisection_test_event : public Event {
     {
         return new bisection_test_event(*this);
     }
+
+private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(start_time);
+    }
+    
 };
 } // namespace merlin
 } // namespace sst

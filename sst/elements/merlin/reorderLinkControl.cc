@@ -42,7 +42,6 @@ ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& 
                                int vns, const UnitAlgebra& in_buf_size,
                                const UnitAlgebra& out_buf_size)
 {
-    std::cout << "ReorderLinkControl" << std::endl;
     this->vns = vns;
     
     // Don't need output buffers, sends will go directly to
@@ -240,3 +239,4 @@ bool ReorderLinkControl::handle_event(int vn) {
 
 } // namespace Merlin
 } // namespace SST
+
