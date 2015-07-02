@@ -179,9 +179,6 @@ class VirtNic : public SST::Module {
     Output      m_dbg;
     Link*       m_toNicLink;
 
-    Output::output_location_t   m_dbg_loc;
-    int                         m_dbg_level;
-
     VirtNic::HandlerBase<void*>* m_notifyGetDone; 
     VirtNic::HandlerBase<void*>* m_notifyPutDone; 
     VirtNic::HandlerBase<void*>* m_notifySendPioDone; 

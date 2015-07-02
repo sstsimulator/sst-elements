@@ -28,10 +28,10 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
     m_notifyRecvDmaDone(NULL),
     m_notifyNeedRecv(NULL)
 {
-    m_dbg_level = params.find_integer("debugLevel",0);
-    m_dbg_loc = (Output::output_location_t)params.find_integer("debug", 0);
-
-    m_dbg.init("@t:VirtNic::@p():@l ", m_dbg_level, 0, m_dbg_loc );
+    m_dbg.init("@t:VirtNic::@p():@l ", 
+        params.find_integer("verboseLevel",0),
+        0,
+        Output::STDOUT );
 
     m_toNicLink = owner->configureLink( params.find_string("portName","nic"), 
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
