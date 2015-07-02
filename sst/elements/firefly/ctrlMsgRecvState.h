@@ -24,8 +24,8 @@ template< class T1 >
 class RecvState : StateBase< T1 > 
 {
   public:
-    RecvState( int verbose, Output::output_location_t loc, T1& obj ) : 
-        StateBase<T1>( verbose, loc, obj ),
+    RecvState( int verbose, int mask, T1& obj ) : 
+        StateBase<T1>( verbose, mask, obj ),
         m_afterProcess( this, &RecvState<T1>::afterProcess ),
         m_unblock( this, &RecvState<T1>::unblock )
     {
@@ -60,7 +60,7 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
         MP::Communicator group, CommReq* commReq,
         FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
-    dbg().verbose(CALL_INFO,1,0,"%s src=%d tag=%#x functor=%p\n",
+    dbg().verbose(CALL_INFO,1,1,"%s src=%d tag=%#x functor=%p\n",
                 blocking ? "blocking" : "non-blocking", src, tag, functor );
 
     StateBase<T1>::setExit( stateFunctor );
@@ -69,7 +69,7 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
 
     m_req = new _CommReq( blocking ? _CommReq::Recv: _CommReq::Irecv,
         ioVec, obj().info()->sizeofDataType(dtype), src, tag, group );
-    dbg().verbose(CALL_INFO,1,0,"new CommReq %p\n",m_req );
+    dbg().verbose(CALL_INFO,1,1,"new CommReq %p\n",m_req );
     if ( ! blocking ) {
         commReq->req = m_req;
     }
@@ -80,12 +80,12 @@ void RecvState<T1>::enter( bool blocking, std::vector<IoVec>& ioVec,
 template< class T1 >
 bool RecvState<T1>::afterProcess()
 {
-    dbg().verbose(CALL_INFO,2,0,"\n");
+    dbg().verbose(CALL_INFO,2,1,"\n");
 
     if ( m_blocking ) {
         if ( m_req->isDone() ) {
             obj().passCtrlToFunction( obj().recvStateDelay(), m_functor );
-            dbg().verbose(CALL_INFO,1,0,"delete CommReq %p\n",m_req );
+            dbg().verbose(CALL_INFO,1,1,"delete CommReq %p\n",m_req );
             delete m_req;
         } else {
             obj().m_processQueuesState->enterWait( new WaitReq(m_req), &m_unblock );
@@ -101,7 +101,7 @@ template< class T1 >
 bool RecvState<T1>::unblock()
 {
     obj().passCtrlToFunction( obj().recvStateDelay(), m_functor );
-    dbg().verbose(CALL_INFO,1,0,"delete CommReq %p\n",m_req );
+    dbg().verbose(CALL_INFO,1,1,"delete CommReq %p\n",m_req );
     delete m_req;
     return false;
 }

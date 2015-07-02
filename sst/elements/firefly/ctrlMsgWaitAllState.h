@@ -23,8 +23,8 @@ template< class T1 >
 class WaitAllState : StateBase< T1 > 
 {
   public:
-    WaitAllState( int verbose, Output::output_location_t loc, T1& obj ) :
-        StateBase<T1>( verbose, loc, obj ), 
+    WaitAllState( int verbose, int mask, T1& obj ) :
+        StateBase<T1>( verbose, mask, obj ), 
         m_unblock( this, &WaitAllState<T1>::unblock )
     {
         char buffer[100];
@@ -50,17 +50,17 @@ template< class T1 >
 void WaitAllState<T1>::enter( std::vector<CommReq*>& reqs, 
     FunctorBase_1<CommReq*,bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
-    dbg().verbose(CALL_INFO,1,0,"num reqs %lu\n", reqs.size());
+    dbg().verbose(CALL_INFO,1,1,"num reqs %lu\n", reqs.size());
     StateBase<T1>::setExit( stateFunctor );
 
     m_reqs = reqs;
     m_functor = functor;
-    dbg().verbose(CALL_INFO,1,0,"%lu\n",m_reqs.size());
+    dbg().verbose(CALL_INFO,1,1,"%lu\n",m_reqs.size());
 
     std::vector<_CommReq*> tmp;
     std::vector<CommReq*>::iterator iter = reqs.begin();
     for ( ; iter != reqs.end(); ++iter ) {
-        dbg().verbose(CALL_INFO,2,0,"CommReq %p\n",(*iter)->req);
+        dbg().verbose(CALL_INFO,2,1,"CommReq %p\n",(*iter)->req);
         tmp.push_back( (*iter)->req );
     }
 
@@ -70,11 +70,11 @@ void WaitAllState<T1>::enter( std::vector<CommReq*>& reqs,
 template< class T1 >
 bool WaitAllState<T1>::unblock()
 {
-    dbg().verbose(CALL_INFO,1,0,"%lu\n",m_reqs.size());
+    dbg().verbose(CALL_INFO,1,1,"%lu\n",m_reqs.size());
 
     for ( int i = 0; i < m_reqs.size(); i++ ) {
         if ( m_reqs[i]->req->isDone() ) {
-            dbg().verbose(CALL_INFO,2,0,"delete CommReq %p\n",m_reqs[i]->req);
+            dbg().verbose(CALL_INFO,2,1,"delete CommReq %p\n",m_reqs[i]->req);
             delete m_reqs[i]->req;
         } else {
             assert(0);

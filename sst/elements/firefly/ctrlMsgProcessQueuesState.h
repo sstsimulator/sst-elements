@@ -27,8 +27,8 @@ class ProcessQueuesState : StateBase< T1 >
     static const unsigned long MinPostedShortBuffers = 5;
 
   public:
-    ProcessQueuesState( int verbose, Output::output_location_t loc, T1& obj ) : 
-        StateBase<T1>( verbose, loc, obj ),
+    ProcessQueuesState( int verbose, int mask, T1& obj ) : 
+        StateBase<T1>( verbose, mask, obj ),
         m_getKey( 0 ),
         m_rspKey( 0 ),
         m_needRecv( 0 ),
@@ -67,7 +67,7 @@ class ProcessQueuesState : StateBase< T1 >
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, FunctorBase_0<bool>* func ) 
     {
-        dbg().verbose(CALL_INFO,1,0,"count=%d dest=%d tag=%#x\n",count,dest,tag);
+        dbg().verbose(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
         enterSend( new _CommReq( _CommReq::Send, buf, count, 
             obj().info()->sizeofDataType( dtype), dest, tag, group ), func );
     }
@@ -77,10 +77,10 @@ class ProcessQueuesState : StateBase< T1 >
         MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
     {
-        dbg().verbose(CALL_INFO,1,0,"count=%d dest=%d tag=%#x\n",count,dest,tag);
+        dbg().verbose(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
         *req = new _CommReq( _CommReq::Isend, buf, count, 
             obj().info()->sizeofDataType(dtype) , dest, tag, group );
-        dbg().verbose(CALL_INFO,1,0,"%p\n",*req);
+        dbg().verbose(CALL_INFO,1,1,"%p\n",*req);
         enterSend( static_cast<_CommReq*>(*req), func );
     }
 
@@ -89,7 +89,7 @@ class ProcessQueuesState : StateBase< T1 >
         MP::Communicator group, MP::MessageResponse* resp,
         FunctorBase_0<bool>* func )
     {
-        dbg().verbose(CALL_INFO,1,0,"count=%d src=%d tag=%#x\n",count,src,tag);
+        dbg().verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
         enterRecv( new _CommReq( _CommReq::Recv, buf, count,
             obj().info()->sizeofDataType(dtype), src, tag, group, resp ), func); 
     }
@@ -99,7 +99,7 @@ class ProcessQueuesState : StateBase< T1 >
         MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
     {
-        dbg().verbose(CALL_INFO,1,0,"count=%d src=%d tag=%#x\n",count,src,tag);
+        dbg().verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
         *req = new _CommReq( _CommReq::Irecv, buf, count, 
             obj().info()->sizeofDataType(dtype), src, tag, group ); 
         enterRecv( static_cast<_CommReq*>(*req), func );
@@ -108,7 +108,7 @@ class ProcessQueuesState : StateBase< T1 >
     void wait( MP::MessageRequest req, MP::MessageResponse* resp,
         FunctorBase_0<bool>* func )
     {
-        dbg().verbose(CALL_INFO,1,0,"\n");
+        dbg().verbose(CALL_INFO,1,1,"\n");
         
         enterWait( new WaitReq( req, resp ), func );
     }
@@ -116,14 +116,14 @@ class ProcessQueuesState : StateBase< T1 >
     void waitAny( int count, MP::MessageRequest req[], int *index,
         MP::MessageResponse* resp, FunctorBase_0<bool>* func  ) 
     {
-        dbg().verbose(CALL_INFO,1,0,"\n");
+        dbg().verbose(CALL_INFO,1,1,"\n");
         enterWait( new WaitReq( count, req, index, resp ), func );
     }
 
     void waitAll( int count, MP::MessageRequest req[],
         MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
     {
-        dbg().verbose(CALL_INFO,1,0,"\n");
+        dbg().verbose(CALL_INFO,1,1,"\n");
         enterWait( new WaitReq( count, req, resp ), func );
     }
 
@@ -447,7 +447,7 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
     size_t length = req->getLength( );
     int delay = obj().txDelay( length );
 
-    dbg().verbose(CALL_INFO,2,0,"new send CommReq\n");
+    dbg().verbose(CALL_INFO,2,1,"new send CommReq\n");
 
     req->setSrcRank( getMyRank( req ) );
 
@@ -476,7 +476,7 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 template< class T1 >
 bool ProcessQueuesState<T1>::enterSendLoop( _CommReq* req )
 {
-    dbg().verbose(CALL_INFO,2,0,"looop\n");
+    dbg().verbose(CALL_INFO,2,1,"looop\n");
 
     IoVec hdrVec;
     hdrVec.ptr = &req->hdr();
@@ -520,13 +520,13 @@ bool ProcessQueuesState<T1>::enterSend( _CommReq* req )
     nid_t nid = calcNid( req, req->getDestRank() );
 
     if ( length <= obj().shortMsgLength() ) {
-        dbg().verbose(CALL_INFO,1,0,"Short %lu bytes dest %#x\n",length,nid); 
+        dbg().verbose(CALL_INFO,1,1,"Short %lu bytes dest %#x\n",length,nid); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
         req->setDone(obj().sendReqFiniDelay( length ));
 
     } else {
-        dbg().verbose(CALL_INFO,1,0,"sending long message %lu bytes\n",length); 
+        dbg().verbose(CALL_INFO,1,1,"sending long message %lu bytes\n",length); 
         req->hdr().key = genGetKey();
 
         GetInfo* info = new GetInfo;
@@ -561,7 +561,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
                                         FunctorBase_0<bool>* exitFunctor )
 {
-    dbg().verbose(CALL_INFO,1,0,"new recv CommReq\n");
+    dbg().verbose(CALL_INFO,1,1,"new recv CommReq\n");
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
         if ( m_numNicRequestedShortBuff ) {
@@ -604,7 +604,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::enterWait( WaitReq* req, 
                                     FunctorBase_0<bool>* exitFunctor  )
 {
-    dbg().verbose(CALL_INFO,1,0,"num pstd %lu, num short %lu\n",
+    dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
 
     setExit( exitFunctor );
@@ -622,8 +622,8 @@ void ProcessQueuesState<T1>::enterWait( WaitReq* req,
 template< class T1 >
 bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
 {
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
-    dbg().verbose(CALL_INFO,1,0,"num pstd %lu, num short %lu\n",
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack.size()); 
+    dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
     WaitCtx* ctx = static_cast<WaitCtx*>( stack.back() );
 
@@ -635,7 +635,7 @@ bool ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>& stack )
         exit( ctx->req->getDelay() );
         delete ctx;
         ctx = NULL;
-        dbg().verbose(CALL_INFO,2,0,"exit found CommReq\n"); 
+        dbg().verbose(CALL_INFO,2,1,"exit found CommReq\n"); 
     }
 
 	if ( ctx ) {
@@ -649,8 +649,8 @@ template< class T1 >
 void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
 {
     int delay = 0;
-    dbg().verbose(CALL_INFO,2,0,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+    dbg().verbose(CALL_INFO,2,1,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack.size()); 
 
     // this does not cost time
     while ( m_needRecv ) {
@@ -700,7 +700,7 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
 template< class T1 >
 bool ProcessQueuesState<T1>::processQueues0( std::deque< FuncCtxBase* >& stack )
 {
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack.size(), m_recvdMsgQ.size() ); 
     
     delete stack.back();
@@ -713,7 +713,7 @@ bool ProcessQueuesState<T1>::processQueues0( std::deque< FuncCtxBase* >& stack )
 template< class T1 >
 void ProcessQueuesState<T1>::processShortList( std::deque<FuncCtxBase*>& stack )
 {
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack.size(), m_recvdMsgQ.size() ); 
 
     ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgQ );
@@ -726,7 +726,7 @@ void ProcessQueuesState<T1>::processShortList( std::deque<FuncCtxBase*>& stack )
 template< class T1 >
 void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
 {
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack.size(), m_recvdMsgQ.size() ); 
 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>( stack.back());
@@ -752,7 +752,7 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>& stack )
 template< class T1 >
 bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
 {
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack.size()); 
 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack.back());
     int delay = 0;
@@ -767,7 +767,7 @@ bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
         if ( length <= obj().shortMsgLength() || 
             dynamic_cast<LoopReq*>( ctx->msg() ) ) {
 
-            dbg().verbose(CALL_INFO,2,0,"receive short|loop message\n"); 
+            dbg().verbose(CALL_INFO,2,1,"receive short|loop message\n"); 
             delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
         }
     }
@@ -784,7 +784,7 @@ bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
 template< class T1 >
 bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 {
-    dbg().verbose(CALL_INFO,2,0,"stack.size()=%lu\n", stack.size()); 
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack.size()); 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack.back());
 
     if ( ctx->req ) {
@@ -795,16 +795,16 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         LoopReq* loopReq;
         if ( ( loopReq = dynamic_cast<LoopReq*>( ctx->msg() ) ) ) {
-		    dbg().verbose(CALL_INFO,1,0,"loop\n");
+		    dbg().verbose(CALL_INFO,1,1,"loop\n");
             req->setDone();
             obj().loopSend( loopReq->srcCore , loopReq->key );
 
         } else if ( length <= obj().shortMsgLength() ) { 
-		    dbg().verbose(CALL_INFO,1,0,"short\n");
+		    dbg().verbose(CALL_INFO,1,1,"short\n");
             req->setDone(obj().recvReqFiniDelay( length ));
         } else {
 
-            dbg().verbose(CALL_INFO,1,0,"long\n");
+            dbg().verbose(CALL_INFO,1,1,"long\n");
             GetFunctor<_CommReq*>* functor =
                 newGetFini<_CommReq*>(req,&ProcessQueuesState::getFini);
 
@@ -822,7 +822,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
     }
 
     if ( ctx->isDone() ) {
-        dbg().verbose(CALL_INFO,2,0,"return up the stack\n");
+        dbg().verbose(CALL_INFO,2,1,"return up the stack\n");
 
 		if ( ! ctx->msgQempty() ) {
 			m_recvdMsgQ.insert( m_recvdMsgQ.begin(), ctx->getMsgQ().begin(),
@@ -832,7 +832,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
         stack.pop_back();
         obj().schedFunctor( stack.back()->getRetFunctor() );
     } else {
-        dbg().verbose(CALL_INFO,1,0,"work on next Msg\n");
+        dbg().verbose(CALL_INFO,1,1,"work on next Msg\n");
 
         processShortList0( stack );
     }
@@ -842,7 +842,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 template< class T1 >
 void ProcessQueuesState<T1>::processLoopResp( LoopResp* resp )
 {
-    dbg().verbose(CALL_INFO,1,0,"srcCore=%d\n",resp->srcCore );
+    dbg().verbose(CALL_INFO,1,1,"srcCore=%d\n",resp->srcCore );
     _CommReq* req = (_CommReq*)resp->key;  
     req->setDone();
     delete resp;
@@ -851,7 +851,7 @@ void ProcessQueuesState<T1>::processLoopResp( LoopResp* resp )
 template< class T1 >
 bool ProcessQueuesState<T1>::getFini( _CommReq* req )
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,1,1,"\n");
     m_longGetFiniQ.push_back( req );
 
     foo();
@@ -863,7 +863,7 @@ template< class T1 >
 bool ProcessQueuesState<T1>::dmaRecvFini( GetInfo* info, nid_t nid, 
                                             uint32_t tag, size_t length )
 {
-    dbg().verbose(CALL_INFO,1,0,"nid=%d tag=%#x length=%lu\n",
+    dbg().verbose(CALL_INFO,1,1,"nid=%d tag=%#x length=%lu\n",
                                                     nid, tag, length );
     assert( ( tag & LongAckKey ) == LongAckKey );
     info->nid = nid;
@@ -880,9 +880,9 @@ template< class T1 >
 bool ProcessQueuesState<T1>::dmaRecvFini( ShortRecvBuffer* buf, nid_t nid,
                                             uint32_t tag, size_t length )
 {
-    dbg().verbose(CALL_INFO,1,0,"ShortMsgQ nid=%#x tag=%#x length=%lu\n",
+    dbg().verbose(CALL_INFO,1,1,"ShortMsgQ nid=%#x tag=%#x length=%lu\n",
                                                     nid, tag, length );
-    dbg().verbose(CALL_INFO,1,0,"ShortMsgQ rank=%d tag=%#" PRIx64 " count=%d "
+    dbg().verbose(CALL_INFO,1,1,"ShortMsgQ rank=%d tag=%#" PRIx64 " count=%d "
                             "dtypeSize=%d\n", buf->hdr.rank, buf->hdr.tag,
                             buf->hdr.count, buf->hdr.dtypeSize );
 
@@ -891,7 +891,7 @@ bool ProcessQueuesState<T1>::dmaRecvFini( ShortRecvBuffer* buf, nid_t nid,
 
     foo();
     m_postedShortBuffers.erase(buf);
-    dbg().verbose(CALL_INFO,1,0,"num postedShortRecvBuffers %lu\n",
+    dbg().verbose(CALL_INFO,1,1,"num postedShortRecvBuffers %lu\n",
                                         m_postedShortBuffers.size());
     return true;
 }
@@ -900,10 +900,10 @@ template< class T1 >
 void ProcessQueuesState<T1>::enableInt( FuncCtxBase* ctx,
 	bool (ProcessQueuesState<T1>::*funcPtr)( std::deque< FuncCtxBase* >&) )
 {
-  	dbg().verbose(CALL_INFO,2,0,"ctx=%p\n",ctx);
+  	dbg().verbose(CALL_INFO,2,1,"ctx=%p\n",ctx);
 	assert( m_funcStack.empty() );
     if ( m_intCtx ) {
-  	    dbg().verbose(CALL_INFO,2,0,"already have a return ctx\n");
+  	    dbg().verbose(CALL_INFO,2,1,"already have a return ctx\n");
         return; 
     }
 
@@ -921,7 +921,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::foo( )
 {
 	if ( ! m_intCtx || ! m_intStack.empty() ) {
-    	dbg().verbose(CALL_INFO,2,0,"missed interrupt\n");
+    	dbg().verbose(CALL_INFO,2,1,"missed interrupt\n");
         m_missedInt = true;
 		return;
 	} 
@@ -943,7 +943,7 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 	delete stack.back();
 	stack.pop_back();
 
-    dbg().verbose(CALL_INFO,2,0,"\n" );
+    dbg().verbose(CALL_INFO,2,1,"\n" );
 
 	FunctorBase_0< bool >* retFunctor = m_intCtx->getRetFunctor();
 
@@ -964,7 +964,7 @@ bool ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>& stack )
 template< class T1 >
 bool ProcessQueuesState<T1>::pioSendFini( void* hdr )
 {
-    dbg().verbose(CALL_INFO,1,0,"hdr=%p\n", hdr );
+    dbg().verbose(CALL_INFO,1,1,"hdr=%p\n", hdr );
     if ( hdr ) {
         free( hdr );
     }
@@ -975,7 +975,7 @@ bool ProcessQueuesState<T1>::pioSendFini( void* hdr )
 template< class T1 >
 bool ProcessQueuesState<T1>::pioSendFini( CtrlHdr* hdr )
 {
-    dbg().verbose(CALL_INFO,1,0,"MsgHdr, Ack sent key=%#x\n", hdr->key);
+    dbg().verbose(CALL_INFO,1,1,"MsgHdr, Ack sent key=%#x\n", hdr->key);
     delete hdr;
     foo();
 
@@ -987,7 +987,7 @@ void ProcessQueuesState<T1>::processLongGetFini(
                         std::deque< FuncCtxBase* >& stack, _CommReq* req )
 {
     ProcessLongGetFiniCtx* ctx = new ProcessLongGetFiniCtx( req );
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,1,1,"\n");
 
     stack.push_back( ctx );
 
@@ -1005,7 +1005,7 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
 {
     _CommReq* req = static_cast<ProcessLongGetFiniCtx*>(stack.back())->req;
 
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,1,1,"\n");
     
     delete stack.back();
     stack.pop_back();
@@ -1027,7 +1027,7 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
 
-    dbg().verbose(CALL_INFO,1,0,"send long msg Ack to nid=%d key=%#x\n", 
+    dbg().verbose(CALL_INFO,1,1,"send long msg Ack to nid=%d key=%#x\n", 
                                                 req->m_ackNid, req->m_ackKey );
 
     obj().nic().pioSend( req->m_ackNid, req->m_ackKey, vec, functor );
@@ -1041,7 +1041,7 @@ bool ProcessQueuesState<T1>::processLongGetFini0(
 template< class T1 >
 void ProcessQueuesState<T1>::processLongAck( GetInfo* info )
 {
-    dbg().verbose(CALL_INFO,1,0,"acked\n");
+    dbg().verbose(CALL_INFO,1,1,"acked\n");
     int delay =  obj().sendReqFiniDelay( info->req->getLength() );
 #if 0 
     // time to unregister memory
@@ -1057,7 +1057,7 @@ void ProcessQueuesState<T1>::processLongAck( GetInfo* info )
 template< class T1 >
 void ProcessQueuesState<T1>::needRecv( int nid, int tag, size_t length  )
 {
-    dbg().verbose(CALL_INFO,1,0,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
+    dbg().verbose(CALL_INFO,1,1,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
     if ( tag != (uint32_t) ShortMsgQ ) {
         dbg().fatal(CALL_INFO,0,"nid=%d tag=%#x length=%lu\n",nid,tag,length);
     }
@@ -1069,7 +1069,7 @@ void ProcessQueuesState<T1>::needRecv( int nid, int tag, size_t length  )
 template< class T1 >
 void ProcessQueuesState<T1>::loopHandler( int srcCore, void* key )
 {
-    dbg().verbose(CALL_INFO,1,0,"key=%p\n",key);
+    dbg().verbose(CALL_INFO,1,1,"key=%p\n",key);
 
     m_loopResp.push_back( new LoopResp( srcCore, key ) );
 
@@ -1079,11 +1079,11 @@ void ProcessQueuesState<T1>::loopHandler( int srcCore, void* key )
 template< class T1 >
 void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, void* key )
 {
-    dbg().verbose(CALL_INFO,1,0,"key=%p vec.size()=%lu\n",key, vec.size());
+    dbg().verbose(CALL_INFO,1,1,"key=%p vec.size()=%lu\n",key, vec.size());
         
     MatchHdr* hdr = (MatchHdr*) vec[0].ptr;
 
-    dbg().verbose(CALL_INFO,1,0,"src rank %d\n",hdr->rank);
+    dbg().verbose(CALL_INFO,1,1,"src rank %d\n",hdr->rank);
     
     ++m_numRecvLooped;
     m_recvdMsgQ.push_back( new LoopReq( srcCore, vec, key ) );
@@ -1096,7 +1096,7 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MatchHdr& hdr, int& delay )
 {
     _CommReq* req = NULL;
     int count = 0;
-    dbg().verbose(CALL_INFO,1,0,"posted size %lu\n",m_pstdRcvQ.size());
+    dbg().verbose(CALL_INFO,1,1,"posted size %lu\n",m_pstdRcvQ.size());
 
     std::deque< _CommReq* >:: iterator iter = m_pstdRcvQ.begin();
     for ( ; iter != m_pstdRcvQ.end(); ++iter ) {
@@ -1110,7 +1110,7 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MatchHdr& hdr, int& delay )
         m_pstdRcvQ.erase(iter);
         break;
     }
-    dbg().verbose(CALL_INFO,2,0,"req=%p\n",req);
+    dbg().verbose(CALL_INFO,2,1,"req=%p\n",req);
     delay = obj().matchDelay(count);
     return req;
 }
@@ -1119,35 +1119,35 @@ template< class T1 >
 bool ProcessQueuesState<T1>::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
                                     uint64_t ignore )
 {
-    dbg().verbose(CALL_INFO,1,0,"posted tag %#" PRIx64 ", msg tag %#" PRIx64 "\n", wantHdr.tag, hdr.tag );
+    dbg().verbose(CALL_INFO,1,1,"posted tag %#" PRIx64 ", msg tag %#" PRIx64 "\n", wantHdr.tag, hdr.tag );
     if ( ( AnyTag != wantHdr.tag ) && 
             ( ( wantHdr.tag & ~ignore) != ( hdr.tag & ~ignore ) ) ) {
         return false;
     }
 
-    dbg().verbose(CALL_INFO,1,0,"want rank %d %d\n", wantHdr.rank, hdr.rank );
+    dbg().verbose(CALL_INFO,1,1,"want rank %d %d\n", wantHdr.rank, hdr.rank );
     if ( ( MP::AnySrc != wantHdr.rank ) && ( wantHdr.rank != hdr.rank ) ) {
         return false;
     }
 
-    dbg().verbose(CALL_INFO,1,0,"want group %d %d\n", wantHdr.group,hdr.group);
+    dbg().verbose(CALL_INFO,1,1,"want group %d %d\n", wantHdr.group,hdr.group);
     if ( wantHdr.group != hdr.group ) {
         return false;
     }
 
-    dbg().verbose(CALL_INFO,1,0,"want count %d %d\n", wantHdr.count,
+    dbg().verbose(CALL_INFO,1,1,"want count %d %d\n", wantHdr.count,
                                     hdr.count);
     if ( wantHdr.count !=  hdr.count ) {
         return false;
     }
 
-    dbg().verbose(CALL_INFO,1,0,"want dtypeSize %d %d\n", wantHdr.dtypeSize,
+    dbg().verbose(CALL_INFO,1,1,"want dtypeSize %d %d\n", wantHdr.dtypeSize,
                                     hdr.dtypeSize);
     if ( wantHdr.dtypeSize !=  hdr.dtypeSize ) {
         return false;
     }
 
-    dbg().verbose(CALL_INFO,1,0,"matched\n");
+    dbg().verbose(CALL_INFO,1,1,"matched\n");
     return true;
 }
 
@@ -1155,7 +1155,7 @@ template< class T1 >
 int ProcessQueuesState<T1>::copyIoVec( 
                 std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t len )
 {
-    dbg().verbose(CALL_INFO,1,0,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
+    dbg().verbose(CALL_INFO,1,1,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
                                     dst.size(), src.size(), len );
 
     size_t copied = 0;
@@ -1163,10 +1163,10 @@ int ProcessQueuesState<T1>::copyIoVec(
     for ( unsigned int i=0; i < src.size() && copied < len; i++ ) 
     {
         assert( rV < dst.size() );
-        dbg().verbose(CALL_INFO,3,0,"src[%d].len %lu\n", i, src[i].len);
+        dbg().verbose(CALL_INFO,3,1,"src[%d].len %lu\n", i, src[i].len);
 
         for ( unsigned int j=0; j < src[i].len && copied < len ; j++ ) {
-            dbg().verbose(CALL_INFO,3,0,"copied=%lu rV=%lu rP=%lu\n",
+            dbg().verbose(CALL_INFO,3,1,"copied=%lu rV=%lu rP=%lu\n",
                                                         copied,rV,rP);
 
             if ( dst[rV].ptr && src[i].ptr ) {
@@ -1186,10 +1186,10 @@ int ProcessQueuesState<T1>::copyIoVec(
 template< class T1 >
 void ProcessQueuesState<T1>::print( char* buf, int len )
 {
-    dbg().verbose(CALL_INFO,3,0,"addr=%p len=%d\n",buf,len);
+    dbg().verbose(CALL_INFO,3,1,"addr=%p len=%d\n",buf,len);
     std::string tmp;
     for ( int i = 0; i < len; i++ ) {
-        dbg().verbose(CALL_INFO,3,0,"%#03x\n",(unsigned char)buf[i]);
+        dbg().verbose(CALL_INFO,3,1,"%#03x\n",(unsigned char)buf[i]);
     }
 }
 
@@ -1205,7 +1205,7 @@ void ProcessQueuesState<T1>::postShortRecvBuffer( )
     // save this info so we can cleanup in the destructor 
     m_postedShortBuffers[buf ] = functor;
 
-    dbg().verbose(CALL_INFO,1,0,"num postedShortRecvBuffers %lu\n",
+    dbg().verbose(CALL_INFO,1,1,"num postedShortRecvBuffers %lu\n",
                                         m_postedShortBuffers.size());
     obj().nic().dmaRecv( -1, ShortMsgQ, buf->ioVec, functor ); 
 }

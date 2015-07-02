@@ -61,8 +61,10 @@ class FunctionSMInterface : public Module {
                     params.find_integer("nodeId"), 
                     m_name.c_str() );
 
-        m_dbg.init( buffer, params.find_integer("verbose",0), 0,
-            (Output::output_location_t)params.find_integer("debug", 0) );
+        m_dbg.init( buffer, 
+            params.find_integer("verboseLevel",0), 
+            params.find_integer("verboseMask",-1), 
+            Output::STDOUT );
     
         m_dbg.verbose(CALL_INFO,1,0,"\n");
     }

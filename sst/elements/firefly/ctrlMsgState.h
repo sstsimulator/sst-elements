@@ -33,21 +33,21 @@ template< class T1 >
 class StateBase {
   public:
 
-    StateBase( int verbose, Output::output_location_t loc, T1& _obj ) 
+    StateBase( int verbose, int mask , T1& _obj ) 
         : obj( _obj ), m_functor(NULL) 
     {
-        m_dbg.init("", verbose, 0, loc );
+        m_dbg.init("", verbose, mask, Output::STDOUT );
     }
     virtual ~StateBase() {}
 
     virtual void exit( int delay = 0 ) {
-        //m_dbg.verbose(CALL_INFO,1,0,"\n");
+        //m_dbg.verbose(CALL_INFO,1,1,"\n");
         obj.schedFunctor( m_functor, delay );
         m_functor = NULL;
     }
 
     void setExit( FunctorBase_0<bool>* functor ) {
-        //m_dbg.verbose(CALL_INFO,1,0,"\n");
+        //m_dbg.verbose(CALL_INFO,1,1,"\n");
         assert( !m_functor );
         m_functor = functor;
     }

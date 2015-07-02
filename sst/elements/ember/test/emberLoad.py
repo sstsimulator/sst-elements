@@ -271,11 +271,10 @@ if rndmPlacement and bgPercentage > 0:
         count += 1
 
 nicParams['verboseLevel'] = debug 
-nicParams['verboseMask'] = 3 
 hermesParams['hermesParams.verboseLevel'] = debug 
 hermesParams['hermesParams.nicParams.debug'] = debug
 hermesParams['hermesParams.functionSM.defaultDebug'] = debug
-hermesParams['hermesParams.ctrlMsg.debug'] = debug
+hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug 
 emberParams['verbose'] = emberVerbose
 
 print "network: BW={0} pktSize={1} flitSize={2}".format(

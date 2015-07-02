@@ -264,8 +264,8 @@ class XXX  {
     RecvState<XXX>*         m_recvState;
     WaitAnyState<XXX>*      m_waitAnyState;
     WaitAllState<XXX>*      m_waitAllState;
-    Output::output_location_t   m_dbg_loc;
     int                         m_dbg_level;
+    int                         m_dbg_mask;
     size_t                  m_shortMsgLength;
   public:
     ProcessQueuesState<XXX>*     m_processQueuesState;

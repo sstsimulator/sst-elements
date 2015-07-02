@@ -23,8 +23,8 @@ template< class T1 >
 class WaitAnyState : StateBase< T1 > 
 {
   public:
-    WaitAnyState( int verbose, Output::output_location_t loc, T1& obj ) :
-        StateBase<T1>( verbose, loc, obj ), 
+    WaitAnyState( int verbose, int mask, T1& obj ) :
+        StateBase<T1>( verbose, mask, obj ), 
         m_unblock( this, &WaitAnyState<T1>::unblock )
     {
         char buffer[100];
@@ -50,7 +50,7 @@ template< class T1 >
 void WaitAnyState<T1>::enter( std::vector<CommReq*>& reqs, 
     FunctorBase_1<CommReq*,bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
-    dbg().verbose(CALL_INFO,1,0,"num reqs %lu\n", reqs.size());
+    dbg().verbose(CALL_INFO,1,1,"num reqs %lu\n", reqs.size());
     StateBase<T1>::setExit( stateFunctor );
 
     m_reqs = reqs;
@@ -68,7 +68,7 @@ void WaitAnyState<T1>::enter( std::vector<CommReq*>& reqs,
 template< class T1 >
 bool WaitAnyState<T1>::unblock()
 {
-    dbg().verbose(CALL_INFO,1,0,"\n");
+    dbg().verbose(CALL_INFO,1,1,"\n");
     std::vector<CommReq*>::iterator iter = m_reqs.begin();
 
     for ( ; iter != m_reqs.end(); ++iter ) {
@@ -79,7 +79,7 @@ bool WaitAnyState<T1>::unblock()
             return false;
         }
     }
-    dbg().verbose(CALL_INFO,1,0,"no CommReq must be a CommEvent\n");
+    dbg().verbose(CALL_INFO,1,1,"no CommReq must be a CommEvent\n");
     obj().passCtrlToFunction( obj().waitanyStateDelay(), m_functor, NULL );
     return false;
 }

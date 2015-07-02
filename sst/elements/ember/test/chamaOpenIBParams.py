@@ -45,8 +45,6 @@ hermesParams = {
     "hermesParams.functionSM.defaultReturnLatency" : 30000,
     "hermesParams.functionSM.defaultDebug" : 0,
     "hermesParams.functionSM.defaultVerbose" : 2,
-    "hermesParams.ctrlMsg.debug" : 0,
-    "hermesParams.ctrlMsg.verboseLevel" : 2,
     "hermesParams.ctrlMsg.shortMsgLength" : 12000,
     "hermesParams.ctrlMsg.matchDelay_ns" : 150,
 

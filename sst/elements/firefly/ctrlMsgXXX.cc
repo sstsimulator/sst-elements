@@ -40,9 +40,12 @@ XXX::XXX( Component* owner, Params& params ) :
     m_processQueuesState( NULL )
 {
     m_dbg_level = params.find_integer("verboseLevel",0);
-    m_dbg_loc = (Output::output_location_t)params.find_integer("debug", 0);
+    m_dbg_mask = params.find_integer("verboseMask",-1);
 
-    m_dbg.init("@t:CtrlMsg::@p():@l ", m_dbg_level, 0, m_dbg_loc );
+    m_dbg.init("@t:CtrlMsg::@p():@l ", 
+        m_dbg_level, 
+        m_dbg_mask,
+        Output::STDOUT );
 
     std::stringstream ss;
     ss << this;
@@ -172,14 +175,14 @@ void XXX::setup()
                                                 m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
-    m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_loc, *this );
-    m_waitAllState = new WaitAllState<XXX>( m_dbg_level, m_dbg_loc, *this );
+    m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_mask, *this );
+    m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_mask, *this );
+    m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_mask, *this );
+    m_waitAllState = new WaitAllState<XXX>( m_dbg_level, m_dbg_mask, *this );
     m_processQueuesState = new ProcessQueuesState<XXX>(
-                        m_dbg_level, m_dbg_loc, *this );
+                        m_dbg_level, m_dbg_mask, *this );
 
-    m_dbg.verbose(CALL_INFO,1,0,"matchDelay %d ns.\n",  m_matchDelay_ns );
+    m_dbg.verbose(CALL_INFO,1,1,"matchDelay %d ns.\n",  m_matchDelay_ns );
 }
 
 void XXX::setRetLink( Link* link ) 
@@ -213,21 +216,21 @@ static size_t calcLength( std::vector<IoVec>& ioVec )
 
 void XXX::loopSend( std::vector<IoVec>& vec, int core, void* key ) 
 {
-    m_dbg.verbose(CALL_INFO,1,0,"dest core=%d key=%p\n",core,key);    
+    m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);    
     
     m_loopLink->send(0, new Foo( vec, core, key ) );
 }    
 
 void XXX::loopSend( int core, void* key ) 
 {
-    m_dbg.verbose(CALL_INFO,1,0,"dest core=%d key=%p\n",core,key);    
+    m_dbg.verbose(CALL_INFO,1,1,"dest core=%d key=%p\n",core,key);    
     m_loopLink->send(0, new Foo( core, key ) );
 }
 
 void XXX::loopHandler( Event* ev )
 {
     Foo* event = static_cast< Foo* >(ev);
-    m_dbg.verbose(CALL_INFO,1,0,"%s key=%p\n",
+    m_dbg.verbose(CALL_INFO,1,1,"%s key=%p\n",
         event->vec.empty() ? "Response" : "Request", event->key);    
 
     if ( event->vec.empty() ) {
@@ -242,7 +245,7 @@ void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
     MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x length=%lu \n",
+    m_dbg.verbose(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu \n",
                                         dest, tag, calcLength(ioVec) );
     m_sendState->enter( blocking, ioVec, dtype, dest, tag, group,
                                         commReq, functor );
@@ -252,7 +255,7 @@ void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
     MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x length=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
     m_recvState->enter( blocking, ioVec, dtype, src, tag, group,commReq, functor );
 }
@@ -330,7 +333,7 @@ void XXX::delayHandler( SST::Event* e )
 {
     DelayEvent* event = static_cast<DelayEvent*>(e);
     
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,1,"\n");
 
     if ( event->functor0 ) {
         if ( (*event->functor0)( ) ) {
@@ -346,7 +349,7 @@ void XXX::delayHandler( SST::Event* e )
 
 bool XXX::notifyGetDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"key=%p\n",key);
+    m_dbg.verbose(CALL_INFO,1,1,"key=%p\n",key);
 
     if ( key ) {
         FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
@@ -360,7 +363,7 @@ bool XXX::notifyGetDone( void* key )
 
 bool XXX::notifyPutDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"key=%p\n",key);
+    m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
 
     if ( key ) {
         FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
@@ -374,7 +377,7 @@ bool XXX::notifyPutDone( void* key )
 
 bool XXX::notifySendPioDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"key=%p\n",key);
+    m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
 
     if ( key ) {
         FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
@@ -388,7 +391,7 @@ bool XXX::notifySendPioDone( void* key )
 
 bool XXX::notifySendDmaDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"key=%p\n",key);
+    m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
 
     if ( key ) {
         FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
@@ -402,7 +405,7 @@ bool XXX::notifySendDmaDone( void* key )
 
 bool XXX::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x len=%lu key=%p\n",
+    m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x len=%lu key=%p\n",
                                                     nid,tag,len,key);
     if ( key ) {
         FunctorBase_3<int,int,size_t,bool>* functor = 
@@ -418,7 +421,7 @@ bool XXX::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
 bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
 {
 
-    m_dbg.verbose(CALL_INFO,1,0,"src=%#x tag=%#x len=%lu\n",nid,tag,len);
+    m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x len=%lu\n",nid,tag,len);
     m_processQueuesState->needRecv( nid, tag, len );
     
     return true;
@@ -426,7 +429,7 @@ bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
 
 void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*, bool>* functor, CommReq* req )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%" PRIu64 " functor=%p\n",
+    m_dbg.verbose(CALL_INFO,1,1,"back to Function delay=%" PRIu64 " functor=%p\n",
                                 delay, functor);
 
     if ( functor ) {
@@ -438,7 +441,7 @@ void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*, bool>* fun
 
 void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"back to Function delay=%" PRIu64 " functor=%p\n",
+    m_dbg.verbose(CALL_INFO,1,1,"back to Function delay=%" PRIu64 " functor=%p\n",
                                 delay, functor);
 
     if ( functor ) {
