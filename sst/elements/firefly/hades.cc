@@ -37,7 +37,6 @@ Hades::Hades( Component* owner, Params& params ) :
 {
     m_dbg.init("@t:Hades::@p():@l ", 
         params.find_integer("verboseLevel",0),
-        //0,
         0,
         Output::STDOUT );
 

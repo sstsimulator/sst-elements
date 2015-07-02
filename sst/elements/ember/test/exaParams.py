@@ -42,13 +42,10 @@ emberParams = {
 
 hermesParams = {
     "hermesParams.nicModule" : "firefly.VirtNic",
-    "hermesParams.nicParams.debug" : 0,
-    "hermesParams.nicParams.debugLevel" : 1 ,
-    "hermesParams.policy" : "adjacent",
+
     "hermesParams.functionSM.defaultEnterLatency" : 10000,
     "hermesParams.functionSM.defaultReturnLatency" : 10000,
-    "hermesParams.functionSM.defaultDebug" : 0,
-    "hermesParams.functionSM.defaultVerbose" : 2,
+
     "hermesParams.ctrlMsg.shortMsgLength" : 64000,
     "hermesParams.ctrlMsg.matchDelay_ns" : 150,
 

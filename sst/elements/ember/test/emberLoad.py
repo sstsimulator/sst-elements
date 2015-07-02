@@ -273,7 +273,7 @@ if rndmPlacement and bgPercentage > 0:
 nicParams['verboseLevel'] = debug 
 hermesParams['hermesParams.verboseLevel'] = debug 
 hermesParams['hermesParams.nicParams.verboseLevel'] = debug 
-hermesParams['hermesParams.functionSM.defaultDebug'] = debug
+hermesParams['hermesParams.functionSM.verboseLevel'] = debug 
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug 
 emberParams['verbose'] = emberVerbose
 

@@ -46,11 +46,11 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
     m_owner( obj ),
     m_proto( proto )
 {
-    int verboseLevel = params.find_integer("verboseLevel",0);
-    Output::output_location_t loc = 
-            (Output::output_location_t)params.find_integer("debug", 0);
 
-    m_dbg.init("@t:FunctionSM::@p():@l ", verboseLevel, 0, loc );
+    m_dbg.init("@t:FunctionSM::@p():@l ", 
+            params.find_integer("verboseLevel",0),
+            0,
+            Output::STDOUT );
 
     m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
@@ -99,8 +99,7 @@ void FunctionSM::setup()
                         m_params.find_string("defaultEnterLatency","0");
     defaultParams[ "returnLatency" ] = 
                         m_params.find_string("defaultReturnLatency","0");
-    defaultParams[ "debug" ]   = m_params.find_string("defaultDebug","0");
-    defaultParams[ "verbose" ] = m_params.find_string("defaultVerbose","0"); 
+    defaultParams[ "verboseLevel" ] = m_params.find_string("verboseLevel","0"); 
     std::ostringstream tmp;
     tmp <<  nodeId; 
     defaultParams[ "nodeId" ] = tmp.str();
@@ -129,12 +128,8 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
         params["name"] = defaultParams[ "name" ];
     }
 
-    if ( params.find_string("verbose").empty() ) {
-        params["verbose"] = defaultParams[ "verbose" ];
-    }
-
-    if ( params.find_string("debug").empty() ) {
-        params["debug"] = defaultParams[ "debug" ];
+    if ( params.find_string("verboseLevel").empty() ) {
+        params["verboseLevel"] = defaultParams[ "verboseLevel" ];
     }
 
     if ( params.find_string("enterLatency").empty() ) {
