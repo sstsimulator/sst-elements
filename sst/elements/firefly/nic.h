@@ -527,19 +527,19 @@ public:
 
     void notifyNeedRecv( int vNic, int src_vNic, int src, int tag,
                                                     size_t length ) {
-    	m_dbg.verbose(CALL_INFO,2,0,"src_vNic=%d src=%d tag=%#x len=%lu\n",
+    	m_dbg.verbose(CALL_INFO,2,1,"src_vNic=%d src=%d tag=%#x len=%lu\n",
                                             src_vNic,src,tag,length);
 
         m_vNicV[vNic]->notifyNeedRecv( src_vNic, src, tag, length );
     }
 
     void notifyPutDone( int vNic, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,0,"%p\n",key);
+        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
         assert(0);
     }
 
     void notifyGetDone( int vNic, void* key ) {
-        m_dbg.verbose(CALL_INFO,2,0,"%p\n",key);
+        m_dbg.verbose(CALL_INFO,2,1,"%p\n",key);
         m_vNicV[vNic]->notifyGetDone( key );
     }
 

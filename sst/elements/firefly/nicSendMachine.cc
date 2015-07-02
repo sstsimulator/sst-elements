@@ -19,6 +19,10 @@ using namespace SST::Interfaces;
 
 static void print( Output& dbg, char* buf, int len );
 
+const char* Nic::SendMachine::m_enumName[] = {
+    FOREACH_ENUM(GENERATE_STRING)
+};
+
 Nic::SendMachine::~SendMachine() 
 {
     while ( ! m_sendQ.empty() ) {
@@ -34,7 +38,7 @@ void Nic::SendMachine::run( SendEntry* entry )
 #ifdef NIC_SEND_DEBUG
     ++m_runCount;
 #endif
-    m_dbg.verbose(CALL_INFO,1,0,"SendMachine\n");
+    m_dbg.verbose(CALL_INFO,1,2,"SendMachine enter state=%s\n",m_enumName[m_state]);
 
     if ( entry ) {
         m_sendQ.push_back( entry );
@@ -86,6 +90,7 @@ void Nic::SendMachine::run( SendEntry* entry )
             break;
         }
     }
+    m_dbg.verbose(CALL_INFO,1,2,"SendMachine leave state=%s\n",m_enumName[m_state]);
 }
 
 Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
@@ -117,7 +122,7 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
             hdr.dst_vNicId = entry->dst_vNic();
             hdr.src_vNicId = entry->local_vNic(); 
 
-            m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d, send dstNid=%d "
+            m_dbg.verbose(CALL_INFO,1,1,"src_vNic=%d, send dstNid=%d "
                     "dst_vNic=%d tag=%#x bytes=%lu\n",
                     hdr.src_vNicId,entry->node(), 
                     hdr.dst_vNicId, hdr.tag, entry->totalBytes()) ;
@@ -141,7 +146,7 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
         	req->setTraceID( m_packetId );
 		}
 		++m_packetId;
-        m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes\n",
+        m_dbg.verbose(CALL_INFO,2,1,"sending event with %lu bytes\n",
                                                         ev->bufSize());
         assert( ev->bufSize() );
         bool sent = m_nic.m_linkControl->send( req, 0 );
@@ -149,7 +154,7 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
 
         if ( ret ) {
 
-            m_dbg.verbose(CALL_INFO,1,0,"send entry done\n");
+            m_dbg.verbose(CALL_INFO,1,1,"send entry done\n");
 
             entry->notify();
 
@@ -163,22 +168,22 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
 static void print( Output& dbg, char* buf, int len )
 {
     std::string tmp;
-    dbg.verbose(CALL_INFO,4,0,"addr=%p len=%d\n",buf,len);
+    dbg.verbose(CALL_INFO,4,1,"addr=%p len=%d\n",buf,len);
     for ( int i = 0; i < len; i++ ) {
-        dbg.verbose(CALL_INFO,3,0,"%#03x\n",(unsigned char)buf[i]);
+        dbg.verbose(CALL_INFO,3,1,"%#03x\n",(unsigned char)buf[i]);
     }
 }
 
 bool  Nic::SendMachine::copyOut( Output& dbg,
                     FireflyNetworkEvent& event, Nic::Entry& entry )
 {
-    dbg.verbose(CALL_INFO,3,0,"ioVec.size()=%lu\n", entry.ioVec().size() );
+    dbg.verbose(CALL_INFO,3,1,"ioVec.size()=%lu\n", entry.ioVec().size() );
 
     for ( ; entry.currentVec < entry.ioVec().size() &&
                 event.bufSize() <  m_packetSizeInBytes;
                 entry.currentVec++, entry.currentPos = 0 ) {
 
-        dbg.verbose(CALL_INFO,3,0,"vec[%lu].len %lu\n",entry.currentVec,
+        dbg.verbose(CALL_INFO,3,1,"vec[%lu].len %lu\n",entry.currentVec,
                     entry.ioVec()[entry.currentVec].len );
 
         if ( entry.ioVec()[entry.currentVec].len ) {
@@ -188,7 +193,7 @@ bool  Nic::SendMachine::copyOut( Output& dbg,
 
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            dbg.verbose(CALL_INFO,3,0,"toBufSpace=%lu fromAvail=%lu, "
+            dbg.verbose(CALL_INFO,3,1,"toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             const char* from = 
@@ -208,7 +213,7 @@ bool  Nic::SendMachine::copyOut( Output& dbg,
             }
         }
     }
-    dbg.verbose(CALL_INFO,3,0,"currentVec=%lu, currentPos=%lu\n",
+    dbg.verbose(CALL_INFO,3,1,"currentVec=%lu, currentPos=%lu\n",
                 entry.currentVec, entry.currentPos);
     return ( entry.currentVec == entry.ioVec().size() ) ;
 }

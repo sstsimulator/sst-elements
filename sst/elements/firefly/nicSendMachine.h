@@ -9,8 +9,24 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.   
 
+#undef FOREACH_ENUM
+
+#define FOREACH_ENUM(NAME) \
+    NAME(Idle) \
+    NAME(Sending) \
+    NAME(WaitDelay) \
+    NAME(WaitTX) \
+    NAME(WaitRead) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
 class SendMachine {
-        enum State { Idle, Sending, WaitDelay, WaitTX, WaitRead } m_state;
+
+        enum State {
+            FOREACH_ENUM(GENERATE_ENUM)
+        } m_state;
+
       public:
         SendMachine( Nic& nic, Output& output ) : m_state( Idle ),
 //            m_nic(nic), m_dbg(output), m_currentSend(NULL), m_txDelay(50), m_packetId(0) { }
@@ -74,6 +90,7 @@ class SendMachine {
         unsigned int            m_packetSizeInBytes;
         int                     m_packetSizeInBits;
         int                     m_packetId;
+        static const char*      m_enumName[]; 
 #ifdef NIC_SEND_DEBUG
         unsigned int                m_msgCount;
         unsigned int                m_runCount;

@@ -33,12 +33,14 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_myNodeId = params.find_integer("nid", -1);
     assert( m_myNodeId != -1 );
 
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     char buffer[100];
     snprintf(buffer,100,"@t:%d:Nic::@p():@l ",m_myNodeId);
 
-    m_dbg.init(buffer, params.find_integer("verboseLevel",0),0,
-       (Output::output_location_t)params.find_integer("debug", 0));
+    m_dbg.init(buffer, 
+        params.find_integer("verboseLevel",0),
+        params.find_integer("verboseMask",-1), 
+        Output::STDOUT);
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
 
     int rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find_integer( "txDelay_ns", 50 );
@@ -61,7 +63,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	UnitAlgebra buf_size( params.find_string("buffer_size") );
 	UnitAlgebra link_bw( params.find_string("link_bw") );
 
-    m_dbg.verbose(CALL_INFO,1,0,"id=%d buffer_size=%s link_bw=%s "
+    m_dbg.verbose(CALL_INFO,1,1,"id=%d buffer_size=%s link_bw=%s "
 			"packetSize=%d\n", m_myNodeId, buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
@@ -86,7 +88,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
 
-    m_dbg.verbose(CALL_INFO,1,0,"%d\n", IdToNet( m_myNodeId ) );
+    m_dbg.verbose(CALL_INFO,1,1,"%d\n", IdToNet( m_myNodeId ) );
 
     m_num_vNics = params.find_integer("num_vNics", 1 );
     for ( int i = 0; i < m_num_vNics; i++ ) {
@@ -124,10 +126,10 @@ void Nic::printStatus(Output &out)
 
 void Nic::init( unsigned int phase )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
     if ( 0 == phase ) {
         for ( unsigned int i = 0; i < m_vNicV.size(); i++ ) {
-            m_dbg.verbose(CALL_INFO,1,0,"sendInitdata to core %d\n", i );
+            m_dbg.verbose(CALL_INFO,1,1,"sendInitdata to core %d\n", i );
             m_vNicV[i]->init( phase );
         } 
     } 
@@ -138,7 +140,7 @@ void Nic::handleVnicEvent( Event* ev, int id )
 {
     NicCmdEvent* event = static_cast<NicCmdEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,3,0,"%d\n",event->type);
+    m_dbg.verbose(CALL_INFO,3,1,"%d\n",event->type);
 
     switch ( event->type ) {
     case NicCmdEvent::DmaSend:
@@ -188,7 +190,7 @@ void Nic::handleSelfEvent( Event *e )
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 {
     SendEntry* entry = new SendEntry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,1,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
 
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
@@ -200,7 +202,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 {
     SendEntry* entry = new SendEntry( vNicNum, e );
-    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
+    m_dbg.verbose(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
         "vecLen=%lu totalBytes=%lu\n", vNicNum, e->node, e->dst_vNic,
                     e->tag, e->iovec.size(), entry->totalBytes() );
 
@@ -214,7 +216,7 @@ void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
 {
     RecvEntry* entry = new RecvEntry( vNicNum, e );
 
-    m_dbg.verbose(CALL_INFO,1,0,"vNicNum=%d src=%d tag=%#x length=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,1,"vNicNum=%d src=%d tag=%#x length=%lu\n",
                    vNicNum, e->node, e->tag, entry->totalBytes());
 
     m_recvMachine.addDma( entry->local_vNic(), e->tag, entry );
@@ -227,13 +229,13 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
 
     m_getOrgnM[ getKey ] = new PutRecvEntry( vNicNum, &e->iovec );
 
-        m_dbg.verbose(CALL_INFO,2,0,"%p %lu\n",m_getOrgnM[getKey],
+        m_dbg.verbose(CALL_INFO,2,1,"%p %lu\n",m_getOrgnM[getKey],
                             m_getOrgnM[ getKey ]->ioVec().size());
 
     m_getOrgnM[ getKey ]->setNotifier( new NotifyFunctor_2< Nic, int, void* >
             ( this, &Nic::notifyGetDone, vNicNum, e->key) );
 
-    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
+    m_dbg.verbose(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
                         "vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), 
                 m_getOrgnM[ getKey ]->totalBytes() );
@@ -245,7 +247,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
 {
     SendEntry* entry = new SendEntry( vNicNum, e );
     assert(0);
-    m_dbg.verbose(CALL_INFO,1,0,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
+    m_dbg.verbose(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
                         "vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(),
                 entry->totalBytes() );
@@ -258,7 +260,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
 
 void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"rgnNum %d\n",e->tag);
+    m_dbg.verbose(CALL_INFO,1,1,"rgnNum %d\n",e->tag);
     
     m_memRgnM[ vNicNum ][ e->tag ] = new MemRgnEntry( vNicNum, e->iovec );
     delete e;
@@ -267,7 +269,7 @@ void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 // Merlin stuff
 bool Nic::sendNotify(int)
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,1,"\n");
     
     m_sendMachine.run();
 
@@ -277,7 +279,7 @@ bool Nic::sendNotify(int)
 
 bool Nic::recvNotify(int vc)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"network event available vc=%d\n",vc);
+    m_dbg.verbose(CALL_INFO,1,1,"network event available vc=%d\n",vc);
     assert( 0 == vc );
 
     m_recvMachine.run();

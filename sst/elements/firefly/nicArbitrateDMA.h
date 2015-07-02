@@ -34,7 +34,7 @@ class ArbitrateDMA {
 
     bool canIWrite( int bytes ) {
 
-        m_dbg.verbose(CALL_INFO,1,0,"bytes=%d\n",bytes);
+        m_dbg.verbose(CALL_INFO,1,1,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Write], m_xx[Read], bytes  );
         if ( delay ) {
             schedWakeup( Write, delay );
@@ -43,7 +43,7 @@ class ArbitrateDMA {
     }
 
     bool canIRead( int bytes ) {
-        m_dbg.verbose(CALL_INFO,1,0,"bytes=%d\n",bytes);
+        m_dbg.verbose(CALL_INFO,1,1,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Read], m_xx[Write], bytes  );
         if ( delay ) {
             schedWakeup( Read, delay );
@@ -62,14 +62,14 @@ class ArbitrateDMA {
             xx.avail = m_bufferSize;
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"avail Bytes %ld, delta %" PRIu64 " ns, "
+        m_dbg.verbose(CALL_INFO,1,1,"avail Bytes %ld, delta %" PRIu64 " ns, "
             "added %ld \n", xx.avail, delta, add ); 
 		//assert( xx.avail >= 0 );
     }
 
     void schedWakeup( Type type, uint64_t delay) {
         SelfEvent* event = new SelfEvent;
-        m_dbg.verbose(CALL_INFO,1,0,"wakeup %s in %" PRIu64 " ns\n",
+        m_dbg.verbose(CALL_INFO,1,1,"wakeup %s in %" PRIu64 " ns\n",
                     Read == type ? "Send":"Recv", delay);
         if ( Read == type ) {
             event->type = SelfEvent::RunSendMachine;

@@ -9,10 +9,24 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#undef FOREACH_ENUM
+
+#define FOREACH_ENUM(NAME) \
+    NAME(NeedPkt) \
+    NAME(HavePkt) \
+    NAME(Move) \
+    NAME(WaitWrite) \
+    NAME(Put) \
+    NAME(NeedRecv) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
 class RecvMachine {
 
-        enum State { NeedPkt, HavePkt, Move, WaitWrite,
-                            Put, NeedRecv } m_state;
+        enum State {
+            FOREACH_ENUM(GENERATE_ENUM)
+        } m_state;
 
       public:
         RecvMachine( Nic& nic, Output& output ) : m_state(NeedPkt),
@@ -115,6 +129,7 @@ class RecvMachine {
         std::map< int, RecvEntry* >     m_activeRecvM;
 
         std::vector< std::map< int, std::deque<RecvEntry*> > > m_recvM;
+        static const char*  m_enumName[];
 #ifdef NIC_RECV_DEBUG 
         unsigned int    m_msgCount;
         unsigned int    m_runCount;

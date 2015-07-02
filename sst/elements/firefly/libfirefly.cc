@@ -63,6 +63,7 @@ static const ElementInfoParam nic_params[] = {
 	{ "corePortName", "Port connected to the core", "core"},
 	{ "num_vNics", "Sets number of cores", "1"},
 	{ "verboseLevel", "Sets the output verbosity of the component", "1"},
+	{ "verboseMask", "Sets the output mask of the component", "1"},
 	{ "debug", "Sets the messaging API of the end point", "0"},
 	{ "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
 	{ "txDelay_ns", "Sets the delay for a send", "100"},

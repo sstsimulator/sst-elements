@@ -270,8 +270,8 @@ if rndmPlacement and bgPercentage > 0:
         jobid += 1
         count += 1
 
-nicParams['debug'] = debug
 nicParams['verboseLevel'] = 1 
+nicParams['verboseMask'] = 3 
 hermesParams['hermesParams.debug'] = debug
 hermesParams['hermesParams.nicParams.debug'] = debug
 hermesParams['hermesParams.functionSM.defaultDebug'] = debug
