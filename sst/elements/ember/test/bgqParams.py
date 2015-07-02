@@ -20,8 +20,6 @@ networkParams = {
 }
 
 nicParams = {
-    "debug" : 0,
-    "verboseLevel": 1,
     "module" : "merlin.linkcontrol",
     "topology" : networkParams['topology'], 
     "packetSize" : networkParams['packetSize'],
@@ -39,8 +37,6 @@ emberParams = {
 }
 
 hermesParams = {
-    "hermesParams.debug" : 0,
-    "hermesParams.verboseLevel" : 1,
     "hermesParams.nicModule" : "firefly.VirtNic",
     "hermesParams.nicParams.debug" : 0,
     "hermesParams.nicParams.debugLevel" : 1 ,

@@ -35,11 +35,11 @@ Hades::Hades( Component* owner, Params& params ) :
 	m_functionSM( NULL ),
     m_gt( Info::Dense )
 {
-    int verboseLevel = params.find_integer("verboseLevel",0);
-    Output::output_location_t loc = 
-            (Output::output_location_t)params.find_integer("debug", 0);
-
-    m_dbg.init("@t:Hades::@p():@l ", verboseLevel, 0, loc );
+    m_dbg.init("@t:Hades::@p():@l ", 
+        params.find_integer("verboseLevel",0),
+        //0,
+        0,
+        Output::STDOUT );
 
     Params nicParams = params.find_prefix_params("nicParams." );
 
