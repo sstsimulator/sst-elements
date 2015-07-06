@@ -48,7 +48,7 @@ class RandomGroup : public Group
 
     void initMapping( int from, int to, int range ) {
 		
-        if ( m_map.size() < from + range ) {
+        if ( m_map.size() < (unsigned)from + range ) {
             m_map.resize(from + range);	
         }	
         for ( int i=0; i < range; i++ ) {
