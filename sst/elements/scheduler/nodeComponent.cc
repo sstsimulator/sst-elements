@@ -476,7 +476,7 @@ SimTime_t genexp(double lambda, unsigned short int * seed)
     double u,x;
     u = urand( seed );
     x = (-1 / lambda) * log(u);
-    return llabs(x);
+    return std::abs(x);
 }
 
 
