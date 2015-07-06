@@ -350,7 +350,7 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 				"Error executing: %s under a PIN fork\n",
 				app);
 		} else {
-			char** execute_env_cp = (char**) malloc(sizeof(char*) * app_env.size());
+			char** execute_env_cp = (char**) malloc(sizeof(char*) * (app_env.size() + 1));
 			uint32_t next_env_cp_index = 0;
 
 			for(auto env_itr = app_env.begin(); env_itr != app_env.end(); env_itr++) {
@@ -363,6 +363,8 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 				execute_env_cp[next_env_cp_index] = execute_env_nv_pair;
 				next_env_cp_index++;
 			}
+
+			execute_env_cp[app_env.size()] = NULL;
 
 			int ret_code = execve(app, args, execute_env_cp);
 			perror("execvep");
