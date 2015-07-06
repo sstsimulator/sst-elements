@@ -476,7 +476,7 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req,
 template< class T1 >
 bool ProcessQueuesState<T1>::enterSendLoop( _CommReq* req )
 {
-    dbg().verbose(CALL_INFO,2,1,"looop\n");
+    dbg().verbose(CALL_INFO,2,2,"key=%p\n", req);
 
     IoVec hdrVec;
     hdrVec.ptr = &req->hdr();
@@ -767,7 +767,8 @@ bool ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>& stack )
         if ( length <= obj().shortMsgLength() || 
             dynamic_cast<LoopReq*>( ctx->msg() ) ) {
 
-            dbg().verbose(CALL_INFO,2,1,"receive short|loop message\n"); 
+            dbg().verbose(CALL_INFO,2,1,"copyIoVec() short|loop message\n");
+
             delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
         }
     }
@@ -795,7 +796,8 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 
         LoopReq* loopReq;
         if ( ( loopReq = dynamic_cast<LoopReq*>( ctx->msg() ) ) ) {
-		    dbg().verbose(CALL_INFO,1,1,"loop\n");
+		    dbg().verbose(CALL_INFO,1,2,"loop message key=%p srcCore=%d srcRank=%d\n", 
+                                        loopReq->key, loopReq->srcCore, ctx->hdr().rank);
             req->setDone();
             obj().loopSend( loopReq->srcCore , loopReq->key );
 
@@ -842,7 +844,7 @@ bool ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>& stack )
 template< class T1 >
 void ProcessQueuesState<T1>::processLoopResp( LoopResp* resp )
 {
-    dbg().verbose(CALL_INFO,1,1,"srcCore=%d\n",resp->srcCore );
+    dbg().verbose(CALL_INFO,1,2,"srcCore=%d\n",resp->srcCore );
     _CommReq* req = (_CommReq*)resp->key;  
     req->setDone();
     delete resp;
@@ -1069,7 +1071,7 @@ void ProcessQueuesState<T1>::needRecv( int nid, int tag, size_t length  )
 template< class T1 >
 void ProcessQueuesState<T1>::loopHandler( int srcCore, void* key )
 {
-    dbg().verbose(CALL_INFO,1,1,"key=%p\n",key);
+    dbg().verbose(CALL_INFO,1,2,"resp: srcCore=%d key=%p \n",srcCore,key);
 
     m_loopResp.push_back( new LoopResp( srcCore, key ) );
 
@@ -1079,12 +1081,12 @@ void ProcessQueuesState<T1>::loopHandler( int srcCore, void* key )
 template< class T1 >
 void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, void* key )
 {
-    dbg().verbose(CALL_INFO,1,1,"key=%p vec.size()=%lu\n",key, vec.size());
         
     MatchHdr* hdr = (MatchHdr*) vec[0].ptr;
 
-    dbg().verbose(CALL_INFO,1,1,"src rank %d\n",hdr->rank);
-    
+    dbg().verbose(CALL_INFO,1,2,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
+                                                    srcCore, key, vec.size(), hdr->rank);
+
     ++m_numRecvLooped;
     m_recvdMsgQ.push_back( new LoopReq( srcCore, vec, key ) );
 
