@@ -230,7 +230,7 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	// If translation is disabled, then just return address
-	if(translationEnabled) {
+	if( ! translationEnabled ) {
 		return virtAddr;
 	}
 
