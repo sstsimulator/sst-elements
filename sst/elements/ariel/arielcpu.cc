@@ -239,7 +239,7 @@ void ArielCPU::init(unsigned int phase)
 {
     if ( phase == 0 ) {
         output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
-        child_pid = forkPINChild(PINTOOL_EXECUTABLE, execute_args);
+        child_pid = forkPINChild(PINTOOL_EXECUTABLE, execute_args, execute_env);
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
         tunnel->waitForChild();
@@ -262,7 +262,7 @@ void ArielCPU::finish() {
 	memmgr->printStats();
 }
 
-int ArielCPU::forkPINChild(const char* app, char** args) {
+int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
 	// If user only wants to init the simulation then we do NOT fork the binary
 	if(Simulation::getSimulation()->getSimulationMode() == Config::INIT)
 		return 0;
@@ -300,12 +300,13 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 
 
 #if defined(SST_COMPILE_MACOSX)
-        char *dyldpath = getenv("DYLD_LIBRARY_PATH");
-        if ( dyldpath ) {
-            setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
-            setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
-            unsetenv("DYLD_LIBRARY_PATH");
-        }
+        	char *dyldpath = getenv("DYLD_LIBRARY_PATH");
+
+        	if ( dyldpath ) {
+            		setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
+            		setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
+            		unsetenv("DYLD_LIBRARY_PATH");
+        	}
 #endif
 		int ret_code = execvp(app, args);
 		perror("execve");
