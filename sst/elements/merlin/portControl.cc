@@ -258,9 +258,9 @@ void
 PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in,
                      const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size)
 {
+    vc_heads = vc_heads_in;
     if ( !connected ) return;
     num_vcs = vcs;
-    vc_heads = vc_heads_in;
     xbar_in_credits = xbar_in_credits_in;
 
     // Input and output buffers

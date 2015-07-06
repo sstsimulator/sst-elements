@@ -89,7 +89,7 @@ public:
 #endif
                    )
     {
-
+        
         for ( int i = 0; i < num_ports; i++ ) progress_vc[i] = -1;
 
         // std::cout << "---------" << std::endl;
