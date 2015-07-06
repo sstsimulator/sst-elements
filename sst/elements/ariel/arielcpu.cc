@@ -190,6 +190,31 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg] = NULL;
 	free(argv_buffer);
 
+	const int32_t pin_env_count = params.find_integer("envparamcount", -1);
+	if(pin_env_count > -1) {
+		char* env_name_buffer = (char*) malloc(sizeof(char) * 256);
+
+		for(int32_t next_env_param = 0; next_env_param < pin_env_count; next_env_param++) {
+			sprintf(env_name_buffer, "envparamname%" PRId32 , next_env_param);
+
+			std::string env_name = params.find_string(env_name_buffer, "");
+
+			if("" == env_name) {
+				output->fatal(CALL_INFO, -1, "Parameter: %s environment variable name is empty",
+					env_name_buffer);
+			}
+
+			sprintf(env_name_buffer, "envparamval%" PRId32, next_env_param);
+
+			std::string env_value = params.find_string(env_name_buffer, "");
+
+			execute_env.insert(std::pair<std::string, std::string>(
+				env_name, env_value));
+		}
+
+		free(env_name_buffer);
+	}
+
 	output->verbose(CALL_INFO, 1, 0, "Completed processing application arguments.\n");
 
 	// Remember that the list of arguments must be NULL terminated for execution
@@ -298,25 +323,46 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 		output->verbose(CALL_INFO, 1, 0,
 			"Launching executable: %s...\n", app);
 
-
+		if(0 == app_env.size()) {
 #if defined(SST_COMPILE_MACOSX)
-        	char *dyldpath = getenv("DYLD_LIBRARY_PATH");
+	        	char *dyldpath = getenv("DYLD_LIBRARY_PATH");
 
-        	if ( dyldpath ) {
-            		setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
-            		setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
-            		unsetenv("DYLD_LIBRARY_PATH");
-        	}
+	        	if ( dyldpath ) {
+	            		setenv("PIN_APP_DYLD_LIBRARY_PATH", dyldpath, 1);
+	            		setenv("PIN_DYLD_RESTORE_REQUIRED", "t", 1);
+	            		unsetenv("DYLD_LIBRARY_PATH");
+	       	 	}
 #endif
-		int ret_code = execvp(app, args);
-		perror("execve");
+			int ret_code = execvp(app, args);
+			perror("execve");
 
-		output->verbose(CALL_INFO, 1, 0,
-			"Call to execvp returned: %d\n", ret_code);
+			output->verbose(CALL_INFO, 1, 0,
+				"Call to execvp returned: %d\n", ret_code);
 
-		output->fatal(CALL_INFO, -1, 
-			"Error executing: %s under a PIN fork\n",
-			app);
+			output->fatal(CALL_INFO, -1,
+				"Error executing: %s under a PIN fork\n",
+				app);
+		} else {
+			char** execute_env_cp = (char**) malloc(sizeof(char*) * app_env.size());
+			uint32_t next_env_cp_index = 0;
+
+			for(auto env_itr = app_env.begin(); env_itr != app_env.end(); env_itr++) {
+				char* execute_env_nv_pair = (char*) malloc(sizeof(char) * (2 +
+					env_itr->first.size() + env_itr->second.size()));
+
+				sprintf(execute_env_nv_pair, "%s=%s", env_itr->first.c_str(),
+					env_itr->second.c_str());
+
+				execute_env_cp[next_env_cp_index] = execute_env_nv_pair;
+				next_env_cp_index++;
+			}
+
+			int ret_code = execve(app, args, execute_env_cp);
+			perror("execvep");
+
+			output->verbose(CALL_INFO, 1, 0, "Call to execvpe returned %d\n", ret_code);
+			output->fatal(CALL_INFO, -1, "Error executing %s under a PIN fork\n", app);
+		}
 	}
 
 	return 0;
