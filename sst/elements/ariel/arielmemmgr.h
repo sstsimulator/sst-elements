@@ -38,9 +38,12 @@ class ArielMemoryManager {
 		void cacheTranslation(uint64_t virtualA, uint64_t physicalA);
 		void populateTables(const char* populateFilePath, const uint32_t level);
 		void printStats();
+		void disableTranslation();
+		void enableTranslation();
 
 	private:
 		Output* output;
+
 		uint32_t defaultLevel;
 		uint32_t memoryLevels;
 		uint64_t* pageSizes;
@@ -54,6 +57,7 @@ class ArielMemoryManager {
 		uint64_t translationQueries;
 		uint64_t translationShootdown;
 		uint64_t pageAllocationCount;
+		bool translationEnabled;
 };
 
 }

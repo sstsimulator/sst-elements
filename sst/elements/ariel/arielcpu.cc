@@ -79,6 +79,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	}
 	free(level_buffer);
 
+	bool enableTLBTranslate = (params.find_string("vtop_translate", "yes") == "yes");
+	if(enableTLBTranslate) {
+		memmgr->enableTranslation();
+	} else {
+		memmgr->disableTranslation();
+	}
+
 	output->verbose(CALL_INFO, 1, 0, "Memory manager construction is completed.\n");
 
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find_integer("maxissuepercycle", 1);

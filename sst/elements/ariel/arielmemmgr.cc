@@ -18,7 +18,8 @@ using namespace SST::ArielComponent;
 
 ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out,
 		uint32_t defLevel, uint32_t translateCacheEntryCount) :
-	translationCacheEntries(translateCacheEntryCount) {
+	translationCacheEntries(translateCacheEntryCount),
+	translationEnabled(true) {
 
 	output = out;
 	memoryLevels = mLevels;
@@ -115,6 +116,14 @@ void ArielMemoryManager::setDefaultPool(const uint32_t newLevel) {
 
 ArielMemoryManager::~ArielMemoryManager() {
 
+}
+
+void ArielMemoryManager::disableTranslation() {
+	translationEnabled = false;
+}
+
+void ArielMemoryManager::enableTranslation() {
+	translationEnabled = true;
 }
 
 void ArielMemoryManager::cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
@@ -220,6 +229,11 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 }
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
+	// If translation is disabled, then just return address
+	if(translationEnabled) {
+		return virtAddr;
+	}
+
 	// Keep track of how many translations we are performing
 	translationQueries++;
 
