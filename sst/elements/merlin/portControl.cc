@@ -259,7 +259,14 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
                      const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size)
 {
     vc_heads = vc_heads_in;
-    if ( !connected ) return;
+    // If the port is not connected, we still need to initialize
+    // vc_heads entries to NULL
+    if ( !connected ) {
+        for ( int i = 0; i < vcs; i++ ) {
+            vc_heads[i] = NULL;
+        }
+        return;
+    }
     num_vcs = vcs;
     xbar_in_credits = xbar_in_credits_in;
 
