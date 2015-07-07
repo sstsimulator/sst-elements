@@ -46,6 +46,11 @@ class ProcessQueuesState : StateBase< T1 >
         }
     }
 
+    void finish() {
+        dbg().verbose(CALL_INFO,1,0,"pstdRcvQ=%lu recvdMsgQ=%lu loopResp=%lu %lu\n", 
+             m_pstdRcvQ.size(), m_recvdMsgQ.size(), m_loopResp.size(), m_funcStack.size() );
+    }
+
     ~ProcessQueuesState() 
     {
         while ( ! m_postedShortBuffers.empty() ) {
@@ -437,7 +442,6 @@ class ProcessQueuesState : StateBase< T1 >
     std::map< ShortRecvBuffer*, RecvFunctor<ShortRecvBuffer*> * >
                                                     m_postedShortBuffers; 
 	FuncCtxBase*	m_intCtx;
-
 };
 
 template< class T1 >
@@ -666,7 +670,7 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     }
 
     // this does not cost time
-    if ( ! m_loopResp.empty() ) {
+    while ( ! m_loopResp.empty() ) {
         processLoopResp( m_loopResp.front() );
         m_loopResp.pop_front(); 
     }
@@ -1114,6 +1118,7 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MatchHdr& hdr, int& delay )
     }
     dbg().verbose(CALL_INFO,2,1,"req=%p\n",req);
     delay = obj().matchDelay(count);
+
     return req;
 }
 

@@ -75,6 +75,7 @@ class XXX  {
     void init( Info* info, VirtNic* );
     void setup();
     void setRetLink( Link* link );
+    void finish();
 
     Info*      info() { return m_info; }
     VirtNic&   nic() { return *m_nic; }           

@@ -112,6 +112,11 @@ Hades::~Hades()
     if ( m_virtNic ) delete m_virtNic;
 }
 
+void Hades::finish(  )
+{
+    m_protocolM.begin()->second->finish();
+}
+
 void Hades::printStatus( Output& out )
 {
     std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();

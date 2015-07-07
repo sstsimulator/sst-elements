@@ -27,6 +27,7 @@ class ProtocolAPI : public SST::Module
     virtual ~ProtocolAPI() {}
     virtual void printStatus( Output& ) {}
     virtual void setup() {};
+    virtual void finish() {};
     virtual void init( Info*, VirtNic* ) = 0;  
     virtual std::string name() = 0;
     virtual void setRetLink(SST::Link* link) { assert(0); } 

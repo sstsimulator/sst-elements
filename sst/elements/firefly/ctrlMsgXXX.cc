@@ -121,6 +121,10 @@ XXX::XXX( Component* owner, Params& params ) :
     assert(m_loopLink);
 }
 
+void XXX::finish() { 
+    m_processQueuesState->finish(); 
+}
+
 XXX::~XXX()
 {
 	if ( m_sendState ) delete m_sendState;

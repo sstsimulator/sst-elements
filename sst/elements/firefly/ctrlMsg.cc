@@ -31,6 +31,10 @@ API::~API()
     delete m_xxx;
 }
 
+void API::finish() { 
+    m_xxx->finish();
+}
+
 void API::init( Info* info, VirtNic* nic )
 {
     m_xxx->init( info, nic );

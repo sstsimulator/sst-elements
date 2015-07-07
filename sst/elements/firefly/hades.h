@@ -35,6 +35,7 @@ class Hades : public OS
     virtual void printStatus( Output& );
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
+    void finish();
 
     int getNid();
     int getNumNids();
