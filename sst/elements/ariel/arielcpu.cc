@@ -357,6 +357,9 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 				char* execute_env_nv_pair = (char*) malloc(sizeof(char) * (2 +
 					env_itr->first.size() + env_itr->second.size()));
 
+				output->verbose(CALL_INFO, 2, 0, "Env: %s=%s\n",
+					env_itr->first.c_str(), env_itr->second.c_str());
+
 				sprintf(execute_env_nv_pair, "%s=%s", env_itr->first.c_str(),
 					env_itr->second.c_str());
 
