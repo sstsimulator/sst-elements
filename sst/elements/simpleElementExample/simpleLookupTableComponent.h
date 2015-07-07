@@ -14,6 +14,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/output.h>
+#include <sst/core/sharedRegion.h>
 
 namespace SST {
 namespace SimpleElementExample {
@@ -33,6 +34,7 @@ private:
     Output out;
     const uint8_t * table;
     size_t tableSize;
+    SharedRegion *sregion;
 };
 
 }

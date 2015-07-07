@@ -13,11 +13,15 @@
 #include <sst/core/serialization.h>
 
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
 
 #include "simpleLookupTableComponent.h"
 
 #include <sst/core/params.h>
-#include <sst/core/lookupTable.h>
+#include <sst/core/sharedRegion.h>
 
 namespace SST {
 namespace SimpleElementExample {
@@ -32,10 +36,21 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
     if ( fname.empty() )
         out.fatal(CALL_INFO, 1, "Must specify a filename for the lookup table.\n");
 
-    tableSize = 0;
-    table = (const uint8_t *)getLookupTable("SimpleLookupTable", new SimpleLookupTableBuilder(fname, &tableSize));
-    if ( !table || tableSize == 0 )
-        out.fatal(CALL_INFO, 1, "Unable to load lookup table.  Error code: %d\n", errno);
+    struct stat buf;
+    int ret = stat(fname.c_str(), &buf);
+    if ( 0 != ret )
+        out.fatal(CALL_INFO, 1, "Unable to load lookup table. stat(%s) failed with code %d\n", fname.c_str(), errno);
+    tableSize = buf.st_size;
+
+    sregion = getLocalSharedRegion("SimpleLookupTable", tableSize);
+    if ( 0 == sregion->getLocalShareID() ) {
+        FILE *fp = fopen(fname.c_str(), "r");
+        if ( !fp )
+            out.fatal(CALL_INFO, 1, "Unable to read file %s\n", fname.c_str());
+        fread(sregion->getRawPtr(), 1, tableSize, fp);
+        fclose(fp);
+    }
+    sregion->publish();
 
 
     registerAsPrimaryComponent();
@@ -47,6 +62,7 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
 
 SimpleLookupTableComponent::~SimpleLookupTableComponent()
 {
+    sregion->shutdown();
 }
 
 
@@ -57,6 +73,7 @@ void SimpleLookupTableComponent::init(unsigned int phase)
 
 void SimpleLookupTableComponent::setup()
 {
+    table = sregion->getPtr<uint8_t*>();
 }
 
 
