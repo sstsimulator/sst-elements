@@ -270,11 +270,11 @@ if rndmPlacement and bgPercentage > 0:
         jobid += 1
         count += 1
 
-nicParams['verboseLevel'] = debug 
-hermesParams['hermesParams.verboseLevel'] = debug 
-hermesParams['hermesParams.nicParams.verboseLevel'] = debug 
-hermesParams['hermesParams.functionSM.verboseLevel'] = debug 
-hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug 
+nicParams['verboseLevel'] = debug
+hermesParams['hermesParams.verboseLevel'] = debug
+hermesParams['hermesParams.nicParams.verboseLevel'] = debug
+hermesParams['hermesParams.functionSM.verboseLevel'] = debug
+hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
 
 print "network: BW={0} pktSize={1} flitSize={2}".format(
