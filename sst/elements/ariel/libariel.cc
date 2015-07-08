@@ -79,6 +79,8 @@ static const ElementInfoParam ariel_params[] = {
     {"cachelinesize", "Line size of the attached caching strucutre", "64"},
     {"arieltool", "Path to the Ariel PIN-tool shared library", NULL},
     {"executable", "Executable to trace", NULL},
+    {"launchparamcount", "Number of parameters supplied for the launch tool", "0" },
+    {"launchparam%(launchparamcount)", "Set the parameter to the launcher", "" },
     {"envparamcount", "Number of environment parameters to supply to the Ariel executable, default=-1 (use SST environment)", "-1"},
     {"envparamname%(envparamcount)", "Sets the environment parameter name", ""},
     {"envparamval%(envparamcount)", "Sets the environment parameter value", ""},

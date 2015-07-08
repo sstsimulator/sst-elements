@@ -143,7 +143,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
-	const uint32_t pin_arg_count = 23;
+    const uint32_t launch_param_count = (uint32_t) params.find_integer("launchparamcount", 0);
+    const uint32_t pin_arg_count = 23 + launch_param_count;
+
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
@@ -155,6 +157,25 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("15");
 #endif
     execute_args[arg++] = const_cast<char*>("-follow_execv");
+
+    char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
+
+    for(uint32_t aa = 0; aa < launch_param_count; aa++) {
+	sprintf(param_name_buffer, "launchparam%" PRIu32, aa);
+	std::string launch_p = params.find_string(param_name_buffer, "");
+
+	if("" == launch_p) {
+		output->fatal(CALL_INFO, -1, "Error: launch parameter %" PRId32 " is empty string, this must be set to a value.\n",
+			aa);
+	}
+
+	execute_args[arg] = (char*) malloc( sizeof(char) * (launch_p.size() + 1) );
+	strcpy(execute_args[arg], launch_p.c_str());
+	arg++;
+    }
+
+    free(param_name_buffer);
+
     execute_args[arg++] = const_cast<char*>("-t");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (ariel_tool.size() + 1));
     strcpy(execute_args[arg-1], ariel_tool.c_str());
@@ -299,6 +320,31 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 	if(Simulation::getSimulation()->getSimulationMode() == Config::INIT)
 		return 0;
 
+	int next_arg_index = 0;
+	int next_line_index = 0;
+
+	char* full_execute_line = (char*) malloc(sizeof(char) * 16384);
+
+	memset(full_execute_line, 0, sizeof(char) * 16384);
+
+	while(NULL != args[next_arg_index]) {
+		int copy_char_index = 0;
+
+		if(0 != next_line_index) {
+			full_execute_line[next_line_index++] = ' ';
+		}
+
+		while('\0' != args[next_arg_index][copy_char_index]) {
+			full_execute_line[next_line_index++] = args[next_arg_index][copy_char_index++];
+		}
+
+		next_arg_index++;
+	}
+
+	full_execute_line[next_line_index] = '\0';
+
+	output->verbose(CALL_INFO, 2, 0, "Executing PIN command: %s\n", full_execute_line);
+	free(full_execute_line);
 
 	pid_t the_child;
 
