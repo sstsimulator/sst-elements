@@ -16,6 +16,8 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
+#include <sst/core/interfaces/simpleNetwork.h>
+
 #include "sst/elements/hermes/hermes.h"
 #include "group.h"
 #include "info.h"
@@ -46,8 +48,6 @@ class Hades : public OS
 
   private:
 
-    void initAdjacentMap( std::istream&, Group*, int numCores );
-
     SST::Link*          m_enterLink;  
     VirtNic*            m_virtNic;
     Info                m_info;
@@ -59,8 +59,9 @@ class Hades : public OS
   private:
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
-    std::string                          m_nidListString;
-    Info::GroupType                      m_gt;
+
+    Interfaces::SimpleNetwork::Mapping  m_netMap;
+    int                                 m_netMapSize;
 };
 
 } // namesapce Firefly 

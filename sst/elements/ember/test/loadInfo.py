@@ -2,13 +2,51 @@
 import sst
 from sst.merlin import *
 
+def calcNetMapId( nodeID, nidList ):
+
+    pos = 0
+    a = nidList.split(',')
+
+    for b in a:
+        c = b.split('-')
+    
+        xx = 1 
+        if 2 == len(c):
+            xx = int(c[1]) - int(c[0]) + 1
+
+        if nodeID < pos + xx:
+            tmp = (int(c[0]) + nodeID) - pos   
+            return tmp
+
+        pos += xx
+
+    sys.exit( "calcNetMapId() failed" );
+
+def calcNetMapSize( nidList ):
+
+    pos = 0
+    a = nidList.split(',')
+
+    for b in a:
+        c = b.split('-')
+    
+        xx = 1 
+        if 2 == len(c):
+            xx = int(c[1]) - int(c[0]) + 1
+
+        pos += xx
+
+    return pos
+
+
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes ):
+    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes, nidList ):
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
         self.driverParams['jobId'] = jobId
         self.statNodes = statNodes
+        self.nidList = nidList
 
     def getName( self ):
         return "EmberEP"
@@ -38,6 +76,10 @@ class EmberEP( EndPoint ):
                     print "printStats for node {0}".format(id)
                     ep.addParams( {'motif1.printStats': 1} )
                     self.statNodes.pop()
+
+            ep.addParams( {'hermesParams.netId': nodeID } )
+            ep.addParams( {'hermesParams.netMapId': calcNetMapId( nodeID, self.nidList ) } ) 
+            ep.addParams( {'hermesParams.netMapSize': calcNetMapSize( self.nidList ) } ) 
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
@@ -77,8 +119,7 @@ class LoadInfo:
 		nidList, ranksPerNode, params = x
 
 		params.update( self.epParams )
-		params['hermesParams.nidListString'] = nidList 
-		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statList )
+		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statList, nidList )
 
 		ep.prepParams()
 		return (ep, nidList)

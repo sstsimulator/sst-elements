@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <virtNic.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
 namespace SST {
 namespace Firefly {
@@ -22,7 +23,9 @@ class MapBase {
   public:
     virtual ~MapBase() {}
     virtual int getSize() = 0;
-    virtual void initMapping( int from, int to, int range ) = 0;
+    virtual void initMapping( int from, int to, int range ) {} 
+    virtual void initMapping( Interfaces::SimpleNetwork::Mapping* map,
+                    int size, int numCores ) {} 
     virtual int getMapping( int from ) = 0;
 };
 
@@ -59,6 +62,31 @@ class RandomGroup : public Group
     int getMapping( int from ) { return m_map[from]; }
   private:
     std::vector<int> m_map;
+};
+
+class NetMapGroup : public Group 
+{
+  public:
+    NetMapGroup() {} 
+
+    int getSize() { return m_size * m_numCores; }
+
+    void initMapping( Interfaces::SimpleNetwork::Mapping* map,
+                                 int size, int numCores ) 
+    {
+        m_netMap = map;
+        m_numCores = numCores;
+        m_size = size;
+    }
+
+    int getMapping( int from ) { 
+        return (*m_netMap)[from/m_numCores] * m_numCores + (from % m_numCores); 
+    }
+
+  private:
+    int m_size;
+    int m_numCores;
+    Interfaces::SimpleNetwork::Mapping* m_netMap;
 };
 
 class IdentityGroup : public Group 

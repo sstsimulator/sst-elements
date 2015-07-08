@@ -32,8 +32,7 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     m_virtNic(NULL),
-	m_functionSM( NULL ),
-    m_gt( Info::Dense )
+	m_functionSM( NULL )
 {
     m_dbg.init("@t:Hades::@p():@l ", 
         params.find_integer("verboseLevel",0),
@@ -51,37 +50,22 @@ Hades::Hades( Component* owner, Params& params ) :
                                         moduleName.c_str());
     }
 
-    m_nidListString = params.find_string("nidListString");
-    m_dbg.verbose(CALL_INFO,1,0,"nidListString `%s`\n", 
-                                            m_nidListString.c_str());
+    int netId = params.find_integer("netId",-1);
+    int netMapId = params.find_integer("netMapId",-1);
+    m_netMapSize = params.find_integer("netMapSize",-1);
 
-    std::string gt = params.find_string("mapType");
+    assert(m_netMapSize > -1 );
 
-    if ( 0 == gt.compare( "dense" )  ) {
-        m_gt = Info::Dense;
-    } else if ( 0 == gt.compare( "identity" ) ) {
-        m_gt = Info::Identity;
-    } else if ( 0 == gt.compare( "random" ) ) {
-        m_gt = Info::Random;
-    } else if ( ! gt.empty() ) {
-        assert(0);
+    if ( -1 == netMapId ) {
+        netMapId = netId; 
     }
-#if 0
-	if ( ! nidListString.empty() ) {
 
-		std::istringstream iss(nidListString);
+    m_dbg.verbose(CALL_INFO,1,0,"netId=%d netMapId=%d netMapSize=%d\n",
+            netId, netMapId, m_netMapSize );
 
-    	m_info.addGroup( MP::GroupWorld, initAdjacentMap(iss) );
+    SST::Interfaces::SimpleNetwork::addMappingEntry(
+                    "HadesNicMap", netId, netMapId );
 
-	}
-
-  	Group* group = m_info.getGroup(MP::GroupWorld);
-
-if ( group ) {
-
-    Params tmpParams;
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-#endif
     int protoNum = 0;
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
     m_protocolM[ protoNum ] = 
@@ -93,7 +77,8 @@ if ( group ) {
 
     m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] =
                                                 m_protocolM[ protoNum ];
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_protocolM[ protoNum ]->name().c_str());
+    m_dbg.verbose(CALL_INFO,1,0,"installed protocol '%s'\n",
+                        m_protocolM[ protoNum ]->name().c_str());
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
@@ -131,27 +116,23 @@ void Hades::_componentSetup()
     m_dbg.verbose(CALL_INFO,1,0,"nodeId %d numCores %d, coreNum %d\n",
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
-	if ( ! m_nidListString.empty() ) {
-        Info::GroupType gt;
-		
-  	    Group* group = m_info.getGroup( m_info.newGroup( MP::GroupWorld, m_gt ) );
+    m_netMap.bind("HadesNicMap");
 
-		std::istringstream iss( m_nidListString );
+    Group* group = m_info.getGroup( 
+        m_info.newGroup( MP::GroupWorld, Info::NetMap ) );
+    group->initMapping( &m_netMap, m_netMapSize, m_virtNic->getNumCores() );
 
-        initAdjacentMap(iss, group, m_virtNic->getNumCores() ); 
+    m_dbg.verbose(CALL_INFO,1,0,"numRanks %u\n", group->getSize());
+    int nid = m_virtNic->getNodeId();
 
-  	    m_dbg.verbose(CALL_INFO,1,0,"numRanks %u\n", group->getSize());
-        int nid = m_virtNic->getNodeId();
+    m_dbg.verbose(CALL_INFO,1,0,"nid %u\n", nid);
 
-  	    m_dbg.verbose(CALL_INFO,1,0,"nid %u\n", nid);
-
-        for ( int i =0; i < group->getSize(); i++ ) {
-            if ( nid == group->getMapping( i ) ) {
-  	            m_dbg.verbose(CALL_INFO,1,0,"rank %d -> nid %d\n", i, nid );
-                group->setMyRank( i );
-                break;
-            } 
-        }
+    for ( int i =0; i < group->getSize(); i++ ) {
+        if ( nid == group->getMapping( i ) ) {
+           m_dbg.verbose(CALL_INFO,1,0,"rank %d -> nid %d\n", i, nid );
+            group->setMyRank( i );
+            break;
+        } 
 	}
 
     std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
@@ -167,50 +148,11 @@ void Hades::_componentSetup()
     m_dbg.setPrefix(buffer);
 }
 
-void Hades::initAdjacentMap( std::istream& nidList, Group* group, int numCores )
-{
-	int nid = 0;
-
-	assert( nidList.peek() != EOF );
-
-	std::string tmp;
-	do { 
-		char c = nidList.get();
-		tmp += c;
-	
-		if ( c == ',' || nidList.peek() == EOF ) {
-			if ( ! tmp.compare("Null") ) {
-				continue;
-			}
-			size_t pos = tmp.find("-");
-			int startNid;
-			int endNid;
-			std::istringstream ( tmp.substr(0, pos ) ) >> startNid;
-			if ( std::string::npos != pos ) { 
-				std::istringstream ( tmp.substr( pos + 1 ) ) >> endNid; 
-				endNid = ((endNid + 1) * numCores ) -1;
-			} else {
-				endNid = (startNid + numCores) - 1;
-			}
-			size_t len = ( endNid - startNid ) + 1;
-    		m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%d\n",
-					nid, startNid, endNid);
-
-            if ( numCores > 1 ) {
-    		    m_dbg.verbose(CALL_INFO,1,0,"nid=%d startNid=%d endNid=%lu\n",
-					nid, startNid*numCores, endNid*numCores );
-            }
-
-			group->initMapping( nid, startNid * numCores, len );
-			nid += len;
-			tmp.clear();
-		}
-	} while ( nidList.peek() != EOF );
-}
-
 void Hades::_componentInit(unsigned int phase )
 {
     m_virtNic->init( phase );
+
+
 }
 
 int Hades::getNumNids()

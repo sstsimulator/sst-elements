@@ -121,7 +121,9 @@ load_hadesMP(Component* comp, Params& params)
 
 static const ElementInfoParam hadesModule_params[] = {
     {"mapType","Sets the type of data structure to use for mapping ranks to NICs", ""},
-    {"nidListString","Sets the rank to nid mapping", ""},
+    {"netId","Sets the network id of the endpoint", ""},
+    {"netMapId","Sets the network mapping id of the endpoint", ""},
+    {"netMapSize","Sets the network map Size of the endpoint", ""},
     {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
 	{"verboseLevel", "Sets the output verbosity of the component", "1"},
 	{ "verboseMask", "Sets the output mask of the component", "1"},
