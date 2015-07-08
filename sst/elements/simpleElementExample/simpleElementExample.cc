@@ -148,7 +148,9 @@ static const ElementInfoPort simpleMessageGeneratorComponent_ports[] = {
 
 
 static const ElementInfoParam simpleLookupTableComponent_params[] = {
-    { "filename", "Filename to load as the table", "0"},
+    { "filename", "Filename to load as the table", ""},
+    {"num_entities", "Number of entities in the sim", "1"},
+    {"myid", "ID Number (0 <= myid < num_entities)", "0"},
     { NULL, NULL, NULL }
 };
 

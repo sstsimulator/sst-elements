@@ -33,22 +33,26 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
     out.init(buffer, 0, 0, Output::STDOUT);
 
     const std::string & fname = params.find_string("filename", "");
-    if ( fname.empty() )
-        out.fatal(CALL_INFO, 1, "Must specify a filename for the lookup table.\n");
+    if ( !fname.empty() ) {
+        struct stat buf;
+        int ret = stat(fname.c_str(), &buf);
+        if ( 0 != ret )
+            out.fatal(CALL_INFO, 1, "Unable to load lookup table. stat(%s) failed with code %d\n", fname.c_str(), errno);
+        tableSize = buf.st_size;
 
-    struct stat buf;
-    int ret = stat(fname.c_str(), &buf);
-    if ( 0 != ret )
-        out.fatal(CALL_INFO, 1, "Unable to load lookup table. stat(%s) failed with code %d\n", fname.c_str(), errno);
-    tableSize = buf.st_size;
-
-    sregion = getLocalSharedRegion("SimpleLookupTable", tableSize);
-    if ( 0 == sregion->getLocalShareID() ) {
-        FILE *fp = fopen(fname.c_str(), "r");
-        if ( !fp )
-            out.fatal(CALL_INFO, 1, "Unable to read file %s\n", fname.c_str());
-        fread(sregion->getRawPtr(), 1, tableSize, fp);
-        fclose(fp);
+        sregion = getLocalSharedRegion("SimpleLookupTable", tableSize);
+        if ( 0 == sregion->getLocalShareID() ) {
+            FILE *fp = fopen(fname.c_str(), "r");
+            if ( !fp )
+                out.fatal(CALL_INFO, 1, "Unable to read file %s\n", fname.c_str());
+            fread(sregion->getRawPtr(), 1, tableSize, fp);
+            fclose(fp);
+        }
+    } else {
+        tableSize = (size_t)params.find_integer("num_entities", 1) * sizeof(size_t);
+        size_t myID = (size_t)params.find_integer("myid", 1);
+        sregion = getGlobalSharedRegion("SimpleLookupTable", tableSize, new SharedRegionMerger());
+        sregion->modifyArray(myID, myID);
     }
     sregion->publish();
 
