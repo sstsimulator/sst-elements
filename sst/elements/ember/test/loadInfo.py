@@ -47,6 +47,7 @@ class EmberEP( EndPoint ):
         self.driverParams['jobId'] = jobId
         self.statNodes = statNodes
         self.nidList = nidList
+        self.numNids = calcNetMapSize( self.nidList )
 
     def getName( self ):
         return "EmberEP"
@@ -79,7 +80,7 @@ class EmberEP( EndPoint ):
 
             ep.addParams( {'hermesParams.netId': nodeID } )
             ep.addParams( {'hermesParams.netMapId': calcNetMapId( nodeID, self.nidList ) } ) 
-            ep.addParams( {'hermesParams.netMapSize': calcNetMapSize( self.nidList ) } ) 
+            ep.addParams( {'hermesParams.netMapSize': self.numNids } ) 
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
                                             "_Link"  )
