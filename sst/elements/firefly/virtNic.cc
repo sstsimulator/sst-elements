@@ -196,6 +196,6 @@ void VirtNic::setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor)
 void VirtNic::setNotifyNeedRecv(
                 VirtNic::HandlerBase3Args<int,int,size_t>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
     m_notifyNeedRecv = functor;
 }

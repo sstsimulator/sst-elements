@@ -40,7 +40,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
         params.find_integer("verboseLevel",0),
         params.find_integer("verboseMask",-1), 
         Output::STDOUT);
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
 
     int rxMatchDelay = params.find_integer( "rxMatchDelay_ns", 100 );
     int txDelay =      params.find_integer( "txDelay_ns", 50 );
@@ -88,7 +87,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
 
-    m_dbg.verbose(CALL_INFO,1,1,"%d\n", IdToNet( m_myNodeId ) );
+    m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
 
     m_num_vNics = params.find_integer("num_vNics", 1 );
     for ( int i = 0; i < m_num_vNics; i++ ) {
@@ -126,7 +125,7 @@ void Nic::printStatus(Output &out)
 
 void Nic::init( unsigned int phase )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_dbg.verbose(CALL_INFO,1,1,"phase=%d\n",phase);
     if ( 0 == phase ) {
         for ( unsigned int i = 0; i < m_vNicV.size(); i++ ) {
             m_dbg.verbose(CALL_INFO,1,1,"sendInitdata to core %d\n", i );
