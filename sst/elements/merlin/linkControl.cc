@@ -306,7 +306,8 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
         break;
     default:
         // Should never happen, checked in constructor
-        break;
+        merlin_abort.fatal(CALL_INFO,-1,"Should never happen, checked in constructor\n");
+        vn_offset = 0;
     }    
     ev->request->vn = vn * checker_board_factor + vn_offset;
     
