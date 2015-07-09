@@ -50,21 +50,24 @@ Hades::Hades( Component* owner, Params& params ) :
                                         moduleName.c_str());
     }
 
-    int netId = params.find_integer("netId",-1);
-    int netMapId = params.find_integer("netMapId",-1);
     m_netMapSize = params.find_integer("netMapSize",-1);
-
     assert(m_netMapSize > -1 );
 
-    if ( -1 == netMapId ) {
-        netMapId = netId; 
-    }
+	if ( m_netMapSize > 0 ) {
 
-    m_dbg.verbose(CALL_INFO,1,0,"netId=%d netMapId=%d netMapSize=%d\n",
+    	int netId = params.find_integer("netId",-1);
+    	int netMapId = params.find_integer("netMapId",-1);
+
+    	if ( -1 == netMapId ) {
+        	netMapId = netId; 
+    	}
+
+    	m_dbg.verbose(CALL_INFO,1,0,"netId=%d netMapId=%d netMapSize=%d\n",
             netId, netMapId, m_netMapSize );
 
-    SST::Interfaces::SimpleNetwork::addMappingEntry(
-                    "HadesNicMap", netId, netMapId );
+    	SST::Interfaces::SimpleNetwork::addMappingEntry(
+                    "HadesNicMap", netMapId, netId );
+	}
 
     int protoNum = 0;
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
@@ -116,23 +119,24 @@ void Hades::_componentSetup()
     m_dbg.verbose(CALL_INFO,1,0,"nodeId %d numCores %d, coreNum %d\n",
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
-    m_netMap.bind("HadesNicMap");
+	if ( m_netMapSize > 0 ) {
+    	m_netMap.bind("HadesNicMap");
 
-    Group* group = m_info.getGroup( 
-        m_info.newGroup( MP::GroupWorld, Info::NetMap ) );
-    group->initMapping( &m_netMap, m_netMapSize, m_virtNic->getNumCores() );
+    	Group* group = m_info.getGroup( 
+        	m_info.newGroup( MP::GroupWorld, Info::NetMap ) );
+    	group->initMapping( &m_netMap, m_netMapSize, m_virtNic->getNumCores() );
 
-    m_dbg.verbose(CALL_INFO,1,0,"numRanks %u\n", group->getSize());
-    int nid = m_virtNic->getNodeId();
+    	int nid = m_virtNic->getNodeId();
+    	m_dbg.verbose(CALL_INFO,1,0,"nid %d, numRanks %u\n",
+												nid, group->getSize());
 
-    m_dbg.verbose(CALL_INFO,1,0,"nid %u\n", nid);
-
-    for ( int i =0; i < group->getSize(); i++ ) {
-        if ( nid == group->getMapping( i ) ) {
-           m_dbg.verbose(CALL_INFO,1,0,"rank %d -> nid %d\n", i, nid );
-            group->setMyRank( i );
-            break;
-        } 
+    	for ( int i =0; i < group->getSize(); i++ ) {
+        	if ( nid == group->getMapping( i ) ) {
+           		m_dbg.verbose(CALL_INFO,1,0,"rank %d -> nid %d\n", i, nid );
+            	group->setMyRank( i );
+            	break;
+        	} 
+		}
 	}
 
     std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();

@@ -2,7 +2,10 @@
 import sst
 from sst.merlin import *
 
-def calcNetMapId( nodeID, nidList ):
+def calcNetMapId( nodeId, nidList ):
+
+    if nidList == 'Null':
+        return -1
 
     pos = 0
     a = nidList.split(',')
@@ -10,19 +13,23 @@ def calcNetMapId( nodeID, nidList ):
     for b in a:
         c = b.split('-')
     
-        xx = 1 
+        start = int(c[0])
+        stop = start
+
         if 2 == len(c):
-            xx = int(c[1]) - int(c[0]) + 1
+            stop = int(c[1])
 
-        if nodeID < pos + xx:
-            tmp = (int(c[0]) + nodeID) - pos   
-            return tmp
+        if nodeId >= start and nodeId <= stop:
+            return pos + (nodeId - start) 
 
-        pos += xx
+        pos = pos + ((stop - start) + 1)
 
-    sys.exit( "calcNetMapId() failed" );
+    return -1
 
 def calcNetMapSize( nidList ):
+
+    if nidList == 'Null':
+        return 0 
 
     pos = 0
     a = nidList.split(',')
@@ -76,7 +83,6 @@ class EmberEP( EndPoint ):
                 if nodeID == id:
                     print "printStats for node {0}".format(id)
                     ep.addParams( {'motif1.printStats': 1} )
-                    self.statNodes.pop()
 
             ep.addParams( {'hermesParams.netId': nodeID } )
             ep.addParams( {'hermesParams.netMapId': calcNetMapId( nodeID, self.nidList ) } ) 
@@ -116,11 +122,11 @@ class LoadInfo:
 		self.nullEP, nidlist = self.foo( -1, self.readWorkList( nullMotif ), [] )
 		self.nullEP.prepParams()
 
-	def foo( self, jobId, x, statList ):
+	def foo( self, jobId, x, statNodes ):
 		nidList, ranksPerNode, params = x
 
 		params.update( self.epParams )
-		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statList, nidList )
+		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList )
 
 		ep.prepParams()
 		return (ep, nidList)
@@ -135,9 +141,9 @@ class LoadInfo:
 		fo.close()
 		self.verifyLoadInfo()
 
-	def initWork(self, workList, statList ):
+	def initWork(self, workList, statNodes ):
 		for jobid, work in workList:
-			self.map.append( self.foo( jobid, self.readWorkList( work ), statList ) )
+			self.map.append( self.foo( jobid, self.readWorkList( work ), statNodes ) )
 		self.verifyLoadInfo()
 
 	def readWorkList(self, workList ):
