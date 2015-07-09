@@ -88,6 +88,7 @@ class YYY {
     int m_parent;
 };
 
+#undef FOREACH_ENUM
 #define FOREACH_ENUM(NAME) \
     NAME( WaitUp ) \
     NAME( SendUp ) \
