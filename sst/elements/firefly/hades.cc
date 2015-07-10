@@ -65,8 +65,10 @@ Hades::Hades( Component* owner, Params& params ) :
     	m_dbg.verbose(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
             netId, netMapId, m_netMapSize );
 
-    	SST::Interfaces::SimpleNetwork::addMappingEntry(
-                    "HadesNicMap", netMapId, netId );
+        m_netMapName = params.find_string( "netMapName" );
+        assert( ! m_netMapName.empty() );
+        SST::Interfaces::SimpleNetwork::addMappingEntry(
+                    m_netMapName, netMapId, netId );
 	}
 
     int protoNum = 0;
@@ -120,7 +122,7 @@ void Hades::_componentSetup()
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	if ( m_netMapSize > 0 ) {
-    	m_netMap.bind("HadesNicMap");
+    	m_netMap.bind(m_netMapName);
 
     	Group* group = m_info.getGroup( 
         	m_info.newGroup( MP::GroupWorld, Info::NetMap ) );

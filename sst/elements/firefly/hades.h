@@ -62,6 +62,7 @@ class Hades : public OS
 
     Interfaces::SimpleNetwork::Mapping  m_netMap;
     int                                 m_netMapSize;
+    std::string                         m_netMapName;
 };
 
 } // namesapce Firefly 
