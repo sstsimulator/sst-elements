@@ -218,6 +218,7 @@ static const ElementInfoParam component_params[] = {
     { "module", "Sets the OS module", ""},
     { "verbose", "Sets the output verbosity of the component", "0" },
     { "jobId", "Sets the job id", "-1"},
+    { "netMapName", "used internally", "-1"},
 
     { "motif_count", "Sets the number of motifs which will be run in this simulation, default is 1", "1"},
 

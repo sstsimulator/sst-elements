@@ -44,6 +44,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     assert( ! osModuleName.empty() );
 
     Params modParams = params.find_prefix_params( osName + "." );
+    std::ostringstream tmp;
+    tmp << m_jobId;
+    modParams["netMapName"] = "Ember" + tmp.str();
 
     m_os  = dynamic_cast<OS*>( loadModuleWithComponent(
                             osModuleName, this, modParams ) );
@@ -179,6 +182,7 @@ void EmberEngine::init(unsigned int phase) {
 }
 
 void EmberEngine::finish() {
+	m_os->finish();
 }
 
 void EmberEngine::setup() {
