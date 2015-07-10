@@ -77,7 +77,7 @@ void SimpleLookupTableComponent::init(unsigned int phase)
 
 void SimpleLookupTableComponent::setup()
 {
-    table = sregion->getPtr<uint8_t*>();
+    table = sregion->getPtr<const uint8_t*>();
 }
 
 
