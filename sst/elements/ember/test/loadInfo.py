@@ -45,6 +45,22 @@ def calcNetMapSize( nidList ):
 
     return pos
 
+def calcMaxNode( nidList ):
+
+    if nidList == 'Null':
+        return 0 
+	
+    max = 0
+    a = nidList.split(',')
+
+    for b in a:
+        c = b.split('-')
+    
+        max = int(c[0]) 
+        if 2 == len(c):
+           max  = int(c[1])
+
+    return max + 1 
 
 class EmberEP( EndPoint ):
     def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes, nidList ):
@@ -125,20 +141,51 @@ class LoadInfo:
 	def foo( self, jobId, x, statNodes ):
 		nidList, ranksPerNode, params = x
 
+		numNodes = calcMaxNode( nidList ) 
+		if numNodes > self.numNodes:
+			sys.exit('Error: Requested number of nodes ' + str(numNodes) +\
+				 ' is greater than available nodes ' + str(self.numNodes) ) 
+
 		params.update( self.epParams )
 		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList )
 
 		ep.prepParams()
 		return (ep, nidList)
+
+	def getWorkListFromFile( self, filename, defaultParams ):
+		stage1 = []
+		for line in open(filename, 'r'):
+			line = line.strip()
+			if line:
+				if line[:1] == '[':
+					stage1.append(line)
+				elif line[:1] == '#':
+					continue;
+				else:
+					stage1[-1] += ' ' + line
+
+		tmp = []
+		nidlist=''
+		for item in stage1:
+			tag,str = item.split(' ', 1)
+				
+			if tag == '[JOB_ID]':	
+				tmp.append([])
+				tmp[-1].append( str )
+			elif tag == '[NID_LIST]':	
+				nidlist = str
+				tmp[-1].append( [] )  
+			elif tag == '[MOTIF]':	
+				tmp[-1][-1].append( dict.copy(defaultParams) )  
+				tmp[-1][-1][-1]['cmd'] = '-nidList=' + nidlist + ' ' + str 
+		return tmp 
 		
-	def initFile(self, extra, fileName ):
-		fo = open(fileName)
-		jobId = 0
-		for line in iter(fo.readline,b''):
-			if  line[0] != '#' and False == line.isspace():
-				self.map.append( self.foo( jobId, self.readWorkList( extra, [line] ), [] ) )
-				jobId += 1
-		fo.close()
+	def initFile(self, defaultParams, fileName, statNodeList ):
+		work = self.getWorkListFromFile( fileName, defaultParams  )
+		for item in work:
+			jobid, motifs = item
+			self.map.append( self.foo( jobid, self.readWorkList( motifs ), statNodeList ) )
+
 		self.verifyLoadInfo()
 
 	def initWork(self, workList, statNodes ):

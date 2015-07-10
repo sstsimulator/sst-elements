@@ -113,8 +113,9 @@ if 1 == len(sys.argv):
 	workFlow, numNodes, numCores = defaultSim.getWorkFlow( motifDefaults )
 	platform, netTopo, netShape = defaultSim.getNetwork( )
 
-workList.append( [jobid, workFlow] )
-jobid += 1
+if workFlow:
+	workList.append( [jobid, workFlow] )
+	jobid += 1
 
 print "platform: {0}".format( platform )
 
@@ -207,7 +208,7 @@ print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 
 emptyNids = []
 
-if rndmPlacement:
+if jobid > 0 and rndmPlacement:
 
 	print "random placement"
 
@@ -304,7 +305,7 @@ if len(loadFile) > 0:
 	if len(workList) > 0:
 		sys.exit("Error: can't specify both loadFile and cmdLine");
 
-	loadInfo.initFile( motifDefaults, loadFile)
+	loadInfo.initFile( motifDefaults, loadFile, statNodeList )
 else:
 	if len(workList) > 0:
 		if len(loadFile) > 0:
