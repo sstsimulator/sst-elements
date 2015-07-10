@@ -56,9 +56,12 @@ def calcMaxNode( nidList ):
     for b in a:
         c = b.split('-')
     
-        max = int(c[0]) 
+        tmp = int(c[0]) 
         if 2 == len(c):
-           max  = int(c[1])
+           tmp  = int(c[1])
+
+        if tmp > max:
+            max = tmp
 
     return max + 1 
 
