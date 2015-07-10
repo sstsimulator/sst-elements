@@ -29,6 +29,7 @@ class OS : public Module {
     virtual void _componentSetup( void ) {}
     virtual void printStatus( Output& ) {}
     virtual int  getNid() { assert(0); }
+    virtual void finish() {}
 };
 
 class Interface : public Module {
