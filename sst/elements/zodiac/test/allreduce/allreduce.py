@@ -161,6 +161,7 @@ class EmberEP(EndPoint):
 			ep.addParams(driverParams)
 			ep.addParam('hermesParams.netId', nodeID )
 			ep.addParam('hermesParams.netMapSize', numRanks )
+			ep.addParam('hermesParams.netMapName', "NetMap" )
             
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
