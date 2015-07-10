@@ -36,7 +36,7 @@ Hades::Hades( Component* owner, Params& params ) :
 {
     m_dbg.init("@t:Hades::@p():@l ", 
         params.find_integer("verboseLevel",0),
-        0,
+        params.find_integer("verboseMask",0),
         Output::STDOUT );
 
     Params nicParams = params.find_prefix_params("nicParams." );
@@ -62,7 +62,7 @@ Hades::Hades( Component* owner, Params& params ) :
         	netMapId = netId; 
     	}
 
-    	m_dbg.verbose(CALL_INFO,1,0,"netId=%d netMapId=%d netMapSize=%d\n",
+    	m_dbg.verbose(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
             netId, netMapId, m_netMapSize );
 
     	SST::Interfaces::SimpleNetwork::addMappingEntry(
@@ -80,7 +80,7 @@ Hades::Hades( Component* owner, Params& params ) :
 
     m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] =
                                                 m_protocolM[ protoNum ];
-    m_dbg.verbose(CALL_INFO,1,0,"installed protocol '%s'\n",
+    m_dbg.verbose(CALL_INFO,1,1,"installed protocol '%s'\n",
                         m_protocolM[ protoNum ]->name().c_str());
 
     Params funcParams = params.find_prefix_params("functionSM.");
@@ -116,7 +116,7 @@ void Hades::printStatus( Output& out )
 
 void Hades::_componentSetup()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"nodeId %d numCores %d, coreNum %d\n",
+    m_dbg.verbose(CALL_INFO,1,1,"nodeId %d numCores %d, coreNum %d\n",
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	if ( m_netMapSize > 0 ) {
@@ -127,16 +127,17 @@ void Hades::_componentSetup()
     	group->initMapping( &m_netMap, m_netMapSize, m_virtNic->getNumCores() );
 
     	int nid = m_virtNic->getNodeId();
-    	m_dbg.verbose(CALL_INFO,1,0,"nid %d, numRanks %u\n",
-												nid, group->getSize());
 
     	for ( int i =0; i < group->getSize(); i++ ) {
         	if ( nid == group->getMapping( i ) ) {
-           		m_dbg.verbose(CALL_INFO,1,0,"rank %d -> nid %d\n", i, nid );
+           		m_dbg.verbose(CALL_INFO,1,2,"rank %d -> nid %d\n", i, nid );
             	group->setMyRank( i );
             	break;
         	} 
 		}
+
+    	m_dbg.verbose(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
+								nid, group->getSize(),group->getMyRank() );
 	}
 
     std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
@@ -166,13 +167,13 @@ int Hades::getNumNids()
 	if ( group ) { 
     	size = group->getSize();
 	}
-    m_dbg.verbose(CALL_INFO,1,0,"size=%d\n",size);
+    m_dbg.verbose(CALL_INFO,1,1,"size=%d\n",size);
     return size;
 }
 
 int Hades::getNid() 
 {
     int rank = m_info.worldRank();
-    m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);
+    m_dbg.verbose(CALL_INFO,1,1,"rank=%d\n",rank);
     return rank;
 }
