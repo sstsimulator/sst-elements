@@ -20,7 +20,8 @@ Halo2D iterations=10  messagesize=128
 [MOTIF] Fini
 
 [JOB_ID] 1 
-[NID_LIST] 14-15 
+[NID_LIST]
+14,15 
 
 [MOTIF] Init 
 [MOTIF] PingPong iterations=100
