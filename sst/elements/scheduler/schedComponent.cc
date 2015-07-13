@@ -139,9 +139,6 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     }
     schedout.output("\n");
     schedout.output("Scheduler Detects %d nodes\n", (int)nodes.size());
-    //Fulya: printout time
-    //schedout.output("Current time is %" PRIu64 "\n", getCurrentSimTime());
-    //end->Fulya
 
     Factory factory;
     machine = factory.getMachine(params, nodes.size());
