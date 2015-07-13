@@ -386,16 +386,6 @@ void nodeComponent::handleEvent(Event *ev) {
             schedout.fatal(CALL_INFO, 1, "Error?! Already running a job, but given a new one!\n");
             //internal_error("Error?! Already running a job, but given a new one!\n");
         }
-        //Fulya: create and send MPIEvent to the NIC
-        /*
-        schedout.output("\nCurrent sim time Default: %" PRIu64 "\n", getCurrentSimTime());
-        schedout.output("Current sim time Micro: %" PRIu64 "\n", getCurrentSimTimeMicro());
-        schedout.output("Current sim time Nano: %" PRIu64 "\n", getCurrentSimTimeNano());       
-        MPIEvent *MPIev = new MPIEvent(START, event ->time, jobNum, 1, 1, 400, this->nodeNum, this->nodeNum + 1);
-        NicLink -> send(MPIev);
-        schedout.output("Sent out the MPI event to Node%d. Src:%d Dest:%d.\n", this->nodeNum, this->nodeNum, this->nodeNum + 1);
-        */
-        //end->Fulya
     } else if(dynamic_cast<FaultEvent*>(ev)){
 
         handleFaultEvent(ev);
