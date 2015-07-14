@@ -33,7 +33,49 @@ namespace MemHierarchy {
 struct pageInfo {
     uint touched; // how many times it is touched in quanta
     bool inFast;
-    pageInfo() : touched(0), inFast(0) {;}
+
+    uint64_t lastRef;
+    typedef enum {LT_NEG_ONE, NEG_ONE, ZERO, ONE, GT_ONE, LAST_CASE} AcCases;
+    uint64_t accPat[LAST_CASE];
+
+    void record(uint64_t addr) {
+        addr >>= 6; // cacheline
+        touched++;
+        if (0 == lastRef) {
+            // first touch, do nothing
+        } else {
+            int64_t diff = addr - lastRef;
+            if (diff < -1) {
+                accPat[LT_NEG_ONE]++;
+            } else if (diff == -1) {
+                accPat[NEG_ONE]++;
+            } else if (diff == 0) {
+                accPat[ZERO]++;
+            } else if (diff == 1) {
+                accPat[ONE]++;
+            } else { // (diff >= 1)
+                accPat[GT_ONE]++;
+            }
+        }
+        lastRef = addr;
+    }
+
+    void printRecord() const {
+        uint64_t sum = 0;
+        for (int i = 0; i < LAST_CASE; ++i) {
+            sum += accPat[i];
+        }
+        for (int i = 0; i < LAST_CASE; ++i) {
+            printf("%.1f", double(accPat[i]*100)/double(sum));
+        }
+        printf("\n");
+    }
+
+    pageInfo() : touched(0), inFast(0), lastRef(0) {
+        for (int i = 0; i < LAST_CASE; ++i) {
+            accPat[i] = 0;
+        }
+    }
 };
 
 class pagedMultiMemory : public DRAMSimMemory {

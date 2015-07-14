@@ -40,7 +40,7 @@ bool pagedMultiMemory::issueRequest(MemController::DRAMReq *req){
     uint64_t pageAddr = (req->baseAddr_ + req->amtInProcess_) >> 12;
     bool inFast = 0;
     auto &page = pageMap[pageAddr];
-    page.touched++;
+    page.record(req->baseAddr_ + req->amtInProcess_);
     // if we are hitting it "a lot" (4) see if we can put it in fast
     if ((0 == page.inFast) && (page.touched > 4)) { 
         if (pagesInFast < maxFastPages) {
@@ -91,7 +91,13 @@ void pagedMultiMemory::clock(){
 
 
 void pagedMultiMemory::finish(){
-    printf("fast_t_pages: %llu\n", pageMap.size());
+    printf("fast_t_pages: %lu\n", pageMap.size());
+
+    // print stats
+    for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
+        p->second.printRecord();
+    }
+
     DRAMSimMemory::finish();
 }
 
