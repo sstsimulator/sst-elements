@@ -13,44 +13,30 @@
  * Classes representing system events
  */
 
-#ifndef SST_SCHEDULER_MPIEVENT_H__
-#define SST_SCHEDULER_MPIEVENT_H__
+#ifndef SST_SCHEDULER_SNAPSHOTEVENT_H__
+#define SST_SCHEDULER_SNAPSHOTEVENT_H__
+
+#include "sst/core/sst_types.h"
 
 namespace SST {
     namespace Scheduler {
 
-	enum MPITypes {START, FINISH};
-        class MPIEvent : public SST::Event {
+        class SnapshotEvent : public SST::Event {
             public:
 
-                MPIEvent(enum MPITypes type, int src_node) : SST::Event() {
-		    this -> MPItype = type;
-		    this -> src_node = src_node; 
-               }
-
-                MPIEvent(enum MPITypes type, unsigned long time, int jobNum, int num_msg, int expected_recv_count, int msg_size_in_bits, int src_node, int dest_node) : SST::Event() {
-		    this -> MPItype = type;
+                SnapshotEvent(SimTime_t time, int jobNum) : SST::Event() {
                     this -> time = time;
                     this -> jobNum = jobNum;
-		    this -> num_msg = num_msg;
-		    this -> expected_recv_count = expected_recv_count;
-                    this -> msg_size_in_bits = msg_size_in_bits;
-                    this -> src_node = src_node;
-		    this -> dest_node = dest_node;
                 }
 
-		enum MPITypes MPItype;
-                unsigned long time;   //the length of the started job
+                SimTime_t time;   //current time of the snapshot
+
                 int jobNum;
-		int num_msg;
-		int expected_recv_count;
-		int msg_size_in_bits;
-		int src_node;
-		int dest_node;
+
+                std::map<int, ITMI> runningJobs;
 
             private:
-
-                MPIEvent() { }  // for serialization only
+                SnapshotEvent() { }  // for serialization only
 
                 friend class boost::serialization::access;
                 template<class Archive>

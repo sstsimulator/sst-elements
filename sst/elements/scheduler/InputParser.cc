@@ -36,11 +36,13 @@ using namespace SST::Scheduler;
 JobParser::JobParser(Machine* machine,
           SST::Params& params,
           bool* useYumYumSimulationKill,
-          bool* YumYumSimulationKillFlag )
+          bool* YumYumSimulationKillFlag,
+          bool* doDetailedNetworkSim ) //NetworkSim: added bool parameter
 {
     this->machine = machine;
     this->useYumYumSimulationKill = useYumYumSimulationKill;
     this->YumYumSimulationKillFlag = YumYumSimulationKillFlag;
+    this->doDetailedNetworkSim = doDetailedNetworkSim; //NetworkSim: added doDetailedNetworkSim parameter
     useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
     jobTrace = params["traceName"].c_str();
 
@@ -198,6 +200,9 @@ bool JobParser::newJobLine(std::string line)
     
     //get communication info
     Job::CommInfo commInfo;
+    //NetworkSim: get phase info
+    Job::PhaseInfo phaseInfo;
+    //end->NetworkSim
     if(nextStr.empty()){
         commInfo.commType = TaskCommInfo::ALLTOALL;
     } else {
@@ -228,6 +233,11 @@ bool JobParser::newJobLine(std::string line)
                 commInfo.commType = TaskCommInfo::CUSTOM;
                 is >> nextStr;
                 commInfo.commFile = nextStr;
+            //NetworkSim: read phase file name if exists
+            } else if(nextStr.compare("phase") == 0){
+                is >> nextStr;
+                phaseInfo.phaseFile = nextStr;
+            //end->NetworkSim
             } else {
                 schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
             }
@@ -236,8 +246,15 @@ bool JobParser::newJobLine(std::string line)
             }
         }
     }
+
+    //NetworkSim: if using the detailed network sim, we have to define a phase file
+    if(*doDetailedNetworkSim == true && phaseInfo.phaseFile.empty()) {
+        schedout.fatal(CALL_INFO, 1, "Phase file must be defined when using DETAILED NETWORK SIM mode:\n\"%s\"\n", line.c_str());
+    }
+    //end->NetworkSim
+
     //add job
-    jobs.push_back(new Job(arrivalTime, procsNeeded, runningTime, estRunningTime, commInfo));
+    jobs.push_back(new Job(arrivalTime, procsNeeded, runningTime, estRunningTime, commInfo, phaseInfo)); //NetworkSim: added phase info
 
     //validate
     return validateJob(jobs.back() , &jobs, runningTime);
@@ -298,6 +315,60 @@ void CommParser::parseComm(Job * job)
                                       job->getJobNum() );
     }
 }
+
+//NetworkSim: added phase parser
+void PhaseParser::parsePhase(Job * job)
+{
+    readPhaseFile(job);
+    //std::cout << "numboundary:" << job->phaseInfo.numBoundaryExchanges << " numallreduce:" << job->phaseInfo.numAllReduces << " numtimestep:" << job->phaseInfo.numTimeSteps << " commratio:" << job->phaseInfo.commRatio << " intraNodeCommDelay:" << job->phaseInfo.intraNodeCommDelay << std:: endl;
+}
+//end->NetworkSim
+
+//NetworkSim: added phase file reader
+void PhaseParser::readPhaseFile(Job *job)
+{
+    Job::PhaseInfo phaseInfo = job->phaseInfo;
+    std::string fileName = phaseInfo.phaseFile;
+
+    ifstream input;
+    input.open( fileName.c_str() );
+    if(!input.is_open()){
+        schedout.fatal(CALL_INFO, 1, "Unable to open job phase file: %s\n", fileName.c_str());
+    }
+
+    //read line by line
+    string line;
+    while (!input.eof()) {
+        getline(input, line);
+        std::stringstream is(line);
+        string nextStr = "";
+        is >> nextStr;
+        while(!nextStr.empty()){
+            if(nextStr.compare("numBoundaryExchanges") == 0){
+                is >> phaseInfo.numBoundaryExchanges;     
+            } else if (nextStr.compare("numAllReduces") == 0){
+                is >> phaseInfo.numAllReduces;
+            } else if (nextStr.compare("numTimeSteps") == 0){
+                is >> phaseInfo.numTimeSteps;
+            } else if (nextStr.compare("commRatio") == 0){
+                is >> phaseInfo.commRatio;
+            } else if (nextStr.compare("intraNodeCommDelay") == 0){
+                is >> phaseInfo.intraNodeCommDelay;
+            } else {
+                schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+            }
+            if(!(is >> nextStr)){
+                break;
+            }
+        }
+    }
+
+    phaseInfo.computeTime = job->actualRunningTime * (1 - phaseInfo.commRatio) / (phaseInfo.numTimeSteps); // compute time per time step
+
+    input.close();
+    job->phaseInfo = phaseInfo; // update te job phase Info
+}
+//end->NetworkSim
 
 std::vector<std::map<int,int> >* CommParser::readCommFile(std::string fileName, int procsNeeded)
 {

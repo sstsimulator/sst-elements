@@ -113,6 +113,11 @@ namespace SST {
                 bool printYumYumJobLog;       // should the Job Log use the YumYum format?
                 bool useYumYumTraceFormat;    // should we expect the incoming job list to use the YumYum format?
                                               // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
+
+                //NetworkSim: enables detailed network simulation
+                bool doDetailedNetworkSim;
+                //end->NetworkSim
+
                 JobParser* jobParser;
 
                 bool useYumYumSimulationKill;         // should the simulation end on a special job (true), or just when the job list is exhausted (false)?

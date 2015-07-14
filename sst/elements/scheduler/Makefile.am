@@ -31,8 +31,6 @@ libscheduler_la_SOURCES = \
     Mesh3DMachine.cc \
     Mesh3DMachine.h \
     misc.h \
-    nicComponent.cc \
-    nicComponent.h \
     nodeComponent.cc \
     nodeComponent.h \
     output.h \
@@ -100,7 +98,7 @@ libscheduler_la_SOURCES = \
     events/JobKillEvent.h \
     events/JobStartEvent.h \
     events/ObjectRetrievalEvent.h \
-    events/MPIEvent.h \
+    events/SnapshotEvent.h \
     schedulers/EASYScheduler.cc \
     schedulers/EASYScheduler.h \
     schedulers/PQScheduler.cc \

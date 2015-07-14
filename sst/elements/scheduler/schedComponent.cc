@@ -44,6 +44,7 @@
 #include "events/FinalTimeEvent.h"
 #include "events/JobKillEvent.h"
 #include "events/JobStartEvent.h"
+#include "events/SnapshotEvent.h" //NetworkSim
 
 using namespace std;
 using namespace SST;
@@ -177,7 +178,29 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
     printJobLog = params.find("printJobLog") != params.end();
 
-    jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag);
+    //NetworkSim: set doDetailedNetworkSim parameter
+    if (params.find("detailedNetworkSim") != params.end()){
+        string temp_string = params["detailedNetworkSim"].c_str();
+        if (temp_string.compare("ON") == 0){
+            doDetailedNetworkSim = true;
+        }
+        else{
+            doDetailedNetworkSim = false;
+        }
+    } else {
+        doDetailedNetworkSim = false;
+    }
+
+    
+    if (doDetailedNetworkSim == true){
+        schedout.output("schedComp:Detailed Network sim is ON\n");
+    }
+    else{
+        //schedout.output("schedComp:Detailed Network sim is OFF\n");                              
+    }
+    //end->NetworkSim
+
+    jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag, &doDetailedNetworkSim); //NetworkSim: added doDetailedNetworkSim parameter);
 
     machine -> reset();
     scheduler -> reset();
@@ -413,6 +436,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *>(ev);
     ArrivalEvent *arevent = dynamic_cast<ArrivalEvent*>(ev);
     FinalTimeEvent* fev = dynamic_cast<FinalTimeEvent*>(ev);
+    SnapshotEvent* sev = dynamic_cast<SnapshotEvent*>(ev); //NetworkSim: to take snapshots of the scheduler
     
     if (NULL != commEvent) {
         schedout.debug(CALL_INFO, 4, 0, "comm event\n");
@@ -517,6 +541,13 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         delete ev; 
 
         startNextJob();
+    //NetworkSim: handle snapshot event
+    } else if (NULL != sev){
+        //dump sapshot to file
+        std::cout << getCurrentSimTime() << ":Snapshot event received...Unregistering self..." << std::endl;
+        delete ev;
+        unregisterYourself();        
+    //end->NetwrokSim
     } else {
         schedout.fatal(CALL_INFO, 1, "Arriving event was not an arrival nor finaltime event");
     }
@@ -535,6 +566,12 @@ void schedComponent::startJob(Job* job)
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
+    //NetworkSim: create phaseParser and read phase files
+    if (doDetailedNetworkSim == true){
+        PhaseParser phaseParser = PhaseParser();
+        phaseParser.parsePhase(job);
+    }
+    //end->NetworkSim
     job->start( getCurrentSimTime() );              //job started flag
     AllocInfo* ai = theAllocator->allocate(job);    //get allocation
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
@@ -590,6 +627,15 @@ void schedComponent::startJob(Job* job)
     if (printJobLog) {
         logJobStart(itmi);
     }
+
+    //NetworkSim: Take a snapshot whenever a job is allocated/mapped to start
+    if (doDetailedNetworkSim == true){
+        SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
+        se->runningJobs[job->getJobNum()] = itmi;
+        selfLink->send(se);
+        std::cout << getCurrentSimTime() << ":Sent snapshot event to self" << std::endl;
+    }
+    //end->NetworkSim
 }
 
 void schedComponent::logJobStart(ITMI itmi)

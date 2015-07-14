@@ -30,11 +30,12 @@ namespace SST {
         class Job {
             public:
                 struct CommInfo;
+                struct PhaseInfo; //NetworkSim: declare the PhaseInfo struct
 
                 Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime,
-                    unsigned long estRunningTime, CommInfo commInfo = CommInfo());
+                    unsigned long estRunningTime, CommInfo commInfo = CommInfo(), PhaseInfo phaseInfo = PhaseInfo()); //NetworkSim: added phase info
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
-                    long estRunningTime, std::string ID, CommInfo commInfo = CommInfo());
+                    long estRunningTime, std::string ID, CommInfo commInfo = CommInfo(), PhaseInfo phaseInfo = PhaseInfo()); //NetworkSim: added phase info
                 Job(const Job &job);
                 
                 ~Job();
@@ -77,6 +78,19 @@ namespace SST {
                     int meshx, meshy, meshz;
                     int centerTask;
                 } commInfo;
+
+                //NetworkSim: added Phase info struct for jobs
+                struct PhaseInfo{
+                    PhaseInfo() : commRatio(0.2) {}
+                    std::string phaseFile;
+                    int numBoundaryExchanges; //per time step
+                    int numAllReduces;        //per time step
+                    unsigned long numTimeSteps;         //total number of time steps
+                    double commRatio;         //communication time / total time
+                    int intraNodeCommDelay;   //constant delay (in ns) for tasks communicating within the node
+                    unsigned long computeTime;          //per time step
+                }phaseInfo;
+                //end->NetworkSim
 
                 unsigned long arrivalTime;        //when the job arrived
                 int procsNeeded;         //how many processors it uses

@@ -24,14 +24,16 @@ using namespace SST::Scheduler;
 
 static long nextJobNum = 0;  //used setting jobNum
 
-Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime, unsigned long estRunningTime, CommInfo inComm) : commInfo(inComm)
+//NetworkSim: added PhaseInfo
+Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime, unsigned long estRunningTime, CommInfo inComm, PhaseInfo inPhase) : commInfo(inComm), phaseInfo(inPhase)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
 }
 
+//NetworkSim: added PhaseInfo
 Job::Job(long arrivalTime, int procsNeeded, long actualRunningTime,
-         long estRunningTime, std::string ID, CommInfo inComm) : commInfo(inComm)
+         long estRunningTime, std::string ID, CommInfo inComm, PhaseInfo inPhase) : commInfo(inComm) , phaseInfo(inPhase)
 {
     initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
     this -> ID = ID;

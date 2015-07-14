@@ -36,7 +36,8 @@ namespace SST {
                 JobParser(Machine* machine, 
                           SST::Params& params, 
                           bool* useYumYumSimulationKill, 
-                          bool* YumYumSimulationKillFlag ); 
+                          bool* YumYumSimulationKillFlag,
+                          bool* doDetailedNetworkSim); //NetworkSim: added bool parameter 
                 ~JobParser() { };
                         
                 std::vector<Job*> parseJobs(SimTime_t currSimTime);
@@ -61,6 +62,7 @@ namespace SST {
                 bool newYumYumJobLine(std::string line, SimTime_t currSimTime);
                 bool* useYumYumSimulationKill;
                 bool* YumYumSimulationKillFlag;
+                bool* doDetailedNetworkSim; //NetworkSim: added doDetailedNetworkSim parameter
         };
         
         class CommParser {
@@ -75,6 +77,17 @@ namespace SST {
                 double** readCoordFile(std::string fileName, int procsNeeded);
         };
         
+        //NetworkSim: added the phase parser
+        class PhaseParser {
+            public:
+                PhaseParser() {}
+                ~PhaseParser() {}
+                void parsePhase(Job *job);
+            private:
+                void readPhaseFile(Job *job);
+        };
+        //end->NetworkSim
+
         class DParser {
             public:
                 DParser(int numNodes,
