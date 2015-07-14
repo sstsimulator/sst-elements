@@ -13,7 +13,8 @@ scheduler.addParams({
       "scheduler" : "easy",
       "allocator" : "bestfit",
       "timeperdistance" : ".001865[.1569,0.0129]",
-      "dMatrixFile" : "none"
+      "dMatrixFile" : "none",
+      "detailedNetworkSim" : "ON"
 })
 
 # nodes
