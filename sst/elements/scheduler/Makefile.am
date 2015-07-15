@@ -40,6 +40,8 @@ libscheduler_la_SOURCES = \
     Scheduler.h \
     SimpleMachine.cc \
     SimpleMachine.h \
+    Snapshot.h \
+    Snapshot.cc \
     Statistics.cc \
     Statistics.h \
     StencilMachine.cc \

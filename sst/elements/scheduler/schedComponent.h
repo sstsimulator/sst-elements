@@ -22,6 +22,7 @@
 #include <sst/core/rng/sstrng.h>
 
 #include "output.h"
+#include "misc.h" //NetworkSim: For ITMI definition
 
 namespace SST {
     class Event;
@@ -43,9 +44,11 @@ namespace SST {
         class FST;
         class JobParser;
 
+        class Snapshot; //NetworkSim: Object that holds a snapshot of the scheduler state
+
         // the maximum length of a job ID.  used primarily for job list parsing.
 
-        struct ITMI {int i; TaskMapInfo *tmi;};
+        //struct ITMI {int i; TaskMapInfo *tmi;}; //NetworkSim: Moved this to misc.h so that Snapshot object can also use
 
         class schedComponent : public SST::Component {
             public:
@@ -60,7 +63,6 @@ namespace SST {
                 {
                     return nodeIDs.at(nodeIndex);
                 }
-
             private:
                 unsigned long lastfinaltime;
                 schedComponent();  // for serialization only
@@ -116,6 +118,8 @@ namespace SST {
 
                 //NetworkSim: enables detailed network simulation
                 bool doDetailedNetworkSim;
+                Snapshot *snapshot;
+                //bool allJobsStarted; // 1 if scheduler has no other jobs to start at current simulation time
                 //end->NetworkSim
 
                 JobParser* jobParser;

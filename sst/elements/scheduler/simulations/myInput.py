@@ -7,7 +7,7 @@ sst.setProgramOption("run-mode", "both")
 # Define the simulation components
 scheduler = sst.Component("myScheduler",             "scheduler.schedComponent")
 scheduler.addParams({
-      "traceName" : "test_scheduler_Atlas.sim",
+      "traceName" : "test_scheduler_Network.sim",
       "machine" : "mesh[5,4,4]",
       "coresPerNode" : "4",
       "scheduler" : "easy",

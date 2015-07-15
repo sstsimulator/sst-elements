@@ -1,0 +1,5 @@
+numBoundaryExchanges 1
+numAllReduces 1
+numTimeSteps 1
+commRatio 0.3
+intraNodeCommDelay 100

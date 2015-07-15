@@ -32,6 +32,7 @@
 #include "StencilMachine.h"
 #include "misc.h"
 #include "Scheduler.h"
+#include "Snapshot.h" //NetworkSim
 #include "Statistics.h"
 #include "TaskMapper.h"
 #include "taskMappers/SimpleTaskMapper.h"
@@ -69,6 +70,7 @@ schedComponent::~schedComponent()
     delete scheduler;
     delete rng;
     if (FSTtype > 0) delete calcFST;
+    if(snapshot != NULL) delete snapshot; //NetworkSim
 }
 
 int readSeed( Params & params, std::string paramName ){
@@ -191,9 +193,9 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         doDetailedNetworkSim = false;
     }
 
-    
     if (doDetailedNetworkSim == true){
         schedout.output("schedComp:Detailed Network sim is ON\n");
+        snapshot = new Snapshot();
     }
     else{
         //schedout.output("schedComp:Detailed Network sim is OFF\n");                              
@@ -544,9 +546,17 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     //NetworkSim: handle snapshot event
     } else if (NULL != sev){
         //dump sapshot to file
-        std::cout << getCurrentSimTime() << ":Snapshot event received...Unregistering self..." << std::endl;
+        std::cout << getCurrentSimTime() << ":Snapshot event received...Appending snapshot..." << std::endl;        
+        snapshot->append(sev->time, sev->jobNum, sev->itmi);
+        for(std::map<int, ITMI>::iterator it = snapshot->runningJobs.begin(); it != snapshot->runningJobs.end(); it++){
+            std::cout << "Job " << it->first << ": Uses " << it->second.i << " nodes:" << std::endl;
+            for(int nodeIt = 0; nodeIt < it->second.tmi->allocInfo->getNodesNeeded(); nodeIt++){
+                std::cout << it->second.tmi->allocInfo->nodeIndices[nodeIt] << ":";
+            }
+            std::cout << std::endl;
+        }
         delete ev;
-        unregisterYourself();        
+        unregisterYourself();
     //end->NetwrokSim
     } else {
         schedout.fatal(CALL_INFO, 1, "Arriving event was not an arrival nor finaltime event");
@@ -631,7 +641,7 @@ void schedComponent::startJob(Job* job)
     //NetworkSim: Take a snapshot whenever a job is allocated/mapped to start
     if (doDetailedNetworkSim == true){
         SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
-        se->runningJobs[job->getJobNum()] = itmi;
+        se->itmi = runningJobs[job->getJobNum()];
         selfLink->send(se);
         std::cout << getCurrentSimTime() << ":Sent snapshot event to self" << std::endl;
     }
