@@ -13,9 +13,11 @@
 #include "sst_config.h"
 #include "sst/core/serialization.h"
 #include <sst/core/timeLord.h>
+
+
 #include "emberengine.h"
 #include "embergen.h"
-
+#include "embermotiflog.h"
 
 using namespace std;
 using namespace SST::Ember;
@@ -51,6 +53,16 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     m_os  = dynamic_cast<OS*>( loadModuleWithComponent(
                             osModuleName, this, modParams ) );
     assert( m_os );
+
+    std::string motifLogFile = params.find_string("motifLog", "");
+    if("" != motifLogFile) {
+	std::ostringstream logPrefix;
+	logPrefix << motifLogFile << "-" << id << ".log";
+	output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
+	m_motifLogger = new EmberMotifLog(logPrefix.str());
+    } else {
+	m_motifLogger = NULL;
+    }
 
 	// create a map of all the available API's
 	m_apiMap = createApiMap( m_os, this, params );
@@ -91,6 +103,11 @@ EmberEngine::~EmberEngine() {
 		delete iter->second->api;
 		delete iter->second;
 	}
+
+	if(NULL != m_motifLogger) {
+		delete m_motifLogger;
+	}
+
 	delete m_os;
 }
 
@@ -139,6 +156,10 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     // get the name of the motif
     std::string gentype = params.find_string( "name" );
 	assert( !gentype.empty() );
+
+    if(NULL != m_motifLogger) {
+    	m_motifLogger->logMotifStart(gentype);
+    }
 
     // get the api the motif uses
     std::string api = params.find_string("api" );

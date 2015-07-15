@@ -233,6 +233,8 @@ static const ElementInfoParam component_params[] = {
 
     { "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = spy on sends", "0" },
 
+    { "motifLog", "Sets a file path to a file where motif execution details are written, empty = no log", "" },
+
     { "Send_bin_width", "Bin width of the send time histogram", "5" },
     { "Compute_bin_width", "Bin width of the compute time histogram", "5" },
     { "Init_bin_width", "Bin width of the init time histogram", "5" },
