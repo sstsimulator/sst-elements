@@ -124,11 +124,12 @@ class EmberEP( EndPoint ):
 
 class LoadInfo:
 
-	def __init__(self, nicParams, epParams, numNodes, numCores ):
+	def __init__(self, nicParams, epParams, numNodes, numCores, numNics ):
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
+		self.numNics = int(numNics)
 		self.nicParams["num_vNics"] = numCores
 		self.map = []
 		nullMotif = [{
@@ -145,8 +146,8 @@ class LoadInfo:
 		nidList, ranksPerNode, params = x
 
 		numNodes = calcMaxNode( nidList ) 
-		if numNodes > self.numNodes:
-			sys.exit('Error: Requested number of nodes ' + str(numNodes) +\
+		if numNodes > self.numNics:
+			sys.exit('Error: Requested max nodes ' + str(numNodes) +\
 				 ' is greater than available nodes ' + str(self.numNodes) ) 
 
 		params.update( self.epParams )

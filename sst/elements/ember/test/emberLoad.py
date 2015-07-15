@@ -204,7 +204,7 @@ if int(numNodes) == 0:
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
  
-print "numRanks={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
+print "numNodes={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 
 emptyNids = []
 
@@ -299,7 +299,7 @@ epParams = {}
 epParams.update(emberParams)
 epParams.update(hermesParams)
 
-loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores )
+loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes()  )
 
 if len(loadFile) > 0:
 	if len(workList) > 0:
