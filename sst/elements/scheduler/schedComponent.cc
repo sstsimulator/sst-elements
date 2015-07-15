@@ -158,28 +158,6 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         calcFST = NULL;
     }
 
-    if (NULL == dynamic_cast<StencilMachine*>(machine)) {
-        char timestring[] = "time";
-        stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
-    } else {
-        //the alloc output only works on a mesh because it calculates L1 distances
-        char timestring[] = "time,alloc";
-        stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
-    }
-
-    useYumYumSimulationKill = params.find("useYumYumSimulationKill") != params.end();
-    YumYumSimulationKillFlag = false;
-
-    if (params.find("YumYumPollWait") != params.end()) {
-        YumYumPollWait = atoi(params.find("YumYumPollWait")->second.c_str() );
-    }else{
-        YumYumPollWait = 250;
-    }
-
-    useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
-    printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
-    printJobLog = params.find("printJobLog") != params.end();
-
     //NetworkSim: set doDetailedNetworkSim parameter
     if (params.find("detailedNetworkSim") != params.end()){
         string temp_string = params["detailedNetworkSim"].c_str();
@@ -197,10 +175,37 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         schedout.output("schedComp:Detailed Network sim is ON\n");
         snapshot = new Snapshot();
     }
-    else{
-        //schedout.output("schedComp:Detailed Network sim is OFF\n");                              
-    }
     //end->NetworkSim
+
+    if (NULL == dynamic_cast<StencilMachine*>(machine)) {
+        char timestring[] = "time";
+        stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
+    } else {
+        //NetworkSim: modified to account for snapshot output
+        if (doDetailedNetworkSim == false){
+            //the alloc output only works on a mesh because it calculates L1 distances
+            char timestring[] = "time,alloc";
+            stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
+        } else {
+            //the alloc output only works on a mesh because it calculates L1 distances
+            char timestring[] = "time,alloc,snapshot";
+            stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
+        }
+        //end->NetworkSim
+    }
+
+    useYumYumSimulationKill = params.find("useYumYumSimulationKill") != params.end();
+    YumYumSimulationKillFlag = false;
+
+    if (params.find("YumYumPollWait") != params.end()) {
+        YumYumPollWait = atoi(params.find("YumYumPollWait")->second.c_str() );
+    }else{
+        YumYumPollWait = 250;
+    }
+
+    useYumYumTraceFormat = params.find("useYumYumTraceFormat") != params.end();
+    printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
+    printJobLog = params.find("printJobLog") != params.end();
 
     jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag, &doDetailedNetworkSim); //NetworkSim: added doDetailedNetworkSim parameter);
 
@@ -548,13 +553,6 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         //dump sapshot to file
         std::cout << getCurrentSimTime() << ":Snapshot event received...Appending snapshot..." << std::endl;        
         snapshot->append(sev->time, sev->jobNum, sev->itmi);
-        for(std::map<int, ITMI>::iterator it = snapshot->runningJobs.begin(); it != snapshot->runningJobs.end(); it++){
-            std::cout << "Job " << it->first << ": Uses " << it->second.i << " nodes:" << std::endl;
-            for(int nodeIt = 0; nodeIt < it->second.tmi->allocInfo->getNodesNeeded(); nodeIt++){
-                std::cout << it->second.tmi->allocInfo->nodeIndices[nodeIt] << ":";
-            }
-            std::cout << std::endl;
-        }
         delete ev;
         unregisterYourself();
     //end->NetwrokSim
@@ -567,6 +565,12 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
 void schedComponent::finish() 
 {
     scheduler -> done();
+    //NetworkSim: Write snapshot to file only once at the end
+    if (doDetailedNetworkSim){    
+        std::cout << "In Sched component finish" << std::endl;
+        stats -> simPauses(snapshot, getCurrentSimTime());
+    }
+    //end->NetWorkSim
     stats -> done();
     theAllocator -> done();
 }

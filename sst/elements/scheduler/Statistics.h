@@ -33,6 +33,7 @@ namespace SST {
         class Scheduler;
         class TaskMapInfo;
         class TaskMapper;
+        class Snapshot; //NetworkSim
 
         class Statistics {
             public:
@@ -51,6 +52,9 @@ namespace SST {
                 void jobFinishes(TaskMapInfo* tmi, unsigned long time);
                 //called every time a job completes
 
+                void simPauses(Snapshot *snapshot, unsigned long time);
+                //NetworkSim: called when the Simulation pauses or finishes
+
                 void done();  //called after all events have occurred
 
             private:
@@ -60,6 +64,9 @@ namespace SST {
 
                 void writeAlloc(TaskMapInfo* tmi);
                 //write allocation information to file
+
+                void writeSnapshot(Snapshot *snapshot);
+                //NetworkSim: write snapshot information to file
 
                 void writeVisual(std::string mesg);
                 //write to log for visualization

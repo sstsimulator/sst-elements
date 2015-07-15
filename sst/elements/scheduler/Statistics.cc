@@ -27,6 +27,7 @@
 #include "Scheduler.h"
 #include "TaskMapInfo.h"
 #include "TaskMapper.h"
+#include "Snapshot.h" //NetworkSim
 
 using namespace std;
 using namespace SST::Scheduler;
@@ -42,7 +43,8 @@ const logInfo supportedLogs[] = {
     {"alloc", "\n# Job\tProcs\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\tHop-Bytes\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
-    {"wait", "\n# Time\tWaiting Jobs\n"}
+    {"wait", "\n# Time\tWaiting Jobs\n"},
+    {"snapshot", ""} //NetworkSim: added snapshot as a supported log
 };
 
 const logInfo supportedLogsFST[] = {
@@ -50,17 +52,19 @@ const logInfo supportedLogsFST[] = {
     {"alloc", "\n# Procs Needed\tActual Time\t Avg Pairwise L1 Distance\tJob Congestion\tHop-Bytes\n"},
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
-    {"wait", "\n# Time\tWaiting Jobs\n"}
+    {"wait", "\n# Time\tWaiting Jobs\n"},
+    {"snapshot", ""} //NetworkSim: added snapshot as a supported log
 };
 
-const int numSupportedLogs = 5;
+const int numSupportedLogs = 6; //NetworkSim: changed this from 5 
 
 enum LOGNAME {  //to use symbolic names on logs; must be updated with supportedLogs
     TIME = 0,
     ALLOC = 1,
     VISUAL = 2,
     UTIL = 3,
-    WAIT = 4
+    WAIT = 4,
+    SNAPSHOT = 5 //NetworkSim: added snapshot as a supported log 
 };
 /*
    UTIL = 1,
@@ -245,6 +249,17 @@ void Statistics::jobFinishes(TaskMapInfo* tmi, unsigned long time)
     currentTime = time;
 }
 
+//NetworkSim: Called once when the simulation pauses or finishes to write the snapshot
+void Statistics::simPauses(Snapshot *snapshot, unsigned long time)
+{
+    if (record[SNAPSHOT]) {
+        writeSnapshot(snapshot);
+    }
+
+    currentTime = time;
+}
+//end->NetworkSim
+
 //Write time statistics to the log.
 void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time) 
 {
@@ -297,6 +312,31 @@ void Statistics::writeAlloc(TaskMapInfo* tmi)
             tmi->getHopBytes() );
     appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
+
+//NetworkSim: Write scheduler snapshot to a file
+void Statistics::writeSnapshot(Snapshot *snapshot)
+{
+    for(std::map<int, ITMI>::iterator it = snapshot->runningJobs.begin(); it != snapshot->runningJobs.end(); it++){
+        char mesg[100];
+        sprintf(mesg, "Job %d: Uses %d nodes:\n",
+                it->first,
+                it->second.i );
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+        //std::cout << "Job " << it->first << ": Uses " << it->second.i << " nodes:" << std::endl;
+
+        for(int nodeIt = 0; nodeIt < it->second.tmi->allocInfo->getNodesNeeded(); nodeIt++){
+            char mesg[1000];
+            sprintf(mesg, "%d ",
+                    it->second.tmi->allocInfo->nodeIndices[nodeIt] );
+            appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+            //std::cout << it->second.tmi->allocInfo->nodeIndices[nodeIt] << " ";
+        }
+        appendToLog("\n", supportedLogs[SNAPSHOT].logName);
+        //std::cout << std::endl;
+    }
+
+}
+//end->NetworkSim
 
 //Write to log for visualization.
 void Statistics::writeVisual(string mesg) 
