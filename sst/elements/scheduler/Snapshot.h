@@ -29,11 +29,14 @@ namespace SST {
                 ~Snapshot();
 
                 //void append(SnapshotEvent *ev);
-                void append(SimTime_t snapshot_time, int jobNum, ITMI itmi);
+                void append(SimTime_t snapshotTime, unsigned long nextArrivalTime, int jobNum, ITMI itmi);
                 std::map<int, ITMI> runningJobs;
-            
+                
+                SimTime_t getSnapshotTime() const { return snapshotTime; }
+                unsigned long getNextArrivalTime() const { return nextArrivalTime; }
             private:   
-                SimTime_t snapshot_time;   //current time of the snapshot
+                SimTime_t snapshotTime;   //current time of the snapshot
+                unsigned long nextArrivalTime; //arrival time of the next job for ember
         };
     }
 }

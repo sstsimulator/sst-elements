@@ -159,21 +159,14 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     }
 
     //NetworkSim: set doDetailedNetworkSim parameter
+    doDetailedNetworkSim = false;
     if (params.find("detailedNetworkSim") != params.end()){
         string temp_string = params["detailedNetworkSim"].c_str();
         if (temp_string.compare("ON") == 0){
             doDetailedNetworkSim = true;
+            schedout.output("schedComp:Detailed Network sim is ON\n");
+            snapshot = new Snapshot();
         }
-        else{
-            doDetailedNetworkSim = false;
-        }
-    } else {
-        doDetailedNetworkSim = false;
-    }
-
-    if (doDetailedNetworkSim == true){
-        schedout.output("schedComp:Detailed Network sim is ON\n");
-        snapshot = new Snapshot();
     }
     //end->NetworkSim
 
@@ -188,7 +181,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
             stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
         } else {
             //the alloc output only works on a mesh because it calculates L1 distances
-            char timestring[] = "time,alloc,snapshot";
+            char timestring[] = "time,alloc,snapshot.xml";
             stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
         }
         //end->NetworkSim
@@ -552,7 +545,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     } else if (NULL != sev){
         //dump sapshot to file
         std::cout << getCurrentSimTime() << ":Snapshot event received...Appending snapshot..." << std::endl;        
-        snapshot->append(sev->time, sev->jobNum, sev->itmi);
+        snapshot->append(sev->time, sev->nextJobArrivalTime, sev->jobNum, sev->itmi);
         delete ev;
         unregisterYourself();
     //end->NetwrokSim
@@ -646,6 +639,8 @@ void schedComponent::startJob(Job* job)
     if (doDetailedNetworkSim == true){
         SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
         se->itmi = runningJobs[job->getJobNum()];
+        se->nextJobArrivalTime = jobs[job->getJobNum() + 1]->getArrivalTime();
+        std::cout << "Next Job: " << job->getJobNum() + 1 << " is arriving at " << se->nextJobArrivalTime << std::endl;
         selfLink->send(se);
         std::cout << getCurrentSimTime() << ":Sent snapshot event to self" << std::endl;
     }

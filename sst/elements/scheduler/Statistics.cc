@@ -44,7 +44,7 @@ const logInfo supportedLogs[] = {
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"},
-    {"snapshot", ""} //NetworkSim: added snapshot as a supported log
+    {"snapshot.xml", ""} //NetworkSim: added snapshot as a supported log
 };
 
 const logInfo supportedLogsFST[] = {
@@ -53,7 +53,7 @@ const logInfo supportedLogsFST[] = {
     {"visual", ""},   //requires special header
     {"util", "\n# Time\tUtilization\n"},
     {"wait", "\n# Time\tWaiting Jobs\n"},
-    {"snapshot", ""} //NetworkSim: added snapshot as a supported log
+    {"snapshot.xml", ""} //NetworkSim: added snapshot as a supported log
 };
 
 const int numSupportedLogs = 6; //NetworkSim: changed this from 5 
@@ -316,24 +316,111 @@ void Statistics::writeAlloc(TaskMapInfo* tmi)
 //NetworkSim: Write scheduler snapshot to a file
 void Statistics::writeSnapshot(Snapshot *snapshot)
 {
+
+    char mesg[100];
+    sprintf(mesg, "<?xml version=\"1.0\"?>\n\n");
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    sprintf(mesg, "<snapshot>\n");
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    //Dump Time
+    sprintf(mesg, "\t<time>\n");
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    sprintf(mesg, "\t\t<snapshotTime>%" PRIu64 "</snapshotTime>\n", snapshot->getSnapshotTime());
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    sprintf(mesg, "\t\t<nextArrivalTime>%lu</nextArrivalTime>\n", snapshot->getNextArrivalTime());
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    sprintf(mesg, "\t</time>\n");
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    //Dump Nodes
+    for(std::map<int, ITMI>::iterator it = snapshot->runningJobs.begin(); it != snapshot->runningJobs.end(); it++){
+
+        sprintf(mesg, "\t<job number=\"%d\">\n", it->first);
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+        sprintf(mesg, "\t\t<motifFile>%s</motifFile>\n", it->second.tmi->job->phaseInfo.phaseFile.c_str());
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+        sprintf(mesg, "\t\t<startingMotif>%d</startingMotif>\n", it->second.tmi->job->phaseInfo.startingMotif);
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+        sprintf(mesg, "\t\t<numNodes>%d</numNodes>\n", it->second.i);
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+        //Dump node numbers and tasks mapped to each node
+        for(std::map<int, std::vector<int> >::iterator iter = it->second.tmi->nodeToTasks.begin(); iter != it->second.tmi->nodeToTasks.end(); iter++){
+
+            sprintf(mesg, "\t\t<node number=\"%d\">\n", iter->first);
+            appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+            sprintf(mesg, "\t\t\t<tasks>");
+            appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+            for(std::vector<int>::iterator iterTask = iter->second.begin(); iterTask != iter->second.end(); iterTask++){
+
+                sprintf(mesg, "%d,", *iterTask);
+                appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+            }
+            sprintf(mesg, "</tasks>\n\t\t</node>\n");
+            appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+        }
+
+        sprintf(mesg, "\t</job>\n");
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+    }
+
+
+
+
+
+    sprintf(mesg, "</snapshot>\n");
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
+
+    /*
+    char mesg[100];
+    sprintf(mesg, "Snapshot Time: %" PRIu64 "\nNext Arrival Time: %lu\n",
+            snapshot->getSnapshotTime(),
+            snapshot->getNextArrivalTime());
+    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
     for(std::map<int, ITMI>::iterator it = snapshot->runningJobs.begin(); it != snapshot->runningJobs.end(); it++){
         char mesg[100];
-        sprintf(mesg, "Job %d: Uses %d nodes:\n",
+        sprintf(mesg, "\nJob %d: Uses %d nodes:\n",
                 it->first,
                 it->second.i );
         appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
-        //std::cout << "Job " << it->first << ": Uses " << it->second.i << " nodes:" << std::endl;
 
-        for(int nodeIt = 0; nodeIt < it->second.tmi->allocInfo->getNodesNeeded(); nodeIt++){
-            char mesg[1000];
-            sprintf(mesg, "%d ",
-                    it->second.tmi->allocInfo->nodeIndices[nodeIt] );
-            appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
-            //std::cout << it->second.tmi->allocInfo->nodeIndices[nodeIt] << " ";
+        //Dump motif file for the job and which motif to start from
+        char mesgM[100];
+        sprintf(mesgM, "MotifFile:%s\nStartingMotif:%d\n",
+                it->second.tmi->job->phaseInfo.phaseFile.c_str(),
+                it->second.tmi->job->phaseInfo.startingMotif);
+        appendToLog(mesgM, supportedLogs[SNAPSHOT].logName);
+
+
+        //Dump node numbers and tasks mapped to each node
+        for(std::map<int, std::vector<int> >::iterator iter = it->second.tmi->nodeToTasks.begin(); iter != it->second.tmi->nodeToTasks.end(); iter++){
+            char mesgN[100];
+            sprintf(mesgN, "%d: ", iter->first);
+            appendToLog(mesgN, supportedLogs[SNAPSHOT].logName);
+
+            char mesgT[100];
+            for(std::vector<int>::iterator iterTask = iter->second.begin(); iterTask != iter->second.end(); iterTask++){
+                sprintf(mesgT, "%d ", *iterTask);
+                appendToLog(mesgT, supportedLogs[SNAPSHOT].logName);
+            }
+            sprintf(mesgT, "\n");
+            appendToLog(mesgT, supportedLogs[SNAPSHOT].logName);
         }
-        appendToLog("\n", supportedLogs[SNAPSHOT].logName);
-        //std::cout << std::endl;
     }
+    */
 
 }
 //end->NetworkSim
@@ -411,7 +498,11 @@ void Statistics::initializeLog(string extension)
     string name = outputDirectory + baseName + "." + extension;
     ofstream file(name.c_str(), ios::out | ios::trunc);
     if (file.is_open()) {
-        file << fileHeader;
+        //NetworkSim: Do not add the fileHeader if the logfile is a snapshot xml
+        if(extension.compare("snapshot.xml")){
+            file << fileHeader;
+        }
+        //end->NetworkSim
     } else {
         //error("Unable to open file " + name);
         schedout.fatal(CALL_INFO, 1, "Unable to open file %s", name.c_str());

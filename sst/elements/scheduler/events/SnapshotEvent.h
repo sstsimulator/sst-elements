@@ -32,6 +32,7 @@ namespace SST {
                 SimTime_t time;   //current time of the snapshot
                 int jobNum;
                 ITMI itmi;
+                unsigned long nextJobArrivalTime;
 
             private:
                 SnapshotEvent();

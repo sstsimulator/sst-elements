@@ -49,6 +49,8 @@ namespace SST {
                 //return the sum of congestion on all links
                 double getHopBytes();
 
+                std::map<int, std::vector<int> > nodeToTasks; //NetworkSim: holds node IDs and tasks mapped to each node
+
             private:
                 TaskCommInfo* taskCommInfo;
                 int mappedCount;

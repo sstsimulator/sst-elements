@@ -50,6 +50,7 @@ void TaskMapInfo::insert(int taskInd, long int nodeInd)
         }
     }
     taskToNode[taskInd] = nodeInd;
+    nodeToTasks[nodeInd].push_back(taskInd); //NetworkSim: Populate the map of nodes and the tasks mapped to them
     mappedCount++;
 }
 

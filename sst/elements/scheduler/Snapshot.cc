@@ -26,11 +26,11 @@ Snapshot::~Snapshot()
 }
 
 
-void Snapshot::append(SimTime_t snapshot_time, int jobNum, ITMI itmi)
+void Snapshot::append(SimTime_t snapshotTime, unsigned long nextArrivalTime, int jobNum, ITMI itmi)
 {
     this->runningJobs[jobNum] = itmi;
-    this->snapshot_time = snapshot_time;
-
+    this->snapshotTime = snapshotTime;
+    this->nextArrivalTime = nextArrivalTime;
 }
 
 

@@ -89,6 +89,7 @@ namespace SST {
                     double commRatio;         //communication time / total time
                     int intraNodeCommDelay;   //constant delay (in ns) for tasks communicating within the node
                     unsigned long computeTime;          //per time step
+                    int startingMotif; // the Motif to start from in the next simulation FIX LATER
                 }phaseInfo;
                 //end->NetworkSim
 
