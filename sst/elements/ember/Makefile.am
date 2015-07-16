@@ -27,6 +27,7 @@ libember_la_SOURCES = \
 	embergaussdistrib.cc \
 	embercomputeev.h \
 	embercomputeev.cc \
+	embermotiflog.h \
 	mpi/embermpigen.h \
 	mpi/embermpigen.cc \
 	mpi/emberrecvev.h \
