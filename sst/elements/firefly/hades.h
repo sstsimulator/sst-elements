@@ -16,7 +16,7 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
-#include <sst/core/interfaces/simpleNetwork.h>
+#include <sst/core/sharedRegion.h>
 
 #include "sst/elements/hermes/hermes.h"
 #include "group.h"
@@ -59,10 +59,9 @@ class Hades : public OS
   private:
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
-
-    Interfaces::SimpleNetwork::Mapping  m_netMap;
-    int                                 m_netMapSize;
-    std::string                         m_netMapName;
+    SharedRegion*                        m_sreg;
+    int                                  m_netMapSize;
+    std::string                          m_netMapName;
 };
 
 } // namesapce Firefly 

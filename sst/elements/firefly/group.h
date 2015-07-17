@@ -24,8 +24,7 @@ class MapBase {
     virtual ~MapBase() {}
     virtual int getSize() = 0;
     virtual void initMapping( int from, int to, int range ) {} 
-    virtual void initMapping( Interfaces::SimpleNetwork::Mapping* map,
-                    int size, int numCores ) {} 
+    virtual void initMapping( const int* map, int size, int numCores ) {} 
     virtual int getMapping( int from ) = 0;
 };
 
@@ -71,8 +70,7 @@ class NetMapGroup : public Group
 
     int getSize() { return m_size * m_numCores; }
 
-    void initMapping( Interfaces::SimpleNetwork::Mapping* map,
-                                 int size, int numCores ) 
+    void initMapping( const int* map, int size, int numCores ) 
     {
         m_netMap = map;
         m_numCores = numCores;
@@ -80,13 +78,13 @@ class NetMapGroup : public Group
     }
 
     int getMapping( int from ) { 
-        return (*m_netMap)[from/m_numCores] * m_numCores + (from % m_numCores); 
+        return m_netMap[from/m_numCores] * m_numCores + (from % m_numCores); 
     }
 
   private:
     int m_size;
     int m_numCores;
-    Interfaces::SimpleNetwork::Mapping* m_netMap;
+    const int* m_netMap;
 };
 
 class IdentityGroup : public Group 

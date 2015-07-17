@@ -14,6 +14,7 @@
 
 #include <sst/core/module.h>
 #include <sst/core/component.h>
+#include <sst/core/subcomponent.h>
 
 #include "functor.h"
 
@@ -23,8 +24,9 @@ namespace SST {
 
 namespace Hermes {
 
-class OS : public Module {
+class OS : public SubComponent {
   public:
+	OS( Component *owner ) : SubComponent( owner ) {}
     virtual void _componentInit( unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
     virtual void printStatus( Output& ) {}

@@ -107,7 +107,7 @@ static const ElementInfoPort loopBack_ports[] = {
 };
 
 
-static Module*
+static SubComponent*
 load_hades(Component* comp, Params& params)
 {
     return new Hades(comp, params);
@@ -351,14 +351,6 @@ static const ElementInfoComponent components[] = {
 };
 
 static const ElementInfoModule modules[] = {
-    { "hades",
-      "Firefly Hermes OS module",
-      NULL,
-      NULL,
-      load_hades,
-      hadesModule_params,
-      "SST::Hermes::OS"
-    },
     { "hadesMP",
       "Firefly Hermes MP module",
       NULL,
@@ -589,6 +581,22 @@ static const ElementInfoModule modules[] = {
     { NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic hades_statistics[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoSubComponent subcomponents[] = {
+    { "hades",
+      "Firefly Hermes OS module",
+      NULL,
+      load_hades,
+      hadesModule_params,
+      hades_statistics,
+      "SST::Hermes::OS"
+    },
+    { NULL, NULL, NULL, NULL}
+};
+
 static const ElementInfoEvent events[] = {
     { "MerlinFireflyEvent",
       "MerlinFireflyEvent",
@@ -606,6 +614,7 @@ extern "C" {
         events,
         NULL,
         modules,
+        subcomponents,
         NULL,
         NULL,
     };

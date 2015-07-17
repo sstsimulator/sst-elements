@@ -31,6 +31,7 @@ using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
+    OS( owner ),	
     m_virtNic(NULL),
 	m_functionSM( NULL )
 {
@@ -67,8 +68,11 @@ Hades::Hades( Component* owner, Params& params ) :
 
         m_netMapName = params.find_string( "netMapName" );
         assert( ! m_netMapName.empty() );
-        SST::Interfaces::SimpleNetwork::addMappingEntry(
-                    m_netMapName, netMapId, netId );
+
+        m_sreg = getGlobalSharedRegion( m_netMapName,
+                    m_netMapSize*sizeof(int), new SharedRegionMerger());
+        m_sreg->modifyArray( netMapId, netId );
+        m_sreg->publish();
 	}
 
     int protoNum = 0;
@@ -122,11 +126,11 @@ void Hades::_componentSetup()
       m_virtNic->getNodeId(), m_virtNic->getNumCores(), m_virtNic->getCoreId());
 
 	if ( m_netMapSize > 0 ) {
-    	m_netMap.bind(m_netMapName);
 
     	Group* group = m_info.getGroup( 
         	m_info.newGroup( MP::GroupWorld, Info::NetMap ) );
-    	group->initMapping( &m_netMap, m_netMapSize, m_virtNic->getNumCores() );
+    	group->initMapping( m_sreg->getPtr<const int*>(),
+					m_netMapSize, m_virtNic->getNumCores() );
 
     	int nid = m_virtNic->getNodeId();
 
