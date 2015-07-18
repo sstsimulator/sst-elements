@@ -20,8 +20,10 @@
 /*
 */
 #include <sst_config.h>
+
+#include <sst/core/serialization.h>
+
 #include "allreduce_pattern.h"
-#include <sst/core/element.h>
 #include "util/stats.h"
 
 
@@ -293,6 +295,3 @@ void Allreduce_pattern::setup()
 	state_transition(E_START, STATE_INIT);
 }
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Allreduce_pattern)
-#endif // SERIALIZATION_WORKS_NOW
