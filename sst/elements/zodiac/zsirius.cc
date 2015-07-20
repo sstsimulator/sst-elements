@@ -43,7 +43,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
    	Params hermesParams = params.find_prefix_params("hermesParams." );
 
-    os = dynamic_cast<OS*>(loadModuleWithComponent(
+    os = dynamic_cast<OS*>(loadSubComponent(
                             osModule, this, hermesParams));
     assert(os);
 
