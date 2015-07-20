@@ -21,7 +21,7 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
-#ifdef HAVE_MPI
+#ifdef SST_CONFIG_HAVE_MPI
 #include <mpi.h>
 #endif
 
@@ -61,7 +61,7 @@ public:
 
 // 	printf("Current time: %lu\n", sim->getTimeLord()->getNano()->convertFromCoreTime(sim->getCurrentSimCycle()));
 
-// #ifdef HAVE_MPI	
+// #ifdef SST_CONFIG_HAVE_MPI	
 // 	boost::mpi::communicator world;
 // #endif
 
@@ -69,7 +69,7 @@ public:
 	int value = wake_up.size() - num_reporting;
 	int out;
 
-#ifdef HAVE_MPI	
+#ifdef SST_CONFIG_HAVE_MPI	
 	// all_reduce( world, &value, 1, &out, std::plus<int>() );  
 	MPI_Allreduce( &value, &out, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );  
 #else
@@ -77,7 +77,7 @@ public:
 #endif	
 
 	if ( 0 == out ) {
-#ifdef HAVE_MPI
+#ifdef SST_CONFIG_HAVE_MPI
         // all_reduce(world, &add_count, 1, &out, std::plus<int>() );
         MPI_Allreduce(&add_count, &out, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 #else
@@ -92,7 +92,7 @@ public:
         SimTime_t total_time_a;
         int rank;
         
-#ifdef HAVE_MPI
+#ifdef SST_CONFIG_HAVE_MPI
         // all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
         // all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
         // all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
