@@ -50,7 +50,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     tmp << m_jobId;
     modParams["netMapName"] = "Ember" + tmp.str();
 
-    m_os  = dynamic_cast<OS*>( loadModuleWithComponent(
+    m_os  = dynamic_cast<OS*>( loadSubComponent(
                             osModuleName, this, modParams ) );
     assert( m_os );
 
