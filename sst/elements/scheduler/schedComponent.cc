@@ -259,10 +259,10 @@ void schedComponent::setup()
     }
 
     //NetworkSim: test for emberFinsihedJobs
-    emberFinishedJobs[0] = 12;
-    emberFinishedJobs[1] = 15;
+    emberFinishedJobs[0] = 5;
+    emberFinishedJobs[1] = 10;
     //emberFinishedJobs[2] = 500;
-    ignoreUntilTime = 3283780;
+    ignoreUntilTime = 3279512;
 
     //end->NetworkSim
 }
@@ -486,7 +486,6 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                         }
                         snapshot->append(getCurrentSimTime(), NextArrivalTime, runningJobs);
                         std::cout << "Next Job is arriving at " << NextArrivalTime << std::endl;
-                        delete ev;
                         unregisterYourself();
                     }
                     //end->NetworkSim                    
