@@ -30,6 +30,7 @@ namespace SST {
                 unsigned long time;   //the length of the started job
 
                 int jobNum;
+                bool emberFinished; //NetworkSim: variable that specifies if that job has run and finished on ember
 
             private:
                 JobStartEvent() { }  // for serialization only

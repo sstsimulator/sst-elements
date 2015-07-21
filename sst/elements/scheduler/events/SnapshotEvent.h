@@ -31,8 +31,9 @@ namespace SST {
 
                 SimTime_t time;   //current time of the snapshot
                 int jobNum;
-                ITMI itmi;
+                //ITMI itmi;
                 unsigned long nextJobArrivalTime;
+                std::map<int, ITMI> runningJobs;
 
             private:
                 SnapshotEvent();
@@ -44,7 +45,7 @@ namespace SST {
                         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
                         ar & BOOST_SERIALIZATION_NVP(jobNum);
                         ar & BOOST_SERIALIZATION_NVP(time);
-                        ar & BOOST_SERIALIZATION_NVP(itmi);
+                        //ar & BOOST_SERIALIZATION_NVP(itmi);
                     }
 
          };

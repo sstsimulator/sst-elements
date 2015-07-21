@@ -29,7 +29,8 @@ namespace SST {
                 ~Snapshot();
 
                 //void append(SnapshotEvent *ev);
-                void append(SimTime_t snapshotTime, unsigned long nextArrivalTime, int jobNum, ITMI itmi);
+                void append(SimTime_t snapshotTime, unsigned long nextArrivalTime, std::map<int, ITMI> runningJobs);
+
                 std::map<int, ITMI> runningJobs;
                 
                 SimTime_t getSnapshotTime() const { return snapshotTime; }

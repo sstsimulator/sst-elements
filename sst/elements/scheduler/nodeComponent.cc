@@ -154,6 +154,8 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
     //set our clock
     setDefaultTimeBase(registerTimeBase(SCHEDULER_TIME_BASE));
+
+    doDetailedNetworkSim = false; //NetworkSim: by default it is false
 }
 
 
@@ -339,31 +341,35 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
 void nodeComponent::handleEvent(Event *ev) {
     if (dynamic_cast<CommunicationEvent *>( ev )){
         CommunicationEvent * event = dynamic_cast<CommunicationEvent*>(ev);
-	if( event->CommType == FAIL_JOBS ){
-		FaultEvent * specialFault = new FaultEvent( std::string( *(string *)event->payload ) );
-		specialFault->shouldKillJob = FAULT_EVENT_SHOULDKILL;
+        if( event->CommType == FAIL_JOBS ){
+            FaultEvent * specialFault = new FaultEvent( std::string( *(string *)event->payload ) );
+            specialFault->shouldKillJob = FAULT_EVENT_SHOULDKILL;
         	logFault( specialFault );
-		handleFaultEvent( specialFault );
-	}else if (event -> CommType == RETRIEVE_ID) {
-		if( event->payload == NULL ){
-			event -> payload = &this -> ID;
-			event -> reply = true;
+            handleFaultEvent( specialFault );
+        }else if (event -> CommType == RETRIEVE_ID) {
+            if( event->payload == NULL ){
+                event -> payload = &this -> ID;
+                event -> reply = true;
 
-			Scheduler -> send(event); 
-			return;
-		}else{
-			event->payload = &this->ID;
-			event->reply = true;
+                Scheduler -> send(event); 
+                return;
+            }else{
+                event->payload = &this->ID;
+                event->reply = true;
 
-			failureInjector->send( event );
-			return;
-		}
+                failureInjector->send( event );
+                return;
+            }
+        //NetworkSim: added comm event type to set the deDetailedNetworkSim parameter
+        } else if (event -> CommType == SET_DETAILED_NETWORK_SIM) {
+            this -> doDetailedNetworkSim = event->reply;
+        //end->NetworkSim
         }else{
 		std::cerr << "Error: unhandled event" << std::endl;
-	}
+        }
 
-	delete event;
-	return;
+        delete event;
+        return;
 
     } else if (dynamic_cast<ObjectRetrievalEvent*>(ev)){
         ObjectRetrievalEvent * event = dynamic_cast<ObjectRetrievalEvent*>(ev);
@@ -380,7 +386,13 @@ void nodeComponent::handleEvent(Event *ev) {
         if (-1 == jobNum) {
             //std::cout << "Received JobStartEvent at Node " << this->nodeNum << std::endl;//NetworkSim: debug
             jobNum = event -> jobNum;
-            SelfLink -> send(event -> time, event); 
+            //NetworkSim: If the job is still running on ember, we do not know the actual running time. Thus, do not send delayed event to yourself.
+            if(doDetailedNetworkSim == false || event->emberFinished == true){
+                SelfLink -> send(event -> time, event);
+            } else {
+                delete event;
+            }
+            //end->NetworkSim
         } else {
             schedout.fatal(CALL_INFO, 1, "Error?! Already running a job, but given a new one!\n");
             //internal_error("Error?! Already running a job, but given a new one!\n");

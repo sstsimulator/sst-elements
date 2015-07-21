@@ -1,4 +1,4 @@
-# Simulation for trace test_scheduler_Network.sim started Thu Jul 16 16:13:25 2015
+# Simulation for trace test_scheduler_Network.sim started Tue Jul 21 11:01:49 2015
 # [Machine] 
 # 5x4x4 Mesh, 4 cores per node
 # [Scheduler] 
@@ -11,3 +11,5 @@
 # Job	Procs	Actual Time	 Avg Pairwise L1 Distance	Job Congestion	Hop-Bytes
 0	258	6	1.963834	46.000000	583041810432.000000
 1	16	6	0.500000	8.000000	6442450944.000000
+2	258	10	2.064660	108.000000	994284929024.000000
+3	4	47	0.000000	0.000000	0.000000

@@ -2,10 +2,10 @@
 
 <snapshot>
 	<time>
-		<snapshotTime>3279507</snapshotTime>
-		<nextArrivalTime>3283775</nextArrivalTime>
+		<snapshotTime>3283780</snapshotTime>
+		<nextArrivalTime>3284653</nextArrivalTime>
 	</time>
-	<job number="0">
+	<job number="2">
 		<motifFile>CTH.phase</motifFile>
 		<startingMotif>0</startingMotif>
 		<numNodes>65</numNodes>
@@ -205,19 +205,10 @@
 			<tasks>256,257,</tasks>
 		</node>
 	</job>
-	<job number="1">
+	<job number="3">
 		<motifFile>CTH.phase</motifFile>
 		<startingMotif>0</startingMotif>
-		<numNodes>4</numNodes>
-		<node number="71">
-			<tasks>12,13,14,15,</tasks>
-		</node>
-		<node number="72">
-			<tasks>8,9,10,11,</tasks>
-		</node>
-		<node number="73">
-			<tasks>4,5,6,7,</tasks>
-		</node>
+		<numNodes>1</numNodes>
 		<node number="74">
 			<tasks>0,1,2,3,</tasks>
 		</node>

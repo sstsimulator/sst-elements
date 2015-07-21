@@ -45,6 +45,8 @@ namespace SST {
             virtual std::string getType();
             virtual std::string getID();
 
+            bool doDetailedNetworkSim; //NetworkSim: variable that protects the original functionality without detailed network sim 
+
             private:
 		unsigned short int * yumyumFaultRand48State;
 		unsigned short int * yumyumErrorLogRand48State;

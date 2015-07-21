@@ -117,9 +117,11 @@ namespace SST {
                                               // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
 
                 //NetworkSim: enables detailed network simulation
-                bool doDetailedNetworkSim;
+                bool doDetailedNetworkSim; //variable that protects the original functionality without detailed network sim 
                 Snapshot *snapshot;
-                //bool allJobsStarted; // 1 if scheduler has no other jobs to start at current simulation time
+                std::map<int, unsigned long> emberFinishedJobs; // The jobs that we have run on ember and finished
+                SimTime_t ignoreUntilTime; // Avoid taking snapshots until this time
+                int jobNumLastArrived;
                 //end->NetworkSim
 
                 JobParser* jobParser;
