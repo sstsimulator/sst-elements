@@ -27,7 +27,16 @@ public:
                 EmberComputeDistribution* dist) :
         EmberEvent(output, stat),
         m_nanoSecondDelay( nanoSecondDelay ),
-        m_computeDistrib(dist)
+        m_computeDistrib(dist),
+        m_calcFunc(NULL)
+    {}  
+
+	EmberComputeEvent( Output* output,
+                      EmberEventTimeStatistic* stat, std::function<uint64_t()> func,
+                EmberComputeDistribution* dist) :
+        EmberEvent(output, stat),
+        m_computeDistrib(dist),
+        m_calcFunc(func)
     {}  
 
 	~EmberComputeEvent() {}
@@ -38,8 +47,13 @@ public:
 
         EmberEvent::issue( time );
     
-        m_completeDelayNS = (double) m_nanoSecondDelay * 
-									m_computeDistrib->sample(time);
+        if ( m_calcFunc ) {
+            m_completeDelayNS = (double) m_calcFunc() * 
+                                    m_computeDistrib->sample(time);
+        } else {
+            m_completeDelayNS = (double) m_nanoSecondDelay * 
+                                    m_computeDistrib->sample(time);
+        }
 
         m_output->verbose(CALL_INFO, 2, 0, "Adjust time by noise "
                 "distribution to give: %" PRIu64 "ns\n", m_completeDelayNS );
@@ -48,6 +62,7 @@ public:
 protected:
 	uint64_t m_nanoSecondDelay;
     EmberComputeDistribution* m_computeDistrib;
+    std::function<uint64_t()> m_calcFunc; 
 
 };
 
