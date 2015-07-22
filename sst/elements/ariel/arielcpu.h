@@ -56,6 +56,7 @@ class ArielCPU : public SST::Component {
         char* shmem_region_name;
         ArielTunnel* tunnel;
         bool stopTicking;
+	std::string appLauncher;
 
         char **execute_args;
 	std::map<std::string, std::string> execute_env;

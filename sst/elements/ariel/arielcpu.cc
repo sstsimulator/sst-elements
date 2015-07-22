@@ -143,6 +143,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     tunnel = new ArielTunnel(shmem_region_name, core_count, maxCoreQueueLen);
 
+    appLauncher = params.find_string("launcher", PINTOOL_EXECUTABLE);
+
     const uint32_t launch_param_count = (uint32_t) params.find_integer("launchparamcount", 0);
     const uint32_t pin_arg_count = 23 + launch_param_count;
 
@@ -151,7 +153,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
     uint32_t arg = 0;
-    execute_args[arg++] = const_cast<char*>(PINTOOL_EXECUTABLE);
+    execute_args[0] = (char*) malloc(sizeof(char) * (appLauncher.size() + 2));
+    sprintf(execute_args[0], "%s", appLauncher.c_str());
+    arg++;
 #if 0
     execute_args[arg++] = const_cast<char*>("-pause_tool");
     execute_args[arg++] = const_cast<char*>("15");
@@ -292,7 +296,7 @@ void ArielCPU::init(unsigned int phase)
 {
     if ( phase == 0 ) {
         output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
-        child_pid = forkPINChild(PINTOOL_EXECUTABLE, execute_args, execute_env);
+        child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env);
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
         tunnel->waitForChild();
