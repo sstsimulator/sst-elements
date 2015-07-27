@@ -46,6 +46,10 @@ class Hades : public OS
         return m_info.sizeofDataType(type); 
     }
 
+    NodePerf* getNodePerf() {
+        return m_nodePerf;
+    }
+
   private:
 
     SST::Link*          m_enterLink;  
@@ -57,6 +61,7 @@ class Hades : public OS
     Output              m_dbg;
 
   private:
+    NodePerf*                            m_nodePerf;
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
     SharedRegion*                        m_sreg;

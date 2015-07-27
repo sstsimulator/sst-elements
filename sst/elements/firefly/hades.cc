@@ -40,14 +40,24 @@ Hades::Hades( Component* owner, Params& params ) :
         params.find_integer("verboseMask",0),
         Output::STDOUT );
 
-    Params nicParams = params.find_prefix_params("nicParams." );
+    Params tmpParams = params.find_prefix_params("nicParams." );
 
     std::string moduleName = params.find_string("nicModule"); 
 
     m_virtNic = dynamic_cast<VirtNic*>(owner->loadModuleWithComponent( 
-                        moduleName, owner, nicParams ) );
+                        moduleName, owner, tmpParams ) );
     if ( !m_virtNic ) {
         m_dbg.fatal(CALL_INFO,0," Unable to find nic module'%s'\n",
+                                        moduleName.c_str());
+    }
+
+    moduleName = params.find_string("nodePerf", "firefly.SimpleNodePerf"); 
+
+    tmpParams = params.find_prefix_params("nodePerf." );
+    m_nodePerf = dynamic_cast<NodePerf*>(owner->loadModule( 
+                                        moduleName, tmpParams ) );
+    if ( !m_nodePerf ) {
+        m_dbg.fatal(CALL_INFO,0," Unable to find nodePerf module'%s'\n",
                                         moduleName.c_str());
     }
 
@@ -76,7 +86,7 @@ Hades::Hades( Component* owner, Params& params ) :
 	}
 
     int protoNum = 0;
-    Params tmpParams = params.find_prefix_params("ctrlMsg.");
+    tmpParams = params.find_prefix_params("ctrlMsg.");
     m_protocolM[ protoNum ] = 
         dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
                             "firefly.CtrlMsgProto", owner, tmpParams ) );

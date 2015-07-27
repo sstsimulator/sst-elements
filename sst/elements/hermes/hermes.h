@@ -24,6 +24,14 @@ namespace SST {
 
 namespace Hermes {
 
+class NodePerf : public Module {
+  public:
+    virtual float getFlops() { assert(0); }
+    virtual float getBandwidth() { assert(0); }
+    virtual float calcTimeNS_flops( int instructions ) { assert(0); } 
+    virtual float calcTimeNS_bandwidth( int bytes ) { assert(0); } 
+};
+
 class OS : public SubComponent {
   public:
 	OS( Component *owner ) : SubComponent( owner ) {}
@@ -32,6 +40,7 @@ class OS : public SubComponent {
     virtual void printStatus( Output& ) {}
     virtual int  getNid() { assert(0); }
     virtual void finish() {}
+    virtual NodePerf* getNodePerf() { assert(0); }
 };
 
 class Interface : public Module {

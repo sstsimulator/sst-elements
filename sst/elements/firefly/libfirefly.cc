@@ -40,6 +40,7 @@
 #include <merlinEvent.h>
 #include <rangeLatMod.h>
 #include <scaleLatMod.h>
+#include <nodePerf.h>
 
 using namespace Firefly;
 
@@ -140,6 +141,9 @@ static const ElementInfoParam hadesModule_params[] = {
 	{"module","internal",""},
     {"nodeId", "internal", ""},
     {"name", "internal", ""},
+	{"flops", "Sets the FLOP rate of the endpoint ", "1"},
+	{"bandwidth", "Sets the bandwidth of the endpoint ", "1"},
+	{"nodePerf", "Sets the node performance module ", "1"},
     {NULL, NULL}
 };
 
@@ -165,6 +169,16 @@ load_latencyMod(Params& params)
 static const ElementInfoParam latencyModule_params[] = {
 	{"base", "base latency component", "1"},
 	{"op", "operation to perform", "1"},
+    {NULL, NULL}
+};
+
+static Module*
+load_simpleNodePerf(Params& params)
+{
+    return new SimpleNodePerf(params);
+}
+
+static const ElementInfoParam simpleNodePerf_params[] = {
     {NULL, NULL}
 };
 
@@ -366,6 +380,15 @@ static const ElementInfoModule modules[] = {
       load_VirtNic,
       virtNicModule_params,
       "SST::Module"
+    },
+
+    { "SimpleNodePerf",
+      "",
+      NULL,
+      load_simpleNodePerf,
+      NULL,
+      simpleNodePerf_params,
+      "SST::Firefly::SimpleNodePerf"
     },
 
     { "LatencyMod",

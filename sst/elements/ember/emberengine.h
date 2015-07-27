@@ -59,20 +59,21 @@ private:
 
     ApiMap createApiMap( Hermes::OS* os, SST::Component*, SST::Params );
     EmberGenerator* initMotif( SST::Params, const ApiMap&,
-										int jobId, int motifNum );
+					int jobId, int motifNum, Hermes::NodePerf* nodePerf );
 
 	int         m_jobId;
 	uint32_t    currentMotif;
-    	bool        m_motifDone;
-    	ApiMap      m_apiMap;
+    bool        m_motifDone;
+    ApiMap      m_apiMap;
 	Output      output;
 
 	std::queue<EmberEvent*> evQueue;
 
+    Hermes::NodePerf*   m_nodePerf;
 	EmberGenerator*     m_generator;
 	SST::Link*          selfEventLink;
 	SST::TimeConverter* nanoTimeConverter;
-	EmberMotifLog*     m_motifLogger;
+	EmberMotifLog*      m_motifLogger;
 
 	std::vector<SST::Params> motifParams;
 

@@ -54,6 +54,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
                             osModuleName, this, modParams ) );
     assert( m_os );
 
+    m_nodePerf = m_os->getNodePerf();
+
     std::string motifLogFile = params.find_string("motifLog", "");
     if("" != motifLogFile) {
 	std::ostringstream logPrefix;
@@ -83,7 +85,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     registerAsPrimaryComponent();
 
     // Init the first Motif
-    m_generator = initMotif( motifParams[0], m_apiMap, m_jobId, currentMotif );
+    m_generator = initMotif( motifParams[0], m_apiMap, m_jobId, 
+                        currentMotif, m_nodePerf );
     assert( m_generator );
     
 	// Configure self link to handle event timing
@@ -149,7 +152,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 }
 
 EmberGenerator* EmberEngine::initMotif( SST::Params params,
-							const ApiMap& apiMap, int jobId, int motifNum ) 
+	const ApiMap& apiMap, int jobId, int motifNum, NodePerf* nodePerf )
 {
     EmberGenerator* gen = NULL;
 
@@ -186,6 +189,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 
         gen->initAPI( info->api );
         gen->initData( &info->data );
+        gen->setNodePerf( nodePerf );
   	    info->data->jobId = jobId;
    	    info->data->motifNum = motifNum;
     }
@@ -243,7 +247,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
                 return;
             } else {
                 m_generator = initMotif( motifParams[currentMotif],
-											m_apiMap, m_jobId, currentMotif );
+								m_apiMap, m_jobId, currentMotif, m_nodePerf );
                 assert( m_generator );
 
                 m_motifDone = refillQueue();

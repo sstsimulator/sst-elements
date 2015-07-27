@@ -57,6 +57,15 @@ class EmberGenerator : public SubComponent {
         m_api = api; 
     }
 
+
+	virtual void setNodePerf( Hermes::NodePerf* perf ) {
+        m_nodePerf = perf;
+	}
+
+	virtual Hermes::NodePerf* getNodePerf() {
+        return m_nodePerf;
+	}
+
     virtual void initData( EmberGeneratorData** data ) {
         assert(0);
     } 
@@ -87,19 +96,24 @@ class EmberGenerator : public SubComponent {
     }
 
   protected:
+    Hermes::NodePerf& nodePerf() { return *m_nodePerf; }
+
     virtual void* memAlloc( size_t );
     virtual void memFree( void* );
 	virtual void* memAddr( void * addr ) {
 		return  m_dataMode == Backing ? addr : NULL;
 	}
 
-    Hermes::Interface*  m_api;
+    Hermes::Interface*      m_api;
 
     std::string m_name;
     Output* 	m_output;
     std::string  	m_outputPrefix;
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
+
+  private:
+    Hermes::NodePerf*  m_nodePerf;
 };
 
 }
