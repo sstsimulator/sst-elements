@@ -41,6 +41,11 @@ namespace SST {
                 ~JobParser() { };
                         
                 std::vector<Job*> parseJobs(SimTime_t currSimTime);
+                //NetworkSim: parse the files for jobs completed/running on ember
+                std::map<int, unsigned long> parseJobsEmberCompleted();
+                std::map<int, std::pair<unsigned long, int> > parseJobsEmberRunning();
+                SimTime_t ignoreUntilTime;
+                //end->NetworkSim
                 bool checkJobFile();
             private:
                 Machine* machine;
@@ -50,6 +55,9 @@ namespace SST {
                 boost::filesystem::path fileNamePath;
                 boost::filesystem::path folderPath;
                 std::string jobTrace;
+
+                std::string completedJobTrace; // NetworkSim: File that lists all jobs that has been completed in ember
+                std::string runningJobTrace; // NetworkSim: File that lists all jobs that are still running on ember
                 
                 time_t LastJobFileModTime;            // Contains the last time that the job file was modified
                 char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file

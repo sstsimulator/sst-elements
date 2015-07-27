@@ -120,6 +120,7 @@ namespace SST {
                 bool doDetailedNetworkSim; //variable that protects the original functionality without detailed network sim 
                 Snapshot *snapshot;
                 std::map<int, unsigned long> emberFinishedJobs; // The jobs that we have run on ember and finished
+                std::map<int, std::pair<unsigned long, int> > emberRunningJobs; // The jobs that are still running on ember <jobNum, <soFarRunningTime, currentMotifCount>>
                 SimTime_t ignoreUntilTime; // Avoid taking snapshots until this time
                 int jobNumLastArrived;
                 //end->NetworkSim

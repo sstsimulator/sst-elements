@@ -166,6 +166,14 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
             doDetailedNetworkSim = true;
             schedout.output("schedComp:Detailed Network sim is ON\n");
             snapshot = new Snapshot();
+            // look for a file that lists all jobs that has been completed in ember
+            if (params.find("completedJobsTrace") == params.end()){
+                schedout.fatal(CALL_INFO, 1, "detailedNetworkSim: You must specify a completedJobsTrace name!\n");
+            }
+            // look for a file that lists all jobs that are still running on ember
+            if (params.find("runningJobsTrace") == params.end()){
+                schedout.fatal(CALL_INFO, 1, "detailedNetworkSim: You must specify a runningJobsTrace name!\n");
+            }
         }
     }
     //end->NetworkSim
@@ -226,6 +234,27 @@ void schedComponent::setup()
     }
     // done setting up the links, now read the job list
     jobs = jobParser -> parseJobs(getCurrentSimTime());
+
+    //NetworkSim: parse the ember completed/running job traces
+    if (doDetailedNetworkSim){
+        emberFinishedJobs = jobParser -> parseJobsEmberCompleted();
+        emberRunningJobs = jobParser -> parseJobsEmberRunning();
+        ignoreUntilTime = jobParser -> ignoreUntilTime;
+
+        std::cout << "The jobs that have been completed in ember" << std::endl;
+        for(std::map<int, unsigned long>::iterator it = emberFinishedJobs.begin(); it != emberFinishedJobs.end(); it++){
+            std::cout << "Job " << it->first << ": " << it->second << std::endl;
+        }
+
+        std::cout << "ignoreUntilTime: " << this->ignoreUntilTime << std::endl;
+
+        std::cout << "The jobs that are still running in ember" << std::endl;
+        for(std::map<int, std::pair<unsigned long, int>>::iterator iter = emberRunningJobs.begin(); iter != emberRunningJobs.end(); iter++){
+            std::cout << "Job " << iter->first << ": soFarRunningTime: " << iter->second.first << " currentMotifCount: " << iter->second.second << std::endl;
+        }
+
+    }
+    //end->NetworkSim
     
     for(int i = 0; i < (int) jobs.size(); i++)
     {
@@ -257,14 +286,6 @@ void schedComponent::setup()
     if (FSTtype > 0){
         calcFST -> setup(jobs.size());
     }
-
-    //NetworkSim: test for emberFinsihedJobs
-    emberFinishedJobs[0] = 5;
-    emberFinishedJobs[1] = 10;
-    //emberFinishedJobs[2] = 500;
-    ignoreUntilTime = 3279512;
-
-    //end->NetworkSim
 }
 
 
@@ -615,6 +636,10 @@ void schedComponent::startJob(Job* job)
     if (doDetailedNetworkSim == true){
         PhaseParser phaseParser = PhaseParser();
         phaseParser.parsePhase(job);
+        // update startingMotif for the jobs that are still running on ember
+        if(emberRunningJobs.find(job->getJobNum()) != emberRunningJobs.end()){
+            job->phaseInfo.startingMotif = emberRunningJobs[job->getJobNum()].second;
+        }
     }
     //end->NetworkSim
     job->start( getCurrentSimTime() );              //job started flag

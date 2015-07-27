@@ -29,7 +29,6 @@ Snapshot::~Snapshot()
 void Snapshot::append(SimTime_t snapshotTime, unsigned long nextArrivalTime, std::map<int, ITMI> runningJobs)
 {
     this->runningJobs = runningJobs;
-    //this->runningJobs[jobNum] = itmi;
     this->snapshotTime = snapshotTime;
     this->nextArrivalTime = nextArrivalTime;
 }

@@ -106,7 +106,7 @@ static const SST::ElementInfoPort link_ports[] = {
     {NULL,NULL,NULL}
 };
 
-//Network Sim: added new parameter
+//Network Sim: added 3 new parameters at the end
 static const SST::ElementInfoParam sched_params[] = {
     { "traceName",
       "Name of the simulation trace file",
@@ -199,6 +199,14 @@ static const SST::ElementInfoParam sched_params[] = {
     { "detailedNetworkSim",
         "Detailed simulation of the network communication delay",
         "OFF"
+    },
+    { "completedJobsTrace",
+        "A file that lists all jobs that has been completed in ember, needed for detailed network sim",
+        "none"
+    },
+    { "runningJobsTrace",
+        "A file that lists all jobs that are still running on ember, needed for detailed network sim",
+        "none"
     },
     {NULL,NULL,NULL}
 };
