@@ -175,6 +175,8 @@ void MemController::handleEvent(SST::Event* _event){
     MemEvent *ev = static_cast<MemEvent*>(_event);
     dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
+    dbg.debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
+        ev->getBaseAddr(), ev->getDst().c_str(), ev->getSrc().c_str(), ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
     Command cmd = ev->getCmd();
 
     // Notify our listeners that we have received an event

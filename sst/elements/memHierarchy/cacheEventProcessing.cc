@@ -239,9 +239,10 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     else incTotalMSHRHits(groupId);
 
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
-        d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s%s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), 
-                   event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
+        d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s%s \n",
+                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), 
+                   event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), 
+                   timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
     }
     cout << flush; 
     if(noncacheable || cf_.allNoncacheableRequests_){
@@ -260,9 +261,15 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     switch(cmd){
         case GetS:
         case GetX:
-        case GetSEx:
-            // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
+        case GetSEx:            
+            // Ignore redundant prefetches from the local prefetcher
+            if (mshr_->isHit(baseAddr) && event->isPrefetch() && event->getRqstr() == this->getName()) {
+                delete event;
+                if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_, "Dropping redundant prefetch\n");
+                break;
+            }
             
+            // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
             if (!_mshrHit && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 sendNACK(event);
@@ -272,8 +279,8 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
             // track times in our separate queue
             if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
 
-            if(mshr_->isHit(baseAddr) && canStall) {
-                if(processRequestInMSHR(baseAddr, event)){
+            if (mshr_->isHit(baseAddr) && canStall) {
+                if (processRequestInMSHR(baseAddr, event)){
                     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                     event->setBlocked(true);
                 }

@@ -376,6 +376,8 @@ void DirectoryController::processPacket(MemEvent * ev) {
         dbg.debug(_L3_, "EVENT: %s, Received: Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, id (%" PRIu64 ",%d), Time = %" PRIu64 "\n",
                 getName().c_str(),  CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), 
                 ev->getID().first, ev->getID().second, getCurrentSimTimeNano());
+        dbg.debug(_L3_, "Info: rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
+                ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
     }
     if(! isRequestAddressValid(ev) ) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
@@ -421,7 +423,7 @@ void DirectoryController::processPacket(MemEvent * ev) {
 void DirectoryController::handleGetS(MemEvent * ev) {
     /* Locate directory entry and allocate if needed */
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
-    if (!entry){
+    if (!entry) {
         entry = createDirEntry(ev->getBaseAddr(), ev->getAddr(), ev->getSize());
         entry->setCached(true);   // TODO fix this so new entries go to memory if the cache is not full map, little bit o cheatin here
     }
@@ -543,6 +545,9 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     Addr localAddr          = convertAddressToLocalAddress(ev->getAddr());
     Addr localBaseAddr      = convertAddressToLocalAddress(ev->getBaseAddr());
     MemEvent *reqEv         = new MemEvent(this, localAddr, localBaseAddr, ev->getCmd(), cacheLineSize);
+    reqEv->setRqstr(ev->getRqstr());
+    reqEv->setVirtualAddress(ev->getVirtualAddress());
+    reqEv->setInstructionPointer(ev->getInstructionPointer());
     memReqs[reqEv->getID()] = ev->getBaseAddr();
     entry->lastRequest      = reqEv->getID();
     profileRequestSent(reqEv);
