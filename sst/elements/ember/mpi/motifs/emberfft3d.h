@@ -124,6 +124,9 @@ uint64_t EmberFFT3DGenerator::calcFwd1Pre( Data& data,
                                         std::string str, float value )
 {
     uint64_t tmp = (data.ntrans/2) * m_data.np0;
+    if ( ! ( data.ntrans % 2 == 0 ) ) {
+        ++tmp;
+    }
     m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
 
     return (uint64_t) ( (float) tmp * value );
@@ -131,6 +134,9 @@ uint64_t EmberFFT3DGenerator::calcFwd1Pre( Data& data,
 
 uint64_t EmberFFT3DGenerator::calcFwd1( Data& data, std::string str, float value ) {
     uint64_t tmp = (data.ntrans/2) * m_data.np0;
+    if ( ! ( data.ntrans % 2 == 0 ) ) {
+        ++tmp;
+    }
     m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
@@ -139,10 +145,16 @@ uint64_t EmberFFT3DGenerator::calcFwd1Post( Data& data,
                                         std::string str, float value ) {
     if ( ! str.compare( "1" ) ) {
         uint64_t tmp = (data.ntrans*2) * data.np0half;
+        if ( ! ( data.ntrans % 2 == 0 ) ) {
+            ++tmp;
+        }
         m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
         return (uint64_t) ( (float) tmp * value );
     } else if ( ! str.compare( "2" ) ) {
         uint64_t tmp = data.np2loc * data.np1locf * data.np0half;
+        if ( ! ( data.ntrans % 2 == 0 ) ) {
+            ++tmp;
+        }
         m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
         return (uint64_t) ( (float) tmp * value );
     } else {

@@ -59,9 +59,12 @@ void EmberFFT3DGenerator::configure()
 {
     m_data.npcol = size() / m_data.nprow; 
 
+    assert( 0 == (size() % m_data.nprow) );
+#if 0
     assert(  (m_data.np0 % m_data.npcol) == 0 ); 
     assert(  (m_data.np1 % m_data.npcol) == 0 ); 
     assert(  (m_data.np2 % m_data.nprow) == 0 ); 
+#endif
 
     unsigned myRow = rank() % m_data.nprow; 
     unsigned myCol = rank() / m_data.nprow; 
