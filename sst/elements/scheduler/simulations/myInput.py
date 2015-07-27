@@ -14,7 +14,9 @@ scheduler.addParams({
       "allocator" : "bestfit",
       "timeperdistance" : ".001865[.1569,0.0129]",
       "dMatrixFile" : "none",
-      "detailedNetworkSim" : "ON"
+      "detailedNetworkSim" : "ON",
+      "completedJobsTrace" : "emberCompleted.txt",
+      "runningJobsTrace" : "emberRunning.txt"
 })
 
 # nodes

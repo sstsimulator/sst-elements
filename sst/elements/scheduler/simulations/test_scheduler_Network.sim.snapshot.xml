@@ -2,29 +2,12 @@
 
 <snapshot>
 	<time>
-		<snapshotTime>3279512</snapshotTime>
-		<nextArrivalTime>3279513</nextArrivalTime>
+		<snapshotTime>3279523</snapshotTime>
+		<nextArrivalTime>3283780</nextArrivalTime>
 	</time>
-	<job number="1">
-		<motifFile>CTH.phase</motifFile>
-		<startingMotif>0</startingMotif>
-		<numNodes>4</numNodes>
-		<node number="71">
-			<tasks>12,13,14,15,</tasks>
-		</node>
-		<node number="72">
-			<tasks>8,9,10,11,</tasks>
-		</node>
-		<node number="73">
-			<tasks>4,5,6,7,</tasks>
-		</node>
-		<node number="74">
-			<tasks>0,1,2,3,</tasks>
-		</node>
-	</job>
 	<job number="2">
 		<motifFile>CTH.phase</motifFile>
-		<startingMotif>0</startingMotif>
+		<startingMotif>15</startingMotif>
 		<numNodes>65</numNodes>
 		<node number="0">
 			<tasks>0,1,2,3,</tasks>
@@ -220,6 +203,17 @@
 		</node>
 		<node number="79">
 			<tasks>256,257,</tasks>
+		</node>
+	</job>
+	<job number="3">
+		<motifFile>CTH.phase</motifFile>
+		<startingMotif>0</startingMotif>
+		<numNodes>2</numNodes>
+		<node number="73">
+			<tasks>4,5,6,7,</tasks>
+		</node>
+		<node number="74">
+			<tasks>0,1,2,3,</tasks>
 		</node>
 	</job>
 </snapshot>
