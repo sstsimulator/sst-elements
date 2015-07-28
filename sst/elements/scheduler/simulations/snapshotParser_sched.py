@@ -2,7 +2,7 @@
 '''
 Date        : 07/17/2015  
 Created by  : Fulya Kaplan
-Description : This script parses the snapshot xml file that is dumped by the scheduler. It then creates a runscript for ember simulation and runs the script. Created specifically for detailed simulation of network congestion together with scheduling & application mapping algorithms.
+Description : This script parses the snapshot xml file that is dumped by the scheduler. It then creates a runscript for ember simulation and runs the script. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
 '''
 #This script is not complete yet!
 
@@ -40,10 +40,9 @@ class Job:
         self.startingMotif = startingMotif
 
 # Function to run linux commands
-def run(cmd, options):
+def run(cmd):
     print(cmd)
-    if not options.norun:
-        os.system(cmd)
+    os.system(cmd)
 
 # Parser for the xml file that holds the snapshot from the scheduler
 def parse_xml (options):
@@ -114,21 +113,85 @@ def parse_xml (options):
     
     return (TimeObject, JobObjects)
 
-# Gets a commandline string, puts it into a shell file and runs
-def run_ember (execcommand = None):
+# Generates a script for ember to run
+def generate_ember_script (TimeObject, JobObjects):
+    
+    loadfile  = "loadfile"
+    emberLoad = "emberLoad.py"
 
+    # Open loadfile to write 
+    ldfile = open(loadfile, "w")
+
+    # Keywords used in the loadfile format
+    J_KEY = "[JOB_ID] "
+    N_KEY = "[NID_LIST] "
+    M_KEY = "[MOTIF] "
+
+    # Populate loadfile with the job & nodeID & motif info 
+    for Job in JobObjects:
+        ldfile_str = ""
+
+        # Insert Job Number
+        ldfile_str += J_KEY + str(Job.jobNum) + "\n\n"
+
+        # Insert NodeID List
+        ldfile_str += N_KEY
+        for nodelist in Job.nodeList:
+            if(nodelist == Job.nodeList[-1]):
+                ldfile_str += str(nodelist[0]) + "\n"
+            else:
+                ldfile_str += str(nodelist[0]) + ","
+
+        # Insert Motifs
+        ldfile_str += M_KEY + "Init\n"
+
+        # Put a function here that reads the motifs for that job from a file
+        # Temporary Motif for test
+        ldfile_str += M_KEY + "Halo2D iterations=10  messagesize=128\n"
+        ldfile_str += M_KEY + "PingPong iterations=100\n"
+        ldfile_str += M_KEY + "Halo2D iterations=10  messagesize=128\n"
+        
+        ldfile_str += M_KEY + "Fini\n\n\n"
+
+        # Write this job's info to the loadfile
+        ldfile.writelines(ldfile_str)
+    ldfile.close()
+
+    # Ember simulation will start from time zero, so feed it the relative time
+    StopAtTime_ = TimeObject.nextArrivalTime - TimeObject.snapshotTime
+    StopAtTime  = str(StopAtTime_) + "us"
+
+    # Generate commandline string to execute
+    # Can parametrize model-options as well later
+    execcommand  = "sst --stop-at " + StopAtTime
+    execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=16B --netPktSize=1024B --netBW=10GB/s --emberVerbose=0 --embermotifLog=/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif"
+    #execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4"
+    execcommand += " --loadFile=" + loadfile + "\""
+    execcommand += " " + emberLoad + "\n"
+
+    print execcommand
+    return (execcommand)
+
+# Gets a commandline string, puts it into a shell file and runs
+def run_ember (execcommand):
+
+    run(execcommand)
+
+    # Use the code below if you want to generate a separate shell file to run ember
+    '''
     print(execcommand)
-    shfile = "runEmber.sh"
+    shfile = "./runEmber.sh"
     print(shfile)
     shellfile = open(shfile, "w")
     print(shellfile)
     shellfile.writelines(execcommand)
     shellfile.close()
-    
+
     cmd  = "chmod +x %s" % shfile
-    run(cmd, options)
-    cmd  = "%s " % shfile
-    run(cmd, options)
+    run(cmd)
+    cmd  = "%s" % shfile
+    run(cmd)
+    '''
 
 def main():
 
@@ -137,52 +200,8 @@ def main():
     (options, args) = parser.parse_args()
     
     TimeObject, JobObjects = parse_xml (options = options)
-    #generate_ember_script ()
-    #run_ember ()
+    execcommand = generate_ember_script (TimeObject, JobObjects)
+    run_ember (execcommand)
 
 if __name__ == '__main__':
     main()
-
-'''
-#################################################################################################################
-def runEXP_NOPCM (sampling_int= None, options = None, indir = None, outdir = None, ptrace = None, config = None, floorplan = None, thickness = None, conductivity = None, melting_pnt = None, q_file = None, model = None):
-    print(indir)
-    print(outdir)
-
-####Shellfile and Outfile for EXPERIMENT
-    shfile = "%s/%s_nopcm_%s_%s_%s.sh" %  (outdir, options.ename, floorplan, thickness, conductivity)
-    outfile = "%s/%s_nopcm_%s_%s.out" %  (outdir, floorplan, thickness, conductivity)
-
-####check if the outfiles already exist
-    if os.path.exists(outfile):
-        if options.force:
-            run("rm -f "+outfile, options)
-        else:
-            print("error: file exists. " + outfile)
-            sys.exit(1)
-
-    if outfile in outFiles:
-        print("error: two sims going to the same outfile.")
-        print(outfile)
-        sys.exit(1)
-    outFiles.append(outfile)   
-#########################################################################
-
-    execcommand = "source /mnt/nokrb/fkaplan3/tools/addsimulator.sh\n"
-    execcommand += "date\n"
-    
-    if options.mode == "steady":
-        
-        execcommand += "pushd ../HotSpot-5.02_varCp/\n"
-        execcommand += "./hotspot -c ./config_files/" + config + ".config"
-        execcommand += " -steady_file ./" + outdir + "/BUpcm_" + thickness + "_" + conductivity +"_" + floorplan + "_" +  ptrace + ".steady"
-        execcommand += " -PCM_model off -melting_pnt " + melting_pnt
-        execcommand += " -melting_model " + model
-        execcommand += " -grid_layer_file ./lcf_files/" + floorplan + "_lcf_files/" + floorplan + "_nopcm_" + thickness + "_" + conductivity + ".lcf"
-        execcommand += " -smoothing_width none"
-        execcommand += " -latent_heat none"
-        execcommand += " -sim_time " + options.sim_time
-        execcommand += "\npopd\n"
-        execcommand += "date\n"
-        
-'''
