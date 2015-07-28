@@ -25,18 +25,18 @@ class SimpleNodePerf : public NodePerf {
         m_bandwidth = params.find_floating("bandwidth",0);
     }
 
-    virtual float getFlops() { return m_flops; }
-    virtual float getBandwidth() { return m_bandwidth; }
-    virtual float calcTimeNS_flops( int instructions ) { 
+    virtual double getFlops() { return m_flops; }
+    virtual double getBandwidth() { return m_bandwidth; }
+    virtual double calcTimeNS_flops( int instructions ) { 
         return instructions / m_flops * 1000 * 1000 * 1000; 
     }
-    virtual float calcTimeNS_bandwidth( int bytes ) { 
+    virtual double calcTimeNS_bandwidth( int bytes ) { 
         return bytes / m_bandwidth * 1000 * 1000 * 1000;
     }
 
   private:
-    float m_flops;
-    float m_bandwidth;
+    double m_flops;
+    double m_bandwidth;
 };
 
 }

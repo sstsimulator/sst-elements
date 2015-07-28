@@ -26,10 +26,10 @@ namespace Hermes {
 
 class NodePerf : public Module {
   public:
-    virtual float getFlops() { assert(0); }
-    virtual float getBandwidth() { assert(0); }
-    virtual float calcTimeNS_flops( int instructions ) { assert(0); } 
-    virtual float calcTimeNS_bandwidth( int bytes ) { assert(0); } 
+    virtual double getFlops() { assert(0); }
+    virtual double getBandwidth() { assert(0); }
+    virtual double calcTimeNS_flops( int instructions ) { assert(0); } 
+    virtual double calcTimeNS_bandwidth( int bytes ) { assert(0); } 
 };
 
 class OS : public SubComponent {
@@ -47,6 +47,13 @@ class Interface : public Module {
   public:
     virtual void setOS( OS* ) { assert(0); }
     virtual std::string getName() { assert(0); }
+    void setSize(int val) { _size = val; }
+    void setRank(int val ) { _rank = val; }
+    int getSize() { return _size; }
+    int getRank() { return _rank; }
+  private:
+	int _rank;
+	int _size;
 };
 
 }
