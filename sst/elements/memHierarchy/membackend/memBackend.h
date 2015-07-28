@@ -19,7 +19,7 @@
 #include <iostream>
 #include <map>
 
-#include "memoryController.h"
+#include <sst/elements/memHierarchy/memoryController.h>
 
 #define NO_STRING_DEFINED "N/A"
 
