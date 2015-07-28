@@ -349,6 +349,9 @@ void Statistics::writeSnapshot(Snapshot *snapshot)
         sprintf(mesg, "\t\t<startingMotif>%d</startingMotif>\n", it->second.tmi->job->phaseInfo.startingMotif);
         appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
 
+        sprintf(mesg, "\t\t<soFarRunningTime>%lu</soFarRunningTime>\n", it->second.tmi->job->phaseInfo.soFarRunningTime);
+        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
+
         sprintf(mesg, "\t\t<numNodes>%d</numNodes>\n", it->second.i);
         appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
 

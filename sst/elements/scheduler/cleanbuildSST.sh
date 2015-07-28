@@ -46,6 +46,7 @@ elif [[ $# -ne 0 && "$1" == "partial" ]]
     echo "" > sst/elements/portals4_sm/.ignore
     echo "" > sst/elements/prospero/.ignore
     echo "" > sst/elements/qsimComponent/.ignore
+    echo "" > sst/elements/savannah/.ignore
     echo "" > sst/elements/SS_router/.ignore
     echo "" > sst/elements/sst_mcniagara/.ignore
     echo "" > sst/elements/sst_mcopteron/.ignore
@@ -84,6 +85,7 @@ elif [[ $# -ne 0 && "$1" == "full" ]]
     rm sst/elements/prospero/.ignore
     rm sst/elements/qsimComponent/.ignore
     rm sst/elements/scheduler/.ignore
+    rm sst/elements/savannah/.ignore
     rm sst/elements/SS_router/.ignore
     rm sst/elements/sst_mcniagara/.ignore
     rm sst/elements/sst_mcopteron/.ignore

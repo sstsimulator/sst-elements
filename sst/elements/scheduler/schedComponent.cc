@@ -638,6 +638,7 @@ void schedComponent::startJob(Job* job)
         phaseParser.parsePhase(job);
         // update startingMotif for the jobs that are still running on ember
         if(emberRunningJobs.find(job->getJobNum()) != emberRunningJobs.end()){
+            job->phaseInfo.soFarRunningTime = emberRunningJobs[job->getJobNum()].first;
             job->phaseInfo.startingMotif = emberRunningJobs[job->getJobNum()].second;
         }
     }

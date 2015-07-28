@@ -463,6 +463,7 @@ void PhaseParser::readPhaseFile(Job *job)
     }
 
     phaseInfo.startingMotif = 0;
+    phaseInfo.soFarRunningTime = 0;
 
     phaseInfo.computeTime = job->actualRunningTime * (1 - phaseInfo.commRatio) / (phaseInfo.numTimeSteps); // compute time per time step
 
