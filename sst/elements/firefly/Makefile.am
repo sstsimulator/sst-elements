@@ -78,6 +78,7 @@ libfirefly_la_SOURCES = \
 	nicSendMachine.cc \
 	nicSendMachine.h \
 	nicRecvMachine.cc \
-	nicRecvMachine.h 
+	nicRecvMachine.h \
+	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version
