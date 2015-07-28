@@ -69,8 +69,20 @@ class EmberGenerator : public SubComponent {
     std::string getMotifName() { return m_motifName; }
     void setRank( int rank ) { m_api->setRank( rank ); }
     void setSize( int size ) { m_api->setSize( size ); }
-    int rank() { return m_api->getRank(); }
-    int size() { return m_api->getSize(); }
+    int rank() { 
+        if ( m_api ) {
+            return m_api->getRank(); 
+        } else {
+            return -1;
+        }
+    }
+    int size() { 
+        if ( m_api ) {
+            return m_api->getSize(); 
+        } else { 
+            return -1;
+        }
+    }
     int getJobId()    { return m_jobId; }
     int getMotifNum() { return m_motifNum; }
 

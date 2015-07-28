@@ -95,7 +95,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 		new Event::Handler<EmberEngine>(this, &EmberEngine::handleEvent));
     assert(selfEventLink);
 
-
 	// Create a time converter for our compute events
 	nanoTimeConverter =
         Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
