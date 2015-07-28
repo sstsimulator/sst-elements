@@ -42,7 +42,6 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner,
     if ( ! ( 0 == rank() || m_rank2 == rank() )  ) {
         m_loopIndex = m_iterations;
     } 
-	verbose(CALL_INFO, 0, 0, "asasdfsadf\n");
 }
 
 bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
