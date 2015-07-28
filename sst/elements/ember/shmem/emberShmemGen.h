@@ -29,11 +29,6 @@ namespace Ember {
 #define GENERATE_STRING(STRING) #STRING,
 
 
-class EmberShmemGeneratorData : public EmberGeneratorData {
-public:
-	EmberShmemGeneratorData() {} 
-};
-
 class EmberShmemGenerator : public EmberGenerator {
 
 public:
@@ -48,35 +43,10 @@ public:
 	~EmberShmemGenerator();
     virtual void completed( const SST::Output*, uint64_t time );
 
-protected:
-
-    void initData( EmberGeneratorData** data ) {
-        assert( *data );
-        m_data = static_cast<EmberShmemGeneratorData*>(*data);
-    }
-
-	void setData( EmberShmemGeneratorData* data ) {
-		m_data = data;
-	}
-	EmberShmemGeneratorData* getData() {
-		return m_data;
-	}
-
-    void initOutput( Output* output ) {
-#if 0
-        std::ostringstream prefix;
-        prefix << "@t:" << m_data->jobId << ":" << (signed) m_data->rank 
-                << ":EmberEngine:MPI:" << m_name << ":@p:@l: ";
-        m_outputPrefix = prefix.str();
-#endif
-    }
-
 private:
 
     int                 m_printStats;
     static const char*  m_eventName[];
-
-    EmberShmemGeneratorData* 	m_data;
 };
 
 static inline Shmem::Interface* cast( Hermes::Interface *in )

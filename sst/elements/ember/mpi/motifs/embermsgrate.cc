@@ -18,7 +18,7 @@
 using namespace SST::Ember;
 
 EmberMsgRateGenerator::EmberMsgRateGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "MsgRate"),
     m_startTime( 0 ),
     m_stopTime( 0 ),
     m_totalTime( 0 ),
@@ -28,8 +28,6 @@ EmberMsgRateGenerator::EmberMsgRateGenerator(SST::Component* owner, Params& para
     m_recvStopTime( 0 ),
     m_loopIndex( 0 )
 {
-    m_name = "MsgRate";
-
 	m_msgSize    = (uint32_t) params.find_integer("arg.msgSize", 0);
 	m_numMsgs    = (uint32_t) params.find_integer("arg.numMsgs", 1);
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
@@ -54,7 +52,7 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
         int totalMsgs = m_numMsgs * m_iterations;
         double tmp = (double) m_totalTime / 1000000000.0;
         double postingLat = m_totalPostTime / totalMsgs;
-        m_output->output("MsgRate: %s msgSize %" PRIu32", totalTime %.6f "
+        output("MsgRate: %s msgSize %" PRIu32", totalTime %.6f "
                 "sec, %.3f msg/sec, %.3f MB/s, %.0f ns/%s\n",
                         0 == rank() ? "Send" : "Recv",
                         m_msgSize,
@@ -67,11 +65,11 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( m_loopIndex == 0 && 0 == rank() ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
     }
 
 
-    GEN_DBG( 1, "%p %p\n",&m_reqs[0],&m_resp[0]);
+    verbose(CALL_INFO, 1, 0, "%p %p\n",&m_reqs[0],&m_resp[0]);
     if ( 0 == rank() ) {
         enQ_barrier( evQ, GroupWorld );
         enQ_getTime( evQ, &m_startTime ); 

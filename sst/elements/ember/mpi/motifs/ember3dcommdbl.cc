@@ -16,11 +16,9 @@
 using namespace SST::Ember;
 
 Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params), 
+	EmberMessagePassingGenerator(owner, params, "3DCommDoubling"), 
 	phase(0)
 {
-	m_name = "3DCommDoubling";
-
 	peX = (uint32_t) params.find_integer("arg.pex", 0);
 	peY = (uint32_t) params.find_integer("arg.pey", 0);
 	peZ = (uint32_t) params.find_integer("arg.pez", 0);
@@ -33,12 +31,14 @@ Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::Component* owner
 	computeBetweenSteps = (uint32_t) params.find_integer("arg.compute_at_step", 2000);
 
 	requests = (MessageRequest*) malloc(sizeof(MessageRequest) * 52);
+
+	configure();
 }
 
 void Ember3DCommDoublingGenerator::configure()
 {
 	if((peX * peY * peZ) != (unsigned) size()) {
-		m_output->fatal(CALL_INFO, -1, "Processor decomposition of %" PRIu32 "x%" PRIu32 "x%" PRIu32 " != rank count of %" PRIu32 "\n",
+		fatal(CALL_INFO, -1, "Processor decomposition of %" PRIu32 "x%" PRIu32 "x%" PRIu32 " != rank count of %" PRIu32 "\n",
 			peX, peY, peZ, size());
 	}
 
@@ -60,7 +60,7 @@ int32_t Ember3DCommDoublingGenerator::power3(const uint32_t expon) {
 bool Ember3DCommDoublingGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
 	if(0 == rank()) {
-		m_output->verbose(CALL_INFO, 1, 0, "Motif executing phase %" PRIu32 "...\n", phase);
+		verbose(CALL_INFO, 1, 0, "Motif executing phase %" PRIu32 "...\n", phase);
 	}
 	++phase;
 

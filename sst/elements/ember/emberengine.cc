@@ -174,6 +174,10 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator" 
                 "or Ember to use\n");
 	} else {
+		params[ "_jobId" ] = std::to_string( jobId ); 
+		params[ "_motifNum" ] = std::to_string( motifNum ); 
+		params[ "_apiName" ] = api; 
+
 		gen = dynamic_cast<EmberGenerator*>(
                 loadSubComponent(gentype, this, params ) );
 
@@ -183,16 +187,6 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		}
 	}
 
-    if ( ! api.empty() ) {
-        ApiInfo* info = apiMap.find(api)->second;
-        gen->initOutput( &output );
-
-        gen->initAPI( info->api );
-        gen->initData( &info->data );
-        gen->setNodePerf( nodePerf );
-  	    info->data->jobId = jobId;
-   	    info->data->motifNum = motifNum;
-    }
 	// Make sure we don't stop the simulation until we are ready
     if ( gen->primary() ) {	
         primaryComponentDoNotEndSim();

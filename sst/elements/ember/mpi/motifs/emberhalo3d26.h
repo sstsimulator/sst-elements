@@ -23,10 +23,11 @@ class EmberHalo3D26Generator : public EmberMessagePassingGenerator {
 public:
 	EmberHalo3D26Generator(SST::Component* owner, Params& params);
 	~EmberHalo3D26Generator() {}
-	void configure();
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:
+	std::function<uint64_t()> compute_the_time;
+
 	std::vector<MessageRequest> requests;
 	bool performReduction;
 
@@ -38,7 +39,6 @@ private:
 	uint32_t peY;
 	uint32_t peZ;
 
-	uint32_t nsCompute;
 	uint32_t nsCopyTime;
 
 	uint32_t nx;

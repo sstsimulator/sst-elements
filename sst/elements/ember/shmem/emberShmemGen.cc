@@ -24,19 +24,16 @@ const char* EmberShmemGenerator::m_eventName[] = {
 EmberShmemGenerator::EmberShmemGenerator( 
             Component* owner, Params& params) :
     EmberGenerator(owner, params), 
-    m_printStats( 0 ),
-	m_data( NULL )
+    m_printStats( 0 )
 {
     m_printStats = (uint32_t) (params.find_integer("printStats", 0));
 }
 
 EmberShmemGenerator::~EmberShmemGenerator()
 {
-    GEN_DBG( 1, "\n");
 }
 
 void EmberShmemGenerator::completed(const SST::Output* output,
         uint64_t time )
 {
-    GEN_DBG( 1, "\n");
 }

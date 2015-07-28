@@ -17,11 +17,9 @@
 using namespace SST::Ember;
 
 EmberHalo1DGenerator::EmberHalo1DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Halo1D"),
 	m_loopIndex(0)
 {
-	m_name = "Halo1D";
-
 	iterations = (uint32_t) params.find_integer("arg.iterations", 10);
 	nsCompute = (uint32_t) params.find_integer("arg.computenano", 1000);
 	messageSize = (uint32_t) params.find_integer("arg.messagesize", 128);
@@ -30,7 +28,7 @@ EmberHalo1DGenerator::EmberHalo1DGenerator(SST::Component* owner, Params& params
 bool EmberHalo1DGenerator::generate( std::queue<EmberEvent*>& evQ ) {
 
     if( 0 == m_loopIndex) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());
     }
 
 		enQ_compute( evQ, nsCompute );

@@ -22,20 +22,17 @@ class EmberFiniGenerator : public EmberMessagePassingGenerator {
 
 public:
     EmberFiniGenerator(SST::Component* owner, Params& params) :
-        EmberMessagePassingGenerator(owner, params)
-    {
-        m_name = "Fini";
-    }
+        EmberMessagePassingGenerator(owner, params, "Fini")
+    { }
 
     bool generate( std::queue<EmberEvent*>& evQ)
     {
-        GEN_DBG( 2, "\n" );
+        verbose(CALL_INFO, 2, 0, "\n" );
         enQ_fini( evQ );
         return true;
     }
 
     void completed(const SST::Output* output, uint64_t time ) {
-        delete getData();
         EmberMessagePassingGenerator::completed(output,time);
     }
 };

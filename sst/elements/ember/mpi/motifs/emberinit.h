@@ -23,16 +23,14 @@ class EmberInitGenerator : public EmberMessagePassingGenerator {
 public:
 
     EmberInitGenerator(SST::Component* owner, Params& params) :
-            EmberMessagePassingGenerator(owner, params),
+            EmberMessagePassingGenerator(owner, params, "Init" ),
 			m_rank(-1),
 			m_size(0)
-    {
-        m_name = "Init";
-    }
+    { }
 
     bool generate( std::queue<EmberEvent*>& evQ )
     {
-		GEN_DBG( 1,"\n");
+		verbose(CALL_INFO, 1, 0, "\n");
 
 		if ( 0 == m_size ) {
         	enQ_init( evQ );
@@ -45,14 +43,6 @@ public:
         	return true;
 		}
     }
-
-    void initData( EmberGeneratorData** data ) {
-        assert( ! *data );
-        setData( new EmberMessagePassingGeneratorData ); 
-        *data = getData(); 
-        setOutputPrefix();
-        configure();
-    } 
 
 private:
 	uint32_t m_rank;

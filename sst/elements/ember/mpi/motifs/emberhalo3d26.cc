@@ -16,11 +16,9 @@
 using namespace SST::Ember;
 
 EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Halo3D26"),
 	m_loopIndex(0) 
 {
-	m_name = "Halo3D26";
-
 	nx  = (uint32_t) params.find_integer("arg.nx", 100);
 	ny  = (uint32_t) params.find_integer("arg.ny", 100);
 	nz  = (uint32_t) params.find_integer("arg.nz", 100);
@@ -33,15 +31,24 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
 	performReduction = (params.find_integer("arg.doreduce", 1) == 1);
 	sizeof_cell = (uint32_t) params.find_integer("arg.datatype_width", 8);
 
-	uint64_t pe_flops = (uint64_t) params.find_integer("arg.peflops", 10000000000);
 	uint64_t flops_per_cell = (uint64_t) params.find_integer("arg.flopspercell", 26);
 
 	const uint64_t total_grid_points = (uint64_t) (nx * ny * nz);
-	const uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
 
-	// Converts FLOP/s into nano seconds of compute
-	const double compute_seconds = ( (double) total_flops / ( (double) pe_flops / 1000000000.0 ) );
-	nsCompute  = (uint64_t) params.find_integer("arg.computetime", (uint64_t) compute_seconds);
+	uint64_t nsCompute = 0;
+	if ( ! params.find_string("arg.computetime").empty() ) {
+		nsCompute  = (uint64_t) params.find_integer("arg.computetime");
+
+		compute_the_time = [ nsCompute ] { return nsCompute; };
+	
+	} else {
+		uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
+
+		compute_the_time = [ this, total_flops ] {
+			return (uint64_t) ( (double) total_flops / ( nodePerf().getFlops() / 1000000000.0 ) );
+		};
+	}
+
 	nsCopyTime = (uint32_t) params.find_integer("arg.copytime", 0);
 
 	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
@@ -76,10 +83,7 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
         corner_f = -1;
         corner_g = -1;
 	corner_h = -1;
-}
 
-void EmberHalo3D26Generator::configure()
-{
 	if(peX == 0 || peY == 0 || peZ == 0) {
 		peX = size();
                 peY = 1;
@@ -98,7 +102,7 @@ void EmberHalo3D26Generator::configure()
 
                                                 if(varNew <= varExisting) {
                                                         if(0 == rank()) {
-                                                                m_output->verbose(CALL_INFO, 2, 0, "Found an improved decomposition solution: %" PRIu32 " x %" PRIu32 " x %" PRIu32 "\n",
+                                                                verbose(CALL_INFO, 2, 0, "Found an improved decomposition solution: %" PRIu32 " x %" PRIu32 " x %" PRIu32 "\n",
                                                                         i, j, k);
                                                         }
 
@@ -118,19 +122,20 @@ void EmberHalo3D26Generator::configure()
 
 	}
 
+		
         if(0 == rank()) {
-		m_output->output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
-		m_output->output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
-		m_output->output("Halo3D compute time: %" PRIu32 " ns\n", nsCompute);
-		m_output->output("Halo3D copy time:    %" PRIu32 " ns\n", nsCopyTime);
-		m_output->output("Halo3D iterations:   %" PRIu32 "\n", iterations);
-		m_output->output("Halo3D items/cell:   %" PRIu32 "\n", items_per_cell);
-		m_output->output("Halo3D do reduction: %" PRIu32 "\n", performReduction);
+		output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
+		output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
+		output("Halo3D compute time: %" PRIu64 " ns\n", nsCompute);
+		output("Halo3D copy time:    %" PRIu32 " ns\n", nsCopyTime);
+		output("Halo3D iterations:   %" PRIu32 "\n", iterations);
+		output("Halo3D items/cell:   %" PRIu32 "\n", items_per_cell);
+		output("Halo3D do reduction: %" PRIu32 "\n", performReduction);
 	}
 
 	assert( peX * peY * peZ == (unsigned) size() );
 
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
 		rank(), peX, peY, peZ);
 
 	int32_t my_Z = 0;
@@ -202,28 +207,28 @@ void EmberHalo3D26Generator::configure()
 	requestLength += (corner_g > -1) ? 1 : 0;
 	requestLength += (corner_h > -1) ? 1 : 0;
 
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
 		rank(), size(), my_X, my_Y, my_Z, peX, peY, peZ);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Total communication partners: %d\n", rank(), (int) requestLength);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), xface_up, xface_down);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), yface_up, yface_down);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank(), zface_up, zface_down);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LA: %" PRId32 ", LB: %" PRId32 ", LC: %" PRId32 ", LD: %" PRId32 "\n", rank(), line_a, line_b, line_c, line_d);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LE: %" PRId32 ", LF: %" PRId32 ", LG: %" PRId32 ", LH: %" PRId32 "\n", rank(), line_e, line_f, line_g, line_h);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LI: %" PRId32 ", LJ: %" PRId32 ", LK: %" PRId32 ", LL: %" PRId32 "\n", rank(), line_i, line_j, line_k, line_l);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CA: %" PRId32 ", CB: %" PRId32 ", CC: %" PRId32 ", CD: %" PRId32 "\n", rank(),
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Total communication partners: %d\n", rank(), (int) requestLength);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), xface_up, xface_down);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), yface_up, yface_down);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank(), zface_up, zface_down);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LA: %" PRId32 ", LB: %" PRId32 ", LC: %" PRId32 ", LD: %" PRId32 "\n", rank(), line_a, line_b, line_c, line_d);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LE: %" PRId32 ", LF: %" PRId32 ", LG: %" PRId32 ", LH: %" PRId32 "\n", rank(), line_e, line_f, line_g, line_h);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LI: %" PRId32 ", LJ: %" PRId32 ", LK: %" PRId32 ", LL: %" PRId32 "\n", rank(), line_i, line_j, line_k, line_l);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CA: %" PRId32 ", CB: %" PRId32 ", CC: %" PRId32 ", CD: %" PRId32 "\n", rank(),
 		corner_a, corner_b, corner_c, corner_d);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CE: %" PRId32 ", CF: %" PRId32 ", CG: %" PRId32 ", CH: %" PRId32 "\n", rank(),
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CE: %" PRId32 ", CF: %" PRId32 ", CG: %" PRId32 ", CH: %" PRId32 "\n", rank(),
 		corner_e, corner_f, corner_g, corner_h);
 
-	m_output->verbose(CALL_INFO, 4, 0, "Allocating request entries...\n");
+	verbose(CALL_INFO, 4, 0, "Allocating request entries...\n");
 	requests.resize( requestLength * 2 );
 }
 
 bool EmberHalo3D26Generator::generate( std::queue<EmberEvent*>& evQ) {
-	m_output->verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 "\n", rank());
+	verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 "\n", rank());
 
-		enQ_compute( evQ, nsCompute );
+		enQ_compute( evQ, compute_the_time );
 
 		int nextRequest = 0;
 
@@ -492,7 +497,7 @@ bool EmberHalo3D26Generator::generate( std::queue<EmberEvent*>& evQ) {
 		// Enqueue a wait all for all the communications we have set up
 		enQ_waitall( evQ, nextRequest, &requests[0], NULL );
 
-		m_output->verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 " completed generation, %d events in queue\n",
+		verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 " completed generation, %d events in queue\n",
 			rank(), (int)evQ.size());
 
     if ( ++m_loopIndex == iterations ) {

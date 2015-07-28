@@ -18,16 +18,14 @@ using namespace SST::Ember;
 #define TAG 0xDEADBEEF
 
 EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, 
-                                                    Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+                                            			Params& params ) :
+	EmberMessagePassingGenerator(owner, params, "PingPong"),
     m_loopIndex(0),
     m_rank2(1),
     m_blockingSend( true ),
     m_blockingRecv( true ),
     m_waitall( false )
 {
-    m_name = "PingPong";
-
 	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 1024);
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_rank2 = (uint32_t) params.find_integer("arg.rank2", 1);
@@ -37,16 +35,14 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner,
     m_blockingSend = (uint32_t) params.find_integer("arg.blockingSend", true);;
     m_blockingRecv = (uint32_t) params.find_integer("arg.blockingRecv", true);;
     m_waitall = (uint32_t) params.find_integer("arg.waitall", false);
-}
 
-void EmberPingPongGenerator::configure()
-{
     if ( 0 == rank() )  {
-        printf("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
+        output("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
     }
     if ( ! ( 0 == rank() || m_rank2 == rank() )  ) {
         m_loopIndex = m_iterations;
     } 
+	verbose(CALL_INFO, 0, 0, "asasdfsadf\n");
 }
 
 bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
@@ -58,9 +54,9 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
             double latency = ((totalTime/m_iterations)/2);
             double bandwidth = (double) m_messageSize / latency;
 
-            m_output->output("%s: otherRank %d, total time %.3f us, loop %d, bufLen %d"
+            output("%s: otherRank %d, total time %.3f us, loop %d, bufLen %d"
                     ", latency %.3f us. bandwidth %f GB/s\n",
-                                m_name.c_str(), m_rank2,
+                                getMotifName().c_str(), m_rank2,
                                 totalTime * 1000000.0, m_iterations,
                                 m_messageSize,
                                 latency * 1000000.0,
@@ -70,7 +66,7 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
         if ( 0 == rank() ) {
             enQ_getTime( evQ, &m_startTime );

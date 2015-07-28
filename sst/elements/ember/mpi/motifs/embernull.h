@@ -22,9 +22,8 @@ class EmberNullGenerator : public EmberMessagePassingGenerator {
 
 public:
 	EmberNullGenerator(SST::Component* owner, Params& params) :
-		EmberMessagePassingGenerator(owner, params) {
-		m_name = "Null";
-	}
+		EmberMessagePassingGenerator(owner, params, "Null" ) 
+	{ }
 
     bool generate( std::queue<EmberEvent*>& evQ) 
 	{

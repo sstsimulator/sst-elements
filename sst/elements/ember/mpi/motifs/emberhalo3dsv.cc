@@ -16,11 +16,9 @@
 using namespace SST::Ember;
 
 EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Halo3DSV"),
 	m_loopIndex(0)
 {
-	m_name = "Halo3DSV";
-
 	nx  = (uint32_t) params.find_integer("arg.nx", 100);
 	ny  = (uint32_t) params.find_integer("arg.ny", 100);
 	nz  = (uint32_t) params.find_integer("arg.nz", 100);
@@ -57,6 +55,8 @@ EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::Component* owner, Params& pa
 	y_up   = -1;
 	z_down = -1;
 	z_up   = -1;
+
+	configure();
 }
 
 void EmberHalo3DSVGenerator::configure()
@@ -79,7 +79,7 @@ void EmberHalo3DSVGenerator::configure()
 
                                                 if(varNew <= varExisting) {
                                                         if(0 == rank()) {
-                                                                m_output->verbose(CALL_INFO, 2, 0, "Found an improved decomposition solution: %" PRIu32 " x %" PRIu32 " x %" PRIu32 "\n",
+                                                                verbose(CALL_INFO, 2, 0, "Found an improved decomposition solution: %" PRIu32 " x %" PRIu32 " x %" PRIu32 "\n",
                                                                         i, j, k);
                                                         }
 
@@ -100,19 +100,19 @@ void EmberHalo3DSVGenerator::configure()
 	}
 
 	if(0 == rank()) {
-		m_output->output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
-		m_output->output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
-		m_output->output("Halo3D compute time: %" PRIu32 " ns\n", nsCompute);
-		m_output->output("Halo3D copy time:    %" PRIu32 " ns\n", nsCopyTime);
-		m_output->output("Halo3D iterations:   %" PRIu32 "\n", iterations);
-		m_output->output("Halo3D items/cell:   %" PRIu32 "\n", items_per_cell);
-		m_output->output("Halo3D items/chunk:  %" PRIu32 "\n", item_chunk);
-		m_output->output("Halo3D do reduction: %" PRIu32 "\n", performReduction);
+		output("Halo3D processor decomposition solution: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", peX, peY, peZ);
+		output("Halo3D problem size: %" PRIu32 "x%" PRIu32 "x%" PRIu32 "\n", nx, ny, nz);
+		output("Halo3D compute time: %" PRIu32 " ns\n", nsCompute);
+		output("Halo3D copy time:    %" PRIu32 " ns\n", nsCopyTime);
+		output("Halo3D iterations:   %" PRIu32 "\n", iterations);
+		output("Halo3D items/cell:   %" PRIu32 "\n", items_per_cell);
+		output("Halo3D items/chunk:  %" PRIu32 "\n", item_chunk);
+		output("Halo3D do reduction: %" PRIu32 "\n", performReduction);
 	}
 
 	assert( peX * peY * peZ == (unsigned) size() );
 
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
 		rank(), peX, peY, peZ);
 
 	int32_t my_Z = 0;
@@ -128,11 +128,11 @@ void EmberHalo3DSVGenerator::configure()
 	z_up    = convertPositionToRank(peX, peY, peZ, my_X, my_Y, my_Z + 1);
 	z_down  = convertPositionToRank(peX, peY, peZ, my_X, my_Y, my_Z - 1);
 
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
 		rank(), size(), my_X, my_Y, my_Z, peX, peY, peZ);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), x_up, x_down);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), y_up, y_down);
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank(), z_up, z_down);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), x_up, x_down);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), y_up, y_down);
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank(), z_up, z_down);
 
 //	assert( (x_up < worldSize) && (y_up < worldSize) && (z_up < worldSize) );
 }
@@ -140,7 +140,7 @@ void EmberHalo3DSVGenerator::configure()
 bool EmberHalo3DSVGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     if( 0 == m_loopIndex) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());
     }
 
 		std::vector<MessageRequest*> requests;

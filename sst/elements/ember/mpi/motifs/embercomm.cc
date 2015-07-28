@@ -18,12 +18,10 @@
 using namespace SST::Ember;
 
 EmberCommGenerator::EmberCommGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Comm"),
     m_workPhase(0),
     m_loopIndex(0)
 {
-    m_name = "Comm";
-
     m_messageSize = (uint32_t) params.find_integer("arg.messagesize", 1024);
     m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 
@@ -52,11 +50,11 @@ bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ)
         m_workPhase = 2;
     } else {
         
-        GEN_DBG( 1, "new size=%d rank=%d\n",
+        verbose(CALL_INFO, 1, 0, "new size=%d rank=%d\n",
                                             m_new_size, m_new_rank );
         uint32_t to = mod(m_new_rank + 1, m_new_size);
         uint32_t from = mod( (signed int) m_new_rank - 1, m_new_size );
-        GEN_DBG( 1, "to=%d from=%d\n",to,from);
+        verbose(CALL_INFO, 1, 0, "to=%d from=%d\n",to,from);
 
         if(0 == m_new_rank) {
 	        enQ_send(evQ, m_sendBuf, m_messageSize, CHAR, to,

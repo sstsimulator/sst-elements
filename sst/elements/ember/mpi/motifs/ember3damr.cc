@@ -22,10 +22,8 @@ using namespace SST::Hermes::MP;
 static std::map<uint32_t, int32_t>  blockToNodeMap;
 
 Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params)
+	EmberMessagePassingGenerator(owner, params, "3DAMR")
 {
-	m_name = "3DAMR";
-
 	int verbose = params.find_integer("arg.verbose", 0);
 	out = new Output("AMR3D [@p:@l]: ", verbose, 0, Output::STDOUT);
 
@@ -70,6 +68,7 @@ Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) 
 
 	// We are complete, let the user know
 	out->verbose(CALL_INFO, 2, 0, "AMR Motif constructor completed.\n");
+	configure();
 }
 
 void Ember3DAMRGenerator::loadBlocks() {

@@ -14,6 +14,8 @@
 
 #include <sst/core/stats/histo/histo.h>
 
+#include <queue>
+
 #include "embergen.h"
 
 #include <sst/elements/hermes/msgapi.h>
@@ -97,15 +99,6 @@ const uint32_t EMBER_SPYPLOT_NONE = 0;
 const uint32_t EMBER_SPYPLOT_SEND_COUNT = 1;
 const uint32_t EMBER_SPYPLOT_SEND_BYTES = 2;
 
-
-class EmberMessagePassingGeneratorData : public EmberGeneratorData {
-public:
-	EmberMessagePassingGeneratorData() : size(0), jobId(-1), rank(-1) {}
-    int                 size;
-    int                 jobId;
-    uint32_t            rank;
-};
-
 class EmberMessagePassingGenerator : public EmberGenerator {
 
 public:
@@ -116,20 +109,11 @@ public:
 
     typedef std::queue<EmberEvent*> Queue;
 
-	EmberMessagePassingGenerator( Component* owner, Params& params );
+	EmberMessagePassingGenerator( Component* owner, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
     virtual void completed( const SST::Output*, uint64_t time );
 
 protected:
-
-    void initData( EmberGeneratorData** data ) {
-        assert( *data );
-        m_data = static_cast<EmberMessagePassingGeneratorData*>(*data);
-        setOutputPrefix();
-        configure();
-    }
-
-	virtual void configure() {}
 
 	void getPosition( int32_t rank, int32_t px, int32_t py, int32_t pz, 
 					int32_t* myX, int32_t* myY, int32_t* myZ );	
@@ -137,37 +121,6 @@ protected:
                 	int32_t* myX, int32_t* myY);
 	int32_t convertPositionToRank( int32_t peX, int32_t peY, int32_t peZ, 
     	int32_t posX, int32_t posY, int32_t posZ);	
-
-	int jobId() { 
-		assert(m_data); 
-		return m_data->jobId;
-	}
-
-	int rank() { 
-		assert(m_data); 
-		return m_data->rank;
-	}
-
-	int size() { 
-		assert(m_data); 
-		return m_data->size;
-	}
-	void setRank( int rank ) {
-		assert(m_data); 
-		m_data->rank = rank;
-	}
-
-	void setSize( int size ) {
-		assert(m_data); 
-		m_data->size = size;
-	}
-
-	void setData( EmberMessagePassingGeneratorData* data ) {
-		m_data = data;
-	}
-	EmberMessagePassingGeneratorData* getData() {
-		return m_data;
-	}
 
     inline void enQ_barrier( Queue&, Communicator );
     inline void enQ_fini( Queue& );
@@ -231,18 +184,6 @@ protected:
 	inline void enQ_irecv( Queue&, uint32_t src, uint32_t nBytes, int tag,
 									Communicator, MessageRequest* req );
 
-    void setOutputPrefix() {
-	char* prefix = (char*) malloc(sizeof(char) * 128);
-    
-	sprintf(prefix, "@t:%" PRIu32 ":%" PRIu32 ":EmberEngine:MPI:%s:@p:@l: ",
-		m_data->jobId, m_data->rank, m_name.c_str());
-
-	m_outputPrefix.clear();
-	m_outputPrefix += prefix;
-
-	free(prefix);
-    }
-
 private:
 
     void updateSpyplot( RankID remoteRank, size_t bytesSent );
@@ -251,7 +192,6 @@ private:
     uint32_t            m_spyplotMode;
     static const char*  m_eventName[];
 
-    EmberMessagePassingGeneratorData* 	m_data;
 	EmberRankMap* 						m_rankMap;
     EmberComputeDistribution*           m_computeDistrib; 
     std::vector< Statistic<uint32_t>* > m_Stats;
@@ -271,45 +211,45 @@ int EmberMessagePassingGenerator::sizeofDataType( PayloadDataType type )
 
 void EmberMessagePassingGenerator::enQ_barrier( Queue& q, Communicator com )
 {
-    q.push( new EmberBarrierEvent( *cast(m_api), m_output,
+    q.push( new EmberBarrierEvent( *cast(m_api), &getOutput(),
                                     m_Stats[Barrier], com ) );
 }
 
 void EmberMessagePassingGenerator::enQ_init( Queue& q )
 {
-    q.push( new EmberInitEvent( *cast(m_api), m_output,
+    q.push( new EmberInitEvent( *cast(m_api), &getOutput(),
                                     m_Stats[Init] ) );
 }
 
 void EmberMessagePassingGenerator::enQ_fini( Queue& q )
 {
-    q.push( new EmberFinalizeEvent( *cast(m_api), m_output, 
+    q.push( new EmberFinalizeEvent( *cast(m_api), &getOutput(), 
                                     m_Stats[Finalize] ) );
 }
 
 void EmberMessagePassingGenerator::enQ_rank( Queue& q, Communicator comm,
                                     uint32_t* rankPtr )
 {
-    q.push( new EmberRankEvent( *cast(m_api), m_output, 
+    q.push( new EmberRankEvent( *cast(m_api), &getOutput(), 
                                     m_Stats[Rank], comm, rankPtr ) );
 }
 
 void EmberMessagePassingGenerator::enQ_size( Queue& q, Communicator comm,
                                     int* sizePtr )
 {
-    q.push( new EmberSizeEvent( *cast(m_api), m_output, 
+    q.push( new EmberSizeEvent( *cast(m_api), &getOutput(), 
                                     m_Stats[Size], comm, sizePtr ) );
 }
 
 void EmberMessagePassingGenerator::enQ_compute( Queue& q, uint64_t delay )
 {
-    q.push( new EmberComputeEvent( m_output,
+    q.push( new EmberComputeEvent( &getOutput(),
                                 m_Stats[Compute], delay, m_computeDistrib ) );
 }
 
 void EmberMessagePassingGenerator::enQ_compute( Queue& q, std::function<uint64_t()> func )
 {
-    q.push( new EmberComputeEvent( m_output,
+    q.push( new EmberComputeEvent( &getOutput(),
                                 m_Stats[Compute], func, m_computeDistrib ) );
 }
 
@@ -317,8 +257,8 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
-	GEN_DBG(2,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
-    q.push( new EmberSendEvent( *cast(m_api), m_output, m_Stats[Send],
+	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
+    q.push( new EmberSendEvent( *cast(m_api), &getOutput(), m_Stats[Send],
 		memAddr(payload), count, dtype, dest, tag, group ) );
 
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
@@ -339,8 +279,8 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	GEN_DBG(2,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
-    q.push( new EmberISendEvent( *cast(m_api), m_output, m_Stats[Isend],
+	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
+    q.push( new EmberISendEvent( *cast(m_api), &getOutput(), m_Stats[Isend],
         memAddr(payload), count, dtype, dest, tag, group, req ) );
     
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
@@ -362,8 +302,8 @@ void EmberMessagePassingGenerator::enQ_recv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID src, uint32_t tag,
     Communicator group, MessageResponse* resp )
 {
-	GEN_DBG(2,"src=%d tag=%#x\n",src,tag);
-    q.push( new EmberRecvEvent( *cast(m_api), m_output, m_Stats[Recv],
+	verbose(CALL_INFO,2,0,"src=%d tag=%#x\n",src,tag);
+    q.push( new EmberRecvEvent( *cast(m_api), &getOutput(), m_Stats[Recv],
 		payload, count, dtype, src, tag, group, resp ) );
 
 	//m_histoM["RecvSize"]->add( count * cast(m_api)->sizeofDataType(dtype) );
@@ -379,8 +319,8 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID source, uint32_t tag,
     Communicator group, MessageRequest* req )
 {
-	GEN_DBG(2,"src=%d tag=%x req=%p\n",source,tag,req);
-    q.push( new EmberIRecvEvent( *cast(m_api), m_output, m_Stats[Irecv],
+	verbose(CALL_INFO,2,0,"src=%d tag=%x req=%p\n",source,tag,req);
+    q.push( new EmberIRecvEvent( *cast(m_api), &getOutput(), m_Stats[Irecv],
         memAddr(payload), count, dtype, source, tag, group, req ) );
 
 	//m_histoM["RecvSize"]->add( count * cast(m_api)->sizeofDataType(dtype) );
@@ -394,40 +334,40 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, uint32_t src,
 
 void EmberMessagePassingGenerator::enQ_getTime( Queue& q, uint64_t* time )
 {
-    q.push( new EmberGetTimeEvent( m_output, time ) ); 
+    q.push( new EmberGetTimeEvent( &getOutput(), time ) ); 
 }
 
 void EmberMessagePassingGenerator::enQ_wait( Queue& q, MessageRequest* req,
 				MessageResponse* resp )
 {
-    q.push( new EmberWaitEvent( *cast(m_api), m_output, m_Stats[Wait],
+    q.push( new EmberWaitEvent( *cast(m_api), &getOutput(), m_Stats[Wait],
 		 												req, resp ) ); 
 }
 
 void EmberMessagePassingGenerator::enQ_waitall( Queue& q, int count,
     MessageRequest req[], MessageResponse* resp[] )
 {
-    q.push( new EmberWaitallEvent( *cast(m_api), m_output, m_Stats[Waitall],
+    q.push( new EmberWaitallEvent( *cast(m_api), &getOutput(), m_Stats[Waitall],
         count, req, resp ) );
 }
 void EmberMessagePassingGenerator::enQ_commSplit( Queue& q, Communicator oldcom,
         int color, int key, Communicator* newCom )
 {
-    q.push( new EmberCommSplitEvent( *cast(m_api), m_output, 
+    q.push( new EmberCommSplitEvent( *cast(m_api), &getOutput(), 
         m_Stats[Commsplit], oldcom, color, key, newCom ) );
 }
 
 void EmberMessagePassingGenerator::enQ_commCreate( Queue& q, 
         Communicator oldcom, std::vector<int>& ranks, Communicator* newCom )
 {
-    q.push( new EmberCommCreateEvent( *cast(m_api), m_output, 
+    q.push( new EmberCommCreateEvent( *cast(m_api), &getOutput(), 
         m_Stats[Commsplit], oldcom, ranks, newCom ) );
 }
 
 void EmberMessagePassingGenerator::enQ_commDestroy( Queue& q, 
             Communicator comm )
 {
-    q.push( new EmberCommDestroyEvent( *cast(m_api), m_output, 
+    q.push( new EmberCommDestroyEvent( *cast(m_api), &getOutput(), 
         m_Stats[Commsplit], comm ) );
 }
 
@@ -435,7 +375,7 @@ void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr mydata,
     Addr result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
     Communicator group )
 {
-    q.push( new EmberAllreduceEvent( *cast(m_api), m_output, 
+    q.push( new EmberAllreduceEvent( *cast(m_api), &getOutput(), 
         m_Stats[Allreduce], memAddr(mydata), memAddr(result),
 					count, dtype, op, group ) );
 }
@@ -444,7 +384,7 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
     Addr result, uint32_t count, PayloadDataType dtype, ReductionOperation op,
     int root, Communicator group )
 {
-    q.push( new EmberReduceEvent( *cast(m_api), m_output, 
+    q.push( new EmberReduceEvent( *cast(m_api), &getOutput(), 
         m_Stats[Reduce], memAddr(mydata), memAddr(result),
 					count, dtype, op, root, group ) );
 }
@@ -452,7 +392,7 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
 void EmberMessagePassingGenerator::enQ_bcast( Queue& q, Addr mydata,
     uint32_t count, PayloadDataType dtype, int root, Communicator group )
 {
-    q.push( new EmberBcastEvent( *cast(m_api), m_output, 
+    q.push( new EmberBcastEvent( *cast(m_api), &getOutput(), 
         m_Stats[Reduce], memAddr(mydata), count, dtype, root, group ) );
 }
 
@@ -461,7 +401,7 @@ void EmberMessagePassingGenerator::enQ_alltoall( Queue& q,
         Addr recvData, int recvCnts, PayloadDataType recvdtype,
         Communicator group )
 {
-    q.push( new EmberAlltoallEvent( *cast(m_api), m_output, 
+    q.push( new EmberAlltoallEvent( *cast(m_api), &getOutput(), 
         m_Stats[Alltoall], memAddr(sendData), sendCnts, senddtype,
         memAddr(recvData), recvCnts, recvdtype, group ) );
 }
@@ -471,7 +411,7 @@ void EmberMessagePassingGenerator::enQ_alltoallv( Queue& q,
         Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group )
 {
-    q.push( new EmberAlltoallvEvent( *cast(m_api), m_output, 
+    q.push( new EmberAlltoallvEvent( *cast(m_api), &getOutput(), 
         m_Stats[Alltoallv],
             memAddr(sendData), sendCnts, sendDsp, senddtype, 
             memAddr(recvData), recvCnts, recvDsp, recvdtype, 

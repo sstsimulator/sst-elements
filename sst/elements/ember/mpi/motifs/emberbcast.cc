@@ -17,11 +17,9 @@ using namespace SST::Ember;
 
 EmberBcastGenerator::EmberBcastGenerator(SST::Component* owner,
                                     Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Bcast"),
     m_loopIndex(0)
 {
-    m_name = "Bcast";
-
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
     m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
@@ -36,8 +34,8 @@ bool EmberBcastGenerator::generate( std::queue<EmberEvent*>& evQ) {
         if ( size() - 1 == rank() ) {
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
             latency /= 1000000000.0;
-            m_output->output( "%s: ranks %d, loop %d, bytes %" PRIu32 ", latency %.3f us\n",
-                    m_name.c_str(), size(), m_iterations, 
+            output( "%s: ranks %d, loop %d, bytes %" PRIu32 ", latency %.3f us\n",
+                    getMotifName().c_str(), size(), m_iterations, 
                         m_count * typeSize, latency * 1000000.0  );
         }
         return true;

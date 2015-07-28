@@ -20,11 +20,9 @@
 using namespace SST::Ember;
 
 EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Sweep2D"),
 	m_loopIndex(0) 
 {
-	m_name = "Sweep2D";
-
 	nsCompute = (uint64_t) params.find_integer("arg.computetime", 1000);
 	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 
@@ -34,13 +32,15 @@ EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& para
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(ny % y_block == 0);
+
+	configure();
 }
 
 void EmberSweep2DGenerator::configure()
 {
 	if(0 == rank()) {
-		m_output->verbose(CALL_INFO, 1, 0, " 2D Sweep Motif\n");
-		m_output->verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %" 
+		verbose(CALL_INFO, 1, 0, " 2D Sweep Motif\n");
+		verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %" 
 			PRIu32 ", y_block=%" PRIu32 ", (ny/yblock)=%" PRIu32 "\n",
 			nx, ny, y_block, (ny/y_block));
 	}
@@ -48,14 +48,14 @@ void EmberSweep2DGenerator::configure()
 	x_up   = (rank() < (size() - 1)) ? rank() + 1 : -1;
 	x_down = (rank() > 0) ? rank() - 1 : -1;
 
-	m_output->verbose(CALL_INFO, 1, 0, "Rank: %" PRId32 ", X+:%" PRId32 
+	verbose(CALL_INFO, 1, 0, "Rank: %" PRId32 ", X+:%" PRId32 
 					",X-:%" PRId32 "\n", rank(), x_up, x_down);
 }
 
 bool EmberSweep2DGenerator::generate( std::queue<EmberEvent*>& evQ ) 
 {
     if( 0 == m_loopIndex) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());
 	}
 	// Sweep from (0, 0) outwards towards (Px, Py)
 	for(uint32_t i = 0; i < ny; i+= y_block) {

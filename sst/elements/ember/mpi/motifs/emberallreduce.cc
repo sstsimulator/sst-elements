@@ -17,11 +17,9 @@ using namespace SST::Ember;
 
 EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Allreduce"),
     m_loopIndex(0)
 {
-    m_name = "Allreduce";
-
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
     m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
@@ -35,8 +33,8 @@ bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
         if ( 0 == rank() ) {
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
             latency /= 1000000000.0;
-            m_output->output( "%s: ranks %d, loop %d, %d double(s), latency %.3f us\n",
-                    m_name.c_str(), size(), m_iterations, m_count, latency * 1000000.0  );
+            output( "%s: ranks %d, loop %d, %d double(s), latency %.3f us\n",
+                    getMotifName().c_str(), size(), m_iterations, m_count, latency * 1000000.0  );
         }
         return true;
     }

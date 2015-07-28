@@ -19,11 +19,9 @@ using namespace SST::Ember;
 
 EmberAllPingPongGenerator::EmberAllPingPongGenerator(SST::Component* owner,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "AllPingPong"),
     m_loopIndex(0)
 {
-    m_name = "AllPingPong";
-
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_messageSize = (uint32_t) params.find_integer("arg.messageSize", 128);
 	m_computeTime = (uint32_t) params.find_integer("arg.computetime", 1000);
@@ -41,9 +39,9 @@ bool EmberAllPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
             double latency = ((totalTime/m_iterations)/2);
             double bandwidth = (double) m_messageSize / latency;
 
-            m_output->output("%s: total time %.3f us, loop %d, bufLen %d"
+            output("%s: total time %.3f us, loop %d, bufLen %d"
                     ", latency %.3f us. bandwidth %f GB/s\n",
-                                m_name.c_str(),
+                                getMotifName().c_str(),
                                 totalTime * 1000000.0, m_iterations,
                                 m_messageSize,
                                 latency * 1000000.0,
@@ -53,7 +51,7 @@ bool EmberAllPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
         if ( 0 == rank() ) {
             enQ_getTime( evQ, &m_startTime );

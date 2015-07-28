@@ -20,11 +20,9 @@
 using namespace SST::Ember;
 
 EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Halo2D"),
 	m_loopIndex(0)
 {
-	m_name = "Halo2D";
-
 	iterations = (uint32_t) params.find_integer("arg.iterations", 10);
 	nsCompute = (uint32_t) params.find_integer("arg.computenano", 10);
 	messageSizeX = (uint32_t) params.find_integer("arg.messagesizey", 128);
@@ -47,6 +45,8 @@ EmberHalo2DGenerator::EmberHalo2DGenerator(SST::Component* owner, Params& params
 	sendSouth = false;
 
 	messageCount = 0;
+
+	configure();
 }
 
 void EmberHalo2DGenerator::configure()
@@ -72,7 +72,7 @@ void EmberHalo2DGenerator::configure()
 	// Check we are not leaving ranks behind
 	assert((unsigned) size() == (sizeX * sizeY));
 
-	m_output->verbose(CALL_INFO, 2, 0, "Processor grid dimensions, X=%" PRIu32 ", Y=%" PRIu32 "\n",
+	verbose(CALL_INFO, 2, 0, "Processor grid dimensions, X=%" PRIu32 ", Y=%" PRIu32 "\n",
 		sizeX, sizeY);
 
 	if(rank() % sizeX > 0) {
@@ -95,7 +95,7 @@ void EmberHalo2DGenerator::configure()
 		procSouth = rank() + sizeX;
 	}
 
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
 		", send above=%s %" PRIu32 ", send below=%s %" PRIu32 "\n",
 		rank(),
 		(sendWest  ? "Y" : "N"), procWest,
@@ -111,10 +111,10 @@ void EmberHalo2DGenerator::completed(const SST::Output* output, uint64_t ) {
 bool EmberHalo2DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
     if( 0 == m_loopIndex) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());
     }
 
-		m_output->verbose(CALL_INFO, 2, 0, "Halo 2D motif generating events for loopIndex %" PRIu32 "\n", m_loopIndex);
+		verbose(CALL_INFO, 2, 0, "Halo 2D motif generating events for loopIndex %" PRIu32 "\n", m_loopIndex);
 
 		enQ_compute( evQ, nsCompute);
 

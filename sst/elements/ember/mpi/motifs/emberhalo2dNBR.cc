@@ -20,11 +20,9 @@
 using namespace SST::Ember;
 
 EmberHalo2DNBRGenerator::EmberHalo2DNBRGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Halo2DNBR"),
 	m_loopIndex(0)
 {
-	m_name = "Halo2DNBR";
-
 	iterations = (uint32_t) params.find_integer("arg.iterations", 10);
 	nsCompute = (uint32_t) params.find_integer("arg.computenano", 10);
 	messageSizeX = (uint32_t) params.find_integer("arg.messagesizey", 128);
@@ -45,6 +43,8 @@ EmberHalo2DNBRGenerator::EmberHalo2DNBRGenerator(SST::Component* owner, Params& 
 	sendSouth = false;
 
 	messageCount = 0;
+
+	configure();
 }
 
 void EmberHalo2DNBRGenerator::completed(const SST::Output* output, uint64_t) {
@@ -54,7 +54,7 @@ void EmberHalo2DNBRGenerator::completed(const SST::Output* output, uint64_t) {
 void EmberHalo2DNBRGenerator::configure()
 {
     if(0 == rank()) {
-        m_output->output("PingPong, size=%d msgSizeX=%d msgSizeY=%d"
+        output("PingPong, size=%d msgSizeX=%d msgSizeY=%d"
             " iter=%d nsCompute=%d\n", 
             size(),messageSizeX,messageSizeY,iterations,nsCompute);
     }
@@ -80,7 +80,7 @@ void EmberHalo2DNBRGenerator::configure()
 	// Check we are not leaving ranks behind
 	assert((unsigned)size() == (sizeX * sizeY));
 
-	m_output->verbose(CALL_INFO, 2, 0, "Processor grid dimensions, X=%" PRIu32 ", Y=%" PRIu32 "\n",
+	verbose(CALL_INFO, 2, 0, "Processor grid dimensions, X=%" PRIu32 ", Y=%" PRIu32 "\n",
 		sizeX, sizeY);
 
 	if(rank() % sizeX > 0) {
@@ -103,7 +103,7 @@ void EmberHalo2DNBRGenerator::configure()
 		procSouth = rank() + sizeX;
 	}
 
-	m_output->verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", send left=%s %" PRIu32 ", send right= %s %" PRIu32
 		", send above=%s %" PRIu32 ", send below=%s %" PRIu32 "\n",
 		rank(),
 		(sendWest  ? "Y" : "N"), procWest,
@@ -115,10 +115,10 @@ void EmberHalo2DNBRGenerator::configure()
 bool EmberHalo2DNBRGenerator::generate( std::queue<EmberEvent*>& evQ ) 
 {
     if( 0 == m_loopIndex) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());
     }
 
-		m_output->verbose(CALL_INFO, 2, 0, "Halo 2DNBR motif generating events for loopIndex %" PRIu32 "\n", m_loopIndex);
+		verbose(CALL_INFO, 2, 0, "Halo 2DNBR motif generating events for loopIndex %" PRIu32 "\n", m_loopIndex);
 
 		enQ_compute( evQ, nsCompute );
 
@@ -203,7 +203,7 @@ bool EmberHalo2DNBRGenerator::generate( std::queue<EmberEvent*>& evQ )
 			}
 		}
 
-		m_output->verbose(CALL_INFO, 2, 0, "Halo 2DNBR motif completed event generation for loopIndex: %" PRIu32 "\n", m_loopIndex);
+		verbose(CALL_INFO, 2, 0, "Halo 2DNBR motif completed event generation for loopIndex: %" PRIu32 "\n", m_loopIndex);
 
     if ( ++m_loopIndex == iterations ) {
         return true;

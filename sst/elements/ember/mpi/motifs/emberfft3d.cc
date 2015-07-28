@@ -19,7 +19,7 @@
 using namespace SST::Ember;
 
 EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params), 
+	EmberMessagePassingGenerator(owner, params, "FFT3D"), 
     m_fwdTime(3,0),
     m_bwdTime(3,0),
 	m_loopIndex(-1),
@@ -30,8 +30,6 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 	m_backwardTotal(0),
     m_transCostPer(6)
 {
-	m_name = "FFT3D";
-
 	m_data.np0 = (uint32_t) params.find_integer("arg.nx", 100);
 	m_data.np1  = (uint32_t) params.find_integer("arg.ny", 100);
 	m_data.np2  = (uint32_t) params.find_integer("arg.nz", 100);
@@ -52,8 +50,9 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
     m_transCostPer[3] = (float) params.find_floating("arg.bwd_fft1",1);
     m_transCostPer[4] = (float) params.find_floating("arg.bwd_fft2",1);
     m_transCostPer[5] = (float) params.find_floating("arg.bwd_fft3",1);
-}
 
+	configure();
+}
 
 void EmberFFT3DGenerator::configure()
 {
@@ -68,7 +67,7 @@ void EmberFFT3DGenerator::configure()
 
     unsigned myRow = rank() % m_data.nprow; 
     unsigned myCol = rank() / m_data.nprow; 
-    m_output->verbose(CALL_INFO, 2, 0, "%d: nx=%d ny=%d nx=%d nprow=%d "
+    verbose(CALL_INFO, 2, 0, "%d: nx=%d ny=%d nx=%d nprow=%d "
         "npcol=%d myRow=%d myCol=%d\n", 
             rank(), m_data.np0, m_data.np1, m_data.np2, 
                 m_data.nprow, m_data.npcol, myRow, myCol );
@@ -85,14 +84,14 @@ void EmberFFT3DGenerator::configure()
         m_rowGrpRanks[i] = myRow + i * m_data.nprow;
         tmp << m_rowGrpRanks[i] << " " ;
     }
-    m_output->verbose(CALL_INFO, 2, 0,"row grp [%s]\n", tmp.str().c_str() );
+    verbose(CALL_INFO, 2, 0,"row grp [%s]\n", tmp.str().c_str() );
     tmp.str("");
     tmp.clear();
     for ( unsigned int i = 0; i < m_colGrpRanks.size(); i++ ) {
         m_colGrpRanks[i] = myCol * m_data.nprow + i;
         tmp << m_colGrpRanks[i] << " " ;
     }
-    m_output->verbose(CALL_INFO, 2, 0,"col grp [%s]\n", tmp.str().c_str() );
+    verbose(CALL_INFO, 2, 0,"col grp [%s]\n", tmp.str().c_str() );
 
     m_data.np0loc_row.resize(m_data.nprow);
     m_data.np1loc_row.resize(m_data.nprow);
@@ -147,7 +146,7 @@ void EmberFFT3DGenerator::configure()
     }
     m_data.ntrans = m_data.np1locf * m_data.np2loc;
 
-    m_output->verbose(CALL_INFO, 2, 0, "np0half=%d np0loc=%d np1locf_=%d "
+    verbose(CALL_INFO, 2, 0, "np0half=%d np0loc=%d np1locf_=%d "
             "np1locb_%d np2loc_=%d\n", 
         m_data.np0half, m_data.np0loc, m_data.np1locf, m_data.np1locb, m_data.np2loc );
 
@@ -162,7 +161,7 @@ void EmberFFT3DGenerator::configure()
         int sendblk = 2*m_data.np0loc * m_data.np1loc_col[i] *m_data.np2loc;
         int recvblk = 2*m_data.np0loc *m_data.np1locb * m_data.np2loc_col[i];
 
-        m_output->verbose(CALL_INFO, 2, 0,"row, sendblk=%d soffset=%d "
+        verbose(CALL_INFO, 2, 0,"row, sendblk=%d soffset=%d "
                 "recvblk=%d roffset=%d\n",sendblk,soffset,recvblk,roffset);
         m_rowSendCnts[i] = sendblk;
         m_rowRecvCnts[i] = recvblk;
@@ -182,7 +181,7 @@ void EmberFFT3DGenerator::configure()
 
         int sendblk = 2 * m_data.np0loc_row[i] *m_data.np1locf *m_data.np2loc;
         int recvblk = 2 *m_data.np0loc * m_data.np1loc_row[i] *m_data.np2loc;
-        m_output->verbose(CALL_INFO, 2, 0,"col_f, sendblk=%d soffset=%d "
+        verbose(CALL_INFO, 2, 0,"col_f, sendblk=%d soffset=%d "
                 "recvblk=%d roffset=%d\n",sendblk,soffset,recvblk,roffset);
 
         m_colSendCnts_f[i] = sendblk;
@@ -204,7 +203,7 @@ void EmberFFT3DGenerator::configure()
         int sendblk = 2 *m_data.np0loc * m_data.np1loc_row[i] *m_data.np2loc;
         int recvblk = 2 * m_data.np0loc_row[i] *m_data.np1locf *m_data.np2loc;
 
-        m_output->verbose(CALL_INFO, 2, 0,"col_b, sendblk=%d soffset=%d "
+        verbose(CALL_INFO, 2, 0,"col_b, sendblk=%d soffset=%d "
                 "recvblk=%d roffset=%d\n",sendblk,soffset,recvblk,roffset);
 
         m_colSendCnts_b[i] = sendblk;
@@ -223,25 +222,25 @@ void EmberFFT3DGenerator::configure()
     maxsize = (maxsize > size3 ? maxsize : size3);
     m_sendBuf =   memAlloc( maxsize * COMPLEX );
     m_recvBuf =   memAlloc( maxsize * COMPLEX );
-    m_output->verbose(CALL_INFO, 2, 0,"maxsize=%d\n",maxsize);
+    verbose(CALL_INFO, 2, 0,"maxsize=%d\n",maxsize);
 
-    m_output->verbose(CALL_INFO, 2, 0,"np0=%d np1=%d np2=%d nprow=%d npcol=%d\n",
+    verbose(CALL_INFO, 2, 0,"np0=%d np1=%d np2=%d nprow=%d npcol=%d\n",
                 m_data.np0, m_data.np1, m_data.np2, m_data.nprow, m_data.npcol );
-    m_output->verbose(CALL_INFO, 2, 0,"np0half=%d np1loc=%d np1locf=%d no1locb=%d np2loc=%d\n",
+    verbose(CALL_INFO, 2, 0,"np0half=%d np1loc=%d np1locf=%d no1locb=%d np2loc=%d\n",
         m_data.np0half, m_data.np0loc, m_data.np1locf, m_data.np1locb, m_data.np2loc );
 
 #if 0
-    m_output->verbose(CALL_INFO, 2, 0,"forward nx=%d dist=%d time=%u\n", 
+    verbose(CALL_INFO, 2, 0,"forward nx=%d dist=%d time=%u\n", 
                         nxt_f, m_data.np0, m_fft1_f );
-    m_output->verbose(CALL_INFO, 2, 0,"forward ny=%d dist=%d time=%u\n",
+    verbose(CALL_INFO, 2, 0,"forward ny=%d dist=%d time=%u\n",
                         nyt, m_data.np1, m_fft2_f ); 
-    m_output->verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
+    verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
                         nzt, m_data.np2, m_fft3_f ); 
-    m_output->verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
+    verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
                         nzt, m_data.np2, m_fft1_b );
-    m_output->verbose(CALL_INFO, 2, 0,"forward ny=%d dist=%d time=%u\n", 
+    verbose(CALL_INFO, 2, 0,"forward ny=%d dist=%d time=%u\n", 
                         nyt, m_data.np1, m_fft2_b );
-    m_output->verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
+    verbose(CALL_INFO, 2, 0,"forward nz=%d dist=%d time=%u\n", 
                         nxt_b, m_data.np0, m_fft3_b );
 #endif
 
@@ -262,8 +261,8 @@ void EmberFFT3DGenerator::initTimes( int numPe, int x, int y, int z, float nsPer
 
     double cost = nsPerElement * x * ((y * z)/numPe); 
 	if ( 0 == rank() ) {
-	   	m_output->output("%s: nsPerElement=%.5f %.2f %.2f %.2f"
-			" %.2f %.2f %.2f\n", m_name.c_str(), nsPerElement, 	
+	   	output("%s: nsPerElement=%.5f %.2f %.2f %.2f"
+			" %.2f %.2f %.2f\n", getMotifName().c_str(), nsPerElement, 	
 			transCostPer[0], transCostPer[1], transCostPer[2],
 			transCostPer[3], transCostPer[4], transCostPer[5]);
 	}
@@ -283,16 +282,16 @@ void EmberFFT3DGenerator::initTimes( int numPe, int x, int y, int z, float nsPer
 
 bool EmberFFT3DGenerator::generate( std::queue<EmberEvent*>& evQ ) 
 {
-    GEN_DBG( 1, "loop=%d\n", m_loopIndex );
+    verbose(CALL_INFO, 1, 0, "loop=%d\n", m_loopIndex );
 
     m_forwardTotal += (m_forwardStop - m_forwardStart);
     m_backwardTotal += (m_backwardStop - m_forwardStop);
 
     if (  m_loopIndex == (signed) m_iterations ) {
         if ( 0 == rank() ) {
-            m_output->output("%s: nRanks=%d fwd time %f sec\n", m_name.c_str(), size(), 
+            output("%s: nRanks=%d fwd time %f sec\n", getMotifName().c_str(), size(), 
                 ((double) m_forwardTotal / 1000000000.0) / m_iterations );
-            m_output->output("%s: rRanks=%d bwd time %f sec\n", m_name.c_str(), size(),
+            output("%s: rRanks=%d bwd time %f sec\n", getMotifName().c_str(), size(),
                 ((double) m_backwardTotal / 1000000000.0) / m_iterations );
         }
         return true;

@@ -23,7 +23,6 @@ class EmberAlltoallvGenerator : public EmberMessagePassingGenerator {
 public:
 	EmberAlltoallvGenerator(SST::Component* owner, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
-    void configure();
 
 private:
 	uint32_t m_iterations;

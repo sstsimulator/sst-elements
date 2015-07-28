@@ -18,11 +18,9 @@ using namespace SST::Ember;
 #define TAG 0xDEADBEEF
 
 EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Ring"),
     m_loopIndex(0)
 {
-    m_name = "Ring";
-
 	m_messageSize = (uint32_t) params.find_integer("arg.messagesize", 1024);
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
     m_sendBuf = memAlloc(m_messageSize);
@@ -44,9 +42,9 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
             double latency = ((totalTime/m_iterations)/size());
             double bandwidth = (double) m_messageSize / latency;
 
-            m_output->output("%s total time %.3f us, loop %d, bufLen %d"
+            output("%s total time %.3f us, loop %d, bufLen %d"
                     ", latency %.3f us. bandwidth %f GB/s\n", 
-                                m_name.c_str(),
+                                getMotifName().c_str(),
                                 totalTime * 1000000.0, m_iterations,
                                 m_messageSize,
                                 latency * 1000000.0,
@@ -56,7 +54,7 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
         if ( 0 == rank() ) {
             enQ_getTime( evQ, &m_startTime );
@@ -65,7 +63,7 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 
     int to = mod( rank() + 1, size());
     int from = mod( (signed int) rank() - 1, size() );
-    GEN_DBG( 2, "to=%d from=%d\n",to,from);
+    verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
 
     if ( 0 == rank() ) {
         enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,

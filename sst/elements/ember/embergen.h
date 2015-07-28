@@ -13,11 +13,12 @@
 #ifndef _H_EMBER_GENERATOR
 #define _H_EMBER_GENERATOR
 
+#include <queue>
+
 #include <sst/core/output.h>
 #include <sst/core/module.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/params.h>
-#include <queue>
 
 #include <sst/elements/hermes/msgapi.h>
 
@@ -27,75 +28,52 @@
 namespace SST {
 namespace Ember {
 
-#define GEN_DBG( lvl, fmt , args... ) \
- {\
-    if( m_output ) \
-    m_output->verbosePrefix(  m_outputPrefix.c_str(), CALL_INFO, lvl, 0, \
-                    fmt, ##args); \
- }
-
-class EmberGeneratorData {
-  public:
-    int                 jobId;
-    int					motifNum;
-    virtual ~EmberGeneratorData() {}  
-};
-
 class EmberGenerator : public SubComponent {
 
   public:
-    EmberGenerator( Component* owner, Params& params ) :
-	SubComponent(owner),
-        m_name("???"),
-        m_output( NULL ),
-        m_dataMode( NoBacking )
-    {}
+    EmberGenerator( Component* owner, Params& params, std::string name ="" );
 
 	~EmberGenerator(){};
     
-    virtual void initAPI( Hermes::Interface* api ) {
-        m_api = api; 
-    }
-
-
-	virtual void setNodePerf( Hermes::NodePerf* perf ) {
-        m_nodePerf = perf;
-	}
-
-	virtual Hermes::NodePerf* getNodePerf() {
-        return m_nodePerf;
-	}
-
-    virtual void initData( EmberGeneratorData** data ) {
-        assert(0);
-    } 
-
-    virtual void initOutput( Output* output ) {
-        m_output = output;
-    }
-
-    virtual void setOutputPrefix() {
-	m_outputPrefix = "";
-    }
-
     virtual void generate( const SST::Output* output, const uint32_t phase,
         std::queue<EmberEvent*>* evQ ) {
         assert(0);
     }
 
-    virtual bool generate( std::queue<EmberEvent*>& evQ ) {
-        assert(0);
+    virtual bool generate( std::queue<EmberEvent*>& evQ ) { 
+        assert(0); 
     }
 
     virtual void completed( const SST::Output* output, uint64_t time) {
         assert(0);
     }
 
-    virtual bool primary( ) {
-        return true;
-    }
+    virtual bool primary( ) { return true; }
 
   protected:
+
+    Output& getOutput() { return *m_output; }
+    void verbose(uint32_t line, const char* file, const char* func,
+                 uint32_t output_level, uint32_t output_bits,
+                 const char* format, ...)    const
+        __attribute__ ((format (printf, 7, 8)));
+
+    void output(const char* format, ...) const
+         __attribute__ ((format (printf, 2, 3)));
+
+    void fatal(uint32_t line, const char* file, const char* func,
+               uint32_t exit_code,
+               const char* format, ...)    const
+                  __attribute__ ((format (printf, 6, 7))) ;
+
+    std::string getMotifName() { return m_motifName; }
+    void setRank( int rank ) { m_api->setRank( rank ); }
+    void setSize( int size ) { m_api->setSize( size ); }
+    int rank() { return m_api->getRank(); }
+    int size() { return m_api->getSize(); }
+    int getJobId()    { return m_jobId; }
+    int getMotifNum() { return m_motifNum; }
+
     Hermes::NodePerf& nodePerf() { return *m_nodePerf; }
 
     virtual void* memAlloc( size_t );
@@ -104,16 +82,17 @@ class EmberGenerator : public SubComponent {
 		return  m_dataMode == Backing ? addr : NULL;
 	}
 
-    Hermes::Interface*      m_api;
-
-    std::string m_name;
-    Output* 	m_output;
-    std::string  	m_outputPrefix;
+    Hermes::Interface*  	m_api;
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 
   private:
-    Hermes::NodePerf*  m_nodePerf;
+    Output* 	        	m_output;
+    std::string				m_motifName;
+    std::ostringstream      m_verbosePrefix;
+    Hermes::NodePerf*       m_nodePerf;
+    int                     m_jobId;
+    int                     m_motifNum;
 };
 
 }

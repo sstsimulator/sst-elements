@@ -127,7 +127,7 @@ uint64_t EmberFFT3DGenerator::calcFwd1Pre( Data& data,
     if ( ! ( data.ntrans % 2 == 0 ) ) {
         ++tmp;
     }
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
 
     return (uint64_t) ( (float) tmp * value );
 }
@@ -137,7 +137,7 @@ uint64_t EmberFFT3DGenerator::calcFwd1( Data& data, std::string str, float value
     if ( ! ( data.ntrans % 2 == 0 ) ) {
         ++tmp;
     }
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
@@ -148,14 +148,14 @@ uint64_t EmberFFT3DGenerator::calcFwd1Post( Data& data,
         if ( ! ( data.ntrans % 2 == 0 ) ) {
             ++tmp;
         }
-        m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+        verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
         return (uint64_t) ( (float) tmp * value );
     } else if ( ! str.compare( "2" ) ) {
         uint64_t tmp = data.np2loc * data.np1locf * data.np0half;
         if ( ! ( data.ntrans % 2 == 0 ) ) {
             ++tmp;
         }
-        m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+        verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
         return (uint64_t) ( (float) tmp * value );
     } else {
         assert(0);
@@ -174,19 +174,19 @@ uint64_t EmberFFT3DGenerator::calcFwd2Pre( Data& data,
             }
         }
     }
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcFwd2( Data& data, std::string str, float value ) {
     uint64_t tmp =  m_data.np1 * data.np0loc * data.np2loc;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 uint64_t EmberFFT3DGenerator::calcFwd2Post( Data& data,
                                         std::string str, float value ) {
     uint64_t tmp = data.np2loc * data.np0loc * m_data.np1;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
@@ -202,39 +202,39 @@ uint64_t EmberFFT3DGenerator::calcFwd3Pre( Data& data,
             }
         }
     }
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcFwd3( Data& data, std::string str, float value ) {
     uint64_t tmp = data.np0loc * data.np1locb * data.np2;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcFwd3Post( Data& data,
                                         std::string str, float value ) {
     uint64_t tmp = data.np2 * data.np1locb * data.np0loc;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 
 uint64_t EmberFFT3DGenerator::calcBwd1Pre( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np2 * m_data.np1locb * m_data.np0loc;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcBwd1( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np0loc * m_data.np1locb * m_data.np2;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcBwd1Post( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np0loc * m_data.np1locb * m_data.np2;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
@@ -249,19 +249,19 @@ uint64_t EmberFFT3DGenerator::calcBwd2Pre( Data& data, std::string str, float va
             }
         }
     } 
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcBwd2( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np0loc * m_data.np2loc * m_data.np1;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcBwd2Post( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np0loc*m_data.np2loc*m_data.np1;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
@@ -276,19 +276,19 @@ uint64_t EmberFFT3DGenerator::calcBwd3Pre( Data& data, std::string str, float va
             }
         }
     }
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcBwd3( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np2loc*m_data.np1locf*m_data.np0;;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 
 uint64_t EmberFFT3DGenerator::calcBwd3Post( Data& data, std::string str, float value ) {
     uint64_t tmp = m_data.np0*m_data.np1locf*m_data.np2loc ;
-    m_output->verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
+    verbose(CALL_INFO, 2, 0,"cnt=%" PRIu64 " val=%f\n", tmp, value );
     return (uint64_t) ( (float) tmp * value );
 }
 

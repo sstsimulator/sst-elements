@@ -17,11 +17,9 @@ using namespace SST::Ember;
 
 EmberReduceGenerator::EmberReduceGenerator(SST::Component* owner,
                                     Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Reduce"),
     m_loopIndex(0)
 {
-    m_name = "Reduce";
-
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
 	m_redRoot    = (uint32_t) params.find_integer("arg.root", 0);
@@ -32,7 +30,7 @@ EmberReduceGenerator::EmberReduceGenerator(SST::Component* owner,
 
 bool EmberReduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
     if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
     }
 
     enQ_compute( evQ, 11000 );

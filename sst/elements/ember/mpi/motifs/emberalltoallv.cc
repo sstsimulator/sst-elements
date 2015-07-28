@@ -17,19 +17,14 @@ using namespace SST::Ember;
 
 EmberAlltoallvGenerator::EmberAlltoallvGenerator(SST::Component* owner,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "Alltoallv"),
     m_loopIndex(0)
 {
-    m_name = "Alltoallv";
-
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
     m_sendBuf = NULL;
     m_recvBuf = NULL;
-}
 
-void EmberAlltoallvGenerator::configure()
-{
     m_sendCnts.resize(size());
     m_sendDsp.resize(size());
     m_recvCnts.resize(size());
@@ -45,7 +40,7 @@ void EmberAlltoallvGenerator::configure()
 bool EmberAlltoallvGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
     if ( 0 == m_loopIndex ) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(), size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
     }
 
     enQ_alltoallv( evQ, m_sendBuf, &m_sendCnts[0], &m_sendDsp[0], DOUBLE, 

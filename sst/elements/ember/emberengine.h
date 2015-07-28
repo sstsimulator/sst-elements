@@ -40,6 +40,10 @@ public:
 	void finish();
 	void init( unsigned int phase );
 
+	Output* getOutput() { return &output; }
+	Hermes::Interface* getAPI(std::string name) { return m_apiMap[name]->api; }
+	Hermes::NodePerf* getNodePerf( ) { return m_nodePerf; } 
+
 private:
 	bool refillQueue() {
 		return m_generator->generate( evQueue );

@@ -20,11 +20,9 @@
 using namespace SST::Ember;
 
 EmberNASLUGenerator::EmberNASLUGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params),
+	EmberMessagePassingGenerator(owner, params, "NASLU"),
 	m_loopIndex(0) 
 {
-	m_name = "NASLU";
-
 	nsCompute = (uint64_t) params.find_integer("arg.computetime", 1000);
 
 	px = (int32_t) params.find_integer("arg.pex", 0);
@@ -39,13 +37,15 @@ EmberNASLUGenerator::EmberNASLUGenerator(SST::Component* owner, Params& params) 
 
 	// Check K-blocking factor is acceptable for dividing the Nz dimension
 	assert(nz % nzblock == 0);
+
+	configure();
 }
 
 void EmberNASLUGenerator::configure()
 {
 	// Check that we are using all the processors or else lock up will happen :(.
 	if( (px * py) != (signed)size() ) {
-		m_output->fatal(CALL_INFO, -1, "Error: NAS-LU motif checked processor decomposition: %" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
+		fatal(CALL_INFO, -1, "Error: NAS-LU motif checked processor decomposition: %" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
 			px, py, size());
 	}
 
@@ -62,19 +62,19 @@ void EmberNASLUGenerator::configure()
 	y_down = (myY != 0) ? rank() - px : -1;
 
 	if(0 == rank()) {
-		m_output->verbose(CALL_INFO, 1, 0, " NAS-LU Motif\n");
-		m_output->verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 ", nzblock=%" PRIu32 ", (nx/nzblock)=%" PRIu32 "\n",
+		verbose(CALL_INFO, 1, 0, " NAS-LU Motif\n");
+		verbose(CALL_INFO, 1, 0, " nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 ", nzblock=%" PRIu32 ", (nx/nzblock)=%" PRIu32 "\n",
 			nx, ny, nz, nzblock, (nz / nzblock));
 	}
 
-	m_output->verbose(CALL_INFO, 1, 0, " Rank: %" PRIu32 " is located at coordinations of (%" PRId32 ", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%" PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
+	verbose(CALL_INFO, 1, 0, " Rank: %" PRIu32 " is located at coordinations of (%" PRId32 ", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%" PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
 		rank(), myX, myY, x_up, x_down, y_up, y_down);
 }
 
 bool EmberNASLUGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
     if( 0 == m_loopIndex) {
-        GEN_DBG( 1, "rank=%d size=%d\n", rank(),size());
+        verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());
     }
 
 	// Sweep from (0, 0) outwards towards (Px, Py)

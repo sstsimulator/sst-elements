@@ -22,10 +22,9 @@ const char* EmberMessagePassingGenerator::m_eventName[] = {
 };
 
 EmberMessagePassingGenerator::EmberMessagePassingGenerator( 
-            Component* owner, Params& params) :
-    EmberGenerator(owner, params), 
+            Component* owner, Params& params, std::string name ) :
+    EmberGenerator(owner, params, name ), 
     m_spyplotMode( EMBER_SPYPLOT_NONE ),
-	m_data( NULL ),
     m_spyinfo( NULL )
 {
     m_Stats.resize( NUM_EVENTS );
@@ -82,7 +81,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
-    GEN_DBG( 2, "\n");
+    verbose(CALL_INFO, 2, 0, "\n");
 //    for ( int i = 0; i < NUM_EVENTS; i++ ) {
 //        delete m_Stats[i];
 //    }
@@ -118,14 +117,14 @@ int32_t EmberMessagePassingGenerator::convertPositionToRank(
 void EmberMessagePassingGenerator::completed(const SST::Output* output, 
         uint64_t time ) 
 {
-    GEN_DBG( 1, "%s\n",m_name.c_str());
+    verbose(CALL_INFO, 1, 0, "%s\n",getMotifName().c_str());
 
     if( EMBER_SPYPLOT_NONE != m_spyplotMode) {
 	char* filenameBuffer = (char*) malloc(sizeof(char) * PATH_MAX);
 	sprintf(filenameBuffer, "ember-%" PRIu32 "-%s-%" PRIu32 ".spy",
-		(uint32_t) m_data->motifNum,
-		m_name.c_str(),
-		(uint32_t) m_data->rank);
+		getMotifNum(),
+		getMotifName().c_str(),
+		(uint32_t) rank());
 
         generateSpyplotRank( filenameBuffer );
 	free(filenameBuffer);
@@ -154,8 +153,8 @@ void EmberMessagePassingGenerator::updateSpyplot(
 
 void EmberMessagePassingGenerator::generateSpyplotRank(const char* filename)
 {
-    GEN_DBG( 2, "Generating Communications Spyplots (Rank %" PRId32 "\n", 
-                                                        m_data->rank);
+    verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots (Rank %" PRId32 "\n", 
+                                                        rank());
 
     FILE* spyplotFile = fopen(filename, "wt");
     assert(NULL != spyplotFile);
@@ -173,6 +172,6 @@ void EmberMessagePassingGenerator::generateSpyplotRank(const char* filename)
 
     ///////////////////////////////////////////////////////////
 
-    GEN_DBG( 2, "Generating Communications Spyplots completed"
-                                " (Rank %" PRId32 "\n", m_data->rank);
+    verbose(CALL_INFO, 2, 0, "Generating Communications Spyplots completed"
+                                " (Rank %" PRId32 "\n", rank());
 }
