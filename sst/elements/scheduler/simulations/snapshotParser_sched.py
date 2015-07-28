@@ -150,6 +150,7 @@ def generate_ember_script (TimeObject, JobObjects):
         ldfile_str += M_KEY + "Halo2D iterations=10  messagesize=128\n"
         ldfile_str += M_KEY + "PingPong iterations=100\n"
         ldfile_str += M_KEY + "Halo2D iterations=10  messagesize=128\n"
+        ldfile_str += M_KEY + "PingPong iterations=100\n"
         
         ldfile_str += M_KEY + "Fini\n\n\n"
 

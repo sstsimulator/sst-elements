@@ -283,7 +283,6 @@ hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
 # NetworkSim: path to the ember motifLog file
 emberParams['motifLog'] = embermotifLog
-#print emberParams['motifLog']
 
 print "network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
@@ -305,7 +304,6 @@ sst.merlin._params.update( topoInfo.getNetworkParams() )
 epParams = {} 
 epParams.update(emberParams)
 epParams.update(hermesParams)
-print epParams
 
 loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes()  )
 

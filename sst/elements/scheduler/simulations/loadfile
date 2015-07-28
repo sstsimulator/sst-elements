@@ -5,6 +5,7 @@
 [MOTIF] Halo2D iterations=10  messagesize=128
 [MOTIF] PingPong iterations=100
 [MOTIF] Halo2D iterations=10  messagesize=128
+[MOTIF] PingPong iterations=100
 [MOTIF] Fini
 
 
@@ -15,6 +16,7 @@
 [MOTIF] Halo2D iterations=10  messagesize=128
 [MOTIF] PingPong iterations=100
 [MOTIF] Halo2D iterations=10  messagesize=128
+[MOTIF] PingPong iterations=100
 [MOTIF] Fini
 
 
