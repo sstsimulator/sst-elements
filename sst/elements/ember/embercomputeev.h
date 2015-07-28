@@ -48,12 +48,11 @@ public:
         EmberEvent::issue( time );
     
         if ( m_calcFunc ) {
-            m_completeDelayNS = (double) m_calcFunc() * 
-                                    m_computeDistrib->sample(time);
+            m_completeDelayNS = (double) m_calcFunc(); 
         } else {
-            m_completeDelayNS = (double) m_nanoSecondDelay * 
-                                    m_computeDistrib->sample(time);
+            m_completeDelayNS = (double) m_nanoSecondDelay;
         }
+        m_completeDelayNS *= m_computeDistrib->sample(time);
 
         m_output->verbose(CALL_INFO, 2, 0, "Adjust time by noise "
                 "distribution to give: %" PRIu64 "ns\n", m_completeDelayNS );
