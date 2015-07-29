@@ -331,8 +331,10 @@ static const ElementInfoParam pagedMultiMem_params[] = {
     {"device_ini",      "Name of DRAMSim Device config file", NULL},
     {"system_ini",      "Name of DRAMSim Device system file", NULL},
     {"access_time", "Constant time memory access for \"fast\" memory", "35ns"},
-    {"max_fast_pages", "Number of 4KB \"fast\" (constant time) pages", "256"},
-    {"quantum", "time period for when page access counts is shifted", "1ms"},
+    {"max_fast_pages", "Number of \"fast\" (constant time) pages", "256"},
+    {"page_shift", "Size of page (2^x bytes)", "12"},
+    {"quantum", "time period for when page access counts is shifted", "5ms"},
+    {"accStatsPrefix","File name for acces pattern statistics",""},
     {NULL, NULL, NULL}
 };
 

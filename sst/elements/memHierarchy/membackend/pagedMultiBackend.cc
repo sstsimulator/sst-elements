@@ -22,11 +22,18 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
                                         new Event::Handler<pagedMultiMemory>(this, &pagedMultiMemory::handleSelfEvent));
 
     maxFastPages = (unsigned int)params.find_integer("max_fast_pages", 256);
+    pageShift = (unsigned int)params.find_integer("page_shift", 12);
 
-    string clock_freq       = params.find_string("quantum", "1ms");
+    accStatsPrefix = params.find_string("accStatsPrefix", "");
+    dumpNum = 0;
+
+    string clock_freq       = params.find_string("quantum", "5ms");
     comp->registerClock(clock_freq, 
                         new Clock::Handler<pagedMultiMemory>(this, 
                                                              &pagedMultiMemory::quantaClock));
+
+    // only applies to access pattern stats
+    collectStats = 1;
 
     // register stats
     fastHits = registerStatistic<uint64_t>("fast_hits","1");
@@ -37,10 +44,11 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
 
 
 bool pagedMultiMemory::issueRequest(MemController::DRAMReq *req){
-    uint64_t pageAddr = (req->baseAddr_ + req->amtInProcess_) >> 12;
+    uint64_t pageAddr = (req->baseAddr_ + req->amtInProcess_) >> pageShift;
     bool inFast = 0;
     auto &page = pageMap[pageAddr];
-    page.record(req->baseAddr_ + req->amtInProcess_);
+    page.record(req, collectStats);
+    //page.record(req->baseAddr_ + req->amtInProcess_, req->isWrite_, req->reqEvent_->);
     // if we are hitting it "a lot" (4) see if we can put it in fast
     if ((0 == page.inFast) && (page.touched > 4)) { 
         if (pagesInFast < maxFastPages) {
@@ -90,13 +98,30 @@ void pagedMultiMemory::clock(){
 }
 
 
+void pagedMultiMemory::printAccStats() {
+  FILE * pFile;
+  char buf[100];
+  snprintf(buf, 100, "%s-%d.out", accStatsPrefix.c_str(), dumpNum);
+  dumpNum++;
+
+  pFile = fopen (buf,"w");
+  if (NULL == pFile) {
+    printf("Coulnd't open %s for output\n", buf);
+    exit(-1);
+  } else {
+
+    for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
+      p->second.printAndClearRecord(p->first, pFile);
+    }
+
+    fclose(pFile);
+  }
+}
+
 void pagedMultiMemory::finish(){
     printf("fast_t_pages: %lu\n", pageMap.size());
 
-    // print stats
-    for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
-        p->second.printRecord();
-    }
+    printAccStats();
 
     DRAMSimMemory::finish();
 }
@@ -110,6 +135,8 @@ void pagedMultiMemory::handleSelfEvent(SST::Event *event){
 }
 
 bool pagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
+  printAccStats();
+
     //printf("Quantum\n");
     for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
         p->second.touched = p->second.touched >> 1;

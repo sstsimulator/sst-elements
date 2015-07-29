@@ -37,10 +37,26 @@ struct pageInfo {
     uint64_t lastRef;
     typedef enum {LT_NEG_ONE, NEG_ONE, ZERO, ONE, GT_ONE, LAST_CASE} AcCases;
     uint64_t accPat[LAST_CASE];
+    set<string> rqstrs; // requestors who have touched this page
 
-    void record(uint64_t addr) {
+    //page.record(req->baseAddr_ + req->amtInProcess_, req->isWrite_, req->reqEvent_->);
+  void record(const MemController::DRAMReq *req, bool collectStats) {
+    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
+    bool isWrite = req->isWrite_;
+
+
+    if (isWrite) return;
+    // record that we've been touched
+    touched++;
+
+    if (0 == collectStats) return;
+
+    // note: this is slow, and only works if directory controller is modified to send along the requestor info
+    const string &requestor = req->reqEvent_->getRqstr();
+    rqstrs.insert(requestor);
+    //printf("%s\n", requestor.c_str());
+
         addr >>= 6; // cacheline
-        touched++;
         if (0 == lastRef) {
             // first touch, do nothing
         } else {
@@ -60,15 +76,25 @@ struct pageInfo {
         lastRef = addr;
     }
 
-    void printRecord() const {
+    void printAndClearRecord(uint64_t addr, FILE *outF) {
         uint64_t sum = 0;
         for (int i = 0; i < LAST_CASE; ++i) {
             sum += accPat[i];
         }
-        for (int i = 0; i < LAST_CASE; ++i) {
-            printf("%.1f", double(accPat[i]*100)/double(sum));
-        }
-        printf("\n");
+	if (sum > 0) {
+	  fprintf(outF, "Page: %" PRIu64 " %" PRIu64, addr, sum);
+	  for (int i = 0; i < LAST_CASE; ++i) {
+	    fprintf(outF, " %.1f", double(accPat[i]*100)/double(sum));
+	  }
+	  fprintf(outF, " %" PRIu64, rqstrs.size());
+	  fprintf(outF, "\n");
+	}	  
+
+        //clear
+	for (int i = 0; i < LAST_CASE; ++i) {
+	  accPat[i] = 0;
+	} 
+	rqstrs.clear();
     }
 
     pageInfo() : touched(0), inFast(0), lastRef(0) {
@@ -86,7 +112,11 @@ public:
     virtual void finish();
 
 private:
-class MemCtrlEvent : public SST::Event {
+    void printAccStats();
+    string accStatsPrefix;
+    int dumpNum;
+
+    class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(MemController::DRAMReq* req) : SST::Event(), req(req)
         { }
@@ -106,8 +136,10 @@ class MemCtrlEvent : public SST::Event {
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;
     int maxFastPages;
+    int pageShift;
     int pagesInFast;
     int lastMin;
+    bool collectStats;
 
     void handleSelfEvent(SST::Event *event);
     bool quantaClock(SST::Cycle_t _cycle);
