@@ -59,10 +59,15 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     std::string motifLogFile = params.find_string("motifLog", "");
     if("" != motifLogFile) {
-	std::ostringstream logPrefix;
-	logPrefix << motifLogFile << "-" << id << ".log";
-	output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
-	m_motifLogger = new EmberMotifLog(logPrefix.str());
+        // we do not want to create motifLog files with a null motif for empty nodes
+        if(m_jobId != -1){
+            std::ostringstream logPrefix;
+            logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
+            output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
+            m_motifLogger = new EmberMotifLog(logPrefix.str()); 
+        } else {
+            m_motifLogger = NULL;
+        }
     } else {
 	m_motifLogger = NULL;
     }
@@ -161,7 +166,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 	assert( !gentype.empty() );
 
     if(NULL != m_motifLogger) {
-    	m_motifLogger->logMotifStart(gentype);
+        m_motifLogger->logMotifStart(gentype, motifNum);
     }
 
     // get the api the motif uses
