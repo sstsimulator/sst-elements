@@ -66,7 +66,7 @@ def calcMaxNode( nidList ):
     return max + 1 
 
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes, nidList ):
+    def __init__( self, jobId, driverParams, nicParams, numCores, ranksPerNode, statNodes, nidList, motifLogNodes): # added motifLogNodes here
         self.driverParams = driverParams
         self.nicParams = nicParams
         self.numCores = numCores
@@ -74,6 +74,8 @@ class EmberEP( EndPoint ):
         self.statNodes = statNodes
         self.nidList = nidList
         self.numNids = calcNetMapSize( self.nidList )
+        # in order to create motifLog files only for the desired nodes of a job
+        self.motifLogNodes = motifLogNodes 
 
     def getName( self ):
         return "EmberEP"
@@ -92,11 +94,40 @@ class EmberEP( EndPoint ):
 
         loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
         loopBack.addParam( "numCores", self.numCores )
+        
+        # Create a motifLog only for one core of the desired node(s)
+        logCreatedforFirstCore = False
+        # end
 
         for x in xrange(self.numCores):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
                                             "_EmberEP", "ember.EmberEngine")
-            ep.addParams(self.driverParams)
+
+            # Create a motif log only for the desired list of nodes (endpoints)
+            # Delete the 'motifLog' parameter from the param list of other endpoints
+            if 'motifLog' in self.driverParams:
+            	if (self.motifLogNodes):
+            		for id in self.motifLogNodes:
+            			if nodeID == int(id) and logCreatedforFirstCore == False:
+                			#print str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes)
+                			#print "Create motifLog for node {0}".format(id)
+                			logCreatedforFirstCore = True
+                			ep.addParams(self.driverParams)
+                		else:
+                			tempParams = self.driverParams
+                			del tempParams['motifLog']
+                			ep.addParams(tempParams)
+                else:
+                	tempParams = self.driverParams
+                	del tempParams['motifLog']
+                	ep.addParams(tempParams)        				
+            else:
+            	ep.addParams(self.driverParams)
+           	# end          
+
+
+            # Original version before motifLog
+            #ep.addParams(self.driverParams)
 
             for id in self.statNodes:
                 if nodeID == id:
@@ -144,6 +175,15 @@ class LoadInfo:
 
 	def foo( self, jobId, x, statNodes ):
 		nidList, ranksPerNode, params = x
+		
+		# In order to pass the motifLog parameter to only desired nodes of a job
+		# Here we choose the first node in the nidList
+		motifLogNodes = []
+		if (nidList != 'Null'):
+			tempnidList = nidList
+			tempnidList = tempnidList.split(',')
+			motifLogNodes.append(tempnidList[0])
+		# end
 
 		numNodes = calcMaxNode( nidList ) 
 		if numNodes > self.numNics:
@@ -151,7 +191,7 @@ class LoadInfo:
 				 ' is greater than available nodes ' + str(self.numNodes) ) 
 
 		params.update( self.epParams )
-		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList )
+		ep = EmberEP( jobId, params, self.nicParams, self.numCores, ranksPerNode, statNodes, nidList, motifLogNodes ) # added motifLogNodes here
 
 		ep.prepParams()
 		return (ep, nidList)

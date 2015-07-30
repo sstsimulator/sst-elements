@@ -59,17 +59,13 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     std::string motifLogFile = params.find_string("motifLog", "");
     if("" != motifLogFile) {
-        // we do not want to create motifLog files with a null motif for empty nodes
-        if(m_jobId != -1){
-            std::ostringstream logPrefix;
-            logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
-            output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
-            m_motifLogger = new EmberMotifLog(logPrefix.str()); 
-        } else {
-            m_motifLogger = NULL;
-        }
+        std::ostringstream logPrefix;
+        logPrefix << motifLogFile << "-" << m_jobId << ".log";
+        //logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
+        output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
+        m_motifLogger = new EmberMotifLog(logPrefix.str()); 
     } else {
-	m_motifLogger = NULL;
+        m_motifLogger = NULL;
     }
 
 	// create a map of all the available API's

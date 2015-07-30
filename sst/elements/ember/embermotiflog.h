@@ -21,10 +21,14 @@ class EmberMotifLog {
 
 		void logMotifStart(std::string name, int motifNum) {
 			if(NULL != logger) {
+				fprintf(logger, "%d %s %s\n", motifNum, name.c_str(),
+					Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str());
+				/*
 				fprintf(logger, "%d %s %s %s %" PRIu64 "\n", motifNum, name.c_str(),
 					Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str(),
 					Simulation::getSimulation()->getElapsedSimTime().toString().c_str(),
 					Simulation::getSimulation()->getCurrentSimCycle());
+				*/
 			}
 		}
 

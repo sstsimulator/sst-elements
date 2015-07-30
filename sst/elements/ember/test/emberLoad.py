@@ -1,5 +1,6 @@
 
 import sys,getopt
+sys.path.insert(0, '/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/ember/test')
 import defaultParams
 import defaultSim
 import chamaOpenIBParams
@@ -20,6 +21,7 @@ import random
 
 debug    = 0
 emberVerbose = 0
+embermotifLog = ''
 
 statNodeList = []
 jobid = 0
@@ -56,8 +58,8 @@ try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=",
 		"debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
-		"emberVerbose=","netBW=","netPktSize=","netFlitSize=","netPktSize",
-		"rtrArb=",		
+		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
+		"rtrArb=","embermotifLog=",	
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
 except getopt.GetopError as err:
@@ -87,6 +89,8 @@ for o, a in opts:
         motifDefaults['printStats'] = a
     elif o in ("--emberVerbose"):
         emberVerbose = a
+    elif o in ("--embermotifLog"):
+        embermotifLog = a
     elif o in ("--netBW"):
         netBW = a
     elif o in ("--netFlitSize"):
@@ -277,6 +281,7 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
+emberParams['motifLog'] = embermotifLog
 
 print "network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
