@@ -50,6 +50,7 @@
 #include "mpi/motifs/embercomm.h"
 #include "mpi/motifs/ember3damr.h"
 #include "mpi/motifs/emberfft3d.h"
+#include "mpi/motifs/emberstop.h" //NetworkSim: added stop motif
 
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
@@ -214,6 +215,13 @@ load_TrafficGen( Component* comp, Params& params ) {
 	return new EmberTrafficGenGenerator(comp, params);
 }
 
+//NetworkSim: loader for the stop motif
+static SubComponent*
+load_Stop( Component* comp, Params& params ) {
+	return new EmberStopGenerator(comp, params);
+}
+//end->NetworkSim
+
 static const ElementInfoParam component_params[] = {
     { "module", "Sets the OS module", ""},
     { "verbose", "Sets the output verbosity of the component", "0" },
@@ -342,6 +350,14 @@ static const ElementInfoParam barrier_params[] = {
 	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
+
+//NetworkSim: stop motif params
+static const ElementInfoParam stop_params[] = {
+	{	"arg.iterations",		"Sets the number of barrier operations to perform", 	"1024"},
+	{	"arg.compute",		"Sets the time spent computing",	 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+//end->NetworkSim
 
 static const ElementInfoParam alltoall_params[] = {
 	{	"arg.iterations",		"Sets the number of alltoall operations to perform", 	"1"},
@@ -639,6 +655,14 @@ static const ElementInfoSubComponent subcomponents[] = {
 	NULL,
 	load_Barrier,
 	barrier_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"StopMotif",
+	"NetworkSim: Performs a Barrier Motif and gives a fatal",
+	NULL,
+	load_Stop,
+	stop_params,
 	emberMotifTime_statistics,
     "SST::Ember::EmberGenerator"
     },

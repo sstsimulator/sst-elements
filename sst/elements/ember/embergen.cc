@@ -27,10 +27,11 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     m_api = ee->getAPI( params.find_string("_apiName") );
 
     m_motifNum = params.find_integer( "_motifNum", -1 );	
-	m_jobId = params.find_integer( "_jobId", -1 );	
+	  m_jobId = params.find_integer( "_jobId", -1 );	
 
     m_verbosePrefix << "@t:" << getJobId() << ":" << rank() << 
 						":EmberEngine:MPI:" << name << ":@p:@l: ";
+    //std::cout << "Job:" << getJobId() << " Rank:" << rank() << std::endl;//NetworkSim
 }
 
 void EmberGenerator::fatal(uint32_t line, const char* file, const char* func,
