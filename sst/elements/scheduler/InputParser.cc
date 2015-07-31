@@ -454,7 +454,7 @@ void PhaseParser::readPhaseFile(Job *job)
             } else if (nextStr.compare("intraNodeCommDelay") == 0){
                 is >> phaseInfo.intraNodeCommDelay;
             } else {
-                schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+                //schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
             }
             if(!(is >> nextStr)){
                 break;

@@ -1,0 +1,13 @@
+Init
+Halo3D iterations=10  nx=13 ny=5 nz=4
+PingPong iterations=100
+PingPong iterations=100
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Halo3D iterations=10  nx=13 ny=5 nz=4
+Stop
+Fini

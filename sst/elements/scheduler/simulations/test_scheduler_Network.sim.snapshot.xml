@@ -6,8 +6,9 @@
 		<nextArrivalTime>3283780</nextArrivalTime>
 	</time>
 	<job number="2">
-		<motifFile>CTH.phase</motifFile>
-		<startingMotif>15</startingMotif>
+		<motifFile>CTH_260.phase</motifFile>
+		<startingMotif>3</startingMotif>
+		<soFarRunningTime>5</soFarRunningTime>
 		<numNodes>65</numNodes>
 		<node number="0">
 			<tasks>0,1,2,3,</tasks>
@@ -206,8 +207,9 @@
 		</node>
 	</job>
 	<job number="3">
-		<motifFile>CTH.phase</motifFile>
+		<motifFile>CTH_8.phase</motifFile>
 		<startingMotif>0</startingMotif>
+		<soFarRunningTime>0</soFarRunningTime>
 		<numNodes>2</numNodes>
 		<node number="73">
 			<tasks>4,5,6,7,</tasks>

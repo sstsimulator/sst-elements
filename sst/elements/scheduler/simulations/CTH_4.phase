@@ -1,0 +1,6 @@
+Init
+Halo3D iterations=10  nx=2 ny=2 nz=1
+PingPong iterations=100
+Halo2D iterations=10  messagesize=128
+PingPong iterations=100
+Fini

@@ -21,6 +21,7 @@ import random
 
 debug    = 0
 emberVerbose = 0
+embermotifLog = ''
 
 statNodeList = []
 jobid = 0
@@ -88,7 +89,6 @@ for o, a in opts:
         motifDefaults['printStats'] = a
     elif o in ("--emberVerbose"):
         emberVerbose = a
-    # NetworkSim: read embermotifLog
     elif o in ("--embermotifLog"):
         embermotifLog = a
     elif o in ("--netBW"):
@@ -281,7 +281,6 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
-# NetworkSim: path to the ember motifLog file
 emberParams['motifLog'] = embermotifLog
 
 print "network: BW={0} pktSize={1} flitSize={2}".format(
@@ -321,7 +320,24 @@ else:
 	else:
 		sys.exit("Error: need a loadFile or cmdLine")
 
+
+#sst.setStatisticLoadLevel(7)
+#sst.enableAllStatisticsForComponentType("merlin.hr_router")
+#sst.setStatisticOutput("sst.statOutputCSV")
+#sst.setStatisticOutputOptions({"filepath" : "merlin_stats.csv"})
+
+#sst.enableStatisticForComponentType("merlin.hr_router", "send_packet_count")
+
+
+#sst.setStatisticOutput("sst.statOutputConsole")
+
+#sst.enableAllStatisticsForAllComponents()
+#sst.setStatisticOutput("sst.statOutputCSV")
+#sst.setStatisticOutputOptions({"filepath": "all_stats.csv"}) 
+
+
 topo.prepParams()
 
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()
+

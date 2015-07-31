@@ -72,11 +72,11 @@ def parse_xml (options):
     # Create a list of Job objects and populate
     JobObjects = []
 
+    print "***Currently Running Jobs***"
     for job in jobs:
-        print "***Job***"
         if job.hasAttribute("number"):
             jobNum = int(job.getAttribute("number"))
-            print "Number: %d" % jobNum
+            print "Job Number: %d" % jobNum
 
         motifFile_ = job.getElementsByTagName('motifFile')[0]
         motifFile  = str(motifFile_.childNodes[0].data)
@@ -142,17 +142,17 @@ def generate_ember_script (TimeObject, JobObjects):
             else:
                 ldfile_str += str(nodelist[0]) + ","
 
-        # Insert Motifs
-        ldfile_str += M_KEY + "Init\n"
+        # Insert Motifs from the motifFile
+        mFile = open(Job.motifFile, "r")
+        mFile_str = mFile.readlines()
 
-        # Put a function here that reads the motifs for that job from a file
-        # Temporary Motif for test
-        ldfile_str += M_KEY + "Halo2D iterations=10  messagesize=128\n"
-        ldfile_str += M_KEY + "PingPong iterations=100\n"
-        ldfile_str += M_KEY + "Halo2D iterations=10  messagesize=128\n"
-        ldfile_str += M_KEY + "PingPong iterations=100\n"
-        
-        ldfile_str += M_KEY + "Fini\n\n\n"
+        if (Job.startingMotif != 0):
+            ldfile_str += M_KEY + "Init\n"
+
+        for motifNum in range(Job.startingMotif, len(mFile_str)):
+            if (mFile_str[motifNum] != "\n"):
+                ldfile_str += M_KEY + mFile_str[motifNum]
+        mFile.close()
 
         # Write this job's info to the loadfile
         ldfile.writelines(ldfile_str)
@@ -164,13 +164,14 @@ def generate_ember_script (TimeObject, JobObjects):
 
     # Generate commandline string to execute
     # Can parametrize model-options as well later
+    #execcommand  = "sst --stop-at " + "300us"
     execcommand  = "sst --stop-at " + StopAtTime
-    execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=16B --netPktSize=1024B --netBW=10GB/s --emberVerbose=0 --embermotifLog=/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif"
+    execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
+    execcommand += " --embermotifLog=/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif"
     #execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4"
     execcommand += " --loadFile=" + loadfile + "\""
     execcommand += " " + emberLoad + "\n"
 
-    print execcommand
     return (execcommand)
 
 # Gets a commandline string, puts it into a shell file and runs
