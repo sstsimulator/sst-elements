@@ -14,6 +14,7 @@
 #define _H_SST_MEMH_PAGEDMULTI_BACKEND
 
 #include "membackend/dramSimBackend.h"
+#include "sst/core/rng/sstrng.h"
 
 #ifdef DEBUG
 #define OLD_DEBUG DEBUG
@@ -31,32 +32,53 @@ namespace SST {
 namespace MemHierarchy {
 
 struct pageInfo {
-    uint touched; // how many times it is touched in quanta
-    bool inFast;
+    typedef list<pageInfo*> pageList_t;
+    typedef pageList_t::iterator pageListIter;
 
-    uint64_t lastRef;
+    uint touched; // how many times it is touched in quanta (used in LFU)
+    pageListIter listEntry;
+    bool inFast;
+    SimTime_t lastTouch; // used in mrpuLRU
+    uint64_t lastRef; // used in scan detection
+    uint scanLeng; // number of consecutive unit-1-stride accesses
+    SimTime_t pageDelay; // time when page will be in fast mem
+
+    // stats
     typedef enum {LT_NEG_ONE, NEG_ONE, ZERO, ONE, GT_ONE, LAST_CASE} AcCases;
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    //page.record(req->baseAddr_ + req->amtInProcess_, req->isWrite_, req->reqEvent_->);
-  void record(const MemController::DRAMReq *req, bool collectStats) {
-    uint64_t addr = req->baseAddr_ + req->amtInProcess_;
-    bool isWrite = req->isWrite_;
+    void record(const MemController::DRAMReq *req, const bool collectStats) {
+        uint64_t addr = req->baseAddr_ + req->amtInProcess_;
+        bool isWrite = req->isWrite_;
+        
+        //stats ignore writes
+        if ((1 == collectStats) && isWrite) return;
 
-
-    if (isWrite) return;
-    // record that we've been touched
-    touched++;
-
-    if (0 == collectStats) return;
-
-    // note: this is slow, and only works if directory controller is modified to send along the requestor info
-    const string &requestor = req->reqEvent_->getRqstr();
-    rqstrs.insert(requestor);
-    //printf("%s\n", requestor.c_str());
-
+        // record that we've been touched
+        touched++;
+        
+        // detect scans
         addr >>= 6; // cacheline
+        if (lastRef != 0) {
+            int64_t diff = addr - lastRef;
+            if (diff == 1) {
+                scanLeng++;
+            } else {
+                scanLeng = 0;
+            }
+        }
+         
+        if (0 == collectStats) {
+            lastRef = addr;
+            return;
+        }
+        
+        // note: this is slow, and only works if directory controller is modified to send along the requestor info
+        const string &requestor = req->reqEvent_->getRqstr();
+        rqstrs.insert(requestor);
+        //printf("%s\n", requestor.c_str());
+
         if (0 == lastRef) {
             // first touch, do nothing
         } else {
@@ -86,7 +108,7 @@ struct pageInfo {
 	  for (int i = 0; i < LAST_CASE; ++i) {
 	    fprintf(outF, " %.1f", double(accPat[i]*100)/double(sum));
 	  }
-	  fprintf(outF, " %" PRIu64, rqstrs.size());
+	  fprintf(outF, " %" PRIu64, (unsigned long long)rqstrs.size());
 	  fprintf(outF, "\n");
 	}	  
 
@@ -97,7 +119,8 @@ struct pageInfo {
 	rqstrs.clear();
     }
 
-    pageInfo() : touched(0), inFast(0), lastRef(0) {
+    pageInfo() : touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
+                 pageDelay(0) {
         for (int i = 0; i < LAST_CASE; ++i) {
             accPat[i] = 0;
         }
@@ -112,6 +135,32 @@ public:
     virtual void finish();
 
 private:
+    Output dbg;
+    RNG::SSTRandom*  rng;
+
+    pageInfo::pageList_t pageList; // used in FIFO
+
+    // addition strategy
+    typedef enum {addMFU, // Most Frequent
+                  addT, // threshold
+                  addMRPU, // threshold + most recent previous add
+                  addSC, // thresh + scan detection
+                  addRAND // thresh + random
+    } pageAddStrat_t;
+    pageAddStrat_t addStrat;
+    // replacement / insertion strategy
+    typedef enum {LFU, // threshold + MFU addition, LFU replacement
+                  FIFO, // FIFO replacement
+                  LRU, // LRU replacement
+                  BiLRU, // bimodal LRU
+                  SCLRU, // scan aware
+                  LAST_STRAT} pageReplaceStrat_t;
+    pageReplaceStrat_t replaceStrat; 
+
+    bool checkAdd(pageInfo &page);
+    void do_FIFO_LRU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
+    void do_LFU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
+    
     void printAccStats();
     string accStatsPrefix;
     int dumpNum;
@@ -139,6 +188,10 @@ private:
     int pageShift;
     int pagesInFast;
     int lastMin;
+    int threshold;
+    int scanThreshold;
+    SimTime_t transferDelay;
+    SimTime_t minAccTime;
     bool collectStats;
 
     void handleSelfEvent(SST::Event *event);
