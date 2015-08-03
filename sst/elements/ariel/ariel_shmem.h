@@ -15,6 +15,7 @@
 #include <inttypes.h>
 
 #include <sst/core/interprocess/ipctunnel.h>
+#include "ariel_inst_class.h"
 
 namespace SST {
 namespace ArielComponent {
@@ -40,6 +41,8 @@ struct ArielCommand {
         struct {
             uint32_t size;
             uint64_t addr;
+            uint64_t instClass;
+	    uint16_t simdElemCount;
         } inst;
         struct {
             uint64_t vaddr;

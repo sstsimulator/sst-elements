@@ -31,6 +31,8 @@
 #endif
 
 #include <sst/elements/ariel/ariel_shmem.h>
+#include <sst/elements/ariel/ariel_inst_class.h>
+
 #undef __STDC_FORMAT_MACROS
 using namespace SST::ArielComponent;
 
@@ -48,6 +50,9 @@ KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
     "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
 KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
     "d", "0", "Default SST Memory Pool");
+
+#define ARIEL_MAX(a,b) \
+   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 //PIN_LOCK pipe_lock;
 UINT32 core_count;
@@ -77,106 +82,81 @@ VOID copy(void* dest, const void* input, UINT32 length) {
 	}
 }
 
-VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRINT ip) {
+VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRINT ip,
+	UINT32 instClass, UINT32 simdOpWidth) {
+
 	if(enable_output) {
 		uint64_t addr64 = (uint64_t) address;
 
 		assert(thr < core_count);
 
-        ArielCommand ac;
-        ac.command = ARIEL_PERFORM_READ;
-	ac.instPtr = (uint64_t) ip;
-        ac.inst.addr = addr64;
-        ac.inst.size = readSize;
-        tunnel->writeMessage(thr, ac);
+        	ArielCommand ac;
+
+        	ac.command = ARIEL_PERFORM_READ;
+		ac.instPtr = (uint64_t) ip;
+        	ac.inst.addr = addr64;
+        	ac.inst.size = readSize;
+		ac.inst.instClass = instClass;
+		ac.inst.simdElemCount = simdOpWidth;
+
+        	tunnel->writeMessage(thr, ac);
 	}
 }
 
-VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADDRINT ip) {
+VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADDRINT ip,
+	UINT32 instClass, UINT32 simdOpWidth) {
 	if(enable_output) {
 		uint64_t addr64 = (uint64_t) address;
 
-        ArielCommand ac;
-        ac.command = ARIEL_PERFORM_WRITE;
-	ac.instPtr = (uint64_t) ip;
-        ac.inst.addr = addr64;
-        ac.inst.size = writeSize;
-        tunnel->writeMessage(thr, ac);
+	        ArielCommand ac;
+
+        	ac.command = ARIEL_PERFORM_WRITE;
+		ac.instPtr = (uint64_t) ip;
+        	ac.inst.addr = addr64;
+        	ac.inst.size = writeSize;
+		ac.inst.instClass = instClass;
+                ac.inst.simdElemCount = simdOpWidth;
+
+		tunnel->writeMessage(thr, ac);
 	}
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip) {
-    ArielCommand ac;
-    ac.command = ARIEL_START_INSTRUCTION;
-    ac.instPtr = (uint64_t) ip;
-    tunnel->writeMessage(thr, ac);
+    	ArielCommand ac;
+    	ac.command = ARIEL_START_INSTRUCTION;
+    	ac.instPtr = (uint64_t) ip;
+    	tunnel->writeMessage(thr, ac);
 }
 
 VOID WriteEndInstructionMarker(UINT32 thr, ADDRINT ip) {
-    ArielCommand ac;
-    ac.command = ARIEL_END_INSTRUCTION;
-    ac.instPtr = (uint64_t) ip;
-    tunnel->writeMessage(thr, ac);
+    	ArielCommand ac;
+    	ac.command = ARIEL_END_INSTRUCTION;
+    	ac.instPtr = (uint64_t) ip;
+    	tunnel->writeMessage(thr, ac);
 }
 
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
-	ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip) {
+	ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip, UINT32 instClass,
+	UINT32 simdOpWidth ) {
 
 	if(enable_output) {
 		if(thr < core_count) {
-
-            const uint64_t wAddr64 = (uint64_t) writeAddr;
-            const uint32_t wSize   = (uint32_t) writeSize;
-            const uint64_t rAddr64 = (uint64_t) readAddr;
-            const uint32_t rSize   = (uint32_t) readSize;
-
-			const uint32_t thrID = (uint32_t) thr;
-
-            ArielCommand acStart, acRead, acWrite, acEnd;
-
-            acStart.command = ARIEL_START_INSTRUCTION;
-	    acStart.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thrID, acStart);
-            acRead.command = ARIEL_PERFORM_READ;
-            acRead.instPtr = (uint64_t) ip;
-            acRead.inst.addr = rAddr64;
-            acRead.inst.size = rSize;
-            tunnel->writeMessage(thrID, acRead);
-            acWrite.command = ARIEL_PERFORM_WRITE;
-            acWrite.instPtr = (uint64_t) ip;
-            acWrite.inst.addr = wAddr64;
-            acWrite.inst.size = wSize;
-            tunnel->writeMessage(thrID, acWrite);
-            acEnd.command = ARIEL_END_INSTRUCTION;
-            acEnd.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thrID, acEnd);
+			WriteStartInstructionMarker( thr, ip );
+			WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
+			WriteInstructionWrite( writeAddr, writeSize, thr, ip, instClass, simdOpWidth );
+			WriteEndInstructionMarker( thr, ip );
 		}
 	}
-
 }
 
-VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, ADDRINT ip) {
+VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, ADDRINT ip,
+	UINT32 instClass, UINT32 simdOpWidth) {
 
 	if(enable_output) {
 		if(thr < core_count) {
-
-            const uint64_t rAddr64 = (uint64_t) readAddr;
-            const uint32_t rSize   = (uint32_t) readSize;
-
-            const uint32_t thrID = (uint32_t) thr;
-
-            ArielCommand acStart, acRead, acEnd;
-            acStart.command = ARIEL_START_INSTRUCTION;
-            acStart.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thrID, acStart);
-            acRead.command = ARIEL_PERFORM_READ;
-  	    acRead.instPtr = (uint64_t) ip;
-            acRead.inst.addr = rAddr64;
-            acRead.inst.size = rSize;
-            tunnel->writeMessage(thrID, acRead);
-            acEnd.command = ARIEL_END_INSTRUCTION;
-            acEnd.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thrID, acEnd);
+			WriteStartInstructionMarker(thr, ip);
+			WriteInstructionRead(  readAddr,  readSize,  thr, ip, instClass, simdOpWidth );
+			WriteEndInstructionMarker(thr, ip);
 		}
 	}
 
@@ -185,37 +165,22 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize, 
 VOID WriteNoOp(THREADID thr, ADDRINT ip) {
 	if(enable_output) {
 		if(thr < core_count) {
-            ArielCommand ac;
-            ac.command = ARIEL_NOOP;
-            ac.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thr, ac);
+            		ArielCommand ac;
+            		ac.command = ARIEL_NOOP;
+            		ac.instPtr = (uint64_t) ip;
+            		tunnel->writeMessage(thr, ac);
 		}
 	}
 }
 
-VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize,
-	ADDRINT ip) {
+VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize, ADDRINT ip,
+	UINT32 instClass, UINT32 simdOpWidth) {
 
 	if(enable_output) {
 		if(thr < core_count) {
-
-            const uint64_t wAddr64 = (uint64_t) writeAddr;
-            const uint32_t wSize   = (uint32_t) writeSize;
-
-            const uint32_t thrID = (uint32_t) thr;
-
-            ArielCommand acStart, acWrite, acEnd;
-            acStart.command = ARIEL_START_INSTRUCTION;
-            acStart.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thrID, acStart);
-            acWrite.command = ARIEL_PERFORM_WRITE;
-            acWrite.instPtr = (uint64_t) ip;
-            acWrite.inst.addr = wAddr64;
-            acWrite.inst.size = wSize;
-            tunnel->writeMessage(thrID, acWrite);
-            acEnd.command = ARIEL_END_INSTRUCTION;
-            acEnd.instPtr = (uint64_t) ip;
-            tunnel->writeMessage(thrID, acEnd);
+                        WriteStartInstructionMarker(thr, ip);
+                        WriteInstructionWrite(writeAddr, writeSize,  thr, ip, instClass, simdOpWidth);
+                        WriteEndInstructionMarker(thr, ip);
 		}
 	}
 
@@ -223,6 +188,60 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 
 VOID InstrumentInstruction(INS ins, VOID *v)
 {
+	UINT32 simdOpWidth     = 1;
+	UINT32 simdMultiplier  = 1;
+	UINT32 instClass       = ARIEL_INST_UNKNOWN;
+
+	std::string instCode = INS_Mnemonic(ins);
+
+	if( instCode.size() > 2) {
+		std::string prefix = "";
+
+		if( instCode.size() > 3) {
+			prefix = instCode.substr(0, 3);
+		}
+
+		std::string suffix = instCode.substr(instCode.size() - 2);
+
+		if("MOV" == prefix || "mov" == prefix) {
+			// Do not found MOV as an FP instruction?
+		} else {
+			if( (suffix == "PD") || (suffix == "pd") ) {
+				simdMultiplier = 1;
+				instClass = ARIEL_INST_DP_FP;
+			} else if( (suffix == "PS") || (suffix == "ps") ) {
+				simdMultiplier = 2;
+				instClass = ARIEL_INST_SP_FP;
+			} else if( (suffix == "SD") || (suffix == "sd") ) {
+				simdMultiplier = 1;
+				instClass = ARIEL_INST_DP_FP;
+			} else if ( (suffix == "SS") || (suffix == "ss") ) {
+				simdMultiplier = 1;
+				instClass = ARIEL_INST_SP_FP;
+			}
+		}
+	}
+
+	for(UINT32 i = 0; i < INS_MaxNumRRegs(ins); i++) {
+		if( REG_is_xmm(INS_RegR(ins, i)) ) {
+			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 2 );
+		} else if ( REG_is_ymm(INS_RegR(ins, i)) ) {
+			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 4 );
+		} else if ( REG_is_zmm(INS_RegR(ins, i)) ) {
+			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 8 );
+		}
+	}
+
+	for(UINT32 i = 0; i < INS_MaxNumWRegs(ins); i++) {
+		if( REG_is_xmm(INS_RegW(ins, i)) ) {
+			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 2 );
+		} else if ( REG_is_ymm(INS_RegW(ins, i)) ) {
+			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 4 );
+		} else if ( REG_is_zmm(INS_RegW(ins, i)) ) {
+			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 8 );
+		}
+	}
+
 	if( INS_IsMemoryRead(ins) && INS_IsMemoryWrite(ins) ) {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
 			WriteInstructionReadWrite,
@@ -230,6 +249,8 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
 			IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
 			IARG_INST_PTR,
+			IARG_UINT32, instClass,
+			IARG_UINT32, simdOpWidth,
 			IARG_END);
 	} else if( INS_IsMemoryRead(ins) ) {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
@@ -237,6 +258,8 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			IARG_THREAD_ID,
 			IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
 			IARG_INST_PTR,
+			IARG_UINT32, instClass,
+			IARG_UINT32, simdOpWidth,
 			IARG_END);
 	} else if( INS_IsMemoryWrite(ins) ) {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
@@ -244,6 +267,8 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			IARG_THREAD_ID,
 			IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
 			IARG_INST_PTR,
+			IARG_UINT32, instClass,
+			IARG_UINT32, simdOpWidth,
 			IARG_END);
 	} else {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
