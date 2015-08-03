@@ -41,8 +41,8 @@ struct ArielCommand {
         struct {
             uint32_t size;
             uint64_t addr;
-            uint64_t instClass;
-	    uint16_t simdElemCount;
+            uint32_t instClass;
+	    uint32_t simdElemCount;
         } inst;
         struct {
             uint64_t vaddr;
