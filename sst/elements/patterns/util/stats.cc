@@ -16,6 +16,8 @@
 #include <math.h>
 #include "stats.h"
 
+#include <list>
+#include <vector>
 
 
 void

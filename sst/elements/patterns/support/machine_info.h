@@ -8,9 +8,6 @@
 #ifndef _MACHINE_INFO_H_
 #define _MACHINE_INFO_H_
 
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/set.hpp>
-
 #include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
@@ -21,14 +18,6 @@ typedef struct   {
     int64_t inflectionpoint;
     int64_t latency;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-	ar & BOOST_SERIALIZATION_NVP(index);
-	ar & BOOST_SERIALIZATION_NVP(inflectionpoint);
-	ar & BOOST_SERIALIZATION_NVP(latency);
-    }
 } NICparams_t;
 
 
@@ -40,14 +29,6 @@ typedef struct   {
     int dest;
     int dest_port;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-	ar & BOOST_SERIALIZATION_NVP(src_port);
-	ar & BOOST_SERIALIZATION_NVP(dest);
-	ar & BOOST_SERIALIZATION_NVP(dest_port);
-    }
 } FarLink_t;
 
 struct _FLcompare   {
@@ -167,45 +148,6 @@ class MachineInfo   {
 	int64_t IOLinkBandwidth;
 	int64_t IOLinkLatency;
 
-
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(verbose);
-	    ar & BOOST_SERIALIZATION_NVP(debug);
-	    ar & BOOST_SERIALIZATION_NVP(NICstat_ranks);
-	    ar & BOOST_SERIALIZATION_NVP(NICparams);
-	    ar & BOOST_SERIALIZATION_NVP(NICsend_fraction);
-	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
-	    ar & BOOST_SERIALIZATION_NVP(_my_core);
-	    ar & BOOST_SERIALIZATION_NVP(Net_width);
-	    ar & BOOST_SERIALIZATION_NVP(Net_height);
-	    ar & BOOST_SERIALIZATION_NVP(Net_depth);
-	    ar & BOOST_SERIALIZATION_NVP(NoC_width);
-	    ar & BOOST_SERIALIZATION_NVP(NoC_height);
-	    ar & BOOST_SERIALIZATION_NVP(NoC_depth);
-	    ar & BOOST_SERIALIZATION_NVP(cores_per_NoC_router);
-	    ar & BOOST_SERIALIZATION_NVP(cores_per_Net_router);
-	    ar & BOOST_SERIALIZATION_NVP(num_router_nodes);
-	    ar & BOOST_SERIALIZATION_NVP(NetXwrap);
-	    ar & BOOST_SERIALIZATION_NVP(NetYwrap);
-	    ar & BOOST_SERIALIZATION_NVP(NetZwrap);
-	    ar & BOOST_SERIALIZATION_NVP(NoCXwrap);
-	    ar & BOOST_SERIALIZATION_NVP(NoCYwrap);
-	    ar & BOOST_SERIALIZATION_NVP(NoCZwrap);
-	    ar & BOOST_SERIALIZATION_NVP(total_cores);
-	    ar & BOOST_SERIALIZATION_NVP(total_ranks);
-	    ar & BOOST_SERIALIZATION_NVP(cores_per_node);
-	    ar & BOOST_SERIALIZATION_NVP(NICgap);
-	    ar & BOOST_SERIALIZATION_NVP(FarLink);
-	    ar & BOOST_SERIALIZATION_NVP(FarLinkPortFieldWidth);
-	    ar & BOOST_SERIALIZATION_NVP(FarLinknum);
-	    ar & BOOST_SERIALIZATION_NVP(LinkBandwidth);
-	    ar & BOOST_SERIALIZATION_NVP(LinkLatency);
-	    ar & BOOST_SERIALIZATION_NVP(IOLinkBandwidth);
-	    ar & BOOST_SERIALIZATION_NVP(IOLinkLatency);
-        }
 
 } ;  // end of class MachineInfo
 

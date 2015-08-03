@@ -8,7 +8,6 @@
 #ifndef _NIC_MODEL_H_
 #define _NIC_MODEL_H_
 
-#include <boost/serialization/list.hpp>
 #include "patterns.h"
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
@@ -80,24 +79,6 @@ class NIC_model   {
 	SST::SimTime_t NextRecvSlot;
 
 
-
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(_m);
-	    ar & BOOST_SERIALIZATION_NVP(_nic);
-	    ar & BOOST_SERIALIZATION_NVP(_self_link);
-	    ar & BOOST_SERIALIZATION_NVP(NICtime_handler);
-	    ar & BOOST_SERIALIZATION_NVP(NICtime_obj);
-
-	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
-	    ar & BOOST_SERIALIZATION_NVP(send_link);
-	    ar & BOOST_SERIALIZATION_NVP(nstats);
-	    ar & BOOST_SERIALIZATION_NVP(rtr);
-	    ar & BOOST_SERIALIZATION_NVP(NextSendSlot);
-	    ar & BOOST_SERIALIZATION_NVP(NextRecvSlot);
-        }
 
 } ;  // end of class NIC_model
 

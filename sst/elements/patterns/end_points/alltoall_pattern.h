@@ -22,7 +22,6 @@
 
 #include <sst/core/params.h>
 
-#include <boost/serialization/list.hpp>
 #include "patterns.h"
 #include "support/state_machine.h"
 #include "support/comm_pattern.h"
@@ -127,9 +126,6 @@ class Alltoall_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZATION_WORKS_NOW
-        Alltoall_pattern();  // For serialization only
-#endif  // SERIALIZATION_WORKS_NOW
         Alltoall_pattern(const Alltoall_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
@@ -177,35 +173,6 @@ class Alltoall_pattern : public Comm_pattern    {
 	// ADDED FOR PROPER INITIALIZATION - ALEVINE
 	// SST Startup and Shutdown
 	void setup();
-
-	// Serialization
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Comm_pattern);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(allreduce_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(alltoall_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(SMallreduce_collect);
-	    ar & BOOST_SERIALIZATION_NVP(SMalltoall_test);
-	    ar & BOOST_SERIALIZATION_NVP(SMbarrier);
-	    ar & BOOST_SERIALIZATION_NVP(SMalltoall_pattern);
-	    ar & BOOST_SERIALIZATION_NVP(num_sets);
-	    ar & BOOST_SERIALIZATION_NVP(num_ops);
-	    ar & BOOST_SERIALIZATION_NVP(num_doubles);
-	    ar & BOOST_SERIALIZATION_NVP(tree_type);
-	    ar & BOOST_SERIALIZATION_NVP(state);
-	    ar & BOOST_SERIALIZATION_NVP(a_collect);
-	    ar & BOOST_SERIALIZATION_NVP(a_test);
-	    ar & BOOST_SERIALIZATION_NVP(set);
-	    ar & BOOST_SERIALIZATION_NVP(ops);
-	    ar & BOOST_SERIALIZATION_NVP(nnodes);
-	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(test_start_time);
-	    ar & BOOST_SERIALIZATION_NVP(duration);
-	    ar & BOOST_SERIALIZATION_NVP(times);
-        }
 
 };
 

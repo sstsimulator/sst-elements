@@ -8,7 +8,6 @@
 #ifndef _NIC_STATS_H_
 #define _NIC_STATS_H_
 
-#include <sst/core/serialization.h>
 #include "patterns.h"
 #include <sst/core/sst_types.h>
 #include "machine_info.h"
@@ -19,13 +18,6 @@ typedef struct   {
     int dest;
     uint64_t cnt;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-	ar & BOOST_SERIALIZATION_NVP(dest);
-	ar & BOOST_SERIALIZATION_NVP(cnt);
-    }
 } stat_dest_t;
 
 struct _dest_compare   {
@@ -86,26 +78,6 @@ class NIC_stats   {
 	SST::SimTime_t msg_congestion_delay;
 	std::set<stat_dest_t, _dest_compare> destination_nodes;
 
-
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
-	    ar & BOOST_SERIALIZATION_NVP(_nic_name);
-	    ar & BOOST_SERIALIZATION_NVP(_print_at_end);
-	    ar & BOOST_SERIALIZATION_NVP(_m);
-	    ar & BOOST_SERIALIZATION_NVP(sends);
-	    ar & BOOST_SERIALIZATION_NVP(send_bytes);
-	    ar & BOOST_SERIALIZATION_NVP(busy);
-	    ar & BOOST_SERIALIZATION_NVP(busy_delay);
-	    ar & BOOST_SERIALIZATION_NVP(recvs);
-	    ar & BOOST_SERIALIZATION_NVP(recv_bytes);
-	    ar & BOOST_SERIALIZATION_NVP(msg_hops);
-	    ar & BOOST_SERIALIZATION_NVP(msg_congestion_cnt);
-	    ar & BOOST_SERIALIZATION_NVP(msg_congestion_delay);
-	    ar & BOOST_SERIALIZATION_NVP(destination_nodes);
-        }
 
 } ;  // end of class NIC_stats
 

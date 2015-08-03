@@ -14,8 +14,6 @@
 #ifndef _PATTERN_COMMON_H
 #define _PATTERN_COMMON_H
 
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/set.hpp>
 #include "patterns.h"
 #include <sst/core/component.h>		// For SST::Params
 #include <sst/core/sst_types.h>
@@ -70,19 +68,6 @@ class Patterns   {
 	// Each message event gets a unique number for debugging
 	uint64_t msg_seq;
 
-
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
-	    ar & BOOST_SERIALIZATION_NVP(_m);
-	    ar & BOOST_SERIALIZATION_NVP(my_self_link);
-	    ar & BOOST_SERIALIZATION_NVP(my_nvram_link);
-	    ar & BOOST_SERIALIZATION_NVP(my_storage_link);
-	    ar & BOOST_SERIALIZATION_NVP(nic);
-	    ar & BOOST_SERIALIZATION_NVP(msg_seq);
-        }
 
 } ;  // end of class Patterns
 

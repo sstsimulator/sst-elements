@@ -21,7 +21,6 @@
 */
 #include <sst_config.h>
 
-#include <sst/core/serialization.h>
 
 #include "allreduce_pattern.h"
 #include "util/stats.h"

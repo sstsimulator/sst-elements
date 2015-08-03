@@ -12,11 +12,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#if defined(NOT_PART_OF_SIM)
 #include <list>
-using namespace std;
-#else
-#include <boost/serialization/list.hpp>
+#if !defined(NOT_PART_OF_SIM)
 #include "patterns.h"
 #endif
 
@@ -61,9 +58,6 @@ class Collective_topology   {
 
 
     private:
-#ifdef SERIALIZATION_WORKS_NOW
-	Collective_topology();	// For serialization only
-#endif  // SERIALIZATION_WORKS_NOW
 	const int this_rank;
 	const int this_topology_size;
 	const tree_type_t t;
@@ -72,19 +66,6 @@ class Collective_topology   {
 	int lsb(uint32_t v);
 	void gen_children(void);
 	uint32_t next_power2(uint32_t v);
-
-#if !defined(NOT_PART_OF_SIM)
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(root);
-	    ar & BOOST_SERIALIZATION_NVP(children);
-	    ar & BOOST_SERIALIZATION_NVP(this_rank);
-	    ar & BOOST_SERIALIZATION_NVP(this_topology_size);
-	    ar & BOOST_SERIALIZATION_NVP(t);
-        }
-#endif  /* NOT_PART_OF_SIM */
 
 };
 

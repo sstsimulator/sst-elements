@@ -104,28 +104,6 @@ class Alltoall_op   {
 	void state_REMAINDER(state_event event);
 	void state_WAIT(state_event event);
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(cp);
-	    ar & BOOST_SERIALIZATION_NVP(alltoall_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(alltoall_nranks);
-	    ar & BOOST_SERIALIZATION_NVP(state);
-	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(i);
-	    ar & BOOST_SERIALIZATION_NVP(shift);
-	    ar & BOOST_SERIALIZATION_NVP(receives);
-	    ar & BOOST_SERIALIZATION_NVP(sends);
-	    ar & BOOST_SERIALIZATION_NVP(got_all_sends);
-	    ar & BOOST_SERIALIZATION_NVP(got_all_receives);
-	    ar & BOOST_SERIALIZATION_NVP(expected_sends);
-	    ar & BOOST_SERIALIZATION_NVP(expected_receives);
-	    ar & BOOST_SERIALIZATION_NVP(bytes_sent);
-	    ar & BOOST_SERIALIZATION_NVP(remainder_done);
-	    ar & BOOST_SERIALIZATION_NVP(epoch);
-        }
-
 };
 
 #endif // _ALLTOALL_OP_H

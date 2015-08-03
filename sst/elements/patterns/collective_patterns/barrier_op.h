@@ -73,18 +73,6 @@ class Barrier_op   {
 	void state_WAIT_CHILDREN(state_event event);
 	void state_WAIT_PARENT(state_event event);
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(cp);
-	    ar & BOOST_SERIALIZATION_NVP(no_data);
-	    ar & BOOST_SERIALIZATION_NVP(state);
-	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(receives);
-	    ar & BOOST_SERIALIZATION_NVP(ctopo);
-        }
-
 };
 
 #endif // _BARRIER_PATTERN_H

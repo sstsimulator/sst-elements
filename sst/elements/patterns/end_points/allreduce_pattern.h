@@ -22,7 +22,6 @@
 
 #include <sst/core/params.h>
 
-#include <sst/core/serialization.h>
 #include "patterns.h"
 #include "support/comm_pattern.h"
 #include "collective_patterns/collective_topology.h" 

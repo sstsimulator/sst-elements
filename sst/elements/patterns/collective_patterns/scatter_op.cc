@@ -19,7 +19,6 @@ scatter messages.
 
 */
 #include <sst_config.h>
-#include <boost/serialization/list.hpp>
 #include "scatter_op.h"
 
 

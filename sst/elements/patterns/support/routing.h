@@ -34,14 +34,6 @@ class Router   {
 
 	MachineInfo *_m;
 
-
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-	    ar & BOOST_SERIALIZATION_NVP(_m);
-        }
-
 } ;  // end of class Router
 
 

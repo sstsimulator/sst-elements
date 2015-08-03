@@ -17,7 +17,6 @@ There are no configuration parameters for this module.
 
 */
 #include <sst_config.h>
-#include <boost/serialization/list.hpp>
 #include "barrier_op.h"
 
 

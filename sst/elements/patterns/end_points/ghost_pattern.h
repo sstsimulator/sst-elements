@@ -197,9 +197,6 @@ class Ghost_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZATION_WORKS_NOW
-        Ghost_pattern();  // For serialization only
-#endif  // SERIALIZATION_WORKS_NOW
         Ghost_pattern(const Ghost_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
@@ -267,53 +264,6 @@ class Ghost_pattern : public Comm_pattern    {
 	// ADDED FOR PROPER INITIALIZATION - ALEVINE
 	// SST Startup and Shutdown
 	void setup();
-
-	// Serialization
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Comm_pattern);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(SMghost);
-	    ar & BOOST_SERIALIZATION_NVP(SMallreduce);
-	    ar & BOOST_SERIALIZATION_NVP(state);
-	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(time_steps);
-	    ar & BOOST_SERIALIZATION_NVP(x_elements);
-	    ar & BOOST_SERIALIZATION_NVP(y_elements);
-	    ar & BOOST_SERIALIZATION_NVP(z_elements);
-	    ar & BOOST_SERIALIZATION_NVP(loops);
-	    ar & BOOST_SERIALIZATION_NVP(reduce_steps);
-	    ar & BOOST_SERIALIZATION_NVP(delay);
-	    ar & BOOST_SERIALIZATION_NVP(verbose);
-	    ar & BOOST_SERIALIZATION_NVP(time_per_flop);
-	    ar & BOOST_SERIALIZATION_NVP(TwoD);
-	    ar & BOOST_SERIALIZATION_NVP(rank_width);
-	    ar & BOOST_SERIALIZATION_NVP(rank_height);
-	    ar & BOOST_SERIALIZATION_NVP(rank_depth);
-	    ar & BOOST_SERIALIZATION_NVP(decomposition_only);
-	    ar & BOOST_SERIALIZATION_NVP(mem_estimate);
-	    // FIXME: don't know how to do this... ar & BOOST_SERIALIZATION_NVP(memory);
-	    // FIXME: don't know how to do this... ar & BOOST_SERIALIZATION_NVP(neighbor_list);
-	    ar & BOOST_SERIALIZATION_NVP(t);
-	    ar & BOOST_SERIALIZATION_NVP(total_time_start);
-	    ar & BOOST_SERIALIZATION_NVP(total_time_end);
-	    ar & BOOST_SERIALIZATION_NVP(comm_time_start);
-	    ar & BOOST_SERIALIZATION_NVP(comm_time_total);
-	    ar & BOOST_SERIALIZATION_NVP(comp_time_start);
-	    ar & BOOST_SERIALIZATION_NVP(comp_time_total);
-	    ar & BOOST_SERIALIZATION_NVP(compute_delay);
-	    ar & BOOST_SERIALIZATION_NVP(num_sends);
-	    ar & BOOST_SERIALIZATION_NVP(fop_cnt);
-	    ar & BOOST_SERIALIZATION_NVP(reduce_cnt);
-	    ar & BOOST_SERIALIZATION_NVP(bytes_sent);
-	    ar & BOOST_SERIALIZATION_NVP(compute_imbalance);
-	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
-	    ar & BOOST_SERIALIZATION_NVP(send_done);
-	    ar & BOOST_SERIALIZATION_NVP(wait_last_receives);
-	    ar & BOOST_SERIALIZATION_NVP(neighbor_cnt);
-        }
 
 };
 

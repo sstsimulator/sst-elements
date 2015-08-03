@@ -103,9 +103,6 @@ class Msgrate_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZATION_WORKS_NOW
-        Msgrate_pattern();  // Fro serialization only
-#endif  // SERIALIZATION_WORKS_NOW
         Msgrate_pattern(const Msgrate_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
@@ -150,26 +147,6 @@ class Msgrate_pattern : public Comm_pattern    {
 	// SST Startup and Shutdown
 	void setup();
 
-	// Serialization
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Comm_pattern);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(allreduce_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(rank_stride);
-	    ar & BOOST_SERIALIZATION_NVP(start_rank);
-	    ar & BOOST_SERIALIZATION_NVP(SMmsgrate);
-	    ar & BOOST_SERIALIZATION_NVP(SMallreduce);
-	    ar & BOOST_SERIALIZATION_NVP(state);
-	    ar & BOOST_SERIALIZATION_NVP(num_msgs);
-	    ar & BOOST_SERIALIZATION_NVP(msg_len);
-	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
-	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
-	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time);
-        }
 
 };
 

@@ -145,9 +145,6 @@ class FFT_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZATION_WORKS_NOW
-        FFT_pattern();  // For serialization only
-#endif  // SERIALIZATION_WORKS_NOW
         FFT_pattern(const FFT_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
@@ -198,35 +195,6 @@ class FFT_pattern : public Comm_pattern    {
 	// SST Startup and Shutdown
 	void setup();
 
-	// Serialization
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Comm_pattern);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(scatter_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(gather_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(SMgather);
-	    ar & BOOST_SERIALIZATION_NVP(SMscatter);
-	    ar & BOOST_SERIALIZATION_NVP(SMfft_pattern);
-	    ar & BOOST_SERIALIZATION_NVP(N);
-	    ar & BOOST_SERIALIZATION_NVP(iter);
-	    ar & BOOST_SERIALIZATION_NVP(tree_type);
-	    ar & BOOST_SERIALIZATION_NVP(state);
-	    ar & BOOST_SERIALIZATION_NVP(i);
-	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(time_per_flop);
-	    ar & BOOST_SERIALIZATION_NVP(verbose);
-	    ar & BOOST_SERIALIZATION_NVP(test_start_time);
-	    ar & BOOST_SERIALIZATION_NVP(phase1_time);
-	    ar & BOOST_SERIALIZATION_NVP(phase2_time);
-	    ar & BOOST_SERIALIZATION_NVP(phase3_time);
-	    ar & BOOST_SERIALIZATION_NVP(phase4_time);
-	    ar & BOOST_SERIALIZATION_NVP(phase5_time);
-	    ar & BOOST_SERIALIZATION_NVP(total_time);
-	    ar & BOOST_SERIALIZATION_NVP(M);
-        }
 };
 
 #endif // _FFT_PATTERN_H

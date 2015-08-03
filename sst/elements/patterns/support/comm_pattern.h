@@ -172,9 +172,6 @@ class Comm_pattern : public Component {
 
     private:
 
-#ifdef SERIALIZATION_WORKS_NOW
-        Comm_pattern();  // For serialization only
-#endif  // SERIALIZATION_WORKS_NOW
         Comm_pattern(const Comm_pattern &c);
 	void handle_sst_events(CPUNicEvent *sst_event, const char *err_str);
 	void handle_self_events(Event *sst_event);
@@ -195,22 +192,5 @@ class Comm_pattern : public Component {
 	TimeConverter *tc;
 
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-	    ar & BOOST_SERIALIZATION_NVP(machine);
-	    ar & BOOST_SERIALIZATION_NVP(my_rank);
-	    ar & BOOST_SERIALIZATION_NVP(num_ranks);
-	    ar & BOOST_SERIALIZATION_NVP(SM);
-	    ar & BOOST_SERIALIZATION_NVP(common);
-	    ar & BOOST_SERIALIZATION_NVP(comm_pattern_debug);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(self_link);
-	    ar & BOOST_SERIALIZATION_NVP(nvram);
-	    ar & BOOST_SERIALIZATION_NVP(storage);
-	    ar & BOOST_SERIALIZATION_NVP(tc);
-        }
 };
 #endif // _COMM_PATTERN_H

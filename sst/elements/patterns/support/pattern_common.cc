@@ -18,9 +18,6 @@
 #include <stdio.h>
 #include <inttypes.h>		// For PRId64
 #include <string>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/set.hpp>
 #include "pattern_common.h"
 
 
