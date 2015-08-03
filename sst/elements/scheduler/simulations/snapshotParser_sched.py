@@ -158,14 +158,16 @@ def generate_ember_script (TimeObject, JobObjects):
         ldfile.writelines(ldfile_str)
     ldfile.close()
 
+    # If nextArrivalTime is zero, it means there are no other jobs left to arrive in the future. Do not use stop-at option.
+    if TimeObject.nextArrivalTime == 0:
+        execcommand = "sst "
     # Ember simulation will start from time zero, so feed it the relative time
-    StopAtTime_ = TimeObject.nextArrivalTime - TimeObject.snapshotTime
-    StopAtTime  = str(StopAtTime_) + "us"
-
+    else:
+        StopAtTime_ = TimeObject.nextArrivalTime - TimeObject.snapshotTime
+        StopAtTime  = str(StopAtTime_) + "us"
+        execcommand = "sst --stop-at " + StopAtTime
     # Generate commandline string to execute
     # Can parametrize model-options as well later
-    #execcommand  = "sst --stop-at " + "300us"
-    execcommand  = "sst --stop-at " + StopAtTime
     execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
     execcommand += " --embermotifLog=/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif"
     #execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4"

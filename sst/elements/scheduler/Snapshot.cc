@@ -16,7 +16,7 @@
 using namespace SST::Scheduler;
 
 
-Snapshot::Snapshot()
+Snapshot::Snapshot() : simFinished(true)
 {
 
 }
@@ -32,6 +32,7 @@ void Snapshot::append(SimTime_t snapshotTime, unsigned long nextArrivalTime, std
     this->runningJobs = runningJobs;
     this->snapshotTime = snapshotTime;
     this->nextArrivalTime = nextArrivalTime;
+    this->simFinished = false;
 }
 
 

@@ -492,9 +492,11 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                 } else {
                     startingNewJob = false;
                     //NetworkSim: if we could not start any job, we will still take a snapshot at t = ignoreUntilTime
-                    if (doDetailedNetworkSim && !newJobsStarted && getCurrentSimTime() == ignoreUntilTime){
+                    if (doDetailedNetworkSim && !newJobsStarted && !emberRunningJobs.empty() && getCurrentSimTime() == ignoreUntilTime){
                         // find the closest job arrival time after the current time
+                        std::cout << "Here!" << std::endl;
                         unsigned long NextArrivalTime = 0;
+                        jobNumLastArrived = (int) jobs.size() - 1;
                         for(int i = (jobNumLastArrived + 1); i < (int) jobs.size(); i++){
                             NextArrivalTime = jobs[i]->getArrivalTime();
                             if (NextArrivalTime > ignoreUntilTime){
@@ -502,9 +504,11 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                             }
                         }
                         // if there are no jobs that arrive after the current time = ignoreUntilTime, set it to zero so that ember will stop only when a job finishes
+                        /*
                         if(NextArrivalTime <= ignoreUntilTime){
                             NextArrivalTime = 0;
                         }
+                        */
                         snapshot->append(getCurrentSimTime(), NextArrivalTime, runningJobs);
                         std::cout << "Next Job is arriving at " << NextArrivalTime << std::endl;
                         unregisterYourself();
@@ -618,9 +622,13 @@ void schedComponent::finish()
 {
     scheduler -> done();
     //NetworkSim: Write snapshot to file only once at the end
-    if (doDetailedNetworkSim){    
-        std::cout << "In Sched component finish" << std::endl;
-        stats -> simPauses(snapshot, getCurrentSimTime());
+    if (doDetailedNetworkSim){
+        if (!snapshot -> getSimFinished()) {
+            std::cout << "In Sched component: sim paused" << std::endl;
+            stats -> simPauses(snapshot, getCurrentSimTime());
+        } else {
+            std::cout << "In Sched component: sim finished" << std::endl;
+        }
     }
     //end->NetWorkSim
     stats -> done();
@@ -716,8 +724,16 @@ void schedComponent::startJob(Job* job)
     if (doDetailedNetworkSim == true && getCurrentSimTime() >= ignoreUntilTime ){
         SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
         se->runningJobs = runningJobs;
-        se->nextJobArrivalTime = jobs[job->getJobNum() + 1]->getArrivalTime();
-        std::cout << "Next Job: " << job->getJobNum() + 1 << " is arriving at " << se->nextJobArrivalTime << std::endl;
+        int ii;
+        for(ii = (jobNumLastArrived + 1); ii < (int) jobs.size(); ii++){
+            se->nextJobArrivalTime = jobs[ii]->getArrivalTime();
+            if (se->nextJobArrivalTime > ignoreUntilTime){
+                break;
+            }
+        }
+
+        //se->nextJobArrivalTime = jobs[job->getJobNum() + 1]->getArrivalTime();
+        std::cout << "Next Job: " << jobs[ii]->getJobNum() << " is arriving at " << se->nextJobArrivalTime << std::endl;
         selfLink->send(se);
         std::cout << getCurrentSimTime() << ":Sent snapshot event to self" << std::endl;
     }

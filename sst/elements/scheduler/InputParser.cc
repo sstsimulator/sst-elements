@@ -103,35 +103,44 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
 //NetworkSim: parser for completedJobTrace
 std::map<int, unsigned long> JobParser::parseJobsEmberCompleted()
 {
-    ifstream input;
-    input.open( completedJobTrace.c_str() );
+    fstream input;
+    input.open( completedJobTrace.c_str());
     if(!input.is_open()){
         schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s\n", completedJobTrace.c_str());
     }
 
     std::map<int, unsigned long> completedEmberJobs;
 
-    //read line by line
-    string line;
-    while (!input.eof()) {
-        getline(input, line);
-        if (line.find_first_not_of(" \t\n") == string::npos)
-            continue;
+    // if the file is not empty, read line by line
+    input.seekg (0, ios::end);
+    int length = input.tellg();
 
-        int jobNum = -1;
-        unsigned long runningTime = 0;
-        string nextStr = "";
+    if(length != 0){
+        
+        input.seekg (0, ios::beg);
+        string line;
+        while (!input.eof()) {
+            getline(input, line);
+            if (line.find_first_not_of(" \t\n") == string::npos)
+                continue;
 
-        std::stringstream is(line);
-        is >> jobNum >> runningTime >> nextStr;
-    
-        if(!nextStr.empty()){
-            schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+            int jobNum = -1;
+            unsigned long runningTime = 0;
+            string nextStr = "";
+
+            std::stringstream is(line);
+            is >> jobNum >> runningTime >> nextStr;
+        
+            if(!nextStr.empty()){
+                schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+            }
+            if(jobNum == -1 || runningTime == 0){
+                schedout.fatal(CALL_INFO, 1, "Invalid values are assigned to jobNum or runningTime:\njobNum:%d runningTime:%lu\n", jobNum, runningTime);
+            }
+            completedEmberJobs[jobNum] = runningTime;
         }
-        if(jobNum == -1 || runningTime == 0){
-            schedout.fatal(CALL_INFO, 1, "Invalid values are assigned to jobNum or runningTime:\njobNum:%d runningTime:%lu\n", jobNum, runningTime);
-        }
-        completedEmberJobs[jobNum] = runningTime;
+    } else {
+        std::cout << "completedJobsTrace file is empty" << std::endl;
     }
 
     input.close();
@@ -143,49 +152,60 @@ std::map<int, unsigned long> JobParser::parseJobsEmberCompleted()
 //NetworkSim: parser for runningJobTrace, also gets the current time from ember
 std::map<int, std::pair<unsigned long, int> > JobParser::parseJobsEmberRunning()
 {
-    ifstream input;
-    input.open( runningJobTrace.c_str() );
+    fstream input;
+    input.open( runningJobTrace.c_str());
+
     if(!input.is_open()){
         schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s\n", runningJobTrace.c_str());
     }
 
     std::map<int, std::pair<unsigned long, int> > runningEmberJobs;
 
-    //read line by line
-    string line;
-    while (!input.eof()) {
-        getline(input, line);
-        if (line.find_first_not_of(" \t\n") == string::npos)
-            continue;
+    // if the file is not empty, read line by line
+    input.seekg (0, ios::end);
+    int length = input.tellg();
 
-        bool isTimeLine = false; // if true, the current line specifies the snapshot time from ember, else it specifies a running job from ember
-        int jobNum = -1;
-        unsigned long soFarRunningTime = 0;
-        int currentMotifCount = -1;
-        string nextStr = "";
-        std::stringstream is(line);
+    if(length != 0){
 
-        is >> nextStr;
-        while(!nextStr.empty()){
-            if(nextStr.compare("time") == 0){
-                isTimeLine = true;
-                is >> this->ignoreUntilTime;     
-            } else if (nextStr.compare("job") == 0){
-                is >> jobNum >> soFarRunningTime >> currentMotifCount;
-            } else {
-                schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+        input.seekg (0, ios::beg);
+        string line;
+        while (!input.eof()) {
+            getline(input, line);
+            if (line.find_first_not_of(" \t\n") == string::npos)
+                continue;
+
+            bool isTimeLine = false; // if true, the current line specifies the snapshot time from ember, else it specifies a running job from ember
+            int jobNum = -1;
+            unsigned long soFarRunningTime = 0;
+            int currentMotifCount = -1;
+            string nextStr = "";
+            std::stringstream is(line);
+
+            is >> nextStr;
+            while(!nextStr.empty()){
+                if(nextStr.compare("time") == 0){
+                    isTimeLine = true;
+                    is >> this->ignoreUntilTime;     
+                } else if (nextStr.compare("job") == 0){
+                    is >> jobNum >> soFarRunningTime >> currentMotifCount;
+                } else {
+                    schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
+                }
+                if(!(is >> nextStr)){
+                    break;
+                }
             }
-            if(!(is >> nextStr)){
-                break;
+
+            if(!isTimeLine){
+                if(jobNum == -1 || soFarRunningTime == 0 || currentMotifCount == -1){
+                    schedout.fatal(CALL_INFO, 1, "Invalid values are assigned to jobNum or soFarRunningTime or currentMotifCount:\njobNum:%d soFarRunningTime:%lu currentMotifCount:%d\n", jobNum, soFarRunningTime, currentMotifCount);
+                }
+                runningEmberJobs[jobNum] = make_pair(soFarRunningTime, currentMotifCount);
             }
         }
-
-        if(!isTimeLine){
-            if(jobNum == -1 || soFarRunningTime == 0 || currentMotifCount == -1){
-                schedout.fatal(CALL_INFO, 1, "Invalid values are assigned to jobNum or soFarRunningTime or currentMotifCount:\njobNum:%d soFarRunningTime:%lu currentMotifCount:%d\n", jobNum, soFarRunningTime, currentMotifCount);
-            }
-            runningEmberJobs[jobNum] = make_pair(soFarRunningTime, currentMotifCount);
-        }
+    } else {
+        std::cout << "runningJobsTrace file is empty" << std::endl;
+        this->ignoreUntilTime = 0;
     }
 
     input.close();

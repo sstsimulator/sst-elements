@@ -35,9 +35,11 @@ namespace SST {
                 
                 SimTime_t getSnapshotTime() const { return snapshotTime; }
                 unsigned long getNextArrivalTime() const { return nextArrivalTime; }
+                bool getSimFinished() const { return simFinished; }
             private:   
                 SimTime_t snapshotTime;   //current time of the snapshot
-                unsigned long nextArrivalTime; //arrival time of the next job for ember
+                unsigned long nextArrivalTime; //arrival time of the next jobfor ember
+                bool simFinished;
         };
     }
 }
