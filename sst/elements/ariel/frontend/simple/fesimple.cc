@@ -85,41 +85,35 @@ VOID copy(void* dest, const void* input, UINT32 length) {
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRINT ip,
 	UINT32 instClass, UINT32 simdOpWidth) {
 
-	if(enable_output) {
-		uint64_t addr64 = (uint64_t) address;
+	const uint64_t addr64 = (uint64_t) address;
 
-		assert(thr < core_count);
+        ArielCommand ac;
 
-        	ArielCommand ac;
+        ac.command = ARIEL_PERFORM_READ;
+	ac.instPtr = (uint64_t) ip;
+        ac.inst.addr = addr64;
+        ac.inst.size = readSize;
+	ac.inst.instClass = instClass;
+	ac.inst.simdElemCount = simdOpWidth;
 
-        	ac.command = ARIEL_PERFORM_READ;
-		ac.instPtr = (uint64_t) ip;
-        	ac.inst.addr = addr64;
-        	ac.inst.size = readSize;
-		ac.inst.instClass = instClass;
-		ac.inst.simdElemCount = simdOpWidth;
-
-        	tunnel->writeMessage(thr, ac);
-	}
+        tunnel->writeMessage(thr, ac);
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADDRINT ip,
 	UINT32 instClass, UINT32 simdOpWidth) {
 
-	if(enable_output) {
-		uint64_t addr64 = (uint64_t) address;
+	const uint64_t addr64 = (uint64_t) address;
 
-	        ArielCommand ac;
+	ArielCommand ac;
 
-        	ac.command = ARIEL_PERFORM_WRITE;
-		ac.instPtr = (uint64_t) ip;
-        	ac.inst.addr = addr64;
-        	ac.inst.size = writeSize;
-		ac.inst.instClass = instClass;
-                ac.inst.simdElemCount = simdOpWidth;
+        ac.command = ARIEL_PERFORM_WRITE;
+	ac.instPtr = (uint64_t) ip;
+        ac.inst.addr = addr64;
+        ac.inst.size = writeSize;
+	ac.inst.instClass = instClass;
+        ac.inst.simdElemCount = simdOpWidth;
 
-		tunnel->writeMessage(thr, ac);
-	}
+	tunnel->writeMessage(thr, ac);
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr, ADDRINT ip) {
@@ -215,7 +209,7 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 		}
 	}
 
-	if( instCode.size() > 1) {
+	if( instCode.size() > 1 ) {
 		std::string prefix = "";
 
 		if( instCode.size() > 2) {
@@ -304,20 +298,18 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp) {
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
-    if (RTN_Name(rtn) == "ariel_enable" ||
-		RTN_Name(rtn) == "_ariel_enable") {
+    if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable") {
 	fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
 	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
 	fprintf(stderr,"Replacement complete.\n");
 	return;
-    } else if (RTN_Name(rtn) == "gettimeofday" ||
+    } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday" ||
 		RTN_Name(rtn) == "__gettimeofday") {
 	fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
 	RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
 	fprintf(stderr,"Replacement complete.\n");
 	return;
-    } else if (RTN_Name(rtn) == "ariel_cycles" ||
-		RTN_Name(rtn) == "_ariel_cycles") {
+    } else if (RTN_Name(rtn) == "ariel_cycles" || RTN_Name(rtn) == "_ariel_cycles") {
 	fprintf(stderr, "Identified routine: ariel_cycles, replacing with Ariel equivalent..\n");
 	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
 	fprintf(stderr, "Replacement complete\n");
