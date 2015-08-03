@@ -42,6 +42,12 @@ static const ElementInfoStatistic ariel_statistics[] = {
     { "split_write_requests", "Stat split_write_requests", "requests", 1},
     { "no_ops",               "Stat no_ops", "instructions", 1},
     { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
+    { "fp_dp_ins",            "Statistic for counting DP-floating point instructions", "instructions", 1 },
+    { "fp_dp_simd_ins",       "Statistic for counting DP-FP SIMD instructons", "instructions", 1 },
+    { "fp_dp_ops",            "Statistic for counting DP-FP operations (inst * SIMD width)", "instructions", 1 },
+    { "fp_sp_ins",            "Statistic for counting SP-floating point instructions", "instructions", 1 },
+    { "fp_sp_simd_ins",       "Statistic for counting SP-FP SIMD instructons", "instructions", 1 },
+    { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
     { NULL, NULL, NULL, 0 }
 };
 

@@ -47,6 +47,15 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
 	statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
 
+	statFPSPIns = own->registerStatistic<uint64_t>("fp_sp_ins", subID);
+	statFPDPIns = own->registerStatistic<uint64_t>("fp_dp_ins", subID);
+
+	statFPSPSIMDIns = own->registerStatistic<uint64_t>("fp_sp_simd_ins", subID);
+	statFPDPSIMDIns = own->registerStatistic<uint64_t>("fp_dp_simd_ins", subID);
+
+	statFPSPOps = own->registerStatistic<uint64_t>("fp_sp_ops", subID);
+	statFPDPOps = own->registerStatistic<uint64_t>("fp_dp_ops", subID);
+
 	free(subID);
 
 	std::string traceGenName = params.find_string("tracegen", "");
@@ -247,10 +256,30 @@ bool ArielCore::refillQueue() {
             return false;
         }
         output->verbose(CALL_INFO, 32, 0, "Tunnel reads data on core: %" PRIu32 "\n", coreID);
-        // There is data on the pipe
 
+        // There is data on the pipe
         switch(ac.command) {
         case ARIEL_START_INSTRUCTION:
+	    if(ARIEL_INST_SP_FP == ac.inst.instClass) {
+		statFPSPIns->addData(1);
+
+		if(ac.inst.simdElemCount > 1) {
+			statFPSPSIMDIns->addData(1);
+			statFPSPOps->addData(ac.inst.simdElemCount);
+		} else {
+			statFPSPOps->addData(1);
+		}
+            } else if(ARIEL_INST_DP_FP == ac.inst.instClass) {
+		statFPSPIns->addData(1);
+
+		if(ac.inst.simdElemCount > 1) {
+			statFPDPSIMDIns->addData(1);
+			statFPDPOps->addData(ac.inst.simdElemCount);
+		} else {
+			statFPSPOps->addData(1);
+		}
+	    }
+
             while(ac.command != ARIEL_END_INSTRUCTION) {
                 ac = tunnel->readMessage(coreID);
 
