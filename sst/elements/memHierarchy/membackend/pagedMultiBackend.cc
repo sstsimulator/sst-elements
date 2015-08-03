@@ -208,9 +208,9 @@ void pagedMultiMemory::do_FIFO_LRU(MemController::DRAMReq *req, pageInfo &page, 
             page.listEntry = pageList.begin();
         }
 
-        page.lastTouch = getCurrentSimTimeNano(); // for mrpu
         inFast = page.inFast;
     }
+    page.lastTouch = getCurrentSimTimeNano(); // for mrpu       
 }
 
 void pagedMultiMemory::do_LFU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping) {
