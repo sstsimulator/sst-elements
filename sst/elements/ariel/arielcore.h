@@ -121,9 +121,11 @@ class ArielCore {
 
 		Statistic<uint64_t>* statFPDPIns;
 		Statistic<uint64_t>* statFPDPSIMDIns;
+		Statistic<uint64_t>* statFPDPScalarIns;
 		Statistic<uint64_t>* statFPDPOps;
 		Statistic<uint64_t>* statFPSPIns;
 		Statistic<uint64_t>* statFPSPSIMDIns;
+		Statistic<uint64_t>* statFPSPScalarIns;
 		Statistic<uint64_t>* statFPSPOps;
 
 		uint64_t pending_transaction_count;

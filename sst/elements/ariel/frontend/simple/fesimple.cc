@@ -105,6 +105,7 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr, ADDRI
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADDRINT ip,
 	UINT32 instClass, UINT32 simdOpWidth) {
+
 	if(enable_output) {
 		uint64_t addr64 = (uint64_t) address;
 
@@ -189,15 +190,35 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 VOID InstrumentInstruction(INS ins, VOID *v)
 {
 	UINT32 simdOpWidth     = 1;
-	UINT32 simdMultiplier  = 1;
 	UINT32 instClass       = ARIEL_INST_UNKNOWN;
+	UINT32 maxSIMDRegWidth = 1;
 
 	std::string instCode = INS_Mnemonic(ins);
 
-	if( instCode.size() > 2) {
+	for(UINT32 i = 0; i < INS_MaxNumRRegs(ins); i++) {
+		if( REG_is_xmm(INS_RegR(ins, i)) ) {
+			maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 2);
+		} else if ( REG_is_ymm(INS_RegR(ins, i)) ) {
+			maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 4);
+		} else if ( REG_is_zmm(INS_RegR(ins, i)) ) {
+			maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 8);
+		}
+	}
+
+	for(UINT32 i = 0; i < INS_MaxNumWRegs(ins); i++) {
+		if( REG_is_xmm(INS_RegW(ins, i)) ) {
+			maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 2);
+		} else if ( REG_is_ymm(INS_RegW(ins, i)) ) {
+			maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 4);
+		} else if ( REG_is_zmm(INS_RegW(ins, i)) ) {
+			maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 8);
+		}
+	}
+
+	if( instCode.size() > 1) {
 		std::string prefix = "";
 
-		if( instCode.size() > 3) {
+		if( instCode.size() > 2) {
 			prefix = instCode.substr(0, 3);
 		}
 
@@ -205,40 +226,23 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 		if("MOV" == prefix || "mov" == prefix) {
 			// Do not found MOV as an FP instruction?
+			simdOpWidth = 1;
 		} else {
 			if( (suffix == "PD") || (suffix == "pd") ) {
-				simdMultiplier = 1;
+				simdOpWidth = maxSIMDRegWidth;
 				instClass = ARIEL_INST_DP_FP;
 			} else if( (suffix == "PS") || (suffix == "ps") ) {
-				simdMultiplier = 2;
+				simdOpWidth = maxSIMDRegWidth * 2;
 				instClass = ARIEL_INST_SP_FP;
 			} else if( (suffix == "SD") || (suffix == "sd") ) {
-				simdMultiplier = 1;
+				simdOpWidth = 1;
 				instClass = ARIEL_INST_DP_FP;
 			} else if ( (suffix == "SS") || (suffix == "ss") ) {
-				simdMultiplier = 1;
+				simdOpWidth = 1;
 				instClass = ARIEL_INST_SP_FP;
+			} else {
+				simdOpWidth = 1;
 			}
-		}
-	}
-
-	for(UINT32 i = 0; i < INS_MaxNumRRegs(ins); i++) {
-		if( REG_is_xmm(INS_RegR(ins, i)) ) {
-			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 2 );
-		} else if ( REG_is_ymm(INS_RegR(ins, i)) ) {
-			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 4 );
-		} else if ( REG_is_zmm(INS_RegR(ins, i)) ) {
-			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 8 );
-		}
-	}
-
-	for(UINT32 i = 0; i < INS_MaxNumWRegs(ins); i++) {
-		if( REG_is_xmm(INS_RegW(ins, i)) ) {
-			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 2 );
-		} else if ( REG_is_ymm(INS_RegW(ins, i)) ) {
-			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 4 );
-		} else if ( REG_is_zmm(INS_RegW(ins, i)) ) {
-			simdOpWidth = ARIEL_MAX(simdOpWidth, (simdMultiplier == 1) ? 1 : simdMultiplier * 8 );
 		}
 	}
 

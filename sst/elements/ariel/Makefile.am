@@ -69,7 +69,7 @@ fesimple.dylib: fesimple.o
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o fesimple.so fesimple.o  \
+	-o fesimple.dylib fesimple.o  \
 	-lpin -lxed -lpindwarf -lpthread
 
 fesimple.o: frontend/simple/fesimple.cc
