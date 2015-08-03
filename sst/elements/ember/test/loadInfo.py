@@ -179,9 +179,12 @@ class LoadInfo:
 		# In order to pass the motifLog parameter to only desired nodes of a job
 		# Here we choose the first node in the nidList
 		motifLogNodes = []
-		if (nidList != 'Null'):
+		if (nidList != 'Null' and 'motifLog' in self.epParams):
 			tempnidList = nidList
-			tempnidList = tempnidList.split(',')
+			if '-' in tempnidList:
+				tempnidList = tempnidList.split('-')
+			else:
+				tempnidList = tempnidList.split(',')
 			motifLogNodes.append(tempnidList[0])
 		# end
 
