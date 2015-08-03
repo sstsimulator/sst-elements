@@ -106,21 +106,24 @@ class EmberEP( EndPoint ):
             # Create a motif log only for the desired list of nodes (endpoints)
             # Delete the 'motifLog' parameter from the param list of other endpoints
             if 'motifLog' in self.driverParams:
-            	if (self.motifLogNodes):
-            		for id in self.motifLogNodes:
-            			if nodeID == int(id) and logCreatedforFirstCore == False:
-                			#print str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes)
-                			#print "Create motifLog for node {0}".format(id)
-                			logCreatedforFirstCore = True
-                			ep.addParams(self.driverParams)
-                		else:
-                			tempParams = self.driverParams
-                			del tempParams['motifLog']
-                			ep.addParams(tempParams)
+            	if self.driverParams['motifLog'] != '':
+            		if (self.motifLogNodes):
+            			for id in self.motifLogNodes:
+            				if nodeID == int(id) and logCreatedforFirstCore == False:
+                				#print str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes)
+                				#print "Create motifLog for node {0}".format(id)
+                				logCreatedforFirstCore = True
+                				ep.addParams(self.driverParams)
+                			else:
+                				tempParams = self.driverParams
+                				del tempParams['motifLog']
+                				ep.addParams(tempParams)
+                	else:
+                		tempParams = self.driverParams
+                		del tempParams['motifLog']
+                		ep.addParams(tempParams)
                 else:
-                	tempParams = self.driverParams
-                	del tempParams['motifLog']
-                	ep.addParams(tempParams)        				
+                	ep.addParams(self.driverParams)      				
             else:
             	ep.addParams(self.driverParams)
            	# end          
