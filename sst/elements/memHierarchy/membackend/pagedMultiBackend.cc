@@ -258,10 +258,12 @@ bool pagedMultiMemory::issueRequest(MemController::DRAMReq *req){
     auto &page = pageMap[pageAddr];
     page.record(req, collectStats);
 
-    if (replaceStrat == LFU) {
+    if (maxFastPages > 0) {
+      if (replaceStrat == LFU) {
         do_LFU(req, page, inFast, swapping);
-    } else {
+      } else {
         do_FIFO_LRU(req, page, inFast, swapping);
+      }
     }
 
     if (transferDelay > 0) {
