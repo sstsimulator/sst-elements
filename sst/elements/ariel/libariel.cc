@@ -50,6 +50,12 @@ static const ElementInfoStatistic ariel_statistics[] = {
     { "fp_sp_simd_ins",       "Statistic for counting SP-FP SIMD instructons", "instructions", 1 },
     { "fp_sp_scalar_ins",     "Statistic for counting SP-FP Non-SIMD instructons", "instructions", 1 },
     { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
+    { "no_ops",               "Stat no_ops", "instructions", 1},
+    { "tlb_hits",             "Hits in the simple Ariel TLB", "hits", 2 },
+    { "tlb_evicts",           "Number of evictions in the simple Ariel TLB", "evictions", 2 },
+    { "tlb_translate_queries","Number of TLB translations performed", "translations", 2 },
+    { "tlb_shootdown",        "Number of TLB clears because of page-frees", "shootdowns", 2 },
+    { "tlb_page_allocs",      "Number of pages allocated by the memory manager", "pages", 2 },
     { NULL, NULL, NULL, 0 }
 };
 

@@ -16,10 +16,12 @@
 
 using namespace SST::ArielComponent;
 
-ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out,
+ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
+		uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out,
 		uint32_t defLevel, uint32_t translateCacheEntryCount) :
 	translationCacheEntries(translateCacheEntryCount),
-	translationEnabled(true) {
+	translationEnabled(true),
+	owner(ownMe) {
 
 	output = out;
 	memoryLevels = mLevels;
@@ -58,11 +60,12 @@ ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint6
 	}
 
 	translationCache = new std::map<uint64_t, uint64_t>();
-	translationCacheHits = 0;
-	translationCacheEvicts = 0;
-	translationQueries = 0;
-	translationShootdown = 0;
-	pageAllocationCount = 0;
+
+	statTranslationCacheHits    = owner->registerStatistic<uint64_t>("tlb_hits");
+	statTranslationCacheEvict   = owner->registerStatistic<uint64_t>("tlb_evicts");
+	statTranslationQueries      = owner->registerStatistic<uint64_t>("tlb_translate_queries");
+	statTranslationShootdown    = owner->registerStatistic<uint64_t>("tlb_shootdown");
+	statPageAllocationCount     = owner->registerStatistic<uint64_t>("tlb_page_allocs");
 }
 
 void ArielMemoryManager::populateTables(const char* populateFilePath, const uint32_t level) {
@@ -129,7 +132,7 @@ void ArielMemoryManager::enableTranslation() {
 void ArielMemoryManager::cacheTranslation(uint64_t virtualA, uint64_t physicalA) {
 	// Remove the oldest entry if we do not have enough slots
 	if(translationCache->size() == translationCacheEntries) {
-		translationCacheEvicts++;
+		statTranslationCacheEvict->addData(1);
 		translationCache->erase(translationCache->begin());
 	}
 
@@ -145,7 +148,7 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 
 	output->verbose(CALL_INFO, 4, 0, "Requesting a memory allocation of %" PRIu64 " bytes, in level: %" PRIu32 ", Virtual mapping=%" PRIu64 "\n",
 		size, level, virtualAddress);
-	pageAllocationCount++;
+	statPageAllocationCount->addData(1);
 
 	const uint64_t pageSize = pageSizes[level];
 
@@ -225,7 +228,7 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 
 	// Invalidate the cached entries
 	translationCache->clear();
-	translationShootdown++;
+	statTranslationShootdown->addData(1);
 }
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
@@ -235,7 +238,7 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	}
 
 	// Keep track of how many translations we are performing
-	translationQueries++;
+	statTranslationQueries->addData(1);
 
 	uint64_t physAddr = (uint64_t) -1;
 	bool found = false;
@@ -245,7 +248,7 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	// Check the translation cache otherwise carry on
 	std::map<uint64_t, uint64_t>::iterator checkCache = translationCache->find(virtAddr);
 	if(checkCache != translationCache->end()) {
-		translationCacheHits++;
+		statTranslationCacheHits->addData(1);
 		return checkCache->second;
 	}
 
@@ -302,11 +305,11 @@ void ArielMemoryManager::printStats() {
 	output->output("\n");
 	output->output("Ariel Memory Management Statistics:\n");
 	output->output("---------------------------------------------------------------------\n");
-	output->output("Translation Cache Queries:        %" PRIu64 "\n", translationQueries);
-	output->output("Translation Cache Hits:           %" PRIu64 "\n", translationCacheHits);
-	output->output("Translation Cache Evicts:         %" PRIu64 "\n", translationCacheEvicts);
-	output->output("Translation Cache Shoot down:     %" PRIu64 "\n", translationShootdown);
-	output->output("Total Page Allocations Performed: %" PRIu64 "\n", pageAllocationCount);
+//	output->output("Translation Cache Queries:        %" PRIu64 "\n", translationQueries);
+//	output->output("Translation Cache Hits:           %" PRIu64 "\n", translationCacheHits);
+//	output->output("Translation Cache Evicts:         %" PRIu64 "\n", translationCacheEvicts);
+//	output->output("Translation Cache Shoot down:     %" PRIu64 "\n", translationShootdown);
+//	output->output("Total Page Allocations Performed: %" PRIu64 "\n", pageAllocationCount);
 	output->output("Page Table Sizes:\n");
 
 	for(uint32_t i = 0; i < memoryLevels; ++i) {

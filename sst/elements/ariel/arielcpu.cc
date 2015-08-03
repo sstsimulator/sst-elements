@@ -63,7 +63,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t translateCacheSize = (uint32_t) params.find_integer("translatecacheentries", 4096);
 
 	output->verbose(CALL_INFO, 1, 0, "Creating memory manager, default allocation from %" PRIu32 " memory pool.\n", default_level);
-	memmgr = new ArielMemoryManager(memory_levels,
+	memmgr = new ArielMemoryManager(this, memory_levels,
 		page_sizes, page_counts, output, default_level, translateCacheSize);
 
 	// Prepopulate any page tables as we find them

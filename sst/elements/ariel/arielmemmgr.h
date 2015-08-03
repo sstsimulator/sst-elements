@@ -13,6 +13,7 @@
 #ifndef _H_ARIEL_MEM_MANAGER
 #define _H_ARIEL_MEM_MANAGER
 
+#include <sst/core/component.h>
 #include <sst/core/output.h>
 
 #include <stdint.h>
@@ -20,13 +21,15 @@
 #include <vector>
 #include <map>
 
+using namespace SST;
+
 namespace SST {
 namespace ArielComponent {
 
 class ArielMemoryManager {
 
 	public:
-		ArielMemoryManager(uint32_t memoryLevels, uint64_t* pageSize, uint64_t* stdPageCount, Output* output,
+		ArielMemoryManager(SST::Component* ownMe, uint32_t memoryLevels, uint64_t* pageSize, uint64_t* stdPageCount, Output* output,
 			uint32_t defLevel, uint32_t translateCacheEntryCount);
 		~ArielMemoryManager();
 		void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
@@ -43,6 +46,13 @@ class ArielMemoryManager {
 
 	private:
 		Output* output;
+		SST::Component* owner;
+
+		Statistic<uint64_t>* statTranslationCacheHits;
+		Statistic<uint64_t>* statTranslationCacheEvict;
+		Statistic<uint64_t>* statTranslationQueries;
+		Statistic<uint64_t>* statTranslationShootdown;
+		Statistic<uint64_t>* statPageAllocationCount;
 
 		uint32_t defaultLevel;
 		uint32_t memoryLevels;
@@ -52,11 +62,6 @@ class ArielMemoryManager {
 		std::map<uint64_t, uint64_t>** pageTables;
 		std::map<uint64_t, uint64_t>* translationCache;
 		const uint32_t translationCacheEntries;
-		uint64_t translationCacheHits;
-		uint64_t translationCacheEvicts;
-		uint64_t translationQueries;
-		uint64_t translationShootdown;
-		uint64_t pageAllocationCount;
 		bool translationEnabled;
 };
 
