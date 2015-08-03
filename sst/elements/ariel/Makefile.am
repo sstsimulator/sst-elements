@@ -27,6 +27,7 @@ libariel_la_SOURCES = \
 	arielallocev.cc \
 	arielfreeev.h \
 	arielfreeev.cc \
+	ariel_inst_class.h \
 	arielswitchpool.cc \
 	arielswitchpool.h \
 	ariel_shmem.h \
