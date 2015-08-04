@@ -4,7 +4,6 @@ Date        : 07/31/2015
 Created by  : Fulya Kaplan
 Description : This script parses the ember output file. It then creates input files & run script for scheduler simulation and runs it. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
 '''
-#This script is not complete yet!
 
 import os, sys
 from xml.dom.minidom import parse
@@ -236,7 +235,7 @@ def main():
     InfoPair = parse_emberOut(options)
     TimeObject, JobObjects = parse_xml (options)
     generate_scheduler_inputs (InfoPair, TimeObject, JobObjects)
-    #run_scheduler (options)
+    run_scheduler (options)
 
 if __name__ == '__main__':
     main()

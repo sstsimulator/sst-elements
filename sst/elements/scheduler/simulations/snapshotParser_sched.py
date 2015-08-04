@@ -4,7 +4,6 @@ Date        : 07/17/2015
 Created by  : Fulya Kaplan
 Description : This script parses the snapshot xml file that is dumped by the scheduler. It then creates a runscript for ember simulation and runs the script. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
 '''
-#This script is not complete yet!
 
 import os, sys
 from xml.dom.minidom import parse
