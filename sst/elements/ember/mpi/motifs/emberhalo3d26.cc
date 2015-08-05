@@ -38,19 +38,23 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::Component* owner, Params& pa
 	uint64_t nsCompute = 0;
 	if ( ! params.find_string("arg.computetime").empty() ) {
 		nsCompute  = (uint64_t) params.find_integer("arg.computetime");
-
+#ifdef HAVE_STDCXX_LAMBDAS
 		compute_the_time = [ nsCompute ] { return nsCompute; };
-	
+#else
+		compute_the_time = nsCompute;
+#endif
 	} else {
 		uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
-
+#ifdef HAVE_STDCXX_LAMBDAS
 		compute_the_time = [ this, total_flops ] {
 			return (uint64_t) ( (double) total_flops / ( nodePerf().getFlops() / 1000000000.0 ) );
 		};
+#else
+		compute_the_time = (double) total_flops / nodePerf().getFlops();
+#endif
 	}
 
 	nsCopyTime = (uint32_t) params.find_integer("arg.copytime", 0);
-
 	iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 
 	xface_down = -1;

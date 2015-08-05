@@ -26,8 +26,11 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:
+#ifdef HAVE_STDCXX_LAMBDAS
 	std::function<uint64_t()> compute_the_time;
-
+#else
+	uint64_t compute_the_time;
+#endif
 	std::vector<MessageRequest> requests;
 	bool performReduction;
 
