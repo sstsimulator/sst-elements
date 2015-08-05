@@ -42,7 +42,7 @@ class Job:
 
 # Function to run linux commands
 def run(cmd):
-    print(cmd)
+    #print(cmd)
     os.system(cmd)
 
 # Parser for the ember output file and the motifLogs
@@ -119,6 +119,7 @@ def parse_xml (options):
 
     snapshotTime_ = time[0].getElementsByTagName('snapshotTime')[0]
     snapshotTime  = int(snapshotTime_.childNodes[0].data)
+    print
     print "snapshotTime: %d" % snapshotTime
     nextArrivalTime_ = time[0].getElementsByTagName('nextArrivalTime')[0]
     nextArrivalTime  = int(nextArrivalTime_.childNodes[0].data)

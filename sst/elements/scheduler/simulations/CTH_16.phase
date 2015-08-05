@@ -3,4 +3,5 @@ Halo3D iterations=10  nx=4 ny=2 nz=2
 PingPong iterations=100
 Halo2D iterations=10  messagesize=128
 PingPong iterations=100
+Stop
 Fini

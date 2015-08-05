@@ -27,6 +27,7 @@ namespace SST {
                 SnapshotEvent(SimTime_t time, int jobNum) : SST::Event() {
                     this -> time = time;
                     this -> jobNum = jobNum;
+                    this -> nextJobArrivalTime = 0;
                 }
 
                 SimTime_t time;   //current time of the snapshot

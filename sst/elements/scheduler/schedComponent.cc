@@ -494,9 +494,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                     //NetworkSim: if we could not start any job, we will still take a snapshot at t = ignoreUntilTime
                     if (doDetailedNetworkSim && !newJobsStarted && !emberRunningJobs.empty() && getCurrentSimTime() == ignoreUntilTime){
                         // find the closest job arrival time after the current time
-                        std::cout << "Here!" << std::endl;
                         unsigned long NextArrivalTime = 0;
-                        jobNumLastArrived = (int) jobs.size() - 1;
                         for(int i = (jobNumLastArrived + 1); i < (int) jobs.size(); i++){
                             NextArrivalTime = jobs[i]->getArrivalTime();
                             if (NextArrivalTime > ignoreUntilTime){
@@ -732,8 +730,12 @@ void schedComponent::startJob(Job* job)
             }
         }
 
-        //se->nextJobArrivalTime = jobs[job->getJobNum() + 1]->getArrivalTime();
-        std::cout << "Next Job: " << jobs[ii]->getJobNum() << " is arriving at " << se->nextJobArrivalTime << std::endl;
+        if (ii == (int) jobs.size()){
+            std::cout << "All jobs have arrived!" << std::endl;
+        } else {
+            //se->nextJobArrivalTime = jobs[job->getJobNum() + 1]->getArrivalTime();
+            std::cout << "Next Job: " << jobs[ii]->getJobNum() << " is arriving at " << se->nextJobArrivalTime << std::endl;
+        }
         selfLink->send(se);
         std::cout << getCurrentSimTime() << ":Sent snapshot event to self" << std::endl;
     }

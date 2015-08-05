@@ -15,8 +15,16 @@ import numpy as np
 
 # Function to run linux commands
 def run(cmd):
-    print(cmd)
+    #print(cmd)
     os.system(cmd)
+
+def clear_files():
+
+    erFile = open('emberRunning.txt', 'w')
+    ecFile = open('emberCompleted.txt', 'w')
+
+    erFile.close()
+    ecFile.close()
 
 def run_sim (options):
 
@@ -24,16 +32,13 @@ def run_sim (options):
     init_cmd  = "sst ./%s" %(options.schedPythonFile)
     run(init_cmd)
 
-    sched_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
-    run(sched_cmd)
-
     # Do the following in a loop until the simulation is completed
-    # Parse ember output->run scheduler->Parse scheduler snapshot->run ember->...
+    # Parse scheduler snapshot->run ember->Parse ember output->run scheduler->...
     while( is_not_empty(options.xmlFile) ):
-        ember_cmd = "./%s --xml %s --emberOut %s --schedPy %s" %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile)
+        ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
         run(ember_cmd)
 
-        sched_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
+        sched_cmd = "./%s --xml %s --emberOut %s --schedPy %s" %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile)
         run(sched_cmd)
 
 def is_not_empty(fileName):
@@ -56,6 +61,8 @@ def main():
     parser.add_option("--ember_parser",  action='store', dest="ember_parser", help="Name of the file that parses the ember output file and runs scheculer.") 
     (options, args) = parser.parse_args()
 
+    #print is_not_empty(options.xmlFile)
+    clear_files()
     run_sim(options)
     
 
