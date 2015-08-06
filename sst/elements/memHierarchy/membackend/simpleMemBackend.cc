@@ -25,12 +25,12 @@ SimpleMemory::SimpleMemory(Component *comp, Params &params) : MemBackend(comp, p
 
 void SimpleMemory::handleSelfEvent(SST::Event *event){
     MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
-    MemController::DRAMReq *req = ev->req;
+    DRAMReq *req = ev->req;
     ctrl->handleMemResponse(req);
     delete event;
 }
 
-bool SimpleMemory::issueRequest(MemController::DRAMReq *req){
+bool SimpleMemory::issueRequest(DRAMReq *req){
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     ctrl->dbg.debug(_L10_, "Issued transaction for address %" PRIx64 "\n", (Addr)addr);
     self_link->send(1, new MemCtrlEvent(req));

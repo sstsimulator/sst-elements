@@ -22,14 +22,14 @@ class SimpleMemory : public MemBackend {
 public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
-    bool issueRequest(MemController::DRAMReq *req);
+    bool issueRequest(DRAMReq *req);
 private:
     class MemCtrlEvent : public SST::Event {
     public:
-        MemCtrlEvent(MemController::DRAMReq* req) : SST::Event(), req(req)
+        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
         { }
 
-        MemController::DRAMReq *req;
+        DRAMReq *req;
     private:
         friend class boost::serialization::access;
         template<class Archive>

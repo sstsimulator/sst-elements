@@ -33,7 +33,7 @@ namespace MemHierarchy {
 class FlashDIMMSimMemory : public MemBackend {
 public:
     FlashDIMMSimMemory(Component *comp, Params &params);
-    bool issueRequest(MemController::DRAMReq *req);
+    bool issueRequest(DRAMReq *req);
     void clock();
     void finish();
 

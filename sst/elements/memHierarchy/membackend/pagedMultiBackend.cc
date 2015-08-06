@@ -155,7 +155,7 @@ bool pagedMultiMemory::checkAdd(pageInfo &page) {
     }
 }
 
-void pagedMultiMemory::do_FIFO_LRU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping) {  
+void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping) {  
     swapping = 0; 
     if (0 == page.inFast) { 
         // not in fast
@@ -213,7 +213,7 @@ void pagedMultiMemory::do_FIFO_LRU(MemController::DRAMReq *req, pageInfo &page, 
     page.lastTouch = getCurrentSimTimeNano(); // for mrpu       
 }
 
-void pagedMultiMemory::do_LFU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping) {
+void pagedMultiMemory::do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping) {
     const uint64_t pageAddr = (req->baseAddr_ + req->amtInProcess_) >> pageShift;
     swapping = 0;
 
@@ -250,7 +250,7 @@ void pagedMultiMemory::do_LFU(MemController::DRAMReq *req, pageInfo &page, bool 
     }
 }
 
-bool pagedMultiMemory::issueRequest(MemController::DRAMReq *req){
+bool pagedMultiMemory::issueRequest(DRAMReq *req){
     uint64_t pageAddr = (req->baseAddr_ + req->amtInProcess_) >> pageShift;
     bool inFast = 0;
     bool swapping = 0;
@@ -328,7 +328,7 @@ void pagedMultiMemory::finish(){
 
 void pagedMultiMemory::handleSelfEvent(SST::Event *event){
     MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
-    MemController::DRAMReq *req = ev->req;
+    DRAMReq *req = ev->req;
     ctrl->handleMemResponse(req);
     delete event;
 }

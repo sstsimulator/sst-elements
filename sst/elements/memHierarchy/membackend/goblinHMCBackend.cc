@@ -147,7 +147,7 @@ GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : MemB
 	output->verbose(CALL_INFO, 1, 0, "Completed HMC Simulation Backend Initialization.\n");
 }
 
-bool GOBLINHMCSimBackend::issueRequest(MemController::DRAMReq* req) {
+bool GOBLINHMCSimBackend::issueRequest(DRAMReq* req) {
 	// We have run out of tags
 	if(tag_queue.empty()) {
 		output->verbose(CALL_INFO, 4, 0, "Will not issue request this call, tag queue has no free entries.\n");
@@ -303,7 +303,7 @@ void GOBLINHMCSimBackend::processResponses() {
 					} else {
 						HMCSimBackEndReq* matchedReq = locate_tag->second;
 
-						MemController::DRAMReq* orig_req = matchedReq->getRequest();
+						DRAMReq* orig_req = matchedReq->getRequest();
 
 						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: %" PRIu64 ", processing time: %" PRIu64 "ns\n",
 							resp_tag, (orig_req->baseAddr_ + orig_req->amtInProcess_),

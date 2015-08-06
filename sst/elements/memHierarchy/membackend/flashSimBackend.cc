@@ -41,7 +41,7 @@ FlashDIMMSimMemory::FlashDIMMSimMemory(Component *comp, Params &params) : MemBac
     output->verbose(CALL_INFO, 2, 0, "Flash DIMM Backend Initialization complete.\n");
 }
 
-bool FlashDIMMSimMemory::issueRequest(MemController::DRAMReq *req){
+bool FlashDIMMSimMemory::issueRequest(DRAMReq *req){
     // If we are up to the max pending requests, tell controller
     // we will not accept this transaction
     if(pendingRequests == maxPendingRequests) {
@@ -72,13 +72,13 @@ void FlashDIMMSimMemory::finish() {
 }
 
 void FlashDIMMSimMemory::FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
-    std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<DRAMReq *> &reqs = dramReqs[addr];
 
     output->verbose(CALL_INFO, 4, 0, "Backend retiring request for address %" PRIx64 ", Reqs: %" PRIu64 "\n",
 		(Addr) addr, (uint64_t) reqs.size());
 
     assert(reqs.size());
-    MemController::DRAMReq *req = reqs.front();
+    DRAMReq *req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())
         dramReqs.erase(addr);

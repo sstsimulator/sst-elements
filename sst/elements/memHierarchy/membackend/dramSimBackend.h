@@ -33,7 +33,7 @@ namespace MemHierarchy {
 class DRAMSimMemory : public MemBackend {
 public:
     DRAMSimMemory(Component *comp, Params &params);
-    virtual bool issueRequest(MemController::DRAMReq *req);
+    virtual bool issueRequest(DRAMReq *req);
     virtual void clock();
     virtual void finish();
 

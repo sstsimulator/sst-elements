@@ -19,7 +19,8 @@
 #include <iostream>
 #include <map>
 
-#include <sst/elements/memHierarchy/memoryController.h>
+#include "sst/elements/memHierarchy/memoryController.h"
+#include "sst/elements/memHierarchy/DRAMReq.h"
 
 #define NO_STRING_DEFINED "N/A"
 
@@ -48,7 +49,7 @@ public:
 	delete output;
     }
 
-    virtual bool issueRequest(MemController::DRAMReq *req) = 0;
+    virtual bool issueRequest(DRAMReq *req) = 0;
     virtual void setup() {}
     virtual void finish() {}
     virtual void clock() {}

@@ -32,7 +32,7 @@ HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : MemBackend(c
 
 
 
-bool HybridSimMemory::issueRequest(MemController::DRAMReq *req){
+bool HybridSimMemory::issueRequest(DRAMReq *req){
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
 
     bool ok = memSystem->WillAcceptTransaction();
@@ -59,10 +59,10 @@ void HybridSimMemory::finish(){
 
 
 void HybridSimMemory::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
-    std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<DRAMReq *> &reqs = dramReqs[addr];
     ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", addr, reqs.size());
     assert(reqs.size());
-    MemController::DRAMReq *req = reqs.front();
+    DRAMReq *req = reqs.front();
     reqs.pop_front();
     if(reqs.size() == 0)
         dramReqs.erase(addr);

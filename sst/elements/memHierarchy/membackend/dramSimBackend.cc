@@ -46,7 +46,7 @@ DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : MemBackend(comp,
 
 
 
-bool DRAMSimMemory::issueRequest(MemController::DRAMReq *req){
+bool DRAMSimMemory::issueRequest(DRAMReq *req){
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     bool ok = memSystem->willAcceptTransaction(addr);
     if(!ok) return false;
@@ -72,10 +72,10 @@ void DRAMSimMemory::finish(){
 
 
 void DRAMSimMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
-    std::deque<MemController::DRAMReq *> &reqs = dramReqs[addr];
+    std::deque<DRAMReq *> &reqs = dramReqs[addr];
     ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
-    MemController::DRAMReq *req = reqs.front();
+    DRAMReq *req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())
         dramReqs.erase(addr);

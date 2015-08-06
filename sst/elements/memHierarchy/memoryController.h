@@ -29,6 +29,8 @@
 #include "sst/elements/memHierarchy/bus.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/memNIC.h"
+#include "sst/elements/memHierarchy/memResponseHandler.h"
+#include "sst/elements/memHierarchy/DRAMReq.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -36,49 +38,15 @@ namespace MemHierarchy {
 class MemBackend;
 using namespace std;
 
-class MemController : public SST::Component {
+class MemController : public SST::Component, public MemResponseHandler {
 public:
-    struct DRAMReq {
-        enum Status_t {NEW, PROCESSING, RETURNED, DONE};
-
-        MemEvent*   reqEvent_;
-        MemEvent*   respEvent_;
-        int         respSize_;
-        Command     cmd_;
-        uint64_t      size_;
-        uint64_t      amtInProcess_;
-        uint64_t      amtProcessed_;
-        Status_t    status_;
-        Addr        baseAddr_;
-        Addr        addr_;
-        bool        isWrite_;
-
-        DRAMReq(MemEvent *ev, const uint64_t busWidth, const uint64_t cacheLineSize) :
-            reqEvent_(new MemEvent(*ev)), respEvent_(NULL), amtInProcess_(0),
-            amtProcessed_(0), status_(NEW){
-            
-            cmd_      = ev->getCmd();
-            isWrite_  = (cmd_ == PutM) ? true : false;
-            baseAddr_ = ev->getBaseAddr();
-            addr_     = ev->getBaseAddr();
-            setSize(cacheLineSize);
-        }
-
-        ~DRAMReq() { delete reqEvent_; }
-
-        void setSize(uint64_t _size){ size_ = _size; }
-        void setAddr(Addr _baseAddr){ baseAddr_ = _baseAddr; }
-
-    };
-
     MemController(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
     void finish();
 
-    void handleMemResponse(DRAMReq *req);
-
     Output dbg;
+    void handleMemResponse(DRAMReq* _req);
 
 private:
 

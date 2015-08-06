@@ -27,7 +27,7 @@ namespace MemHierarchy {
 
 class HMCSimBackEndReq {
 	public:
-		HMCSimBackEndReq(MemController::DRAMReq* r, uint64_t sTime) :
+		HMCSimBackEndReq(DRAMReq* r, uint64_t sTime) :
 			req(r), startTime(sTime) {}
 		~HMCSimBackEndReq() {}
 
@@ -35,11 +35,11 @@ class HMCSimBackEndReq {
 			return startTime;
 		}
 
-		MemController::DRAMReq* getRequest() const {
+		DRAMReq* getRequest() const {
 			return req;
 		}
 	private:
-		MemController::DRAMReq* req;
+		DRAMReq* req;
 		uint64_t startTime;
 };
 
@@ -49,7 +49,7 @@ public:
 	GOBLINHMCSimBackend() : MemBackend() {};
 	GOBLINHMCSimBackend(Component* comp, Params& params);
 	~GOBLINHMCSimBackend();
-	bool issueRequest(MemController::DRAMReq* req);
+	bool issueRequest(DRAMReq* req);
 	void setup();
 	void finish();
 	void clock();

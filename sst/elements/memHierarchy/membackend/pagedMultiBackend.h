@@ -48,7 +48,7 @@ struct pageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record(const MemController::DRAMReq *req, const bool collectStats) {
+    void record(const DRAMReq *req, const bool collectStats) {
         uint64_t addr = req->baseAddr_ + req->amtInProcess_;
         bool isWrite = req->isWrite_;
         
@@ -130,7 +130,7 @@ struct pageInfo {
 class pagedMultiMemory : public DRAMSimMemory {
 public:
     pagedMultiMemory(Component *comp, Params &params);
-    virtual bool issueRequest(MemController::DRAMReq *req);
+    virtual bool issueRequest(DRAMReq *req);
     virtual void clock();
     virtual void finish();
 
@@ -158,8 +158,8 @@ private:
     pageReplaceStrat_t replaceStrat; 
 
     bool checkAdd(pageInfo &page);
-    void do_FIFO_LRU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
-    void do_LFU(MemController::DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
+    void do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
+    void do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
     
     void printAccStats();
     string accStatsPrefix;
@@ -167,10 +167,10 @@ private:
 
     class MemCtrlEvent : public SST::Event {
     public:
-        MemCtrlEvent(MemController::DRAMReq* req) : SST::Event(), req(req)
+        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
         { }
 
-        MemController::DRAMReq *req;
+        DRAMReq *req;
     private:
         friend class boost::serialization::access;
         template<class Archive>
