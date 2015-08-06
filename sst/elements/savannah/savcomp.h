@@ -22,7 +22,7 @@ using namespace SST::MemHierarchy;
 namespace SST {
 namespace Savannah {
 
-class SavannahComponent : public SST::Component, MemResponseHandler {
+class SavannahComponent : public SST::Component, public MemResponseHandler {
 
 public:
 	SavannahComponent(ComponentId_t id, Params &params);
