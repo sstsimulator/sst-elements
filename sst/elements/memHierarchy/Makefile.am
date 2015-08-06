@@ -59,6 +59,8 @@ libmemHierarchy_la_SOURCES = \
 	dmaEngine.cc \
 	networkMemInspector.h \
 	networkMemInspector.cc \
+	memResponseHandler.h \
+	DRAMReq.h \
 	libmemHierarchy.cc
 
 EXTRA_DIST = \
