@@ -36,6 +36,17 @@ namespace MemHierarchy {
             setSize(cacheLineSize);
         }
 
+        DRAMReq(const uint64_t baseAddress, Command reqCmd, const uint64_t busWidth, const uint64_t cacheLineSize) :
+	    reqEvent_(NULL), respEvent_(NULL), amtInProcess_(0),
+            amtProcessed_(0), status_(NEW) {
+
+	    addr_ = baseAddress;
+            baseAddr_ = baseAddress;
+	    cmd_ = reqCmd;
+            isWrite_  = (cmd_ == PutM) ? true : false;
+            setSize(cacheLineSize);
+        }
+
         ~DRAMReq() { delete reqEvent_; }
 
         void setSize(uint64_t _size){ size_ = _size; }
