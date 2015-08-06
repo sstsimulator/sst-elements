@@ -46,7 +46,7 @@ public:
     void finish();
 
     Output dbg;
-    void handleMemResponse(DRAMReq* _req);
+    virtual void handleMemResponse(DRAMReq* _req);
 
 private:
 

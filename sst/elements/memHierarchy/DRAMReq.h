@@ -7,6 +7,9 @@
 namespace SST {
 namespace MemHierarchy {
 
+    /**
+	Creates a request to DRAM memory backends
+    */
     struct DRAMReq {
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
