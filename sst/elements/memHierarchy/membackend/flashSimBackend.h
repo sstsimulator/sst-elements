@@ -43,7 +43,7 @@ private:
     uint32_t maxPendingRequests;
 
     FDSim::FlashDIMM *memSystem;
-    std::map<uint64_t, std::deque<MemController::DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
 
 };
 
