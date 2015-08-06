@@ -31,8 +31,23 @@ class MemController;
 class MemBackend : public SubComponent {
 public:
     MemBackend();
-    MemBackend(Component *comp, Params &params);
-    virtual ~MemBackend();
+
+    MemBackend(Component *comp, Params &params) :
+	SubComponent(comp) {
+
+	uint32_t verbose = (uint32_t) params.find_integer("verbose", 0);
+    	output = new SST::Output("MemoryBackend[@p:@l]: ", verbose, 0, SST::Output::STDOUT);
+
+    	ctrl = dynamic_cast<MemController*>(comp);
+    	if (!ctrl) {
+        	output->fatal(CALL_INFO, -1, "MemBackends expect to be loaded into MemControllers.\n");
+	}
+    }
+
+    virtual ~MemBackend() {
+	delete output;
+    }
+
     virtual bool issueRequest(MemController::DRAMReq *req) = 0;
     virtual void setup() {}
     virtual void finish() {}
@@ -42,8 +57,6 @@ protected:
     Output* output;
 
 };
-
-
 
 }}
 

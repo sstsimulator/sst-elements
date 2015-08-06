@@ -26,7 +26,6 @@ libmemHierarchy_la_SOURCES = \
 	memoryController.h \
 	memoryController.cc \
         membackend/memBackend.h \
-        membackend/memBackend.cc \
 	membackend/simpleMemBackend.cc \
 	membackend/simpleMemBackend.h \
 	membackend/vaultSimBackend.h \
