@@ -2,8 +2,9 @@
 #ifndef _H_SST_SAVANNAH_EVENT
 #define _H_SST_SAVANNAH_EVENT
 
-#include <sst/elements/memHierarchy/memoryController.h>
-#include <sst/elements/memHierarchy/membackend/memBackend.h>
+#include "sst/elements/memHierarchy/memoryController.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
+#include "sst/elements/memHierarchy/DRAMReq.h"
 
 using namespace SST::MemHierarchy;
 
@@ -12,17 +13,17 @@ namespace Savannah {
 
 class SavannahRequestEvent : public SST::Event {
 public:
-	SavannahRequestEvent(MemController::DRAMReq& req) :
+	SavannahRequestEvent(DRAMReq& req) :
 		request(req) {
 
 		recvLink = 0;
 	};
 
-	MemController::DRAMReq& getRequest() {
+	DRAMReq& getRequest() {
 		return request;
 	}
 
-	MemController::DRAMReq* getRequestPtr() {
+	DRAMReq* getRequestPtr() {
 		return &request;
 	}
 
@@ -35,7 +36,7 @@ public:
 	}
 
 private:
-	MemController::DRAMReq request;
+	DRAMReq request;
 	uint32_t recvLink;
 };
 

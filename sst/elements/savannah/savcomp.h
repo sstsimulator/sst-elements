@@ -8,8 +8,10 @@
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
-#include <sst/elements/memHierarchy/memoryController.h>
-#include <sst/elements/memHierarchy/membackend/memBackend.h>
+#include "sst/elements/memHierarchy/memoryController.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
+#include "sst/elements/memHierarchy/memResponseHandler.h"
+#include "sst/elements/memHierarchy/DRAMReq.h"
 
 #include "savarb.h"
 #include "savevent.h"
@@ -20,13 +22,13 @@ using namespace SST::MemHierarchy;
 namespace SST {
 namespace Savannah {
 
-class SavannahComponent : public SST::Component {
+class SavannahComponent : public SST::Component, MemResponseHandler {
 
 public:
 	SavannahComponent(ComponentId_t id, Params &params);
 	void handleIncomingEvent(SST::Event* ev);
 	bool tick(Cycle_t cycle);
-	void processBackendResponse(MemController::DRAMReq* resp);
+	virtual void handleMemResponse(DRAMReq* resp);
 	~SavannahComponent();
 
 private:
@@ -36,7 +38,7 @@ private:
 
 	SST::Link** incomingLinks;
 	SavannahIssueArbitrator* arbitrator;
-	std::map<MemController::DRAMReq*, SavannahRequestEvent*> linkRequestMap;
+	std::map<DRAMReq*, SavannahRequestEvent*> linkRequestMap;
 	std::queue<SavannahRequestEvent*> reqQueue;
 
 	uint32_t    incomingLinkCount;

@@ -18,7 +18,7 @@ bool SavannahComponent::tick(Cycle_t cycle) {
 			// Set the link we are polling event from
 			savEv->setLink(i);
 
-			linkRequestMap.insert(std::pair<MemController::DRAMReq*,
+			linkRequestMap.insert(std::pair<DRAMReq*,
 				SavannahRequestEvent*>(savEv->getRequestPtr(), savEv));
 		}
 	}
@@ -30,8 +30,8 @@ bool SavannahComponent::tick(Cycle_t cycle) {
 	return false;
 }
 
-void SavannahComponent::processBackendResponse(MemController::DRAMReq* resp) {
-	std::map<MemController::DRAMReq*, SavannahRequestEvent*>::iterator respMatch =
+void SavannahComponent::handleMemResponse(DRAMReq* resp) {
+	std::map<DRAMReq*, SavannahRequestEvent*>::iterator respMatch =
 		linkRequestMap.find(resp);
 
 	if(linkRequestMap.end() == respMatch) {
