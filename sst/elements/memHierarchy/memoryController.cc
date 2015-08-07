@@ -145,7 +145,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     }
     memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
 
-    if(!memBuffer_)         dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
+    if(memBuffer_ == MAP_FAILED) dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
     if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
 
     GetSReqReceived_        = 0;
