@@ -7,7 +7,7 @@ networkParams = {
     "link_lat" : "40ns",
     "input_latency" : "50ns",
     "output_latency" : "50ns",
-    "flitSize" : "2048B",
+    "flitSize" : "8B",
     "buffer_size" : "14KB",
 }
 
