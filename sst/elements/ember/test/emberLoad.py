@@ -121,7 +121,7 @@ if workFlow:
 	workList.append( [jobid, workFlow] )
 	jobid += 1
 
-print "platform: {0}".format( platform )
+print "EMBER: platform: {0}".format( platform )
 
 platNetConfig = {}
 if platform == "default":
@@ -198,9 +198,9 @@ else:
 	sys.exit("how did we get here")
 
 if rtrArb:
-	print "network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,rtrArb)
+	print "EMBER: network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,rtrArb)
 else:
-	print "network: topology={0} shape={1}".format(netTopo,netShape)
+	print "EMBER: network: topology={0} shape={1}".format(netTopo,netShape)
 
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())
@@ -208,13 +208,13 @@ if int(numNodes) == 0:
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
  
-print "numNodes={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
+print "EMBER: numNodes={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
 
 emptyNids = []
 
 if jobid > 0 and rndmPlacement:
 
-	print "random placement"
+	print "EMBER: random placement"
 
 	hermesParams["hermesParams.mapType"] = 'random'
 
@@ -252,7 +252,7 @@ if rndmPlacement and bgPercentage > 0:
     avail = int( topoInfo.getNumNodes() * bgPercentage ) 
     bgMotifs, r = divmod( avail - int(numNodes), 2 )
 
-    print "netAlloced {0}%, bg motifs {1}, mean {2} ns, stddev {3} ns, msgsize {4} bytes".\
+    print "EMBER: netAlloced {0}%, bg motifs {1}, mean {2} ns, stddev {3} ns, msgsize {4} bytes".\
                     format(int(bgPercentage*100),bgMotifs,bgMean,bgStddev,bgMsgSize)
     while ( count < bgMotifs ) :
         workFlow = []
@@ -283,7 +283,7 @@ hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
 emberParams['motifLog'] = embermotifLog
 
-print "network: BW={0} pktSize={1} flitSize={2}".format(
+print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
 
 sst.merlin._params["link_lat"] = networkParams['link_lat']
