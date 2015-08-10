@@ -43,9 +43,9 @@ EmberCMT2DGenerator::EmberCMT2DGenerator(SST::Component* owner, Params& params) 
     	threads = (uint32_t) params.find_integer("arg.threads", 1);
 
     	// Local distribution of elements on each MPI rank
-    	mx = (uint32_t) params.find_integer("arg.x_elementsperproc", 10);
-    	my = (uint32_t) params.find_integer("arg.y_elementsperproc", 10);
-    	mz = (uint32_t) params.find_integer("arg.z_elementsperproc", 10);
+    	mx = (uint32_t) params.find_integer("arg.mx", 10);
+    	my = (uint32_t) params.find_integer("arg.my", 10);
+    	mz = (uint32_t) params.find_integer("arg.mz", 10);
     	nelt  = mx * my * mz; //Default : 1000
 
     	// Calculate computation time in nanoseconds
