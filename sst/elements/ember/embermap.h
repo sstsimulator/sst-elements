@@ -30,11 +30,14 @@ public:
 	virtual void getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
                 int32_t* myX, int32_t* myY, int32_t* myZ) = 0;
 
-        virtual void getPosition(const int32_t rank, const int32_t px, const int32_t py,
+    virtual void getPosition(const int32_t rank, const int32_t px, const int32_t py,
                 int32_t* myX, int32_t* myY) = 0;
 
-        virtual int32_t convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
-                const int32_t posX, const int32_t posY, const int32_t posZ) = 0;
+    virtual int32_t convertPositionToRank(const int32_t px, const int32_t py,
+	                const int32_t myX, const int32_t myY) = 0;
+
+    virtual int32_t convertPositionToRank(const int32_t px, const int32_t py, const int32_t pz,
+	                const int32_t myX, const int32_t myY, const int32_t myZ) = 0;
 
 };
 

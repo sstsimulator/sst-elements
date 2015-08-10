@@ -119,8 +119,10 @@ protected:
 					int32_t* myX, int32_t* myY, int32_t* myZ );	
 	void getPosition( int32_t rank, int32_t px, int32_t py,
                 	int32_t* myX, int32_t* myY);
-	int32_t convertPositionToRank( int32_t peX, int32_t peY, int32_t peZ, 
-    	int32_t posX, int32_t posY, int32_t posZ);	
+	int32_t convertPositionToRank( int32_t px, int32_t py, 
+    	int32_t myX, int32_t myY);	
+	int32_t convertPositionToRank( int32_t px, int32_t py, int32_t pz, 
+    	int32_t myX, int32_t myY, int32_t myZ);	
 
     inline void enQ_barrier( Queue&, Communicator );
     inline void enQ_fini( Queue& );

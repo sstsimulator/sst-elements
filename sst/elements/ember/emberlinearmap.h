@@ -44,13 +44,23 @@ public:
         	*myY = rank / px;
 	}
 
-	int32_t convertPositionToRank(const int32_t peX, const int32_t peY, const int32_t peZ,
-        	const int32_t posX, const int32_t posY, const int32_t posZ) {
+	int32_t convertPositionToRank(const int32_t px, const int32_t py,
+        	const int32_t myX, const int32_t myY) {
 
-        	if( (posX < 0) || (posY < 0) || (posZ < 0) || (posX >= peX) || (posY >= peY) || (posZ >= peZ) ) {
+        	if( (myX < 0) || (myY < 0) || (myX >= px) || (myY >= py) ) {
                 	return -1;
         	} else {
-                	return (posZ * (peX * peY)) + (posY * peX) + posX;
+                	return (myY * px) + myX;
+        	}
+	}
+
+	int32_t convertPositionToRank(const int32_t px, const int32_t py, const int32_t pz,
+        	const int32_t myX, const int32_t myY, const int32_t myZ) {
+
+        	if( (myX < 0) || (myY < 0) || (myZ < 0) || (myX >= px) || (myY >= py) || (myZ >= pz) ) {
+                	return -1;
+        	} else {
+                	return (myZ * (px * py)) + (myY * px) + myX;
         	}
 	}
 

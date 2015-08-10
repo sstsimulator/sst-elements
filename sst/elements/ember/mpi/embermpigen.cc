@@ -108,11 +108,19 @@ void EmberMessagePassingGenerator::getPosition( int32_t rank, int32_t px,
 }
 
 int32_t EmberMessagePassingGenerator::convertPositionToRank( 
-	int32_t peX, int32_t peY, int32_t peZ, 
-	int32_t posX, int32_t posY, int32_t posZ) 
+	int32_t px, int32_t py, int32_t pz, 
+	int32_t myX, int32_t myY, int32_t myZ) 
 {
-    return m_rankMap->convertPositionToRank(peX, peY, peZ, posX, posY, posZ);
+    return m_rankMap->convertPositionToRank(px, py, pz, myX, myY, myZ);
 }
+
+int32_t EmberMessagePassingGenerator::convertPositionToRank( 
+	int32_t px, int32_t py, 
+	int32_t myX, int32_t myY) 
+{
+    return m_rankMap->convertPositionToRank(px, py, myX, myY);
+}
+
 
 void EmberMessagePassingGenerator::completed(const SST::Output* output, 
         uint64_t time ) 

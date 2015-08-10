@@ -50,8 +50,11 @@
 #include "mpi/motifs/embercomm.h"
 #include "mpi/motifs/ember3damr.h"
 #include "mpi/motifs/emberfft3d.h"
+#include "mpi/motifs/embercmt1d.h"
+#include "mpi/motifs/embercmt2d.h"
+#include "mpi/motifs/embercmt3d.h"
+#include "mpi/motifs/embercmtcr.h"
 #include "mpi/motifs/emberstop.h" //NetworkSim: added stop motif
-
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -208,6 +211,26 @@ load_Comm( Component* comp, Params& params ) {
 static SubComponent*
 load_FFT3D( Component* comp, Params& params ) {
 	return new EmberFFT3DGenerator(comp, params);
+}
+
+static SubComponent*
+load_CMT1D( Component* comp, Params& params ) {
+	return new EmberCMT1DGenerator(comp, params);
+}
+
+static SubComponent*
+load_CMT2D( Component* comp, Params& params ) {
+	return new EmberCMT2DGenerator(comp, params);
+}
+
+static SubComponent*
+load_CMT3D( Component* comp, Params& params ) {
+	return new EmberCMT3DGenerator(comp, params);
+}
+
+static SubComponent*
+load_CMTCR( Component* comp, Params& params ) {
+	return new EmberCMTCRGenerator(comp, params);
 }
 
 static SubComponent*
@@ -514,6 +537,66 @@ static const ElementInfoParam naslu_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
 
+static const ElementInfoParam cmt1d_params[] = {
+	{	"arg.iterations",	"Sets the number of data exchanges to perform", "1"},
+	{	"arg.elementsize",	"Sets the number of gridpoints per element", "10"},
+	{	"arg.nelt",		"Sets the number of elements per processor",	"1000"},
+	{	"arg.processorflops",	"Sets the processor flops for compute time estimation",	"4"},
+	{	"arg.processorfreq",	"Sets the processor frequency for compute time estimation", "2.5"},
+	{	"arg.nsComputeMean",	"Sets the mean compute time per processor", "1000"},
+	{	"arg.nsComputeStddev",	"Sets the stddev in compute time per processor", "50"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam cmt2d_params[] = {
+	{	"arg.iterations",	"Sets the number of data exchanges to perform", "1"},
+	{	"arg.elementsize",	"Sets the number of gridpoints per element", "10"},
+	{	"arg.x_elementsperproc","Sets the number of elements per processor in x dim",	"10"},
+	{	"arg.y_elementsperproc","Sets the number of elements per processor in y dim",	"10"},
+	{	"arg.z_elementsperproc","Sets the number of elements per processor in z dim",	"10"},
+	{	"arg.px",		"Sets the size of the processors in the machine in x_dim", "4"},
+	{	"arg.py",		"Sets the size of the processors in the machine in y_dim", "4"},
+	{	"arg.processorflops",	"Sets the processor flops for compute time estimation",	"4"},
+	{	"arg.processorfreq",	"Sets the processor frequency for compute time estimation", "2.5"},
+	{	"arg.nsComputeMean",	"Sets the mean compute time per processor", "1000"},
+	{	"arg.nsComputeStddev",	"Sets the stddev in compute time per processor", "50"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam cmt3d_params[] = {
+	{	"arg.iterations",	"Sets the number of data exchanges to perform", "1"},
+	{	"arg.elementsize",	"Sets the number of gridpoints per element", "10"},
+	{	"arg.px",		"Sets the size of the processors in the machine in x_dim", "8"},
+	{	"arg.py",		"Sets the size of the processors in the machine in y_dim", "8"},
+	{	"arg.pz",		"Sets the size of the processors in the machine in z_dim", "8"},
+	{	"arg.threads",          "Sets the number of MPI threads per processor", "1"},
+	{	"arg.mx",	        "Sets the number of elements per MPI rank in x dim",	"10"},
+	{	"arg.my",	        "Sets the number of elements per MPI rank in y dim",	"10"},
+	{	"arg.mz",	        "Sets the number of elements per MPI rank in z dim",	"10"},
+	{	"arg.processorflops",	"Sets the processor flops for compute time estimation",	"4"},
+	{	"arg.processorfreq",	"Sets the processor frequency for compute time estimation", "2.5"},
+	{	"arg.nsComputeMean",	"Sets the mean compute time per processor", "1000"},
+	{	"arg.nsComputeStddev",	"Sets the stddev in compute time per processor", "50"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam cmtcr_params[] = {
+	{	"arg.iterations",	"Sets the number of data exchanges to perform", "1"},
+	{	"arg.elementsize",	"Sets the number of gridpoints per element", "10"},
+	{	"arg.x_elementsperproc","Sets the number of elements per processor in x dim",	"10"},
+	{	"arg.y_elementsperproc","Sets the number of elements per processor in y dim",	"10"},
+	{	"arg.z_elementsperproc","Sets the number of elements per processor in z dim",	"10"},
+	{	"arg.px",		"Sets the size of the processors in the machine in x_dim", "4"},
+	{	"arg.py",		"Sets the size of the processors in the machine in y_dim", "4"},
+	{	"arg.pz",		"Sets the size of the processors in the machine in z_dim", "4"},
+	{	"arg.processorflops",	"Sets the processor flops for compute time estimation",	"4"},
+	{	"arg.processorfreq",	"Sets the processor frequency for compute time estimation", "2.5"},
+	{	"arg.nsComputeMean",	"Sets the mean compute time per processor", "1000"},
+	{	"arg.nsComputeStddev",	"Sets the stddev in compute time per processor", "50"},
+	{	NULL,	NULL,	NULL	}
+};
+
+
 static const ElementInfoParam init_params[] = {
 	{	NULL,	NULL,	NULL	}
 };
@@ -737,6 +820,38 @@ static const ElementInfoSubComponent subcomponents[] = {
 	naslu_params,
 	emberMotifTime_statistics,
         "SST::Ember::EmberGenerator"
+    },
+    { 	"CMT1DMotif",
+	"Performs nearest neighbor exchange over a linear/1D decomposition",
+	NULL,
+	load_CMT1D,
+	cmt1d_params,
+	emberMotifTime_statistics,
+        "SST::Ember::EmberGenerator"
+    },
+    { 	"CMT2DMotif",
+	"Performs nearest neighbor exchange over a 2D mesh decomposition",
+	NULL,
+	load_CMT2D,
+	cmt2d_params,
+	emberMotifTime_statistics,
+        "SST::Ember::EmberGenerator"
+    },
+    { 	"CMT3DMotif",
+	"Performs nearest neighbor exchange over a 3D machine decomposition",
+	NULL,
+	load_CMT3D,
+	cmt3d_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
+    },
+    { 	"CMTCRMotif",
+	"Performs all-to-all communication using Crystal Router",
+	NULL,
+	load_CMTCR,
+	cmtcr_params,
+	emberMotifTime_statistics,
+    "SST::Ember::EmberGenerator"
     },
     { 	"AlltoallMotif",
 	"Performs a Alltoall operation with type set to float64 and operation SUM",

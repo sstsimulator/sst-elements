@@ -6,8 +6,17 @@ def getWorkFlow( defaults ):
     motif['cmd'] = "Init"
     workFlow.append( motif )
 
+#    motif = dict.copy( defaults )
+#    motif['cmd'] = "CMT1D"
+#    workFlow.append( motif )
+
+#    motif = dict.copy( defaults )
+#    motif['cmd'] = "CMT2D"
+#    workFlow.append( motif )
+
     motif = dict.copy( defaults )
-    motif['cmd'] = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
+    motif['cmd'] = "CMT3D elementsize=12 px=8 py=4 pz=4 threads=1 mx=5 my=5 mz=4 iterations=10000 processorfreq=3.3"
+#    motif['cmd'] = "CMTCR elementsize=10 px=16 py=16 pz=16 iterations=1000"
     workFlow.append( motif )
 
     motif = dict.copy( defaults )
@@ -30,6 +39,6 @@ def getNetwork():
 	#topo = ''
 	#shape = ''
 	topo = 'torus'
-	shape = '4x4x4'
+	shape = '8x4x4'
 
 	return platform, topo, shape 
