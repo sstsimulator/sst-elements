@@ -32,14 +32,20 @@ def run_sim (options):
     init_cmd  = "sst ./%s" %(options.schedPythonFile)
     run(init_cmd)
 
+    #ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
+    ember_cmd = "./%s --xml %s " %(options.sched_parser, options.xmlFile )
+
+    run(ember_cmd)
     # Do the following in a loop until the simulation is completed
     # Parse scheduler snapshot->run ember->Parse ember output->run scheduler->...
+    '''
     while( is_not_empty(options.xmlFile) ):
         ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
         run(ember_cmd)
 
         sched_cmd = "./%s --xml %s --emberOut %s --schedPy %s" %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile)
         run(sched_cmd)
+    '''
 
 def is_not_empty(fileName):
 

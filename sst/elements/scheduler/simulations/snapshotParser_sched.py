@@ -170,6 +170,7 @@ def generate_ember_script (TimeObject, JobObjects):
     # Can parametrize model-options as well later
     execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
     execcommand += " --embermotifLog=/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif"
+    execcommand += " --rankmapper=ember.CustomMap"
     #execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4"
     execcommand += " --loadFile=" + loadfile + "\""
     execcommand += " " + emberLoad + "\n"
