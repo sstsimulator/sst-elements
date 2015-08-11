@@ -213,6 +213,7 @@ void EmberEngine::setup() {
 
     std::ostringstream prefix;
     prefix << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: ";
+    //std::cout << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: " << std::endl; //NetworkSim
 
     output.setPrefix( prefix.str() );
 

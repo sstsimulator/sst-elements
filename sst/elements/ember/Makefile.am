@@ -19,6 +19,7 @@ libember_la_SOURCES = \
 	embergettimeev.cc \
 	emberlinearmap.h \
 	emberlinearmap.h \
+	embercustommap.h \
 	emberdistrib.h \
 	emberdistrib.cc \
 	emberconstdistrib.h \

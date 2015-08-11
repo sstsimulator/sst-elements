@@ -22,6 +22,7 @@ import random
 debug    = 0
 emberVerbose = 0
 embermotifLog = ''
+emberrankmapper = ''
 
 statNodeList = []
 jobid = 0
@@ -59,7 +60,7 @@ try:
 		"debug=","platform=","numNodes=",
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-		"rtrArb=","embermotifLog=",	
+		"rtrArb=","embermotifLog=",	"rankmapper=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
 except getopt.GetopError as err:
@@ -91,6 +92,8 @@ for o, a in opts:
         emberVerbose = a
     elif o in ("--embermotifLog"):
         embermotifLog = a
+    elif o in ("--rankmapper"):
+        emberrankmapper = a
     elif o in ("--netBW"):
         netBW = a
     elif o in ("--netFlitSize"):
@@ -281,7 +284,10 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 emberParams['verbose'] = emberVerbose
-emberParams['motifLog'] = embermotifLog
+if embermotifLog:
+    emberParams['motifLog'] = embermotifLog
+if emberrankmapper:
+    emberParams['rankmapper'] = emberrankmapper
 
 print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])

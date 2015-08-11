@@ -23,6 +23,7 @@
 
 #include "embermap.h"
 #include "emberlinearmap.h"
+#include "embercustommap.h" //NetworkSim: added custom rank map
 #include "mpi/motifs/emberhalo2d.h"
 #include "mpi/motifs/emberhalo2dNBR.h"
 #include "mpi/motifs/emberhalo3d.h"
@@ -112,6 +113,13 @@ static Module*
 load_LinearNodeMap( Component* comp, Params& params ) {
 	return new EmberLinearRankMap(comp, params);
 }
+
+//NetworkSim: added custom map loader
+static Module*
+load_CustomNodeMap( Component* comp, Params& params ) {
+	return new EmberCustomRankMap(comp, params);
+}
+//end->NetworkSim
 
 static SubComponent*
 load_CommDoubling( Component* comp, Params& params ) {
@@ -654,6 +662,14 @@ static const ElementInfoParam linearMapper_params[] = {
 	{	NULL, NULL, NULL 	}
 };
 
+//NetworkSim: added custom mapper params
+static const ElementInfoParam customMapper_params[] = {
+	{	"mapFile",			"Sets the name of the input file for custom map", "customMap.txt" },
+	{	"_mapjobId",		"Sets the jobId for custom map", "-1" },
+	{	NULL, NULL, NULL 	}
+};
+//end->NetworkSim
+
 static const ElementInfoStatistic emberMotifTime_statistics[] = {
     { "time-Init", "Time spent in Init event",          "ns",  0},
     { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
@@ -969,6 +985,15 @@ static const ElementInfoModule modules[] = {
 	NULL,
 	load_LinearNodeMap,
 	linearMapper_params,
+	"SST::Ember::EmberRankMap"
+    },
+    {
+	"CustomMap",
+	"NetworkSim: Performs a custom mapping of MPI ranks based on an input file",
+	NULL,
+	NULL,
+	load_CustomNodeMap,
+	customMapper_params,
 	"SST::Ember::EmberRankMap"
     },
     {   NULL, NULL, NULL, NULL, NULL, NULL, NULL  }
