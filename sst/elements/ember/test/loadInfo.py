@@ -270,7 +270,7 @@ class LoadInfo:
 				nidList = "0-" + str(self.numNodes-1) 
 			
 			if "Null" != cmdList[0]:
-				print "Job: -nidList={0} -ranksPerNode={1} {2}".format( nidList, ranksPerNode, cmdList )
+				print "EMBER: Job: -nidList={0} -ranksPerNode={1} {2}".format( nidList, ranksPerNode, cmdList )
 
 			if  ranksPerNode > self.numCores:
 				sys.exit("Error: " + str(ranksPerNode) + " ranksPerNode is greater than "+
