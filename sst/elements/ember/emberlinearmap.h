@@ -25,8 +25,6 @@ public:
 	EmberLinearRankMap(Component* owner, Params& params) : EmberRankMap(owner, params) {}
 	~EmberLinearRankMap() {}
 
-        int jobId;
-
 	void setEnvironment(const uint32_t rank, const uint32_t worldSize) {};
 	uint32_t mapRank(const uint32_t input) { return input; }
 
