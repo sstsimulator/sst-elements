@@ -37,8 +37,8 @@ public:
                 }
                 readMapFile(mapFile);
                 */
-                TiXmlDocument doc("sample.sim.snapshot.xml");
-                std::cout << "After TiXmlDocument is created." << std::endl;
+                //TiXmlDocument doc("~/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/sample.sim.snapshot.xml");
+                //std::cout << "After TiXmlDocument is created." << std::endl;
             
         }
 	~EmberCustomRankMap() {}

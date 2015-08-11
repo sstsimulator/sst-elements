@@ -67,8 +67,8 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     }
 
     Params mapParams = params.find_prefix_params("rankmap.");
-    //string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
-    string rankMapModule = params.find_string("rankmapper", "ember.CustomMap"); //NetworkSim
+    string rankMapModule = params.find_string("rankmapper", "ember.LinearMap");
+    //string rankMapModule = params.find_string("rankmapper", "ember.CustomMap"); //NetworkSim
 
     //NetworkSim: each job has its own custom map, so pass jobId info
     /*
