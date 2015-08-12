@@ -378,52 +378,8 @@ void Statistics::writeSnapshot(Snapshot *snapshot)
 
     }
 
-
-
-
-
     sprintf(mesg, "</snapshot>\n");
     appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
-
-
-    /*
-    char mesg[100];
-    sprintf(mesg, "Snapshot Time: %" PRIu64 "\nNext Arrival Time: %lu\n",
-            snapshot->getSnapshotTime(),
-            snapshot->getNextArrivalTime());
-    appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
-
-    for(std::map<int, ITMI>::iterator it = snapshot->runningJobs.begin(); it != snapshot->runningJobs.end(); it++){
-        char mesg[100];
-        sprintf(mesg, "\nJob %d: Uses %d nodes:\n",
-                it->first,
-                it->second.i );
-        appendToLog(mesg, supportedLogs[SNAPSHOT].logName);
-
-        //Dump motif file for the job and which motif to start from
-        char mesgM[100];
-        sprintf(mesgM, "MotifFile:%s\nStartingMotif:%d\n",
-                it->second.tmi->job->phaseInfo.phaseFile.c_str(),
-                it->second.tmi->job->phaseInfo.startingMotif);
-        appendToLog(mesgM, supportedLogs[SNAPSHOT].logName);
-
-
-        //Dump node numbers and tasks mapped to each node
-        for(std::map<int, std::vector<int> >::iterator iter = it->second.tmi->nodeToTasks.begin(); iter != it->second.tmi->nodeToTasks.end(); iter++){
-            char mesgN[100];
-            sprintf(mesgN, "%d: ", iter->first);
-            appendToLog(mesgN, supportedLogs[SNAPSHOT].logName);
-
-            char mesgT[100];
-            for(std::vector<int>::iterator iterTask = iter->second.begin(); iterTask != iter->second.end(); iterTask++){
-                sprintf(mesgT, "%d ", *iterTask);
-                appendToLog(mesgT, supportedLogs[SNAPSHOT].logName);
-            }
-            sprintf(mesgT, "\n");
-            appendToLog(mesgT, supportedLogs[SNAPSHOT].logName);
-        }
-    }
-    */
 
 }
 //end->NetworkSim

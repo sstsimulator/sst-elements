@@ -113,12 +113,19 @@ def parse_xml (options):
     
     return (TimeObject, JobObjects)
 
-# Generates a script for ember to run
-def generate_ember_script (TimeObject, JobObjects):
-    
-    loadfile  = "loadfile"
-    emberLoad = "emberLoad.py"
+# Generates necessary files for ember to run
+def generate_ember_files (TimeObject, JobObjects):
 
+    loadfile    = generate_loadfile (TimeObject, JobObjects)
+    mapfile     = generate_mapfile (JobObjects)
+    execcommand = generate_ember_script (TimeObject, JobObjects, loadfile, mapfile)
+
+    return (execcommand)
+
+# Generates a loadfile for ember
+def generate_loadfile (TimeObject, JobObjects):
+
+    loadfile  = "loadfile"
     # Open loadfile to write 
     ldfile = open(loadfile, "w")
 
@@ -158,6 +165,45 @@ def generate_ember_script (TimeObject, JobObjects):
         ldfile.writelines(ldfile_str)
     ldfile.close()
 
+    return (loadfile)
+
+def generate_mapfile (JobObjects):
+
+    mapfile = "mapFile.txt"
+    # Open mapfile to write 
+    mpfile = open(mapfile, "w")
+
+    # Populate mapfile with the job & nodeID & motif info 
+    for Job in JobObjects:
+        mpfile_str = ""
+
+        # Insert Job Start Identifier
+        mpfile_str += "[JOB " + str(Job.jobNum) + " START]\n"
+
+        # Insert Task List for Each Node
+        for nodelist in Job.nodeList:
+            tasklist = nodelist[1]
+
+            for task in tasklist:
+                if(task == tasklist[-1]):
+                    mpfile_str += str(task) + "\n"
+                else:
+                    mpfile_str += str(task) + " "
+
+        # Insert Job End Identifier
+        mpfile_str += "[JOB " + str(Job.jobNum) + " END]\n"
+
+        # Write this job's task map info to the mapfile
+        mpfile.writelines(mpfile_str)
+    mpfile.close()
+
+    return (mapfile)
+
+# Generates a script for ember to run
+def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile):
+    
+    emberLoad = "emberLoad.py"
+    
     # If nextArrivalTime is zero, it means there are no other jobs left to arrive in the future. Do not use stop-at option.
     if TimeObject.nextArrivalTime == 0:
         execcommand = "sst "
@@ -165,7 +211,8 @@ def generate_ember_script (TimeObject, JobObjects):
     else:
         StopAtTime_ = TimeObject.nextArrivalTime - TimeObject.snapshotTime
         StopAtTime  = str(StopAtTime_) + "us"
-        execcommand = "sst --stop-at " + StopAtTime
+        #execcommand = "sst --stop-at " + StopAtTime
+        execcommand = "sst "
     # Generate commandline string to execute
     # Can parametrize model-options as well later
     execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
@@ -205,7 +252,7 @@ def main():
     (options, args) = parser.parse_args()
     
     TimeObject, JobObjects = parse_xml (options = options)
-    execcommand = generate_ember_script (TimeObject, JobObjects)
+    execcommand = generate_ember_files (TimeObject, JobObjects)
     run_ember (execcommand)
 
 if __name__ == '__main__':

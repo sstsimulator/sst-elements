@@ -32,8 +32,8 @@ def run_sim (options):
     init_cmd  = "sst ./%s" %(options.schedPythonFile)
     run(init_cmd)
 
-    #ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
-    ember_cmd = "./%s --xml %s " %(options.sched_parser, options.xmlFile )
+    ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
+    #ember_cmd = "./%s --xml %s " %(options.sched_parser, options.xmlFile )
 
     run(ember_cmd)
     # Do the following in a loop until the simulation is completed
