@@ -157,10 +157,12 @@ class ProcessQueuesState : StateBase< T1 >
             ioVec[0].ptr = &hdr;
             ioVec[0].len = sizeof(hdr);
 
-            if ( &buf[0] ) {
+            if ( length ) {
                 buf.resize( length );
-            }
-            ioVec[1].ptr = &buf[0];
+            	ioVec[1].ptr = &buf[0];
+            } else {
+            	ioVec[1].ptr = NULL; 
+			}
             ioVec[1].len = length;
 
             ProcessQueuesState<T1>::Msg::m_ioVec.push_back( ioVec[1] ); 
