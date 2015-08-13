@@ -171,7 +171,7 @@ bool ReorderLinkControl::isNetworkInitialized() const {
     return link_control->isNetworkInitialized();
 }
 
-int ReorderLinkControl::getEndpointID() const {
+SST::Interfaces::SimpleNetwork::nid_t ReorderLinkControl::getEndpointID() const {
     return link_control->getEndpointID();
 }
 

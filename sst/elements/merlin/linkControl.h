@@ -151,7 +151,7 @@ public:
     inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
 
     inline bool isNetworkInitialized() const { return network_initialized; }
-    inline int getEndpointID() const { return id; }
+    inline nid_t getEndpointID() const { return id; }
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
     

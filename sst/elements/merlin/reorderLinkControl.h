@@ -131,7 +131,7 @@ private:
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
-    HandlerBase* sendFunctor;
+//    HandlerBase* sendFunctor;
     
 public:
     ReorderLinkControl(Component* parent, Params &params);
@@ -173,7 +173,7 @@ public:
     void setNotifyOnSend(HandlerBase* functor);
 
     bool isNetworkInitialized() const;
-    int getEndpointID() const;
+    nid_t getEndpointID() const;
     const UnitAlgebra& getLinkBW() const;
 
     
