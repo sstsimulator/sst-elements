@@ -57,7 +57,7 @@ class FunctionSMInterface : public Module {
     {
         char buffer[100];
 
-        snprintf(buffer,100,"@t:%ld:%sFunc::@p():@l ",
+        snprintf(buffer,100,"@t:%" PRId64 ":%sFunc::@p():@l ",
                     params.find_integer("nodeId"), 
                     m_name.c_str() );
 
