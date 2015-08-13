@@ -11,6 +11,7 @@
 
 #include <sst_config.h>
 #include <sst/core/component.h>
+#include <sst/core/stringize.h> //NetworkSim: included for string operations
 
 #include "embermpigen.h"
 
@@ -72,7 +73,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 
     //NetworkSim: each job has its own custom map, so pass jobId info
     if(!rankMapModule.compare("ember.CustomMap")){
-        Params::value_type addedparam = std::make_pair("_mapjobId", std::to_string( params.find_integer("_jobId")));
+        Params::value_type addedparam = std::make_pair("_mapjobId", to_string( params.find_integer("_jobId")));
         mapParams.insert( addedparam );
         //std::cout << "rankMapModule is: " << rankMapModule.c_str() << std::endl;
     }

@@ -14,6 +14,7 @@
 #define _SST_EMBER_CUSTOM_RANK_MAP
 
 #include "embermap.h"
+#include <sst/core/stringize.h>
 
 #include <fstream>
 #include <sstream>
@@ -57,8 +58,8 @@ public:
                 }
 
                 std::string line;
-                std::string startIdentifier = "[JOB " + std::to_string(jobId) + " START]";
-                std::string endIdentifier = "[JOB " + std::to_string(jobId) + " END]";
+                std::string startIdentifier = "[JOB " + to_string(jobId) + " START]";
+                std::string endIdentifier = "[JOB " + to_string(jobId) + " END]";
                 bool inDesiredRegion = false;
                 int taskNum = 0;
 
@@ -136,10 +137,10 @@ public:
         	if( (posX < 0) || (posY < 0) || (posZ < 0) || (posX >= peX) || (posY >= peY) || (posZ >= peZ) ) {
                 	return -1;
         	} else {
+                        return (posZ * (peX * peY)) + (posY * peX) + posX;
                 	linearMapRank = (posZ * (peX * peY)) + (posY * peX) + posX;
                         //std::cout << "linearMapTaskNum: " << linearMapRank << " customMapTaskNum: " << customMap[linearMapRank] << std::endl;
-                        return (int32_t) customMap[linearMapRank];
-                        //return linearMapRank;
+                        //return (int32_t) customMap[linearMapRank];
         	}
 	}
 
