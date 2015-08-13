@@ -116,7 +116,7 @@ namespace SST {
 		const uint64_t seekOffset = rankIndexOffset + (rank * sizeof(uint64_t));
 
 		output->verbose(CALL_INFO, 16, 0, "Seek file offet: Base=%" PRIu64 ", Rank=%" PRIu32 ", Offset=%" PRIu64 ", File Seek=%" PRIu64 "\n",
-			rankIndexOffset, rank, (rank * sizeof(uint64_t)), seekOffset);
+			rankIndexOffset, rank, (uint64_t)(rank * sizeof(uint64_t)), seekOffset);
 
 		fseek(amrFile, seekOffset, SEEK_SET);
 

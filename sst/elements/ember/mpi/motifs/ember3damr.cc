@@ -96,15 +96,15 @@ void Ember3DAMRGenerator::loadBlocks() {
 	out->verbose(CALL_INFO, 2, 0, "Loaded AMR block information: %" PRIu32 " blocks, %" PRIu32 " max refinement, blocks (X=%" PRIu32 ",Y=%" PRIu32 ",Z=%" PRIu32 ")\n",
 		blockCount, maxLevel, blocksX, blocksY, blocksZ);
 
-	uint32_t blocksOnRank = 0;
-	uint32_t blockID = 0;
-	uint32_t  blockLevel = 0;
-	int32_t  xUp = 0;
-	int32_t  xDown = 0;
-	int32_t  yUp = 0;
-	int32_t  yDown = 0;
-	int32_t  zUp = 0;
-	int32_t  zDown = 0;
+//	uint32_t blocksOnRank = 0;
+//	uint32_t blockID = 0;
+//	uint32_t  blockLevel = 0;
+//	int32_t  xUp = 0;
+//	int32_t  xDown = 0;
+//	int32_t  yUp = 0;
+//	int32_t  yDown = 0;
+//	int32_t  zUp = 0;
+//	int32_t  zDown = 0;
 
 	uint32_t line = 0;
 
@@ -936,7 +936,7 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 
 //		for(uint32_t i = 0; i < localBlocks.size(); ++i) {
 			out->verbose(CALL_INFO, 8, 0, "Loading information for block: %" PRIu32 " out of %" PRIu64 "\n",
-				nextBlockToBeProcessed, localBlocks.size());
+				nextBlockToBeProcessed, (uint64_t)localBlocks.size());
 			Ember3DAMRBlock* currentBlock = localBlocks[nextBlockToBeProcessed];
 
 			out->verbose(CALL_INFO, 16, 0, "Creating communication events for block %" PRIu32 "\n", currentBlock->getBlockID());

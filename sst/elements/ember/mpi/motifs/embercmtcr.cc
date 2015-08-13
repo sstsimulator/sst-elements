@@ -100,7 +100,7 @@ void EmberCMTCRGenerator::configure()
 bool EmberCMTCRGenerator::generate( std::queue<EmberEvent*>& evQ) 
 {
         if (m_loopIndex == 0) { 
-            verbose(CALL_INFO, 2, 0, "rank=%ld, size=%d\n", myID, size()); 
+            verbose(CALL_INFO, 2, 0, "rank=%" PRIu64 ", size=%d\n", myID, size()); 
         }
 
         double nsCompute = m_random->getNextDouble();
