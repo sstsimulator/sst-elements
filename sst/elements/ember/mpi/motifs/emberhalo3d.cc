@@ -118,6 +118,8 @@ void EmberHalo3DGenerator::configure()
 
 	getPosition(rank(), peX, peY, peZ, &my_X, &my_Y, &my_Z);
 
+	//output("My rank is: %" PRIu32 "\n", rank()); // NetworkSim
+
 	y_up    = convertPositionToRank(peX, peY, peZ, my_X, my_Y + 1, my_Z);
 	y_down  = convertPositionToRank(peX, peY, peZ, my_X, my_Y - 1, my_Z);
 	x_up    = convertPositionToRank(peX, peY, peZ, my_X + 1, my_Y, my_Z);

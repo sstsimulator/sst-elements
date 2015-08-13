@@ -30,18 +30,18 @@ public:
 
 	EmberCustomRankMap(Component* owner, Params& params) : EmberRankMap(owner, params) 
         {
-                jobId     = (int) params.find_integer("_mapjobId");
+                jobId    = params.find_string("_mapjobId", "-1");
                 //std::cout << "EmberCustommap: mapjobId: " << jobId << std::endl;
                 mapFile  = params.find_string("mapFile", "mapFile.txt");
                 //std::cout << "EmberCustommap: mapFile: " << mapFile.c_str() << std::endl;
-                if(jobId != -1){
+                if(jobId.compare("-1")){
                         customMap = readMapFile(mapFile);
                 }            
         }
 	~EmberCustomRankMap() {}
 
         // NetworkSim: added variables to construct the custom map
-        int jobId;
+        std::string jobId;
         std::string mapFile;
         std::map<int, int> customMap;
         // end->NetworkSim
@@ -58,8 +58,8 @@ public:
                 }
 
                 std::string line;
-                std::string startIdentifier = "[JOB " + to_string(jobId) + " START]";
-                std::string endIdentifier = "[JOB " + to_string(jobId) + " END]";
+                std::string startIdentifier = "[JOB " + jobId + " START]";
+                std::string endIdentifier = "[JOB " + jobId + " END]";
                 bool inDesiredRegion = false;
                 int taskNum = 0;
 
@@ -93,7 +93,7 @@ public:
                 input.close();
                 
                 for(std::map<int, int>::iterator it = jobMap.begin(); it != jobMap.end(); it++){
-                        std::cout << "linearMapRankNum: " << it->first << " customMapRankNum: " << it->second << std::endl;
+                        //std::cout << "linearMapRankNum: " << it->first << " customMapRankNum: " << it->second << std::endl;
                 }
 
                 return jobMap;
@@ -137,10 +137,10 @@ public:
         	if( (posX < 0) || (posY < 0) || (posZ < 0) || (posX >= peX) || (posY >= peY) || (posZ >= peZ) ) {
                 	return -1;
         	} else {
-                        return (posZ * (peX * peY)) + (posY * peX) + posX;
                 	linearMapRank = (posZ * (peX * peY)) + (posY * peX) + posX;
-                        //std::cout << "linearMapTaskNum: " << linearMapRank << " customMapTaskNum: " << customMap[linearMapRank] << std::endl;
-                        //return (int32_t) customMap[linearMapRank];
+                        std::cout << "linearMapTaskNum: " << linearMapRank << " customMapTaskNum: " << customMap[linearMapRank] << std::endl;
+                        //return (posZ * (peX * peY)) + (posY * peX) + posX;
+                        return (int32_t) customMap[linearMapRank];
         	}
 	}
 
