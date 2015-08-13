@@ -32,9 +32,9 @@ namespace Merlin {
 
 route_test::route_test(ComponentId_t cid, Params& params) :
     Component(cid),
+    sending(false),
     done(false),
-    initialized(false),
-    sending(false)
+    initialized(false)
 {
     id = params.find_integer("id");
     if ( id == -1 ) {
