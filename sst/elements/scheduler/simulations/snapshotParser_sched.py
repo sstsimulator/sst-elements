@@ -25,18 +25,21 @@ class Time:
 
 class Job:
     def __init__(self):
-        self.jobNum     = -1
-        self.nodeList   = []
-        self.numNodes   = -1
-        self.motifFile  = ''
+        self.jobNum        = -1
+        self.nodeList      = []
+        self.numNodes      = -1
+        self.numCores      = -1
+        self.motifFile     = ''
         self.startingMotif = -1
 
     def set(self, jobNum, nodeList, motifFile, startingMotif):
-        self.jobNum = jobNum
-        self.nodeList = nodeList
-        self.numNodes = len(nodeList)
-        self.motifFile = motifFile
+        self.jobNum        = jobNum
+        self.nodeList      = nodeList
+        self.numNodes      = len(nodeList)
+        self.numCores      = len(nodeList[0][1])
+        self.motifFile     = motifFile
         self.startingMotif = startingMotif
+
 
 # Function to run linux commands
 def run(cmd):
@@ -106,18 +109,37 @@ def parse_xml (options):
             NodeList.append(temp)
         #print NodeList
 
+        # Find number of cores per node
+        numCores = len(NodeList[0][1])
+
+        # Sort NodeList to match the desired mapping in ember
+        sortedNodeList = sort_NID(NodeList, numCores)
+
         tempJobObject = Job()
-        tempJobObject.set(jobNum, NodeList, motifFile, startingMotif)
+        tempJobObject.set(jobNum, sortedNodeList, motifFile, startingMotif)
         JobObjects.append(tempJobObject)
     #end
     
     return (TimeObject, JobObjects)
+
+def sort_NID (nodeList, numCores):
+
+    sorted_nodeList = [[] for i in range(len(nodeList))]
+
+    for node in nodeList:
+        index = node[1][0] / numCores
+        sorted_nodeList[index] = node
+        #print "First Task Num: %s Index: %s" % (node[1][0], index)
+        #print sorted_nodeList[index]
+
+    return (sorted_nodeList)
 
 # Generates necessary files for ember to run
 def generate_ember_files (TimeObject, JobObjects):
 
     loadfile    = generate_loadfile (TimeObject, JobObjects)
     mapfile     = generate_mapfile (JobObjects)
+    #mapfile = "mapFile.txt"
     execcommand = generate_ember_script (TimeObject, JobObjects, loadfile, mapfile)
 
     return (execcommand)
@@ -141,7 +163,7 @@ def generate_loadfile (TimeObject, JobObjects):
         # Insert Job Number
         ldfile_str += J_KEY + str(Job.jobNum) + "\n\n"
 
-        # Insert NodeID List
+        # Insert Sorted NodeID List
         ldfile_str += N_KEY
         for nodelist in Job.nodeList:
             if(nodelist == Job.nodeList[-1]):
