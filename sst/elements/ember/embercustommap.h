@@ -14,7 +14,6 @@
 #define _SST_EMBER_CUSTOM_RANK_MAP
 
 #include "embermap.h"
-#include <sst/core/stringize.h>
 
 #include <fstream>
 #include <sstream>
@@ -35,7 +34,7 @@ public:
                 mapFile  = params.find_string("mapFile", "mapFile.txt");
                 //std::cout << "EmberCustommap: mapFile: " << mapFile.c_str() << std::endl;
                 if(jobId.compare("-1")){
-                        customMap = readMapFile(mapFile);
+                        readMapFile(mapFile);
                 }            
         }
 	~EmberCustomRankMap() {}
@@ -43,12 +42,12 @@ public:
         // NetworkSim: added variables to construct the custom map
         std::string jobId;
         std::string mapFile;
-        std::map<int, int> customMap;
+        std::map<int, int> CustomMap;
+        std::map<int, int> InvCustomMap;
         // end->NetworkSim
 
         //NetworkSim: function that reads the custom mapping of the job with _mapjobId
-        std::map<int, int> readMapFile(std::string fileName) {
-                std::map<int, int> jobMap;
+        void readMapFile(std::string fileName) {
 
                 std::ifstream input;
                 input.open( fileName.c_str() );
@@ -82,7 +81,8 @@ public:
 
                                 is >> nextStr;
                                 while(!nextStr.empty()){
-                                        jobMap[taskNum] = std::stoi(nextStr);
+                                        CustomMap[taskNum] = std::stoi(nextStr);
+                                        InvCustomMap[std::stoi(nextStr)] = taskNum;
                                         taskNum++;
                                         if(!(is >> nextStr)){
                                                 break;
@@ -92,11 +92,11 @@ public:
                 }
                 input.close();
                 
-                for(std::map<int, int>::iterator it = jobMap.begin(); it != jobMap.end(); it++){
-                        //std::cout << "linearMapRankNum: " << it->first << " customMapRankNum: " << it->second << std::endl;
+                /*
+                for(std::map<int, int>::iterator it = CustomMap.begin(); it != CustomMap.end(); it++){
+                        std::cout << "linearMapRankNum: " << it->first << " customMapRankNum: " << it->second << std::endl;
                 }
-
-                return jobMap;
+                */
         }
 
 	void setEnvironment(const uint32_t rank, const uint32_t worldSize) {};
@@ -105,11 +105,18 @@ public:
 	void getPosition(const int32_t rank, const int32_t px, const int32_t py, const int32_t pz,
                 int32_t* myX, int32_t* myY, int32_t* myZ) {
 
-        	const int32_t my_plane  = rank % (px * py);
+                int32_t customRank = (int32_t) InvCustomMap[rank];
+                
+                //std::cout << "rank: " << rank << " customRank: " << customRank << std::endl;
+
+
+        	//const int32_t my_plane  = rank % (px * py);
+                const int32_t my_plane  = customRank % (px * py);
         	*myY                    = my_plane / px;
         	const int32_t remain    = my_plane % px;
         	*myX                    = remain != 0 ? remain : 0;
-        	*myZ                    = rank / (px * py);
+        	//*myZ                    = rank / (px * py);
+                *myZ                    = customRank / (px * py);
 	}
 
 	void getPosition(const int32_t rank, const int32_t px, const int32_t py,
@@ -138,9 +145,9 @@ public:
                 	return -1;
         	} else {
                 	linearMapRank = (posZ * (peX * peY)) + (posY * peX) + posX;
-                        std::cout << "linearMapTaskNum: " << linearMapRank << " customMapTaskNum: " << customMap[linearMapRank] << std::endl;
+                        //std::cout << "linearMapTaskNum: " << linearMapRank << " customMapTaskNum: " << CustomMap[linearMapRank] << std::endl;
                         //return (posZ * (peX * peY)) + (posY * peX) + posX;
-                        return (int32_t) customMap[linearMapRank];
+                        return (int32_t) CustomMap[linearMapRank];
         	}
 	}
 

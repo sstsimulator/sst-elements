@@ -11,7 +11,6 @@
 
 #include <sst_config.h>
 #include <sst/core/component.h>
-#include <sst/core/stringize.h> //NetworkSim: included for string operations
 
 #include "embermpigen.h"
 
