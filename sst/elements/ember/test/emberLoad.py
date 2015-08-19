@@ -1,6 +1,5 @@
 
 import sys,getopt
-sys.path.insert(0, '/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/ember/test')
 import defaultParams
 import defaultSim
 import chamaOpenIBParams

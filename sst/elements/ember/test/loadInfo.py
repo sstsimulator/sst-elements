@@ -1,6 +1,7 @@
-
 import sst
 from sst.merlin import *
+
+import copy
 
 def calcNetMapId( nodeId, nidList ):
 
@@ -75,7 +76,7 @@ class EmberEP( EndPoint ):
         self.nidList = nidList
         self.numNids = calcNetMapSize( self.nidList )
         # in order to create motifLog files only for the desired nodes of a job
-        self.motifLogNodes = motifLogNodes 
+        self.motifLogNodes = motifLogNodes
 
     def getName( self ):
         return "EmberEP"
@@ -115,11 +116,11 @@ class EmberEP( EndPoint ):
                 				logCreatedforFirstCore = True
                 				ep.addParams(self.driverParams)
                 			else:
-                				tempParams = self.driverParams
+                				tempParams = copy.copy(self.driverParams)
                 				del tempParams['motifLog']
                 				ep.addParams(tempParams)
                 	else:
-                		tempParams = self.driverParams
+                		tempParams = copy.copy(self.driverParams)
                 		del tempParams['motifLog']
                 		ep.addParams(tempParams)
                 else:
