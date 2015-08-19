@@ -41,7 +41,7 @@ class ProcessQueuesState : StateBase< T1 >
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
-        for ( int i = 0; i < MinPostedShortBuffers; i++ ) {
+        for ( unsigned long i = 0; i < MinPostedShortBuffers; i++ ) {
             postShortRecvBuffer();
         }
     }

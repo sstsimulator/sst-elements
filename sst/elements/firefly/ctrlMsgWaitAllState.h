@@ -72,7 +72,7 @@ bool WaitAllState<T1>::unblock()
 {
     dbg().verbose(CALL_INFO,1,1,"%lu\n",m_reqs.size());
 
-    for ( int i = 0; i < m_reqs.size(); i++ ) {
+    for ( size_t i = 0; i < m_reqs.size(); i++ ) {
         if ( m_reqs[i]->req->isDone() ) {
             dbg().verbose(CALL_INFO,2,1,"delete CommReq %p\n",m_reqs[i]->req);
             delete m_reqs[i]->req;

@@ -17,7 +17,7 @@ using namespace SST;
 using namespace SST::Firefly;
 using namespace SST::Interfaces;
 
-static void print( Output& dbg, char* buf, int len );
+//static void print( Output& dbg, char* buf, int len );
 
 const char* Nic::SendMachine::m_enumName[] = {
     FOREACH_ENUM(GENERATE_STRING)
@@ -165,14 +165,14 @@ Nic::SendMachine::State Nic::SendMachine::processSend( SendEntry* entry )
     return Idle;
 }
 
-static void print( Output& dbg, char* buf, int len )
-{
-    std::string tmp;
-    dbg.verbose(CALL_INFO,4,1,"addr=%p len=%d\n",buf,len);
-    for ( int i = 0; i < len; i++ ) {
-        dbg.verbose(CALL_INFO,3,1,"%#03x\n",(unsigned char)buf[i]);
-    }
-}
+//static void print( Output& dbg, char* buf, int len )
+//{
+//    std::string tmp;
+//    dbg.verbose(CALL_INFO,4,1,"addr=%p len=%d\n",buf,len);
+//    for ( int i = 0; i < len; i++ ) {
+//        dbg.verbose(CALL_INFO,3,1,"%#03x\n",(unsigned char)buf[i]);
+//    }
+//}
 
 bool  Nic::SendMachine::copyOut( Output& dbg,
                     FireflyNetworkEvent& event, Nic::Entry& entry )
