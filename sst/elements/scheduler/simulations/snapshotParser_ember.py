@@ -2,7 +2,7 @@
 '''
 Date        : 07/31/2015  
 Created by  : Fulya Kaplan
-Description : This script parses the ember output file. It then creates input files & run script for scheduler simulation and runs it. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
+Description : This sub-python script parses the ember output file. It then creates input files & run script for scheduler simulation and runs it. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
 '''
 
 import os, sys
@@ -88,7 +88,9 @@ def grep_timeInfo(string, mode):
 # Converts the units for the time info to microseconds
 def convertToMicro(number, unit):
 
-    if (unit == 's'):
+    if (unit == 'Ks'):
+        convertedNum = number*1000000000
+    elif (unit == 's'):
         convertedNum = number*1000000
     elif (unit == 'ms'):
         convertedNum = number*1000
@@ -97,7 +99,7 @@ def convertToMicro(number, unit):
     elif (unit == 'ns'):
         convertedNum = float(number/1000)
     else:
-        print "ERROR: Valid time units: [s | ms | us | ns]"
+        print "ERROR: Valid time units: [Ks | s | ms | us | ns]"
         sys.exit(0)
 
     return (convertedNum)
@@ -190,7 +192,7 @@ def generate_scheduler_inputs (InfoPair, TimeObject, JobObjects):
 
             # Read motifLogs to get the current motif number from ember
             motifLog = motifLogprefix + str(Job.jobNum) + ".log"
-            print motifLog
+            #print motifLog
             mFile    = open(motifLog, 'r')
             emberMotifNum = -1
 
@@ -209,11 +211,11 @@ def generate_scheduler_inputs (InfoPair, TimeObject, JobObjects):
                 emberMotifNum -= 1
 
 
-            print emberMotifNum
+            #print emberMotifNum
             mFile.close()
 
             # Write the updated time and motif counts
-            line = "job\t%d\t%d\t%d\n" % (Job.jobNum, (Job.soFarRunningTime + emberTime), (Job.startingMotif + emberMotifNum) ) # Fix this! motif count from ember + starting motif
+            line = "job\t%d\t%d\t%d\n" % (Job.jobNum, (Job.soFarRunningTime + emberTime), (Job.startingMotif + emberMotifNum) )
             erFile.writelines(line)
 
     ecFile.close()

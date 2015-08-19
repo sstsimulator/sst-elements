@@ -1,0 +1,13 @@
+0 288 55000 -1 mesh 9 8 4 phase CTH_288.phase
+14600 288 55000 -1 mesh 9 8 4 phase CTH_288.phase
+255740 128 45000 -1 mesh 8 4 4 phase CTH_128.phase
+266130 128 45000 -1 mesh 8 4 4 phase CTH_128.phase
+273310 64 35000 -1 mesh 4 4 4 phase CTH_64.phase
+279680 256 54000 -1 mesh 8 8 4 phase CTH_256.phase
+279890 256 54000 -1 phase CTH_256.phase
+280430 64 35000 -1 phase CTH_64.phase
+282550 128 45000 -1 phase CTH_128.phase
+295390 32 27000 -1 mesh 4 4 2 phase CTH_32.phase
+296160 32 27000 -1 phase CTH_32.phase
+303040 16 18000 -1 mesh 4 2 2 phase CTH_16.phase
+305420 16 18000 -1 phase CTH_16.phase

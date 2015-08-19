@@ -2,7 +2,7 @@
 '''
 Date        : 07/17/2015  
 Created by  : Fulya Kaplan
-Description : This script parses the snapshot xml file that is dumped by the scheduler. It then creates a runscript for ember simulation and runs the script. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
+Description : This sub-python script parses the snapshot xml file that is dumped by the scheduler. It then creates a runscript for ember simulation and runs the script. Created specifically for detailed simulation of network congestion together with scheduling & application task mapping algorithms.
 '''
 
 import os, sys
@@ -138,8 +138,8 @@ def sort_NID (nodeList, numCores):
 def generate_ember_files (TimeObject, JobObjects):
 
     loadfile    = generate_loadfile (TimeObject, JobObjects)
-    mapfile     = generate_mapfile (JobObjects)
-    #mapfile = "mapFile.txt"
+    #mapfile     = generate_mapfile (JobObjects)
+    mapfile = "mapFile.txt"
     execcommand = generate_ember_script (TimeObject, JobObjects, loadfile, mapfile)
 
     return (execcommand)
@@ -233,14 +233,13 @@ def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile):
     else:
         StopAtTime_ = TimeObject.nextArrivalTime - TimeObject.snapshotTime
         StopAtTime  = str(StopAtTime_) + "us"
-        #execcommand = "sst --stop-at " + StopAtTime
-        execcommand = "sst "
+        execcommand = "sst --stop-at " + StopAtTime
     # Generate commandline string to execute
     # Can parametrize model-options as well later
-    execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
+    #execcommand += " --model-options=\"--topo=torus --shape=5x4x4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
+    execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4 --netFlitSize=8B --netPktSize=1024B --netBW=4GB/s --emberVerbose=0 --printStats=1"
     execcommand += " --embermotifLog=/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif"
     execcommand += " --rankmapper=ember.CustomMap"
-    #execcommand += " --model-options=\"--topo=dragonfly --shape=7:2:2:4 --numCores=4"
     execcommand += " --loadFile=" + loadfile + "\""
     execcommand += " " + emberLoad + "\n"
 
@@ -250,22 +249,6 @@ def generate_ember_script (TimeObject, JobObjects, loadfile, mapfile):
 def run_ember (execcommand):
 
     run(execcommand)
-
-    # Use the code below if you want to generate a separate shell file to run ember
-    '''
-    print(execcommand)
-    shfile = "./runEmber.sh"
-    print(shfile)
-    shellfile = open(shfile, "w")
-    print(shellfile)
-    shellfile.writelines(execcommand)
-    shellfile.close()
-
-    cmd  = "chmod +x %s" % shfile
-    run(cmd)
-    cmd  = "%s" % shfile
-    run(cmd)
-    '''
 
 def main():
 

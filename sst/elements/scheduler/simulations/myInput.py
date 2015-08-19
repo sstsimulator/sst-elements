@@ -7,8 +7,8 @@ sst.setProgramOption("run-mode", "both")
 # Define the simulation components
 scheduler = sst.Component("myScheduler",             "scheduler.schedComponent")
 scheduler.addParams({
-      "traceName" : "sample.sim",
-      "machine" : "mesh[5,4,4]",
+      "traceName" : "test_DetailedNetwork.sim",
+      "machine" : "mesh[6,4,3]",
       "coresPerNode" : "4",
       "scheduler" : "easy",
       "allocator" : "bestfit",
@@ -308,38 +308,7 @@ n71 = sst.Component("n71", "scheduler.nodeComponent")
 n71.addParams({
       "nodeNum" : "71",
 })
-n72 = sst.Component("n72", "scheduler.nodeComponent")
-n72.addParams({
-      "nodeNum" : "72",
-})
-n73 = sst.Component("n73", "scheduler.nodeComponent")
-n73.addParams({
-      "nodeNum" : "73",
-})
-n74 = sst.Component("n74", "scheduler.nodeComponent")
-n74.addParams({
-      "nodeNum" : "74",
-})
-n75 = sst.Component("n75", "scheduler.nodeComponent")
-n75.addParams({
-      "nodeNum" : "75",
-})
-n76 = sst.Component("n76", "scheduler.nodeComponent")
-n76.addParams({
-      "nodeNum" : "76",
-})
-n77 = sst.Component("n77", "scheduler.nodeComponent")
-n77.addParams({
-      "nodeNum" : "77",
-})
-n78 = sst.Component("n78", "scheduler.nodeComponent")
-n78.addParams({
-      "nodeNum" : "78",
-})
-n79 = sst.Component("n79", "scheduler.nodeComponent")
-n79.addParams({
-      "nodeNum" : "79",
-})
+
 
 # define links
 l0 = sst.Link("l0")
@@ -486,20 +455,3 @@ l70 = sst.Link("l70")
 l70.connect( (scheduler, "nodeLink70", "0 ns"), (n70, "Scheduler", "0 ns") )
 l71 = sst.Link("l71")
 l71.connect( (scheduler, "nodeLink71", "0 ns"), (n71, "Scheduler", "0 ns") )
-l72 = sst.Link("l72")
-l72.connect( (scheduler, "nodeLink72", "0 ns"), (n72, "Scheduler", "0 ns") )
-l73 = sst.Link("l73")
-l73.connect( (scheduler, "nodeLink73", "0 ns"), (n73, "Scheduler", "0 ns") )
-l74 = sst.Link("l74")
-l74.connect( (scheduler, "nodeLink74", "0 ns"), (n74, "Scheduler", "0 ns") )
-l75 = sst.Link("l75")
-l75.connect( (scheduler, "nodeLink75", "0 ns"), (n75, "Scheduler", "0 ns") )
-l76 = sst.Link("l76")
-l76.connect( (scheduler, "nodeLink76", "0 ns"), (n76, "Scheduler", "0 ns") )
-l77 = sst.Link("l77")
-l77.connect( (scheduler, "nodeLink77", "0 ns"), (n77, "Scheduler", "0 ns") )
-l78 = sst.Link("l78")
-l78.connect( (scheduler, "nodeLink78", "0 ns"), (n78, "Scheduler", "0 ns") )
-l79 = sst.Link("l79")
-l79.connect( (scheduler, "nodeLink79", "0 ns"), (n79, "Scheduler", "0 ns") )
-

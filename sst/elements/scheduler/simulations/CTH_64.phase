@@ -1,0 +1,23 @@
+Init
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Halo3D iterations=19 computetime=132754 doreduce=0 nx=4 ny=4 nz=4
+Allreduce iterations=78 compute=0
+Stop
+Fini

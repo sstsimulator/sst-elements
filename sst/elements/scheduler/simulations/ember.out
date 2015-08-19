@@ -1,42 +1,6 @@
 platform: default
-network: topology=torus shape=5x4x4
-numNodes=80 numNics=80
+network: topology=dragonfly shape=7:2:2:4
+numNodes=72 numNics=72
 Ember params are:
 {'verbose': '0', 'os.module': 'firefly.hades', 'motifLog': '/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif', 'api.0.module': 'firefly.hadesMP', 'os.name': 'hermesParams', 'rankmapper': 'ember.CustomMap'}
 network: BW=4GB/s pktSize=1024B flitSize=8B
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['Init']
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['Halo3D', 'iterations=10', 'nx=4', 'ny=2', 'nz=2']
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['PingPong', 'iterations=100']
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['Halo2D', 'iterations=10', 'messagesize=128']
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['PingPong', 'iterations=100']
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['Stop']
-EMBER: Job: -nidList=0,1,2,3 -ranksPerNode=4 ['Fini']
-Halo3D processor decomposition solution: 4x4x1
-Halo3D problem size: 4x2x2
-Halo3D compute time: 41 ns
-Halo3D copy time: 0 ns
-Halo3D iterations: 10
-Halo3D iterms/cell: 1
-Halo3D do reduction: 1
-rank2=1 messageSize=1024 iterations=100
-PingPong: otherRank 1, total time 120.359 us, loop 100, bufLen 1024, latency 0.602 us. bandwidth 1.701576 GB/s
-rank2=1 messageSize=1024 iterations=100
-PingPong: otherRank 1, total time 151.550 us, loop 100, bufLen 1024, latency 0.758 us. bandwidth 1.351369 GB/s
-Stop: ranks 16, loop 1, latency 1.464 us
-Job Finished: JobNum:12 Time:437 us
-FATAL: 437431000:12:0:EmberEngine:generate:39: Job 12 finished at time: 437 us
-SST Fatal Backtrace Information:
-    0 : sst(_ZNK3SST6Output5fatalEjPKcS2_jS2_z+0x24e) [0x6465fe]
-    1 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZNK3SST5Ember14EmberGenerator5fatalEjPKcS3_jS3_z+0xe0) [0x7fbfb53d1d20]
-    2 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZN3SST5Ember18EmberStopGenerator8generateERSt5queueIPNS0_10EmberEventESt5dequeIS4_SaIS4_EEE+0x5ae) [0x7fbfb5446a6e]
-    3 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZN3SST5Ember11EmberEngine14issueNextEventEm+0x1b0) [0x7fbfb53dbec0]
-    4 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZN3SST5Ember11EmberEngine11handleEventEPNS_5EventE+0x151) [0x7fbfb53dc101]
-    5 : sst(_ZN3SST10Simulation3runEv+0x196) [0x64d036]
-    6 : sst(main+0x23c4) [0x5c5d24]
-    7 : /lib64/libc.so.6(__libc_start_main+0xfd) [0x3ed401ed5d]
-    8 : sst() [0x5c2f19]
-
-snapshotTime: 30542000000
-nextArrivalTime: 0
-***Currently Running Jobs***
-Job Number: 12
