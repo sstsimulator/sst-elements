@@ -34,6 +34,11 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     //std::cout << "Job:" << getJobId() << " Rank:" << rank() << std::endl;//NetworkSim
 }
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
+#endif
+
 void EmberGenerator::fatal(uint32_t line, const char* file, const char* func,
                uint32_t exit_code,
                const char* format, ...)    const
@@ -68,6 +73,10 @@ void EmberGenerator::verbose(uint32_t line, const char* file, const char* func,
 	m_output->verbosePrefix( m_verbosePrefix.str().c_str(), line, file, func,
 											output_level, output_bits, buf ); 
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 void* EmberGenerator::memAlloc( size_t size )
 {

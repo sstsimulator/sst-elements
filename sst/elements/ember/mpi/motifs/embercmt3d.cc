@@ -54,7 +54,7 @@ EmberCMT3DGenerator::EmberCMT3DGenerator(SST::Component* owner, Params& params) 
 
     	// Calculate computation time in nanoseconds
     	procFlops = (uint64_t) params.find_integer("arg.processorflops", 4); // Nehalem 4 DP FLOPS/cycle
-    	procFreq = (uint64_t) params.find_integer("arg.processorfreq", 2.5);
+    	procFreq = (uint64_t) params.find_integer("arg.processorfreq", 2);
     	const int64_t flopCount	= pow(eltSize, 3) * (nelt) * (2*eltSize-1); // Not assuming FMAs
     	const double time = (double)flopCount / ( (double)procFlops * (double)procFreq ); //Time in ns
 
