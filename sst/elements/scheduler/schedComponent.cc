@@ -642,11 +642,8 @@ void schedComponent::startJob(Job* job)
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
-    //NetworkSim: create phaseParser and read phase files
+    //NetworkSim: update startingMotif for the jobs that are still running on ember
     if (doDetailedNetworkSim == true){
-        PhaseParser phaseParser = PhaseParser();
-        phaseParser.parsePhase(job);
-        // update startingMotif for the jobs that are still running on ember
         if(emberRunningJobs.find(job->getJobNum()) != emberRunningJobs.end()){
             job->phaseInfo.soFarRunningTime = emberRunningJobs[job->getJobNum()].first;
             job->phaseInfo.startingMotif = emberRunningJobs[job->getJobNum()].second;

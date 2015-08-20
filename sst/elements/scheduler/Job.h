@@ -81,14 +81,8 @@ namespace SST {
 
                 //NetworkSim: added Phase info struct for jobs
                 struct PhaseInfo{
-                    PhaseInfo() : commRatio(0.2) {}
+                    PhaseInfo() : startingMotif(0), soFarRunningTime(0) {}
                     std::string phaseFile;
-                    int numBoundaryExchanges; //per time step
-                    int numAllReduces;        //per time step
-                    unsigned long numTimeSteps;         //total number of time steps
-                    double commRatio;         //communication time / total time
-                    int intraNodeCommDelay;   //constant delay (in ns) for tasks communicating within the node
-                    unsigned long computeTime;          //per time step
                     int startingMotif; // the Motif to start from in the next simulation
                     unsigned long soFarRunningTime; // the cumulative time that the job has run on ember so far (for jobs that are still running)
                 }phaseInfo;

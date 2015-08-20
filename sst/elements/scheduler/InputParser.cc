@@ -435,63 +435,6 @@ void CommParser::parseComm(Job * job)
     }
 }
 
-//NetworkSim: added phase parser
-void PhaseParser::parsePhase(Job * job)
-{
-    readPhaseFile(job);
-    //std::cout << "numboundary:" << job->phaseInfo.numBoundaryExchanges << " numallreduce:" << job->phaseInfo.numAllReduces << " numtimestep:" << job->phaseInfo.numTimeSteps << " commratio:" << job->phaseInfo.commRatio << " intraNodeCommDelay:" << job->phaseInfo.intraNodeCommDelay << std:: endl;
-}
-//end->NetworkSim
-
-//NetworkSim: added phase file reader
-void PhaseParser::readPhaseFile(Job *job)
-{
-    Job::PhaseInfo phaseInfo = job->phaseInfo;
-    std::string fileName = phaseInfo.phaseFile;
-
-    ifstream input;
-    input.open( fileName.c_str() );
-    if(!input.is_open()){
-        schedout.fatal(CALL_INFO, 1, "Unable to open job phase file: %s\n", fileName.c_str());
-    }
-
-    //read line by line
-    string line;
-    while (!input.eof()) {
-        getline(input, line);
-        std::stringstream is(line);
-        string nextStr = "";
-        is >> nextStr;
-        while(!nextStr.empty()){
-            if(nextStr.compare("numBoundaryExchanges") == 0){
-                is >> phaseInfo.numBoundaryExchanges;     
-            } else if (nextStr.compare("numAllReduces") == 0){
-                is >> phaseInfo.numAllReduces;
-            } else if (nextStr.compare("numTimeSteps") == 0){
-                is >> phaseInfo.numTimeSteps;
-            } else if (nextStr.compare("commRatio") == 0){
-                is >> phaseInfo.commRatio;
-            } else if (nextStr.compare("intraNodeCommDelay") == 0){
-                is >> phaseInfo.intraNodeCommDelay;
-            } else {
-                //schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
-            }
-            if(!(is >> nextStr)){
-                break;
-            }
-        }
-    }
-
-    phaseInfo.startingMotif = 0;
-    phaseInfo.soFarRunningTime = 0;
-
-    phaseInfo.computeTime = job->actualRunningTime * (1 - phaseInfo.commRatio) / (phaseInfo.numTimeSteps); // compute time per time step
-
-    input.close();
-    job->phaseInfo = phaseInfo; // update te job phase Info
-}
-//end->NetworkSim
-
 std::vector<std::map<int,int> >* CommParser::readCommFile(std::string fileName, int procsNeeded)
 {
     //read matrix

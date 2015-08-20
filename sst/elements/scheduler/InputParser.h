@@ -85,17 +85,6 @@ namespace SST {
                 double** readCoordFile(std::string fileName, int procsNeeded);
         };
         
-        //NetworkSim: added the phase parser
-        class PhaseParser {
-            public:
-                PhaseParser() {}
-                ~PhaseParser() {}
-                void parsePhase(Job *job);
-            private:
-                void readPhaseFile(Job *job);
-        };
-        //end->NetworkSim
-
         class DParser {
             public:
                 DParser(int numNodes,
