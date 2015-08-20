@@ -1,0 +1,60 @@
+------------------------------------------------------------------------------
+    Overview of the Detailed Network Simulation Infrastructure 
+------------------------------------------------------------------------------
+
+
+
+
+------------------------------------------------------------------------------
+    How to Run The Scheduler Component with Detailed Network Simulation in SST
+------------------------------------------------------------------------------
+
+The files that are used by the detailed simulation infrastructure can be grouped into 4 categories: (i) Input files that are provided by the user, (ii) intermediate files that are generated and updated during the simulation, (iii) output files, (iv) python scripts that provide the interface between scheduler & ember simulations and run them. Next, we explain each category in detail:
+
+(i) Input Files: <example file name located in /scheduler/simulations folder>
+
+Job trace file: <sample.sim>
+SST input configuration file: <sstInput.py>
+Ember inout configuration file: <emberLoad.py>
+Application phase file: <CTH_256.phase>
+
+(ii) Intermediate Files: <example file name located in /scheduler/simulations folder>
+
+Scheduler snapshot file: <sample.sim.snapshot.xml>
+Ember output file: <ember.out>
+Ember load file: <loadfile>
+Ember motif log files: <motif-0.log>
+Completed/Running job log files: <EmberCompleted.txt> , <EmberRunning.txt>
+
+(iii) Output Files: <example file name located in /scheduler/simulations folder>
+
+Allocation file: <sample.sim.alloc>
+Timing file: <sample.sim.time>
+
+(iv) Python Scripts: <example file name located in /scheduler/simulations folder>
+
+Main python script: <run_DetailedNetworkSim.py>
+Sub-python script to parse scheduler output & run ember: <snapshotParser_sched.py>
+Sub-python script to parse ember output & run scheduler: <snapshotParser_ember.py>
+
+
+A main python script drives sub-python scripts in order to run scheduler & ember simulations successively until all jobs is the job trace finish running. 
+
+------------------------------------------------------------------------------
+    Important Items to Check Before Running the Detailed Network Simulation
+------------------------------------------------------------------------------
+
+-Ember requires all cores of a node to be fully occupied with tasks. Thus, all jobs in the job trace should have the requested number of processors that is an integer multiple of coresPerNode (Ex: If coresPerNode = 4, valid values for the requested number of processors are 4, 8, 12,..., 1000,...).
+
+-Application phase files (Ex: CTH_256.phase) should not include more than a few 100 motifs. As the number of motifs per job and the number of nodes increase, ember runs into memory issues and the simulation gets killed. If simulation of longer jobs are desired, one should increase the number of iterations within a motif as opposed to creating more number of motifs. It is a tradeoff between simulation granularity & simulated time and the resource limitations of the host processor.
+
+-The running times in the input job trace should match (i.e., should be within the ballpark of) the actual running times of the applications in ember. If (EmberRunningTime) > (MaximumRequestedTime specified in the job trace), the scheduler will give a fatal error saying "Failed to start job <jobNumber> at guaranteed time".
+
+-If you are using the RCB task mapper, you must use "ember.CustomMap" as your rankmapper in ember as opposed to the default rankmapper "ember.LinearMap". For other task mappers, no change is needed. (May delete this completely.)
+
+
+
+
+
+
+

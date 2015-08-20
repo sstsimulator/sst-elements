@@ -1,6 +1,125 @@
-platform: default
-network: topology=dragonfly shape=7:2:2:4
-numNodes=72 numNics=72
-Ember params are:
-{'verbose': '0', 'os.module': 'firefly.hades', 'motifLog': '/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/scheduler/simulations/motif', 'api.0.module': 'firefly.hadesMP', 'os.name': 'hermesParams', 'rankmapper': 'ember.CustomMap'}
-network: BW=4GB/s pktSize=1024B flitSize=8B
+EMBER: platform: default
+EMBER: network: topology=dragonfly shape=7:2:2:4
+EMBER: numNodes=72 numNics=72
+EMBER: network: BW=4GB/s pktSize=1024B flitSize=8B
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Init']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Halo3D', 'iterations=19', 'computetime=167140', 'doreduce=0', 'nx=8', 'ny=4', 'nz=4']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Allreduce', 'iterations=78', 'compute=0']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Stop']
+EMBER: Job: -nidList=0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,42,43,44,45,46,47,41,40 -ranksPerNode=4 ['Fini']
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.491 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Halo3D processor decomposition solution: 8x4x4
+Halo3D problem size: 8x4x4
+Halo3D compute time: 167140 ns
+Halo3D copy time: 0 ns
+Halo3D iterations: 19
+Halo3D iterms/cell: 1
+Halo3D do reduction: 0
+Allreduce: ranks 128, loop 78, 1 double(s), latency 15.493 us
+Stop: ranks 128, loop 1, latency 15.508 us
+Job Finished: JobNum:8 Time:45033 us
+FATAL: 45033654000:8:0:EmberEngine:generate:39: Job 8 finished at time: 45033 us
+SST Fatal Backtrace Information:
+    0 : sst(_ZNK3SST6Output5fatalEjPKcS2_jS2_z+0x24e) [0x6465fe]
+    1 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZNK3SST5Ember14EmberGenerator5fatalEjPKcS3_jS3_z+0xe0) [0x7fe30d4a1d20]
+    2 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZN3SST5Ember18EmberStopGenerator8generateERSt5queueIPNS0_10EmberEventESt5dequeIS4_SaIS4_EEE+0x5ae) [0x7fe30d516a6e]
+    3 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZN3SST5Ember11EmberEngine14issueNextEventEm+0x1b0) [0x7fe30d4abec0]
+    4 : /home/fkaplan/SST/local/sst-simulator/lib/sst/libember.so(_ZN3SST5Ember11EmberEngine11handleEventEPNS_5EventE+0x151) [0x7fe30d4ac101]
+    5 : sst(_ZN3SST10Simulation3runEv+0x196) [0x64d036]
+    6 : sst(main+0x23c4) [0x5c5d24]
+    7 : /lib64/libc.so.6(__libc_start_main+0xfd) [0x3ed401ed5d]
+    8 : sst() [0x5c2f19]
+
+snapshotTime: 464990
+nextArrivalTime: 0
+***Currently Running Jobs***
+Job Number: 8

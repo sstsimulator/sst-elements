@@ -26,14 +26,16 @@ def clear_files():
     erFile.close()
     ecFile.close()
 
+def delete_logs():
+
+    cmd = "rm motif*.log"
+    run(cmd)
+
 def run_sim (options):
 
     # Run scheduler for the first time and create the first snapshot
     init_cmd  = "sst ./%s" %(options.schedPythonFile)
     run(init_cmd)
-
-    #ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
-    #run(ember_cmd)
 
     # Do the following in a loop until the simulation is completed
     # Parse scheduler snapshot->run ember->Parse ember output->run scheduler->...
@@ -43,6 +45,8 @@ def run_sim (options):
 
         sched_cmd = "./%s --xml %s --emberOut %s --schedPy %s" %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile)
         run(sched_cmd)
+
+    delete_logs()
 
 def is_not_empty(fileName):
 

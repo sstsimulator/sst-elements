@@ -123,6 +123,7 @@ namespace SST {
                 std::map<int, std::pair<unsigned long, int> > emberRunningJobs; // The jobs that are still running on ember <jobNum, <soFarRunningTime, currentMotifCount>>
                 SimTime_t ignoreUntilTime; // Avoid taking snapshots until this time
                 int jobNumLastArrived;
+                int numJobs;
                 //end->NetworkSim
 
                 JobParser* jobParser;

@@ -1,5 +1,5 @@
 --------------------------------------------------
-    How to Use The Scheduler Componenent With SST
+    How to Use The Scheduler Component With SST
 --------------------------------------------------
 
 The scheduler component reads in a trace (usually .sim) file, which consists

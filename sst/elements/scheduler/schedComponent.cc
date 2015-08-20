@@ -235,6 +235,10 @@ void schedComponent::setup()
     // done setting up the links, now read the job list
     jobs = jobParser -> parseJobs(getCurrentSimTime());
 
+    // NetworkSim: record the total number of jobs as the jobs vector changes over time
+    numJobs = (int) jobs.size();
+    // end-> NetworkSim   
+
     //NetworkSim: parse the ember completed/running job traces
     if (doDetailedNetworkSim){
         emberFinishedJobs = jobParser -> parseJobsEmberCompleted();
@@ -495,7 +499,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                     if (doDetailedNetworkSim && !newJobsStarted && !emberRunningJobs.empty() && getCurrentSimTime() == ignoreUntilTime){
                         // find the closest job arrival time after the current time
                         unsigned long NextArrivalTime = 0;
-                        for(int i = (jobNumLastArrived + 1); i < (int) jobs.size(); i++){
+                        for(int i = (jobNumLastArrived + 1); i < numJobs; i++){
                             NextArrivalTime = jobs[i]->getArrivalTime();
                             if (NextArrivalTime > ignoreUntilTime){
                                 break;
@@ -722,18 +726,20 @@ void schedComponent::startJob(Job* job)
     if (doDetailedNetworkSim == true && getCurrentSimTime() >= ignoreUntilTime ){
         SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
         se->runningJobs = runningJobs;
+
+        std::cout << "Taking snapshot as Job " << job->getJobNum() << " is starting..." << std::endl;
+
         int ii;
-        for(ii = (jobNumLastArrived + 1); ii < (int) jobs.size(); ii++){
+        for(ii = (jobNumLastArrived + 1); ii < numJobs; ii++){
             se->nextJobArrivalTime = jobs[ii]->getArrivalTime();
             if (se->nextJobArrivalTime > ignoreUntilTime){
                 break;
             }
         }
 
-        if (ii == (int) jobs.size()){
+        if (ii == numJobs){
             std::cout << "All jobs have arrived!" << std::endl;
         } else {
-            //se->nextJobArrivalTime = jobs[job->getJobNum() + 1]->getArrivalTime();
             std::cout << "Next Job: " << jobs[ii]->getJobNum() << " is arriving at " << se->nextJobArrivalTime << std::endl;
         }
         selfLink->send(se);
