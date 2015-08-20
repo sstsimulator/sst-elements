@@ -414,14 +414,14 @@ void Cache::intrapolateMSHRLatency(){
     y[0] = 0;
     y[1] = 1;
     for(uint64 idx = 2;  idx < 12; idx++) y[idx] = 2;
-    for(uint64 idx = 13; idx < 16; idx++) y[idx] = 3;
-    for(uint64 idx = 17; idx < 26; idx++) y[idx] = 5;
+    for(uint64 idx = 12; idx < 16; idx++) y[idx] = 3;
+    for(uint64 idx = 16; idx < 26; idx++) y[idx] = 5;
 
     
     /* L3 */
-    for(uint64 idx = 27; idx < 46; idx++) y[idx] = 19;
-    for(uint64 idx = 47; idx < 68; idx++) y[idx] = 26;
-    for(uint64 idx = 69; idx < N;  idx++) y[idx] = 32;
+    for(uint64 idx = 26; idx < 46; idx++) y[idx] = 19;
+    for(uint64 idx = 46; idx < 68; idx++) y[idx] = 26;
+    for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
     
     if (accessLatency_ > N) {
         d_->fatal(CALL_INFO, -1, "Error: cannot intrapolate MSHR latency if cache latency > 200. Cache latency: %" PRIu64 "\n", accessLatency_);
