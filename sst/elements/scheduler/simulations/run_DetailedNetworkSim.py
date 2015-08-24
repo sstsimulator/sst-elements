@@ -58,6 +58,13 @@ def is_not_empty(fileName):
     except OSError:
         print "No file"
 
+def set_path_emberLoad(options):
+
+    emberpath="/home/fkaplan/SST/scratch/src/sst-simulator/sst/elements/ember/test"
+    cmd = "sed -i \"s|PATH|%s|g\" emberLoad.py" %(emberpath)
+    print cmd
+    run(cmd)
+
 def main():
 
     parser = OptionParser(usage="usage: %prog [options]")
@@ -69,6 +76,7 @@ def main():
     (options, args) = parser.parse_args()
 
     clear_files()
+    set_path_emberLoad(options)
     run_sim(options)
     
 

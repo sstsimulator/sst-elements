@@ -49,12 +49,3 @@ A main python script drives sub-python scripts in order to run scheduler & ember
 -Application phase files (Ex: CTH_256.phase) should not include more than a few 100 motifs. As the number of motifs per job and the number of nodes increase, ember runs into memory issues and the simulation gets killed. If simulation of longer jobs are desired, one should increase the number of iterations within a motif as opposed to creating more number of motifs. It is a tradeoff between simulation granularity & simulated time and the resource limitations of the host processor.
 
 -The running times in the input job trace should match (i.e., should be within the ballpark of) the actual running times of the applications in ember. If (EmberRunningTime) > (MaximumRequestedTime specified in the job trace), the scheduler will give a fatal error saying "Failed to start job <jobNumber> at guaranteed time".
-
--If you are using the RCB task mapper, you must use "ember.CustomMap" as your rankmapper in ember as opposed to the default rankmapper "ember.LinearMap". For other task mappers, no change is needed. (May delete this completely.)
-
-
-
-
-
-
-
