@@ -6,39 +6,48 @@
 
 
 ------------------------------------------------------------------------------
-    How to Run The Scheduler Component with Detailed Network Simulation in SST
+    Descriptions of Files Involved in Running Scheduler Component with Detailed Network Simulation in SST
 ------------------------------------------------------------------------------
 
 The files that are used by the detailed simulation infrastructure can be grouped into 4 categories: (i) Input files that are provided by the user, (ii) intermediate files that are generated and updated during the simulation, (iii) output files, (iv) python scripts that provide the interface between scheduler & ember simulations and run them. Next, we explain each category in detail:
 
 (i) Input Files: <example file name located in /scheduler/simulations folder>
 
-Job trace file: <sample.sim>
-SST input configuration file: <sstInput.py>
-Ember inout configuration file: <emberLoad.py>
-Application phase file: <CTH_256.phase>
+	Job trace file: <test_DetailedNetwork.sim>
+		this is a list of jobs to run involving the arrival time, number of processors required, estimated running time etc. When running in DetailedNetworkSim mode, an application phase file has to be specified for each job as in the example trace.
+	SST input configuration file: <test_DetailedNetwork.py>
+		This file includes the simulation configuration parameters such as the number of nodes, cores per node, the type of scheduler/task mapper to use etc. When running in DetailedNetworkSim mode, the parameters "detailedNetworkSim", "completedJobsTrace", and "runningJobsTrace" must be specified as in the example file. 
+	Ember input configuration file: <emberLoad.py>
+		This file configures the settings for the ember simulation such as the network topology, the number of nodes, network bandwodth, packet size etc. It includes some other python files from the ember/test directory for default parameters. In order not to copy all those files to our current directory, we add the full path to the directory of these files on Line 3 of emberLoad.py. More details on this will be provided later. 
+	Application phase file: <CTH_256.phase>
+		Each job on the job list has a phase file. Phase file includes a series of motifs that represent the behavior of an application. Example motifs are Halo3D, Allreduce, PingPong etc., and they can be picked from the list of motifs defined in ember.
 
 (ii) Intermediate Files: <example file name located in /scheduler/simulations folder>
 
-Scheduler snapshot file: <sample.sim.snapshot.xml>
-Ember output file: <ember.out>
-Ember load file: <loadfile>
-Ember motif log files: <motif-0.log>
-Completed/Running job log files: <EmberCompleted.txt> , <EmberRunning.txt>
+	Scheduler snapshot file: <test_DetailedNetwork.sim.snapshot.xml>
+	Ember output file: <ember.out>
+	Ember load file: <loadfile>
+	Ember motif log files: <motif-0.log>
+	Completed/Running job log files: <EmberCompleted.txt> , <EmberRunning.txt>
 
 (iii) Output Files: <example file name located in /scheduler/simulations folder>
 
-Allocation file: <sample.sim.alloc>
-Timing file: <sample.sim.time>
+	Allocation file: <test_DetailedNetwork.sim.alloc>
+	Timing file: <test_DetailedNetwork.sim.time>
 
 (iv) Python Scripts: <example file name located in /scheduler/simulations folder>
 
-Main python script: <run_DetailedNetworkSim.py>
-Sub-python script to parse scheduler output & run ember: <snapshotParser_sched.py>
-Sub-python script to parse ember output & run scheduler: <snapshotParser_ember.py>
+	Main python script: <run_DetailedNetworkSim.py>
+	Sub-python script to parse scheduler output & run ember: <snapshotParser_sched.py>
+	Sub-python script to parse ember output & run scheduler: <snapshotParser_ember.py>
 
 
 A main python script drives sub-python scripts in order to run scheduler & ember simulations successively until all jobs is the job trace finish running. 
+
+------------------------------------------------------------------------------
+    How to Run The Scheduler Component with Detailed Network Simulation in SST
+------------------------------------------------------------------------------
+
 
 ------------------------------------------------------------------------------
     Important Items to Check Before Running the Detailed Network Simulation

@@ -159,10 +159,10 @@ def parse_xml (options):
     return (TimeObject, JobObjects)
 
 # Generates/updates ember related input files for the next scheduler run
-def generate_scheduler_inputs (InfoPair, TimeObject, JobObjects):
+def generate_scheduler_inputs (InfoPair, TimeObject, JobObjects, options):
 
-    emberCompletedFile = "emberCompleted.txt"
-    emberRunningFile   = "emberRunning.txt"
+    emberCompletedFile = options.emberCompletedFile
+    emberRunningFile   = options.emberRunningFile
     motifLogprefix     = "motif-"
 
     ecFile = open(emberCompletedFile, 'a')
@@ -233,11 +233,13 @@ def main():
     parser.add_option("--xml",  action='store', dest="xmlFile", help="Name of the xml file that holds the current scheduler snapshot.") 
     parser.add_option("--emberOut",  action='store', dest="emberOutFile", help="Name of the ember output file.")
     parser.add_option("--schedPy",  action='store', dest="schedPythonFile", help="Name of the python file that holds the scheduler parameters.")
+    parser.add_option("--ember_completed",  action='store', dest="emberCompletedFile", help="Name of the file that lists the jobs that have been completed in ember.")
+    parser.add_option("--ember_running",  action='store', dest="emberRunningFile", help="Name of the file that lists the jobs that are currently running in ember.") 
     (options, args) = parser.parse_args()
 
     InfoPair = parse_emberOut(options)
     TimeObject, JobObjects = parse_xml (options)
-    generate_scheduler_inputs (InfoPair, TimeObject, JobObjects)
+    generate_scheduler_inputs (InfoPair, TimeObject, JobObjects, options)
     run_scheduler (options)
 
 if __name__ == '__main__':

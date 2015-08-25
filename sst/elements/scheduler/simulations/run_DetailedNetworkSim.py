@@ -18,10 +18,10 @@ def run(cmd):
     #print(cmd)
     os.system(cmd)
 
-def clear_files():
+def clear_files(options):
 
-    erFile = open('emberRunning.txt', 'w')
-    ecFile = open('emberCompleted.txt', 'w')
+    erFile = open(options.emberRunningFile, 'w')
+    ecFile = open(options.emberCompletedFile, 'w')
 
     erFile.close()
     ecFile.close()
@@ -43,7 +43,7 @@ def run_sim (options):
         ember_cmd = "./%s --xml %s > %s" %(options.sched_parser, options.xmlFile, options.emberOutFile)
         run(ember_cmd)
 
-        sched_cmd = "./%s --xml %s --emberOut %s --schedPy %s" %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile)
+        sched_cmd = "./%s --xml %s --emberOut %s --schedPy %s --ember_completed %s --ember_running %s " %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile, options.emberCompletedFile, options.emberRunningFile)
         run(sched_cmd)
 
     delete_logs()
@@ -66,18 +66,44 @@ def set_path_emberLoad(options):
     print cmd
     run(cmd)
 '''
+def grep_set_fileNames(options):
+
+    # Parser script names are defined by default
+    options.sched_parser = "snapshotParser_sched.py"
+    options.ember_parser = "snapshotParser_ember.py"
+
+    # Grep other file names from the python configuration file
+    traceFile = open(options.schedPythonFile, 'r')
+
+    for line in traceFile:
+        if "traceName" in line:
+            temp = line.split(':')[1]
+            temp = temp.split('\"')[1]
+            options.xmlFile = temp + ".snapshot.xml"
+        elif "completedJobsTrace" in line:
+            temp = line.split(':')[1]
+            temp = temp.split('\"')[1]
+            options.emberCompletedFile = temp
+        elif "runningJobsTrace" in line:
+            temp = line.split(':')[1]
+            temp = temp.split('\"')[1]
+            options.emberRunningFile = temp
+
+    traceFile.close()
+
+    return (options)
+
 
 def main():
 
     parser = OptionParser(usage="usage: %prog [options]")
-    parser.add_option("--xml",  action='store', dest="xmlFile", help="Name of the xml file that holds the current scheduler snapshot.") 
     parser.add_option("--emberOut",  action='store', dest="emberOutFile", help="Name of the ember output file.")
     parser.add_option("--schedPy",  action='store', dest="schedPythonFile", help="Name of the python file that holds the scheduler parameters.")
-    parser.add_option("--sched_parser",  action='store', dest="sched_parser", help="Name of the file that parses the current scheduler snapshot and runs ember.") 
-    parser.add_option("--ember_parser",  action='store', dest="ember_parser", help="Name of the file that parses the ember output file and runs scheduler.") 
     (options, args) = parser.parse_args()
 
-    clear_files()
+
+    options = grep_set_fileNames(options)
+    clear_files(options)
     #set_path_emberLoad(options)
     run_sim(options)
     
