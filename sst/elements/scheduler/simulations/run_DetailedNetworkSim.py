@@ -72,7 +72,7 @@ def grep_set_fileNames(options):
     options.sched_parser = "snapshotParser_sched.py"
     options.ember_parser = "snapshotParser_ember.py"
 
-    # Grep other file names from the python configuration file
+    # Grep other file names from the scheduler input configuration file
     traceFile = open(options.schedPythonFile, 'r')
 
     for line in traceFile:
