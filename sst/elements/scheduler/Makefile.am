@@ -131,7 +131,6 @@ EXTRA_DIST = \
     simulations/CTH_288.phase \
     simulations/CTH_32.phase \
     simulations/CTH_64.phase \
-    simulations/CTH.phase \
     simulations/emberLoad.py \
     simulations/run_detailedNetworkSim.py \
     simulations/snapshotParser_ember.py \
