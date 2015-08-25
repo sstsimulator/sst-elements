@@ -123,7 +123,21 @@ EXTRA_DIST = \
     simulations/makeSDL.pl \
     simulations/test_scheduler_Atlas.sim \
     simulations/sphere3.mtx \
-    simulations/sphere3_coord.mtx
+    simulations/sphere3_coord.mtx \
+    simulations/CTH_108.phase \
+    simulations/CTH_128.phase \
+    simulations/CTH_16.phase \
+    simulations/CTH_256.phase \
+    simulations/CTH_288.phase \
+    simulations/CTH_32.phase \
+    simulations/CTH_64.phase \
+    simulations/CTH.phase \
+    simulations/emberLoad.py \
+    simulations/run_detailedNetworkSim.py \
+    simulations/snapshotParser_ember.py \
+    simulations/snapshotParser_sched.py \
+    simulations/test_DetailedNetwork.py \
+    simulations/test_DetailedNetwork.sim
 
 libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
 libscheduler_la_LIBADD =
