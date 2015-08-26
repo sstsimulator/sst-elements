@@ -19,9 +19,9 @@ using namespace SST::ArielComponent;
 ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 		uint32_t mLevels, uint64_t* pSizes, uint64_t* stdPCounts, Output* out,
 		uint32_t defLevel, uint32_t translateCacheEntryCount) :
+	owner(ownMe),
 	translationCacheEntries(translateCacheEntryCount),
-	translationEnabled(true),
-	owner(ownMe) {
+	translationEnabled(true) {
 
 	output = out;
 	memoryLevels = mLevels;
