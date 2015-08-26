@@ -35,10 +35,10 @@ private:
     uint32_t variables;     // No. of physical quantities
 
 // User parameters - machine
-	uint32_t px;			// Machine size (no. of nodes in 3d dimensions)
-	uint32_t py;			
-	uint32_t pz;
-	uint32_t threads;			
+	int32_t px;			// Machine size (no. of nodes in 3d dimensions)
+	int32_t py;			
+	int32_t pz;
+	int32_t threads;			
 
 // User parameters - mpi rank
 	uint32_t mx;			// Local distribution of the elements on a MPI rank

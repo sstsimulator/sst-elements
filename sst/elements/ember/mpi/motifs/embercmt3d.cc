@@ -73,9 +73,10 @@ void EmberCMT3DGenerator::configure()
 {
 
     	// Check that we are using all the processors or else lock up will happen :(.
+//    	if( (px * py *pz *threads) != (signed)size() ) {
     	if( (px * py *pz *threads) != (signed)size() ) {
     		fatal(CALL_INFO, -1, "Error: CMT3D motif checked processor decomposition: %" \
-    			PRIu32 "x%" PRIu32 "x%" PRIu32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
+    			PRId32 "x%" PRId32 "x%" PRId32 "x%" PRIu32 " != MPI World %" PRIu32 "\n",
     			px, py, pz, threads, size());
     	}
 
