@@ -119,6 +119,7 @@ libscheduler_la_SOURCES = \
     taskMappers/Rcm.h
 
 EXTRA_DIST = \
+    DetailedNetworkSim_HOWTO \
     simulations/DMatrix4_5_2 \
     simulations/makeSDL.pl \
     simulations/test_scheduler_Atlas.sim \
