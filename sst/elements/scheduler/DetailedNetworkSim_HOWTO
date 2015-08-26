@@ -2,8 +2,19 @@
     Overview of the Detailed Network Simulation Infrastructure 
 ------------------------------------------------------------------------------
 
+The new simulation infrastructure provides interface between the scheduler element and the ember element in order to account for the performance impact of different allocation/task mapping schemes with higher accuracy.
 
+Ember element models the MPI messaging patterns (i.e., motifs) in detail. Ember runs on top of a network model stack composed of firefly, hermes, and merlin. The new infrastructure provides the connection between the scheduler decisions and the underlying network by providing an interface between the two separate simulations.
 
+The main functionality of this interface is that it runs the scheduler and ember simulations separately one after another, and provides the necessary information obtained from one simulation to another to proceed. In other words, we run two separate binaries (for the scheduler and the ember), but exchange information between the runs through python scripts and intermediate files.
+
+The scheduler or ember simulations need to pause and resume at certain times. For example, when a new job gets successfully allocated and starts running in the scheduler, the scheduler simulation needs to pause and ember simulation should start running to estimate the running time of this newly started job. On the other hand, ember simulation needs to pause whenever a new job might possibly get scheduled to run in the scheduler. The logic for when/how to pause/resume simulations is incorporated within the "schedComponent" of the scheduler as well as the python scripts/intermediate files that drive the simulation. Whenever a simulation pauses, a snapshot of the current state is dumped in the form of .xml file (for scheduler) or .out file (for ember).
+
+There is one main python script and two sub-python scripts that are used to run the simulations. The main python script (run_DetailedNetworkSim.py) drives the sub-python scripts to run scheduler and ember simulations successively until all jobs in the job trace are completed. The sub-python script "snapshotParser_sched.py" parses the snapshot of the scheduler state and runs ember based on this information. The other sub-python script "snapshotParser_ember.py" parses the snapshot of the ember state and runs scheduler based on this information.
+
+Pausing and resuming simulations bring about some errors, which can be minimized by adjusting the simulation parameters. There are two main source of errors in this simulation environment: (i) the network state (the packages in flight, the congestion etc.) is reset every time the ember simulation pauses, (ii) if a motif execution gets interrupted when ember simulation pauses, we resume from the beginning of that motif in the next run. In order to minimize the error due to (i), one should simulate time scales large enough (in the order of seconds) so that the network warm-up time is negligible. In order to minimize the error due to (ii), one should make sure that each motif spans small enough time so that the additional estimated time due to the interruption is negligible.
+
+All of the default scheduler functionality (without the ember interface) is protected by a boolean variable. By default, detailed network simulation with ember interface is OFF. In order to turn on the ember interface, one needs to add "detailedNetworkSim" : "ON" to the scheduler parameters.
 
 ------------------------------------------------------------------------------
     Descriptions of Files Involved in Running Scheduler Component with Detailed Network Simulation in SST
