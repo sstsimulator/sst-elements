@@ -114,8 +114,8 @@ void logicLayer::init(unsigned int phase) {
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
-            if ( me->isWriteback() ) {
-                //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
+	  if ( me->isWriteback() || me->getCmd() == GetX) {
+	         //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
                 uint32_t chunkSize = (1 << VAULT_SHIFT);
                 if (me->getSize() > chunkSize) {
                     // may need to break request up in to 256 byte chunks (minimal
@@ -154,15 +154,17 @@ void logicLayer::init(unsigned int phase) {
                 } else {
                     if (isOurs(me->getAddr())) {
                         // send to the vault
-                        unsigned int vaultID = (me->getAddr() >> 8) % m_memChans.size();
+                        unsigned int vaultID = (me->getAddr() >> VAULT_SHIFT) % m_memChans.size();
+                        // printf("Propagating initial write %p to vault %d\n", me, vaultID);
                         m_memChans[vaultID]->sendInitData(me);      
                     } else {
+
                         // send down the chain
                         toMem->sendInitData(ev);
                     }
                 }
             } else {
-                printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+	        printf("Memory received unexpected Init Command: %s\n", CommandString[me->getCmd()] );
             }
         }
     }
