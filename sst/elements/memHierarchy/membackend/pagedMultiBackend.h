@@ -108,7 +108,7 @@ struct pageInfo {
 	  for (int i = 0; i < LAST_CASE; ++i) {
 	    fprintf(outF, " %.1f", double(accPat[i]*100)/double(sum));
 	  }
-	  fprintf(outF, " %" PRIu64, (unsigned long long)rqstrs.size());
+	  fprintf(outF, " %" PRIu64, (uint64_t)rqstrs.size());
 	  fprintf(outF, "\n");
 	}	  
 
@@ -184,12 +184,12 @@ private:
 
     typedef map<uint64_t, pageInfo> pageMap_t;
     pageMap_t pageMap;
-    int maxFastPages;
-    int pageShift;
-    int pagesInFast;
-    int lastMin;
-    int threshold;
-    int scanThreshold;
+    uint maxFastPages;
+    uint pageShift;
+    uint pagesInFast;
+    uint lastMin;
+    uint threshold;
+    uint scanThreshold;
     SimTime_t transferDelay;
     SimTime_t minAccTime;
     bool collectStats;

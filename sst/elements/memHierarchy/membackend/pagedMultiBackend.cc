@@ -228,11 +228,11 @@ void pagedMultiMemory::do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &
             if (maxFastPages > 0) {
 	      if(page.touched > lastMin) {
                 // we're full, search for someone to bump
-	        lastMin = INT_MAX;
+	        lastMin = UINT_MAX;
 	        const auto endP = pageMap.end();
                 for (auto p = pageMap.begin(); p != endP; ++p) {
 		  if ((p->second.inFast == 1) && (p->first != pageAddr)) {
-		    lastMin = min(lastMin, int(p->second.touched));
+		    lastMin = min(lastMin, p->second.touched);
 		    if(p->second.touched < page.touched) {
 		      p->second.inFast = 0; // rm old
 		      page.inFast = 1; // add new
