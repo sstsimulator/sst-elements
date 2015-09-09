@@ -129,7 +129,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t app_argc = (uint32_t) params.find_integer("appargcount", 0);
 	output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
 
-	uint32_t pin_startup_mode = (uint32_t) params.find_integer("arielmode", 1);
+	uint32_t pin_startup_mode = (uint32_t) params.find_integer("arielmode", 2);
 	uint32_t intercept_multilev_mem = (uint32_t) params.find_integer("arielinterceptcalls", 1);
 
 	switch(intercept_multilev_mem) {
