@@ -45,7 +45,7 @@ KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool",
     "c", "1", "Maximum core count to use for data pipes.");
 KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
-    "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled");
+    "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
 KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
     "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
 KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
@@ -302,6 +302,8 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 	fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
 	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
 	fprintf(stderr,"Replacement complete.\n");
+	fprintf(stderr, "Tool was called with auto-detect enable mode, setting initial output to not be traced.\n");
+	enable_output = false;
 	return;
     } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday" ||
 		RTN_Name(rtn) == "__gettimeofday") {
@@ -366,6 +368,10 @@ int main(int argc, char *argv[])
     } else if (StartupMode.Value() == 0) {
         fprintf(stderr, "ARIEL: Tool is configured to suspend profiling until program control\n");
         enable_output = false;
+    } else if (StartupMode.Value() == 2) {
+	fprintf(stderr, "ARIEL: Tool is configured to attempt auto detect of profiling\n");
+	fprintf(stderr, "ARIEL: Initial mode will be to enable profiling unless ariel_enable function is located\n");
+	enable_output = true;
     }
 
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
