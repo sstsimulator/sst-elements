@@ -86,14 +86,14 @@ class XXX  {
 
     void sendv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
+        MP::Communicator group, CommReq*, FunctorBase_0<bool>* = NULL );
 
     void recvv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
+        MP::Communicator group, CommReq*, FunctorBase_0<bool>* = NULL );
 
-    void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
-    void waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* );
+    void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* = NULL );
+    void waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* = NULL );
 
     void send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
