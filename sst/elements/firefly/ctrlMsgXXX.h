@@ -70,6 +70,10 @@ class ShortRecvBuffer;
 class XXX  {
 
   public:
+
+    typedef std::function<void()> Callback;
+    typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
+
     XXX( Component* owner, Params& params );
     ~XXX();
     void init( Info* info, VirtNic* );
@@ -124,6 +128,7 @@ class XXX  {
     void passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* );
     void passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
     void schedFunctor( FunctorBase_0<bool>*, uint64_t delay = 0 );
+    void schedCallback( Callback, uint64_t delay = 0 );
 
     LatencyMod* m_txMemcpyMod;
     LatencyMod* m_rxMemcpyMod;
@@ -229,6 +234,7 @@ class XXX  {
             Event(), 
             functor0( _functor ),
             functor1( NULL ),
+            callback( NULL ),
             req( NULL )
         {}
 
@@ -236,11 +242,21 @@ class XXX  {
             Event(), 
             functor0( NULL ),
             functor1( _functor ),
+            callback( NULL ),
             req( _req )
+        {}
+
+        DelayEvent( Callback _callback ) :
+            Event(), 
+            functor0( NULL ),
+            functor1( NULL ),
+            callback( _callback ),
+            req( NULL )
         {}
 
         FunctorBase_0<bool>*    functor0;
         FunctorBase_1<CommReq*,bool>*    functor1;
+        Callback                callback;
         CommReq*                         req;
     };
 

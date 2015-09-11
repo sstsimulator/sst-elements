@@ -280,7 +280,10 @@ void XXX::send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, FunctorBase_0<bool>* func )
 {
-    m_processQueuesState->send( buf, count, dtype, dest, tag, group, func );
+    m_dbg.verbose(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
+
+    m_processQueuesState->enterSend( new _CommReq( _CommReq::Send, buf, count,
+            info()->sizeofDataType( dtype), dest, tag, group ), func );
 }
 
 void XXX::isend(MP::Addr buf, uint32_t count,
@@ -288,9 +291,10 @@ void XXX::isend(MP::Addr buf, uint32_t count,
         MP::Communicator group, MP::MessageRequest* req,
 		FunctorBase_0<bool>* func )
 {
-
-    m_processQueuesState->isend( buf, count, dtype, dest, tag, group,
-													req, func );
+    *req = new _CommReq( _CommReq::Isend, buf, count,
+            info()->sizeofDataType(dtype) , dest, tag, group );
+    m_dbg.verbose(CALL_INFO,1,1,"%p\n",*req);
+    m_processQueuesState->enterSend( static_cast<_CommReq*>(*req), func );
 }
 
 void XXX::recv(MP::Addr buf, uint32_t count,
@@ -298,7 +302,9 @@ void XXX::recv(MP::Addr buf, uint32_t count,
         MP::Communicator group, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
-    m_processQueuesState->recv( buf, count, dtype, src, tag, group, resp, func);
+    m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
+    m_processQueuesState->enterRecv( new _CommReq( _CommReq::Recv, buf, count,
+            info()->sizeofDataType(dtype), src, tag, group, resp ), func);
 }
 
 void XXX::irecv(MP::Addr buf, uint32_t count,
@@ -306,31 +312,42 @@ void XXX::irecv(MP::Addr buf, uint32_t count,
         MP::Communicator group, MP::MessageRequest* req,
         FunctorBase_0<bool>* func )
 {
-    m_processQueuesState->irecv( buf, count, dtype, src, tag, group,
-						req, func );
+    m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
+    *req = new _CommReq( _CommReq::Irecv, buf, count,
+            info()->sizeofDataType(dtype), src, tag, group );
+    m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req), func );
 }
 
 void XXX::wait( MP::MessageRequest req, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
-	m_processQueuesState->wait( req, resp, func );
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+
+    m_processQueuesState->enterWait( new WaitReq( req, resp ), func );
 }
 
 void XXX::waitAny( int count, MP::MessageRequest req[], int *index,
         MP::MessageResponse* resp, FunctorBase_0<bool>* func  )
 {
-	m_processQueuesState->waitAny( count, req, index, resp, func );
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_processQueuesState->enterWait( new WaitReq( count, req, index, resp ), func );
 }
 
 void XXX::waitAll( int count, MP::MessageRequest req[],
 	MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
 {
-	m_processQueuesState->waitAll( count, req, resp, func );
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_processQueuesState->enterWait( new WaitReq( count, req, resp ), func );
 }
 
 void XXX::schedFunctor( FunctorBase_0<bool>* functor, uint64_t delay )
 {
     m_delayLink->send( delay, new DelayEvent(functor) );
+}
+
+void XXX::schedCallback( Callback callback, uint64_t delay )
+{
+    m_delayLink->send( delay, new DelayEvent(callback) );
 }
 
 void XXX::delayHandler( SST::Event* e )
@@ -347,6 +364,8 @@ void XXX::delayHandler( SST::Event* e )
         if ( (*event->functor1)( event->req ) ) {
             delete event->functor1;
         }
+    } else if ( event->callback ) {
+        event->callback();
     }
     delete e;
 }
@@ -356,10 +375,9 @@ bool XXX::notifyGetDone( void* key )
     m_dbg.verbose(CALL_INFO,1,1,"key=%p\n",key);
 
     if ( key ) {
-        FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
-        if ( (*functor)() ) {
-            delete functor;
-        }     
+        Callback* callback = static_cast<Callback*>(key);
+        (*callback)();
+        delete callback;
     }
 
     return true;
@@ -384,10 +402,9 @@ bool XXX::notifySendPioDone( void* key )
     m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
 
     if ( key ) {
-        FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
-        if ( (*functor)() ) {
-            delete functor;
-        }     
+        Callback* callback = static_cast<Callback*>(key);
+        (*callback)();
+        delete callback;
     }
 
     return true;
@@ -412,11 +429,9 @@ bool XXX::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
     m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x len=%lu key=%p\n",
                                                     nid,tag,len,key);
     if ( key ) {
-        FunctorBase_3<int,int,size_t,bool>* functor = 
-            static_cast< FunctorBase_3<int,int,size_t,bool>* >(key);
-        if ( (*functor)( nid, tag, len ) ) {
-            delete functor;
-        }     
+        Callback2* callback = static_cast<Callback2*>(key);
+        (*callback)(nid,tag,len);
+        delete callback;
     }
 
     return true;
