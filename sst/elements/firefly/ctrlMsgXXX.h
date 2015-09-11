@@ -179,14 +179,6 @@ class XXX  {
         return m_rxSetupMod->getLatency( bytes );
     }
 
-    int txNicDelay() {
-        return m_txNicDelay;
-    }
-
-    int rxNicDelay() {
-        return m_rxNicDelay;
-    }
-
     int sendReqFiniDelay( int bytes ) {
         return m_txFiniMod->getLatency( bytes );
     }
@@ -219,8 +211,6 @@ class XXX  {
     uint64_t m_waitanyStateDelay;
 
     int m_matchDelay_ns;
-    int m_txNicDelay;
-    int m_rxNicDelay;
     int m_regRegionBaseDelay_ns;
     int m_regRegionPerPageDelay_ns;
     int m_regRegionXoverLength;
@@ -264,9 +254,7 @@ class XXX  {
     void delayHandler( Event* );
     void loopHandler( Event* );
     bool notifyGetDone( void* );
-    bool notifyPutDone( void* );
     bool notifySendPioDone( void* );
-    bool notifySendDmaDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
     bool notifyNeedRecv( int, int, size_t );
 

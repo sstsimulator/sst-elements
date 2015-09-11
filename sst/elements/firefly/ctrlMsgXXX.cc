@@ -87,9 +87,6 @@ XXX::XXX( Component* owner, Params& params ) :
             owner->loadModule( tmpName, tmpParams ) );  
     }
 
-    m_txNicDelay = params.find_integer( "txNicDelay_ns", 0 );
-    m_rxNicDelay = params.find_integer( "rxNicDelay_ns", 0 );
-
     m_regRegionBaseDelay_ns = params.find_integer( "regRegionBaseDelay_ns", 0 );
     m_regRegionPerPageDelay_ns = params.find_integer( "regRegionPerPageDelay_ns", 0 );
     m_regRegionXoverLength = params.find_integer( "regRegionXoverLength", 4096 );
@@ -149,19 +146,12 @@ void XXX::init( Info* info, VirtNic* nic )
 {
     m_info = info;
     m_nic = nic;
-    nic->setNotifyOnPutDone(
-        new VirtNic::Handler<XXX,void*>(this, &XXX::notifyPutDone )
-    );
     nic->setNotifyOnGetDone(
         new VirtNic::Handler<XXX,void*>(this, &XXX::notifyGetDone )
     );
     nic->setNotifyOnSendPioDone(
         new VirtNic::Handler<XXX,void*>(this, &XXX::notifySendPioDone )
     );
-    nic->setNotifyOnSendDmaDone(
-        new VirtNic::Handler<XXX,void*>(this, &XXX::notifySendDmaDone )
-    );
-
     nic->setNotifyOnRecvDmaDone(
         new VirtNic::Handler4Args<XXX,int,int,size_t,void*>(
                                 this, &XXX::notifyRecvDmaDone )
@@ -383,20 +373,6 @@ bool XXX::notifyGetDone( void* key )
     return true;
 }
 
-bool XXX::notifyPutDone( void* key )
-{
-    m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
-
-    if ( key ) {
-        FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
-        if ( (*functor)() ) {
-            delete functor;
-        }     
-    }
-
-    return true;
-}
-
 bool XXX::notifySendPioDone( void* key )
 {
     m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
@@ -405,20 +381,6 @@ bool XXX::notifySendPioDone( void* key )
         Callback* callback = static_cast<Callback*>(key);
         (*callback)();
         delete callback;
-    }
-
-    return true;
-}
-
-bool XXX::notifySendDmaDone( void* key )
-{
-    m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
-
-    if ( key ) {
-        FunctorBase_0<bool>* functor = static_cast<FunctorBase_0<bool>*>(key);
-        if ( (*functor)() ) {
-            delete functor;
-        }     
     }
 
     return true;
