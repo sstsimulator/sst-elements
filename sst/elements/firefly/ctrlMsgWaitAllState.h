@@ -32,7 +32,7 @@ class WaitAllState : StateBase< T1 >
                             obj.nic().getNodeId(), obj.info()->worldRank());
         dbg().setPrefix(buffer);
     }
-    void enter( std::vector<CommReq*>&, FunctorBase_1<CommReq*,bool>*, 
+    void enter( std::vector<CommReq*>&, FunctorBase_0<bool>*, 
                                     FunctorBase_0<bool>* funtor = NULL );
 
     bool unblock();
@@ -40,7 +40,7 @@ class WaitAllState : StateBase< T1 >
     Output& dbg() { return StateBase<T1>::m_dbg; }
     T1& obj() { return StateBase<T1>::obj; }
 
-    FunctorBase_1<CommReq*,bool>*       m_functor;
+    FunctorBase_0<bool>*                m_functor;
     Functor_0<WaitAllState<T1>,bool>    m_unblock;
     std::vector<CommReq*>               m_reqs; 
     WaitReq*                            m_waitReq;
@@ -48,7 +48,7 @@ class WaitAllState : StateBase< T1 >
 
 template< class T1 >
 void WaitAllState<T1>::enter( std::vector<CommReq*>& reqs, 
-    FunctorBase_1<CommReq*,bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
+    FunctorBase_0<bool>* functor, FunctorBase_0<bool>* stateFunctor ) 
 {
     dbg().verbose(CALL_INFO,1,1,"num reqs %lu\n", reqs.size());
     StateBase<T1>::setExit( stateFunctor );
@@ -80,7 +80,7 @@ bool WaitAllState<T1>::unblock()
             assert(0);
         }
     }
-    obj().passCtrlToFunction( obj().waitallStateDelay(), m_functor, NULL );
+    obj().passCtrlToFunction( obj().waitallStateDelay(), m_functor );
     return false;
 }
 

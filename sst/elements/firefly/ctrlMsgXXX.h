@@ -92,7 +92,7 @@ class XXX  {
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, CommReq*, FunctorBase_0<bool>* = NULL );
 
-    void waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* = NULL );
+    void waitAll( std::vector<CommReq*>& reqs, FunctorBase_0<bool>* = NULL );
 
     void send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
@@ -125,7 +125,6 @@ class XXX  {
     size_t shortMsgLength() { return m_shortMsgLength; }
 
     void passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* );
-    void passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*,bool>*, CommReq*);
     void schedFunctor( FunctorBase_0<bool>*, uint64_t delay = 0 );
     void schedCallback( Callback, uint64_t delay = 0 );
 
@@ -222,31 +221,17 @@ class XXX  {
         DelayEvent( FunctorBase_0<bool>* _functor) :
             Event(), 
             functor0( _functor ),
-            functor1( NULL ),
-            callback( NULL ),
-            req( NULL )
-        {}
-
-        DelayEvent( FunctorBase_1<CommReq*,bool>* _functor, CommReq* _req) :
-            Event(), 
-            functor0( NULL ),
-            functor1( _functor ),
-            callback( NULL ),
-            req( _req )
+            callback( NULL )
         {}
 
         DelayEvent( Callback _callback ) :
             Event(), 
             functor0( NULL ),
-            functor1( NULL ),
-            callback( _callback ),
-            req( NULL )
+            callback( _callback )
         {}
 
         FunctorBase_0<bool>*    functor0;
-        FunctorBase_1<CommReq*,bool>*    functor1;
         Callback                callback;
-        CommReq*                         req;
     };
 
   private:

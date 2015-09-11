@@ -253,7 +253,7 @@ void XXX::recvv( std::vector<IoVec>& ioVec,
 }
 
 void XXX::waitAll( std::vector<CommReq*>& reqs,
-                                FunctorBase_1<CommReq*,bool>* functor )
+                                FunctorBase_0<bool>* functor ) 
 {
     m_waitAllState->enter( reqs, functor );
 }
@@ -347,10 +347,6 @@ void XXX::delayHandler( SST::Event* e )
         if ( (*event->functor0)( ) ) {
             delete event->functor0;
         }
-    } else if ( event->functor1 ) {
-        if ( (*event->functor1)( event->req ) ) {
-            delete event->functor1;
-        }
     } else if ( event->callback ) {
         event->callback();
     }
@@ -403,18 +399,6 @@ bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
     m_processQueuesState->needRecv( nid, tag, len );
     
     return true;
-}
-
-void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_1<CommReq*, bool>* functor, CommReq* req )
-{
-    m_dbg.verbose(CALL_INFO,1,1,"back to Function delay=%" PRIu64 " functor=%p\n",
-                                delay, functor);
-
-    if ( functor ) {
-        m_delayLink->send( delay, new DelayEvent( functor, req ) );
-    } else {
-        m_retLink->send( delay, NULL );
-    }
 }
 
 void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* functor )
