@@ -84,11 +84,11 @@ class XXX  {
     Info*      info() { return m_info; }
     VirtNic&   nic() { return *m_nic; }           
 
-    void sendv( bool blocking, std::vector<IoVec>&,
+    void sendv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
 
-    void recvv( bool blocking, std::vector<IoVec>&,
+    void recvv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, CommReq*, FunctorBase_0<bool>* );
 

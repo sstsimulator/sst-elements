@@ -62,8 +62,7 @@ void API::send( void* buf, size_t len, nid_t dest, uint64_t tag,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    m_xxx->sendv( true, ioVec, MP::CHAR, dest,
-                tag, MP::GroupWorld, NULL, functor );
+    m_xxx->sendv( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL, functor );
 }
 
 void API::send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
@@ -73,8 +72,7 @@ void API::send( void* buf, size_t len, MP::RankID dest, uint64_t tag,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    m_xxx->sendv( true, ioVec, MP::CHAR, dest,
-                tag, grp, NULL, functor );
+    m_xxx->sendv( ioVec, MP::CHAR, dest, tag, grp, NULL, functor );
 }
 
 void API::isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* req,
@@ -84,15 +82,14 @@ void API::isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* req,
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
 
-    m_xxx->sendv( false, ioVec, MP::CHAR, dest,
-                tag, MP::GroupWorld, req, functor );
+    assert(req);
+    m_xxx->sendv( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, req, functor );
 }
 
 void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag,
                                                 FunctorBase_0<bool>* functor )
 {
-    m_xxx->sendv( true, ioVec, MP::CHAR, dest,
-                tag, MP::GroupWorld, NULL, functor );
+    m_xxx->sendv( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL, functor );
 }
 
 void API::recv( void* buf, size_t len, nid_t src, uint64_t tag,
@@ -101,8 +98,7 @@ void API::recv( void* buf, size_t len, nid_t src, uint64_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( true, ioVec, MP::CHAR, src,
-                tag, MP::GroupWorld, NULL, functor );
+    m_xxx->recvv( ioVec, MP::CHAR, src, tag, MP::GroupWorld, NULL, functor );
 }
 
 void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag,
@@ -111,8 +107,9 @@ void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( false, ioVec, MP::CHAR, src,
-                tag, MP::GroupWorld, req, functor );
+
+    assert(req);
+    m_xxx->recvv( ioVec, MP::CHAR, src, tag, MP::GroupWorld, req, functor );
 }
 
 void API::irecv( void* buf, size_t len, MP::RankID src, uint64_t tag, 
@@ -121,8 +118,8 @@ void API::irecv( void* buf, size_t len, MP::RankID src, uint64_t tag,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
-    m_xxx->recvv( false, ioVec, MP::CHAR, src,
-                tag, grp, req, functor );
+    assert(req);
+    m_xxx->recvv( ioVec, MP::CHAR, src, tag, grp, req, functor );
 }
 
 void API::wait( CommReq* req, FunctorBase_1<CommReq*,bool>* functor )

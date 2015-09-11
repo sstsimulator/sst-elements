@@ -235,23 +235,25 @@ void XXX::loopHandler( Event* ev )
     delete ev;
 }
 
-void XXX::sendv( bool blocking, std::vector<IoVec>& ioVec, 
+void XXX::sendv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
     MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
     m_dbg.verbose(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu \n",
                                         dest, tag, calcLength(ioVec) );
-    m_sendState->enter( blocking, ioVec, dtype, dest, tag, group,
-                                        commReq, functor );
+
+    m_sendState->enter( commReq ? false : true, ioVec, dtype, dest, tag,
+                                        group, commReq, functor );
 }
 
-void XXX::recvv( bool blocking, std::vector<IoVec>& ioVec, 
+void XXX::recvv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
     MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
 {
     m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
-    m_recvState->enter( blocking, ioVec, dtype, src, tag, group,commReq, functor );
+    m_recvState->enter( commReq ? false : true, ioVec, dtype, src, tag,
+                                        group,commReq, functor );
 }
 
 void XXX::waitAny( std::vector<CommReq*>& reqs,
