@@ -92,7 +92,6 @@ class XXX  {
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, CommReq*, FunctorBase_0<bool>* = NULL );
 
-    void waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* = NULL );
     void waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* = NULL );
 
     void send(MP::Addr buf, uint32_t count,
@@ -267,7 +266,6 @@ class XXX  {
 
     SendState<XXX>*         m_sendState;
     RecvState<XXX>*         m_recvState;
-    WaitAnyState<XXX>*      m_waitAnyState;
     WaitAllState<XXX>*      m_waitAllState;
     int                         m_dbg_level;
     int                         m_dbg_mask;

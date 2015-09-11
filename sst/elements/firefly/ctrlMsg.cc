@@ -122,7 +122,7 @@ void API::wait( CommReq* req )
 {
     std::vector<CommReq*> tmp; 
     tmp.push_back( req );
-    m_xxx->waitAny( tmp );
+    m_xxx->waitAll( tmp );
 }
 
 void API::waitAll( std::vector<CommReq*>& reqs )

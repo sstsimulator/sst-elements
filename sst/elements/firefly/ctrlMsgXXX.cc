@@ -35,7 +35,6 @@ XXX::XXX( Component* owner, Params& params ) :
     m_info( NULL ),
     m_sendState( NULL ),
     m_recvState( NULL ),
-    m_waitAnyState( NULL ),
     m_waitAllState( NULL ),
     m_processQueuesState( NULL )
 {
@@ -126,7 +125,6 @@ XXX::~XXX()
 {
 	if ( m_sendState ) delete m_sendState;
 	if ( m_recvState ) delete m_recvState;
-	if ( m_waitAnyState) delete m_waitAnyState;
 	if ( m_waitAllState) delete m_waitAllState;
 	if ( m_processQueuesState) delete m_processQueuesState;
 
@@ -171,7 +169,6 @@ void XXX::setup()
 
     m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_mask, *this );
     m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_mask, *this );
-    m_waitAnyState = new WaitAnyState<XXX>( m_dbg_level, m_dbg_mask, *this );
     m_waitAllState = new WaitAllState<XXX>( m_dbg_level, m_dbg_mask, *this );
     m_processQueuesState = new ProcessQueuesState<XXX>(
                         m_dbg_level, m_dbg_mask, *this );
@@ -256,18 +253,13 @@ void XXX::recvv( std::vector<IoVec>& ioVec,
                                         group,commReq, functor );
 }
 
-void XXX::waitAny( std::vector<CommReq*>& reqs,
-                                FunctorBase_1<CommReq*,bool>* functor )
-{
-    m_waitAnyState->enter( reqs, functor );
-}
-
 void XXX::waitAll( std::vector<CommReq*>& reqs,
                                 FunctorBase_1<CommReq*,bool>* functor )
 {
     m_waitAllState->enter( reqs, functor );
 }
 
+// **********************************************************************
 void XXX::send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, FunctorBase_0<bool>* func )
@@ -310,6 +302,8 @@ void XXX::irecv(MP::Addr buf, uint32_t count,
     m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req), func );
 }
 
+// **********************************************************************
+
 void XXX::wait( MP::MessageRequest req, MP::MessageResponse* resp,
 		FunctorBase_0<bool>* func )
 {
@@ -331,6 +325,8 @@ void XXX::waitAll( int count, MP::MessageRequest req[],
     m_dbg.verbose(CALL_INFO,1,1,"\n");
     m_processQueuesState->enterWait( new WaitReq( count, req, resp ), func );
 }
+
+// **********************************************************************
 
 void XXX::schedFunctor( FunctorBase_0<bool>* functor, uint64_t delay )
 {

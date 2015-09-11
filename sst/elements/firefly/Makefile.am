@@ -19,7 +19,6 @@ libfirefly_la_SOURCES = \
 	ctrlMsgState.h \
 	ctrlMsgSendState.h \
 	ctrlMsgRecvState.h \
-	ctrlMsgWaitAnyState.h \
 	ctrlMsgWaitAllState.h \
 	ctrlMsgFunctors.h \
 	ctrlMsgProcessQueuesState.h \
