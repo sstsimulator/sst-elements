@@ -66,8 +66,8 @@ void API::send( void* buf, size_t len, nid_t dest, uint64_t tag,
                 tag, MP::GroupWorld, NULL, functor );
 }
 
-void API::send( void* buf, size_t len, MP::RankID dest, MP::Communicator grp,
-                            uint64_t tag, FunctorBase_0<bool>* functor ) 
+void API::send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
+                        MP::Communicator grp, FunctorBase_0<bool>* functor ) 
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
@@ -95,14 +95,6 @@ void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag,
                 tag, MP::GroupWorld, NULL, functor );
 }
 
-
-void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag,
-                            CommReq* req, FunctorBase_0<bool>* functor )
-{
-    m_xxx->sendv( false, ioVec, MP::CHAR, dest,
-                tag, MP::GroupWorld, req, functor );
-}
-
 void API::recv( void* buf, size_t len, nid_t src, uint64_t tag,
                                             FunctorBase_0<bool>* functor )
 {
@@ -123,8 +115,8 @@ void API::irecv( void* buf, size_t len, nid_t src, uint64_t tag,
                 tag, MP::GroupWorld, req, functor );
 }
 
-void API::irecv( void* buf, size_t len, MP::RankID src, MP::Communicator grp,
-                        uint64_t tag, CommReq* req, FunctorBase_0<bool>* functor )
+void API::irecv( void* buf, size_t len, MP::RankID src, uint64_t tag, 
+            MP::Communicator grp, CommReq* req, FunctorBase_0<bool>* functor )
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
@@ -133,23 +125,11 @@ void API::irecv( void* buf, size_t len, MP::RankID src, MP::Communicator grp,
                 tag, grp, req, functor );
 }
 
-void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,
-                            CommReq* req, FunctorBase_0<bool>* functor )
-{
-    m_xxx->recvv( false, ioVec, MP::CHAR, src,
-                tag, MP::GroupWorld, req, functor );
-}
-
 void API::wait( CommReq* req, FunctorBase_1<CommReq*,bool>* functor )
 {
     std::vector<CommReq*> tmp; 
     tmp.push_back( req );
     m_xxx->waitAny( tmp, functor );
-}
-
-void API::waitAny( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* functor )
-{
-    m_xxx->waitAny( reqs, functor );
 }
 
 void API::waitAll( std::vector<CommReq*>& reqs, FunctorBase_1<CommReq*,bool>* functor )
@@ -203,9 +183,4 @@ void API::waitAll( int count, MP::MessageRequest req[],
         MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
 {
 	m_xxx->waitAll( count, req, resp, func );
-}
-
-size_t API::shortMsgLength()
-{
-    return m_xxx->shortMsgLength();
 }

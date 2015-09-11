@@ -64,28 +64,24 @@ class API : public ProtocolAPI {
 
     void send( void* buf, size_t len, nid_t dest, uint64_t tag, 
                                         FunctorBase_0<bool>* = NULL );
-    void send( void* buf, size_t len, MP::RankID dest, MP::Communicator grp,
-                            uint64_t tag, FunctorBase_0<bool>* = NULL );
+    void send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
+                            MP::Communicator grp, FunctorBase_0<bool>* = NULL );
     void isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq*, 
                                         FunctorBase_0<bool>* = NULL );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag,
                                         FunctorBase_0<bool>* = NULL );
-    void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, CommReq*,
-                                        FunctorBase_0<bool>* = NULL );
     void recv( void* buf, size_t len, nid_t src, uint64_t tag,
-                                        FunctorBase_0<bool>* = NULL );
-    void recvv( std::vector<IoVec>&, nid_t src, uint64_t tag,
                                         FunctorBase_0<bool>* = NULL );
     void irecv( void* buf, size_t len, nid_t src, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
-    void irecv( void* buf, size_t len, MP::RankID src, MP::Communicator grp,
-                    uint64_t tag, CommReq*, FunctorBase_0<bool>* = NULL );
+    void irecv( void* buf, size_t len, MP::RankID src, uint64_t tag, 
+                MP::Communicator grp, CommReq*, FunctorBase_0<bool>* = NULL );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq*,
                                         FunctorBase_0<bool>* = NULL );
 
     void wait( CommReq*, FunctorBase_1<CommReq*,bool>* = NULL );
-    void waitAll( std::vector<CommReq*>&, FunctorBase_1<CommReq*, bool>* = NULL );
-    void waitAny( std::vector<CommReq*>&, FunctorBase_1<CommReq*, bool>* = NULL );
+    void waitAll( std::vector<CommReq*>&,
+                            FunctorBase_1<CommReq*, bool>* = NULL );
 
 	void send(MP::Addr buf, uint32_t count, 
 		MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
@@ -112,8 +108,6 @@ class API : public ProtocolAPI {
               	MP::MessageResponse* resp, FunctorBase_0<bool>* func );
     void waitAll( int count, MP::MessageRequest req[],
                 MP::MessageResponse* resp[], FunctorBase_0<bool>* func );
-
-    size_t shortMsgLength();
 
   private:
     XXX*    m_xxx;

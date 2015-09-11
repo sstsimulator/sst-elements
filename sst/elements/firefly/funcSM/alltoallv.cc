@@ -69,7 +69,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
                                                         m_count, rank );
 
         proto()->irecv( recvChunkPtr(rank), recvChunkSize(rank), 
-                        rank, m_event->group, genTag(), &m_recvReq ); 
+                        rank, genTag(), m_event->group, &m_recvReq ); 
         m_state = Send;
         break;
 
@@ -80,7 +80,7 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
                                                         m_count, rank );
 
         proto()->send( sendChunkPtr(rank), sendChunkSize(rank), 
-                                            rank, m_event->group, genTag() ); 
+                                            rank, genTag(), m_event->group ); 
         m_state = WaitRecv;
         break;
 
