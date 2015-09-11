@@ -75,9 +75,6 @@ hermesParams = {
     "hermesParams.ctrlMsg.rxMemcpyMod" : "firefly.ScaleLatMod",
     "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-50000:450ps-100ps",
 
-    "hermesParams.ctrlMsg.txNicDelay_ns" : 0,
-    "hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
-
     "hermesParams.ctrlMsg.txFiniMod" : "firefly.LatencyMod",
     "hermesParams.ctrlMsg.txFiniModParams.range.0" : "0-127:400ns",
     "hermesParams.ctrlMsg.txFiniModParams.range.1" : "128-:900ns",

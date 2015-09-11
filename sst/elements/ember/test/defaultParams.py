@@ -51,8 +51,6 @@ hermesParams = {
     "hermesParams.ctrlMsg.txMemcpyModParams.op" : "Mult",
     "hermesParams.ctrlMsg.rxMemcpyModParams.range.0" : "0-:344ps",
 
-    "hermesParams.ctrlMsg.txNicDelay_ns" : 0,
-    "hermesParams.ctrlMsg.rxNicDelay_ns" : 0,
     "hermesParams.ctrlMsg.sendAckDelay_ns" : 0,
     "hermesParams.ctrlMsg.regRegionBaseDelay_ns" : 3000,
     "hermesParams.ctrlMsg.regRegionPerPageDelay_ns" : 100,
