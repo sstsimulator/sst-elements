@@ -340,7 +340,10 @@ void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )
     req->setSrcRank( getMyRank( req ) );
 
     if ( obj().nic().isLocal( calcNid( req, req->getDestRank() ) ) ) {
-        processSendLoop( req );
+        obj().schedCallback(
+            std::bind( &ProcessQueuesState<T1>::processSendLoop, this, req ),
+            delay
+        );
     } else {
 
         delay += obj().txMemcpyDelay( sizeof( req->hdr() ) );
