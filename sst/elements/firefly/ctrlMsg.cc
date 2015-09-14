@@ -118,6 +118,13 @@ void API::irecv( void* buf, size_t len, MP::RankID src, uint64_t tag,
     m_xxx->recvv( ioVec, MP::CHAR, src, tag, grp, req );
 }
 
+void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,
+                            CommReq* req  )
+{
+    m_xxx->recvv( ioVec, MP::CHAR, src,
+                tag, MP::GroupWorld, req );
+}
+
 void API::wait( CommReq* req )
 {
     std::vector<CommReq*> tmp; 
