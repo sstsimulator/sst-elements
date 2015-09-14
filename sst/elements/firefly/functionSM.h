@@ -87,8 +87,6 @@ class FunctionSM  {
     
     void initFunction( SST::Component*, Info*, FunctionEnum,
                                     std::string, Params&, Params& );
-	bool backToMe();
-	Functor             m_backToMe;
 
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*    m_sm; 

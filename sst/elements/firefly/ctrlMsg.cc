@@ -139,48 +139,44 @@ void API::waitAll( std::vector<CommReq*>& reqs )
 
 void API::send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, FunctorBase_0<bool>* func )
+        MP::Communicator group )
 {
-	m_xxx->send( buf, count, dtype, dest, tag, group, func );
+	m_xxx->send( buf, count, dtype, dest, tag, group );
 }
 
 void API::isend(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-		FunctorBase_0<bool>* func )
+        MP::Communicator group, MP::MessageRequest* req )
 {
-	m_xxx->isend( buf, count, dtype, dest, tag, group, req, func );
+	m_xxx->isend( buf, count, dtype, dest, tag, group, req );
 }
 
 void API::recv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func )
+        MP::Communicator group, MP::MessageResponse* resp )
 {
-	m_xxx->recv( buf, count, dtype, src, tag, group, resp, func ); 
+	m_xxx->recv( buf, count, dtype, src, tag, group, resp ); 
 }
 
 void API::irecv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-        FunctorBase_0<bool>* func )
+        MP::Communicator group, MP::MessageRequest* req )
 {
-	m_xxx->irecv( buf, count, dtype, src, tag, group, req, func ); 
+	m_xxx->irecv( buf, count, dtype, src, tag, group, req ); 
 }
 
-void API::wait( MP::MessageRequest req, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func )
+void API::wait( MP::MessageRequest req, MP::MessageResponse* resp )
 {
-	m_xxx->wait( req, resp, func );
+	m_xxx->wait( req, resp );
 }
 void API::waitAny( int count, MP::MessageRequest req[], int *index,
-       	MP::MessageResponse* resp, FunctorBase_0<bool>* func )
+       	MP::MessageResponse* resp )
 {
-	m_xxx->waitAny( count, req, index, resp, func );
+	m_xxx->waitAny( count, req, index, resp );
 }
 
 void API::waitAll( int count, MP::MessageRequest req[],
-        MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
+        MP::MessageResponse* resp[] )
 {
-	m_xxx->waitAll( count, req, resp, func );
+	m_xxx->waitAll( count, req, resp );
 }

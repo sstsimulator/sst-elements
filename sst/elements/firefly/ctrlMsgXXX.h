@@ -21,26 +21,8 @@ namespace SST {
 namespace Firefly {
 namespace CtrlMsg {
 
-
-template< class T >
-class SendState;
-
-template< class T >
-class RecvState;
-
-template< class T >
-class WaitAnyState;
-
-template< class T >
-class WaitAllState;
-
 template< class T >
 class ProcessQueuesState;
-
-template< class T1, class T2 >
-class FunctorBase_1;
-
-class StateArgsBase;
 
 typedef unsigned short key_t;
 
@@ -86,55 +68,42 @@ class XXX  {
 
     void sendv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, CommReq*, FunctorBase_0<bool>* = NULL );
+        MP::Communicator group, CommReq* );
 
     void recvv( std::vector<IoVec>&,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, CommReq*, FunctorBase_0<bool>* = NULL );
+        MP::Communicator group, CommReq* );
 
-    void waitAll( std::vector<CommReq*>& reqs, FunctorBase_0<bool>* = NULL );
+    void waitAll( std::vector<CommReq*>& reqs );
 
     void send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, FunctorBase_0<bool>* func );
+        MP::Communicator group );
 
     void isend(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-		FunctorBase_0<bool>* func );
+        MP::Communicator group, MP::MessageRequest* req );
 
     void recv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func );
+        MP::Communicator group, MP::MessageResponse* resp );
 
     void irecv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-        FunctorBase_0<bool>* func );
+        MP::Communicator group, MP::MessageRequest* req );
 
-    void wait( MP::MessageRequest, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func );
+    void wait( MP::MessageRequest, MP::MessageResponse* resp );
 
     void waitAny( int count, MP::MessageRequest req[], int *index,
-        MP::MessageResponse* resp, FunctorBase_0<bool>* func  );
+        MP::MessageResponse* resp );
 
     void waitAll( int count, MP::MessageRequest req[],
-        MP::MessageResponse* resp[], FunctorBase_0<bool>* func );
+        MP::MessageResponse* resp[] );
 
     size_t shortMsgLength() { return m_shortMsgLength; }
 
-    void passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* );
-    void schedFunctor( FunctorBase_0<bool>*, uint64_t delay = 0 );
     void schedCallback( Callback, uint64_t delay = 0 );
-
-    LatencyMod* m_txMemcpyMod;
-    LatencyMod* m_rxMemcpyMod;
-    LatencyMod* m_txSetupMod;
-    LatencyMod* m_rxSetupMod;
-    LatencyMod* m_rxPostMod;
-    LatencyMod* m_txFiniMod;
-    LatencyMod* m_rxFiniMod;
+    void passCtrlToFunction( uint64_t delay = 0 );
 
     int txMemcpyDelay( int bytes ) {
         return m_txMemcpyMod->getLatency( bytes );
@@ -203,34 +172,16 @@ class XXX  {
     uint64_t waitanyStateDelay() {
         return m_waitanyStateDelay;
     }
-    uint64_t m_sendStateDelay;
-    uint64_t m_recvStateDelay;
-    uint64_t m_waitallStateDelay;
-    uint64_t m_waitanyStateDelay;
-
-    int m_matchDelay_ns;
-    int m_regRegionBaseDelay_ns;
-    int m_regRegionPerPageDelay_ns;
-    int m_regRegionXoverLength;
-    int m_sendAckDelay;
 
   private:
     class DelayEvent : public SST::Event {
       public:
 
-        DelayEvent( FunctorBase_0<bool>* _functor) :
-            Event(), 
-            functor0( _functor ),
-            callback( NULL )
-        {}
-
         DelayEvent( Callback _callback ) :
             Event(), 
-            functor0( NULL ),
             callback( _callback )
         {}
 
-        FunctorBase_0<bool>*    functor0;
         Callback                callback;
     };
 
@@ -249,12 +200,29 @@ class XXX  {
     Info*           m_info;
     VirtNic*        m_nic;
 
-    SendState<XXX>*         m_sendState;
-    RecvState<XXX>*         m_recvState;
-    WaitAllState<XXX>*      m_waitAllState;
     int                         m_dbg_level;
     int                         m_dbg_mask;
     size_t                  m_shortMsgLength;
+
+    uint64_t m_sendStateDelay;
+    uint64_t m_recvStateDelay;
+    uint64_t m_waitallStateDelay;
+    uint64_t m_waitanyStateDelay;
+
+    int m_matchDelay_ns;
+    int m_regRegionBaseDelay_ns;
+    int m_regRegionPerPageDelay_ns;
+    int m_regRegionXoverLength;
+    int m_sendAckDelay;
+
+    LatencyMod* m_txMemcpyMod;
+    LatencyMod* m_rxMemcpyMod;
+    LatencyMod* m_txSetupMod;
+    LatencyMod* m_rxSetupMod;
+    LatencyMod* m_rxPostMod;
+    LatencyMod* m_txFiniMod;
+    LatencyMod* m_rxFiniMod;
+
   public:
     ProcessQueuesState<XXX>*     m_processQueuesState;
     void loopSend( std::vector<IoVec>&, int, void* );
@@ -296,7 +264,6 @@ class _CommReq : public MP::MessageRequestBase {
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag, 
         MP::Communicator group, MP::MessageResponse* resp = NULL ) :
         m_type( type ),
-//        m_buf( buf ),
         m_resp( resp ),
         m_done( false ),
         m_destRank( MP::AnySrc ),

@@ -28,7 +28,7 @@ void WaitAllFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_event = static_cast< WaitAllStartEvent* >(e);
 
-    proto()->waitAll( m_event->count, m_event->req, m_event->resp, m_backToMe );
+    proto()->waitAll( m_event->count, m_event->req, m_event->resp );
 }
 
 void WaitAllFuncSM::handleEnterEvent( Retval& retval )

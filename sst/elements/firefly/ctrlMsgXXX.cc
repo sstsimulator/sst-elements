@@ -17,9 +17,6 @@
 
 #include "virtNic.h"
 #include "ctrlMsgXXX.h"
-#include "ctrlMsgSendState.h"
-#include "ctrlMsgRecvState.h"
-#include "ctrlMsgWaitAllState.h"
 #include "ctrlMsgProcessQueuesState.h"
 #include "info.h"
 #include "loopBack.h"
@@ -29,12 +26,9 @@ using namespace SST::Firefly;
 using namespace SST;
 
 XXX::XXX( Component* owner, Params& params ) :
-    m_rxPostMod( NULL ),
     m_retLink( NULL ),
     m_info( NULL ),
-    m_sendState( NULL ),
-    m_recvState( NULL ),
-    m_waitAllState( NULL ),
+    m_rxPostMod( NULL ),
     m_processQueuesState( NULL )
 {
     m_dbg_level = params.find_integer("verboseLevel",0);
@@ -122,9 +116,6 @@ void XXX::finish() {
 
 XXX::~XXX()
 {
-	if ( m_sendState ) delete m_sendState;
-	if ( m_recvState ) delete m_recvState;
-	if ( m_waitAllState) delete m_waitAllState;
 	if ( m_processQueuesState) delete m_processQueuesState;
 
     delete m_txMemcpyMod;
@@ -166,9 +157,6 @@ void XXX::setup()
                                                 m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
-    m_sendState = new SendState<XXX>( m_dbg_level, m_dbg_mask, *this );
-    m_recvState = new RecvState<XXX>( m_dbg_level, m_dbg_mask, *this );
-    m_waitAllState = new WaitAllState<XXX>( m_dbg_level, m_dbg_mask, *this );
     m_processQueuesState = new ProcessQueuesState<XXX>(
                         m_dbg_level, m_dbg_mask, *this );
 
@@ -231,106 +219,121 @@ void XXX::loopHandler( Event* ev )
     delete ev;
 }
 
+// **********************************************************************
+
 void XXX::sendv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-    MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
+    MP::Communicator group, CommReq* commReq )
 {
     m_dbg.verbose(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu \n",
                                         dest, tag, calcLength(ioVec) );
 
-    m_sendState->enter( commReq ? false : true, ioVec, dtype, dest, tag,
-                                        group, commReq, functor );
+    _CommReq* req;
+    if ( commReq ) {
+        req = new _CommReq( _CommReq::Isend, ioVec,
+            info()->sizeofDataType(dtype) , dest, tag, group );
+        commReq->req = req;
+    } else {
+        req = new _CommReq( _CommReq::Send, ioVec,
+            info()->sizeofDataType( dtype), dest, tag, group );
+    }
+
+    m_processQueuesState->enterSend( req, sendStateDelay() );
 }
 
 void XXX::recvv( std::vector<IoVec>& ioVec, 
     MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-    MP::Communicator group, CommReq* commReq, FunctorBase_0<bool>* functor )
+    MP::Communicator group, CommReq* commReq )
 {
     m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
-    m_recvState->enter( commReq ? false : true, ioVec, dtype, src, tag,
-                                        group,commReq, functor );
+
+    _CommReq* req;
+    if ( commReq ) {
+        req = new _CommReq( _CommReq::Irecv, ioVec,
+            info()->sizeofDataType(dtype), src, tag, group );
+        commReq->req = req;
+    } else {
+        req = new _CommReq( _CommReq::Recv, ioVec,
+            info()->sizeofDataType(dtype), src, tag, group );
+    }
+
+    m_processQueuesState->enterRecv( req, recvStateDelay() );
 }
 
-void XXX::waitAll( std::vector<CommReq*>& reqs,
-                                FunctorBase_0<bool>* functor ) 
+void XXX::waitAll( std::vector<CommReq*>& reqs )
 {
-    m_waitAllState->enter( reqs, functor );
+    std::vector<_CommReq*> tmp(reqs.size());
+    for ( unsigned i = 0; i < reqs.size(); i++ ) {
+        tmp[i] = reqs[i]->req; 
+    }
+    m_processQueuesState->enterWait( new WaitReq( tmp ), waitallStateDelay() );
 }
 
 // **********************************************************************
 void XXX::send(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, FunctorBase_0<bool>* func )
+        MP::Communicator group )
 {
     m_dbg.verbose(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
 
     m_processQueuesState->enterSend( new _CommReq( _CommReq::Send, buf, count,
-            info()->sizeofDataType( dtype), dest, tag, group ), func );
+            info()->sizeofDataType( dtype), dest, tag, group ) );
 }
 
 void XXX::isend(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-		FunctorBase_0<bool>* func )
+        MP::Communicator group, MP::MessageRequest* req )
 {
     *req = new _CommReq( _CommReq::Isend, buf, count,
             info()->sizeofDataType(dtype) , dest, tag, group );
     m_dbg.verbose(CALL_INFO,1,1,"%p\n",*req);
-    m_processQueuesState->enterSend( static_cast<_CommReq*>(*req), func );
+    m_processQueuesState->enterSend( static_cast<_CommReq*>(*req) );
 }
 
 void XXX::recv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func )
+        MP::Communicator group, MP::MessageResponse* resp )
 {
     m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     m_processQueuesState->enterRecv( new _CommReq( _CommReq::Recv, buf, count,
-            info()->sizeofDataType(dtype), src, tag, group, resp ), func);
+            info()->sizeofDataType(dtype), src, tag, group, resp ) );
 }
 
 void XXX::irecv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-        FunctorBase_0<bool>* func )
+        MP::Communicator group, MP::MessageRequest* req )
 {
     m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     *req = new _CommReq( _CommReq::Irecv, buf, count,
             info()->sizeofDataType(dtype), src, tag, group );
-    m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req), func );
+    m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req) );
 }
 
 // **********************************************************************
 
-void XXX::wait( MP::MessageRequest req, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func )
+void XXX::wait( MP::MessageRequest req, MP::MessageResponse* resp )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
 
-    m_processQueuesState->enterWait( new WaitReq( req, resp ), func );
+    m_processQueuesState->enterWait( new WaitReq( req, resp ) );
 }
 
 void XXX::waitAny( int count, MP::MessageRequest req[], int *index,
-        MP::MessageResponse* resp, FunctorBase_0<bool>* func  )
+        MP::MessageResponse* resp  )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    m_processQueuesState->enterWait( new WaitReq( count, req, index, resp ), func );
+    m_processQueuesState->enterWait( new WaitReq( count, req, index, resp ) );
 }
 
 void XXX::waitAll( int count, MP::MessageRequest req[],
-	MP::MessageResponse* resp[], FunctorBase_0<bool>* func )
+	MP::MessageResponse* resp[] )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    m_processQueuesState->enterWait( new WaitReq( count, req, resp ), func );
+    m_processQueuesState->enterWait( new WaitReq( count, req, resp ) );
 }
 
 // **********************************************************************
-
-void XXX::schedFunctor( FunctorBase_0<bool>* functor, uint64_t delay )
-{
-    m_delayLink->send( delay, new DelayEvent(functor) );
-}
 
 void XXX::schedCallback( Callback callback, uint64_t delay )
 {
@@ -343,13 +346,7 @@ void XXX::delayHandler( SST::Event* e )
     
     m_dbg.verbose(CALL_INFO,2,1,"\n");
 
-    if ( event->functor0 ) {
-        if ( (*event->functor0)( ) ) {
-            delete event->functor0;
-        }
-    } else if ( event->callback ) {
-        event->callback();
-    }
+    event->callback();
     delete e;
 }
 
@@ -401,15 +398,10 @@ bool XXX::notifyNeedRecv(int nid, int tag, size_t len )
     return true;
 }
 
-void XXX::passCtrlToFunction( uint64_t delay, FunctorBase_0<bool>* functor )
+void XXX::passCtrlToFunction( uint64_t delay )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"back to Function delay=%" PRIu64 " functor=%p\n",
-                                delay, functor);
+    m_dbg.verbose(CALL_INFO,1,1,"back to Function delay=%" PRIu64 "\n",
+                                delay );
 
-    if ( functor ) {
-        m_delayLink->send( delay, new DelayEvent( functor ) );
-    } else {
-        m_retLink->send( delay, NULL );
-    }
+    m_retLink->send( delay, NULL ); 
 }
-

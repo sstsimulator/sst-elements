@@ -39,7 +39,6 @@ class DriverEvent : public SST::Event {
 
 FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 
         SST::Link* toProgressLink, std::map<std::string,ProtocolAPI*>& proto ) :
-	m_backToMe( Functor( this, &FunctionSM::backToMe ) ),
     m_sm( NULL ),
     m_info( info ),
     m_params( params ),
@@ -59,7 +58,7 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleStartEvent));
     assert( m_fromDriverLink );
 
-    m_toMeLink = obj->configureSelfLink("ToMe", "1 ps",
+    m_toMeLink = obj->configureSelfLink("ToMe", "1 ns",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
     assert( m_toMeLink );
 
@@ -144,7 +143,6 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 
     m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
                              params );
-    m_smV[ num ]->setBackToMe( &m_backToMe );
 
     assert( m_smV[ Init ] );
     m_smV[ num ]->setInfo( info ); 
@@ -154,16 +152,6 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
         assert(proto);
         m_smV[ num ]->setProtocol( proto ); 
     }
-}
-
-bool FunctionSM::backToMe()
-{
-    assert( m_sm );
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
-    Retval retval;
-    m_sm->handleEnterEvent( retval );
-    processRetval( retval );
-	return false;
 }
 
 void FunctionSM::enter( )

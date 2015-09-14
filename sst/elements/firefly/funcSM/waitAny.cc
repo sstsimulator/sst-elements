@@ -29,7 +29,7 @@ void WaitAnyFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_event = static_cast< WaitAnyStartEvent* >(e);
 
     proto()->waitAny( m_event->count, m_event->req,
-                                    m_event->index, m_event->resp, m_backToMe );
+                                    m_event->index, m_event->resp );
 }
 
 void WaitAnyFuncSM::handleEnterEvent( Retval& retval )

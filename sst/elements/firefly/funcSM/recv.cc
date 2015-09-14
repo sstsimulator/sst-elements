@@ -36,10 +36,10 @@ void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     if ( m_event->req == NULL ) {
 		proto()->recv( m_event->buf, m_event->count, m_event->dtype, m_event->src, 
-			m_event->tag, m_event->group, m_event->resp, m_backToMe );
+			m_event->tag, m_event->group, m_event->resp );
 	} else {
 		proto()->irecv( m_event->buf, m_event->count, m_event->dtype, m_event->src, 
-			m_event->tag, m_event->group, m_event->req, m_backToMe );
+			m_event->tag, m_event->group, m_event->req );
 	}
 }
 

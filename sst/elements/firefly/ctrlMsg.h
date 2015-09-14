@@ -77,29 +77,25 @@ class API : public ProtocolAPI {
 
 	void send(MP::Addr buf, uint32_t count, 
 		MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, FunctorBase_0<bool>* func );
+        MP::Communicator group );
 
 	void isend(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-		FunctorBase_0<bool>* func );
+        MP::Communicator group, MP::MessageRequest* req );
 
     void recv(MP::Addr buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageResponse* resp,
-		FunctorBase_0<bool>* func );
+        MP::Communicator group, MP::MessageResponse* resp );
 
     void irecv(MP::Addr _buf, uint32_t _count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
-        MP::Communicator group, MP::MessageRequest* req,
-        FunctorBase_0<bool>* func );
+        MP::Communicator group, MP::MessageRequest* req );
 
-	void wait( MP::MessageRequest, MP::MessageResponse* resp,
-				FunctorBase_0<bool>* func );
+	void wait( MP::MessageRequest, MP::MessageResponse* resp );
    	void waitAny( int count, MP::MessageRequest req[], int *index,
-              	MP::MessageResponse* resp, FunctorBase_0<bool>* func );
+              	MP::MessageResponse* resp );
     void waitAll( int count, MP::MessageRequest req[],
-                MP::MessageResponse* resp[], FunctorBase_0<bool>* func );
+                MP::MessageResponse* resp[] );
 
   private:
     XXX*    m_xxx;

@@ -36,10 +36,10 @@ void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 	if ( NULL == m_event->req ) {
 		proto()->send( m_event->buf, m_event->count, m_event->dtype, m_event->dest,
-			m_event->tag, m_event->group, m_backToMe );
+			m_event->tag, m_event->group );
 	} else {
 		proto()->isend( m_event->buf, m_event->count, m_event->dtype, m_event->dest,
-			m_event->tag, m_event->group, m_event->req, m_backToMe );
+			m_event->tag, m_event->group, m_event->req );
 	}
 }
 

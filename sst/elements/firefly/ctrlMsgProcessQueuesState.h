@@ -13,7 +13,6 @@
 #define COMPONENTS_FIREFLY_CTRLMSGPROCESSQUEUESSTATE_H
 
 #include <sst/core/output.h>
-#include "ctrlMsgState.h"
 #include "ctrlMsgXXX.h"
 
 namespace SST {
@@ -21,7 +20,7 @@ namespace Firefly {
 namespace CtrlMsg {
 
 template< class T1 >
-class ProcessQueuesState : StateBase< T1 > 
+class ProcessQueuesState 
 {
     static const unsigned long MaxPostedShortBuffers = 512;
     static const unsigned long MinPostedShortBuffers = 5;
@@ -30,7 +29,7 @@ class ProcessQueuesState : StateBase< T1 >
 
   public:
     ProcessQueuesState( int verbose, int mask, T1& obj ) : 
-        StateBase<T1>( verbose, mask, obj ),
+        m_obj( obj ),
         m_getKey( 0 ),
         m_rspKey( 0 ),
         m_needRecv( 0 ),
@@ -39,6 +38,7 @@ class ProcessQueuesState : StateBase< T1 >
         m_missedInt( false ),
 		m_intCtx(NULL)
     {
+        m_dbg.init("", verbose, mask, Output::STDOUT );
         char buffer[100];
         snprintf(buffer,100,"@t:%#x:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             obj.nic().getNodeId(), obj.info()->worldRank());
@@ -62,9 +62,9 @@ class ProcessQueuesState : StateBase< T1 >
         }
     }
 
-    void enterSend( _CommReq*, FunctorBase_0<bool>* func );
-    void enterRecv( _CommReq*, FunctorBase_0<bool>* func );
-    void enterWait( WaitReq*, FunctorBase_0<bool>* func );
+    void enterSend( _CommReq*, uint64_t exitDelay = 0 );
+    void enterRecv( _CommReq*, uint64_t exitDelay = 0 );
+    void enterWait( WaitReq*, uint64_t exitDelay = 0 );
 
     void needRecv( int, int, size_t );
 
@@ -256,8 +256,8 @@ class ProcessQueuesState : StateBase< T1 >
 
     int copyIoVec( std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t);
 
-    Output& dbg()   { return StateBase<T1>::m_dbg; }
-    T1& obj()       { return StateBase<T1>::obj; }
+    Output& dbg()   { return m_dbg; }
+    T1& obj()       { return m_obj; }
 
     void postShortRecvBuffer();
 
@@ -272,16 +272,9 @@ class ProcessQueuesState : StateBase< T1 >
     _CommReq*	searchPostedRecv( MatchHdr& hdr, int& delay );
     void        print( char* buf, int len );
 
-    void setExit( FunctorBase_0<bool>* exitFunctor ) {
-        StateBase<T1>::setExit( exitFunctor );
-    }
-
-    FunctorBase_0<bool>* clearExit( ) {
-        return StateBase<T1>::clearExit( );
-    }
-
     void exit( int delay = 0 ) {
-        StateBase<T1>::exit( delay );
+        obj().passCtrlToFunction( m_exitDelay + delay );
+        m_exitDelay = 0;
     }
 
     key_t    genGetKey() {
@@ -308,6 +301,9 @@ class ProcessQueuesState : StateBase< T1 >
         return region | ReadRspKey;
     }  
 
+    T1&         m_obj;
+    Output      m_dbg;
+
     key_t   m_getKey;
     key_t   m_rspKey;
     int     m_needRecv;
@@ -329,13 +325,13 @@ class ProcessQueuesState : StateBase< T1 >
     std::map< ShortRecvBuffer*, Callback2* >
                                                     m_postedShortBuffers; 
 	FuncCtxBase*	m_intCtx;
+    uint64_t        m_exitDelay;
 };
 
 template< class T1 >
-void ProcessQueuesState<T1>::enterSend( _CommReq* req,
-                                        FunctorBase_0<bool>* exitFunctor )
+void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )
 {
-    setExit( exitFunctor );
+    m_exitDelay = exitDelay;
     size_t length = req->getLength( );
     int delay = obj().txDelay( length );
 
@@ -381,7 +377,7 @@ void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
     if ( ! req->isBlocking() ) {
         exit();
     } else {
-        enterWait( new WaitReq( req ), clearExit() );
+        enterWait( new WaitReq( req ), m_exitDelay );
     }
 }
 
@@ -445,16 +441,15 @@ void ProcessQueuesState<T1>::processSend( _CommReq* req )
     if ( ! req->isBlocking() ) {
         exit();
     } else {
-        enterWait( new WaitReq( req ), clearExit() );
+        enterWait( new WaitReq( req ), m_exitDelay );
     }
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::enterRecv( _CommReq* req,
-                                        FunctorBase_0<bool>* exitFunctor )
+void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
     dbg().verbose(CALL_INFO,1,1,"new recv CommReq\n");
-    setExit( exitFunctor );
+    m_exitDelay = exitDelay;
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
         if ( m_numNicRequestedShortBuff ) {
@@ -486,18 +481,17 @@ void ProcessQueuesState<T1>::processRecv( _CommReq* req )
     if ( ! req->isBlocking() ) {
         exit();
     } else {
-        enterWait( new WaitReq( req ), clearExit() );
+        enterWait( new WaitReq( req ), m_exitDelay );
     }
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::enterWait( WaitReq* req, 
-                                    FunctorBase_0<bool>* exitFunctor  )
+void ProcessQueuesState<T1>::enterWait( WaitReq* req, uint64_t exitDelay  )
 {
     dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
 
-    setExit( exitFunctor );
+    m_exitDelay = exitDelay;
 
     WaitCtx* ctx = new WaitCtx ( req,
         std::bind( &ProcessQueuesState<T1>::enterWait0, this, &m_funcStack ) 
