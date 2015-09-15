@@ -237,10 +237,16 @@ class ProcessQueuesState
     void processLongGetFini0( std::deque< FuncCtxBase* >* );
     void processPioSendFini( _CommReq* );
 
-    void processSend( _CommReq* );
-    void processRecv( _CommReq* );
+    void processSend_0( _CommReq* );
+    void processSend_1( _CommReq* );
+    void processSend_2( _CommReq* );
     void processSendLoop( _CommReq* );
+
+    void processRecv_0( _CommReq* );
+    void processRecv_1( _CommReq* );
+
     void enterWait0( std::deque< FuncCtxBase* >* );
+
     void processQueues( std::deque< FuncCtxBase* >& );
     void processQueues0( std::deque< FuncCtxBase* >* );
     void processShortList( std::deque< FuncCtxBase* >& );
@@ -332,60 +338,48 @@ template< class T1 >
 void ProcessQueuesState<T1>::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
-    size_t length = req->getLength( );
-    int delay = obj().txDelay( length );
-
-    dbg().verbose(CALL_INFO,2,1,"new send CommReq\n");
-
     req->setSrcRank( getMyRank( req ) );
 
+    uint64_t delay = obj().txDelay( req->getLength() );
+
+    Callback callback;
     if ( obj().nic().isLocal( calcNid( req, req->getDestRank() ) ) ) {
-        obj().schedCallback(
-            std::bind( &ProcessQueuesState<T1>::processSendLoop, this, req ),
-            delay
-        );
+        callback =  std::bind( 
+                    &ProcessQueuesState<T1>::processSendLoop, this, req );
     } else {
-
-        delay += obj().txMemcpyDelay( sizeof( req->hdr() ) );
-        if ( length > obj().shortMsgLength() ) {
-            delay += obj().regRegionDelay( length );
-        } else {
-            delay += obj().txMemcpyDelay( length );
-        }
-
-        obj().schedCallback( 
-            std::bind( &ProcessQueuesState<T1>::processSend, this, req ),
-            delay
-        );
+        callback = std::bind( 
+                    &ProcessQueuesState<T1>::processSend_0, this, req );
     }
+    obj().schedCallback( callback, delay);
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
+void ProcessQueuesState<T1>::processSend_0( _CommReq* req )
 {
-    dbg().verbose(CALL_INFO,2,2,"key=%p\n", req);
+    obj().memwrite( 
+        std::bind( &ProcessQueuesState<T1>::processSend_1, this, req ),
+        0, sizeof( req->hdr()) 
+    ); 
+}
 
-    IoVec hdrVec;
-    hdrVec.ptr = &req->hdr();
-    hdrVec.len = sizeof( req->hdr() );
+template< class T1 >
+void ProcessQueuesState<T1>::processSend_1( _CommReq* req )
+{
+    Callback callback = std::bind( 
+        &ProcessQueuesState<T1>::processSend_2, this, req );
 
-    std::vector<IoVec> vec;
-    vec.insert( vec.begin(), hdrVec );
-    vec.insert( vec.begin() + 1, req->ioVec().begin(), 
-                                        req->ioVec().end() );
+    size_t length = req->getLength( );
 
-    obj().loopSend( vec, obj().nic().calcCoreId( 
-                        calcNid( req, req->getDestRank() ) ), req );
-
-    if ( ! req->isBlocking() ) {
-        exit();
+    if ( length > obj().shortMsgLength() ) {
+        obj().mempin( callback, 0, length );
+//        delay += obj().regRegionDelay( length );
     } else {
-        enterWait( new WaitReq( req ), m_exitDelay );
+        obj().memcpy( callback, 0, 0, length );
     }
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processSend( _CommReq* req )
+void ProcessQueuesState<T1>::processSend_2( _CommReq* req )
 {
     void* hdrPtr = NULL;
     size_t length = req->getLength( );
@@ -449,6 +443,30 @@ void ProcessQueuesState<T1>::processSend( _CommReq* req )
 }
 
 template< class T1 >
+void ProcessQueuesState<T1>::processSendLoop( _CommReq* req )
+{
+    dbg().verbose(CALL_INFO,2,2,"key=%p\n", req);
+
+    IoVec hdrVec;
+    hdrVec.ptr = &req->hdr();
+    hdrVec.len = sizeof( req->hdr() );
+
+    std::vector<IoVec> vec;
+    vec.insert( vec.begin(), hdrVec );
+    vec.insert( vec.begin() + 1, req->ioVec().begin(), 
+                                        req->ioVec().end() );
+
+    obj().loopSend( vec, obj().nic().calcCoreId( 
+                        calcNid( req, req->getDestRank() ) ), req );
+
+    if ( ! req->isBlocking() ) {
+        exit();
+    } else {
+        enterWait( new WaitReq( req ), m_exitDelay );
+    }
+}
+
+template< class T1 >
 void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
 {
     dbg().verbose(CALL_INFO,1,1,"new recv CommReq\n");
@@ -467,19 +485,33 @@ void ProcessQueuesState<T1>::enterRecv( _CommReq* req, uint64_t exitDelay )
     m_pstdRcvQ.push_front( req );
 
     size_t length = req->getLength( );
-    uint64_t delay = obj().rxPostDelay_ns( length );
+
+    Callback callback;
+
     if ( length > obj().shortMsgLength() ) {
-        delay += obj().regRegionDelay( length );
+        callback = std::bind(
+                &ProcessQueuesState<T1>::processRecv_0, this, req ); 
+    } else {
+        callback = std::bind(
+                &ProcessQueuesState<T1>::processRecv_1, this, req );
     }
 
-    obj().schedCallback( 
-        std::bind( &ProcessQueuesState::processRecv,this,req), 
-        delay 
+    obj().schedCallback( callback, obj().rxPostDelay_ns( length ) );
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processRecv_0( _CommReq* req )
+{
+    dbg().verbose(CALL_INFO,1,1,"\n");
+
+    obj().mempin(
+        std::bind( &ProcessQueuesState<T1>::processRecv_1, this, req ),
+        0, req->getLength() 
     );
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processRecv( _CommReq* req )
+void ProcessQueuesState<T1>::processRecv_1( _CommReq* req )
 {
     if ( ! req->isBlocking() ) {
         exit();

@@ -16,6 +16,7 @@
 #include "ctrlMsg.h"
 #include "ioVec.h"
 #include "latencyMod.h"
+#include "mem.h"
 
 namespace SST {
 namespace Firefly {
@@ -24,6 +25,7 @@ namespace CtrlMsg {
 template< class T >
 class ProcessQueuesState;
 
+typedef uint64_t MemAddr;
 typedef unsigned short key_t;
 
 static const key_t LongGetKey  = 1 << (sizeof(key_t) * 8 - 2);
@@ -173,6 +175,11 @@ class XXX  {
         return m_waitanyStateDelay;
     }
 
+    void memcpy( Callback, MemAddr to, MemAddr from, size_t );
+    void memwrite( Callback, MemAddr to, size_t );
+    void memread( Callback, MemAddr to, size_t );
+    void mempin( Callback, uint64_t Memaddr, size_t );
+
   private:
     class DelayEvent : public SST::Event {
       public:
@@ -188,6 +195,7 @@ class XXX  {
   private:
     void delayHandler( Event* );
     void loopHandler( Event* );
+    void memEventHandler( Event* );
     bool notifyGetDone( void* );
     bool notifySendPioDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
@@ -195,6 +203,7 @@ class XXX  {
 
     Output          m_dbg;
     Link*           m_retLink;
+    Link*           m_memLink;
     Link*           m_delayLink;
     Link*           m_loopLink;
     Info*           m_info;

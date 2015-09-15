@@ -27,6 +27,7 @@ using namespace SST;
 
 XXX::XXX( Component* owner, Params& params ) :
     m_retLink( NULL ),
+    m_memLink( NULL ),
     m_info( NULL ),
     m_rxPostMod( NULL ),
     m_processQueuesState( NULL )
@@ -108,6 +109,12 @@ XXX::XXX( Component* owner, Params& params ) :
 			params.find_string("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<XXX>(this,&XXX::loopHandler) );
     assert(m_loopLink);
+
+#if 0
+    m_memLink = owner->configureLink( params.find_string("memPortName","mem"),
+            "1 ns", new Event::Handler<XXX>(this,&XXX::memEventHandler) );
+    assert( m_memLink );
+#endif
 }
 
 void XXX::finish() { 
@@ -217,6 +224,14 @@ void XXX::loopHandler( Event* ev )
         m_processQueuesState->loopHandler(event->core, event->vec, event->key);
     }
     delete ev;
+}
+
+void XXX::memEventHandler( Event* ev )
+{
+    MemRespEvent* event = static_cast<MemRespEvent*>(ev);
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    event->callback();
+    delete event;
 }
 
 // **********************************************************************
@@ -348,6 +363,38 @@ void XXX::delayHandler( SST::Event* e )
 
     event->callback();
     delete e;
+}
+
+void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
+{
+    if ( m_memLink ) {
+        m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
+    } else {
+        m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
+    }
+}
+
+void XXX::memread( Callback callback, MemAddr addr, size_t length )
+{
+    if ( m_memLink ) {
+        m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
+    } else {
+        m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
+    }
+}
+
+void XXX::memwrite( Callback callback, MemAddr addr, size_t length )
+{
+    if ( m_memLink ) {
+        m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
+    } else {
+        m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
+    }
+}
+
+void XXX::mempin( Callback callback, MemAddr addr, size_t length )
+{
+    m_delayLink->send( regRegionDelay( length ), new DelayEvent(callback) );
 }
 
 bool XXX::notifyGetDone( void* key )
