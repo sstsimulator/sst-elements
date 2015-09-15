@@ -264,7 +264,7 @@ class ProcessQueuesState
     void foo();
     void foo0( Stack* );
 
-    int copyIoVec( std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t);
+    void copyIoVec( std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t);
 
     Output& dbg()   { return m_dbg; }
     T1& obj()       { return m_obj; }
@@ -682,7 +682,6 @@ void ProcessQueuesState<T1>::processShortList_3( Stack* stack )
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
-    int delay = 0;
 
     _CommReq* req = ctx->req;
 
@@ -691,17 +690,21 @@ void ProcessQueuesState<T1>::processShortList_3( Stack* stack )
     size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
 
     if ( length <= obj().shortMsgLength() || 
-        dynamic_cast<LoopReq*>( ctx->msg() ) ) {
-
+                            dynamic_cast<LoopReq*>( ctx->msg() ) ) 
+    {
         dbg().verbose(CALL_INFO,2,1,"copyIoVec() short|loop message\n");
 
-        delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
-    }
+        copyIoVec( req->ioVec(), ctx->ioVec(), length );
 
-    obj().schedCallback( 
-        std::bind( &ProcessQueuesState<T1>::processShortList_4, this, stack ),
-        delay
-    );
+        obj().memcpy( 
+            std::bind(
+                    &ProcessQueuesState<T1>::processShortList_4, this, stack ),
+                0, 0, length 
+        );
+
+    } else {
+        processShortList_4( stack );
+    }
 }
 
 template< class T1 >
@@ -1059,7 +1062,7 @@ bool ProcessQueuesState<T1>::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
 }
 
 template< class T1 >
-int ProcessQueuesState<T1>::copyIoVec( 
+void ProcessQueuesState<T1>::copyIoVec( 
                 std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t len )
 {
     dbg().verbose(CALL_INFO,1,1,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
@@ -1087,7 +1090,7 @@ int ProcessQueuesState<T1>::copyIoVec(
             } 
         }
     }
-    return obj().rxMemcpyDelay( copied );
+    assert( copied == len );
 }
 
 template< class T1 >
