@@ -157,6 +157,8 @@ class ProcessQueuesState
         Callback callback;
     };
 
+    typedef std::deque<FuncCtxBase*> Stack; 
+
     class ProcessQueuesCtx : public FuncCtxBase {
 	  public:
 		ProcessQueuesCtx( Callback callback ) :
@@ -233,8 +235,8 @@ class ProcessQueuesState
 
     void processLoopResp( LoopResp* );
     void processLongAck( GetInfo* );
-    void processLongGetFini( std::deque< FuncCtxBase* >&, _CommReq* );
-    void processLongGetFini0( std::deque< FuncCtxBase* >* );
+    void processLongGetFini( Stack*, _CommReq* );
+    void processLongGetFini0( Stack* );
     void processPioSendFini( _CommReq* );
 
     void processSend_0( _CommReq* );
@@ -245,20 +247,20 @@ class ProcessQueuesState
     void processRecv_0( _CommReq* );
     void processRecv_1( _CommReq* );
 
-    void processWait_0( std::deque< FuncCtxBase* >* );
+    void processWait_0( Stack* );
 
-    void processQueues( std::deque< FuncCtxBase* >& );
-    void processQueues0( std::deque< FuncCtxBase* >* );
-    void processShortList( std::deque< FuncCtxBase* >& );
-    void processShortList0( std::deque< FuncCtxBase* >* );
-    void processShortList1( std::deque< FuncCtxBase* >* );
-    void processShortList2( std::deque< FuncCtxBase* >* );
+    void processQueues( Stack* );
+    void processQueues0( Stack* );
 
-	void enableInt( FuncCtxBase*, 
-			void (ProcessQueuesState::*)( std::deque< FuncCtxBase* >*) );
+    void processShortList( Stack* );
+    void processShortList0( Stack* );
+    void processShortList1( Stack* );
+    void processShortList2( Stack* );
+
+	void enableInt( FuncCtxBase*, void (ProcessQueuesState::*)( Stack*) );
 
     void foo();
-    void foo0( std::deque< FuncCtxBase* >* );
+    void foo0( Stack* );
 
     int copyIoVec( std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t);
 
@@ -323,8 +325,8 @@ class ProcessQueuesState
     std::deque< _CommReq* >         m_longGetFiniQ;
     std::deque< GetInfo* >          m_longAckQ;
 
-    std::deque< FuncCtxBase* >      m_funcStack; 
-    std::deque< FuncCtxBase* >      m_intStack; 
+    Stack                           m_funcStack; 
+    Stack                           m_intStack; 
 
     std::deque< LoopResp* >         m_loopResp;
 
@@ -534,11 +536,11 @@ void ProcessQueuesState<T1>::enterWait( WaitReq* req, uint64_t exitDelay  )
 
     m_funcStack.push_back( ctx );
 
-    processQueues( m_funcStack );
+    processQueues( &m_funcStack );
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processWait_0( std::deque<FuncCtxBase*>* stack )
+void ProcessQueuesState<T1>::processWait_0( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
     dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
@@ -562,11 +564,11 @@ void ProcessQueuesState<T1>::processWait_0( std::deque<FuncCtxBase*>* stack )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
+void ProcessQueuesState<T1>::processQueues( Stack* stack )
 {
     int delay = 0;
     dbg().verbose(CALL_INFO,2,1,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
-    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack.size()); 
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
     // this does not cost time
     while ( m_needRecv ) {
@@ -590,9 +592,9 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     if ( ! m_longGetFiniQ.empty() ) {
 
         ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
-                bind( &ProcessQueuesState<T1>::processQueues0, this, &stack )  
+                bind( &ProcessQueuesState<T1>::processQueues0, this, stack )  
         ); 
-        stack.push_back( ctx );
+        stack->push_back( ctx );
 
         processLongGetFini( stack, m_longGetFiniQ.front() );
 
@@ -601,18 +603,18 @@ void ProcessQueuesState<T1>::processQueues( std::deque< FuncCtxBase* >& stack )
     } else if ( ! m_recvdMsgQ.empty() ) {
 
         ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
-                bind ( &ProcessQueuesState<T1>::processQueues0, this, &stack ) 
+                bind ( &ProcessQueuesState<T1>::processQueues0, this, stack ) 
         );  
-        stack.push_back( ctx );
+        stack->push_back( ctx );
         processShortList( stack );
 
     } else {
-        obj().schedCallback( stack.back()->getCallback(), delay );
+        obj().schedCallback( stack->back()->getCallback(), delay );
     }
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processQueues0( std::deque< FuncCtxBase* >* stack )
+void ProcessQueuesState<T1>::processQueues0( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack->size(), m_recvdMsgQ.size() ); 
@@ -623,25 +625,26 @@ void ProcessQueuesState<T1>::processQueues0( std::deque< FuncCtxBase* >* stack )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList( std::deque<FuncCtxBase*>& stack )
-{
-    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
-            stack.size(), m_recvdMsgQ.size() ); 
-
-    ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgQ );
-	m_recvdMsgQ.clear();
-    stack.push_back( ctx );
-
-    processShortList0( &stack );
-}
-
-template< class T1 >
-void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>* stack )
+void ProcessQueuesState<T1>::processShortList( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack->size(), m_recvdMsgQ.size() ); 
 
-    ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>( stack->back());
+    ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgQ );
+	m_recvdMsgQ.clear();
+    stack->push_back( ctx );
+
+    processShortList0( stack );
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processShortList0( Stack* stack )
+{
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
+                        stack->size(), m_recvdMsgQ.size() ); 
+
+    ProcessShortListCtx* ctx = 
+                        static_cast<ProcessShortListCtx*>( stack->back() );
     
     int delay = 0;
     ctx->req = searchPostedRecv( ctx->hdr(), delay );
@@ -657,7 +660,7 @@ void ProcessQueuesState<T1>::processShortList0(std::deque<FuncCtxBase*>* stack )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>* stack )
+void ProcessQueuesState<T1>::processShortList1( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
@@ -688,7 +691,7 @@ void ProcessQueuesState<T1>::processShortList1(std::deque<FuncCtxBase*>* stack )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList2(std::deque<FuncCtxBase*>* stack )
+void ProcessQueuesState<T1>::processShortList2( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
@@ -799,7 +802,7 @@ void ProcessQueuesState<T1>::dmaRecvFiniSRB( ShortRecvBuffer* buf, nid_t nid,
 
 template< class T1 >
 void ProcessQueuesState<T1>::enableInt( FuncCtxBase* ctx,
-	void (ProcessQueuesState<T1>::*funcPtr)( std::deque< FuncCtxBase* >*) )
+	void (ProcessQueuesState<T1>::*funcPtr)( Stack* ) )
 {
   	dbg().verbose(CALL_INFO,2,1,"ctx=%p\n",ctx);
 	assert( m_funcStack.empty() );
@@ -832,11 +835,11 @@ void ProcessQueuesState<T1>::foo( )
 
     m_intStack.push_back( ctx );
 
-	processQueues( m_intStack );
+	processQueues( &m_intStack );
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::foo0(std::deque<FuncCtxBase*>* stack )
+void ProcessQueuesState<T1>::foo0( Stack* stack )
 {
     assert( 1 == stack->size() );
 	delete stack->back();
@@ -874,23 +877,21 @@ void ProcessQueuesState<T1>::pioSendFiniCtrlHdr( CtrlHdr* hdr )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processLongGetFini( 
-                        std::deque< FuncCtxBase* >& stack, _CommReq* req )
+void ProcessQueuesState<T1>::processLongGetFini( Stack* stack, _CommReq* req )
 {
     ProcessLongGetFiniCtx* ctx = new ProcessLongGetFiniCtx( req );
     dbg().verbose(CALL_INFO,1,1,"\n");
 
-    stack.push_back( ctx );
+    stack->push_back( ctx );
 
     obj().schedCallback( 
-        std::bind( &ProcessQueuesState<T1>::processLongGetFini0, this, &stack),
+        std::bind( &ProcessQueuesState<T1>::processLongGetFini0, this, stack),
         obj().sendAckDelay() 
     );
 }
 
-template< class T1 >
-void ProcessQueuesState<T1>::processLongGetFini0( 
-                            std::deque< FuncCtxBase* >* stack )
+template< class T1 > 
+void ProcessQueuesState<T1>::processLongGetFini0( Stack* stack )
 {
     _CommReq* req = static_cast<ProcessLongGetFiniCtx*>(stack->back())->req;
 
