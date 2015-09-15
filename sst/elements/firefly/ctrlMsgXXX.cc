@@ -370,7 +370,15 @@ void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
     if ( m_memLink ) {
         m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
     } else {
-        m_delayLink->send( txMemcpyDelay( length ), new DelayEvent(callback) );
+        uint64_t delay; 
+        if ( from ) {
+            delay = txMemcpyDelay( length );
+        } else if ( to ) {
+            delay = rxMemcpyDelay( length );
+        } else {
+            assert(0);
+        }
+        m_delayLink->send( delay, new DelayEvent(callback) );
     }
 }
 

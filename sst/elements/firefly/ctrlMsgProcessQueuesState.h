@@ -376,9 +376,8 @@ void ProcessQueuesState<T1>::processSend_1( _CommReq* req )
 
     if ( length > obj().shortMsgLength() ) {
         obj().mempin( callback, 0, length );
-//        delay += obj().regRegionDelay( length );
     } else {
-        obj().memcpy( callback, 0, 0, length );
+        obj().memcpy( callback, 0, 1, length );
     }
 }
 
@@ -699,7 +698,7 @@ void ProcessQueuesState<T1>::processShortList_3( Stack* stack )
         obj().memcpy( 
             std::bind(
                     &ProcessQueuesState<T1>::processShortList_4, this, stack ),
-                0, 0, length 
+                1, 0, length 
         );
 
     } else {
@@ -740,8 +739,8 @@ void ProcessQueuesState<T1>::processShortList_4( Stack* stack )
 
         req->m_ackKey = ctx->hdr().key; 
         req->m_ackNid = nid;
-
     }
+
     ctx->removeMsg();
     processShortList_5( stack );
 }

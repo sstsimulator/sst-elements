@@ -107,10 +107,6 @@ class XXX  {
     void schedCallback( Callback, uint64_t delay = 0 );
     void passCtrlToFunction( uint64_t delay = 0 );
 
-    int txMemcpyDelay( int bytes ) {
-        return m_txMemcpyMod->getLatency( bytes );
-    }
-
     int rxPostDelay_ns( int bytes ) {
         if ( m_rxPostMod ) {
             return m_rxPostMod->getLatency( bytes );
@@ -118,14 +114,6 @@ class XXX  {
             return 0;
         }
     } 
-
-    int rxMemcpyDelay( int bytes ) {
-        return m_rxMemcpyMod->getLatency( bytes );
-    } 
-
-    int matchDelay( int i ) {
-        return i * m_matchDelay_ns;
-    }
 
     int regRegionDelay( int nbytes ) {
         double tmp = 0;
@@ -201,6 +189,18 @@ class XXX  {
     bool notifySendPioDone( void* );
     bool notifyRecvDmaDone( int, int, size_t, void* );
     bool notifyNeedRecv( int, int, size_t );
+
+    int txMemcpyDelay( int bytes ) {
+        return m_txMemcpyMod->getLatency( bytes );
+    }
+
+    int rxMemcpyDelay( int bytes ) {
+        return m_rxMemcpyMod->getLatency( bytes );
+    } 
+
+    int matchDelay( int i ) {
+        return i * m_matchDelay_ns;
+    }
 
     Output          m_dbg;
     Link*           m_retLink;
