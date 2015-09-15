@@ -252,10 +252,11 @@ class ProcessQueuesState
     void processQueues( Stack* );
     void processQueues0( Stack* );
 
-    void processShortList( Stack* );
-    void processShortList0( Stack* );
-    void processShortList1( Stack* );
-    void processShortList2( Stack* );
+    void processShortList_0( Stack* );
+    void processShortList_1( Stack* );
+    void processShortList_2( Stack* );
+    void processShortList_3( Stack* );
+    void processShortList_4( Stack* );
 
 	void enableInt( FuncCtxBase*, void (ProcessQueuesState::*)( Stack*) );
 
@@ -606,7 +607,7 @@ void ProcessQueuesState<T1>::processQueues( Stack* stack )
                 bind ( &ProcessQueuesState<T1>::processQueues0, this, stack ) 
         );  
         stack->push_back( ctx );
-        processShortList( stack );
+        processShortList_0( stack );
 
     } else {
         obj().schedCallback( stack->back()->getCallback(), delay );
@@ -625,7 +626,7 @@ void ProcessQueuesState<T1>::processQueues0( Stack* stack )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList( Stack* stack )
+void ProcessQueuesState<T1>::processShortList_0( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
             stack->size(), m_recvdMsgQ.size() ); 
@@ -634,11 +635,11 @@ void ProcessQueuesState<T1>::processShortList( Stack* stack )
 	m_recvdMsgQ.clear();
     stack->push_back( ctx );
 
-    processShortList0( stack );
+    processShortList_1( stack );
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList0( Stack* stack )
+void ProcessQueuesState<T1>::processShortList_1( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
                         stack->size(), m_recvdMsgQ.size() ); 
@@ -646,21 +647,34 @@ void ProcessQueuesState<T1>::processShortList0( Stack* stack )
     ProcessShortListCtx* ctx = 
                         static_cast<ProcessShortListCtx*>( stack->back() );
     
-    int delay = 0;
-    ctx->req = searchPostedRecv( ctx->hdr(), delay );
+    int count = 0;
+    ctx->req = searchPostedRecv( ctx->hdr(), count );
 
-    if ( ctx->req ) {
-        delay += obj().rxDelay( ctx->hdr().count * ctx->hdr().dtypeSize );
-    }
-
-    obj().schedCallback( 
-        std::bind( &ProcessQueuesState<T1>::processShortList1, this, stack ),
-        delay 
-    );
+    obj().memwalk( 
+        std::bind( &ProcessQueuesState<T1>::processShortList_2, this, stack ),
+        count
+    ); 
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList1( Stack* stack )
+void ProcessQueuesState<T1>::processShortList_2( Stack* stack )
+{
+    ProcessShortListCtx* ctx = 
+                        static_cast<ProcessShortListCtx*>( stack->back() );
+
+    if ( ctx->req ) {
+        obj().schedCallback( 
+            std::bind( 
+                    &ProcessQueuesState<T1>::processShortList_3, this, stack ),
+            obj().rxDelay( ctx->hdr().count * ctx->hdr().dtypeSize )
+        ); 
+    } else {
+        processShortList_3( stack );
+    }
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processShortList_3( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
@@ -684,14 +698,14 @@ void ProcessQueuesState<T1>::processShortList1( Stack* stack )
     }
 
     obj().schedCallback( 
-        std::bind( &ProcessQueuesState<T1>::processShortList2, this, stack ),
+        std::bind( &ProcessQueuesState<T1>::processShortList_4, this, stack ),
         delay
     );
     
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::processShortList2( Stack* stack )
+void ProcessQueuesState<T1>::processShortList_4( Stack* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
@@ -744,7 +758,7 @@ void ProcessQueuesState<T1>::processShortList2( Stack* stack )
     } else {
         dbg().verbose(CALL_INFO,1,1,"work on next Msg\n");
 
-        processShortList0( stack );
+        processShortList_1( stack );
     }
 }
 
@@ -981,10 +995,9 @@ void ProcessQueuesState<T1>::loopHandler( int srcCore, std::vector<IoVec>& vec, 
 }
 
 template< class T1 >
-_CommReq* ProcessQueuesState<T1>::searchPostedRecv( MatchHdr& hdr, int& delay )
+_CommReq* ProcessQueuesState<T1>::searchPostedRecv( MatchHdr& hdr, int& count )
 {
     _CommReq* req = NULL;
-    int count = 0;
     dbg().verbose(CALL_INFO,1,1,"posted size %lu\n",m_pstdRcvQ.size());
 
     std::deque< _CommReq* >:: iterator iter = m_pstdRcvQ.begin();
@@ -1000,7 +1013,6 @@ _CommReq* ProcessQueuesState<T1>::searchPostedRecv( MatchHdr& hdr, int& delay )
         break;
     }
     dbg().verbose(CALL_INFO,2,1,"req=%p\n",req);
-    delay = obj().matchDelay(count);
 
     return req;
 }

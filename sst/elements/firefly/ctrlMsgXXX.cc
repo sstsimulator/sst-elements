@@ -397,6 +397,11 @@ void XXX::mempin( Callback callback, MemAddr addr, size_t length )
     m_delayLink->send( regRegionDelay( length ), new DelayEvent(callback) );
 }
 
+void XXX::memwalk( Callback callback, int count )
+{
+    m_delayLink->send( matchDelay( count ), new DelayEvent(callback) );
+}
+
 bool XXX::notifyGetDone( void* key )
 {
     m_dbg.verbose(CALL_INFO,1,1,"key=%p\n",key);

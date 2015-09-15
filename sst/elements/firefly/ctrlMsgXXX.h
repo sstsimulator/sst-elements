@@ -179,6 +179,7 @@ class XXX  {
     void memwrite( Callback, MemAddr to, size_t );
     void memread( Callback, MemAddr to, size_t );
     void mempin( Callback, uint64_t Memaddr, size_t );
+    void memwalk( Callback, int count );
 
   private:
     class DelayEvent : public SST::Event {
