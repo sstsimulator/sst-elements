@@ -245,7 +245,7 @@ class ProcessQueuesState
     void processRecv_0( _CommReq* );
     void processRecv_1( _CommReq* );
 
-    void enterWait0( std::deque< FuncCtxBase* >* );
+    void processWait_0( std::deque< FuncCtxBase* >* );
 
     void processQueues( std::deque< FuncCtxBase* >& );
     void processQueues0( std::deque< FuncCtxBase* >* );
@@ -529,7 +529,7 @@ void ProcessQueuesState<T1>::enterWait( WaitReq* req, uint64_t exitDelay  )
     m_exitDelay = exitDelay;
 
     WaitCtx* ctx = new WaitCtx ( req,
-        std::bind( &ProcessQueuesState<T1>::enterWait0, this, &m_funcStack ) 
+        std::bind( &ProcessQueuesState<T1>::processWait_0, this, &m_funcStack ) 
     );
 
     m_funcStack.push_back( ctx );
@@ -538,7 +538,7 @@ void ProcessQueuesState<T1>::enterWait( WaitReq* req, uint64_t exitDelay  )
 }
 
 template< class T1 >
-void ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>* stack )
+void ProcessQueuesState<T1>::processWait_0( std::deque<FuncCtxBase*>* stack )
 {
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
     dbg().verbose(CALL_INFO,1,1,"num pstd %lu, num short %lu\n",
@@ -557,7 +557,7 @@ void ProcessQueuesState<T1>::enterWait0( std::deque<FuncCtxBase*>* stack )
     }
 
 	if ( ctx ) {
-		enableInt( ctx, &ProcessQueuesState::enterWait0 );
+		enableInt( ctx, &ProcessQueuesState::processWait_0 );
 	}
 }
 
