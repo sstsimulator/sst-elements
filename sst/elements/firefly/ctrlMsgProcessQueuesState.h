@@ -257,6 +257,7 @@ class ProcessQueuesState
     void processShortList_2( Stack* );
     void processShortList_3( Stack* );
     void processShortList_4( Stack* );
+    void processShortList_5( Stack* );
 
 	void enableInt( FuncCtxBase*, void (ProcessQueuesState::*)( Stack*) );
 
@@ -661,6 +662,7 @@ void ProcessQueuesState<T1>::processShortList_2( Stack* stack )
 {
     ProcessShortListCtx* ctx = 
                         static_cast<ProcessShortListCtx*>( stack->back() );
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
     if ( ctx->req ) {
         obj().schedCallback( 
@@ -669,7 +671,8 @@ void ProcessQueuesState<T1>::processShortList_2( Stack* stack )
             obj().rxDelay( ctx->hdr().count * ctx->hdr().dtypeSize )
         ); 
     } else {
-        processShortList_3( stack );
+        ctx->incPos();
+        processShortList_5( stack );
     }
 }
 
@@ -681,69 +684,71 @@ void ProcessQueuesState<T1>::processShortList_3( Stack* stack )
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
     int delay = 0;
 
-    if ( ctx->req ) {
-        _CommReq* req = ctx->req;
+    _CommReq* req = ctx->req;
 
-        req->setResp( ctx->hdr().tag, ctx->hdr().rank, ctx->hdr().count );
+    req->setResp( ctx->hdr().tag, ctx->hdr().rank, ctx->hdr().count );
 
-        size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
+    size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
 
-        if ( length <= obj().shortMsgLength() || 
-            dynamic_cast<LoopReq*>( ctx->msg() ) ) {
+    if ( length <= obj().shortMsgLength() || 
+        dynamic_cast<LoopReq*>( ctx->msg() ) ) {
 
-            dbg().verbose(CALL_INFO,2,1,"copyIoVec() short|loop message\n");
+        dbg().verbose(CALL_INFO,2,1,"copyIoVec() short|loop message\n");
 
-            delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
-        }
+        delay = copyIoVec( req->ioVec(), ctx->ioVec(), length );
     }
 
     obj().schedCallback( 
         std::bind( &ProcessQueuesState<T1>::processShortList_4, this, stack ),
         delay
     );
-    
 }
 
 template< class T1 >
 void ProcessQueuesState<T1>::processShortList_4( Stack* stack )
 {
-    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
-    if ( ctx->req ) {
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
-        _CommReq* req = ctx->req;
+    _CommReq* req = ctx->req;
 
-        size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
+    size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
 
-        LoopReq* loopReq;
-        if ( ( loopReq = dynamic_cast<LoopReq*>( ctx->msg() ) ) ) {
-		    dbg().verbose(CALL_INFO,1,2,"loop message key=%p srcCore=%d srcRank=%d\n", 
-                                        loopReq->key, loopReq->srcCore, ctx->hdr().rank);
-            req->setDone();
-            obj().loopSend( loopReq->srcCore , loopReq->key );
+    LoopReq* loopReq;
+    if ( ( loopReq = dynamic_cast<LoopReq*>( ctx->msg() ) ) ) {
+        dbg().verbose(CALL_INFO,1,2,"loop message key=%p srcCore=%d "
+            "srcRank=%d\n", loopReq->key, loopReq->srcCore, ctx->hdr().rank);
+        req->setDone();
+        obj().loopSend( loopReq->srcCore , loopReq->key );
 
-        } else if ( length <= obj().shortMsgLength() ) { 
-		    dbg().verbose(CALL_INFO,1,1,"short\n");
-            req->setDone(obj().recvReqFiniDelay( length ));
-        } else {
-
-            dbg().verbose(CALL_INFO,1,1,"long\n");
-            Callback* callback = new Callback;
-            *callback = std::bind( &ProcessQueuesState<T1>::getFini,this, req );
-
-            nid_t nid = calcNid( ctx->req, ctx->hdr().rank );
-
-            obj().nic().get( nid, ctx->hdr().key, req->ioVec(), callback );
-
-            req->m_ackKey = ctx->hdr().key; 
-            req->m_ackNid = nid;
-
-        }
-        ctx->removeMsg();
+    } else if ( length <= obj().shortMsgLength() ) { 
+        dbg().verbose(CALL_INFO,1,1,"short\n");
+        req->setDone(obj().recvReqFiniDelay( length ));
     } else {
-        ctx->incPos();
+
+        dbg().verbose(CALL_INFO,1,1,"long\n");
+        Callback* callback = new Callback;
+        *callback = std::bind( &ProcessQueuesState<T1>::getFini,this, req );
+
+        nid_t nid = calcNid( ctx->req, ctx->hdr().rank );
+
+        obj().nic().get( nid, ctx->hdr().key, req->ioVec(), callback );
+
+        req->m_ackKey = ctx->hdr().key; 
+        req->m_ackNid = nid;
+
     }
+    ctx->removeMsg();
+    processShortList_5( stack );
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processShortList_5( Stack* stack )
+{
+    ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
+
+    dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
     if ( ctx->isDone() ) {
         dbg().verbose(CALL_INFO,2,1,"return up the stack\n");
