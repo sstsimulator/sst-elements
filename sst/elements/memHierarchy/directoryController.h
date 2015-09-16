@@ -152,15 +152,15 @@ class DirectoryController : public Component {
     /** Handle incoming PutM */
     void handlePutM(MemEvent * ev);
 
-    /** Handle incoming PutX */
-    void handlePutX(MemEvent * ev);
-
     /** Handle incoming FetchResp (or PutM that is treated as FetchResp) */
     void handleFetchResp(MemEvent * ev);
 
-    /** Handle incoming FetchXResp (or PutX that is treated as FetchXResp) */
+    /** Handle incoming FetchXResp */
     void handleFetchXResp(MemEvent * ev);
 
+    /** Handle incoming AckInv */
+    void handleAckInv(MemEvent * ev);
+    
     /** Handle incoming NACK */
     void handleNACK(MemEvent * ev);
 
@@ -171,6 +171,9 @@ class DirectoryController : public Component {
 
     /** Send invalidate to a specific sharer */
     void sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry);
+    
+    /** Send AckPut to a replacing cache */
+    void sendAckPut(MemEvent * event);
 
     /** Send data request to memory */
     void issueMemoryRequest(MemEvent * ev, DirEntry * entry);

@@ -4,6 +4,8 @@ import sst
 # Define SST core options
 sst.setProgramOption("timebase", "1ns")
 sst.setProgramOption("stopAtCycle", "500000ns")
+sst.setStatisticLoadLevel(4)
+sst.setStatisticOutput("sst.statOutputConsole")
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
@@ -28,6 +30,7 @@ comp_c0_l1cache.addParams({
       "L1" : "1",
       "debug" : ""
 })
+comp_c0_l1cache.enableAllStatistics();
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
       "num_loadstore" : "1000",
@@ -110,6 +113,7 @@ comp_n0_l2cache.addParams({
       "statistics" : "1",
       "debug" : ""
 })
+comp_n0_l2cache.enableAllStatistics();
 comp_cpu4 = sst.Component("cpu4", "memHierarchy.trivialCPU")
 comp_cpu4.addParams({
       "num_loadstore" : "1000",

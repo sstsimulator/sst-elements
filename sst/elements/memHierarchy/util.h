@@ -166,7 +166,13 @@ inline void printData(Output* dbg, string msg, vector<uint8_t>* data, Addr offse
     dbg->debug(_L10_,"\n");
     */
 }
-
+/*
+ *  IGNORE - ignore this request, drop it, do not retry any waiting requests
+ *  DONE - this request finished, should retry
+ *  STALL - this request is being handled and should be stalled in the MSHRs
+ *  BLOCK - this request is blocked by a current outstanding request and should stall in the MSHRs
+ */
+typedef enum {IGNORE, DONE, STALL, BLOCK } CacheAction;
 
 }}
 #endif	/* UTIL_H */

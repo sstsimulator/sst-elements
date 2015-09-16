@@ -24,7 +24,8 @@ comp_c0_l1cache.addParams({
       "cache_size" : "4 KB",
       "statistics" : "1",
       "L1" : "1",
-      "debug" : ""
+      #"debug" : "1",
+      "debug_level" : 10
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
@@ -59,6 +60,8 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
+      "LLC" : 1,
+      "LL" : 1,
       "statistics" : "1",
       "debug" : ""
 })

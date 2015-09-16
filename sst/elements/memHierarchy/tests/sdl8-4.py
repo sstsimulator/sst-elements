@@ -24,6 +24,7 @@ comp_c0_l1cache.addParams({
       "cache_size" : "4 KB",
       "statistics" : "1",
       "L1" : "1",
+      "debug_level" : 10,
       "debug" : ""
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
@@ -44,6 +45,7 @@ comp_c1_l1cache.addParams({
       "cache_size" : "4 KB",
       "statistics" : "1",
       "L1" : "1",
+      "debug_level" : 10,
       "debug" : ""
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
@@ -60,6 +62,7 @@ comp_n0_l2cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
       "statistics" : "1",
+      "debug_level" : 10,
       "debug" : ""
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
@@ -80,6 +83,7 @@ comp_c2_l1cache.addParams({
       "cache_size" : "4 KB",
       "statistics" : "1",
       "L1" : "1",
+      "debug_level" : 10,
       "debug" : ""
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
@@ -100,6 +104,7 @@ comp_c3_l1cache.addParams({
       "cache_size" : "4 KB",
       "statistics" : "1",
       "L1" : "1",
+      "debug_level" : 10,
       "debug" : ""
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
@@ -116,6 +121,7 @@ comp_n1_l2cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
       "statistics" : "1",
+      "debug_level" : 10,
       "debug" : ""
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
@@ -132,6 +138,7 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "statistics" : "1",
+      "debug_level" : 10,
       "debug" : "",
       "network_address" : "1",
       "network_bw" : "25GB/s",
@@ -152,6 +159,7 @@ comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "",
+      "debug_level" : 10,
       "network_address" : "0",
       "entry_cache_size" : "1024",
       "network_bw" : "25GB/s",

@@ -20,8 +20,6 @@
 
 #include <assert.h>
 #include "coherenceControllers.h"
-#include "MESIBottomCoherenceController.h"
-#include "MESITopCoherenceController.h"
 #include "sst/core/rng/marsaglia.h"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -36,14 +34,9 @@ class ReplacementMgr{
         typedef unsigned int uint;
         virtual void update(uint id) = 0;
         virtual uint getBestCandidate() = 0;
-        virtual uint findBestCandidate(uint setBegin, State * state, bool sharersAware) = 0;
+        virtual uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) = 0;
         virtual void replaced(uint id) = 0;
-        void setTopCC(TopCacheController* cc) {topCC_ = cc;}
-        void setBottomCC(MESIBottomCC* cc) {bottomCC_ = cc;}
         virtual ~ReplacementMgr(){}
-    protected:
-        TopCacheController* topCC_;
-        MESIBottomCC* bottomCC_;
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -94,15 +87,15 @@ public:
 
     void update(uint id) { array[id] = timestamp++; }
     
-    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+    uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
         uint setEnd = setBegin + numWays;
         bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? topCC_->numSharers(setBegin) : 0, (sharersAware)? topCC_->ownerExists(setBegin) : 0, state[0]};
+        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : 0, state[0]};
         if (state[0] == I) return (uint)bestCandidate;
         setBegin++;
         int i = 1;
         for (uint id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, (sharersAware)? topCC_->ownerExists(id) : 0, state[i]};
+            Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? sharers[i] : 0, state[i]};
             if (candRank.lessThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = id;
@@ -188,16 +181,17 @@ class LFUReplacementMgr : public ReplacementMgr {
             array[id].acc++;
             timestamp += 1000;
         }
-        uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+        
+        uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
             uint setEnd = setBegin + numWays;
             bestCandidate = setBegin;
-            Rank bestRank = {array[setBegin], (sharersAware)? topCC_->numSharers(setBegin) : 0, (sharersAware)? topCC_->ownerExists(setBegin) : 0, state[0] };
+            Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : 0, state[0] };
             if (state[0] == I) return (uint)bestCandidate; 
         
             setBegin++;
             int i = 1;
             for (uint id = setBegin; id < setEnd; id++) {
-                Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, (sharersAware)? topCC_->ownerExists(id) : 0, state[i]};
+                Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? owned[i] : 0, state[i]};
                 if (candRank.lessThan(bestRank, timestamp)) {
                     bestRank = candRank;
                     bestCandidate = id;
@@ -263,16 +257,16 @@ public:
 
     void update(uint id) { array[id] = timestamp++; }
 
-    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+    uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
         uint setEnd = setBegin + numWays;
         bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? topCC_->numSharers(setBegin) : 0, (sharersAware)? topCC_->ownerExists(setBegin) : 0, state[0] };
+        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : 0, state[0] };
         if (state[0] == I) return (uint)bestCandidate; 
         
         setBegin++;
         int i = 1;
         for (uint id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? topCC_->numSharers(id) : 0, (sharersAware)? topCC_->ownerExists(id) : 0, state[i]};
+            Rank candRank = {array[id], (sharersAware)? sharers[i]: 0, (sharersAware)? owned[i] : 0, state[i]};
             if (candRank.biggerThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = id;
@@ -311,8 +305,15 @@ public:
     }
 
     void update(uint id){}
-        
-    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+       
+    // Return a empty slot if one exists, otherwise return a random candidate
+    uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
+        for (uint i = 0; i < numWays; i++) {
+            if (state[i] == I) {
+                bestCandidate = setBegin + i;
+                return (uint)bestCandidate;
+            }
+        }
         bestCandidate = (randomGenerator_.generateNextUInt32() % numWays) + setBegin;
         return (uint)bestCandidate;
     }
@@ -347,7 +348,14 @@ public:
         array[id/numWays] = id % numWays; 
     }
 
-    uint findBestCandidate(uint setBegin, State * state, bool sharersAware) {
+    // Return an empty slot if one exists, otherwise return any slot that is not the most-recently used in the set
+    uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
+        for (uint i = 0; i < numWays; i++) {
+            if (state[i] == I) {
+                bestCandidate = setBegin + i;
+                return (uint)bestCandidate;
+            }
+        }
         int index = randomGenerator.generateNextUInt32() % (numWays-1);
         if (index < array[setBegin/numWays]) bestCandidate = setBegin + index;
         else bestCandidate = setBegin + index + 1;

@@ -4,6 +4,9 @@ import sst
 # Define SST core options
 sst.setProgramOption("timebase", "1ns")
 sst.setProgramOption("stopAtCycle", "5000ns")
+sst.setStatisticLoadLevel(4)
+sst.setStatisticOutput("sst.statOutputConsole")
+
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
@@ -24,8 +27,10 @@ comp_l1cache.addParams({
       "cache_size" : "2 KB",
       "statistics" : "1",
       "L1" : "1",
-      "debug" : ""
+      #"debug" : "1",
+      "debug_level" : "10"
 })
+comp_l1cache.enableAllStatistics()
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
       "access_latency_cycles" : "10",
@@ -36,8 +41,12 @@ comp_l2cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "16 KB",
       "statistics" : "1",
-      "debug" : ""
+      "LLC" : 1,
+      "LL" : 1,
+      #"debug" : "1",
+      "debug_level" : "10"
 })
+comp_l2cache.enableAllStatistics()
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "coherence_protocol" : "MSI",

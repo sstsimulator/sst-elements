@@ -154,10 +154,10 @@ void DMAEngine::startRequest(Request *req)
     ++numTransfers;
     Addr ptr = req->getSrc();
     while ( ptr < (req->getSrc() + req->getSize()) ) {
-        MemEvent *ev = new MemEvent(this, ptr, ptr, RequestData);
+        MemEvent *ev = new MemEvent(this, ptr, ptr, GetS);
         ev->setSize(blocksize);
         ev->setFlag(MemEvent::F_NONCACHEABLE);
-        ev->setDst(networkLink->findTargetDirectory(ptr));
+        ev->setDst(networkLink->findTargetDestination(ptr));
         req->loadKeys.insert(ev->getID());
         networkLink->send(ev);
         ptr += blocksize;
@@ -171,19 +171,19 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
 {
     assert(0);
     /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface
-    if ( ev->getCmd() == SupplyData ) {
+    if ( ev->getCmd() == GetSResp) {
         if ( !req->loadKeys.count(ev->getResponseToID()) ) {
-            dbg.fatal(CALL_INFO, 1, "Received Response of SupplyData, but that wasn't in our LoadKeys!\n");
+            dbg.fatal(CALL_INFO, 1, "Received GetSResp, but we don't have a corresponding request in loadKeys!\n");
         }
         size_t offset = ev->getAddr() - req->getSrc();
         req->loadKeys.erase(ev->getResponseToID());
-        MemEvent *storeEV = new MemEvent(this, (req->getDst() + offset), (req->getDst() + offset), SupplyData);
+        MemEvent *storeEV = new MemEvent(this, (req->getDst() + offset), (req->getDst() + offset), GetX);
         storeEV->setFlag(MemEvent::F_NONCACHEABLE);
         storeEV->setPayload(ev->getPayload());
-        storeEV->setDst(networkLink->findTargetDirectory(req->getDst() + offset));
+        storeEV->setDst(networkLink->findTargetDestination(req->getDst() + offset));
         req->storeKeys.insert(storeEV->getID());
         networkLink->send(storeEV);
-    } else if ( ev->getCmd() == WriteResp ) {
+    } else if ( ev->getCmd() == GetXResp ) {
         bytesTransferred += ev->getSize();
         req->storeKeys.erase(ev->getResponseToID());
         if ( req->storeKeys.empty() ) {

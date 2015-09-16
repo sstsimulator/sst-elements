@@ -53,6 +53,8 @@ comp_l3cache.addParams({
       "debug_level" : "8",
       "statistics" : "1",
       "debug" : "1",
+      "LL" : 1,
+      "LC" : 1,
       "cache_size" : "64 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")

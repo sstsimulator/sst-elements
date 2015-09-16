@@ -29,7 +29,7 @@ typedef uint64_t Addr;
  *  Not all coherence protocols use all types
  */
 #define X_TYPES \
-    X(NULLCMD) \
+    X(NULLCMD)         /* Dummy command */\
     /* Requests */ \
     X(GetS)            /* Read:  Request to get cache line in S state */\
     X(GetX)            /* Write: Request to get cache line in M state */\
@@ -47,14 +47,15 @@ typedef uint64_t Addr;
     /* Invalidates - sent by caches or directory controller */\
     X(Inv)             /* Other write request:  Invalidate cache line */\
     /* Invalidates - sent by directory controller */\
-    X(FetchInv)        /* Other write request:  Invalidate cache line */\
-    X(FetchInvX)       /* Other read request:   Downgrade cache line to O/S (Remove exclusivity) */\
-    X(FetchResp)       /* response to a FetchInv or FetchInvX request */\
+    X(Fetch)           /* Other read request to sharer:  Get data but don't invalidate cache line */\
+    X(FetchInv)        /* Other write request to owner:  Invalidate cache line */\
+    X(FetchInvX)       /* Other read request to owner:   Downgrade cache line to O/S (Remove exclusivity) */\
+    X(FetchResp)       /* response to a Fetch, FetchInv or FetchInvX request */\
     X(FetchXResp)      /* response to a FetchInvX request - indicates a shared copy of the line was kept */\
     /* Others */\
     X(NACK)\
     X(AckInv)\
-    X(AckPut)\
+    X(AckPut) \
     X(LAST_CMD)
 
 /** Valid commands for the MemEvent */
@@ -82,67 +83,52 @@ static const ElementInfoStatistic networkMemoryInspector_statistics[] = {
 #undef X_TYPES
 
 
-/* Coherence states for Top Coherence Controller Cache Lines */
-    
-#define TCCLINE_TYPES \
-    X(V)        /* Valid */\
-    X(InvX_A)   /* Have sent InvX, waiting for acks */\
-    X(Inv_A)    /* Have sent Inv, waiting for acks */
-
-/** Valid commands for the MemEvent */
-typedef enum {
-#define X(x) x,
-    TCCLINE_TYPES
-#undef X
-} TCC_State;
-
-/** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
-static const char* TccLineString[] __attribute__((unused)) = {
-#define X(x) #x ,
-    TCCLINE_TYPES
-#undef X
-};
-
-#undef TCCLINE_TYPES
-
-/* Coherence states for Bottom Coherence Controller Cache Lines
+/* Coherence states 
  * Not all protocols use all states 
  */
-#define BCCLINE_TYPES \
+#define STATE_TYPES \
+    X(NP)    /* Invalid */\
     X(I)    /* Invalid */\
-    X(I_a)  /* Replaced, waiting for completion ack */\
-    X(IS)   /* Invalid, have issued read request */\
-    X(IM)   /* Invalid, have issued write request */\
     X(S)    /* Shared */\
-    X(SM)   /* Shared, have issued upgrade request */\
     X(E)    /* Exclusive, clean */\
     X(O)    /* Owned, dirty */\
-    X(OM)   /* Owned, have issued upgrade request */\
     X(M)    /* Exclusive, dirty */\
+    X(IS)   /* Invalid, have issued read request */\
+    X(IM)   /* Invalid, have issued write request */\
+    X(SM)   /* Shared, have issued upgrade request */\
+    X(OM)   /* Owned, have issued upgrade request */\
     X(I_d)  /* I, waiting for dir entry from memory */\
     X(S_d)  /* S, waiting for dir entry from memory */\
     X(M_d)  /* M, waiting for dir entry from memory */\
     X(M_Inv)    /* M, waiting for FetchResp from owner */\
     X(M_InvX)   /* M, waiting for FetchXResp from owner */\
+    X(E_Inv)    /* E, waiting for FetchResp from owner */\
+    X(E_InvX)   /* E, waiting for FetchXResp from owner */\
     X(S_D)      /* S, waiting for data from memory for another GetS request */\
+    X(E_D)      /* E with sharers, waiting for data from memory for another GetS request */\
+    X(M_D)      /* M with sharers, waiting for data from memory for another GetS request */\
+    X(SM_D)     /* SM, waiting for data from memory for another GetS request */\
     X(S_Inv)    /* S, waiting for Invalidation acks from sharers */\
-    X(DUMMY) \
+    X(SM_Inv)   /* SM, waiting for Invalidation acks from sharers */\
+    X(MI) \
+    X(EI) \
+    X(SI) \
     X(NULLST)
 
 typedef enum {
 #define X(x) x,
-    BCCLINE_TYPES
+    STATE_TYPES
 #undef X
 } State;
 
 /** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
-static const char* BccLineString[] __attribute__((unused)) = {
+static const char* StateString[] __attribute__((unused)) = {
 #define X(x) #x ,
-    BCCLINE_TYPES
+    STATE_TYPES
 #undef X
 };
 
-#undef BCCLINE_TYPES
+#undef STATE_TYPES
 
 static const std::string NONE = "None";
 
@@ -244,34 +230,34 @@ public:
     }
 
     void initialize(){
-        addr_             = 0;
-        cmd_              = NULLCMD;
-        eventID_          = generateUniqueId();
-        responseToID_     = NO_ID;
-        baseAddr_         = 0;
-        dst_              = NONE;
-        src_              = NONE;
-        rqstr_            = NONE;
-        size_             = 0;
-        flags_            = 0;
-        groupID_          = 0;
-        prefetch_         = false;
-        ackNeeded_        = false;
-        atomic_           = false;
-        loadLink_         = false;
-        storeConditional_ = false;
-        grantedState_     = NULLST;
-        startTime_        = 0;
-        NACKedCmd_        = NULLCMD;
-        NACKedEvent_      = NULL;
-        inMSHR_           = false;
-        blocked_          = false;
-        statsUpdated_     = false;
-        initTime_         = 0;
+        addr_               = 0;
+        cmd_                = NULLCMD;
+        eventID_            = generateUniqueId();
+        responseToID_       = NO_ID;
+        baseAddr_           = 0;
+        dst_                = NONE;
+        src_                = NONE;
+        rqstr_              = NONE;
+        size_               = 0;
+        flags_              = 0;
+        groupID_            = 0;
+        prefetch_           = false;
+        atomic_             = false;
+        loadLink_           = false;
+        storeConditional_   = false;
+        grantedState_       = NULLST;
+        startTime_          = 0;
+        NACKedCmd_          = NULLCMD;
+        NACKedEvent_        = NULL;
+        inMSHR_             = false;
+        blocked_            = false;
+        statsUpdated_       = false;
+        initTime_           = 0;
         payload_.clear();
-        dirty_            = false;
-	instPtr_	  = 0;
-	vAddr_		  = 0;
+        dirty_              = false;
+	instPtr_	    = 0;
+	vAddr_		    = 0;
+        inProgress_         = false;
     }
 
     /** return the original event that caused a NACK */
@@ -317,6 +303,9 @@ public:
     bool blocked(){ return blocked_; }
     void setBlocked(bool _value){ blocked_ = _value; }
     
+    bool inProgress() { return inProgress_; }
+    void setInProgress(bool _value) { inProgress_ = _value; }
+
     bool statsUpdated(){ return statsUpdated_; }
     void setStatsUpdated(bool _value) { statsUpdated_ = _value; }
     
@@ -337,7 +326,7 @@ public:
     }
     
    bool isLowNetEvent(){
-        if(cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX){
+        if(cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX || cmd_ == Fetch){
             return true;
         }
         return false;
@@ -393,7 +382,7 @@ public:
     bool isPrefetch(){ return prefetch_; }
     
     /** Returns true if this is a Data Request */
-    static bool isDataRequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX); }
+    static bool isDataRequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX || cmd == Fetch); }
     bool isDataRequest(void) const { return MemEvent::isDataRequest(cmd_); }
     /** Returns true if this is of cpu type */
     static bool isCPURequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
@@ -411,11 +400,6 @@ public:
     void setGroupId(uint32_t _groupID){ groupID_ = _groupID; }
     /** Getter for GroupId */
     uint32_t getGroupId() { return groupID_; }
-    
-    /** Set ackNeeded member variable */
-    void setAckNeeded(){ ackNeeded_ = true;}
-     /** Getter for ackNeeded member variable */
-    bool getAckNeeded(){ return ackNeeded_;}
     
     void setDirty(bool status){ dirty_ = status; }
     bool getDirty() { return dirty_; }
@@ -469,6 +453,7 @@ public:
             case GetX:
                 return GetXResp;
             case FetchInv:
+            case Fetch:
                 return FetchResp;
             case FetchInvX:
                 return FetchXResp;
@@ -477,34 +462,34 @@ public:
         }
     }
 private:
-    id_type         eventID_;
-    id_type         responseToID_;
-    uint32_t        flags_;
-    uint32_t        size_;
-    uint32_t        groupID_;
-    Addr            addr_;
-    Addr            baseAddr_;
-    string          src_;
-    string          dst_;
-    string          rqstr_;
-    Command         cmd_;
-    Command         NACKedCmd_;
-    MemEvent*       NACKedEvent_;
-    dataVec         payload_;
-    State           grantedState_;
-    bool            ackNeeded_;
-    bool            prefetch_;
-    bool            atomic_;
-    bool            loadLink_;
-    bool            storeConditional_;
-    uint64_t        startTime_;
-    bool            inMSHR_;
-    bool            blocked_;
-    bool            statsUpdated_;
-    SimTime_t       initTime_;
-    bool            dirty_;
-    Addr	    instPtr_;
-    Addr 	    vAddr_;
+    id_type         eventID_;           // Unique ID for this event
+    id_type         responseToID_;      // For responses, holds the ID to which this event matches
+    uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
+    uint32_t        size_;              // Size in bytes for the request
+    uint32_t        groupID_;           // ???
+    Addr            addr_;              // Address
+    Addr            baseAddr_;          // Base (line) address
+    string          src_;               // Source ID
+    string          dst_;               // Destination ID
+    string          rqstr_;             // Cache that originated this request
+    Command         cmd_;               // Command
+    Command         NACKedCmd_;         // For a NACK, the command of the NACKed event
+    MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
+    dataVec         payload_;           // Data
+    State           grantedState_;      // For data responses, the cohrence state that the request is granted in
+    bool            prefetch_;          // Whether this request came from a prefetcher
+    bool            atomic_;            // Whether this request is atomic
+    bool            loadLink_;          // Whether this request in a LL
+    bool            storeConditional_;  // Whether this request is a SC
+    uint64_t        startTime_;         // For profiling within a cache, the time this request was received
+    bool            inMSHR_;            // Whether this request is in an MSHR (for profiling)
+    bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
+    bool            statsUpdated_;      // Whether stats have been recorded for this request (for profiling)
+    SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
+    bool            dirty_;             // For a replacement, whether the data is dirty or not
+    Addr	    instPtr_;           // Instruction pointer associated with the request
+    Addr 	    vAddr_;             // Virtual address associated with the request
+    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR
 
     MemEvent() {} // For serialization only
 
@@ -528,7 +513,6 @@ private:
         ar & BOOST_SERIALIZATION_NVP(NACKedEvent_);
         ar & BOOST_SERIALIZATION_NVP(payload_);
         ar & BOOST_SERIALIZATION_NVP(grantedState_);
-        ar & BOOST_SERIALIZATION_NVP(ackNeeded_);
         ar & BOOST_SERIALIZATION_NVP(prefetch_);
         ar & BOOST_SERIALIZATION_NVP(atomic_);
         ar & BOOST_SERIALIZATION_NVP(loadLink_);
@@ -537,9 +521,11 @@ private:
         ar & BOOST_SERIALIZATION_NVP(inMSHR_);
         ar & BOOST_SERIALIZATION_NVP(blocked_);
         ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
+        ar & BOOST_SERIALIZATION_NVP(initTime_);
         ar & BOOST_SERIALIZATION_NVP(dirty_);
         ar & BOOST_SERIALIZATION_NVP(instPtr_);
         ar & BOOST_SERIALIZATION_NVP(vAddr_);
+        ar & BOOST_SERIALIZATION_NVP(inProgress_);
     }
 };
 

@@ -126,7 +126,7 @@ void Bus::sendSingleEvent(SST::Event* _ev){
 void Bus::mapNodeEntry(const std::string& _name, LinkId_t _id){
 	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(_name);
 	if (nameMap_.end() != it) {
-            dbg_.fatal(CALL_INFO, -1, "Error: Bus attempting to map node that has already been mapped\n");
+            dbg_.fatal(CALL_INFO, -1, "%s, Error: Bus attempting to map node that has already been mapped\n", getName().c_str());
         }
     nameMap_[_name] = _id;
 }
@@ -134,7 +134,7 @@ void Bus::mapNodeEntry(const std::string& _name, LinkId_t _id){
 LinkId_t Bus::lookupNode(const std::string& _name){
 	std::map<std::string, LinkId_t>::iterator it = nameMap_.find(_name);
     if (nameMap_.end() == it) {
-        dbg_.fatal(CALL_INFO, -1, "Error: Bus lookup of node %s returned no mapping\n", _name.c_str());
+        dbg_.fatal(CALL_INFO, -1, "%s, Error: Bus lookup of node %s returned no mapping\n", getName().c_str(), _name.c_str());
     }
     return it->second;
 }
@@ -212,14 +212,14 @@ void Bus::init(unsigned int _phase){
     SST::Event *ev;
 
     for(int i = 0; i < numHighNetPorts_; i++) {
-        while ((ev = highNetPorts_[i]->recvInitData())){
-            
+        while ((ev = highNetPorts_[i]->recvInitData())) {
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if(!memEvent) delete memEvent;
-            else if(memEvent->getCmd() == NULLCMD){
+
+            if (memEvent && memEvent->getCmd() == NULLCMD) {
                 mapNodeEntry(memEvent->getSrc(), highNetPorts_[i]->getId());
-            }
-            else{
+                for(int k = 0; k < numLowNetPorts_; k++)
+                    lowNetPorts_[k]->sendInitData(new MemEvent(*memEvent));
+            } else if (memEvent) {
                 for(int k = 0; k < numLowNetPorts_; k++)
                     lowNetPorts_[k]->sendInitData(new MemEvent(*memEvent));
             }
@@ -236,9 +236,12 @@ void Bus::init(unsigned int _phase){
                 for(int i = 0; i < numHighNetPorts_; i++) {
                     highNetPorts_[i]->sendInitData(new MemEvent(*memEvent));
                 }
+                delete memEvent;
             }
-            else{/*Ignore responses */}
-            delete memEvent;
+            else{
+                /*Ignore responses */
+                delete memEvent;
+            }
         }
     }
 }

@@ -51,8 +51,8 @@ class Cache : public SST::Component {
 public:
 
     typedef CacheArray::CacheLine           CacheLine;
-    typedef TopCacheController::CCLine      CCLine;
-    typedef map<Addr, vector<mshrType> >    mshrTable;
+    typedef CacheArray::DataLine            DataLine;
+    typedef map<Addr, mshrEntry>            mshrTable;
     typedef unsigned int                    uint;
     typedef uint64_t                        uint64;
 
@@ -67,13 +67,8 @@ public:
     
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
-        Addr baseAddr = (addr) & ~(cf_.cacheArray_->getLineSize() - 1);  //Remove the block offset bits
-        return baseAddr;
+        return (addr) & ~(cf_.cacheArray_->getLineSize() - 1);
     }
-    
-    /** Stall Exception.  Exception thrown when an events needs to stall due 
-        to an upgrade needed, cache line being locked, etc */
-    class blockedEventException : public exception{ const char* what () const throw (){ return "Memory requests needs to 'stall'. Request will be processed at a later time\n"; } };
     
 private:
     struct CacheConfig;
@@ -106,7 +101,7 @@ private:
     
     /** Function processes incomming invalidate messages.  Redirects message 
         to Top and Bottom controllers appropriately  */
-    void processCacheInvalidate(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
+    void processCacheInvalidate(MemEvent *event, Addr baseAddr, bool mshrHit);
 
     /** Function processes incomming GetS/GetX responses.  
         Redirects message to Top Controller */
@@ -114,44 +109,13 @@ private:
     
     void processFetchResp(MemEvent* event, Addr baseAddr);
 
-    /** Function processes incomming Fetch invalidate requests from the Directory Controller
-        Fetches send data, while FetchInvalidates evict data to the directory controller */
-    void processFetch(MemEvent* event, Addr baseAddr, bool mshrHit);
-
     /** Find replacement for the current request.  If the replacement candidate is
         valid then a writeback is needed.  If replacemenent candidate is transitioning, we 
         need to wait (stall) until the replacement is in a 'stable' state */
-    inline void allocateCacheLine(MemEvent *event, Addr baseAddr, int& lineIndex) throw(blockedEventException);
-
-    /** Depending on the replacement policy and cache array type, this function appropriately
-        searches for the replacement candidate */
-    inline CacheLine* findReplacementCacheLine(Addr baseAddr);
-
-    /** Check that the selected replacement candidate can actually be replaced.
-        The cacheline could be 'user-locked' for atomicity or the cacheline could be in transition */
-    inline void candidacyCheck(MemEvent* event, CacheLine* wbCacheLine, Addr requestBaseAddr) throw(blockedEventException);
-
-    /** Evict replacement cache line in higher level caches (if necessary).
-        TopCC sends invalidates to lower level caches; stall if invalidates were sent */
-    inline void evictInHigherLevelCaches(CacheLine* wbCacheLine, Addr requestBaseAddr) throw (blockedEventException);
-
-    /** Writeback cache line to lower level caches */
-    inline void writebackToLowerLevelCaches(MemEvent *event, CacheLine* wbCacheLine);
-
-    /** At this point, cache line has been evicted or is not valid. 
-        This function replaces cache line with the info/addr of the current request */
-    inline void replaceCacheLine(int replacementCacheLineIndex, int& newCacheLineIndex, Addr newBaseAddr);
-
-    /** Check whether or not replacement candidate is in transition
-       If so, we cannot writeback cacheline, postpone current request */
-    inline bool isCandidateInTransition(CacheLine* wbCacheLine, Addr requestAddr);
-
-    /** Check if invalidates are in progress */
-    bool invalidatesInProgress(int lineIndex);
-
-    /* Invalidate was received. This function checks wheter this invalidate request can proceed.
-       This function prevents deadlocks by giving priority to requests in progress */
-    bool shouldInvRequestProceed(MemEvent *event, CacheLine* cacheLine, Addr baseAddr, bool mshrHit);
+    inline bool allocateLine(MemEvent *event, Addr baseAddr);
+    inline bool allocateCacheLine(MemEvent *event, Addr baseAddr);
+    inline bool allocateDirLine(MemEvent *event, Addr baseAddr);
+    inline bool allocateDirCacheLine(MemEvent *event, Addr baseAddr, CacheLine * dirLine, bool noStall);
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
@@ -160,37 +124,29 @@ private:
     /** This function re-processes a signle previous request.  In hardware, the MSHR would be looked up,
         the MSHR entry would be modified and the response would be sent directly without reading the cache
         array and tag.  In SST, we just rerun the request to avoid complexity */
-    inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& mshrEntry, Addr addr, vector<mshrType>::iterator it, int i);
+    inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr addr, vector<mshrType>::iterator it, int i);
 
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool requestCompleted, bool mshrHit) throw(blockedEventException);
+    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool mshrHit);
+    
+    inline void postReplacementProcessing(MemEvent* event, CacheAction action, bool mshrHit);
 
     /** If cache line was user-locked, then events might be waiting for lock to be released
         and need to be reactivated */
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine);
 
-    /** Most requests are stalled in the MSHR if the cache line is 'blocking'.  However, this does not happen for
-        writebacks.  This funciton handles the case where the cache line is 'blocking' and an incomming PutS request is received. */
-    bool handleIgnorableRequests(MemEvent* _event, CacheLine* cacheLine, Command cmd);
-
-    /** After BCC is executed, this function checks if an upgrade request was sent to LwLv caches.  If so, this request
-        needs to stall */
-    void stallIfUpgradeInProgress(CacheLine* _cacheLine) throw(blockedEventException);
-
     /** Check if there a cache miss */
     inline bool isCacheMiss(int lineIndex);
 
     /** Find cache line by base addr */
+    inline CacheLine* getLine(Addr baseAddr);
     inline CacheLine* getCacheLine(Addr baseAddr);
+    inline CacheLine* getDirLine(Addr baseAddr);
     
     /** Find cache line by line index */
+    inline CacheLine* getLine(int lineIndex);
     inline CacheLine* getCacheLine(int lineIndex);
+    inline CacheLine* getDirLine(int lineIndex);
 
-    /** Get Cache Coherency line */
-    inline TopCacheController::CCLine* getCCLine(int index);
-
-    /** Make sure that this request is not a dirty writeback.  Cache miss cannot occur on a dirty writeback  */
-    inline bool checkCacheMissValidity(MemEvent* event);
-    
     /** Check whether this request will hit or miss in the cache - including correct coherence permission */
     int isCacheHit(MemEvent* _event, Command _cmd, Addr _baseAddr);
 
@@ -199,7 +155,7 @@ private:
     
     /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
     bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
-    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, int index);
+    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgress);
     
     /** Determines what CC will send the NACK. */
     void sendNACK(MemEvent* _event);
@@ -219,9 +175,12 @@ private:
     void updateUpgradeLatencyAverage(SimTime_t start, Addr requestAddr);
     void recordLatency(MemEvent * event);
 
-    /** Get the front elevemnt of a MSHR entry */
-    MemEvent* getOrigReq(const vector<mshrType> _mshrEntry);
-    
+    /** Get the front element of a MSHR entry */
+    MemEvent* getOrigReq(const vector<mshrType> entries);
+   
+    /** Print cache line for debugging */
+    void printLine(Addr addr);
+
     /** Find out if number is a power of 2 */
     bool isPowerOfTwo(uint x){ return (x & (x - 1)) == 0; }
     
@@ -233,9 +192,7 @@ private:
         numbers gather by other papers/results */
     void intrapolateMSHRLatency();
 
-    /** Add requests to the 'retry queue.'  This event will be reissued at a later time */
-    void retryRequestLater(MemEvent* event);
-    void profileEvent(MemEvent* event, Command cmd, bool mshrHit, bool canStall);
+    void profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall);
     void incTotalRequestsReceived(int _groupId);
     void incTotalMSHRHits(int _groupId);
     void incInvalidateWaitingForUserLock(int _groupId);
@@ -246,9 +203,8 @@ private:
     bool clockTick(Cycle_t time) {
         timestamp_++;
         if(cf_.bottomNetwork_ != "") memNICIdle_ = bottomNetworkLink_->clock();
-        topCC_->sendOutgoingCommands(getCurrentSimTimeNano());
-        bottomCC_->sendOutgoingCommands(getCurrentSimTimeNano());
-        if ( cf_.maxWaitTime > 0 ) {
+        coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
+        if ( cf_.maxWaitTime_ > 0 ) {
             checkMaxWait();
         }
         return false;
@@ -281,7 +237,7 @@ private:
 
         if ( oldReq ) {
             SimTime_t waitTime = curTime - oldReq->getInitializationTime();
-            if ( waitTime > cf_.maxWaitTime ) {
+            if ( waitTime > cf_.maxWaitTime_ ) {
                 d_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
                         "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
                         getName().c_str(), CommandString[oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
@@ -292,6 +248,7 @@ private:
     struct CacheConfig{
         string cacheFrequency_;
         CacheArray* cacheArray_;
+        CacheArray* directoryArray_;
         uint protocol_;
         Output* dbg_;
         ReplacementMgr* rm_;
@@ -299,12 +256,14 @@ private:
         uint lineSize_;
         uint MSHRSize_;
         bool L1_;
+        bool LLC_;
+        bool LL_;
         string bottomNetwork_;
         string topNetwork_;
         vector<int> statGroupIds_;
         bool allNoncacheableRequests_;
-        SimTime_t maxWaitTime;
-        bool upperSliced;
+        SimTime_t maxWaitTime_;
+        string type_;
     };
     
     CacheConfig             cf_;
@@ -317,15 +276,14 @@ private:
     MemNIC*                 topNetworkLink_;
     Output*                 d_;
     Output*                 d2_;
-    vector<string>*         nextLevelCacheNames_;
+    vector<string>          lowerLevelCacheNames_;
+    vector<string>          upperLevelCacheNames_;
     bool                    L1_;
+    bool                    LLC_;
+    bool                    LL_;
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
-    TopCacheController*     topCC_;
-    MESIBottomCC*           bottomCC_;
-    bool                    sharersAware_;
-    vector<MemEvent*>       retryQueue_;
-    vector<MemEvent*>       retryQueueNext_;
+    CoherencyController*    coherenceMgr;
     queue<pair<SST::Event*, uint64> >   incomingEventQueue_;
     uint64                  accessLatency_;
     uint64                  tagLatency_;
@@ -391,7 +349,6 @@ private:
     Statistic<uint64_t>* statGetXResp_recv;
     Statistic<uint64_t>* statPutS_recv;
     Statistic<uint64_t>* statPutM_recv;
-    Statistic<uint64_t>* statPutX_recv;
     Statistic<uint64_t>* statPutE_recv;
     Statistic<uint64_t>* statFetchInv_recv;
     Statistic<uint64_t>* statFetchInvX_recv;
@@ -489,12 +446,7 @@ private:
     
         - An L1 cache handles as many requests sent by the CPU per cycle.  However, only one request is sent
         back to the CPU per cycle (after access_latency_cycles in case of a hit).
- 
-        - Exceptions (eg. blockedEventException) are used mainly to avoid if-else statements for every value 
-        returned in the cache controller helper functions. It creates cleaner code and performance is not 
-        diminished because the exceptions used are not that common.
-        IE.  Cache hits are more common than Cache misses (when blocked Event exceptions get thrown).
-        
+         
         - Class member variables have a suffix "_", while function parameters have it as a preffix.
         
         - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window 

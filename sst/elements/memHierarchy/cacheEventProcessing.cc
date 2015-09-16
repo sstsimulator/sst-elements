@@ -55,9 +55,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
             case PutE:
                 statPutE_recv->addData(1);
                 return;
-            case PutX:
-                statPutX_recv->addData(1);
-                return;
             case PutM:
                 statPutM_recv->addData(1);
                 return;
@@ -220,7 +217,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
 }
 
 
-void Cache::processEvent(MemEvent* event, bool _mshrHit) {
+void Cache::processEvent(MemEvent* event, bool replay) {
     Command cmd     = event->getCmd();
     if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
@@ -231,7 +228,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
     
-    if(!_mshrHit){ 
+    if(!replay){ 
         incTotalRequestsReceived(groupId);
         if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
         cout << flush;
@@ -239,38 +236,39 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
     else incTotalMSHRHits(groupId);
 
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
-        d_->debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s%s \n",
-                   this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), 
-                   event->getRqstr().c_str(), event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), 
-                   timestamp_, noncacheable ? "noncacheable" : "cacheable", _mshrHit ? ", replay" : "");
+        if (replay) {
+            d_->debug(_L3_,"Replay. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s\n",
+                       this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
+                       event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
+        } else {
+            d_->debug(_L3_,"New Event. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, cycles: %" PRIu64 ", %s\n",
+                       this->getName().c_str(), CommandString[event->getCmd()], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getRqstr().c_str(), 
+                       event->getSrc().c_str(), event->getDst().c_str(), event->isPrefetch() ? "true" : "false", event->getSize(), timestamp_, noncacheable ? "noncacheable" : "cacheable");
+        }
     }
     cout << flush; 
     if(noncacheable || cf_.allNoncacheableRequests_){
         processNoncacheable(event, cmd, baseAddr);
         return;
     }
-    
+
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
-    CacheLine * cacheLine = NULL;
-    int lineIndex = cf_.cacheArray_->find(baseAddr, false);
-    if (lineIndex != -1) cacheLine = cf_.cacheArray_->lines_[lineIndex];
-    
-    bool canStall = !L1_ || event->getCmd() != GetX || cacheLine == NULL || !(cacheLine->isLocked());
-    profileEvent(event, cmd, _mshrHit, canStall);
+    bool canStall = !L1_ || event->getCmd() != GetX;
+    if (!canStall) {
+        CacheLine * cacheLine = NULL;
+        int lineIndex = cf_.cacheArray_->find(baseAddr, false);
+        if (lineIndex != -1) cacheLine = cf_.cacheArray_->lines_[lineIndex];
+        canStall = cacheLine == NULL || !(cacheLine->isLocked());
+    }
+
+    profileEvent(event, cmd, replay, canStall);
 
     switch(cmd){
         case GetS:
         case GetX:
-        case GetSEx:            
-            // Ignore redundant prefetches from the local prefetcher
-            if (mshr_->isHit(baseAddr) && event->isPrefetch() && event->getRqstr() == this->getName()) {
-                delete event;
-                if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_, "Dropping redundant prefetch\n");
-                break;
-            }
-            
+        case GetSEx:
             // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
-            if (!_mshrHit && mshr_->isAlmostFull()) { 
+            if (!replay && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 sendNACK(event);
                 break;
@@ -279,14 +277,15 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
             // track times in our separate queue
             if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
 
-            if (mshr_->isHit(baseAddr) && canStall) {
-                if (processRequestInMSHR(baseAddr, event)){
+            if(mshr_->isHit(baseAddr) && canStall) {
+                if(processRequestInMSHR(baseAddr, event)){
                     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
                     event->setBlocked(true);
                 }
                 break;
             }
-            processCacheRequest(event, cmd, baseAddr, _mshrHit);
+            
+            processCacheRequest(event, cmd, baseAddr, replay);
             break;
         case GetSResp:
         case GetXResp:
@@ -295,12 +294,7 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
         case PutS:
         case PutM:
         case PutE:
-        case PutX:
-        case PutXE:
-            processCacheReplacement(event, cmd, baseAddr, _mshrHit);
-            break;
-        case Inv:
-            processCacheInvalidate(event, cmd, baseAddr, _mshrHit);
+            processCacheReplacement(event, cmd, baseAddr, replay);
             break;
         case NACK:
             origEvent = event->getNACKedEvent();
@@ -308,9 +302,13 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
             delete event;
             break;
         case FetchInv:
+        case Fetch:
         case FetchInvX:
-            processFetch(event, baseAddr, _mshrHit);
+        case Inv:
+            processCacheInvalidate(event, baseAddr, replay);
             break;
+        case AckPut:
+        case AckInv:
         case FetchResp:
         case FetchXResp:
             processFetchResp(event, baseAddr);
@@ -321,7 +319,6 @@ void Cache::processEvent(MemEvent* event, bool _mshrHit) {
 }
 
 void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
-    vector<mshrType> mshrEntry;
     MemEvent* origRequest;
     bool inserted;
     _event->setFlag(MemEvent::F_NONCACHEABLE);
@@ -336,8 +333,8 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
                 d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[_cmd], _baseAddr, getCurrentSimTimeNano());
             }
             _event->setStartTime(timestamp_);
-            if(_cmd == GetS) bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
-            else             bottomCC_->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
+            if(_cmd == GetS) coherenceMgr->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
+            else             coherenceMgr->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
@@ -346,12 +343,11 @@ void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[_cmd],_baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            topCC_->sendResponse(origRequest, DUMMY, &_event->getPayload(), true);
+            coherenceMgr->sendResponseUp(origRequest, NULLST, &_event->getPayload(), true);
             delete origRequest;
             break;
         default:
             d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[_cmd], _event->getSrc().c_str());
-            break;
     }
 }
 
@@ -409,13 +405,15 @@ void Cache::init(unsigned int _phase){
     for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
         while ((ev = (highNetPorts_->at(idc))->recvInitData())){
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if(!memEvent) delete memEvent;
-            else{
-                if(cf_.bottomNetwork_ != "") 
-                {
-                    bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
+            if(!memEvent) { /* Do nothing */ }
+            else if (memEvent->getCmd() == NULLCMD) {
+                if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
+                    upperLevelCacheNames_.push_back(memEvent->getSrc());
                 }
-                else{
+            } else {
+                if(cf_.bottomNetwork_ != "") {
+                    bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
+                } else {
                     for(uint idp = 0; idp < lowNetPorts_->size(); idp++) {
                         lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
                     }
@@ -425,13 +423,12 @@ void Cache::init(unsigned int _phase){
         }
     }
     
-    if(cf_.bottomNetwork_ == ""){
+    if(cf_.bottomNetwork_ == "") {  // Save names of caches below us
         for(uint i = 0; i < lowNetPorts_->size(); i++) {
             while ((ev = lowNetPorts_->at(i)->recvInitData())){
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-                if(!memEvent) delete memEvent;
-                else if(memEvent->getCmd() == NULLCMD) {
-                    nextLevelCacheNames_->push_back(memEvent->getSrc());
+                if (memEvent && memEvent->getCmd() == NULLCMD) {
+                    lowerLevelCacheNames_.push_back(memEvent->getSrc());
                 }
                 delete memEvent;
             }
@@ -441,8 +438,10 @@ void Cache::init(unsigned int _phase){
 
 
 void Cache::setup(){
-    if (nextLevelCacheNames_->size() == 0) nextLevelCacheNames_->push_back(""); // avoid segfault on accessing this
-    bottomCC_->setNextLevelCache(nextLevelCacheNames_);
+    if (lowerLevelCacheNames_.size() == 0) lowerLevelCacheNames_.push_back(""); // avoid segfault on accessing this
+    if (upperLevelCacheNames_.size() == 0) upperLevelCacheNames_.push_back(""); // avoid segfault on accessing this
+    coherenceMgr->setLowerLevelCache(&lowerLevelCacheNames_);
+    coherenceMgr->setUpperLevelCache(&upperLevelCacheNames_);
 }
 
 
@@ -451,16 +450,13 @@ void Cache::finish(){
     if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
     else averageLatency = 0;
 
-    bottomCC_->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
+    coherenceMgr->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
             missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
             missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
-    topCC_->printStats(statsFile_);
     listener_->printStats(*d_);
     delete cf_.cacheArray_;
     delete cf_.rm_;
     delete d_;
-    retryQueue_.clear();
-    retryQueueNext_.clear();
     linkIdMap_.clear();
     nameMap_.clear();
 }

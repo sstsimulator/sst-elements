@@ -16,10 +16,6 @@ libmemHierarchy_la_SOURCES = \
 	cacheEventProcessing.cc \
 	cacheController.cc \
 	cacheFactory.cc \
-    Sieve/cacheController.h \
-    Sieve/cacheController.cc \
-    Sieve/cacheFactory.cc \
-	ccLine.h \
 	replacementManager.h \
 	bus.h \
 	bus.cc \
@@ -38,14 +34,16 @@ libmemHierarchy_la_SOURCES = \
 	coherenceControllers.h \
         memHierarchyInterface.cc \
         memHierarchyInterface.h \
-	MESIBottomCoherenceController.h \
-	MESIBottomCoherenceController.cc \
-	MESITopCoherenceController.h \
-	MESITopCoherenceController.cc \
-	MOESIBottomCoherenceController.h \
-	MOESIBottomCoherenceController.cc \
-	MOESITopCoherenceController.h \
-	MOESITopCoherenceController.cc \
+	MESIInternalDirectory.h \
+	MESIInternalDirectory.cc \
+	MESICoherenceController.h \
+	MESICoherenceController.cc \
+	IncoherentController.h \
+	IncoherentController.cc \
+	L1IncoherentController.h \
+	L1IncoherentController.cc \
+	L1CoherenceController.h \
+	L1CoherenceController.cc \
 	cacheArray.cc \
 	cacheArray.h \
 	mshr.h \
