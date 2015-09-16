@@ -248,6 +248,9 @@ class ProcessQueuesState
     void processRecv_1( _CommReq* );
 
     void processWait_0( Stack* );
+    void processWaitCtx_0( WaitCtx*, _CommReq* req );
+    void processWaitCtx_1( WaitCtx*, _CommReq* req );
+    void processWaitCtx_2( WaitCtx* );
 
     void processQueues( Stack* );
     void processQueues0( Stack* );
@@ -283,6 +286,7 @@ class ProcessQueuesState
     void        print( char* buf, int len );
 
     void exit( int delay = 0 ) {
+        dbg().verbose(CALL_INFO,2,1,"exit ProcessQueuesState\n"); 
         obj().passCtrlToFunction( m_exitDelay + delay );
         m_exitDelay = 0;
     }
@@ -406,7 +410,7 @@ void ProcessQueuesState<T1>::processSend_2( _CommReq* req )
         dbg().verbose(CALL_INFO,1,1,"Short %lu bytes dest %#x\n",length,nid); 
         vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
-        req->setDone(obj().sendReqFiniDelay( length ));
+        req->setDone( obj().sendReqFiniDelay( length ) );
 
     } else {
         dbg().verbose(CALL_INFO,1,1,"sending long message %lu bytes\n",length); 
@@ -552,22 +556,70 @@ void ProcessQueuesState<T1>::processWait_0( Stack* stack )
 
 	assert( stack->empty() );
 
-    if ( ctx->req->isDone() ) {
-        exit( ctx->req->getDelay() );
-        delete ctx;
-        ctx = NULL;
-        dbg().verbose(CALL_INFO,2,1,"exit found CommReq\n"); 
+    _CommReq* req = ctx->req->getFiniReq();
+
+    if ( req ) {
+        processWaitCtx_0( ctx, req ); 
+    } else {
+        processWaitCtx_2( ctx );
+    }
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processWaitCtx_0( WaitCtx* ctx, _CommReq* req )
+{
+    dbg().verbose(CALL_INFO,1,1,"\n");
+    obj().schedCallback( 
+        std::bind( &ProcessQueuesState<T1>::processWaitCtx_1, this, ctx, req ),
+        req->getFiniDelay()
+    );
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
+{
+    size_t   length = req->getLength(); 
+
+    dbg().verbose(CALL_INFO,1,1,"\n");
+
+    if ( req->isMine() ) {
+        delete req;
     }
 
-	if ( ctx ) {
+    if ( length > obj().shortMsgLength() ) {
+        // this is a hack, to get point to point latencies to match Chama
+        // we need to not add delay for unpinning the send buffer for long msg  
+        if ( req->isSend() ) { 
+            length = 0;
+        } 
+        obj().memunpin( 
+            std::bind( &ProcessQueuesState<T1>::processWaitCtx_2, this, ctx ),
+            0, length 
+        ); 
+    } else {
+        processWaitCtx_2( ctx );
+    }
+}
+
+template< class T1 >
+void ProcessQueuesState<T1>::processWaitCtx_2( WaitCtx* ctx )
+{
+    _CommReq* req = ctx->req->getFiniReq();
+    dbg().verbose(CALL_INFO,1,1,"\n");
+
+    if ( req ) {
+        processWaitCtx_0( ctx, req ); 
+    } else  if ( ctx->req->isDone() ) {
+        delete ctx;
+        exit( );
+    } else {
 		enableInt( ctx, &ProcessQueuesState::processWait_0 );
-	}
+    }
 }
 
 template< class T1 >
 void ProcessQueuesState<T1>::processQueues( Stack* stack )
 {
-    int delay = 0;
     dbg().verbose(CALL_INFO,2,1,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
     dbg().verbose(CALL_INFO,2,1,"stack.size()=%lu\n", stack->size()); 
 
@@ -610,7 +662,7 @@ void ProcessQueuesState<T1>::processQueues( Stack* stack )
         processShortList_0( stack );
 
     } else {
-        obj().schedCallback( stack->back()->getCallback(), delay );
+        obj().schedCallback( stack->back()->getCallback() );
     }
 }
 
@@ -726,7 +778,7 @@ void ProcessQueuesState<T1>::processShortList_4( Stack* stack )
 
     } else if ( length <= obj().shortMsgLength() ) { 
         dbg().verbose(CALL_INFO,1,1,"short\n");
-        req->setDone(obj().recvReqFiniDelay( length ));
+        req->setDone( obj().recvReqFiniDelay( length ) );
     } else {
 
         dbg().verbose(CALL_INFO,1,1,"long\n");
@@ -920,12 +972,8 @@ void ProcessQueuesState<T1>::processLongGetFini0( Stack* stack )
     
     delete stack->back();
     stack->pop_back();
-    int delay = obj().recvReqFiniDelay( req->getLength() );
 
-    // time to unregister memory
-    delay += obj().regRegionDelay( req->getLength() );
-
-    req->setDone( delay );
+    req->setDone( obj().recvReqFiniDelay( req->getLength() ) );
 
     IoVec hdrVec;   
     CtrlHdr* hdr = new CtrlHdr;
@@ -952,14 +1000,7 @@ template< class T1 >
 void ProcessQueuesState<T1>::processLongAck( GetInfo* info )
 {
     dbg().verbose(CALL_INFO,1,1,"acked\n");
-    int delay =  obj().sendReqFiniDelay( info->req->getLength() );
-#if 0 
-    // time to unregister memory
-    if ( info->req->getLength() > obj().shortMsgLength() ) { 
-        delay += obj().regRegionDelay( info->req->getLength() );
-    }
-#endif
-    info->req->setDone( delay );
+    info->req->setDone( obj().sendReqFiniDelay( info->req->getLength() ) );
     delete info;
     return;
 }

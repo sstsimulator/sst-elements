@@ -352,6 +352,7 @@ void XXX::waitAll( int count, MP::MessageRequest req[],
 
 void XXX::schedCallback( Callback callback, uint64_t delay )
 {
+    m_dbg.verbose(CALL_INFO,1,1,"delay=%lu\n",delay);
     m_delayLink->send( delay, new DelayEvent(callback) );
 }
 
@@ -359,7 +360,7 @@ void XXX::delayHandler( SST::Event* e )
 {
     DelayEvent* event = static_cast<DelayEvent*>(e);
     
-    m_dbg.verbose(CALL_INFO,2,1,"\n");
+    m_dbg.verbose(CALL_INFO,2,1,"execute callback\n");
 
     event->callback();
     delete e;
@@ -367,6 +368,7 @@ void XXX::delayHandler( SST::Event* e )
 
 void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
 {
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
     if ( m_memLink ) {
         m_memLink->send( 0, new MemCpyReqEvent( callback, 0, to, from, length ) );
     } else {
@@ -384,6 +386,7 @@ void XXX::memcpy( Callback callback, MemAddr to, MemAddr from, size_t length )
 
 void XXX::memread( Callback callback, MemAddr addr, size_t length )
 {
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
     if ( m_memLink ) {
         m_memLink->send( 0, new MemReadReqEvent( callback, 0, addr, length ) );
     } else {
@@ -393,6 +396,7 @@ void XXX::memread( Callback callback, MemAddr addr, size_t length )
 
 void XXX::memwrite( Callback callback, MemAddr addr, size_t length )
 {
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
     if ( m_memLink ) {
         m_memLink->send( 0, new MemWriteReqEvent( callback, 0, addr, length ) );
     } else {
@@ -402,11 +406,19 @@ void XXX::memwrite( Callback callback, MemAddr addr, size_t length )
 
 void XXX::mempin( Callback callback, MemAddr addr, size_t length )
 {
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_delayLink->send( regRegionDelay( length ), new DelayEvent(callback) );
+}
+
+void XXX::memunpin( Callback callback, MemAddr addr, size_t length )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
     m_delayLink->send( regRegionDelay( length ), new DelayEvent(callback) );
 }
 
 void XXX::memwalk( Callback callback, int count )
 {
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
     m_delayLink->send( matchDelay( count ), new DelayEvent(callback) );
 }
 

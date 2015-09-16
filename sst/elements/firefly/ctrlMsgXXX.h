@@ -167,6 +167,7 @@ class XXX  {
     void memwrite( Callback, MemAddr to, size_t );
     void memread( Callback, MemAddr to, size_t );
     void mempin( Callback, uint64_t Memaddr, size_t );
+    void memunpin( Callback, uint64_t Memaddr, size_t );
     void memwalk( Callback, int count );
 
   private:
@@ -248,7 +249,6 @@ class _CommReq : public MP::MessageRequestBase {
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag,
         MP::Communicator group ) : 
         m_type( type ),
-//        m_buf( NULL ),
         m_ioVec( _ioVec ),
         m_resp( NULL ),
         m_done( false ),
@@ -324,8 +324,8 @@ class _CommReq : public MP::MessageRequestBase {
         m_done = true; 
     }
 
-    void getResp( MP::MessageResponse* resp ) {
-        *resp = m_matchInfo;
+    MP::MessageResponse* getResp(  ) {
+        return &m_matchInfo;
     }
 
     void setResp( uint32_t tag, MP::RankID src, uint32_t count )
@@ -355,6 +355,14 @@ class _CommReq : public MP::MessageRequestBase {
     }
     int  getFiniDelay() { return m_finiDelay_ns; }
 
+    bool isSend() {
+        if ( m_type == Isend  || m_type == Send ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // need to save info for the long protocol ack
     int m_ackKey;
     int m_ackNid;
@@ -363,7 +371,6 @@ class _CommReq : public MP::MessageRequestBase {
 
     MatchHdr            m_hdr; 
     Type                m_type;
-//    MP::Addr        m_buf;
     std::vector<IoVec>  m_ioVec;
     MP::MessageResponse* m_resp;
     bool                m_done;
@@ -388,25 +395,25 @@ class WaitReq {
     };
 
   public:
-    WaitReq( _CommReq* req ) : indexPtr(NULL), delay_ns(0) {
+    WaitReq( _CommReq* req ) : indexPtr(NULL) {
         reqQ.push_back( X( req ) ); 
     }
 
-    WaitReq( std::vector<_CommReq*> reqs ) : indexPtr(NULL), delay_ns(0) {
+    WaitReq( std::vector<_CommReq*> reqs ) : indexPtr(NULL) {
         for ( unsigned int i = 0; i < reqs.size(); i++ ) {
             reqQ.push_back( X( i, reqs[i] ) ); 
         } 
     }
 
     WaitReq( MP::MessageRequest req, MP::MessageResponse* resp ) :
-        indexPtr(NULL), delay_ns(0)
+        indexPtr(NULL)
     {
         reqQ.push_back( X( static_cast<_CommReq*>(req), resp ) );
     }
 
     WaitReq( int count, MP::MessageRequest req[], int *index,
                                         MP::MessageResponse* resp ) :
-        indexPtr(index), delay_ns(0)
+        indexPtr(index)
     {
         for ( int i = 0; i < count; i++ ) {
             reqQ.push_back( X( i, static_cast<_CommReq*>(req[i]), resp ) );
@@ -415,7 +422,7 @@ class WaitReq {
 
     WaitReq( int count, MP::MessageRequest req[],
                                         MP::MessageResponse* resp[] ) : 
-        indexPtr(NULL), delay_ns(0)
+        indexPtr(NULL)
     {
         MP::MessageResponse* tmp = (MP::MessageResponse*)resp;
         for ( int i = 0; i < count; i++ ) {
@@ -428,42 +435,40 @@ class WaitReq {
     }
 
     bool isDone() {
+        return reqQ.empty();
+    }
+
+    _CommReq* getFiniReq() {
         std::deque<X>::iterator iter = reqQ.begin();
 
         while ( iter != reqQ.end() ) {
             if ( iter->req->isDone() ) {
-                delay_ns += iter->req->getFiniDelay();
-                ++delay_ns;
-                if ( iter->resp ) {
-                    iter->req->getResp( iter->resp );
-                }
 
-                if ( iter->req->isMine() ) {
-                    delete iter->req;
+                _CommReq* req = iter->req;
+
+                if ( iter->resp ) {
+                    *iter->resp = *iter->req->getResp(  );
                 }
 
                 // a waitany will have an valid indexPtr
                 if ( indexPtr ) { 
                     *indexPtr = iter->pos;
                     reqQ.clear();
-                    iter = reqQ.end();
                 } else {
                     iter = reqQ.erase( iter );
                 }
-
+                return req;
 
             } else {
                 ++iter;
             }
         } 
-        return reqQ.empty();
+        return NULL;
     }
-    int getDelay() { return delay_ns; }
 
   private:
     std::deque< X > reqQ;
     int* indexPtr; 
-    int  delay_ns;
 };
 
 }
