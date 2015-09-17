@@ -145,7 +145,7 @@ public:
         // Sharers getters & setter
         bool isShareless() { return sharers_.empty(); }
         set<std::string>* getSharers() { return &sharers_; }
-        uint numSharers() { return sharers_.size(); }
+        unsigned int numSharers() { return sharers_.size(); }
         
         bool isSharer(std::string name) { 
             if (name.empty()) return false; 
@@ -292,7 +292,7 @@ public:
     unsigned int preReplace(Addr baseAddr);
     void deallocate(unsigned int index);
     State * setStates;
-    uint * setSharers;
+    unsigned int * setSharers;
     bool * setOwned;
 };
 
@@ -310,10 +310,10 @@ public:
     
     vector<DataLine*> dataLines_;
     State * dirSetStates;
-    uint * dirSetSharers;
+    unsigned int * dirSetSharers;
     bool * dirSetOwned;
     State * cacheSetStates;
-    uint * cacheSetSharers;
+    unsigned int * cacheSetSharers;
     bool * cacheSetOwned;
 
 private:

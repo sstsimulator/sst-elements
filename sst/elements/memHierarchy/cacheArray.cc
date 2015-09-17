@@ -27,7 +27,7 @@ SetAssociativeArray::SetAssociativeArray(Output* dbg, unsigned int numLines, uns
     CacheArray(dbg, numLines, associativity, lineSize, rm, hf, sharersAware, true) 
     { 
         setStates = new State[associativity];
-        setSharers = new uint[associativity];
+        setSharers = new unsigned int[associativity];
         setOwned = new bool[associativity];
     }
 
@@ -94,10 +94,10 @@ DualSetAssociativeArray::DualSetAssociativeArray(Output* dbg, unsigned int lineS
         }
 
         dirSetStates    = new State[dirAssociativity];
-        dirSetSharers   = new uint[dirAssociativity];
+        dirSetSharers   = new unsigned int[dirAssociativity];
         dirSetOwned     = new bool[dirAssociativity];
         cacheSetStates  = new State[cacheAssociativity];
-        cacheSetSharers = new uint[cacheAssociativity];
+        cacheSetSharers = new unsigned int[cacheAssociativity];
         cacheSetOwned   = new bool[cacheAssociativity];
     }
 
