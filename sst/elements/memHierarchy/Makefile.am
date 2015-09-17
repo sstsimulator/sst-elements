@@ -59,6 +59,9 @@ libmemHierarchy_la_SOURCES = \
 	networkMemInspector.cc \
 	memResponseHandler.h \
 	DRAMReq.h \
+	Sieve/sieveController.h
+	Sieve/sieveController.cc
+	Sieve/sieveFactory.cc
 	libmemHierarchy.cc
 
 EXTRA_DIST = \

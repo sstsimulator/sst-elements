@@ -18,7 +18,7 @@
 #include "memEvent.h"
 #include "memNIC.h"
 #include "cacheController.h"
-#include "Sieve/cacheController.h"
+#include "Sieve/sieveController.h"
 #include "bus.h"
 #include "trivialCPU.h"
 #include "streamCPU.h"
@@ -317,7 +317,7 @@ static const ElementInfoStatistic cache_statistics[] = {
 
 static Component* create_Sieve(ComponentId_t id, Params& params)
 {
-	return Sieve::cacheFactory(id, params);
+	return Sieve::sieveFactory(id, params);
 }
 
 static const ElementInfoParam sieve_params[] = {

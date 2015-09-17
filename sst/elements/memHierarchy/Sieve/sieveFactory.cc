@@ -10,7 +10,7 @@
 // distribution.
 
 /*
- * File:   cacheFactory.cc
+ * File:   sieveFactory.cc
  */
 
 
@@ -18,14 +18,14 @@
 #include <sst/core/params.h>
 #include "../util.h"
 #include "../hash.h"
-#include "cacheController.h"
+#include "sieveController.h"
 
 
 namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Sieve* Sieve::cacheFactory(ComponentId_t _id, Params &_params){
+Sieve* Sieve::sieveFactory(ComponentId_t _id, Params &_params){
  
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
@@ -52,15 +52,15 @@ Sieve* Sieve::cacheFactory(ComponentId_t _id, Params &_params){
     /* ---------------- Initialization ----------------- */
     HashFunction* ht = new PureIdHashFunction;
     ReplacementMgr* replManager = new LRUReplacementMgr(dbg, numLines, associativity, true);
-    CacheArray* cacheArray = new SetAssociativeArray(dbg, cacheSize, lineSize, associativity, replManager, ht, false);
+    CacheArray* cacheArray = new SetAssociativeArray(dbg, numLines, lineSize, associativity, replManager, ht, false);
     
-    CacheConfig config = {cacheArray, dbg, replManager};
+    SieveConfig config = {cacheArray, dbg, replManager};
     return new Sieve(_id, _params, config);
 }
 
 
 
-Sieve::Sieve(ComponentId_t _id, Params &_params, CacheConfig _config) : Component(_id){
+Sieve::Sieve(ComponentId_t _id, Params &_params, SieveConfig _config) : Component(_id){
     cf_ = _config;
     d_  = cf_.dbg_;
     d_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());

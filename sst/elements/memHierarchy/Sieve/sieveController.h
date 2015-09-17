@@ -10,7 +10,7 @@
 // distribution.
 
 /*
- * File:   cacheController.h
+ * File:   sieveController.h
  */
 
 #ifndef _SIEVECONTROLLER_H_
@@ -46,7 +46,7 @@ public:
     virtual void finish(void);
     
     /** Creates cache componennt */
-    static Sieve* cacheFactory(SST::ComponentId_t id, SST::Params& params);
+    static Sieve* sieveFactory(SST::ComponentId_t id, SST::Params& params);
     
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
@@ -55,21 +55,21 @@ public:
     }
     
 private:
-    struct CacheConfig;
+    struct SieveConfig;
     
     /** Constructor for Sieve Component */
-    Sieve(ComponentId_t _id, Params &_params, CacheConfig _config);
+    Sieve(ComponentId_t _id, Params &_params, SieveConfig _config);
     
     /** Handler for incoming link events.  */
     void processEvent(SST::Event* event);
     
-    struct CacheConfig{
+    struct SieveConfig{
         CacheArray* cacheArray_;
         Output* dbg_;
         ReplacementMgr* rm_;
     };
     
-    CacheConfig             cf_;
+    SieveConfig             cf_;
     CacheListener*          listener_;
     Output*                 d_;
  };

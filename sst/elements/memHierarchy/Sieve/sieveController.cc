@@ -10,7 +10,7 @@
 // distribution.
 
 /*
- * File:   cache.cc
+ * File:   sieveController.cc
  */
 
 
@@ -19,7 +19,7 @@
 //#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
-#include "cacheController.h"
+#include "sieveController.h"
 #include "../memEvent.h"
 
 using namespace SST;
