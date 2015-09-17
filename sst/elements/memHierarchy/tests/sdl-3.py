@@ -24,6 +24,8 @@ comp_l1cache.addParams({
       "debug" : "",
       "statistics" : "1",
       "L1" : "1",
+      "LL" : "1",
+      "LLC" : "1",
       "cache_size" : "4 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")

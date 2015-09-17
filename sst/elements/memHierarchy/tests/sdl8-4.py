@@ -140,6 +140,7 @@ comp_l3cache.addParams({
       "statistics" : "1",
       "debug_level" : 10,
       "debug" : "",
+      "LLC" : "1",
       "network_address" : "1",
       "network_bw" : "25GB/s",
       "directory_at_next_level" : "1"
