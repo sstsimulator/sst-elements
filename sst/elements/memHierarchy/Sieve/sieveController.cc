@@ -37,8 +37,8 @@ void Sieve::processEvent(SST::Event* _ev) {
         
     if (lineIndex == -1) {                                     /* Miss.  If needed, evict candidate */
         // d_->debug(_L3_,"-- Cache Miss --\n");
-        int wbLineIndex = cf_.cacheArray_->preReplace(baseAddr);       // Find a replacement candidate
-        cf_.cacheArray_->replace(baseAddr, wbLineIndex);
+        CacheLine * line = cf_.cacheArray_->findReplacementCandidate(baseAddr, false);
+        cf_.cacheArray_->replace(baseAddr, line->getIndex());
         
         auto cmdT = (GetS == cmd) ? READ : WRITE;
         //std::cout << "VA: = " << event->getVirtualAddress() << "\n";
