@@ -53,14 +53,14 @@ private:
     struct Rank {
         uint64_t   timestamp;
         uint       sharers;
-        uint       owned;
+        bool       owned;
         State      state;
 
         void reset() {
             state       = I;
             sharers     = 0;
             timestamp   = 0;
-            owned       = 0;
+            owned       = false;
         }
 
         inline bool lessThan(const Rank& other) const {
@@ -90,12 +90,12 @@ public:
     uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
         uint setEnd = setBegin + numWays;
         bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : 0, state[0]};
+        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : false, state[0]};
         if (state[0] == I) return (uint)bestCandidate;
         setBegin++;
         int i = 1;
         for (uint id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? sharers[i] : 0, state[i]};
+            Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? owned[i] : false, state[i]};
             if (candRank.lessThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = id;
@@ -132,13 +132,13 @@ class LFUReplacementMgr : public ReplacementMgr {
         struct Rank {
             LFUInfo lfuInfo;
             uint sharers;
-            uint owned;
+            bool owned;
             State state;
 
             void reset() {
                 state = I;
                 sharers = 0;
-                owned = 0;
+                owned = false;
                 lfuInfo = (LFUInfo){0, 0};
             }
 
@@ -185,13 +185,13 @@ class LFUReplacementMgr : public ReplacementMgr {
         uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
             uint setEnd = setBegin + numWays;
             bestCandidate = setBegin;
-            Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : 0, state[0] };
+            Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : false, state[0] };
             if (state[0] == I) return (uint)bestCandidate; 
         
             setBegin++;
             int i = 1;
             for (uint id = setBegin; id < setEnd; id++) {
-                Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? owned[i] : 0, state[i]};
+                Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? owned[i] : false, state[i]};
                 if (candRank.lessThan(bestRank, timestamp)) {
                     bestRank = candRank;
                     bestCandidate = id;
@@ -226,13 +226,13 @@ private:
     struct Rank {
         uint64_t  timestamp;
         uint      sharers;
-        uint      owned;
+        bool      owned;
         State     state;
 
         void reset() {
             state       = I;
             sharers     = 0;
-            owned       = 0;
+            owned       = false;
             timestamp   = 0;
         }
 
@@ -260,13 +260,13 @@ public:
     uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
         uint setEnd = setBegin + numWays;
         bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : 0, state[0] };
+        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : false, state[0] };
         if (state[0] == I) return (uint)bestCandidate; 
         
         setBegin++;
         int i = 1;
         for (uint id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? sharers[i]: 0, (sharersAware)? owned[i] : 0, state[i]};
+            Rank candRank = {array[id], (sharersAware)? sharers[i]: 0, (sharersAware)? owned[i] : false, state[i]};
             if (candRank.biggerThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = id;

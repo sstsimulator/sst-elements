@@ -103,6 +103,8 @@ public:
             if (cache) data_.resize(size_/sizeof(uint8_t));
         }
         
+        virtual ~CacheLine() {}
+
         void reset() {
             state_ = I;
             sharers_.clear();
