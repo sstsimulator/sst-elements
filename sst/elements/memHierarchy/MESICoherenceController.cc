@@ -694,6 +694,10 @@ CacheAction MESIController::handleInv(MemEvent* event, CacheLine* cacheLine, boo
     recordStateEventCount(event->getCmd(), state);
     
     switch(state) {
+        case I:
+        case IS:
+        case IM:
+            return DONE;    // Eviction raced with Inv, IS/IM only happen if we don't use AckPuts
         case S:
             if (cacheLine->numSharers() > 0) {
                 invalidateAllSharers(cacheLine, event->getRqstr(), replay);
