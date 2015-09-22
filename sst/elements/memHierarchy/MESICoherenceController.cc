@@ -536,9 +536,14 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
         case SM_Inv:
             if (action == DONE) {
                 if (reqEvent->getCmd() == Inv) {
-                    sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                    inc_InvalidatePUTSReqSent();
-                    line->setState(IM);
+                    if (line->numSharers() > 0) {
+                        invalidateAllSharers(line, reqEvent->getRqstr(), true);
+                        return IGNORE;
+                    } else {
+                        sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+                        inc_InvalidatePUTSReqSent();
+                        line->setState(IM);
+                    }
                 } else {
                     line->setState(SM);
                     action = IGNORE; // Waiting for GetXResp
