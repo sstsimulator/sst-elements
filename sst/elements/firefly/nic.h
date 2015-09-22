@@ -25,6 +25,8 @@
 namespace SST {
 namespace Firefly {
 
+typedef std::function<void()> Callback;
+
 class NicInitEvent : public Event {
 
   public:
@@ -172,12 +174,14 @@ class Nic : public SST::Component  {
     class Entry;
     class SelfEvent : public SST::Event {
       public:
-        enum Type { RunRecvMachine, RunSendMachine } type;
 
-        SelfEvent() : entry(NULL) {}
-        SelfEvent ( Type _type) : type(_type), entry(NULL) {}
-        ~SelfEvent() {}
+        SelfEvent( Entry* entry) : 
+            entry(entry), callback(NULL) {}
+        SelfEvent( Callback _callback ) :
+            entry(NULL), callback( _callback) {}
+        
         Entry*              entry;
+        Callback            callback;
     };
 
     #include "nicVirtNic.h" 
@@ -328,6 +332,9 @@ class Nic : public SST::Component  {
             if ( m_notifyFunctor ) {
                 (*m_notifyFunctor)(); 
             }
+        }
+        bool isDone() {
+            return ( currentVec == ioVec().size() );
         }
         
       protected:
@@ -496,6 +503,18 @@ public:
     int getNum_vNics() { return m_num_vNics; }
     void printStatus(Output &out);
 
+    void dmaRead( Callback callback, uint64_t addr, size_t len ) {
+        m_arbitrateDMA->canIRead( callback, len );
+    }
+
+    void dmaWrite( Callback callback, uint64_t addr, size_t len ) {
+        m_arbitrateDMA->canIWrite( callback, len );
+    }
+
+    void schedCallback(  Callback callback, uint64_t delay = 0 ) {
+        schedEvent( new SelfEvent( callback ), delay);
+    }
+
   private:
     void handleSelfEvent( Event* );
     void handleVnicEvent( Event*, int );
@@ -510,7 +529,6 @@ public:
     void schedEvent( SelfEvent* event, int delay = 0 ) {
         m_selfLink->send( delay, event );
     }
-
 
     void notifySendDmaDone( int vNicNum, void* key ) {
         m_vNicV[vNicNum]->notifySendDmaDone(  key );

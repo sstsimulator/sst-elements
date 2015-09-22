@@ -32,23 +32,25 @@ class ArbitrateDMA {
         }
     } 
 
-    bool canIWrite( int bytes ) {
+    void canIWrite( Callback callback, int bytes ) {
 
         m_dbg.verbose(CALL_INFO,1,1,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Write], m_xx[Read], bytes  );
         if ( delay ) {
-            schedWakeup( Write, delay );
+            m_nic.schedCallback( callback, delay );
+        } else {
+            callback();
         }
-        return ( 0 ==  delay); 
     }
 
-    bool canIRead( int bytes ) {
+    void canIRead( Callback callback, int bytes ) {
         m_dbg.verbose(CALL_INFO,1,1,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Read], m_xx[Write], bytes  );
         if ( delay ) {
-            schedWakeup( Read, delay );
+            m_nic.schedCallback( callback, delay );
+        } else {
+            callback();
         }
-        return ( 0 ==  delay); 
     }
 
   private:
@@ -65,19 +67,6 @@ class ArbitrateDMA {
         m_dbg.verbose(CALL_INFO,1,1,"avail Bytes %ld, delta %" PRIu64 " ns, "
             "added %ld \n", xx.avail, delta, add ); 
 		//assert( xx.avail >= 0 );
-    }
-
-    void schedWakeup( Type type, uint64_t delay) {
-        SelfEvent* event = new SelfEvent;
-        m_dbg.verbose(CALL_INFO,1,1,"wakeup %s in %" PRIu64 " ns\n",
-                    Read == type ? "Send":"Recv", delay);
-        if ( Read == type ) {
-            event->type = SelfEvent::RunSendMachine;
-        } else {
-            event->type = SelfEvent::RunRecvMachine;
-        }
-    
-        m_nic.schedEvent( event, delay );
     }
 
     uint64_t foo( XX& me, XX& other, int bytes ) {

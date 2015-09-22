@@ -18,10 +18,6 @@ using namespace SST::Firefly;
 
 static void print( Output& dbg, char* buf, int len );
 
-const char* Nic::RecvMachine::m_enumName[] = {
-    FOREACH_ENUM(GENERATE_STRING)
-};
-
 Nic::RecvMachine::~RecvMachine()
 {
     for ( unsigned i = 0; i < m_recvM.size(); i++ ) {
@@ -41,142 +37,105 @@ Nic::RecvMachine::~RecvMachine()
     }
 }
 
-void Nic::RecvMachine::run( )
+void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
 {
-    m_dbg.verbose(CALL_INFO,1,2,"RecvMachine enter state=%s\n", m_enumName[m_state]);
+    m_dbg.verbose(CALL_INFO,1,1,"got a network pkt\n");
+    assert( ev );
 
-#ifdef NIC_RECV_DEBUG
-    ++m_runCount;
-#endif
-    bool blocked = false;
-    do { 
-        switch ( m_state ) {
-          case NeedPkt:
-            m_dbg.verbose(CALL_INFO,1,1,"NeedPkt\n");
-            m_mEvent = getNetworkEvent(0);
-            if ( ! m_mEvent ) {
-                m_dbg.verbose(CALL_INFO,1,1,"no packet available\n");
-                setNotify();
-                blocked = true;
-                break;
-            }
-            m_state = HavePkt;
-
-          case HavePkt:
-            m_dbg.verbose(CALL_INFO,1,1,"event has %lu bytes\n",
-                                                    m_mEvent->bufSize() );
-
-            // is there an active stream for this src node?
-            if ( m_activeRecvM.find( m_mEvent->src ) == m_activeRecvM.end() ) {
-    
-                SelfEvent* event = new SelfEvent;
-
-                // note that m_state and enry are set by this function
-                uint64_t delay = processFirstEvent( 
-                            *m_mEvent, m_state, event->entry );
-
-                m_dbg.verbose(CALL_INFO,1,1,"state=%s\n",m_enumName[m_state]);
-
-                // if the packet was a "Get" it created a SendEntry,
-                // schedule the send and continue receiving packets
-                // else 
-                // schedule a delay that runs the recvMachine
-                if ( event->entry ) {
-                    event->type = SelfEvent::RunSendMachine;
-                    m_state = NeedPkt;
-                    delete m_mEvent;
-                } else {
-                    event->type = SelfEvent::RunRecvMachine;
-                    clearNotify();
-                    blocked = true;
-                } 
-                m_nic.schedEvent( event, delay ); 
-
-                break;
-            }
-            m_state = Move;
-
-          case Move:
-          case Put:
-            m_dbg.verbose(CALL_INFO,1,1,"Move\n");
-            assert( m_mEvent );
-            if ( ! moveEvent( m_mEvent ) ) {
-                clearNotify();
-                m_state = WaitWrite;
-                blocked = true;
-                break; 
-            } 
-
-            m_state = NeedPkt; 
-            break;
-
-          case WaitWrite:
-            m_state = Move;
-            break;
-
-          case NeedRecv: 
-            m_dbg.verbose(CALL_INFO,1,1,"NeedRecv\n"); 
-            processNeedRecv( m_mEvent );
-            m_state = HavePkt; 
-            blocked = true;
-            break;
-        }
-        m_dbg.verbose(CALL_INFO,1,1,"state=%s %s\n",m_enumName[m_state],
-                    blocked?"blocked":"not blocked");
-    } while ( ! blocked );
-
-    m_dbg.verbose(CALL_INFO,1,2,"RecvMachine leave state=%s\n", m_enumName[m_state]);
+    // is there an active stream for this src node?
+    if ( m_activeRecvM.find( ev->src ) == m_activeRecvM.end() ) {
+        state_1( ev );
+     } else {
+        state_move_0( ev );
+    } 
 }
 
-uint64_t Nic::RecvMachine::processFirstEvent( FireflyNetworkEvent& mEvent,
-                        RecvMachine::State& state, Entry*& sEntry  )
+void Nic::RecvMachine::state_1(  FireflyNetworkEvent* ev )
 {
-    int delay = 0;
-        
-    MsgHdr& hdr = *(MsgHdr*) mEvent.bufPtr();
-
 #ifdef NIC_RECV_DEBUG
     ++m_msgCount;
 #endif
+    MsgHdr& hdr = *(MsgHdr*) ev->bufPtr();
+
     if ( MsgHdr::Msg == hdr.op ) {
-        m_dbg.verbose(CALL_INFO,2,1,"Msg Op\n");
+        m_dbg.verbose(CALL_INFO,1,1,"Msg Operation\n");
 
-        delay = m_rxMatchDelay;
+        Callback callback;
+        if ( findRecv( ev->src, hdr ) ) {
+            ev->bufPop( sizeof(MsgHdr) );
 
-        if ( findRecv( mEvent.src, hdr ) ) {
-            mEvent.bufPop( sizeof(MsgHdr) );
-            state = Move;
+            callback = std::bind( &Nic::RecvMachine::state_move_0, this, ev );
         } else {
-            state = NeedRecv;
+            callback = std::bind( &Nic::RecvMachine::state_2, this, ev );
         }
-
+        m_nic.schedCallback( callback, m_rxMatchDelay);
     } else if ( MsgHdr::Rdma == hdr.op ) {
 
-        RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) mEvent.bufPtr( sizeof(MsgHdr) );
+        m_dbg.verbose(CALL_INFO,1,1,"RDMA Operation\n");
 
+        RdmaMsgHdr& rdmaHdr = *(RdmaMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
+
+        uint64_t delay = 0;
+        Callback callback;
         switch ( rdmaHdr.op  ) {
 
           case RdmaMsgHdr::Put:
           case RdmaMsgHdr::GetResp:
             m_dbg.verbose(CALL_INFO,2,1,"Put Op\n");
-            state = Put;
-            assert( findPut( mEvent.src, hdr, rdmaHdr ) );
+
+            assert( findPut( ev->src, hdr, rdmaHdr ) );
+            callback = std::bind( &Nic::RecvMachine::state_move_0, this, ev );
             break;
 
           case RdmaMsgHdr::Get:
-            m_dbg.verbose(CALL_INFO,2,1,"Get Op\n");
-            sEntry = findGet( mEvent.src, hdr, rdmaHdr );
-            delay = m_hostReadDelay; // host read  delay
+            {
+                m_dbg.verbose(CALL_INFO,2,1,"Get Op\n");
+                SendEntry* entry = findGet( ev->src, hdr, rdmaHdr );
+                delay = m_hostReadDelay; // host read  delay
+                callback = std::bind( &Nic::RecvMachine::state_3, this, entry );
+                delete ev;
+            }
             break;
 
           default:
             assert(0);
         }
 
-        mEvent.bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
-    }
+        ev->bufPop(sizeof(MsgHdr) + sizeof(rdmaHdr) );
 
-    return delay;
+        m_nic.schedCallback( callback, delay );
+    }
+}
+
+// Need Recv
+void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    processNeedRecv( 
+        ev,
+        std::bind( &Nic::RecvMachine::state_0, this, ev )
+    );
+}
+
+// Need Get 
+void Nic::RecvMachine::state_3( SendEntry* entry )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_nic.m_sendMachine.run( entry );
+
+    checkNetwork();
+}
+
+void Nic::RecvMachine::checkNetwork( )
+{
+    FireflyNetworkEvent* ev = getNetworkEvent(0);
+    if ( ev ) {
+        m_dbg.verbose(CALL_INFO,1,1,"pulled a packet from the network\n");
+        state_0( ev );
+    } else {
+        m_dbg.verbose(CALL_INFO,1,1,"nothing on the network, set notifier\n");
+        setNotify();
+    }
 }
 
 bool Nic::RecvMachine::findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
@@ -279,14 +238,18 @@ bool Nic::RecvMachine::findRecv( int src, MsgHdr& hdr )
     return true;
 }
 
-bool Nic::RecvMachine::moveEvent( FireflyNetworkEvent* event )
+void Nic::RecvMachine::state_move_0( FireflyNetworkEvent* event )
+{
+    m_dbg.verbose(CALL_INFO,1,1,"event has %lu bytes\n", event->bufSize() );
+
+    m_nic.dmaWrite(
+            std::bind( &Nic::RecvMachine::state_move_1, this, event ), 
+            0, event->bufSize() );
+}
+        
+void Nic::RecvMachine::state_move_1( FireflyNetworkEvent* event )
 {
     int src = event->src;
-    m_dbg.verbose(CALL_INFO,1,1,"event has %lu bytes\n", event->bufSize() );
-    if ( ! m_nic.m_arbitrateDMA->canIWrite( event->bufSize() ) ) {
-        return false;
-    }
-
     if ( 0 == m_activeRecvM[ src ]->currentVec && 
              0 == m_activeRecvM[ src ]->currentPos  ) {
         m_dbg.verbose(CALL_INFO,1,1,"local_vNic %d, recv srcNic=%d "
@@ -324,7 +287,8 @@ bool Nic::RecvMachine::moveEvent( FireflyNetworkEvent* event )
         m_dbg.verbose(CALL_INFO,1,1,"network event is done\n");
         delete event;
     }
-    return true;
+
+    checkNetwork();
 }
 
 static void print( Output& dbg, char* buf, int len )
@@ -379,4 +343,16 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
     dbg.verbose(CALL_INFO,3,1,"currentVec=%lu, currentPos=%lu\n",
                 entry.currentVec, entry.currentPos);
     return ( entry.currentVec == entry.ioVec().size() ) ;
+}
+
+void Nic::RecvMachine::printStatus( Output& out ) {
+#ifdef NIC_RECV_DEBUG
+    if ( m_nic.m_linkControl->requestToReceive( 0 ) ) {
+        out.output( "%lu: %d: RecvMachine `%s` msgCount=%d runCount=%d,"
+            " net event avail %d\n",
+            Simulation::getSimulation()->getCurrentSimCycle(),
+            m_nic. m_myNodeId, state( m_state), m_msgCount, m_runCount,
+            m_nic.m_linkControl->requestToReceive( 0 ) );
+    }
+#endif
 }

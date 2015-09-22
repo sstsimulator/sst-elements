@@ -57,7 +57,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     } else {
         assert(0);
     }
-	int packetSizeInBits = packetSizeInBytes * 8;
 
 	UnitAlgebra buf_size( params.find_string("buffer_size") );
 	UnitAlgebra link_bw( params.find_string("link_bw") );
@@ -77,6 +76,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
         new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
     assert( m_recvNotifyFunctor );
 
+    m_recvMachine.setNotify();
+
     m_sendNotifyFunctor =
         new SimpleNetwork::Handler<Nic>(this,&Nic::sendNotify );
     assert( m_sendNotifyFunctor );
@@ -84,8 +85,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_selfLink = configureSelfLink("Nic::selfLink", "1 ns",
         new Event::Handler<Nic>(this,&Nic::handleSelfEvent));
     assert( m_selfLink );
-
-    m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
 
     m_dbg.verbose(CALL_INFO,2,1,"IdToNet()=%d\n", IdToNet( m_myNodeId ) );
 
@@ -95,7 +94,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find_string("corePortName","core") ) );
     }
     m_recvMachine.init( m_vNicV.size(), rxMatchDelay, hostReadDelay );
-    m_sendMachine.init( txDelay, packetSizeInBytes, packetSizeInBits );
+    m_sendMachine.init( txDelay, packetSizeInBytes );
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find_floating( "dmaBW_GBs", 0.0 ); 
@@ -168,19 +167,11 @@ void Nic::handleVnicEvent( Event* ev, int id )
 void Nic::handleSelfEvent( Event *e )
 {
     SelfEvent* event = static_cast<SelfEvent*>(e);
-
-    switch ( event->type ) {
-
-      case SelfEvent::RunRecvMachine:
-        m_recvMachine.run();
-        break;
-
-      case SelfEvent::RunSendMachine:
+    
+    if ( event->callback ) {
+        event->callback();
+    } else if ( event->entry ) {
         m_sendMachine.run( static_cast<SendEntry*>(event->entry) );
-        break;
-
-      default:
-        assert(0);
     }
 
     delete e;
@@ -270,10 +261,10 @@ bool Nic::sendNotify(int)
 {
     m_dbg.verbose(CALL_INFO,2,1,"\n");
     
-    m_sendMachine.run();
+    m_sendMachine.notify();
 
-    // keep the current notifier because the sendMahcine may have changed it 
-    return true;
+    // remove this notifier
+    return false;
 }
 
 bool Nic::recvNotify(int vc)
@@ -281,10 +272,10 @@ bool Nic::recvNotify(int vc)
     m_dbg.verbose(CALL_INFO,1,1,"network event available vc=%d\n",vc);
     assert( 0 == vc );
 
-    m_recvMachine.run();
+    m_recvMachine.notify( vc );
 
-    // keep the current notifier because the recvMahcine may have changed it 
-    return true;
+    // remove this notifier
+    return false;
 }
 
 BOOST_CLASS_EXPORT( SST::Firefly::NicInitEvent )
