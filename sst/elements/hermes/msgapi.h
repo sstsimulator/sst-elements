@@ -24,7 +24,28 @@ namespace Hermes {
 
 namespace MP {
 
-typedef void*    Addr;
+class Addr {
+  public:
+    Addr( ) : 
+        m_backing(NULL), m_simulated(0), m_backed(false) 
+    { }
+
+    Addr( void* backing, bool backed = false ) : 
+        m_backing(backing), m_simulated(0), m_backed(backed) 
+    { }
+
+    void* ptr() { return m_backing; } 
+    void setPtr( void* ptr ) { 
+        m_backing = ptr; 
+    }
+    bool backed() { return m_backed; }
+
+ private:
+    void*       m_backing;
+    uint64_t    m_simulated;
+    bool        m_backed; 
+};
+
 typedef uint32_t Communicator;
 typedef uint32_t RankID;
 
@@ -137,8 +158,8 @@ class Interface : public Hermes::Interface {
         Communicator group, Functor*) {}
 
     virtual void alltoallv(
-        Addr sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
-        Addr recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
+        Addr sendbuf, void* sendcnts, void* senddispls, PayloadDataType sendtype,
+        Addr recvbuf, void* recvcnts, void* recvdispls, PayloadDataType recvtype,
         Communicator group, Functor*) {}
 
     virtual void barrier(Communicator group, Functor*) {}
