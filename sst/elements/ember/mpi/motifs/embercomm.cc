@@ -24,9 +24,6 @@ EmberCommGenerator::EmberCommGenerator(SST::Component* owner, Params& params) :
 {
     m_messageSize = (uint32_t) params.find_integer("arg.messagesize", 1024);
     m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
-
-    m_sendBuf = NULL;
-    m_recvBuf = NULL;
 }
 
 inline long mod( long a, long b )

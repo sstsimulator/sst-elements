@@ -30,7 +30,7 @@ private:
     uint64_t m_compute;
     uint32_t m_iterations;
     uint32_t m_count;
-    void*    m_sendBuf;
+    Addr     m_sendBuf;
     int      m_root;
     uint32_t m_loopIndex;
 };

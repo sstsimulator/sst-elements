@@ -246,7 +246,7 @@ bool EmberHalo3DSVGenerator::generate( std::queue<EmberEvent*>& evQ )
 		}
 
 		if( (performReduction > 0) && (m_loopIndex % performReduction == 0) ) {
-			enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, SUM, GroupWorld );
+			enQ_allreduce( evQ, Addr(), Addr(), 1, DOUBLE, SUM, GroupWorld );
 		}
 
 	if ( ++m_loopIndex == iterations ) {

@@ -821,7 +821,7 @@ void Ember3DAMRGenerator::postBlockCommunication(std::queue<EmberEvent*>& evQ, i
 	const uint32_t msgTag, const Ember3DAMRBlock* theBlock) {
 
 	const uint32_t maxFaceDim = std::max(blockNx, std::max(blockNy, blockNz));
-	char* bufferPtr = (char*) blockMessageBuffer;
+	char* bufferPtr = (char*) blockMessageBuffer.ptr();
 
 	const int32_t thisRank = rank();
 

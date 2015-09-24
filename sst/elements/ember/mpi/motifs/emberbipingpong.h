@@ -25,8 +25,8 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:
-    void*    m_sendBuf;
-    void*    m_recvBuf;
+    Addr     m_sendBuf;
+    Addr     m_recvBuf;
     MessageRequest m_req;
 
 	uint32_t m_messageSize;

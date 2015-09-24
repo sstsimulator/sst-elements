@@ -28,7 +28,7 @@ void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
                 m_event->req ? "Irecv":"Recv", 
-                m_event->buf,
+                m_event->buf.ptr(),
                 m_event->count,
                 m_event->dtype,
                 m_event->src,

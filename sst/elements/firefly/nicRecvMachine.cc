@@ -309,18 +309,18 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
     for ( ; entry.currentVec < entry.ioVec().size();
                 entry.currentVec++, entry.currentPos = 0 ) {
 
-        if ( entry.ioVec()[entry.currentVec].len ) {
-            size_t toLen = entry.ioVec()[entry.currentVec].len - entry.currentPos;
+        if ( entry.ioVec()[entry.currentVec].len() ) {
+            size_t toLen = entry.ioVec()[entry.currentVec].len() - entry.currentPos;
             size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            char* toPtr = (char*) entry.ioVec()[entry.currentVec].ptr +
+            char* toPtr = (char*) entry.ioVec()[entry.currentVec].addr().ptr() +
                                                         entry.currentPos;
             dbg.verbose(CALL_INFO,3,1,"toBufSpace=%lu fromAvail=%lu, "
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             entry.currentLen += len;
-            if ( entry.ioVec()[entry.currentVec].ptr ) {
+            if ( entry.ioVec()[entry.currentVec].addr().backed() ) {
                 void *buf = event.bufPtr();
                 if ( buf ) {
                     memcpy( toPtr, buf, len );
@@ -332,7 +332,7 @@ size_t Nic::RecvMachine::copyIn( Output& dbg, Nic::Entry& entry,
 
             entry.currentPos += len;
             if ( event.bufEmpty() &&
-                    entry.currentPos != entry.ioVec()[entry.currentVec].len )
+                    entry.currentPos != entry.ioVec()[entry.currentVec].len() )
             {
                 dbg.verbose(CALL_INFO,3,1,"event buffer empty\n");
                 break;

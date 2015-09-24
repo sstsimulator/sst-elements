@@ -27,8 +27,8 @@ public:
 private:
     uint32_t m_iterations;
     uint32_t m_count;
-    void*    m_sendBuf;
-    void*    m_recvBuf;
+    Addr     m_sendBuf;
+    Addr    m_recvBuf;
     int      m_redRoot;
     uint32_t m_loopIndex;
 };

@@ -62,14 +62,14 @@ class API : public ProtocolAPI {
     virtual std::string name() { return "CtrlMsgProtocol"; }
     virtual void setRetLink( Link* link );
 
-    void send( void* buf, size_t len, nid_t dest, uint64_t tag ); 
-    void send( void* buf, size_t len, MP::RankID dest, uint64_t tag, 
+    void send( Addr buf, size_t len, nid_t dest, uint64_t tag ); 
+    void send( Addr buf, size_t len, MP::RankID dest, uint64_t tag, 
                             MP::Communicator grp );
-    void isend( void* buf, size_t len, nid_t dest, uint64_t tag, CommReq* );
+    void isend( Addr buf, size_t len, nid_t dest, uint64_t tag, CommReq* );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag );
-    void recv( void* buf, size_t len, nid_t src, uint64_t tag );
-    void irecv( void* buf, size_t len, nid_t src, uint64_t tag, CommReq* );
-    void irecv( void* buf, size_t len, MP::RankID src, uint64_t tag, 
+    void recv( Addr buf, size_t len, nid_t src, uint64_t tag );
+    void irecv( Addr buf, size_t len, nid_t src, uint64_t tag, CommReq* );
+    void irecv( Addr buf, size_t len, MP::RankID src, uint64_t tag, 
                 MP::Communicator grp, CommReq* );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq* );
     void wait( CommReq* );

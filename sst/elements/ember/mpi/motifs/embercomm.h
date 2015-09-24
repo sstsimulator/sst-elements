@@ -32,8 +32,8 @@ private:
     uint32_t m_messageSize;
     int      m_new_size;
     uint32_t m_new_rank;
-    void*    m_sendBuf;
-    void*    m_recvBuf;
+    Addr     m_sendBuf;
+    Addr     m_recvBuf;
     int      m_workPhase;
     uint32_t m_loopIndex;
 };

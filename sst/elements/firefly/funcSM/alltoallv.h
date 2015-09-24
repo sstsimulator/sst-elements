@@ -63,7 +63,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     }
 
     unsigned char* sendChunkPtr( MP::RankID rank ) {
-        unsigned char* ptr = (unsigned char*) m_event->sendbuf;
+        unsigned char* ptr = (unsigned char*) m_event->sendbuf.ptr();
         if ( ! ptr ) return NULL;
         if ( m_event->sendcnts ) {
             ptr += ((int*)m_event->senddispls)[rank];
@@ -71,7 +71,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
             ptr += rank * sendChunkSize( rank );
         }
         m_dbg.verbose(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
-                                    m_event->sendbuf,ptr);
+                                    m_event->sendbuf.ptr(),ptr);
 
         return ptr;
     }
@@ -90,7 +90,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     }
 
     unsigned char* recvChunkPtr( MP::RankID rank ) {
-        unsigned char* ptr = (unsigned char*) m_event->recvbuf;
+        unsigned char* ptr = (unsigned char*) m_event->recvbuf.ptr();
         if ( ! ptr ) return NULL;
         if ( m_event->recvcnts ) {
             ptr += ((int*)m_event->recvdispls)[rank];
@@ -98,7 +98,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
             ptr += rank * recvChunkSize( rank );
         }
         m_dbg.verbose(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
-                    m_event->recvbuf, ptr);
+                    m_event->recvbuf.ptr(), ptr);
 
         return ptr;
     }

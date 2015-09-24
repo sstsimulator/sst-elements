@@ -59,10 +59,10 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
 
 
-    m_bufV[0] = m_event->mydata;
+    m_bufV[0] = m_event->mydata.ptr();
      
     for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
-        if ( m_event->mydata ) {
+        if ( m_event->mydata.ptr() ) {
             m_bufV[i+1] = malloc( m_bufLen );
             assert( m_bufV[i+1] );
         } else {
@@ -115,7 +115,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
                     if ( m_bufV[0] ) {
                         collectiveOp( &m_bufV[0], m_yyy->numChildren() + 1,
-                            m_event->result, m_event->count,
+                            m_event->result.ptr(), m_event->count,
                             m_event->dtype, m_event->op );  
                     }
             }
@@ -128,7 +128,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
 
             m_state = WaitDown;
 
-            ptr = m_yyy->numChildren() ?  m_event->result : m_event->mydata;
+            ptr = m_yyy->numChildren() ?  m_event->result.ptr() : m_event->mydata.ptr();
 
             m_dbg.verbose(CALL_INFO,1,0,"send message to parent %d\n",
                                                             m_yyy->parent());

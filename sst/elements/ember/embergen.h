@@ -25,12 +25,15 @@
 #include "emberevent.h"
 #include "embermap.h"
 
+using namespace Hermes::MP;
+
 namespace SST {
 namespace Ember {
 
 class EmberGenerator : public SubComponent {
 
   public:
+
     EmberGenerator( Component* owner, Params& params, std::string name ="" );
 
 	~EmberGenerator(){};
@@ -88,10 +91,10 @@ class EmberGenerator : public SubComponent {
 
     Hermes::NodePerf& nodePerf() { return *m_nodePerf; }
 
-    virtual void* memAlloc( size_t );
-    virtual void memFree( void* );
-	virtual void* memAddr( void * addr ) {
-		return  m_dataMode == Backing ? addr : NULL;
+    virtual Addr memAlloc( size_t );
+    virtual void memFree( Addr );
+    virtual void* memAddr( Addr addr ) {
+        return  m_dataMode == Backing ? addr.ptr() : NULL;
 	}
 
     Hermes::Interface*  	m_api;

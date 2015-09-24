@@ -308,7 +308,7 @@ class Nic : public SST::Component  {
             assert(m_ioVec);
             size_t bytes = 0;
             for ( unsigned int i = 0; i < m_ioVec->size(); i++ ) {
-                bytes += m_ioVec->at(i).len; 
+                bytes += m_ioVec->at(i).len(); 
             } 
             return bytes;
         }
@@ -432,8 +432,8 @@ class Nic : public SST::Component  {
             m_hdr.rgnNum = cmd->tag; 
             m_hdr.offset = -1;
             m_hdr.op = RdmaMsgHdr::Get;
-            m_rdmaVec[0].ptr = &m_hdr;
-            m_rdmaVec[0].len = sizeof( m_hdr );
+            m_rdmaVec[0].setAddr( Addr( &m_hdr ) );
+            m_rdmaVec[0].setLen( sizeof( m_hdr ) );
             m_ioVec = &m_rdmaVec;
         }
 
@@ -461,8 +461,8 @@ class Nic : public SST::Component  {
             m_putVec.resize(1);
             m_hdr.respKey = respKey;
             m_hdr.op = RdmaMsgHdr::GetResp;
-            m_putVec[0].ptr = &m_hdr;
-            m_putVec[0].len = sizeof(m_hdr);
+            m_putVec[0].setAddr( Addr(&m_hdr) );
+            m_putVec[0].setLen( sizeof(m_hdr) );
             for ( unsigned int i = 0; i < memRgn->iovec().size(); i++ ) {
                 m_putVec.push_back( memRgn->iovec()[i] );
             }

@@ -78,29 +78,29 @@ void EmberGenerator::verbose(uint32_t line, const char* file, const char* func,
 #pragma clang diagnostic pop
 #endif
 
-void* EmberGenerator::memAlloc( size_t size )
+Addr EmberGenerator::memAlloc( size_t size )
 {
-    void *ret = NULL;
+    Addr addr;
     switch ( m_dataMode  ) {
       case Backing:
-        ret = malloc( size );
+        addr.setPtr( malloc( size ) );
         break;
       case BackingZeroed: 
-        ret = malloc( size );
-        memset( ret, 0, size ); 
+        addr.setPtr( malloc( size ) );
+        memset( addr.ptr(), 0, size ); 
         break;
       case NoBacking:
         break;
     } 
-    return ret;
+    return addr;
 }
 
-void EmberGenerator::memFree( void* ptr )
+void EmberGenerator::memFree( Addr addr )
 {
     switch ( m_dataMode  ) {
       case Backing:
       case BackingZeroed: 
-        free( ptr );
+        free( addr.ptr() );
         break;
       case NoBacking:
         break;

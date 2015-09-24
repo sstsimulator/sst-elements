@@ -22,8 +22,6 @@ EmberAlltoallvGenerator::EmberAlltoallvGenerator(SST::Component* owner,
 {
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
-    m_sendBuf = NULL;
-    m_recvBuf = NULL;
 
     m_sendCnts.resize(size());
     m_sendDsp.resize(size());

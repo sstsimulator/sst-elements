@@ -194,7 +194,7 @@ static size_t calcLength( std::vector<IoVec>& ioVec )
 {
     size_t len = 0;
     for ( size_t i = 0; i < ioVec.size(); i++ ) {
-        len += ioVec[i].len;
+        len += ioVec[i].len();
     }
     return len;
 }
