@@ -91,8 +91,6 @@ void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev )
         entry->notify();
         delete entry;
 
-        m_sendQ.pop_front( ); 
-
         if ( ! canSend( m_packetSizeInBytes ) ) {
             m_dbg.verbose(CALL_INFO,1,1,"send busy\n");
             setCanSendCallback( 

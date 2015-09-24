@@ -61,6 +61,7 @@ class SendMachine {
         void state_1( SendEntry*, FireflyNetworkEvent* );
         void state_2( SendEntry*, FireflyNetworkEvent* );
         void state_3( ) {
+            m_sendQ.pop_front( );
             if ( ! m_sendQ.empty() ) {
                 state_0( m_sendQ.front() );
             }
