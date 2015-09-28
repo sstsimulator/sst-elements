@@ -28,7 +28,7 @@ void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d dest=%d tag=%#x\n",
                 m_event->req ? "Isend":"Send",
-                m_event->buf.ptr(),
+                m_event->buf,
                 m_event->count,
                 m_event->dtype,
                 m_event->dest,

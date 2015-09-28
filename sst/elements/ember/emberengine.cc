@@ -137,7 +137,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
         assert( ! moduleName.empty() );
         Params modParams = apiParams.find_prefix_params( "params" );
 
-        Hermes::Interface* api = dynamic_cast<Hermes::Interface*>(
+        Hermes::Interface* api = dynamic_cast<Interface*>(
                         owner->loadModuleWithComponent( 
                             moduleName, owner, modParams ) );
         assert( tmp.find( api->getName() ) == tmp.end() );

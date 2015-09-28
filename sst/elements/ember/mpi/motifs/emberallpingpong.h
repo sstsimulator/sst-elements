@@ -33,8 +33,8 @@ private:
     uint64_t m_stopTime;
 
     MessageResponse m_resp;
-    Addr     m_sendBuf;
-    Addr     m_recvBuf;
+    void*    m_sendBuf;
+    void*    m_recvBuf;
 };
 
 }

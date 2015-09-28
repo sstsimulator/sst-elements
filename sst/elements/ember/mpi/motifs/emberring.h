@@ -29,8 +29,8 @@ private:
 	uint32_t m_iterations;
     uint32_t m_loopIndex;
     MessageResponse m_resp;
-    Addr     m_sendBuf;
-    Addr     m_recvBuf;
+    void*    m_sendBuf;
+    void*    m_recvBuf;
     uint64_t m_startTime;
     uint64_t m_stopTime;
 };

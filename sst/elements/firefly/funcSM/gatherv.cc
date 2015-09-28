@@ -195,7 +195,7 @@ void GathervFuncSM::doRoot()
     int len = m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
     m_dbg.verbose(CALL_INFO,1,0,"I'm root buf.size()=%lu\n", m_recvBuf.size());
 
-    memcpy( &m_recvBuf[0], m_event->sendbuf.ptr(), len ); 
+    memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
 
 #if 0 // print debug
     for ( unsigned int i = 0; i < m_recvBuf.size()/4; i++ ) {
@@ -219,12 +219,12 @@ void GathervFuncSM::doRoot()
 
             m_dbg.verbose(CALL_INFO,1,0,"rank %d, recvcnt %d, displs %d, "
                                 "len=%u\n", rank, recvcnt, displs, len);
-            memcpy( (unsigned char*) m_event->recvbuf.ptr() + displs, 
+            memcpy( (unsigned char*) m_event->recvbuf + displs, 
                             &m_recvBuf[offset], len);
         } else {
             len = m_info->sizeofDataType( m_event->recvtype ) * 
                                     m_event->recvcnt;
-            memcpy( (unsigned char*) m_event->recvbuf.ptr() + len * rank, 
+            memcpy( (unsigned char*) m_event->recvbuf + len * rank, 
                             &m_recvBuf[offset], len);
         }
 
@@ -250,7 +250,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
         if ( 0 == m_qqq->numChildren() ) {
             m_recvBuf.resize( len );
         }
-        memcpy( &m_recvBuf[0], m_event->sendbuf.ptr(), len ); 
+        memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
         m_intBuf = m_recvBuf.size();
         m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
                                                 m_intBuf, m_qqq->parent());

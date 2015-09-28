@@ -29,8 +29,8 @@ private:
     uint32_t m_loopIndex;
     int      m_count;
 
-    Addr     m_sendBuf;
-    Addr     m_recvBuf;
+    void*    m_sendBuf;
+    void*    m_recvBuf;
     std::vector<int>    m_sendCnts;
     std::vector<int>    m_sendDsp;
     std::vector<int>    m_recvCnts;

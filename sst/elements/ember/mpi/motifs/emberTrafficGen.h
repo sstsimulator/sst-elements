@@ -31,11 +31,12 @@ public:
     void configure();
 
 private:
+//    MessageResponse m_resp;
     double  m_mean;
     double  m_stddev;
     double  m_startDelay;
-    Addr    m_sendBuf;
-    Addr    m_recvBuf;
+    void*    m_sendBuf;
+    void*    m_recvBuf;
     MessageRequest m_req;
 
 	uint32_t m_messageSize;

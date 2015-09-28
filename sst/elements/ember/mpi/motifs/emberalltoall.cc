@@ -23,6 +23,8 @@ EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
 	m_iterations = (uint32_t) params.find_integer("arg.iterations", 1);
 	m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 	m_bytes      = (uint32_t) params.find_integer("arg.bytes", 1);
+    m_sendBuf = NULL;
+    m_recvBuf = NULL;
 }
 
 bool EmberAlltoallGenerator::generate( std::queue<EmberEvent*>& evQ) {

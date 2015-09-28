@@ -45,7 +45,7 @@ void HadesMP::send(Addr buf, uint32_t count,
         Functor* retFunc )
 {
    dbg().verbose(CALL_INFO,1,1,"buf=%p count=%d dtype=%d dest=%d tag=%d "
-                        "group=%d\n", buf.ptr(),count,dtype,dest,tag,group);
+                        "group=%d\n", buf,count,dtype,dest,tag,group);
     functionSM().start( FunctionSM::Send, retFunc,
             new SendStartEvent( buf, count, dtype, dest, tag, group, NULL) ); 
 }
@@ -55,7 +55,7 @@ void HadesMP::isend(Addr buf, uint32_t count, PayloadDataType dtype,
         MessageRequest* req, Functor* retFunc )
 {
     dbg().verbose(CALL_INFO,1,1,"buf=%p count=%d dtype=%d dest=%d tag=%d "
-                        "group=%d\n", buf.ptr(),count,dtype,dest,tag,group);
+                        "group=%d\n", buf,count,dtype,dest,tag,group);
     functionSM().start( FunctionSM::Send, retFunc, 
                 new SendStartEvent( buf, count, dtype, dest, tag, group, req));
 }
@@ -65,7 +65,7 @@ void HadesMP::recv(Addr target, uint32_t count, PayloadDataType dtype,
         MessageResponse* resp, Functor* retFunc )
 {
     dbg().verbose(CALL_INFO,1,1,"target=%p count=%d dtype=%d source=%d tag=%d "
-                        "group=%d\n", target.ptr(),count,dtype,source,tag,group);
+                        "group=%d\n", target,count,dtype,source,tag,group);
     functionSM().start( FunctionSM::Recv, retFunc,
       new RecvStartEvent(target, count, dtype, source, tag, group, NULL, resp));
 }
@@ -75,7 +75,7 @@ void HadesMP::irecv(Addr target, uint32_t count, PayloadDataType dtype,
         MessageRequest* req, Functor* retFunc)
 {
     dbg().verbose(CALL_INFO,1,1,"target=%p count=%d dtype=%d source=%d tag=%d " 
-                        "group=%d\n", target.ptr(),count,dtype,source,tag,group);
+                        "group=%d\n", target,count,dtype,source,tag,group);
     functionSM().start( FunctionSM::Recv, retFunc,
       new RecvStartEvent(target, count, dtype, source, tag, group, req, NULL));
 }
@@ -85,7 +85,7 @@ void HadesMP::allreduce(Addr mydata, Addr result, uint32_t count,
         Communicator group, Functor* retFunc)
 {
     dbg().verbose(CALL_INFO,1,1,"in=%p out=%p count=%d dtype=%d\n",
-                mydata.ptr(),result.ptr(),count,dtype);
+                mydata,result,count,dtype);
     functionSM().start( FunctionSM::Allreduce, retFunc,
     new CollectiveStartEvent(mydata, result, count, dtype, op, 0, group, 
                             CollectiveStartEvent::Allreduce));
@@ -96,7 +96,7 @@ void HadesMP::reduce(Addr mydata, Addr result, uint32_t count,
         Communicator group, Functor* retFunc)
 {
     dbg().verbose(CALL_INFO,1,1,"in=%p out=%p count=%d dtype=%d \n",
-                mydata.ptr(),result.ptr(),count,dtype);
+                mydata,result,count,dtype);
     functionSM().start( FunctionSM::Reduce, retFunc,
         new CollectiveStartEvent(mydata, result, count, 
                         dtype, op, root, group, 
@@ -108,7 +108,7 @@ void HadesMP::bcast(Addr mydata, uint32_t count,
         Communicator group, Functor* retFunc)
 {
     dbg().verbose(CALL_INFO,1,1,"in=%p ount=%d dtype=%d \n",
-                mydata.ptr(),count,dtype);
+                mydata,count,dtype);
     functionSM().start( FunctionSM::Reduce, retFunc,
         new CollectiveStartEvent(mydata, NULL, count, 
                         dtype, NOP, root, group, 
@@ -128,11 +128,11 @@ void HadesMP::allgather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtyp
 
 void HadesMP::allgatherv(
         Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, void* recvcnt, void* displs, PayloadDataType recvtype,
+        Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
         Communicator group, Functor* retFunc)
 {
     dbg().verbose(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcnt=%d "
-                    "recvcntPtr=%p\n", sendbuf.ptr(),recvbuf.ptr(),sendcnt,recvcnt);
+                    "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnt,recvcnt);
     functionSM().start( FunctionSM::Allgatherv, retFunc,
         new GatherStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, displs, recvtype, group ) );
@@ -149,12 +149,12 @@ void HadesMP::gather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
 }
 
 void HadesMP::gatherv( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, void* recvcnt, void* displs,
+        Addr recvbuf, Addr recvcnt, Addr displs,
         PayloadDataType recvtype,
         RankID root, Communicator group, Functor* retFunc)
 {
     dbg().verbose(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcnt=%d "
-                    "recvcntPtr=%p\n", sendbuf.ptr(),recvbuf.ptr(),sendcnt,recvcnt);
+                    "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnt,recvcnt);
     functionSM().start( FunctionSM::Gatherv, retFunc,
          new GatherStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, displs, recvtype, root, group ) );
@@ -166,19 +166,19 @@ void HadesMP::alltoall(
         Communicator group, Functor* retFunc) 
 {
     dbg().verbose(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcnt=%d "
-                        "recvcnt=%d\n", sendbuf.ptr(),recvbuf.ptr(),sendcnt,recvcnt);
+                        "recvcnt=%d\n", sendbuf,recvbuf,sendcnt,recvcnt);
     functionSM().start( FunctionSM::Alltoall, retFunc,
         new AlltoallStartEvent( sendbuf,sendcnt, sendtype, recvbuf,
                                     recvcnt, recvtype, group) );
 }
 
 void HadesMP::alltoallv(
-        Addr sendbuf, void* sendcnts, void* senddispls, PayloadDataType sendtype,
-        Addr recvbuf, void* recvcnts, void* recvdispls, PayloadDataType recvtype,
+        Addr sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
         Communicator group, Functor* retFunc ) 
 {
     dbg().verbose(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcntPtr=%p "
-                        "recvcntPtr=%p\n", sendbuf.ptr(),recvbuf.ptr(),sendcnts,recvcnts);
+                        "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnts,recvcnts);
     functionSM().start( FunctionSM::Alltoallv, retFunc,
         new AlltoallStartEvent( sendbuf, sendcnts, senddispls, sendtype, 
             recvbuf, recvcnts, recvdispls, recvtype,

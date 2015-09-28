@@ -112,4 +112,4 @@ for network in networks :
                 print "fi"
                 print "popd"
                 print "}"
-                call("sst --model-options=\"--topo={0} {1} --cmdLine=\\\"Init\\\" --cmdLine=\\\"{2} {3}\\\"--cmdLine=\\\"Fini\\\"\" {4}".format(network['topo'], x, test['motif'], y, config), shell=True )
+                #call("sst --model-options=\"--topo={0} {1} --cmdLine=\\\"Init\\\" --cmdLine=\\\"{2} {3}\\\"--cmdLine=\\\"Fini\\\"\" {4}".format(network['topo'], x, test['motif'], y, config), shell=True )

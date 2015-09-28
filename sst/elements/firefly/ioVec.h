@@ -13,28 +13,16 @@
 #define COMPONENTS_FIREFLY_IOVEC_H
 
 #include <stddef.h>
-#include <sst/elements/hermes/msgapi.h>
-
-using namespace Hermes::MP;
 
 namespace SST {
 namespace Firefly {
 
-class IoVec {
-  public:
-    IoVec() : m_len( 0 ) {}
-    IoVec( Addr addr, size_t size ) : 
-        m_addr( addr ), m_len( size ) {}
-
-    Addr addr() { return m_addr; }
-    size_t len() { return m_len; }
-
-
-    void setAddr( Addr addr ) { m_addr = addr; }
-    void setLen(size_t len ) { m_len = len; }
-  private:
-    Addr m_addr;
-    size_t m_len;
+struct IoVec {
+    IoVec() {}
+    IoVec( void* _ptr, size_t _size ) : 
+        ptr( _ptr ), len( _size ) {}
+    void*  ptr;
+    size_t len;
 };
 }
 }

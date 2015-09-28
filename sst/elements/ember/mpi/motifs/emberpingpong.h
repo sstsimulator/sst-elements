@@ -27,8 +27,8 @@ public:
 private:
     MessageRequest  m_req;
     MessageResponse m_resp;
-    Addr     m_sendBuf;
-    Addr     m_recvBuf;
+    void*    m_sendBuf;
+    void*    m_recvBuf;
 
 	uint32_t m_messageSize;
 	uint32_t m_iterations;

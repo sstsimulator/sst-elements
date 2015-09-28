@@ -111,7 +111,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
       case SetupState::SendStartMsg:
 
-        memcpy( chunkPtr(m_rank), m_event->sendbuf.ptr(), chunkSize(m_rank) );
+        memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
 
         m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",m_dest[0]);
         proto()->send( NULL, 0, m_dest[0], genTag() );
@@ -180,32 +180,30 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
     while ( countDown ) {  
         --countDown;
         IoVec jjj;
-        jjj.setAddr( Addr( chunkPtr( currentChunk ) ) ); 
-        jjj.setLen( chunkSize( currentChunk ) );
+        jjj.ptr = chunkPtr( currentChunk ); 
+        jjj.len = chunkSize( currentChunk );
         
         m_dbg.verbose(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
-                    currentChunk, jjj.addr().ptr(), jjj.len());
+                    currentChunk, jjj.ptr,jjj.len);
     
         while ( countDown &&
-           (unsigned char*) jjj.addr().ptr() + jjj.len() ==
-                                        chunkPtr( nextChunk ) )
+                (unsigned char*) jjj.ptr + jjj.len == chunkPtr( nextChunk ) )
         {
-            jjj.setLen( jjj.len() +  chunkSize( nextChunk ) );
-            m_dbg.verbose(CALL_INFO,2,0,"len=%lu\n", jjj.len() );
+            jjj.len += chunkSize( nextChunk );
+            m_dbg.verbose(CALL_INFO,2,0,"len=%lu\n", jjj.len );
             currentChunk = nextChunk;
             nextChunk = ( currentChunk + 1 ) % m_size; 
             --countDown;
         }
         if ( 0 == countDown || 
-           (unsigned char*) jjj.addr().ptr() + jjj.len() != 
-                                            chunkPtr( nextChunk ) )
+                (unsigned char*) jjj.ptr + jjj.len != chunkPtr( nextChunk ) )
         {
 
             ioVec.push_back( jjj );
             m_dbg.verbose(CALL_INFO,2,0,"ioVec[%lu] ptr=%p len=%lu\n",
                                 ioVec.size()-1,
-                                ioVec[ioVec.size()-1].addr().ptr(),
-                                ioVec[ioVec.size()-1].len()); 
+                                ioVec[ioVec.size()-1].ptr,
+                                ioVec[ioVec.size()-1].len); 
         }
         currentChunk = nextChunk;
         nextChunk = ( currentChunk + 1 ) % m_size; 

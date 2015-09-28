@@ -52,7 +52,7 @@ private:
 	MessageRequest*   requests;
 	MessageResponse** responses;
 
-	Addr blockMessageBuffer;
+	void* blockMessageBuffer;
 
 //        static std::map<uint32_t, int32_t>  blockToNodeMap;
         char* blockFilePath;

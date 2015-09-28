@@ -24,6 +24,7 @@ EmberBcastGenerator::EmberBcastGenerator(SST::Component* owner,
 	m_count      = (uint32_t) params.find_integer("arg.count", 1);
     m_compute    = (uint32_t) params.find_integer("arg.compute", 0);
 	m_root    = (uint32_t) params.find_integer("arg.root", 0);
+    m_sendBuf = NULL;
 }
 
 bool EmberBcastGenerator::generate( std::queue<EmberEvent*>& evQ) {

@@ -191,7 +191,7 @@ class GatherStartEvent : public GatherBaseStartEvent {
     GatherStartEvent(
             MP::Addr sendbuf, uint32_t sendcnt,
             MP::PayloadDataType sendtype,
-            MP::Addr recvbuf, void* _recvcnt, void* _displs,
+            MP::Addr recvbuf, MP::Addr _recvcnt, MP::Addr _displs,
             MP::PayloadDataType recvtype,
             MP::RankID root, MP::Communicator group ) :
         GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
@@ -229,7 +229,7 @@ class GatherStartEvent : public GatherBaseStartEvent {
     GatherStartEvent(
             MP::Addr sendbuf, uint32_t sendcnt,
             MP::PayloadDataType sendtype,
-            MP::Addr recvbuf, void* _recvcnt, void* _displs,
+            MP::Addr recvbuf, MP::Addr _recvcnt, MP::Addr _displs,
             MP::PayloadDataType recvtype, MP::Communicator group ) :
         GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, 0, group ),
@@ -237,8 +237,8 @@ class GatherStartEvent : public GatherBaseStartEvent {
             displsPtr( _displs )
     { }
 
-    void* recvcntPtr;
-    void* displsPtr;
+    MP::Addr recvcntPtr;
+    MP::Addr displsPtr;
     uint32_t recvcnt;
 };
 
@@ -262,11 +262,11 @@ class AlltoallStartEvent: public Event {
     { } 
 
     AlltoallStartEvent(
-            MP::Addr _sendbuf, void* _sendcnts,  
-            void* _senddispls,
+            MP::Addr _sendbuf, MP::Addr _sendcnts,  
+            MP::Addr _senddispls,
             MP::PayloadDataType _sendtype, 
-            MP::Addr _recvbuf, void* _recvcnts, 
-            void* _recvdispls,
+            MP::Addr _recvbuf, MP::Addr _recvcnts, 
+            MP::Addr _recvdispls,
             MP::PayloadDataType _recvtype, 
             MP::Communicator _group ) :
         sendbuf( _sendbuf ),
@@ -282,13 +282,13 @@ class AlltoallStartEvent: public Event {
 
     MP::Addr            sendbuf;
     uint32_t                sendcnt;
-    void*            sendcnts;
-    void*            senddispls;
+    MP::Addr            sendcnts;
+    MP::Addr            senddispls;
     MP::PayloadDataType sendtype;
     MP::Addr            recvbuf;
     uint32_t                recvcnt;
-    void*            recvcnts;
-    void*            recvdispls;
+    MP::Addr            recvcnts;
+    MP::Addr            recvdispls;
     MP::PayloadDataType recvtype;
     MP::Communicator    group;
 };

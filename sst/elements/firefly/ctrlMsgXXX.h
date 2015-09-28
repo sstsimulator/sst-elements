@@ -296,8 +296,8 @@ class _CommReq : public MP::MessageRequestBase {
         m_hdr.tag = tag;
         m_hdr.group = group;
         m_ioVec.resize( 1 );
-        m_ioVec[0].setAddr( buf );
-        m_ioVec[0].setLen( dtypeSize * count );
+        m_ioVec[0].ptr = buf;
+        m_ioVec[0].len = dtypeSize * count;
     }
     ~_CommReq() {
     }
@@ -345,7 +345,7 @@ class _CommReq : public MP::MessageRequestBase {
     size_t getLength( ) {
         size_t length = 0;
         for ( size_t i = 0; i < m_ioVec.size(); i++ ) {
-            length += m_ioVec[i].len();
+            length += m_ioVec[i].len;
         }
         return length;
     }

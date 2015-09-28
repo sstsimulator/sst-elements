@@ -74,7 +74,7 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
         enQ_barrier( evQ, GroupWorld );
         enQ_getTime( evQ, &m_startTime ); 
         for ( unsigned int i = 0; i < m_numMsgs; i++ ) {
-            enQ_isend( evQ, Addr(), m_msgSize, CHAR, 1, TAG,
+            enQ_isend( evQ, NULL, m_msgSize, CHAR, 1, TAG,
                                                 GroupWorld, &m_reqs[i] );
         }
         enQ_getTime( evQ, &m_preWaitTime ); 
@@ -86,7 +86,7 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
 
         enQ_getTime( evQ, &m_recvStartTime ); 
         for ( unsigned int i = 0; i < m_numMsgs; i++ ) {
-            enQ_irecv( evQ, Addr(), m_msgSize, CHAR, 0, TAG, 
+            enQ_irecv( evQ, NULL, m_msgSize, CHAR, 0, TAG, 
                                                 GroupWorld, &m_reqs[i] );
         }
         enQ_getTime( evQ, &m_recvStopTime ); 

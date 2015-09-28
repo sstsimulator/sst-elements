@@ -169,8 +169,8 @@ protected:
         Communicator group );
 
     inline void enQ_alltoallv( Queue&, 
-        Addr sendData, void* sendCnts, void* sendDsp, PayloadDataType senddtype,
-        Addr recvData, void* recvCnts, void* recvDsp, PayloadDataType recvdtype,
+        Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group );
 
     inline int sizeofDataType( PayloadDataType );
@@ -259,10 +259,9 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag,
     Communicator group)
 {
-	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x\n",
-            memAddr(payload), dest, tag);
+	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x\n",payload, dest, tag);
     q.push( new EmberSendEvent( *cast(m_api), &getOutput(), m_Stats[Send],
-		payload, count, dtype, dest, tag, group ) );
+		memAddr(payload), count, dtype, dest, tag, group ) );
 
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
 
@@ -272,21 +271,19 @@ void EmberMessagePassingGenerator::enQ_send( Queue& q, Addr payload,
         updateSpyplot( dest, bytes );
     }
 }
-
 void EmberMessagePassingGenerator::enQ_send( Queue& q, uint32_t dst,
 						uint32_t nBytes, int tag, Communicator group )
 {
-	enQ_send( q, Addr(), nBytes, CHAR, dst, tag, group );
+	enQ_send( q, NULL, nBytes, CHAR, dst, tag, group );
 }
 
 void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload, 
     uint32_t count, PayloadDataType dtype, RankID dest, uint32_t tag, 
     Communicator group, MessageRequest* req )
 {
-	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x req=%p\n",
-            memAddr(payload), dest, tag, req );
+	verbose(CALL_INFO,2,0,"payload=%p dest=%d tag=%#x req=%p\n",payload, dest, tag, req );
     q.push( new EmberISendEvent( *cast(m_api), &getOutput(), m_Stats[Isend],
-        payload, count, dtype, dest, tag, group, req ) );
+        memAddr(payload), count, dtype, dest, tag, group, req ) );
     
     size_t bytes = cast(m_api)->sizeofDataType(dtype);
 
@@ -300,7 +297,7 @@ void EmberMessagePassingGenerator::enQ_isend( Queue& q, Addr payload,
 void EmberMessagePassingGenerator::enQ_isend( Queue& q, uint32_t dest,
 		 uint32_t nBytes, int tag, Communicator group, MessageRequest* req )
 {
-	enQ_isend( q, Addr(), nBytes, CHAR, dest, tag, group, req );
+	enQ_isend( q, NULL, nBytes, CHAR, dest, tag, group, req );
 }
 
 void EmberMessagePassingGenerator::enQ_recv( Queue& q, Addr payload,
@@ -317,7 +314,7 @@ void EmberMessagePassingGenerator::enQ_recv( Queue& q, Addr payload,
 inline void EmberMessagePassingGenerator::enQ_recv( Queue& q, uint32_t src,
 						uint32_t nBytes, int tag, Communicator group )
 {
-	enQ_recv( q, Addr(), nBytes, CHAR, src, tag, group, NULL ); 
+	enQ_recv( q, NULL, nBytes, CHAR, src, tag, group, NULL ); 
 }
 
 void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
@@ -326,7 +323,7 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
 {
 	verbose(CALL_INFO,2,0,"src=%d tag=%x req=%p\n",source,tag,req);
     q.push( new EmberIRecvEvent( *cast(m_api), &getOutput(), m_Stats[Irecv],
-        payload, count, dtype, source, tag, group, req ) );
+        memAddr(payload), count, dtype, source, tag, group, req ) );
 
 	//m_histoM["RecvSize"]->add( count * cast(m_api)->sizeofDataType(dtype) );
 }
@@ -334,7 +331,7 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, Addr payload,
 void EmberMessagePassingGenerator::enQ_irecv( Queue& q, uint32_t src,
 	uint32_t nBytes, int tag, Communicator group, MessageRequest* req )
 {
-	enQ_irecv( q, Addr(), nBytes, CHAR, src, tag, group, req );
+	enQ_irecv( q, NULL, nBytes, CHAR, src, tag, group, req );
 }
 
 void EmberMessagePassingGenerator::enQ_getTime( Queue& q, uint64_t* time )
@@ -381,7 +378,7 @@ void EmberMessagePassingGenerator::enQ_allreduce( Queue& q, Addr mydata,
     Communicator group )
 {
     q.push( new EmberAllreduceEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Allreduce], mydata, result,
+        m_Stats[Allreduce], memAddr(mydata), memAddr(result),
 					count, dtype, op, group ) );
 }
 
@@ -390,7 +387,7 @@ void EmberMessagePassingGenerator::enQ_reduce( Queue& q, Addr mydata,
     int root, Communicator group )
 {
     q.push( new EmberReduceEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Reduce], mydata, result,
+        m_Stats[Reduce], memAddr(mydata), memAddr(result),
 					count, dtype, op, root, group ) );
 }
 
@@ -398,7 +395,7 @@ void EmberMessagePassingGenerator::enQ_bcast( Queue& q, Addr mydata,
     uint32_t count, PayloadDataType dtype, int root, Communicator group )
 {
     q.push( new EmberBcastEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Reduce], mydata, count, dtype, root, group ) );
+        m_Stats[Reduce], memAddr(mydata), count, dtype, root, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_alltoall( Queue& q, 
@@ -407,19 +404,19 @@ void EmberMessagePassingGenerator::enQ_alltoall( Queue& q,
         Communicator group )
 {
     q.push( new EmberAlltoallEvent( *cast(m_api), &getOutput(), 
-        m_Stats[Alltoall], sendData, sendCnts, senddtype,
-        recvData, recvCnts, recvdtype, group ) );
+        m_Stats[Alltoall], memAddr(sendData), sendCnts, senddtype,
+        memAddr(recvData), recvCnts, recvdtype, group ) );
 }
 
 void EmberMessagePassingGenerator::enQ_alltoallv( Queue& q, 
-        Addr sendData, void* sendCnts, void* sendDsp, PayloadDataType senddtype,
-        Addr recvData, void* recvCnts, void* recvDsp, PayloadDataType recvdtype,
+        Addr sendData, Addr sendCnts, Addr sendDsp, PayloadDataType senddtype,
+        Addr recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group )
 {
     q.push( new EmberAlltoallvEvent( *cast(m_api), &getOutput(), 
         m_Stats[Alltoallv],
-            sendData, sendCnts, sendDsp, senddtype, 
-            recvData, recvCnts, recvDsp, recvdtype, 
+            memAddr(sendData), sendCnts, sendDsp, senddtype, 
+            memAddr(recvData), recvCnts, recvDsp, recvdtype, 
                 group ) );
 }
 

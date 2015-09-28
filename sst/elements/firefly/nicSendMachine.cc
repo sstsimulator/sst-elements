@@ -123,11 +123,11 @@ void Nic::SendMachine::copyOut( Output& dbg,
                 entry.currentVec++, entry.currentPos = 0 ) {
 
         dbg.verbose(CALL_INFO,3,1,"vec[%lu].len %lu\n",entry.currentVec,
-                    entry.ioVec()[entry.currentVec].len() );
+                    entry.ioVec()[entry.currentVec].len );
 
-        if ( entry.ioVec()[entry.currentVec].len() ) {
+        if ( entry.ioVec()[entry.currentVec].len ) {
             size_t toLen = m_packetSizeInBytes - event.bufSize();
-            size_t fromLen = entry.ioVec()[entry.currentVec].len() -
+            size_t fromLen = entry.ioVec()[entry.currentVec].len -
                                                         entry.currentPos;
 
             size_t len = toLen < fromLen ? toLen : fromLen;
@@ -136,10 +136,10 @@ void Nic::SendMachine::copyOut( Output& dbg,
                             "memcpy len=%lu\n", toLen,fromLen,len);
 
             const char* from = 
-                (const char*) entry.ioVec()[entry.currentVec].addr().ptr() + 
+                    (const char*) entry.ioVec()[entry.currentVec].ptr + 
                                                         entry.currentPos;
 
-            if ( entry.ioVec()[entry.currentVec].addr().backed() ) {
+            if ( entry.ioVec()[entry.currentVec].ptr ) {
                 event.bufAppend( from, len );
             } else {
                 event.bufAppend( NULL, len );
@@ -147,7 +147,7 @@ void Nic::SendMachine::copyOut( Output& dbg,
 
             entry.currentPos += len;
             if ( event.bufSize() == m_packetSizeInBytes &&
-                entry.currentPos != entry.ioVec()[entry.currentVec].len() ) {
+                    entry.currentPos != entry.ioVec()[entry.currentVec].len ) {
                 break;
             }
         }

@@ -66,7 +66,7 @@ class HadesMP : public MP::Interface
         MP::Communicator group, MP::MessageRequest* req,
         MP::Functor*);
 
-    virtual void allreduce(MP::Addr mydata, MP::Addr result, uint32_t count,
+    virtual void allreduce(MP::Addr mydata, void* result, uint32_t count,
         MP::PayloadDataType dtype, MP::ReductionOperation op,
         MP::Communicator group, MP::Functor*);
 
@@ -87,7 +87,7 @@ class HadesMP : public MP::Interface
 
     virtual void allgatherv( MP::Addr sendbuf, uint32_t sendcnt,
         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, void* recvcnt, void* displs,
+        MP::Addr recvbuf, MP::Addr recvcnt, MP::Addr displs,
         MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
@@ -99,7 +99,7 @@ class HadesMP : public MP::Interface
 
     virtual void gatherv( MP::Addr sendbuf, uint32_t sendcnt,
         MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, void* recvcnt, void* displs,
+        MP::Addr recvbuf, MP::Addr recvcnt, MP::Addr displs,
         MP::PayloadDataType recvtype,
         MP::RankID root, MP::Communicator group, MP::Functor*);
 
@@ -113,10 +113,10 @@ class HadesMP : public MP::Interface
         MP::Communicator group, MP::Functor*);
 
     virtual void alltoallv(
-        MP::Addr sendbuf, void* sendcnts, 
-            void* senddispls, MP::PayloadDataType sendtype,
-        MP::Addr recvbuf, void* recvcnts, 
-            void* recvdispls, MP::PayloadDataType recvtype,
+        MP::Addr sendbuf, MP::Addr sendcnts, 
+            MP::Addr senddispls, MP::PayloadDataType sendtype,
+        MP::Addr recvbuf, MP::Addr recvcnts, 
+            MP::Addr recvdispls, MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
     virtual void probe(MP::RankID source, uint32_t tag,
