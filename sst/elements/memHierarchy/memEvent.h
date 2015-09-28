@@ -170,7 +170,6 @@ public:
         me->responseToID_ = eventID_;
         me->dst_          = src_;
         me->NACKedEvent_  = NACKedEvent;
-        me->NACKedCmd_    = NACKedEvent->cmd_;
         me->cmd_          = NACK;
         me->initTime_     = source->getCurrentSimTimeNano();
         me->rqstr_        = rqstr_;
@@ -247,8 +246,8 @@ public:
         storeConditional_   = false;
         grantedState_       = NULLST;
         startTime_          = 0;
-        NACKedCmd_          = NULLCMD;
         NACKedEvent_        = NULL;
+        retries_            = 0;
         inMSHR_             = false;
         blocked_            = false;
         statsUpdated_       = false;
@@ -262,8 +261,6 @@ public:
 
     /** return the original event that caused a NACK */
     MemEvent* getNACKedEvent() { return NACKedEvent_; }
-    /** return the original command type that caused a NACK */
-    Command getNACKedCmd() { return NACKedCmd_; }
     /** @return  Unique ID of this MemEvent */
     id_type getID(void) const { return eventID_; }
     /** @return  Unique ID of the MemEvent that this is a response to */
@@ -296,7 +293,11 @@ public:
     uint32_t getSize(void) const { return size_; }
     /** Sets the size in bytes that this MemEvent represents */
     void setSize(uint32_t _size) { size_ = _size; }
-    
+   
+    /** Increments the number of retries */
+    void incrementRetries() { retries_++; }
+    int getRetries() { return retries_; }
+
     bool inMSHR(){ return inMSHR_; }
     void setInMSHR(bool _value){ inMSHR_ = _value; }
     
@@ -473,8 +474,8 @@ private:
     string          dst_;               // Destination ID
     string          rqstr_;             // Cache that originated this request
     Command         cmd_;               // Command
-    Command         NACKedCmd_;         // For a NACK, the command of the NACKed event
     MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
+    int             retries_;           // For NACKed events, how many times a retry has been sent
     dataVec         payload_;           // Data
     State           grantedState_;      // For data responses, the cohrence state that the request is granted in
     bool            prefetch_;          // Whether this request came from a prefetcher
@@ -511,6 +512,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(rqstr_);
         ar & BOOST_SERIALIZATION_NVP(cmd_);
         ar & BOOST_SERIALIZATION_NVP(NACKedEvent_);
+        ar & BOOST_SERIALIZATION_NVP(retries_);
         ar & BOOST_SERIALIZATION_NVP(payload_);
         ar & BOOST_SERIALIZATION_NVP(grantedState_);
         ar & BOOST_SERIALIZATION_NVP(prefetch_);

@@ -127,7 +127,13 @@ public:
     
   
     void resendEvent(MemEvent * event, bool up) {
-        uint64 deliveryTime =  timestamp_ + mshrLatency_;
+        // Add some backoff latency to avoid unneccessary traffic
+        int retries = event->getRetries();
+        if (retries > 10) retries = 10;
+        uint64 backoff = ( 0x1 << retries);
+        event->incrementRetries();
+
+        uint64 deliveryTime =  timestamp_ + mshrLatency_ + backoff;
         Response resp = {event, deliveryTime, false};
         if (!up) addToOutgoingQueue(resp);
         else addToOutgoingQueueUp(resp);
@@ -234,6 +240,31 @@ public:
         }
         outgoingEventQueueUp_.insert(it, resp);
     }
+
+    
+    void recordLatency(Command cmd, State state, uint64_t latency) {
+        switch (state) {
+            case IS:
+                stat_latency_GetS_IS->addData(latency);
+                break;
+            case IM:
+                if (cmd == GetX) stat_latency_GetX_IM->addData(latency);
+                else stat_latency_GetSEx_IM->addData(latency);
+                break;
+            case SM:
+                if (cmd == GetX) stat_latency_GetX_SM->addData(latency);
+                else stat_latency_GetSEx_SM->addData(latency);
+                break;
+            case M:
+                if (cmd == GetS) stat_latency_GetS_M->addData(latency);
+                if (cmd == GetX) stat_latency_GetX_M->addData(latency);
+                else stat_latency_GetSEx_M->addData(latency);
+                break;
+            default:
+                break;
+        }
+    }
+
 
 protected:
     CoherencyController(const Cache* cache, Output* _dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
@@ -415,6 +446,15 @@ protected:
         stat_stateEvent_AckInv_EInv = ((Component *)owner_)->registerStatistic<uint64_t>("stateEvent_AckInv_EInv");
         stat_stateEvent_AckInv_MInv = ((Component *)owner_)->registerStatistic<uint64_t>("stateEvent_AckInv_MInv");
         stat_stateEvent_AckPut_I = ((Component *)owner_)->registerStatistic<uint64_t>("stateEvent_AckPut_I");
+        
+        stat_latency_GetS_IS = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetS_IS");
+        stat_latency_GetS_M = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetS_M");
+        stat_latency_GetX_IM = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetX_IM");
+        stat_latency_GetX_SM = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetX_SM");
+        stat_latency_GetX_M = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetX_M");
+        stat_latency_GetSEx_IM = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetSEx_IM");
+        stat_latency_GetSEx_SM = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetSEx_SM");
+        stat_latency_GetSEx_M = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetSEx_M");
 }
    
     ~CoherencyController(){}
@@ -595,6 +635,14 @@ protected:
     Statistic<uint64_t>* stat_stateEvent_AckInv_MI;
     Statistic<uint64_t>* stat_stateEvent_AckPut_I;
 
+    Statistic<uint64_t>* stat_latency_GetS_IS;
+    Statistic<uint64_t>* stat_latency_GetS_M;
+    Statistic<uint64_t>* stat_latency_GetX_IM;
+    Statistic<uint64_t>* stat_latency_GetX_SM;
+    Statistic<uint64_t>* stat_latency_GetX_M;
+    Statistic<uint64_t>* stat_latency_GetSEx_IM;
+    Statistic<uint64_t>* stat_latency_GetSEx_SM;
+    Statistic<uint64_t>* stat_latency_GetSEx_M;
 
     struct Stats {
         uint64_t GETSMissIS_,       //

@@ -495,6 +495,8 @@ void DirectoryController::handleGetX(MemEvent * ev) {
         return;
     }
 
+    MemEvent * respEv;
+
     State state = entry->getState();
     switch (state) {
         case I:
@@ -502,9 +504,21 @@ void DirectoryController::handleGetX(MemEvent * ev) {
             issueMemoryRequest(ev, entry);
             break;
         case S:
-            if (entry->getSharerCount() == 1 && entry->isSharer(node_id(ev->getSrc()))) {
-                entry->setState(SM);
-                issueMemoryRequest(ev, entry);
+            if (entry->getSharerCount() == 1 && entry->isSharer(node_id(ev->getSrc()))) {   // Special case: upgrade
+                mshr->removeFront(ev->getBaseAddr());
+                if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr());
+                entry->setState(M);
+                entry->removeSharer(node_name_to_id(ev->getSrc()));
+                entry->setOwner(node_name_to_id(ev->getSrc()));
+                respEv = ev->makeResponse();
+                respEv->setSize(cacheLineSize);
+                profileResponseSent(respEv);
+                sendEventToCaches(respEv, timestamp + accessLatency);
+                if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
+                    dbg.debug(_L4_, "Sending response for 0x%" PRIx64 " to %s, granted state = %s\n", entry->getBaseAddr(), respEv->getDst().c_str(), StateString[respEv->getGrantedState()]);
+                }
+                postRequestProcessing(ev, entry);
+                updateCache(entry);                
             } else {
                 entry->setState(S_Inv);
                 issueInvalidates(ev, entry);
@@ -520,8 +534,9 @@ void DirectoryController::handleGetX(MemEvent * ev) {
 }
 
 void DirectoryController::issueInvalidates(MemEvent * ev, DirEntry * entry) {
+    uint32_t rqst_id = node_id(ev->getSrc());
     for (uint32_t i = 0; i < numTargets; i++) {
-        if (i == node_name_to_id(ev->getSrc())) continue;
+        if (i == rqst_id) continue;
         if (entry->isSharer(i)) {
             sendInvalidate(i, ev, entry);
             entry->incrementWaitingAcks();
@@ -618,7 +633,6 @@ void DirectoryController::handlePutS(MemEvent * ev) {
             sendAckPut(ev);
             postRequestProcessing(ev, entry);   // profile & delete ev
             updateCache(entry);             // update dir cache
-            
             break;
         case S_D:
             profileRequestRecv(ev, entry);
@@ -630,7 +644,7 @@ void DirectoryController::handlePutS(MemEvent * ev) {
             entry->decrementWaitingAcks();
             delete ev;
             if (entry->getWaitingAcks() == 0) {
-                entry->setState(I);
+                (entry->getSharerCount() > 0) ? entry->setState(S) : entry->setState(I);
                 replayWaitingEvents(addr);
             }
             break;
@@ -832,7 +846,7 @@ void DirectoryController::handleFetchXResp(MemEvent * ev) {
     entry->clearOwner();
     entry->addSharer(node_name_to_id(ev->getSrc()));
     entry->setState(S);
-    writebackData(ev);
+    if (ev->getDirty()) writebackData(ev);
 
     MemEvent * respEv = reqEv->makeResponse(); 
     entry->addSharer(node_id(reqEv->getSrc()));
@@ -869,7 +883,7 @@ void DirectoryController::handleAckInv(MemEvent * ev) {
             entry->decrementWaitingAcks();
             delete ev;
             if (entry->getWaitingAcks() == 0) {
-                entry->setState(I);
+                entry->getSharerCount() > 0 ? entry->setState(S) : entry->setState(I);
                 replayWaitingEvents(addr);
             }
             break;

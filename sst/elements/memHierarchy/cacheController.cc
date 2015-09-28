@@ -499,33 +499,41 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& _entries, Addr 
 }
 
 void Cache::recordLatency(MemEvent* event) {
-    uint64 t = (startTimeList.find(event))->second;
+    uint64 issueTime = (startTimeList.find(event))->second;
     if (missTypeList.find(event) != missTypeList.end()) {
         int missType = missTypeList.find(event)->second;
         switch (missType) {
             case 0:
-                missLatency_GetS_IS += (timestamp_ - t + 1);
+                missLatency_GetS_IS += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetS, IS, timestamp_ - issueTime);
                 break;
             case 1:
-                missLatency_GetS_M += (timestamp_ - t + 1);
+                missLatency_GetS_M += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetS, M, timestamp_ - issueTime);
                 break;
             case 2:
-                missLatency_GetX_IM += (timestamp_ - t + 1);
+                missLatency_GetX_IM += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetX, IM, timestamp_ - issueTime);
                 break;
             case 3:
-                missLatency_GetX_SM += (timestamp_ - t + 1);
+                missLatency_GetX_SM += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetX, SM, timestamp_ - issueTime);
                 break;
             case 4:
-                missLatency_GetX_M += (timestamp_ - t + 1);
+                missLatency_GetX_M += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetX, M, timestamp_ - issueTime);
                 break;
             case 5:
-                missLatency_GetSEx_IM += (timestamp_ - t + 1);
+                missLatency_GetSEx_IM += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetSEx, IM, timestamp_ - issueTime);
                 break;
             case 6:
-                missLatency_GetSEx_SM += (timestamp_ - t + 1);
+                missLatency_GetSEx_SM += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetSEx, SM, timestamp_ - issueTime);
                 break;
             case 7:
-                missLatency_GetSEx_M += (timestamp_ - t + 1);
+                missLatency_GetSEx_M += (timestamp_ - issueTime + 1);
+                coherenceMgr->recordLatency(GetSEx, M, timestamp_ - issueTime);
                 break;
             default:
                 break;

@@ -53,6 +53,10 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, uint32_t grou
         case I:
             return DONE;
         case S:
+            if (!inclusive_ && wbCacheLine->numSharers() > 0) {
+                wbCacheLine->setState(I);
+                return DONE;
+            }
             if (wbCacheLine->numSharers() > 0) {
                 invalidateAllSharers(wbCacheLine, name_, false); 
                 wbCacheLine->setState(SI);
@@ -66,6 +70,10 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, uint32_t grou
             if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(wbBaseAddr);
 	    return DONE;
         case E:
+            if (!inclusive_ && wbCacheLine->ownerExists()) {
+                wbCacheLine->setState(I);
+                return DONE;
+            }
             if (wbCacheLine->numSharers() > 0) {
                 invalidateAllSharers(wbCacheLine, name_, false); 
                 wbCacheLine->setState(EI);
@@ -86,7 +94,11 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, uint32_t grou
 	    wbCacheLine->setState(I);    // wait for ack
             if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(wbBaseAddr);
 	    return DONE;
-    case M:
+        case M:
+            if (!inclusive_ && wbCacheLine->ownerExists()) {
+                wbCacheLine->setState(I);
+                return DONE;
+            }
             if (wbCacheLine->numSharers() > 0) {
                 invalidateAllSharers(wbCacheLine, name_, false); 
                 wbCacheLine->setState(MI);
@@ -458,105 +470,91 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
     
     bool retry = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0);
     state = line->getState(); 
-    CacheAction action = retry ? DONE : IGNORE;
+    if (!retry) return IGNORE;
+
     switch (state) {
         case I:
         case S:
         case E:
         case M:
             if (!inclusive_) sendWritebackAck(event);
-            return action;
+            return DONE;
+        /* Races with evictions */
+        case SI:
+            inc_EvictionPUTSReqSent();
+            sendWriteback(PutS, line, false, name_);
+            if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(line->getBaseAddr());
+            line->setState(I);
+            return DONE;
+        case EI:
+            inc_EvictionPUTEReqSent();
+            sendWriteback(PutE, line, false, name_);
+            if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(line->getBaseAddr());
+            line->setState(I);
+            return DONE;
+        case MI:
+            inc_EvictionPUTMReqSent();
+            sendWriteback(PutM, line, true, name_);
+            if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(line->getBaseAddr());
+            line->setState(I);
+            return DONE;
+        /* Race with a fetch */
         case S_D:
-            if (action == DONE) {
-                sendResponseDown(reqEvent, line, false, true);
-                line->setState(S);
-            }
-            return action;
+            sendResponseDown(reqEvent, line, false, true);
+            line->setState(S);
+            return DONE;
+        /* Races with Invs and FetchInvs from outside our sub-hierarchy; races with GetX from within our sub-hierarchy*/
         case S_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Inv) {
+            if (reqEvent->getCmd() == Inv) {
+                sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
+                inc_InvalidatePUTSReqSent();
+                line->setState(I);
+            } else {
+                sendResponseDown(reqEvent, line, false, true);
+                inc_FetchInvReqSent();
+                line->setState(I);
+            }
+            return DONE;
+        case E_Inv:
+            inc_FetchInvReqSent();
+            sendResponseDown(reqEvent, line, false, true);
+            line->setState(I);
+            return DONE;
+        case M_Inv:
+            if (reqEvent->getCmd() == FetchInv) {
+                inc_FetchInvReqSent();
+                sendResponseDown(reqEvent, line, true, true);
+                line->setState(I);
+            } else if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
+                line->setOwner(reqEvent->getSrc());
+                if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
+                sendResponseUp(reqEvent, M, line->getData(), true);
+                line->setState(M);
+                if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(line->getData(), false);
+            }
+            return DONE;
+        case SM_Inv:
+            if (reqEvent->getCmd() == Inv) {
+                if (line->numSharers() > 0) {
+                    invalidateAllSharers(line, reqEvent->getRqstr(), true);
+                    return IGNORE;
+                } else {
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
                     inc_InvalidatePUTSReqSent();
-                    line->setState(I);
-                } else {
-                    sendResponseDown(reqEvent, line, false, true);
-                    inc_FetchInvReqSent();
-                    line->setState(I);
+                    line->setState(IM);
+                    return DONE;
                 }
+            } else {
+                line->setState(SM);
+                return IGNORE; // Waiting for GetXResp
             }
-            return action;
-        case SI:
-            if (action == DONE) {
-                inc_EvictionPUTSReqSent();
-                sendWriteback(PutS, line, false, name_);
-                if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(line->getBaseAddr());
-                line->setState(I);
-            }
-            return action;
-        case EI:
-            if (action == DONE) {
-                inc_EvictionPUTSReqSent();
-                sendWriteback(PutE, line, false, name_);
-                if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(line->getBaseAddr());
-                line->setState(I);
-            }
-            return action;
-        case MI:
-            if (action == DONE) {
-                inc_EvictionPUTSReqSent();
-                sendWriteback(PutM, line, true, name_);
-                if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(line->getBaseAddr());
-                line->setState(I);
-            }
-            return action;
-        case E_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
-                    sendResponseDown(reqEvent, line, false, true);
-                    line->setState(I);
-                }
-            }
-            return action;
-        case M_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
-                    sendResponseDown(reqEvent, line, true, true);
-                    line->setState(I);
-                } else if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
-                    line->setOwner(reqEvent->getSrc());
-                    if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
-                    sendResponseUp(reqEvent, M, line->getData(), true);
-                    line->setState(M);
-                    if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(line->getData(), false);
-                }
-            }
-            return action;
-        case SM_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Inv) {
-                    if (line->numSharers() > 0) {
-                        invalidateAllSharers(line, reqEvent->getRqstr(), true);
-                        return IGNORE;
-                    } else {
-                        sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                        inc_InvalidatePUTSReqSent();
-                        line->setState(IM);
-                    }
-                } else {
-                    line->setState(SM);
-                    action = IGNORE; // Waiting for GetXResp
-                }
-            }
-            return action;
         default:
             d_->fatal(CALL_INFO,-1,"%s, Error: Received PutS in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
                     name_.c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(), 
                     StateString[state], ((Component *)owner_)->getCurrentSimTimeNano());
 
     }
-    return action;   // eliminate compiler warning
+    return IGNORE;   // eliminate compiler warning
 }
 
 
@@ -610,10 +608,9 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             if (event->getDirty()) cacheLine->setState(M);
         case M:
             cacheLine->clearOwner();
-            if (reqEvent != NULL) {
-            
-            } else if (!inclusive_) sendWritebackAck(event);
+            if (!inclusive_) sendWritebackAck(event);
             break;
+        /* Races with evictions */
         case EI:
             if (event->getCmd() == PutM) {
                 inc_EvictionPUTMReqSent();
@@ -631,14 +628,30 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
 	    cacheLine->setState(I);    // wait for ack
             if (!LL_ && (LLC_ || writebackCleanBlocks_)) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
+        /* Races with FetchInv from outside our sub-hierarchy; races with GetX from within our sub-hierarchy */
         case E_Inv:
             inc_FetchInvReqSent();
             sendResponseDown(reqEvent, cacheLine, event->getDirty(), true);
             cacheLine->setState(I);
             break;
+        case M_Inv:
+            cacheLine->clearOwner();
+            if (reqEvent->getCmd() == FetchInv) {
+                inc_FetchInvReqSent();
+                sendResponseDown(reqEvent, cacheLine, true, true);
+                cacheLine->setState(I);
+            } else {
+                cacheLine->setState(M);
+                if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
+                inc_GETXHit(reqEvent);
+                cacheLine->setOwner(reqEvent->getSrc());
+                sendResponseUp(reqEvent, M, cacheLine->getData(), true);
+                if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+            }
+            break;
+        /* Races from FetchInvX from outside our sub-hierarchy; races with GetS from within our sub-hierarchy */
         case E_InvX:
         case M_InvX:
-            // occurs when we got a GetS to an owned/exclusive block & are waiting for a FetchXResp
             if (!event->getDirty() && state == E_InvX) {
                 cacheLine->setState(E);
             } else {
@@ -659,21 +672,6 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             } else {
                 cacheLine->addSharer(reqEvent->getSrc());
                 sendResponseUp(reqEvent, S, cacheLine->getData(), true);
-            }
-            break;
-        case M_Inv:
-            cacheLine->clearOwner();
-            if (reqEvent->getCmd() == FetchInv) {
-                inc_FetchInvReqSent();
-                sendResponseDown(reqEvent, cacheLine, true, true);
-                cacheLine->setState(I);
-            } else {
-                cacheLine->setState(M);
-                if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
-                inc_GETXHit(reqEvent);
-                cacheLine->setOwner(reqEvent->getSrc());
-                sendResponseUp(reqEvent, M, cacheLine->getData(), true);
-                if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             }
             break;
         default:
@@ -1041,6 +1039,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
                 inc_GETXHit(reqEvent);
                 cacheLine->setOwner(reqEvent->getSrc());
+                if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
                 sendResponseUp(reqEvent, M, cacheLine->getData(), true);
                 if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(cacheLine->getData(), false);
                 cacheLine->setState(M);

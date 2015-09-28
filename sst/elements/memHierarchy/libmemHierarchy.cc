@@ -311,6 +311,15 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"evict_EInvX",             "Eviction: Attempted to evict a block in state E_InvX", "count", 3},
     {"evict_MInvX",             "Eviction: Attempted to evict a block in state M_InvX", "count", 3},
     {"evict_SI",                "Eviction: Attempted to evict a block in state SI", "count", 3},
+    /* Latency for different kinds of misses*/
+    {"latency_GetS_IS",         "Latency for read misses in I state", "cycles", 1},
+    {"latency_GetS_M",          "Latency for read misses that find the block owned by another cache in M state", "cycles", 1},
+    {"latency_GetX_IM",         "Latency for write misses in I state", "cycles", 1},
+    {"latency_GetX_SM",         "Latency for write misses in S state", "cycles", 1},
+    {"latency_GetX_M",          "Latency for write misses that find the block owned by another cache in M state", "cycles", 1},
+    {"latency_GetSEx_IM",       "Latency for read-exclusive misses in I state", "cycles", 1},
+    {"latency_GetSEx_SM",       "Latency for read-exclusive misses in S state", "cycles", 1},
+    {"latency_GetSEx_M",        "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
     {NULL, NULL, NULL, 0}
 };
 
