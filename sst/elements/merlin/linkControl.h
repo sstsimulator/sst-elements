@@ -111,6 +111,8 @@ private:
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* output_port_stalls;
 
+    Output& output;
+    
 public:
     LinkControl(Component* parent, Params &params);
 

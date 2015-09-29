@@ -3,7 +3,7 @@ import os
 from optparse import OptionParser
 
 # Define SST core options
-sst.setProgramOption("timebase", "1ns")
+sst.setProgramOption("timebase", "1ps")
 
 sievePrefetchParams = {
         "prefetcher": "cassini.AddrHistogrammer",

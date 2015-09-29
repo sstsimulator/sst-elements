@@ -32,7 +32,8 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     receiveFunctor(NULL), sendFunctor(NULL),
-    network_initialized(false)
+    network_initialized(false),
+    output(Simulation::getSimulation()->getSimulationOutput())
 {
     checker_board_factor = params.find_integer("checkerboard", 1);
     std::string checkerboard_alg = params.find_string("checkerboard_alg","deterministic");
@@ -103,7 +104,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     packet_latency = registerStatistic<uint64_t>("packet_latency");
     send_bit_count = registerStatistic<uint64_t>("send_bit_count");
     output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
-
+    
     return true;
 }
 
@@ -217,6 +218,7 @@ void LinkControl::init(unsigned int phase)
         }
 
         id = init_ev->int_value;
+        // init_ev->print("LC: ",Simulation::getSimulation()->getSimulationOutput());
         delete ev;
         
         // Need to send available credits to other side of link
@@ -324,9 +326,11 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     ev->setInjectionTime(parent->getCurrentSimTimeNano());
 
     if ( ev->getTraceType() != SimpleNetwork::Request::NONE ) {
-        std::cout << "TRACE(" << ev->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                  << " ns: Sent on LinkControl in NIC: "
-                  << parent->getName() << std::endl;
+        output.output("TRACE(%d): %" PRIu64 " ns: Send on LinkControl in NIC: %s\n",ev->getTraceID(),
+                      parent->getCurrentSimTimeNano(), parent->getName().c_str());
+        // std::cout << "TRACE(" << ev->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+        //           << " ns: Sent on LinkControl in NIC: "
+        //           << parent->getName() << std::endl;
     }
     return true;
 }
@@ -362,9 +366,11 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     // std::cout << std::endl;
     
     if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
-        std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                  << " ns: recv called on LinkControl in NIC: "
-                  << parent->getName() << std::endl;
+        output.output("TRACE(%d): %" PRIu64 " ns: recv called on LinkControl in NIC: %s\n",event->getTraceID(),
+                      parent->getCurrentSimTimeNano(), parent->getName().c_str());
+        // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+        //           << " ns: recv called on LinkControl in NIC: "
+        //           << parent->getName() << std::endl;
     }
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->request;
@@ -432,10 +438,18 @@ void LinkControl::handle_input(Event* ev)
 
         input_buf[actual_vn].push(event);
         if ( event->request->getTraceType() == SimpleNetwork::Request::FULL ) {
-            std::cout << "TRACE(" << event->request->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                      << " ns: Received an event on LinkControl in NIC: "
-                      << parent->getName() << " on VN " << event->request->vn << " from src " << event->request->src
-                      << "." << std::endl;
+            output.output("TRACE(%d): %" PRIu64 " ns: Received and event on LinkControl in NIC: %s"
+                          " on VN %d from src %" PRIu64 "\n",
+                          event->request->getTraceID(),
+                          parent->getCurrentSimTimeNano(),
+                          parent->getName().c_str(),
+                          event->request->vn,
+                          event->request->src);
+
+            // std::cout << "TRACE(" << event->request->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+            //           << " ns: Received an event on LinkControl in NIC: "
+            //           << parent->getName() << " on VN " << event->request->vn << " from src " << event->request->src
+            //           << "." << std::endl;
         }
         if ( receiveFunctor != NULL ) {
             bool keep = (*receiveFunctor)(actual_vn);
@@ -475,7 +489,7 @@ void LinkControl::handle_output(Event* ev)
         found = true;
         break;
     }
-
+    
     if (!found)  {
         for ( int i = 0; i < curr_out_vn; i++ ) {
             if ( output_buf[i].empty() ) continue;
@@ -521,10 +535,18 @@ void LinkControl::handle_output(Event* ev)
         // std::cout << "Sent packet on vn " << vn_to_send << ", credits remaining: " << rtr_credits[vn_to_send] << std::endl;
         
         if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
-            std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                      << " ns: Sent an event to router from LinkControl in NIC: "
-                      << parent->getName() << " on VN " << send_event->request->vn << " to dest " << send_event->request->dest
-                      << "." << std::endl;
+            output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
+                          " in NIC: %s on VN %d to dest %" PRIu64 ".\n",
+                          send_event->getTraceID(),
+                          parent->getCurrentSimTimeNano(),
+                          parent->getName().c_str(),
+                          send_event->request->vn,
+                          send_event->request->dest);
+
+            // std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+            //           << " ns: Sent an event to router from LinkControl in NIC: "
+            //           << parent->getName() << " on VN " << send_event->request->vn << " to dest " << send_event->request->dest
+            //           << "." << std::endl;
         }
         send_bit_count->addData(send_event->request->size_in_bits);
         if (sendFunctor != NULL ) {

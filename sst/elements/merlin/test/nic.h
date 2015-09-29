@@ -21,6 +21,8 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
+#include <sst/core/threadsafe.h>
+
 namespace SST {
 
 namespace Merlin {
@@ -30,6 +32,7 @@ class nic : public Component {
 
 private:
 
+    // SST::Interfaces::SimpleNetwork::nid_t id;
     int id;
     int net_id;
     int num_peers;
@@ -52,6 +55,8 @@ private:
 
     int remap;
     SST::Interfaces::SimpleNetwork::Mapping net_map;
+
+    Output& output;
     
 public:
     nic(ComponentId_t cid, Params& params);

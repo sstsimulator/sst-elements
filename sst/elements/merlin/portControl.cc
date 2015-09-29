@@ -149,7 +149,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     waiting(true),
     have_packets(false),
     start_block(0),
-    parent(rif)
+    parent(rif),
+    output(Simulation::getSimulation()->getSimulationOutput())
 {
     // Configure the links.  output_timing will have a temporary time bases.  It will be
     // changed once the final link BW is set.
@@ -199,7 +200,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     // Register statistics
     std::string port_name("port");
     port_name = port_name + boost::lexical_cast<std::string>(port_number);
-    
+
     send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
     send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);
     output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
@@ -401,6 +402,7 @@ PortControl::init(unsigned int phase) {
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
             ev->int_value = topo->getEndpointID(port_number);
+            // ev->print("PC: ", Simulation::getSimulation()->getSimulationOutput());
             port_link->sendInitData(ev);
         }
         else {
@@ -512,6 +514,7 @@ PortControl::init(unsigned int phase) {
         }
         break;
     }   
+    // std::cout << "End PortControl::init" << std::endl;
 }
 
 void
@@ -659,11 +662,22 @@ PortControl::handle_input_n2r(Event* ev)
 	    }
 	    
 	    if ( event->request->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
-            std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                      << " ns: Received an event on port " << port_number
-                      << " in router " << rtr_id << " ("
-                      << parent->getName() << ") on VC " << curr_vc << " from src " << event->request->src
-                      << " to dest " << event->request->dest << "." << std::endl;
+            output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
+                          " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
+                          event->getTraceID(),
+                          parent->getCurrentSimTimeNano(),
+                          port_number,
+                          rtr_id,
+                          parent->getName().c_str(),
+                          curr_vc,
+                          event->request->src,
+                          event->request->dest);
+                          
+            // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+            //           << " ns: Received an event on port " << port_number
+            //           << " in router " << rtr_id << " ("
+            //           << parent->getName() << ") on VC " << curr_vc << " from src " << event->request->src
+            //           << " to dest " << event->request->dest << "." << std::endl;
 	    }
         
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
@@ -738,11 +752,23 @@ PortControl::handle_input_r2r(Event* ev)
         // std::cout << "Got to here 3" << std::endl; 
 	    
 	    if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
-            std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                      << " ns: Received an event on port " << port_number
-                      << " in router " << rtr_id << " ("
-                      << parent->getName() << ") on VC " << curr_vc << " from src " << event->getSrc()
-                      << " to dest " << event->getDest() << "." << std::endl;
+            output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
+                          " (%s) on VC %d from src %d to dest %d.\n",
+                          event->getTraceID(),
+                          parent->getCurrentSimTimeNano(),
+                          port_number,
+                          rtr_id,
+                          parent->getName().c_str(),
+                          curr_vc,
+                          event->getSrc(),
+                          event->getDest());
+
+                          
+            // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+            //           << " ns: Received an event on port " << port_number
+            //           << " in router " << rtr_id << " ("
+            //           << parent->getName() << ") on VC " << curr_vc << " from src " << event->getSrc()
+            //           << " to dest " << event->getDest() << "." << std::endl;
 	    }
         
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
@@ -763,6 +789,7 @@ PortControl::handle_input_r2r(Event* ev)
 
 void
 PortControl::handle_output_r2r(Event* ev) {
+    // TraceFunction trace (CALL_INFO_LONG);
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
@@ -782,15 +809,18 @@ PortControl::handle_output_r2r(Event* ev) {
         
 	    // Send event
 	    port_link->send(1,event);
+        // trace.getOutput().output(CALL_INFO, "after\n");
 	    return;
 	}
-	
+    // trace.getOutput().output(CALL_INFO, "Got to here 1\n");
+    
 	// We do a round robin scheduling.  If the current vc has no
 	// data, find one that does.
 	int vc_to_send = -1;
 	bool found = false;
 	internal_router_event* send_event = NULL;
     have_packets = false;
+    // trace.getOutput().output(CALL_INFO, "Got to here 2\n");
     
 	for ( int i = curr_out_vc; i < num_vcs; i++ ) {
 	    if ( output_buf[i].empty() ) continue;
@@ -803,6 +833,7 @@ PortControl::handle_output_r2r(Event* ev) {
 	    found = true;
 	    break;
 	}
+    // trace.getOutput().output(CALL_INFO, "Got to here 3\n");
 	
 	if (!found)  {
 	    for ( int i = 0; i < curr_out_vc; i++ ) {
@@ -817,6 +848,7 @@ PortControl::handle_output_r2r(Event* ev) {
             break;
 	    }
 	}
+    // trace.getOutput().output(CALL_INFO, "Got to here 4\n");
 	
 	// If we found an event to send, go ahead and send it
 	if ( found ) {
@@ -843,12 +875,22 @@ PortControl::handle_output_r2r(Event* ev) {
 	    output_buf_count[vc_to_send]++;
         
 	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
-            std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                      << " ns: Sent an event to router from PortControl in router: " << rtr_id
-                      << " (" << parent->getName() << ") on VC " << send_event->getVC()
-                      << " from src " << send_event->getSrc()
-                      << " to dest " << send_event->getDest()
-                      << "." << std::endl;
+            output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
+                          " (%s) on VC %d from src %d to dest %d.\n",
+                          send_event->getTraceID(),
+                          parent->getCurrentSimTimeNano(),
+                          rtr_id,
+                          parent->getName().c_str(),
+                          send_event->getVC(),
+                          send_event->getSrc(),
+                          send_event->getDest());
+
+            // std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+            //           << " ns: Sent an event to router from PortControl in router: " << rtr_id
+            //           << " (" << parent->getName() << ") on VC " << send_event->getVC()
+            //           << " from src " << send_event->getSrc()
+            //           << " to dest " << send_event->getDest()
+            //           << "." << std::endl;
 	    }
         send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
         send_packet_count->addData(1);
@@ -860,12 +902,16 @@ PortControl::handle_output_r2r(Event* ev) {
 
 	    if ( host_port ) {
             // std::cout << "Found an event to send on host port " << port_number << std::endl;
+            // trace.getOutput().output(CALL_INFO, "before\n");
             port_link->send(1,send_event->getEncapsulatedEvent()); 
+            // trace.getOutput().output(CALL_INFO, "after\n");
             send_event->setEncapsulatedEvent(NULL);
             delete send_event;
 	    }
 	    else {
+            // trace.getOutput().output(CALL_INFO, "before\n");
             port_link->send(1,send_event); 
+            // trace.getOutput().output(CALL_INFO, "after\n");
 	    }
 	}
 	else {
@@ -888,6 +934,7 @@ PortControl::handle_output_r2r(Event* ev) {
 
 void
 PortControl::handle_output_n2r(Event* ev) {
+    // TraceFunction trace(CALL_INFO_LONG);
 	// The event is an empty event used just for timing.
 
 	// ***** Need to add in logic for when to return credits *****
@@ -964,16 +1011,26 @@ PortControl::handle_output_n2r(Event* ev) {
 	    output_buf_count[vc_to_send]++;
         
 	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
-            std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-                      << " ns: Sent an event to router from PortControl in router: " << rtr_id
-                      << " (" << parent->getName() << ") on VC " << send_event->getVC()
-                      << " from src " << send_event->getSrc()
-                      << " to dest " << send_event->getDest()
-                      << "." << std::endl;
+            output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
+                          " (%s) on VC %d from src %d to dest %d.\n",
+                          send_event->getTraceID(),
+                          parent->getCurrentSimTimeNano(),
+                          rtr_id,
+                          parent->getName().c_str(),
+                          send_event->getVC(),
+                          send_event->getSrc(),
+                          send_event->getDest());
+
+            // std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+            //           << " ns: Sent an event to router from PortControl in router: " << rtr_id
+            //           << " (" << parent->getName() << ") on VC " << send_event->getVC()
+            //           << " from src " << send_event->getSrc()
+            //           << " to dest " << send_event->getDest()
+            //           << "." << std::endl;
 	    }
 #if 1        
-        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
-        send_packet_count->addData(1);
+        // send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
+        // send_packet_count->addData(1);
 #endif
 	    if ( host_port ) {
             // std::cout << "Found an event to send on host port " << port_number << std::endl;

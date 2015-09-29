@@ -16,9 +16,9 @@ using namespace std;
 using namespace SST;
 using namespace SST::Portals4_sm;
 
-Portals4Partition::Portals4Partition(int total_ranks) :
+Portals4Partition::Portals4Partition(RankInfo total_ranks) :
     SSTPartitioner(),
-    ranks(total_ranks)
+    ranks(total_ranks.rank)
 {}
 
 void Portals4Partition::performPartition(ConfigGraph* graph) {
@@ -87,7 +87,7 @@ void Portals4Partition::performPartition(ConfigGraph* graph) {
             if ( z >= sz/2 ) rank = rank | (1 << 3);
         }
         
-        ccomp->rank = rank;
+        ccomp->rank = RankInfo(rank,0);
         
     }    
     

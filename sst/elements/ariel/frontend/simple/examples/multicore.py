@@ -1,6 +1,6 @@
 import sst
 
-sst.setProgramOption("timebase", "1ns")
+sst.setProgramOption("timebase", "1ps")
 
 corecount = 8
 

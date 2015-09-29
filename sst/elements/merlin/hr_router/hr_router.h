@@ -77,6 +77,9 @@ private:
 
     void init_vcs();
     Statistic<uint64_t>** xbar_stalls;
+
+    Output& output;
+    
 public:
     hr_router(ComponentId_t cid, Params& params);
     ~hr_router();

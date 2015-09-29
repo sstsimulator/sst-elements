@@ -31,7 +31,7 @@ class Portals4Partition : public SST::Partition::SSTPartitioner {
 		/**
 			Creates a new self partition scheme.
 		*/
-		Portals4Partition(int total_ranks);
+		Portals4Partition(RankInfo total_ranks);
 
 		/**
 			Performs a partition of an SST simulation configuration
@@ -42,7 +42,7 @@ class Portals4Partition : public SST::Partition::SSTPartitioner {
         bool requiresConfigGraph() { return true; }
         bool spawnOnAllRanks() { return false; }
 
-        static SSTPartitioner* allocate(int total_ranks, int my_rank, int verbosity) {
+        static SSTPartitioner* allocate(RankInfo total_ranks, RankInfo my_rank, int verbosity) {
             return new Portals4Partition(total_ranks);
     }
         

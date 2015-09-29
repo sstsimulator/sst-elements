@@ -25,8 +25,9 @@ public:
     void setup()  { }
     void finish() 
     { 
-        std::cout << "Component completed at: " << getCurrentSimTimeMilli() 
-    	   <<  " milliseconds" << std::endl;
+//      std::cout << "Component completed at: " << getCurrentSimTimeMilli() 
+//  	   <<  " milliseconds" << std::endl;
+        fprintf(stdout, "Component completed at: %lu milliseconds\n", getCurrentSimTimeMilli() );
 //    	return 0; 
     }
 

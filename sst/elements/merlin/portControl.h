@@ -116,6 +116,9 @@ private:
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* send_packet_count;
     Statistic<uint64_t>* output_port_stalls;
+
+    Output& output;
+    
 public:
 
     void sendTopologyEvent(TopologyEvent* ev);

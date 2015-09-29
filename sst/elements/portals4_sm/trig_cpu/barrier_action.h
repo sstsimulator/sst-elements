@@ -47,7 +47,7 @@ public:
 	rand_init = false;
 	max_init_rank = -1;
 
-	job_size = Simulation::getSimulation()->getNumRanks();
+	job_size = Simulation::getSimulation()->getNumRanks().rank;
 
 // 	if ( job_size > 1 ) {
 	    Simulation::getSimulation()->insertActivity(Simulation::getSimulation()->getTimeLord()->getTimeConverter("1us")->getFactor(),this);

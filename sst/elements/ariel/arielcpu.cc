@@ -321,7 +321,7 @@ void ArielCPU::finish() {
 
 int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
 	// If user only wants to init the simulation then we do NOT fork the binary
-	if(Simulation::getSimulation()->getSimulationMode() == Config::INIT)
+	if(Simulation::getSimulation()->getSimulationMode() == Simulation::INIT)
 		return 0;
 
 	int next_arg_index = 0;

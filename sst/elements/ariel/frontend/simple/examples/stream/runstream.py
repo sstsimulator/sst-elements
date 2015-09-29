@@ -1,7 +1,7 @@
 import sst
 import os
 
-sst.setProgramOption("timebase", "1ns")
+sst.setProgramOption("timebase", "1ps")
 
 sst_root = os.getenv( "SST_ROOT" )
 

@@ -55,7 +55,7 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
     "clock"                 : "2 Ghz",
     "range_start"           : "0",
-    "backend.mem_size"      : "1024",
+    "mem_size"              : "1024",
     "coherence_protocol"    : "MSI",
     "request_width"         : "64",
     "debug"                 : "0",
@@ -63,7 +63,7 @@ comp_memory.addParams({
     "backend"               : "memHierarchy.simpleMem"
 })
 
-comp_tracer = sst.Component("tracer", "cacheTracer.cacheTracer")
+comp_tracer = sst.Component("tracer", "simpleElementExample.simpleTracerComponent")
 comp_tracer.addParams({
     "clock"      : "2 Ghz", 
     "debug"      : "0",

@@ -38,7 +38,8 @@ nic::nic(ComponentId_t cid, Params& params) :
     packets_recd(0),
     stalled_cycles(0),
     done(false),
-    initialized(false)
+    initialized(false),
+    output(Simulation::getSimulation()->getSimulationOutput())
 {
     net_id = params.find_integer("id");
     if ( net_id == -1 ) {
@@ -99,19 +100,23 @@ nic::~nic()
 void nic::finish()
 {
     link_control->finish();
-    std::cout << "Nic " << id << " had " << stalled_cycles << " stalled cycles." << std::endl;
+    output.output("Nic %d had %d stalled cycles.\n",id,stalled_cycles);
 }
 
 void nic::setup()
 {
     link_control->setup();
     if ( link_control->getEndpointID() != net_id ) {
-        std::cout << "NIC ids don't match: param = " << net_id << ", LinkControl = "
-                          << link_control->getEndpointID() << std::endl;
+        output.output("NIC ids don't match: parem = %" PRIi64 ", LinkControl = %" PRIi64 "\n",net_id, link_control->getEndpointID());
+        // output.output("NIC ids don't match: parem = %d, LinkControl = %" PRIi64 "\n",net_id, link_control->getEndpointID());
     }
     if ( !initialized ) {
-        std::cout << "Nic " << id << ": Broadcast failed!" << std::endl;  
+        // output.output("Nic %" PRIi64 ": Broadcast failed!\n", id);
+        output.output("Nic %d: Broadcast failed!\n", id);
     }
+    // else {
+    //     output.output("Nic %d: Broadcast succeeded!\n", id);
+    // }
 
     net_map.bind("global");
     // if ( Simulation::getSimulation()->getRank() == 1 ) {
@@ -126,7 +131,7 @@ nic::init(unsigned int phase) {
     link_control->init(phase);
     if ( link_control->isNetworkInitialized() ) {
         // Put my address into the network mapping
-        SST::Interfaces::SimpleNetwork::addMappingEntry("global", id, net_id);
+        //SST::Interfaces::SimpleNetwork::addMappingEntry("global", id, net_id);
     }
     if ( id == 0 && !initialized ) {
         if ( link_control->isNetworkInitialized() ) {
@@ -182,7 +187,7 @@ nic::clock_handler(Cycle_t cycle)
     int expected_recv_count = (num_peers-1)*num_msg;
 
     if ( !done && (packets_recd >= expected_recv_count) ) {
-        std::cout << cycle << ": NIC " << id << " received all packets!" << std::endl;
+        output.output("%" PRIu64 ": NIC %d received all packets!\n", cycle, id);
         primaryComponentOKToEndSim();
         done = true;
     }
@@ -199,16 +204,16 @@ nic::clock_handler(Cycle_t cycle)
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
             
-            req->dest = net_map[last_target];
-            // req->dest = last_target;
+            // req->dest = net_map[last_target];
+            req->dest = last_target;
             req->src = net_id;
 
             req->vn = 0;
             req->size_in_bits = size_in_bits;
             req->givePayload(ev);
             // if ( id == 0 ) {
-            //     ev->setTraceType(RtrEvent::FULL);
-            //     ev->setTraceID(packets_sent);
+                // req->setTraceType(SST::Interfaces::SimpleNetwork::Request::FULL);
+                // req->setTraceID(net_id*1000 + packets_sent);
             // }
             
             bool sent = link_control->send(req,send_vc);
@@ -216,8 +221,8 @@ nic::clock_handler(Cycle_t cycle)
             //std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
             packets_sent++;
             if ( packets_sent == expected_recv_count ) {
-                std::cout << cycle << ":  " << id << " Finished sending packets (total of " <<
-                    num_msg << ")" << std::endl;
+                output.output("%" PRIu64 ":  %d Finished sending packets (total of %d)\n",
+                              cycle, id, num_msg);
             }
         }
         else {
@@ -239,7 +244,8 @@ nic::clock_handler(Cycle_t cycle)
             int src = req->src;
 #if 0
             if ( next_seq[src] != ev->seq ) {
-                std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
+                output.output("%d received packet %d from %d Expected sequence number %d\n",
+                              id, ev->seq, ev->src, next_seq[ev->src]);
                 assert(false);
             }
 #endif

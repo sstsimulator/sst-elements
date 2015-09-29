@@ -56,7 +56,6 @@ SimpleLookupTableComponent::SimpleLookupTableComponent(SST::ComponentId_t id, SS
     }
     sregion->publish();
 
-
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 

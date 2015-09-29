@@ -69,6 +69,10 @@ cpu::cpu( ComponentId_t id, Params& params ) :
   } else {
     rng = new MersenneRNG();
   } 
+
+  // register as a primary component
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 }
 
 void cpu::finish() 

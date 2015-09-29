@@ -86,7 +86,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     Router(cid),
 //    requested_vns(0),
     num_vcs(-1),
-    vcs_initialized(false)
+    vcs_initialized(false),
+    output(Simulation::getSimulation()->getSimulationOutput())
 {
     // std::cout << "Constructing hr_router" << std::endl;
     
@@ -253,7 +254,6 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                   << link_bw.toStringBestSI() << std::endl;
         abort();
     }
-
     // Register statistics
     xbar_stalls = new Statistic<uint64_t>*[num_ports];
     for ( int i = 0; i < num_ports; i++ ) {
@@ -385,13 +385,28 @@ hr_router::clock_handler(Cycle_t cycle)
             // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
             
             if ( ev->getTraceType() == SimpleNetwork::Request::FULL ) {
-                std::cout << "TRACE(" << ev->getTraceID() << "): " << getCurrentSimTimeNano()
-                          << " ns: Copying event (src = " << ev->getSrc() << ","
-                          << " dest = "<< ev->getDest() << ") over crossbar in router " << id
-                          << " (" << getName() << ")"
-                          << " from port " << i << ", VC " << progress_vcs[i] 
-                          << " to port " << ev->getNextPort() << ", VC " << ev->getVC()
-                          << "." << std::endl;
+                output.output("TRACE(%d): %" PRIu64 " ns: Copying event (src = %d, dest = %d) "
+                              "over crossbar in router %d (%s) from port %d, VC %d to port"
+                              " %d, VC %d.\n",
+                              ev->getTraceID(),
+                              getCurrentSimTimeNano(),
+                              ev->getSrc(),
+                              ev->getDest(),
+                              id,
+                              getName().c_str(),
+                              i,
+                              progress_vcs[i] ,
+                              ev->getNextPort(),
+                              ev->getVC());
+                              
+
+               // std::cout << "TRACE(" << ev->getTraceID() << "): " << getCurrentSimTimeNano()
+               //            << " ns: Copying event (src = " << ev->getSrc() << ","
+               //            << " dest = "<< ev->getDest() << ") over crossbar in router " << id
+               //            << " (" << getName() << ")"
+               //            << " from port " << i << ", VC " << progress_vcs[i] 
+               //            << " to port " << ev->getNextPort() << ", VC " << ev->getVC()
+               //            << "." << std::endl;
             }
 
         }
