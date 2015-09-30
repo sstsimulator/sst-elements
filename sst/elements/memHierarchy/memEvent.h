@@ -462,6 +462,17 @@ public:
                 return NULLCMD;
         }
     }
+
+#ifdef USE_VAULTSIM_HMC
+    /** Setter for HMC instruction type */
+    void setHMCInstType(uint8_t _hmcInstType) { hmcInstType_ = _hmcInstType; }
+    /** Getter for HMC instruction type */
+    uint8_t getHMCInstType() { return hmcInstType_; }
+
+private:
+    uint8_t         hmcInstType_;
+#endif
+
 private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
@@ -528,6 +539,9 @@ private:
         ar & BOOST_SERIALIZATION_NVP(instPtr_);
         ar & BOOST_SERIALIZATION_NVP(vAddr_);
         ar & BOOST_SERIALIZATION_NVP(inProgress_);
+#ifdef USE_VAULTSIM_HMC
+        ar & BOOST_SERIALIZATION_NVP(hmcInstType_);
+#endif
     }
 };
 
