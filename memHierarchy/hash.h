@@ -62,6 +62,34 @@ public:
     }
 };
 
+/* This function is taken from the C99 standard's RNG and should uniquely map
+   each input to an output. */
+class LinearHashFunction : public HashFunction {
+public:
+  uint64_t hash(uint32_t _ID, uint64_t x) {
+    return 1103515245*x + 12345;
+  }
+};
+
+/* Just a simple xor-based hash. */
+class XorHashFunction : public HashFunction {
+public:
+  uint64_t hash(uint32_t _ID, uint64_t x) {
+    unsigned char b[8];
+    for (unsigned i = 0; i < 8; ++i)
+      b[i] = (x >> (i*8))&0xff;
+
+    for (unsigned i = 0; i < 7; ++i)
+      b[i] ^= b[i + 1];
+
+    uint64_t result = 0;
+    for (unsigned i = 0; i < 8; ++i)
+      result |= (b[i]<<(i*8));
+
+    return result;
+  }
+};
+
 }}
 #endif	
 /* HASH_H */
