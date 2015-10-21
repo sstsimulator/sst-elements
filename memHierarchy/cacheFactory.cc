@@ -134,10 +134,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
       ht = new LinearHashFunction;
     } else if (hashFunc == 2) {
       ht = new XorHashFunction;
-    } else if (hashFunc == 3) {
-      ht = new SHA1HashFunction;
-    } else if (hashFunc == 4) {
-      ht = new H3HashFunction;
     } else {
       ht = new PureIdHashFunction;
     }

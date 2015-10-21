@@ -68,7 +68,7 @@ static const ElementInfoParam cache_params[] = {
     {"access_latency_cycles",   "Required, int      - Latency (in cycles) to access the cache array."},
     {"coherence_protocol",      "Required, string   - Coherence protocol. Options: MESI, MSI, NONE"},
     {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
-    {"hash_function",           "Optional, int      - 0 - none (default), 1 - linear, 2 - XOR, 2 - SHA1, 3 - H3"},
+    {"hash_function",           "Optional, int      - 0 - none (default), 1 - linear, 2 - XOR"},
     {"L1",                      "Required, int      - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]"},
     {"LLC",                     "Required, int      - Required for LLCs, specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
     {"LL",                      "Required, int      - Required for LLCs, specifies whether an LLC is also the lowest-level coherence entity in the system (e.g., no dir below). Options: 0[not LL entity], 1[LL entity]"},
