@@ -33,33 +33,40 @@ public:
     virtual uint64_t hash(uint32_t _ID, uint64_t _value) = 0;
 };
 
-class SHA1HashFunction : public HashFunction {
-private:
-    uint64_t dynamicValues_;
-    uint32_t* dynamicHashes_;
-    int numFunctions_;
-    int numPasses_;
-public:
-    SHA1HashFunction(int _numFunctions);
-    uint64_t hash(uint32_t _ID, uint64_t _value);
-};
-
-class H3HashFunction : public HashFunction {
-private:
-    uint64_t* hashMatrixPt_;
-    uint32_t resShift_;
-    uint32_t numFunctions_;
-public:
-    H3HashFunction( uint32_t _numFunctions, uint32_t _outputBits, uint64_t _randomSeed = 123132127);
-    uint64_t hash(uint32_t _ID, uint64_t _value);
-};
-
 /* Simplest ID hashing */
 class PureIdHashFunction : public HashFunction {
 public:
     inline uint64_t hash(uint32_t _ID, uint64_t _value) {
         return _value;
     }
+};
+
+/* This function is taken from the C99 standard's RNG and should uniquely map
+   each input to an output. */
+class LinearHashFunction : public HashFunction {
+public:
+  uint64_t hash(uint32_t _ID, uint64_t x) {
+    return 1103515245*x + 12345;
+  }
+};
+
+/* Just a simple xor-based hash. */
+class XorHashFunction : public HashFunction {
+public:
+  uint64_t hash(uint32_t _ID, uint64_t x) {
+    unsigned char b[8];
+    for (unsigned i = 0; i < 8; ++i)
+      b[i] = (x >> (i*8))&0xff;
+
+    for (unsigned i = 0; i < 7; ++i)
+      b[i] ^= b[i + 1];
+
+    uint64_t result = 0;
+    for (unsigned i = 0; i < 8; ++i)
+      result |= (b[i]<<(i*8));
+
+    return result;
+  }
 };
 
 }}
