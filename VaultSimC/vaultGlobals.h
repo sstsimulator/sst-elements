@@ -14,7 +14,7 @@
 
 static const unsigned int LL_SHIFT = 12; // min hash between cubes in 1024
 static const unsigned int VAULT_SHIFT = 7; // min hash for vaults in 16
-static const unsigned int VAULT_MASK = ((1<<VAULT_SHIFT)-1);
+static const unsigned int VAULT_MASK = 0x7; // min hash for vaults in 16
 
 
 #endif

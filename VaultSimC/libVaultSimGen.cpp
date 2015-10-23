@@ -17,7 +17,6 @@
 extern "C" {
   Component* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Params& params );
   Component* create_logicLayer( SST::ComponentId_t id,  SST::Params& params );
-  Component* create_cpu( SST::ComponentId_t id,  SST::Params& params );
 }
 
 const char *memEventList[] = {
@@ -26,32 +25,30 @@ const char *memEventList[] = {
 };
 
 static const ElementInfoParam VaultSimC_params[] = {
-    {"clock",              "Vault Clock Rate.", "1.0 Ghz"},
-    {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
-    {"VaultID",            "Vault Unique ID (Unique to cube)."},
-    {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-#if !(HAVE_LIBPHX == 1)
-    {"delay", "Static vault delay", "40ns"},
-#endif /* HAVE_LIBPHX */
+  {"clock",              "Vault Clock Rate.", "1.0 Ghz"},
+  {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
+  {"VaultID",            "Vault Unique ID (Unique to cube)."},
+  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"statistics",         "0: disable ,1: enable statistics printing"},
   { NULL, NULL }
 };
 
 static const ElementInfoPort VaultSimC_ports[] = {
-    {"bus", "Link to the logic layer", memEventList},
-    {NULL, NULL, NULL}
+  {"bus", "Link to the logic layer", memEventList},
+  {NULL, NULL, NULL}
 };
 
 static const ElementInfoStatistic VaultSimC_statistics[] = {
-    { "Mem_Outstanding", "Number of memory requests outstanding each cycle", "reqs/cycle", 1},
-    { NULL, NULL, NULL, 0 }
+  { "Mem_Outstanding", "Number of memory requests outstanding each cycle", "reqs/cycle", 1},
+  { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoStatistic logicLayer_statistics[] = {
-    { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 1},
-    { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 2},
-    { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs/cycle", 3},
-    { "BW_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", "reqs/cycle", 4},
-    { NULL, NULL, NULL, 0 }
+  { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 1},
+  { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 2},
+  { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs/cycle", 3},
+  { "BW_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", "reqs/cycle", 4},
+  { NULL, NULL, NULL, 0 }
 };
 
 static const ElementInfoParam logicLayer_params[] = {
@@ -66,60 +63,38 @@ static const ElementInfoParam logicLayer_params[] = {
 };
 
 static const ElementInfoPort logicLayer_ports[] = {
-    {"bus_%(vaults)d", "Link to the individual memory vaults", memEventList},
-    {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", memEventList},    
-    {"toMem", "If 'terminal' is 0 (i.e. this is not the last cube in the chain) then this port connects to the next cube.", memEventList},
-    {NULL, NULL, NULL}
-};
-
-static const ElementInfoParam cpu_params[] = {
-  {"clock",              "Simple CPU Clock Rate."},
-  {"threads",            "Number of simulated threads in cpu."},
-  {"app",                "Synthetic Application. 0:miniMD-like 1:phdMesh-like. (See app.cpp for details)."},
-  {"bwlimit",            "Maximum number of memory instructions issued by the processor per cycle. Note, each thread can only have at most 2 outstanding memory references at a time. "},
-  {"seed",               "Optional random number generator seed. If not defined or 0, uses srandomdev()."},
-  { NULL, NULL }
-};
-
-static const ElementInfoPort cpu_ports[] = {
-    {"toMem", "Link to the memory system", memEventList},
-    {NULL, NULL, NULL}
+  {"bus_%(vaults)d", "Link to the individual memory vaults", memEventList},
+  {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", memEventList},    
+  {"toMem", "If 'terminal' is 0 (i.e. this is not the last cube in the chain) then this port connects to the next cube.", memEventList},
+  {NULL, NULL, NULL}
 };
 
 static const ElementInfoComponent components[] = {
-    { "VaultSimC",
-      "Vault Component",
-      NULL,
-      VaultSimCAllocComponent,
-      VaultSimC_params,
-      VaultSimC_ports,
-      COMPONENT_CATEGORY_MEMORY,
-      VaultSimC_statistics
-    },
-    { "logicLayer",
-      "Logic Layer Component",
-      NULL,
-      create_logicLayer,
-      logicLayer_params,
-      logicLayer_ports,
-      COMPONENT_CATEGORY_MEMORY,
-      logicLayer_statistics
-    },
-    { "cpu",
-      "simple CPU",
-      NULL,
-      create_cpu,
-      cpu_params,
-      cpu_ports,
-      COMPONENT_CATEGORY_PROCESSOR
-    },
-    { NULL, NULL, NULL, NULL }
+  { "VaultSimC",
+    "Vault Component",
+    NULL,
+    VaultSimCAllocComponent,
+    VaultSimC_params,
+    VaultSimC_ports,
+    COMPONENT_CATEGORY_MEMORY,
+    VaultSimC_statistics
+  },
+  { "logicLayer",
+    "Logic Layer Component",
+    NULL,
+    create_logicLayer,
+    logicLayer_params,
+    logicLayer_ports,
+    COMPONENT_CATEGORY_MEMORY,
+    logicLayer_statistics
+  },
+  { NULL, NULL, NULL, NULL }
 };
 
 extern "C" {
-    ElementLibraryInfo VaultSimC_eli = {
-        "VaultSimC",
-        "Stacked memory Vault Components",
-        components,
-    };
+  ElementLibraryInfo VaultSimC_eli = {
+    "VaultSimC",
+    "Stacked memory Vault Components",
+    components,
+  };
 }

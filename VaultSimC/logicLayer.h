@@ -23,14 +23,12 @@
 using namespace std;
 using namespace SST;
 
-//#define STUPID_DEBUG 
-
 class logicLayer : public IntrospectedComponent {
   
 public: // functions
   
   logicLayer( ComponentId_t id, Params& params );
-  int Finish();
+  void finish();
   void init(unsigned int phase);
   
 private: // types
