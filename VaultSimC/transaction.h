@@ -44,14 +44,14 @@ POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef enum HMC_Op_State_enum {
-  NO_STATE,
-  QUEUED,
-  READ_ISSUED,
-  READ_ANS_RECV,
-  COMPUTE,
-  WRITE_ISSUED,
-  WRITE_ANS_RECV,
-  NUM_HMC_OP_STATES
+    NO_STATE,
+    QUEUED,
+    READ_ISSUED,
+    READ_ANS_RECV,
+    COMPUTE,
+    WRITE_ISSUED,
+    WRITE_ANS_RECV,
+    NUM_HMC_OP_STATES
 } HMC_Op_State;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,122 +60,121 @@ typedef enum HMC_Op_State_enum {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 class transaction_c {
-  public:
-    /** Constructor
-     *  @param is_write is it a write?
-     *  @param addr address for memory operation
+public:
+    /** 
+     * Constructor
+     * @param isWrite is it a write?
+     * @param addr address for memory operation
      */
-    transaction_c() : m_is_write(0), m_addr(0), 
-        m_atomic(false), m_hmc_type(HMC_NONE), m_hmc_op_state(NO_STATE) {}
+    transaction_c() : isWrite(false), addr(0), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE) {}
 
-    transaction_c(bool is_write, uint64_t addr) : 
-      m_is_write(is_write), m_addr(addr), 
-      m_atomic(false), m_hmc_type(HMC_NONE), m_hmc_op_state(NO_STATE) {}
+    transaction_c(bool _isWrite, uint64_t _addr) : 
+        isWrite(_isWrite), addr(_addr), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE) {}
 
-    /** addr functions 
+    /** 
+     * addr functions 
      */
-    uint64_t get_addr() { return m_addr; }
+    uint64_t getAddr() { return addr; }
 
-    /** is_write functions      
+    /** 
+     * isWrite functions      
      */
-    bool is_write() { return m_is_write; }
-    void set_is_write() { m_is_write = true; }
-    void reset_is_write() { m_is_write = false; }
+    bool getIsWrite() { return isWrite; }
+    void setIsWrite() { isWrite = true; }
+    void resetIsWrite() { isWrite = false; }
 
-    /** m_atomic Member Fuctions
+    /** 
+     * isAtomic Member Fuctions
      */
-    bool get_atomic() { return m_atomic; }
-    void set_atomic() { m_atomic = true; }
-    void reset_atomic() { m_atomic = false; }
+    bool getAtomic() { return isAtomic; }
+    void setAtomic() { isAtomic = true; }
+    void resetAtomic() { isAtomic = false; }
 
-    /** HMC_Type functions
+    /** 
+     * HMC_Type functions
      */
-    void set_HMCOpType(uint8_t instType) { m_hmc_type = instType; }
-
-    uint8_t get_HMCOpType() { return m_hmc_type; }
-
-    const char* get_HMCOpType_str() {
-      switch (m_hmc_type) {
+    void setHmcOpType(uint8_t instType) { hmcType = instType; }
+    uint8_t getHmcOpType() { return hmcType; }
+    const char* getHmcOpTypeStr() {
+        switch (hmcType) {
         case HMC_NONE:  
-          return "HMC_NONE";
+            return "HMC_NONE";
         case HMC_CAS_equal_16B:
-          return "HMC_CAS_equal_16B";
+            return "HMC_CAS_equal_16B";
         case HMC_CAS_zero_16B:
-          return "HMC_CAS_zero_16B";
+            return "HMC_CAS_zero_16B";
         case HMC_CAS_greater_16B:
-          return "HMC_CAS_greater_16B";
+            return "HMC_CAS_greater_16B";
         case HMC_CAS_less_16B:
-          return "HMC_CAS_less_16B";
+            return "HMC_CAS_less_16B";
         case HMC_ADD_16B:
-          return "HMC_ADD_16B";
+            return "HMC_ADD_16B";
         case HMC_ADD_8B:
-          return "HMC_ADD_8B";
+            return "HMC_ADD_8B";
         case HMC_ADD_DUAL:
-          return "HMC_ADD_DUAL";
+            return "HMC_ADD_DUAL";
         case HMC_SWAP:
-          return "HMC_SWAP";
+            return "HMC_SWAP";
         case HMC_BIT_WR:
-          return "HMC_BIT_WR";
+            return "HMC_BIT_WR";
         case HMC_AND:
-          return "HMC_AND";
+            return "HMC_AND";
         case HMC_NAND:
-          return "HMC_NAND";
+            return "HMC_NAND";
         case HMC_OR:
-          return "HMC_OR";
+            return "HMC_OR";
         case HMC_XOR:
-          return "HMC_XOR";
-      }
+            return "HMC_XOR";
+        default:
+            return "THIS MUST NOT BE PRINTED";
+        }
     }
 
-
-    /** HMC_Op_State functions
+    /**
+     * HMC_Op_State functions
      */
-     /*
-    void set_HMCOpState(HMC_Op_State instState) { m_hmc_op_state=instState; }
+    /*void setHmcOpState(HMC_Op_State instState) { hmcOpState = instState; }
 
-    HMC_Op_State get_HMCOpState() { return m_hmc_op_state; }
+    HMC_Op_State getHmcOpState() { return hmcOpState; }
 
-    const char* get_HMCOpState_str() {
-      switch (m_hmc_op_state) {
+    const char* getHmcOpStateStr() {
+        switch (hmcOpState) {
         case NO_STATE:
-          return "NO_STATE";
+            return "NO_STATE";
         case QUEUED:
-          return "QUEUED";
+            return "QUEUED";
         case READ_ISSUED:  
-          return "READ_ISSUED";
+            return "READ_ISSUED";
         case READ_ANS_RECV:
-          return "READ_ANS_RECV";
+            return "READ_ANS_RECV";
         case COMPUTE:
-          return "COMPUTE";
+            return "COMPUTE";
         case WRITE_ISSUED:
-          return "WRITE_ISSUED";
+            return "WRITE_ISSUED";
         case WRITE_ANS_RECV:
-          return "WRITE_ANS_RECV";
-      }
-    }
-    */
+            return "WRITE_ANS_RECV";
+        }
+    }*/
 
-    /** BankNo functions
+    /**
+     * BankNo functions
      */ 
-    void set_bankNo (unsigned bankNo) { m_bankNo = bankNo; }
-    unsigned get_bankNo () { return m_bankNo; } 
+    void setBankNo (unsigned _bankNo) { bankNo = _bankNo; }
+    unsigned getBankNo () { return bankNo; } 
 
-  private:
-    bool m_is_write;
-    uint64_t m_addr;
-    unsigned int m_bankNo;
+private:
+    bool isWrite;
+    uint64_t addr;
+    unsigned int bankNo;
+    bool isAtomic;
+    uint8_t hmcType;              //HMC_Type Enum
+    HMC_Op_State hmcOpState;
 
-    bool m_atomic;
-    uint8_t m_hmc_type;              //HMC_Type Enum
-    HMC_Op_State m_hmc_op_state;
-
-  public:
-    /*Stat Gathering*/
-    uint64_t m_in_cycle;
-    uint64_t m_issue_cycle;
-    uint64_t m_read_done_cycle;       // Same as write issue cycle (without computing)
-    uint64_t m_write_done_cycle;      // Same as done cycle 
-
+public:
+    uint64_t inCycle;
+    uint64_t issueCycle;
+    uint64_t readDoneCycle;       // Same as write issue cycle (without computing)
+    uint64_t writeDoneCycle;      // Same as done cycle 
 };
 
 #endif

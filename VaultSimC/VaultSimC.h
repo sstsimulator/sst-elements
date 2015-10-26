@@ -28,40 +28,33 @@ using namespace std;
 using namespace SST;
 
 class VaultSimC : public IntrospectedComponent {
-
-public: // functions
-
-    VaultSimC( ComponentId_t id, Params& params );
+public:
+    VaultSimC(ComponentId_t id, Params& params);
     void finish();
     void init(unsigned int phase);
 
-    Output dbg;
-    
-private: // types
-    
+private:
     typedef SST::Link memChan_t;
     typedef multimap<uint64_t, MemHierarchy::MemEvent*> t2MEMap_t;
-    
-private: // functions
-    
-    VaultSimC (const VaultSimC& c);
-    
-    bool clock_phx (Cycle_t currentCycle);
-    
-    void readData (unsigned id, uint64_t addr, uint64_t clockcycle);
-    void writeData (unsigned id, uint64_t addr, uint64_t clockcycle);
-    
-    std::deque<transaction_c> m_transQ;
+
+private:
+    VaultSimC(const VaultSimC& c);
+
+    bool clock(Cycle_t currentCycle);
+
+    void readData(unsigned id, uint64_t addr, uint64_t clockcycle);
+    void writeData(unsigned id, uint64_t addr, uint64_t clockcycle);
+
+    deque<transaction_c> transQ;
     t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
-    Vault* m_memorySystem;
-    
+    Vault* memorySystem;
 
     uint8_t *memBuffer;
-    memChan_t* m_memChan;
+    memChan_t* memChan;
     size_t numVaults2;  // not clear if used
     int numOutstanding; //number of mem requests outstanding (non-phx)
-
     unsigned vaultID;
+
     size_t getInternalAddress(MemHierarchy::Addr in) {
         // calculate address
         size_t lower = in & VAULT_MASK;
@@ -71,7 +64,10 @@ private: // functions
     }
 
     // statistics
-    Statistic<uint64_t>*  memOutStat;
+    Statistic<uint64_t>* memOutStat;
+
+public:
+    Output dbg;
 };
 
 

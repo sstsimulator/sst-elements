@@ -24,39 +24,35 @@ using namespace std;
 using namespace SST;
 
 class logicLayer : public IntrospectedComponent {
-  
-public: // functions
-  
-  logicLayer( ComponentId_t id, Params& params );
-  void finish();
-  void init(unsigned int phase);
-  
-private: // types
-  
-  typedef SST::Link memChan_t;
-  typedef vector<memChan_t*> memChans_t;
-  
+public:
+    logicLayer(ComponentId_t id, Params& params);
+    void finish();
+    void init(unsigned int phase);
+
+private:
+    typedef SST::Link memChan_t;
+    typedef vector<memChan_t*> memChans_t;
+
 private: 
-  
-  logicLayer( const logicLayer& c );
-  bool clock( Cycle_t );
-  // determine if we 'own' a given address
-  bool isOurs(unsigned int addr) {
-    return ((((addr >> LL_SHIFT) & LL_MASK) == llID)
-	    || (LL_MASK == 0));
-  }
+    logicLayer(const logicLayer& c);
+    bool clock(Cycle_t);
+    // determine if we 'own' a given address
+    bool isOurs(unsigned int addr) {
+        return ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0));
+    }
 
-  Output dbg;
-  memChans_t m_memChans;
-  SST::Link *toMem;
-  SST::Link *toCPU;
-  int bwlimit;
-  unsigned int LL_MASK;
-  unsigned int llID;
-  unsigned long long memOps;
+    Output dbg;
+    memChans_t memChans;
+    SST::Link *toMem;
+    SST::Link *toCPU;
+    int bwLimit;
 
-    Statistic<uint64_t>*  bwUsedToCpu[2]; 
-    Statistic<uint64_t>*  bwUsedToMem[2]; 
+    unsigned int LL_MASK;
+    unsigned int llID;
+    unsigned long long memOps;
+
+    Statistic<uint64_t>* bwUsedToCpu[2];
+    Statistic<uint64_t>* bwUsedToMem[2];
 };
 
 #endif

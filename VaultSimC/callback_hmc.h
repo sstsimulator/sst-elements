@@ -38,7 +38,7 @@
 
 template <typename ReturnT, typename... Params>
 class CallbackBase {
-  public:
+public:
     virtual ~CallbackBase() = 0;
     virtual ReturnT operator()(Params...) = 0;
 };
@@ -48,17 +48,17 @@ CallbackBase<ReturnT, Params...>::~CallbackBase() {}
 
 template <typename ConsumerT, typename ReturnT, typename... Params>
 class Callback : public CallbackBase<ReturnT, Params...> {
-  private:
+private:
     typedef ReturnT (ConsumerT::*PtrMember)(Params...);
 
-  public:
+public:
     Callback(ConsumerT* const object, PtrMember member) : object(object), member(member) {}
     Callback(const Callback<ConsumerT, ReturnT, Params...>& e) : object(e.object), member(e.member) {}
     ReturnT operator()(Params... params) {
-      return (const_cast<ConsumerT*>(object)->*member)(params...);
+        return (const_cast<ConsumerT*>(object)->*member)(params...);
     }
 
-  private:
+private:
     ConsumerT* const object;
     const PtrMember member;
 };

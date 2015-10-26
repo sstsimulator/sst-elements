@@ -4,8 +4,8 @@
 #include "macsim.h"
 
 namespace HMC {
-  class LogicLayer;
-  LogicLayer *get_memory_system_instance(unsigned id, bool terminal, macsim_c *simBase);
+    class LogicLayer;
+    LogicLayer *getMemorySystemInstance(unsigned id, bool terminal, macsim_c *simBase);
 } // namespace HMC
 
 #endif

@@ -21,14 +21,14 @@ libVaultSimC_la_SOURCES = \
   DRAMSim2/MultiChannelMemorySystem.cpp \
   DRAMSim2/SimulatorObject.cpp \
   DRAMSim2/Transaction.cpp \
-	libVaultSimGen.cpp \
-	logicLayer.h \
-	logicLayer.cpp \
-	VaultSimC.cpp \
-	VaultSimC.h \
-	Vault.cpp \
-	Vault.h \
-	globals.h
+  libVaultSimGen.cpp \
+  logicLayer.h \
+  logicLayer.cpp \
+  VaultSimC.cpp \
+  VaultSimC.h \
+  Vault.cpp \
+  Vault.h \
+  globals.h
 
-libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) -DUSE_VAULTSIM_HMC -DNO_STORAGE -DUSING_SST 
+libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) -DUSE_VAULTSIM_HMC -DNO_STORAGE -DUSING_SST
 libVaultSimC_la_LDFLAGS = -module -avoid-version
