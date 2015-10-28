@@ -84,9 +84,26 @@ PyProto::~PyProto()
     Py_XDECREF(that);
 }
 
-void PyProto::init(unsigned int phase) { }
-void PyProto::setup() { }
-void PyProto::finish() { }
+
+void PyProto::init(unsigned int phase)
+{
+    PyObject *res = PyObject_CallMethod((PyObject*)that, (char*)"init", (char*)"I", phase);
+    Py_XDECREF(res);
+}
+
+
+void PyProto::setup()
+{
+    PyObject *res = PyObject_CallMethod((PyObject*)that, (char*)"setup", (char*)"");
+    Py_XDECREF(res);
+}
+
+
+void PyProto::finish()
+{
+    PyObject *res = PyObject_CallMethod((PyObject*)that, (char*)"finish", (char*)"");
+    Py_XDECREF(res);
+}
 
 
 

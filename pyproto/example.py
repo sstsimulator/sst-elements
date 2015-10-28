@@ -46,13 +46,13 @@ class MyObject(PyProto):
         print self.name, "Construct()"
 
     def init(self, phase):
-        print name, "init(%d)"%phase
+        print self.name, "init(%d)"%phase
 
     def setup(self):
-        print name, "setup()"
+        print self.name, "setup()"
 
     def finish(self):
-        print name, "finish()"
+        print self.name, "finish()"
 
 
 
