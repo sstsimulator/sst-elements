@@ -16,7 +16,6 @@
 #include <sst/core/params.h>
 
 #include "VaultSimC.h"
-#include "vaultGlobals.h"
 
 static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 

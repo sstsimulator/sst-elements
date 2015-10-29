@@ -18,7 +18,6 @@
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
-#include "vaultGlobals.h"
 #include "globals.h"
 #include "Vault.h"
 #include "transaction.h"
