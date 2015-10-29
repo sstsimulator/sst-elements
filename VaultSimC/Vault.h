@@ -20,6 +20,8 @@
 
 #include <sst/core/output.h>
 #include <sst/core/params.h>
+
+#include "globals.h"
 #include "callback_hmc.h"
 #include "transaction.h"
 
