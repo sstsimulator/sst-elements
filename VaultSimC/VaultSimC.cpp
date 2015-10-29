@@ -23,7 +23,10 @@ using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( id ), numOutstanding(0) 
 {
-    dbg.init("@R:VaultSim::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));  
+    int debugLevel = params.find_integer("debug_level", 0);
+    dbg.init("@R:VaultSim::@p():@l " + getName() + ": ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));  
+    if(debugLevel < 0 || debugLevel > 10) 
+        dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     std::string frequency = "1.0 GHz";
     frequency = params.find_string("clock", "1.0 Ghz");

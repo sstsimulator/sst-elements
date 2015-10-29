@@ -16,15 +16,15 @@
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ CALL_INFO,ERROR,0           //
 #define _WARNING_ CALL_INFO,WARNING,0       //
-#define _INFO_ CALL_INFO,INFO,0             //
-#define _L3_ CALL_INFO,L3,0                 //Important messages:  incoming requests, state changes, etc
-#define _L4_ CALL_INFO,L4,0                 //Important messages:  send request, forward request, send response
+#define _INFO_ CALL_INFO,INFO,0             // Init, Finish, Parameters
+#define _L3_ CALL_INFO,L3,0                 //
+#define _L4_ CALL_INFO,L4,0                 //
 #define _L5_ CALL_INFO,L5,0                 //
-#define _L6_ CALL_INFO,L6,0                 //BottomCC messages
-#define _L7_ CALL_INFO,L7,0                 //TopCC messages
-#define _L8_ CALL_INFO,L8,0                 //Atomics
-#define _L9_ CALL_INFO,L9,0                 //MSHR messages
-#define _L10_ CALL_INFO,L10,0               //Directory controller, Bus, Memory Controller
+#define _L6_ CALL_INFO,L6,0                 //
+#define _L7_ CALL_INFO,L7,0                 // Logic Layer Requests, 
+#define _L8_ CALL_INFO,L8,0                 //
+#define _L9_ CALL_INFO,L9,0                 //
+#define _L10_ CALL_INFO,L10,0               //
 
 
 enum AddressMappingScheme {

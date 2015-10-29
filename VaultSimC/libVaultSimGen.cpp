@@ -28,8 +28,9 @@ static const ElementInfoParam VaultSimC_params[] = {
   {"clock",              "Vault Clock Rate.", "1.0 Ghz"},
   {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
   {"VaultID",            "Vault Unique ID (Unique to cube)."},
-  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
   {"statistics",         "0: disable ,1: enable statistics printing"},
+  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"debug_level",        "debug verbosity level (0-10)"},
   { NULL, NULL }
 };
 
@@ -59,6 +60,7 @@ static const ElementInfoParam logicLayer_params[] = {
   {"terminal",           "Is this the last cube in the chain?"},
   {"vaults",             "Number of vaults per cube."},
   {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"debug_level",        "debug verbosity level (0-10)"},
   { NULL, NULL }
 };
 
