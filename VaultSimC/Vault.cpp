@@ -41,10 +41,12 @@ Vault::Vault(unsigned _id, Output* _dbg, bool _statistics, string _frequency) :
     dramsim->RegisterCallbacks(rc, wc, NULL);
 
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
-    bankBusyMap.reserve(BANK_BUSY_MAP_OPTIMUM_SIZE);
+    bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
+    computePhaseMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
+    computeDoneCycleMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     unlockAllBanks();
     transQ.reserve(TRANS_Q_OPTIMUM_SIZE);
-    //resetComputePhase();
+    resetAllComputePhase();
 
 }
 
@@ -109,9 +111,9 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
         // mi->second.setHmcOpState(READ_ANS_RECV);
 
         // Now in Compute Phase, set cycle done 
-        issueAtomicSecondMemoryPhase(mi);
-        // issueAtomicComputePhase(mi);
-        // setComputePhase();
+        // issueAtomicSecondMemoryPhase(mi);
+        issueAtomicComputePhase(mi);
+        setComputePhase(mi->second.getBankNo());
     }
 }
 
@@ -156,18 +158,22 @@ void Vault::update()
     dramsim->update();
     currentClockCycle++;  
     
-    updateQueue();
-    
     // If we are in compute phase, check for cycle compute done
-    /*if (getComputePhase()) {
-        if (currentClockCycle >= getComputeDoneCycle()) {
-            dbg->output(CALL_INFO, "Vault %d:hmc: Atomic op %p (bank%u) compute phase has been done in cycle=%lu\n", 
-                    id, (void*)addrCompute, bankNoCompute, currentClockCycle);
-            addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
-            issueAtomicSecondMemoryPhase(mi);
-            resetComputePhase();
+    for(unsigned bankId = 0; bankId < getComputePhaseSize(); bankId++) {
+        if (getComputePhase(bankId)) {
+            if (currentClockCycle >= getComputeDoneCycle(bankId)) {
+                uint64_t addrCompute = getAddrCompute(bankId);
+                dbg->debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase has been done in cycle=%lu\n", 
+                        id, (void*)addrCompute, bankId, currentClockCycle);
+                addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
+                issueAtomicSecondMemoryPhase(mi);
+                resetComputePhase(bankId);
+            }
         }
-    }*/
+    }
+
+    // Process Queue
+    updateQueue();
 }
 
 bool Vault::addTransaction(transaction_c transaction) 
@@ -297,15 +303,16 @@ void Vault::issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi)
     }
 }
 
-/*
+
 void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi) 
 {
-    dbg->output(CALL_INFO, "Vault %d:hmc: Atomic op %p (bank%u) compute phase started in cycle=%lu\n", 
+    dbg->debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase started in cycle=%lu\n", 
             id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
 
     // mi->second.setHmcOpState(COMPUTE);
-    addrCompute = mi->second.getAddr();
-    bankNoCompute = mi->second.getBankNo();
+    unsigned bankNoCompute = mi->second.getBankNo();
+    uint64_t addrCompute = mi->second.getAddr();
+    setAddrCompute(bankNoCompute, addrCompute);
 
     switch (mi->second.getHmcOpType()) {
     case (HMC_CAS_equal_16B):
@@ -321,11 +328,11 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
     case (HMC_NAND):
     case (HMC_OR):
     case (HMC_XOR):
-        m_computeDoneCycle = currentClockCycle + 3;
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + 3;
         break;
     case (HMC_NONE):
     default:
         dbg->fatal(CALL_INFO, -1, "Vault Should not get a non HMC op in issue atomic (compute phase)\n");
         break;
     }
-}*/
+}

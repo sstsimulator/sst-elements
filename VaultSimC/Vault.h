@@ -29,7 +29,7 @@ using namespace std;
 using namespace SST;
 
 #define ON_FLY_HMC_OP_OPTIMUM_SIZE 2
-#define BANK_BUSY_MAP_OPTIMUM_SIZE 10
+#define BANK_BOOL_MAP_OPTIMUM_SIZE 10
 #define TRANS_Q_OPTIMUM_SIZE 10
 
 namespace DRAMSim {
@@ -40,7 +40,9 @@ class Vault {
 private:
     typedef CallbackBase<void, unsigned, uint64_t, uint64_t> callback_t;
     typedef unordered_map<uint64_t, transaction_c> addr2TransactionMap_t;
-    typedef unordered_map<unsigned, bool> bank2busyMap_t;
+    typedef unordered_map<unsigned, bool> bank2BoolMap_t;
+    typedef unordered_map<unsigned, uint64_t> bank2CycleMap_t;
+    typedef unordered_map<unsigned, uint64_t> bank2AddrMap_t;
     typedef vector<transaction_c> transQ_t;
 
 public:
@@ -64,7 +66,7 @@ public:
 
     /** 
      * update
-     * Vaultsim handle to update DramSim, it also increases the cycle 
+     * Vaultsim handle to update DRAMSIM, it also increases the cycle 
      */
     void update();
 
@@ -105,59 +107,49 @@ private:
     void updateQueue();
 
     /**
-     * issueAtomicFirstMemoryPhase
+     * issueAtomicPhases
      */
     void issueAtomicFirstMemoryPhase(addr2TransactionMap_t::iterator mi);
-
-    /**
-     * issueAtomicSecondMemoryPhase
-     */
     void issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi);
+    void issueAtomicComputePhase(addr2TransactionMap_t::iterator mi);
 
     /**
-     * issueAtomicComputePhase
-     */
-    //void issueAtomicComputePhase(addr2TransactionMap_t::iterator mi);
-
-    /**
-     * printStats
-     */
-    void printStats();
-
-    /**
-     * initStats
+     * Stats
      */
     void initStats();
+    void printStats();
+    inline bool isStatSet() { return statistics; }
 
     /** 
-     * bankBusyMap Functions
+     * Bank BusyMap Functions
      */
-    inline bool getBankState(unsigned bankid) { return bankBusyMap[bankid]; }
-    inline void unlockBank(unsigned bankid) { bankBusyMap[bankid] = false; }
-    inline void lockBank(unsigned bankid) { bankBusyMap[bankid] = true; }
+    inline bool getBankState(unsigned bankId) { return bankBusyMap[bankId]; }
+    inline void unlockBank(unsigned bankId) { bankBusyMap[bankId] = false; }
+    inline void lockBank(unsigned bankId) { bankBusyMap[bankId] = true; }
     inline void unlockAllBanks() {
-        for (int i = 0; i < BANK_BUSY_MAP_OPTIMUM_SIZE; i++) {
+        for (unsigned i = 0; i < BANK_BOOL_MAP_OPTIMUM_SIZE; i++) {
             bankBusyMap[i] = false;
         }
     }
 
     /** 
-     * statistics functions
+     * Compute Phase Functions 
      */
-    inline bool isStatSet() { return statistics; } 
+    inline bool getComputePhase(unsigned bankId) { return computePhaseMap[bankId]; }
+    inline unsigned getComputePhaseSize() { return computePhaseMap.size(); }
+    inline void setComputePhase(unsigned bankId) { computePhaseMap[bankId] = true; }
+    inline void resetComputePhase(unsigned bankId) { computePhaseMap[bankId] = false; }
+    inline void resetAllComputePhase() {
+        for (unsigned i = 0; i < BANK_BOOL_MAP_OPTIMUM_SIZE; i++) {
+            computePhaseMap[i] = false;
+        }
+    }
 
-    /** 
-     * computePhase Functions 
-     */
-    //inline void setComputePhase() { computePhase = true; }
-    //inline void resetComputePhase() { computePhase = false; }
-    //inline bool getComputePhase() { return computePhase; }
+    inline void setComputeDoneCycle(unsigned bankId, uint64_t cycle) { computeDoneCycleMap[bankId] = cycle; }
+    inline uint64_t getComputeDoneCycle(unsigned bankId) { return computeDoneCycleMap[bankId]; }
 
-    /** 
-     * compupteDoneCycle Functions    
-     */
-    //inline void setComputeDoneCycle(uint64_t cycle) { compupteDoneCycle = cycle; }
-    //inline uint64_t getComputeDoneCycle() { return compupteDoneCycle; }
+    inline void setAddrCompute(unsigned bankId, uint64_t addr) { addrComputeMap[bankId] = addr; }
+    inline uint64_t getAddrCompute(unsigned bankId) { return addrComputeMap[bankId]; }
 
 public:
     unsigned id;
@@ -174,8 +166,11 @@ private:
     string frequency;                            // Vault Frequency
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
-    bank2busyMap_t bankBusyMap;                  // Current Busy Banks
+    bank2BoolMap_t bankBusyMap;                  // Current Busy Banks
     transQ_t transQ;                             // Transaction Queue
+    bank2BoolMap_t computePhaseMap;              // Current Compute Phase Insturctions (same size as bankBusyMap)
+    bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
+    bank2AddrMap_t addrComputeMap;
 
     struct statistics_t {
         uint64_t totalTransactions;
@@ -188,9 +183,5 @@ private:
         uint64_t writeHmcLatency;
     } stats;
 
-    //bool computePhase;
-    //uint64_t compupteDoneCycle;
-    //unsigned int bankNoCompute;
-    //uint64_t addrCompute;
 };
 #endif
