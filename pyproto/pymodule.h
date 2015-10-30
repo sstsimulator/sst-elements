@@ -13,9 +13,7 @@
 #ifndef COMPONENTS_PYPROTO_PYMODULE_H
 #define COMPONENTS_PYPROTO_PYMODULE_H
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 void* genPyProtoPyModule(void);
 
@@ -49,8 +47,13 @@ typedef struct {
 } PyProto_t;
 
 
-#ifdef __cplusplus
 }
-#endif
+
+namespace SST {
+class Event;
+namespace PyProtoNS {
+        PyEvent_t *convertEventToPython(SST::Event *event);
+}
+}
 
 #endif // COMPONENTS_PYPROTO_PYMODULE_H

@@ -12,7 +12,9 @@ libpyproto_la_SOURCES = \
 						eli.cc \
 						pyproto.h \
 						pyproto.cc \
-						pymodule.cc
+						pymodule.cc \
+						pyarchive.h \
+						pyarchive.cc
 
 
 libpyproto_la_LDFLAGS = -module -avoid-version \

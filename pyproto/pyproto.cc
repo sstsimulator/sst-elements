@@ -112,12 +112,10 @@ PyEvent_t* PyProto::doLinkRecv(size_t linkNum)
     PyEvent_t *res = NULL;
     SST::Link *link = links.at(linkNum);
     Event *event = link->recv();
-    PyEvent *pe = dynamic_cast<PyEvent*>(event);
-    if ( pe ) {
-        PyEvent_t *e = pe->getPyObj();
-        res = e;
+    if ( event ) {
+        res = convertEventToPython(event);
+        delete event;
     }
-    if ( event ) delete event;
     return res;
 }
 
@@ -134,10 +132,9 @@ void PyProto::linkAction(Event *event, size_t linkNum)
     PyObject *cb = that->links->at(linkNum).second;
     /* Translate the Event to a Python-readable thing */
     /* Do something with the callback */
-    PyEvent *pe = dynamic_cast<PyEvent*>(event);
+    PyEvent_t *pe = convertEventToPython(event);
     if ( pe ) {
-        PyEvent_t *e = pe->getPyObj();
-        PyObject *args = Py_BuildValue("(O)", e);
+        PyObject *args = Py_BuildValue("(O)", pe);
         PyObject *res = PyObject_CallObject(cb, args);
         Py_XDECREF(res);
     }

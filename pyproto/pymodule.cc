@@ -429,5 +429,4 @@ static PyObject* pyProto_finish(PyObject *self, PyObject *args)
 }
 
 
-
 } /* extern "C" */
