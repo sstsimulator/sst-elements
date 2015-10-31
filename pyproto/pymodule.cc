@@ -11,6 +11,7 @@
 
 #include <sst_config.h>
 #include <Python.h>
+#include <structmember.h>
 
 #include <vector>
 
@@ -29,6 +30,11 @@ static int pyEvent_Init(PyEvent_t *self, PyObject *args, PyObject *kwds);
 static void pyEvent_Dealloc(PyEvent_t *self);
 static PyMethodDef pyEventMethods[] = {
     { NULL, NULL, 0, NULL }
+};
+static PyMemberDef pyEventMembers[] = {
+    { (char*)"type", T_OBJECT, offsetof(PyEvent_t, type), 0, (char*)"Type of Event"},
+    { (char*)"sst", T_OBJECT, offsetof(PyEvent_t, dict), 0, (char*)"SST Event members"},
+    { NULL, 0, 0, 0, NULL }
 };
 
 static PyTypeObject PyEventDef = {
@@ -61,7 +67,7 @@ static PyTypeObject PyEventDef = {
     0,                         /* tp_iter */
     0,                         /* tp_iternext */
     pyEventMethods,            /* tp_methods */
-    0,                         /* tp_members */
+    pyEventMembers,            /* tp_members */
     0,                         /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
@@ -242,12 +248,17 @@ void* genPyProtoPyModule(void)
 
 static int pyEvent_Init(PyEvent_t *self, PyObject *args, PyObject *kwds)
 {
+    self->type = PyString_FromString("Python");
+    self->dict = PyDict_New();
+    PyErr_Print();
     return 0;
 }
 
 
 static void pyEvent_Dealloc(PyEvent_t *self)
 {
+    Py_XDECREF(self->type);
+    Py_XDECREF(self->dict);
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -430,3 +441,14 @@ static PyObject* pyProto_finish(PyObject *self, PyObject *args)
 
 
 } /* extern "C" */
+
+
+namespace SST {
+namespace PyProtoNS {
+    PyTypeObject* getEventObject() { return &PyEventDef; }
+    PyTypeObject* getPyProtoObject() { return &PyProtoDef; }
+    PyTypeObject* getPyLinkObject() { return &PyLinkDef; }
+}
+}
+
+

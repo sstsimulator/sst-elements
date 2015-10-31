@@ -137,6 +137,7 @@ void PyProto::linkAction(Event *event, size_t linkNum)
         PyObject *args = Py_BuildValue("(O)", pe);
         PyObject *res = PyObject_CallObject(cb, args);
         Py_XDECREF(res);
+        Py_XDECREF(pe);
     }
     delete event;
 }

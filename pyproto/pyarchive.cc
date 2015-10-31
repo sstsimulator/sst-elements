@@ -15,10 +15,11 @@
 #include <vector>
 
 #include <sst/core/event.h>
-#include <sst/core/interfaces/stringEvent.h>
 
 #include "pymodule.h"
 #include "pyproto.h"
+
+#include "pyarchive.h"
 
 namespace SST {
 namespace PyProtoNS {
@@ -28,8 +29,13 @@ PyEvent_t *convertEventToPython(SST::Event *event)
     PyEvent *pe = dynamic_cast<PyEvent*>(event);
     if ( pe ) {
         return pe->getPyObj();
-    } else if ( Interfaces::StringEvent *se = dynamic_cast<Interfaces::StringEvent*>(event) ) {
-        //PyEvent_t *res = 
+    } else {
+        PyEvent_t *out = NULL;
+        polymorphic_PyEvent_oarchive oa(std::cout, boost::archive::no_header|boost::archive::no_codecvt);
+
+        oa << event;
+
+        return oa.getEvent();
     }
     return NULL;
 }

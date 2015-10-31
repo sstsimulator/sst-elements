@@ -20,6 +20,8 @@ void* genPyProtoPyModule(void);
 
 typedef struct {
     PyObject_HEAD;
+    PyObject *type;
+    PyObject *dict; /* Holds elements from Events */
 } PyEvent_t;
 
 
@@ -53,6 +55,9 @@ namespace SST {
 class Event;
 namespace PyProtoNS {
         PyEvent_t *convertEventToPython(SST::Event *event);
+        PyTypeObject* getEventObject();
+        PyTypeObject* getPyProtoObject();
+        PyTypeObject* getPyLinkObject();
 }
 }
 
