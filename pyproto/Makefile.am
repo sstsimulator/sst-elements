@@ -12,6 +12,7 @@ libpyproto_la_SOURCES = \
 						eli.cc \
 						pyproto.h \
 						pyproto.cc \
+						pymodule.h \
 						pymodule.cc \
 						pyarchive.h \
 						pyarchive.cc
