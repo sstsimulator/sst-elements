@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <string>
+#include <numeric>
 
 #include <cstddef>
 #include <boost/archive/basic_archive.hpp>
@@ -109,7 +110,7 @@ class PyEvent_oarchive : public boost::archive::detail::common_oarchive<PyEvent_
 
     void buildCurrentName()
     {
-        current_name = accumulate( stack.begin(), stack.end(), std::string(""),
+        current_name = std::accumulate( stack.begin(), stack.end(), std::string(""),
                     [](const std::string &a, const std::string &b) {
                         return a.empty() ? b : (a + "::" + b);
                     });
