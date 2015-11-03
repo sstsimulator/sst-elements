@@ -251,6 +251,10 @@ void Vault::issueAtomicFirstMemoryPhase(addr2TransactionMap_t::iterator mi)
     case (HMC_NAND):
     case (HMC_OR):
     case (HMC_XOR):
+    case (HMC_FP_ADD):
+    case (HMC_COMP_greater):
+    case (HMC_COMP_less):
+    case (HMC_COMP_equal):
         mi->second.resetIsWrite(); //FIXME: check if isWrite flag conceptioally is correct in hmc2 ops
         if (mi->second.getIsWrite()) {
             dbg->fatal(CALL_INFO, -1, "Atomic operation write flag should not be write\n");
@@ -286,6 +290,10 @@ void Vault::issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi)
     case (HMC_NAND):
     case (HMC_OR):
     case (HMC_XOR):
+    case (HMC_FP_ADD):
+    case (HMC_COMP_greater):
+    case (HMC_COMP_less):
+    case (HMC_COMP_equal):
         mi->second.setIsWrite();
         if (!mi->second.getIsWrite()) {
             dbg->fatal(CALL_INFO, -1, "Atomic operation write flag should be write (2nd phase)\n");

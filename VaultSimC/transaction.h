@@ -125,6 +125,14 @@ public:
             return "HMC_OR";
         case HMC_XOR:
             return "HMC_XOR";
+        case HMC_FP_ADD:
+            return "HMC_FP_ADD";
+        case HMC_COMP_greater:
+            return "HMC_COMP_greater";
+        case HMC_COMP_less:
+            return "HMC_COMP_less";
+        case HMC_COMP_equal:
+            return "HMC_COMP_equal";
         default:
             return "THIS MUST NOT BE PRINTED";
         }
