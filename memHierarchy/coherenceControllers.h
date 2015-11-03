@@ -31,6 +31,9 @@
 #include <list>
 #include <vector>
 #include "memNIC.h"
+#include <sstream>
+#include <fstream>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace SST::MemHierarchy;
@@ -90,6 +93,7 @@ public:
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
    
     virtual void printStats(int _statsFile, vector<int> statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency, uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM, uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M) =0;
+    virtual void printStatsForMacSim(int _statsFile, vector<int> statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency, uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM, uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M) =0;
 
 
 
@@ -938,6 +942,20 @@ protected:
                 break;
         }
 
+    }
+
+    // Helper function for printing statistics in MacSim format
+    void writeTo(ofstream &ofs, string prefix, string name, uint64_t count) {
+        #define FILED1_LENGTH 45
+        #define FILED2_LENGTH 20
+        #define FILED3_LENGTH 30
+    
+        ofs.setf(ios::left, ios::adjustfield);
+        string capitalized_prefixed_name = boost::to_upper_copy(prefix + "_" + name);
+        ofs << setw(FILED1_LENGTH) << capitalized_prefixed_name;
+    
+        ofs.setf(ios::right, ios::adjustfield);
+        ofs << setw(FILED2_LENGTH) << count << setw(FILED3_LENGTH) << count << endl << endl;
     }
 };
 

@@ -198,6 +198,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
 
     statsFile_          = params.find_integer("statistics", 0);
+    statsFormat_        = params.find_integer("statistics_format", 0);
     idleMax_            = params.find_integer("idle_max", 10000);
     accessLatency_      = params.find_integer("access_latency_cycles", -1);
     tagLatency_         = params.find_integer("tag_access_latency_cycles",accessLatency_);

@@ -1659,3 +1659,101 @@ void MESIInternalDirectory::printStats(int statLoc, vector<int> groupIds, map<in
     }    
 }
 
+void MESIInternalDirectory::printStatsForMacSim(int statLocation, vector<int> groupIds, map<int, CtrlStats> ctrlStats, uint64_t upgradeLatency, 
+        uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM,
+        uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M){
+    stringstream ss;
+    ss << name_.c_str() << ".stat.out";
+    string filename = ss.str();
+
+    ofstream ofs;
+    ofs.exceptions(std::ofstream::eofbit | std::ofstream::failbit | std::ofstream::badbit);
+    ofs.open(filename.c_str(), std::ios_base::out);
+
+    for (unsigned int i = 0; i < groupIds.size(); ++i) {
+        uint64_t totalMisses =  ctrlStats[groupIds[i]].newReqGetSMisses_ + ctrlStats[groupIds[i]].newReqGetXMisses_ + ctrlStats[groupIds[i]].newReqGetSExMisses_ +
+                                ctrlStats[groupIds[i]].blockedReqGetSMisses_ + ctrlStats[groupIds[i]].blockedReqGetXMisses_ + ctrlStats[groupIds[i]].blockedReqGetSExMisses_;
+        uint64_t totalHits =    ctrlStats[groupIds[i]].newReqGetSHits_ + ctrlStats[groupIds[i]].newReqGetXHits_ + ctrlStats[groupIds[i]].newReqGetSExHits_ +
+                                ctrlStats[groupIds[i]].blockedReqGetSHits_ + ctrlStats[groupIds[i]].blockedReqGetXHits_ + ctrlStats[groupIds[i]].blockedReqGetSExHits_;
+
+        uint64_t totalRequests = totalHits + totalMisses;
+        double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
+
+        writeTo(ofs, name_, string("Total_data_requests"), totalRequests);
+        writeTo(ofs, name_, string("GetS"), 
+                ctrlStats[groupIds[i]].newReqGetSHits_ + ctrlStats[groupIds[i]].newReqGetSMisses_ + 
+                ctrlStats[groupIds[i]].blockedReqGetSHits_ + ctrlStats[groupIds[i]].blockedReqGetSMisses_);
+        writeTo(ofs, name_, string("GetX"), 
+                ctrlStats[groupIds[i]].newReqGetXHits_ + ctrlStats[groupIds[i]].newReqGetXMisses_ + 
+                ctrlStats[groupIds[i]].blockedReqGetXHits_ + ctrlStats[groupIds[i]].blockedReqGetXMisses_);
+        writeTo(ofs, name_, string("GetSEx"), 
+                ctrlStats[groupIds[i]].newReqGetSExHits_ + ctrlStats[groupIds[i]].newReqGetSExMisses_ + 
+                ctrlStats[groupIds[i]].blockedReqGetSExHits_ + ctrlStats[groupIds[i]].blockedReqGetSExMisses_);
+
+        writeTo(ofs, name_, string("Total_misses"), totalMisses);
+        // Report misses at the time a request was handled -> "blocked" indicates request was blocked by another pending request before being handled
+        writeTo(ofs, name_, string("GetS_miss_on_arrival"),            ctrlStats[groupIds[i]].newReqGetSMisses_);
+        writeTo(ofs, name_, string("GetS_miss_after_being_blocked"),   ctrlStats[groupIds[i]].blockedReqGetSMisses_);
+        writeTo(ofs, name_, string("GetX_miss_on_arrival"),            ctrlStats[groupIds[i]].newReqGetXMisses_);
+        writeTo(ofs, name_, string("GetX_miss_after_being_blocked"),   ctrlStats[groupIds[i]].blockedReqGetXMisses_);
+        writeTo(ofs, name_, string("GetSEx_miss_on_arrival"),          ctrlStats[groupIds[i]].newReqGetSExMisses_);
+        writeTo(ofs, name_, string("GetSEx_miss_after_being_blocked"), ctrlStats[groupIds[i]].blockedReqGetSExMisses_);
+
+        writeTo(ofs, name_, string("Total_hits"), totalHits);
+        writeTo(ofs, name_, string("GetS_hit_on_arrival"),            ctrlStats[groupIds[i]].newReqGetSHits_);
+        writeTo(ofs, name_, string("GetS_hit_after_being_blocked"),   ctrlStats[groupIds[i]].blockedReqGetSHits_);
+        writeTo(ofs, name_, string("GetX_hit_on_arrival"),            ctrlStats[groupIds[i]].newReqGetXHits_);
+        writeTo(ofs, name_, string("GetX_hit_after_being_blocked"),   ctrlStats[groupIds[i]].blockedReqGetXHits_);
+        writeTo(ofs, name_, string("GetSEx_hit_on_arrival"),          ctrlStats[groupIds[i]].newReqGetSExHits_);
+        writeTo(ofs, name_, string("GetSEx_hit_after_being_blocked"), ctrlStats[groupIds[i]].blockedReqGetSExHits_);
+
+        writeTo(ofs, name_, string("Hit_ratio"), hitRatio);
+        writeTo(ofs, name_, string("Miss_ratio"), 100 - hitRatio);
+
+        // Coherence transitions for misses 
+        writeTo(ofs, name_, string("GetS_I->S"),                           ctrlStats[groupIds[i]].GetS_IS);
+        writeTo(ofs, name_, string("GetS_M(present_at_another_cache)"),    ctrlStats[groupIds[i]].GetS_M);
+        writeTo(ofs, name_, string("GetX_I->M"),                           ctrlStats[groupIds[i]].GetX_IM);
+        writeTo(ofs, name_, string("GetX_S->M"),                           ctrlStats[groupIds[i]].GetX_SM);
+        writeTo(ofs, name_, string("GetX_M(present_at_another_cache)"),    ctrlStats[groupIds[i]].GetX_M);
+        writeTo(ofs, name_, string("GetSEx_I->M"),                         ctrlStats[groupIds[i]].GetSE_IM);
+        writeTo(ofs, name_, string("GetSEx_S->M"),                         ctrlStats[groupIds[i]].GetSE_SM);
+        writeTo(ofs, name_, string("GetSEx_M(present_at_another_cache)"),  ctrlStats[groupIds[i]].GetSE_M);
+
+        // Replacements and evictions
+        writeTo(ofs, name_, string("PutS_received"),               stats_[groupIds[i]].PUTSReqsReceived_);
+        writeTo(ofs, name_, string("PutM_received"),               stats_[groupIds[i]].PUTMReqsReceived_);
+        writeTo(ofs, name_, string("PutS_sent_due_to_eviction"),   stats_[groupIds[i]].EvictionPUTSReqSent_);
+        writeTo(ofs, name_, string("PutE_sent_due_to_eviction"),   stats_[groupIds[i]].EvictionPUTEReqSent_);
+        writeTo(ofs, name_, string("PutM_sent_due_to_eviction"),   stats_[groupIds[i]].EvictionPUTMReqSent_);
+
+        // Other stats
+        writeTo(ofs, name_, string("Inv_stalled_because_LOCK_held"),               ctrlStats[groupIds[i]].InvWaitingForUserLock_);
+        writeTo(ofs, name_, string("Requests_received_(incl_coherence_traffic)"),  ctrlStats[groupIds[i]].TotalRequestsReceived_);
+        writeTo(ofs, name_, string("Requests_handled_by_MSHR_(MSHR_hits)"),        ctrlStats[groupIds[i]].TotalMSHRHits_);
+        writeTo(ofs, name_, string("NACKs_sent_(MSHR_Full,Down)"),                 stats_[groupIds[i]].NACKsSentDown_);
+        writeTo(ofs, name_, string("NACKs_sent_(MSHR_Full,Up)"),                   stats_[groupIds[i]].NACKsSentUp_);
+
+        // Latency stats
+        writeTo(ofs, name_, string("Avg_Miss_Latency_(cyc)"), upgradeLatency);
+        if (ctrlStats[groupIds[0]].GetS_IS  > 0) writeTo(ofs, name_, string("Latency_GetS_I->S"),   (lat_GetS_IS / ctrlStats[groupIds[0]].GetS_IS));
+        if (ctrlStats[groupIds[0]].GetS_M   > 0) writeTo(ofs, name_, string("Latency_GetS_M"),      (lat_GetS_M / ctrlStats[groupIds[0]].GetS_M));
+        if (ctrlStats[groupIds[0]].GetX_IM  > 0) writeTo(ofs, name_, string("Latency_GetX_I->M"),   (lat_GetX_IM / ctrlStats[groupIds[0]].GetX_IM));
+        if (ctrlStats[groupIds[0]].GetX_SM  > 0) writeTo(ofs, name_, string("Latency_GetX_S->M"),   (lat_GetX_SM / ctrlStats[groupIds[0]].GetX_SM));
+        if (ctrlStats[groupIds[0]].GetX_M   > 0) writeTo(ofs, name_, string("Latency_GetX_M"),      (lat_GetX_M / ctrlStats[groupIds[0]].GetX_M));
+        if (ctrlStats[groupIds[0]].GetSE_IM > 0) writeTo(ofs, name_, string("Latency_GetSEx_I->M"), (lat_GetSEx_IM / ctrlStats[groupIds[0]].GetSE_IM));
+        if (ctrlStats[groupIds[0]].GetSE_SM > 0) writeTo(ofs, name_, string("Latency_GetSEx_S->M"), (lat_GetSEx_SM / ctrlStats[groupIds[0]].GetSE_SM));
+        if (ctrlStats[groupIds[0]].GetSE_M  > 0) writeTo(ofs, name_, string("Latency_GetSEx_M"),    (lat_GetSEx_M / ctrlStats[groupIds[0]].GetSE_M));
+    }
+
+    // State and event stats
+#include <boost/format.hpp>
+    for (int i = 0; i < LAST_CMD; i++) {
+        for (int j = 0; j < LAST_CMD; j++) {
+            if (stateStats_[i][j] == 0) continue;
+            writeTo(ofs, name_, str(boost::format("%1%_%2%") % CommandString[i] % StateString[j]), stateStats_[i][j]);
+        }
+    }
+    ofs.close();
+}
+

@@ -290,6 +290,7 @@ private:
     uint64                  mshrLatency_;
     uint64                  timestamp_;
     int                     statsFile_;
+    int                     statsFormat_;
     int                     idleMax_;
     int                     idleCount_;
     bool                    memNICIdle_;

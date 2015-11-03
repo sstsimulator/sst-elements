@@ -450,9 +450,15 @@ void Cache::finish(){
     if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
     else averageLatency = 0;
 
-    coherenceMgr->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
-            missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
-            missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
+    if (statsFormat_ == 0) 
+        coherenceMgr->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
+                missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
+                missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
+    else if (statsFormat_ == 1)
+        coherenceMgr->printStatsForMacSim(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
+                missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
+                missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
+
     listener_->printStats(*d_);
     delete cf_.cacheArray_;
     delete cf_.rm_;
