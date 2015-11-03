@@ -336,6 +336,10 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
     case (HMC_NAND):
     case (HMC_OR):
     case (HMC_XOR):
+    case (HMC_FP_ADD):
+    case (HMC_COMP_greater):
+    case (HMC_COMP_less):
+    case (HMC_COMP_equal):
         computeDoneCycleMap[bankNoCompute] = currentClockCycle + 3;
         break;
     case (HMC_NONE):
