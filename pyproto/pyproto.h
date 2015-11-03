@@ -12,15 +12,15 @@
 #ifndef COMPONENTS_PYPROTO_PYPROTO_H
 #define COMPONENTS_PYPROTO_PYPROTO_H
 
-#include <Python.h>
-
 #include <inttypes.h>
 #include <atomic>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
 
-#include "pymodule.h"
+extern "C" struct PyEvent_t;
+extern "C" struct PyProto_t;
+extern "C" typedef struct _object PyObject;
 
 namespace SST {
 namespace PyProtoNS {

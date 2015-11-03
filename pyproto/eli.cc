@@ -12,10 +12,10 @@
 #include "sst_config.h"
 
 #include "pyproto.h"
-#include "pymodule.h"
 
 #include "sst/core/element.h"
 
+extern "C" void* genPyProtoPyModule(void);
 
 using namespace SST;
 

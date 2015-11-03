@@ -18,22 +18,22 @@ extern "C" {
 void* genPyProtoPyModule(void);
 
 
-typedef struct {
+struct PyEvent_t {
     PyObject_HEAD;
     PyObject *type;
     PyObject *dict; /* Holds elements from Events */
-} PyEvent_t;
+};
 
 
-typedef struct {
+struct PyLink_t {
     PyObject_HEAD;
     PyObject *object; /* PyProto Object */
     char *portName;
     size_t portNumber;
-} PyLink_t;
+};
 
 
-typedef struct {
+struct PyProto_t {
     PyObject_HEAD;
     char *name;
     PyObject *tcomponent;
@@ -46,7 +46,7 @@ typedef struct {
     linkArray_t  *links;
     bool constructed;
 
-} PyProto_t;
+};
 
 
 }
