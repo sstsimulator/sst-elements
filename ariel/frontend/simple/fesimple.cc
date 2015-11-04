@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
 
     // Load the symbols ready for us to mangle functions.
-    PIN_InitSymbols();
+    PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
     PIN_AddFiniFunction(Fini, 0);
 
     if(SSTVerbosity.Value() > 0) {
