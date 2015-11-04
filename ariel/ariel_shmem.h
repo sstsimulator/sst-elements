@@ -124,8 +124,15 @@ public:
     /** Return the current time (in seconds) of the simulation */
     void getTime(struct timeval *tp) {
         uint64_t cTime = sharedData->simTime;
-        tp->tv_sec = cTime / 1e6;
-        tp->tv_usec = cTime - (tp->tv_sec * 1e6);
+        tp->tv_sec = cTime / 1e9;
+        tp->tv_usec = (cTime - (tp->tv_sec * 1e9)) / 1e3;
+    }
+
+    /** Return the current time in nanoseconds of the simulation */
+    void getTimeNs(struct timespec *tp) {
+        uint64_t cTime = sharedData->simTime;
+        tp->tv_sec = cTime / 1e9;
+        tp->tv_nsec = cTime - (tp->tv_sec * 1e9);
     }
 
 };
