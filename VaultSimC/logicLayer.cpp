@@ -10,13 +10,14 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
-#include <logicLayer.h>
-
+#include <sst/core/serialization.h>
 #include <sst/core/interfaces/stringEvent.h>
-#include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+
+#include <sst/elements/memHierarchy/memEvent.h>
+
+#include "logicLayer.h"
 
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
@@ -183,7 +184,7 @@ bool logicLayer::clock(Cycle_t current)
                 tm[1]++;
                 dbg.debug(_L4_, "ll%d sends %p to next\n", llID, event);
             } else {
-                printf("ll%d not sure what to do with %p...\n", llID, event);
+                //printf("ll%d not sure what to do with %p...\n", llID, event);
             }
         }
     }
@@ -222,7 +223,7 @@ bool logicLayer::clock(Cycle_t current)
     }
 
     if (tm[0] > bwLimit || tm[1] > bwLimit || tc[0] > bwLimit || tc[1] > bwLimit) {
-        //dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
+        dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
     }
 
     bwUsedToCpu[0]->addData(tc[0]);

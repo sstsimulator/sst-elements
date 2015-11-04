@@ -18,12 +18,15 @@
 #include <unordered_map>
 #include <vector>
 
+#include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
 #include "globals.h"
-#include "callback_hmc.h"
 #include "transaction.h"
+#include "callback_hmc.h"
+
+#include <DRAMSim.h>
 
 using namespace std;
 using namespace SST;
@@ -32,11 +35,7 @@ using namespace SST;
 #define BANK_BOOL_MAP_OPTIMUM_SIZE 10
 #define TRANS_Q_OPTIMUM_SIZE 10
 
-namespace DRAMSim {
-    class MultiChannelMemorySystem;
-};
-
-class Vault {
+class Vault : public SubComponent {
 private:
     typedef CallbackBase<void, unsigned, uint64_t, uint64_t> callback_t;
     typedef unordered_map<uint64_t, transaction_c> addr2TransactionMap_t;
@@ -56,7 +55,7 @@ public:
      * @param id Vault id
      * @param dbg VaultSimC() class wrapper sst debuger
      */
-    Vault(unsigned id, Output* dbg, bool statistics, string frequency);
+    Vault(Component *comp, Params &params);
 
     /**
      * finish
@@ -113,12 +112,6 @@ private:
     void issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi);
     void issueAtomicComputePhase(addr2TransactionMap_t::iterator mi);
 
-    /**
-     * Stats
-     */
-    void initStats();
-    void printStats();
-    inline bool isStatSet() { return statistics; }
 
     /** 
      * Bank BusyMap Functions
@@ -158,12 +151,10 @@ public:
     callback_t *readCallback;
     callback_t *writeCallback;
 
-    DRAMSim::MultiChannelMemorySystem* dramsim;
+    DRAMSim::MultiChannelMemorySystem *memorySystem;
 
 private:
-    Output* dbg;                                 // VaulSimC wrapper dbg, for printing debuging commands
-    bool statistics;                             // Print statistics knob
-    string frequency;                            // Vault Frequency
+    Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
     bank2BoolMap_t bankBusyMap;                  // Current Busy Banks
@@ -172,16 +163,14 @@ private:
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 
-    struct statistics_t {
-        uint64_t totalTransactions;
-        uint64_t totalHmcOps;
-        uint64_t totalNonHmcOps;
-
-        uint64_t totalHmcLatency;
-        uint64_t issueHmcLatency;
-        uint64_t readHmcLatency;
-        uint64_t writeHmcLatency;
-    } stats;
+    // stats
+    Statistic<uint64_t>* statTotalTransactions;
+    Statistic<uint64_t>* statTotalHmcOps;
+    Statistic<uint64_t>* statTotalNonHmcOps;
+    Statistic<uint64_t>* statTotalHmcLatency;
+    Statistic<uint64_t>* statIssueHmcLatency;
+    Statistic<uint64_t>* statReadHmcLatency;
+    Statistic<uint64_t>* statWriteHmcLatency;
 
 };
 #endif

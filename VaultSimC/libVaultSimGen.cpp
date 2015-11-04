@@ -10,9 +10,11 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
-#include "sst/core/element.h"
-#include <VaultSimC.h>
+#include <sst/core/serialization.h>
+#include <sst/core/element.h>
+#include <sst/core/component.h>
+
+#include "Vault.h"
 
 extern "C" {
   Component* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Params& params );
@@ -27,10 +29,11 @@ const char *memEventList[] = {
 static const ElementInfoParam VaultSimC_params[] = {
   {"clock",              "Vault Clock Rate.", "1.0 Ghz"},
   {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
-  {"VaultID",            "Vault Unique ID (Unique to cube)."},
-  {"statistics",         "0: disable ,1: enable statistics printing"},
-  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-  {"debug_level",        "debug verbosity level (0-10)"},
+  {"debug",              "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"debug_level",        "VaultSimC debug verbosity level (0-10)"},
+  {"vault.id",           "Vault Unique ID (Unique to cube)."},
+  {"vault.debug",        "Vault debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"vault.debug_level",  "Vault debug verbosity level (0-10)"},
   { NULL, NULL }
 };
 
@@ -93,10 +96,56 @@ static const ElementInfoComponent components[] = {
   { NULL, NULL, NULL, NULL }
 };
 
+#if defined(HAVE_LIBDRAMSIM)
+static SubComponent* create_Vault(Component* comp, Params& params) {
+    return new Vault(comp, params);
+}
+
+static const ElementInfoParam Vault_params[] = {
+    {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"system_ini",      "Name of DRAMSim System config file", NULL},
+    {"pwd",             "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
+    {"logfile",         "DRAMSim output path", NULL},
+    {"mem_size",        "Size of physical memory in MB", "0"},
+    {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic Vault_statistics[] = {
+  { "TOTAL_TRANSACTIONS",      "", "reqs", 1},
+  { "TOTAL_HMC_OPS",           "", "reqs", 1},
+  { "TOTAL_NON_HMC_OPS",       "", "reqs", 1},
+  { "HMC_OPS_TOTAL_LATENCY",   "", "cycles", 1},
+  { "HMC_OPS_ISSUE_LATENCY",   "", "cycles", 1},
+  { "HMC_OPS_READ_LATENCY",    "", "cycles", 1},
+  { "HMC_OPS_WRITE_LATENCY",   "", "cycles", 1},
+  { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoSubComponent subcomponents[] = {
+    {   
+        "Vault",                          /*!< Name of the subcomponent. */
+        "DRAMSim-based Vault timings",    /*!< Brief description of the subcomponent. */
+        NULL,                             /*!< Pointer to a function that will print additional documentation (optional) */
+        create_Vault,                     /*!< Pointer to a function to initialize a subcomponent instance. */
+        Vault_params,                     /*!< List of parameters which are used by this subcomponent. */
+        Vault_statistics,                 /*!< List of statistics supplied by this subcomponent. */
+        "SST::VaultSimC"                  /*!< Name of SuperClass which for this subcomponent can be used. */
+    },
+    {NULL, NULL, NULL, NULL, NULL, NULL}
+};
+#endif
+
 extern "C" {
   ElementLibraryInfo VaultSimC_eli = {
-    "VaultSimC",
-    "Stacked memory Vault Components",
-    components,
+    "VaultSimC",                          /*!< Name of the Library. */
+    "Stacked memory Vault Components",    /*!< Brief description of the Library */
+    components,                           /*!< List of Components contained in the library. */
+    NULL,                                 /*!< List of Events exported by the library. */
+    NULL,                                 /*!< List of Introspectors provided by the library. */
+    NULL,                                 /*!< List of Modules provided by the library. */
+    subcomponents,                        /*!< List of SubComponents provided by the library. */
+    NULL,                                 /*!< List of Partitioners provided by the library. */ 
+    NULL,                                 /*!< Pointer to Function to generate a Python Module for use in Configurations */
+    NULL                                  /*!< List of Generators provided by the library. */
   };
 }

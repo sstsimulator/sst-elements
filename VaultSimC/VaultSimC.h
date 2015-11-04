@@ -15,13 +15,13 @@
 
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
-#include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
-#include "globals.h"
-#include "Vault.h"
-#include "transaction.h"
+#include <sst/elements/memHierarchy/memEvent.h>
 
+#include "globals.h"
+#include "transaction.h"
+#include "Vault.h"
 
 using namespace std;
 using namespace SST;
@@ -46,10 +46,10 @@ private:
 
     deque<transaction_c> transQ;
     t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
-    Vault* memorySystem;
+    Vault *memorySystem;
 
     uint8_t *memBuffer;
-    memChan_t* memChan;
+    memChan_t *memChan;
     size_t numVaults2;  // not clear if used
     int numOutstanding; //number of mem requests outstanding (non-phx)
     unsigned vaultID;

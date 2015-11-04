@@ -9,8 +9,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sst_config.h>
 #include <sys/mman.h>
+
+#include <sst_config.h>
 #include <sst/core/serialization.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -23,59 +24,47 @@ using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( id ), numOutstanding(0) 
 {
-    int debugLevel = params.find_integer("debug_level", 0);
-    dbg.init("@R:VaultSim::@p():@l " + getName() + ": ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));  
-    if(debugLevel < 0 || debugLevel > 10) 
+    int debugLevel = params.find_integer("vault.debug_level", 0);
+    if (debugLevel < 0 || debugLevel > 10) 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+    dbg.init("@R:VaultSim::@p():@l " + getName() + ": ", debugLevel, 0, (Output::output_location_t)params.find_integer("vault.debug", 0));  
 
     std::string frequency = "1.0 GHz";
     frequency = params.find_string("clock", "1.0 Ghz");
 
     // number of bits to determine vault address
     int nv2 = params.find_integer("numVaults2", -1);
-    if (-1 == nv2) {
-        dbg.fatal(CALL_INFO, -1, "numVaults2 (number of bits to determine vault address) not set! \
-                Should be log2(number of vaults per cube)\n");
-    } else {
-        numVaults2 = nv2;
-    }
+    if (-1 == nv2) 
+        dbg.fatal(CALL_INFO, -1, "numVaults2 not set! should be log2(number of vaults per cube)\n");
+    numVaults2 = nv2;
 
     memChan = configureLink("bus", "1 ns");
 
-    int vid = params.find_integer("VaultID", -1);
-    if (-1 == vid) {
-        dbg.fatal(CALL_INFO, -1, "VaultID not set\n");
-    } else {
-        vaultID = vid;
-    }
-
-    bool statistics = params.find_integer("statistics", -1);
-    if (-1 == vid) {
-        dbg.fatal(CALL_INFO, -1, "statistics not set\n");
-    }
+    int vid = params.find_integer("vault.id", -1);
+    if (-1 == vid) 
+        dbg.fatal(CALL_INFO, -1, "vault.id not set\n");
+    vaultID = vid;
 
     registerClock(frequency, new Clock::Handler<VaultSimC>(this, &VaultSimC::clock));
 
-    // Phx Library configuratoin
-    memorySystem = new Vault(vaultID, &dbg, statistics, frequency);
-    if (!memorySystem) {
-        dbg.fatal(CALL_INFO, -1, "MemorySystem() failed\n");
-    }
+    Params vaultParams = params.find_prefix_params("vault.");
+    memorySystem = dynamic_cast<Vault*>(loadSubComponent("VaultSimC.Vault", this, vaultParams));
+    if (!memorySystem) 
+        dbg.fatal(CALL_INFO, -1, "Unable to load Vault as sub-component\n");
 
     CallbackBase<void, unsigned, uint64_t, uint64_t> *readDataCB = 
         new Callback<VaultSimC, void, unsigned, uint64_t, uint64_t>(this, &VaultSimC::readData);
     CallbackBase<void, unsigned, uint64_t, uint64_t> *writeDataCB = 
         new Callback<VaultSimC, void, unsigned, uint64_t, uint64_t>(this, &VaultSimC::writeData);
 
-    dbg.debug(_INFO_, "VaultSimC %u: made vault %u\n", vaultID, vaultID);
     memorySystem->registerCallback(readDataCB, writeDataCB);
+    dbg.output(CALL_INFO, "VaultSimC %u: made vault %u\n", vaultID, vaultID);
 
     // setup backing store
     size_t memSize = MEMSIZE;
     memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-    if (NULL == memBuffer) {
+    if (NULL == memBuffer)
         dbg.fatal(CALL_INFO, -1, "Unable to MMAP backing store for Memory\n");
-    }
 
     memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }

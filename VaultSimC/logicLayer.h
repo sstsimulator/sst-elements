@@ -18,6 +18,7 @@
 #include <sst/core/output.h>
 #include <sst/core/statapi/stataccumulator.h>
 #include <sst/core/statapi/stathistogram.h>
+
 #include "globals.h"
 
 using namespace std;
