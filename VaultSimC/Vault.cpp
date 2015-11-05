@@ -19,6 +19,8 @@ using namespace std;
 
 Vault::Vault(Component *comp, Params &params) : SubComponent(comp) 
 {
+    out.init("", 0, 0, Output::STDOUT);
+    
     int debugLevel = params.find_integer("debug_level", 0);
     dbg.init("@R:Vault::@p():@l: ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     if (debugLevel < 0 || debugLevel > 10) 

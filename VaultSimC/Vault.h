@@ -155,6 +155,7 @@ public:
 
 private:
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
+    Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats         
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
     bank2BoolMap_t bankBusyMap;                  // Current Busy Banks

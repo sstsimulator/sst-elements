@@ -67,6 +67,7 @@ private:
 
 public:
     Output dbg;
+    Output out;
 };
 
 

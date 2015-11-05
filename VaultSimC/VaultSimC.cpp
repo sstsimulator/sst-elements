@@ -24,6 +24,8 @@ using namespace SST::MemHierarchy;
 
 VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( id ), numOutstanding(0) 
 {
+    out.init("", 0, 0, Output::STDOUT);
+    
     int debugLevel = params.find_integer("debug_level", 0);
     if (debugLevel < 0 || debugLevel > 10) 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");

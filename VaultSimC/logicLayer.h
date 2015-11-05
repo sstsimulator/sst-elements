@@ -43,6 +43,7 @@ private:
     }
 
     Output dbg;
+    Output out;
     memChans_t memChans;
     SST::Link *toMem;
     SST::Link *toCPU;

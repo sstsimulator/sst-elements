@@ -26,6 +26,8 @@ using namespace SST::MemHierarchy;
 
 logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id ), memOps(0) 
 {
+    out.init("", 0, 0, Output::STDOUT);
+
     int debugLevel = params.find_integer("debug_level", 0);
     dbg.init("@R:LogicLayer::@p():@l " + getName() + ": ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     if(debugLevel < 0 || debugLevel > 10) 
@@ -61,7 +63,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
                 dbg.fatal(CALL_INFO, -1, " could not find %s\n", bus_name);
             }
         }
-        printf(" Connected %d Vaults\n", numVaults);
+        out.output("*LogicLayer%d: Connected %d Vaults\n", ident, numVaults);
     } else {
         dbg.fatal(CALL_INFO, -1, " no <vaults> tag defined for LogicLayer\n");
     }
@@ -150,7 +152,7 @@ void logicLayer::init(unsigned int phase)
                     }
                 }
             } else {
-                printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+                out.output("LogicLayer%d: Memory received unexpected Init Command: %d\n", llID, me->getCmd() );
             }
         }
     }
