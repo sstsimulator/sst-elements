@@ -82,6 +82,9 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
 void Vault::finish() 
 {
+    //Print Statistics
+    if (statsFormat == 1)
+        printStatsForMacSim();
 }
 
 void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle) 
@@ -344,6 +347,33 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
 /*
     Other Functions
 */
+
+/*
+ *  Print Macsim style output in a file
+ **/
+void Vault::printStatsForMacSim() {
+    string name_ = "Vault" + to_string(id);
+    stringstream ss;
+    ss << name_.c_str() << ".stat.out";
+    string filename = ss.str();
+
+    ofstream ofs;
+    ofs.exceptions(std::ofstream::eofbit | std::ofstream::failbit | std::ofstream::badbit);
+    ofs.open(filename.c_str(), std::ios_base::out);
+
+    float avgHmcOpsLatencyTotal = (float)statTotalHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyIssue = (float)statIssueHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyRead  = (float)statReadHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyWrite = (float)statWriteHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
+
+    writeTo(ofs, name_, string("Total_trans"),                      statTotalTransactions->getCollectionCount());
+    writeTo(ofs, name_, string("Total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
+    writeTo(ofs, name_, string("Total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_total"),        avgHmcOpsLatencyTotal);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssue);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_read"),         avgHmcOpsLatencyRead);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWrite);
+}
 
 // Helper function for printing statistics in MacSim format
 void Vault::writeTo(ofstream &ofs, string prefix, string name, uint64_t count)
