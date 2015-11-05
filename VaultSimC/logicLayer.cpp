@@ -33,6 +33,8 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     if(debugLevel < 0 || debugLevel > 10) 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
+    statsFormat = params.find_integer("statistics_format", 0);
+
     std::string frequency = "2.2 GHz";
     frequency = params.find_string("clock", "2.2 Ghz");
 

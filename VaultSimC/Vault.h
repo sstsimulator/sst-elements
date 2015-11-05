@@ -17,6 +17,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
+#include <fstream>
+#include <boost/algorithm/string.hpp>
 
 #include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
@@ -144,6 +147,12 @@ private:
     inline void setAddrCompute(unsigned bankId, uint64_t addr) { addrComputeMap[bankId] = addr; }
     inline uint64_t getAddrCompute(unsigned bankId) { return addrComputeMap[bankId]; }
 
+    /**
+     *  Stats
+     */
+    // Helper function for printing statistics in MacSim format
+    void writeTo(ofstream &ofs, string prefix, string name, uint64_t count);
+
 public:
     unsigned id;
     uint64_t currentClockCycle;
@@ -155,7 +164,8 @@ public:
 
 private:
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
-    Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats         
+    Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats
+    int statsFormat;                             // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
     bank2BoolMap_t bankBusyMap;                  // Current Busy Banks

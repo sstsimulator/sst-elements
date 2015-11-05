@@ -26,24 +26,64 @@
 using namespace std;
 using namespace SST;
 
+/**
+ *  Stats
+ */
+// Helper function for printing statistics in MacSim format
+void writeTo(ofstream &ofs, string prefix, string name, uint64_t count);
 class VaultSimC : public IntrospectedComponent {
-public:
-    VaultSimC(ComponentId_t id, Params& params);
-    void finish();
-    void init(unsigned int phase);
-
 private:
     typedef SST::Link memChan_t;
     typedef multimap<uint64_t, MemHierarchy::MemEvent*> t2MEMap_t;
 
+public:
+    /** 
+     * Constructor
+     */
+    VaultSimC(ComponentId_t id, Params& params);
+
+    /**
+     * finish
+     * Callback function that gets to be called when simulation finishes
+     */
+    void finish();
+
+
 private:
+    /** 
+     * Constructor
+     */
     VaultSimC(const VaultSimC& c);
 
+    /** 
+     * Step call for VaultSimC
+     */
     bool clock(Cycle_t currentCycle);
 
+    /** 
+     * readData
+     * Vault calls this function when it is done with a read
+     */
     void readData(unsigned id, uint64_t addr, uint64_t clockcycle);
+
+    /** 
+     * writeData
+     * Vault calls this function when it is done with a write
+     */
     void writeData(unsigned id, uint64_t addr, uint64_t clockcycle);
 
+    /**
+     *
+     */
+    void init(unsigned int phase);
+    size_t getInternalAddress(MemHierarchy::Addr in) {
+        // calculate address
+        size_t lower = in & VAULT_MASK;
+        size_t upper = in >> (numVaults2 + VAULT_SHIFT);
+        size_t out = (upper << VAULT_SHIFT) + lower;
+        return out;
+    }
+private:
     deque<transaction_c> transQ;
     t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
     Vault *memorySystem;
@@ -54,20 +94,13 @@ private:
     int numOutstanding; //number of mem requests outstanding (non-phx)
     unsigned vaultID;
 
-    size_t getInternalAddress(MemHierarchy::Addr in) {
-        // calculate address
-        size_t lower = in & VAULT_MASK;
-        size_t upper = in >> (numVaults2 + VAULT_SHIFT);
-        size_t out = (upper << VAULT_SHIFT) + lower;
-        return out;
-    }
-
-    // statistics
+    // Statistics
     Statistic<uint64_t>* memOutStat;
 
-public:
+    // Output
     Output dbg;
     Output out;
+    int statsFormat;            // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 };
 
 

@@ -20,12 +20,14 @@ using namespace std;
 Vault::Vault(Component *comp, Params &params) : SubComponent(comp) 
 {
     out.init("", 0, 0, Output::STDOUT);
-    
+
     int debugLevel = params.find_integer("debug_level", 0);
     dbg.init("@R:Vault::@p():@l: ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     if (debugLevel < 0 || debugLevel > 10) 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    dbg.init("Vault", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));  
+    dbg.init("Vault", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+
+    statsFormat = params.find_integer("statistics_format", 0);
 
     string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
     if (NO_STRING_DEFINED == deviceIniFilename)
@@ -337,4 +339,23 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
         dbg.fatal(CALL_INFO, -1, "Vault Should not get a non HMC op in issue atomic (compute phase)\n");
         break;
     }
+}
+
+/*
+    Other Functions
+*/
+
+// Helper function for printing statistics in MacSim format
+void Vault::writeTo(ofstream &ofs, string prefix, string name, uint64_t count)
+{
+    #define FILED1_LENGTH 45
+    #define FILED2_LENGTH 20
+    #define FILED3_LENGTH 30
+
+    ofs.setf(ios::left, ios::adjustfield);
+    string capitalized_prefixed_name = boost::to_upper_copy(prefix + "_" + name);
+    ofs << setw(FILED1_LENGTH) << capitalized_prefixed_name;
+
+    ofs.setf(ios::right, ios::adjustfield);
+    ofs << setw(FILED2_LENGTH) << count << setw(FILED3_LENGTH) << count << endl << endl;
 }

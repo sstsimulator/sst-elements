@@ -27,13 +27,15 @@ const char *memEventList[] = {
 };
 
 static const ElementInfoParam VaultSimC_params[] = {
-  {"clock",              "Vault Clock Rate.", "1.0 Ghz"},
-  {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
-  {"debug",              "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-  {"debug_level",        "VaultSimC debug verbosity level (0-10)"},
-  {"vault.id",           "Vault Unique ID (Unique to cube)."},
-  {"vault.debug",        "Vault debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-  {"vault.debug_level",  "Vault debug verbosity level (0-10)"},
+  {"clock",                     "Vault Clock Rate.", "1.0 Ghz"},
+  {"numVaults2",                "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
+  {"debug",                     "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"debug_level",               "VaultSimC debug verbosity level (0-10)"},
+  {"statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+  {"vault.id",                  "Vault Unique ID (Unique to cube)."},
+  {"vault.debug",               "Vault debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"vault.debug_level",         "Vault debug verbosity level (0-10)"},
+  {"vault.statistics_format",   "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
   { NULL, NULL }
 };
 
@@ -64,6 +66,7 @@ static const ElementInfoParam logicLayer_params[] = {
   {"vaults",             "Number of vaults per cube."},
   {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
   {"debug_level",        "debug verbosity level (0-10)"},
+  {"statistics_format",  "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
   { NULL, NULL }
 };
 
@@ -102,14 +105,15 @@ static SubComponent* create_Vault(Component* comp, Params& params) {
 }
 
 static const ElementInfoParam Vault_params[] = {
-    {"id",              "Unique ID number of Vault", NULL},
-    {"device_ini",      "Name of DRAMSim Device config file", NULL},
-    {"debug",           "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", 0},
-    {"debug_level",     "VaultSimC debug verbosity level (0-10)", 0},
-    {"system_ini",      "Name of DRAMSim System config file", NULL},
-    {"pwd",             "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
-    {"logfile",         "DRAMSim output path", NULL},
-    {"mem_size",        "Size of physical memory in MB", "0"},
+    {"id",                  "Unique ID number of Vault", NULL},
+    {"device_ini",          "Name of DRAMSim Device config file", NULL},
+    {"debug",               "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", 0},
+    {"debug_level",         "VaultSimC debug verbosity level (0-10)", 0},
+    {"system_ini",          "Name of DRAMSim System config file", NULL},
+    {"pwd",                 "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
+    {"logfile",             "DRAMSim output path", NULL},
+    {"mem_size",            "Size of physical memory in MB", "0"},
+    {"statistics_format",   "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
     {NULL, NULL, NULL}
 };
 

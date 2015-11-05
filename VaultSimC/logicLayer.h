@@ -25,25 +25,44 @@ using namespace std;
 using namespace SST;
 
 class logicLayer : public IntrospectedComponent {
-public:
-    logicLayer(ComponentId_t id, Params& params);
-    void finish();
-    void init(unsigned int phase);
-
 private:
     typedef SST::Link memChan_t;
     typedef vector<memChan_t*> memChans_t;
 
+public:
+    /** 
+     * Constructor
+     */
+    logicLayer(ComponentId_t id, Params& params);
+
+    /**
+     * finish
+     * Callback function that gets to be called when simulation finishes
+     */
+    void finish();
+
+    /**
+     *
+     */
+    void init(unsigned int phase);
+
 private: 
+    /** 
+     * Constructor
+     */
     logicLayer(const logicLayer& c);
+
+    /** 
+     * Step call for LogicLayer
+     */
     bool clock(Cycle_t);
-    // determine if we 'own' a given address
+
+    // Determine if we 'own' a given address
     bool isOurs(unsigned int addr) {
         return ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0));
     }
 
-    Output dbg;
-    Output out;
+private:
     memChans_t memChans;
     SST::Link *toMem;
     SST::Link *toCPU;
@@ -53,8 +72,14 @@ private:
     unsigned int llID;
     unsigned long long memOps;
 
+    // Statistics
     Statistic<uint64_t>* bwUsedToCpu[2];
     Statistic<uint64_t>* bwUsedToMem[2];
+
+    // Output
+    Output dbg;                 // Output, for printing debuging commands
+    Output out;                 // Output, for printing always printed info and stats
+    int statsFormat;            // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 };
 
 #endif
