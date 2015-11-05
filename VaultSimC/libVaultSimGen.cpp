@@ -102,7 +102,10 @@ static SubComponent* create_Vault(Component* comp, Params& params) {
 }
 
 static const ElementInfoParam Vault_params[] = {
+    {"id",              "Unique ID number of Vault", NULL},
     {"device_ini",      "Name of DRAMSim Device config file", NULL},
+    {"debug",           "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", 0},
+    {"debug_level",     "VaultSimC debug verbosity level (0-10)", 0},
     {"system_ini",      "Name of DRAMSim System config file", NULL},
     {"pwd",             "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
     {"logfile",         "DRAMSim output path", NULL},
