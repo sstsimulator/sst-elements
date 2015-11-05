@@ -257,6 +257,9 @@ public:
 	instPtr_	    = 0;
 	vAddr_		    = 0;
         inProgress_         = false;
+#ifdef USE_VAULTSIM_HMC
+        hmcInstType_ = 0;
+#endif
     }
 
     /** return the original event that caused a NACK */
