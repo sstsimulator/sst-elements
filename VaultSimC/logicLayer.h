@@ -20,6 +20,7 @@
 #include <sst/core/statapi/stathistogram.h>
 
 #include "globals.h"
+#include "transaction.h"
 
 using namespace std;
 using namespace SST;

@@ -170,26 +170,28 @@ bool logicLayer::clock(Cycle_t current)
     // check for events from the CPU
     while ((tc[0] < bwLimit) && (ev = toCPU->recv())) {
         MemEvent *event  = dynamic_cast<MemEvent*>(ev);
-        dbg.debug(_L4_, "ll%d got req for %p (%" PRIu64 " %d)\n", llID, (void*)event->getAddr(), event->getID().first, event->getID().second);
-        if (NULL == event) { 
-            dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n"); 
-        }
+        dbg.debug(_L4_, "LogicLayer%d got req for %p (%" PRIu64 " %d)\n", llID, (void*)event->getAddr(), event->getID().first, event->getID().second);
+        if (NULL == event)
+            dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event\n", llID);
+        if (event->getHMCInstType() >= NUM_HMC_TYPES)
+            dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad HMC type %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
 
         tc[0]++;
         if (isOurs(event->getAddr())) {
             // it is ours!
             unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % memChans.size();
-            dbg.debug(_L4_, "ll%d sends %p to vault @ %" PRIu64 "\n", llID, event, current);
+            dbg.debug(_L4_, "LogicLayer%d sends %p to vault @ %" PRIu64 "\n", llID, event, current);
             memChans[vaultID]->send(event);      
-        } else {
+        } 
+        else {
             // it is not ours
             if (NULL != toMem) {
-                toMem->send( event );
+                toMem->send(event);
                 tm[1]++;
-                dbg.debug(_L4_, "ll%d sends %p to next\n", llID, event);
-            } else {
-                //printf("ll%d not sure what to do with %p...\n", llID, event);
-            }
+                dbg.debug(_L4_, "LogicLayer%d sends %p to next\n", llID, event);
+            } 
+            else 
+                out.output("LogicLayer%d not sure what to do with %p...\n", llID, event);
         }
     }
 
@@ -198,12 +200,12 @@ bool logicLayer::clock(Cycle_t current)
         while ((tm[0] < bwLimit) && (ev = toMem->recv())) {
             MemEvent *event  = dynamic_cast<MemEvent*>(ev);
             if (NULL == event) { 
-                dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n"); 
+                dbg.fatal(CALL_INFO, -1, "LogicLayer got bad event\n"); 
             }
 
             tm[0]++;
             // pass along to the CPU
-            dbg.debug(_L4_, "ll%d sends %p towards cpu (%" PRIu64 " %d)\n", llID, event, event->getID().first, event->getID().second);
+            dbg.debug(_L4_, "LogicLayer%d sends %p towards cpu (%" PRIu64 " %d)\n", llID, event, event->getID().first, event->getID().second);
             toCPU->send(event);
             tc[1]++;
         }
@@ -215,10 +217,10 @@ bool logicLayer::clock(Cycle_t current)
         while ((ev = m_memChan->recv())) {
             MemEvent *event  = dynamic_cast<MemEvent*>(ev);
             if (event == NULL) {
-                dbg.fatal(CALL_INFO, -1, "logic layer got bad event from vaults\n");
+                dbg.fatal(CALL_INFO, -1, "LogicLayer got bad event from vaults\n");
             }
 
-            dbg.debug(_L4_, "ll%d got an event %p from vault @ %" PRIu64 ", sends " "towards cpu\n", llID, event, current);
+            dbg.debug(_L4_, "LogicLayer%d got an event %p from vault @ %" PRIu64 ", sends " "towards cpu\n", llID, event, current);
             // send to CPU
             memOps++;
             toCPU->send(event);
@@ -227,7 +229,7 @@ bool logicLayer::clock(Cycle_t current)
     }
 
     if (tm[0] > bwLimit || tm[1] > bwLimit || tc[0] > bwLimit || tc[1] > bwLimit) {
-        dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
+        dbg.output(CALL_INFO, "logicLayer%d Bandwdith: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
     }
 
     bwUsedToCpu[0]->addData(tc[0]);
