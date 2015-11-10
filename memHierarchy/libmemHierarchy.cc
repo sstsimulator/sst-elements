@@ -358,7 +358,7 @@ static const ElementInfoParam bus_params[] = {
     {"bus_frequency",       "Bus clock frequency"},
     {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
     {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports", "0"},
-    {"bus_latency_cycles",  "Number of ports on the bus", "0"},
+    {"bus_latency_cycles",  "Bus latency in cycles", "0"},
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
