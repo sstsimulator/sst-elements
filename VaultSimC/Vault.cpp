@@ -26,6 +26,14 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.init("@R:Vault::@p():@l: ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
 
+    dbgOnFlyHmcOpsIsOn = params.find_integer("debug_OnFlyHmcOps", 0);
+    dbgOnFlyHmcOps.init("onFlyHmcOps: ", 0, 0, (Output::output_location_t)dbgOnFlyHmcOpsIsOn);
+    if (1 == dbgOnFlyHmcOpsIsOn) {
+        dbgOnFlyHmcOpsThresh = params.find_integer("debug_OnFlyHmcOpsThresh", -1);
+        if (-1 == dbgOnFlyHmcOpsThresh)
+            dbg.fatal(CALL_INFO, -1, "vault.debug_OnFlyHmcOpsThresh is set to 1, definition of vault.debug_OnFlyHmcOpsThresh is required as well");
+    }
+
     statsFormat = params.find_integer("statistics_format", 0);
 
     string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
@@ -100,11 +108,11 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
     if (mi == onFlyHmcOps.end()) {
         // DRAMSim returns ID that is useless to us
         (*readCallback)(id, addr, cycle);
-        dbg.debug(_L7_, "Vault %d:hmc: Atomic op %p callback(read) at cycle=%lu\n", 
+        dbg.debug(_L7_, "Vault %d:hmc: Atomic op %p callback(read) @cycle=%lu\n", 
                 id, (void*)addr, cycle);
     } else { 
         // Found in atomic
-        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) read req answer has been received in cycle=%lu\n", 
+        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) read req answer has been received @cycle=%lu\n", 
                 id, (void*)mi->second.getAddr(), mi->second.getBankNo(), cycle);
 
         /* statistics */
@@ -127,11 +135,11 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
     if (mi == onFlyHmcOps.end()) {
         // DRAMSim returns ID that is useless to us
         (*writeCallback)(id, addr, cycle);
-        dbg.debug(_L7_, "Vault %d:hmc: Atomic op %p callback(write) at cycle=%lu\n", 
+        dbg.debug(_L7_, "Vault %d:hmc: Atomic op %p callback(write) @cycle=%lu\n", 
                 id, (void*)addr, cycle);
     } else {
         // Found in atomic
-        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) write answer has been received in cycle=%lu\n",
+        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) write answer has been received @cycle=%lu\n",
                 id, (void*)mi->second.getAddr(),  mi->second.getBankNo(), cycle);
 
         // mi->second.setHmcOpState(WRITE_ANS_RECV);
@@ -168,7 +176,7 @@ void Vault::update()
         if (getComputePhase(bankId)) {
             if (currentClockCycle >= getComputeDoneCycle(bankId)) {
                 uint64_t addrCompute = getAddrCompute(bankId);
-                dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase has been done in cycle=%lu\n", 
+                dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase has been done @cycle=%lu\n", \
                         id, (void*)addrCompute, bankId, currentClockCycle);
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
                 issueAtomicSecondMemoryPhase(mi);
@@ -176,6 +184,17 @@ void Vault::update()
             }
         }
     }
+
+    // Debug long hmc ops in Queue
+    if (1 == dbgOnFlyHmcOpsIsOn)
+        for (auto it = onFlyHmcOps.begin(); it != onFlyHmcOps.end(); it++)
+            if ( !it->second.getFlagPrintDbgHMC() )
+                if (currentClockCycle - it->second.inCycle > dbgOnFlyHmcOpsThresh) {
+                    it->second.setFlagPrintDbgHMC();
+                    dbgOnFlyHmcOps.output(CALL_INFO, "Vault %u: Warning HMC op %p is onFly for %d cycles @cycle %lu\n", \
+                                         id, (void*)it->second.getAddr(), dbgOnFlyHmcOpsThresh, currentClockCycle);
+                }
+
 
     // Process Queue
     updateQueue();
@@ -210,7 +229,7 @@ void Vault::updateQueue()
                 // Add to onFlyHmcOps
                 onFlyHmcOps[transQ[i].getAddr()] = transQ[i];
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(transQ[i].getAddr());
-                dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) of type %s issued in cycle=%lu\n", 
+                dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) of type %s issued @cycle=%lu\n", 
                         id, (void*)transQ[i].getAddr(), transQ[i].getBankNo(), transQ[i].getHmcOpTypeStr(), currentClockCycle);
 
                 // Issue First Phase
@@ -224,7 +243,7 @@ void Vault::updateQueue()
             } else { // Not atomic op
                 // Issue to DRAM
                 memorySystem->addTransaction(transQ[i].getIsWrite(), transQ[i].getAddr());
-                dbg.debug(_L8_, "Vault %d: %s %p (bank%u) issued in cycle=%lu\n", 
+                dbg.debug(_L8_, "Vault %d: %s %p (bank%u) issued @cycle=%lu\n", 
                         id, transQ[i].getIsWrite() ? "Write" : "Read", (void*)transQ[i].getAddr(), transQ[i].getBankNo(), currentClockCycle);
 
                 // Remove from Transction Queue
@@ -239,7 +258,7 @@ void Vault::updateQueue()
 
 void Vault::issueAtomicFirstMemoryPhase(addr2TransactionMap_t::iterator mi) 
 {
-    dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) 1st_mem phase started in cycle=%lu\n", 
+    dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) 1st_mem phase started @cycle=%lu\n", 
             id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
 
     switch (mi->second.getHmcOpType()) {
@@ -266,7 +285,7 @@ void Vault::issueAtomicFirstMemoryPhase(addr2TransactionMap_t::iterator mi)
         }
 
         memorySystem->addTransaction(mi->second.getIsWrite(), mi->second.getAddr());
-        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) read req has been issued in cycle=%lu\n", 
+        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) read req has been issued @cycle=%lu\n", 
                 id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
         // mi->second.setHmcOpState(READ_ISSUED);
         break;
@@ -279,7 +298,7 @@ void Vault::issueAtomicFirstMemoryPhase(addr2TransactionMap_t::iterator mi)
 
 void Vault::issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi) 
 {
-    dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) 2nd_mem phase started in cycle=%lu\n", id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
+    dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) 2nd_mem phase started @cycle=%lu\n", id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
 
     switch (mi->second.getHmcOpType()) {
     case (HMC_CAS_equal_16B):
@@ -305,7 +324,7 @@ void Vault::issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi)
         }
 
         memorySystem->addTransaction(mi->second.getIsWrite(), mi->second.getAddr());
-        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) write has been issued (2nd phase) in cycle=%lu\n", 
+        dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) write has been issued (2nd phase) @cycle=%lu\n", 
                 id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
         // mi->second.setHmcOpState(WRITE_ISSUED);
         break;
@@ -319,7 +338,7 @@ void Vault::issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi)
 
 void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi) 
 {
-    dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase started in cycle=%lu\n", 
+    dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase started @cycle=%lu\n", 
             id, (void*)mi->second.getAddr(), mi->second.getBankNo(), currentClockCycle);
 
     // mi->second.setHmcOpState(COMPUTE);

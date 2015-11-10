@@ -165,8 +165,14 @@ public:
     DRAMSim::MultiChannelMemorySystem *memorySystem;
 
 private:
+    //Debugs
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
     Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats
+    Output dbgOnFlyHmcOps;                       // For debugging long lasting hmc_ops in queue
+    int dbgOnFlyHmcOpsIsOn;                      // For debuggung late onFlyHMC ops (bool variable)
+    int dbgOnFlyHmcOpsThresh;                    // For debuggung late onFlyHMC ops (threshhold Value)
+
+    //Stat Format
     int statsFormat;                             // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
