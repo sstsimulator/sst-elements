@@ -77,6 +77,11 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     statReadHmcLatency    = registerStatistic<uint64_t>("HMC_OPS_READ_LATENCY", "0");
     statWriteHmcLatency   = registerStatistic<uint64_t>("HMC_OPS_WRITE_LATENCY", "0");
 
+    statTotalHmcLatencyInt = 0;
+    statIssueHmcLatencyInt = 0;
+    statReadHmcLatencyInt = 0;
+    statWriteHmcLatencyInt = 0;
+
     currentClockCycle = 0;
 }
 
@@ -143,6 +148,12 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
         statReadHmcLatency->addData(mi->second.readDoneCycle - mi->second.issueCycle);
         statWriteHmcLatency->addData(mi->second.writeDoneCycle - mi->second.readDoneCycle);
 
+        statTotalHmcLatencyInt += (mi->second.writeDoneCycle - mi->second.inCycle);
+        statIssueHmcLatencyInt += (mi->second.issueCycle - mi->second.inCycle);
+        statReadHmcLatencyInt += (mi->second.readDoneCycle - mi->second.issueCycle);
+        statWriteHmcLatencyInt += (mi->second.writeDoneCycle - mi->second.readDoneCycle);
+
+        // unlock
         unlockBank(mi->second.getBankNo());
         onFlyHmcOps.erase(mi);
     }
@@ -351,6 +362,7 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
 /*
  *  Print Macsim style output in a file
  **/
+
 void Vault::printStatsForMacSim() {
     string name_ = "Vault" + to_string(id);
     stringstream ss;
@@ -361,22 +373,29 @@ void Vault::printStatsForMacSim() {
     ofs.exceptions(std::ofstream::eofbit | std::ofstream::failbit | std::ofstream::badbit);
     ofs.open(filename.c_str(), std::ios_base::out);
 
-    float avgHmcOpsLatencyTotal = (float)statTotalHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
-    float avgHmcOpsLatencyIssue = (float)statIssueHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
-    float avgHmcOpsLatencyRead  = (float)statReadHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
-    float avgHmcOpsLatencyWrite = (float)statWriteHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyTotal = (float)statTotalHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();     //FIXME: this is wrong (getCollectionCount return #of elements)
+    float avgHmcOpsLatencyIssue = (float)statIssueHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();     //FIXME: this is wrong (getCollectionCount return #of elements)
+    float avgHmcOpsLatencyRead  = (float)statReadHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();      //FIXME: this is wrong (getCollectionCount return #of elements)
+    float avgHmcOpsLatencyWrite = (float)statWriteHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();     //FIXME: this is wrong (getCollectionCount return #of elements)
+
+    float avgHmcOpsLatencyTotalInt = (float)statTotalHmcLatencyInt / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyIssueInt = (float)statIssueHmcLatencyInt / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyReadInt = (float)statReadHmcLatencyInt / statTotalHmcOps->getCollectionCount();
+    float avgHmcOpsLatencyWriteInt = (float)statWriteHmcLatencyInt / statTotalHmcOps->getCollectionCount();
 
     writeTo(ofs, name_, string("Total_trans"),                      statTotalTransactions->getCollectionCount());
     writeTo(ofs, name_, string("Total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
     writeTo(ofs, name_, string("Total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_total"),        avgHmcOpsLatencyTotal);
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssue);
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_read"),         avgHmcOpsLatencyRead);
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWrite);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_total"),        avgHmcOpsLatencyTotalInt);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssueInt);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_read"),         avgHmcOpsLatencyReadInt);
+    writeTo(ofs, name_, string("Avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWriteInt);
 }
 
+
 // Helper function for printing statistics in MacSim format
-void Vault::writeTo(ofstream &ofs, string prefix, string name, uint64_t count)
+template<typename T>
+void Vault::writeTo(ofstream &ofs, string prefix, string name, T count)
 {
     #define FILED1_LENGTH 45
     #define FILED2_LENGTH 20

@@ -151,7 +151,8 @@ private:
      *  Stats
      */
     // Helper function for printing statistics in MacSim format
-    void writeTo(ofstream &ofs, string prefix, string name, uint64_t count);
+    template<typename T>
+    void writeTo(ofstream &ofs, string prefix, string name, T count);
     void printStatsForMacSim();
 
 public:
@@ -183,6 +184,13 @@ private:
     Statistic<uint64_t>* statIssueHmcLatency;
     Statistic<uint64_t>* statReadHmcLatency;
     Statistic<uint64_t>* statWriteHmcLatency;
+
+    // internal stats
+    uint64_t statTotalHmcLatencyInt;   //statapi does not provide any non-collection type addData (ORno documentation)
+    uint64_t statIssueHmcLatencyInt;
+    uint64_t statReadHmcLatencyInt;
+    uint64_t statWriteHmcLatencyInt;
+
 
 };
 #endif
