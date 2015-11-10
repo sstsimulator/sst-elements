@@ -22,10 +22,9 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     out.init("", 0, 0, Output::STDOUT);
 
     int debugLevel = params.find_integer("debug_level", 0);
-    dbg.init("@R:Vault::@p():@l: ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     if (debugLevel < 0 || debugLevel > 10) 
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    dbg.init("Vault", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("@R:Vault::@p():@l: ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
 
     statsFormat = params.find_integer("statistics_format", 0);
 
