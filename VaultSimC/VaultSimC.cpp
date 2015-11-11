@@ -64,46 +64,13 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
     memorySystem->registerCallback(readDataCB, writeDataCB);
     dbg.output(CALL_INFO, "VaultSimC %u: made vault %u\n", vaultID, vaultID);
 
-    // setup backing store
-    size_t memSize = MEMSIZE;
-    memBuffer = (uint8_t*)mmap(NULL, memSize, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-    if (NULL == memBuffer)
-        dbg.fatal(CALL_INFO, -1, "Unable to MMAP backing store for Memory\n");
-
     memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }
 
 void VaultSimC::finish() 
 {
     dbg.debug(_INFO_, "VaultSim %d finished\n", vaultID);
-    munmap(memBuffer, MEMSIZE);
     memorySystem->finish();
-}
-
-void VaultSimC::init(unsigned int phase) 
-{
-    SST::Event *ev = NULL;
-    while ((ev = memChan->recvInitData()) != NULL) {
-        MemEvent *me = dynamic_cast<MemEvent*>(ev);
-        if (NULL != me) {
-            /* Push data to memory */
-            if (me->isWriteback()) {
-                uint32_t chunkSize = (1 << VAULT_SHIFT);
-                if (me->getSize() > chunkSize) {
-                    dbg.fatal(CALL_INFO, -1, "vault got too large init\n");
-                }
-                
-                for (size_t i = 0; i < me->getSize(); i++) {
-                    memBuffer[getInternalAddress(me->getAddr() + i)] = me->getPayload()[i];
-                }
-            } else {
-                dbg.fatal(CALL_INFO, -1, "vault got bad init command\n");
-            }
-        } else {
-            dbg.fatal(CALL_INFO, -1, "vault got bad init event\n");
-        }
-        delete ev;
-    }
 }
 
 void VaultSimC::readData(unsigned id, uint64_t addr, uint64_t clockcycle) 
@@ -115,14 +82,6 @@ void VaultSimC::readData(unsigned id, uint64_t addr, uint64_t clockcycle)
 
     MemEvent *parentEvent = mi->second;
     MemEvent *event = parentEvent->makeResponse();
-    // printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
-    // assert(bp.burstLength == parentEvent->getSize());
-
-    // copy data from backing store to event
-    // event->setSize(bp.burstLength);
-    // for (size_t i = 0; i < event->getSize(); i++) {
-    //     event->getPayload()[i] = memBuffer[getInternalAddress(bp.physicalAddress + i)];
-    // }
 
     memChan->send(event);
     dbg.debug(_L5_, "VaultSimC %d: read req %p answered in clock=%lu\n", vaultID, (void*)addr, clockcycle);
@@ -142,13 +101,6 @@ void VaultSimC::writeData(unsigned id, uint64_t addr, uint64_t clockcycle)
 
     MemEvent *parentEvent = mi->second;
     MemEvent *event = parentEvent->makeResponse();
-    // printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
-    // assert(bp.burstLength == parentEvent->getSize());
-
-    // write the data to the backing store
-    // for ( size_t i = 0 ; i < bp.burstLength ; i++ ) {
-    //     memBuffer[getInternalAddress(bp.physicalAddress + i)] = parentEvent->getPayload()[i];
-    // }
 
     // send event
     memChan->send(event);

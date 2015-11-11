@@ -75,6 +75,7 @@ static const ElementInfoParam logicLayer_params[] = {
   {"LL_MASK",            "Bitmask to determine 'ownership' of an address by a cube. A cube 'owns' an address if ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0)). LL_SHIFT is set in vaultGlobals.h and is 8 by default."},
   {"terminal",           "Is this the last cube in the chain?"},
   {"vaults",             "Number of vaults per cube."},
+  {"vaults_LinkDelay",   "Link delay between each Vault and Logic layer"},
   {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
   {"debug_level",        "debug verbosity level (0-10)"},
   {"statistics_format",  "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
