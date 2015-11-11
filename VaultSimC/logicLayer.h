@@ -19,6 +19,10 @@
 #include <sst/core/statapi/stataccumulator.h>
 #include <sst/core/statapi/stathistogram.h>
 
+#include <sstream>
+#include <fstream>
+#include <boost/algorithm/string.hpp>
+
 #include "globals.h"
 #include "transaction.h"
 
@@ -62,6 +66,14 @@ private:
     bool isOurs(unsigned int addr) {
         return ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0));
     }
+
+    /**
+     *  Stats
+     */
+    // Helper function for printing statistics in MacSim format
+    template<typename T>
+    void writeTo(ofstream &ofs, string prefix, string name, T count);
+    void printStatsForMacSim();
 
 private:
     memChans_t memChans;

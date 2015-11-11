@@ -75,6 +75,7 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
 
 void VaultSimC::finish() 
 {
+    dbg.debug(_INFO_, "VaultSim %d finished\n", vaultID);
     munmap(memBuffer, MEMSIZE);
     memorySystem->finish();
 }

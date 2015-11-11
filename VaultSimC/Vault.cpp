@@ -112,6 +112,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
 void Vault::finish() 
 {
+    dbg.debug(_L7_, "Vault %d finished\n", id);
     //Print Statistics
     if (statsFormat == 1)
         printStatsForMacSim();

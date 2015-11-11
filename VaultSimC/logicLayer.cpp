@@ -22,8 +22,6 @@
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
-#define DBG(fmt, args...) m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
-
 logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id ), memOps(0) 
 {
     out.init("", 0, 0, Output::STDOUT);
@@ -91,6 +89,9 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
 void logicLayer::finish() 
 {
     dbg.debug(_INFO_, "Logic Layer %d completed %lld ops\n", llID, memOps);
+    //Print Statistics
+    if (statsFormat == 1)
+        printStatsForMacSim();
 }
 
 void logicLayer::init(unsigned int phase) 
@@ -245,4 +246,41 @@ extern "C" {
     {
         return new logicLayer( id, params );
     }
+}
+
+/*
+    Other Functions
+*/
+
+/*
+ *  Print Macsim style output in a file
+ **/
+
+void logicLayer::printStatsForMacSim() {
+    string name_ = "LogicLayer" + to_string(llID);
+    stringstream ss;
+    ss << name_.c_str() << ".stat.out";
+    string filename = ss.str();
+
+    ofstream ofs;
+    ofs.exceptions(std::ofstream::eofbit | std::ofstream::failbit | std::ofstream::badbit);
+    ofs.open(filename.c_str(), std::ios_base::out);
+
+}
+
+
+// Helper function for printing statistics in MacSim format
+template<typename T>
+void logicLayer::writeTo(ofstream &ofs, string prefix, string name, T count)
+{
+    #define FILED1_LENGTH 45
+    #define FILED2_LENGTH 20
+    #define FILED3_LENGTH 30
+
+    ofs.setf(ios::left, ios::adjustfield);
+    string capitalized_prefixed_name = boost::to_upper_copy(prefix + "_" + name);
+    ofs << setw(FILED1_LENGTH) << capitalized_prefixed_name;
+
+    ofs.setf(ios::right, ios::adjustfield);
+    ofs << setw(FILED2_LENGTH) << count << setw(FILED3_LENGTH) << count << endl << endl;
 }
