@@ -143,6 +143,8 @@ static const ElementInfoStatistic Vault_statistics[] = {
   { "TOTAL_TRANSACTIONS",      "", "reqs", 1},
   { "TOTAL_HMC_OPS",           "", "reqs", 1},
   { "TOTAL_NON_HMC_OPS",       "", "reqs", 1},
+  { "TOTAL_NON_HMC_READ",      "", "reqs", 1},
+  { "TOTAL_NON_HMC_WRITE",     "", "reqs", 1},
   { "HMC_OPS_TOTAL_LATENCY",   "", "cycles", 1},
   { "HMC_OPS_ISSUE_LATENCY",   "", "cycles", 1},
   { "HMC_OPS_READ_LATENCY",    "", "cycles", 1},

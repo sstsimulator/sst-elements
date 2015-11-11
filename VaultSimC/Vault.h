@@ -197,6 +197,10 @@ private:
     Statistic<uint64_t>* statTotalTransactions;
     Statistic<uint64_t>* statTotalHmcOps;
     Statistic<uint64_t>* statTotalNonHmcOps;
+
+    Statistic<uint64_t>* statTotalNonHmcRead;
+    Statistic<uint64_t>* statTotalNonHmcWrite;
+
     Statistic<uint64_t>* statTotalHmcLatency;
     Statistic<uint64_t>* statIssueHmcLatency;
     Statistic<uint64_t>* statReadHmcLatency;
