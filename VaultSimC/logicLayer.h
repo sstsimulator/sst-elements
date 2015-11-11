@@ -46,11 +46,6 @@ public:
      */
     void finish();
 
-    /**
-     *
-     */
-    void init(unsigned int phase);
-
 private: 
     /** 
      * Constructor
@@ -63,9 +58,7 @@ private:
     bool clock(Cycle_t);
 
     // Determine if we 'own' a given address
-    bool isOurs(unsigned int addr) {
-        return ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0));
-    }
+    bool isOurs(unsigned int addr);
 
     /**
      *  Stats
