@@ -19,6 +19,7 @@ using namespace std;
 
 Vault::Vault(Component *comp, Params &params) : SubComponent(comp) 
 {
+    // Debug and Output Initialization
     out.init("", 0, 0, Output::STDOUT);
 
     int debugLevel = params.find_integer("debug_level", 0);
@@ -36,6 +37,18 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
     statsFormat = params.find_integer("statistics_format", 0);
 
+    // HMC Cost Initialization
+    HMCCostLogicalOps = params.find_integer("HMCCost_LogicalOps", 0);
+    HMCCostCASOps = params.find_integer("HMCCost_CASOps", 0);
+    HMCCostCompOps = params.find_integer("HMCCost_CompOps", 0);
+    HMCCostAdd8 = params.find_integer("HMCCost_Add8", 0);
+    HMCCostAdd16 = params.find_integer("HMCCost_Add16", 0);
+    HMCCostAddDual = params.find_integer("HMCCost_AddDual", 0);
+    HMCCostFPAdd = params.find_integer("HMCCost_FPAdd", 0);
+    HMCCostSwap = params.find_integer("HMCCost_Swap", 0);
+    HMCCostBitW = params.find_integer("HMCCost_BitW", 0);
+
+    // DRAMSim2 Initialization
     string deviceIniFilename = params.find_string("device_ini", NO_STRING_DEFINED);
     if (NO_STRING_DEFINED == deviceIniFilename)
         dbg.fatal(CALL_INFO, -1, "Define a 'device_ini' file parameter\n");
@@ -67,6 +80,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
     memorySystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 
+    // etc Initialization
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
     bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     computePhaseMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
@@ -75,7 +89,9 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     transQ.reserve(TRANS_Q_OPTIMUM_SIZE);
     resetAllComputePhase();
 
-    // register stats
+    currentClockCycle = 0;
+
+    // Stats Initialization
     statTotalTransactions = registerStatistic<uint64_t>("TOTAL_TRANSACTIONS", "0");  
     statTotalHmcOps       = registerStatistic<uint64_t>("TOTAL_HMC_OPS", "0");
     statTotalNonHmcOps    = registerStatistic<uint64_t>("TOTAL_NON_HMC_OPS", "0");
@@ -88,8 +104,6 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     statIssueHmcLatencyInt = 0;
     statReadHmcLatencyInt = 0;
     statWriteHmcLatencyInt = 0;
-
-    currentClockCycle = 0;
 }
 
 void Vault::finish() 
@@ -351,20 +365,36 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
     case (HMC_CAS_zero_16B):
     case (HMC_CAS_greater_16B):
     case (HMC_CAS_less_16B):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostCASOps;
+        break;
     case (HMC_ADD_16B):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostAdd16;
+        break;
     case (HMC_ADD_8B):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostAdd8;
+        break;
     case (HMC_ADD_DUAL):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostAddDual;
+        break;
     case (HMC_SWAP):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostSwap;
+        break;
     case (HMC_BIT_WR):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostBitW;
+        break;
     case (HMC_AND):
     case (HMC_NAND):
     case (HMC_OR):
     case (HMC_XOR):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostLogicalOps;
+        break;
     case (HMC_FP_ADD):
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostLogicalOps;
+        break;
     case (HMC_COMP_greater):
     case (HMC_COMP_less):
     case (HMC_COMP_equal):
-        computeDoneCycleMap[bankNoCompute] = currentClockCycle + 3;
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostCompOps;
         break;
     case (HMC_NONE):
     default:

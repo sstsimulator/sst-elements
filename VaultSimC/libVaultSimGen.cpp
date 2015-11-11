@@ -38,6 +38,15 @@ static const ElementInfoParam VaultSimC_params[] = {
   {"vault.debug_OnFlyHmcOps",         "Vault debugging for hmc queue"},
   {"vault.debug_OnFlyHmcOpsThresh",   "Vault debugging for hmc queue threshhold value"},
   {"vault.statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+  {"vault.HMCCost_LogicalOps",        "Compute Cost of Logical Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_CASOps",            "Compute Cost of CAS Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_CompOps",           "Compute Cost of Compare Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_Add8",              "Compute Cost of Add 8b Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_Add16",             "Compute Cost of Add 16b Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_AddDual",           "Compute Cost of Add Dual Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_FPAdd",             "Compute Cost of FP Add in Vault's cycles", "0"},
+  {"vault.HMCCost_Swap",              "Compute Cost of Swap Op in Vault's cycles", "0"},
+  {"vault.HMCCost_BitW",              "Compute Cost of Bit W Op in Vault's cycles", "0"},
   { NULL, NULL }
 };
 
@@ -118,6 +127,15 @@ static const ElementInfoParam Vault_params[] = {
     {"logfile",                   "DRAMSim output path", NULL},
     {"mem_size",                  "Size of physical memory in MB", "0"},
     {"statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+    {"HMCCost_LogicalOps",        "Compute Cost of Logical Ops in Vault's cycles", "0"},
+    {"HMCCost_CASOps",            "Compute Cost of CAS Ops in Vault's cycles", "0"},
+    {"HMCCost_CompOps",           "Compute Cost of Compare Ops in Vault's cycles", "0"},
+    {"HMCCost_Add8",              "Compute Cost of Add 8b Ops in Vault's cycles", "0"},
+    {"HMCCost_Add16",             "Compute Cost of Add 16b Ops in Vault's cycles", "0"},
+    {"HMCCost_AddDual",           "Compute Cost of Add Dual Ops in Vault's cycles", "0"},
+    {"HMCCost_FPAdd",             "Compute Cost of FP Add in Vault's cycles", "0"},
+    {"HMCCost_Swap",              "Compute Cost of Swap Op in Vault's cycles", "0"},
+    {"HMCCost_BitW",              "Compute Cost of Bit W Op in Vault's cycles", "0"},
     {NULL, NULL, NULL}
 };
 

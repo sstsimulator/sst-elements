@@ -182,6 +182,17 @@ private:
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 
+    // HMC ops Cost in Cycles
+    int HMCCostLogicalOps;
+    int HMCCostCASOps;
+    int HMCCostCompOps;
+    int HMCCostAdd8;
+    int HMCCostAdd16;
+    int HMCCostAddDual;
+    int HMCCostFPAdd;
+    int HMCCostSwap;
+    int HMCCostBitW;
+
     // stats
     Statistic<uint64_t>* statTotalTransactions;
     Statistic<uint64_t>* statTotalHmcOps;
