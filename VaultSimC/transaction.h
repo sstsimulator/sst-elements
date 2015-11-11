@@ -86,10 +86,10 @@ public:
      * @param isWrite is it a write?
      * @param addr address for memory operation
      */
-    transaction_c() : isWrite(false), addr(0), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE) {}
+    transaction_c() : isWrite(false), addr(0), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE), flagPrintDbgHMC(0) {}
 
     transaction_c(bool _isWrite, uint64_t _addr) : 
-        isWrite(_isWrite), addr(_addr), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE) {}
+        isWrite(_isWrite), addr(_addr), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE), flagPrintDbgHMC(0) {}
 
     /** 
      * addr functions 
@@ -190,19 +190,31 @@ public:
     void setBankNo (unsigned _bankNo) { bankNo = _bankNo; }
     unsigned getBankNo () { return bankNo; } 
 
+    /**
+     * Stats
+     */
+    void setFlagPrintDbgHMC() { flagPrintDbgHMC = true; }
+    void resetFlagPrintDbgHMC() { flagPrintDbgHMC = false; }
+    bool getFlagPrintDbgHMC() { return flagPrintDbgHMC; }
+
 private:
+    //transaction properties
     bool isWrite;
     uint64_t addr;
     unsigned int bankNo;
     bool isAtomic;
     uint8_t hmcType;              //HMC_Type Enum
+
+    //stats
     HMC_Op_State hmcOpState;
+    bool flagPrintDbgHMC;
 
 public:
+    //stats
     uint64_t inCycle;
     uint64_t issueCycle;
     uint64_t readDoneCycle;       // Same as write issue cycle (without computing)
-    uint64_t writeDoneCycle;      // Same as done cycle 
+    uint64_t writeDoneCycle;      // Same as done cycle
 };
 
 #endif

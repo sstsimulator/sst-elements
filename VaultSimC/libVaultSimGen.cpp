@@ -27,15 +27,26 @@ const char *memEventList[] = {
 };
 
 static const ElementInfoParam VaultSimC_params[] = {
-  {"clock",                     "Vault Clock Rate.", "1.0 Ghz"},
-  {"numVaults2",                "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
-  {"debug",                     "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-  {"debug_level",               "VaultSimC debug verbosity level (0-10)"},
-  {"statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
-  {"vault.id",                  "Vault Unique ID (Unique to cube)."},
-  {"vault.debug",               "Vault debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-  {"vault.debug_level",         "Vault debug verbosity level (0-10)"},
-  {"vault.statistics_format",   "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+  {"clock",                           "Vault Clock Rate.", "1.0 Ghz"},
+  {"numVaults2",                      "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
+  {"debug",                           "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"debug_level",                     "VaultSimC debug verbosity level (0-10)"},
+  {"statistics_format",               "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+  {"vault.id",                        "Vault Unique ID (Unique to cube)."},
+  {"vault.debug",                     "Vault debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"vault.debug_level",               "Vault debug verbosity level (0-10)"},
+  {"vault.debug_OnFlyHmcOps",         "Vault debugging for hmc queue"},
+  {"vault.debug_OnFlyHmcOpsThresh",   "Vault debugging for hmc queue threshhold value"},
+  {"vault.statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+  {"vault.HMCCost_LogicalOps",        "Compute Cost of Logical Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_CASOps",            "Compute Cost of CAS Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_CompOps",           "Compute Cost of Compare Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_Add8",              "Compute Cost of Add 8b Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_Add16",             "Compute Cost of Add 16b Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_AddDual",           "Compute Cost of Add Dual Ops in Vault's cycles", "0"},
+  {"vault.HMCCost_FPAdd",             "Compute Cost of FP Add in Vault's cycles", "0"},
+  {"vault.HMCCost_Swap",              "Compute Cost of Swap Op in Vault's cycles", "0"},
+  {"vault.HMCCost_BitW",              "Compute Cost of Bit W Op in Vault's cycles", "0"},
   { NULL, NULL }
 };
 
@@ -105,15 +116,26 @@ static SubComponent* create_Vault(Component* comp, Params& params) {
 }
 
 static const ElementInfoParam Vault_params[] = {
-    {"id",                  "Unique ID number of Vault", NULL},
-    {"device_ini",          "Name of DRAMSim Device config file", NULL},
-    {"debug",               "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", 0},
-    {"debug_level",         "VaultSimC debug verbosity level (0-10)", 0},
-    {"system_ini",          "Name of DRAMSim System config file", NULL},
-    {"pwd",                 "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
-    {"logfile",             "DRAMSim output path", NULL},
-    {"mem_size",            "Size of physical memory in MB", "0"},
-    {"statistics_format",   "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+    {"id",                        "Unique ID number of Vault", NULL},
+    {"device_ini",                "Name of DRAMSim Device config file", NULL},
+    {"debug",                     "Vault debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", 0},
+    {"debug_level",               "Vault debug verbosity level (0-10)", 0},
+    {"debug_OnFlyHmcOps",         "Vault debugging for hmc queue"},
+    {"debug_OnFlyHmcOpsThresh",   "Vault debugging for hmc queue threshhold value"},
+    {"system_ini",                "Name of DRAMSim System config file", NULL},
+    {"pwd",                       "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
+    {"logfile",                   "DRAMSim output path", NULL},
+    {"mem_size",                  "Size of physical memory in MB", "0"},
+    {"statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+    {"HMCCost_LogicalOps",        "Compute Cost of Logical Ops in Vault's cycles", "0"},
+    {"HMCCost_CASOps",            "Compute Cost of CAS Ops in Vault's cycles", "0"},
+    {"HMCCost_CompOps",           "Compute Cost of Compare Ops in Vault's cycles", "0"},
+    {"HMCCost_Add8",              "Compute Cost of Add 8b Ops in Vault's cycles", "0"},
+    {"HMCCost_Add16",             "Compute Cost of Add 16b Ops in Vault's cycles", "0"},
+    {"HMCCost_AddDual",           "Compute Cost of Add Dual Ops in Vault's cycles", "0"},
+    {"HMCCost_FPAdd",             "Compute Cost of FP Add in Vault's cycles", "0"},
+    {"HMCCost_Swap",              "Compute Cost of Swap Op in Vault's cycles", "0"},
+    {"HMCCost_BitW",              "Compute Cost of Bit W Op in Vault's cycles", "0"},
     {NULL, NULL, NULL}
 };
 

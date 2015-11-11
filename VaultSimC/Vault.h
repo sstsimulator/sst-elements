@@ -151,7 +151,8 @@ private:
      *  Stats
      */
     // Helper function for printing statistics in MacSim format
-    void writeTo(ofstream &ofs, string prefix, string name, uint64_t count);
+    template<typename T>
+    void writeTo(ofstream &ofs, string prefix, string name, T count);
     void printStatsForMacSim();
 
 public:
@@ -164,8 +165,14 @@ public:
     DRAMSim::MultiChannelMemorySystem *memorySystem;
 
 private:
+    //Debugs
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
     Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats
+    Output dbgOnFlyHmcOps;                       // For debugging long lasting hmc_ops in queue
+    int dbgOnFlyHmcOpsIsOn;                      // For debuggung late onFlyHMC ops (bool variable)
+    int dbgOnFlyHmcOpsThresh;                    // For debuggung late onFlyHMC ops (threshhold Value)
+
+    //Stat Format
     int statsFormat;                             // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
@@ -175,6 +182,17 @@ private:
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 
+    // HMC ops Cost in Cycles
+    int HMCCostLogicalOps;
+    int HMCCostCASOps;
+    int HMCCostCompOps;
+    int HMCCostAdd8;
+    int HMCCostAdd16;
+    int HMCCostAddDual;
+    int HMCCostFPAdd;
+    int HMCCostSwap;
+    int HMCCostBitW;
+
     // stats
     Statistic<uint64_t>* statTotalTransactions;
     Statistic<uint64_t>* statTotalHmcOps;
@@ -183,6 +201,13 @@ private:
     Statistic<uint64_t>* statIssueHmcLatency;
     Statistic<uint64_t>* statReadHmcLatency;
     Statistic<uint64_t>* statWriteHmcLatency;
+
+    // internal stats
+    uint64_t statTotalHmcLatencyInt;   //statapi does not provide any non-collection type addData (ORno documentation)
+    uint64_t statIssueHmcLatencyInt;
+    uint64_t statReadHmcLatencyInt;
+    uint64_t statWriteHmcLatencyInt;
+
 
 };
 #endif
