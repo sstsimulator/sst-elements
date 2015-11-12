@@ -88,7 +88,6 @@ private:
     unsigned vaultID;
 
     // Statistics
-    Statistic<uint64_t>* memOutStat;
 
     // Output
     Output dbg;

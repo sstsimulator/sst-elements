@@ -63,8 +63,6 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
 
     memorySystem->registerCallback(readDataCB, writeDataCB);
     dbg.output(CALL_INFO, "VaultSimC %u: made vault %u\n", vaultID, vaultID);
-
-    memOutStat = registerStatistic<uint64_t>("Mem_Outstanding","1");
 }
 
 void VaultSimC::finish() 
@@ -174,8 +172,7 @@ bool VaultSimC::clock(Cycle_t currentCycle)
             ret = false;
         }
     }
-
-    memOutStat->addData(transactionToMemEventMap.size());
+    
     return false;
 }
 

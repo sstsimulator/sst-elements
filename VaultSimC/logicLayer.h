@@ -72,16 +72,16 @@ private:
     memChans_t memChans;        // SST links to each Vault
     SST::Link *toMem;
     SST::Link *toCPU;
-    int bwLimit;
+    int reqLimit;
 
     unsigned int LL_MASK;
     unsigned int llID;
 
     // Statistics
-    uint64_t memOpsProcessed;
+    Statistic<uint64_t>* memOpsProcessed;
     
-    Statistic<uint64_t>* bwUsedToCpu[2];
-    Statistic<uint64_t>* bwUsedToMem[2];
+    Statistic<uint64_t>* reqUsedToCpu[2];
+    Statistic<uint64_t>* reqUsedToMem[2];
 
     // Output
     Output dbg;                 // Output, for printing debuging commands

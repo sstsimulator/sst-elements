@@ -26,6 +26,38 @@ const char *memEventList[] = {
   NULL
 };
 
+// Logiclayer
+static const ElementInfoStatistic logicLayer_statistics[] = {
+  { "Total_memory_ops_processed", "Total memory ops processed", "reqs", 1},
+  { "Req_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs", 1},
+  { "Req_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs", 1},
+  { "Req_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs", 1},
+  { "Req_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", "reqs", 1},
+  { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoParam logicLayer_params[] = {
+  {"clock",              "Logic Layer Clock Rate."},
+  {"llID",               "Logic Layer ID (Unique id within chain)"},
+  {"bwlimit",            "Number of memory events which can be processed per cycle per link."},
+  {"LL_MASK",            "Bitmask to determine 'ownership' of an address by a cube. A cube 'owns' an address if ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0)). LL_SHIFT is set in vaultGlobals.h and is 8 by default."},
+  {"terminal",           "Is this the last cube in the chain?"},
+  {"vaults",             "Number of vaults per cube."},
+  {"vaults_LinkDelay",   "Link delay between each Vault and Logic layer"},
+  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+  {"debug_level",        "debug verbosity level (0-10)"},
+  {"statistics_format",  "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
+  { NULL, NULL }
+};
+
+static const ElementInfoPort logicLayer_ports[] = {
+  {"bus_%(vaults)d", "Link to the individual memory vaults", memEventList},
+  {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", memEventList},    
+  {"toMem", "If 'terminal' is 0 (i.e. this is not the last cube in the chain) then this port connects to the next cube.", memEventList},
+  {NULL, NULL, NULL}
+};
+
+// VaultSimC
 static const ElementInfoParam VaultSimC_params[] = {
   {"clock",                           "Vault Clock Rate.", "1.0 Ghz"},
   {"numVaults2",                      "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
@@ -56,38 +88,9 @@ static const ElementInfoPort VaultSimC_ports[] = {
 };
 
 static const ElementInfoStatistic VaultSimC_statistics[] = {
-  { "Mem_Outstanding", "Number of memory requests outstanding each cycle", "reqs/cycle", 1},
   { NULL, NULL, NULL, 0 }
 };
 
-static const ElementInfoStatistic logicLayer_statistics[] = {
-  { "BW_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 1},
-  { "BW_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs/cycle", 2},
-  { "BW_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs/cycle", 3},
-  { "BW_send_to_Mem", "Bandwidth used (sends from other memories by the LL) per cycle (in messages)", "reqs/cycle", 4},
-  { NULL, NULL, NULL, 0 }
-};
-
-static const ElementInfoParam logicLayer_params[] = {
-  {"clock",              "Logic Layer Clock Rate."},
-  {"llID",               "Logic Layer ID (Unique id within chain)"},
-  {"bwlimit",            "Number of memory events which can be processed per cycle per link."},
-  {"LL_MASK",            "Bitmask to determine 'ownership' of an address by a cube. A cube 'owns' an address if ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0)). LL_SHIFT is set in vaultGlobals.h and is 8 by default."},
-  {"terminal",           "Is this the last cube in the chain?"},
-  {"vaults",             "Number of vaults per cube."},
-  {"vaults_LinkDelay",   "Link delay between each Vault and Logic layer"},
-  {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-  {"debug_level",        "debug verbosity level (0-10)"},
-  {"statistics_format",  "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
-  { NULL, NULL }
-};
-
-static const ElementInfoPort logicLayer_ports[] = {
-  {"bus_%(vaults)d", "Link to the individual memory vaults", memEventList},
-  {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", memEventList},    
-  {"toMem", "If 'terminal' is 0 (i.e. this is not the last cube in the chain) then this port connects to the next cube.", memEventList},
-  {NULL, NULL, NULL}
-};
 
 static const ElementInfoComponent components[] = {
   { "VaultSimC",
