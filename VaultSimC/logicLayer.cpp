@@ -22,7 +22,7 @@
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
-logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id ), memOps(0) 
+logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id ), memOpsProcessed(0) 
 {
     // Debug and Output Initializatio
     out.init("", 0, 0, Output::STDOUT);
@@ -33,14 +33,10 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     // logicLayer Params Initialization
-    std::string frequency;
-    frequency = params.find_string("clock", "2.2 Ghz");
-
     int ident = params.find_integer("llID", -1);
     if (-1 == ident)
         dbg.fatal(CALL_INFO, -1, "no llID defined\n");
     llID = ident;
-    dbg.debug(_INFO_, "Making LogicLayer with id=%d & clock=%s\n", llID, frequency.c_str());
 
     bwLimit = params.find_integer("bwlimit", -1);
     if (-1 == bwLimit)  
@@ -53,7 +49,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
 
     bool terminal = params.find_integer("terminal", 0);
 
-    // Vaults Initialization
+    // VaultSims Initializations (Links)
     std::string vaultsLinkDelay;
     vaultsLinkDelay = params.find_string("vaults_LinkDelay", "");
     if ("" == vaultsLinkDelay)
@@ -76,15 +72,18 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     }
     out.output("*LogicLayer%d: Connected %d Vaults\n", ident, numVaults);
 
-    // connect chain
+    // Connect Chain
     toCPU = configureLink("toCPU");
     if (!terminal) 
         toMem = configureLink("toMem");
     else 
         toMem = NULL;
-
-    registerClock(frequency, new Clock::Handler<logicLayer>(this, &logicLayer::clock));
     dbg.debug(_INFO_, "Made LogicLayer %d toMem:%p toCPU:%p\n", llID, toMem, toCPU);
+
+    std::string frequency;
+    frequency = params.find_string("clock", "2.2 Ghz");
+    registerClock(frequency, new Clock::Handler<logicLayer>(this, &logicLayer::clock));
+    dbg.debug(_INFO_, "Making LogicLayer with id=%d & clock=%s\n", llID, frequency.c_str());
 
     // Stats Initialization
     statsFormat = params.find_integer("statistics_format", 0);
@@ -97,7 +96,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
 
 void logicLayer::finish() 
 {
-    dbg.debug(_INFO_, "Logic Layer %d completed %lld ops\n", llID, memOps);
+    dbg.debug(_INFO_, "Logic Layer %d completed %lld ops\n", llID, memOpsProcessed);
     //Print Statistics
     if (statsFormat == 1)
         printStatsForMacSim();
@@ -107,11 +106,15 @@ bool logicLayer::clock(Cycle_t current)
 {
     SST::Event* ev = NULL;
 
-    int tm[2] = {0,0}; //recv send
-    int tc[2] = {0,0};
+    // Bandwidth Stats
+    int toMemory[2] = {0,0};    // {recv, send}
+    int toCpu[2] = {0,0};       // {recv, send}
 
-    // check for events from the CPU
-    while ((tc[0] < bwLimit) && (ev = toCPU->recv())) {
+    // 1)
+    /* Check For Events From CPU
+     *     Check ownership, if owned send to internal vaults, if not send to another LogicLayer
+     **/
+    while ((toCpu[0] < bwLimit) && (ev = toCPU->recv())) {
         MemEvent *event  = dynamic_cast<MemEvent*>(ev);
         dbg.debug(_L4_, "LogicLayer%d got req for %p (%" PRIu64 " %d)\n", llID, (void*)event->getAddr(), event->getID().first, event->getID().second);
         if (NULL == event)
@@ -119,76 +122,77 @@ bool logicLayer::clock(Cycle_t current)
         if (event->getHMCInstType() >= NUM_HMC_TYPES)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad HMC type %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
 
-        tc[0]++;
+        toCpu[0]++;
+
+        // (Multi LogicLayer) Check if it is for this LogicLayer
         if (isOurs(event->getAddr())) {
-            // it is ours!
             unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % memChans.size();
             dbg.debug(_L4_, "LogicLayer%d sends %p to vault @ %" PRIu64 "\n", llID, event, current);
             memChans[vaultID]->send(event);      
         } 
         else {
-            // it is not ours
-            if (NULL != toMem) {
-                toMem->send(event);
-                tm[1]++;
-                dbg.debug(_L4_, "LogicLayer%d sends %p to next\n", llID, event);
-            } 
-            else 
-                out.output("LogicLayer%d not sure what to do with %p...\n", llID, event);
+            if (NULL == toMem) 
+                dbg.fatal(CALL_INFO, -1, "LogicLayer%d not sure what to do with %p...\n", llID, event);
+            toMem->send(event);
+            toMemory[1]++;
+            dbg.debug(_L4_, "LogicLayer%d sends %p to next\n", llID, event);
         }
     }
 
-    // check for events from the memory chain
+    // 2)
+    /* Check For Events From Memory Chain
+     *     and send them to CPU
+     **/
     if (NULL != toMem) {
-        while ((tm[0] < bwLimit) && (ev = toMem->recv())) {
+        while ((toMemory[0] < bwLimit) && (ev = toMem->recv())) {
             MemEvent *event  = dynamic_cast<MemEvent*>(ev);
-            if (NULL == event) { 
-                dbg.fatal(CALL_INFO, -1, "LogicLayer got bad event\n"); 
-            }
+            if (NULL == event)
+                dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event from another LogicLayer\n", llID); 
 
-            tm[0]++;
-            // pass along to the CPU
-            dbg.debug(_L4_, "LogicLayer%d sends %p towards cpu (%" PRIu64 " %d)\n", llID, event, event->getID().first, event->getID().second);
+            toMemory[0]++;
+    
             toCPU->send(event);
-            tc[1]++;
+            toCpu[1]++;
+            dbg.debug(_L4_, "LogicLayer%d sends %p towards cpu (%" PRIu64 " %d)\n", llID, event, event->getID().first, event->getID().second);
         }
     }
 
-    // check for incoming events from the vaults
+    // 3)
+    /* Check For Events From Vaults 
+     *     and send them to CPU
+     **/
     for (memChans_t::iterator i = memChans.begin(); i != memChans.end(); ++i) {
         memChan_t *m_memChan = *i;
         while ((ev = m_memChan->recv())) {
             MemEvent *event  = dynamic_cast<MemEvent*>(ev);
-            if (event == NULL) {
-                dbg.fatal(CALL_INFO, -1, "LogicLayer got bad event from vaults\n");
-            }
+            if (event == NULL)
+                dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event from vaults\n", llID);
 
-            dbg.debug(_L4_, "LogicLayer%d got an event %p from vault @ %" PRIu64 ", sends " "towards cpu\n", llID, event, current);
-            // send to CPU
-            memOps++;
+            memOpsProcessed++;
             toCPU->send(event);
-            tc[1]++;
+            toCpu[1]++;
+            dbg.debug(_L4_, "LogicLayer%d got an event %p from vault @ %" PRIu64 ", sends towards cpu\n", llID, event, current);
         }    
     }
 
-    if (tm[0] > bwLimit || tm[1] > bwLimit || tc[0] > bwLimit || tc[1] > bwLimit) {
-        dbg.output(CALL_INFO, "logicLayer%d Bandwdith: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
+    if (toMemory[0] > bwLimit || toMemory[1] > bwLimit || toCpu[0] > bwLimit || toCpu[1] > bwLimit) {
+        dbg.output(CALL_INFO, "logicLayer%d Bandwdith: %d %d %d %d\n", llID, toMemory[0], toMemory[1], toCpu[0], toCpu[1]);
     }
 
-    bwUsedToCpu[0]->addData(tc[0]);
-    bwUsedToCpu[1]->addData(tc[1]);
-    bwUsedToMem[0]->addData(tm[0]);
-    bwUsedToMem[1]->addData(tm[1]);
+    bwUsedToCpu[0]->addData(toCpu[0]);
+    bwUsedToCpu[1]->addData(toCpu[1]);
+    bwUsedToMem[0]->addData(toMemory[0]);
+    bwUsedToMem[1]->addData(toMemory[1]);
 
     return false;
 }
 
-extern "C" {
-    Component* create_logicLayer( SST::ComponentId_t id,  SST::Params& params ) 
-    {
-        return new logicLayer( id, params );
-    }
+
+extern "C" Component* create_logicLayer( SST::ComponentId_t id,  SST::Params& params ) 
+{
+    return new logicLayer( id, params );
 }
+
 
 // Determine if we 'own' a given address
 bool logicLayer::isOurs(unsigned int addr) 

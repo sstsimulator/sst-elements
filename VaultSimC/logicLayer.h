@@ -69,16 +69,17 @@ private:
     void printStatsForMacSim();
 
 private:
-    memChans_t memChans;
+    memChans_t memChans;        // SST links to each Vault
     SST::Link *toMem;
     SST::Link *toCPU;
     int bwLimit;
 
     unsigned int LL_MASK;
     unsigned int llID;
-    unsigned long long memOps;
 
     // Statistics
+    uint64_t memOpsProcessed;
+    
     Statistic<uint64_t>* bwUsedToCpu[2];
     Statistic<uint64_t>* bwUsedToMem[2];
 
