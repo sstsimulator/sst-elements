@@ -18,7 +18,6 @@
 #include <sst_config.h>
 #include "cacheArray.h"
 #include <vector>
-#include "replacementManager.h"
 
 namespace SST { namespace MemHierarchy {
 
