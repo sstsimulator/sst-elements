@@ -42,7 +42,7 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
         dbg.fatal(CALL_INFO, -1, "numVaults2 not set! should be log2(number of vaults per cube)\n");
     numVaults2 = nv2;
 
-    memChan = configureLink("bus", "1 ns");
+    memChan = configureLink("bus");     //link delay is configurable by python scripts
 
     int vid = params.find_integer("vault.id", -1);
     if (-1 == vid) 
@@ -172,7 +172,7 @@ bool VaultSimC::clock(Cycle_t currentCycle)
             ret = false;
         }
     }
-    
+
     return false;
 }
 

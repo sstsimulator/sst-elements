@@ -50,11 +50,6 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     bool terminal = params.find_integer("terminal", 0);
 
     // VaultSims Initializations (Links)
-    std::string vaultsLinkDelay;
-    vaultsLinkDelay = params.find_string("vaults_LinkDelay", "");
-    if ("" == vaultsLinkDelay)
-        dbg.fatal(CALL_INFO, -1, " no vaults_LinkDelay param defined for logiclayer\n");
-
     int numVaults = params.find_integer("vaults", -1);
     if (-1 == numVaults) 
         dbg.fatal(CALL_INFO, -1, " no vaults param defined for LogicLayer\n");
@@ -62,7 +57,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     for (int i = 0; i < numVaults; ++i) {
         char bus_name[50];
         snprintf(bus_name, 50, "bus_%d", i);
-        memChan_t *chan = configureLink(bus_name, vaultsLinkDelay);
+        memChan_t *chan = configureLink(bus_name);      //link delay is configurable by python scripts
         if (chan) {
             memChans.push_back(chan);
             dbg.debug(_INFO_, "\tConnected %s\n", bus_name);
