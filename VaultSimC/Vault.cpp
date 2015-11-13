@@ -95,6 +95,10 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     statTotalTransactions = registerStatistic<uint64_t>("TOTAL_TRANSACTIONS", "0");  
     statTotalHmcOps       = registerStatistic<uint64_t>("TOTAL_HMC_OPS", "0");
     statTotalNonHmcOps    = registerStatistic<uint64_t>("TOTAL_NON_HMC_OPS", "0");
+
+    statTotalNonHmcRead   = registerStatistic<uint64_t>("TOTAL_NON_HMC_READ", "0");
+    statTotalNonHmcWrite  = registerStatistic<uint64_t>("TOTAL_NON_HMC_WRITE", "0");
+
     statTotalHmcLatency   = registerStatistic<uint64_t>("HMC_OPS_TOTAL_LATENCY", "0");
     statIssueHmcLatency   = registerStatistic<uint64_t>("HMC_OPS_ISSUE_LATENCY", "0");
     statReadHmcLatency    = registerStatistic<uint64_t>("HMC_OPS_READ_LATENCY", "0");
@@ -108,6 +112,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
 void Vault::finish() 
 {
+    dbg.debug(_L7_, "Vault %d finished\n", id);
     //Print Statistics
     if (statsFormat == 1)
         printStatsForMacSim();
@@ -256,7 +261,8 @@ void Vault::updateQueue()
                 mi->second.issueCycle = currentClockCycle;
             } else { // Not atomic op
                 // Issue to DRAM
-                memorySystem->addTransaction(transQ[i].getIsWrite(), transQ[i].getAddr());
+                bool isWrite_ = transQ[i].getIsWrite();
+                memorySystem->addTransaction(isWrite_, transQ[i].getAddr());
                 dbg.debug(_L8_, "Vault %d: %s %p (bank%u) issued @cycle=%lu\n", 
                         id, transQ[i].getIsWrite() ? "Write" : "Read", (void*)transQ[i].getAddr(), transQ[i].getBankNo(), currentClockCycle);
 
@@ -265,6 +271,11 @@ void Vault::updateQueue()
 
                 /* statistics */
                 statTotalNonHmcOps->addData(1);
+                if (isWrite_)
+                    statTotalNonHmcWrite->addData(1);
+                else
+                    statTotalNonHmcRead->addData(1);
+                
             }
         }
     }
@@ -431,13 +442,17 @@ void Vault::printStatsForMacSim() {
     float avgHmcOpsLatencyReadInt = (float)statReadHmcLatencyInt / statTotalHmcOps->getCollectionCount();
     float avgHmcOpsLatencyWriteInt = (float)statWriteHmcLatencyInt / statTotalHmcOps->getCollectionCount();
 
-    writeTo(ofs, name_, string("Total_trans"),                      statTotalTransactions->getCollectionCount());
-    writeTo(ofs, name_, string("Total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
-    writeTo(ofs, name_, string("Total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_total"),        avgHmcOpsLatencyTotalInt);
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssueInt);
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_read"),         avgHmcOpsLatencyReadInt);
-    writeTo(ofs, name_, string("Avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWriteInt);
+    writeTo(ofs, name_, string("total_trans"),                      statTotalTransactions->getCollectionCount());
+    writeTo(ofs, name_, string("total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
+    writeTo(ofs, name_, string("total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
+    ofs << "\n";
+    writeTo(ofs, name_, string("total_non_HMC_read"),               statTotalNonHmcRead->getCollectionCount());
+    writeTo(ofs, name_, string("total_non_HMC_write"),              statTotalNonHmcWrite->getCollectionCount());
+    ofs << "\n";
+    writeTo(ofs, name_, string("avg_HMC_ops_latency_total"),        avgHmcOpsLatencyTotalInt);
+    writeTo(ofs, name_, string("avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssueInt);
+    writeTo(ofs, name_, string("avg_HMC_ops_latency_read"),         avgHmcOpsLatencyReadInt);
+    writeTo(ofs, name_, string("avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWriteInt);
 }
 
 

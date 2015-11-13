@@ -75,14 +75,7 @@ private:
     /**
      *
      */
-    void init(unsigned int phase);
-    size_t getInternalAddress(MemHierarchy::Addr in) {
-        // calculate address
-        size_t lower = in & VAULT_MASK;
-        size_t upper = in >> (numVaults2 + VAULT_SHIFT);
-        size_t out = (upper << VAULT_SHIFT) + lower;
-        return out;
-    }
+
 private:
     deque<transaction_c> transQ;
     t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
@@ -95,7 +88,6 @@ private:
     unsigned vaultID;
 
     // Statistics
-    Statistic<uint64_t>* memOutStat;
 
     // Output
     Output dbg;

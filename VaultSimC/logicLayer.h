@@ -19,6 +19,10 @@
 #include <sst/core/statapi/stataccumulator.h>
 #include <sst/core/statapi/stathistogram.h>
 
+#include <sstream>
+#include <fstream>
+#include <boost/algorithm/string.hpp>
+
 #include "globals.h"
 #include "transaction.h"
 
@@ -42,11 +46,6 @@ public:
      */
     void finish();
 
-    /**
-     *
-     */
-    void init(unsigned int phase);
-
 private: 
     /** 
      * Constructor
@@ -59,23 +58,30 @@ private:
     bool clock(Cycle_t);
 
     // Determine if we 'own' a given address
-    bool isOurs(unsigned int addr) {
-        return ((((addr >> LL_SHIFT) & LL_MASK) == llID) || (LL_MASK == 0));
-    }
+    bool isOurs(unsigned int addr);
+
+    /**
+     *  Stats
+     */
+    // Helper function for printing statistics in MacSim format
+    template<typename T>
+    void writeTo(ofstream &ofs, string prefix, string name, T count);
+    void printStatsForMacSim();
 
 private:
-    memChans_t memChans;
+    memChans_t memChans;        // SST links to each Vault
     SST::Link *toMem;
     SST::Link *toCPU;
-    int bwLimit;
+    int reqLimit;
 
     unsigned int LL_MASK;
     unsigned int llID;
-    unsigned long long memOps;
 
     // Statistics
-    Statistic<uint64_t>* bwUsedToCpu[2];
-    Statistic<uint64_t>* bwUsedToMem[2];
+    Statistic<uint64_t>* memOpsProcessed;
+    
+    Statistic<uint64_t>* reqUsedToCpu[2];
+    Statistic<uint64_t>* reqUsedToMem[2];
 
     // Output
     Output dbg;                 // Output, for printing debuging commands
