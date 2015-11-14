@@ -146,16 +146,16 @@ bool VaultSimC::clock(Cycle_t currentCycle)
         transaction_c transaction (isWrite, event->getAddr());
 
         #ifdef USE_VAULTSIM_HMC
-        HMC_Type HMCTypeEvent = event->getHMCInstType();
+        uint8_t HMCTypeEvent = event->getHMCInstType();
+        transaction.setHmcOpType(HMCTypeEvent);
         if (HMCTypeEvent == HMC_NONE || HMCTypeEvent == HMC_CANDIDATE) {
             transaction.resetAtomic();
-            dbg.debug(_L6_, "VaultSimC %d got a req for %p in clock=%lu (%lu %d)\n", 
-                    vaultID, (void*)event->getAddr(), currentCycle, event->getID().first, event->getID().second);
+            dbg.debug(_L6_, "VaultSimC %d got a req for %p of type %s in clock=%lu\n", 
+                    vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
         } 
         else {
             transaction.setAtomic();
             transaction.resetIsWrite(); //FIXME: all hmc ops come as read. true?
-            transaction.setHmcOpType(event->getHMCInstType());
             dbg.debug(_L6_, "VaultSimC %d got an atomic req for %p of type %s in clock=%lu\n", 
                     vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
         }

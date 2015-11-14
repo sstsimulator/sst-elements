@@ -66,6 +66,9 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
             dbg.fatal(CALL_INFO, -1, " could not find %s\n", bus_name);
     }
     out.output("*LogicLayer%d: Connected %d Vaults\n", ident, numVaults);
+    #ifdef USE_VAULTSIM_HMC
+    out.output("*LogicLayer%d: Flag USE_VAULTSIM_HMC set\n", ident);
+    #endif
 
     // Connect Chain
     toCPU = configureLink("toCPU");
@@ -119,7 +122,7 @@ bool logicLayer::clock(Cycle_t current)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event\n", llID);
 
         #ifdef USE_VAULTSIM_HMC
-        HMC_Type HMCTypeEvent = event->getHMCInstType();
+        uint8_t HMCTypeEvent = event->getHMCInstType();
         if (HMCTypeEvent >= NUM_HMC_TYPES)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad HMC type %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
         if (HMCTypeEvent != HMC_NONE && HMCTypeEvent != HMC_CANDIDATE)
