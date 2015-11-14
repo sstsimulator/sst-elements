@@ -155,7 +155,7 @@ bool VaultSimC::clock(Cycle_t currentCycle)
         } 
         else {
             transaction.setAtomic();
-            transaction.resetIsWrite(); //FIXME: all hmc ops come as read. true?
+            transaction.setIsWrite();   //all hmc ops treat as write
             dbg.debug(_L6_, "VaultSimC %d got an atomic req for %p of type %s in clock=%lu\n", 
                     vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
         }
