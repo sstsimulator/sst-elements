@@ -2,7 +2,9 @@
 #
 #
 
-AM_CPPFLAGS = -g
+AM_CPPFLAGS = \ 
+            $(HMC_FLAG) \ 
+            -g
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libVaultSimC.la
@@ -17,7 +19,7 @@ libVaultSimC_la_SOURCES = \
     globals.h \
     libVaultSimGen.cpp
 
-libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) -DUSE_VAULTSIM_HMC 
+libVaultSimC_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(HMC_FLAG) 
 libVaultSimC_la_LDFLAGS = -module -avoid-version
 libVaultSimC_la_LIBADD = 
 

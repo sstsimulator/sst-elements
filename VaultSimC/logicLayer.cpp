@@ -115,8 +115,11 @@ bool logicLayer::clock(Cycle_t current)
         dbg.debug(_L4_, "LogicLayer%d got req for %p (%" PRIu64 " %d)\n", llID, (void*)event->getAddr(), event->getID().first, event->getID().second);
         if (NULL == event)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event\n", llID);
+
+        #ifdef USE_VAULTSIM_HMC
         if (event->getHMCInstType() >= NUM_HMC_TYPES)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad HMC type %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
+        #endif
 
         toCpu[0]++;
         reqUsedToCpu[0]->addData(1);
