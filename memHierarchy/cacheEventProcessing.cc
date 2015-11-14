@@ -32,6 +32,12 @@ using namespace SST::MemHierarchy;
 
 
 void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall) {
+#ifdef USE_VAULTSIM_HMC
+    bool isHMC = false;
+    if (event->getHMCInstType()!=0) 
+        isHMC = true;
+#endif
+
     if (!replay) {
         switch (cmd) {
             case GetS:
@@ -86,7 +92,31 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 return; // profile later, this event is getting NACKed 
         }
     }
+#ifdef USE_VAULTSIM_HMC
+    if (!replay)
+    {
+        if (isHMC) 
+            statRequest_hmc->addData(1);
+        else
+            statRequest_nonhmc->addData(1);
+        
+        if (cacheHit == 0)
+        {
+            if (isHMC)
+                statCacheHits_hmc->addData(1);
+            else
+                statCacheHits_nonhmc->addData(1);
+        }
+        else
+        {
+            if (isHMC)
+                statCacheMisses_hmc->addData(1);
+            else
+                statCacheMisses_nonhmc->addData(1);
 
+        }
+    }
+#endif
     switch(cmd) {
         case GetS:
             if (!replay) {                // New event
@@ -455,10 +485,17 @@ void Cache::finish(){
                 missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
                 missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
     else if (statsFormat_ == 1)
+    {
         coherenceMgr->printStatsForMacSim(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
                 missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
                 missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
-
+        coherenceMgr->printStatsForMacSimHMC(statCacheHits_hmc->getCollectionCount(),
+                statCacheHits_nonhmc->getCollectionCount(),
+                statCacheMisses_hmc->getCollectionCount(),
+                statCacheMisses_nonhmc->getCollectionCount(),
+                statRequest_hmc->getCollectionCount(),
+                statRequest_nonhmc->getCollectionCount());
+    }
     listener_->printStats(*d_);
     delete cf_.cacheArray_;
     delete cf_.rm_;

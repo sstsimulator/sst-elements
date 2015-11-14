@@ -322,6 +322,15 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"latency_GetSEx_IM",       "Latency for read-exclusive misses in I state", "cycles", 1},
     {"latency_GetSEx_SM",       "Latency for read-exclusive misses in S state", "cycles", 1},
     {"latency_GetSEx_M",        "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+#ifdef USE_VAULTSIM_HMC    
+    /* hmc counters */
+    {"hmcCacheHits", "cache hit number for hmc instructions", "count", 1},
+    {"nonhmcCacheHits", "cache hit number for nonhmc instructions", "count", 1},
+    {"hmcCacheMisses", "cache miss number for hmc instructions", "count", 1},
+    {"nonhmcCacheMisses", "cache miss number for nonhmc instructions", "count", 1},
+    {"hmcRequest", "number of received hmc requests", "count", 1},
+    {"nonhmcRequest", "number of received nonhmc requests", "count", 1},
+#endif
     {NULL, NULL, NULL, 0}
 };
 

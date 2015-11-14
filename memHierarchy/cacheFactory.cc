@@ -395,7 +395,14 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     statFetchInvX_recv          = registerStatistic<uint64_t>("FetchInvX_recv");
     statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
-
+#ifdef USE_VAULTSIM_HMC
+    statCacheHits_hmc           = registerStatistic<uint64_t>("hmcCacheHits");
+    statCacheHits_nonhmc        = registerStatistic<uint64_t>("nonhmcCacheHits");
+    statCacheMisses_hmc         = registerStatistic<uint64_t>("hmcCacheMisses");
+    statCacheMisses_nonhmc      = registerStatistic<uint64_t>("nonhmcCacheMisses");
+    statRequest_hmc             = registerStatistic<uint64_t>("hmcRequest");
+    statRequest_nonhmc          = registerStatistic<uint64_t>("nonhmcRequest");
+#endif
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {
             if (i > 0 && (cf_.statGroupIds_[i] == 0 || cf_.statGroupIds_[i] == -1)) 
