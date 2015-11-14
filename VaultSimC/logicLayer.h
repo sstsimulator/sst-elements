@@ -79,6 +79,8 @@ private:
 
     // Statistics
     Statistic<uint64_t>* memOpsProcessed;
+    Statistic<uint64_t>* HMCCandidateProcessed;
+    Statistic<uint64_t>* HMCOpsProcessed;
     
     Statistic<uint64_t>* reqUsedToCpu[2];
     Statistic<uint64_t>* reqUsedToMem[2];

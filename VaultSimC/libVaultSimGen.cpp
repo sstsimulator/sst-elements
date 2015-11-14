@@ -29,6 +29,8 @@ const char *memEventList[] = {
 // Logiclayer
 static const ElementInfoStatistic logicLayer_statistics[] = {
   { "Total_memory_ops_processed", "Total memory ops processed", "reqs", 1},
+  { "HMC_ops_processed", "Total HMC ops processed", "reqs", 1},
+  { "Total_HMC_candidate_processed", "Total HMC Candidate (instruction that might be able to use HMC) ops processed", "reqs", 1},
   { "Req_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs", 1},
   { "Req_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs", 1},
   { "Req_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs", 1},
@@ -143,15 +145,16 @@ static const ElementInfoParam Vault_params[] = {
 };
 
 static const ElementInfoStatistic Vault_statistics[] = {
-  { "TOTAL_TRANSACTIONS",      "", "reqs", 1},
-  { "TOTAL_HMC_OPS",           "", "reqs", 1},
-  { "TOTAL_NON_HMC_OPS",       "", "reqs", 1},
-  { "TOTAL_NON_HMC_READ",      "", "reqs", 1},
-  { "TOTAL_NON_HMC_WRITE",     "", "reqs", 1},
-  { "HMC_OPS_TOTAL_LATENCY",   "", "cycles", 1},
-  { "HMC_OPS_ISSUE_LATENCY",   "", "cycles", 1},
-  { "HMC_OPS_READ_LATENCY",    "", "cycles", 1},
-  { "HMC_OPS_WRITE_LATENCY",   "", "cycles", 1},
+  { "Total_transactions",      "", "reqs", 1},
+  { "Total_hmc_ops",           "", "reqs", 1},
+  { "Total_non_hmc_ops",       "", "reqs", 1},
+  { "Total_candidate_hmc_ops", "", "reqs", 1},
+  { "Total_non_hmc_read",      "", "reqs", 1},
+  { "Total_non_hmc_write",     "", "reqs", 1},
+  { "Hmc_ops_total_latency",   "", "cycles", 1},
+  { "Hmc_ops_issue_latency",   "", "cycles", 1},
+  { "Hmc_ops_read_latency",    "", "cycles", 1},
+  { "Hmc_ops_write_latency",   "", "cycles", 1},
   { NULL, NULL, NULL, 0 }
 };
 

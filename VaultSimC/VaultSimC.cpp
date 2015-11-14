@@ -146,7 +146,8 @@ bool VaultSimC::clock(Cycle_t currentCycle)
         transaction_c transaction (isWrite, event->getAddr());
 
         #ifdef USE_VAULTSIM_HMC
-        if (event->getHMCInstType() == HMC_NONE) {
+        HMC_Type HMCTypeEvent = event->getHMCInstType();
+        if (HMCTypeEvent == HMC_NONE || HMCTypeEvent == HMC_CANDIDATE) {
             transaction.resetAtomic();
             dbg.debug(_L6_, "VaultSimC %d got a req for %p in clock=%lu (%lu %d)\n", 
                     vaultID, (void*)event->getAddr(), currentCycle, event->getID().first, event->getID().second);

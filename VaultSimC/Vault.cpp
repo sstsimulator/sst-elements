@@ -92,17 +92,18 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     currentClockCycle = 0;
 
     // Stats Initialization
-    statTotalTransactions = registerStatistic<uint64_t>("TOTAL_TRANSACTIONS", "0");  
-    statTotalHmcOps       = registerStatistic<uint64_t>("TOTAL_HMC_OPS", "0");
-    statTotalNonHmcOps    = registerStatistic<uint64_t>("TOTAL_NON_HMC_OPS", "0");
+    statTotalTransactions = registerStatistic<uint64_t>("Total_transactions", "0");  
+    statTotalHmcOps       = registerStatistic<uint64_t>("Total_hmc_ops", "0");
+    statTotalNonHmcOps    = registerStatistic<uint64_t>("Total_non_hmc_ops", "0");
+    statTotalHmcCandidate = registerStatistic<uint64_t>("Total_candidate_hmc_ops", "0");
 
-    statTotalNonHmcRead   = registerStatistic<uint64_t>("TOTAL_NON_HMC_READ", "0");
-    statTotalNonHmcWrite  = registerStatistic<uint64_t>("TOTAL_NON_HMC_WRITE", "0");
+    statTotalNonHmcRead   = registerStatistic<uint64_t>("Total_non_hmc_read", "0");
+    statTotalNonHmcWrite  = registerStatistic<uint64_t>("Total_non_hmc_write", "0");
 
-    statTotalHmcLatency   = registerStatistic<uint64_t>("HMC_OPS_TOTAL_LATENCY", "0");
-    statIssueHmcLatency   = registerStatistic<uint64_t>("HMC_OPS_ISSUE_LATENCY", "0");
-    statReadHmcLatency    = registerStatistic<uint64_t>("HMC_OPS_READ_LATENCY", "0");
-    statWriteHmcLatency   = registerStatistic<uint64_t>("HMC_OPS_WRITE_LATENCY", "0");
+    statTotalHmcLatency   = registerStatistic<uint64_t>("Hmc_ops_total_latency", "0");
+    statIssueHmcLatency   = registerStatistic<uint64_t>("Hmc_ops_issue_latency", "0");
+    statReadHmcLatency    = registerStatistic<uint64_t>("Hmc_ops_read_latency", "0");
+    statWriteHmcLatency   = registerStatistic<uint64_t>("Hmc_ops_write_latency", "0");
 
     statTotalHmcLatencyInt = 0;
     statIssueHmcLatencyInt = 0;
@@ -259,7 +260,8 @@ void Vault::updateQueue()
                 /* statistics */
                 statTotalHmcOps->addData(1);
                 mi->second.issueCycle = currentClockCycle;
-            } else { // Not atomic op
+            } 
+            else { // Not atomic op
                 // Issue to DRAM
                 bool isWrite_ = transQ[i].getIsWrite();
                 memorySystem->addTransaction(isWrite_, transQ[i].getAddr());
@@ -275,6 +277,8 @@ void Vault::updateQueue()
                     statTotalNonHmcWrite->addData(1);
                 else
                     statTotalNonHmcRead->addData(1);
+                if (transQ[i].getHmcOpType() == HMC_CANDIDATE)
+                    statTotalHmcCandidate->addData(1);
                 
             }
         }
@@ -445,6 +449,7 @@ void Vault::printStatsForMacSim() {
     writeTo(ofs, name_, string("total_trans"),                      statTotalTransactions->getCollectionCount());
     writeTo(ofs, name_, string("total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
     writeTo(ofs, name_, string("total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
+    writeTo(ofs, name_, string("total_HMC_candidate_ops"),          statTotalHmcCandidate->getCollectionCount());
     ofs << "\n";
     writeTo(ofs, name_, string("total_non_HMC_read"),               statTotalNonHmcRead->getCollectionCount());
     writeTo(ofs, name_, string("total_non_HMC_write"),              statTotalNonHmcWrite->getCollectionCount());

@@ -56,7 +56,8 @@ typedef enum HMC_Type_enum {
     HMC_COMP_greater=15,
     HMC_COMP_less=16,
     HMC_COMP_equal=17,
-    NUM_HMC_TYPES=18
+    HMC_CANDIDATE=18,           // Not a HMC-op, it is showing if an instruction could be HMC in other scenarios
+    NUM_HMC_TYPES=19
 } HMC_Type;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

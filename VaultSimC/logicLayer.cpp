@@ -83,7 +83,9 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     // Stats Initialization
     statsFormat = params.find_integer("statistics_format", 0);
 
-    memOpsProcessed = registerStatistic<uint64_t>("Total_memory_ops_processed", "0");  
+    memOpsProcessed = registerStatistic<uint64_t>("Total_memory_ops_processed", "0");
+    HMCOpsProcessed = registerStatistic<uint64_t>("HMC_ops_processed", "0");
+    HMCCandidateProcessed = registerStatistic<uint64_t>("Total_HMC_candidate_processed", "0");
     reqUsedToCpu[0] = registerStatistic<uint64_t>("Req_recv_from_CPU", "0");  
     reqUsedToCpu[1] = registerStatistic<uint64_t>("Req_send_to_CPU", "0");
     reqUsedToMem[0] = registerStatistic<uint64_t>("Req_recv_from_Mem", "0");
@@ -117,8 +119,13 @@ bool logicLayer::clock(Cycle_t current)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event\n", llID);
 
         #ifdef USE_VAULTSIM_HMC
-        if (event->getHMCInstType() >= NUM_HMC_TYPES)
+        HMC_Type HMCTypeEvent = event->getHMCInstType();
+        if (HMCTypeEvent >= NUM_HMC_TYPES)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad HMC type %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
+        if (HMCTypeEvent != HMC_NONE && HMCTypeEvent != HMC_CANDIDATE)
+            HMCOpsProcessed->addData(1);
+        if (HMCTypeEvent == HMC_CANDIDATE)
+            HMCCandidateProcessed->addData(1);
         #endif
 
         toCpu[0]++;
@@ -219,11 +226,14 @@ void logicLayer::printStatsForMacSim() {
     ofs.open(filename.c_str(), std::ios_base::out);
 
     writeTo(ofs, name_, string("total_memory_ops_processed"), memOpsProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_hmc_ops_processed"), HMCOpsProcessed->getCollectionCount());
     ofs << "\n";
     writeTo(ofs, name_, string("req_recv_from_CPU"), reqUsedToCpu[0]->getCollectionCount());
     writeTo(ofs, name_, string("req_send_to_CPU"),   reqUsedToCpu[1]->getCollectionCount());
     writeTo(ofs, name_, string("req_recv_from_Mem"), reqUsedToMem[0]->getCollectionCount());
     writeTo(ofs, name_, string("req_send_to_Mem"),   reqUsedToMem[1]->getCollectionCount());
+    ofs << "\n";
+    writeTo(ofs, name_, string("total_HMC_candidate_ops"),   HMCCandidateProcessed->getCollectionCount());
 }
 
 
