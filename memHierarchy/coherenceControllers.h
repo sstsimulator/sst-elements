@@ -95,7 +95,29 @@ public:
     virtual void printStats(int _statsFile, vector<int> statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency, uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM, uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M) =0;
     virtual void printStatsForMacSim(int _statsFile, vector<int> statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency, uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM, uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M) =0;
 
+#ifdef USE_VAULTSIM_HMC
+    void printStatsForMacSimHMC(uint64_t _CacheHits_hmc, uint64_t _CacheHits_nonhmc,
+            uint64_t _CacheMisses_hmc, uint64_t _CacheMisses_nonhmc,
+            uint64_t _Request_hmc, uint64_t _Request_nonhmc)
+    {
+        stringstream ss;
+        ss << name_.c_str() << ".stat.out";
+        string filename = ss.str();
 
+        ofstream ofs;
+        ofs.exceptions(std::ofstream::eofbit | std::ofstream::failbit | std::ofstream::badbit);
+        ofs.open(filename.c_str(), std::ios_base::out | std::ios_base::app);
+
+        writeTo(ofs, name_, string("CacheHits_hmc"), _CacheHits_hmc);
+        writeTo(ofs, name_, string("CacheHits_nonhmc"), _CacheHits_nonhmc);
+        writeTo(ofs, name_, string("CacheMisses_hmc"), _CacheMisses_hmc);
+        writeTo(ofs, name_, string("CacheMisses_nonhmc"), _CacheMisses_nonhmc);
+        writeTo(ofs, name_, string("Request_hmc"), _Request_hmc);
+        writeTo(ofs, name_, string("Request_nonhmc"), _Request_nonhmc);
+
+        ofs.close();
+    }
+#endif
 
     // Send NACK in response to a request. Could be made virtual if needed.
     void sendNACK(MemEvent * event, bool up) {
