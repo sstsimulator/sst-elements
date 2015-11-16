@@ -162,9 +162,11 @@ public:
     callback_t *readCallback;
     callback_t *writeCallback;
 
-    DRAMSim::MultiChannelMemorySystem *memorySystem;
+    
 
 private:
+    DRAMSim::MultiChannelMemorySystem *memorySystem;
+
     //Debugs
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
     Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats

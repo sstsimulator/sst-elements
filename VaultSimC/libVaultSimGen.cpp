@@ -62,6 +62,7 @@ static const ElementInfoPort logicLayer_ports[] = {
 static const ElementInfoParam VaultSimC_params[] = {
   {"clock",                           "Vault Clock Rate.", "1.0 Ghz"},
   {"numVaults2",                      "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
+  {"cacheLineSize",                   "Optional, used to strip address bits for DRAMSim2", "64"},
   {"debug",                           "VaultSimC debug: 0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
   {"debug_level",                     "VaultSimC debug verbosity level (0-10)"},
   {"statistics_format",               "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},

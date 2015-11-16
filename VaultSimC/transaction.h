@@ -96,6 +96,7 @@ public:
      * addr functions 
      */
     uint64_t getAddr() { return addr; }
+    void setAddr( uint64_t addr_) { addr = addr_; }
 
     /** 
      * isWrite functions      

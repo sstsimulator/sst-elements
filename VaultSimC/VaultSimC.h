@@ -79,7 +79,9 @@ private:
 private:
     deque<transaction_c> transQ;
     t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
+
     Vault *memorySystem;
+    uint64_t CacheLineSize;    // it is used to send stripped address to DRAMSim2
 
     uint8_t *memBuffer;
     memChan_t *memChan;

@@ -63,6 +63,8 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
 
     memorySystem->registerCallback(readDataCB, writeDataCB);
     dbg.output(CALL_INFO, "VaultSimC %u: made vault %u\n", vaultID, vaultID);
+
+    CacheLineSize = params.find_integer("cacheLineSize", 64);;
 }
 
 void VaultSimC::finish() 
@@ -126,7 +128,7 @@ bool VaultSimC::clock(Cycle_t currentCycle)
         //dbg.output(CALL_INFO, "transType=%d addr=%p\n", transType, (void*)event->getAddr());
 
         // save the memEvent eventID based on addr so we can respond to it correctly
-        transactionToMemEventMap.insert(pair<uint64_t, MemHierarchy::MemEvent*>(event->getAddr(), event));
+        transactionToMemEventMap.insert(pair<uint64_t, MemHierarchy::MemEvent*>(event->getAddr() & ~((uint64_t)CacheLineSize-1), event));
 
         bool isWrite = false;
         switch(event->getCmd()) {
@@ -143,7 +145,7 @@ bool VaultSimC::clock(Cycle_t currentCycle)
         }
 
         // add to the Q
-        transaction_c transaction (isWrite, event->getAddr());
+        transaction_c transaction (isWrite, event->getAddr() & ~((uint64_t)CacheLineSize-1));
 
         #ifdef USE_VAULTSIM_HMC
         uint8_t HMCTypeEvent = event->getHMCInstType();
