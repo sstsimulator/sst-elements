@@ -58,7 +58,7 @@ private:
     bool clock(Cycle_t);
 
     // Determine if we 'own' a given address
-    bool isOurs(unsigned int addr);
+    inline bool isOurs(unsigned int addr);
 
     /**
      *  Stats
@@ -73,6 +73,9 @@ private:
     SST::Link *toMem;
     SST::Link *toCPU;
     int reqLimit;
+
+    uint64_t CacheLineSize;             // it is used to determine VaultIDs
+    unsigned CacheLineSizeLog2;         // bits of CacheLineSize
 
     unsigned int LL_MASK;
     unsigned int llID;

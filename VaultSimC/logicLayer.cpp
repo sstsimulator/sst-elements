@@ -78,10 +78,14 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
         toMem = NULL;
     dbg.debug(_INFO_, "Made LogicLayer %d toMem:%p toCPU:%p\n", llID, toMem, toCPU);
 
+    // etc
     std::string frequency;
     frequency = params.find_string("clock", "2.2 Ghz");
     registerClock(frequency, new Clock::Handler<logicLayer>(this, &logicLayer::clock));
     dbg.debug(_INFO_, "Making LogicLayer with id=%d & clock=%s\n", llID, frequency.c_str());
+
+    CacheLineSize = params.find_integer("cacheLineSize", 64);
+    CacheLineSizeLog2 = log(CacheLineSize) / log(2);
 
     // Stats Initialization
     statsFormat = params.find_integer("statistics_format", 0);
@@ -136,8 +140,8 @@ bool logicLayer::clock(Cycle_t current)
 
         // (Multi LogicLayer) Check if it is for this LogicLayer
         if (isOurs(event->getAddr())) {
-            unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % memChans.size();
-            dbg.debug(_L4_, "LogicLayer%d sends %p to vault @ %" PRIu64 "\n", llID, event, current);
+            unsigned int vaultID = (event->getAddr() >> CacheLineSizeLog2) % memChans.size();
+            dbg.debug(_L4_, "LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, current);
             memChans[vaultID]->send(event);      
         } 
         else {
