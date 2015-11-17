@@ -144,9 +144,7 @@ bool logicLayer::clock(Cycle_t current)
         // (Multi LogicLayer) Check if it is for this LogicLayer
         if (isOurs(event->getAddr())) {
             unsigned int vaultID = (event->getAddr() >> CacheLineSizeLog2) % memChans.size();
-            dbg.debug(_L4_, "LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, current);
-
-            //out.output("LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, current);
+            dbg.debug(_L4_, "LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, current);;
             memChans[vaultID]->send(event);      
         } 
         else {
@@ -264,3 +262,4 @@ void logicLayer::writeTo(ofstream &ofs, string prefix, string name, T count)
     ofs.setf(ios::right, ios::adjustfield);
     ofs << setw(FILED2_LENGTH) << count << setw(FILED3_LENGTH) << count << endl << endl;
 }
+

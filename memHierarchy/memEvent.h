@@ -257,9 +257,10 @@ public:
 	instPtr_	    = 0;
 	vAddr_		    = 0;
         inProgress_         = false;
-#ifdef USE_VAULTSIM_HMC
+    #ifdef USE_VAULTSIM_HMC
         hmcInstType_ = 0;
-#endif
+        hmcTransId_ = 0;
+    #endif
     }
 
     /** return the original event that caused a NACK */
@@ -471,9 +472,14 @@ public:
     void setHMCInstType(uint8_t _hmcInstType) { hmcInstType_ = _hmcInstType; }
     /** Getter for HMC instruction type */
     uint8_t getHMCInstType() { return hmcInstType_; }
+    /** Setter of HMC Transaction ID */
+    void setHMCTransId(uint64_t _hmcTransId) { hmcTransId_ = _hmcTransId; }
+    /** Getter of HMC Transaction ID */
+    uint64_t getHMCTransId() { return hmcTransId_; }
 
 private:
     uint8_t         hmcInstType_;
+    uint64_t        hmcTransId_;
 #endif
 
 private:
