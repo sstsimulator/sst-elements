@@ -36,12 +36,6 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
     std::string frequency = "1.0 GHz";
     frequency = params.find_string("clock", "1.0 Ghz");
 
-    // number of bits to determine vault address
-    int nv2 = params.find_integer("numVaults2", -1);
-    if (-1 == nv2) 
-        dbg.fatal(CALL_INFO, -1, "numVaults2 not set! should be log2(number of vaults per cube)\n");
-    numVaults2 = nv2;
-
     memChan = configureLink("bus");     //link delay is configurable by python scripts
 
     int vid = params.find_integer("vault.id", -1);
@@ -64,7 +58,7 @@ VaultSimC::VaultSimC(ComponentId_t id, Params& params) : IntrospectedComponent( 
     memorySystem->registerCallback(readDataCB, writeDataCB);
     dbg.output(CALL_INFO, "VaultSimC %u: made vault %u\n", vaultID, vaultID);
 
-    CacheLineSize = params.find_integer("cacheLineSize", 64);;
+    CacheLineSize = params.find_integer("cacheLineSize", 64);
 }
 
 void VaultSimC::finish() 
