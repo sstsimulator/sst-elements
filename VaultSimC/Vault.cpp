@@ -225,7 +225,7 @@ bool Vault::addTransaction(transaction_c transaction)
 {
     unsigned newChan, newRank, newBank, newRow, newColumn;
     DRAMSim::addressMapping(transaction.getAddr(), newChan, newRank, newBank, newRow, newColumn);
-    transaction.setBankNo(newBank);
+    transaction.setBankNo(newBank);       //FIXME: newRank * MAX_BANK_SIZE + newBank - Why not implemented: performance issues
     // transaction.setHmcOpState(QUEUED);
     
     /* statistics */

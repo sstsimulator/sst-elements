@@ -34,9 +34,11 @@
 using namespace std;
 using namespace SST;
 
-#define ON_FLY_HMC_OP_OPTIMUM_SIZE 2
+#define ON_FLY_HMC_OP_OPTIMUM_SIZE 10
 #define BANK_BOOL_MAP_OPTIMUM_SIZE 10
 #define TRANS_Q_OPTIMUM_SIZE 10
+
+//#define MAX_BANK_SIZE                   // FIXME: used for mapping (rank,bank) pair to a single number
 
 class Vault : public SubComponent {
 private:
