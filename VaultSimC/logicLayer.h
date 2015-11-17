@@ -69,16 +69,23 @@ private:
     void printStatsForMacSim();
 
 private:
+    unsigned int llID;
+
+    // Links to Vaults
     memChans_t memChans;        // SST links to each Vault
     SST::Link *toMem;
     SST::Link *toCPU;
     int reqLimit;
 
+    // for VaultId process
     uint64_t CacheLineSize;             // it is used to determine VaultIDs
     unsigned CacheLineSizeLog2;         // bits of CacheLineSize
 
+    // Multi logicLayer support (FIXME)
     unsigned int LL_MASK;
-    unsigned int llID;
+
+    // Transaction Support
+    bool isInHookMode;
 
     // Statistics
     Statistic<uint64_t>* memOpsProcessed;
