@@ -97,7 +97,8 @@ MemEvent* MemHierarchyInterface::createMemEvent(SimpleMem::Request *_req) const{
 #ifdef USE_VAULTSIM_HMC
     MacSim::SimpleMemHMCExtension::HMCRequest *hmcReq = 
         static_cast<MacSim::SimpleMemHMCExtension::HMCRequest *>(_req);
-    me->setHMCInstType(hmcReq->hmcInstType); 
+    me->setHMCInstType(hmcReq->hmcInstType);
+    me->setHMCTransId(hmcReq->hmcTransId);
 #endif
 
     //totalRequests_++;

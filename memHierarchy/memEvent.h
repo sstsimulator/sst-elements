@@ -550,6 +550,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(inProgress_);
 #ifdef USE_VAULTSIM_HMC
         ar & BOOST_SERIALIZATION_NVP(hmcInstType_);
+        ar & BOOST_SERIALIZATION_NVP(hmcTransId_);
 #endif
     }
 };
