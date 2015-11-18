@@ -21,8 +21,8 @@ using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
 //Transcation GLOBAL FIXME
+unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
 unordered_map<unsigned, bool> vaultTransActive;
-unordered_map<unsigned, vector<unsigned> > vaultBankTransFootprint;
 
 logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id )
 {
@@ -155,7 +155,6 @@ bool logicLayer::clock(Cycle_t current)
 
         // (Multi LogicLayer) Check if it is for this LogicLayer
         if (isOurs(event->getAddr())) {
-            unsigned int vaultID = (event->getAddr() >> CacheLineSizeLog2) % memChans.size();
             bool eventIsNotTransaction = false;
 
             // Transaction support: Process HMC Transactions
@@ -165,41 +164,30 @@ bool logicLayer::clock(Cycle_t current)
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
                 //tIdQueue.insert(pair <uint64_t, queue<MemHierarchy::MemEvent> > (IdEvent, queue<MemHierarchy::MemEvent>() ));
-                tIdQueue[IdEvent].push(*event);
-                // Save this event footprint
-                unsigned newChan, newRank, newBank, newRow, newColumn;
-                DRAMSim::addressMapping(event->getAddr(), newChan, newRank, newBank, newRow, newColumn);
-                tIdFootprint[IdEvent].insert(vaultID, newBank);
+                tIdQueue[IdEvent].push_back(*event);
                 dbg.debug(_L3_, "LogicLayer%d got transaction BEG for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             else if (HMCTypeEvent == HMC_TRANS_MID) {
                 eventIsNotTransaction = true;
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
-                tIdQueue[IdEvent].push(*event);
-                // Save this event footprint
-                unsigned newChan, newRank, newBank, newRow, newColumn;
-                DRAMSim::addressMapping(event->getAddr(), newChan, newRank, newBank, newRow, newColumn);
-                tIdFootprint[IdEvent].insert(vaultID, newBank);
-                dbg.debug(_L3_, "LogicLayer%d got transaction MID for addr%p with id %lu, size of footprint %u\n", llID, (void*)event->getAddr(), IdEvent, tIdFootprint[IdEvent].getSize());
+                tIdQueue[IdEvent].push_back(*event);
+                dbg.debug(_L3_, "LogicLayer%d got transaction MID for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             else if (HMCTypeEvent == HMC_TRANS_END) {
                 eventIsNotTransaction = true;
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
-                tIdQueue[IdEvent].push(*event);
-                // Save this event footprint
-                unsigned newChan, newRank, newBank, newRow, newColumn;
-                DRAMSim::addressMapping(event->getAddr(), newChan, newRank, newBank, newRow, newColumn);
-                tIdFootprint[IdEvent].insert(vaultID, newBank);
-                dbg.debug(_L3_, "LogicLayer%d got transaction END for addr%p with id %lu, size of footprint %u\n", llID, (void*)event->getAddr(), IdEvent, tIdFootprint[IdEvent].getSize());
+                tIdQueue[IdEvent].push_back(*event);
                 //This the end of this ID. Issue
                 transReadyQueue.push(IdEvent);
                 issueTransactionNext = true;
+                dbg.debug(_L3_, "LogicLayer%d got transaction END for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             #endif
 
             if (!eventIsNotTransaction) {
+                unsigned int vaultID = (event->getAddr() >> CacheLineSizeLog2) % memChans.size();
                 memChans[vaultID]->send(event);
                 dbg.debug(_L4_, "LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, current);
             }
@@ -216,22 +204,52 @@ bool logicLayer::clock(Cycle_t current)
     }
 
     // 1-b)
-    /* Issue Transactions if they are ready
+    /* Check Transactions conflicts
      *     
      **/
+
+     // 1-c)
+    /* Retire Done Transactions
+     *     delete tIdQueue entry, delete activeTransaction entry, edit vaultTransActive, edit vaultTransFootprint
+     **/
+
+    // 1-d)
+    /* Issue Transactions if they are ready
+     *     and save their footprint, let vaults know to check conflicts
+     **/
+    #ifdef USE_VAULTSIM_HMC
     if (issueTransactionNext) {
         if (transReadyQueue.size() == 0)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d in issue Transaction but no ready transaction found\n", llID);
         while (!transReadyQueue.empty()) {
             unsigned currentTransId = transReadyQueue.front();
-            //transReadyQueue.pop();
+            transReadyQueue.pop();
 
             activeTransactions.insert(currentTransId);
+            dbg.debug(_L3_, "LogicLayer%d issuing ready transaction %u with size %lu\n", llID, currentTransId, tIdQueue[currentTransId].size());
+
+            for (vector<MemHierarchy::MemEvent>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
+                MemEvent event = *it;
+                unsigned int vaultID = (event.getAddr() >> CacheLineSizeLog2) % memChans.size();
+
+                // Save this event footprint
+                unsigned newChan, newRank, newBank, newRow, newColumn;
+                DRAMSim::addressMapping(event.getAddr(), newChan, newRank, newBank, newRow, newColumn);
+                tIdFootprint[currentTransId].insert(vaultID, newBank);
+                vaultTransFootprint[vaultID].insert(currentTransId, newBank);
+
+                vaultTransActive[vaultID] = true;
+                memChans[vaultID]->send(&event);
+            }
+
 
         }
 
         issueTransactionNext = false;
     }
+    #endif
+
+
 
     // 2)
     /* Check For Events From Memory Chain

@@ -41,8 +41,22 @@ using namespace SST;
 #define TRANS_PART_OPTIMUM_SIZE 4
 #define ACTIVE_TRANS_OPTIMUM_SIZE 4
 
-extern unordered_map<unsigned, vector<unsigned> > vaultBankTransFootprint;
-extern unordered_map<unsigned, bool> vaultTransActive; 
+struct vaultTouchFootprint_t {
+    vector <unsigned> transId;
+    vector <unsigned> bankId;
+
+    vaultTouchFootprint_t() {
+        transId.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
+        bankId.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
+    }
+
+    void insert(unsigned transId_, unsigned bankId_) {
+        transId.push_back(transId_);
+        bankId.push_back(bankId_);
+    }
+
+    unsigned getSize() { return transId.size(); }
+};
 
 struct transTouchFootprint_t {
     vector <unsigned> vaultId;
@@ -61,13 +75,17 @@ struct transTouchFootprint_t {
     unsigned getSize() { return vaultId.size(); }
 };
 
+
+extern unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
+extern unordered_map<unsigned, bool> vaultTransActive; 
+
 class logicLayer : public IntrospectedComponent {
 private:
     typedef SST::Link memChan_t;
     typedef vector<memChan_t*> memChans_t;
 
     typedef unordered_map<uint64_t, transTouchFootprint_t> tId2tTouchFootprint_t;
-    typedef unordered_map<uint64_t, queue<MemHierarchy::MemEvent> > tIdQueue_t;
+    typedef unordered_map<uint64_t, vector<MemHierarchy::MemEvent> > tIdQueue_t;
 
 public:
     /** 
@@ -120,9 +138,9 @@ private:
     unsigned int LL_MASK;
 
     // Transaction Support
-    bool isInTransactionMode;
+    bool isInTransactionMode;               //FIXME: currently maintained but not used, global variables are used, it's checked inside vaults
     bool issueTransactionNext;
-    tId2tTouchFootprint_t tIdFootprint;
+    tId2tTouchFootprint_t tIdFootprint;     //FIXME: currently maintained but not used, global variables are used
     tIdQueue_t tIdQueue;
     queue<uint64_t> transReadyQueue;
     unsigned activeTransactionsLimit;       //FIXME: Not used now
