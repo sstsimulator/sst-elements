@@ -56,7 +56,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     bool terminal = params.find_integer("terminal", 0);
 
     // VaultSims Initializations (Links)
-    int numVaults = params.find_integer("vaults", -1);
+    numVaults = params.find_integer("vaults", -1);
     if (-1 == numVaults) 
         dbg.fatal(CALL_INFO, -1, " no vaults param defined for LogicLayer\n");
     // connect up our vaults
@@ -90,9 +90,11 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
-    isInTransactionMode = false;
-    issueTransactionNext = false;
     activeTransactionsLimit = 2;        //FIXME: currently not checked
+
+
+    for (int i = 0; i < numVaults; ++i)
+        vaultTransActive[i] = false;
     #endif
 
     // etc
@@ -146,10 +148,13 @@ bool logicLayer::clock(Cycle_t current)
         tIdFootprint.erase(doneTransId);
         tIdQueue.erase(doneTransId);
 
-        //vaultTransActive
-        //vaultTransFootprint
+        for (auto it = vaultTransFootprint.begin(); it != vaultTransFootprint.end(); ++it)
+            vaultTransFootprint[it->first].removeTrans(doneTransId);
+        for (int i = 0; i < numVaults; ++i) 
+            if(vaultTransFootprint[i].isEmpty())
+                vaultTransActive[i] = false;
 
-
+        dbg.debug(_L3_, "LogicLayer%d Transaction Done %lu\n", llID, doneTransId);
      }
      #endif
 
@@ -221,7 +226,6 @@ bool logicLayer::clock(Cycle_t current)
                 tIdQueue[IdEvent].push_back(*event);
                 //This the end of this ID. Issue
                 transReadyQueue.push(IdEvent);
-                issueTransactionNext = true;
                 dbg.debug(_L3_, "LogicLayer%d got transaction END for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             #endif
@@ -248,34 +252,27 @@ bool logicLayer::clock(Cycle_t current)
      *     and save their footprint, let vaults know to check conflicts
      **/
     #ifdef USE_VAULTSIM_HMC
-    if (issueTransactionNext) {
-        if (transReadyQueue.size() == 0)
-            dbg.fatal(CALL_INFO, -1, "LogicLayer%d in issue Transaction but no ready transaction found\n", llID);
-        while (!transReadyQueue.empty()) {
-            unsigned currentTransId = transReadyQueue.front();
-            transReadyQueue.pop();
+    while (!transReadyQueue.empty()) { //FIXME: no limit on number of transaction issue
+        unsigned currentTransId = transReadyQueue.front();
+        transReadyQueue.pop();
 
-            activeTransactions.insert(currentTransId);
-            dbg.debug(_L3_, "LogicLayer%d issuing ready transaction %u with size %lu\n", llID, currentTransId, tIdQueue[currentTransId].size());
+        activeTransactions.insert(currentTransId);
+        dbg.debug(_L3_, "LogicLayer%d issuing ready transaction %u with size %lu\n", llID, currentTransId, tIdQueue[currentTransId].size());
 
-            for (vector<MemHierarchy::MemEvent>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
-                MemEvent event = *it;
-                unsigned int vaultID = (event.getAddr() >> CacheLineSizeLog2) % memChans.size();
+        for (vector<MemHierarchy::MemEvent>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
+            MemEvent event = *it;
+            unsigned int vaultID = (event.getAddr() >> CacheLineSizeLog2) % memChans.size();
 
-                // Save this event footprint
-                unsigned newChan, newRank, newBank, newRow, newColumn;
-                DRAMSim::addressMapping(event.getAddr(), newChan, newRank, newBank, newRow, newColumn);
-                tIdFootprint[currentTransId].insert(vaultID, newBank);
-                vaultTransFootprint[vaultID].insert(currentTransId, newBank);
-
-                vaultTransActive[vaultID] = true;
-                memChans[vaultID]->send(&event);
-            }
-
-
+            // Save this event footprint
+            unsigned newChan, newRank, newBank, newRow, newColumn;
+            DRAMSim::addressMapping(event.getAddr(), newChan, newRank, newBank, newRow, newColumn);
+            tIdFootprint[currentTransId].insert(vaultID, newBank);
+            vaultTransFootprint[vaultID].insert(currentTransId, newBank);
+            vaultTransActive[vaultID] = true;
+            memChans[vaultID]->send(&event);
         }
 
-        issueTransactionNext = false;
+
     }
     #endif
 

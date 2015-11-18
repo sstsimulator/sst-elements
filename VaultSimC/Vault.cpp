@@ -156,6 +156,16 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
         mi->second.readDoneCycle = currentClockCycle;
         // mi->second.setHmcOpState(READ_ANS_RECV);
     }
+
+    /** Transaction Support */
+    #ifdef USE_VAULTSIM_HMC
+    unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
+    if ( miTrans != addrTransEndMap.end()) {
+        vaultDoneTrans.push(miTrans->second);
+        addrTransEndMap.erase(miTrans);
+        dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, miTrans->second);
+    }
+    #endif
 }
 
 void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle) 
@@ -205,8 +215,11 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
     /** Transaction Support */
     #ifdef USE_VAULTSIM_HMC
     unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
-    if ( miTrans != addrTransEndMap.end());
+    if ( miTrans != addrTransEndMap.end()) {
         vaultDoneTrans.push(miTrans->second);
+        addrTransEndMap.erase(miTrans);
+        dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, miTrans->second);
+    }
     #endif
 }
 
@@ -264,6 +277,7 @@ bool Vault::addTransaction(transaction_c transaction)
         // Save End of transaction address
         if (transaction.getHmcOpType() == HMC_TRANS_END) {
             addrTransEndMap[transaction.getAddr()] = transaction.getTransId();
+            dbg.debug(_L3_, "Vault %d Transction %lu end recived\n", id, transaction.getTransId());
         }
     }
     #endif

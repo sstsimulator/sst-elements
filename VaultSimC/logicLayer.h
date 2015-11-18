@@ -64,9 +64,21 @@ struct vaultTouchFootprint_t {
         return ( find(bankId.begin(), bankId.end(), bankId_) != bankId.end() );
     }
 
-    void removeTrans(uint64_t transId_) {
-
+    bool isEmpty() {
+        return transId.empty();
     }
+
+    void removeTrans(uint64_t transId_) {
+        for (vector<uint64_t>::iterator itTrans = transId.begin() ; itTrans != transId.end(); ++itTrans) {
+            vector<unsigned>::iterator itBank = bankId.begin();
+            if (*itTrans == transId_) {
+                transId.erase(itTrans);
+                bankId.erase(itBank);
+            }
+            ++itBank;
+        }
+    }
+
 };
 
 struct transTouchFootprint_t {
@@ -146,6 +158,7 @@ private:
     SST::Link *toMem;
     SST::Link *toCPU;
     int reqLimit;
+    int numVaults;
 
     // for VaultId process
     uint64_t CacheLineSize;             // it is used to determine VaultIDs
@@ -156,8 +169,6 @@ private:
 
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
-    bool isInTransactionMode;               //FIXME: currently maintained but not used, global variables are used, it's checked inside vaults
-    bool issueTransactionNext;
     tId2tTouchFootprint_t tIdFootprint;     //FIXME: currently maintained but not used, global variables are used
     tIdQueue_t tIdQueue;
     queue<uint64_t> transReadyQueue;
