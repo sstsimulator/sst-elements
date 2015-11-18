@@ -30,6 +30,7 @@
 #include "callback_hmc.h"
 
 #include <DRAMSim.h>
+#include <AddressMapping.h>
 
 using namespace std;
 using namespace SST;

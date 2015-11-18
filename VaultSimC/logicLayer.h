@@ -18,10 +18,18 @@
 #include <sst/core/output.h>
 #include <sst/core/statapi/stataccumulator.h>
 #include <sst/core/statapi/stathistogram.h>
+#include <sst/elements/memHierarchy/memEvent.h>
 
+#include <queue>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
+
+#include <DRAMSim.h>
+#include <AddressMapping.h>
 
 #include "globals.h"
 #include "transaction.h"
@@ -29,10 +37,37 @@
 using namespace std;
 using namespace SST;
 
+#define TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE 10
+#define TRANS_PART_OPTIMUM_SIZE 4
+#define ACTIVE_TRANS_OPTIMUM_SIZE 4
+
+extern unordered_map<unsigned, vector<unsigned> > vaultBankTransFootprint;
+extern unordered_map<unsigned, bool> vaultTransActive; 
+
+struct transTouchFootprint_t {
+    vector <unsigned> vaultId;
+    vector <unsigned> bankId;
+
+    transTouchFootprint_t() {
+        vaultId.reserve(TRANS_PART_OPTIMUM_SIZE);
+        bankId.reserve(TRANS_PART_OPTIMUM_SIZE);
+    }
+
+    void insert(unsigned vaultId_, unsigned bankId_) {
+        vaultId.push_back(vaultId_);
+        bankId.push_back(bankId_);
+    }
+
+    unsigned getSize() { return vaultId.size(); }
+};
+
 class logicLayer : public IntrospectedComponent {
 private:
     typedef SST::Link memChan_t;
     typedef vector<memChan_t*> memChans_t;
+
+    typedef unordered_map<uint64_t, transTouchFootprint_t> tId2tTouchFootprint_t;
+    typedef unordered_map<uint64_t, queue<MemHierarchy::MemEvent> > tIdQueue_t;
 
 public:
     /** 
@@ -85,12 +120,19 @@ private:
     unsigned int LL_MASK;
 
     // Transaction Support
-    bool isInHookMode;
+    bool isInTransactionMode;
+    bool issueTransactionNext;
+    tId2tTouchFootprint_t tIdFootprint;
+    tIdQueue_t tIdQueue;
+    queue<uint64_t> transReadyQueue;
+    unsigned activeTransactionsLimit;       //FIXME: Not used now
+    unordered_set<uint64_t> activeTransactions;
 
     // Statistics
     Statistic<uint64_t>* memOpsProcessed;
     Statistic<uint64_t>* HMCCandidateProcessed;
     Statistic<uint64_t>* HMCOpsProcessed;
+    Statistic<uint64_t>* HMCTransOpsProcessed;
     
     Statistic<uint64_t>* reqUsedToCpu[2];
     Statistic<uint64_t>* reqUsedToMem[2];

@@ -17,7 +17,7 @@ enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ CALL_INFO,ERROR,0           //
 #define _WARNING_ CALL_INFO,WARNING,0       //
 #define _INFO_ CALL_INFO,INFO,0             // Init, Finish, Parameters
-#define _L3_ CALL_INFO,L3,0                 //
+#define _L3_ CALL_INFO,L3,0                 // Trasaction Support
 #define _L4_ CALL_INFO,L4,0                 // Logic Layer Requests
 #define _L5_ CALL_INFO,L5,0                 // VautlSimC answers
 #define _L6_ CALL_INFO,L6,0                 // VaultSimC internals
@@ -49,6 +49,6 @@ unsigned inline log2(unsigned value) {
     }
     if (1u << logbase2 < orig) logbase2++;
     return logbase2;
-} 
+}
 
 #endif

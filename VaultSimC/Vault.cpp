@@ -10,8 +10,9 @@
 // distribution.
 
 #include <string>
-#include <AddressMapping.h>
 #include "Vault.h"
+
+#include "logicLayer.h"
 
 using namespace std;
 

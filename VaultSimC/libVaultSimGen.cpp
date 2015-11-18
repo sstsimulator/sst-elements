@@ -31,6 +31,7 @@ static const ElementInfoStatistic logicLayer_statistics[] = {
   { "Total_memory_ops_processed", "Total memory ops processed", "reqs", 1},
   { "HMC_ops_processed", "Total HMC ops processed", "reqs", 1},
   { "Total_HMC_candidate_processed", "Total HMC Candidate (instruction that might be able to use HMC) ops processed", "reqs", 1},
+  { "Total_HMC_transactions_processed", "Total HMC Transaction ops processed", "reqs", 1},
   { "Req_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs", 1},
   { "Req_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs", 1},
   { "Req_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs", 1},

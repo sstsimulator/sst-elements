@@ -166,7 +166,7 @@ public:
     /**
      * HMC_Op_State functions
      */
-    /*void setHmcOpState(HMC_Op_State instState) { hmcOpState = instState; }
+    void setHmcOpState(HMC_Op_State instState) { hmcOpState = instState; }
 
     HMC_Op_State getHmcOpState() { return hmcOpState; }
 
@@ -187,7 +187,7 @@ public:
         case WRITE_ANS_RECV:
             return "WRITE_ANS_RECV";
         }
-    }*/
+    }
 
     /**
      * BankNo functions
