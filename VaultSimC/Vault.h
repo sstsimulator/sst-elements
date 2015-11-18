@@ -187,6 +187,11 @@ private:
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 
+    //Transaction Support
+    #ifdef USE_VAULTSIM_HMC
+    unordered_map<uint64_t, uint64_t> addrTransEndMap;
+    #endif
+
     // HMC ops Cost in Cycles
     int HMCCostLogicalOps;
     int HMCCostCASOps;

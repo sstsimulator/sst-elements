@@ -90,19 +90,19 @@ public:
      * @param isWrite is it a write?
      * @param addr address for memory operation
      */
-    transaction_c() : isWrite(false), addr(0), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE), flagPrintDbgHMC(0) {}
+    transaction_c() : isWrite(false), addr(0), isAtomic(false), hmcType(HMC_NONE), transactionId(0), hmcOpState(NO_STATE), flagPrintDbgHMC(0) {}
 
     transaction_c(bool _isWrite, uint64_t _addr) : 
-        isWrite(_isWrite), addr(_addr), isAtomic(false), hmcType(HMC_NONE), hmcOpState(NO_STATE), flagPrintDbgHMC(0) {}
+        isWrite(_isWrite), addr(_addr), isAtomic(false), hmcType(HMC_NONE), transactionId(0), hmcOpState(NO_STATE), flagPrintDbgHMC(0) {}
 
     /** 
-     * addr functions 
+     * addr Member Fuctions
      */
     uint64_t getAddr() { return addr; }
     void setAddr( uint64_t addr_) { addr = addr_; }
 
     /** 
-     * isWrite functions      
+     * isWrite Member Fuctions     
      */
     bool getIsWrite() { return isWrite; }
     void setIsWrite() { isWrite = true; }
@@ -114,6 +114,12 @@ public:
     bool getAtomic() { return isAtomic; }
     void setAtomic() { isAtomic = true; }
     void resetAtomic() { isAtomic = false; }
+
+    /**
+     * transactionId Member Functions
+     */
+    void setTransId(uint64_t transactionId_) { transactionId = transactionId_; }
+    uint64_t getTransId() { return transactionId; }
 
     /** 
      * HMC_Type functions
@@ -209,6 +215,9 @@ private:
     unsigned int bankNo;
     bool isAtomic;
     uint8_t hmcType;              //HMC_Type Enum
+
+    //Transaction Support
+    uint64_t transactionId;
 
     //stats
     HMC_Op_State hmcOpState;

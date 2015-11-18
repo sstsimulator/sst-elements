@@ -12,7 +12,9 @@
 #include <string>
 #include "Vault.h"
 
+#ifdef USE_VAULTSIM_HMC
 #include "logicLayer.h"
+#endif
 
 using namespace std;
 
@@ -81,6 +83,11 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
     memorySystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 
+    //Transaction Support
+    #ifdef USE_VAULTSIM_HMC
+    addrTransEndMap.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
+    #endif
+
     // etc Initialization
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
     bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
@@ -123,7 +130,11 @@ void Vault::finish()
 void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle) 
 {
     // Check for atomic
+    #ifdef USE_VAULTSIM_HMC
     addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addr);
+    #else
+    addr2TransactionMap_t::iterator mi = onFlyHmcOps.end();
+    #endif
 
     // Not found in map, not atomic
     if (mi == onFlyHmcOps.end()) {
@@ -150,7 +161,11 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
 void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle) 
 {
     // Check for atomic
+    #ifdef USE_VAULTSIM_HMC
     addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addr);
+    #else
+    addr2TransactionMap_t::iterator mi = onFlyHmcOps.end();
+    #endif
 
     // Not found in map, not atomic
     if (mi == onFlyHmcOps.end()) {
@@ -186,6 +201,13 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
         unlockBank(mi->second.getBankNo());
         onFlyHmcOps.erase(mi);
     }
+
+    /** Transaction Support */
+    #ifdef USE_VAULTSIM_HMC
+    unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
+    if ( miTrans != addrTransEndMap.end());
+        vaultDoneTrans.push(miTrans->second);
+    #endif
 }
 
 void Vault::update() 
@@ -228,7 +250,24 @@ bool Vault::addTransaction(transaction_c transaction)
     DRAMSim::addressMapping(transaction.getAddr(), newChan, newRank, newBank, newRow, newColumn);
     transaction.setBankNo(newBank);       //FIXME: newRank * MAX_BANK_SIZE + newBank - Why not implemented: performance issues
     // transaction.setHmcOpState(QUEUED);
-    
+
+    /** Transaction Support */
+    #ifdef USE_VAULTSIM_HMC
+    if (vaultTransActive[id]) {
+        // Check for transaction conflict
+        if ( !(transaction.getHmcOpType()>18 && transaction.getHmcOpType()<22) )
+            if ( vaultTransFootprint[id].isPresent(newBank) ) {
+                vaultConflict[id] = true;
+                dbg.debug(_L3_, "Vault %d Transction conflict (bank%u)\n", id, newBank);
+            }
+
+        // Save End of transaction address
+        if (transaction.getHmcOpType() == HMC_TRANS_END) {
+            addrTransEndMap[transaction.getAddr()] = transaction.getTransId();
+        }
+    }
+    #endif
+
     /* statistics */
     transaction.inCycle = currentClockCycle;
     statTotalTransactions->addData(1);
@@ -320,6 +359,9 @@ void Vault::issueAtomicFirstMemoryPhase(addr2TransactionMap_t::iterator mi)
         // mi->second.setHmcOpState(READ_ISSUED);
         break;
     case (HMC_NONE):
+    case (HMC_TRANS_BEG):
+    case (HMC_TRANS_MID):
+    case (HMC_TRANS_END):
     default:
         dbg.fatal(CALL_INFO, -1, "Vault Should not get a non HMC op in issue atomic\n");
         break;
@@ -358,6 +400,9 @@ void Vault::issueAtomicSecondMemoryPhase(addr2TransactionMap_t::iterator mi)
         // mi->second.setHmcOpState(WRITE_ISSUED);
         break;
     case (HMC_NONE):
+    case (HMC_TRANS_BEG):
+    case (HMC_TRANS_MID):
+    case (HMC_TRANS_END):
     default:
         dbg.fatal(CALL_INFO, -1, "Vault Should not get a non HMC op in issue atomic (2nd phase)\n");
         break;
@@ -412,6 +457,9 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
         computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostCompOps;
         break;
     case (HMC_NONE):
+    case (HMC_TRANS_BEG):
+    case (HMC_TRANS_MID):
+    case (HMC_TRANS_END):
     default:
         dbg.fatal(CALL_INFO, -1, "Vault Should not get a non HMC op in issue atomic (compute phase)\n");
         break;

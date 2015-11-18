@@ -144,13 +144,17 @@ bool VaultSimC::clock(Cycle_t currentCycle)
         #ifdef USE_VAULTSIM_HMC
         uint8_t HMCTypeEvent = event->getHMCInstType();
         transaction.setHmcOpType(HMCTypeEvent);
-        if (HMCTypeEvent == HMC_NONE || 
-            //HMCTypeEvent == HMC_CANDIDATE ||HMCTypeEvent == HMC_TRANS_BEG || HMCTypeEvent == HMC_TRANS_MID || HMCTypeEvent == HMC_TRANS_END) {
-            (HMCTypeEvent > 17 && HMCTypeEvent < 22) ) {
+        if (HMCTypeEvent == HMC_NONE || HMCTypeEvent == HMC_CANDIDATE) {
             transaction.resetAtomic();
             dbg.debug(_L6_, "VaultSimC %d got a req for %p of type %s in clock=%lu\n", 
                     vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
         } 
+        else if (HMCTypeEvent == HMC_TRANS_BEG || HMCTypeEvent == HMC_TRANS_MID || HMCTypeEvent == HMC_TRANS_END) {
+            transaction.resetAtomic();
+            transaction.setTransId(event->getHMCTransId());
+            dbg.debug(_L6_, "VaultSimC %d got a req for %p of type %s in clock=%lu\n", 
+                    vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
+        }
         else {
             transaction.setAtomic();
             transaction.setIsWrite();   //all hmc ops treat as write

@@ -22,6 +22,7 @@
 
 #include <queue>
 #include <vector>
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 #include <sstream>
@@ -37,12 +38,14 @@
 using namespace std;
 using namespace SST;
 
+#ifdef USE_VAULTSIM_HMC
+
 #define TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE 10
 #define TRANS_PART_OPTIMUM_SIZE 4
 #define ACTIVE_TRANS_OPTIMUM_SIZE 4
 
 struct vaultTouchFootprint_t {
-    vector <unsigned> transId;
+    vector <uint64_t> transId;
     vector <unsigned> bankId;
 
     vaultTouchFootprint_t() {
@@ -50,12 +53,20 @@ struct vaultTouchFootprint_t {
         bankId.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     }
 
-    void insert(unsigned transId_, unsigned bankId_) {
+    void insert(uint64_t transId_, unsigned bankId_) {
         transId.push_back(transId_);
         bankId.push_back(bankId_);
     }
 
     unsigned getSize() { return transId.size(); }
+
+    bool isPresent(unsigned bankId_) {
+        return ( find(bankId.begin(), bankId.end(), bankId_) != bankId.end() );
+    }
+
+    void removeTrans(uint64_t transId_) {
+
+    }
 };
 
 struct transTouchFootprint_t {
@@ -77,15 +88,21 @@ struct transTouchFootprint_t {
 
 
 extern unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
-extern unordered_map<unsigned, bool> vaultTransActive; 
+extern unordered_map<uint64_t, bool> vaultTransActive;
+extern unordered_map<unsigned, bool> vaultConflict;
+extern queue<uint64_t> vaultDoneTrans;
+
+#endif
 
 class logicLayer : public IntrospectedComponent {
 private:
     typedef SST::Link memChan_t;
     typedef vector<memChan_t*> memChans_t;
 
+    #ifdef USE_VAULTSIM_HMC
     typedef unordered_map<uint64_t, transTouchFootprint_t> tId2tTouchFootprint_t;
     typedef unordered_map<uint64_t, vector<MemHierarchy::MemEvent> > tIdQueue_t;
+    #endif
 
 public:
     /** 
@@ -138,6 +155,7 @@ private:
     unsigned int LL_MASK;
 
     // Transaction Support
+    #ifdef USE_VAULTSIM_HMC
     bool isInTransactionMode;               //FIXME: currently maintained but not used, global variables are used, it's checked inside vaults
     bool issueTransactionNext;
     tId2tTouchFootprint_t tIdFootprint;     //FIXME: currently maintained but not used, global variables are used
@@ -145,6 +163,7 @@ private:
     queue<uint64_t> transReadyQueue;
     unsigned activeTransactionsLimit;       //FIXME: Not used now
     unordered_set<uint64_t> activeTransactions;
+    #endif
 
     // Statistics
     Statistic<uint64_t>* memOpsProcessed;

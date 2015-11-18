@@ -20,9 +20,13 @@
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
 
+#ifdef USE_VAULTSIM_HMC
 //Transcation GLOBAL FIXME
 unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
-unordered_map<unsigned, bool> vaultTransActive;
+unordered_map<uint64_t, bool> vaultTransActive;
+unordered_map<unsigned, bool> vaultConflict;
+queue<uint64_t> vaultDoneTrans;
+#endif
 
 logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id )
 {
@@ -81,6 +85,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     dbg.debug(_INFO_, "Made LogicLayer %d toMem:%p toCPU:%p\n", llID, toMem, toCPU);
 
     // Transaction Support
+    #ifdef USE_VAULTSIM_HMC
     tIdFootprint.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
@@ -88,6 +93,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     isInTransactionMode = false;
     issueTransactionNext = false;
     activeTransactionsLimit = 2;        //FIXME: currently not checked
+    #endif
 
     // etc
     std::string frequency;
@@ -128,6 +134,40 @@ bool logicLayer::clock(Cycle_t current)
     int toCpu[2] = {0,0};       // {recv, send}
 
     // 1-a)
+    /* Retire Done Transactions
+     *     delete tIdQueue entry, activeTransactions & tIdFootprint entry, edit vaultTransActive, edit vaultTransFootprint
+     **/
+     #ifdef USE_VAULTSIM_HMC
+     while (!vaultDoneTrans.empty()) {
+        uint64_t doneTransId = vaultDoneTrans.front();
+        vaultDoneTrans.pop();
+
+        activeTransactions.erase(doneTransId);
+        tIdFootprint.erase(doneTransId);
+        tIdQueue.erase(doneTransId);
+
+        //vaultTransActive
+        //vaultTransFootprint
+
+
+     }
+     #endif
+
+    // 1-b)
+    /* Check Transactions conflicts
+     *     and erase entry
+     **/
+     #ifdef USE_VAULTSIM_HMC
+     if (!vaultConflict.empty()) {
+        for ( auto it = vaultConflict.begin(); it != vaultConflict.end(); ++it )
+            if (it->second) {
+                dbg.debug(_L3_, "LogicLayer%d conflict detected on Vault %u\n", llID, it->first);
+                //FIXME
+            }
+     }
+     #endif
+
+    // 1-c)
     /* Check For Events From CPU
      *     Check ownership, if owned send to internal vaults, if not send to another LogicLayer
      **/
@@ -202,16 +242,6 @@ bool logicLayer::clock(Cycle_t current)
             dbg.debug(_L4_, "LogicLayer%d sends %p to next\n", llID, event);
         }
     }
-
-    // 1-b)
-    /* Check Transactions conflicts
-     *     
-     **/
-
-     // 1-c)
-    /* Retire Done Transactions
-     *     delete tIdQueue entry, delete activeTransaction entry, edit vaultTransActive, edit vaultTransFootprint
-     **/
 
     // 1-d)
     /* Issue Transactions if they are ready
