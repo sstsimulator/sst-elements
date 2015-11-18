@@ -34,7 +34,7 @@ void writeTo(ofstream &ofs, string prefix, string name, uint64_t count);
 class VaultSimC : public IntrospectedComponent {
 private:
     typedef SST::Link memChan_t;
-    typedef multimap<uint64_t, MemHierarchy::MemEvent*> t2MEMap_t;
+    typedef multimap<uint64_t, MemHierarchy::MemEvent*> t2MEMap_t;      // Why multimap? a single address could be associatet to multiple events
 
 public:
     /** 
