@@ -24,8 +24,7 @@ using namespace SST::MemHierarchy;
 //Transcation GLOBAL FIXME
 unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
 unordered_map<uint64_t, bool> vaultTransActive;
-unordered_map<unsigned, bool> vaultConflict;    //TODO: can be just a queue of conflicted vaults since we have vaultConflictTrans
-unordered_map<unsigned, uint64_t> vaultConflictTrans;
+queue<uint64_t> vaultConflictedTransDone;
 queue<uint64_t> vaultDoneTrans;
 #endif
 
@@ -90,8 +89,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     tIdFootprint.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
-
-    activeTransactionsLimit = 2;        //FIXME: currently not checked
+    vaultTransFootprint.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
 
     for (int i = 0; i < numVaults; ++i)
@@ -161,21 +159,15 @@ bool logicLayer::clock(Cycle_t current)
 
     // 1-b)
     /* Check Transactions conflicts
-     *     and erase entry
+     *     and erase entry of 
+     *     
      **/
      #ifdef USE_VAULTSIM_HMC
-     if (!vaultConflict.empty()) {
-        for ( auto it = vaultConflict.begin(); it != vaultConflict.end(); ++it )
-            if (it->second) {
-                uint64_t conflictTransId = vaultConflictTrans[it->first];
-                vaultConflict.erase(it);
-                vaultConflictTrans.erase(conflictTransId);
-                dbg.debug(_L3_, "LogicLayer%d conflict detected on Vault %u for transaction %lu\n", llID, it->first, conflictTransId);
-
-            }
-            else {
-                dbg.fatal(CALL_INFO, -1, "LogicLayer%d bad vaultConflict entry\n", llID);
-            }
+     while ( !vaultConflictedTransDone.empty() ) {
+            uint64_t conflictTransId = vaultConflictedTransDone.front();
+            vaultConflictedTransDone.pop();
+            transReadyQueue.push(conflictTransId);
+            dbg.debug(_L3_, "LogicLayer%d conflicted transaction restarted%lu\n", llID, conflictTransId);
      }
      #endif
 

@@ -169,6 +169,7 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
             dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, transId);
         }
         else {
+            vaultConflictedTransDone.push(transId);
             addrTransEndMap.erase(miTrans);
             ConflictedTrans.erase(transId);
             dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end send to logicLayer withput pushing to vaultDoneTrans\n", id, transId);
@@ -232,6 +233,7 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
             dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, transId);
         }
         else {
+            vaultConflictedTransDone.push(transId);
             addrTransEndMap.erase(miTrans);
             ConflictedTrans.erase(transId);
             dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end send to logicLayer withput pushing to vaultDoneTrans\n", id, transId);
@@ -288,8 +290,6 @@ bool Vault::addTransaction(transaction_c transaction)
         if ( !(transaction.getHmcOpType()>18 && transaction.getHmcOpType()<22) ) {
             uint64_t *transId;
             if ( vaultTransFootprint[id].isPresent(newBank, transId) ) {
-                vaultConflict[id] = true;
-                vaultConflictTrans[id] = *transId;
                 ConflictedTrans.insert(*transId);
                 dbg.debug(_L3_, "Vault %d Transction conflicts with transaction %lu (bank%u)\n", id, *transId, newBank);
             }
@@ -303,8 +303,9 @@ bool Vault::addTransaction(transaction_c transaction)
                 dbg.debug(_L3_, "Vault %d Transction %lu end recived\n", id, transId);
             }
             else {
+                vaultConflictedTransDone.push(transId);
                 ConflictedTrans.erase(transId);
-                dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end recived\n", id, transId);
+                dbg.debug(_L3_, "Vault %d Conflicted Transction %lu END recived\n", id, transId);
             }
         }
     }

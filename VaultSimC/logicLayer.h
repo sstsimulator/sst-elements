@@ -111,9 +111,8 @@ struct transTouchFootprint_t {
 
 extern unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
 extern unordered_map<uint64_t, bool> vaultTransActive;
-extern unordered_map<unsigned, bool> vaultConflict;
-extern unordered_map<unsigned, uint64_t> vaultConflictTrans;
 extern queue<uint64_t> vaultDoneTrans;
+extern queue<uint64_t> vaultConflictedTransDone;
 
 #endif
 
