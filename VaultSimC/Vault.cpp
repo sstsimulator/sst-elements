@@ -86,6 +86,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     //Transaction Support
     #ifdef USE_VAULTSIM_HMC
     addrTransEndMap.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
+    ConflictedTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
     #endif
 
     // etc Initialization
@@ -161,9 +162,17 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
     #ifdef USE_VAULTSIM_HMC
     unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
     if ( miTrans != addrTransEndMap.end()) {
-        vaultDoneTrans.push(miTrans->second);
-        addrTransEndMap.erase(miTrans);
-        dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, miTrans->second);
+        uint64_t transId = miTrans->second;
+        if ( ConflictedTrans.find(transId) ==  ConflictedTrans.end() ) {
+            vaultDoneTrans.push(transId);
+            addrTransEndMap.erase(miTrans);
+            dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, transId);
+        }
+        else {
+            addrTransEndMap.erase(miTrans);
+            ConflictedTrans.erase(transId);
+            dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end send to logicLayer withput pushing to vaultDoneTrans\n", id, transId);
+        }
     }
     #endif
 }
@@ -216,9 +225,17 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
     #ifdef USE_VAULTSIM_HMC
     unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
     if ( miTrans != addrTransEndMap.end()) {
-        vaultDoneTrans.push(miTrans->second);
-        addrTransEndMap.erase(miTrans);
-        dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, miTrans->second);
+        uint64_t transId = miTrans->second;
+        if ( ConflictedTrans.find(transId) ==  ConflictedTrans.end() ) {
+            vaultDoneTrans.push(transId);
+            addrTransEndMap.erase(miTrans);
+            dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, transId);
+        }
+        else {
+            addrTransEndMap.erase(miTrans);
+            ConflictedTrans.erase(transId);
+            dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end send to logicLayer withput pushing to vaultDoneTrans\n", id, transId);
+        }
     }
     #endif
 }
@@ -268,16 +285,27 @@ bool Vault::addTransaction(transaction_c transaction)
     #ifdef USE_VAULTSIM_HMC
     if (vaultTransActive[id]) {
         // Check for transaction conflict
-        if ( !(transaction.getHmcOpType()>18 && transaction.getHmcOpType()<22) )
-            if ( vaultTransFootprint[id].isPresent(newBank) ) {
+        if ( !(transaction.getHmcOpType()>18 && transaction.getHmcOpType()<22) ) {
+            uint64_t *transId;
+            if ( vaultTransFootprint[id].isPresent(newBank, transId) ) {
                 vaultConflict[id] = true;
-                dbg.debug(_L3_, "Vault %d Transction conflict (bank%u)\n", id, newBank);
+                vaultConflictTrans[id] = *transId;
+                ConflictedTrans.insert(*transId);
+                dbg.debug(_L3_, "Vault %d Transction conflicts with transaction %lu (bank%u)\n", id, *transId, newBank);
             }
+        }
 
         // Save End of transaction address
         if (transaction.getHmcOpType() == HMC_TRANS_END) {
-            addrTransEndMap[transaction.getAddr()] = transaction.getTransId();
-            dbg.debug(_L3_, "Vault %d Transction %lu end recived\n", id, transaction.getTransId());
+            uint64_t transId = transaction.getTransId();
+            if ( ConflictedTrans.find(transId) ==  ConflictedTrans.end() ) {
+                addrTransEndMap[transaction.getAddr()] = transId;
+                dbg.debug(_L3_, "Vault %d Transction %lu end recived\n", id, transId);
+            }
+            else {
+                ConflictedTrans.erase(transId);
+                dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end recived\n", id, transId);
+            }
         }
     }
     #endif

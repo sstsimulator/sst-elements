@@ -22,7 +22,6 @@
 
 #include <queue>
 #include <vector>
-#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 #include <sstream>
@@ -60,8 +59,19 @@ struct vaultTouchFootprint_t {
 
     unsigned getSize() { return transId.size(); }
 
-    bool isPresent(unsigned bankId_) {
-        return ( find(bankId.begin(), bankId.end(), bankId_) != bankId.end() );
+    bool isPresent(unsigned bankId_, uint64_t* transId_) {
+        vector<uint64_t>::iterator itTrans = transId.begin();
+        vector<unsigned>::iterator itBank;
+        for (itBank = bankId.begin(); itBank != bankId.end(); ++itBank, ++itTrans)
+            if (*itBank == bankId_)
+                break;
+
+        if (itBank == bankId.end())
+            return false;
+        else {
+            *transId_ = *itTrans;
+            return true;
+        }
     }
 
     bool isEmpty() {
@@ -102,6 +112,7 @@ struct transTouchFootprint_t {
 extern unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
 extern unordered_map<uint64_t, bool> vaultTransActive;
 extern unordered_map<unsigned, bool> vaultConflict;
+extern unordered_map<unsigned, uint64_t> vaultConflictTrans;
 extern queue<uint64_t> vaultDoneTrans;
 
 #endif
