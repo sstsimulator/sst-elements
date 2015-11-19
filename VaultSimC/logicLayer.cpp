@@ -22,7 +22,7 @@ using namespace SST::MemHierarchy;
 
 #ifdef USE_VAULTSIM_HMC
 //Transcation GLOBAL FIXME
-unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
+unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
 unordered_map<uint64_t, bool> vaultTransActive;
 queue<uint64_t> vaultConflictedTransDone;
 queue<uint64_t> vaultDoneTrans;
@@ -89,8 +89,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     tIdFootprint.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
-    vaultTransFootprint.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
-
+    vaultBankTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
     for (int i = 0; i < numVaults; ++i)
         vaultTransActive[i] = false;
@@ -136,7 +135,7 @@ bool logicLayer::clock(Cycle_t current)
 
     // 1-a)
     /* Retire Done Transactions
-     *     delete tIdQueue entry, activeTransactions & tIdFootprint entry, edit vaultTransActive, edit vaultTransFootprint
+     *     delete tIdQueue entry, activeTransactions & tIdFootprint entry, edit vaultTransActive, edit vaultBankTrans
      **/
      #ifdef USE_VAULTSIM_HMC
      while (!vaultDoneTrans.empty()) {
@@ -147,12 +146,17 @@ bool logicLayer::clock(Cycle_t current)
         tIdFootprint.erase(doneTransId);
         tIdQueue.erase(doneTransId);
 
-        for (auto it = vaultTransFootprint.begin(); it != vaultTransFootprint.end(); ++it)
-            vaultTransFootprint[it->first].removeTrans(doneTransId);
-        for (int i = 0; i < numVaults; ++i) 
-            if(vaultTransFootprint[i].isEmpty())
-                vaultTransActive[i] = false;
-
+        for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)
+            for (auto itB = itA->second.begin(); itB != itA->second.end(); ++itB)
+                for (auto itC = itB->second.begin(); itC != itB->second.end(); ++itC) {
+                    if (*itC == doneTransId) {
+                        itB->second.erase(doneTransId);
+                        if (itB->second.empty()) {
+                            itA->second.erase(itB);
+                            vaultTransActive[itA->first] = false;
+                        }
+                    }
+                }
         dbg.debug(_L3_, "LogicLayer%d Transaction Done %lu\n", llID, doneTransId);
      }
      #endif
@@ -266,7 +270,7 @@ bool logicLayer::clock(Cycle_t current)
             unsigned newChan, newRank, newBank, newRow, newColumn;
             DRAMSim::addressMapping(event.getAddr(), newChan, newRank, newBank, newRow, newColumn);
             tIdFootprint[currentTransId].insert(vaultID, newBank);
-            vaultTransFootprint[vaultID].insert(currentTransId, newBank);
+            vaultBankTrans[vaultID][newBank].insert(currentTransId);
             vaultTransActive[vaultID] = true;
             memChans[vaultID]->send(&event);
         }

@@ -109,7 +109,7 @@ struct transTouchFootprint_t {
 };
 
 
-extern unordered_map<unsigned, vaultTouchFootprint_t > vaultTransFootprint;
+extern unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
 extern unordered_map<uint64_t, bool> vaultTransActive;
 extern queue<uint64_t> vaultDoneTrans;
 extern queue<uint64_t> vaultConflictedTransDone;

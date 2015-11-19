@@ -289,9 +289,12 @@ bool Vault::addTransaction(transaction_c transaction)
         // Check for transaction conflict
         if ( !(transaction.getHmcOpType()>18 && transaction.getHmcOpType()<22) ) {
             uint64_t *transId;
-            if ( vaultTransFootprint[id].isPresent(newBank, transId) ) {
-                ConflictedTrans.insert(*transId);
-                dbg.debug(_L3_, "Vault %d Transction conflicts with transaction %lu (bank%u)\n", id, *transId, newBank);
+            auto it = vaultBankTrans[id].find(newBank);
+            if ( it != vaultBankTrans[id].end() ) {
+                for (auto itTransId = vaultBankTrans[id][newBank].begin(); itTransId!=vaultBankTrans[id][newBank].end(); ++itTransId) {
+                    ConflictedTrans.insert(*itTransId);
+                    dbg.debug(_L3_, "Vault %d Transction conflicts with transaction %lu (bank%u)\n", id, *transId, newBank);
+                }
             }
         }
 
