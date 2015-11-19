@@ -43,72 +43,6 @@ using namespace SST;
 #define TRANS_PART_OPTIMUM_SIZE 4
 #define ACTIVE_TRANS_OPTIMUM_SIZE 4
 
-struct vaultTouchFootprint_t {
-    vector <uint64_t> transId;
-    vector <unsigned> bankId;
-
-    vaultTouchFootprint_t() {
-        transId.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
-        bankId.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
-    }
-
-    void insert(uint64_t transId_, unsigned bankId_) {
-        transId.push_back(transId_);
-        bankId.push_back(bankId_);
-    }
-
-    unsigned getSize() { return transId.size(); }
-
-    bool isPresent(unsigned bankId_, uint64_t* transId_) {
-        vector<uint64_t>::iterator itTrans = transId.begin();
-        vector<unsigned>::iterator itBank;
-        for (itBank = bankId.begin(); itBank != bankId.end(); ++itBank, ++itTrans)
-            if (*itBank == bankId_)
-                break;
-
-        if (itBank == bankId.end())
-            return false;
-        else {
-            *transId_ = *itTrans;
-            return true;
-        }
-    }
-
-    bool isEmpty() {
-        return transId.empty();
-    }
-
-    void removeTrans(uint64_t transId_) {
-        for (vector<uint64_t>::iterator itTrans = transId.begin() ; itTrans != transId.end(); ++itTrans) {
-            vector<unsigned>::iterator itBank = bankId.begin();
-            if (*itTrans == transId_) {
-                transId.erase(itTrans);
-                bankId.erase(itBank);
-            }
-            ++itBank;
-        }
-    }
-
-};
-
-struct transTouchFootprint_t {
-    vector <unsigned> vaultId;
-    vector <unsigned> bankId;
-
-    transTouchFootprint_t() {
-        vaultId.reserve(TRANS_PART_OPTIMUM_SIZE);
-        bankId.reserve(TRANS_PART_OPTIMUM_SIZE);
-    }
-
-    void insert(unsigned vaultId_, unsigned bankId_) {
-        vaultId.push_back(vaultId_);
-        bankId.push_back(bankId_);
-    }
-
-    unsigned getSize() { return vaultId.size(); }
-};
-
-
 extern unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
 extern unordered_map<uint64_t, bool> vaultTransActive;
 extern queue<uint64_t> vaultDoneTrans;
@@ -122,7 +56,6 @@ private:
     typedef vector<memChan_t*> memChans_t;
 
     #ifdef USE_VAULTSIM_HMC
-    typedef unordered_map<uint64_t, transTouchFootprint_t> tId2tTouchFootprint_t;
     typedef unordered_map<uint64_t, vector<MemHierarchy::MemEvent> > tIdQueue_t;
     #endif
 
@@ -179,7 +112,6 @@ private:
 
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
-    tId2tTouchFootprint_t tIdFootprint;     //FIXME: currently maintained but not used, global variables are used
     tIdQueue_t tIdQueue;
     queue<uint64_t> transReadyQueue;
     unsigned activeTransactionsLimit;       //FIXME: Not used now

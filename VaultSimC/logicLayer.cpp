@@ -86,7 +86,6 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
 
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
-    tIdFootprint.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
     vaultBankTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
@@ -135,7 +134,7 @@ bool logicLayer::clock(Cycle_t current)
 
     // 1-a)
     /* Retire Done Transactions
-     *     delete tIdQueue entry, activeTransactions & tIdFootprint entry, edit vaultTransActive, edit vaultBankTrans
+     *     delete tIdQueue entry, activeTransactions entry, edit vaultTransActive, edit vaultBankTrans
      **/
      #ifdef USE_VAULTSIM_HMC
      while (!vaultDoneTrans.empty()) {
@@ -143,7 +142,6 @@ bool logicLayer::clock(Cycle_t current)
         vaultDoneTrans.pop();
 
         activeTransactions.erase(doneTransId);
-        tIdFootprint.erase(doneTransId);
         tIdQueue.erase(doneTransId);
 
         for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)
@@ -269,7 +267,6 @@ bool logicLayer::clock(Cycle_t current)
             // Save this event footprint
             unsigned newChan, newRank, newBank, newRow, newColumn;
             DRAMSim::addressMapping(event.getAddr(), newChan, newRank, newBank, newRow, newColumn);
-            tIdFootprint[currentTransId].insert(vaultID, newBank);
             vaultBankTrans[vaultID][newBank].insert(currentTransId);
             vaultTransActive[vaultID] = true;
             memChans[vaultID]->send(&event);
