@@ -336,17 +336,16 @@ static const ElementInfoParam sieve_params[] = {
     {"associativity",           "Required, int      - Associativity of the cache. In set associative mode, this is the number of ways."},
     {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
     /* Not required */
-    {"prefetcher",              "Optional, string   - Name of prefetcher module", ""},
+    {"profiler",                "Optional, string   - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort sieve_ports[] = {
-    {"cpu_link", "Connection to the CPU", memEvent_port_events},
+    {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
     {NULL, NULL, NULL}
 };
-
 
 
 static Component* create_Bus(ComponentId_t id, Params& params)
@@ -768,7 +767,7 @@ static const ElementInfoComponent components[] = {
         cache_statistics
 	},
     { "Sieve",
-		"Simple Cache Filtering Component",
+		"Simple Cache Filtering Component to model LL private caches",
 		NULL,
         create_Sieve,
         sieve_params,

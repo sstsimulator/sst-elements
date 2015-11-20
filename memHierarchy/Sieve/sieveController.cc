@@ -26,19 +26,19 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-void Sieve::processEvent(SST::Event* _ev) {
-    MemEvent* event = static_cast<MemEvent*>(_ev);
+void Sieve::processEvent(SST::Event* ev) {
+    MemEvent* event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
     
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
             
-    int lineIndex = cf_.cacheArray_->find(baseAddr, true);
+    int lineIndex = cacheArray_->find(baseAddr, true);
         
     if (lineIndex == -1) {                                     /* Miss.  If needed, evict candidate */
-        // d_->debug(_L3_,"-- Cache Miss --\n");
-        CacheLine * line = cf_.cacheArray_->findReplacementCandidate(baseAddr, false);
-        cf_.cacheArray_->replace(baseAddr, line->getIndex());
+        // output_->debug(_L3_,"-- Cache Miss --\n");
+        CacheLine * line = cacheArray_->findReplacementCandidate(baseAddr, false);
+        cacheArray_->replace(baseAddr, line->getIndex());
         
         auto cmdT = (GetS == cmd) ? READ : WRITE;
         //std::cout << "VA: = " << event->getVirtualAddress() << "\n";
@@ -63,27 +63,31 @@ void Sieve::processEvent(SST::Event* _ev) {
     // there is no need to construct the payload.
     
     responseEvent->setDst(event->getSrc());
-    cpu_link->send(responseEvent);
+    SST::Link * link = event->getDeliveryLink();
+    link->send(responseEvent);
     
-    //d_->debug(_L3_,"%s, Sending Response, Addr = %" PRIx64 "\n", getName().c_str(), _event->getAddr());
+    //output_->debug(_L3_,"%s, Sending Response, Addr = %" PRIx64 "\n", getName().c_str(), event->getAddr());
     
-    delete _ev;
+    delete ev;
 }
 
 void Sieve::init(unsigned int phase) {
     if (!phase) {
-        cpu_link->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        for (int i = 0; i < cpuLinkCount_; i++) {
+            cpuLinks_[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        }
     }
 
-    while (SST::Event* ev = cpu_link->recvInitData()) {
-        if (ev) delete ev;
+    for (int i = 0; i < cpuLinkCount_; i++) {
+        while (SST::Event* ev = cpuLinks_[i]->recvInitData()) {
+            if (ev) delete ev;
+        }
     }
 }
 
 void Sieve::finish(){
-    listener_->printStats(*d_);
-    delete cf_.cacheArray_;
-    delete cf_.rm_;
-    delete d_;
+    listener_->printStats(*output_);
+    delete cacheArray_;
+    delete output_;
 }
 
