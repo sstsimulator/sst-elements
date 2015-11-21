@@ -286,9 +286,9 @@ bool Vault::addTransaction(transaction_c transaction)
     /** Transaction Support */
     #ifdef USE_VAULTSIM_HMC
     if (vaultTransActive[id]) {
-        cout << "\n\n\n**********IAMMMMMMMMMMMMMMMMMM***************\n\n\n" << endl;
         // Check for transaction conflict
-        if ( !(transaction.getHmcOpType()>18 && transaction.getHmcOpType()<22) ) {
+        uint8_t opHMCType = transaction.getHmcOpType();
+        if ( !(opHMCType == HMC_TRANS_BEG || opHMCType == HMC_TRANS_MID || opHMCType == HMC_TRANS_END) ) {
             uint64_t *transId;
             auto it = vaultBankTrans[id].find(newBank);
             if ( it != vaultBankTrans[id].end() ) {

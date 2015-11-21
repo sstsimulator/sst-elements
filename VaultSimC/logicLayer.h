@@ -56,7 +56,7 @@ private:
     typedef vector<memChan_t*> memChans_t;
 
     #ifdef USE_VAULTSIM_HMC
-    typedef unordered_map<uint64_t, vector<MemHierarchy::MemEvent> > tIdQueue_t;
+    typedef unordered_map<uint64_t, vector<MemHierarchy::MemEvent*> > tIdQueue_t;
     #endif
 
 public:

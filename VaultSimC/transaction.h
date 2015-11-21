@@ -166,6 +166,18 @@ public:
             return "HMC_COMP_less";
         case HMC_COMP_equal:
             return "HMC_COMP_equal";
+        case HMC_hook:
+            return "HMC_hook";
+        case HMC_unhook:
+            return "HMC_unhook";
+        case HMC_CANDIDATE:
+            return "HMC_CANDIDATE";
+        case HMC_TRANS_BEG:
+            return "HMC_TRANS_BEG";
+        case HMC_TRANS_MID: 
+            return "HMC_TRANS_MID";
+        case HMC_TRANS_END:
+            return "HMC_TRANS_END";
         default:
             return "THIS MUST NOT BE PRINTED";
         }

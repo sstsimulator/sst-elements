@@ -212,21 +212,21 @@ bool logicLayer::clock(Cycle_t current)
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
                 //tIdQueue.insert(pair <uint64_t, queue<MemHierarchy::MemEvent> > (IdEvent, queue<MemHierarchy::MemEvent>() ));
-                tIdQueue[IdEvent].push_back(*event);
+                tIdQueue[IdEvent].push_back(event);
                 dbg.debug(_L3_, "LogicLayer%d got transaction BEG for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             else if (HMCTypeEvent == HMC_TRANS_MID) {
                 eventIsNotTransaction = true;
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
-                tIdQueue[IdEvent].push_back(*event);
+                tIdQueue[IdEvent].push_back(event);
                 dbg.debug(_L3_, "LogicLayer%d got transaction MID for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             else if (HMCTypeEvent == HMC_TRANS_END) {
                 eventIsNotTransaction = true;
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
-                tIdQueue[IdEvent].push_back(*event);
+                tIdQueue[IdEvent].push_back(event);
                 //This the end of this ID. Issue
                 transReadyQueue.push(IdEvent);
                 dbg.debug(_L3_, "LogicLayer%d got transaction END for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
@@ -262,16 +262,18 @@ bool logicLayer::clock(Cycle_t current)
         activeTransactions.insert(currentTransId);
         dbg.debug(_L3_, "LogicLayer%d issuing ready transaction %u with size %lu\n", llID, currentTransId, tIdQueue[currentTransId].size());
 
-        for (vector<MemHierarchy::MemEvent>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
-            MemEvent event = *it;
-            unsigned int vaultID = (event.getAddr() >> CacheLineSizeLog2) % memChans.size();
+        for (vector<MemHierarchy::MemEvent*>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
+            MemEvent* eventReady = *it;
+            unsigned int vaultID = (eventReady->getAddr() >> CacheLineSizeLog2) % memChans.size();
 
             // Save this event footprint
             unsigned newChan, newRank, newBank, newRow, newColumn;
-            DRAMSim::addressMapping(event.getAddr(), newChan, newRank, newBank, newRow, newColumn);
+            DRAMSim::addressMapping(eventReady->getAddr() & ~((uint64_t)CacheLineSize-1), newChan, newRank, newBank, newRow, newColumn);
             vaultBankTrans[vaultID][newBank].insert(currentTransId);
             vaultTransActive[vaultID] = true;
-            memChans[vaultID]->send(&event);
+            dbg.debug(_L3_, "LogicLayer%d: Transaction%u: Issuing %p with type %d (vault%u bank%u)\n", 
+                    llID, currentTransId, (void*)eventReady->getAddr(), eventReady->getHMCInstType(), vaultID, newBank);
+            memChans[vaultID]->send(eventReady);
         }
 
 
