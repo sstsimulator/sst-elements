@@ -144,18 +144,14 @@ bool logicLayer::clock(Cycle_t current)
         activeTransactions.erase(doneTransId);
         tIdQueue.erase(doneTransId);
 
-        for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)
-            for (auto itB = itA->second.begin(); itB != itA->second.end(); ++itB)
-                for (auto itC = itB->second.begin(); itC != itB->second.end(); ++itC) {
-                    if (*itC == doneTransId) {
-                        itB->second.erase(doneTransId);
-                        if (itB->second.empty()) {
-                            itA->second.erase(itB);
-                            vaultTransActive[itA->first] = false;
-                        }
-                    }
-                }
-        dbg.debug(_L3_, "LogicLayer%d Transaction Done %lu\n", llID, doneTransId);
+        for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)     //FIXME: optimizable
+            for (auto itB = itA->second.begin(); itB != itA->second.end(); ++itB) 
+                for (auto itC = itB->second.begin(); itC != itB->second.end(); ++itC) 
+                    if (*itC == doneTransId) 
+                        if (itB->second.empty()) 
+                            itB->second.erase(doneTransId);
+        
+        dbg.debug(_L3_, "LogicLayer%d Transaction %lu Done\n", llID, doneTransId);
      }
      #endif
 
