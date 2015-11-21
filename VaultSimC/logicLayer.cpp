@@ -190,8 +190,10 @@ bool logicLayer::clock(Cycle_t current)
             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad HMC type %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
         if (HMCTypeEvent == HMC_CANDIDATE)
             HMCCandidateProcessed->addData(1);
-        else if (HMCTypeEvent>18 && HMCTypeEvent<22)
+        else if (HMCTypeEvent == HMC_TRANS_BEG || HMCTypeEvent == HMC_TRANS_MID || HMCTypeEvent == HMC_TRANS_END)
             HMCTransOpsProcessed->addData(1);
+        else if (HMCTypeEvent == HMC_hook || HMCTypeEvent == HMC_hook) 
+             dbg.fatal(CALL_INFO, -1, "LogicLayer%d got HMC type hook/unhook %d for address %p\n", llID, event->getHMCInstType(), (void*)event->getAddr());
         else if (HMCTypeEvent != HMC_NONE && HMCTypeEvent != HMC_CANDIDATE)
             HMCOpsProcessed->addData(1);
         #endif
@@ -211,14 +213,14 @@ bool logicLayer::clock(Cycle_t current)
                 // Add this event to Queue
                 //tIdQueue.insert(pair <uint64_t, queue<MemHierarchy::MemEvent> > (IdEvent, queue<MemHierarchy::MemEvent>() ));
                 tIdQueue[IdEvent].push_back(*event);
-                dbg.debug(_L3_, "LogicLayer%d got transaction BEG for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
+                dbg.debug(_L3_, "LogicLayer%d got transaction BEG for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             else if (HMCTypeEvent == HMC_TRANS_MID) {
                 eventIsNotTransaction = true;
                 uint64_t IdEvent = event->getHMCTransId();
                 // Add this event to Queue
                 tIdQueue[IdEvent].push_back(*event);
-                dbg.debug(_L3_, "LogicLayer%d got transaction MID for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
+                dbg.debug(_L3_, "LogicLayer%d got transaction MID for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             else if (HMCTypeEvent == HMC_TRANS_END) {
                 eventIsNotTransaction = true;
@@ -227,7 +229,7 @@ bool logicLayer::clock(Cycle_t current)
                 tIdQueue[IdEvent].push_back(*event);
                 //This the end of this ID. Issue
                 transReadyQueue.push(IdEvent);
-                dbg.debug(_L3_, "LogicLayer%d got transaction END for addr%p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
+                dbg.debug(_L3_, "LogicLayer%d got transaction END for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
             }
             #endif
 

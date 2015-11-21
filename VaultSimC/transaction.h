@@ -56,11 +56,13 @@ typedef enum HMC_Type_enum {
     HMC_COMP_greater=15,
     HMC_COMP_less=16,
     HMC_COMP_equal=17,
-    HMC_CANDIDATE=18,           // Not a HMC-op, it is showing if an instruction could be HMC in other scenarios
-    HMC_TRANS_BEG=19,           // Transaction support
-    HMC_TRANS_MID=20,           // Transaction support
-    HMC_TRANS_END=21,           // Transaction support
-    NUM_HMC_TYPES=22
+    HMC_hook=18,                // Not used in VaultSim
+    HMC_unhook=19,              // Not used in VaultSim
+    HMC_CANDIDATE=20,           // Not a HMC-op, it is showing if an instruction could be HMC in other scenarios
+    HMC_TRANS_BEG=21,           // Transaction support
+    HMC_TRANS_MID=22,           // Transaction support
+    HMC_TRANS_END=23,           // Transaction support
+    NUM_HMC_TYPES=24
 } HMC_Type;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
