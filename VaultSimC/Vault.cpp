@@ -91,7 +91,6 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     // etc Initialization
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
     bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
-    computePhaseEnabledBanks.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     computeDoneCycleMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     unlockAllBanks();
     transQ.reserve(TRANS_Q_OPTIMUM_SIZE);
@@ -273,7 +272,7 @@ void Vault::update()
     
     // If we are in compute phase, check for cycle compute done
     if (!computePhaseEnabledBanks.empty())
-        for(vector<unsigned>::iterator it = computePhaseEnabledBanks.begin(); it != computePhaseEnabledBanks.end(); NULL) {
+        for(list<unsigned>::iterator it = computePhaseEnabledBanks.begin(); it != computePhaseEnabledBanks.end(); NULL) {
             unsigned bankId = *it;
             if (currentClockCycle >= getComputeDoneCycle(bankId)) {
                 uint64_t addrCompute = getAddrCompute(bankId);
@@ -281,7 +280,7 @@ void Vault::update()
                         id, (void*)addrCompute, bankId, currentClockCycle);
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
                 issueAtomicSecondMemoryPhase(mi);
-                computePhaseEnabledBanks.erase(it++);
+                it = computePhaseEnabledBanks.erase(it);
             }
             else
                 it++;

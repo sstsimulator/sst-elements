@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <set>
 #include <vector>
+#include <list>
 #include <sstream>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
@@ -174,7 +175,7 @@ private:
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
     bank2BoolMap_t bankBusyMap;                  // Current Busy Banks
     transQ_t transQ;                             // Transaction Queue
-    vector<unsigned> computePhaseEnabledBanks;   // Current Compute Phase Insturctions (same size as bankBusyMap)
+    list<unsigned> computePhaseEnabledBanks;     // Current Compute Phase Insturctions (same size as bankBusyMap)
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 
