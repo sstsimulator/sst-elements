@@ -123,7 +123,13 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     statReadHmcLatencyInt = 0;
     statWriteHmcLatencyInt = 0;
 
+    statTotalTransOpLatencyInt = 0;
+    statTotalTransOpReadLatencyInt = 0;
+    statTotalTransOpWriteLatencyInt = 0;
+
     statMemTransTotalProcessed = registerStatistic<uint64_t>("Total_memory_transaction_processed", "0");
+    statMemTransTotalReadProcessed = registerStatistic<uint64_t>("Total_memory_transaction_read_processed", "0");
+    statMemTransTotalWriteProcessed = registerStatistic<uint64_t>("Total_memory_transaction_write_processed", "0");
     statMemTransTotalBegProcessed = registerStatistic<uint64_t>("Total_memory_transaction_begin_processed", "0");
     statMemTransTotalEndProcessed = registerStatistic<uint64_t>("Total_memory_transaction_end_processed", "0");
     statMemTransTotalMidProcessed = registerStatistic<uint64_t>("Total_memory_transaction_middle_processed", "0");
@@ -184,12 +190,10 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
                 vaultDoneTrans.push(transId);
                 statMemTransTotalRetired->addData(1);
             }
-            addrTransMap.erase(miTrans);
             dbg.debug(_L3_, "Vault %d Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
                     id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
         }
         else {
-            addrTransMap.erase(miTrans);
             dbg.debug(_L3_, "Vault %d Conflicted Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
                     id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
             if (vaultTransCount[transId] == vaultTransSize[transId]) {
@@ -198,6 +202,10 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
                 statMemTransTotalConflict->addData(1);
             }
         }
+        miTrans->second.readDoneCycle = currentClockCycle;
+        statTotalTransOpLatencyInt += (miTrans->second.readDoneCycle - miTrans->second.inCycle);
+        statTotalTransOpReadLatencyInt += (miTrans->second.readDoneCycle - miTrans->second.inCycle);
+        addrTransMap.erase(miTrans);
     }
     #endif
 }
@@ -257,12 +265,10 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
                 vaultDoneTrans.push(transId);
                 statMemTransTotalRetired->addData(1);
             }
-            addrTransMap.erase(miTrans);
             dbg.debug(_L3_, "Vault %d Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
                     id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
         }
         else {
-            addrTransMap.erase(miTrans);
             dbg.debug(_L3_, "Vault %d Conflicted Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
                     id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
             if (vaultTransCount[transId] == vaultTransSize[transId]) {
@@ -271,6 +277,10 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
                 statMemTransTotalConflict->addData(1);
             }
         }
+        miTrans->second.writeDoneCycle = currentClockCycle;
+        statTotalTransOpLatencyInt += (miTrans->second.writeDoneCycle - miTrans->second.inCycle);
+        statTotalTransOpWriteLatencyInt += (miTrans->second.writeDoneCycle - miTrans->second.inCycle);
+        addrTransMap.erase(miTrans);
     }
     #endif
 }
@@ -321,7 +331,8 @@ bool Vault::addTransaction(transaction_c transaction)
     if (bankMappingScheme == 1)
         newBank = newRank * 2 + newBank;
     transaction.setBankNo(newBank);
-           
+    transaction.inCycle = currentClockCycle;
+
     // transaction.setHmcOpState(QUEUED);
     bool insertTrans = true;
 
@@ -349,8 +360,8 @@ bool Vault::addTransaction(transaction_c transaction)
             uint64_t transId = transaction.getTransId();
             if ( vaultConflictedTrans.find(transId) ==  vaultConflictedTrans.end() ) {
                 addrTransMap.insert(pair<uint64_t, transaction_c>(transaction.getAddr(), transaction));
-                dbg.debug(_L3_, "Vault %d Transction %lu of type %s received\n", id, transId, transaction.getHmcOpTypeStr());
                 insertTrans = true;
+                dbg.debug(_L3_, "Vault %d Transction %lu of type %s received\n", id, transId, transaction.getHmcOpTypeStr());
             }
             // if its conflicted dump and send back answer
             else {
@@ -368,6 +379,11 @@ bool Vault::addTransaction(transaction_c transaction)
             }
             //stats
             statMemTransTotalProcessed->addData(1);
+            if (transaction.getIsWrite())
+                statMemTransTotalWriteProcessed->addData(1);
+            else
+                statMemTransTotalReadProcessed->addData(1);
+
             switch (transaction.getHmcOpType()) {
                 case HMC_TRANS_BEG:
                     statMemTransTotalBegProcessed->addData(1);
@@ -385,7 +401,6 @@ bool Vault::addTransaction(transaction_c transaction)
 
     /* statistics & insert to Queue*/
     if(insertTrans){
-        transaction.inCycle = currentClockCycle;
         statTotalTransactions->addData(1);
         transQ.push_back(transaction);
 
@@ -624,8 +639,12 @@ void Vault::printStatsForMacSim() {
     writeTo(ofs, name_, string("avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssueInt);
     writeTo(ofs, name_, string("avg_HMC_ops_latency_read"),         avgHmcOpsLatencyReadInt);
     writeTo(ofs, name_, string("avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWriteInt);
+
+    #ifdef USE_VAULTSIM_HMC
     ofs << "\n";
     writeTo(ofs, name_, string("total_memory_transaction_processed"),   statMemTransTotalProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_transaction_read_processed"),   statMemTransTotalReadProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_transaction_write_processed"),   statMemTransTotalWriteProcessed->getCollectionCount());
     writeTo(ofs, name_, string("total_memory_transaction_begin_processed"),   statMemTransTotalBegProcessed->getCollectionCount());
     writeTo(ofs, name_, string("total_memory_transaction_end_processed"),   statMemTransTotalEndProcessed->getCollectionCount());
     writeTo(ofs, name_, string("total_memory_transaction_middle_processed"),   statMemTransTotalMidProcessed->getCollectionCount());
@@ -633,9 +652,14 @@ void Vault::printStatsForMacSim() {
     writeTo(ofs, name_, string("total_memory_trasactions_confilict_happened"),   statMemTransTotalConflictHappened->getCollectionCount());
     writeTo(ofs, name_, string("total_memory_trasactions_retired"),   statMemTransTotalRetired->getCollectionCount());
     ofs << "\n";
+    writeTo(ofs, name_, string("avg_memory_trasactions_total_latency"),   (float)statTotalTransOpLatencyInt / statMemTransTotalProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("avg_memory_trasactions_read_latency"),   (float)statTotalTransOpReadLatencyInt / statMemTransTotalReadProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("avg_memory_trasactions_write_latency"),   (float)statTotalTransOpWriteLatencyInt / statMemTransTotalWriteProcessed->getCollectionCount());
+    ofs << "\n";
     for (int i=0; i <VAULT_MAX_BANK_SIZE; i++) {    //FIXME: will pring based on VAULT_MAX_BANK_SIZE, make it dynamic
         writeTo(ofs, name_, string("total_memory_trasactions_confilict_bank") + to_string(i),  statMemTransTotalConflictBanks[i]);
     }
+    #endif
         
 }
 

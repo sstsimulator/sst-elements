@@ -241,10 +241,8 @@ public:
     //stats
     uint64_t inCycle;
     uint64_t issueCycle;
-    uint64_t readDoneCycle;       // Same as write issue cycle (without computing)
-    uint64_t writeDoneCycle;      // Same as done cycle
-
-    //Transaction Support Stats
+    uint64_t readDoneCycle;
+    uint64_t writeDoneCycle;
     
 };
 

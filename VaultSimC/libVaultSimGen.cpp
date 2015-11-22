@@ -166,6 +166,8 @@ static const ElementInfoStatistic Vault_statistics[] = {
   { "Hmc_ops_read_latency",    "Hmc ops read latency", "cycles", 1},
   { "Hmc_ops_write_latency",   "Hmc ops write latency", "cycles", 1},
   { "Total_memory_transaction_processed", "Total memory transaction processed", "reqs", 1},
+  { "Total_memory_transaction_read_processed", "Total memory transaction read processed", "reqs", 1},
+  { "Total_memory_transaction_write_processed", "Total memory transaction write processed", "reqs", 1},
   { "Total_memory_transaction_begin_processed", "Total memory transaction begin processed", "reqs", 1},
   { "Total_memory_transaction_end_processed", "Total memory transaction end processed", "reqs", 1},
   { "Total_memory_transaction_middle_processed", "Total memory transaction middle processed", "reqs", 1},

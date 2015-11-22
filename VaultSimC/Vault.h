@@ -164,7 +164,7 @@ public:
 private:
     DRAMSim::MultiChannelMemorySystem *memorySystem;
     int bankMappingScheme;
-    
+
     //Debugs
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
     Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats
@@ -213,6 +213,8 @@ private:
     Statistic<uint64_t>* statWriteHmcLatency;
 
     Statistic<uint64_t>* statMemTransTotalProcessed;
+    Statistic<uint64_t>* statMemTransTotalReadProcessed;
+    Statistic<uint64_t>* statMemTransTotalWriteProcessed;
     Statistic<uint64_t>* statMemTransTotalBegProcessed;
     Statistic<uint64_t>* statMemTransTotalEndProcessed;
     Statistic<uint64_t>* statMemTransTotalMidProcessed;
@@ -222,11 +224,17 @@ private:
 
     vector<uint64_t> statMemTransTotalConflictBanks; //FIXME: convert to sst type stats
 
-    // internal stats
+    /* internal stats */
+    // HMC Latency
     uint64_t statTotalHmcLatencyInt;   //statapi does not provide any non-collection type addData (ORno documentation)
     uint64_t statIssueHmcLatencyInt;
     uint64_t statReadHmcLatencyInt;
     uint64_t statWriteHmcLatencyInt;
+
+    // Trans Op latency
+    uint64_t statTotalTransOpLatencyInt;
+    uint64_t statTotalTransOpReadLatencyInt;
+    uint64_t statTotalTransOpWriteLatencyInt;
 
 
 };
