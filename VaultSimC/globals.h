@@ -15,6 +15,7 @@
 //Optimizations
 #define BANK_SIZE_OPTIMUM 16
 #define VAULT_SIZE_OPTIMUM 16
+#define VAULT_MAX_BANK_SIZE 16              // Used for conflicted Bank stats FIXME: figure this from DRAMSim
 
 //Debug Levels (output class)
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};

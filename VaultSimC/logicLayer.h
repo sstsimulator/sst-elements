@@ -107,6 +107,8 @@ private:
     int reqLimit;
     int numVaults;
 
+    int bankMappingScheme;
+
     // for VaultId process
     uint64_t CacheLineSize;             // it is used to determine VaultIDs
     unsigned CacheLineSizeLog2;         // bits of CacheLineSize

@@ -87,6 +87,12 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
         toMem = NULL;
     dbg.debug(_INFO_, "Made LogicLayer %d toMem:%p toCPU:%p\n", llID, toMem, toCPU);
 
+    bankMappingScheme = 0;
+    #ifdef USE_VAULTSIM_HMC
+        bankMappingScheme = params.find_integer("bank_MappingScheme", 0);
+        out.output("*LogicLayer%d: bankMappingScheme %d\n", ident, bankMappingScheme);
+    #endif
+
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
     vaultBankTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
@@ -192,7 +198,7 @@ bool logicLayer::clock(Cycle_t currentCycle)
             vaultConflictedTrans.erase(conflictTransId);
             vaultTransCount[conflictTransId]=0;
 
-            //transConflictQueue.insert(conflictTransId);
+            //transConflictQueue.insert(conflictTransId);   //FIXME: not restarting
             vaultDoneTrans.push(conflictTransId);
             dbg.debug(_L3_, "LogicLayer%d conflicted transaction %lu pushed to conflicted queue\n", llID, conflictTransId);
             memTransTotalConflict->addData(1);
@@ -302,8 +308,12 @@ bool logicLayer::clock(Cycle_t currentCycle)
 
             // Save this event footprint
             unsigned newChan, newRank, newBank, newRow, newColumn;
-            DRAMSim::addressMapping(eventReady->getAddr() & ~((uint64_t)CacheLineSize-1), newChan, newRank, newBank, newRow, newColumn);
-            vaultBankTrans[vaultID][newBank].insert(currentTransId);
+            DRAMSim::addressMapping(eventReady->getAddr() & ~((uint64_t)CacheLineSize-1), newChan, newRank, newBank, newRow, newColumn); //FIXME
+            if (bankMappingScheme == 0)
+                vaultBankTrans[vaultID][newBank].insert(currentTransId);
+            else if (bankMappingScheme == 1)
+                vaultBankTrans[vaultID][newRank * 2 + newBank].insert(currentTransId);
+
             vaultTransActive[vaultID] = true;
             dbg.debug(_L3_, "LogicLayer%d: Transaction%u: Issuing %p with type %d (vault%u bank%u)\n", 
                     llID, currentTransId, (void*)eventReady->getAddr(), eventReady->getHMCInstType(), vaultID, newBank);

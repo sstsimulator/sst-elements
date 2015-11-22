@@ -83,6 +83,12 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
     memorySystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 
+    bankMappingScheme = 0;
+    #ifdef USE_VAULTSIM_HMC
+        bankMappingScheme = params.find_integer("bank_MappingScheme", 0);
+        out.output("*Vault: bankMappingScheme %d\n", bankMappingScheme);
+    #endif
+
     //Transaction Support
     #ifdef USE_VAULTSIM_HMC
     addrTransMap.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
@@ -124,6 +130,9 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     statMemTransTotalConflict = registerStatistic<uint64_t>("Total_memory_trasactions_confilict", "0");
     statMemTransTotalConflictHappened = registerStatistic<uint64_t>("Total_memory_trasactions_confilict_happened", "0");
     statMemTransTotalRetired = registerStatistic<uint64_t>("Total_memory_trasactions_retired", "0");
+    for (int i=0; i <VAULT_MAX_BANK_SIZE; i++) {
+        statMemTransTotalConflictBanks.push_back(0);
+    }
 }
 
 void Vault::finish() 
@@ -281,7 +290,7 @@ void Vault::update()
                         id, (void*)addrCompute, bankId, currentClockCycle);
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
                 issueAtomicSecondMemoryPhase(mi);
-                
+
                 eraseAddrCompute(bankId);
                 eraseComputeDoneCycle(bankId);
                 it = computePhaseEnabledBanks.erase(it);
@@ -308,8 +317,12 @@ void Vault::update()
 bool Vault::addTransaction(transaction_c transaction) 
 {
     unsigned newChan, newRank, newBank, newRow, newColumn;
-    DRAMSim::addressMapping(transaction.getAddr(), newChan, newRank, newBank, newRow, newColumn);
-    transaction.setBankNo(newBank);       //FIXME: newRank * MAX_BANK_SIZE + newBank - Why not implemented: performance issues
+    DRAMSim::addressMapping(transaction.getAddr(), newChan, newRank, newBank, newRow, newColumn); //FIXME: newRank * MAX_BANK_SIZE + newBank - Why not implemented: performance issues
+    if (bankMappingScheme == 0)
+        transaction.setBankNo(newBank);
+    else if (bankMappingScheme == 1)
+        transaction.setBankNo(newRank * 2 + newBank);
+           
     // transaction.setHmcOpState(QUEUED);
     bool insertTrans = true;
 
@@ -327,6 +340,7 @@ bool Vault::addTransaction(transaction_c transaction)
                     dbg.debug(_L3_, "*CONFILICT* Vault %d Transction %p of type %s conflicted with transaction %lu (bank%u)\n", \
                             id, (void*)transaction.getAddr(), transaction.getHmcOpTypeStr(), *itTransId, newBank);
                     statMemTransTotalConflictHappened->addData(1);
+                    statMemTransTotalConflictBanks[newBank]++;
                 }
             }
         }
@@ -618,6 +632,11 @@ void Vault::printStatsForMacSim() {
     writeTo(ofs, name_, string("total_memory_trasactions_confilict"),   statMemTransTotalConflict->getCollectionCount());
     writeTo(ofs, name_, string("total_memory_trasactions_confilict_happened"),   statMemTransTotalConflictHappened->getCollectionCount());
     writeTo(ofs, name_, string("total_memory_trasactions_retired"),   statMemTransTotalRetired->getCollectionCount());
+    ofs << "\n";
+    for (int i=0; i <VAULT_MAX_BANK_SIZE; i++) {    //FIXME: will pring based on VAULT_MAX_BANK_SIZE, make it dynamic
+        writeTo(ofs, name_, string("total_memory_trasactions_confilict_bank") + to_string(i),  statMemTransTotalConflictBanks[i]);
+    }
+        
 }
 
 

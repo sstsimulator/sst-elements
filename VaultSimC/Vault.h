@@ -12,7 +12,8 @@
 #ifndef VAULT_H
 #define VAULT_H
 
-#include <string.h>
+#include <cstring>
+#include <string>
 #include <iomanip>
 #include <iostream>
 #include <unordered_map>
@@ -162,7 +163,8 @@ public:
 
 private:
     DRAMSim::MultiChannelMemorySystem *memorySystem;
-
+    int bankMappingScheme;
+    
     //Debugs
     Output dbg;                                  // VaulSimC wrapper dbg, for printing debuging commands
     Output out;                                  // VaulSimC wrapper output, for printing always printed info and stats
@@ -214,9 +216,12 @@ private:
     Statistic<uint64_t>* statMemTransTotalBegProcessed;
     Statistic<uint64_t>* statMemTransTotalEndProcessed;
     Statistic<uint64_t>* statMemTransTotalMidProcessed;
-    Statistic<uint64_t>* statMemTransTotalConflictHappened;
     Statistic<uint64_t>* statMemTransTotalConflict;
+    Statistic<uint64_t>* statMemTransTotalConflictHappened;
     Statistic<uint64_t>* statMemTransTotalRetired;
+
+    vector<uint64_t> statMemTransTotalConflictBanks; //FIXME: convert to sst type stats
+
     // internal stats
     uint64_t statTotalHmcLatencyInt;   //statapi does not provide any non-collection type addData (ORno documentation)
     uint64_t statIssueHmcLatencyInt;
