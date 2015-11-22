@@ -90,9 +90,9 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
     // etc Initialization
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
-    bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
-    computeDoneCycleMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
-    addrComputeMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
+    bankBusyMap.reserve(BANK_SIZE_OPTIMUM);
+    computeDoneCycleMap.reserve(BANK_SIZE_OPTIMUM);
+    addrComputeMap.reserve(BANK_SIZE_OPTIMUM);
     unlockAllBanks();
     transQ.reserve(TRANS_Q_OPTIMUM_SIZE);
 

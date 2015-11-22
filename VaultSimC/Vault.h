@@ -38,7 +38,6 @@ using namespace std;
 using namespace SST;
 
 #define ON_FLY_HMC_OP_OPTIMUM_SIZE 10
-#define BANK_BOOL_MAP_OPTIMUM_SIZE 10
 #define TRANS_Q_OPTIMUM_SIZE 10
 
 //#define MAX_BANK_SIZE                   // FIXME: used for mapping (rank,bank) pair to a single number
@@ -128,7 +127,7 @@ private:
     inline void unlockBank(unsigned bankId) { bankBusyMap[bankId] = false; }
     inline void lockBank(unsigned bankId) { bankBusyMap[bankId] = true; }
     inline void unlockAllBanks() {
-        for (unsigned i = 0; i < BANK_BOOL_MAP_OPTIMUM_SIZE; i++) {
+        for (unsigned i = 0; i < BANK_SIZE_OPTIMUM; i++) {
             bankBusyMap[i] = false;
         }
     }

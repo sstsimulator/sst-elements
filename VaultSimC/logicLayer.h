@@ -45,7 +45,7 @@ using namespace SST;
 #define ACTIVE_TRANS_OPTIMUM_SIZE 10
 
 extern unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
-extern unordered_map<uint64_t, bool> vaultTransActive;
+extern vector<bool> vaultTransActive;
 extern unordered_map<uint64_t, uint64_t> vaultTransSize;
 extern set<uint64_t> vaultConflictedTrans;
 extern queue<uint64_t> vaultDoneTrans;

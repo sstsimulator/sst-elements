@@ -12,6 +12,10 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+//Optimizations
+#define BANK_SIZE_OPTIMUM 16
+#define VAULT_SIZE_OPTIMUM 16
+
 //Debug Levels (output class)
 enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _ERROR_ CALL_INFO,ERROR,0           //

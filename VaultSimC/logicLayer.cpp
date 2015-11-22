@@ -23,7 +23,7 @@ using namespace SST::MemHierarchy;
 #ifdef USE_VAULTSIM_HMC
 //Transcation GLOBAL FIXME
 unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
-unordered_map<uint64_t, bool> vaultTransActive; //FIXME Currently just get true when we see a trans (performance issue)
+vector<bool> vaultTransActive;
 unordered_map<uint64_t, uint64_t> vaultTransSize;
 set<uint64_t> vaultConflictedTrans;
 queue<uint64_t> vaultConflictedTransDone;
@@ -90,8 +90,6 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
     vaultBankTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
-    for (int i = 0; i < numVaults; ++i)
-        vaultTransActive[i] = false;
     vaultTransSize.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
     vaultTransCount.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
@@ -99,7 +97,8 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     tIdReadyForRetire.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
-    
+    for (unsigned i=0; i<numVaults; i++)
+        vaultTransActive.push_back(false);
     #endif
 
     // etc
@@ -159,9 +158,13 @@ bool logicLayer::clock(Cycle_t currentCycle)
 
         transRetireQueue.push(doneTransId);
 
-        activeTransactions.erase(doneTransId);
         vaultTransSize.erase(doneTransId);
         vaultTransCount.erase(doneTransId);
+        activeTransactions.erase(doneTransId);
+        //disable all vautls if there is not active Trans FIXME: do this in vault granularity
+        if(activeTransactions.empty()) 
+            for(vector<bool>::iterator it = vaultTransActive.begin(); it != vaultTransActive.end(); it++)
+                *it = false;
 
         for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)     //FIXME: optimizable //FIXME: disable vaultTransActive
             for (auto itB = itA->second.begin(); itB != itA->second.end(); ++itB) 
