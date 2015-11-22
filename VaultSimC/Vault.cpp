@@ -304,7 +304,7 @@ bool Vault::addTransaction(transaction_c transaction)
             auto it = vaultBankTrans[id].find(newBank);
             if ( it != vaultBankTrans[id].end() || !it->second.empty()) {
                 for (auto itTransId = vaultBankTrans[id][newBank].begin(); itTransId!=vaultBankTrans[id][newBank].end(); ++itTransId) {
-                    //vaultConflictedTrans.insert(*itTransId);
+                    vaultConflictedTrans.insert(*itTransId);
 
                     dbg.debug(_L3_, "*CONFILICT* Vault %d Transction %p of type %s conflicted with transaction %lu (bank%u)\n", \
                             id, (void*)transaction.getAddr(), transaction.getHmcOpTypeStr(), *itTransId, newBank);

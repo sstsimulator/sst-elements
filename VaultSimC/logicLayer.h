@@ -117,8 +117,12 @@ private:
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
     tIdQueue_t tIdQueue;
+    unordered_map<uint64_t, uint64_t> transSize;
     queue<uint64_t> transReadyQueue;
+    queue<uint64_t> transRetireQueue;
+    set<uint64_t> transConflictQueue;
     unsigned activeTransactionsLimit;       //FIXME: Not used now
+    tIdQueue_t tIdReadyForRetire;
     unordered_set<uint64_t> activeTransactions;
     #endif
 

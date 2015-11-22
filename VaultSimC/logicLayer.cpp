@@ -23,7 +23,7 @@ using namespace SST::MemHierarchy;
 #ifdef USE_VAULTSIM_HMC
 //Transcation GLOBAL FIXME
 unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
-unordered_map<uint64_t, bool> vaultTransActive;
+unordered_map<uint64_t, bool> vaultTransActive; //FIXME Currently just get true when we see a trans (performance issue)
 unordered_map<uint64_t, uint64_t> vaultTransSize;
 set<uint64_t> vaultConflictedTrans;
 queue<uint64_t> vaultConflictedTransDone;
@@ -96,6 +96,7 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     vaultTransCount.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
     tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
+    tIdReadyForRetire.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
     activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
 
     
@@ -131,7 +132,7 @@ void logicLayer::finish()
         printStatsForMacSim();
 }
 
-bool logicLayer::clock(Cycle_t current) 
+bool logicLayer::clock(Cycle_t currentCycle) 
 {
     SST::Event* ev = NULL;
 
@@ -141,15 +142,16 @@ bool logicLayer::clock(Cycle_t current)
 
     // 1-a)
     /* Retire Done Transactions
-     *     delete tIdQueue entry, activeTransactions entry, edit vaultTransActive, edit vaultBankTrans
+     *     delete activeTransactions entry, edit vaultTransActive, edit vaultBankTrans
      **/
      #ifdef USE_VAULTSIM_HMC
      while (!vaultDoneTrans.empty()) {
         uint64_t doneTransId = vaultDoneTrans.front();
         vaultDoneTrans.pop();
 
+        transRetireQueue.push(doneTransId);
+
         activeTransactions.erase(doneTransId);
-        tIdQueue.erase(doneTransId);
         vaultTransSize.erase(doneTransId);
         vaultTransCount.erase(doneTransId);
 
@@ -162,7 +164,7 @@ bool logicLayer::clock(Cycle_t current)
                         itC++;
                 }
         
-        dbg.debug(_L3_, "LogicLayer%d Transaction %lu Done\n", llID, doneTransId);
+        dbg.debug(_L3_, "LogicLayer%d Transaction %lu Retired\n", llID, doneTransId);
      }
      #endif
 
@@ -178,8 +180,9 @@ bool logicLayer::clock(Cycle_t current)
             vaultConflictedTrans.erase(conflictTransId);
             vaultTransCount[conflictTransId]=0;
 
-            transReadyQueue.push(conflictTransId);
-            dbg.debug(_L3_, "LogicLayer%d conflicted transaction %lu restarted\n", llID, conflictTransId);
+            //transConflictQueue.insert(conflictTransId);
+            vaultDoneTrans.push(conflictTransId);
+            dbg.debug(_L3_, "LogicLayer%d conflicted transaction %lu pushed to conflicted queue\n", llID, conflictTransId);
      }
      #endif
 
@@ -246,7 +249,7 @@ bool logicLayer::clock(Cycle_t current)
             if (!eventIsNotTransaction) {
                 unsigned int vaultID = (event->getAddr() >> CacheLineSizeLog2) % memChans.size();
                 memChans[vaultID]->send(event);
-                dbg.debug(_L4_, "LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, current);
+                dbg.debug(_L4_, "LogicLayer%d sends %p to vault%u @ %" PRIu64 "\n", llID, (void*)event->getAddr(), vaultID, currentCycle);
             }
         } 
         // This event is not for this LogicLayer
@@ -271,6 +274,7 @@ bool logicLayer::clock(Cycle_t current)
 
         activeTransactions.insert(currentTransId);
         vaultTransSize[currentTransId] = tIdQueue[currentTransId].size();
+        transSize[currentTransId] = tIdQueue[currentTransId].size();
         dbg.debug(_L3_, "LogicLayer%d issuing ready transaction %u with size %lu\n", llID, currentTransId, tIdQueue[currentTransId].size());
 
         for (vector<MemHierarchy::MemEvent*>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
@@ -286,8 +290,7 @@ bool logicLayer::clock(Cycle_t current)
                     llID, currentTransId, (void*)eventReady->getAddr(), eventReady->getHMCInstType(), vaultID, newBank);
             memChans[vaultID]->send(eventReady);
         }
-
-
+        tIdQueue.erase(currentTransId);
     }
     #endif
 
@@ -316,21 +319,85 @@ bool logicLayer::clock(Cycle_t current)
     // 3)
     /* Check For Events From Vaults 
      *     and send them to CPU
+     *     Transaction Support: save all transaction until we know what to do with them (dump or restart)
      **/
-    for (memChans_t::iterator i = memChans.begin(); i != memChans.end(); ++i) {
-        memChan_t *m_memChan = *i;
+    unsigned j = 0;
+    for (memChans_t::iterator it = memChans.begin(); it != memChans.end(); ++it, ++j) {
+        memChan_t *m_memChan = *it;
         while ((ev = m_memChan->recv())) {
             MemEvent *event  = dynamic_cast<MemEvent*>(ev);
             if (event == NULL)
                 dbg.fatal(CALL_INFO, -1, "LogicLayer%d got bad event from vaults\n", llID);
+            #ifdef USE_VAULTSIM_HMC
+            unsigned eventTransId = event->getHMCTransId();
+            unordered_set<uint64_t>::iterator it = activeTransactions.find(eventTransId);
+            if (it != activeTransactions.end()) {
+                tIdReadyForRetire[eventTransId].push_back(event);
+                dbg.debug(_L3_, "LogicLayer%d transaction %u Ready To Retire instruction %p with type %u pushed to RetireQueue\n",\
+                     llID, eventTransId, (void*)event->getAddr(), event->getHMCInstType());
+            }
+            else {
+                memOpsProcessed->addData(1);
+                toCPU->send(event);
+                toCpu[1]++;
+                reqUsedToCpu[1]->addData(1);
+                dbg.debug(_L4_, "LogicLayer%d got event %p from vault %u @%" PRIu64 ", sent towards cpu\n", llID, (void*)event->getAddr(), j, currentCycle);
+            }
 
+            #else
             memOpsProcessed->addData(1);
             toCPU->send(event);
             toCpu[1]++;
             reqUsedToCpu[1]->addData(1);
-            dbg.debug(_L4_, "LogicLayer%d got an event %p from vault @ %" PRIu64 ", sends towards cpu\n", llID, event, current);
+            dbg.debug(_L4_, "LogicLayer%d got event %p from vault %u @%" PRIu64 ", sent towards cpu\n", llID, (void*)event->getAddr(), j, currentCycle);
+            #endif
         }    
     }
+
+    // 3-b)
+    /* Process Retire Queues 
+     *      if transId is done send back the responces
+     *      if it is conflicted restart it
+     **/
+     #ifdef USE_VAULTSIM_HMC
+     // Retire Queue, send beck responces
+     while (!transRetireQueue.empty()) {
+        uint64_t doneTransId = transRetireQueue.front();
+        transRetireQueue.pop();
+
+        for (vector<MemHierarchy::MemEvent*>::iterator it = tIdReadyForRetire[doneTransId].begin() ; it != tIdReadyForRetire[doneTransId].end(); ++it) {
+            MemEvent* eventRetire = *it;
+            memOpsProcessed->addData(1);
+            toCPU->send(eventRetire);
+            toCpu[1]++;
+            reqUsedToCpu[1]->addData(1);
+        }
+        tIdReadyForRetire.erase(doneTransId);
+        transSize.erase(doneTransId);
+        dbg.debug(_L3_, "LogicLayer%d Transaction %lu Done all\n", llID, doneTransId);
+     }
+
+     if (!transConflictQueue.empty()) {
+        set<uint64_t>::iterator it;
+        for (it = transConflictQueue.begin(); it != transConflictQueue.end(); NULL) {
+            uint64_t transId = *it;
+            if (transSize[transId] == tIdReadyForRetire[transId].size()) {
+                for (vector<MemHierarchy::MemEvent*>::iterator it = tIdReadyForRetire[transId].begin() ; it != tIdReadyForRetire[transId].end(); ++it) {
+                    MemEvent* eventRetire = *it;
+                    tIdQueue[transId].push_back(eventRetire);
+                }
+                transReadyQueue.push(transId);
+                transSize.erase(transId);
+                transConflictQueue.erase(it++);
+                dbg.debug(_L3_, "LogicLayer%d conflicted transaction %lu restarted\n", llID, transId);
+            }
+            else
+                it++;
+        }
+
+     }
+
+     #endif
 
     if (toMemory[0] > reqLimit || toMemory[1] > reqLimit || toCpu[0] > reqLimit || toCpu[1] > reqLimit) {
         dbg.output(CALL_INFO, "logicLayer%d Bandwdith: %d %d %d %d\n", llID, toMemory[0], toMemory[1], toCpu[0], toCpu[1]);
