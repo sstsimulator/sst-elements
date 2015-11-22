@@ -309,10 +309,9 @@ bool logicLayer::clock(Cycle_t currentCycle)
             // Save this event footprint
             unsigned newChan, newRank, newBank, newRow, newColumn;
             DRAMSim::addressMapping(eventReady->getAddr() & ~((uint64_t)CacheLineSize-1), newChan, newRank, newBank, newRow, newColumn); //FIXME
-            if (bankMappingScheme == 0)
-                vaultBankTrans[vaultID][newBank].insert(currentTransId);
-            else if (bankMappingScheme == 1)
-                vaultBankTrans[vaultID][newRank * 2 + newBank].insert(currentTransId);
+            if (bankMappingScheme == 1)
+                newBank = newRank * 2 + newBank;
+            vaultBankTrans[vaultID][newBank].insert(currentTransId);
 
             vaultTransActive[vaultID] = true;
             dbg.debug(_L3_, "LogicLayer%d: Transaction%u: Issuing %p with type %d (vault%u bank%u)\n", 

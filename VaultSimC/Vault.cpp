@@ -86,7 +86,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     bankMappingScheme = 0;
     #ifdef USE_VAULTSIM_HMC
         bankMappingScheme = params.find_integer("bank_MappingScheme", 0);
-        out.output("*Vault: bankMappingScheme %d\n", bankMappingScheme);
+        out.output("*Vault%u: bankMappingScheme %d\n", id, bankMappingScheme);
     #endif
 
     //Transaction Support
@@ -318,10 +318,9 @@ bool Vault::addTransaction(transaction_c transaction)
 {
     unsigned newChan, newRank, newBank, newRow, newColumn;
     DRAMSim::addressMapping(transaction.getAddr(), newChan, newRank, newBank, newRow, newColumn); //FIXME: newRank * MAX_BANK_SIZE + newBank - Why not implemented: performance issues
-    if (bankMappingScheme == 0)
-        transaction.setBankNo(newBank);
-    else if (bankMappingScheme == 1)
-        transaction.setBankNo(newRank * 2 + newBank);
+    if (bankMappingScheme == 1)
+        newBank = newRank * 2 + newBank;
+    transaction.setBankNo(newBank);
            
     // transaction.setHmcOpState(QUEUED);
     bool insertTrans = true;
@@ -333,16 +332,17 @@ bool Vault::addTransaction(transaction_c transaction)
         uint8_t opHMCType = transaction.getHmcOpType();
         if ( !(opHMCType == HMC_TRANS_BEG || opHMCType == HMC_TRANS_MID || opHMCType == HMC_TRANS_END) ) {
             auto it = vaultBankTrans[id].find(newBank);
-            if ( it != vaultBankTrans[id].end() || !it->second.empty()) {
-                for (auto itTransId = vaultBankTrans[id][newBank].begin(); itTransId!=vaultBankTrans[id][newBank].end(); ++itTransId) {
-                    vaultConflictedTrans.insert(*itTransId);
+            if ( it != vaultBankTrans[id].end() ) 
+                if ( !it->second.empty() ) {
+                    for (auto itTransId = vaultBankTrans[id][newBank].begin(); itTransId!=vaultBankTrans[id][newBank].end(); ++itTransId) {
+                        vaultConflictedTrans.insert(*itTransId);
 
-                    dbg.debug(_L3_, "*CONFILICT* Vault %d Transction %p of type %s conflicted with transaction %lu (bank%u)\n", \
-                            id, (void*)transaction.getAddr(), transaction.getHmcOpTypeStr(), *itTransId, newBank);
-                    statMemTransTotalConflictHappened->addData(1);
-                    statMemTransTotalConflictBanks[newBank]++;
+                        dbg.debug(_L3_, "*CONFILICT* Vault %d Transction %p of type %s conflicted with transaction %lu (bank%u)\n", \
+                                id, (void*)transaction.getAddr(), transaction.getHmcOpTypeStr(), *itTransId, newBank);
+                        statMemTransTotalConflictHappened->addData(1);
+                        statMemTransTotalConflictBanks[newBank]++;
+                    }
                 }
-            }
         }
         // Save transaction address
         else {
