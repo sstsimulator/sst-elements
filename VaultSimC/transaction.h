@@ -243,6 +243,9 @@ public:
     uint64_t issueCycle;
     uint64_t readDoneCycle;       // Same as write issue cycle (without computing)
     uint64_t writeDoneCycle;      // Same as done cycle
+
+    //Transaction Support Stats
+    
 };
 
 #endif

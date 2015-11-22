@@ -131,6 +131,14 @@ private:
     Statistic<uint64_t>* HMCCandidateProcessed;
     Statistic<uint64_t>* HMCOpsProcessed;
     Statistic<uint64_t>* HMCTransOpsProcessed;
+
+    Statistic<uint64_t>* memTransTotalProcessed;
+    Statistic<uint64_t>* memTransTotalBegProcessed;
+    Statistic<uint64_t>* memTransTotalEndProcessed;
+    Statistic<uint64_t>* memTransTotalMidProcessed;
+    Statistic<uint64_t>* memTransTotalSize;
+    Statistic<uint64_t>* memTransTotalConflict;
+    Statistic<uint64_t>* memTransTotalRetired;
     
     Statistic<uint64_t>* reqUsedToCpu[2];
     Statistic<uint64_t>* reqUsedToMem[2];

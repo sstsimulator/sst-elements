@@ -118,6 +118,14 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
     HMCOpsProcessed = registerStatistic<uint64_t>("HMC_ops_processed", "0");
     HMCCandidateProcessed = registerStatistic<uint64_t>("Total_HMC_candidate_processed", "0");
     HMCTransOpsProcessed = registerStatistic<uint64_t>("Total_HMC_transactions_processed", "0");
+
+    memTransTotalProcessed = registerStatistic<uint64_t>("Total_memory_transaction_processed", "0");
+    memTransTotalBegProcessed = registerStatistic<uint64_t>("Total_memory_transaction_begin_processed", "0");
+    memTransTotalEndProcessed = registerStatistic<uint64_t>("Total_memory_transaction_end_processed", "0");
+    memTransTotalMidProcessed = registerStatistic<uint64_t>("Total_memory_transaction_middle_processed", "0");
+    memTransTotalConflict = registerStatistic<uint64_t>("Total_memory_trasactions_confilict", "0");
+    memTransTotalRetired = registerStatistic<uint64_t>("Total_memory_trasactions_retired", "0");
+
     reqUsedToCpu[0] = registerStatistic<uint64_t>("Req_recv_from_CPU", "0");  
     reqUsedToCpu[1] = registerStatistic<uint64_t>("Req_send_to_CPU", "0");
     reqUsedToMem[0] = registerStatistic<uint64_t>("Req_recv_from_Mem", "0");
@@ -165,6 +173,7 @@ bool logicLayer::clock(Cycle_t currentCycle)
                 }
         
         dbg.debug(_L3_, "LogicLayer%d Transaction %lu Retired\n", llID, doneTransId);
+        memTransTotalRetired->addData(1);
      }
      #endif
 
@@ -183,6 +192,7 @@ bool logicLayer::clock(Cycle_t currentCycle)
             //transConflictQueue.insert(conflictTransId);
             vaultDoneTrans.push(conflictTransId);
             dbg.debug(_L3_, "LogicLayer%d conflicted transaction %lu pushed to conflicted queue\n", llID, conflictTransId);
+            memTransTotalConflict->addData(1);
      }
      #endif
 
@@ -227,6 +237,8 @@ bool logicLayer::clock(Cycle_t currentCycle)
                 //tIdQueue.insert(pair <uint64_t, queue<MemHierarchy::MemEvent> > (IdEvent, queue<MemHierarchy::MemEvent>() ));
                 tIdQueue[IdEvent].push_back(event);
                 dbg.debug(_L3_, "LogicLayer%d got transaction BEG for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
+                memTransTotalProcessed->addData(1);
+                memTransTotalBegProcessed->addData(1);
             }
             else if (HMCTypeEvent == HMC_TRANS_MID) {
                 eventIsNotTransaction = true;
@@ -234,6 +246,8 @@ bool logicLayer::clock(Cycle_t currentCycle)
                 // Add this event to Queue
                 tIdQueue[IdEvent].push_back(event);
                 dbg.debug(_L3_, "LogicLayer%d got transaction MID for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
+                memTransTotalProcessed->addData(1);
+                memTransTotalMidProcessed->addData(1);
             }
             else if (HMCTypeEvent == HMC_TRANS_END) {
                 eventIsNotTransaction = true;
@@ -243,6 +257,8 @@ bool logicLayer::clock(Cycle_t currentCycle)
                 //This the end of this ID. Issue
                 transReadyQueue.push(IdEvent);
                 dbg.debug(_L3_, "LogicLayer%d got transaction END for addr %p with id %lu\n", llID, (void*)event->getAddr(), IdEvent);
+                memTransTotalProcessed->addData(1);
+                memTransTotalEndProcessed->addData(1);
             }
             #endif
 
@@ -447,6 +463,14 @@ void logicLayer::printStatsForMacSim() {
     writeTo(ofs, name_, string("req_send_to_Mem"),   reqUsedToMem[1]->getCollectionCount());
     ofs << "\n";
     writeTo(ofs, name_, string("total_HMC_candidate_ops"),   HMCCandidateProcessed->getCollectionCount());
+    ofs << "\n";
+    writeTo(ofs, name_, string("total_memory_transaction_processed"),   memTransTotalProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_transaction_begin_processed"),   memTransTotalBegProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_transaction_end_processed"),   memTransTotalEndProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_transaction_middle_processed"),   memTransTotalMidProcessed->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_trasactions_confilict"),   memTransTotalConflict->getCollectionCount());
+    writeTo(ofs, name_, string("total_memory_trasactions_retired"),   memTransTotalRetired->getCollectionCount());
+    writeTo(ofs, name_, string("avg_memory_transactions_size"),   (float)memTransTotalProcessed->getCollectionCount() / memTransTotalBegProcessed->getCollectionCount() );
 }
 
 
