@@ -135,16 +135,6 @@ private:
     /** 
      * Compute Phase Functions 
      */
-    inline bool getComputePhase(unsigned bankId) { return computePhaseMap[bankId]; }
-    inline unsigned getComputePhaseSize() { return computePhaseMap.size(); }
-    inline void setComputePhase(unsigned bankId) { computePhaseMap[bankId] = true; }
-    inline void resetComputePhase(unsigned bankId) { computePhaseMap[bankId] = false; }
-    inline void resetAllComputePhase() {
-        for (unsigned i = 0; i < BANK_BOOL_MAP_OPTIMUM_SIZE; i++) {
-            computePhaseMap[i] = false;
-        }
-    }
-
     inline void setComputeDoneCycle(unsigned bankId, uint64_t cycle) { computeDoneCycleMap[bankId] = cycle; }
     inline uint64_t getComputeDoneCycle(unsigned bankId) { return computeDoneCycleMap[bankId]; }
 
@@ -184,7 +174,7 @@ private:
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
     bank2BoolMap_t bankBusyMap;                  // Current Busy Banks
     transQ_t transQ;                             // Transaction Queue
-    bank2BoolMap_t computePhaseMap;              // Current Compute Phase Insturctions (same size as bankBusyMap)
+    vector<unsigned> computePhaseEnabledBanks;   // Current Compute Phase Insturctions (same size as bankBusyMap)
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 

@@ -91,11 +91,10 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     // etc Initialization
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
     bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
-    computePhaseMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
+    computePhaseEnabledBanks.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     computeDoneCycleMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     unlockAllBanks();
     transQ.reserve(TRANS_Q_OPTIMUM_SIZE);
-    resetAllComputePhase();
 
     currentClockCycle = 0;
 
@@ -158,7 +157,7 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
 
         // Now in Compute Phase, set cycle done 
         issueAtomicComputePhase(mi);
-        setComputePhase(mi->second.getBankNo());
+        computePhaseEnabledBanks.push_back(mi->second.getBankNo());
 
         /* statistics */
         mi->second.readDoneCycle = currentClockCycle;
@@ -273,18 +272,20 @@ void Vault::update()
     currentClockCycle++;  
     
     // If we are in compute phase, check for cycle compute done
-    for(unsigned bankId = 0; bankId < getComputePhaseSize(); bankId++) {
-        if (getComputePhase(bankId)) {
+    if (!computePhaseEnabledBanks.empty())
+        for(vector<unsigned>::iterator it = computePhaseEnabledBanks.begin(); it != computePhaseEnabledBanks.end(); NULL) {
+            unsigned bankId = *it;
             if (currentClockCycle >= getComputeDoneCycle(bankId)) {
                 uint64_t addrCompute = getAddrCompute(bankId);
                 dbg.debug(_L8_, "Vault %d:hmc: Atomic op %p (bank%u) compute phase has been done @cycle=%lu\n", \
                         id, (void*)addrCompute, bankId, currentClockCycle);
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
                 issueAtomicSecondMemoryPhase(mi);
-                resetComputePhase(bankId);
+                computePhaseEnabledBanks.erase(it++);
             }
+            else
+                it++;
         }
-    }
 
     // Debug long hmc ops in Queue
     if (1 == dbgOnFlyHmcOpsIsOn)
