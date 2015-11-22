@@ -138,9 +138,11 @@ private:
      */
     inline void setComputeDoneCycle(unsigned bankId, uint64_t cycle) { computeDoneCycleMap[bankId] = cycle; }
     inline uint64_t getComputeDoneCycle(unsigned bankId) { return computeDoneCycleMap[bankId]; }
+    inline void eraseComputeDoneCycle(unsigned bankId) { computeDoneCycleMap.erase(bankId); }
 
     inline void setAddrCompute(unsigned bankId, uint64_t addr) { addrComputeMap[bankId] = addr; }
     inline uint64_t getAddrCompute(unsigned bankId) { return addrComputeMap[bankId]; }
+    inline void eraseAddrCompute(unsigned bankId) { addrComputeMap.erase(bankId); }
 
     /**
      *  Stats

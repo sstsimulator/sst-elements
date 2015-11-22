@@ -92,6 +92,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     onFlyHmcOps.reserve(ON_FLY_HMC_OP_OPTIMUM_SIZE);
     bankBusyMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     computeDoneCycleMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
+    addrComputeMap.reserve(BANK_BOOL_MAP_OPTIMUM_SIZE);
     unlockAllBanks();
     transQ.reserve(TRANS_Q_OPTIMUM_SIZE);
 
@@ -280,6 +281,9 @@ void Vault::update()
                         id, (void*)addrCompute, bankId, currentClockCycle);
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
                 issueAtomicSecondMemoryPhase(mi);
+                
+                eraseAddrCompute(bankId);
+                eraseComputeDoneCycle(bankId);
                 it = computePhaseEnabledBanks.erase(it);
             }
             else
