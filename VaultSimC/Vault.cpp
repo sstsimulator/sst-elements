@@ -85,8 +85,7 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 
     //Transaction Support
     #ifdef USE_VAULTSIM_HMC
-    addrTransEndMap.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
-    ConflictedTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
+    addrTransMap.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
     #endif
 
     // etc Initialization
@@ -160,19 +159,25 @@ void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle)
 
     /** Transaction Support */
     #ifdef USE_VAULTSIM_HMC
-    unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
-    if ( miTrans != addrTransEndMap.end()) {
-        uint64_t transId = miTrans->second;
-        if ( ConflictedTrans.find(transId) ==  ConflictedTrans.end() ) {
-            vaultDoneTrans.push(transId);
-            addrTransEndMap.erase(miTrans);
-            dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, transId);
+    unordered_map<uint64_t, transaction_c>::iterator miTrans = addrTransMap.find(addr);
+    if ( miTrans != addrTransMap.end()) {
+        uint64_t transId = miTrans->second.getTransId();
+        vaultTransCount[transId]++;
+        if ( vaultConflictedTrans.find(transId) ==  vaultConflictedTrans.end() ) {
+            if (vaultTransCount[transId] == vaultTransSize[transId])
+                vaultDoneTrans.push(transId);
+            addrTransMap.erase(miTrans);
+            dbg.debug(_L3_, "Vault %d Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
+                    id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
         }
         else {
-            vaultConflictedTransDone.push(transId);
-            addrTransEndMap.erase(miTrans);
-            ConflictedTrans.erase(transId);
-            dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end send to logicLayer withput pushing to vaultDoneTrans\n", id, transId);
+            addrTransMap.erase(miTrans);
+            dbg.debug(_L3_, "Vault %d Conflicted Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
+                    id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
+            if (vaultTransCount[transId] == vaultTransSize[transId]) {
+                dbg.debug(_L3_, "Vault %d Conflicted Transaction %lu Conflicted DONE sent to logicLayer\n", id, transId);
+                vaultConflictedTransDone.push(transId);
+            }
         }
     }
     #endif
@@ -224,19 +229,25 @@ void Vault::writeComplete(unsigned id, uint64_t addr, uint64_t cycle)
 
     /** Transaction Support */
     #ifdef USE_VAULTSIM_HMC
-    unordered_map<uint64_t, uint64_t>::iterator miTrans = addrTransEndMap.find(addr);
-    if ( miTrans != addrTransEndMap.end()) {
-        uint64_t transId = miTrans->second;
-        if ( ConflictedTrans.find(transId) ==  ConflictedTrans.end() ) {
-            vaultDoneTrans.push(transId);
-            addrTransEndMap.erase(miTrans);
-            dbg.debug(_L3_, "Vault %d Transction %lu end send to logicLayer\n", id, transId);
+    unordered_map<uint64_t, transaction_c>::iterator miTrans = addrTransMap.find(addr);
+    if ( miTrans != addrTransMap.end()) {
+        uint64_t transId = miTrans->second.getTransId();
+        vaultTransCount[transId]++;
+        if ( vaultConflictedTrans.find(transId) ==  vaultConflictedTrans.end() ) {
+            if (vaultTransCount[transId] == vaultTransSize[transId])
+                vaultDoneTrans.push(transId);
+            addrTransMap.erase(miTrans);
+            dbg.debug(_L3_, "Vault %d Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
+                    id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
         }
         else {
-            vaultConflictedTransDone.push(transId);
-            addrTransEndMap.erase(miTrans);
-            ConflictedTrans.erase(transId);
-            dbg.debug(_L3_, "Vault %d Conflicted Transction %lu end send to logicLayer withput pushing to vaultDoneTrans\n", id, transId);
+            addrTransMap.erase(miTrans);
+            dbg.debug(_L3_, "Vault %d Conflicted Transaction %lu of type %s sent to logicLayer (%lu from %lu)\n", \
+                    id, transId, miTrans->second.getHmcOpTypeStr(), vaultTransCount[transId], vaultTransSize[transId]);
+            if (vaultTransCount[transId] == vaultTransSize[transId]) {
+                dbg.debug(_L3_, "Vault %d Conflicted Transaction %lu Conflicted DONE sent to logicLayer\n", id, transId);
+                vaultConflictedTransDone.push(transId);
+            }
         }
     }
     #endif
@@ -282,6 +293,7 @@ bool Vault::addTransaction(transaction_c transaction)
     DRAMSim::addressMapping(transaction.getAddr(), newChan, newRank, newBank, newRow, newColumn);
     transaction.setBankNo(newBank);       //FIXME: newRank * MAX_BANK_SIZE + newBank - Why not implemented: performance issues
     // transaction.setHmcOpState(QUEUED);
+    bool insertTrans = true;
 
     /** Transaction Support */
     #ifdef USE_VAULTSIM_HMC
@@ -289,38 +301,51 @@ bool Vault::addTransaction(transaction_c transaction)
         // Check for transaction conflict
         uint8_t opHMCType = transaction.getHmcOpType();
         if ( !(opHMCType == HMC_TRANS_BEG || opHMCType == HMC_TRANS_MID || opHMCType == HMC_TRANS_END) ) {
-            uint64_t *transId;
             auto it = vaultBankTrans[id].find(newBank);
-            if ( it != vaultBankTrans[id].end() ) {
+            if ( it != vaultBankTrans[id].end() || !it->second.empty()) {
                 for (auto itTransId = vaultBankTrans[id][newBank].begin(); itTransId!=vaultBankTrans[id][newBank].end(); ++itTransId) {
-                    ConflictedTrans.insert(*itTransId);
-                    dbg.debug(_L3_, "Vault %d Transction conflicts with transaction %lu (bank%u)\n", id, *transId, newBank);
+                    //vaultConflictedTrans.insert(*itTransId);
+
+                    dbg.debug(_L3_, "*CONFILICT* Vault %d Transction %p of type %s conflicted with transaction %lu (bank%u)\n", \
+                            id, (void*)transaction.getAddr(), transaction.getHmcOpTypeStr(), *itTransId, newBank);
                 }
             }
         }
-
-        // Save End of transaction address
-        if (transaction.getHmcOpType() == HMC_TRANS_END) {
+        // Save transaction address
+        else {
             uint64_t transId = transaction.getTransId();
-            if ( ConflictedTrans.find(transId) ==  ConflictedTrans.end() ) {
-                addrTransEndMap[transaction.getAddr()] = transId;
-                dbg.debug(_L3_, "Vault %d Transction %lu end recived\n", id, transId);
+            if ( vaultConflictedTrans.find(transId) ==  vaultConflictedTrans.end() ) {
+                addrTransMap.insert(pair<uint64_t, transaction_c>(transaction.getAddr(), transaction));
+                dbg.debug(_L3_, "Vault %d Transction %lu of type %s received\n", id, transId, transaction.getHmcOpTypeStr());
+                insertTrans = true;
             }
+            // if its conflicted dump and send back answer
             else {
-                vaultConflictedTransDone.push(transId);
-                ConflictedTrans.erase(transId);
-                dbg.debug(_L3_, "Vault %d Conflicted Transction %lu END recived\n", id, transId);
+                vaultTransCount[transId]++;
+                if (vaultTransCount[transId] == vaultTransSize[transId])
+                    vaultConflictedTransDone.push(transId);
+                unsigned id = 0;
+                bool isWrite_ = transaction.getIsWrite();
+                if (isWrite_)
+                    (*writeCallback)(id, transaction.getAddr(), currentClockCycle);
+                else
+                    (*readCallback)(id, transaction.getAddr(), currentClockCycle);
+                insertTrans = false;
+                dbg.debug(_L3_, "Vault %d Conflicted Transction %lu recived & dumped\n", id, transId);
             }
         }
     }
     #endif
 
-    /* statistics */
-    transaction.inCycle = currentClockCycle;
-    statTotalTransactions->addData(1);
-    transQ.push_back(transaction);
+    /* statistics & insert to Queue*/
+    if(insertTrans){
+        transaction.inCycle = currentClockCycle;
+        statTotalTransactions->addData(1);
+        transQ.push_back(transaction);
 
-    updateQueue();
+        updateQueue();
+    }
+
     return true;
 }
 

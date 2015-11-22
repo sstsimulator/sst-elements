@@ -20,6 +20,7 @@
 #include <sst/core/statapi/stathistogram.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 
+#include <set>
 #include <queue>
 #include <vector>
 #include <unordered_map>
@@ -40,13 +41,16 @@ using namespace SST;
 #ifdef USE_VAULTSIM_HMC
 
 #define TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE 10
-#define TRANS_PART_OPTIMUM_SIZE 4
-#define ACTIVE_TRANS_OPTIMUM_SIZE 4
+#define TRANS_PART_OPTIMUM_SIZE 6
+#define ACTIVE_TRANS_OPTIMUM_SIZE 10
 
 extern unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
 extern unordered_map<uint64_t, bool> vaultTransActive;
+extern unordered_map<uint64_t, uint64_t> vaultTransSize;
+extern set<uint64_t> vaultConflictedTrans;
 extern queue<uint64_t> vaultDoneTrans;
 extern queue<uint64_t> vaultConflictedTransDone;
+extern unordered_map<uint64_t, uint64_t> vaultTransCount;
 
 #endif
 

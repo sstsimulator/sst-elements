@@ -16,7 +16,7 @@
 #include <iomanip>
 #include <iostream>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <vector>
 #include <sstream>
 #include <fstream>
@@ -190,8 +190,7 @@ private:
 
     //Transaction Support
     #ifdef USE_VAULTSIM_HMC
-    unordered_map<uint64_t, uint64_t> addrTransEndMap;
-    unordered_set<uint64_t> ConflictedTrans;
+    unordered_multimap<uint64_t, transaction_c> addrTransMap;
     #endif
 
     // HMC ops Cost in Cycles

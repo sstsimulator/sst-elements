@@ -24,8 +24,11 @@ using namespace SST::MemHierarchy;
 //Transcation GLOBAL FIXME
 unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
 unordered_map<uint64_t, bool> vaultTransActive;
+unordered_map<uint64_t, uint64_t> vaultTransSize;
+set<uint64_t> vaultConflictedTrans;
 queue<uint64_t> vaultConflictedTransDone;
 queue<uint64_t> vaultDoneTrans;
+unordered_map<uint64_t, uint64_t> vaultTransCount;
 #endif
 
 logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent( id )
@@ -86,12 +89,16 @@ logicLayer::logicLayer(ComponentId_t id, Params& params) : IntrospectedComponent
 
     // Transaction Support
     #ifdef USE_VAULTSIM_HMC
-    tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
-    activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
     vaultBankTrans.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
-
     for (int i = 0; i < numVaults; ++i)
         vaultTransActive[i] = false;
+    vaultTransSize.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
+    vaultTransCount.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
+
+    tIdQueue.reserve(TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE);
+    activeTransactions.reserve(ACTIVE_TRANS_OPTIMUM_SIZE);
+
+    
     #endif
 
     // etc
@@ -143,29 +150,36 @@ bool logicLayer::clock(Cycle_t current)
 
         activeTransactions.erase(doneTransId);
         tIdQueue.erase(doneTransId);
+        vaultTransSize.erase(doneTransId);
+        vaultTransCount.erase(doneTransId);
 
-        for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)     //FIXME: optimizable
+        for (auto itA = vaultBankTrans.begin(); itA != vaultBankTrans.end(); ++itA)     //FIXME: optimizable //FIXME: disable vaultTransActive
             for (auto itB = itA->second.begin(); itB != itA->second.end(); ++itB) 
-                for (auto itC = itB->second.begin(); itC != itB->second.end(); ++itC) 
-                    if (*itC == doneTransId) 
-                        if (itB->second.empty()) 
-                            itB->second.erase(doneTransId);
+                for (auto itC = itB->second.begin(); itC != itB->second.end(); NULL) {
+                    if (doneTransId == *itC)
+                        itB->second.erase(itC++);
+                    else
+                        itC++;
+                }
         
         dbg.debug(_L3_, "LogicLayer%d Transaction %lu Done\n", llID, doneTransId);
      }
      #endif
 
     // 1-b)
-    /* Check Transactions conflicts
-     *     and erase entry of 
+    /* Check Transactions conflicts that are done
+     *     and erase entry of them, also remove them from global conflicted transactions
      *     
      **/
      #ifdef USE_VAULTSIM_HMC
      while ( !vaultConflictedTransDone.empty() ) {
             uint64_t conflictTransId = vaultConflictedTransDone.front();
             vaultConflictedTransDone.pop();
+            vaultConflictedTrans.erase(conflictTransId);
+            vaultTransCount[conflictTransId]=0;
+
             transReadyQueue.push(conflictTransId);
-            dbg.debug(_L3_, "LogicLayer%d conflicted transaction restarted%lu\n", llID, conflictTransId);
+            dbg.debug(_L3_, "LogicLayer%d conflicted transaction %lu restarted\n", llID, conflictTransId);
      }
      #endif
 
@@ -256,6 +270,7 @@ bool logicLayer::clock(Cycle_t current)
         transReadyQueue.pop();
 
         activeTransactions.insert(currentTransId);
+        vaultTransSize[currentTransId] = tIdQueue[currentTransId].size();
         dbg.debug(_L3_, "LogicLayer%d issuing ready transaction %u with size %lu\n", llID, currentTransId, tIdQueue[currentTransId].size());
 
         for (vector<MemHierarchy::MemEvent*>::iterator it = tIdQueue[currentTransId].begin() ; it != tIdQueue[currentTransId].end(); ++it) {
