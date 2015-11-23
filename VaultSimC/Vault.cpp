@@ -586,7 +586,7 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
         computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostLogicalOps;
         break;
     case (HMC_FP_ADD):
-        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostLogicalOps;
+        computeDoneCycleMap[bankNoCompute] = currentClockCycle + HMCCostFPAdd;
         break;
     case (HMC_COMP_greater):
     case (HMC_COMP_less):
