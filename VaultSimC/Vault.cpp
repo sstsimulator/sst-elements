@@ -110,6 +110,8 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
     statTotalNonHmcOps    = registerStatistic<uint64_t>("Total_non_hmc_ops", "0");
     statTotalHmcCandidate = registerStatistic<uint64_t>("Total_candidate_hmc_ops", "0");
 
+    statTotalHmcConfilictHappened = registerStatistic<uint64_t>("Total_hmc_confilict_happened", "0");
+
     statTotalNonHmcRead   = registerStatistic<uint64_t>("Total_non_hmc_read", "0");
     statTotalNonHmcWrite  = registerStatistic<uint64_t>("Total_non_hmc_write", "0");
 
@@ -456,6 +458,8 @@ void Vault::updateQueue()
                 
             }
         }
+        else
+            statTotalHmcConfilictHappened->addData(1);
     }
 }
 
@@ -631,6 +635,8 @@ void Vault::printStatsForMacSim() {
     writeTo(ofs, name_, string("total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
     writeTo(ofs, name_, string("total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
     writeTo(ofs, name_, string("total_HMC_candidate_ops"),          statTotalHmcCandidate->getCollectionCount());
+    ofs << "\n";
+    writeTo(ofs, name_, string("total_hmc_confilict_happened"),     statTotalHmcConfilictHappened->getCollectionCount());
     ofs << "\n";
     writeTo(ofs, name_, string("total_non_HMC_read"),               statTotalNonHmcRead->getCollectionCount());
     writeTo(ofs, name_, string("total_non_HMC_write"),              statTotalNonHmcWrite->getCollectionCount());

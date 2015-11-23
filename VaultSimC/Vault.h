@@ -203,6 +203,7 @@ private:
     Statistic<uint64_t>* statTotalHmcOps;
     Statistic<uint64_t>* statTotalNonHmcOps;
     Statistic<uint64_t>* statTotalHmcCandidate;
+    Statistic<uint64_t>* statTotalHmcConfilictHappened;
 
     Statistic<uint64_t>* statTotalNonHmcRead;
     Statistic<uint64_t>* statTotalNonHmcWrite;
