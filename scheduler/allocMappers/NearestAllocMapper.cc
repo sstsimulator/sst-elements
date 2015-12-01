@@ -19,9 +19,9 @@
 #include "AllocInfo.h"
 #include "Job.h"
 #include "FibonacciHeap.h"
-#include "Machine.h"
-#include "TaskCommInfo.h"
 #include "output.h"
+#include "StencilMachine.h"
+#include "TaskCommInfo.h"
 
 #include <cfloat>
 #include <queue>
@@ -30,16 +30,19 @@ using namespace SST::Scheduler;
 using namespace std;
 
 NearestAllocMapper::NearestAllocMapper(const Machine & mach,
-                                       bool allocateAndMap,
-                                       NodeGenType inNodeGen)
+    bool allocateAndMap, NodeGenType inNodeGen)
     : AllocMapper(mach, allocateAndMap)
 {
     nodeGen = inNodeGen;
     lastNode = 0;
+    Machine* tempMach = const_cast<Machine*>(&mach);
+    if (dynamic_cast<StencilMachine*>(tempMach) == NULL) {
+        schedout.fatal(CALL_INFO, 1, "NearestAllocMapper only supports stencil machine\n");
+    }
     //calculate minimum distances for a given radius
     radiusToVolume.push_back(1);
     for(int rad = 1; radiusToVolume.back() < mach.numNodes ; rad++){
-        radiusToVolume.push_back(4*pow(rad,3)/3+2*pow(rad,2)+8*rad/3+1);
+        radiusToVolume.push_back(radiusToVolume.back() + mach.nodesAtDistance(rad));
     }
 }
 
@@ -284,14 +287,15 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
     int bestNode = -1;
     double bestScore = -DBL_MAX;
     long int searchCount = 0;
-    int searchRadius = 0;
+	
     //get minimum required distance
-    for(std::list<long>::iterator it = radiusToVolume.begin(); it != radiusToVolume.end(); it++){
-        if(*it >= nodesNeeded){
-            searchRadius = *it + 2;
-            break;
-        }
+    int searchRadius = 0;
+    while (radiusToVolume[searchRadius] < nodesNeeded) {
+        searchRadius++;
     }
+    //Add two to look for excessive availability
+    //Ideally, this should not be hard-coded; but it will not create a problem
+    searchRadius += 2;
     
     //for all nodes
     for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
@@ -299,7 +303,10 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
             double curScore = 1;
             int availNodes = 1;
             for(int dist = 1; dist <= searchRadius; dist++){
-                double scoreFactor = 4*pow(dist,2) + 2;
+                double scoreFactor = mach.nodesAtDistance(dist);
+                if (scoreFactor == 0) {
+                    continue;
+                }
                 std::list<int>* toDelete = closestNodes(lastNode, dist);
                 int availInDist = toDelete->size();
                 delete toDelete;

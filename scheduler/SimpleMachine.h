@@ -16,6 +16,7 @@
 #ifndef SST_SCHEDULER_SIMPLEMACHINE_H__
 #define SST_SCHEDULER_SIMPLEMACHINE_H__
 
+#include <cstdlib>
 #include <list>
 #include <string>
 
@@ -35,13 +36,17 @@ namespace SST {
 
                 void reset();  //return to beginning-of-simulation state
                 
+                AllocInfo* getBaselineAllocation(Job* job) const { return NULL; }
+                
                 int getNodeDistance(int node0, int node1) const;
+                
+                int nodesAtDistance(int dist) const;
                 
                 //returns the free nodes at given L1 distance
                 std::list<int>* getFreeAtDistance(int center, int distance) const;
 
                 //SimpleMachine assumes a single network link in the machine
-                std::vector<int> getRoute(int node0, int node1, double commWeight) const;
+                std::vector<int>* getRoute(int node0, int node1, double commWeight) const;
 
             private:
                 bool simulationmachine;
