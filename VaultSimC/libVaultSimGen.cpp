@@ -50,7 +50,6 @@ static const ElementInfoParam logicLayer_params[] = {
   {"vaults",             "Number of vaults per cube."},
   {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
   {"debug_level",        "debug verbosity level (0-10)"},
-  {"statistics_format",  "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
   { NULL, NULL }
 };
 
@@ -135,7 +134,6 @@ static const ElementInfoParam Vault_params[] = {
     {"pwd",                       "Path of DRAMSim input files (ignored if file name is an absoluth path)", NULL},
     {"logfile",                   "DRAMSim output path", NULL},
     {"mem_size",                  "Size of physical memory in MB", "0"},
-    {"statistics_format",         "Optional, Stats format. Options: 0[default], 1[MacSim]", "0"},
     {"bank_MappingScheme",        "Mapping Scheme for banks (not accurate now)"},
     {"HMCCost_LogicalOps",        "Compute Cost of Logical Ops in Vault's cycles", "0"},
     {"HMCCost_CASOps",            "Compute Cost of CAS Ops in Vault's cycles", "0"},

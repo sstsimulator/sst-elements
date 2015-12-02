@@ -73,14 +73,6 @@ private:
     // Determine if we 'own' a given address
     inline bool isOurs(unsigned int addr);
 
-    /**
-     *  Stats
-     */
-    // Helper function for printing statistics in MacSim format
-    template<typename T>
-    void writeTo(ofstream &ofs, string prefix, string name, T count);
-    void printStatsForMacSim();
-
 private:
     unsigned int llID;
 
@@ -124,7 +116,6 @@ private:
     // Output
     Output dbg;                 // Output, for printing debuging commands
     Output out;                 // Output, for printing always printed info and stats
-    int statsFormat;            // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 };
 
 #endif

@@ -14,8 +14,6 @@
 
 #include <cstring>
 #include <string>
-#include <iomanip>
-#include <iostream>
 #include <unordered_map>
 #include <set>
 #include <vector>
@@ -144,14 +142,6 @@ private:
     inline uint64_t getAddrCompute(unsigned bankId) { return addrComputeMap[bankId]; }
     inline void eraseAddrCompute(unsigned bankId) { addrComputeMap.erase(bankId); }
 
-    /**
-     *  Stats
-     */
-    // Helper function for printing statistics in MacSim format
-    template<typename T>
-    void writeTo(ofstream &ofs, string prefix, string name, T count);
-    void printStatsForMacSim();
-
 public:
     unsigned id;
     uint64_t currentClockCycle;
@@ -171,9 +161,6 @@ private:
     Output dbgOnFlyHmcOps;                       // For debugging long lasting hmc_ops in queue
     int dbgOnFlyHmcOpsIsOn;                      // For debuggung late onFlyHMC ops (bool variable)
     int dbgOnFlyHmcOpsThresh;                    // For debuggung late onFlyHMC ops (threshhold Value)
-
-    //Stat Format
-    int statsFormat;                             // Type of Stat output 0:Defualt 1:Macsim (Default Value is set to 0)
 
     addr2TransactionMap_t onFlyHmcOps;           // Currently issued atomic ops
     bank2BoolMap_t bankBusyMap;                  // Current Busy Banks

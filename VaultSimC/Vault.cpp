@@ -34,8 +34,6 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
             dbg.fatal(CALL_INFO, -1, "vault.debug_OnFlyHmcOpsThresh is set to 1, definition of vault.debug_OnFlyHmcOpsThresh is required as well");
     }
 
-    statsFormat = params.find_integer("statistics_format", 0);
-
     // HMC Cost Initialization
     HMCCostLogicalOps = params.find_integer("HMCCost_LogicalOps", 0);
     HMCCostCASOps = params.find_integer("HMCCost_CASOps", 0);
@@ -120,9 +118,6 @@ Vault::Vault(Component *comp, Params &params) : SubComponent(comp)
 void Vault::finish() 
 {
     dbg.debug(_L7_, "Vault %d finished\n", id);
-    //Print Statistics
-    if (statsFormat == 1)
-        printStatsForMacSim();
 }
 
 void Vault::readComplete(unsigned id, uint64_t addr, uint64_t cycle) 
@@ -440,65 +435,4 @@ void Vault::issueAtomicComputePhase(addr2TransactionMap_t::iterator mi)
         dbg.fatal(CALL_INFO, -1, "Vault Should not get a non HMC op in issue atomic (compute phase)\n");
         break;
     }
-}
-
-/*
-    Other Functions
-*/
-
-/*
- *  Print Macsim style output in a file
- **/
-
-void Vault::printStatsForMacSim() {
-    string name_ = "Vault" + to_string(id);
-    stringstream ss;
-    ss << name_.c_str() << ".stat.out";
-    string filename = ss.str();
-
-    ofstream ofs;
-    ofs.exceptions(std::ofstream::eofbit | std::ofstream::failbit | std::ofstream::badbit);
-    ofs.open(filename.c_str(), std::ios_base::out);
-
-    float avgHmcOpsLatencyTotal = (float)statTotalHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();     //FIXME: this is wrong (getCollectionCount return #of elements)
-    float avgHmcOpsLatencyIssue = (float)statIssueHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();     //FIXME: this is wrong (getCollectionCount return #of elements)
-    float avgHmcOpsLatencyRead  = (float)statReadHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();      //FIXME: this is wrong (getCollectionCount return #of elements)
-    float avgHmcOpsLatencyWrite = (float)statWriteHmcLatency->getCollectionCount() / statTotalHmcOps->getCollectionCount();     //FIXME: this is wrong (getCollectionCount return #of elements)
-
-    float avgHmcOpsLatencyTotalInt = (float)statTotalHmcLatencyInt / statTotalHmcOps->getCollectionCount();
-    float avgHmcOpsLatencyIssueInt = (float)statIssueHmcLatencyInt / statTotalHmcOps->getCollectionCount();
-    float avgHmcOpsLatencyReadInt = (float)statReadHmcLatencyInt / statTotalHmcOps->getCollectionCount();
-    float avgHmcOpsLatencyWriteInt = (float)statWriteHmcLatencyInt / statTotalHmcOps->getCollectionCount();
-
-    writeTo(ofs, name_, string("total_trans"),                      statTotalTransactions->getCollectionCount());
-    writeTo(ofs, name_, string("total_HMC_ops"),                    statTotalHmcOps->getCollectionCount());
-    writeTo(ofs, name_, string("total_non_HMC_ops"),                statTotalNonHmcOps->getCollectionCount());
-    writeTo(ofs, name_, string("total_HMC_candidate_ops"),          statTotalHmcCandidate->getCollectionCount());
-    ofs << "\n";
-    writeTo(ofs, name_, string("total_hmc_confilict_happened"),     statTotalHmcConfilictHappened->getCollectionCount());
-    ofs << "\n";
-    writeTo(ofs, name_, string("total_non_HMC_read"),               statTotalNonHmcRead->getCollectionCount());
-    writeTo(ofs, name_, string("total_non_HMC_write"),              statTotalNonHmcWrite->getCollectionCount());
-    ofs << "\n";
-    writeTo(ofs, name_, string("avg_HMC_ops_latency_total"),        avgHmcOpsLatencyTotalInt);
-    writeTo(ofs, name_, string("avg_HMC_ops_latency_issue"),        avgHmcOpsLatencyIssueInt);
-    writeTo(ofs, name_, string("avg_HMC_ops_latency_read"),         avgHmcOpsLatencyReadInt);
-    writeTo(ofs, name_, string("avg_HMC_ops_latency_write"),        avgHmcOpsLatencyWriteInt);    
-}
-
-
-// Helper function for printing statistics in MacSim format
-template<typename T>
-void Vault::writeTo(ofstream &ofs, string prefix, string name, T count)
-{
-    #define FILED1_LENGTH 45
-    #define FILED2_LENGTH 20
-    #define FILED3_LENGTH 30
-
-    ofs.setf(ios::left, ios::adjustfield);
-    string capitalized_prefixed_name = boost::to_upper_copy(prefix + "_" + name);
-    ofs << setw(FILED1_LENGTH) << capitalized_prefixed_name;
-
-    ofs.setf(ios::right, ios::adjustfield);
-    ofs << setw(FILED2_LENGTH) << count << setw(FILED3_LENGTH) << count << endl << endl;
 }
