@@ -239,14 +239,14 @@ void schedComponent::setup()
         
         schedout.output("The jobs that have been completed in ember\n");
         for(std::map<int, unsigned long>::iterator it = emberFinishedJobs.begin(); it != emberFinishedJobs.end(); it++){
-            schedout.output("Job %d: %ul\n", it->first, it->second);
+            schedout.output("Job %d: %lu\n", it->first, it->second);
         }
 
-        schedout.output("ignoreUntilTime: %ul\n", this->ignoreUntilTime);
+        schedout.output("ignoreUntilTime: %lu\n", this->ignoreUntilTime);
 
         schedout.output("The jobs that are still running in ember\n");
         for(std::map<int, std::pair<unsigned long, int>>::iterator iter = emberRunningJobs.begin(); iter != emberRunningJobs.end(); iter++){
-            schedout.output("Job %d: soFarRunningTime: %ul currentMotifCount: %d\n", iter->first, iter->second.first, iter->second.second);
+            schedout.output("Job %d: soFarRunningTime: %lu currentMotifCount: %d\n", iter->first, iter->second.first, iter->second.second);
         }
     }
     
@@ -496,7 +496,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                             }
                         }
                         snapshot->append(getCurrentSimTime(), NextArrivalTime, runningJobs);
-                        std::cout << "Next Job is arriving at " << NextArrivalTime << std::endl;
+                        schedout.output("Next Job is arriving at %lu\n", NextArrivalTime);
                         unregisterYourself();
                     }                 
                 }
@@ -591,7 +591,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         startNextJob();
     } else if (NULL != sev){ //snapshot event
         //dump snapshot to file
-        //std::cout << getCurrentSimTime() << ":Snapshot event received...Appending snapshot..." << std::endl;        
+        schedout.output("%lu:Snapshot event received...Appending snapshot...\n", getCurrentSimTime());        
         snapshot->append(sev->time, sev->nextJobArrivalTime, sev->runningJobs);
         delete ev;
         unregisterYourself();
@@ -607,7 +607,7 @@ void schedComponent::finish()
     if (doDetailedNetworkSim) {
         //Write snapshot to file only once at the end
         if (!snapshot -> getSimFinished()) {
-            std::cout << "In Sched component: sim paused" << std::endl;
+            schedout.output("In Sched component: sim paused\n");
             stats -> simPauses(snapshot, getCurrentSimTime());
         } else {
             schedout.output("In Sched component: sim finished\n");
@@ -715,10 +715,10 @@ void schedComponent::startJob(Job* job)
         if (ii == numJobs) {
             schedout.output("All jobs have arrived!\n");
         } else {
-            schedout.output("Next Job: %d is arriving at %ul\n", jobs[ii]->getJobNum(), se->nextJobArrivalTime);
+            schedout.output("Next Job: %d is arriving at %lu\n", jobs[ii]->getJobNum(), se->nextJobArrivalTime);
         }
         selfLink->send(se);
-        schedout.output("%ul: Sent snapshot event to self\n", getCurrentSimTime());
+        schedout.output("%lu: Sent snapshot event to self\n", getCurrentSimTime());
     }
 }
 

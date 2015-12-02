@@ -32,7 +32,7 @@ namespace SST {
                     GREEDY_NODE = 0,   //O(N + VE)
                     EXHAUST_NODE = 1,  //O(NV + VE)
                 };
-                
+
                 //add O(VE + V^2 lg V) if center task is not provided
 
                 NearestAllocMapper(const Machine & mach,
@@ -116,4 +116,3 @@ namespace SST {
 }
 
 #endif /* SST_SCHEDULER_NEARESTALLOCMAPPER_H_ */
-

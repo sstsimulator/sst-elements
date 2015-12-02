@@ -22,7 +22,7 @@
 
 namespace SST {
     namespace Scheduler {
-		class AllocInfo;
+        class AllocInfo;
         class Job;
         class TaskMapInfo;
 

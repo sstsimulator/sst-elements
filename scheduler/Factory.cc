@@ -19,10 +19,12 @@
 
 #include <sst/core/params.h>
 
-#include "InputParser.h"
-#include "Machine.h"
-#include "Mesh3DMachine.h"
 #include "schedComponent.h"
+#include "InputParser.h"
+
+#include "Machine.h"
+#include "DragonflyMachine.h"
+#include "Mesh3DMachine.h"
 #include "SimpleMachine.h"
 #include "StencilMachine.h"
 #include "Torus3DMachine.h"
@@ -74,6 +76,7 @@ const Factory::machTableEntry Factory::machTable[] = {
     {SIMPLEMACH, "simple"},
     {MESH, "mesh"},
     {TORUS, "torus"},
+    {DRAGONFLY, "dragonfly"},
 };
 
 const Factory::allocTableEntry Factory::allocTable[] = {
@@ -113,7 +116,7 @@ const Factory::FSTTableEntry Factory::FSTTable[] = {
     {STRICT, "strict"},
 };
 
-Factory::Factory() 
+Factory::Factory()
 {
     schedout.init("", 8, 0, Output::STDOUT);
 }
@@ -219,13 +222,13 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
 {
     Machine* retMachine = NULL;
     double** D_matrix = NULL;
-    
+
     //get the heat recirculation matrix if available
     string dMatrixFile = "none";
-    if( params.find("dMatrixFile") != params.end() ){
+    if (params.find("dMatrixFile") != params.end()) {
         dMatrixFile = params["dMatrixFile"];
     }
-    if (dMatrixFile.compare("none") == 0 ) { 
+    if (dMatrixFile.compare("none") == 0 ) {
         //default: no recuirculation
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no heat recirculation\n");
     } else {
@@ -298,6 +301,26 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
             retMachine = new Torus3DMachine(dims, coresPerNode, D_matrix);
             break;
         }
+        case DRAGONFLY:
+        {
+            if (schedparams -> size() < 7) {
+                schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Dragonfly Machine: routersPerGroup, portsPerRouter, opticalsPerRouter, nodesPerRouter, localTopology (opt), globalTopology (opt)");
+            }
+            int routersPerGroup     = strtol(schedparams -> at(1).c_str(), NULL, 0);
+            int portsPerRouter      = strtol(schedparams -> at(2).c_str(), NULL, 0);
+            int opticalsPerRouter   = strtol(schedparams -> at(3).c_str(), NULL, 0);
+            int nodesPerRouter      = strtol(schedparams -> at(4).c_str(), NULL, 0);
+            int lt = 0;
+            if (schedparams -> size() == 6)
+                lt = strtol(schedparams -> at(5).c_str(), NULL, 0);
+            int gt = 0;
+            if (schedparams -> size() == 7)
+                gt = strtol(schedparams -> at(6).c_str(), NULL, 0);
+            retMachine = new DragonflyMachine(routersPerGroup, portsPerRouter, opticalsPerRouter,
+                nodesPerRouter, coresPerNode, (DragonflyMachine::localTopo) lt,
+                (DragonflyMachine::globalTopo) gt, D_matrix);
+            break;
+        }
         default:
             schedout.fatal(CALL_INFO, 1, "Cannot parse name of machine");
         }
@@ -306,11 +329,9 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
     return retMachine;
 }
 
-
 //returns the correct allocator based on the parameters
 Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent* sc)
 {
-    StencilMachine *mMachine = dynamic_cast<StencilMachine*>(m);
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
         schedout.verbose(CALL_INFO, 4, 0, "Defaulting to Simple Allocator\n");
@@ -442,19 +463,16 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                 break;
             }
         case NEARESTAMAP:
-            if(mMachine == NULL){
-                schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine\n");
-            }
-            if(params.find("taskMapper") != params.end()
-               && taskmappername(parseparams(params["taskMapper"])->at(0)) == NEARESTAMT){
-                return new NearestAllocMapper(*mMachine, true);
+            if (params.find("taskMapper") != params.end()
+               && taskmappername(parseparams(params["taskMapper"])->at(0)) == NEARESTAMT) {
+                return new NearestAllocMapper(*m, true);
             } else {
-                return new NearestAllocMapper(*mMachine, false);
+                return new NearestAllocMapper(*m, false);
             }
-            break;       
+            break;
         case SPECTRALAMAP:
-            if(params.find("taskMapper") != params.end()
-              && taskmappername(parseparams(params["taskMapper"])->at(0)) == SPECTRALAMT){
+            if (params.find("taskMapper") != params.end()
+              && taskmappername(parseparams(params["taskMapper"])->at(0)) == SPECTRALAMT) {
                return new SpectralAllocMapper(*m, true);
             } else {
                 return new SpectralAllocMapper(*m, false);
@@ -496,14 +514,11 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             taskMapper = new TopoMapper(*mach, TopoMapper::R_C_M);
             break;  
         case NEARESTAMT:
-            if(sMachine == NULL){
-                schedout.fatal(CALL_INFO, 1, "NearestAllocMapper requires MeshMachine");
-            }
-            if(params.find("allocator") != params.end()
-              && allocatorname(parseparams(params["allocator"])->at(0)) == NEARESTAMAP ){
-                taskMapper = new NearestAllocMapper(*sMachine, true);
+            if (params.find("allocator") != params.end()
+                && allocatorname(parseparams(params["allocator"])->at(0)) == NEARESTAMAP ) {
+                taskMapper = new NearestAllocMapper(*mach, true);
             } else {
-                taskMapper = new NearestAllocMapper(*sMachine, false);
+                taskMapper = new NearestAllocMapper(*mach, false);
             }
             break;  
         case SPECTRALAMT:
