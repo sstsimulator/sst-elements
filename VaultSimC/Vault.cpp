@@ -303,8 +303,8 @@ void Vault::update()
                 addr2TransactionMap_t::iterator mi = onFlyHmcOps.find(addrCompute);
                 issueAtomicSecondMemoryPhase(mi);
 
-                //eraseAddrCompute(bankId);     //FIXME
-                //eraseComputeDoneCycle(bankId);    //FIXME
+                eraseAddrCompute(bankId);
+                eraseComputeDoneCycle(bankId); 
                 it = computePhaseEnabledBanks.erase(it);
             }
             else
