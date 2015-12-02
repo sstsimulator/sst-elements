@@ -17,6 +17,7 @@
 #endif
 
 #include "AllocInfo.h"
+#include "DragonflyMachine.h"
 #include "Job.h"
 #include "FibonacciHeap.h"
 #include "output.h"
@@ -30,14 +31,16 @@ using namespace SST::Scheduler;
 using namespace std;
 
 NearestAllocMapper::NearestAllocMapper(const Machine & mach,
-    bool allocateAndMap, NodeGenType inNodeGen)
+                                       bool allocateAndMap,
+                                       NodeGenType inNodeGen)
     : AllocMapper(mach, allocateAndMap)
 {
     nodeGen = inNodeGen;
     lastNode = 0;
     Machine* tempMach = const_cast<Machine*>(&mach);
-    if (dynamic_cast<StencilMachine*>(tempMach) == NULL) {
-        schedout.fatal(CALL_INFO, 1, "NearestAllocMapper only supports stencil machine\n");
+    if(dynamic_cast<StencilMachine*>(tempMach) == NULL
+        && dynamic_cast<DragonflyMachine*>(tempMach) == NULL){
+        schedout.fatal(CALL_INFO, 1, "NearestAllocMapper only supports stencil and dragonfly machines\n");
     }
     //calculate minimum distances for a given radius
     radiusToVolume.push_back(1);
@@ -257,7 +260,8 @@ void NearestAllocMapper::createCommGraph(const Job & job)
     }
 }
 
-int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & inCommGraph, const long int upperLimit) const
+int NearestAllocMapper::getCenterTask(const std::vector<std::map<int,int> > & inCommGraph,
+    const long int upperLimit) const
 {
     int centerTask = -1;
     double minDist = DBL_MAX;
@@ -287,40 +291,39 @@ int NearestAllocMapper::getCenterNodeExh(const int nodesNeeded, const long int u
     int bestNode = -1;
     double bestScore = -DBL_MAX;
     long int searchCount = 0;
-	
-    //get minimum required distance
     int searchRadius = 0;
+    //get minimum required distance
     while (radiusToVolume[searchRadius] < nodesNeeded) {
         searchRadius++;
     }
     //Add two to look for excessive availability
     //Ideally, this should not be hard-coded; but it will not create a problem
     searchRadius += 2;
-    
+
     //for all nodes
-    for(long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++){
-        if(isFree->at(lastNode)){
+    for (long int nodeIt = 0; nodeIt < mach.numNodes; nodeIt++) {
+        if (isFree->at(lastNode)) {
             double curScore = 1;
             int availNodes = 1;
             for(int dist = 1; dist <= searchRadius; dist++){
                 double scoreFactor = mach.nodesAtDistance(dist);
-                if (scoreFactor == 0) {
+                if ( scoreFactor == 0) {
                     continue;
                 }
                 std::list<int>* toDelete = closestNodes(lastNode, dist);
                 int availInDist = toDelete->size();
                 delete toDelete;
-                if(availNodes < nodesNeeded && availNodes + availInDist > nodesNeeded){
+                if (availNodes < nodesNeeded && availNodes + availInDist > nodesNeeded) {
                     curScore += (2*nodesNeeded - 2*availNodes - availInDist) / scoreFactor;
                     availNodes = nodesNeeded;
-                } else if(availNodes < nodesNeeded){
+                } else if(availNodes < nodesNeeded) {
                     curScore += availInDist / scoreFactor;
                     availNodes += availInDist;
                 } else { //penalize extra nodes
                     curScore -= availInDist / scoreFactor;
                 }
             }
-            
+
             //update best node
             if(curScore > bestScore){
                 bestScore = curScore;
@@ -407,7 +410,7 @@ std::list<int>* NearestAllocMapper::closestNodes(const long int srcNode, const i
             } else {
                 it++;
             }
-        }      
+        }
         if(initDist != 0){ //function is called for specific distance
             break;
         }
@@ -439,14 +442,14 @@ int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
         list<int>::iterator bestIt; //to be able to erase from the list
         for(list<int>::iterator nodeIt = tiedNodes.begin(); nodeIt != tiedNodes.end(); nodeIt++){
             double curWeight = 0;
-            //iterate over task neighbors and 
+            //iterate over task neighbors and
             //calculate the total comm distance if this task was allocated here
             for(unsigned int nIt = 0; nIt < neighbors.size(); nIt++){
                 curWeight += mach.getNodeDistance(neighbors[nIt], *nodeIt) * neighWeights[nIt];
             }
             if(curWeight < minWeight
-              || (curWeight == minWeight 
-                  && mach.getNodeDistance(*nodeIt,centerNode) < bestToCenter) ){ 
+              || (curWeight == minWeight
+                  && mach.getNodeDistance(*nodeIt,centerNode) < bestToCenter) ){
                 minWeight = curWeight;
                 bestNode = *nodeIt;
                 bestIt = nodeIt;
@@ -461,8 +464,8 @@ int NearestAllocMapper::bestNode(list<int> & tiedNodes, int inTask) const
 void NearestAllocMapper::updateTaskList(int mappedTask, FibonacciHeap & taskList)
 {
     //look at neighbors of the mapped task
-    for(map<int, int>::const_iterator it = commGraph->at(mappedTask).begin(); 
-      it != commGraph->at(mappedTask).end(); 
+    for(map<int, int>::const_iterator it = commGraph->at(mappedTask).begin();
+      it != commGraph->at(mappedTask).end();
       it++){
         if(!marked[it->first]){ //add this neighbor to the tsak list
             marked[it->first] = true;
