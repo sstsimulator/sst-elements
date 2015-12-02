@@ -182,11 +182,6 @@ private:
     bank2CycleMap_t computeDoneCycleMap;         // Current Compute Done Cycle ((same size as bankBusyMap)
     bank2AddrMap_t addrComputeMap;
 
-    //Transaction Support
-    #ifdef USE_VAULTSIM_HMC
-    unordered_multimap<uint64_t, transaction_c> addrTransMap;
-    #endif
-
     // HMC ops Cost in Cycles
     int HMCCostLogicalOps;
     int HMCCostCASOps;
@@ -213,30 +208,12 @@ private:
     Statistic<uint64_t>* statReadHmcLatency;
     Statistic<uint64_t>* statWriteHmcLatency;
 
-    Statistic<uint64_t>* statMemTransTotalProcessed;
-    Statistic<uint64_t>* statMemTransTotalReadProcessed;
-    Statistic<uint64_t>* statMemTransTotalWriteProcessed;
-    Statistic<uint64_t>* statMemTransTotalBegProcessed;
-    Statistic<uint64_t>* statMemTransTotalEndProcessed;
-    Statistic<uint64_t>* statMemTransTotalMidProcessed;
-    Statistic<uint64_t>* statMemTransTotalConflict;
-    Statistic<uint64_t>* statMemTransTotalConflictHappened;
-    Statistic<uint64_t>* statMemTransTotalRetired;
-
-    vector<uint64_t> statMemTransTotalConflictBanks; //FIXME: convert to sst type stats
-
     /* internal stats */
     // HMC Latency
     uint64_t statTotalHmcLatencyInt;   //statapi does not provide any non-collection type addData (ORno documentation)
     uint64_t statIssueHmcLatencyInt;
     uint64_t statReadHmcLatencyInt;
     uint64_t statWriteHmcLatencyInt;
-
-    // Trans Op latency
-    uint64_t statTotalTransOpLatencyInt;
-    uint64_t statTotalTransOpReadLatencyInt;
-    uint64_t statTotalTransOpWriteLatencyInt;
-
 
 };
 #endif

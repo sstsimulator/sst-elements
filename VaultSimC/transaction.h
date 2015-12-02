@@ -56,13 +56,8 @@ typedef enum HMC_Type_enum {
     HMC_COMP_greater=15,
     HMC_COMP_less=16,
     HMC_COMP_equal=17,
-    HMC_hook=18,                // Not used in VaultSim
-    HMC_unhook=19,              // Not used in VaultSim
     HMC_CANDIDATE=20,           // Not a HMC-op, it is showing if an instruction could be HMC in other scenarios
-    HMC_TRANS_BEG=21,           // Transaction support
-    HMC_TRANS_MID=22,           // Transaction support
-    HMC_TRANS_END=23,           // Transaction support
-    NUM_HMC_TYPES=24
+    NUM_HMC_TYPES=21
 } HMC_Type;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,18 +161,8 @@ public:
             return "HMC_COMP_less";
         case HMC_COMP_equal:
             return "HMC_COMP_equal";
-        case HMC_hook:
-            return "HMC_hook";
-        case HMC_unhook:
-            return "HMC_unhook";
         case HMC_CANDIDATE:
             return "HMC_CANDIDATE";
-        case HMC_TRANS_BEG:
-            return "HMC_TRANS_BEG";
-        case HMC_TRANS_MID: 
-            return "HMC_TRANS_MID";
-        case HMC_TRANS_END:
-            return "HMC_TRANS_END";
         default:
             return "THIS MUST NOT BE PRINTED";
         }

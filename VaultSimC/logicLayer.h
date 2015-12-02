@@ -38,22 +38,6 @@
 using namespace std;
 using namespace SST;
 
-#ifdef USE_VAULTSIM_HMC
-
-#define TRANS_FOOTPRINT_MAP_OPTIMUM_SIZE 10
-#define TRANS_PART_OPTIMUM_SIZE 6
-#define ACTIVE_TRANS_OPTIMUM_SIZE 10
-
-extern unordered_map<unsigned, unordered_map<unsigned, unordered_set<uint64_t> > > vaultBankTrans;
-extern vector<bool> vaultTransActive;
-extern unordered_map<uint64_t, uint64_t> vaultTransSize;
-extern set<uint64_t> vaultConflictedTrans;
-extern queue<uint64_t> vaultDoneTrans;
-extern queue<uint64_t> vaultConflictedTransDone;
-extern unordered_map<uint64_t, uint64_t> vaultTransCount;
-
-#endif
-
 class logicLayer : public IntrospectedComponent {
 private:
     typedef SST::Link memChan_t;
@@ -133,14 +117,6 @@ private:
     Statistic<uint64_t>* HMCCandidateProcessed;
     Statistic<uint64_t>* HMCOpsProcessed;
     Statistic<uint64_t>* HMCTransOpsProcessed;
-
-    Statistic<uint64_t>* memTransTotalProcessed;
-    Statistic<uint64_t>* memTransTotalBegProcessed;
-    Statistic<uint64_t>* memTransTotalEndProcessed;
-    Statistic<uint64_t>* memTransTotalMidProcessed;
-    Statistic<uint64_t>* memTransTotalSize;
-    Statistic<uint64_t>* memTransTotalConflict;
-    Statistic<uint64_t>* memTransTotalRetired;
     
     Statistic<uint64_t>* reqUsedToCpu[2];
     Statistic<uint64_t>* reqUsedToMem[2];

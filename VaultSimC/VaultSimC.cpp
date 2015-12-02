@@ -148,12 +148,6 @@ bool VaultSimC::clock(Cycle_t currentCycle)
             transaction.resetAtomic();
             dbg.debug(_L6_, "VaultSimC %d got a req for %p of type %s in clock=%lu\n", 
                     vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
-        } 
-        else if (HMCTypeEvent == HMC_TRANS_BEG || HMCTypeEvent == HMC_TRANS_MID || HMCTypeEvent == HMC_TRANS_END) {
-            transaction.resetAtomic();
-            transaction.setTransId(event->getHMCTransId());
-            dbg.debug(_L3_, "VaultSimC %d got a req for %p of type %s in clock=%lu\n", 
-                    vaultID, (void *)transaction.getAddr(), transaction.getHmcOpTypeStr(), currentCycle);
         }
         else {
             transaction.setAtomic();

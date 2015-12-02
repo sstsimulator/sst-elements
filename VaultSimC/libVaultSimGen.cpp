@@ -32,12 +32,6 @@ static const ElementInfoStatistic logicLayer_statistics[] = {
   { "HMC_ops_processed", "Total HMC ops processed", "reqs", 1},
   { "Total_HMC_candidate_processed", "Total HMC Candidate (instruction that might be able to use HMC) ops processed", "reqs", 1},
   { "Total_HMC_transactions_processed", "Total HMC Transaction ops processed", "reqs", 1},
-  { "Total_memory_transaction_processed", "Total memory transaction processed", "reqs", 1},
-  { "Total_memory_transaction_begin_processed", "Total memory transaction begin processed", "reqs", 1},
-  { "Total_memory_transaction_end_processed", "Total memory transaction end processed", "reqs", 1},
-  { "Total_memory_transaction_middle_processed", "Total memory transaction middle processed", "reqs", 1},
-  { "Total_memory_trasactions_confilict", "Total memory trasactions confilict", "reqs", 1},
-  { "Total_memory_trasactions_retired", "Total memory trasactions retired", "reqs", 1},
   { "Req_recv_from_CPU", "Bandwidth used (recieves from the CPU by the LL) per cycle (in messages)", "reqs", 1},
   { "Req_send_to_CPU", "Bandwidth used (sends from the CPU by the LL) per cycle (in messages)", "reqs", 1},
   { "Req_recv_from_Mem", "Bandwidth used (recieves from other memories by the LL) per cycle (in messages)", "reqs", 1},
@@ -167,15 +161,6 @@ static const ElementInfoStatistic Vault_statistics[] = {
   { "Hmc_ops_issue_latency",        "Hmc ops issue latency", "cycles", 1},
   { "Hmc_ops_read_latency",         "Hmc ops read latency", "cycles", 1},
   { "Hmc_ops_write_latency",        "Hmc ops write latency", "cycles", 1},
-  { "Total_memory_transaction_processed", "Total memory transaction processed", "reqs", 1},
-  { "Total_memory_transaction_read_processed", "Total memory transaction read processed", "reqs", 1},
-  { "Total_memory_transaction_write_processed", "Total memory transaction write processed", "reqs", 1},
-  { "Total_memory_transaction_begin_processed", "Total memory transaction begin processed", "reqs", 1},
-  { "Total_memory_transaction_end_processed", "Total memory transaction end processed", "reqs", 1},
-  { "Total_memory_transaction_middle_processed", "Total memory transaction middle processed", "reqs", 1},
-  { "Total_memory_trasactions_confilict", "Total memory trasactions confilict", "reqs", 1},
-  { "Total_memory_trasactions_confilict_happened", "Total memory trasactions confilict happened", "reqs", 1},
-  { "Total_memory_trasactions_retired", "Total memory trasactions retired", "reqs", 1},
   { NULL, NULL, NULL, 0 }
 };
 
