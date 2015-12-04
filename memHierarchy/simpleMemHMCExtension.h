@@ -17,8 +17,9 @@ public:
             Interfaces::SimpleMem::Request(cmd, addr, size, data, flags), hmcInstType(_hmcInstType) { }
 
         /** Constructor */
-        HMCRequest(Command cmd, Addr addr, size_t size, flags_t flags = 0, uint8_t _hmcInstType = 0) :
+        HMCRequest(Command cmd, Addr addr, size_t size, flags_t flags = 0, uint8_t _hmcInstType = 0, uint64_t _dummy_trans_id = 0) :
             Interfaces::SimpleMem::Request(cmd, addr, size, flags), hmcInstType(_hmcInstType) { }
+
     }; // class HMCRequest
 }; // class SimpleMemHMCExtension
 
