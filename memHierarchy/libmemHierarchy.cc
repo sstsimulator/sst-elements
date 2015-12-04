@@ -91,7 +91,6 @@ static const ElementInfoParam cache_params[] = {
     {"slice_id",                "Optional, int      - For distributed, shared caches, unique ID for this cache slice", "0"},
     {"slice_allocation_policy", "Optional, string   - Policy for allocating addresses among distributed shared cache. Options: rr[round-robin]", "rr"},
     {"statistics",              "Optional, int      - Print cache stats at end of simulation. Options: 0[off], 1[on]", "0"},
-    {"statistics_format",       "Optional, int      - Cache stats format. Options: 0[default], 1[MacSim]", "0"},
     {"network_bw",              "Optional, int      - Network link bandwidth.", "1GB/s"},
     {"network_address",         "Optional, int      - When connected to a network, the network address of this cache.", "0"},
     {"network_num_vc",          "Optional, int      - When connected to a network, the number of VCS on the on-chip network.", "3"},
@@ -322,15 +321,6 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"latency_GetSEx_IM",       "Latency for read-exclusive misses in I state", "cycles", 1},
     {"latency_GetSEx_SM",       "Latency for read-exclusive misses in S state", "cycles", 1},
     {"latency_GetSEx_M",        "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
-#ifdef USE_VAULTSIM_HMC    
-    /* hmc counters */
-    {"hmcCacheHits", "cache hit number for hmc instructions", "count", 1},
-    {"nonhmcCacheHits", "cache hit number for nonhmc instructions", "count", 1},
-    {"hmcCacheMisses", "cache miss number for hmc instructions", "count", 1},
-    {"nonhmcCacheMisses", "cache miss number for nonhmc instructions", "count", 1},
-    {"hmcRequest", "number of received hmc requests", "count", 1},
-    {"nonhmcRequest", "number of received nonhmc requests", "count", 1},
-#endif
     {NULL, NULL, NULL, 0}
 };
 

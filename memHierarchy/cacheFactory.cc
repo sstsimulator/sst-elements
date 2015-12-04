@@ -198,7 +198,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
 
     statsFile_          = params.find_integer("statistics", 0);
-    statsFormat_        = params.find_integer("statistics_format", 0);
     idleMax_            = params.find_integer("idle_max", 10000);
     accessLatency_      = params.find_integer("access_latency_cycles", -1);
     tagLatency_         = params.find_integer("tag_access_latency_cycles",accessLatency_);
@@ -395,14 +394,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     statFetchInvX_recv          = registerStatistic<uint64_t>("FetchInvX_recv");
     statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
-#ifdef USE_VAULTSIM_HMC
-    statCacheHits_hmc           = registerStatistic<uint64_t>("hmcCacheHits");
-    statCacheHits_nonhmc        = registerStatistic<uint64_t>("nonhmcCacheHits");
-    statCacheMisses_hmc         = registerStatistic<uint64_t>("hmcCacheMisses");
-    statCacheMisses_nonhmc      = registerStatistic<uint64_t>("nonhmcCacheMisses");
-    statRequest_hmc             = registerStatistic<uint64_t>("hmcRequest");
-    statRequest_nonhmc          = registerStatistic<uint64_t>("nonhmcRequest");
-#endif
+
     if(groupStats_){
         for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {
             if (i > 0 && (cf_.statGroupIds_[i] == 0 || cf_.statGroupIds_[i] == -1)) 
