@@ -5,9 +5,9 @@ from optparse import OptionParser
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
 
-sievePrefetchParams = {
-        "prefetcher": "cassini.AddrHistogrammer",
-        "prefetcher.addr_cutoff" : "16GiB"
+sieveProfilerParams = {
+        "profiler": "cassini.AddrHistogrammer",
+        "profiler.addr_cutoff" : "16GiB"
         }
 
 # Define the simulation components
@@ -25,10 +25,10 @@ comp_sieve.addParams({
       "cache_line_size": 64
 })
 
-comp_sieve.addParams(sievePrefetchParams)
+comp_sieve.addParams(sieveProfilerParams)
 
 link_cpu_sieve_link = sst.Link("link_cpu_sieve_link")
-link_cpu_sieve_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_sieve, "cpu_link", "1000ps") )
+link_cpu_sieve_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_sieve, "cpu_link_0", "1000ps") )
 
 statoutputs = dict([(1,"sst.statOutputConsole"), (2,"sst.statOutputCSV"), (3,"sst.statOutputTXT")])
 
