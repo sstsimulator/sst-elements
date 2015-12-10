@@ -36,6 +36,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output = new SST::Output("ArielComponent[@f:@l:@p] ",
 		verbosity, 0, SST::Output::STDOUT);
 
+        // see if we should send allocation events out on links
+	useAllocTracker = params.find_integer("allocktracker", 0);
+
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
 	core_count = (uint32_t) params.find_integer("corecount", 1);
@@ -257,6 +260,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
 	cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
+        if (useAllocTracker) {
+            output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
+            cpu_to_alloc_tracker_links = (Link**) malloc( sizeof(Link*) * core_count );
+        } else {
+            cpu_to_alloc_tracker_links = 0;
+        }
+
 	output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
 	cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
 
@@ -270,7 +280,16 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 			memmgr, perform_checks, params);
         cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
-		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
+
+
+                // optionally wire up links to allocate trackers (e.g. memSieve)
+                if (useAllocTracker) {
+                    sprintf(link_buffer, "alloc_link_%" PRIu32, i);
+                    cpu_to_alloc_tracker_links[i] = configureLink(link_buffer);
+                    cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], cpu_to_alloc_tracker_links[i]);
+                } else {
+                    cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], 0);
+                }
 	}
 	free(link_buffer);
 

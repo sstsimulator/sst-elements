@@ -42,6 +42,7 @@
 #include "arielfreeev.h"
 #include "arielnoop.h"
 #include "arielswitchpool.h"
+#include "arielalloctrackev.h"
 
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
@@ -75,7 +76,7 @@ class ArielCore {
 		void createExitEvent();
 		void createSwitchPoolEvent(uint32_t pool);
 
-		void setCacheLink(SimpleMem* newCacheLink);
+                void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
 		void handleEvent(SimpleMem::Request* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
@@ -98,6 +99,7 @@ class ArielCore {
 		std::queue<ArielEvent*>* coreQ;
 		bool isHalted;
 		SimpleMem* cacheLink;
+                Link* allocLink;
 		ArielTunnel *tunnel;
 		std::map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;

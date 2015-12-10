@@ -24,6 +24,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	cacheLink = coreToCacheLink;
+        allocLink = 0;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
 	isHalted = false;
@@ -98,8 +99,9 @@ ArielCore::~ArielCore() {
 	}
 }
 
-void ArielCore::setCacheLink(SimpleMem* newLink) {
+void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
 	cacheLink = newLink;
+        allocLink = newAllocLink;
 }
 
 void ArielCore::printTraceEntry(const bool isRead,
@@ -348,6 +350,16 @@ void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress());
 
 	memmgr->free(rFE->getVirtualAddress());
+
+        if (allocLink) {
+            // tell the allocate montior (e.g. mem sieve that a free has occured)
+            arielAllocTrackEvent *e = 
+                new arielAllocTrackEvent(arielAllocTrackEvent::FREE,
+                                         0,
+                                         0,
+                                         rFE->getVirtualAddress());
+            allocLink->send(e);
+        }
 }
 
 void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
@@ -490,6 +502,17 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 		aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel());
 
 	memmgr->allocate(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
+
+        if (allocLink) {
+            // tell the allocate montior (e.g. mem sieve that an
+            // allocation has occured)
+            arielAllocTrackEvent *e 
+                = new arielAllocTrackEvent(arielAllocTrackEvent::ALLOC,
+                                           aEv->getAllocationLength(),
+                                           aEv->getAllocationLevel(),
+                                           aEv->getVirtualAddress());
+            allocLink->send(e);
+        }
 }
 
 void ArielCore::printCoreStatistics() {
