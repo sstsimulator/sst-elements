@@ -143,12 +143,12 @@ void Sieve::finish(){
     for(allocCountMap_t::iterator i = allocMap.begin(); 
         i != allocMap.end(); ++i) {
         ArielComponent::arielAllocTrackEvent *ev = i->first;
-        printf("%#" PRIx64 " %#" PRIx64 " %#" PRIx64 " %#" PRIx64 "\n", ev->getVirtualAddress(), ev->getAllocateLength(),
+        printf("%#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 "\n", ev->getVirtualAddress(), ev->getAllocateLength(),
                i->second.first, i->second.second);
         tMiss = tMiss + i->second.first + i->second.second;
     }
-    printf("Unassociated Misses: %#" PRIx64 " (%.2f%%)\n", unassociatedMisses, 
-           double(unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));
+    printf("Unassociated Misses: %" PRId64 " (%.2f%%)\n", unassociatedMisses, 
+           double(100*unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));
 }
 
 
