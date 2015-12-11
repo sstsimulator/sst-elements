@@ -53,6 +53,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
+static const char * arielAlloc_port_events[] = {"ariel.arielAllocTrackEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 static Component* create_Cache(ComponentId_t id, Params& params)
@@ -344,6 +345,8 @@ static const ElementInfoParam sieve_params[] = {
 
 static const ElementInfoPort sieve_ports[] = {
     {"cpu_link", "Connection to the CPU", memEvent_port_events},
+    {"alloc_link", "Connection to the CPU's allocation/free notification", 
+     arielAlloc_port_events},
     {NULL, NULL, NULL}
 };
 

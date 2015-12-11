@@ -77,6 +77,7 @@ static const ElementInfoParam ariel_gzbinary_trace_params[] = {
 
 static const ElementInfoParam ariel_params[] = {
     {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
+    {"allocktracker", "Use an allocation tracker (e.g. memSieve)", "0"},
     {"corecount", "Number of CPU cores to emulate", "1"},
     {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},
     {"vtop_translate", "Set to yes to perform virt-phys translation (TLB) or no to disable", "yes"},
@@ -111,6 +112,7 @@ static const ElementInfoParam ariel_params[] = {
 
 static const ElementInfoPort ariel_ports[] = {
     {"cache_link_%(corecount)d", "Each core's link to its cache", NULL},
+    {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", NULL},
     {NULL, NULL, NULL}
 };
 

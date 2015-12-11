@@ -27,6 +27,7 @@
 #include "../replacementManager.h"
 #include "../util.h"
 #include "../cacheListener.h"
+#include "../../ariel/arielalloctrackev.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -42,6 +43,7 @@ public:
     typedef uint64_t uint64;
 
     SST::Link* cpu_link;
+    SST::Link* alloc_link;
     virtual void init(unsigned int);
     virtual void finish(void);
     
@@ -56,13 +58,29 @@ public:
     
 private:
     struct SieveConfig;
+    typedef map<Addr, ArielComponent::arielAllocTrackEvent*> allocMap_t;
+    typedef pair<uint64_t, uint64_t> rwCount_t;
+    typedef map<ArielComponent::arielAllocTrackEvent*, 
+                rwCount_t > allocCountMap_t;
+    /** All Allocations */
+    allocCountMap_t allocMap;
+    /** Active Allocations */
+    allocMap_t actAllocMap; 
+    /** misses not associated with an alloc'd region */
+    uint64_t unassociatedMisses;
+
+    void recordMiss(Addr addr, bool isRead);
     
     /** Constructor for Sieve Component */
     Sieve(ComponentId_t _id, Params &_params, SieveConfig _config);
-    
+    ~Sieve();
+
     /** Handler for incoming link events.  */
     void processEvent(SST::Event* event);
-    
+
+    /** Handler for incoming alloc/free events.  */
+    void processAllocEvent(SST::Event* event);
+
     struct SieveConfig{
         CacheArray* cacheArray_;
         Output* dbg_;

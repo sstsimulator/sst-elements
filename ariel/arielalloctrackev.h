@@ -26,6 +26,11 @@ public:
     arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev) : 
         SST::Event(), type(t), virtualAddress(va), allocateLength(len), level(lev) { }
 
+    arielAllocTrackType getType() const {return type;}
+    uint64_t getVirtualAddress() const {return virtualAddress;}
+    uint64_t getAllocateLength() const {return allocateLength;}
+    uint32_t getLevel() const {return level;}
+
 private:
     arielAllocTrackType type;
     uint64_t virtualAddress;
