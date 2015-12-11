@@ -37,7 +37,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		verbosity, 0, SST::Output::STDOUT);
 
         // see if we should send allocation events out on links
-	useAllocTracker = params.find_integer("allocktracker", 0);
+	useAllocTracker = params.find_integer("alloctracker", 0);
 
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
