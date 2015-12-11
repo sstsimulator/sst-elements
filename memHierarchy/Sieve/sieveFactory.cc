@@ -25,7 +25,7 @@ namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Sieve* Sieve::sieveFactory(ComponentId_t _id, Params &_params){
+    Sieve* Sieve::sieveFactory(ComponentId_t _id, Params &_params)  {
  
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
@@ -60,7 +60,7 @@ Sieve* Sieve::sieveFactory(ComponentId_t _id, Params &_params){
 
 
 
-Sieve::Sieve(ComponentId_t _id, Params &_params, SieveConfig _config) : Component(_id){
+        Sieve::Sieve(ComponentId_t _id, Params &_params, SieveConfig _config) : Component(_id), unassociatedMisses(0) {
     cf_ = _config;
     d_  = cf_.dbg_;
     d_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
@@ -85,7 +85,9 @@ Sieve::Sieve(ComponentId_t _id, Params &_params, SieveConfig _config) : Componen
     if (!cpu_link) {
         d_->fatal(CALL_INFO, -1, "%s, Error creating link to CPU from Sieve", getName().c_str());
     }
+
+    // optional link for allocation / free tracking
+    alloc_link = configureLink("alloc_link", "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
 }
 
-
-}}
+    }}
