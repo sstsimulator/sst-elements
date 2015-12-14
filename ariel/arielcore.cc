@@ -355,9 +355,10 @@ void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
             // tell the allocate montior (e.g. mem sieve that a free has occured)
             arielAllocTrackEvent *e = 
                 new arielAllocTrackEvent(arielAllocTrackEvent::FREE,
-                                         0,
-                                         0,
-                                         rFE->getVirtualAddress());
+					 rFE->getVirtualAddress(),
+					 0,
+                                         0);
+                        
             allocLink->send(e);
         }
 }
@@ -504,13 +505,14 @@ void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
 	memmgr->allocate(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
 
         if (allocLink) {
+	  output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");
             // tell the allocate montior (e.g. mem sieve that an
             // allocation has occured)
             arielAllocTrackEvent *e 
                 = new arielAllocTrackEvent(arielAllocTrackEvent::ALLOC,
-                                           aEv->getAllocationLength(),
-                                           aEv->getAllocationLevel(),
-                                           aEv->getVirtualAddress());
+                                           aEv->getVirtualAddress(),
+					   aEv->getAllocationLength(),
+                                           aEv->getAllocationLevel());
             allocLink->send(e);
         }
 }

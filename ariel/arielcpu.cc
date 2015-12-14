@@ -261,7 +261,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
         if (useAllocTracker) {
-            output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
+            output->verbose(CALL_INFO, 1, 0, "Creating core to allocate tracker links...\n");
             cpu_to_alloc_tracker_links = (Link**) malloc( sizeof(Link*) * core_count );
         } else {
             cpu_to_alloc_tracker_links = 0;
