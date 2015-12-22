@@ -25,7 +25,7 @@ namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params){
+Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
  
     /* --------------- Output Class --------------- */
     Output* output = new Output();
@@ -59,7 +59,7 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params){
 
 
 
-Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id){
+    Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id), unassociatedMisses(0) {
     cacheArray_ = cacheArray;
     output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
