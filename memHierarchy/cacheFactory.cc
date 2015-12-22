@@ -174,7 +174,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
         else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
     }
-        
+    
+    // Auto-detect LLC if directory is present
+    if (bottomNetwork == "directory") LLC = true; 
+
     CacheConfig config = {frequency, cacheArray, dirArray, protocol, dbg, replManager, numLines,
 	static_cast<uint>(lineSize),
 	static_cast<uint>(mshrSize), L1, LLC, LL, bottomNetwork, topNetwork, statGroupIds,

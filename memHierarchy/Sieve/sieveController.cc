@@ -55,7 +55,7 @@ void Sieve::processAllocEvent(SST::Event* event) {
         if (allocMap.find(ev) == allocMap.end()) {
             allocMap[ev] = rwCount_t();
         } else {
-            cf_.dbg_->fatal(CALL_INFO, -1, "Trying to add allocation event which has already been added. \n");
+            output_->fatal(CALL_INFO, -1, "Trying to add allocation event which has already been added. \n");
         }
         
         // add to the list of active allocations (i.e. not FREEd)
@@ -63,33 +63,33 @@ void Sieve::processAllocEvent(SST::Event* event) {
             actAllocMap[ev->getVirtualAddress()] = ev;
         } else {
             // not sure if should be fatal, or should just replace the 'old' alloc
-            cf_.dbg_->fatal(CALL_INFO, -1, "Trying to add allocation event at an address with an active allocation. \n");
+            output_->fatal(CALL_INFO, -1, "Trying to add allocation event at an address with an active allocation. \n");
         }
     } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::FREE) {
         allocMap_t::iterator targ = actAllocMap.find(ev->getVirtualAddress());
         if (targ == actAllocMap.end()) {
-            cf_.dbg_->debug(_INFO_,"FREEing an address taht was never ALLOCd\n");
+            output_->debug(_INFO_,"FREEing an address taht was never ALLOCd\n");
         } else {
             actAllocMap.erase(targ);
         }
     } else {
-        cf_.dbg_->fatal(CALL_INFO, -1, "Unrecognized Ariel Allocation Tracking Event Type \n");
+        output_->fatal(CALL_INFO, -1, "Unrecognized Ariel Allocation Tracking Event Type \n");
     }
 }
 
-void Sieve::processEvent(SST::Event* _ev) {
-    MemEvent* event = static_cast<MemEvent*>(_ev);
+void Sieve::processEvent(SST::Event* ev) {
+    MemEvent* event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
     
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
             
-    int lineIndex = cf_.cacheArray_->find(baseAddr, true);
+    int lineIndex = cacheArray_->find(baseAddr, true);
         
     if (lineIndex == -1) {                                     /* Miss.  If needed, evict candidate */
-        // d_->debug(_L3_,"-- Cache Miss --\n");
-        CacheLine * line = cf_.cacheArray_->findReplacementCandidate(baseAddr, false);
-        cf_.cacheArray_->replace(baseAddr, line->getIndex());
+        // output_->debug(_L3_,"-- Cache Miss --\n");
+        CacheLine * line = cacheArray_->findReplacementCandidate(baseAddr, false);
+        cacheArray_->replace(baseAddr, line->getIndex());
         
         auto cmdT = (GetS == cmd) ? READ : WRITE;
         //std::cout << "VA: = " << event->getVirtualAddress() << "\n";
@@ -116,25 +116,31 @@ void Sieve::processEvent(SST::Event* _ev) {
     // there is no need to construct the payload.
     
     responseEvent->setDst(event->getSrc());
-    cpu_link->send(responseEvent);
+    SST::Link * link = event->getDeliveryLink();
+    link->send(responseEvent);
     
-    //d_->debug(_L3_,"%s, Sending Response, Addr = %" PRIx64 "\n", getName().c_str(), _event->getAddr());
+    //output_->debug(_L3_,"%s, Sending Response, Addr = %" PRIx64 "\n", getName().c_str(), event->getAddr());
     
-    delete _ev;
+    delete ev;
 }
 
 void Sieve::init(unsigned int phase) {
     if (!phase) {
-        cpu_link->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        for (int i = 0; i < cpuLinkCount_; i++) {
+            cpuLinks_[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        }
     }
 
-    while (SST::Event* ev = cpu_link->recvInitData()) {
-        if (ev) delete ev;
+    for (int i = 0; i < cpuLinkCount_; i++) {
+        while (SST::Event* ev = cpuLinks_[i]->recvInitData()) {
+            if (ev) delete ev;
+        }
     }
 }
 
 void Sieve::finish(){
-    listener_->printStats(*d_);
+
+    listener_->printStats(*output_);
 
     // print out all the allocations and how often they were touched
 #warning should switch to file output
@@ -153,9 +159,8 @@ void Sieve::finish(){
 
 
 Sieve::~Sieve(){
-    delete cf_.cacheArray_;
-    delete cf_.rm_;
-    delete d_;
+    delete cacheArray_;
+    delete output_;
 
     for(allocCountMap_t::iterator i = allocMap.begin();
         i != allocMap.end(); ++i) {

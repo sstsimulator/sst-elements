@@ -107,23 +107,14 @@ void nic::setup()
 {
     link_control->setup();
     if ( link_control->getEndpointID() != net_id ) {
-        output.output("NIC ids don't match: parem = %" PRIi64 ", LinkControl = %" PRIi64 "\n",net_id, link_control->getEndpointID());
-        // output.output("NIC ids don't match: parem = %d, LinkControl = %" PRIi64 "\n",net_id, link_control->getEndpointID());
+        output.output("NIC ids don't match: param = %" PRIi64 ", LinkControl = %" PRIi64 "\n", 
+		(int64_t) net_id, (int64_t) link_control->getEndpointID());
     }
     if ( !initialized ) {
-        // output.output("Nic %" PRIi64 ": Broadcast failed!\n", id);
         output.output("Nic %d: Broadcast failed!\n", id);
     }
-    // else {
-    //     output.output("Nic %d: Broadcast succeeded!\n", id);
-    // }
 
     net_map.bind("global");
-    // if ( Simulation::getSimulation()->getRank() == 1 ) {
-    //     for ( int i = 0; i < num_peers; i++ ) {
-    //         std::cout << id << ": " << net_map[i] << std::endl;
-    //     }
-    // }
 }
 
 void

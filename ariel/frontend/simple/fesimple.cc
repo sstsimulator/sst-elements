@@ -296,6 +296,13 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp) {
     return 0;
 }
 
+int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
+    if (tp == NULL) { errno = EINVAL; return -1; }
+    tunnel->getTimeNs(tp);
+    return 0;
+}
+
+
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
     if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable") {
@@ -315,6 +322,12 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 	fprintf(stderr, "Identified routine: ariel_cycles, replacing with Ariel equivalent..\n");
 	RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
 	fprintf(stderr, "Replacement complete\n");
+	return;
+    } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
+		RTN_Name(rtn) == "__clock_gettime") {
+	fprintf(stderr,"Identified routine: clock_gettime, replacing with Ariel equivalent...\n");
+	RTN_Replace(rtn, (AFUNPTR) mapped_clockgettime);
+	fprintf(stderr,"Replacement complete.\n");
 	return;
     }
 
@@ -340,7 +353,7 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
 
     // Load the symbols ready for us to mangle functions.
-    PIN_InitSymbols();
+    PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
     PIN_AddFiniFunction(Fini, 0);
 
     if(SSTVerbosity.Value() > 0) {
