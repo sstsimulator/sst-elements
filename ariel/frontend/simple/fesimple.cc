@@ -64,7 +64,7 @@ ArielTunnel *tunnel = NULL;
 bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
-UINT64 lastMallocSize;
+UINT64* lastMallocSize;
 
 UINT32 overridePool;
 bool shouldOverride;
@@ -474,8 +474,7 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize) {
 		THREADID currentThread = PIN_ThreadId();
 		UINT32 thr = (UINT32) currentThread;
 
-    	PIN_GetLock(&mainLock, thr);
-        lastMallocSize = (UINT64) allocSize;
+        lastMallocSize[thr] = (UINT64) allocSize;
 }
 
 VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
@@ -484,7 +483,7 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
 				UINT32 thr = (UINT32) currentThread;
 		
 				const uint64_t virtualAddress = (uint64_t) allocLocation;
-				const uint64_t allocationLength = (uint64_t) lastMallocSize;
+				const uint64_t allocationLength = (uint64_t) lastMallocSize[thr];
 				const uint32_t allocationLevel = (uint32_t) default_pool;
 
     			ArielCommand ac;
@@ -501,10 +500,8 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
     			tunnel->writeMessage(thr, ac);
     			
     			printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
-    				(UINT64) lastMallocSize);
+    				(UINT64) allocationLength);
 		}
-		
-    	PIN_ReleaseLock(&mainLock);
 }
 
 VOID ariel_postfree_instrument(ADDRINT allocLocation) {
@@ -638,6 +635,11 @@ int main(int argc, char *argv[])
     core_count = MaxCoreCount.Value();
 
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
+    lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
+    
+    for(int i = 0; i < core_count; i++) {
+    	lastMallocSize[i] = (UINT64) 0;
+    }
 
 	fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
 	fflush(stdout);
