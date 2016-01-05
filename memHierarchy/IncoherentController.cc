@@ -18,7 +18,7 @@ using namespace SST::MemHierarchy;
 
 /*----------------------------------------------------------------------------------------------------------------------
  * Incoherent Controller Implementation
- * Inclusive caches do not allocate on Get* requests except for prefetches
+ * Non-Inclusive caches do not allocate on Get* requests except for prefetches
  * Inclusive caches do
  * No writebacks except dirty data
  * I = not present in the cache, E = present & clean, M = present & dirty
@@ -52,7 +52,6 @@ CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, uint32_
             wbCacheLine->setState(I);
             return DONE;
         case IS:
-        case IM:
             return STALL;
         default:
 	    d_->fatal(CALL_INFO,-1,"%s, Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
@@ -92,24 +91,31 @@ CacheAction IncoherentController::handleRequest(MemEvent* event, CacheLine* cach
  */
 CacheAction IncoherentController::handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay) {
     setGroupId(event->getGroupId());
+    
+    // May need to update state since we just allocated
+    if (reqEvent->getCmd() == GetS && cacheLine->getState() == I) cacheLine->setState(IS);
+    if (reqEvent->getCmd() == GetX && cacheLine->getState() == I) cacheLine->setState(IM);
+
     if (cacheLine != NULL && (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()))   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
     
+
     Command cmd = event->getCmd();
+    CacheAction action = DONE;
 
     switch(cmd) {
         case PutM:
             inc_PUTMReqsReceived();
-            handlePutMRequest(event, cacheLine);
+            action = handlePutMRequest(event, cacheLine);
             break;
         case PutE:
             inc_PUTEReqsReceived();
-            handlePutMRequest(event, cacheLine);
+            action = handlePutMRequest(event, cacheLine);
             break;
         default:
 	    d_->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component *)owner_)->getCurrentSimTimeNano());
     }
-    return DONE;
+    return action;
 }
 
 
@@ -207,11 +213,6 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
     recordStateEventCount(event->getCmd(), state);
     
     switch (state) {
-        case I:
-            inc_GETXMissIM(event);
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
-            cacheLine->setState(IM);
-            return STALL;
         case E:
         case M:
             if (cmd == GetSEx) inc_GetSExReqsReceived(replay);
@@ -231,7 +232,7 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
  *  Handle PutM
  *  Incoherent caches only replace dirty data
  */
-void IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* cacheLine) {
+CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* cacheLine) {
     State state = cacheLine->getState();
 
     stateStats_[event->getCmd()][state]++;
@@ -243,6 +244,10 @@ void IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* cacheLi
             if (event->getDirty()) cacheLine->setState(M);
             else cacheLine->setState(E);
             break;
+        case IS: // Occurs if we issued a request for a block that was cached by an upper level cache
+        case IM:
+            if (event->getDirty()) return BLOCK;
+            else return DONE;
         case E:
             if (event->getDirty()) cacheLine->setState(M);
         case M:
@@ -255,6 +260,7 @@ void IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* cacheLi
 	    d_->fatal(CALL_INFO, -1, "%s, Error: Updating data but cache is not in E or M state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
                     name_.c_str(), event->getBaseAddr(), CommandString[event->getCmd()], event->getSrc().c_str(), StateString[state], ((Component *)owner_)->getCurrentSimTimeNano());
     }
+    return DONE;
 }
 
 
@@ -286,7 +292,7 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
         case IM:
-            cacheLine->setState(M);
+            cacheLine->setState(M); 
             sendResponseUp(origRequest, M, cacheLine->getData(), true);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
