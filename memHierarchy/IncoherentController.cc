@@ -93,8 +93,8 @@ CacheAction IncoherentController::handleReplacement(MemEvent* event, CacheLine* 
     setGroupId(event->getGroupId());
     
     // May need to update state since we just allocated
-    if (reqEvent->getCmd() == GetS && cacheLine->getState() == I) cacheLine->setState(IS);
-    if (reqEvent->getCmd() == GetX && cacheLine->getState() == I) cacheLine->setState(IM);
+    if (reqEvent != NULL && reqEvent->getCmd() == GetS && cacheLine->getState() == I) cacheLine->setState(IS);
+    if (reqEvent != NULL && reqEvent->getCmd() == GetX && cacheLine->getState() == I) cacheLine->setState(IM);
 
     if (cacheLine != NULL && (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()))   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
     
