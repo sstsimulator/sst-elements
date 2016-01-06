@@ -124,7 +124,7 @@ public:
     void sendTopologyEvent(TopologyEvent* ev);
     // Returns true if there is space in the output buffer and false
     // otherwise.
-    bool send(internal_router_event* ev, int vc);
+    void send(internal_router_event* ev, int vc);
     // Returns true if there is space in the output buffer and false
     // otherwise.
     bool spaceToSend(int vc, int flits);
