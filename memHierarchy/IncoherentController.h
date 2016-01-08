@@ -78,7 +78,7 @@ private:
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
     /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
-    void handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
+    CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
     
     /** Process GetSResp/GetXResp.  Update the cache line */
     CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
