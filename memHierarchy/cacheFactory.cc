@@ -102,28 +102,38 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
     if(LLint != 1 && LLint != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: LL - should be '1' if cache is the lowest level coherence entity (e.g., LLC and no directory below), 0 otherwise\n");
     if(accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
     
-    /* Check that parameters are valid */
+    /* Check that connectivity parameters are valid */
     if(dirAtNextLvl > 1 || dirAtNextLvl < 0)    
         dbg->fatal(CALL_INFO, -1, "Invalid param: directory_at_next_level - should be '1' if directory exists at next level below this cache, 0 otherwise. You specified '%d'.\n", dirAtNextLvl);
     if(!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))  
         dbg->fatal(CALL_INFO, -1, "Invalid param: bottom_network - valid options are '', 'directory', or 'cache'. You specified '%s'.\n", bottomNetwork.c_str());
     if(!(topNetwork == "" || topNetwork == "cache"))    
         dbg->fatal(CALL_INFO, -1, "Invalid param: top_network - valid options are '' or 'cache'. You specified '%s'\n", topNetwork.c_str());
+    
+    /* Ensure that cache level/coherence/inclusivity params are valid */
     if (cacheType != "inclusive" && cacheType != "noninclusive" && cacheType != "noninclusive_with_directory") 
         dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", cacheType.c_str());
-    if (L1 && cacheType != "inclusive") 
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
+    
     if (cacheType == "noninclusive_with_directory") {
         if (dirAssociativity <= -1) dbg->fatal(CALL_INFO, -1, "Param not specified: directory_associativity - this must be specified if cache_type is noninclusive_with_directory. You specified %d\n", dirAssociativity);
         if (dirNumEntries <= 0)     dbg->fatal(CALL_INFO, -1, "Invalid param: noninlusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified %d\n", dirNumEntries);
     }
+    
+    if (L1) {
+        if (cacheType != "inclusive")
+            dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
+    } else {
+        if (coherenceProtocol == "none" && cacheType != "noninclusive") 
+            dbg->fatal(CALL_INFO, -1, "Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
+                    cacheType.c_str(), coherenceProtocol.c_str()); 
+    }
 
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    if(L1 && mshrSize != -1)    dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
+    if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
     
-    /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
-    if(-1 == mshrSize) mshrSize = HUGE_MSHR;
-    if(mshrSize < 2)            dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
+    /* Ensure mshr size is large enough to avoid deadlock*/
+    if (-1 == mshrSize) mshrSize = HUGE_MSHR;
+    if (mshrSize < 2)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
     /* Update parameters for initialization */
     if (dirAtNextLvl) bottomNetwork = "directory";
