@@ -432,6 +432,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
+    {"do_not_back",         "DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
     {NULL, NULL, NULL}
 };
 
