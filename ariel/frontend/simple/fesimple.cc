@@ -522,8 +522,10 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
 		fprintf(stderr,"Replacement complete.\n");
-		fprintf(stderr, "Tool was called with auto-detect enable mode, setting initial output to not be traced.\n");
-		enable_output = false;
+                if (StartupMode.Value() == 2) {
+		    fprintf(stderr, "Tool was called with auto-detect enable mode, setting initial output to not be traced.\n");
+		    enable_output = false;
+                }
 		return;
     } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday" ||
 		RTN_Name(rtn) == "__gettimeofday") {
