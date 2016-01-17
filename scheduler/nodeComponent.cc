@@ -364,8 +364,8 @@ void nodeComponent::handleEvent(Event *ev) {
         } else if (event -> CommType == SET_DETAILED_NETWORK_SIM) {
             this -> doDetailedNetworkSim = event->reply;
         //end->NetworkSim
-        }else{
-		std::cerr << "Error: unhandled event" << std::endl;
+        } else {
+            schedout.output("WARN: unhandled event\n");
         }
 
         delete event;

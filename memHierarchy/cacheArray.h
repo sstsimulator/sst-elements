@@ -26,7 +26,7 @@
 #include <sst/core/serialization/element.h>
 #include "sst/core/output.h"
 #include "util.h"
-
+#include "replacementManager.h"
 
 using namespace std;
 
@@ -238,6 +238,8 @@ public:
     virtual ~CacheArray() {
         for (unsigned int i = 0; i < lines_.size(); i++)
             delete lines_[i];
+        delete replacementMgr_;
+        delete hash_;
     }
 
     vector<CacheLine *> lines_;

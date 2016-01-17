@@ -50,9 +50,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
     string frequency            = params.find_string("cache_frequency", "" );            //Hertz
     string replacement          = params.find_string("replacement_policy", "LRU");
     int associativity           = params.find_integer("associativity", -1);
+    int hashFunc                = params.find_integer("hash_function", 0);
     string sizeStr              = params.find_string("cache_size", "");                  //Bytes
     int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
-    int accessLatency           = params.find_integer("access_latency_cycles", -1);                 //ns
+    int accessLatency           = params.find_integer("access_latency_cycles", -1);      //ns
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
     int L1int                   = params.find_integer("L1", 0);
@@ -101,34 +102,51 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
     if(LLint != 1 && LLint != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: LL - should be '1' if cache is the lowest level coherence entity (e.g., LLC and no directory below), 0 otherwise\n");
     if(accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
     
-    /* Check that parameters are valid */
+    /* Check that connectivity parameters are valid */
     if(dirAtNextLvl > 1 || dirAtNextLvl < 0)    
         dbg->fatal(CALL_INFO, -1, "Invalid param: directory_at_next_level - should be '1' if directory exists at next level below this cache, 0 otherwise. You specified '%d'.\n", dirAtNextLvl);
     if(!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))  
         dbg->fatal(CALL_INFO, -1, "Invalid param: bottom_network - valid options are '', 'directory', or 'cache'. You specified '%s'.\n", bottomNetwork.c_str());
     if(!(topNetwork == "" || topNetwork == "cache"))    
         dbg->fatal(CALL_INFO, -1, "Invalid param: top_network - valid options are '' or 'cache'. You specified '%s'\n", topNetwork.c_str());
+    
+    /* Ensure that cache level/coherence/inclusivity params are valid */
     if (cacheType != "inclusive" && cacheType != "noninclusive" && cacheType != "noninclusive_with_directory") 
         dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", cacheType.c_str());
-    if (L1 && cacheType != "inclusive") 
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
+    
     if (cacheType == "noninclusive_with_directory") {
         if (dirAssociativity <= -1) dbg->fatal(CALL_INFO, -1, "Param not specified: directory_associativity - this must be specified if cache_type is noninclusive_with_directory. You specified %d\n", dirAssociativity);
         if (dirNumEntries <= 0)     dbg->fatal(CALL_INFO, -1, "Invalid param: noninlusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified %d\n", dirNumEntries);
     }
+    
+    if (L1) {
+        if (cacheType != "inclusive")
+            dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
+    } else {
+        if (coherenceProtocol == "none" && cacheType != "noninclusive") 
+            dbg->fatal(CALL_INFO, -1, "Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
+                    cacheType.c_str(), coherenceProtocol.c_str()); 
+    }
 
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    if(L1 && mshrSize != -1)    dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
+    if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
     
-    /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
-    if(-1 == mshrSize) mshrSize = HUGE_MSHR;
-    if(mshrSize < 2)            dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
+    /* Ensure mshr size is large enough to avoid deadlock*/
+    if (-1 == mshrSize) mshrSize = HUGE_MSHR;
+    if (mshrSize < 2)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
     /* Update parameters for initialization */
     if (dirAtNextLvl) bottomNetwork = "directory";
     
     /* ---------------- Initialization ----------------- */
-    HashFunction* ht = new PureIdHashFunction;
+    HashFunction* ht;
+    if (hashFunc == 1) {
+      ht = new LinearHashFunction;
+    } else if (hashFunc == 2) {
+      ht = new XorHashFunction;
+    } else {
+      ht = new PureIdHashFunction;
+    }
     
     long cacheSize  = SST::MemHierarchy::convertToBytes(sizeStr);
     uint numLines = cacheSize/lineSize;
@@ -166,7 +184,10 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
         else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
     }
-        
+    
+    // Auto-detect LLC if directory is present
+    if (bottomNetwork == "directory") LLC = true; 
+
     CacheConfig config = {frequency, cacheArray, dirArray, protocol, dbg, replManager, numLines,
 	static_cast<uint>(lineSize),
 	static_cast<uint>(mshrSize), L1, LLC, LL, bottomNetwork, topNetwork, statGroupIds,

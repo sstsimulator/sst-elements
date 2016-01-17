@@ -434,7 +434,7 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 	stopTicking = false;
 	output->verbose(CALL_INFO, 16, 0, "Main processor tick, will issue to individual cores...\n");
 
-        tunnel->updateTime(getCurrentSimTimeMicro());
+        tunnel->updateTime(getCurrentSimTimeNano());
 	tunnel->incrementCycles();
 
 	// Keep ticking unless one of the cores says it is time to stop.

@@ -41,7 +41,6 @@ public:
     typedef unsigned int uint;
     typedef uint64_t uint64;
 
-    SST::Link* cpu_link;
     virtual void init(unsigned int);
     virtual void finish(void);
     
@@ -50,7 +49,7 @@ public:
     
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
-        Addr baseAddr = (addr) & ~(cf_.cacheArray_->getLineSize() - 1);  //Remove the block offset bits
+        Addr baseAddr = (addr) & ~(cacheArray_->getLineSize() - 1);  //Remove the block offset bits
         return baseAddr;
     }
     
@@ -58,20 +57,19 @@ private:
     struct SieveConfig;
     
     /** Constructor for Sieve Component */
-    Sieve(ComponentId_t _id, Params &_params, SieveConfig _config);
+    Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output);
     
+    /** Function to find and configure links */
+    void configureLinks();
+
     /** Handler for incoming link events.  */
     void processEvent(SST::Event* event);
     
-    struct SieveConfig{
-        CacheArray* cacheArray_;
-        Output* dbg_;
-        ReplacementMgr* rm_;
-    };
-    
-    SieveConfig             cf_;
-    CacheListener*          listener_;
-    Output*                 d_;
+    CacheArray*         cacheArray_;
+    Output*             output_;
+    CacheListener*      listener_;
+    vector<SST::Link*>  cpuLinks_;
+    uint32_t            cpuLinkCount_;
  };
 
 /*  Implementation Details
@@ -95,7 +93,7 @@ private:
  
     Key notes:
  
-        - Class member variables have a suffix "_", while function parameters have it as a preffix.
+        - Class member variables have a suffix "_".
 
 */
 

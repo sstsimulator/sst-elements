@@ -455,7 +455,6 @@ void Cache::finish(){
             missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
     listener_->printStats(*d_);
     delete cf_.cacheArray_;
-    delete cf_.rm_;
     delete d_;
     linkIdMap_.clear();
     nameMap_.clear();

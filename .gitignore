@@ -1,6 +1,8 @@
 *.o
 *.lo
 *.la
+*.pyc
+.*.swp
 .libs/
 .deps/
 .dirstamp

@@ -68,6 +68,7 @@ static const ElementInfoParam cache_params[] = {
     {"access_latency_cycles",   "Required, int      - Latency (in cycles) to access the cache array."},
     {"coherence_protocol",      "Required, string   - Coherence protocol. Options: MESI, MSI, NONE"},
     {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
+    {"hash_function",           "Optional, int      - 0 - none (default), 1 - linear, 2 - XOR"},
     {"L1",                      "Required, int      - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]"},
     {"LLC",                     "Required, int      - Required for LLCs, specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
     {"LL",                      "Required, int      - Required for LLCs, specifies whether an LLC is also the lowest-level coherence entity in the system (e.g., no dir below). Options: 0[not LL entity], 1[LL entity]"},
@@ -335,17 +336,16 @@ static const ElementInfoParam sieve_params[] = {
     {"associativity",           "Required, int      - Associativity of the cache. In set associative mode, this is the number of ways."},
     {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
     /* Not required */
-    {"prefetcher",              "Optional, string   - Name of prefetcher module", ""},
+    {"profiler",                "Optional, string   - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort sieve_ports[] = {
-    {"cpu_link", "Connection to the CPU", memEvent_port_events},
+    {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
     {NULL, NULL, NULL}
 };
-
 
 
 static Component* create_Bus(ComponentId_t id, Params& params)
@@ -357,7 +357,7 @@ static const ElementInfoParam bus_params[] = {
     {"bus_frequency",       "Bus clock frequency"},
     {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
     {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports", "0"},
-    {"bus_latency_cycles",  "Number of ports on the bus", "0"},
+    {"bus_latency_cycles",  "Bus latency in cycles", "0"},
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
@@ -432,6 +432,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
+    {"do_not_back",         "DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
     {NULL, NULL, NULL}
 };
 
@@ -767,7 +768,7 @@ static const ElementInfoComponent components[] = {
         cache_statistics
 	},
     { "Sieve",
-		"Simple Cache Filtering Component",
+		"Simple Cache Filtering Component to model LL private caches",
 		NULL,
         create_Sieve,
         sieve_params,
