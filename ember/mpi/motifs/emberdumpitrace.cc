@@ -38,7 +38,11 @@ EmberDUMPITraceGenerator::EmberDUMPITraceGenerator(SST::Component* owner,
 	if( "" == trace_file_name ) {
 		// Error goes her
 	} else {
-		trace_file = undumpi_open(trace_file_name.c_str());
+		char* rank_trace_file_name = (char*) malloc(sizeof(char) * PATH_MAX);
+		sprintf(rank_trace_file_name, "%s-%04d.bin", trace_file_name.c_str(), (int) rank());
+		
+		trace_file = undumpi_open(rank_trace_file_name);
+		free(rank_trace_file_name);
 
 		if( NULL == trace_file ) {
 			// Load Error Here
