@@ -105,14 +105,15 @@ private:
     set<DRAMReq*>   requestPool_;   // All requests that are in flight at the memory controller (including those waiting to be issued) 
     int         backingFd_;
     uint8_t*    memBuffer_;
-    uint64_t      memSize_;
-    uint64_t      requestSize_;
+    uint64_t    memSize_;
+    uint64_t    requestSize_;
     Addr        rangeStart_;
-    uint64_t      numPages_;
+    uint64_t    numPages_;
     Addr        interleaveSize_;
     Addr        interleaveStep_;
-    uint64_t      cacheLineSize_;
-    uint64_t      requestWidth_;
+    bool        doNotBack_;
+    uint64_t    cacheLineSize_;
+    uint64_t    requestWidth_;
     uint64_t    GetSReqReceived_;
     uint64_t    GetXReqReceived_;
     uint64_t    PutMReqReceived_;

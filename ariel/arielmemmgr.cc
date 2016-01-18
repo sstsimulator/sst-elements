@@ -21,7 +21,8 @@ ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 		uint32_t defLevel, uint32_t translateCacheEntryCount) :
 	owner(ownMe),
 	translationCacheEntries(translateCacheEntryCount),
-	translationEnabled(true) {
+	translationEnabled(true),
+	reportUnmatchedFree(false) {
 
 	output = out;
 	memoryLevels = mLevels;
@@ -222,13 +223,15 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 	}
 
 	if(! found) {
-		output->fatal(CALL_INFO, -1, "Error: asked to free virtual address: %" PRIu64 " but entry was not found in allocation map.\n",
-			virtAddress);
+		if( reportUnmatchedFree ) {
+			output->fatal(CALL_INFO, -1, "Error: asked to free virtual address: %" PRIu64 " but entry was not found in allocation map.\n",
+				virtAddress);
+		}
+	} else {
+		// Invalidate the cached entries
+		translationCache->clear();
+		statTranslationShootdown->addData(1);
 	}
-
-	// Invalidate the cached entries
-	translationCache->clear();
-	statTranslationShootdown->addData(1);
 }
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {

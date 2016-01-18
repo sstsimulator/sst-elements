@@ -173,7 +173,7 @@ void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr,
         recordLatency(origRequest);
         delete origRequest;
     }
-    if (action == STALL) {
+    if (action == STALL || action == BLOCK) {
         processRequestInMSHR(baseAddr, event);
         return;
     }
