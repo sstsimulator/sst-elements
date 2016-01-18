@@ -24,6 +24,11 @@
 #include "embermap.h"
 #include "emberlinearmap.h"
 #include "embercustommap.h" //NetworkSim: added custom rank map
+
+#ifdef HAVE_DUMPI
+#include "mpi/motifs/emberdumpitrace.h"
+#endif
+
 #include "mpi/motifs/emberhalo2d.h"
 #include "mpi/motifs/emberhalo2dNBR.h"
 #include "mpi/motifs/emberhalo3d.h"
@@ -78,6 +83,13 @@ static SubComponent*
 load_BiPingPong( Component* comp, Params& params ) {
 	return new EmberBiPingPongGenerator(comp, params);
 }
+
+#ifdef HAVE_DUMPI
+static SubComponent*
+load_DUMPITrace( Component* comp, Params& params ) {
+	return new EmberDUMPITraceGenerator(comp, params);
+}
+#endif
 
 static SubComponent*
 load_3DAMR( Component* comp, Params& params) {
@@ -331,6 +343,13 @@ static const ElementInfoParam bipingpong_params[] = {
 	{	"arg.iterations",		"Sets the number of operations to perform", 	"1"},
 	{	NULL,	NULL,	NULL	}
 };
+
+#ifdef HAVE_DUMPI
+static const ElementInfoParam dumpitrace_params[] = {
+	{       "arg.tracefile",                "Sets the trace file to read from.", "" },
+	{	NULL,	NULL,	NULL	}
+};
+#endif
 
 static const ElementInfoParam amr3d_params[] = {
 	{	"arg.iterations",		"Sets the number of ping pong operations to perform", 	"1"},
@@ -704,6 +723,16 @@ static const ElementInfoSubComponent subcomponents[] = {
 	emberMotifTime_statistics,
     	"SST::Ember::EmberGenerator"
     },
+#ifdef HAVE_DUMPI
+    { 	"DUMPITraceMotif",
+	"Performs a motif based on a DUMPI trace",
+	NULL,
+	load_DUMPITrace,
+	dumpitrace_params,
+	emberMotifTime_statistics,
+    	"SST::Ember::EmberGenerator"
+    },
+#endif
     { 	"BiPingPongMotif",
 	"Performs a InOut Motif",
 	NULL,

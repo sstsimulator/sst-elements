@@ -6,6 +6,8 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
 
+libember_la_LDFLAGS = -module -avoid-version
+
 libember_la_SOURCES = \
 	embergen.h \
 	embergen.cc	\
@@ -123,12 +125,22 @@ libember_la_SOURCES = \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h
 
+if USE_DUMPI
+
+libember_la_SOURCES += \
+	mpi/motifs/emberdumpitrace.cc \
+	mpi/motifs/emberdumpitrace.h
+
+AM_CPPFLAGS += $(DUMPI_CPPFLAGS)
+libember_la_LDFLAGS += $(DUMPI_LDFLAGS)
+libember_la_LIBADD = $(DUMPI_LIB)
+
+endif
+
 bin_PROGRAMS = sst-spygen sst-meshconvert
 
 sst_spygen_SOURCES = tools/spygen/spygen.cc
 sst_meshconvert_SOURCES = tools/meshconverter/meshconverter.cc
-
-libember_la_LDFLAGS = -module -avoid-version
 
 EXTRA_DIST = \
 	test/emberLoad.py \
