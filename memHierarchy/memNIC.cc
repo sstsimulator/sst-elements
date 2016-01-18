@@ -135,6 +135,8 @@ void MemNIC::init(unsigned int phase)
                 destinations[imre->compInfo] = imre->name;
             } else if (ci.type == MemNIC::TypeCacheToCache && peerCI.type == MemNIC::TypeNetworkCache) { // higher cache -> lower cache
                 destinations[imre->compInfo] = imre->name;
+            } else if (ci.type == MemNIC::TypeSmartMemory && (peerCI.type == MemNIC::TypeSmartMemory || peerCI.type == MemNIC::TypeDirectoryCtrl || peerCI.type == MemNIC::TypeNetworkDirectory ) ) {
+                destinations[imre->compInfo] = imre->name;
             }
         } else {
             initQueue.push_back(static_cast<MemRtrEvent*>(payload));

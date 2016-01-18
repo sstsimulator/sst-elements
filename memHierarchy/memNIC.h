@@ -42,6 +42,7 @@ public:
         TypeNetworkDirectory,   // directory - connected to cache and memory via network; associated with a particular set of addresses
         TypeMemory,             // memory - connected to directory or cache via network
         TypeDMAEngine,
+        TypeSmartMemory,        // Sender and Receiver
         TypeOther
     };
 
@@ -52,6 +53,7 @@ public:
         uint64_t interleaveStep;
         uint32_t blocksize;    
         bool contains(uint64_t addr) const {
+            fprintf(stderr, "checking if 0x%" PRIx64 " is in range 0x%" PRIx64 " - 0x%" PRIx64 "\n", addr, rangeStart, rangeEnd);
             if ( addr >= rangeStart && addr < rangeEnd ) {
                 if ( interleaveSize == 0 ) return true;
                 uint64_t offset = (addr - rangeStart) % interleaveStep;
