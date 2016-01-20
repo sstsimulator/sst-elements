@@ -93,16 +93,12 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
                     statGetSHitOnArrival->addData(1);
-                    stats_[0].newReqGetSHits_++;
                 } else {
                     statCacheMisses->addData(1);
                     statGetSMissOnArrival->addData(1);
-                    stats_[0].newReqGetSMisses_++;
                     if (cacheHit == 1 || cacheHit == 2) {
-                        stats_[0].GetS_IS++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 0));
                     } else if (cacheHit == 3) {
-                        stats_[0].GetS_M++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 1));
                     }
                 }
@@ -110,16 +106,12 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
                     statGetSHitAfterBlocked->addData(1);
-                    stats_[0].blockedReqGetSHits_++;
                 } else {
                     statCacheMisses->addData(1);
                     statGetSMissAfterBlocked->addData(1);
-                    stats_[0].blockedReqGetSMisses_++;
                     if (cacheHit == 1 || cacheHit == 2) {
-                        stats_[0].GetS_IS++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 0));
                     } else if (cacheHit == 3) {
-                        stats_[0].GetS_M++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 1));
                     }
                 }
@@ -130,19 +122,14 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
                     statGetXHitOnArrival->addData(1);
-                    stats_[0].newReqGetXHits_++;
                 } else {
                     statCacheMisses->addData(1);
                     statGetXMissOnArrival->addData(1);
-                    stats_[0].newReqGetXMisses_++;
                     if (cacheHit == 1) {
-                        stats_[0].GetX_IM++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
                     } else if (cacheHit == 2) {
-                        stats_[0].GetX_SM++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 3));
                     } else if (cacheHit == 3) {
-                        stats_[0].GetX_M++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 4));
                     }
                 }
@@ -150,20 +137,15 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
                     statGetXHitAfterBlocked->addData(1);
-                    stats_[0].blockedReqGetXHits_++;
                 } else {
                     statCacheMisses->addData(1);
                     statGetXMissAfterBlocked->addData(1);
-                    stats_[0].blockedReqGetXMisses_++;
                     if (cacheHit == 1) {
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 2));
-                        stats_[0].GetX_IM++;
                     } else if (cacheHit == 2) {
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 3));
-                        stats_[0].GetX_SM++;
                     } else if (cacheHit == 3) {
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 4));
-                        stats_[0].GetX_M++;
                     }
                 }
             }
@@ -173,19 +155,14 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
                     statGetSExHitOnArrival->addData(1);
-                    stats_[0].newReqGetSExHits_++;
                 } else {
                     statCacheMisses->addData(1);
                     statGetSExMissOnArrival->addData(1);
-                    stats_[0].newReqGetSExMisses_++;
                     if (cacheHit == 1) {
-                        stats_[0].GetSE_IM++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
                     } else if (cacheHit == 2) { 
-                        stats_[0].GetSE_SM++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 6));
                     } else if (cacheHit == 3) {
-                        stats_[0].GetSE_M++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 7));
                     }
                 }
@@ -193,19 +170,14 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                 if (cacheHit == 0) {
                     statCacheHits->addData(1);
                     statGetSExMissAfterBlocked->addData(1);
-                    stats_[0].blockedReqGetSExHits_++;
                 } else {
                     statCacheMisses->addData(1);
                     statGetSExMissAfterBlocked->addData(1);
-                    stats_[0].blockedReqGetSExMisses_++;
                     if (cacheHit == 1) {
-                        stats_[0].GetSE_IM++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 5));
                     } else if (cacheHit == 2) {
-                        stats_[0].GetSE_SM++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 6));
                     } else if (cacheHit == 3) {
-                        stats_[0].GetSE_M++;
                         missTypeList.insert(std::pair<MemEvent*,int>(event, 7));
                     }
                 }
@@ -229,11 +201,11 @@ void Cache::processEvent(MemEvent* event, bool replay) {
 
     
     if(!replay){ 
-        incTotalRequestsReceived(groupId);
+        statTotalEventsReceived->addData(1);
         if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
         cout << flush;
     }
-    else incTotalMSHRHits(groupId);
+    else statTotalEventsReplayed->addData(1);
 
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
         if (replay) {
@@ -318,49 +290,47 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     }
 }
 
-void Cache::processNoncacheable(MemEvent* _event, Command _cmd, Addr _baseAddr){
+void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
     MemEvent* origRequest;
     bool inserted;
-    _event->setFlag(MemEvent::F_NONCACHEABLE);
+    event->setFlag(MemEvent::F_NONCACHEABLE);
     
-    switch(_cmd){
+    switch(cmd){
         case GetS:
         case GetX:
         case GetSEx:
-	    if (_cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
-            inserted = mshrNoncacheable_->insert(_baseAddr, _event);
+	    if (cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
+            inserted = mshrNoncacheable_->insert(baseAddr, event);
             if (!inserted) {
-                d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[_cmd], _baseAddr, getCurrentSimTimeNano());
+                d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
             }
-            _event->setStartTime(timestamp_);
-            if(_cmd == GetS) coherenceMgr->forwardMessage(_event, _baseAddr, _event->getSize(), NULL);
-            else             coherenceMgr->forwardMessage(_event, _baseAddr, _event->getSize(), &_event->getPayload());
+            if(cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), NULL);
+            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), &event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
-            origRequest = mshrNoncacheable_->removeFront(_baseAddr);
-            if (origRequest->getID().second != _event->getResponseToID().second) {
+            origRequest = mshrNoncacheable_->removeFront(baseAddr);
+            if (origRequest->getID().second != event->getResponseToID().second) {
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
-                        getName().c_str(),CommandString[_cmd],_baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
+                        getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            coherenceMgr->sendResponseUp(origRequest, NULLST, &_event->getPayload(), true);
+            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true);
             delete origRequest;
             break;
         default:
-            d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[_cmd], _event->getSrc().c_str());
+            d_->fatal(CALL_INFO, -1, "Command does not exist. Command: %s, Src: %s\n", CommandString[cmd], event->getSrc().c_str());
     }
 }
 
 
-void Cache::handlePrefetchEvent(SST::Event* _event) {
-    selfLink_->send(1, _event);
+void Cache::handlePrefetchEvent(SST::Event* event) {
+    selfLink_->send(1, event);
 }
 
-void Cache::handleSelfEvent(SST::Event* _event){
-    MemEvent* ev = static_cast<MemEvent*>(_event);
+void Cache::handleSelfEvent(SST::Event* event){
+    MemEvent* ev = static_cast<MemEvent*>(event);
     ev->setBaseAddr(toBaseAddr(ev->getAddr()));
     ev->setInMSHR(false);
-    ev->setStatsUpdated(false);
     
     if(ev->getCmd() != NULLCMD && !mshr_->isFull() && (L1_ || !mshr_->isAlmostFull()))
         processEvent(ev, false);
@@ -368,9 +338,9 @@ void Cache::handleSelfEvent(SST::Event* _event){
 
 
 
-void Cache::init(unsigned int _phase){
+void Cache::init(unsigned int phase){
     if (cf_.topNetwork_ == "cache") { // I'm connected to the network ONLY via a single NIC
-        bottomNetworkLink_->init(_phase);
+        bottomNetworkLink_->init(phase);
             
         /*  */
         while(MemEvent *ev = bottomNetworkLink_->recvInitData()){
@@ -381,10 +351,10 @@ void Cache::init(unsigned int _phase){
     
     SST::Event *ev;
     if(bottomNetworkLink_) {
-        bottomNetworkLink_->init(_phase);
+        bottomNetworkLink_->init(phase);
     }
     
-    if(!_phase){
+    if(!phase){
         if(L1_) {
             for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
                 highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
@@ -446,13 +416,6 @@ void Cache::setup(){
 
 
 void Cache::finish(){
-    uint64_t averageLatency;
-    if(upgradeCount_ > 0) averageLatency = totalUpgradeLatency_/upgradeCount_;
-    else averageLatency = 0;
-
-    coherenceMgr->printStats(statsFile_, cf_.statGroupIds_, stats_, averageLatency, 
-            missLatency_GetS_IS, missLatency_GetS_M, missLatency_GetX_IM, missLatency_GetX_SM,
-            missLatency_GetX_M, missLatency_GetSEx_IM, missLatency_GetSEx_SM, missLatency_GetSEx_M);
     listener_->printStats(*d_);
     delete cf_.cacheArray_;
     delete d_;
@@ -461,9 +424,8 @@ void Cache::finish(){
 }
 
 
-void Cache::processIncomingEvent(SST::Event* _ev){
-    MemEvent* event = static_cast<MemEvent*>(_ev);
+void Cache::processIncomingEvent(SST::Event* ev){
+    MemEvent* event = static_cast<MemEvent*>(ev);
     event->setInMSHR(false);
-    event->setStatsUpdated(false);
     processEvent(event, false);
 }

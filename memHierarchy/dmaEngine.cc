@@ -38,7 +38,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "netLink";
     myInfo.link_bandwidth = "1GB/s";
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = params.find_integer("network_num_vc", 1);
     myInfo.name = getName();
     myInfo.network_addr = params.find_integer("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;

@@ -250,7 +250,6 @@ public:
         retries_            = 0;
         inMSHR_             = false;
         blocked_            = false;
-        statsUpdated_       = false;
         initTime_           = 0;
         payload_.clear();
         dirty_              = false;
@@ -307,9 +306,6 @@ public:
     bool inProgress() { return inProgress_; }
     void setInProgress(bool _value) { inProgress_ = _value; }
 
-    bool statsUpdated(){ return statsUpdated_; }
-    void setStatsUpdated(bool _value) { statsUpdated_ = _value; }
-    
     void setLoadLink(){ loadLink_ = true; }
     bool isLoadLink() { return loadLink_; }
     
@@ -496,7 +492,6 @@ private:
     uint64_t        startTime_;         // For profiling within a cache, the time this request was received
     bool            inMSHR_;            // Whether this request is in an MSHR (for profiling)
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
-    bool            statsUpdated_;      // Whether stats have been recorded for this request (for profiling)
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     Addr	    instPtr_;           // Instruction pointer associated with the request
@@ -533,7 +528,6 @@ private:
         ar & BOOST_SERIALIZATION_NVP(startTime_);
         ar & BOOST_SERIALIZATION_NVP(inMSHR_);
         ar & BOOST_SERIALIZATION_NVP(blocked_);
-        ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
         ar & BOOST_SERIALIZATION_NVP(initTime_);
         ar & BOOST_SERIALIZATION_NVP(dirty_);
         ar & BOOST_SERIALIZATION_NVP(instPtr_);

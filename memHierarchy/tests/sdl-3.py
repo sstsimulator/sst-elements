@@ -41,6 +41,12 @@ comp_memory.addParams({
       "backend.mem_size" : "512"
 })
 
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
