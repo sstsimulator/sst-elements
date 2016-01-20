@@ -420,8 +420,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
@@ -438,9 +438,14 @@ static const ElementInfoParam memctrl_params[] = {
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
-    { "cycles_with_issue", "Total cycles with successful issue to back end", "cycles", 1 },
-    { "cycles_attempted_issue_but_rejected", "Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles", "Total cycles called at the memory controller", "cycles", 1 },
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles", 1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles", 1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1},
+    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1},
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1},
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1},
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1},
     { NULL, NULL, NULL, 0 }
 };
 

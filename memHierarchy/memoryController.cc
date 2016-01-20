@@ -51,7 +51,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
     
-    statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
+    
+    int stats               = params.find_integer("statistics", 0);
+    if (stats != 0) {
+        Output out("", 0, 0, Output::STDOUT);
+        out.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", getName().c_str());
+    }
+
+    
     rangeStart_             = (Addr)params.find_integer("range_start", 0);
     interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize_         *= 1024;
@@ -123,7 +130,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     backend_                = dynamic_cast<MemBackend*>(loadSubComponent(backendName, this, backendParams));
 
     if (!isNetworkConnected_) {
-    lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
     } else {
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port        = "network";
@@ -160,12 +167,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
 
-    GetSReqReceived_        = 0;
-    GetXReqReceived_        = 0;
-    PutMReqReceived_        = 0;
-    GetSExReqReceived_      = 0;
-    numReqOutstanding_      = 0;
-    numCycles_              = 0;
+    stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
+    stat_GetSExReqReceived  = registerStatistic<uint64_t>("requests_received_GetSEx");
+    stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
+    stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
+    stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
+
 
     if (protocolStr.empty()) {
 	dbg.fatal(CALL_INFO, -1, "Coherency protocol not specified, please specify MESI or MSI\n");
@@ -206,11 +213,12 @@ void MemController::handleEvent(SST::Event* event) {
 	        	listeners_[i]->notifyAccess(notify);
 	    	}
 	    }
-
-            if (cmd == GetS)         GetSReqReceived_++;
-            else if (cmd == GetX)    GetXReqReceived_++;
-            else if (cmd == GetSEx)  GetSExReqReceived_++;
-            else if (cmd == PutM)    PutMReqReceived_++;
+            
+            // Update statistics
+            if (cmd == GetS)         stat_GetSReqReceived->addData(1);
+            else if (cmd == GetX)    stat_GetXReqReceived->addData(1);
+            else if (cmd == GetSEx)  stat_GetSExReqReceived->addData(1);
+            else if (cmd == PutM)    stat_PutMReqReceived->addData(1);
 
             addRequest(ev);
             break;
@@ -277,8 +285,7 @@ bool MemController::clock(Cycle_t cycle) {
         }
     }
 
-    numReqOutstanding_ += requestPool_.size();
-    numCycles_++;
+    stat_outstandingReqs->addData(requestPool_.size());
 
     return false;
 }
@@ -444,18 +451,6 @@ void MemController::finish(void) {
 
     backend_->finish();
     if (isNetworkConnected_) networkLink_->finish();
-
-    Output out("", 0, 0, statsOutputTarget_);
-    out.output("\n--------------------------------------------------------------------\n");
-    out.output("--- Main Memory Stats\n");
-    out.output("--- Name: %s\n", getName().c_str());
-    out.output("--------------------------------------------------------------------\n");
-    out.output("- GetS received (read):  %" PRIu64 "\n", GetSReqReceived_);
-    out.output("- GetX received (read):  %" PRIu64 "\n", GetXReqReceived_);
-    out.output("- GetSEx received (read):  %" PRIu64 "\n", GetSExReqReceived_);
-    out.output("- PutM received (write):  %" PRIu64 "\n", PutMReqReceived_);
-    out.output("- Avg. Requests outstanding/cycle: %.3f\n",float(numReqOutstanding_)/float(numCycles_));
-
 }
 
 
