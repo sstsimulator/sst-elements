@@ -70,7 +70,7 @@ class ArielCore {
 		void finishCore();
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
-		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level);
+    		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t ip);
 		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
