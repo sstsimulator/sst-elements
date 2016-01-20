@@ -42,6 +42,7 @@ public:
         TypeNetworkDirectory,   // directory - connected to cache and memory via network; associated with a particular set of addresses
         TypeMemory,             // memory - connected to directory or cache via network
         TypeDMAEngine,
+        TypeSmartMemory,        // Sender and Receiver
         TypeOther
     };
 
