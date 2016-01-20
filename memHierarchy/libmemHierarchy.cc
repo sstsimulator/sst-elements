@@ -612,7 +612,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
     {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"statistics",          "DEPRECATED - Use the Statistics API to get statistics", "0"},
     {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},
     {"mshr_num_entries",    "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
@@ -629,6 +629,36 @@ static const ElementInfoPort dirctrl_ports[] = {
     {NULL, NULL, NULL}
 };
 
+
+static const ElementInfoStatistic dirctrl_statistics[] = {
+    {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
+    {"get_request_latency",             "Total latency in ns of all get* requests handled",                     "nanoseconds",  1},
+    {"directory_cache_hits",            "Number of requests that hit in the directory cache",                   "requests",     1},
+    {"mshr_hits",                       "Number of requests that hit in the MSHRs",                             "requests",     1},
+    {"requests_received_GetS",          "Number of GetS (read-shared) requests received",                       "requests",     1},
+    {"requests_received_GetX",          "Number of GetX (write-exclusive) requests received",                   "requests",     1},
+    {"requests_received_GetSEx",        "Number of GetSEx (read-exclusive) requests received",                  "requests",     1},
+    {"requests_received_PutS",          "Number of PutS (shared replacement) requests received",                "requests",     1},
+    {"requests_received_PutE",          "Number of PutE (clean exclusive replacement) requests received",       "requests",     1},
+    {"requests_received_PutM",          "Number of PutM (dirty exclusive replacement) requests received",       "requests",     1},
+    {"responses_received_NACK",         "Number of NACK responses received",                                    "responses",    1},
+    {"responses_received_FetchResp",    "Number of FetchResp responses received (response to FetchInv/Fetch)",  "responses",    1},
+    {"responses_received_FetchXResp",   "Number of FetchXResp responses received (response to FetchXInv) ",     "responses",    1},
+    {"responses_received_PutS",         "Number of PutS (shared replacement) requests received that raced with an Inv/Fetch* and were treated as a response to that Inv/Fetch*",   "requests",     1},
+    {"responses_received_PutE",         "Number of PutE (clean exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
+    {"responses_received_PutM",         "Number of PutM (dirty exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
+    {"memory_requests_directory_entry_read", "Number of read requests for a directory entry sent to memory",    "requests",     1},
+    {"memory_requests_directory_entry_write","Number of write requests for a directory entry sent to memory",   "requests",     1},
+    {"memory_requests_data_read",       "Number of read requests for data sent to memory",                      "requests",     1},
+    {"memory_requests_data_write",      "Number of write requests for data sent to memory",                     "requests",     1},
+    {"requests_sent_Inv",               "Number of Inv (invalidate) requests sent to LLCs",                     "requests",     1},
+    {"requests_sent_FetchInv",          "Number of FetchInv (invalidate and fetch exclusive data) requests sent to LLCs",   "requests",     1},
+    {"requests_sent_FetchInvX",         "Number of FetchInvX (fetch exclusive data and downgrade) requests sent to LLCs",   "requests",     1},
+    {"responses_sent_NACK",             "Number of NACK responses sent to LLCs",                                            "responses",    1},
+    {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSEx) responses sent to LLCs",      "responses",    1},
+    {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
+    {NULL, NULL, NULL, 0}
+};
 
 
 static Component* create_DMAEngine(ComponentId_t id, Params& params){
@@ -803,8 +833,9 @@ static const ElementInfoComponent components[] = {
 		create_DirectoryController,
         dirctrl_params,
         dirctrl_ports,
-        COMPONENT_CATEGORY_MEMORY
-	},
+        COMPONENT_CATEGORY_MEMORY,
+	dirctrl_statistics
+        },
 	{"DMAEngine",
 		"DMA Engine Component",
 		NULL,

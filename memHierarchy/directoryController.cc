@@ -35,8 +35,12 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
     if(debugLevel < 0 || debugLevel > 10)     dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-    printStatsLoc = (Output::output_location_t)params.find_integer("statistics", 0);
     
+    int printStatsLoc = params.find_integer("statistics", 0);
+    if (printStatsLoc != 0) {
+        dbg.output("**WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n");
+    }
+
     int dAddr = params.find_integer("debug_addr", -1);
     if (dAddr == -1) {
         DEBUG_ADDR = (Addr) dAddr;
@@ -148,35 +152,33 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     // Timestamp - aka cycle count
     timestamp = 0;
 
-    // Clear statistics counters
-    numReqsProcessed    = 0;
-    totalReplProcessTime = 0;
-    totalGetReqProcessTime = 0;
-    totalReqProcessTime = 0;
-    numCacheHits        = 0;
-    mshrHits            = 0;
-    GetXReqReceived     = 0;
-    GetSExReqReceived   = 0;
-    GetSReqReceived     = 0;
-    PutMReqReceived     = 0;
-    PutEReqReceived     = 0;
-    PutSReqReceived     = 0;
-    NACKReceived        = 0;
-    FetchRespReceived   = 0;
-    FetchRespXReceived  = 0;
-    PutMRespReceived    = 0;
-    PutERespReceived    = 0;
-    PutSRespReceived    = 0;
-    dataReads           = 0;
-    dataWrites          = 0;
-    dirEntryReads       = 0;
-    dirEntryWrites      = 0;
-    NACKSent            = 0;
-    InvSent             = 0; 
-    FetchInvSent        = 0;
-    FetchInvXSent       = 0;
-    GetSRespSent        = 0;
-    GetXRespSent        = 0;
+    // Register statistics
+    stat_replacementRequestLatency  = registerStatistic<uint64_t>("replacement_request_latency");
+    stat_getRequestLatency          = registerStatistic<uint64_t>("get_request_latency");
+    stat_cacheHits                  = registerStatistic<uint64_t>("directory_cache_hits");
+    stat_mshrHits                   = registerStatistic<uint64_t>("mshr_hits");
+    stat_GetXReqReceived            = registerStatistic<uint64_t>("requests_received_GetX");
+    stat_GetSExReqReceived          = registerStatistic<uint64_t>("requests_received_GetSEx");
+    stat_GetSReqReceived            = registerStatistic<uint64_t>("requests_received_GetS");
+    stat_PutMReqReceived            = registerStatistic<uint64_t>("requests_received_PutM");
+    stat_PutEReqReceived            = registerStatistic<uint64_t>("requests_received_PutE");
+    stat_PutSReqReceived            = registerStatistic<uint64_t>("requests_received_PutS");
+    stat_NACKRespReceived           = registerStatistic<uint64_t>("responses_received_NACK");
+    stat_FetchRespReceived          = registerStatistic<uint64_t>("responses_received_FetchResp");
+    stat_FetchXRespReceived         = registerStatistic<uint64_t>("responses_received_FetchXResp");
+    stat_PutMRespReceived           = registerStatistic<uint64_t>("responses_received_PutM");
+    stat_PutERespReceived           = registerStatistic<uint64_t>("responses_received_PutE");
+    stat_PutSRespReceived           = registerStatistic<uint64_t>("responses_received_PutS");
+    stat_dataReads                  = registerStatistic<uint64_t>("memory_requests_data_write");
+    stat_dataWrites                 = registerStatistic<uint64_t>("memory_requests_data_read");
+    stat_dirEntryReads              = registerStatistic<uint64_t>("memory_requests_directory_entry_read");
+    stat_dirEntryWrites             = registerStatistic<uint64_t>("memory_requests_directory_entry_write");
+    stat_InvSent                    = registerStatistic<uint64_t>("requests_sent_Inv"); 
+    stat_FetchInvSent               = registerStatistic<uint64_t>("requests_sent_FetchInv");
+    stat_FetchInvXSent              = registerStatistic<uint64_t>("requests_sent_FetchInvX");
+    stat_NACKRespSent               = registerStatistic<uint64_t>("responses_sent_NACK");
+    stat_GetSRespSent               = registerStatistic<uint64_t>("responses_sent_GetSResp");
+    stat_GetXRespSent               = registerStatistic<uint64_t>("responses_sent_GetXResp");
 
 
 }
@@ -231,66 +233,70 @@ void DirectoryController::handlePacket(SST::Event *event){
 
 /**
  * Profile requests sent to directory controller
- * Could wrap this in "if printStatLoc" so that it's ignored if we're not printing stats
  */
 inline void DirectoryController::profileRequestRecv(MemEvent * event, DirEntry * entry) {
     Command cmd = event->getCmd();
     switch (cmd) {
     case GetX:
-        GetXReqReceived++;
+        stat_GetXReqReceived->addData(1);
         break;
     case GetSEx:
-        GetSExReqReceived++;
+        stat_GetSExReqReceived->addData(1);
         break;
     case GetS:
-        GetSReqReceived++;
+        stat_GetSReqReceived->addData(1);
         break;
     case PutM:
-        PutMReqReceived++;
+        stat_PutMReqReceived->addData(1);
         break;
     case PutE:
-        PutEReqReceived++;
+        stat_PutEReqReceived->addData(1);
         break;
     case PutS:
-        PutSReqReceived++;
+        stat_PutSReqReceived->addData(1);
         break;
     default:
         break;
 
     }
     if (!entry || entry->isCached()) {
-        ++numCacheHits;
+        stat_cacheHits->addData(1);
     }
 }
 /** 
  * Profile requests sent from directory controller to memory or other caches
- * Could wrap this in "if printStatLoc" so that it's ignored if we're not printing stats
  */
 inline void DirectoryController::profileRequestSent(MemEvent * event) {
     Command cmd = event->getCmd();
     switch(cmd) {
     case PutM:
-        if (event->getAddr() == 0) dirEntryWrites++;
-        else dataWrites++;
+        if (event->getAddr() == 0) { 
+            stat_dirEntryWrites->addData(1);
+        } else {
+            stat_dataWrites->addData(1);
+        }
         break;
     case GetX:
         if (event->queryFlag(MemEvent::F_NONCACHEABLE)) {
-            dataWrites++;
+            stat_dataWrites->addData(1);
             break;
         }
     case GetSEx:
     case GetS:
-        if (event->getAddr() == 0) dirEntryReads++;
-        else dataReads++;
+        if (event->getAddr() == 0) {
+            stat_dirEntryReads->addData(1);
+        } else {
+            stat_dataReads->addData(1);
+        }
         break;
     case FetchInv:
-        FetchInvSent++;
+        stat_FetchInvSent->addData(1);
         break;
     case FetchInvX:
-        FetchInvXSent++;
+        stat_FetchInvXSent->addData(1);
         break;
     case Inv:
-        InvSent++;
+        stat_InvSent->addData(1);
         break;
     default:
         break;
@@ -300,19 +306,18 @@ inline void DirectoryController::profileRequestSent(MemEvent * event) {
 
 /** 
  * Profile responses sent from directory controller to caches
- * Could wrap this in "if printStatLoc" so that it's ignored if we're not printing stats
  */
 inline void DirectoryController::profileResponseSent(MemEvent * event) {
     Command cmd = event->getCmd();
     switch(cmd) {
     case GetSResp:
-        GetSRespSent++;
+        stat_GetSRespSent->addData(1);
         break;
     case GetXResp:
-        GetXRespSent++;
+        stat_GetXRespSent->addData(1);
         break;
     case NACK:
-        NACKSent++;
+        stat_NACKRespSent->addData(1);
         break;
     default:
         break;
@@ -321,28 +326,27 @@ inline void DirectoryController::profileResponseSent(MemEvent * event) {
 
 /** 
  * Profile responses received by directory controller from caches
- * Could wrap this in "if printStatLoc" so that it's ignored if we're not printing stats
  */
 inline void DirectoryController::profileResponseRecv(MemEvent * event) {
     Command cmd = event->getCmd();
     switch(cmd) {
     case FetchResp:
-        FetchRespReceived++;
+        stat_FetchRespReceived->addData(1);
         break;
     case FetchXResp:
-        FetchRespXReceived++;
+        stat_FetchXRespReceived->addData(1);
         break;
     case PutM:
-        PutMRespReceived++;
+        stat_PutMRespReceived->addData(1);
         break;
     case PutE:
-        PutERespReceived++;
+        stat_PutERespReceived->addData(1);
         break;
     case PutS:
-        PutSRespReceived++;
+        stat_PutSRespReceived->addData(1);
         break;
     case NACK:
-        NACKReceived++;
+        stat_NACKRespReceived->addData(1);
         break;
     default:
         break;
@@ -674,7 +678,7 @@ void DirectoryController::handlePutE(MemEvent * ev) {
 
     if (!(entry->isCached())) {
         if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
-            mshrHits++;
+            stat_mshrHits->addData(1);
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
             if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
                 dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
@@ -732,7 +736,7 @@ void DirectoryController::handlePutM(MemEvent * ev) {
 
     if (!(entry->isCached())) {
         if (!(mshr->elementIsHit(ev->getBaseAddr(),ev))) {
-            mshrHits++;
+            stat_mshrHits->addData(1);
             bool inserted = mshr->insert(ev->getBaseAddr(),ev);
             if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
                 dbg.debug(_L8_, "Inserting request in mshr. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Addr = 0x%" PRIx64 ", MSHR size: %d\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getAddr(), mshr->getSize());
@@ -1234,13 +1238,11 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
 }
 
 void DirectoryController::postRequestProcessing(MemEvent * ev, DirEntry * entry) {
-    ++numReqsProcessed;
-    totalReqProcessTime += (getCurrentSimTimeNano() - ev->getDeliveryTime());
     Command cmd = ev->getCmd();
     if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
-        totalGetReqProcessTime += (getCurrentSimTimeNano() - ev->getDeliveryTime());
+        stat_getRequestLatency->addData(getCurrentSimTimeNano() - ev->getDeliveryTime());
     } else {
-        totalReplProcessTime += (getCurrentSimTimeNano() - ev->getDeliveryTime() + 1);
+        stat_replacementRequestLatency->addData(getCurrentSimTimeNano() - ev->getDeliveryTime());
     }
 
     delete ev;
@@ -1377,41 +1379,6 @@ void DirectoryController::init(unsigned int phase){
 
 void DirectoryController::finish(void){
     network->finish();
-    uint64_t getReq = GetSReqReceived + GetXReqReceived + GetSExReqReceived;
-    uint64_t putReq = PutMReqReceived + PutEReqReceived + PutSReqReceived;
-    Output out("", 0, 0, printStatsLoc);
-    out.output("\n--------------------------------------------------------------------\n");
-    out.output("--- Directory Controller\n");
-    out.output("--- Name: %s\n", getName().c_str());
-    out.output("--------------------------------------------------------------------\n");
-    out.output("- Total requests received:  %" PRIu64 "\n", numReqsProcessed);
-    out.output("- GetS received:            %" PRIu64 "\n", GetSReqReceived);
-    out.output("- GetX received:            %" PRIu64 "\n", GetXReqReceived);
-    out.output("- GetSEx received:          %" PRIu64 "\n", GetSExReqReceived);
-    out.output("- PutM received:            %" PRIu64 "\n", PutMReqReceived);
-    out.output("- PutE received:            %" PRIu64 "\n", PutEReqReceived);
-    out.output("- PutS received:            %" PRIu64 "\n", PutSReqReceived);
-    out.output("- NACK received:            %" PRIu64 "\n", NACKReceived);
-    out.output("- FetchResp received:       %" PRIu64 "\n", FetchRespReceived);
-    out.output("- FetchXResp received:      %" PRIu64 "\n", FetchRespXReceived);
-    out.output("- PutM response received:   %" PRIu64 "\n", PutMRespReceived);
-    out.output("- PutE response received:   %" PRIu64 "\n", PutERespReceived);
-    out.output("- PutS response received:   %" PRIu64 "\n", PutSRespReceived);
-    out.output("- Data reads issued:        %" PRIu64 "\n", dataReads);
-    out.output("- Data writes issued:       %" PRIu64 "\n", dataWrites);
-    out.output("- Dir entry reads:          %" PRIu64 "\n", dirEntryReads);
-    out.output("- Dir entry writes:         %" PRIu64 "\n", dirEntryWrites);
-    out.output("- Inv sent:                 %" PRIu64 "\n", InvSent);
-    out.output("- FetchInv sent:            %" PRIu64 "\n", FetchInvSent);
-    out.output("- FetchInvX sent:           %" PRIu64 "\n", FetchInvXSent);
-    out.output("- GetSResp sent:            %" PRIu64 "\n", GetSRespSent);
-    out.output("- GetXResp sent:            %" PRIu64 "\n", GetXRespSent);
-    out.output("- NACKs sent:               %" PRIu64 "\n", NACKSent);
-    out.output("- Avg Req Time:             %" PRIu64 " ns\n", (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0);
-    out.output("- Avg 'Get' Req Time:       %" PRIu64 " ns\n", (getReq > 0) ? totalGetReqProcessTime / getReq : 0);
-    out.output("- Avg 'Put' Req Time:       %" PRIu64 " ns\n", (putReq > 0) ? totalReplProcessTime / putReq : 0);
-    out.output("- Entry Cache Hits:         %" PRIu64 "\n", numCacheHits);
-    out.output("- MSHR hits:                %" PRIu64 "\n", mshrHits);
 }
 
 
