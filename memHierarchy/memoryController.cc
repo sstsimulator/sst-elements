@@ -102,11 +102,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
 
     if (params.find("mem_size") != params.end()) {
-	dbg.fatal(CALL_INFO, -1, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n");
+	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
     }
 
     if (0 == backendRamSizeMB) {
-	dbg.fatal(CALL_INFO, -1, "Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n");
+	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n", getName().c_str());
     }
 
     // Convert into MBs
@@ -128,7 +128,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port        = "network";
         myInfo.link_bandwidth   = net_bw;
-        myInfo.num_vcs          = params.find_integer("network_num_vc", 3);
+        myInfo.num_vcs          = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            dbg.debug(_WARNING_, "%s, WARNING Deprecated parameter: network_num_vc. memHierarchy only uses one virtual channel.\n", getName().c_str());
+        }
         myInfo.name             = getName();
         myInfo.network_addr     = addr;
         myInfo.type             = MemNIC::TypeMemory;

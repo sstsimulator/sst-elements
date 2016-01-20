@@ -204,7 +204,7 @@ private:
         timestamp_++;
         if(cf_.bottomNetwork_ != "") memNICIdle_ = bottomNetworkLink_->clock();
         coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
-        if ( cf_.maxWaitTime_ > 0 ) {
+        if ( cf_.maxWaitTime_ > 0  && timestamp_%1000 == 0) {
             checkMaxWait();
         }
         return false;

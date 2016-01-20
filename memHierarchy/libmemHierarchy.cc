@@ -93,7 +93,7 @@ static const ElementInfoParam cache_params[] = {
     {"statistics",              "Optional, int      - Print cache stats at end of simulation. Options: 0[off], 1[on]", "0"},
     {"network_bw",              "Optional, int      - Network link bandwidth.", "1GB/s"},
     {"network_address",         "Optional, int      - When connected to a network, the network address of this cache.", "0"},
-    {"network_num_vc",          "Optional, int      - When connected to a network, the number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",          "DEPRECATED         - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size", "Optional, int      - Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size","Optional, int      - Size of the network's output buffer.", "1KB"},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
@@ -429,7 +429,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"direct_link", "Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
-    {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
     {"do_not_back",         "DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
@@ -595,7 +595,7 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 static const ElementInfoParam dirctrl_params[] = {
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
-    {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
@@ -635,7 +635,7 @@ static const ElementInfoParam dmaengine_params[] = {
     {"debug_level",     "Debugging level: 0 to 10", "0"},
     {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
     {"netAddr",         "Network address of component.", NULL},
-    {"network_num_vc",  "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",  "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };

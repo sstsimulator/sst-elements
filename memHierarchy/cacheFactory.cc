@@ -281,7 +281,10 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache; 
@@ -303,7 +306,10 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "cache";
         myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCacheToCache; 
@@ -326,7 +332,10 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeNetworkCache; 

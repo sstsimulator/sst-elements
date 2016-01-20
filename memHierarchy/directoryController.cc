@@ -97,7 +97,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port                        = "network";
         myInfo.link_bandwidth                   = net_bw;
-        myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
+        myInfo.num_vcs                          = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            dbg.debug(WARNING, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name                             = getName();
         myInfo.network_addr                     = addr;
         myInfo.type                             = MemNIC::TypeDirectoryCtrl;
@@ -119,7 +122,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port                        = "network";
         myInfo.link_bandwidth                   = net_bw;
-        myInfo.num_vcs                          = params.find_integer("network_num_vc", 3);
+        myInfo.num_vcs                          = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            dbg.debug(WARNING, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name                             = getName();
         myInfo.network_addr                     = addr;
         myInfo.type                             = MemNIC::TypeNetworkDirectory;
