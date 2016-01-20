@@ -484,7 +484,7 @@ VOID ariel_premalloc_instrument(ADDRINT allocSize) {
         lastMallocSize[thr] = (UINT64) allocSize;
 }
 
-VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
+VOID ariel_postmalloc_instrument(ADDRINT allocLocation, ADDRINT ip) {
 		if(lastMallocSize >= 0) {
 				THREADID currentThread = PIN_ThreadId();
 				UINT32 thr = (UINT32) currentThread;
@@ -494,7 +494,8 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
 				const uint32_t allocationLevel = (uint32_t) default_pool;
 
     			ArielCommand ac;
-   		 		ac.command = ARIEL_ISSUE_TLM_MAP;
+                        ac.command = ARIEL_ISSUE_TLM_MAP;
+                        ac.instPtr = (uint64_t) ip;
     			ac.mlm_map.vaddr = virtualAddress;
     			ac.mlm_map.alloc_len = allocationLength;
 
@@ -579,9 +580,10 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                 IARG_END);
 
         RTN_InsertCall(rtn, IPOINT_AFTER,
-            (AFUNPTR) ariel_postmalloc_instrument,
-                IARG_FUNCRET_EXITPOINT_VALUE,
-                IARG_END);
+                       (AFUNPTR) ariel_postmalloc_instrument,
+                       IARG_FUNCRET_EXITPOINT_VALUE,
+                       IARG_INST_PTR, 
+                       IARG_END);
 
         RTN_Close(rtn);
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (

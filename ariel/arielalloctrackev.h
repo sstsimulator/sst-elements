@@ -23,20 +23,21 @@ public:
         FREE
     };
 
-    arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev) : 
-        SST::Event(), type(t), virtualAddress(va), allocateLength(len), level(lev) { }
+    arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev, uint64_t ip) : 
+        SST::Event(), type(t), virtualAddress(va), allocateLength(len), level(lev), instPtr(ip) { }
 
     arielAllocTrackType getType() const {return type;}
     uint64_t getVirtualAddress() const {return virtualAddress;}
     uint64_t getAllocateLength() const {return allocateLength;}
     uint32_t getLevel() const {return level;}
+    uint64_t getInstructionPointer() const {return instPtr;}
 
 private:
     arielAllocTrackType type;
     uint64_t virtualAddress;
     uint64_t allocateLength;
     uint32_t level;
-
+    uint64_t instPtr;
 
     friend class boost::serialization::access;
     template<class Archive>

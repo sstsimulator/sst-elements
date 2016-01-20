@@ -64,7 +64,7 @@ void Sieve::processAllocEvent(SST::Event* event) {
         } else {
             // not sure if should be fatal, or should just replace the 'old' alloc
 #warning figure out why we get these
-	  output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), actAllocMap.size());
+            output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), (uint64_t)actAllocMap.size());
 	  // for now, replace the 'old' alloc
 	  actAllocMap[ev->getVirtualAddress()] = ev;
         }
@@ -147,12 +147,15 @@ void Sieve::finish(){
 
     // print out all the allocations and how often they were touched
 #warning should switch to file output
-    printf("Printing out allocation hits (addr, len, reads, writes):\n");
+    printf("Printing out allocation hits (addr, IP, len, reads, writes):\n");
     uint64_t tMiss = 0;
     for(allocCountMap_t::iterator i = allocMap.begin(); 
         i != allocMap.end(); ++i) {
         ArielComponent::arielAllocTrackEvent *ev = i->first;
-        printf("%#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 "\n", ev->getVirtualAddress(), ev->getAllocateLength(),
+        printf("%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 "\n", 
+               ev->getVirtualAddress(), 
+               ev->getInstructionPointer(), 
+               ev->getAllocateLength(),
                i->second.first, i->second.second);
         tMiss = tMiss + i->second.first + i->second.second;
     }
