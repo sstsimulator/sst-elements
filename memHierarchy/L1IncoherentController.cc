@@ -32,9 +32,8 @@ using namespace SST::MemHierarchy;
  *      handleInvalidationRequest
  */
   
-CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, uint32_t groupId, string origRqstr, bool ignoredParam) {
+CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
     State state = wbCacheLine->getState();
-    setGroupId(groupId);
    
     /* L1 specific code */
     if (wbCacheLine->isLocked()) {
@@ -49,12 +48,10 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, uint3
         case E:
             if (writebackCleanBlocks_) {
                 sendWriteback(PutE, wbCacheLine, origRqstr);
-                inc_EvictionPUTEReqSent();
             }
             wbCacheLine->setState(I);
             return DONE;
         case M:
-            inc_EvictionPUTMReqSent();
             sendWriteback(PutM, wbCacheLine, origRqstr);
             wbCacheLine->setState(I);
             return DONE;
@@ -75,7 +72,6 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, uint3
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction L1IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
-    setGroupId(event->getGroupId());
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
     
     Command cmd = event->getCmd();
@@ -146,17 +142,16 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
     vector<uint8_t>* data = cacheLine->getData();
     
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == name_));
-    stateStats_[event->getCmd()][state]++; 
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
-            inc_GETSMissIS(event);
+            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
             return STALL;
         case E:
         case M:
-            inc_GETSHit(event);
+            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (event->isLoadLink()) cacheLine->atomicStart();
             sendResponseUp(event, S, data, replay);
@@ -179,11 +174,10 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
     Command cmd = event->getCmd();
     vector<uint8_t>* data = cacheLine->getData();
     
-    stateStats_[event->getCmd()][state]++; 
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
-            inc_GETXMissIM(event);
+            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
             cacheLine->setState(IM);
             return STALL;
@@ -211,8 +205,7 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
             if (event->isStoreConditional()) sendResponseUp(event, M, data, replay, cacheLine->isAtomic());
             else sendResponseUp(event, M, data, replay);
 
-            if (cmd == GetSEx) inc_GetSExReqsReceived(replay);
-            inc_GETXHit(event);
+            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             return DONE;
          default:
             d_->fatal(CALL_INFO, -1, "%s, Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -229,12 +222,11 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
     bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == name_));
     
     State state = cacheLine->getState();
-    stateStats_[responseEvent->getCmd()][state]++; 
     recordStateEventCount(responseEvent->getCmd(), state);
     switch (state) {
         case IS:
             cacheLine->setState(E);
-            inc_GETSHit(origRequest);
+            notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) break;
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
             sendResponseUp(origRequest, S, cacheLine->getData(), true);
@@ -257,12 +249,11 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
             } else {
                 /* Handle GetSEx - Load-lock */
                 cacheLine->incLock(); 
-                inc_GetSExReqsReceived(true);
             }
             
             if (origRequest->isStoreConditional()) sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->isAtomic());
             else sendResponseUp(origRequest, M, cacheLine->getData(), true);
-            inc_GETXHit(origRequest);
+            notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             break;
         default:
             d_->fatal(CALL_INFO, -1, "%s, Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
@@ -356,99 +347,4 @@ void L1IncoherentController::printData(vector<uint8_t> * data, bool set) {
     printf("\n"); */
 }
 
-
-/*
- *  Print stats
- */
-void L1IncoherentController::printStats(int stats, vector<int> groupIds, map<int, CtrlStats> ctrlStats, uint64_t upgradeLatency, 
-        uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM,
-        uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M){
-    Output* dbg = new Output();
-    dbg->init("", 0, 0, (Output::output_location_t)stats);
-    dbg->output(CALL_INFO,"\n------------------------------------------------------------------------\n");
-    dbg->output(CALL_INFO,"--- Cache Stats\n");
-    dbg->output(CALL_INFO,"--- Name: %s\n", name_.c_str());
-    dbg->output(CALL_INFO,"--- Overall Statistics\n");
-    dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
-
-    for (unsigned int i = 0; i < groupIds.size(); i++) {
-        uint64_t totalMisses =  ctrlStats[groupIds[i]].newReqGetSMisses_ + ctrlStats[groupIds[i]].newReqGetXMisses_ + ctrlStats[groupIds[i]].newReqGetSExMisses_ +
-                                ctrlStats[groupIds[i]].blockedReqGetSMisses_ + ctrlStats[groupIds[i]].blockedReqGetXMisses_ + ctrlStats[groupIds[i]].blockedReqGetSExMisses_;
-        uint64_t totalHits =    ctrlStats[groupIds[i]].newReqGetSHits_ + ctrlStats[groupIds[i]].newReqGetXHits_ + ctrlStats[groupIds[i]].newReqGetSExHits_ +
-                                ctrlStats[groupIds[i]].blockedReqGetSHits_ + ctrlStats[groupIds[i]].blockedReqGetXHits_ + ctrlStats[groupIds[i]].blockedReqGetSExHits_;
-
-        uint64_t totalRequests = totalHits + totalMisses;
-        double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
-        
-        if(i != 0) {
-            dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
-            dbg->output(CALL_INFO,"--- Cache Stats\n");
-            dbg->output(CALL_INFO,"--- Name: %s\n", name_.c_str());
-            dbg->output(CALL_INFO,"--- Group Statistics, Group ID = %i\n", groupIds[i]);
-            dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
-        }
-        dbg->output(CALL_INFO,"- Total data requests:                           %" PRIu64 "\n", totalRequests);
-        dbg->output(CALL_INFO,"     GetS:                                       %" PRIu64 "\n", 
-                ctrlStats[groupIds[i]].newReqGetSHits_ + ctrlStats[groupIds[i]].newReqGetSMisses_ + 
-                ctrlStats[groupIds[i]].blockedReqGetSHits_ + ctrlStats[groupIds[i]].blockedReqGetSMisses_);                                  
-        dbg->output(CALL_INFO,"     GetX:                                       %" PRIu64 "\n", 
-                ctrlStats[groupIds[i]].newReqGetXHits_ + ctrlStats[groupIds[i]].newReqGetXMisses_ + 
-                ctrlStats[groupIds[i]].blockedReqGetXHits_ + ctrlStats[groupIds[i]].blockedReqGetXMisses_);                                  
-        dbg->output(CALL_INFO,"     GetSEx:                                     %" PRIu64 "\n", 
-                ctrlStats[groupIds[i]].newReqGetSExHits_ + ctrlStats[groupIds[i]].newReqGetSExMisses_ + 
-                ctrlStats[groupIds[i]].blockedReqGetSExHits_ + ctrlStats[groupIds[i]].blockedReqGetSExMisses_);                                  
-        dbg->output(CALL_INFO,"- Total misses:                                  %" PRIu64 "\n", totalMisses);
-        // Report misses at the time a request was handled -> "blocked" indicates request was blocked by another pending request before being handled
-        dbg->output(CALL_INFO,"     GetS, miss on arrival:                      %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSMisses_);
-        dbg->output(CALL_INFO,"     GetS, miss after being blocked:             %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSMisses_);
-        dbg->output(CALL_INFO,"     GetX, miss on arrival:                      %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetXMisses_);
-        dbg->output(CALL_INFO,"     GetX, miss after being blocked:             %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetXMisses_);
-        dbg->output(CALL_INFO,"     GetSEx, miss on arrival:                    %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSExMisses_);
-        dbg->output(CALL_INFO,"     GetSEx, miss after being blocked:           %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSExMisses_);
-        dbg->output(CALL_INFO,"- Total hits:                                    %" PRIu64 "\n", totalHits);
-        dbg->output(CALL_INFO,"     GetS, hit on arrival:                       %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSHits_);
-        dbg->output(CALL_INFO,"     GetS, hit after being blocked:              %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSHits_);
-        dbg->output(CALL_INFO,"     GetX, hit on arrival:                       %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetXHits_);
-        dbg->output(CALL_INFO,"     GetX, hit after being blocked:              %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetXHits_);
-        dbg->output(CALL_INFO,"     GetSEx, hit on arrival:                     %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSExHits_);
-        dbg->output(CALL_INFO,"     GetSEx, hit after being blocked:            %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSExHits_);
-        dbg->output(CALL_INFO,"- Hit ratio:                                     %.3f%%\n", hitRatio);
-        dbg->output(CALL_INFO,"- Miss ratio:                                    %.3f%%\n", 100 - hitRatio);
-        dbg->output(CALL_INFO,"------------ Coherence transitions for misses -------------\n");
-        dbg->output(CALL_INFO,"- GetS   I->S:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetS_IS);
-        dbg->output(CALL_INFO,"- GetX   I->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetX_IM);
-        dbg->output(CALL_INFO,"- GetX   S->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetX_SM);
-        dbg->output(CALL_INFO,"- GetSEx I->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetSE_IM);
-        dbg->output(CALL_INFO,"- GetSEx S->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetSE_SM);
-        dbg->output(CALL_INFO,"------------ Replacements and evictions -------------------\n");
-        dbg->output(CALL_INFO,"- PUTM sent due to [inv, evictions]:             [%" PRIu64 ", %" PRIu64 "]\n", stats_[groupIds[i]].InvalidatePUTMReqSent_, stats_[groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(CALL_INFO,"- PUTE sent due to [inv, evictions]:             [%" PRIu64 ", %" PRIu64 "]\n", stats_[groupIds[i]].InvalidatePUTEReqSent_, stats_[groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(CALL_INFO,"- PUTX sent due to [inv, evictions]:             [%" PRIu64 ", %" PRIu64 "]\n", stats_[groupIds[i]].InvalidatePUTXReqSent_, stats_[groupIds[i]].EvictionPUTEReqSent_);
-        dbg->output(CALL_INFO,"------------ Other stats ----------------------------------\n");
-        dbg->output(CALL_INFO,"- Inv stalled because LOCK held:                 %" PRIu64 "\n", ctrlStats[groupIds[i]].InvWaitingForUserLock_);
-        dbg->output(CALL_INFO,"- Requests received (incl coherence traffic):    %" PRIu64 "\n", ctrlStats[groupIds[i]].TotalRequestsReceived_);
-        dbg->output(CALL_INFO,"- Requests handled by MSHR (MSHR hits):          %" PRIu64 "\n", ctrlStats[groupIds[i]].TotalMSHRHits_);
-        dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, Down):                  %" PRIu64 "\n", stats_[groupIds[i]].NACKsSentDown_);
-        dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, Up):                    %" PRIu64 "\n", stats_[groupIds[i]].NACKsSentUp_);
-        dbg->output(CALL_INFO,"------------ Latency stats --------------------------------\n");
-        dbg->output(CALL_INFO,"- Avg Miss Latency (cyc):                        %" PRIu64 "\n", upgradeLatency);
-        if (ctrlStats[groupIds[0]].GetS_IS > 0) 
-            dbg->output(CALL_INFO,"- Latency GetS   I->S                            %" PRIu64 "\n", (lat_GetS_IS / ctrlStats[groupIds[0]].GetS_IS));
-        if (ctrlStats[groupIds[0]].GetX_IM > 0)
-            dbg->output(CALL_INFO,"- Latency GetX   I->M                            %" PRIu64 "\n", (lat_GetX_IM / ctrlStats[groupIds[0]].GetX_IM));
-        if (ctrlStats[groupIds[0]].GetX_SM > 0)
-            dbg->output(CALL_INFO,"- Latency GetX   S->M                            %" PRIu64 "\n", (lat_GetX_SM / ctrlStats[groupIds[0]].GetX_SM));
-        if (ctrlStats[groupIds[0]].GetSE_IM > 0)
-            dbg->output(CALL_INFO,"- Latency GetSEx I->M                            %" PRIu64 "\n", (lat_GetSEx_IM / ctrlStats[groupIds[0]].GetSE_IM));
-        if (ctrlStats[groupIds[0]].GetSE_SM > 0)
-            dbg->output(CALL_INFO,"- Latency GetSEx S->M                            %" PRIu64 "\n", (lat_GetSEx_SM / ctrlStats[groupIds[0]].GetSE_SM));
-    }
-    dbg->output(CALL_INFO,"------------ State and event stats ---------------------------\n");
-    for (int i = 0; i < LAST_CMD; i++) {
-        for (int j = 0; j < LAST_CMD; j++) {
-            if (stateStats_[i][j] == 0) continue;
-            dbg->output(CALL_INFO,"%s, %s:        %" PRIu64 "\n", CommandString[i], StateString[j], stateStats_[i][j]);
-        }
-    }
-}
 

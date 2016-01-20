@@ -67,7 +67,7 @@ public:
     bool insertInv(Addr baseAddr, MemEvent* event, bool inProgress);            
     bool insertWriteback(Addr keyAddr);
     
-    MemEvent* removeFront(Addr _baseAddr);                  
+    MemEvent* removeFront(Addr baseAddr);                  
     void removeElement(Addr baseAddr, MemEvent* event);     
     vector<mshrType> removeAll(Addr);                       
     void removeWriteback(Addr baseAddr);
@@ -99,8 +99,7 @@ public:
     // unimplemented or unused functions
     unsigned int getSize(){ return size_; }                 // not implemented
     void printEntry(Addr baseAddr);                         // not implemented
-    void printEntry2(vector<MemEvent*> events);             // not implemented
-    MemEvent* lookupFront(Addr _baseAddr);      
+    MemEvent* lookupFront(Addr baseAddr);      
     void removeElement(Addr baseAddr, Addr pointer);
     void insertFront(Addr baseAddr, MemEvent* event);
     void printTable();

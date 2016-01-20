@@ -171,8 +171,7 @@ private:
     /** Print input members/parameters */
     void pMembers();
     
-    /** Udpate the upgrade latency stats */
-    void updateUpgradeLatencyAverage(SimTime_t start, Addr requestAddr);
+    /** Update the latency stats */
     void recordLatency(MemEvent * event);
 
     /** Get the front element of a MSHR entry */
@@ -193,10 +192,6 @@ private:
     void intrapolateMSHRLatency();
 
     void profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall);
-    void incTotalRequestsReceived(int _groupId);
-    void incTotalMSHRHits(int _groupId);
-    void incInvalidateWaitingForUserLock(int _groupId);
-    int groupId;
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
@@ -260,7 +255,6 @@ private:
         bool LL_;
         string bottomNetwork_;
         string topNetwork_;
-        vector<int> statGroupIds_;
         bool allNoncacheableRequests_;
         SimTime_t maxWaitTime_;
         string type_;
@@ -289,7 +283,6 @@ private:
     uint64                  tagLatency_;
     uint64                  mshrLatency_;
     uint64                  timestamp_;
-    int                     statsFile_;
     int                     idleMax_;
     int                     idleCount_;
     bool                    memNICIdle_;
@@ -303,21 +296,6 @@ private:
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
-    
-    /* Profiling */
-    bool                    groupStats_;
-    map<int,CtrlStats>      stats_;
-    uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
-    uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
-    uint64                  upgradeCount_;
-    uint64                  missLatency_GetS_IS;
-    uint64                  missLatency_GetS_M;
-    uint64                  missLatency_GetX_IM;
-    uint64                  missLatency_GetX_SM;
-    uint64                  missLatency_GetX_M;
-    uint64                  missLatency_GetSEx_IM;
-    uint64                  missLatency_GetSEx_SM;
-    uint64                  missLatency_GetSEx_M;
     
     /* 
      * Statistics API stats  - 
@@ -354,6 +332,10 @@ private:
     Statistic<uint64_t>* statFetchInvX_recv;
     Statistic<uint64_t>* statInv_recv;
     Statistic<uint64_t>* statNACK_recv;
+    Statistic<uint64_t>* statTotalEventsReceived;
+    Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
+    Statistic<uint64_t>* statInvStalledByLockedLine;
+
 };
 
 /*  Implementation Details
