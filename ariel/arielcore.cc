@@ -262,6 +262,11 @@ bool ArielCore::refillQueue() {
 
         // There is data on the pipe
         switch(ac.command) {
+        case ARIEL_OUTPUT_STATS:
+            fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
+            Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
+            break;
+
         case ARIEL_START_INSTRUCTION:
 	    if(ARIEL_INST_SP_FP == ac.inst.instClass) {
 		statFPSPIns->addData(1);

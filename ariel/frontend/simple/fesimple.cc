@@ -303,6 +303,13 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp) {
     return 0;
 }
 
+void mapped_ariel_output_stats() {
+    ArielCommand ac;
+    ac.command = ARIEL_OUTPUT_STATS;
+    ac.instPtr = (uint64_t) 0;
+    tunnel->writeMessage(0, ac);
+}
+
 /*
 int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
     if (tp == NULL) { errno = EINVAL; return -1; }
@@ -519,29 +526,31 @@ VOID ariel_postfree_instrument(ADDRINT allocLocation) {
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
 
     if (RTN_Name(rtn) == "ariel_enable" || RTN_Name(rtn) == "_ariel_enable") {
-		fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
-		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
-		fprintf(stderr,"Replacement complete.\n");
-		fprintf(stderr, "Tool was called with auto-detect enable mode, setting initial output to not be traced.\n");
-		enable_output = false;
-		return;
+        fprintf(stderr,"Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
+        fprintf(stderr,"Replacement complete.\n");
+        if (StartupMode.Value() == 2) {
+            fprintf(stderr, "Tool was called with auto-detect enable mode, setting initial output to not be traced.\n");
+            enable_output = false;
+        }
+        return;
     } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday" ||
-		RTN_Name(rtn) == "__gettimeofday") {
-		fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
-		RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
-		fprintf(stderr,"Replacement complete.\n");
-		return;
+            RTN_Name(rtn) == "__gettimeofday") {
+        fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
     } else if (RTN_Name(rtn) == "ariel_cycles" || RTN_Name(rtn) == "_ariel_cycles") {
-		fprintf(stderr, "Identified routine: ariel_cycles, replacing with Ariel equivalent..\n");
-		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
-		fprintf(stderr, "Replacement complete\n");
-		return;
+        fprintf(stderr, "Identified routine: ariel_cycles, replacing with Ariel equivalent..\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
+        fprintf(stderr, "Replacement complete\n");
+        return;
     } /*else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
-		RTN_Name(rtn) == "__clock_gettime") {
-		fprintf(stderr,"Identified routine: clock_gettime, replacing with Ariel equivalent...\n");
-		RTN_Replace(rtn, (AFUNPTR) mapped_clockgettime);
-		fprintf(stderr,"Replacement complete.\n");
-		return;
+        RTN_Name(rtn) == "__clock_gettime") {
+        fprintf(stderr,"Identified routine: clock_gettime, replacing with Ariel equivalent...\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_clockgettime);
+        fprintf(stderr,"Replacement complete.\n");
+        return;
     }*/ else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
@@ -554,15 +563,15 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         fprintf(stderr, "Replacement complete.\n");
         return;
     } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_set_pool") {
-        fprintf(stderr, "Identifier routine: mlm_set_pool, replacing with Ariel equivalent...\n");
+        fprintf(stderr, "Identified routine: mlm_set_pool, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) ariel_mlm_set_pool);
         fprintf(stderr, "Replacement complete.\n");
         return;
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
-    		RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc")) {
+                RTN_Name(rtn) == "malloc" || RTN_Name(rtn) == "_malloc")) {
     		
-    	fprintf(stderr, "Identifier routine: malloc/_malloc, replacing with Ariel equivalent...\n");
-		RTN_Open(rtn);
+        fprintf(stderr, "Identified routine: malloc/_malloc, replacing with Ariel equivalent...\n");
+        RTN_Open(rtn);
 
         RTN_InsertCall(rtn, IPOINT_BEFORE,
             (AFUNPTR) ariel_premalloc_instrument,
@@ -575,11 +584,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                 IARG_END);
 
         RTN_Close(rtn);
-	} else if ((InterceptMultiLevelMemory.Value() > 0) && (
-    		RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free")) {
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && (
+                RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free")) {
     		
-		fprintf(stderr, "Identifier routine: free/_free, replacing with Ariel equivalent...\n");
-		RTN_Open(rtn);
+        fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
+        RTN_Open(rtn);
 
         RTN_InsertCall(rtn, IPOINT_BEFORE,
             (AFUNPTR) ariel_postfree_instrument,
@@ -587,7 +596,13 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
                 IARG_END);
 
         RTN_Close(rtn);
-	}
+    } else if (RTN_Name(rtn) == "ariel_output_stats" || RTN_Name(rtn) == "_ariel_output_stats") {
+        fprintf(stderr, "Identified routine: ariel_output_stats, replacing with Ariel equivalent..\n");
+        RTN_Replace(rtn, (AFUNPTR) mapped_ariel_output_stats);
+        fprintf(stderr, "Replacement complete\n");
+        return;
+    }
+
 }
 
 /* ===================================================================== */

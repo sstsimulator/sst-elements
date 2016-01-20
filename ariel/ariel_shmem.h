@@ -32,6 +32,7 @@ enum ArielShmemCmd_t {
     ARIEL_ISSUE_TLM_FREE = 100,
     ARIEL_SWITCH_POOL = 110,
     ARIEL_NOOP = 128,
+    ARIEL_OUTPUT_STATS = 140,
 };
 
 struct ArielCommand {
@@ -69,7 +70,7 @@ struct ArielSharedData {
     uint64_t simTime;
     uint64_t cycles;
     volatile uint32_t child_attached;
-    uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t)];
+    uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t) - sizeof(uint64_t)];
 };
 
 
