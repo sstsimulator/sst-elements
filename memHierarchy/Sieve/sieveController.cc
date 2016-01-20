@@ -63,12 +63,15 @@ void Sieve::processAllocEvent(SST::Event* event) {
             actAllocMap[ev->getVirtualAddress()] = ev;
         } else {
             // not sure if should be fatal, or should just replace the 'old' alloc
-            output_->fatal(CALL_INFO, -1, "Trying to add allocation event at an address with an active allocation. \n");
+#warning figure out why we get these
+	  output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), actAllocMap.size());
+	  // for now, replace the 'old' alloc
+	  actAllocMap[ev->getVirtualAddress()] = ev;
         }
     } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::FREE) {
         allocMap_t::iterator targ = actAllocMap.find(ev->getVirtualAddress());
         if (targ == actAllocMap.end()) {
-            output_->debug(_INFO_,"FREEing an address taht was never ALLOCd\n");
+            output_->debug(_INFO_,"FREEing an address that was never ALLOCd\n");
         } else {
             actAllocMap.erase(targ);
         }
