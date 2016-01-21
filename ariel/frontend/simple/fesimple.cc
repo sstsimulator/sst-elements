@@ -65,6 +65,7 @@ bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
 UINT64* lastMallocSize;
+UINT64* lastMallocLoc;
 
 UINT32 overridePool;
 bool shouldOverride;
@@ -477,14 +478,15 @@ void ariel_mlm_free(void* ptr) {
 	}
 }
 
-VOID ariel_premalloc_instrument(ADDRINT allocSize) {
+VOID ariel_premalloc_instrument(ADDRINT allocSize, ADDRINT ip) {
 		THREADID currentThread = PIN_ThreadId();
 		UINT32 thr = (UINT32) currentThread;
 
         lastMallocSize[thr] = (UINT64) allocSize;
+        lastMallocLoc[thr] = (UINT64) ip;
 }
 
-VOID ariel_postmalloc_instrument(ADDRINT allocLocation, ADDRINT ip) {
+VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
 		if(lastMallocSize >= 0) {
 				THREADID currentThread = PIN_ThreadId();
 				UINT32 thr = (UINT32) currentThread;
@@ -495,9 +497,10 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation, ADDRINT ip) {
 
     			ArielCommand ac;
                         ac.command = ARIEL_ISSUE_TLM_MAP;
-                        ac.instPtr = (uint64_t) ip;
+                        ac.instPtr = lastMallocLoc[thr];
     			ac.mlm_map.vaddr = virtualAddress;
     			ac.mlm_map.alloc_len = allocationLength;
+
 
     			if(shouldOverride) {
        				ac.mlm_map.alloc_level = overridePool;
@@ -577,12 +580,12 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_InsertCall(rtn, IPOINT_BEFORE,
             (AFUNPTR) ariel_premalloc_instrument,
                 IARG_FUNCARG_ENTRYPOINT_VALUE, 0,
+                IARG_INST_PTR, 
                 IARG_END);
 
         RTN_InsertCall(rtn, IPOINT_AFTER,
                        (AFUNPTR) ariel_postmalloc_instrument,
                        IARG_FUNCRET_EXITPOINT_VALUE,
-                       IARG_INST_PTR, 
                        IARG_END);
 
         RTN_Close(rtn);
@@ -653,9 +656,11 @@ int main(int argc, char *argv[])
 
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
+    lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
     
     for(int i = 0; i < core_count; i++) {
     	lastMallocSize[i] = (UINT64) 0;
+    	lastMallocLoc[i] = (UINT64) 0;
     }
 
 	fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
