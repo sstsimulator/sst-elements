@@ -11,6 +11,11 @@
 
 //#include <assert.h>
 
+// AARONS CHANGE #1
+
+#include "thisshouldnotwork.h"
+
+// AARONS CHANGE #4
 #include "sst_config.h"
 #include "simpleClockerComponent.h"
 
