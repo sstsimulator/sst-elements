@@ -262,6 +262,23 @@ void EmberSIRIUSTraceGenerator::readMPIWait( std::queue<EmberEvent*>& evQ ) {
 	delete emberReq;
 }
 
+void EmberSIRIUSTraceGenerator::readMPIBcast( std::queue<EmberEvent*>& evQ ) {
+	const double startTime = readTime();
+	const uint64_t buffer = readUINT64();
+	const uint32_t count = readUINT32();
+	const PayloadDatatype dType = readDataType();
+	const int32_t root = readINT32();
+	const Communicator comm = readMPIComm();
+	const double endTime = readTime();
+	const int32_t result = readINT32();
+
+	void* buffer = memAlloc( count * getTypeElementSize(dType) );
+
+	verbose(CALL_INFO, 2, 0, "Bcast: root=%" PRId32 ", count=%" PRIu32 "\n", root, count);
+
+	enQ_bcast( evQ, buffer, count, dType, root, comm );
+}
+
 void EmberSIRIUSTraceGenerator::readMPIFinalize( std::queue<EmberEvent*>& evQ ) {
 	const double startTime = readTime();
 	const double endTime   = readTime();

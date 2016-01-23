@@ -52,6 +52,7 @@ private:
 	void readMPIAllreduce( std::queue<EmberEvent*>& evQ );
 	void readMPIBarrier( std::queue<EmberEvent*>& evQ );
 	void readMPIWait( std::queue<EmberEvent*>& evQ );
+	void readMPIBcast( std::queue<EmberEvent*>& evQ );
 
 };
 
