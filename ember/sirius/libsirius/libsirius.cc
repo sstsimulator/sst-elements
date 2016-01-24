@@ -261,7 +261,13 @@ extern "C" int MPI_Send(SIRIUS_MPI_CONST void* buffer,
 	printUINT32((uint32_t) count);
 	printMPIDatatype(datatype);
 	printINT32((int32_t) dest);
-	printINT32((int32_t) tag);
+
+	if(MPI_ANY_TAG == tag) {
+		printINT32((int32_t) INT32_MAX);
+	} else {
+		printINT32((int32_t) tag);
+	}
+
 	printMPIComm(comm);
 
 	int result = PMPI_Send(buffer, count, datatype, dest, tag, comm);
@@ -280,8 +286,19 @@ extern "C" int MPI_Irecv(void *buffer, int count, MPI_Datatype datatype, int src
 	printUINT64((uint64_t) buffer);
 	printUINT32((uint32_t) count);
 	printMPIDatatype(datatype);
-	printINT32((int32_t) src);
-	printINT32((int32_t) tag);
+
+	if(MPI_ANY_SOURCE == src) {
+		printINT32(int32_t) INT32_MAX);
+	} else {
+		printINT32((int32_t) src);
+	}
+
+	if(MPI_ANY_TAG == tag) {
+		printINT32((int32_t) INT32_MAX);
+	} else {
+		printINT32((int32_t) tag);
+	}
+
 	printMPIComm(comm);
 	printUINT64((uint64_t) request);
 
@@ -303,7 +320,13 @@ extern "C" int MPI_Isend(SIRIUS_MPI_CONST void *buffer, int count,
 	printUINT32((uint32_t) count);
 	printMPIDatatype(datatype);
 	printINT32((int32_t) dest);
-	printINT32((int32_t) tag);
+
+	if(MPI_ANY_TAG == tag) {
+		printINT32((int32_t) INT32_MAX);
+	} else {
+		printINT32((int32_t) tag);
+	}
+
 	printMPIComm(comm);
 	printUINT64((uint64_t) request);
 
@@ -323,8 +346,19 @@ extern "C" int MPI_Recv(void* buffer, int count, MPI_Datatype datatype, int src,
 	printUINT64((uint64_t) buffer);
 	printUINT32((uint32_t) count);
 	printMPIDatatype(datatype);
-	printINT32((int32_t) src);
-	printINT32((int32_t) tag);
+
+	if(MPI_ANY_SOURCE == src) {
+		printINT32(int32_t) INT32_MAX);
+	} else {
+		printINT32((int32_t) src);
+	}
+
+	if(MPI_ANY_TAG == tag) {
+		printINT32((int32_t) INT32_MAX);
+	} else {
+		printINT32((int32_t) tag);
+	}
+
 	printMPIComm(comm);
 
 	int result = PMPI_Recv(buffer, count, datatype, src, tag, comm, status);
