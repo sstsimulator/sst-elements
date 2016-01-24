@@ -69,11 +69,29 @@ bool EmberSIRIUSTraceGenerator::generate( std::queue<EmberEvent*>& evQ)
 	case SIRIUS_MPI_RECV:
 		readMPIRecv(evQ);
 		break;
-	case SIRIUS_MPI_BARRIER:
-		break;
 	case SIRIUS_MPI_ALLREDUCE:
+		readMPIAllreduce(evQ);
+		break;
+	case SIRIUS_MPI_REDUCE:
+		readMPIReduce(evQ);
 		break;
 	case SIRIUS_MPI_WAIT:
+		readMPIWait(evQ);
+		break;
+	case SIRIUS_MPI_WAITALL:
+		readMPIWaitall(evQ);
+		break;
+	case SIRIUS_MPI_BARRIER:
+		readMPIBarrier(evQ);
+		break;
+	case SIRIUS_MPI_BCAST:
+		readMPIBcast(evQ);
+		break;
+	case SIRIUS_MPI_COMM_SPLIT:
+		readMPICommSplit(evQ);
+		break;
+	case SIRIUS_MPI_COMM_DISCONNECT:
+		readMPICommDisconnect(evQ);
 		break;
 	case SIRIUS_MPI_FINALIZE:
 		readMPIFinalize(evQ);
@@ -89,6 +107,47 @@ void EmberSIRIUSTraceGenerator::readMPIInit( std::queue<EmberEvent*>& evQ ) {
 	const int32_t result    = readINT32();
 }
 
+void EmberSIRIUSTraceGenerator::readMPICommDisconnect( std::queue<EmberEvent*>& evQ ) {
+	const double startTime = readTime();
+	const Communicator* comm = readCommunicator();
+
+	const double endTime = readTime();
+	const int32_t result = readINT32();
+
+	for(auto findComm = communicatorMap.begin(); findComm != communicatorMap.end(); findComm++) {
+		if(comm == findComm->second) {
+			communicatorMap.erase(findComm);
+			break;
+		}
+	}
+
+	verbose(CALL_INFO, 4, 0, "Enqueue comm disconnect\n");
+
+	enQ_commDestroy( evQ, *comm );
+}
+
+void EmberSIRIUSTraceGenerator::readMPICommSplit( std::queue<EmberEvent*>& evQ ) {
+	const double startTime = readTime();
+	const Communicator* comm = readCommunicator();
+	const int32_t color = readINT32();
+	const int32_t key   = readINT32();
+	const uint32_t newCommID = readUINT32();
+	const double endTime = readTime();
+	const int32_t result = readINT32();
+
+	Communicator* newComm = NULL;
+
+	auto checkCommMapping = communicatorMap.find(newCommID);
+
+	if( checkCommMapping != communicatorMap.end() ) {
+		fatal(CALL_INFO, -1, "Error: communicator mapped to %" PRIu32 " already in comm map.\n", newCommID);
+	}
+
+	communicatorMap.insert( std::pair<uint32_t, Communicator*>(newCommID, newComm) );
+
+	enQ_commSplit(evQ, *comm, color, key, newComm );
+}
+
 void EmberSIRIUSTraceGenerator::readMPISend( std::queue<EmberEvent*>& evQ ) {
 	const double startTime = readTime();
 	const uint64_t readBuffer = readUINT64();
@@ -96,7 +155,7 @@ void EmberSIRIUSTraceGenerator::readMPISend( std::queue<EmberEvent*>& evQ ) {
 	const PayloadDataType dType = readDataType();
 	const int32_t dest = readINT32();
 	const int32_t tag = readINT32();
-	const Communicator comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
@@ -105,7 +164,7 @@ void EmberSIRIUSTraceGenerator::readMPISend( std::queue<EmberEvent*>& evQ ) {
 
 	void* sendBuffer = memAlloc( count * getTypeElementSize(dType) );
 
-	enQ_send( evQ, sendBuffer, count, dType, dest, tag, comm );
+	enQ_send( evQ, sendBuffer, count, dType, dest, tag, *comm );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIIsend( std::queue<EmberEvent*>& evQ ) {
@@ -115,7 +174,7 @@ void EmberSIRIUSTraceGenerator::readMPIIsend( std::queue<EmberEvent*>& evQ ) {
 	const PayloadDataType dType = readDataType();
 	const int32_t dest = readINT32();
 	const int32_t tag  = readINT32();
-	const Communicator comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 	const uint64_t req = readUINT64();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
@@ -134,7 +193,7 @@ void EmberSIRIUSTraceGenerator::readMPIIsend( std::queue<EmberEvent*>& evQ ) {
         liveRequests.insert( std::pair<uint64_t, MessageRequest*>(req, emberReq) );
 
 	void* sendBuffer = memAlloc( count * getTypeElementSize(dType) );
-	enQ_isend( evQ, sendBuffer, count, dType, dest, tag, comm, emberReq );
+	enQ_isend( evQ, sendBuffer, count, dType, dest, tag, *comm, emberReq );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIRecv( std::queue<EmberEvent*>& evQ ) {
@@ -144,7 +203,7 @@ void EmberSIRIUSTraceGenerator::readMPIRecv( std::queue<EmberEvent*>& evQ ) {
 	const PayloadDataType dType = readDataType();
 	const int32_t src = readINT32();
 	const int32_t tag = readINT32();
-	const Communicator comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 	MessageResponse* msgResp = new MessageResponse();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
@@ -153,18 +212,18 @@ void EmberSIRIUSTraceGenerator::readMPIRecv( std::queue<EmberEvent*>& evQ ) {
 		src, tag, count);
 
 	void* recvBuffer = memAlloc( count * getTypeElementSize(dType) );
-	enQ_recv( evQ, recvBuffer, count, dType, src, tag, comm, msgResp );
+	enQ_recv( evQ, recvBuffer, count, dType, src, tag, *comm, msgResp );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIBarrier( std::queue<EmberEvent*>& evQ ) {
 	const double startTime = readTime();
-	const Communicator comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
 	verbose(CALL_INFO, 2, 0, "Barrier\n");
 
-	enQ_barrier( evQ, comm );
+	enQ_barrier( evQ, *comm );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIReduce( std::queue<EmberEvent*>& evQ ) {
@@ -175,7 +234,7 @@ void EmberSIRIUSTraceGenerator::readMPIReduce( std::queue<EmberEvent*>& evQ ) {
 	const PayloadDataType dType = readDataType();
 	const ReductionOperation opType = readReductionOp();
 	const int32_t root = readINT32();
-	const Communicator& comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 
 	const double endTime = readTime();
 	const int32_t result = readINT32();
@@ -185,7 +244,7 @@ void EmberSIRIUSTraceGenerator::readMPIReduce( std::queue<EmberEvent*>& evQ ) {
 
 	verbose(CALL_INFO, 2, 0, "Reduce count=%" PRIu32 ", root=%" PRId32 "\n", count, root);
 
-	enQ_reduce( evQ, allocLocalBuffer, allocRecvBuffer, count, dType, opType, root, comm );
+	enQ_reduce( evQ, allocLocalBuffer, allocRecvBuffer, count, dType, opType, root, *comm );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIAllreduce( std::queue<EmberEvent*>& evQ ) {
@@ -195,7 +254,7 @@ void EmberSIRIUSTraceGenerator::readMPIAllreduce( std::queue<EmberEvent*>& evQ )
 	const uint32_t count = readUINT32();
 	const PayloadDataType dType = readDataType();
 	const ReductionOperation opType = readReductionOp();
-	const Communicator& comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 
 	const double endTime = readTime();
 	const int32_t result = readINT32();
@@ -205,7 +264,7 @@ void EmberSIRIUSTraceGenerator::readMPIAllreduce( std::queue<EmberEvent*>& evQ )
 
 	verbose(CALL_INFO, 2, 0, "Allreduce count=%" PRIu32 "\n", count);
 
-	enQ_allreduce( evQ, allocLocalBuffer, allocRecvBuffer, count, dType, opType, comm );
+	enQ_allreduce( evQ, allocLocalBuffer, allocRecvBuffer, count, dType, opType, *comm );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
@@ -215,7 +274,7 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 	const PayloadDataType dType = readDataType();
 	const int32_t src     = readINT32();
 	const int32_t tag     = readINT32();
-	const Communicator comm = readCommunicator();
+	const Communicator* comm = readCommunicator();
 	const uint64_t req    = readUINT64();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
@@ -232,7 +291,34 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 
 	// Add into the map, keep for a WAIT call
 	liveRequests.insert( std::pair<uint64_t, MessageRequest*>(req, emberReq) );
-	enQ_irecv( evQ, allocBuffer, count, dType, src, tag, comm, emberReq );
+	enQ_irecv( evQ, allocBuffer, count, dType, src, tag, *comm, emberReq );
+}
+
+void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
+	const double startTime = readTime();
+	const uint32_t reqCount = readUINT32();
+
+	uint64_t* reqAddr = (uint64_t*) malloc(sizeof(uint64_t) * reqCount);
+	for(uint32_t i = 0 ; i < reqCount; i++) {
+		reqAddr[i] = readUINT64();
+	}
+
+	const double endTime = readTime();
+	const int32_t result = readINT32();
+
+	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest*) * reqCount );
+	for(uint32_t i = 0; i < reqCount; i++) {
+		auto findReq = liveRequests.find(reqAddr[i]);
+
+		if( findReq == liveRequests.end() ) {
+			fatal(CALL_INFO, -1, "Error: unable to find request at address: %" PRIu64 "\n", reqAddr[i]);
+		} else {
+			reqs[i] = *(findReq->second);
+		}
+	}
+
+	verbose(CALL_INFO, 2, 0, "Waitall, count=%" PRIu32 "\n", reqCount);
+	enQ_waitall( evQ, reqCount, reqs, NULL );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIWait( std::queue<EmberEvent*>& evQ ) {
@@ -266,17 +352,17 @@ void EmberSIRIUSTraceGenerator::readMPIBcast( std::queue<EmberEvent*>& evQ ) {
 	const double startTime = readTime();
 	const uint64_t buffer = readUINT64();
 	const uint32_t count = readUINT32();
-	const PayloadDatatype dType = readDataType();
+	const PayloadDataType dType = readDataType();
 	const int32_t root = readINT32();
-	const Communicator comm = readMPIComm();
+	const Communicator* comm = readCommunicator();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
-	void* buffer = memAlloc( count * getTypeElementSize(dType) );
+	void* realBuffer = memAlloc( count * getTypeElementSize(dType) );
 
 	verbose(CALL_INFO, 2, 0, "Bcast: root=%" PRId32 ", count=%" PRIu32 "\n", root, count);
 
-	enQ_bcast( evQ, buffer, count, dType, root, comm );
+	enQ_bcast( evQ, realBuffer, count, dType, root, *comm );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIFinalize( std::queue<EmberEvent*>& evQ ) {
@@ -336,7 +422,7 @@ int32_t EmberSIRIUSTraceGenerator::readINT32() const {
 	return tmp;
 }
 
-Communicator EmberSIRIUSTraceGenerator::readCommunicator() const {
+const Communicator* EmberSIRIUSTraceGenerator::readCommunicator() const {
 	uint32_t comm;
 
 	size_t readLen = fread(&comm, sizeof(comm), 1, trace_file);
@@ -346,7 +432,7 @@ Communicator EmberSIRIUSTraceGenerator::readCommunicator() const {
         }
 
 	if( 0 == comm ) {
-		return GroupWorld;
+		return &GroupWorld;
 	} else {
 		auto findComm = communicatorMap.find(comm);
 
