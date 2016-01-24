@@ -36,6 +36,8 @@ EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::Component* owner,
 		}
 	}
 
+	currentTraceTime = 0;
+
 	// Start by reading in the MPI_init event
 	const uint32_t sirius_init = readUINT32();
 	if(sirius_init != SIRIUS_MPI_INIT) {
@@ -52,22 +54,35 @@ EmberSIRIUSTraceGenerator::~EmberSIRIUSTraceGenerator() {
 	}
 }
 
+void EmberSIRIUSTraceGenerator::enqueueCompute( std::queue<EmberEvent*>& evQ,
+		const double nextStartTime,
+		const double nextEndTime) {
+
+	const double currentDiffTime = nextStartTime - currentTraceTime;
+
+	if(currentDiffTime > 0) {
+		enQ_compute( evQ, (currentDiffTime * 1.0e9 ) );
+	}
+
+	currentTraceTime = std::max(currentTraceTime, nextEndTime);
+}
+
 bool EmberSIRIUSTraceGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
 	const uint32_t sirius_func_type = readUINT32();
 
 	switch(sirius_func_type) {
-	case SIRIUS_MPI_ISEND:
-		readMPIIsend(evQ);
-		break;
 	case SIRIUS_MPI_SEND:
 		readMPISend(evQ);
 		break;
-	case SIRIUS_MPI_IRECV:
-		readMPIIrecv(evQ);
+	case SIRIUS_MPI_ISEND:
+		readMPIIsend(evQ);
 		break;
 	case SIRIUS_MPI_RECV:
 		readMPIRecv(evQ);
+		break;
+	case SIRIUS_MPI_IRECV:
+		readMPIIrecv(evQ);
 		break;
 	case SIRIUS_MPI_ALLREDUCE:
 		readMPIAllreduce(evQ);
@@ -101,10 +116,22 @@ bool EmberSIRIUSTraceGenerator::generate( std::queue<EmberEvent*>& evQ)
     	return false;
 }
 
+int32_t EmberSIRIUSTraceGenerator::readTag() const {
+	const int32_t tag = readINT32();
+
+	if(INT32_MAX == tag) {
+		return AnyTag;
+	} else {
+		return tag;
+	}
+}
+
 void EmberSIRIUSTraceGenerator::readMPIInit( std::queue<EmberEvent*>& evQ ) {
 	const double startTime  = readTime();
 	const double startTime2 = readTime();
 	const int32_t result    = readINT32();
+
+	currentTraceTime = startTime2;
 }
 
 void EmberSIRIUSTraceGenerator::readMPICommDisconnect( std::queue<EmberEvent*>& evQ ) {
@@ -123,6 +150,7 @@ void EmberSIRIUSTraceGenerator::readMPICommDisconnect( std::queue<EmberEvent*>& 
 
 	verbose(CALL_INFO, 4, 0, "Enqueue comm disconnect\n");
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_commDestroy( evQ, *comm );
 }
 
@@ -145,6 +173,7 @@ void EmberSIRIUSTraceGenerator::readMPICommSplit( std::queue<EmberEvent*>& evQ )
 
 	communicatorMap.insert( std::pair<uint32_t, Communicator*>(newCommID, newComm) );
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_commSplit(evQ, *comm, color, key, newComm );
 }
 
@@ -154,7 +183,7 @@ void EmberSIRIUSTraceGenerator::readMPISend( std::queue<EmberEvent*>& evQ ) {
 	const uint32_t count = readUINT32();
 	const PayloadDataType dType = readDataType();
 	const int32_t dest = readINT32();
-	const int32_t tag = readINT32();
+	const int32_t tag = readTag();
 	const Communicator* comm = readCommunicator();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
@@ -164,6 +193,7 @@ void EmberSIRIUSTraceGenerator::readMPISend( std::queue<EmberEvent*>& evQ ) {
 
 	void* sendBuffer = memAlloc( count * getTypeElementSize(dType) );
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_send( evQ, sendBuffer, count, dType, dest, tag, *comm );
 }
 
@@ -173,7 +203,7 @@ void EmberSIRIUSTraceGenerator::readMPIIsend( std::queue<EmberEvent*>& evQ ) {
 	const uint32_t count   = readUINT32();
 	const PayloadDataType dType = readDataType();
 	const int32_t dest = readINT32();
-	const int32_t tag  = readINT32();
+	const int32_t tag  = readTag();
 	const Communicator* comm = readCommunicator();
 	const uint64_t req = readUINT64();
 	const double endTime = readTime();
@@ -193,6 +223,8 @@ void EmberSIRIUSTraceGenerator::readMPIIsend( std::queue<EmberEvent*>& evQ ) {
         liveRequests.insert( std::pair<uint64_t, MessageRequest*>(req, emberReq) );
 
 	void* sendBuffer = memAlloc( count * getTypeElementSize(dType) );
+
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_isend( evQ, sendBuffer, count, dType, dest, tag, *comm, emberReq );
 }
 
@@ -201,8 +233,13 @@ void EmberSIRIUSTraceGenerator::readMPIRecv( std::queue<EmberEvent*>& evQ ) {
 	const uint64_t readBuffer = readUINT64();
 	const uint32_t count = readUINT32();
 	const PayloadDataType dType = readDataType();
-	const int32_t src = readINT32();
-	const int32_t tag = readINT32();
+	int32_t src = readINT32();
+
+	if(INT32_MAX == src) {
+		src = AnySrc;
+	}
+
+	const int32_t tag = readTag();
 	const Communicator* comm = readCommunicator();
 	MessageResponse* msgResp = new MessageResponse();
 	const double endTime = readTime();
@@ -212,6 +249,8 @@ void EmberSIRIUSTraceGenerator::readMPIRecv( std::queue<EmberEvent*>& evQ ) {
 		src, tag, count);
 
 	void* recvBuffer = memAlloc( count * getTypeElementSize(dType) );
+
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_recv( evQ, recvBuffer, count, dType, src, tag, *comm, msgResp );
 }
 
@@ -223,6 +262,7 @@ void EmberSIRIUSTraceGenerator::readMPIBarrier( std::queue<EmberEvent*>& evQ ) {
 
 	verbose(CALL_INFO, 2, 0, "Barrier\n");
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_barrier( evQ, *comm );
 }
 
@@ -244,6 +284,7 @@ void EmberSIRIUSTraceGenerator::readMPIReduce( std::queue<EmberEvent*>& evQ ) {
 
 	verbose(CALL_INFO, 2, 0, "Reduce count=%" PRIu32 ", root=%" PRId32 "\n", count, root);
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_reduce( evQ, allocLocalBuffer, allocRecvBuffer, count, dType, opType, root, *comm );
 }
 
@@ -264,6 +305,7 @@ void EmberSIRIUSTraceGenerator::readMPIAllreduce( std::queue<EmberEvent*>& evQ )
 
 	verbose(CALL_INFO, 2, 0, "Allreduce count=%" PRIu32 "\n", count);
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_allreduce( evQ, allocLocalBuffer, allocRecvBuffer, count, dType, opType, *comm );
 }
 
@@ -272,8 +314,14 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 	const uint64_t buffer = readUINT64();
 	const uint32_t count  = readUINT32();
 	const PayloadDataType dType = readDataType();
-	const int32_t src     = readINT32();
-	const int32_t tag     = readINT32();
+
+	int32_t src = readINT32();
+
+	if(INT32_MAX == src) {
+		src = AnySrc;
+	}
+
+	const int32_t tag = readTag();
 	const Communicator* comm = readCommunicator();
 	const uint64_t req    = readUINT64();
 	const double endTime = readTime();
@@ -291,6 +339,8 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 
 	// Add into the map, keep for a WAIT call
 	liveRequests.insert( std::pair<uint64_t, MessageRequest*>(req, emberReq) );
+
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_irecv( evQ, allocBuffer, count, dType, src, tag, *comm, emberReq );
 }
 
@@ -318,6 +368,8 @@ void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
 	}
 
 	verbose(CALL_INFO, 2, 0, "Waitall, count=%" PRIu32 "\n", reqCount);
+
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_waitall( evQ, reqCount, reqs, NULL );
 }
 
@@ -339,6 +391,7 @@ void EmberSIRIUSTraceGenerator::readMPIWait( std::queue<EmberEvent*>& evQ ) {
 
 	verbose(CALL_INFO, 2, 0, "Wait, request=%" PRIu64 "\n", request);
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_wait( evQ, emberReq );
 
 	// Remove the request from the map
@@ -362,6 +415,7 @@ void EmberSIRIUSTraceGenerator::readMPIBcast( std::queue<EmberEvent*>& evQ ) {
 
 	verbose(CALL_INFO, 2, 0, "Bcast: root=%" PRId32 ", count=%" PRIu32 "\n", root, count);
 
+	enqueueCompute(evQ, startTime, endTime);
 	enQ_bcast( evQ, realBuffer, count, dType, root, *comm );
 }
 

@@ -32,16 +32,21 @@ private:
 	FILE* trace_file;
 	std::unordered_map<uint32_t, Communicator*> communicatorMap;
 	std::unordered_map<uint64_t, MessageRequest*> liveRequests;
+	double currentTraceTime;
 
 	double readTime() const;
 	uint32_t readUINT32() const;
 	uint64_t readUINT64() const;
 	int32_t readINT32() const;
+	int32_t readTag() const;
 	PayloadDataType readDataType() const;
 	const Communicator* readCommunicator() const;
 	size_t getTypeElementSize(const PayloadDataType dType) const;
 	ReductionOperation readReductionOp() const;
 
+	void enqueueCompute( std::queue<EmberEvent*>& evQ,
+                const double nextStartTime,
+                const double nextEndTime);
 	void readMPISend( std::queue<EmberEvent*>& evQ );
 	void readMPIIsend( std::queue<EmberEvent*>& evQ );
 	void readMPIRecv( std::queue<EmberEvent*>& evQ );
