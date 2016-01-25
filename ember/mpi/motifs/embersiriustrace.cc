@@ -331,7 +331,7 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 	void* allocBuffer = memAlloc( count * getTypeElementSize(dType) );
 
 	auto checkReq = liveRequests.find(req);
-	if( checkReq == liveRequests.end() ) {
+	if( checkReq != liveRequests.end() ) {
 		fatal(CALL_INFO, -1, "Error: when issuing an Irecv, found an MPI_Request was already active.\n");
 	}
 
@@ -364,6 +364,7 @@ void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
 			fatal(CALL_INFO, -1, "Error: unable to find request at address: %" PRIu64 "\n", reqAddr[i]);
 		} else {
 			reqs[i] = *(findReq->second);
+			liveRequests.erase(findReq);
 		}
 	}
 
@@ -396,9 +397,6 @@ void EmberSIRIUSTraceGenerator::readMPIWait( std::queue<EmberEvent*>& evQ ) {
 
 	// Remove the request from the map
 	liveRequests.erase(reqLookup);
-
-	// Delete the request now that it has been completed
-	delete emberReq;
 }
 
 void EmberSIRIUSTraceGenerator::readMPIBcast( std::queue<EmberEvent*>& evQ ) {
@@ -514,8 +512,14 @@ PayloadDataType EmberSIRIUSTraceGenerator::readDataType() const {
 		return INT;
 	case SIRIUS_MPI_DOUBLE:
 		return DOUBLE;
+	case SIRIUS_MPI_FLOAT:
+		return FLOAT;
+	case SIRIUS_MPI_LONG:
+		return LONG;
 	case SIRIUS_MPI_CHAR:
 		return CHAR;
+	case SIRIUS_MPI_COMPLEX:
+		return COMPLEX;
 	default:
 		fatal(CALL_INFO, -1, "I/O Error reading from SIRIUS trace, unknown data type\n");
 	}
@@ -532,6 +536,12 @@ size_t EmberSIRIUSTraceGenerator::getTypeElementSize(const PayloadDataType dType
 		return 8;
 	case CHAR:
 		return 1;
+	case FLOAT:
+		return 4;
+	case LONG:
+		return 8;
+	case COMPLEX:
+		return 16;
 	default:
 		fatal(CALL_INFO, -1, "Error: unknown data type provided for conversion.\n");
 	}

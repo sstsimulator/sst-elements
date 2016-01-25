@@ -18,6 +18,10 @@
 
 #include "sirius/siriusglobals.h"
 
+#ifdef SIRIUS_BACKTRACE
+#include <execinfo.h>
+#endif
+
 int sirius_rank;
 int sirius_npes;
 double load_library;
@@ -113,10 +117,46 @@ void printMPIComm(MPI_Comm comm) {
 void printMPIDatatype(MPI_Datatype the_type) {
 	uint32_t convert = 0;
 
-	if ( the_type == MPI_INTEGER ) {
+	if ( the_type == MPI_INT ) {
 		convert = SIRIUS_MPI_INTEGER;
 	} else if ( the_type == MPI_DOUBLE ) {
 		convert = SIRIUS_MPI_DOUBLE;
+	} else if ( the_type == MPI_CHAR ) {
+		convert = SIRIUS_MPI_CHAR;
+	} else if ( the_type == MPI_LONG ) {
+		convert = SIRIUS_MPI_LONG;
+	} else if ( the_type == MPI_INTEGER ) {
+		convert = SIRIUS_MPI_INTEGER;
+	} else if ( the_type == MPI_FLOAT ) {
+		convert = SIRIUS_MPI_FLOAT;
+	} else if ( the_type == MPI_COMPLEX ) {
+		convert = SIRIUS_MPI_COMPLEX;
+	} else {
+#ifdef SIRIUS_STRICT_DATATYPE
+		fprintf(stderr, "Unknown data type\n");
+
+#ifdef SIRIUS_BACKTRACE
+		const int N = 100;
+		void** buffer = (void**) malloc(sizeof(void*) * N);
+           	char** symbol_strings;
+
+		const int stack_items = backtrace(buffer, N);
+		symbol_strings = backtrace_symbols(buffer, stack_items);
+
+		if( NULL == symbol_strings ) {
+			fprintf(stderr, "Unable to backtrace symbols\n");
+		}
+
+		for(int i = 0; i < stack_items; i++) {
+			printf("[%d]: %s\n", i, symbol_strings[i]);
+		}
+
+		free(symbol_strings);
+#endif
+		MPI_Abort(MPI_COMM_WORLD, -1);
+#else
+		convert = SIRIUS_MPI_DOUBLE;
+#endif
 	}
 
 	printUINT32(convert);
@@ -288,7 +328,7 @@ extern "C" int MPI_Irecv(void *buffer, int count, MPI_Datatype datatype, int src
 	printMPIDatatype(datatype);
 
 	if(MPI_ANY_SOURCE == src) {
-		printINT32(int32_t) INT32_MAX);
+		printINT32((int32_t) INT32_MAX);
 	} else {
 		printINT32((int32_t) src);
 	}
@@ -348,7 +388,7 @@ extern "C" int MPI_Recv(void* buffer, int count, MPI_Datatype datatype, int src,
 	printMPIDatatype(datatype);
 
 	if(MPI_ANY_SOURCE == src) {
-		printINT32(int32_t) INT32_MAX);
+		printINT32((int32_t) INT32_MAX);
 	} else {
 		printINT32((int32_t) src);
 	}

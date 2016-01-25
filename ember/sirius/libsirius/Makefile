@@ -1,6 +1,6 @@
 
 MPICXX=mpicxx
-CXXFLAGS=-O3 -std=c++11 -I ../include -fPIC
+CXXFLAGS=-O3 -std=c++11 -I ../include -fPIC -DSIRIUS_BACKTRACE
 SHARED=-shared
 
 all: libsirius.so libsirius.a
