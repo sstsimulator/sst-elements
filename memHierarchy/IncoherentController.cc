@@ -304,8 +304,8 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
 void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr){
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
+    newCommandEvent->setSize(cacheLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        newCommandEvent->setSize(cacheLine->getSize());
         newCommandEvent->setPayload(*cacheLine->getData());
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) printData(cacheLine->getData(), false);
     }

@@ -289,7 +289,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
 
-        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
 
         topNetworkLink_ = NULL;
@@ -314,7 +314,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
 
-        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
         bottomNetworkLink_->addTypeInfo(typeInfo);
         
         topNetworkLink_ = NULL;
@@ -355,7 +356,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         typeInfo.interleaveStep = interleaveStep;
         typeInfo.blocksize      = cf_.lineSize_;
         
-        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
         
         topNetworkLink_ = bottomNetworkLink_;

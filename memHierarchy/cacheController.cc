@@ -102,7 +102,7 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
 
         // Forward instead of allocating for non-inclusive caches
         vector<uint8_t> * data = &event->getPayload();
-        coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), data);
+        coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), data); // Event to forward, address, requested size, data (if any)
         event->setInProgress(true);
         return;
     }

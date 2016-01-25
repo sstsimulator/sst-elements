@@ -160,7 +160,7 @@ public:
 
 private:
 
-    Output dbg;
+    Output* dbg;
     int num_vcs;
     size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
@@ -193,10 +193,10 @@ private:
     void sendNewTypeInfo(const ComponentTypeInfo &cti);
 
 public:
-    MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
+    MemNIC(Component *comp, Output* output, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
     /** Constructor to be used when loading as a module.
      */
-    MemNIC(Component *comp);
+    MemNIC(Component *comp, Params& params);
     /** To be used when loading MemNIC as a module.  Not necessary to call
      * when using the full-featured constructor
      */
