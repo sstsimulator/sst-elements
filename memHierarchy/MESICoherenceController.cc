@@ -1118,6 +1118,7 @@ void MESIController::invalidateAllSharers(CacheLine * cacheLine, string rqstr, b
         MemEvent * inv = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Inv);
         inv->setDst(*it);
         inv->setRqstr(rqstr);
+        inv->setSize(cacheLine->getSize());
     
         uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
         Response resp = {inv, deliveryTime, false};
@@ -1144,6 +1145,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
         MemEvent * inv = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Inv);
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
+        inv->setSize(cacheLine->getSize());
 
         uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
         Response resp = {inv, deliveryTime, false};
@@ -1166,6 +1168,7 @@ void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool repl
     MemEvent * fetch = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), FetchInv);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
+    fetch->setSize(cacheLine->getSize());
     
     uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
@@ -1183,7 +1186,8 @@ void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool rep
     MemEvent * fetch = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
-    
+    fetch->setSize(cacheLine->getSize());
+
     uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
     addToOutgoingQueueUp(resp);
@@ -1201,6 +1205,7 @@ void MESIController::forwardMessageUp(MemEvent* event) {
     MemEvent * forwardEvent = new MemEvent(*event);
     forwardEvent->setSrc(name_);
     forwardEvent->setDst(upperLevelCacheNames_[0]);
+    
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response fwdReq = {forwardEvent, deliveryTime, false};
     addToOutgoingQueueUp(fwdReq);
@@ -1254,8 +1259,8 @@ void MESIController::sendResponseDownFromMSHR(MemEvent * respEvent, MemEvent * r
 void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string rqstr) {
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
+    newCommandEvent->setSize(cacheLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        newCommandEvent->setSize(cacheLine->getSize());
         newCommandEvent->setPayload(*cacheLine->getData());
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) printData(cacheLine->getData(), false);
     }
@@ -1276,7 +1281,8 @@ void MESIController::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = new MemEvent((SST::Component*)owner_, event->getBaseAddr(), event->getBaseAddr(), AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
-    
+    ack->setSize(event->getSize());
+
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {ack, deliveryTime, false};
     addToOutgoingQueueUp(resp);
@@ -1291,7 +1297,8 @@ void MESIController::sendAckInv(Addr baseAddr, string origRqstr) {
     MemEvent * ack = new MemEvent((SST::Component*)owner_, baseAddr, baseAddr, AckInv);
     ack->setDst(getDestination(baseAddr));
     ack->setRqstr(origRqstr);
-    
+    ack->setSize(lineSize_); // Number of bytes invalidated
+
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {ack, deliveryTime, false};
     addToOutgoingQueue(resp);

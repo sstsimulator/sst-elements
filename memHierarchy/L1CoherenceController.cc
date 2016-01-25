@@ -531,6 +531,7 @@ void L1CoherenceController::sendResponseUp(MemEvent * event, State grantedState,
             /* If write (GetX) and LLSC set, then check if operation was Atomic */
   	    if (finishedAtomically) responseEvent->setAtomic(true);
             else responseEvent->setAtomic(false);
+            responseEvent->setSize(event->getSize()); // Return size that was written
         }
     } else {
         responseEvent->setPayload(*data);
@@ -556,8 +557,8 @@ void L1CoherenceController::sendResponseUp(MemEvent * event, State grantedState,
 void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr) {
     MemEvent* writeback = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(cacheLine->getBaseAddr()));
+    writeback->setSize(cacheLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        writeback->setSize(cacheLine->getSize());
         writeback->setPayload(*cacheLine->getData());
         //printf("Sending writeback data: ");
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) {
@@ -584,6 +585,7 @@ void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr) {
     MemEvent* ack = new MemEvent((SST::Component*)owner_, baseAddr, baseAddr, AckInv);
     ack->setDst(getDestination(baseAddr));
     ack->setRqstr(origRqstr);
+    ack->setSize(lineSize_);
     
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {ack, deliveryTime, false};

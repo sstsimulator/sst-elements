@@ -586,7 +586,7 @@ static Module* create_MemInterface(Component *comp, Params &params) {
 
 
 static Module* create_MemNIC(Component *comp, Params &params) {
-    return new MemNIC(comp);
+    return new MemNIC(comp, params);
 }
 
 

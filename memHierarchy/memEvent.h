@@ -149,7 +149,7 @@ public:
 
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
-    /** Creates a new MemEvent - Genetic */
+    /** Creates a new MemEvent - Generic */
     MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd) : SST::Event(){
         initialize(_src, _addr, _baseAddr, _cmd);
     }
@@ -353,6 +353,7 @@ public:
      * @param[in] data  Vector from which to copy data
      */
     void setPayload(std::vector<uint8_t>& _data) {
+        setSize(_data.size());
         payload_ = _data;
     }
     
@@ -366,6 +367,10 @@ public:
         for ( uint32_t i = 0 ; i < _size ; i++ ) {
             payload_[i] = _data[i];
         }
+    }
+
+    uint32_t getPayloadSize() {
+        return payload_.size();
     }
 
     /** Sets the Granted State */
@@ -473,7 +478,7 @@ private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
-    uint32_t        size_;              // Size in bytes for the request
+    uint32_t        size_;              // Size in bytes that are being requested
     uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
