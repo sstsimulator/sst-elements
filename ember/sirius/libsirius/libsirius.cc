@@ -66,19 +66,19 @@ __attribute__((destructor))  void fini_sirius() {
 
 void printTime() {
 	double dbl_now = get_time();
-	if(sirius_output) fwrite(&dbl_now, 1, sizeof(double), trace_dump);
+	fwrite(&dbl_now, 1, sizeof(double), trace_dump);
 }
 
 void printUINT32(uint32_t value) {
-	if(sirius_output) fwrite(&value, 1, sizeof(uint32_t), trace_dump);
+	fwrite(&value, 1, sizeof(uint32_t), trace_dump);
 }
 
 void printUINT64(uint64_t value) {
-	if(sirius_output) fwrite(&value, 1, sizeof(uint64_t), trace_dump);
+	fwrite(&value, 1, sizeof(uint64_t), trace_dump);
 }
 
 void printINT32(int32_t value) {
-	if(sirius_output) fwrite(&value, 1, sizeof(int32_t), trace_dump);
+	fwrite(&value, 1, sizeof(int32_t), trace_dump);
 }
 
 void printMPIOp(MPI_Op op) {
@@ -169,8 +169,20 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 	PMPI_Comm_rank(MPI_COMM_WORLD, &sirius_rank);
 	PMPI_Comm_size(MPI_COMM_WORLD, &sirius_npes);
 
-	// Start with SIRIUS enabled.
-	sirius_output = 1;
+	// Start with SIRIUS enabled?
+	char* checkSiriusEnv = getenv("SIRIUS_ENABLE_PROFILING");
+
+	if(NULL == checkSiriusEnv) {
+		sirius_output = 1;
+	} else {
+		sirius_output = atoi(checkSiriusEnv);
+
+		if(0 == sirius_output) {
+			if(0 == sirius_rank) {
+				printf("SIRIUS: Profiling disabled by environment variable (SIRIUS_ENABLE_PROFILING)\n");
+			}
+		}
+	}
 
 //	printf("MPI_INIT CALLED\n");
 
@@ -204,62 +216,69 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 		printf("SIRIUS: MPI Profiling Enabled\n");
 		printf("SIRIUS: =============================================================\n");
 	}
-	
+
 	commPtrMap.insert( std::pair<MPI_Comm, uint32_t>(MPI_COMM_WORLD, 0) );
 	commPtrMap.insert( std::pair<MPI_Comm, uint32_t>(MPI_COMM_SELF,  1) );
 
 	printTime();
 	printINT32((int32_t) result);
-	
+
 	return result;
 }
 
 extern "C" int MPI_Comm_disconnect(MPI_Comm *comm) {
-	printUINT32((uint32_t) SIRIUS_MPI_COMM_DISCONNECT);
-	printTime();
-	printMPIComm(*comm);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_COMM_DISCONNECT);
+		printTime();
+		printMPIComm(*comm);
+	}
 
-	int result = PMPI_Comm_disconnect( comm );
-	printTime();
-	printINT32((int32_t) result);
+	const int result = PMPI_Comm_disconnect( comm );
+
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
 
 extern "C" int MPI_Comm_split(MPI_Comm comm, int color, int key,
     MPI_Comm *newcomm) {
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_COMM_SPLIT);
+		printTime();
+		printMPIComm(comm);
+		printINT32((int32_t) color);
+		printINT32((int32_t) key);
+	}
 
-	printUINT32((uint32_t) SIRIUS_MPI_COMM_SPLIT);
-	printTime();
+	const int result = PMPI_Comm_split(comm, color, key, newcomm);
 
-	printMPIComm(comm);
-	printINT32((int32_t) color);
-	printINT32((int32_t) key);
+	if(sirius_output) {
+		for(uint32_t i = 2; i < UINT32_MAX; i++) {
+			bool found = false;
 
-	int result = PMPI_Comm_split(comm, color, key, newcomm);
+			for(auto commSearch = commPtrMap.cbegin(); commSearch != commPtrMap.cend();
+				commSearch++) {
 
-	for(uint32_t i = 2; i < UINT32_MAX; i++) {
-		bool found = false;
+				if(i == commSearch->second) {
+					found = true;
+					break;
+				}
+			}
 
-		for(auto commSearch = commPtrMap.cbegin(); commSearch != commPtrMap.cend();
-			commSearch++) {
+			if(! found) {
+				commPtrMap.insert( std::pair<MPI_Comm, uint32_t>(*newcomm, i) );
+				printMPIComm(*newcomm);
 
-			if(i == commSearch->second) {
-				found = true;
 				break;
 			}
 		}
 
-		if(! found) {
-			commPtrMap.insert( std::pair<MPI_Comm, uint32_t>(*newcomm, i) );
-			printMPIComm(*newcomm);
-
-			break;
-		}
+		printTime();
+		printINT32((int32_t) result);
 	}
-
-	printTime();
-	printINT32((int32_t) result);
 
 	return result;
 }
@@ -277,17 +296,25 @@ extern "C" int MPI_Finalize() {
 	printINT32((int32_t) result);
 
 	fclose(trace_dump);
-	
+
 	return result;
 }
 
 extern "C" int MPI_Pcontrol(int control, ...) {
 	if(control == 0) {
 		sirius_output = 0;
+
+		if(sirius_rank == 0) {
+			printf("SIRIUS: Disable profiling.\n");
+		}
 	} else if (control == 1) {
 		sirius_output = 1;
+
+		if(sirius_rank == 0) {
+			printf("SIRIUS: Enable profiling.\n");
+		}
 	}
-	
+
 	return MPI_SUCCESS;
 }
 
@@ -295,25 +322,29 @@ extern "C" int MPI_Send(SIRIUS_MPI_CONST void* buffer,
 	int count, MPI_Datatype datatype, int dest, int tag,
 	MPI_Comm comm) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_SEND);
-	printTime();
-	printUINT64((uint64_t) buffer);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
-	printINT32((int32_t) dest);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_SEND);
+		printTime();
+		printUINT64((uint64_t) buffer);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
+		printINT32((int32_t) dest);
 
-	if(MPI_ANY_TAG == tag) {
-		printINT32((int32_t) INT32_MAX);
-	} else {
-		printINT32((int32_t) tag);
+		if(MPI_ANY_TAG == tag) {
+			printINT32((int32_t) INT32_MAX);
+		} else {
+			printINT32((int32_t) tag);
+		}
+
+		printMPIComm(comm);
 	}
 
-	printMPIComm(comm);
+	const int result = PMPI_Send(buffer, count, datatype, dest, tag, comm);
 
-	int result = PMPI_Send(buffer, count, datatype, dest, tag, comm);
-
-	printTime();
-	printINT32((int32_t) result);
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
@@ -321,31 +352,35 @@ extern "C" int MPI_Send(SIRIUS_MPI_CONST void* buffer,
 extern "C" int MPI_Irecv(void *buffer, int count, MPI_Datatype datatype, int src,
               int tag, MPI_Comm comm, MPI_Request *request) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_IRECV);
-	printTime();
-	printUINT64((uint64_t) buffer);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_IRECV);
+		printTime();
+		printUINT64((uint64_t) buffer);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
 
-	if(MPI_ANY_SOURCE == src) {
-		printINT32((int32_t) INT32_MAX);
-	} else {
-		printINT32((int32_t) src);
+		if(MPI_ANY_SOURCE == src) {
+			printINT32((int32_t) INT32_MAX);
+		} else {
+			printINT32((int32_t) src);
+		}
+
+		if(MPI_ANY_TAG == tag) {
+			printINT32((int32_t) INT32_MAX);
+		} else {
+			printINT32((int32_t) tag);
+		}
+
+		printMPIComm(comm);
+		printUINT64((uint64_t) request);
 	}
 
-	if(MPI_ANY_TAG == tag) {
-		printINT32((int32_t) INT32_MAX);
-	} else {
-		printINT32((int32_t) tag);
+	const int result = PMPI_Irecv(buffer, count, datatype, src, tag, comm, request);
+
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
 	}
-
-	printMPIComm(comm);
-	printUINT64((uint64_t) request);
-
-	int result = PMPI_Irecv(buffer, count, datatype, src, tag, comm, request);
-
-	printTime();
-	printINT32((int32_t) result);
 
 	return result;
 }
@@ -354,26 +389,30 @@ extern "C" int MPI_Isend(SIRIUS_MPI_CONST void *buffer, int count,
 		MPI_Datatype datatype, int dest,
               	int tag, MPI_Comm comm, MPI_Request *request) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_ISEND);
-	printTime();
-	printUINT64((uint64_t) buffer);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
-	printINT32((int32_t) dest);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_ISEND);
+		printTime();
+		printUINT64((uint64_t) buffer);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
+		printINT32((int32_t) dest);
 
-	if(MPI_ANY_TAG == tag) {
-		printINT32((int32_t) INT32_MAX);
-	} else {
-		printINT32((int32_t) tag);
+		if(MPI_ANY_TAG == tag) {
+			printINT32((int32_t) INT32_MAX);
+		} else {
+			printINT32((int32_t) tag);
+		}
+
+		printMPIComm(comm);
+		printUINT64((uint64_t) request);
 	}
-
-	printMPIComm(comm);
-	printUINT64((uint64_t) request);
 
 	int result = PMPI_Isend(buffer, count, datatype, dest, tag, comm, request);
 
-	printTime();
-	printINT32((int32_t) result);
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
@@ -381,43 +420,51 @@ extern "C" int MPI_Isend(SIRIUS_MPI_CONST void *buffer, int count,
 extern "C" int MPI_Recv(void* buffer, int count, MPI_Datatype datatype, int src, int tag,
 	MPI_Comm comm, MPI_Status* status) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_RECV);
-	printTime();
-	printUINT64((uint64_t) buffer);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_RECV);
+		printTime();
+		printUINT64((uint64_t) buffer);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
 
-	if(MPI_ANY_SOURCE == src) {
-		printINT32((int32_t) INT32_MAX);
-	} else {
-		printINT32((int32_t) src);
+		if(MPI_ANY_SOURCE == src) {
+			printINT32((int32_t) INT32_MAX);
+		} else {
+			printINT32((int32_t) src);
+		}
+
+		if(MPI_ANY_TAG == tag) {
+			printINT32((int32_t) INT32_MAX);
+		} else {
+			printINT32((int32_t) tag);
+		}
+
+		printMPIComm(comm);
 	}
 
-	if(MPI_ANY_TAG == tag) {
-		printINT32((int32_t) INT32_MAX);
-	} else {
-		printINT32((int32_t) tag);
+	const int result = PMPI_Recv(buffer, count, datatype, src, tag, comm, status);
+
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
 	}
-
-	printMPIComm(comm);
-
-	int result = PMPI_Recv(buffer, count, datatype, src, tag, comm, status);
-
-	printTime();
-	printINT32((int32_t) result);
 
 	return result;
 }
 
 extern "C" int MPI_Barrier(MPI_Comm comm) {
-	printUINT32((uint32_t) SIRIUS_MPI_BARRIER);
-	printTime();
-	printMPIComm(comm);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_BARRIER);
+		printTime();
+		printMPIComm(comm);
+	}
 
-	int result = PMPI_Barrier(MPI_COMM_WORLD);
+	const int result = PMPI_Barrier(MPI_COMM_WORLD);
 
-	printTime();
-	printINT32((int32_t) result);
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
@@ -426,33 +473,42 @@ extern "C" int MPI_Allreduce(SIRIUS_MPI_CONST void* buffer, void* recv,
 		int count, MPI_Datatype datatype,
 		MPI_Op op, MPI_Comm comm) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_ALLREDUCE);
-	printTime();
-	printUINT64((uint64_t) buffer);
-	printUINT64((uint64_t) recv);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
-	printMPIOp(op);
-	printMPIComm(comm);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_ALLREDUCE);
+		printTime();
+		printUINT64((uint64_t) buffer);
+		printUINT64((uint64_t) recv);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
+		printMPIOp(op);
+		printMPIComm(comm);
+	}
 
-	int result = PMPI_Allreduce(buffer, recv, count, datatype, op, comm);
+	const int result = PMPI_Allreduce(buffer, recv, count, datatype, op, comm);
 
-	printTime();
-	printINT32((int32_t) result);
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
 
 extern "C" int MPI_Wait(MPI_Request *request, MPI_Status *status) {
-	printUINT32((uint32_t) SIRIUS_MPI_WAIT);
-	printTime();
-	printUINT64((uint64_t) request);
-	printUINT64((uint64_t) status);
 
-	int result = PMPI_Wait(request, status);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_WAIT);
+		printTime();
+		printUINT64((uint64_t) request);
+		printUINT64((uint64_t) status);
+	}
 
-	printTime();
-	printINT32((int32_t) result);
+	const int result = PMPI_Wait(request, status);
+
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
@@ -460,35 +516,44 @@ extern "C" int MPI_Wait(MPI_Request *request, MPI_Status *status) {
 extern "C" int MPI_Waitall(int count, MPI_Request array_of_requests[],
     		MPI_Status *array_of_statuses) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_WAITALL);
-	printTime();
-	printUINT32((uint32_t) count);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_WAITALL);
+		printTime();
+		printUINT32((uint32_t) count);
 
-	for(int i = 0; i < count; i++) {
-		printUINT64((uint64_t) &array_of_requests[i]);
+		for(int i = 0; i < count; i++) {
+			printUINT64((uint64_t) &array_of_requests[i]);
+		}
 	}
 
-	int result = PMPI_Waitall(count, array_of_requests, array_of_statuses);
+	const int result = PMPI_Waitall(count, array_of_requests, array_of_statuses);
 
-	printTime();
-	printINT32((int32_t) result);
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
 
 extern "C" int MPI_Bast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
-	printUINT32((uint32_t) SIRIUS_MPI_BCAST);
-	printTime();
-	printUINT64((uint64_t) buffer);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
-	printINT32((int32_t) root);
-	printMPIComm(comm);
 
-	int result = PMPI_Bcast(buffer, count, datatype, root, comm);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_BCAST);
+		printTime();
+		printUINT64((uint64_t) buffer);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
+		printINT32((int32_t) root);
+		printMPIComm(comm);
+	}
 
-	printTime();
-	printINT32((int32_t) result);
+	const int result = PMPI_Bcast(buffer, count, datatype, root, comm);
+
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
@@ -497,20 +562,24 @@ extern "C" int MPI_Reduce(SIRIUS_MPI_CONST void *sendbuf, void *recvbuf, int cou
                MPI_Datatype datatype, MPI_Op op, int root,
                MPI_Comm comm) {
 
-	printUINT32((uint32_t) SIRIUS_MPI_REDUCE);
-	printTime();
-	printUINT64((uint64_t) sendbuf);
-	printUINT64((uint64_t) recvbuf);
-	printUINT32((uint32_t) count);
-	printMPIDatatype(datatype);
-	printMPIOp(op);
-	printINT32((int32_t) root);
-	printMPIComm(comm);
+	if(sirius_output) {
+		printUINT32((uint32_t) SIRIUS_MPI_REDUCE);
+		printTime();
+		printUINT64((uint64_t) sendbuf);
+		printUINT64((uint64_t) recvbuf);
+		printUINT32((uint32_t) count);
+		printMPIDatatype(datatype);
+		printMPIOp(op);
+		printINT32((int32_t) root);
+		printMPIComm(comm);
+	}
 
-	int result = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+	const int result = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
 
-	printTime();
-	printINT32((int32_t) result);
+	if(sirius_output) {
+		printTime();
+		printINT32((int32_t) result);
+	}
 
 	return result;
 }
