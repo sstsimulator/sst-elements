@@ -108,14 +108,15 @@ public:
     virtual void sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, bool atomic=false) {
         MemEvent * responseEvent = event->makeResponse(grantedState);
         responseEvent->setDst(event->getSrc());
+        responseEvent->setSize(event->getSize());
         if (data != NULL) responseEvent->setPayload(*data);
     
         uint64_t deliveryTime = timestamp_ + (replay ? mshrLatency_ : accessLatency_);
         Response resp = {responseEvent, deliveryTime, true};
         addToOutgoingQueueUp(resp);
     
-        if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
-                deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+        if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %i, Granted State = %s\n", 
+                deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getPayloadSize(), StateString[responseEvent->getGrantedState()]);
         
     }
     
@@ -137,13 +138,13 @@ public:
   
 
     // Could make this virtual if needed
-    void forwardMessage(MemEvent * event, Addr baseAddr, unsigned int lineSize, vector<uint8_t>* data) {
+    void forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, vector<uint8_t>* data) {
         /* Create event to be forwarded */
         MemEvent* forwardEvent;
         forwardEvent = new MemEvent(*event);
         forwardEvent->setSrc(name_);
         forwardEvent->setDst(getDestination(baseAddr));
-        forwardEvent->setSize(lineSize);
+        forwardEvent->setSize(requestSize);
     
         if (data != NULL) forwardEvent->setPayload(*data);
 
@@ -180,9 +181,9 @@ public:
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
             recordEventSentDown(outgoingEvent->getCmd());
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
             }
 
             if(bottomNetworkLink_) {
@@ -199,9 +200,9 @@ public:
             MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
             recordEventSentUp(outgoingEvent->getCmd());
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
             }
 
             if (topNetworkLink_) {
