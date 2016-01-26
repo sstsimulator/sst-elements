@@ -11,7 +11,7 @@
 
 
 #include <sst_config.h>
-#include "emberSIRIUSTrace.h"
+#include "embersiriustrace.h"
 
 using namespace SST::Ember;
 
