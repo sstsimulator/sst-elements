@@ -30,7 +30,7 @@ int MemNIC::addrForDest(const std::string &target) const
 {
   std::map<std::string, int>::const_iterator addrIter = addrMap.find(target);
   if ( addrIter == addrMap.end() )
-      dbg.fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
+      dbg->fatal(CALL_INFO, -1, "Address for target %s not found in addrMap.\n", target.c_str());
   return addrIter->second;
 }
 
@@ -42,14 +42,12 @@ bool MemNIC::isValidDestination(std::string target) {
 int MemNIC::getFlitSize(MemEvent *ev)
 {
     /* addr (8B) + cmd (1B) + size */
-    return 8 + ev->getSize();
+    return 8 + ev->getPayloadSize();
 }
 
 
 void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 {
-    dbg.init("@t:MemNIC::@p():@l " + comp->getName() + ": ", 0, 0, Output::NONE); //TODO: Parameter
-
     this->ci = ci;
     this->recvHandler = handler;
 
@@ -65,14 +63,15 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
 }
 
 
-MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) :
+MemNIC::MemNIC(Component *comp, Output* output, ComponentInfo &ci, Event::HandlerBase *handler) :
     typeInfoSent(false), comp(comp)
 {
+    dbg = output;
     moduleInit(ci, handler);
 }
 
 
-MemNIC::MemNIC(Component *comp) :
+MemNIC::MemNIC(Component *comp, Params& params) :
     typeInfoSent(false), comp(comp)
 {
 }
@@ -114,7 +113,7 @@ void MemNIC::init(unsigned int phase)
             }
         }
         typeInfoSent = true;
-        dbg.debug(_L10_, "Sent init data!\n");
+        dbg->debug(_L10_, "Sent init data!\n");
     }
     // while ( SST::Event *ev = link_control->recvInitData() ) {
     while ( SimpleNetwork::Request *req = link_control->recvInitData() ) {
@@ -185,7 +184,7 @@ std::string MemNIC::findTargetDestination(Addr addr)
             i != destinations.end() ; ++i ) {
         if ( i->first.contains(addr) ) return i->second;
     }
-    dbg.fatal(CALL_INFO,-1,"MemNIC %s cannot find a target for address 0x%" PRIx64 "\n",comp->getName().c_str(),addr);
+    dbg->fatal(CALL_INFO,-1,"MemNIC %s cannot find a target for address 0x%" PRIx64 "\n",comp->getName().c_str(),addr);
     return "";
 }
 
@@ -202,7 +201,7 @@ bool MemNIC::clock(void)
             if ( sent ) {
                 if ( static_cast<MemRtrEvent*>(head->inspectPayload())->hasClientData() ) {
                     MemEvent* event = static_cast<MemEvent*>((static_cast<MemRtrEvent*>(head->inspectPayload()))->event);
-                    dbg.debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
+                    dbg->debug(_L10_, "Sent message ((%" PRIx64 ", %d) %s %" PRIx64 ") to (%" PRIu64 ") [%s]\n", event->getID().first, event->getID().second, CommandString[event->getCmd()], event->getAddr(), head->dest, event->getDst().c_str());
                 }
                 sendQueue.pop_front();
             }
@@ -270,6 +269,8 @@ void MemNIC::send(MemEvent *ev)
     req->dest = addrForDest(ev->getDst());
     req->size_in_bits = 8 * getFlitSize(ev);
     req->vn = 0;
+    dbg->debug(_L4_, "%s, memNIC send: dst: %s; bits: %d. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
+            comp->getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[ev->getCmd()], ev->getSize(), ev->getPayloadSize());
     req->givePayload(mre);
     
     sendQueue.push_back(req);

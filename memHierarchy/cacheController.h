@@ -202,6 +202,8 @@ private:
         if ( cf_.maxWaitTime_ > 0  && timestamp_%1000 == 0) {
             checkMaxWait();
         }
+        // MSHR occupancy
+        statMSHROccupancy->addData(mshr_->getSize());
         return false;
     }
     
@@ -336,6 +338,7 @@ private:
     Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
     Statistic<uint64_t>* statInvStalledByLockedLine;
 
+    Statistic<uint64_t>* statMSHROccupancy;
 };
 
 /*  Implementation Details

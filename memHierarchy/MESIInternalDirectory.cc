@@ -1292,6 +1292,7 @@ void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, 
         }
         inv->setDst(*it);
         inv->setRqstr(rqstr);
+        inv->setSize(cacheLine->getSize());
     
         uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
         Response resp = {inv, deliveryTime, false};
@@ -1324,6 +1325,7 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
         }
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
+        inv->setSize(cacheLine->getSize());
 
         uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
         Response resp = {inv, deliveryTime, false};
@@ -1344,6 +1346,7 @@ void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bo
     if (!(cacheLine->getOwner()).empty()) fetch->setDst(cacheLine->getOwner());
     else fetch->setDst(*(cacheLine->getSharers()->begin()));
     fetch->setRqstr(rqstr);
+    fetch->setSize(cacheLine->getSize());
     
     uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
@@ -1358,6 +1361,7 @@ void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, b
     MemEvent * fetch = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
+    fetch->setSize(cacheLine->getSize());
     
     uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
@@ -1436,7 +1440,8 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = new MemEvent((SST::Component*)owner_, event->getBaseAddr(), event->getBaseAddr(), AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
-    
+    ack->setSize(event->getSize());
+
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {ack, deliveryTime, false};
     addToOutgoingQueueUp(resp);
@@ -1446,8 +1451,8 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
 void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
     MemEvent * writeback = new MemEvent((SST::Component*)owner_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
+    writeback->setSize(dirLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        writeback->setSize(dirLine->getSize());
         writeback->setPayload(*(dirLine->getDataLine()->getData()));
     }
     writeback->setRqstr(rqstr);
@@ -1461,8 +1466,8 @@ void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirL
 void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
     MemEvent * writeback = new MemEvent((SST::Component*)owner_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
+    writeback->setSize(dirLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        writeback->setSize(dirLine->getSize());
         writeback->setPayload(*data);
     }
     writeback->setRqstr(rqstr);

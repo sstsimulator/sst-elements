@@ -56,10 +56,10 @@ public:
         vector<uint8_t>* getData() { return &data_; }
 
         void setData(vector<uint8_t> data, MemEvent* ev) {
-            if (ev->getSize() == size_) data_ = data;
+            if (ev->getPayloadSize() == size_) data_ = data;
             else {
                 Addr offset = ev->getAddr() - ev->getBaseAddr();
-                for(uint32_t i = 0; i < ev->getSize() ; i++ ) {
+                for(uint32_t i = 0; i < ev->getPayloadSize() ; i++ ) {
                     data_[offset + i] = ev->getPayload()[i];
                 }
             }
@@ -219,10 +219,10 @@ public:
 
         /** Setter for cache line data - write only specified bits*/
         void setData(vector<uint8_t> data, MemEvent* memEvent) {
-            if (memEvent->getSize() == size_) data_ = data;
+            if (memEvent->getPayloadSize() == size_) data_ = data;
             else {
                 Addr offset = memEvent->getAddr() - baseAddr_;
-                for(uint32_t i = 0; i < memEvent->getSize() ; i++ ) {
+                for(uint32_t i = 0; i < memEvent->getPayloadSize() ; i++ ) {
                     data_[offset + i] = memEvent->getPayload()[i];
                 }
             }
