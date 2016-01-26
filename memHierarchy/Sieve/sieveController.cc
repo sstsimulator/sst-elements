@@ -51,9 +51,10 @@ void Sieve::processAllocEvent(SST::Event* event) {
     ArielComponent::arielAllocTrackEvent* ev = (ArielComponent::arielAllocTrackEvent*)event;
 
     if (ev->getType() == ArielComponent::arielAllocTrackEvent::ALLOC) {
-        // add to the big list of all allocations
+        // add to the big map and list of all allocations
         if (allocMap.find(ev) == allocMap.end()) {
             allocMap[ev] = rwCount_t();
+	    allocList.push_back(ev);
         } else {
             output_->fatal(CALL_INFO, -1, "Trying to add allocation event which has already been added. \n");
         }
@@ -145,17 +146,19 @@ void Sieve::finish(){
     listener_->printStats(*output_);
 
     // print out all the allocations and how often they were touched
-    output_file->output(CALL_INFO, "#Printing out allocation hits (addr, IP, len, reads, writes):\n");
+    output_file->output(CALL_INFO, "#Printing out allocation hits (addr, IP, len, reads, writes, 'density'):\n");
     uint64_t tMiss = 0;
-    for(allocCountMap_t::iterator i = allocMap.begin(); 
-        i != allocMap.end(); ++i) {
-        ArielComponent::arielAllocTrackEvent *ev = i->first;
-        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 "\n", 
+    for(allocList_t::iterator i = allocList.begin(); 
+        i != allocList.end(); ++i) {
+        ArielComponent::arielAllocTrackEvent *ev = *i;
+	rwCount_t counts = allocMap[ev];
+	double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
+        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
 			    ev->getVirtualAddress(), 
 			    ev->getInstructionPointer(), 
 			    ev->getAllocateLength(),
-			    i->second.first, i->second.second);
-        tMiss = tMiss + i->second.first + i->second.second;
+			    counts.first, counts.second, density);
+        tMiss = tMiss + counts.first + counts.second;
     }
     output_file->output(CALL_INFO, "#Unassociated Misses: %" PRId64 " (%.2f%%)\n", unassociatedMisses, 
 			double(100*unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));

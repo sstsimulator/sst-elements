@@ -57,11 +57,14 @@ public:
 private:
     struct SieveConfig;
     typedef map<Addr, ArielComponent::arielAllocTrackEvent*> allocMap_t;
+    typedef list<ArielComponent::arielAllocTrackEvent*> allocList_t;
     typedef pair<uint64_t, uint64_t> rwCount_t;
     typedef map<ArielComponent::arielAllocTrackEvent*, 
                 rwCount_t > allocCountMap_t;
     /** All Allocations */
     allocCountMap_t allocMap;
+     /** All allocations in list form */
+    allocList_t allocList;
     /** Active Allocations */
     allocMap_t actAllocMap; 
     /** misses not associated with an alloc'd region */
