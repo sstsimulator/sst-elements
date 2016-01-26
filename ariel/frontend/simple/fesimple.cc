@@ -510,8 +510,8 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation) {
 
     			tunnel->writeMessage(thr, ac);
     			
-    			printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
-    				(UINT64) allocationLength);
+    			/*printf("ARIEL: Created a malloc of size: %" PRIu64 " in Ariel\n",
+			  (UINT64) allocationLength);*/
 		}
 }
 
