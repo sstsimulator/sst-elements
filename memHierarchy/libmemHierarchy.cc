@@ -132,6 +132,7 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"GetSExMiss_Blocked",  "GetSEx was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
     {"TotalEventsReceived", "Total number of events received by this cache", "events", 1},
     {"TotalEventsReplayed", "Total number of events that were initially blocked and then were replayed", "events", 1},
+    {"MSHR_occupancy",      "Number of events in MSHR each cycle", "events", 1},
     /* Coherence events - break down GetS between S/E */
     {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
     {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},
@@ -654,6 +655,7 @@ static const ElementInfoStatistic dirctrl_statistics[] = {
     {"responses_sent_NACK",             "Number of NACK responses sent to LLCs",                                            "responses",    1},
     {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSEx) responses sent to LLCs",      "responses",    1},
     {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
+    {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1},
     {NULL, NULL, NULL, 0}
 };
 

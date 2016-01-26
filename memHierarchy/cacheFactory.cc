@@ -403,6 +403,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     statFetchInvX_recv          = registerStatistic<uint64_t>("FetchInvX_recv");
     statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
+    statMSHROccupancy           = registerStatistic<uint64_t>("MSHR_occupancy");
 
     /* --------------- Coherence Controllers --------------- */
     coherenceMgr = NULL;
