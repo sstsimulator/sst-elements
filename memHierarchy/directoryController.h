@@ -45,7 +45,7 @@ class DirectoryController : public Component {
     bool DEBUG_ALL;
     Addr DEBUG_ADDR;
     struct DirEntry;
-    
+
     /* Total number of cache blocks we are responsible for */
     /* ie, sum of all caches we talk to */
     uint32_t    entrySize;
@@ -104,6 +104,7 @@ class DirectoryController : public Component {
     Statistic<uint64_t> * stat_FetchInvXSent;
     Statistic<uint64_t> * stat_GetSRespSent;
     Statistic<uint64_t> * stat_GetXRespSent;
+    Statistic<uint64_t> * stat_MSHROccupancy;
 
     /* Directory structures */
     std::list<DirEntry*>                    entryCache;
