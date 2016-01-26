@@ -62,10 +62,9 @@ void Sieve::processAllocEvent(SST::Event* event) {
         if (actAllocMap.find(ev->getVirtualAddress()) == actAllocMap.end()) {
             actAllocMap[ev->getVirtualAddress()] = ev;
         } else {
-            // not sure if should be fatal, or should just replace the 'old' alloc
-#warning figure out why we get these
+            // sometimes ariel replaces both malloc() and _malloc(), so we get two reports. Just ignore the first. 
             output_->debug(_INFO_, "Trying to add allocation event at an address (%p %" PRIx64") with an active allocation. %" PRIu64 "\n", ev, ev->getVirtualAddress(), (uint64_t)actAllocMap.size());
-	  // for now, replace the 'old' alloc
+	    // replace the 'old' alloc
 	  actAllocMap[ev->getVirtualAddress()] = ev;
         }
     } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::FREE) {
