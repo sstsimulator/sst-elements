@@ -63,6 +63,13 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
     cacheArray_ = cacheArray;
     output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
+
+    /* file output */ 
+    string outFileName  = params.find_string("output_file");
+    if (outFileName.empty()) {
+      outFileName = "sieveMallocRank.txt";
+    }
+    output_file = new Output("",0,0,SST::Output::FILE,outFileName);
     
     /* --------------- Sieve profiler - implemented as a cassini prefetcher subcomponent ---------------*/
     string listener   = params.find_string("profiler");

@@ -146,21 +146,20 @@ void Sieve::finish(){
     listener_->printStats(*output_);
 
     // print out all the allocations and how often they were touched
-#warning should switch to file output
-    printf("Printing out allocation hits (addr, IP, len, reads, writes):\n");
+    output_file->output(CALL_INFO, "#Printing out allocation hits (addr, IP, len, reads, writes):\n");
     uint64_t tMiss = 0;
     for(allocCountMap_t::iterator i = allocMap.begin(); 
         i != allocMap.end(); ++i) {
         ArielComponent::arielAllocTrackEvent *ev = i->first;
-        printf("%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 "\n", 
-               ev->getVirtualAddress(), 
-               ev->getInstructionPointer(), 
-               ev->getAllocateLength(),
-               i->second.first, i->second.second);
+        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 "\n", 
+			    ev->getVirtualAddress(), 
+			    ev->getInstructionPointer(), 
+			    ev->getAllocateLength(),
+			    i->second.first, i->second.second);
         tMiss = tMiss + i->second.first + i->second.second;
     }
-    printf("Unassociated Misses: %" PRId64 " (%.2f%%)\n", unassociatedMisses, 
-           double(100*unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));
+    output_file->output(CALL_INFO, "#Unassociated Misses: %" PRId64 " (%.2f%%)\n", unassociatedMisses, 
+			double(100*unassociatedMisses)/(double(tMiss)+double(unassociatedMisses)));
 }
 
 

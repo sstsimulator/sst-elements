@@ -85,6 +85,7 @@ private:
     
     CacheArray*         cacheArray_;
     Output*             output_;
+    Output*             output_file;
     CacheListener*      listener_;
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
