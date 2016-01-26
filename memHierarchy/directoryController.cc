@@ -53,8 +53,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     targetCount = 0;
 
     registerTimeBase("1 ns", true);
-
-
+    
     entryCacheMaxSize = (size_t)params.find_integer("entry_cache_size", 32768);
     entryCacheSize = 0;
     int addr = params.find_integer("network_address");
@@ -179,7 +178,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_NACKRespSent               = registerStatistic<uint64_t>("responses_sent_NACK");
     stat_GetSRespSent               = registerStatistic<uint64_t>("responses_sent_GetSResp");
     stat_GetXRespSent               = registerStatistic<uint64_t>("responses_sent_GetXResp");
-
+    stat_MSHROccupancy              = registerStatistic<uint64_t>("MSHR_occupancy");
 
 }
 
@@ -358,6 +357,8 @@ inline void DirectoryController::profileResponseRecv(MemEvent * event) {
  */
 bool DirectoryController::clock(SST::Cycle_t cycle){
     timestamp++;
+    stat_MSHROccupancy->addData(mshr->getSize());
+
     while (!netMsgQueue.empty() && netMsgQueue.begin()->first <= timestamp) {
         MemEvent * ev = netMsgQueue.begin()->second;
         network->send(ev);
@@ -371,6 +372,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
     network->clock();
     
+    if (!workQueue.empty()) {
+        dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
+    }
+
     while(!workQueue.empty()){
         MemEvent *event = workQueue.front();
         workQueue.erase(workQueue.begin());
@@ -382,11 +387,10 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
 void DirectoryController::processPacket(MemEvent * ev) {
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
-        dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
-        dbg.debug(_L3_, "EVENT: %s, Received: Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, id (%" PRIu64 ",%d), Time = %" PRIu64 "\n",
+        dbg.debug(_L3_, "PROCESSING EVENT (%s): Cmd = %s, BsAddr = 0x%" PRIx64 ", Src = %s, id (%" PRIu64 ",%d), Time = %" PRIu64 "\n",
                 getName().c_str(),  CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), 
                 ev->getID().first, ev->getID().second, getCurrentSimTimeNano());
-        dbg.debug(_L3_, "Info: rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
+        dbg.debug(_L4_, "Info: rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
                 ev->getRqstr().c_str(), ev->getSize(), ev->isPrefetch(), ev->getVirtualAddress(), ev->getInstructionPointer());
     }
     if(! isRequestAddressValid(ev) ) {
@@ -1264,8 +1268,8 @@ void DirectoryController::replayWaitingEvents(Addr addr) {
 
 void DirectoryController::sendEventToCaches(MemEvent *ev, uint64_t deliveryTime){
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
-        dbg.debug(_L3_, "Sending Event. Cmd = %s, BaseAddr = 0x%" PRIx64 ", Dst = %s, Size = %u\n", CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize());
-        dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), getCurrentSimTimeNano());
+        dbg.debug(_L3_, "SEND: %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ",  Dst = %s, Size = %u, Time = %" PRIu64 "\n", 
+                getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getDst().c_str(), ev->getSize(), getCurrentSimTimeNano());
     }
     netMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, ev));
 }

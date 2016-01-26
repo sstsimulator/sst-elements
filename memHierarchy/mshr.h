@@ -97,7 +97,7 @@ public:
     
 
     // unimplemented or unused functions
-    unsigned int getSize(){ return size_; }                 // not implemented
+    unsigned int getSize(){ return size_; }                 
     void printEntry(Addr baseAddr);                         // not implemented
     MemEvent* lookupFront(Addr baseAddr);      
     void removeElement(Addr baseAddr, Addr pointer);
