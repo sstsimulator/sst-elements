@@ -60,6 +60,8 @@ void MemNIC::moduleInit(ComponentInfo &ci, Event::HandlerBase *handler)
     link_control = (SimpleNetwork*)comp->loadSubComponent("merlin.linkcontrol", comp, params);
     link_control->initialize(ci.link_port, UnitAlgebra(ci.link_bandwidth), num_vcs, UnitAlgebra(ci.link_inbuf_size), UnitAlgebra(ci.link_outbuf_size));
 
+    recvNotifyHandler = new SimpleNetwork::Handler<MemNIC>(this, &MemNIC::recvNotify);
+    checkRecvQueue = true;
 }
 
 
@@ -208,15 +210,30 @@ bool MemNIC::clock(void)
         }
     }
 
-    if ( NULL != recvHandler ) {
+    if ( NULL != recvHandler && checkRecvQueue) {
         MemEvent *me = recv();
         if ( me ) {
             (*recvHandler)(me);
+        } else {
+            checkRecvQueue = false;
+            link_control->setNotifyOnReceive(recvNotifyHandler);
         }
     }
     
     return (empty == true);
 }
+
+/*  
+ *  Notify MemNIC on receiving an event
+ *  De-register recvNotify when its called (return false)
+ */
+bool MemNIC::recvNotify(int) {
+    //printf("%s Enabled recv @ %" PRIu64 "\n", comp->getName().c_str(), cycles);
+    checkRecvQueue = true;
+    return false;
+}
+
+
 
 MemEvent* MemNIC::recv(void)
 {
