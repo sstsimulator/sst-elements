@@ -123,6 +123,7 @@ libember_la_SOURCES = \
 	mpi/motifs/emberstop.cc \
 	mpi/motifs/embersiriustrace.h \
 	mpi/motifs/embersiriustrace.cc \
+	sirius/include/sirius/siriusglobals.h \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h
 
