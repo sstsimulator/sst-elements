@@ -221,7 +221,8 @@ bool MemNIC::recvNotify(int) {
     if (me) {
         dbg->debug(_L8_, "%s, memNIC recv: src: %s. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
                 comp->getName().c_str(), me->getSrc().c_str(), CommandString[me->getCmd()], me->getSize(), me->getPayloadSize());
-        (*recvHandler)(me}
+        (*recvHandler)(me);
+    }
     return true;
 }
 
