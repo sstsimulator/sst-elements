@@ -170,6 +170,7 @@ private:
     ComponentInfo ci;
     std::vector<ComponentTypeInfo> typeInfoList;
     Event::HandlerBase *recvHandler;
+    //Event::HandlerBase *parentRecvNotifyHandler;
     SST::Interfaces::SimpleNetwork *link_control;
     SST::Interfaces::SimpleNetwork::Handler<MemNIC>* recvNotifyHandler;
 
@@ -208,6 +209,9 @@ public:
         typeInfoList.push_back(cti);
         if ( typeInfoSent ) sendNewTypeInfo(cti);
     }
+
+    /* Allow parent to register a callback function so it can de-clock itself safely */
+    void registerRecvCallback(Event::HandlerBase * handler);
 
     /* Call these from their respective calls in the component */
     void setup(void);
