@@ -53,6 +53,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
+static const char * arielAlloc_port_events[] = {"ariel.arielAllocTrackEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 static Component* create_Cache(ComponentId_t id, Params& params)
@@ -337,11 +338,14 @@ static const ElementInfoParam sieve_params[] = {
     {"profiler",                "Optional, string   - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
+    {"output_file",             "Optional, string   – Name of file to output malloc information to", "sieveMallocRank.txt"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort sieve_ports[] = {
     {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
+    {"alloc_link", "Connection to the CPU's allocation/free notification", 
+     arielAlloc_port_events},
     {NULL, NULL, NULL}
 };
 
