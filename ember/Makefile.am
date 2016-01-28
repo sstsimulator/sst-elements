@@ -2,7 +2,7 @@
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
-	-Isirius/include
+	-I$(top_srcdir)/sst/elements/ember/sirius/include
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
