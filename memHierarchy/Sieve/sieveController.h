@@ -93,7 +93,15 @@ private:
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
     SST::Link* alloc_link;
- };
+
+    /* Statistics */
+    Statistic<uint64_t>* statReadHits;
+    Statistic<uint64_t>* statReadMisses;
+    Statistic<uint64_t>* statWriteHits;
+    Statistic<uint64_t>* statWriteMisses;
+
+
+};
 
 /*  Implementation Details
  

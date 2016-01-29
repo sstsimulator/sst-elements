@@ -59,7 +59,7 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
 
 
 
-    Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id), unassociatedMisses(0) {
+Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id), unassociatedMisses(0) {
     cacheArray_ = cacheArray;
     output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
@@ -89,6 +89,13 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
     // optional link for allocation / free tracking
     alloc_link = configureLink("alloc_link", "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
     configureLinks();
+
+    /* Register statistics */
+    statReadHits    = registerStatistic<uint64_t>("ReadHits");
+    statReadMisses  = registerStatistic<uint64_t>("ReadMisses");
+    statWriteHits   = registerStatistic<uint64_t>("WriteHits");
+    statWriteMisses = registerStatistic<uint64_t>("WriteMisses");
+
 }
 
 void Sieve::configureLinks() {

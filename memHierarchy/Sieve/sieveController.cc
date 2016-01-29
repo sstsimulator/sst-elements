@@ -88,12 +88,16 @@ void Sieve::processEvent(SST::Event* ev) {
     Addr baseAddr   = event->getBaseAddr();
             
     int lineIndex = cacheArray_->find(baseAddr, true);
-        
-    if (lineIndex == -1) {                                     /* Miss.  If needed, evict candidate */
+    bool miss = (lineIndex == -1) ? true : false; 
+    Addr replacementAddr = 0;
+
+    if (miss) {                                     /* Miss.  If needed, evict candidate */
         // output_->debug(_L3_,"-- Cache Miss --\n");
         CacheLine * line = cacheArray_->findReplacementCandidate(baseAddr, false);
+        replacementAddr = line->getBaseAddr();
         cacheArray_->replace(baseAddr, line->getIndex());
-        
+        line->setState(M);
+
         auto cmdT = (GetS == cmd) ? READ : WRITE;
         //std::cout << "VA: = " << event->getVirtualAddress() << "\n";
         //exit(0);
@@ -105,6 +109,21 @@ void Sieve::processEvent(SST::Event* ev) {
 
         recordMiss(event->getVirtualAddress(), (cmdT == READ));
     }
+
+    // Debug output. Ifdef this for even better performance
+    output_->debug(_L4_, "%s, Src = %s, Cmd = %s, BaseAddr = %" PRIx64 ", Addr = %" PRIx64 ", VA = %" PRIx64 ", PC = %" PRIx64 ", Size = %d: %s\n",
+            getName().c_str(), event->getSrc().c_str(), CommandString[cmd], baseAddr, event->getAddr(), event->getVirtualAddress(), event->getInstructionPointer(), event->getSize(), miss ? "MISS" : "HIT");
+    if (miss) output_->debug(_L5_, "%s, Replaced address %" PRIx64 "\n", getName().c_str(), replacementAddr);
+ 
+    /* Record statistics */
+    if (miss) {
+        if (cmd == GetS) statReadMisses->addData(1);
+        else statWriteMisses->addData(1);
+    } else {
+        if (cmd == GetS) statReadHits->addData(1);
+        else statWriteHits->addData(1);
+    }
+
         
     MemEvent * responseEvent;
     if (cmd == GetS) {
