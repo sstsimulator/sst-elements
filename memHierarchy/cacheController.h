@@ -69,7 +69,7 @@ public:
     Addr toBaseAddr(Addr addr){
         return (addr) & ~(cf_.cacheArray_->getLineSize() - 1);
     }
-    
+
 private:
     struct CacheConfig;
     
@@ -197,25 +197,33 @@ private:
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++;
-        if(cf_.bottomNetwork_ != "") memNICIdle_ = bottomNetworkLink_->clock();
-        coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
-        if ( cf_.maxWaitTime_ > 0  && timestamp_%1000 == 0) {
+        bool queuesEmpty = coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
+        
+        bool nicIdle = true;
+        if (cf_.bottomNetwork_ != "") nicIdle = bottomNetworkLink_->clock();
+        if ( checkMaxWaitInterval_ > 0 && (timestamp_ % checkMaxWaitInterval_) == 0) {
             checkMaxWait();
         }
+        
         // MSHR occupancy
         statMSHROccupancy->addData(mshr_->getSize());
-        return false;
-    }
-    
-    /** Increment idle clock count */
-    bool incIdleCount(){
-        idleCount_++;
-        if(cf_.bottomNetwork_ == "" && idleCount_ > idleMax_){
-            clockOn_ = false;
-            idleCount_ = 0;
+        
+        // Disable lower-level cache clocks if they're idle
+        if (queuesEmpty && nicIdle && clockIsOn_ && !L1_) {
+            clockIsOn_ = false;
+            lastActiveClockCycle_ = time;
+            if (!maxWaitWakeupExists_) {
+                maxWaitWakeupExists_ = true;
+                registerOneShot(maxWaitWakeupDelay_, maxWaitWakeupHandler_);
+            }
             return true;
         }
         return false;
+    }
+
+    void maxWaitWakeup() {
+        checkMaxWait();
+        maxWaitWakeupExists_ = false;
     }
 
     void checkMaxWait(void) const {
@@ -286,9 +294,6 @@ private:
     uint64                  mshrLatency_;
     uint64                  timestamp_;
     int                     idleMax_;
-    int                     idleCount_;
-    bool                    memNICIdle_;
-    int                     memNICIdleCount_;
     bool                    clockOn_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
@@ -298,7 +303,16 @@ private:
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
-    
+
+    /* Performance enhancement: turn clocks off when idle */
+    bool                    clockIsOn_;                 // Tell us whether clock is on or off
+    SimTime_t               lastActiveClockCycle_;      // Cycle we turned the clock off at - for re-syncing stats
+    SimTime_t               checkMaxWaitInterval_;      // Check for timeouts on this interval - when clock is on
+    UnitAlgebra             maxWaitWakeupDelay_;        // Set wakeup event to check timeout on this interval - when clock is off
+    bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
+    OneShot::HandlerBase*   maxWaitWakeupHandler_;      // Handler to be called by timeout wakeup
+
+
     /* 
      * Statistics API stats  - 
      * Note: these duplicate some of the existing stats that are output 

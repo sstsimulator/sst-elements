@@ -172,7 +172,11 @@ public:
     }
     
 
-    virtual void sendOutgoingCommands(SimTime_t curTime) {
+    /**
+     *  Send outgoing commands if the arey ready (according to timestamp)
+     *  @return Whether queue is empty or not
+     */
+    virtual bool sendOutgoingCommands(SimTime_t curTime) {
         // Increment timestamp
         timestamp_++;
         
@@ -212,6 +216,7 @@ public:
             }
             outgoingEventQueueUp_.pop_front();
         }
+        return (outgoingEventQueue_.empty() && outgoingEventQueueUp_.empty());
     }
     
     // Add a message to the outgoing queue down in timestamp order

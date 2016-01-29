@@ -145,8 +145,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network->addTypeInfo(typeInfo);
     }
     
-
-    registerClock(params.find_string("clock", "1GHz"), new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
+    clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
+    defaultTimeBase = registerClock(params.find_string("clock", "1GHz"), clockHandler);
+    clockOn = true;
 
     // Timestamp - aka cycle count
     timestamp = 0;
@@ -203,6 +204,16 @@ void DirectoryController::handlePacket(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
      
+    if (!clockOn) {
+        clockOn = true;
+        timestamp = reregisterClock(defaultTimeBase, clockHandler);
+        timestamp--; // reregisterClock returns next cycle clock will be enabled, set timestamp to current cycle
+        uint64_t inactiveCycles = timestamp - lastActiveClockCycle;
+        for (uint64_t i = 0; i < inactiveCycles; i++) {
+            stat_MSHROccupancy->addData(mshr->getSize());
+        }
+    }
+    
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) {
         dbg.debug(_L3_, "RECV %s \tCmd = %s, BaseAddr = 0x%" PRIx64 ", Src = %s, Time = %" PRIu64 "\n", getName().c_str(), CommandString[ev->getCmd()], ev->getBaseAddr(), ev->getSrc().c_str(), getCurrentSimTimeNano());
     }
@@ -370,8 +381,9 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         memMsgQueue.erase(memMsgQueue.begin());
     }
 
-    network->clock();
-    
+    bool netIdle = network->clock();
+    bool empty = workQueue.empty();
+
     if (!workQueue.empty()) {
         dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
     }
@@ -382,7 +394,12 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 	processPacket(event);
     }
 
-	return false;
+    if (empty && netIdle && clockOn) {
+        clockOn = false;
+        lastActiveClockCycle = timestamp;
+        return true;
+    }
+    return false;
 }
 
 void DirectoryController::processPacket(MemEvent * ev) {
@@ -959,6 +976,16 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
 
 void DirectoryController::handleMemoryResponse(SST::Event *event){
     MemEvent *ev = static_cast<MemEvent*>(event);
+    
+    if (!clockOn) {
+        clockOn = true;
+        timestamp = reregisterClock(defaultTimeBase, clockHandler);
+        timestamp--; // reregisterClock returns next cycle clock will be enabled, set timestamp to current cycle
+        uint64_t inactiveCycles = timestamp - lastActiveClockCycle;
+        for (uint64_t i = 0; i < inactiveCycles; i++) {
+            stat_MSHROccupancy->addData(mshr->getSize());
+        }
+    }
     
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr()) dbg.debug(_L3_, "\n\n----------------------------------------------------------------------------------------\n");
     

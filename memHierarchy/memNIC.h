@@ -164,12 +164,15 @@ private:
     int num_vcs;
     size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
+    bool checkRecvQueue;
 
     Component *comp;
     ComponentInfo ci;
     std::vector<ComponentTypeInfo> typeInfoList;
     Event::HandlerBase *recvHandler;
+    //Event::HandlerBase *parentRecvNotifyHandler;
     SST::Interfaces::SimpleNetwork *link_control;
+    SST::Interfaces::SimpleNetwork::Handler<MemNIC>* recvNotifyHandler;
 
     std::deque<MemRtrEvent*> initQueue;
     // std::deque<MemRtrEvent *> sendQueue;
@@ -207,6 +210,9 @@ public:
         if ( typeInfoSent ) sendNewTypeInfo(cti);
     }
 
+    /* Allow parent to register a callback function so it can de-clock itself safely */
+    void registerRecvCallback(Event::HandlerBase * handler);
+
     /* Call these from their respective calls in the component */
     void setup(void);
     void init(unsigned int phase);
@@ -225,6 +231,8 @@ public:
     // NOTE: does not clear the listing of destinations which are used for address lookups
     void clearPeerInfo(void) { peers.clear(); }
 
+    // Callback function for linkControl
+    bool recvNotify(int vn);
 };
 
 } //namespace memHierarchy
