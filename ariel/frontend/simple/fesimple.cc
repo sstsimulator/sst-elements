@@ -310,13 +310,13 @@ void mapped_ariel_output_stats() {
     tunnel->writeMessage(0, ac);
 }
 
-/*
+#if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
     if (tp == NULL) { errno = EINVAL; return -1; }
     tunnel->getTimeNs(tp);
     return 0;
 }
-*/
+#endif
 
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 #ifdef ARIEL_DEBUG
@@ -336,7 +336,7 @@ int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 	UINT32 thr = (UINT32) currentThread;
 
 	if(thr >= core_count) {
-		fprintf(stderr, "Thread ID: %lu is greater than core count.\n", thr);
+		fprintf(stderr, "Thread ID: %" PRIu32 " is greater than core count.\n", thr);
 		exit(-4);
 	}
 
@@ -534,8 +534,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
             enable_output = false;
         }
         return;
-    } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday" ||
-            RTN_Name(rtn) == "__gettimeofday") {
+    } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday") {
         fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
         fprintf(stderr,"Replacement complete.\n");
@@ -545,13 +544,15 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
         fprintf(stderr, "Replacement complete\n");
         return;
-    } /*else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
+#if ! defined(__APPLE__)
+    } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
         RTN_Name(rtn) == "__clock_gettime") {
         fprintf(stderr,"Identified routine: clock_gettime, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_clockgettime);
         fprintf(stderr,"Replacement complete.\n");
         return;
-    }*/ else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
+#endif
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
         AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mlm_malloc);
@@ -625,9 +626,10 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
 
     // Load the symbols ready for us to mangle functions.
-    PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
+    //PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
+    PIN_InitSymbols();
     PIN_AddFiniFunction(Fini, 0);
-    
+
     PIN_InitLock(&mainLock);
 
     if(SSTVerbosity.Value() > 0) {
@@ -636,13 +638,13 @@ int main(int argc, char *argv[])
             MaxInstructions.Value() <<
             " max core count: " << MaxCoreCount.Value() << std::endl;
     }
-    
+
     char* override_pool_name = getenv("ARIEL_OVERRIDE_POOL");
     if(NULL != override_pool_name) {
 		fprintf(stderr, "ARIEL-SST: Override for memory pools\n");
 		shouldOverride = true;
 		overridePool = (UINT32) atoi(getenv("ARIEL_OVERRIDE_POOL"));
-		fprintf(stderr, "ARIEL-SST: Use pool: %lu instead of application provided\n", overridePool);
+		fprintf(stderr, "ARIEL-SST: Use pool: %" PRIu32 " instead of application provided\n", overridePool);
     } else {
 		fprintf(stderr, "ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.\n");
     }
@@ -651,14 +653,14 @@ int main(int argc, char *argv[])
 
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
-    
+
     for(int i = 0; i < core_count; i++) {
     	lastMallocSize[i] = (UINT64) 0;
     }
 
 	fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
 	fflush(stdout);
-	
+
     sleep(1);
 
     default_pool = DefaultMemoryPool.Value();
