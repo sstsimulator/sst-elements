@@ -349,6 +349,15 @@ static const ElementInfoPort sieve_ports[] = {
     {NULL, NULL, NULL}
 };
 
+static const ElementInfoStatistic sieve_statistics[] = {
+    {"ReadHits",    "Number of read requests that hit in the sieve", "count", 1},
+    {"ReadMisses",  "Number of read requests that missed in the sieve", "count", 1},
+    {"WriteHits",   "Number of write requests that hit in the sieve", "count", 1},
+    {"WriteMisses", "Number of write requests that missed in the sieve", "count", 1},
+    {NULL, NULL, NULL, 0},
+};
+
+
 
 static Component* create_Bus(ComponentId_t id, Params& params)
 {
@@ -796,72 +805,73 @@ static const ElementInfoModule modules[] = {
 
 
 static const ElementInfoComponent components[] = {
-	{ "Cache",
-		"Cache Component",
-		NULL,
-        create_Cache,
-        cache_params,
-        cache_ports,
-        COMPONENT_CATEGORY_MEMORY,
-        cache_statistics
+	{   "Cache",
+	    "Cache Component",
+	    NULL,
+            create_Cache,
+            cache_params,
+            cache_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            cache_statistics
 	},
-    { "Sieve",
-		"Simple Cache Filtering Component to model LL private caches",
-		NULL,
-        create_Sieve,
-        sieve_params,
-        sieve_ports,
-        COMPONENT_CATEGORY_MEMORY
-	},
-	{ "Bus",
-		"Mem Hierarchy Bus Component",
-		NULL,
-		create_Bus,
-        bus_params,
-        bus_ports,
-        COMPONENT_CATEGORY_MEMORY
-	},
-	{"MemController",
-		"Memory Controller Component",
-		NULL,
-		create_MemController,
-        	memctrl_params,
-        	memctrl_ports,
-        	COMPONENT_CATEGORY_MEMORY,
-		memctrl_statistics
-	},
-	{"DirectoryController",
-		"Coherencey Directory Controller Component",
-		NULL,
-		create_DirectoryController,
-        dirctrl_params,
-        dirctrl_ports,
-        COMPONENT_CATEGORY_MEMORY,
-	dirctrl_statistics
+        {   "Sieve",
+	    "Simple Cache Filtering Component to model LL private caches",
+	    NULL,
+            create_Sieve,
+            sieve_params,
+            sieve_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            sieve_statistics	
         },
-	{"DMAEngine",
-		"DMA Engine Component",
-		NULL,
-		create_DMAEngine,
-        dmaengine_params,
-        dmaengine_ports,
-        COMPONENT_CATEGORY_MEMORY
+	{   "Bus",
+	    "Mem Hierarchy Bus Component",
+	    NULL,
+	    create_Bus,
+            bus_params,
+            bus_ports,
+            COMPONENT_CATEGORY_MEMORY
 	},
-	{"trivialCPU",
-		"Simple Demo CPU for testing",
-		NULL,
-		create_trivialCPU,
-        cpu_params,
-        cpu_ports,
-        COMPONENT_CATEGORY_PROCESSOR
+	{   "MemController",
+	    "Memory Controller Component",
+	    NULL,
+	    create_MemController,
+            memctrl_params,
+            memctrl_ports,
+            COMPONENT_CATEGORY_MEMORY,
+	    memctrl_statistics
 	},
-	{"streamCPU",
-		"Simple Demo STREAM CPU for testing",
-		NULL,
-		create_streamCPU,
-        cpu_params,
-        cpu_ports,
-        COMPONENT_CATEGORY_PROCESSOR
+	{   "DirectoryController",
+	    "Coherencey Directory Controller Component",
+	    NULL,
+	    create_DirectoryController,
+            dirctrl_params,
+            dirctrl_ports,
+            COMPONENT_CATEGORY_MEMORY,
+	    dirctrl_statistics
+        },
+	{   "DMAEngine",
+	    "DMA Engine Component",
+	    NULL,
+	    create_DMAEngine,
+            dmaengine_params,
+            dmaengine_ports,
+            COMPONENT_CATEGORY_MEMORY
+	},
+	{   "trivialCPU",
+	    "Simple Demo CPU for testing",
+	    NULL,
+	    create_trivialCPU,
+            cpu_params,
+            cpu_ports,
+            COMPONENT_CATEGORY_PROCESSOR
+	},
+	{   "streamCPU",
+	    "Simple Demo STREAM CPU for testing",
+	    NULL,
+	    create_streamCPU,
+            cpu_params,
+            cpu_ports,
+            COMPONENT_CATEGORY_PROCESSOR
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };
