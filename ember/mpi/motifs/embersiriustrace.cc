@@ -11,7 +11,11 @@
 
 
 #include <sst_config.h>
+
 #include "embersiriustrace.h"
+
+#include <cstdint>
+#include <climits>
 
 using namespace SST::Ember;
 
