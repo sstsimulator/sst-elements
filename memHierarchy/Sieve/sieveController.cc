@@ -75,6 +75,7 @@ void Sieve::processAllocEvent(SST::Event* event) {
         } else {
             actAllocMap.erase(targ);
         }
+        delete ev;
     } else {
         output_->fatal(CALL_INFO, -1, "Unrecognized Ariel Allocation Tracking Event Type \n");
     }
