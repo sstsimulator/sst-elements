@@ -25,6 +25,7 @@ libariel_la_SOURCES = \
 	arielnoop.cc \
 	arielallocev.h \
 	arielallocev.cc \
+	arielalloctrackev.h \
 	arielfreeev.h \
 	arielfreeev.cc \
 	ariel_inst_class.h \
