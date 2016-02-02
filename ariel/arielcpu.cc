@@ -150,6 +150,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
+    const uint32_t profileFunctions = (uint32_t) params.find_integer("profilefunctions", 0);
+
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
     uint32_t arg = 0;
@@ -189,6 +191,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%d", verbosity);
+    execute_args[arg++] = const_cast<char*>("-t");
+    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
+    sprintf(execute_args[arg-1], "%" PRIu32, profileFunctions);
     execute_args[arg++] = const_cast<char*>("-i");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 30);
     sprintf(execute_args[arg-1], "%" PRIu64, (uint64_t) 1000000000);

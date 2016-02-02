@@ -34,11 +34,12 @@
 #include <sst/elements/ariel/ariel_shmem.h>
 #include <sst/elements/ariel/ariel_inst_class.h>
 
-
-
 #undef __STDC_FORMAT_MACROS
+
 using namespace SST::ArielComponent;
 
+KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool",
+    "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
 KNOB<string> SSTNamedPipe(KNOB_MODE_WRITEONCE, "pintool",
     "p", "", "Named pipe to connect to SST simulator");
 KNOB<UINT64> MaxInstructions(KNOB_MODE_WRITEONCE, "pintool",
@@ -57,7 +58,11 @@ KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
-//PIN_LOCK pipe_lock;
+typedef struct {
+	int64_t insExecuted;
+} ArielFunctionRecord;
+
+UINT32 funcProfileLevel;
 UINT32 core_count;
 UINT32 default_pool;
 ArielTunnel *tunnel = NULL;
@@ -65,6 +70,7 @@ bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
 UINT64* lastMallocSize;
+std::map<std::string, ArielFunctionRecord*> funcProfile;
 
 UINT32 overridePool;
 bool shouldOverride;
@@ -81,6 +87,18 @@ VOID Fini(INT32 code, VOID* v)
     tunnel->writeMessage(0, ac);
 
     delete tunnel;
+
+    if(funcProfileLevel > 0) {
+    	FILE* funcProfileOutput = fopen("func.profile", "wt");
+
+    	for(std::map<std::string, ArielFunctionRecord*>::iterator funcItr = funcProfile.begin();
+    			funcItr != funcProfile.end(); funcItr++) {
+    		fprintf(funcProfileOutput, "%s %" PRId64 "\n", funcItr->first.c_str(),
+    			funcItr->second->insExecuted);
+    	}
+
+    	fclose(funcProfileOutput);
+    }
 }
 
 VOID copy(void* dest, const void* input, UINT32 length) {
@@ -188,6 +206,17 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 
 }
 
+VOID IncrementFunctionRecord(VOID* funcRecord) {
+	ArielFunctionRecord* arielFuncRec = (ArielFunctionRecord*) funcRecord;
+
+	__asm__ __volatile__(
+	    "lock incq %0"
+	     : /* no output registers */
+	     : "m" (arielFuncRec->insExecuted)
+	     : "memory"
+	);
+}
+
 VOID InstrumentInstruction(INS ins, VOID *v)
 {
 	UINT32 simdOpWidth     = 1;
@@ -283,6 +312,29 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			IARG_END);
 	}
 
+	if(funcProfileLevel > 0) {
+		RTN rtn = INS_Rtn(ins);
+		std::string rtn_name = "Unknown Function";
+
+		if(RTN_Valid(rtn)) {
+			rtn_name = RTN_Name(rtn);
+		}
+
+    		std::map<std::string, ArielFunctionRecord*>::iterator checkExists =
+    			funcProfile.find(rtn_name);
+    		ArielFunctionRecord* funcRecord = NULL;
+
+    		if(checkExists == funcProfile.end()) {
+			funcRecord = new ArielFunctionRecord();
+    			funcProfile.insert( std::pair<std::string, ArielFunctionRecord*>(rtn_name,
+    				funcRecord) );
+    		} else {
+    			funcRecord = checkExists->second;
+    		}
+
+    		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) IncrementFunctionRecord,
+	    		IARG_PTR, (void*) funcRecord, IARG_END);
+	}
 }
 
 void mapped_ariel_enable() {
@@ -587,7 +639,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_Close(rtn);
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free")) {
-    		
+
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
 
@@ -637,6 +689,14 @@ int main(int argc, char *argv[])
             SSTNamedPipe.Value() << " max instruction count: " <<
             MaxInstructions.Value() <<
             " max core count: " << MaxCoreCount.Value() << std::endl;
+    }
+
+    funcProfileLevel = TrapFunctionProfile.Value();
+
+    if(funcProfileLevel > 0) {
+    	std::cout << "SSTARIEL: Function profile level is configured to: " << funcProfileLevel << std::endl;
+    } else {
+    	std::cout << "SSTARIEL: Function profiling is disabled." << std::endl;
     }
 
     char* override_pool_name = getenv("ARIEL_OVERRIDE_POOL");
