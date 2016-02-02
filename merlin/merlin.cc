@@ -26,12 +26,14 @@
 #include "test/route_test/route_test.h"
 #include "test/pt2pt/pt2pt_test.h"
 #include "test/bisection/bisection_test.h"
+#include "test/simple_patterns/shift.h"
 
 #include "topology/torus.h"
 #include "topology/mesh.h"
 #include "topology/singlerouter.h"
 #include "topology/fattree.h"
 #include "topology/dragonfly.h"
+#include "topology/dragonfly2.h"
 
 #include "hr_router/xbar_arb_rr.h"
 #include "hr_router/xbar_arb_lru.h"
@@ -174,6 +176,32 @@ static const ElementInfoParam test_nic_params[] = {
 };
 
 static const ElementInfoPort test_nic_ports[] = {
+    {"rtr",  "Port that hooks up to router.", nic_events},
+    {NULL, NULL, NULL}
+};
+
+// shift_nic element info
+static Component*
+create_shift_nic(SST::ComponentId_t id,
+		SST::Params& params)
+{
+    return new shift_nic( id, params );
+}
+
+
+static const ElementInfoParam shift_nic_params[] = {
+    {"id","Network ID of endpoint."},
+    {"num_peers","Total number of endpoints in network."},
+    {"shift","Number of logical network endpoints to shift to use as destination for packets."},
+    {"packets_to_send","Number of packets to send in the test.","10"},
+    {"packet_size","Packet size specified in either b or B (can include SI prefix).","64B"},
+    {"link_bw","Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
+    {"remap", "Creates a logical to physical mapping shifted by remap amount.", "0"},
+    // {"buffer_size","Size of input and output buffers specified in b or B (can include SI prefix)."},
+    {NULL,NULL,NULL}
+};
+
+static const ElementInfoPort shift_nic_ports[] = {
     {"rtr",  "Port that hooks up to router.", nic_events},
     {NULL, NULL, NULL}
 };
@@ -334,6 +362,24 @@ static const ElementInfoParam dragonfly_params[] = {
     {"dragonfly:intergroup_per_router","Number of links per router connected to other groups."},
     {"dragonfly:num_groups","Number of groups in network."},
     {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+    {NULL,NULL,NULL}
+};
+
+// topo dragonfly2
+static Module*
+load_dragonfly2_topology(Component* comp, Params& params)
+{
+    return new topo_dragonfly2(comp,params);
+}
+
+static const ElementInfoParam dragonfly2_params[] = {
+    {"dragonfly:hosts_per_router","Number of hosts connected to each router."},
+    {"dragonfly:routers_per_group","Number of links used to connect to routers in same group."},
+    {"dragonfly:intergroup_per_router","Number of links per router connected to other groups."},
+    {"dragonfly:intergroup_links","Number of links between each pair of groups."},
+    {"dragonfly:num_groups","Number of groups in network."},
+    {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+    {"dragonfly:global_link_map","Array specifying connectivity of global links in each dragonfly group."},
     {NULL,NULL,NULL}
 };
 
@@ -530,6 +576,15 @@ static const ElementInfoComponent components[] = {
       COMPONENT_CATEGORY_NETWORK,
       NULL
     },
+    { "shift_nic",
+      "Simple pattern NIC doing a shift pattern.",
+      NULL,
+      create_shift_nic,
+      shift_nic_params,
+      shift_nic_ports,
+      COMPONENT_CATEGORY_NETWORK,
+      NULL
+    },
     { "route_test",
       "Simple NIC to test routing.",
       NULL,
@@ -590,6 +645,14 @@ static const ElementInfoModule modules[] = {
       NULL,
       load_dragonfly_topology,
       dragonfly_params,
+      "SST::Merlin::Topology"
+    },
+    { "dragonfly2",
+      "Dragonfly2 topology object",
+      NULL,
+      NULL,
+      load_dragonfly2_topology,
+      dragonfly2_params,
       "SST::Merlin::Topology"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }

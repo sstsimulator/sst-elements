@@ -26,6 +26,8 @@ libmerlin_la_SOURCES = \
 	test/pt2pt/pt2pt_test.cc \
 	test/bisection/bisection_test.h \
 	test/bisection/bisection_test.cc \
+	test/simple_patterns/shift.h \
+	test/simple_patterns/shift.cc \
 	topology/torus.h \
 	topology/torus.cc \
 	topology/mesh.h \
@@ -34,6 +36,8 @@ libmerlin_la_SOURCES = \
 	topology/fattree.cc \
 	topology/dragonfly.h \
 	topology/dragonfly.cc \
+	topology/dragonfly2.h \
+	topology/dragonfly2.cc \
 	topology/singlerouter.h \
 	topology/singlerouter.cc \
 	hr_router/hr_router.h \
