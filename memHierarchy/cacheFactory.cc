@@ -267,6 +267,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
 
+    clockIsOn_ = true;
     /* ---------------- Memory NICs --------------- */
     if (cf_.bottomNetwork_ == "directory" && cf_.topNetwork_ == "") { // cache with a dir below, direct connection to cache above
         if (!isPortConnected("directory")) {
@@ -368,12 +369,22 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     /* ------------- Member variables intialization ------------- */
     configureLinks();
     clockOn_                = true;
-    idleCount_              = 0;
-    memNICIdleCount_        = 0;
-    memNICIdle_             = false;
     timestamp_              = 0;
-
-
+    // Figure out interval to check max wait time and associated delay for one shot if we're asleep
+    checkMaxWaitInterval_   = cf_.maxWaitTime_ / 4;
+    // Doubtful that this corner case will occur but just in case...
+    if (cf_.maxWaitTime_ > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = cf_.maxWaitTime_;
+    if (cf_.maxWaitTime_ > 0) {
+        ostringstream oss;
+        oss << checkMaxWaitInterval_;
+        string interval = oss.str();
+        maxWaitWakeupDelay_ = UnitAlgebra(interval) / UnitAlgebra(cf_.cacheFrequency_); 
+        maxWaitWakeupHandler_ = new OneShot::Handler<Cache>(this, &Cache::maxWaitWakeup);
+        maxWaitWakeupExists_ = false;
+    } else {
+        maxWaitWakeupExists_ = true;
+    }
+    
     /* Register statistics */
     statTotalEventsReceived     = registerStatistic<uint64_t>("TotalEventsReceived");
     statTotalEventsReplayed     = registerStatistic<uint64_t>("TotalEventsReplayed");
@@ -438,7 +449,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
 void Cache::configureLinks() {
     int highNetCount = 0;
     bool lowNetExists = false;
-
+    
     if (cf_.bottomNetwork_ == "") {
         for(uint id = 0 ; id < 200; id++) {
             string linkName = "low_network_" + boost::lexical_cast<std::string>(id);

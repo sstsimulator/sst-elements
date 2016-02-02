@@ -27,6 +27,7 @@
 #include "../replacementManager.h"
 #include "../util.h"
 #include "../cacheListener.h"
+#include "../../ariel/arielalloctrackev.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -55,22 +56,52 @@ public:
     
 private:
     struct SieveConfig;
+    typedef map<Addr, ArielComponent::arielAllocTrackEvent*> allocMap_t;
+    typedef list<ArielComponent::arielAllocTrackEvent*> allocList_t;
+    typedef pair<uint64_t, uint64_t> rwCount_t;
+    typedef map<ArielComponent::arielAllocTrackEvent*, 
+                rwCount_t > allocCountMap_t;
+    /** All Allocations */
+    allocCountMap_t allocMap;
+     /** All allocations in list form */
+    allocList_t allocList;
+    /** Active Allocations */
+    allocMap_t actAllocMap; 
+    /** misses not associated with an alloc'd region */
+    uint64_t unassociatedMisses;
+
+    void recordMiss(Addr addr, bool isRead);
     
     /** Constructor for Sieve Component */
     Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output);
     
+    /** Destructor for Sieve Component */
+    ~Sieve();
+
     /** Function to find and configure links */
     void configureLinks();
 
     /** Handler for incoming link events.  */
     void processEvent(SST::Event* event);
+    /** Handler for incoming allocation events.  */
+    void processAllocEvent(SST::Event* event);
     
     CacheArray*         cacheArray_;
     Output*             output_;
+    Output*             output_file;
     CacheListener*      listener_;
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
- };
+    SST::Link* alloc_link;
+
+    /* Statistics */
+    Statistic<uint64_t>* statReadHits;
+    Statistic<uint64_t>* statReadMisses;
+    Statistic<uint64_t>* statWriteHits;
+    Statistic<uint64_t>* statWriteMisses;
+
+
+};
 
 /*  Implementation Details
  

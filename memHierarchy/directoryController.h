@@ -74,6 +74,12 @@ class DirectoryController : public Component {
     uint64_t    accessLatency;
     uint64_t    mshrLatency;
 
+    /* Turn clocks off when idle */
+    bool        clockOn;
+    Clock::Handler<DirectoryController>*  clockHandler;
+    TimeConverter* defaultTimeBase;
+    SimTime_t   lastActiveClockCycle;
+
     /* Statistics counters for profiling DC */
     Statistic<uint64_t> * stat_replacementRequestLatency;   // totalReplProcessTime
     Statistic<uint64_t> * stat_getRequestLatency;           // totalGetReqProcessTime;

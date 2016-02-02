@@ -25,7 +25,7 @@ namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params){
+Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params) {
  
     /* --------------- Output Class --------------- */
     Output* output = new Output();
@@ -59,10 +59,17 @@ Sieve* Sieve::sieveFactory(ComponentId_t id, Params &params){
 
 
 
-Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id){
+Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output * output) : Component(id), unassociatedMisses(0) {
     cacheArray_ = cacheArray;
     output_ = output;
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
+
+    /* file output */ 
+    string outFileName  = params.find_string("output_file");
+    if (outFileName.empty()) {
+      outFileName = "sieveMallocRank.txt";
+    }
+    output_file = new Output("",0,0,SST::Output::FILE,outFileName);
     
     /* --------------- Sieve profiler - implemented as a cassini prefetcher subcomponent ---------------*/
     string listener   = params.find_string("profiler");
@@ -79,7 +86,16 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
 	  listener_ = dynamic_cast<CacheListener*>(loadSubComponent(listener, this, listenerParams));
     }
     
+    // optional link for allocation / free tracking
+    alloc_link = configureLink("alloc_link", "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
     configureLinks();
+
+    /* Register statistics */
+    statReadHits    = registerStatistic<uint64_t>("ReadHits");
+    statReadMisses  = registerStatistic<uint64_t>("ReadMisses");
+    statWriteHits   = registerStatistic<uint64_t>("WriteHits");
+    statWriteMisses = registerStatistic<uint64_t>("WriteMisses");
+
 }
 
 void Sieve::configureLinks() {
@@ -99,4 +115,4 @@ void Sieve::configureLinks() {
     if (cpuLinkCount_ < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports cpu_link_\%d\n");
 }
 
-}}
+    }}
