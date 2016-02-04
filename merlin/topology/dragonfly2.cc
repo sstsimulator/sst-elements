@@ -23,6 +23,30 @@
 using namespace SST::Merlin;
 
 
+
+void
+RouteToGroup::init(SharedRegion* sr, size_t g, size_t r)
+{
+    region = sr;
+    // data = static_cast<RouterPortPair*>(sr->getRawPtr());
+    groups = g;
+    routes = r;
+    
+}
+
+RouterPortPair&
+RouteToGroup::getRouterPortPair(int group, int route_number)
+{
+    data = static_cast<RouterPortPair*>(region->getRawPtr());
+    return data[group*routes + route_number];
+}
+
+void
+RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPair& pair) {
+    region->modifyArray(group*routes+route_number,pair);
+}
+
+
 /*
  * Port Layout:
  * [0, params.p)                    // Hosts 0 -> params.p
@@ -65,10 +89,11 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     // End parse array on our own
     
     // Get a shared region
-    SharedRegion* sr = Simulation::getSharedRegionManager()->getLocalSharedRegion("dragonfly:group_to_global_port",
-                                                                                  (params.g-1) * params.n * sizeof(RouterPortPair));
+    SharedRegion* sr = Simulation::getSharedRegionManager()->getGlobalSharedRegion("dragonfly:group_to_global_port",
+                                                                                  ((params.g-1) * params.n) * sizeof(RouterPortPair),
+                                                                                   new SharedRegionMerger());
     // Set up the RouteToGroup object
-    group_to_global_port.init(sr->getRawPtr(), params.g, params.n);
+    group_to_global_port.init(sr, params.g, params.n);
 
     // Fill in the shared region using the RouteToGroupObject (if
     // vector for param dragonfly:global_link_map is empty, then
@@ -83,9 +108,10 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
         int router = i / params.h;
         int port = (i % params.h) + params.p + params.a - 1;
         
-        RouterPortPair& rpp = group_to_global_port.getRouterPortPair(group, route_num);
+        RouterPortPair rpp;
         rpp.router = router;
         rpp.port = port;
+        group_to_global_port.setRouterPortPair(group, route_num, rpp);
     }
 
     // Publish the shared region to make sure everyone has the data.

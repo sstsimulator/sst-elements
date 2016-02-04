@@ -25,6 +25,8 @@
 
 
 namespace SST {
+class SharedRegion;
+
 namespace Merlin {
 
 class topo_dragonfly2_event;
@@ -32,11 +34,19 @@ class topo_dragonfly2_event;
 struct RouterPortPair {
     uint16_t router;
     uint16_t port;
+
+    RouterPortPair(int router, int port) :
+        router(router),
+        port(port)
+        {}
+
+    RouterPortPair() {}
 };
 
 class RouteToGroup {
 private:
     RouterPortPair* data;
+    SharedRegion* region;
     size_t groups;
     size_t routes;
 
@@ -44,15 +54,11 @@ private:
 public:
     RouteToGroup() {}
 
-    void init(void* d, size_t g, size_t r) {
-        data = static_cast<RouterPortPair*>(d);
-        groups = g;
-        routes = r;
-    }
+    void init(SharedRegion* sr, size_t g, size_t r);
 
-    RouterPortPair& getRouterPortPair(int group, int route_number) {
-        return data[group*routes + route_number];
-    }
+    RouterPortPair& getRouterPortPair(int group, int route_number);
+
+    void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
 };
 
 class topo_dragonfly2: public Topology {
@@ -146,6 +152,7 @@ private:
 		ar & BOOST_SERIALIZATION_NVP(dest.mid_group);
 		ar & BOOST_SERIALIZATION_NVP(dest.router);
 		ar & BOOST_SERIALIZATION_NVP(dest.host);
+        ar & BOOST_SERIALIZATION_NVP(global_slice);
     }
 };
 
