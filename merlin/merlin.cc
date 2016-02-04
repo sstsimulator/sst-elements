@@ -40,6 +40,8 @@
 #include "hr_router/xbar_arb_age.h"
 #include "hr_router/xbar_arb_rand.h"
 
+#include "hr_router/xbar_arb_lru_infx.h"
+
 #include "trafficgen/trafficgen.h"
 
 #include "pymodule.h"
@@ -447,6 +449,21 @@ static const ElementInfoParam xbar_arb_rand_params[] = {
 };
 
 
+// least recently used, "infinte" crossbar
+static SubComponent*
+load_xbar_arb_lru_infx(Component* comp, Params& params)
+{
+    return new xbar_arb_lru_infx(comp);
+}
+
+static const ElementInfoStatistic xbar_arb_lru_infx_statistics[] = {
+    { NULL, NULL, NULL, 0 }
+};
+
+static const ElementInfoParam xbar_arb_lru_infx_params[] = {
+    {NULL,NULL,NULL}
+};
+
 
 static Component*
 create_portals_nic(SST::ComponentId_t id,
@@ -714,6 +731,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       load_xbar_arb_rand,
       xbar_arb_rand_params,
       xbar_arb_rand_statistics,
+      "Merlin::XbarArbitration"
+    },
+    { "xbar_arb_lru_infx",
+      "Least recently used arbitration unit for hr_router",
+      NULL,
+      load_xbar_arb_lru_infx,
+      xbar_arb_lru_infx_params,
+      xbar_arb_lru_infx_statistics,
       "Merlin::XbarArbitration"
     },
     { NULL, NULL, NULL, NULL, NULL, NULL }

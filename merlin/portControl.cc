@@ -42,7 +42,7 @@ PortControl::sendTopologyEvent(TopologyEvent* ev)
 	topo_queue.push(ev);
 }
 
-bool
+void
 PortControl::send(internal_router_event* ev, int vc)
 {
 #if TRACK
@@ -52,7 +52,7 @@ PortControl::send(internal_router_event* ev, int vc)
     }
 #endif
 	// std::cout << "sending event on port " << port_number << " and VC " << vc << std::endl;
-	if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
+	// if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
     
 	xbar_in_credits[vc] -= ev->getFlitCount();
 	ev->setVC(vc);
@@ -70,7 +70,7 @@ PortControl::send(internal_router_event* ev, int vc)
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
-	return true;
+	// return true;
 }
 
 bool

@@ -1,7 +1,8 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/sst/elements/ember/sirius/include
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libember.la
@@ -120,6 +121,9 @@ libember_la_SOURCES = \
 	mpi/motifs/embercmtcr.cc \
 	mpi/motifs/emberstop.h \
 	mpi/motifs/emberstop.cc \
+	mpi/motifs/embersiriustrace.h \
+	mpi/motifs/embersiriustrace.cc \
+	sirius/include/sirius/siriusglobals.h \
 	shmem/emberShmemGen.cc \
 	shmem/emberShmemGen.h
 

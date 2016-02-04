@@ -65,14 +65,13 @@ public:
     
     MemNIC*     bottomNetworkLink_; // Ptr to memNIC for our lower link (if network-connected)
     MemNIC*     topNetworkLink_;    // Ptr to memNIC for our upper link (if network-connected)
-    bool        groupStats_;
     uint64_t    timestamp_;         // Local timestamp (cycles)
     uint64_t    accessLatency_;     // Cache access latency
     uint64_t    tagLatency_;        // Cache tag access latency
     uint64_t    mshrLatency_;       // MSHR lookup latency
     string      name_;              // Name of cache we are associated with
     bool        LLC_;               // True if this is the last-level-cache in the system
-    bool        LL_;                // True if this is both the last-level-cache AND there is not other coherence entity (e.g., a directory) below us
+    bool        LL_;                // True if this is both the last-level-cache AND there is no other coherence entity (e.g., a directory) below us
     MSHR *      mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
 
     list<Response> outgoingEventQueue_;
@@ -86,21 +85,16 @@ public:
     virtual CacheAction handleRequest(MemEvent * event, CacheLine * line, bool replay) =0;
     virtual CacheAction handleReplacement(MemEvent * event, CacheLine * line, MemEvent * reqEvent, bool replay) =0;
     virtual CacheAction handleInvalidationRequest(MemEvent * event, CacheLine * line, bool replay) =0;
-    virtual CacheAction handleEviction(CacheLine * line, uint32_t groupID, string rqstr, bool fromDataCache=false) =0;
+    virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
    
-    virtual void printStats(int _statsFile, vector<int> statGroupIds, map<int, CtrlStats> _ctrlStats, uint64_t _updgradeLatency, uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM, uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M) =0;
-
-
 
     // Send NACK in response to a request. Could be made virtual if needed.
     void sendNACK(MemEvent * event, bool up) {
-        setGroupId(event->getGroupId());
         MemEvent *NACKevent = event->makeNACKResponse((Component*)owner_, event);
     
         uint64 deliveryTime      = timestamp_ + tagLatency_;
         Response resp = {NACKevent, deliveryTime, true};
-        count_NACKsSent(up);
         if (up) {
             addToOutgoingQueueUp(resp);
         } else {
@@ -114,14 +108,15 @@ public:
     virtual void sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, bool atomic=false) {
         MemEvent * responseEvent = event->makeResponse(grantedState);
         responseEvent->setDst(event->getSrc());
+        responseEvent->setSize(event->getSize());
         if (data != NULL) responseEvent->setPayload(*data);
     
         uint64_t deliveryTime = timestamp_ + (replay ? mshrLatency_ : accessLatency_);
         Response resp = {responseEvent, deliveryTime, true};
         addToOutgoingQueueUp(resp);
     
-        if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
-                deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+        if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %i, Granted State = %s\n", 
+                deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getPayloadSize(), StateString[responseEvent->getGrantedState()]);
         
     }
     
@@ -143,13 +138,13 @@ public:
   
 
     // Could make this virtual if needed
-    void forwardMessage(MemEvent * event, Addr baseAddr, unsigned int lineSize, vector<uint8_t>* data) {
+    void forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, vector<uint8_t>* data) {
         /* Create event to be forwarded */
         MemEvent* forwardEvent;
         forwardEvent = new MemEvent(*event);
         forwardEvent->setSrc(name_);
         forwardEvent->setDst(getDestination(baseAddr));
-        forwardEvent->setSize(lineSize);
+        forwardEvent->setSize(requestSize);
     
         if (data != NULL) forwardEvent->setPayload(*data);
 
@@ -177,17 +172,22 @@ public:
     }
     
 
-    virtual void sendOutgoingCommands(SimTime_t curTime) {
+    /**
+     *  Send outgoing commands if the arey ready (according to timestamp)
+     *  @return Whether queue is empty or not
+     */
+    virtual bool sendOutgoingCommands(SimTime_t curTime) {
         // Increment timestamp
         timestamp_++;
         
         // Send events down
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
+            recordEventSentDown(outgoingEvent->getCmd());
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
             }
 
             if(bottomNetworkLink_) {
@@ -202,10 +202,11 @@ public:
         // Send events up
         while(!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
             MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
+            recordEventSentUp(outgoingEvent->getCmd());
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
-                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
+                d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
-                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), timestamp_, curTime);
+                   outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
             }
 
             if (topNetworkLink_) {
@@ -215,6 +216,7 @@ public:
             }
             outgoingEventQueueUp_.pop_front();
         }
+        return (outgoingEventQueue_.empty() && outgoingEventQueueUp_.empty());
     }
     
     // Add a message to the outgoing queue down in timestamp order
@@ -267,10 +269,10 @@ public:
 
 
 protected:
-    CoherencyController(const Cache* cache, Output* _dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
+    CoherencyController(const Cache* cache, Output* dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
             vector<Link*>* parentLinks, vector<Link*>* childLinks, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, CacheListener* listener, MSHR * mshr, bool wbClean, 
-            bool groupStats, vector<int> statGroupIds, bool debugAll, Addr debugAddr):
-                        timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(cache), d_(_dbg), lineSize_(lineSize), sentEvents_(0) {
+            bool debugAll, Addr debugAddr):
+                        timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(cache), d_(dbg), lineSize_(lineSize), sentEvents_(0) {
         name_                   = name;
         accessLatency_          = accessLatency;
         tagLatency_             = tagLatency;
@@ -286,27 +288,8 @@ protected:
         highNetPorts_           = childLinks;
         listener_               = listener;
         writebackCleanBlocks_   = wbClean;
-        groupStats_             = groupStats;
-        statGroupIds_           = statGroupIds;
 
-        if (groupStats_) {
-            for(unsigned int i = 0; i < statGroupIds_.size(); i++)
-                stats_[statGroupIds_[i]].initialize();
-        }
-
-        for (int i = 0; i < LAST_CMD; i++) {
-            for (int j = 0; j < NULLST; j++) {
-                stateStats_[i][j] = 0;
-            }
-        }
-
-        // Register statistics 
-        statGetSMissIS = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSMiss_IS");
-        statGetXMissIM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetXMiss_IM");
-        statGetXMissSM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetXMiss_SM");
-        statGetSExMissIM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSExMiss_IM");
-        statGetSExMissSM = ((Component *)owner_)->registerStatistic<uint64_t>( "GetSExMiss_SM");        
-    
+        // Register statistics - TODO register in a protocol-specific way??
         stat_evict_I = ((Component *)owner_)->registerStatistic<uint64_t>("evict_I");
         stat_evict_S = ((Component *)owner_)->registerStatistic<uint64_t>("evict_S");
         stat_evict_E = ((Component *)owner_)->registerStatistic<uint64_t>("evict_E");
@@ -455,6 +438,27 @@ protected:
         stat_latency_GetSEx_IM = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetSEx_IM");
         stat_latency_GetSEx_SM = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetSEx_SM");
         stat_latency_GetSEx_M = ((Component *)owner_)->registerStatistic<uint64_t>("latency_GetSEx_M");
+
+        stat_eventSent_GetS = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_GetS");
+        stat_eventSent_GetX = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_GetX");
+        stat_eventSent_GetSEx = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_GetSEx");
+        stat_eventSent_GetSResp = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_GetSResp");
+        stat_eventSent_GetXResp = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_GetXResp");
+        stat_eventSent_PutS = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_PutS");
+        stat_eventSent_PutE = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_PutE");
+        stat_eventSent_PutM = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_PutM");
+        stat_eventSent_Inv = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_Inv");
+        stat_eventSent_Fetch = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_Fetch");
+        stat_eventSent_FetchInv = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_FetchInv");
+        stat_eventSent_FetchInvX = ((Component *)owner_)->registerStatistic<uint64>("eventSent_FetchInvX");
+        stat_eventSent_FetchResp = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_FetchResp");
+        stat_eventSent_FetchXResp = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_FetchXResp");
+        stat_eventSent_AckInv = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_AckInv");
+        stat_eventSent_AckPut = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_AckPut");
+        stat_eventSent_NACK_up = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_NACK_up");
+        stat_eventSent_NACK_down = ((Component *)owner_)->registerStatistic<uint64_t>("eventSent_NACK_down");
+        
+        stat_eventStalledForLock = ((Component *)owner_)->registerStatistic<uint64_t>("EventStalledForLockedCacheline");
 }
    
     ~CoherencyController(){}
@@ -477,22 +481,6 @@ protected:
     
     int             sentEvents_;
     
-    // Coherence events - GetS
-    Statistic<uint64_t>* statGetSHitS;
-    Statistic<uint64_t>* statGetSHitE;
-    Statistic<uint64_t>* statGetSHitM;
-    Statistic<uint64_t>* statGetSMissIS;
-    Statistic<uint64_t>* statGetXHitE;
-    Statistic<uint64_t>* statGetXHitM;
-    Statistic<uint64_t>* statGetXMissIM;
-    Statistic<uint64_t>* statGetXMissSM;
-    Statistic<uint64_t>* statGetXMissMM;    // other owner existed when GetX arrived
-    Statistic<uint64_t>* statGetSExHitE;
-    Statistic<uint64_t>* statGetSExHitM;
-    Statistic<uint64_t>* statGetSExMissIM;
-    Statistic<uint64_t>* statGetSExMissSM;
-    Statistic<uint64_t>* statGetSExMissMM;    // other owner existed when GetSEx arrived
-
     // Eviction statistics, count how many times we attempted to evict a block in a particular state
     Statistic<uint64_t>* stat_evict_I;
     Statistic<uint64_t>* stat_evict_S;
@@ -643,55 +631,30 @@ protected:
     Statistic<uint64_t>* stat_latency_GetSEx_IM;
     Statistic<uint64_t>* stat_latency_GetSEx_SM;
     Statistic<uint64_t>* stat_latency_GetSEx_M;
-
-    struct Stats {
-        uint64_t GETSMissIS_,       //
-                GETSMissBlocked_,
-                GETXMissSM_,
-                GETXMissIM_,
-                GETXMissBlocked_,
-                GETSHit_,
-                GETXHit_,
-                PUTSReqsReceived_,
-                PUTEReqsReceived_,
-                PUTMReqsReceived_,
-                PUTXReqsReceived_,
-                GetSExReqsReceived_,
-                GetXReqsReceived_,
-                GetSReqsReceived_,
-                EvictionPUTSReqSent_,
-                EvictionPUTMReqSent_,
-                EvictionPUTEReqSent_,
-                InvalidatePUTMReqSent_,
-                InvalidatePUTEReqSent_,
-                InvalidatePUTXReqSent_,
-                InvalidatePUTSReqSent_,
-                FetchInvReqSent_,
-                FetchInvXReqSent_,
-                NACKsSentDown_,
-                NACKsSentUp_;
-        
-        Stats(){
-            initialize();
-        }
-        
-        void initialize(){
-            GETSMissIS_ = GETSMissBlocked_ = GETXMissSM_ = GETXMissIM_ = GETXMissBlocked_ = GETSHit_ = GETXHit_ = 0;
-            PUTSReqsReceived_ = PUTEReqsReceived_ = PUTMReqsReceived_ = PUTXReqsReceived_ = 0;
-            EvictionPUTSReqSent_ = EvictionPUTMReqSent_ = EvictionPUTEReqSent_ = 0;
-            InvalidatePUTMReqSent_ = InvalidatePUTEReqSent_ = InvalidatePUTXReqSent_ = InvalidatePUTSReqSent_ = 0;
-            GetSExReqsReceived_ = GetSReqsReceived_ = GetXReqsReceived_ = 0;
-            NACKsSentDown_ = NACKsSentUp_ = 0;
-            FetchInvReqSent_ = FetchInvXReqSent_ = 0;
-        }
-    }; // end Stats struct
-
-    map<uint32_t,Stats> stats_;
-    vector<int>         statGroupIds_;
-    int                 groupId_;
-    uint64_t            stateStats_[LAST_CMD][NULLST];
+   
+    // Count events sent
+    Statistic<uint64_t>* stat_eventSent_GetS;
+    Statistic<uint64_t>* stat_eventSent_GetX;
+    Statistic<uint64_t>* stat_eventSent_GetSEx;
+    Statistic<uint64_t>* stat_eventSent_GetSResp;
+    Statistic<uint64_t>* stat_eventSent_GetXResp;
+    Statistic<uint64_t>* stat_eventSent_PutS;
+    Statistic<uint64_t>* stat_eventSent_PutE;
+    Statistic<uint64_t>* stat_eventSent_PutM;
+    Statistic<uint64_t>* stat_eventSent_Inv;
+    Statistic<uint64_t>* stat_eventSent_Fetch;
+    Statistic<uint64_t>* stat_eventSent_FetchInv;
+    Statistic<uint64_t>* stat_eventSent_FetchInvX;
+    Statistic<uint64_t>* stat_eventSent_FetchResp;
+    Statistic<uint64_t>* stat_eventSent_FetchXResp;
+    Statistic<uint64_t>* stat_eventSent_AckInv;
+    Statistic<uint64_t>* stat_eventSent_AckPut;
+    Statistic<uint64_t>* stat_eventSent_NACK_up;
+    Statistic<uint64_t>* stat_eventSent_NACK_down;
 
 
+    Statistic<uint64_t>* stat_eventStalledForLock;
+    
     // General protected methods
 
     // For distributed caches, return which cache is home for a particular address
@@ -708,25 +671,7 @@ protected:
     }
 
     // Statistics protected methods
-    void count_NACKsSent(bool up) {
-        if (!up) {
-            stats_[0].NACKsSentDown_++;
-            if (groupStats_) stats_[getGroupId()].NACKsSentDown_++;
-        } else {
-            stats_[0].NACKsSentUp_++;
-            if (groupStats_) stats_[getGroupId()].NACKsSentUp_++;
-        }
-    }
     
-    void setGroupId(int groupId) {
-        groupId_ = groupId;
-    }
-
-    uint32_t getGroupId() {
-        if (groupId_ < 1) d_->fatal(CALL_INFO, -1, "%s, Error: GroupId is less than 1. GroupId = %d\n", name_.c_str(), groupId_);
-        return groupId_;
-    }
-
     void recordStateEventCount(Command cmd, State state) {
         switch (cmd) {
             case GetS:
@@ -939,6 +884,85 @@ protected:
         }
 
     }
+
+    void recordEventSentUp(Command cmd) {
+        switch(cmd) {
+            case GetSResp:
+                stat_eventSent_GetSResp->addData(1);
+                break;
+            case GetXResp:
+                stat_eventSent_GetXResp->addData(1);
+                break;
+            case Inv:
+                stat_eventSent_Inv;
+                break;
+            case Fetch:
+                stat_eventSent_Fetch;
+                break;
+            case FetchInv:
+                stat_eventSent_FetchInv;
+                break;
+            case FetchInvX:
+                stat_eventSent_FetchInvX;
+                break;
+            case AckPut:
+                stat_eventSent_AckPut;
+                break;
+            case NACK:
+                stat_eventSent_NACK_up;
+                break;
+            default: 
+                break;
+        }
+    }
+
+    void recordEventSentDown(Command cmd) {
+        switch (cmd) {
+            case GetS:
+                stat_eventSent_GetS->addData(1);
+                break;
+            case GetX:
+                stat_eventSent_GetX->addData(1);
+                break;
+            case GetSEx:
+                stat_eventSent_GetSEx->addData(1);
+                break;
+            case PutS:
+                stat_eventSent_PutS->addData(1);
+                break;
+            case PutE:
+                stat_eventSent_PutE->addData(1);
+                break;
+            case PutM:
+                stat_eventSent_PutM->addData(1);
+                break;
+            case FetchResp:
+                stat_eventSent_FetchResp->addData(1);
+                break;
+            case FetchXResp:
+                stat_eventSent_FetchXResp->addData(1);
+                break;
+            case AckInv:
+                stat_eventSent_AckInv->addData(1);
+                break;
+            case NACK:
+                stat_eventSent_NACK_down->addData(1);
+                break;
+            default: break;
+        }
+    }
+
+    // Perform listener call back. 
+    // These used to be replicated in each coherence class - they can be overwritten if needed
+    virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT) {
+        if (!event->isPrefetch()) {
+            CacheListenerNotification notify(event->getBaseAddr(), event->getVirtualAddress(),
+                event->getInstructionPointer(), event->getSize(), accessT, resultT);
+            listener_->notifyAccess(notify);
+        }
+    }
+
+
 };
 
 

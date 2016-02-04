@@ -1,0 +1,10 @@
+*.o
+*.lo
+*.la
+*.pyc
+.*.swp
+.libs/
+.deps/
+.dirstamp
+Makefile.in
+Makefile

@@ -62,7 +62,7 @@ try:
 		"rtrArb=","embermotifLog=",	"rankmapper=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
-except getopt.GetopError as err:
+except getopt.GetoptError as err:
     print str(err)
     sys.exit(2)
 

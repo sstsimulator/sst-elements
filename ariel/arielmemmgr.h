@@ -63,6 +63,7 @@ class ArielMemoryManager {
 		std::map<uint64_t, uint64_t>* translationCache;
 		const uint32_t translationCacheEntries;
 		bool translationEnabled;
+		bool reportUnmatchedFree;
 };
 
 }

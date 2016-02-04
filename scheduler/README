@@ -121,7 +121,11 @@ two arguments [x,y] in which case z is assumed to be 1. Requires that x*y*z =
 numprocs. The machine nodes are numbered first in x, then y, then z directions.
 A node number 20 in a [3,4,5] machine corresponds to x=2, y=2, z=1.
 
-mesh - a three dimensional torus of nodes. The arguments are the same as mesh.
+torus - a three dimensional torus of nodes. The arguments are the same as mesh.
+
+dragonfly - a dragonfly network with following arguments: [routersPerGroup,
+portsPerRouter, opticalsPerRouter, nodesPerRouter]. Currently, only all-to-all
+local topology and circulant global topology are supported.
 
               Allocators: 
 

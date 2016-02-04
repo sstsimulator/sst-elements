@@ -18,7 +18,6 @@
 #include <sst_config.h>
 #include "cacheArray.h"
 #include <vector>
-#include "replacementManager.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -39,7 +38,7 @@ int SetAssociativeArray::find(const Addr baseAddr, bool update) {
     int setEnd = setBegin + associativity_;
    
     for (int i = setBegin; i < setEnd; i++) {
-        if (lines_[i]->getBaseAddr() == baseAddr){
+        if (lines_[i]->getBaseAddr() == baseAddr) {
             if (update) replacementMgr_->update(i);
             return i;
         }
@@ -52,7 +51,7 @@ CacheArray::CacheLine* SetAssociativeArray::findReplacementCandidate(const Addr 
     return lines_[index];
 }
 
-unsigned int SetAssociativeArray::preReplace(const Addr baseAddr){
+unsigned int SetAssociativeArray::preReplace(const Addr baseAddr) {
     Addr lineAddr   = toLineAddr(baseAddr);
     int set         = hash_->hash(0, lineAddr) & setMask_;
     int setBegin    = set * associativity_;
@@ -102,14 +101,14 @@ DualSetAssociativeArray::DualSetAssociativeArray(Output* dbg, unsigned int lineS
     }
 
 
-int DualSetAssociativeArray::find(const Addr baseAddr, bool update){
+int DualSetAssociativeArray::find(const Addr baseAddr, bool update) {
     Addr lineAddr = toLineAddr(baseAddr);
     int set = hash_->hash(0, lineAddr) & setMask_;
     int setBegin = set * associativity_;
     int setEnd = setBegin + associativity_;
    
     for (int i = setBegin; i < setEnd; i++) {
-        if (lines_[i]->getBaseAddr() == baseAddr){
+        if (lines_[i]->getBaseAddr() == baseAddr) {
             if (update) {
                 replacementMgr_->update(i);
                 if (lines_[i]->getDataLine() != NULL) {
@@ -173,7 +172,7 @@ void DualSetAssociativeArray::replace(const Addr baseAddr, unsigned int id, bool
     }
 }
 
-unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr){
+unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr) {
     Addr lineAddr   = toLineAddr(baseAddr);
     int set         = hash_->hash(0, lineAddr) & cacheSetMask_;
     int setBegin    = set * cacheAssociativity_;
@@ -208,7 +207,7 @@ void CacheArray::printConfiguration() {
     dbg_->debug(_INFO_, "Associativity: %i \n\n", associativity_);
 }
 
-void CacheArray::errorChecking(){
+void CacheArray::errorChecking() {
     if(0 == numLines_ || 0 == numSets_)     dbg_->fatal(CALL_INFO, -1, "Cache size and/or number of sets not greater than zero. Number of lines = %d, Number of sets = %d.\n", numLines_, numSets_);
     // TODO relax this, use mod instead of setmask_
     if(!isPowerOfTwo(numSets_))             dbg_->fatal(CALL_INFO, -1, "Number of sets is not a power of two. Number of sets = %d.\n", numSets_);
