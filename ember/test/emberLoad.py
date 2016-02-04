@@ -196,6 +196,11 @@ elif "dragonfly" == netTopo:
 	topoInfo = DragonFlyInfo(netShape)
 	topo = topoDragonFly()
 
+elif "dragonfly2" == netTopo:
+
+	topoInfo = DragonFly2Info(netShape)
+	topo = topoDragonFly2()
+
 else:
 	sys.exit("how did we get here")
 

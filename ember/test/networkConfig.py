@@ -95,3 +95,29 @@ class DragonFlyInfo(TopoInfo):
 
 	def getNumNodes(self):
 		return self.numNodes 
+
+class DragonFly2Info(TopoInfo):
+	def __init__( self, shape ):
+		lcl, nRtrs, glbl, nGrp = shape.split(':')
+		self.params = {}
+		hostsPerGroup = int(nRtrs) * int(lcl)
+		self.params["dragonfly:shape"] = "" 
+		self.params["dragonfly:hosts_per_router"] = lcl
+		self.params["dragonfly:routers_per_group"] = nRtrs
+		self.params["dragonfly:intergroup_links"] = glbl
+		self.params["dragonfly:num_groups"] =  nGrp
+		self.params["dragonfly:algorithm"] =  "minimal" 
+
+                print lcl
+                print nRtrs
+                print glbl
+                print nGrp
+                
+		self.numNodes = int(nGrp) * hostsPerGroup
+                print self.numNodes
+                
+	def getNetworkParams(self):
+		return self.params
+
+	def getNumNodes(self):
+		return self.numNodes 
