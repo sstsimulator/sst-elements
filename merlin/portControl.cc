@@ -132,6 +132,7 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
                          Topology *topo, 
                          SimTime_t input_latency_cycles, std::string input_latency_timebase,
                          SimTime_t output_latency_cycles, std::string output_latency_timebase,
+                         const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
                          std::vector<std::string>& inspector_names) :
     rtr_id(rtr_id),
     num_vcs(-1),
@@ -179,12 +180,15 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
         break;
     }
     
+    connected = true;
+
     if ( port_link == NULL ) {
         connected = false;
         return;
     }
 
-    connected = true;
+    input_buf_size = in_buf_size;
+    output_buf_size = out_buf_size;
 
     if ( port_link && input_latency_timebase != "" ) {
         // std::cout << "Adding extra latency" << std::endl;
@@ -217,47 +221,9 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     }
 }
 
-// void
-// PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in,
-//                      int* in_buf_size, int* out_buf_size)
-// {
-//     num_vcs = vcs;
-//     vc_heads = vc_heads_in;
-//     xbar_in_credits = xbar_in_credits_in;
-
-//     // Input and output buffers
-//     input_buf = new port_queue_t[vcs];
-//     output_buf = new port_queue_t[vcs];
-    
-//     input_buf_count = new int[vcs];
-//     output_buf_count = new int[vcs];
-	
-//     for ( int i = 0; i < num_vcs; i++ ) {
-//         input_buf_count[i] = 0;
-//         output_buf_count[i] = 0;
-//         vc_heads[i] = NULL;
-//     }
-	
-//     // Initialize credit arrays
-//     // xbar_in_credits = new int[vcs];
-//     port_ret_credits = new int[vcs];
-//     port_out_credits = new int[vcs];
-    
-//     // Copy the starting return tokens for the input buffers (this
-//     // essentially sets the size of the buffer)
-//     memcpy(port_ret_credits,in_buf_size,vcs*sizeof(int));
-//     memcpy(xbar_in_credits,out_buf_size,vcs*sizeof(int));
-	
-//     // The output credits are set to zero and the other side of the
-//     // link will send the number of tokens.
-//     for ( int i = 0; i < vcs; i++ ) port_out_credits[i] = 0;
-    
-    
-// }
 
 void
-PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in,
-                     const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size)
+PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in)
 {
     vc_heads = vc_heads_in;
     // If the port is not connected, we still need to initialize
@@ -292,8 +258,8 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     // Figure out how large the buffers are in flits
 
     // Need to see if we need to convert to bits
-    UnitAlgebra ibs = in_buf_size;
-    UnitAlgebra obs = out_buf_size;
+    UnitAlgebra ibs = input_buf_size;
+    UnitAlgebra obs = output_buf_size;
 
     if ( !ibs.hasUnits("b") && !ibs.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"input_buf_size must be specified in either "
@@ -380,7 +346,8 @@ PortControl::finish() {
 
 void
 PortControl::init(unsigned int phase) {
-    if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
+    // if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
+    if ( !connected ) return;
     Event *ev;
     RtrInitEvent* init_ev;
 
@@ -526,7 +493,7 @@ PortControl::sendInitData(Event *ev)
 Event*
 PortControl::recvInitData()
 {
-    if ( init_events.size() ) {
+    if ( connected && init_events.size() ) {
         Event *ev = init_events.front();
         init_events.pop_front();
         return ev;

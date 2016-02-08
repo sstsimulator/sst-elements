@@ -77,6 +77,7 @@ static const ElementInfoParam ariel_gzbinary_trace_params[] = {
 
 static const ElementInfoParam ariel_params[] = {
     {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
+    {"profilefunctions", "Profile functions for Ariel execution, 0 = none, >0 = enable", "0" },
     {"alloctracker", "Use an allocation tracker (e.g. memSieve)", "0"},
     {"corecount", "Number of CPU cores to emulate", "1"},
     {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},

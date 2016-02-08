@@ -130,16 +130,18 @@ private:
 
 
     class UniformDist : public Generator {
-	MersenneRNG* gen;
-	SSTUniformDistribution* dist;
+        MersenneRNG* gen;
+        SSTUniformDistribution* dist;
 
+        int dist_size;
+        
     public:
         UniformDist(int min, int max)
         {
 		gen = new MersenneRNG();
 
-		int size = std::max(1, max-min);
-		dist = new SSTUniformDistribution(size, gen);
+		dist_size = std::max(1, max-min);
+		dist = new SSTUniformDistribution(dist_size, gen);
 	}
 
 	~UniformDist() {
@@ -154,7 +156,10 @@ private:
 
         void seed(uint32_t val)
         {
-	    gen = new MersenneRNG((unsigned int) val);
+            delete dist;
+            delete gen;
+            gen = new MersenneRNG((unsigned int) val);
+            dist = new SSTUniformDistribution(dist_size,gen);
         }
     };
 

@@ -34,11 +34,12 @@
 #include <sst/elements/ariel/ariel_shmem.h>
 #include <sst/elements/ariel/ariel_inst_class.h>
 
-
-
 #undef __STDC_FORMAT_MACROS
+
 using namespace SST::ArielComponent;
 
+KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool",
+    "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
 KNOB<string> SSTNamedPipe(KNOB_MODE_WRITEONCE, "pintool",
     "p", "", "Named pipe to connect to SST simulator");
 KNOB<UINT64> MaxInstructions(KNOB_MODE_WRITEONCE, "pintool",
@@ -57,7 +58,11 @@ KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
-//PIN_LOCK pipe_lock;
+typedef struct {
+	int64_t insExecuted;
+} ArielFunctionRecord;
+
+UINT32 funcProfileLevel;
 UINT32 core_count;
 UINT32 default_pool;
 ArielTunnel *tunnel = NULL;
@@ -65,6 +70,7 @@ bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
 UINT64* lastMallocSize;
+std::map<std::string, ArielFunctionRecord*> funcProfile;
 UINT64* lastMallocLoc;
 
 UINT32 overridePool;
@@ -82,6 +88,18 @@ VOID Fini(INT32 code, VOID* v)
     tunnel->writeMessage(0, ac);
 
     delete tunnel;
+
+    if(funcProfileLevel > 0) {
+    	FILE* funcProfileOutput = fopen("func.profile", "wt");
+
+    	for(std::map<std::string, ArielFunctionRecord*>::iterator funcItr = funcProfile.begin();
+    			funcItr != funcProfile.end(); funcItr++) {
+    		fprintf(funcProfileOutput, "%s %" PRId64 "\n", funcItr->first.c_str(),
+    			funcItr->second->insExecuted);
+    	}
+
+    	fclose(funcProfileOutput);
+    }
 }
 
 VOID copy(void* dest, const void* input, UINT32 length) {
@@ -189,6 +207,17 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 
 }
 
+VOID IncrementFunctionRecord(VOID* funcRecord) {
+	ArielFunctionRecord* arielFuncRec = (ArielFunctionRecord*) funcRecord;
+
+	__asm__ __volatile__(
+	    "lock incq %0"
+	     : /* no output registers */
+	     : "m" (arielFuncRec->insExecuted)
+	     : "memory"
+	);
+}
+
 VOID InstrumentInstruction(INS ins, VOID *v)
 {
 	UINT32 simdOpWidth     = 1;
@@ -284,6 +313,29 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			IARG_END);
 	}
 
+	if(funcProfileLevel > 0) {
+		RTN rtn = INS_Rtn(ins);
+		std::string rtn_name = "Unknown Function";
+
+		if(RTN_Valid(rtn)) {
+			rtn_name = RTN_Name(rtn);
+		}
+
+    		std::map<std::string, ArielFunctionRecord*>::iterator checkExists =
+    			funcProfile.find(rtn_name);
+    		ArielFunctionRecord* funcRecord = NULL;
+
+    		if(checkExists == funcProfile.end()) {
+			funcRecord = new ArielFunctionRecord();
+    			funcProfile.insert( std::pair<std::string, ArielFunctionRecord*>(rtn_name,
+    				funcRecord) );
+    		} else {
+    			funcRecord = checkExists->second;
+    		}
+
+    		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR) IncrementFunctionRecord,
+	    		IARG_PTR, (void*) funcRecord, IARG_END);
+	}
 }
 
 void mapped_ariel_enable() {
@@ -311,13 +363,13 @@ void mapped_ariel_output_stats() {
     tunnel->writeMessage(0, ac);
 }
 
-/*
+#if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp) {
     if (tp == NULL) { errno = EINVAL; return -1; }
     tunnel->getTimeNs(tp);
     return 0;
 }
-*/
+#endif
 
 int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 #ifdef ARIEL_DEBUG
@@ -337,7 +389,7 @@ int ariel_mlm_memcpy(void* dest, void* source, size_t size) {
 	UINT32 thr = (UINT32) currentThread;
 
 	if(thr >= core_count) {
-		fprintf(stderr, "Thread ID: %lu is greater than core count.\n", thr);
+		fprintf(stderr, "Thread ID: %" PRIu32 " is greater than core count.\n", thr);
 		exit(-4);
 	}
 
@@ -538,8 +590,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
             enable_output = false;
         }
         return;
-    } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday" ||
-            RTN_Name(rtn) == "__gettimeofday") {
+    } else if (RTN_Name(rtn) == "gettimeofday" || RTN_Name(rtn) == "_gettimeofday") {
         fprintf(stderr,"Identified routine: gettimeofday, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_gettimeofday);
         fprintf(stderr,"Replacement complete.\n");
@@ -549,13 +600,15 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_Replace(rtn, (AFUNPTR) mapped_ariel_cycles);
         fprintf(stderr, "Replacement complete\n");
         return;
-    } /*else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
+#if ! defined(__APPLE__)
+    } else if (RTN_Name(rtn) == "clock_gettime" || RTN_Name(rtn) == "_clock_gettime" ||
         RTN_Name(rtn) == "__clock_gettime") {
         fprintf(stderr,"Identified routine: clock_gettime, replacing with Ariel equivalent...\n");
         RTN_Replace(rtn, (AFUNPTR) mapped_clockgettime);
         fprintf(stderr,"Replacement complete.\n");
         return;
-    }*/ else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
+#endif
+    } else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "mlm_malloc") {
         // This means we want a special malloc to be used (needs a TLB map inside the virtual core)
         fprintf(stderr,"Identified routine: mlm_malloc, replacing with Ariel equivalent...\n");
         AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mlm_malloc);
@@ -591,7 +644,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
         RTN_Close(rtn);
     } else if ((InterceptMultiLevelMemory.Value() > 0) && (
                 RTN_Name(rtn) == "free" || RTN_Name(rtn) == "_free")) {
-    		
+
         fprintf(stderr, "Identified routine: free/_free, replacing with Ariel equivalent...\n");
         RTN_Open(rtn);
 
@@ -630,9 +683,10 @@ int main(int argc, char *argv[])
     if (PIN_Init(argc, argv)) return Usage();
 
     // Load the symbols ready for us to mangle functions.
-    PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
+    //PIN_InitSymbolsAlt(IFUNC_SYMBOLS);
+    PIN_InitSymbols();
     PIN_AddFiniFunction(Fini, 0);
-    
+
     PIN_InitLock(&mainLock);
 
     if(SSTVerbosity.Value() > 0) {
@@ -641,13 +695,21 @@ int main(int argc, char *argv[])
             MaxInstructions.Value() <<
             " max core count: " << MaxCoreCount.Value() << std::endl;
     }
-    
+
+    funcProfileLevel = TrapFunctionProfile.Value();
+
+    if(funcProfileLevel > 0) {
+    	std::cout << "SSTARIEL: Function profile level is configured to: " << funcProfileLevel << std::endl;
+    } else {
+    	std::cout << "SSTARIEL: Function profiling is disabled." << std::endl;
+    }
+
     char* override_pool_name = getenv("ARIEL_OVERRIDE_POOL");
     if(NULL != override_pool_name) {
 		fprintf(stderr, "ARIEL-SST: Override for memory pools\n");
 		shouldOverride = true;
 		overridePool = (UINT32) atoi(getenv("ARIEL_OVERRIDE_POOL"));
-		fprintf(stderr, "ARIEL-SST: Use pool: %lu instead of application provided\n", overridePool);
+		fprintf(stderr, "ARIEL-SST: Use pool: %" PRIu32 " instead of application provided\n", overridePool);
     } else {
 		fprintf(stderr, "ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.\n");
     }
@@ -657,7 +719,7 @@ int main(int argc, char *argv[])
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
-    
+
     for(int i = 0; i < core_count; i++) {
     	lastMallocSize[i] = (UINT64) 0;
     	lastMallocLoc[i] = (UINT64) 0;
@@ -665,7 +727,7 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "ARIEL-SST PIN tool activating with %" PRIu32 " threads\n", core_count);
 	fflush(stdout);
-	
+
     sleep(1);
 
     default_pool = DefaultMemoryPool.Value();

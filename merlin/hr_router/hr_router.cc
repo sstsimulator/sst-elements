@@ -25,9 +25,6 @@
 
 #include "merlin.h"
 #include "portControl.h"
-#include "xbar_arb_rr.h"
-#include "xbar_arb_lru.h"
-#include "xbar_arb_age.h"
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -67,6 +64,44 @@ static void split(string input, string delims, vector<string>& tokens) {
     }
 }
 
+static std::string getLogicalGroupParam(const Params& params, Topology* topo, int port,
+                                        std::string param, std::string default_val = "") {
+    // Use topology object to get the group for the port
+    std::string group = topo->getPortLogicalGroup(port);
+
+    // Create fully qualified key name
+    std::string key = param;
+    key.append(std::string(":")).append(group);
+
+    std::string value = params.find_string(key);
+
+    if ( value == "" ) {
+        // Look for default value
+        value = params.find_string(param, default_val);
+        if ( value == "" ) {
+            // Abort
+            merlin_abort.fatal(CALL_INFO, -1, "hr_router requires %s to be specified\n", param.c_str());
+        }
+    }
+    return value;
+}
+
+static UnitAlgebra getLogicalGroupParamUA(const Params& params, Topology* topo, int port,
+                                          std::string param, std::string default_val = "") {
+
+    std::string value = getLogicalGroupParam(params,topo,port,param,default_val);
+
+    UnitAlgebra ua(value);
+    // If units were in Bytes, convert to bits
+    if ( ua.hasUnits("B") || ua.hasUnits("B/s") ) {
+        ua *= UnitAlgebra("8b/B");
+    }
+
+    return ua;
+}
+
+
+// Start class functions
 hr_router::~hr_router()
 {
     delete [] in_port_busy;
@@ -84,25 +119,20 @@ hr_router::~hr_router()
 
 hr_router::hr_router(ComponentId_t cid, Params& params) :
     Router(cid),
-//    requested_vns(0),
     num_vcs(-1),
     vcs_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
-    // std::cout << "Constructing hr_router" << std::endl;
-    
     // Get the options for the router
     id = params.find_integer("id");
     if ( id == -1 ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires id to be specified\n");
     }
-    // std::cout << "id: " << id << std::endl;
 
     num_ports = params.find_integer("num_ports");
     if ( num_ports == -1 ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires num_poorts to be specified\n");
     }
-    // std::cout << "num_ports: " << num_ports << std::endl;
 
     num_vcs = params.find_integer("num_vcs");
     if ( num_vcs != -1 ) {
@@ -111,11 +141,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
                              "the number of VCs is derived from the number of VNs the\n"
                              "endpoint requests.\n");
     }
-    // std::cout << "num_vcs: " << num_vcs << std::endl;
 
     // Get the topology
     std::string topology = params.find_string("topology");
-    // std::cout << "Topology: " << topology << std::endl;
 
     if ( topology == "" ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
@@ -129,20 +157,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::string xbar_arb = params.find_string("xbar_arb","merlin.xbar_arb_lru");
     
     // Parse all the timing parameters
-    std::string link_bw_s = params.find_string("link_bw");
-    if ( link_bw_s == "" ) {
-        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires link_bw to be specified\n");
-        abort();
-    }
 
-    UnitAlgebra link_bw(link_bw_s);
-    // std::cout << "link_bw: " << link_bw << std::endl;
-
-    if ( link_bw.hasUnits("B/s") ) {
-        // Need to convert to bits per second
-        link_bw *= UnitAlgebra("8b/B");
-    }
-    
+    // Flit size
     std::string flit_size_s = params.find_string("flit_size");
     if ( flit_size_s == "" ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires flit_size to be specified\n");
@@ -155,11 +171,20 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         flit_size *= UnitAlgebra("8b/B");
     }
     
+    // Link BW default.  Can be overwritten using logical groups
+    std::string link_bw_s = params.find_string("link_bw");
+    UnitAlgebra link_bw(link_bw_s);
+
+    if ( link_bw.hasUnits("B/s") ) {
+        // Need to convert to bits per second
+        link_bw *= UnitAlgebra("8b/B");
+    }
+    
+    // Cross bar bandwidth
     std::string xbar_bw_s = params.find_string("xbar_bw");
     if ( xbar_bw_s == "" ) {
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires xbar_bw to be specified\n");
     }
-    // std::cout << "xbar_bw: " << xbar_bw << std::endl;
 
     UnitAlgebra xbar_bw_ua(xbar_bw_s);
     if ( xbar_bw_ua.hasUnits("B/s") ) {
@@ -167,33 +192,20 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         xbar_bw_ua *= UnitAlgebra("8b/B");
     }
 
-    // Compute the link bandwidth in flits/sec
-    UnitAlgebra link_clock;
-    link_clock = link_bw / flit_size;
-    // std::cout << "link_clock = " << link_clock.toStringBestSI() << std::endl;
-
     UnitAlgebra xbar_clock;
     xbar_clock = xbar_bw_ua / flit_size;
-    // std::cout << "xbar_clock = " << xbar_clock.toStringBestSI() << std::endl;
-    
-    // TimeConverter* link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw_s);
-    // TimeConverter* link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_clock);
+
 
     std::string input_latency = params.find_string("input_latency", "0ns");
-    // std::cout << "input_latency: " << input_latency << std::endl;
-
     std::string output_latency = params.find_string("output_latency", "0ns");
-    // std::cout << "output_latency: " << output_latency << std::endl;
 
 
     // Create all the PortControl blocks
     ports = new PortControl*[num_ports];
 
-    std::string input_buf_size_s = params.find_string("input_buf_size", "0");
-    std::string output_buf_size_s = params.find_string("output_buf_size", "0");
+    std::string input_buf_size = params.find_string("input_buf_size", "0");
+    std::string output_buf_size = params.find_string("output_buf_size", "0");
 
-    input_buf_size = input_buf_size_s;
-    output_buf_size = output_buf_size_s;
     
     // Naming convention is from point of view of the xbar.  So,
     // in_port_busy is >0 if someone is writing to that xbar port and
@@ -205,7 +217,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 
     std::string inspector_config = params.find_string("network_inspectors", "");
     split(inspector_config,",",inspector_names);
-    
+
+    params.enableVerify(false);
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
         out_port_busy[i] = 0;
@@ -214,29 +227,38 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         std::stringstream port_name;
         port_name << "port";
         port_name << i;
-        // std::cout << port_name.str() << std::endl;
 
-        // ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo,
-        //                            1, input_latency, 1, output_latency);
-        ports[i] = new PortControl(this, id, port_name.str(), i, link_bw, flit_size, topo,
-                                   1, input_latency, 1, output_latency, inspector_names);
+        // For each port, some default parameters can be overwritten
+        // by logical group parameters (link_bw, input_buf_size,
+        // output_buf_size, input_latency, output_latency).
+
+        // ports[i] = new PortControl(this, id, port_name.str(), i, link_bw, flit_size, topo,
+        //                            1, input_latency, 1, output_latency,
+        //                            input_buf_size, output_buf_size, inspector_names);
+        ports[i] = new PortControl(this, id, port_name.str(), i,
+                                   getLogicalGroupParamUA(params,topo,i,"link_bw"),
+                                   flit_size, topo,
+                                   1, getLogicalGroupParam(params,topo,i,"input_latency","0ns"),
+                                   1, getLogicalGroupParam(params,topo,i,"output_latency","0ns"),
+                                   getLogicalGroupParam(params,topo,i,"input_buf_size"),
+                                   getLogicalGroupParam(params,topo,i,"output_buf_size"),
+                                   inspector_names);
         
     }
+    params.enableVerify(true);
     
     // Get the Xbar arbitration
-    // arb = new xbar_arb_rr(num_ports,num_vcs);
-    // arb = new xbar_arb_rr();
     Params empty_params; // Empty params sent to subcomponents
     arb = static_cast<XbarArbitration*>(loadSubComponent(xbar_arb, this, empty_params));
     
-    if ( params.find_integer("debug", 0) ) {
-        if ( num_routers == 0 ) {
-            signal(SIGUSR2, &hr_router::sigHandler);
-        }
-        my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler);
-    } else {
-        my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::clock_handler);
-    }
+    // if ( params.find_integer("debug", 0) ) {
+    //     if ( num_routers == 0 ) {
+    //         signal(SIGUSR2, &hr_router::sigHandler);
+    //     }
+    //     my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler);
+    // } else {
+    my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::clock_handler);
+    // }
     // xbar_tc = registerClock( xbar_bw, my_clock_handler);
     xbar_tc = registerClock( xbar_clock, my_clock_handler);
     num_routers++;
@@ -324,19 +346,19 @@ hr_router::printStatus(Output& out)
     out.output("End Router: id = %d\n", id);
 }
 
-bool
-hr_router::debug_clock_handler(Cycle_t cycle)
-{
-    if ( print_debug > 0 ) {
-        /* TODO:  PRINT DEBUGGING */
-        // Change cycle to a long long unsigned int from a uint64_t (which is a unsigned long long int) to avoid a compile warning
-        printf("Debug output for %s at cycle %llu\n", getName().c_str(), (long long unsigned int)cycle);
-        dumpState(std::cout);
-        print_debug--;
-    }
+// bool
+// hr_router::debug_clock_handler(Cycle_t cycle)
+// {
+//     if ( print_debug > 0 ) {
+//         /* TODO:  PRINT DEBUGGING */
+//         // Change cycle to a long long unsigned int from a uint64_t (which is a unsigned long long int) to avoid a compile warning
+//         printf("Debug output for %s at cycle %llu\n", getName().c_str(), (long long unsigned int)cycle);
+//         dumpState(std::cout);
+//         print_debug--;
+//     }
 
-    return clock_handler(cycle);
-}
+//     return clock_handler(cycle);
+// }
 
 bool
 hr_router::clock_handler(Cycle_t cycle)
@@ -435,6 +457,7 @@ void hr_router::finish()
     for ( int i = 0; i < num_ports; i++ ) {
     	ports[i]->finish();
     }
+    
 }
 
 void
@@ -473,6 +496,7 @@ hr_router::init(unsigned int phase)
         }
     }
 
+    
     // Alsways do the above.  A few specific things to do during init
 
     // After phase 1, all the PortControl blocks will have reported
@@ -570,7 +594,7 @@ hr_router::init_vcs()
     }
     
     for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],input_buf_size,output_buf_size);
+        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs]);
     }    
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);

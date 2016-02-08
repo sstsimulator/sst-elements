@@ -35,7 +35,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	memmgr = memMgr;
 
 	coreQ = new std::queue<ArielEvent*>();
-	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
+	pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
@@ -160,7 +160,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID);
 
     SimpleMem::Request::id_t mev_id = event->id;
-    std::map<SimpleMem::Request::id_t, SimpleMem::Request*>::iterator find_entry = pendingTransactions->find(mev_id);
+    auto find_entry = pendingTransactions->find(mev_id);
 
     if(find_entry != pendingTransactions->end()) {
         output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",

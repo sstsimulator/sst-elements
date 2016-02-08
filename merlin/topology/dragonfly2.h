@@ -12,33 +12,69 @@
 // distribution.
 
 
-#ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
-#define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
+#ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
+#define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H
 
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sst/core/rng/sstrng.h>
 
 #include "sst/elements/merlin/router.h"
 
+
+
 namespace SST {
+class SharedRegion;
+
 namespace Merlin {
 
-class topo_dragonfly_event;
+class topo_dragonfly2_event;
 
-class topo_dragonfly: public Topology {
+struct RouterPortPair {
+    uint16_t router;
+    uint16_t port;
+
+    RouterPortPair(int router, int port) :
+        router(router),
+        port(port)
+        {}
+
+    RouterPortPair() {}
+};
+
+class RouteToGroup {
+private:
+    RouterPortPair* data;
+    SharedRegion* region;
+    size_t groups;
+    size_t routes;
+
+    
+public:
+    RouteToGroup() {}
+
+    void init(SharedRegion* sr, size_t g, size_t r);
+
+    RouterPortPair& getRouterPortPair(int group, int route_number);
+
+    void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
+};
+
+class topo_dragonfly2: public Topology {
     /* Assumed connectivity of each router:
      * ports [0, p-1]:      Hosts
      * ports [p, p+a-2]:    Intra-group
      * ports [p+a-1, k-1]:  Inter-group
      */
 
-    struct dgnflyParams {
+    struct dgnfly2Params {
         uint32_t p;  /* # of hosts / router */
         uint32_t a;  /* # of routers / group */
         uint32_t k;  /* Router Radix */
         uint32_t h;  /* # of ports / router to connect to other groups */
         uint32_t g;  /* # of Groups */
+        uint32_t n;  /* # of links between groups in a pair */
     };
 
     enum RouteAlgo {
@@ -46,22 +82,25 @@ class topo_dragonfly: public Topology {
         VALIANT
     };
 
-
-    struct dgnflyParams params;
+    RouteToGroup group_to_global_port;
+    
+    struct dgnfly2Params params;
     RouteAlgo algorithm;
     uint32_t group_id;
     uint32_t router_id;
 
+    RNG::SSTRandom* rng;
+    
 public:
-    struct dgnflyAddr {
+    struct dgnfly2Addr {
         uint32_t group;
         uint32_t mid_group;
         uint32_t router;
         uint32_t host;
     };
 
-    topo_dragonfly(Component* comp, Params& p);
-    ~topo_dragonfly();
+    topo_dragonfly2(Component* comp, Params& p);
+    ~topo_dragonfly2();
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
@@ -76,31 +115,32 @@ public:
     virtual int getEndpointID(int port);
 
 private:
-    void idToLocation(int id, dgnflyAddr *location) const;
-    uint32_t router_to_group(uint32_t group) const;
-    uint32_t port_for_router(uint32_t router) const;
-    uint32_t port_for_group(uint32_t group) const;
+    void idToLocation(int id, dgnfly2Addr *location);
+    uint32_t router_to_group(uint32_t group);
+    uint32_t port_for_router(uint32_t router);
+    uint32_t port_for_group(uint32_t group, uint32_t global_slice);
 };
 
 
 
 
-class topo_dragonfly_event : public internal_router_event {
+class topo_dragonfly2_event : public internal_router_event {
 
 public:
     uint32_t src_group;
-    topo_dragonfly::dgnflyAddr dest;
+    topo_dragonfly2::dgnfly2Addr dest;
+    uint16_t global_slice;
 
-    topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) : dest(dest) {}
-    ~topo_dragonfly_event() { }
+    topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) : dest(dest) {}
+    ~topo_dragonfly2_event() { }
 
     virtual internal_router_event *clone(void)
     {
-        return new topo_dragonfly_event(*this);
+        return new topo_dragonfly2_event(*this);
     }
 
 private:
-    topo_dragonfly_event() { }
+    topo_dragonfly2_event() { }
 	friend class boost::serialization::access;
 	template<class Archive>
 	void
@@ -112,10 +152,11 @@ private:
 		ar & BOOST_SERIALIZATION_NVP(dest.mid_group);
 		ar & BOOST_SERIALIZATION_NVP(dest.router);
 		ar & BOOST_SERIALIZATION_NVP(dest.host);
+        ar & BOOST_SERIALIZATION_NVP(global_slice);
     }
 };
 
 }
 }
 
-#endif // COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
+#endif // COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY2_H

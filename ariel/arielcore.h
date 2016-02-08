@@ -31,7 +31,7 @@
 
 #include <string>
 #include <queue>
-#include <map>
+#include <unordered_map>
 
 #include "arielmemmgr.h"
 #include "arielevent.h"
@@ -101,7 +101,7 @@ class ArielCore {
 		SimpleMem* cacheLink;
                 Link* allocLink;
 		ArielTunnel *tunnel;
-		std::map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
+		std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;
 		uint32_t maxQLength;
 		uint64_t cacheLineSize;

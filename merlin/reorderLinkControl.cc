@@ -68,6 +68,9 @@ ReorderLinkControl::setup()
 
 void ReorderLinkControl::init(unsigned int phase)
 {
+    if ( phase == 0 ) {
+        link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
+    }
     link_control->init(phase);
     if (link_control->isNetworkInitialized()) {
         id = link_control->getEndpointID();
@@ -210,6 +213,10 @@ bool ReorderLinkControl::handle_event(int vn) {
         if ( receiveFunctor != NULL ) {
             bool keep = (*receiveFunctor)(vn);
             if (!keep) receiveFunctor = NULL;
+            // while ( keep && input_buf[vn].size() != 0 ) {
+            //     keep = (*receiveFunctor)(vn);
+            //     if (!keep) receiveFunctor = NULL;
+            // }
         }
         
     }
