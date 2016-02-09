@@ -105,19 +105,20 @@ public:
 
 
     // Non-L1s can inherit this version, L1s should implement a different version to split out the requested block
-    virtual void sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, bool atomic=false) {
+    virtual uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false) {
         MemEvent * responseEvent = event->makeResponse(grantedState);
         responseEvent->setDst(event->getSrc());
         responseEvent->setSize(event->getSize());
         if (data != NULL) responseEvent->setPayload(*data);
     
-        uint64_t deliveryTime = timestamp_ + (replay ? mshrLatency_ : accessLatency_);
+        if (baseTime < timestamp_) baseTime = timestamp_;
+        uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
         Response resp = {responseEvent, deliveryTime, true};
         addToOutgoingQueueUp(resp);
     
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %i, Granted State = %s\n", 
                 deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getPayloadSize(), StateString[responseEvent->getGrantedState()]);
-        
+        return deliveryTime;
     }
     
   
@@ -138,7 +139,7 @@ public:
   
 
     // Could make this virtual if needed
-    void forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, vector<uint8_t>* data) {
+    uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data) {
         /* Create event to be forwarded */
         MemEvent* forwardEvent;
         forwardEvent = new MemEvent(*event);
@@ -149,11 +150,12 @@ public:
         if (data != NULL) forwardEvent->setPayload(*data);
 
         /* Determine latency in cycles */
-        uint64 deliveryTime;
+        uint64_t deliveryTime;
+        if (baseTime < timestamp_) baseTime = timestamp_;
         if (event->queryFlag(MemEvent::F_NONCACHEABLE)) {
             forwardEvent->setFlag(MemEvent::F_NONCACHEABLE);
             deliveryTime = timestamp_ + mshrLatency_;
-        } else deliveryTime = timestamp_ + tagLatency_; 
+        } else deliveryTime = baseTime + tagLatency_; 
     
         Response fwdReq = {forwardEvent, deliveryTime, false};
         addToOutgoingQueue(fwdReq);

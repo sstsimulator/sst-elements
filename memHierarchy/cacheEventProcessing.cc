@@ -304,8 +304,8 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
             if (!inserted) {
                 d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
             }
-            if(cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), NULL);
-            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), &event->getPayload());
+            if(cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
+            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
@@ -314,7 +314,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true);
+            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             delete origRequest;
             break;
         default:

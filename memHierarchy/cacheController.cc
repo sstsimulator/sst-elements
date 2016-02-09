@@ -102,7 +102,7 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
 
         // Forward instead of allocating for non-inclusive caches
         vector<uint8_t> * data = &event->getPayload();
-        coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), data); // Event to forward, address, requested size, data (if any)
+        coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, data); // Event to forward, address, requested size, data (if any)
         event->setInProgress(true);
         return;
     }
@@ -183,7 +183,6 @@ void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr,
 
 void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) {
     printLine(baseAddr);
-    
     if (!mshr_->pendingWriteback(baseAddr) && mshr_->isFull()) {
         processInvRequestInMSHR(baseAddr, event, false); // trigger a NACK
         return;
@@ -193,7 +192,6 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
     CacheAction action = coherenceMgr->handleInvalidationRequest(event, line, replay);
         
     printLine(baseAddr);
-    
     if (action == STALL) {
         processInvRequestInMSHR(baseAddr, event, false);  // This inv is currently being handled, insert in front of mshr
     } else if (action == BLOCK) {
@@ -215,7 +213,7 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
 /* Handles processing for data responses - GetSResp and GetXResp */
 void Cache::processCacheResponse(MemEvent* responseEvent, Addr baseAddr) {
     printLine(baseAddr);
-    
+
     MemEvent* origRequest = getOrigReq(mshr_->lookup(baseAddr));
     CacheLine * line = getLine(baseAddr);
     CacheAction action = coherenceMgr->handleResponse(responseEvent, line, origRequest);
@@ -236,7 +234,7 @@ void Cache::processCacheResponse(MemEvent* responseEvent, Addr baseAddr) {
 
 void Cache::processFetchResp(MemEvent * event, Addr baseAddr) {
     printLine(baseAddr);
-    
+
     MemEvent * origRequest = NULL;
     if (mshr_->exists(baseAddr)) origRequest = mshr_->lookupFront(baseAddr); /* Note that 'exists' returns true if there is a waiting MemEvent for this addr, ignores waiting evictions */
     CacheLine * line = getLine(baseAddr);
@@ -472,7 +470,6 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& _entries, Addr 
     if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %" PRIx64 ", addr: %" PRIx64 ", dst: %s\n",
                   index, CommandString[event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
     if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"--------------------------------------\n");
-    
     this->processEvent(event, true);
     
     if (DEBUG_ALL || DEBUG_ADDR == _addr) d_->debug(_L3_,"--------------------------------------\n");
@@ -686,7 +683,6 @@ void Cache::sendNACK(MemEvent* event) {
  */
 void Cache::processIncomingNACK(MemEvent* origReqEvent) {
     if (DEBUG_ALL || DEBUG_ADDR == origReqEvent->getBaseAddr()) d_->debug(_L3_,"NACK received.\n");
-
     /* Determine what CC will retry sending the event */
     if (origReqEvent->fromHighNetNACK())       coherenceMgr->resendEvent(origReqEvent, true);
     else if (origReqEvent->fromLowNetNACK())   coherenceMgr->resendEvent(origReqEvent, false);
