@@ -6,31 +6,24 @@
 
 using namespace SST::Ember;
 
-static std::unordered_map<uint32_t, EmberMotifLogRecord*>* logHandles = nullptr;
+static std::unordered_map<uint32_t, EmberMotifLogRecord*>* logHandles = NULL;
 
 EmberMotifLog::EmberMotifLog(const std::string logPath, const uint32_t jobID) {
-	printf("EmberMotifLog START =======\n");
-
-	if(nullptr == logHandles) {
+	if(NULL == logHandles) {
 		logHandles = new std::unordered_map<uint32_t, EmberMotifLogRecord*>();
 	}
 
 	auto logHandleFind = logHandles->find(jobID);
 
 	if(logHandleFind == logHandles->end()) {
-		printf("DID NOT FIND ENTRY .. CREATING ONE ..\n");
-		FILE* loggerFile = fopen(logPath.c_str(), "wt");
-		EmberMotifLogRecord* newRecord = new EmberMotifLogRecord(loggerFile);
+		logRecord = new EmberMotifLogRecord(logPath.c_str());
 		logRecord->increment();
 
-		logHandles->insert( std::pair<uint32_t, EmberMotifLogRecord*>(jobID, newRecord) );
+		logHandles->insert( std::pair<uint32_t, EmberMotifLogRecord*>(jobID, logRecord) );
 	} else {
-		printf("FOUND ENTRY \n");
-		EmberMotifLogRecord* logRecord = logHandleFind->second;
+		logRecord = logHandleFind->second;
 		logRecord->increment();
 	}
-
-	printf("EmberMotifLog DONE =====\n");
 }
 
 EmberMotifLog::~EmberMotifLog() {
@@ -42,9 +35,13 @@ EmberMotifLog::~EmberMotifLog() {
 	}
 }
 
-void EmberMotifLog::logMotifStart(std::string name, int motifNum) {
-	if(nullptr != logRecord->getFile()) {
-       		fprintf(logRecord->getFile(), "%d %s %s\n", motifNum, name.c_str(),
-       			Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str());
+void EmberMotifLog::logMotifStart(const std::string name, const int motifNum) {
+	if(NULL != logRecord->getFile()) {
+		FILE* logFile = logRecord->getFile();
+
+		const char* nameChar = name.c_str();
+		const char* timeChar = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str();
+
+		fprintf(logFile, "%d %s %s\n", motifNum, nameChar, timeChar);
 	}
 }

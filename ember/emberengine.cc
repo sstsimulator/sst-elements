@@ -57,7 +57,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     m_nodePerf = m_os->getNodePerf();
 
-    std::string motifLogFile = params.find_string("motifLog", "motif-log-");
+    std::string motifLogFile = params.find_string("motifLog", "");
     if("" != motifLogFile) {
         std::ostringstream logPrefix;
         logPrefix << motifLogFile << "-" << m_jobId << ".log";

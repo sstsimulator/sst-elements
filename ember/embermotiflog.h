@@ -10,8 +10,14 @@ namespace Ember {
 
 class EmberMotifLogRecord {
 	public:
-		EmberMotifLogRecord(FILE* theLog) {
-			loggerFile = theLog;
+		EmberMotifLogRecord(const char* filePath) {
+			loggerFile = fopen(filePath, "wt");
+		}
+
+		~EmberMotifLogRecord() {
+			if(NULL != loggerFile) {
+				fclose(loggerFile);
+			}
 		}
 
 		void increment() {
@@ -31,7 +37,7 @@ class EmberMotifLogRecord {
 		}
 
 		void invalidateFile() {
-			loggerFile = nullptr;
+			loggerFile = NULL;
 		}
 
 	protected:
@@ -43,7 +49,7 @@ class EmberMotifLog {
 	public:
 		EmberMotifLog(const std::string logPath, const uint32_t jobID);
 		~EmberMotifLog();
-		void logMotifStart(std::string name, int motifNum);
+		void logMotifStart(const std::string name, const int motifNum);
 	protected:
 		EmberMotifLogRecord* logRecord;
 
