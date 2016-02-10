@@ -105,9 +105,11 @@ bool DMAEngine::clock(Cycle_t cycle)
     while ( NULL != (me = networkLink->recv()) ) {
         /* Process network packet */
         Request* req = findRequest(me->getResponseToID());
+#ifdef __SST_DEBUG_OUTPUT__
         if ( NULL == req ) {
             dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%" PRIx64 ", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
         }
+#endif
         processPacket(req, me);
     }
 

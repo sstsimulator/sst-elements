@@ -30,7 +30,6 @@ public:
         d_->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
         protocol_           = protocol;
 
-        evictionRequiredInv_ = 0;
     }
 
     ~MESIInternalDirectory() {}
@@ -68,8 +67,6 @@ private:
 /* Private data members */
     bool                protocol_;  // True for MESI, false for MSI
 
-    uint64_t            evictionRequiredInv_;
-    
 /* Private event handlers */
     /** Handle GetX request. Request upgrade if needed */
     CacheAction handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay);

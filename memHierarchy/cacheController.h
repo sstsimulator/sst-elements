@@ -209,7 +209,7 @@ private:
         statMSHROccupancy->addData(mshr_->getSize());
         
         // Disable lower-level cache clocks if they're idle
-        if (queuesEmpty && nicIdle && clockIsOn_ && !L1_) {
+        if (queuesEmpty && nicIdle && clockIsOn_) {
             clockIsOn_ = false;
             lastActiveClockCycle_ = time;
             if (!maxWaitWakeupExists_) {

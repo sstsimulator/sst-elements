@@ -112,11 +112,12 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
     if (cacheLine == NULL) {
         recordStateEventCount(event->getCmd(), I);
         if (mshr_->pendingWriteback(event->getBaseAddr())) {
+#ifdef __SST_DEBUG_OUTPUT__
             d_->debug(_L8_, "Treating Inv as AckPut, not sending AckInv\n");
+#endif
             mshr_->removeWriteback(event->getBaseAddr());
             return DONE;
         } else {
-            //if (event->getCmd() == Inv) sendAckInv(event->getBaseAddr(), event->getRqstr()); // When is this needed?
             return IGNORE;
         }
     }
@@ -124,7 +125,8 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
     /* L1 specific code for gem5 integration */
     if (snoopL1Invs_) {
         MemEvent* snoop = new MemEvent((Component*)owner_, event->getAddr(), event->getBaseAddr(), Inv);
-        uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+        uint64_t baseTime = timestamp_ > cacheLine->getTimestamp() ? timestamp_ : cacheLine->getTimestamp();
+        uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
         Response resp = {snoop, deliveryTime, true};
         addToOutgoingQueueUp(resp);
     }
@@ -188,11 +190,13 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
     
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == name_));
     recordStateEventCount(event->getCmd(), state);
+    uint64_t sendTime = 0;
     switch (state) {
         case I:
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
+            sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
+            cacheLine->setTimestamp(sendTime);
             return STALL;
         case S:
         case E:
@@ -200,7 +204,8 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (event->isLoadLink()) cacheLine->atomicStart();
-            sendResponseUp(event, S, data, replay);
+            sendTime = sendResponseUp(event, S, data, replay, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime-1);
             return DONE;
         default:
             d_->fatal(CALL_INFO,-1,"%s, Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
@@ -219,18 +224,21 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
     State state = cacheLine->getState();
     Command cmd = event->getCmd();
     vector<uint8_t>* data = cacheLine->getData();
-    
+    uint64_t sendTime = 0;
+
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
+            sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             cacheLine->setState(IM);
+            cacheLine->setTimestamp(sendTime);
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
+            sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), cacheLine->getTimestamp(), NULL);
             cacheLine->setState(SM);
+            cacheLine->setTimestamp(sendTime);
             return STALL;
         case E:
             cacheLine->setState(M);
@@ -256,8 +264,9 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendResponseUp(event, M, data, replay, cacheLine->isAtomic());
-            else sendResponseUp(event, M, data, replay);
+            if (event->isStoreConditional()) sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime-1);
 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             return DONE;
@@ -278,7 +287,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
-    
+    uint64_t sendTime = 0;
     switch (state) {
         case IS:
             cacheLine->setData(responseEvent->getPayload(), responseEvent);
@@ -291,7 +300,8 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) break;
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
-            sendResponseUp(origRequest, S, cacheLine->getData(), true);
+            sendTime = sendResponseUp(origRequest, S, cacheLine->getData(), true, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime-1);
             break;
         case IM:
             cacheLine->setData(responseEvent->getPayload(), responseEvent);
@@ -320,9 +330,10 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
                 cacheLine->incLock(); 
             }
             
-            if (origRequest->isStoreConditional()) sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->isAtomic());
-            else sendResponseUp(origRequest, M, cacheLine->getData(), true);
-
+            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime-1);
+            
             notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             break;
         default:
@@ -340,14 +351,13 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
         case I:
         case IS:
         case IM:
-            //sendAckInv(event->getBaseAddr(), event->getRqstr());
             return IGNORE;  // Our Put raced with the invalidation and will serve as the AckInv when it arrives
         case S:
-            sendAckInv(event->getBaseAddr(), event->getRqstr());
+            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
             cacheLine->setState(I);
             return DONE;
         case SM:
-            sendAckInv(event->getBaseAddr(), event->getRqstr());
+            sendAckInv(event->getBaseAddr(), event->getRqstr(), cacheLine);
             cacheLine->setState(IM);
             return DONE;
         default:
@@ -492,7 +502,7 @@ int L1CoherenceController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine
 
 /*
  *  Handles: responses to fetch invalidates
- *  Latency: cache access to read data for payload  
+ *  Latency: cache access to read data for payload or mshr access if we just got the data from elsewhere
  */
 void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool replay){
     MemEvent *responseEvent = event->makeResponse();
@@ -505,17 +515,21 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
     
     if (cacheLine->getState() == M) responseEvent->setDirty(true);
 
-    uint64 deliveryTime = replay ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = replay ? baseTime + mshrLatency_ :baseTime + accessLatency_;
     Response resp  = {responseEvent, deliveryTime, true};
     addToOutgoingQueue(resp);
-    
+    cacheLine->setTimestamp(deliveryTime-1);
+
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) { 
-    d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
+        d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
     }
+#endif
 }
 
 
-void L1CoherenceController::sendResponseUp(MemEvent * event, State grantedState, std::vector<uint8_t>* data, bool replay, bool finishedAtomically) {
+uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, State grantedState, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
     Command cmd = event->getCmd();
     MemEvent * responseEvent = event->makeResponse(grantedState);
     responseEvent->setDst(event->getSrc());
@@ -541,12 +555,18 @@ void L1CoherenceController::sendResponseUp(MemEvent * event, State grantedState,
         printData(data, false);
     }
 
-    // Debugging
-    uint64_t deliveryTime = timestamp_ + (replay ? mshrLatency_ : accessLatency_);
+    // Compute latency, accounting for serialization of requests to the address
+    if (baseTime < timestamp_) baseTime = timestamp_;
+    uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueueUp(resp);
     
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+    // Debugging
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
+            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#endif
+    return deliveryTime;
 }
 
 
@@ -569,11 +589,16 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, str
     writeback->setRqstr(origRqstr);
     if (cacheLine->getState() == M) writeback->setDirty(true);
     
-    
-    uint64 deliveryTime = timestamp_ + accessLatency_;
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64 deliveryTime = baseTime + accessLatency_;
     Response resp = {writeback, deliveryTime, false};
     addToOutgoingQueue(resp);
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[cmd], ((cmd == PutM || writebackCleanBlocks_) ? "" : "out"));
+    cacheLine->setTimestamp(deliveryTime-1);
+    
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) 
+        d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[cmd], ((cmd == PutM || writebackCleanBlocks_) ? "" : "out"));
+#endif
 }
 
 
@@ -581,16 +606,21 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, str
  *  Handles: sending AckInv responses
  *  Latency: cache access + tag to update coherence state
  */
-void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr) {
+void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr, CacheLine * cacheLine) {
     MemEvent* ack = new MemEvent((SST::Component*)owner_, baseAddr, baseAddr, AckInv);
     ack->setDst(getDestination(baseAddr));
     ack->setRqstr(origRqstr);
     ack->setSize(lineSize_);
     
-    uint64 deliveryTime = timestamp_ + accessLatency_;
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64 deliveryTime = baseTime + tagLatency_;
     Response resp = {ack, deliveryTime, false};
     addToOutgoingQueue(resp);
+    cacheLine->setTimestamp(deliveryTime-1);
+    
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
+#endif
 }
 
 

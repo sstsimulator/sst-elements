@@ -64,7 +64,9 @@ CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, string 
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
+#endif
 
     Command cmd = event->getCmd();
 
@@ -90,8 +92,10 @@ CacheAction IncoherentController::handleReplacement(MemEvent* event, CacheLine* 
     if (reqEvent != NULL && reqEvent->getCmd() == GetS && cacheLine->getState() == I) cacheLine->setState(IS);
     if (reqEvent != NULL && reqEvent->getCmd() == GetX && cacheLine->getState() == I) cacheLine->setState(IM);
 
+#ifdef __SST_DEBUG_OUTPUT__
     if (cacheLine != NULL && (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()))   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-    
+#endif
+
 
     Command cmd = event->getCmd();
     CacheAction action = DONE;
@@ -171,18 +175,23 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == ((Component*)owner_)->getName()));
     recordStateEventCount(event->getCmd(), state);
 
+    uint64_t sendTime = 0;
+
     switch (state) {
         case I:
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
+            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
+#ifdef __SST_DEBUG_OUTPUT__
             d_->debug(_L6_,"Forwarding GetS, new state IS\n");
+#endif
             return STALL;
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
-            sendResponseUp(event, E, data, replay);
+            sendTime = sendResponseUp(event, E, data, replay, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             return DONE;
         default:
             d_->fatal(CALL_INFO,-1,"%s, Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
@@ -202,11 +211,14 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
     Command cmd = event->getCmd();
     recordStateEventCount(event->getCmd(), state);
     
+    uint64_t sendTime = 0;
+
     switch (state) {
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
-            sendResponseUp(event, M, cacheLine->getData(), replay);
+            sendTime = sendResponseUp(event, M, cacheLine->getData(), replay, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
         default:
@@ -258,7 +270,7 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
 CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     if (!inclusive_ && (cacheLine == NULL || cacheLine->getState() == I)) {
-        sendResponseUp(origRequest, responseEvent->getGrantedState(), &responseEvent->getPayload(), true);
+        sendResponseUp(origRequest, responseEvent->getGrantedState(), &responseEvent->getPayload(), true, cacheLine->getTimestamp());
         return DONE;
     }
 
@@ -269,18 +281,20 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
     recordStateEventCount(responseEvent->getCmd(), state);
     
     bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == ((Component*)owner_)->getName()));
-    
+    uint64_t sendTime = 0;
     switch (state) {
         case IS:
             cacheLine->setState(E);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
-            sendResponseUp(origRequest, cacheLine->getState(), cacheLine->getData(), true);
+            sendTime = sendResponseUp(origRequest, cacheLine->getState(), cacheLine->getData(), true, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
         case IM:
             cacheLine->setState(M); 
-            sendResponseUp(origRequest, M, cacheLine->getData(), true);
+            sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
             return DONE;
         default:
@@ -316,7 +330,9 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[cmd]);
+#endif
 }
 
 
