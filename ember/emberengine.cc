@@ -63,7 +63,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
         logPrefix << motifLogFile << "-" << m_jobId << ".log";
         //logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
         output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
-        m_motifLogger = new EmberMotifLog(logPrefix.str()); 
+        m_motifLogger = new EmberMotifLog(logPrefix.str(), m_jobId);
     } else {
         m_motifLogger = NULL;
     }
