@@ -72,8 +72,10 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction L1IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-    
+#endif
+
     Command cmd = event->getCmd();
 
     switch(cmd) {
@@ -143,9 +145,12 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
     
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == name_));
     recordStateEventCount(event->getCmd(), state);
+    
+    uint64_t sendTime = 0;
+
     switch (state) {
         case I:
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
+            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
             return STALL;
@@ -154,7 +159,8 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (event->isLoadLink()) cacheLine->atomicStart();
-            sendResponseUp(event, S, data, replay);
+            sendTime = sendResponseUp(event, S, data, replay, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             return DONE;
         default:
             d_->fatal(CALL_INFO,-1,"%s, Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
@@ -174,11 +180,13 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
     Command cmd = event->getCmd();
     vector<uint8_t>* data = cacheLine->getData();
     
+    uint64_t sendTime = 0;
+
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
-            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), NULL);
+            forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             cacheLine->setState(IM);
             return STALL;
         case E:
@@ -202,8 +210,9 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendResponseUp(event, M, data, replay, cacheLine->isAtomic());
-            else sendResponseUp(event, M, data, replay);
+            if (event->isStoreConditional()) sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(event, M, data, replay, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             return DONE;
@@ -223,13 +232,15 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
+    uint64_t sendTime = 0;
     switch (state) {
         case IS:
             cacheLine->setState(E);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) break;
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
-            sendResponseUp(origRequest, S, cacheLine->getData(), true);
+            sendTime = sendResponseUp(origRequest, S, cacheLine->getData(), true, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             break;
         case IM:
             cacheLine->setState(M);
@@ -251,8 +262,9 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
                 cacheLine->incLock(); 
             }
             
-            if (origRequest->isStoreConditional()) sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->isAtomic());
-            else sendResponseUp(origRequest, M, cacheLine->getData(), true);
+            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            else sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
+            cacheLine->setTimestamp(sendTime);
             notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             break;
         default:
@@ -282,7 +294,7 @@ int L1IncoherentController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLin
  *  Methods for sending & receiving messages
  *********************************************/
 
-void L1IncoherentController::sendResponseUp(MemEvent * event, State grantedState, std::vector<uint8_t>* data, bool replay, bool finishedAtomically) {
+uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, State grantedState, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
     Command cmd = event->getCmd();
     MemEvent * responseEvent = event->makeResponse(grantedState);
     responseEvent->setDst(event->getSrc());
@@ -304,11 +316,16 @@ void L1IncoherentController::sendResponseUp(MemEvent * event, State grantedState
         responseEvent->setPayload(*data);
     }
     // Debugging
-    uint64_t deliveryTime = timestamp_ + (replay ? mshrLatency_ : accessLatency_);
+    if (baseTime < timestamp_) baseTime = timestamp_;
+    uint64_t deliveryTime = baseTime + (replay ? mshrLatency_ : accessLatency_);
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueueUp(resp);
     
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
+            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#endif
+    return deliveryTime;
 }
 
 
@@ -330,7 +347,9 @@ void L1IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, st
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {writeback, deliveryTime, false};
     addToOutgoingQueue(resp);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[cmd]);
+#endif
 }
 
 

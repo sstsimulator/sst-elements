@@ -202,11 +202,14 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     
     if(!replay){ 
         statTotalEventsReceived->addData(1);
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
         cout << flush;
+#endif
     }
     else statTotalEventsReplayed->addData(1);
 
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) {
         if (replay) {
             d_->debug(_L3_,"Replay. Name: %s, Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", VAddr: %" PRIx64 ", iPtr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Bytes requested = %u, cycles: %" PRIu64 ", %s\n",
@@ -219,6 +222,8 @@ void Cache::processEvent(MemEvent* event, bool replay) {
         }
     }
     cout << flush; 
+#endif
+
     if(noncacheable || cf_.allNoncacheableRequests_){
         processNoncacheable(event, cmd, baseAddr);
         return;
@@ -251,7 +256,9 @@ void Cache::processEvent(MemEvent* event, bool replay) {
 
             if(mshr_->isHit(baseAddr) && canStall) {
                 if(processRequestInMSHR(baseAddr, event)){
+#ifdef __SST_DEBUG_OUTPUT__
                     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
+#endif
                     event->setBlocked(true);
                 }
                 break;
@@ -299,13 +306,15 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
         case GetS:
         case GetX:
         case GetSEx:
+#ifdef __SST_DEBUG_OUTPUT__
 	    if (cmd == GetSEx) d_->debug(_WARNING_, "WARNING: Noncachable atomics have undefined behavior; atomicity not preserved\n"); 
+#endif
             inserted = mshrNoncacheable_->insert(baseAddr, event);
             if (!inserted) {
                 d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
             }
-            if(cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), NULL);
-            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), &event->getPayload());
+            if(cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
+            else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
             break;
         case GetSResp:
         case GetXResp:
@@ -314,7 +323,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
                 d_->fatal(CALL_INFO, -1, "%s, Error: noncacheable response received does not match request at front of mshr. Resp cmd = %s, Resp addr = 0x%" PRIx64 ", Req cmd = %s, Req addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",
                         getName().c_str(),CommandString[cmd],baseAddr, CommandString[origRequest->getCmd()], origRequest->getBaseAddr(),getCurrentSimTimeNano());
             }
-            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true);
+            coherenceMgr->sendResponseUp(origRequest, NULLST, &event->getPayload(), true, 0);
             delete origRequest;
             break;
         default:

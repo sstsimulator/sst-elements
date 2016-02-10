@@ -85,6 +85,8 @@ public:
         State               state_;
         set<std::string>    sharers_;
         std::string         owner_;
+        
+        uint64_t            lastSendTimestamp_; // Use to force sequential timing for subsequent accesses to the line
 
         /* L1 specific */
         unsigned int userLock_;
@@ -109,6 +111,8 @@ public:
             state_ = I;
             sharers_.clear();
             owner_.clear();
+            
+            lastSendTimestamp_      = 0;
 
             /* Dir specific */
             dataLine_ = NULL;
@@ -116,7 +120,7 @@ public:
             /* L1 specific */
             userLock_               = 0;
             eventsWaitingForLock_   = false;
-            LLSCAtomic_             = false;   
+            LLSCAtomic_             = false;
         }
 
 
@@ -182,6 +186,11 @@ public:
         void clearOwner() { owner_.clear(); }
         /** Getter for owner field - return whether field is set */
         bool ownerExists() { return !owner_.empty(); }
+
+        /** Setter for timestamp field */
+        void setTimestamp(uint64_t timestamp) { lastSendTimestamp_ = timestamp; }
+        /** Getter for timestamp field */
+        uint64_t getTimestamp() { return lastSendTimestamp_; }
 
         /****** L1 specific fields ******/
         
