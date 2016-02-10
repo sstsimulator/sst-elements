@@ -61,7 +61,6 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
             if (wbCacheLine->numSharers() > 0) {
                 invalidateAllSharers(wbCacheLine, name_, false); 
                 wbCacheLine->setState(SI);
-                evictionRequiredInv_++;
 #ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == wbBaseAddr) d_->debug(_L7_, "Eviction requires invalidating sharers\n");
 #endif
@@ -79,7 +78,6 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
             if (wbCacheLine->numSharers() > 0) {
                 invalidateAllSharers(wbCacheLine, name_, false); 
                 wbCacheLine->setState(EI);
-                evictionRequiredInv_++;
 #ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == wbBaseAddr) d_->debug(_L7_, "Eviction requires invalidating sharers\n");
 #endif
@@ -89,7 +87,6 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 sendFetchInv(wbCacheLine, name_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 wbCacheLine->setState(EI);
-                evictionRequiredInv_++;
 #ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == wbBaseAddr) d_->debug(_L7_, "Eviction requires invalidating owner\n");
 #endif
@@ -116,7 +113,6 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 sendFetchInv(wbCacheLine, name_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 wbCacheLine->setState(MI);
-                evictionRequiredInv_++;
 #ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == wbBaseAddr) d_->debug(_L7_, "Eviction requires invalidating owner\n");
 #endif

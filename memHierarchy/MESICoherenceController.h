@@ -30,7 +30,6 @@ public:
         protocol_           = protocol;         // 1 for MESI, 0 for MSI
         inclusive_          = inclusive;
         
-        evictionRequiredInv_ = 0;
     }
 
     ~MESIController() {}
@@ -72,7 +71,6 @@ private:
     bool                protocol_;  // True for MESI, false for MSI
     bool                inclusive_;
 
-    uint64_t            evictionRequiredInv_;
     
 /* Private event handlers */
     /** Handle GetX request. Request upgrade if needed */

@@ -60,7 +60,6 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 if (isCached || collision) invalidateAllSharers(replacementLine, name_, false);
                 else invalidateAllSharersAndFetch(replacementLine, name_, false);    // Fetch needed for PutS
                 replacementLine->setState(SI);
-                evictionRequiredInv_++;
                 return STALL;
             }
             if (!isCached && !collision) d_->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers. Addr = 0x%" PRIx64 ", State = %s\n", name_.c_str(), replacementLine->getBaseAddr(), StateString[state]);
@@ -75,13 +74,11 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 if (isCached || collision) invalidateAllSharers(replacementLine, name_, false);
                 else invalidateAllSharersAndFetch(replacementLine, name_, false);
                 replacementLine->setState(EI);
-                evictionRequiredInv_++;
                 return STALL;
             } else if (replacementLine->ownerExists() && !fromDataCache) { // Not cached
                 sendFetchInv(replacementLine, name_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 replacementLine->setState(EI);
-                evictionRequiredInv_++;
                 return STALL;
             } else { // Must be cached
                 if (!isCached && !collision) 
@@ -98,13 +95,11 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
                 if (isCached || collision) invalidateAllSharers(replacementLine, name_, false);
                 else invalidateAllSharersAndFetch(replacementLine, name_, false);
                 replacementLine->setState(MI);
-                evictionRequiredInv_++;
                 return STALL;
             } else if (replacementLine->ownerExists() && !fromDataCache) {
                 sendFetchInv(replacementLine, name_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 replacementLine->setState(MI);
-                evictionRequiredInv_++;
                 return STALL;
             } else {
                 if (!isCached && !collision) 
