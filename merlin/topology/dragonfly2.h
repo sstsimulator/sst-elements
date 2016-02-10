@@ -87,6 +87,7 @@ class topo_dragonfly2: public Topology {
     
     struct dgnfly2Params params;
     RouteAlgo algorithm;
+    double adaptive_threshold;
     uint32_t group_id;
     uint32_t router_id;
 
