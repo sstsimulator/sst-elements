@@ -28,21 +28,22 @@ void
 RouteToGroup::init(SharedRegion* sr, size_t g, size_t r)
 {
     region = sr;
-    // data = static_cast<RouterPortPair*>(sr->getRawPtr());
+    data = sr->getPtr<const RouterPortPair*>();
     groups = g;
     routes = r;
     
 }
 
-RouterPortPair&
+const RouterPortPair&
 RouteToGroup::getRouterPortPair(int group, int route_number)
 {
-    data = static_cast<RouterPortPair*>(region->getRawPtr());
+    // data = static_cast<RouterPortPair*>(region->getRawPtr());
     return data[group*routes + route_number];
 }
 
 void
 RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPair& pair) {
+    // output.output("%d, %d, %d, %d\n",group,route_number,pair.router,pair.port);
     region->modifyArray(group*routes+route_number,pair);
 }
 
@@ -114,6 +115,7 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
         group_to_global_port.setRouterPortPair(group, route_num, rpp);
     }
 
+    
     // Publish the shared region to make sure everyone has the data.
     sr->publish();
     
@@ -124,14 +126,18 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
         } else {
             algorithm = VALIANT;
         }
-    } else {
+    }
+    else if ( !route_algo.compare("adaptive-local") ) {
+        algorithm = ADAPTIVE_LOCAL;
+    }
+    else {
         algorithm = MINIMAL;
     }
 
     uint32_t id = p.find_integer("id");
     group_id = id / params.a;
     router_id = id % params.a;
-    
+
     rng = new RNG::XORShiftRNG(id+1);
 
     output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
@@ -168,8 +174,122 @@ void topo_dragonfly2::route(int port, int vc, internal_router_event* ev)
         next_port = td_ev->dest.host;
     }
 
+    // if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
+    //     output.output("TRACE(%d): route()\n",
+    //                   td_ev->getTraceID());
+    // }
+
     output.verbose(CALL_INFO, 1, 1, "%u:%u, Recv: %d/%d  Setting Next Port/VC:  %u/%u\n", group_id, router_id, port, vc, next_port, td_ev->getVC());
     td_ev->setNextPort(next_port);
+}
+
+void topo_dragonfly2::reroute(int port, int vc, internal_router_event* ev)
+{
+    if ( algorithm != ADAPTIVE_LOCAL ) return;
+    
+    // For now, we make the adaptive routing decision only at the
+    // input to the network and at the input to a group for adaptively
+    // routed packets
+    if ( port >= params.p && port < (params.p + params.a-1) ) return;
+    
+    topo_dragonfly2_event *td_ev = static_cast<topo_dragonfly2_event*>(ev);
+
+    // If the dest is in the same group, no need to adaptively route
+    if ( td_ev->dest.group == group_id ) return;
+
+    
+    // Based on the output queue depths, choose minimal or valiant
+    // route.  We'll chose the direct route unless the remaining
+    // output credits for the direct route is half of the valiant
+    // route.  We'll look at two slice for each direct and indirect,
+    // giving us a total of 4 routes we are looking at.  For packets
+    // which came in adaptively on global links, look at two direct
+    // routes and chose between the.
+    int direct_slice1 = td_ev->global_slice_shadow;
+    // int direct_slice2 = td_ev->global_slice;
+    int direct_slice2 = (td_ev->global_slice_shadow + 1) % params.n;
+    int direct_route_port1 = port_for_group(td_ev->dest.group, direct_slice1, 0 );
+    int direct_route_port2 = port_for_group(td_ev->dest.group, direct_slice2, 1 );
+    int direct_route_credits1 = output_credits[direct_route_port1 * num_vcs + vc];
+    int direct_route_credits2 = output_credits[direct_route_port2 * num_vcs + vc];
+    int direct_slice;
+    int direct_route_port;
+    int direct_route_credits;
+    if ( direct_route_credits1 > direct_route_credits2 ) {
+        direct_slice = direct_slice1;
+        direct_route_port = direct_route_port1;
+        direct_route_credits = direct_route_credits1;
+    }
+    else {
+        direct_slice = direct_slice2;
+        direct_route_port = direct_route_port2;
+        direct_route_credits = direct_route_credits2;        
+    }
+    // if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
+    //     output.output("TRACE(%d): reroute():"
+    //                   " mid_group_shadow = %u,"
+    //                   " direct_slice1 = %d,"
+    //                   " direct_slice2 = %d,"
+    //                   " direct_route_port1 = %d,"
+    //                   " direct_route_port2 = %d",
+    //                   td_ev->getTraceID(),
+    //                   td_ev->dest.mid_group_shadow,
+    //                   direct_slice1,
+    //                   direct_slice2,
+    //                   direct_route_port1,
+    //                   direct_route_port2);
+    // }
+
+    int valiant_slice = 0;
+    int valiant_route_port = 0;
+    int valiant_route_credits = 0;
+
+    if ( port >= (params.p + params.a-1) ) {
+        // Global port, no indirect routes.  Set credits negative so
+        // it will never get chosen
+        valiant_route_credits = -1;
+    }
+    else {
+        int valiant_slice1 = td_ev->global_slice;
+        // int valiant_slice2 = td_ev->global_slice;
+        int valiant_slice2 = (td_ev->global_slice + 1) % params.n;
+        int valiant_route_port1 = port_for_group(td_ev->dest.mid_group_shadow, valiant_slice1, 2 );
+        int valiant_route_port2 = port_for_group(td_ev->dest.mid_group_shadow, valiant_slice2, 3 );
+        int valiant_route_credits1 = output_credits[valiant_route_port1 * num_vcs + vc];
+        int valiant_route_credits2 = output_credits[valiant_route_port2 * num_vcs + vc];
+        if ( valiant_route_credits1 > valiant_route_credits2 ) {
+            valiant_slice = valiant_slice1;
+            valiant_route_port = valiant_route_port1;
+            valiant_route_credits = valiant_route_credits1;
+        }
+        else {
+            valiant_slice = valiant_slice2;
+            valiant_route_port = valiant_route_port2;
+            valiant_route_credits = valiant_route_credits2;        
+        }
+    }
+
+    
+    if ( valiant_route_credits > direct_route_credits * 2 ) { // Use valiant route
+        td_ev->dest.mid_group = td_ev->dest.mid_group_shadow;
+        td_ev->setNextPort(valiant_route_port);
+        // output.output("valiant_slice = %d\n", valiant_slice);
+        td_ev->global_slice = valiant_slice;
+    }
+    else { // Use direct route
+        td_ev->dest.mid_group = td_ev->dest.group;
+        td_ev->setNextPort(direct_route_port);
+        // output.output("direct_slice = %d\n", valiant_slice);
+        td_ev->global_slice = direct_slice;
+    }
+
+    // if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
+    //     output.output("TRACE(%d): reroute():"
+    //                   " mid_group_shadow = %u\n",
+    //                   td_ev->getTraceID(),
+    //                   td_ev->dest.mid_group_shadow);
+    // }
+    
 }
 
 
@@ -183,6 +303,7 @@ internal_router_event* topo_dragonfly2::process_input(RtrEvent* ev)
         dstAddr.mid_group = dstAddr.group;
         break;
     case VALIANT:
+    case ADAPTIVE_LOCAL:
         if ( dstAddr.group == group_id ) {
             // staying here.
             dstAddr.mid_group = dstAddr.group;
@@ -194,7 +315,7 @@ internal_router_event* topo_dragonfly2::process_input(RtrEvent* ev)
         }
         break;
     }
-
+    dstAddr.mid_group_shadow = dstAddr.mid_group;
     // output.verbose(CALL_INFO, 1, 1, "Init packet from %d to %d to %u:%u:%u:%u\n", ev->request->src, ev->request->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
 
     topo_dragonfly2_event *td_ev = new topo_dragonfly2_event(dstAddr);
@@ -202,7 +323,14 @@ internal_router_event* topo_dragonfly2::process_input(RtrEvent* ev)
     td_ev->setEncapsulatedEvent(ev);
     td_ev->setVC(ev->request->vn * 3);
     td_ev->global_slice = ev->request->src % params.n;
-    
+    td_ev->global_slice_shadow = ev->request->src % params.n;
+
+    if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
+        output.output("TRACE(%d): process_input():"
+                      " mid_group_shadow = %u\n",
+                      td_ev->getTraceID(),
+                      td_ev->dest.mid_group_shadow);
+    }
     return td_ev;
 }
 
@@ -248,7 +376,7 @@ void topo_dragonfly2::routeInitData(int port, internal_router_event* ev, std::ve
 
         if ( broadcast_to_groups ) {
             for ( int p = 0; p < (int)(params.g - 1); p++ ) {
-                RouterPortPair& pair = group_to_global_port.getRouterPortPair(p,0);
+                const RouterPortPair& pair = group_to_global_port.getRouterPortPair(p,0);
                 if ( pair.router == router_id ) outPorts.push_back((int)(pair.port));
             }
         }
@@ -295,6 +423,13 @@ topo_dragonfly2::getEndpointID(int port)
         (router_id * params.p /*hosts_per_rtr*/) + port;
 }
 
+void
+topo_dragonfly2::setOutputBufferCreditArray(int const* array, int vcs)
+{
+    output_credits = array;
+    num_vcs = vcs;
+}
+
 
 void topo_dragonfly2::idToLocation(int id, dgnfly2Addr *location)
 {
@@ -328,14 +463,12 @@ uint32_t topo_dragonfly2::router_to_group(uint32_t group)
 
 
 /* returns local router port if group can't be reached from this router */
-uint32_t topo_dragonfly2::port_for_group(uint32_t group, uint32_t slice)
+uint32_t topo_dragonfly2::port_for_group(uint32_t group, uint32_t slice, int id)
 {
     // Look up global port to use
     if ( group >= group_id ) group--;
-    RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
+    const RouterPortPair& pair = group_to_global_port.getRouterPortPair(group,slice);
 
-    // output.output("%u, %u, %u, %u\n",group,slice,pair.router,pair.port);
-    
     if ( pair.router == router_id ) {
         return pair.port;
     } else {

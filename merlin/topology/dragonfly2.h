@@ -45,7 +45,7 @@ struct RouterPortPair {
 
 class RouteToGroup {
 private:
-    RouterPortPair* data;
+    const RouterPortPair* data;
     SharedRegion* region;
     size_t groups;
     size_t routes;
@@ -56,7 +56,7 @@ public:
 
     void init(SharedRegion* sr, size_t g, size_t r);
 
-    RouterPortPair& getRouterPortPair(int group, int route_number);
+    const RouterPortPair& getRouterPortPair(int group, int route_number);
 
     void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
 };
@@ -79,7 +79,8 @@ class topo_dragonfly2: public Topology {
 
     enum RouteAlgo {
         MINIMAL,
-        VALIANT
+        VALIANT,
+        ADAPTIVE_LOCAL
     };
 
     RouteToGroup group_to_global_port;
@@ -90,11 +91,15 @@ class topo_dragonfly2: public Topology {
     uint32_t router_id;
 
     RNG::SSTRandom* rng;
+
+    int const* output_credits;
+    int num_vcs;
     
 public:
     struct dgnfly2Addr {
         uint32_t group;
         uint32_t mid_group;
+        uint32_t mid_group_shadow;
         uint32_t router;
         uint32_t host;
     };
@@ -103,6 +108,7 @@ public:
     ~topo_dragonfly2();
 
     virtual void route(int port, int vc, internal_router_event* ev);
+    virtual void reroute(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
@@ -114,11 +120,13 @@ public:
     virtual int computeNumVCs(int vns) { return vns * 3; }
     virtual int getEndpointID(int port);
 
+    virtual void setOutputBufferCreditArray(int const* array, int vcs);
+    
 private:
     void idToLocation(int id, dgnfly2Addr *location);
     uint32_t router_to_group(uint32_t group);
     uint32_t port_for_router(uint32_t router);
-    uint32_t port_for_group(uint32_t group, uint32_t global_slice);
+    uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
 };
 
 
@@ -130,6 +138,7 @@ public:
     uint32_t src_group;
     topo_dragonfly2::dgnfly2Addr dest;
     uint16_t global_slice;
+    uint16_t global_slice_shadow;
 
     topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) : dest(dest) {}
     ~topo_dragonfly2_event() { }
@@ -150,9 +159,11 @@ private:
 		ar & BOOST_SERIALIZATION_NVP(src_group);
 		ar & BOOST_SERIALIZATION_NVP(dest.group);
 		ar & BOOST_SERIALIZATION_NVP(dest.mid_group);
+		ar & BOOST_SERIALIZATION_NVP(dest.mid_group_shadow);
 		ar & BOOST_SERIALIZATION_NVP(dest.router);
 		ar & BOOST_SERIALIZATION_NVP(dest.host);
         ar & BOOST_SERIALIZATION_NVP(global_slice);
+        ar & BOOST_SERIALIZATION_NVP(global_slice_shadow);
     }
 };
 
