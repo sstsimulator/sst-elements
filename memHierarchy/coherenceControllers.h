@@ -100,7 +100,9 @@ public:
         } else {
             addToOutgoingQueue(resp);
         }
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending NACK at cycle = %" PRIu64 "\n", deliveryTime);
+#endif
     }
 
 
@@ -116,8 +118,10 @@ public:
         Response resp = {responseEvent, deliveryTime, true};
         addToOutgoingQueueUp(resp);
     
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Payload Bytes = %i, Granted State = %s\n", 
                 deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getPayloadSize(), StateString[responseEvent->getGrantedState()]);
+#endif
         return deliveryTime;
     }
     
@@ -133,8 +137,10 @@ public:
         Response resp = {event, deliveryTime, false};
         if (!up) addToOutgoingQueue(resp);
         else addToOutgoingQueueUp(resp);
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending request: Addr = %" PRIx64 ", BaseAddr = %" PRIx64 ", Cmd = %s\n", 
                 event->getAddr(), event->getBaseAddr(), CommandString[event->getCmd()]);
+#endif
     }
   
 
@@ -159,7 +165,9 @@ public:
     
         Response fwdReq = {forwardEvent, deliveryTime, false};
         addToOutgoingQueue(fwdReq);
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
+#endif
     }
     
 
@@ -186,11 +194,13 @@ public:
         while(!outgoingEventQueue_.empty() && outgoingEventQueue_.front().deliveryTime <= timestamp_) {
             MemEvent *outgoingEvent = outgoingEventQueue_.front().event;
             recordEventSentDown(outgoingEvent->getCmd());
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
                 d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
             }
+#endif
 
             if(bottomNetworkLink_) {
                 outgoingEvent->setDst(bottomNetworkLink_->findTargetDestination(outgoingEvent->getBaseAddr()));
@@ -205,11 +215,13 @@ public:
         while(!outgoingEventQueueUp_.empty() && outgoingEventQueueUp_.front().deliveryTime <= timestamp_) {
             MemEvent * outgoingEvent = outgoingEventQueueUp_.front().event;
             recordEventSentUp(outgoingEvent->getCmd());
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || outgoingEvent->getBaseAddr() == DEBUG_ADDR) {
                 d_->debug(_L4_,"SEND. Cmd: %s, BsAddr: %" PRIx64 ", Addr: %" PRIx64 ", Rqstr: %s, Src: %s, Dst: %s, PreF:%s, Rqst size = %u, Payload size = %u, time: (%" PRIu64 ", %" PRIu64 ")\n",
                    CommandString[outgoingEvent->getCmd()], outgoingEvent->getBaseAddr(), outgoingEvent->getAddr(), outgoingEvent->getRqstr().c_str(), outgoingEvent->getSrc().c_str(), 
                    outgoingEvent->getDst().c_str(), outgoingEvent->isPrefetch() ? "true" : "false", outgoingEvent->getSize(), outgoingEvent->getPayloadSize(), timestamp_, curTime);
             }
+#endif
 
             if (topNetworkLink_) {
                 topNetworkLink_->send(outgoingEvent);

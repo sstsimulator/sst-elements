@@ -72,8 +72,10 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction L1IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-    
+#endif
+
     Command cmd = event->getCmd();
 
     switch(cmd) {
@@ -319,7 +321,10 @@ uint64_t L1IncoherentController::sendResponseUp(MemEvent * event, State grantedS
     Response resp = {responseEvent, deliveryTime, true};
     addToOutgoingQueueUp(resp);
     
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
+            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#endif
     return deliveryTime;
 }
 
@@ -342,7 +347,9 @@ void L1IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, st
     uint64 deliveryTime = timestamp_ + accessLatency_;
     Response resp = {writeback, deliveryTime, false};
     addToOutgoingQueue(resp);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[cmd]);
+#endif
 }
 
 

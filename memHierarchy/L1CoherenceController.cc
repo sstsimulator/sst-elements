@@ -112,7 +112,9 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
     if (cacheLine == NULL) {
         recordStateEventCount(event->getCmd(), I);
         if (mshr_->pendingWriteback(event->getBaseAddr())) {
+#ifdef __SST_DEBUG_OUTPUT__
             d_->debug(_L8_, "Treating Inv as AckPut, not sending AckInv\n");
+#endif
             mshr_->removeWriteback(event->getBaseAddr());
             return DONE;
         } else {
@@ -519,9 +521,11 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
 
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) { 
-    d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
+        d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
     }
+#endif
 }
 
 
@@ -558,7 +562,10 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, State grantedSt
     addToOutgoingQueueUp(resp);
     
     // Debugging
-    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ". Current Time = %" PRIu64 ", Addr = %" PRIx64 ", Dst = %s, Size = %i, Granted State = %s\n", 
+            deliveryTime, timestamp_, event->getAddr(), responseEvent->getDst().c_str(), responseEvent->getSize(), StateString[responseEvent->getGrantedState()]);
+#endif
     return deliveryTime;
 }
 
@@ -588,7 +595,10 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, str
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
     
-    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[cmd], ((cmd == PutM || writebackCleanBlocks_) ? "" : "out"));
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) 
+        d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", deliveryTime, CommandString[cmd], ((cmd == PutM || writebackCleanBlocks_) ? "" : "out"));
+#endif
 }
 
 
@@ -608,7 +618,9 @@ void L1CoherenceController::sendAckInv(Addr baseAddr, string origRqstr, CacheLin
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime-1);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
+#endif
 }
 
 

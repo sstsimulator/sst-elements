@@ -100,20 +100,24 @@ void Bus::broadcastEvent(SST::Event* _ev){
 
 void Bus::sendSingleEvent(SST::Event* _ev){
     MemEvent *event = static_cast<MemEvent*>(_ev);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
         dbg_.debug(_L3_,"\n\n");
         dbg_.debug(_L3_,"----------------------------------------------------------------------------------------\n");    //raise(SIGINT);
         dbg_.debug(_L3_,"Incoming Event. Name: %s, Cmd: %s, Addr: %" PRIx64 ", BsAddr: %" PRIx64 ", Src: %s, Dst: %s, LinkID: %ld \n",
                    this->getName().c_str(), CommandString[event->getCmd()], event->getAddr(), event->getBaseAddr(), event->getSrc().c_str(), event->getDst().c_str(), event->getDeliveryLink()->getId());
     }
+#endif
     LinkId_t dstLinkId = lookupNode(event->getDst());
     SST::Link* dstLink = linkIdMap_[dstLinkId];
     MemEvent* forwardEvent = new MemEvent(*event);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == forwardEvent->getBaseAddr()) {
         dbg_.debug(_L3_,"BCmd = %s \n", CommandString[forwardEvent->getCmd()]);
         dbg_.debug(_L3_,"BDst = %s \n", forwardEvent->getDst().c_str());
         dbg_.debug(_L3_,"BSrc = %s \n", forwardEvent->getSrc().c_str());
     }
+#endif
     dstLink->send(forwardEvent);
     
     delete event;

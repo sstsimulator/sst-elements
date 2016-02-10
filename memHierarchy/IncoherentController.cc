@@ -64,7 +64,9 @@ CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, string 
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
 CacheAction IncoherentController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr())   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
+#endif
 
     Command cmd = event->getCmd();
 
@@ -90,8 +92,10 @@ CacheAction IncoherentController::handleReplacement(MemEvent* event, CacheLine* 
     if (reqEvent != NULL && reqEvent->getCmd() == GetS && cacheLine->getState() == I) cacheLine->setState(IS);
     if (reqEvent != NULL && reqEvent->getCmd() == GetX && cacheLine->getState() == I) cacheLine->setState(IM);
 
+#ifdef __SST_DEBUG_OUTPUT__
     if (cacheLine != NULL && (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()))   d_->debug(_L6_,"State = %s\n", StateString[cacheLine->getState()]);
-    
+#endif
+
 
     Command cmd = event->getCmd();
     CacheAction action = DONE;
@@ -178,7 +182,9 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
+#ifdef __SST_DEBUG_OUTPUT__
             d_->debug(_L6_,"Forwarding GetS, new state IS\n");
+#endif
             return STALL;
         case E:
         case M:
@@ -324,7 +330,9 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s\n", deliveryTime, CommandString[cmd]);
+#endif
 }
 
 
