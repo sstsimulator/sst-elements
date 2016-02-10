@@ -52,7 +52,7 @@ private:
 
   ////////////////////////////////////////////////////////
 
-  MessageInterface* msgapi;
+  SST::Hermes::MP::Interface* msgapi;
   DUMPIReader* trace;
   std::queue<ZodiacEvent*>* eventQ;
 

@@ -62,6 +62,7 @@ namespace SST {
                     SIMPLEMACH = 0,
                     MESH = 1,
                     TORUS = 2,
+                    DRAGONFLY = 3,
                 };
                 enum AllocatorType{
                     SIMPLEALLOC = 0,
@@ -121,13 +122,13 @@ namespace SST {
                     std::string name;
                 };
 
-                static const int numMachTableEntries = 3;
+                static const int numMachTableEntries = 4;
                 static const int numSchedTableEntries = 6;
                 static const int numFSTTableEntries = 3;
                 static const int numAllocTableEntries = 18;
                 static const int numTaskMapTableEntries = 7;
                 
-                static const machTableEntry machTable[3];
+                static const machTableEntry machTable[4];
                 static const schedTableEntry schedTable[6];
                 static const FSTTableEntry FSTTable[3];
                 static const allocTableEntry allocTable[18];

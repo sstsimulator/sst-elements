@@ -36,23 +36,24 @@ namespace SST{ namespace MemHierarchy{
     using namespace SST::MemHierarchy;
     using namespace std;
 
-Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
+Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
  
     /* --------------- Output Class --------------- */
     Output* dbg = new Output();
     int debugLevel = params.find_integer("debug_level", 0);
     
     dbg->init("--->  ", debugLevel, 0,(Output::output_location_t)params.find_integer("debug", 0));
-    if(debugLevel < 0 || debugLevel > 10)     dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+    if (debugLevel < 0 || debugLevel > 10)     dbg->fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg->debug(_INFO_,"\n--------------------------- Initializing [Memory Hierarchy] --------------------------- \n\n");
 
     /* --------------- Get Parameters --------------- */
     string frequency            = params.find_string("cache_frequency", "" );            //Hertz
     string replacement          = params.find_string("replacement_policy", "LRU");
     int associativity           = params.find_integer("associativity", -1);
+    int hashFunc                = params.find_integer("hash_function", 0);
     string sizeStr              = params.find_string("cache_size", "");                  //Bytes
     int lineSize                = params.find_integer("cache_line_size", -1);            //Bytes
-    int accessLatency           = params.find_integer("access_latency_cycles", -1);                 //ns
+    int accessLatency           = params.find_integer("access_latency_cycles", -1);      //ns
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
     int L1int                   = params.find_integer("L1", 0);
@@ -60,7 +61,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
     int LLint                   = params.find_integer("LL", 0);
     int dirAtNextLvl            = params.find_integer("directory_at_next_level", 0);
     string coherenceProtocol    = params.find_string("coherence_protocol", "");
-    string statGroups           = params.find_string("stat_group_ids", "");
     string bottomNetwork        = params.find_string("bottom_network", "");
     string topNetwork           = params.find_string("top_network", "");
     int noncacheableRequests    = params.find_integer("force_noncacheable_reqs", 0);
@@ -72,17 +72,7 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
     bool L1 = (L1int == 1);
     bool LLC = (LLCint == 1);
     bool LL = (LLint == 1);
-    vector<int> statGroupIds;
     
-    istringstream ss(statGroups);
-    string token;
-    
-    statGroupIds.push_back(0);         //Id = 0 prints overall statistics
-
-    while(getline(ss, token, ',')) {
-        statGroupIds.push_back(atoi(token.c_str()));
-    }
-
     /* Convert all strings to lower case */
     boost::algorithm::to_lower(coherenceProtocol);
     boost::algorithm::to_lower(replacement);
@@ -92,50 +82,67 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
     boost::algorithm::to_lower(cacheType);
 
     /* Check user specified all required fields */
-    if(frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency.\n");
-    if(-1 >= associativity)         dbg->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
-    if(sizeStr.empty())             dbg->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
-    if(-1 == lineSize)              dbg->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
-    if(L1int != 1 && L1int != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: L1 - should be '1' if cache is an L1, 0 otherwise\n");
-    if(LLCint != 1 && LLCint != 0)  dbg->fatal(CALL_INFO, -1, "Param not specified: LLC - should be '1' if cache is an LLC, 0 otherwise\n");
-    if(LLint != 1 && LLint != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: LL - should be '1' if cache is the lowest level coherence entity (e.g., LLC and no directory below), 0 otherwise\n");
-    if(accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
+    if (frequency.empty())           dbg->fatal(CALL_INFO, -1, "Param not specified: frequency - cache frequency.\n");
+    if (-1 >= associativity)         dbg->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
+    if (sizeStr.empty())             dbg->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
+    if (-1 == lineSize)              dbg->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
+    if (L1int != 1 && L1int != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: L1 - should be '1' if cache is an L1, 0 otherwise\n");
+    if (LLCint != 1 && LLCint != 0)  dbg->fatal(CALL_INFO, -1, "Param not specified: LLC - should be '1' if cache is an LLC, 0 otherwise\n");
+    if (LLint != 1 && LLint != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: LL - should be '1' if cache is the lowest level coherence entity (e.g., LLC and no directory below), 0 otherwise\n");
+    if (accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
     
-    /* Check that parameters are valid */
-    if(dirAtNextLvl > 1 || dirAtNextLvl < 0)    
+    /* Check that connectivity parameters are valid */
+    if (dirAtNextLvl > 1 || dirAtNextLvl < 0)    
         dbg->fatal(CALL_INFO, -1, "Invalid param: directory_at_next_level - should be '1' if directory exists at next level below this cache, 0 otherwise. You specified '%d'.\n", dirAtNextLvl);
-    if(!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))  
+    if (!(bottomNetwork == "" || bottomNetwork == "directory" || bottomNetwork == "cache"))  
         dbg->fatal(CALL_INFO, -1, "Invalid param: bottom_network - valid options are '', 'directory', or 'cache'. You specified '%s'.\n", bottomNetwork.c_str());
-    if(!(topNetwork == "" || topNetwork == "cache"))    
+    if (!(topNetwork == "" || topNetwork == "cache"))    
         dbg->fatal(CALL_INFO, -1, "Invalid param: top_network - valid options are '' or 'cache'. You specified '%s'\n", topNetwork.c_str());
+    
+    /* Ensure that cache level/coherence/inclusivity params are valid */
     if (cacheType != "inclusive" && cacheType != "noninclusive" && cacheType != "noninclusive_with_directory") 
         dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", cacheType.c_str());
-    if (L1 && cacheType != "inclusive") 
-        dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
+    
     if (cacheType == "noninclusive_with_directory") {
         if (dirAssociativity <= -1) dbg->fatal(CALL_INFO, -1, "Param not specified: directory_associativity - this must be specified if cache_type is noninclusive_with_directory. You specified %d\n", dirAssociativity);
         if (dirNumEntries <= 0)     dbg->fatal(CALL_INFO, -1, "Invalid param: noninlusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified %d\n", dirNumEntries);
     }
+    
+    if (L1) {
+        if (cacheType != "inclusive")
+            dbg->fatal(CALL_INFO, -1, "Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", cacheType.c_str());
+    } else {
+        if (coherenceProtocol == "none" && cacheType != "noninclusive") 
+            dbg->fatal(CALL_INFO, -1, "Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n", 
+                    cacheType.c_str(), coherenceProtocol.c_str()); 
+    }
 
     /* NACKing to from L1 to the CPU doesnt really happen in CPUs*/
-    if(L1 && mshrSize != -1)    dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
+    if (L1 && mshrSize != -1)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - must be -1 for L1s, memHierarchy assumes L1 MSHR is sized to match the CPU's load/store queue. You specified %d\n", mshrSize);
     
-    /* No L2+ cache should realistically have an MSHR that is less than 10-16 entries */
-    if(-1 == mshrSize) mshrSize = HUGE_MSHR;
-    if(mshrSize < 2)            dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
+    /* Ensure mshr size is large enough to avoid deadlock*/
+    if (-1 == mshrSize) mshrSize = HUGE_MSHR;
+    if (mshrSize < 2)   dbg->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
     /* Update parameters for initialization */
     if (dirAtNextLvl) bottomNetwork = "directory";
     
     /* ---------------- Initialization ----------------- */
-    HashFunction* ht = new PureIdHashFunction;
+    HashFunction* ht;
+    if (hashFunc == 1) {
+      ht = new LinearHashFunction;
+    } else if (hashFunc == 2) {
+      ht = new XorHashFunction;
+    } else {
+      ht = new PureIdHashFunction;
+    }
     
     long cacheSize  = SST::MemHierarchy::convertToBytes(sizeStr);
     uint numLines = cacheSize/lineSize;
     uint protocol = 0;
     
-    if(coherenceProtocol == "mesi")      protocol = 1;
-    else if(coherenceProtocol == "msi")  protocol = 0;
+    if (coherenceProtocol == "mesi")      protocol = 1;
+    else if (coherenceProtocol == "msi")  protocol = 0;
     else if (coherenceProtocol == "none") protocol = 2;
     else dbg->fatal(CALL_INFO,-1, "Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'\n");
 
@@ -166,17 +173,20 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params){
         else dbg->fatal(CALL_INFO, -1, "Invalid param: directory_replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified %s.\n", replacement.c_str());
         cacheArray = new DualSetAssociativeArray(dbg, static_cast<uint>(lineSize), ht, true, dirNumEntries, dirAssociativity, dirReplManager, numLines, associativity, replManager);
     }
-        
+    
+    // Auto-detect LLC if directory is present
+    if (bottomNetwork == "directory") LLC = true; 
+
     CacheConfig config = {frequency, cacheArray, dirArray, protocol, dbg, replManager, numLines,
 	static_cast<uint>(lineSize),
-	static_cast<uint>(mshrSize), L1, LLC, LL, bottomNetwork, topNetwork, statGroupIds,
+	static_cast<uint>(mshrSize), L1, LLC, LL, bottomNetwork, topNetwork,
 	static_cast<bool>(noncacheableRequests), maxWaitTime, cacheType};
     return new Cache(id, params, config);
 }
 
 
 
-Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(id){
+Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(id) {
     cf_     = config;
     d_      = cf_.dbg_;
     L1_     = cf_.L1_;
@@ -188,8 +198,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     d2_ = new Output();
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
-
-    statsFile_          = params.find_integer("statistics", 0);
+    
+    int stats           = params.find_integer("statistics", 0);
     idleMax_            = params.find_integer("idle_max", 10000);
     accessLatency_      = params.find_integer("access_latency_cycles", -1);
     tagLatency_         = params.find_integer("tag_access_latency_cycles",accessLatency_);
@@ -209,7 +219,13 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     /* --------------- Check parameters -------------*/
     if (accessLatency_ < 1) d_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n", 
             this->Component::getName().c_str(), accessLatency_);
-   
+  
+    if (stats != 0) {
+        SST::Output outputStd("",1,0,SST::Output::STDOUT);
+        outputStd.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo for available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", this->Component::getName().c_str());
+    }
+
+
     if (cf_.topNetwork_ == "cache") {
         if (cacheSliceCount == 1) sliceID = 0;
         else if (cacheSliceCount > 1) {
@@ -235,7 +251,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     /* ---------------- Latency ---------------- */
-    if(mshrLatency_ < 1) intrapolateMSHRLatency();
+    if (mshrLatency_ < 1) intrapolateMSHRLatency();
     
     /* ----------------- MSHR ----------------- */
     mshr_               = new MSHR(d_, cf_.MSHRSize_, this->getName(), DEBUG_ALL, DEBUG_ADDR);
@@ -251,6 +267,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     registerTimeBase("2 ns", true);       //  TODO:  Is this right?
 
+    clockIsOn_ = true;
     /* ---------------- Memory NICs --------------- */
     if (cf_.bottomNetwork_ == "directory" && cf_.topNetwork_ == "") { // cache with a dir below, direct connection to cache above
         if (!isPortConnected("directory")) {
@@ -260,7 +277,10 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCache; 
@@ -270,7 +290,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
 
-        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
 
         topNetworkLink_ = NULL;
@@ -282,7 +302,10 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "cache";
         myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeCacheToCache; 
@@ -292,7 +315,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
 
-        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
         bottomNetworkLink_->addTypeInfo(typeInfo);
         
         topNetworkLink_ = NULL;
@@ -305,7 +329,10 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port = "directory";
         myInfo.link_bandwidth = params.find_string("network_bw", "1GB/s");
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            d_->debug(_WARNING_, "%s, WARNING Deprecated parameter: 'network_num_vc'. memHierarchy does not use multiple virtual channels.\n", getName().c_str());
+        }
         myInfo.name = getName();
         myInfo.network_addr = params.find_integer("network_address");
         myInfo.type = MemNIC::TypeNetworkCache; 
@@ -330,7 +357,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         typeInfo.interleaveStep = interleaveStep;
         typeInfo.blocksize      = cf_.lineSize_;
         
-        bottomNetworkLink_ = new MemNIC(this, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
         
         topNetworkLink_ = bottomNetworkLink_;
@@ -341,25 +368,26 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     /* ------------- Member variables intialization ------------- */
     configureLinks();
-    groupStats_             = (cf_.statGroupIds_.size() < 2) ? false : true;
     clockOn_                = true;
-    idleCount_              = 0;
-    memNICIdleCount_        = 0;
-    memNICIdle_             = false;
     timestamp_              = 0;
-    totalUpgradeLatency_    = 0;
-    upgradeCount_           = 0;
-    missLatency_GetS_IS     = 0;
-    missLatency_GetS_M      = 0;
-    missLatency_GetX_IM     = 0;
-    missLatency_GetX_SM     = 0;
-    missLatency_GetX_M      = 0;
-    missLatency_GetSEx_IM   = 0;
-    missLatency_GetSEx_SM   = 0;
-    missLatency_GetSEx_M    = 0;
-
-
+    // Figure out interval to check max wait time and associated delay for one shot if we're asleep
+    checkMaxWaitInterval_   = cf_.maxWaitTime_ / 4;
+    // Doubtful that this corner case will occur but just in case...
+    if (cf_.maxWaitTime_ > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = cf_.maxWaitTime_;
+    if (cf_.maxWaitTime_ > 0) {
+        ostringstream oss;
+        oss << checkMaxWaitInterval_;
+        string interval = oss.str();
+        maxWaitWakeupDelay_ = UnitAlgebra(interval) / UnitAlgebra(cf_.cacheFrequency_); 
+        maxWaitWakeupHandler_ = new OneShot::Handler<Cache>(this, &Cache::maxWaitWakeup);
+        maxWaitWakeupExists_ = false;
+    } else {
+        maxWaitWakeupExists_ = true;
+    }
+    
     /* Register statistics */
+    statTotalEventsReceived     = registerStatistic<uint64_t>("TotalEventsReceived");
+    statTotalEventsReplayed     = registerStatistic<uint64_t>("TotalEventsReplayed");
     statCacheHits               = registerStatistic<uint64_t>("CacheHits");
     statGetSHitOnArrival        = registerStatistic<uint64_t>("GetSHit_Arrival");   
     statGetXHitOnArrival        = registerStatistic<uint64_t>("GetXHit_Arrival");
@@ -386,15 +414,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     statFetchInvX_recv          = registerStatistic<uint64_t>("FetchInvX_recv");
     statInv_recv                = registerStatistic<uint64_t>("Inv_recv");
     statNACK_recv               = registerStatistic<uint64_t>("NACK_recv");
+    statMSHROccupancy           = registerStatistic<uint64_t>("MSHR_occupancy");
 
-    if(groupStats_){
-        for(unsigned int i = 0; i < cf_.statGroupIds_.size(); i++) {
-            if (i > 0 && (cf_.statGroupIds_[i] == 0 || cf_.statGroupIds_[i] == -1)) 
-                d_->fatal(CALL_INFO,-1, "Invalid param: stat_group_ids - custom IDs cannot be 0 or -1\n");
-            stats_[cf_.statGroupIds_[i]].initialize();
-        }
-    }
-        
     /* --------------- Coherence Controllers --------------- */
     coherenceMgr = NULL;
     bool inclusive = cf_.type_ == "inclusive";
@@ -402,22 +423,22 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         if (cf_.protocol_ != 2) {
             if (cf_.type_ != "noninclusive_with_directory") {
                 coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, cf_.protocol_, 
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, groupStats_, cf_.statGroupIds_, DEBUG_ALL, DEBUG_ADDR);
+                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
             } else {
                 coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, cf_.protocol_,
-                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, groupStats_, cf_.statGroupIds_, DEBUG_ALL, DEBUG_ADDR);
+                        lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
             }
         } else {
             coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_,
-                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, groupStats_, cf_.statGroupIds_, DEBUG_ALL, DEBUG_ADDR);
+                    inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
         }
     } else {
         if (cf_.protocol_ != 2) {
             coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, cf_.protocol_, 
-                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, groupStats_, cf_.statGroupIds_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs);
+                lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs);
         } else {
             coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, 
-                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, groupStats_, cf_.statGroupIds_, DEBUG_ALL, DEBUG_ADDR);
+                    lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
         }
     }
     
@@ -425,15 +446,15 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
 }
 
 
-void Cache::configureLinks(){
+void Cache::configureLinks() {
     int highNetCount = 0;
     bool lowNetExists = false;
-
-    if(cf_.bottomNetwork_ == "") {
+    
+    if (cf_.bottomNetwork_ == "") {
         for(uint id = 0 ; id < 200; id++) {
             string linkName = "low_network_" + boost::lexical_cast<std::string>(id);
             SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-            if(link){
+            if (link) {
                 d_->debug(_INFO_,"Low Network Link ID: %u \n", (uint)link->getId());
                 lowNetPorts_->push_back(link);
                 lowNetExists = true;
@@ -442,11 +463,11 @@ void Cache::configureLinks(){
         }
     }
 
-    if(cf_.topNetwork_ == "") {
+    if (cf_.topNetwork_ == "") {
         for(uint id = 0 ; id < 200; id++) {
             string linkName = "high_network_" + boost::lexical_cast<std::string>(id);
             SST::Link* link = configureLink(linkName, "50ps", new Event::Handler<Cache>(this, &Cache::processIncomingEvent));  //TODO: fix
-            if(link) {
+            if (link) {
                 d_->debug(_INFO_,"High Network Link ID: %u \n", (uint)link->getId());
                 highNetPorts_->push_back(link);
                 highNetCount++;
@@ -465,11 +486,11 @@ void Cache::configureLinks(){
 
 
 
-void Cache::intrapolateMSHRLatency(){
+void Cache::intrapolateMSHRLatency() {
     uint64 N = 200; // max cache latency supported by the intrapolation method
     int y[N];
 
-    if(L1_){
+    if (L1_) {
         mshrLatency_ = 1;
         return;
     }

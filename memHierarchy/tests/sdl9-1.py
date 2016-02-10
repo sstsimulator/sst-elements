@@ -24,7 +24,6 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : "",
       "cache_size" : "4 KB"
@@ -38,7 +37,6 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "statistics" : "1",
       "debug" : "",
       "cache_size" : "32 KB"
 })
@@ -51,7 +49,6 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "debug_level" : "8",
-      "statistics" : "1",
       "debug" : "1",
       "LL" : 1,
       "LC" : 1,
@@ -66,6 +63,11 @@ comp_memory.addParams({
       "backend.mem_size" : "512"
 })
 
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu_l1cache_link = sst.Link("link_cpu_l1cache_link")

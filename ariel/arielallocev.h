@@ -23,17 +23,19 @@ namespace ArielComponent {
 class ArielAllocateEvent : public ArielEvent {
 
 	public:
-		ArielAllocateEvent(uint64_t vAddr, uint64_t len, uint32_t lev);
+    		ArielAllocateEvent(uint64_t vAddr, uint64_t len, uint32_t lev, uint64_t ip);
 		~ArielAllocateEvent();
 		ArielEventType getEventType();
 		uint64_t getVirtualAddress();
 		uint64_t getAllocationLength();
 		uint32_t getAllocationLevel();
+    		uint64_t getInstructionPointer();
 
 	protected:
 		uint64_t virtualAddress;
 		uint64_t allocateLength;
 		uint32_t level;
+    		uint64_t instPtr;
 
 };
 

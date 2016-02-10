@@ -1,10 +1,10 @@
 // Copyright 2009-2015 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2015, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -88,9 +88,9 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
     if(dist < 1 || dist > dims[0] + dims[1] + dims[2]){
         return nodeList;
     }
-    
+
     //first scan the sides
-    
+
     //go backward in x
     curDims[0] = centerX - dist;
     //scan all y except edges & corners
@@ -157,9 +157,9 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
             appendIfFree(curDims, nodeList);
         }
     }
-    
+
     //now do edges
-    
+
     //backward in x
     curDims[0] = centerX - dist;
     //backward in y
@@ -190,7 +190,7 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
         curDims[2] = centerZ + zDist;
         appendIfFree(curDims, nodeList);
     }
-    
+
     //backward in y
     curDims[1] = centerY - dist;
     //backward in z
@@ -223,7 +223,7 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
         curDims[0] = centerX + xDist;
         appendIfFree(curDims, nodeList);
     }
-    
+
     //forward in x
     curDims[0] = centerX + dist;
     //backward in y
@@ -254,9 +254,9 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
         curDims[2] = centerZ + zDist;
         appendIfFree(curDims, nodeList);
     }
-    
+
     //now do corners
-    
+
     //backward in x
     curDims[0] = centerX - dist;
     curDims[1] = centerY - dist; //backward in y
@@ -269,7 +269,7 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
     appendIfFree(curDims, nodeList);
     curDims[2] = centerZ + dist; //forward in z
     appendIfFree(curDims, nodeList);
-    
+
     //forward in x
     curDims[0] = centerX + dist;
     curDims[1] = centerY - dist; //backward in y
@@ -282,8 +282,16 @@ std::list<int>* Mesh3DMachine::getFreeAtLInfDistance(int center, int dist) const
     appendIfFree(curDims, nodeList);
     curDims[2] = centerZ + dist; //forward in z
     appendIfFree(curDims, nodeList);
-    
+
     return nodeList;
+}
+
+int Mesh3DMachine::nodesAtDistance(int dist) const
+{
+    if(dist == 0)
+        return 1;
+    else
+        return 4 * pow(dist, 2) + 2;
 }
 
 void Mesh3DMachine::appendIfFree(std::vector<int> curDims, std::list<int>* nodeList) const
@@ -333,9 +341,9 @@ int Mesh3DMachine::getLinkIndex(std::vector<int> nodeDims, int dimension) const
     return linkNo;
 }
 
-std::vector<int> Mesh3DMachine::getRoute(int node0, int node1, double commWeight) const
+std::vector<int>* Mesh3DMachine::getRoute(int node0, int node1, double commWeight) const
 {
-    std::vector<int> links(0);
+    std::vector<int>* links = new std::vector<int>();
     int x0 = coordOf(node0,0);
     int x1 = coordOf(node1,0);
     int y0 = coordOf(node0,1);
@@ -348,21 +356,21 @@ std::vector<int> Mesh3DMachine::getRoute(int node0, int node1, double commWeight
         loc[0] = x;
         loc[1] = y0;
         loc[2] = z0;
-        links.push_back(getLinkIndex(loc, 0));
+        links->push_back(getLinkIndex(loc, 0));
     }
     //add Y route
     for(int y = std::min(y0, y1); y < std::max(y0, y1); y++){
         loc[0] = x1;
         loc[1] = y;
         loc[2] = z0;
-        links.push_back(getLinkIndex(loc, 1));
+        links->push_back(getLinkIndex(loc, 1));
     }
     //add Z route
     for(int z = std::min(z0, z1); z < std::max(z0, z1); z++){
         loc[0] = x1;
         loc[1] = y1;
         loc[2] = z;
-        links.push_back(getLinkIndex(loc, 2));
+        links->push_back(getLinkIndex(loc, 2));
     }
     return links;
 }

@@ -22,6 +22,8 @@
 
 namespace SST {
     namespace Scheduler {
+        class AllocInfo;
+        class Job;
         class TaskMapInfo;
 
         class Machine{
@@ -42,15 +44,21 @@ namespace SST {
                  
                 virtual std::string getSetupInfo(bool comment) = 0;
                 
+                //returns baseline allocation used for running time estimation
+                virtual AllocInfo* getBaselineAllocation(Job* job) const = 0;
+
                 //returns the network distance between two nodes
                 virtual int getNodeDistance(int node0, int node1) const = 0;
+                
+                //max number of nodes at a given distance - NearestAllocMapper uses this
+                virtual int nodesAtDistance(int dist) const = 0;
                 
                 //returns the free nodes at given network distance
                 virtual std::list<int>* getFreeAtDistance(int center, int distance) const = 0;
 
                 //finds the communication route between node0 and node1 for the given weight of commWeight
                 //@return The link indices used in the route
-                virtual std::vector<int> getRoute(int node0, int node1, double commWeight) const = 0;
+                virtual std::vector<int>* getRoute(int node0, int node1, double commWeight) const = 0;
                 
                 double** D_matrix;
                 

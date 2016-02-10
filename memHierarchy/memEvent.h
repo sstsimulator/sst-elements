@@ -149,7 +149,7 @@ public:
 
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
-    /** Creates a new MemEvent - Genetic */
+    /** Creates a new MemEvent - Generic */
     MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd) : SST::Event(){
         initialize(_src, _addr, _baseAddr, _cmd);
     }
@@ -250,7 +250,6 @@ public:
         retries_            = 0;
         inMSHR_             = false;
         blocked_            = false;
-        statsUpdated_       = false;
         initTime_           = 0;
         payload_.clear();
         dirty_              = false;
@@ -307,9 +306,6 @@ public:
     bool inProgress() { return inProgress_; }
     void setInProgress(bool _value) { inProgress_ = _value; }
 
-    bool statsUpdated(){ return statsUpdated_; }
-    void setStatsUpdated(bool _value) { statsUpdated_ = _value; }
-    
     void setLoadLink(){ loadLink_ = true; }
     bool isLoadLink() { return loadLink_; }
     
@@ -357,6 +353,7 @@ public:
      * @param[in] data  Vector from which to copy data
      */
     void setPayload(std::vector<uint8_t>& _data) {
+        setSize(_data.size());
         payload_ = _data;
     }
     
@@ -370,6 +367,10 @@ public:
         for ( uint32_t i = 0 ; i < _size ; i++ ) {
             payload_[i] = _data[i];
         }
+    }
+
+    uint32_t getPayloadSize() {
+        return payload_.size();
     }
 
     /** Sets the Granted State */
@@ -477,7 +478,7 @@ private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
-    uint32_t        size_;              // Size in bytes for the request
+    uint32_t        size_;              // Size in bytes that are being requested
     uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
@@ -496,7 +497,6 @@ private:
     uint64_t        startTime_;         // For profiling within a cache, the time this request was received
     bool            inMSHR_;            // Whether this request is in an MSHR (for profiling)
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
-    bool            statsUpdated_;      // Whether stats have been recorded for this request (for profiling)
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     Addr	    instPtr_;           // Instruction pointer associated with the request
@@ -533,7 +533,6 @@ private:
         ar & BOOST_SERIALIZATION_NVP(startTime_);
         ar & BOOST_SERIALIZATION_NVP(inMSHR_);
         ar & BOOST_SERIALIZATION_NVP(blocked_);
-        ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
         ar & BOOST_SERIALIZATION_NVP(initTime_);
         ar & BOOST_SERIALIZATION_NVP(dirty_);
         ar & BOOST_SERIALIZATION_NVP(instPtr_);

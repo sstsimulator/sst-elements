@@ -28,7 +28,6 @@
 namespace SST {
 namespace MemHierarchy {
 
-//#define N CALL_INFO
 #define Z 0
 
 #   define ASSERT_MSG(condition, message) \
@@ -53,47 +52,6 @@ enum {ERROR, WARNING, INFO, L3, L4, L5, L6, L7, L8, L9, L10};
 #define _L9_ CALL_INFO,L9,0     //MSHR messages
 #define _L10_ CALL_INFO,L10,0   //Directory controller, Bus, Memory Controller
 
-
-struct CtrlStats{
-    uint64_t    TotalRequestsReceived_,
-                TotalMSHRHits_,
-                InvWaitingForUserLock_,
-                updgradeLatency_,
-                newReqGetSHits_,
-                newReqGetSMisses_,
-                blockedReqGetSHits_,
-                blockedReqGetSMisses_,
-                newReqGetXHits_,
-                newReqGetXMisses_,
-                blockedReqGetXHits_,
-                blockedReqGetXMisses_,
-                newReqGetSExHits_,
-                newReqGetSExMisses_,
-                blockedReqGetSExHits_,
-                blockedReqGetSExMisses_,
-                GetS_IS,
-                GetS_M,
-                GetX_IM,
-                GetX_SM,
-                GetX_M,
-                GetSE_IM,
-                GetSE_SM,
-                GetSE_M;
-    CtrlStats(){
-        initialize();
-    }
-    
-    void initialize(){ 
-        TotalRequestsReceived_ = TotalMSHRHits_ = InvWaitingForUserLock_ = updgradeLatency_ = 0; 
-        newReqGetSHits_ = newReqGetSMisses_ = blockedReqGetSHits_ = blockedReqGetSMisses_ = 0;
-        newReqGetXHits_ = newReqGetXMisses_ = blockedReqGetXHits_ = blockedReqGetXMisses_ = 0;
-        newReqGetSExHits_ = newReqGetSExMisses_ = blockedReqGetSExHits_ = blockedReqGetSExMisses_ = 0;
-        GetS_IS = GetS_M = GetX_IM = GetX_SM = GetX_M = GetSE_IM = GetSE_SM = GetSE_M = 0;
-    }
-};
-
-#define MAX_CACHE_CHILDREN (512);
-    
 const unsigned int kibi = 1024;
 const unsigned int mebi = kibi * 1024;
 const unsigned int gibi = mebi * 1024;
