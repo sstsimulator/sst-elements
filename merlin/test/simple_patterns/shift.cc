@@ -175,9 +175,9 @@ shift_nic::clock_handler(Cycle_t cycle)
             req->vn = 0;
             req->size_in_bits = size_in_bits;
             req->givePayload(ev);
-            // if ( id == 0 ) {
-                // req->setTraceType(SST::Interfaces::SimpleNetwork::Request::FULL);
-                // req->setTraceID(net_id*1000 + packets_sent);
+            // if ( net_id == 3 ) {
+            //     req->setTraceType(SST::Interfaces::SimpleNetwork::Request::FULL);
+            //     req->setTraceID(net_id*1000 + packets_sent);
             // }
             
             bool sent = link_control->send(req,0);
@@ -196,6 +196,8 @@ shift_nic::clock_handler(Cycle_t cycle)
         send_done = true;
         if ( recv_done ) {
             primaryComponentOKToEndSim();
+            // output.output("%d called primaryComponentOKToEndSim()\n",
+            //               net_id);
         }
         return true;
     }
@@ -226,7 +228,7 @@ shift_nic::clock_handler(Cycle_t cycle)
 bool
 shift_nic::handle_event(int vn)
 {
-    if ( link_control->requestToReceive(0) ) {
+    while ( link_control->requestToReceive(0) ) {
         SimpleNetwork::Request* req = link_control->recv(0);
         ShiftEvent* ev = dynamic_cast<ShiftEvent*>(req->takePayload());
         if ( ev == NULL ) {
@@ -247,9 +249,13 @@ shift_nic::handle_event(int vn)
 
     }
     if ( packets_recd == num_msg ) {
+        output.output("%d Received all packets (total of %d)\n",
+                      net_id, num_msg);
         recv_done = true;
         if ( send_done ) {
             primaryComponentOKToEndSim();
+            // output.output("%d called primaryComponentOKToEndSim()\n",
+            //               net_id);
         }
         return false;
     }
