@@ -67,6 +67,8 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
     
     std::string route_algo = p.find_string("dragonfly:algorithm", "minimal");
 
+    adaptive_threshold = p.find_floating("dragonfly:adaptive_threshold",2.0);
+    
     // Get the global link map
     std::vector<int64_t> global_link_map;
     // p.find_integer_array("dragonfly:global_link_map",global_link_map);
@@ -270,7 +272,7 @@ void topo_dragonfly2::reroute(int port, int vc, internal_router_event* ev)
     }
 
     
-    if ( valiant_route_credits > direct_route_credits * 2 ) { // Use valiant route
+    if ( valiant_route_credits > (int)((double)direct_route_credits * adaptive_threshold) ) { // Use valiant route
         td_ev->dest.mid_group = td_ev->dest.mid_group_shadow;
         td_ev->setNextPort(valiant_route_port);
         // output.output("valiant_slice = %d\n", valiant_slice);

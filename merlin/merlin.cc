@@ -381,6 +381,7 @@ static const ElementInfoParam dragonfly2_params[] = {
     {"dragonfly:intergroup_links","Number of links between each pair of groups."},
     {"dragonfly:num_groups","Number of groups in network."},
     {"dragonfly:algorithm","Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+    {"dragonfly:adaptive_threshold","Threshold to use when make adaptive routing decisions.", "2.0"},
     {"dragonfly:global_link_map","Array specifying connectivity of global links in each dragonfly group."},
     {NULL,NULL,NULL}
 };
