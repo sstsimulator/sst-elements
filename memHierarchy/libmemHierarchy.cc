@@ -53,6 +53,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 static const char * memEvent_port_events[] = {"memHierarchy.MemEvent", NULL};
+static const char * arielAlloc_port_events[] = {"ariel.arielAllocTrackEvent", NULL};
 static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 static Component* create_Cache(ComponentId_t id, Params& params)
@@ -68,6 +69,7 @@ static const ElementInfoParam cache_params[] = {
     {"access_latency_cycles",   "Required, int      - Latency (in cycles) to access the cache array."},
     {"coherence_protocol",      "Required, string   - Coherence protocol. Options: MESI, MSI, NONE"},
     {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
+    {"hash_function",           "Optional, int      - 0 - none (default), 1 - linear, 2 - XOR"},
     {"L1",                      "Required, int      - Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]"},
     {"LLC",                     "Required, int      - Required for LLCs, specifies whether cache is a last-level cache. Options: 0[not LLC], 1[LLC]"},
     {"LL",                      "Required, int      - Required for LLCs, specifies whether an LLC is also the lowest-level coherence entity in the system (e.g., no dir below). Options: 0[not LL entity], 1[LL entity]"},
@@ -92,7 +94,7 @@ static const ElementInfoParam cache_params[] = {
     {"statistics",              "Optional, int      - Print cache stats at end of simulation. Options: 0[off], 1[on]", "0"},
     {"network_bw",              "Optional, int      - Network link bandwidth.", "1GB/s"},
     {"network_address",         "Optional, int      - When connected to a network, the network address of this cache.", "0"},
-    {"network_num_vc",          "Optional, int      - When connected to a network, the number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",          "DEPRECATED         - Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size", "Optional, int      - Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size","Optional, int      - Size of the network's output buffer.", "1KB"},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
@@ -129,61 +131,57 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"GetXMiss_Blocked",    "GetX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
     {"GetSExMiss_Arrival",  "GetSEx was handled at arrival and was a cache miss", "count", 1},
     {"GetSExMiss_Blocked",  "GetSEx was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
-    /* Coherence events - hits */
-    {"GetSHit_S",           "Coherence: GetS handled in state: S", "count", 2},
-    {"GetSHit_E",           "Coherence: GetS handled in state: E", "count", 2},
-    {"GetSHit_M",           "Coherence: GetS handled in state: M", "count", 2},
-    {"GetXHit_E",           "Coherence: GetX handled in state: E", "count", 2},
-    {"GetXHit_M",           "Coherence: GetX handled in state: M", "count", 2},
-    {"GetSExHit_E",         "Coherence: GetSEx handled in state: E", "count", 2},
-    {"GetSExHit_M",         "Coherence: GetSEx handled in state: M", "count", 2},
-    /* Coherence events - misses */
-    {"GetSMiss_IS",         "Coherence: GetS caused I->S transition", "count", 2},  // Name, description, unit, level
-    {"GetXMiss_IM",         "Coherence: GetX caused I->M transition", "count", 2},
-    {"GetXMiss_SM",         "Coherence: GetX caused S->M transition", "count", 2},
-    {"GetXMiss_MM",         "Coherence: GetX caused ownership transition (M->M)", "count", 2},
-    {"GetSExMiss_IM",       "Coherence: GetSEx caused I->M transition", "count", 2},
-    {"GetSExMiss_SM",       "Coherence: GetSEx caused S->M transition", "count", 2},
-    {"GetSExMiss_MM",       "Coherence: GetSEx caused ownership transition (M->M)", "count", 2},
-    {"SharedReadResponse",  "Coherence: Received shared response to a GetS request", "count", 1},
-    {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 1},
+    {"TotalEventsReceived", "Total number of events received by this cache", "events", 1},
+    {"TotalEventsReplayed", "Total number of events that were initially blocked and then were replayed", "events", 1},
+    {"MSHR_occupancy",      "Number of events in MSHR each cycle", "events", 1},
+    /* Coherence events - break down GetS between S/E */
+    {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
+    {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},
     /* Event receives */
-    {"GetS_recv",               "Event received: GetS", "count", 1},
-    {"GetX_recv",               "Event received: GetX", "count", 1},
-    {"GetSEx_recv",             "Event received: GetSEx", "count", 1},
-    {"GetSResp_recv",           "Event received: GetSResp", "count", 1},
-    {"GetXResp_recv",           "Event received: GetXResp", "count", 1},
-    {"PutM_recv",               "Event received: PutM", "count", 1},
-    {"PutS_recv",               "Event received: PutS", "count", 1},
-    {"PutE_recv",               "Event received: PutE", "count", 1},
-    {"FetchInv_recv",           "Event received: FetchInv", "count", 1},
-    {"FetchInvX_recv",          "Event received: FetchInvX", "count", 1},
-    {"Inv_recv",                "Event received: Inv", "count", 1},
-    {"NACK_recv",               "Event: NACK received", "count", 1},
+    {"GetS_recv",               "Event received: GetS", "count", 2},
+    {"GetX_recv",               "Event received: GetX", "count", 2},
+    {"GetSEx_recv",             "Event received: GetSEx", "count", 2},
+    {"GetSResp_recv",           "Event received: GetSResp", "count", 2},
+    {"GetXResp_recv",           "Event received: GetXResp", "count", 2},
+    {"PutM_recv",               "Event received: PutM", "count", 2},
+    {"PutS_recv",               "Event received: PutS", "count", 2},
+    {"PutE_recv",               "Event received: PutE", "count", 2},
+    {"FetchInv_recv",           "Event received: FetchInv", "count", 2},
+    {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
+    {"Inv_recv",                "Event received: Inv", "count", 2},
+    {"NACK_recv",               "Event: NACK received", "count", 2},
     /* Event sends */
-    {"PutM_Sent_Evict",         "Event: PutM sent due to eviction", "count", 1},
-    {"PutS_Sent_Evict",         "Event: PutS sent due to eviction", "count", 1},
-    {"PutE_Sent_Evict",         "Event: PutE sent due to eviction", "count", 1},
-    {"PutM_Sent_Inv",           "Event: PutM sent due to invalidation", "count", 1},
-    {"PutS_Sent_Inv",           "Event: PutS sent due to invalidation", "count", 1},
-    {"PutE_Sent_Inv",           "Event: PutE sent due to invalidation", "count", 1},
-    {"Inv_Sent",                "Event: Inv sent", "count", 1},
-    {"FetchInv_Sent",           "Event: FetchInv sent", "count", 1},
-    {"FetchInvX_Sent",          "Event: FetchInvX sent", "count", 1},
-    {"NACK_Sent",               "Event: NACK sent", "count", 1},
+    {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
+    {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
+    {"eventSent_GetSEx",        "Number of GetSEx requests sent", "events", 2},
+    {"eventSent_GetSResp",      "Number of GetSResp responses sent", "events", 2},
+    {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
+    {"eventSent_PutS",          "Number of PutS requests sent", "events", 2},
+    {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
+    {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
+    {"eventSent_Inv",           "Number of Inv requests sent", "events", 2},
+    {"eventSent_Fetch",         "Number of Fetch requests sent", "events", 2},
+    {"eventSent_FetchInv",      "Number of FetchInv requests sent", "events", 2},
+    {"eventSent_FetchInvX",     "Number of FetchInvX requests sent", "events", 2},
+    {"eventSent_FetchResp",     "Number of FetchResp requests sent", "events", 2},
+    {"eventSent_FetchXResp",    "Number of FetchXResp requests sent", "events", 2},
+    {"eventSent_AckInv",        "Number of AckInvs sent", "events", 2},
+    {"eventSent_AckPut",        "Number of AckPuts sent", "events", 2},
+    {"eventSent_NACK_up",       "Number of NACKs sent up (towards CPU)", "events", 2},
+    {"eventSent_NACK_down",     "Number of NACKs sent down (towards main memory)", "events", 2},
     /* Event/State combinations - Count how many times an event was seen in particular state */
-    {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I", "count", 3},
-    {"stateEvent_GetS_S",           "Event/State: Number of times a GetS was seen in state S", "count", 3},
-    {"stateEvent_GetS_E",           "Event/State: Number of times a GetS was seen in state E", "count", 3},
-    {"stateEvent_GetS_M",           "Event/State: Number of times a GetS was seen in state M", "count", 3},
-    {"stateEvent_GetX_I",           "Event/State: Number of times a GetX was seen in state I", "count", 3},
-    {"stateEvent_GetX_S",           "Event/State: Number of times a GetX was seen in state S", "count", 3},
-    {"stateEvent_GetX_E",           "Event/State: Number of times a GetX was seen in state E", "count", 3},
-    {"stateEvent_GetX_M",           "Event/State: Number of times a GetX was seen in state M", "count", 3},
-    {"stateEvent_GetSEx_I",         "Event/State: Number of times a GetSEx was seen in state I", "count", 3},
-    {"stateEvent_GetSEx_S",         "Event/State: Number of times a GetSEx was seen in state S", "count", 3},
-    {"stateEvent_GetSEx_E",         "Event/State: Number of times a GetSEx was seen in state E", "count", 3},
-    {"stateEvent_GetSEx_M",         "Event/State: Number of times a GetSEx was seen in state M", "count", 3},
+    {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I (Miss)", "count", 3},
+    {"stateEvent_GetS_S",           "Event/State: Number of times a GetS was seen in state S (Hit)", "count", 3},
+    {"stateEvent_GetS_E",           "Event/State: Number of times a GetS was seen in state E (Hit)", "count", 3},
+    {"stateEvent_GetS_M",           "Event/State: Number of times a GetS was seen in state M (Hit)", "count", 3},
+    {"stateEvent_GetX_I",           "Event/State: Number of times a GetX was seen in state I (Miss)", "count", 3},
+    {"stateEvent_GetX_S",           "Event/State: Number of times a GetX was seen in state S (Miss)", "count", 3},
+    {"stateEvent_GetX_E",           "Event/State: Number of times a GetX was seen in state E (Hit)", "count", 3},
+    {"stateEvent_GetX_M",           "Event/State: Number of times a GetX was seen in state M (Hit)", "count", 3},
+    {"stateEvent_GetSEx_I",         "Event/State: Number of times a GetSEx was seen in state I (Miss)", "count", 3},
+    {"stateEvent_GetSEx_S",         "Event/State: Number of times a GetSEx was seen in state S (Miss)", "count", 3},
+    {"stateEvent_GetSEx_E",         "Event/State: Number of times a GetSEx was seen in state E (Hit)", "count", 3},
+    {"stateEvent_GetSEx_M",         "Event/State: Number of times a GetSEx was seen in state M (Hit)", "count", 3},
     {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
     {"stateEvent_GetSResp_IM",      "Event/State: Number of times a GetSResp was seen in state IM", "count", 3},
     {"stateEvent_GetSResp_SMInv",   "Event/State: Number of times a GetSResp was seen in state SM_Inv", "count", 3},
@@ -320,6 +318,8 @@ static const ElementInfoStatistic cache_statistics[] = {
     {"latency_GetSEx_IM",       "Latency for read-exclusive misses in I state", "cycles", 1},
     {"latency_GetSEx_SM",       "Latency for read-exclusive misses in S state", "cycles", 1},
     {"latency_GetSEx_M",        "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+    /* Miscellaneous */
+    {"EventStalledForLockedCacheline",  "Number of times an event (FetchInv, FetchInvX, eviction, Fetch, etc.) was stalled because a cache line was locked", "instances", 1},
     {NULL, NULL, NULL, 0}
 };
 
@@ -335,15 +335,26 @@ static const ElementInfoParam sieve_params[] = {
     {"associativity",           "Required, int      - Associativity of the cache. In set associative mode, this is the number of ways."},
     {"cache_line_size",         "Required, int      - Size of a cache line (aka cache block) in bytes."},
     /* Not required */
-    {"prefetcher",              "Optional, string   - Name of prefetcher module", ""},
+    {"profiler",                "Optional, string   - Name of profiling module. Currently only configured to work with cassini.AddrHistogrammer. Add params using 'profiler.paramName'", ""},
     {"debug",                   "Optional, int      - Print debug information. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
     {"debug_level",             "Optional, int      - Debugging level. Between 0 and 10", "0"},
+    {"output_file",             "Optional, string   – Name of file to output malloc information to", "sieveMallocRank.txt"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoPort sieve_ports[] = {
-    {"cpu_link", "Connection to the CPU", memEvent_port_events},
+    {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
+    {"alloc_link", "Connection to the CPU's allocation/free notification", 
+     arielAlloc_port_events},
     {NULL, NULL, NULL}
+};
+
+static const ElementInfoStatistic sieve_statistics[] = {
+    {"ReadHits",    "Number of read requests that hit in the sieve", "count", 1},
+    {"ReadMisses",  "Number of read requests that missed in the sieve", "count", 1},
+    {"WriteHits",   "Number of write requests that hit in the sieve", "count", 1},
+    {"WriteMisses", "Number of write requests that missed in the sieve", "count", 1},
+    {NULL, NULL, NULL, 0},
 };
 
 
@@ -357,7 +368,7 @@ static const ElementInfoParam bus_params[] = {
     {"bus_frequency",       "Bus clock frequency"},
     {"broadcast",           "If set, messages are broadcasted to all other ports", "0"},
     {"fanout",              "If set, messages from the high network are replicated and sent to all low network ports", "0"},
-    {"bus_latency_cycles",  "Number of ports on the bus", "0"},
+    {"bus_latency_cycles",  "Bus latency in cycles", "0"},
     {"idle_max",            "Bus temporarily turns off clock after this amount of idle cycles", "6"},
     {"debug",               "Prints debug statements --0[No debugging], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
@@ -420,8 +431,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"direct_link_latency", "Latency when using the 'direct_link', rather than 'snoop_link'", "10 ns"},
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
-    {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"debug_addr",          "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
+    {"statistics",          "DEPRECATED - use Statistics API to get statistics for memory controller","0"},
     {"trace_file",          "File name (optional) of a trace-file to generate.", ""},
     {"coherence_protocol",  "Coherence protocol.  Supported: MESI (default), MSI"},
     {"listenercount",       "Counts the number of listeners attached to this controller, these are modules for tracing or components like prefetchers", "0"},
@@ -429,17 +440,23 @@ static const ElementInfoParam memctrl_params[] = {
     {"direct_link", "Specifies whether memory is directly connected to a directory/cache (1) or is connected via the network (0)","1"},
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
-    {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
+    {"do_not_back",         "DO NOT use this parameter if simulation depends on correct memory values. Otherwise, set to '1' to reduce simulation's memory footprint", "0"},
     {NULL, NULL, NULL}
 };
 
 static const ElementInfoStatistic memctrl_statistics[] = {
     /* Cache hits and misses */
-    { "cycles_with_issue", "Total cycles with successful issue to back end", "cycles", 1 },
-    { "cycles_attempted_issue_but_rejected", "Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
-    { "total_cycles", "Total cycles called at the memory controller", "cycles", 1 },
+    { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles", 1 },
+    { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },
+    { "total_cycles",                       "Total cycles called at the memory controller",     "cycles", 1 },
+    { "requests_received_GetS",             "Number of GetS (read) requests received",          "requests", 1},
+    { "requests_received_GetSEx",           "Number of GetSEx (read) requests received",        "requests", 1},
+    { "requests_received_GetX",             "Number of GetX (read) requests received",          "requests", 1},
+    { "requests_received_PutM",             "Number of PutM (write) requests received",         "requests", 1},
+    { "outstanding_requests",               "Total number of outstanding requests each cycle",  "requests", 1},
     { NULL, NULL, NULL, 0 }
 };
 
@@ -583,7 +600,7 @@ static Module* create_MemInterface(Component *comp, Params &params) {
 
 
 static Module* create_MemNIC(Component *comp, Params &params) {
-    return new MemNIC(comp);
+    return new MemNIC(comp, params);
 }
 
 
@@ -594,7 +611,7 @@ static Component* create_DirectoryController(ComponentId_t id, Params& params){
 static const ElementInfoParam dirctrl_params[] = {
     {"network_bw",          "Network link bandwidth.", NULL},
     {"network_address",     "Network address of component.", ""},
-    {"network_num_vc",      "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"network_input_buffer_size",   "Size of the network's input buffer.", "1KB"},
     {"network_output_buffer_size",  "Size of the network's output buffer.", "1KB"},
     {"addr_range_start",    "Start of Address Range, for this controller.", "0"},
@@ -606,7 +623,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"debug",               "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {"debug_level",         "Debugging level: 0 to 10", "0"},
     {"debug_addr",              "Optional, int      - Address (in decimal) to be debugged, if not specified or specified as -1, debug output for all addresses will be printed","-1"},
-    {"statistics",          "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
+    {"statistics",          "DEPRECATED - Use the Statistics API to get statistics", "0"},
     {"cache_line_size",     "Size of a cache line [aka cache block] in bytes.", "64"},
     {"coherence_protocol",  "Coherence protocol.  Supported --MESI, MSI--"},
     {"mshr_num_entries",    "Number of MSHRs. Set to -1 for almost unlimited number.", "-1"},
@@ -624,6 +641,37 @@ static const ElementInfoPort dirctrl_ports[] = {
 };
 
 
+static const ElementInfoStatistic dirctrl_statistics[] = {
+    {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
+    {"get_request_latency",             "Total latency in ns of all get* requests handled",                     "nanoseconds",  1},
+    {"directory_cache_hits",            "Number of requests that hit in the directory cache",                   "requests",     1},
+    {"mshr_hits",                       "Number of requests that hit in the MSHRs",                             "requests",     1},
+    {"requests_received_GetS",          "Number of GetS (read-shared) requests received",                       "requests",     1},
+    {"requests_received_GetX",          "Number of GetX (write-exclusive) requests received",                   "requests",     1},
+    {"requests_received_GetSEx",        "Number of GetSEx (read-exclusive) requests received",                  "requests",     1},
+    {"requests_received_PutS",          "Number of PutS (shared replacement) requests received",                "requests",     1},
+    {"requests_received_PutE",          "Number of PutE (clean exclusive replacement) requests received",       "requests",     1},
+    {"requests_received_PutM",          "Number of PutM (dirty exclusive replacement) requests received",       "requests",     1},
+    {"responses_received_NACK",         "Number of NACK responses received",                                    "responses",    1},
+    {"responses_received_FetchResp",    "Number of FetchResp responses received (response to FetchInv/Fetch)",  "responses",    1},
+    {"responses_received_FetchXResp",   "Number of FetchXResp responses received (response to FetchXInv) ",     "responses",    1},
+    {"responses_received_PutS",         "Number of PutS (shared replacement) requests received that raced with an Inv/Fetch* and were treated as a response to that Inv/Fetch*",   "requests",     1},
+    {"responses_received_PutE",         "Number of PutE (clean exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
+    {"responses_received_PutM",         "Number of PutM (dirty exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
+    {"memory_requests_directory_entry_read", "Number of read requests for a directory entry sent to memory",    "requests",     1},
+    {"memory_requests_directory_entry_write","Number of write requests for a directory entry sent to memory",   "requests",     1},
+    {"memory_requests_data_read",       "Number of read requests for data sent to memory",                      "requests",     1},
+    {"memory_requests_data_write",      "Number of write requests for data sent to memory",                     "requests",     1},
+    {"requests_sent_Inv",               "Number of Inv (invalidate) requests sent to LLCs",                     "requests",     1},
+    {"requests_sent_FetchInv",          "Number of FetchInv (invalidate and fetch exclusive data) requests sent to LLCs",   "requests",     1},
+    {"requests_sent_FetchInvX",         "Number of FetchInvX (fetch exclusive data and downgrade) requests sent to LLCs",   "requests",     1},
+    {"responses_sent_NACK",             "Number of NACK responses sent to LLCs",                                            "responses",    1},
+    {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSEx) responses sent to LLCs",      "responses",    1},
+    {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
+    {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1},
+    {NULL, NULL, NULL, 0}
+};
+
 
 static Component* create_DMAEngine(ComponentId_t id, Params& params){
 	return new DMAEngine( id, params );
@@ -634,7 +682,7 @@ static const ElementInfoParam dmaengine_params[] = {
     {"debug_level",     "Debugging level: 0 to 10", "0"},
     {"clockRate",       "Clock Rate for processing DMAs.", "1GHz"},
     {"netAddr",         "Network address of component.", NULL},
-    {"network_num_vc",  "The number of VCS on the on-chip network.", "3"},
+    {"network_num_vc",  "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE.", "0"},
     {NULL, NULL, NULL}
 };
@@ -757,71 +805,73 @@ static const ElementInfoModule modules[] = {
 
 
 static const ElementInfoComponent components[] = {
-	{ "Cache",
-		"Cache Component",
-		NULL,
-        create_Cache,
-        cache_params,
-        cache_ports,
-        COMPONENT_CATEGORY_MEMORY,
-        cache_statistics
+	{   "Cache",
+	    "Cache Component",
+	    NULL,
+            create_Cache,
+            cache_params,
+            cache_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            cache_statistics
 	},
-    { "Sieve",
-		"Simple Cache Filtering Component",
-		NULL,
-        create_Sieve,
-        sieve_params,
-        sieve_ports,
-        COMPONENT_CATEGORY_MEMORY
+        {   "Sieve",
+	    "Simple Cache Filtering Component to model LL private caches",
+	    NULL,
+            create_Sieve,
+            sieve_params,
+            sieve_ports,
+            COMPONENT_CATEGORY_MEMORY,
+            sieve_statistics	
+        },
+	{   "Bus",
+	    "Mem Hierarchy Bus Component",
+	    NULL,
+	    create_Bus,
+            bus_params,
+            bus_ports,
+            COMPONENT_CATEGORY_MEMORY
 	},
-	{ "Bus",
-		"Mem Hierarchy Bus Component",
-		NULL,
-		create_Bus,
-        bus_params,
-        bus_ports,
-        COMPONENT_CATEGORY_MEMORY
+	{   "MemController",
+	    "Memory Controller Component",
+	    NULL,
+	    create_MemController,
+            memctrl_params,
+            memctrl_ports,
+            COMPONENT_CATEGORY_MEMORY,
+	    memctrl_statistics
 	},
-	{"MemController",
-		"Memory Controller Component",
-		NULL,
-		create_MemController,
-        	memctrl_params,
-        	memctrl_ports,
-        	COMPONENT_CATEGORY_MEMORY,
-		memctrl_statistics
+	{   "DirectoryController",
+	    "Coherencey Directory Controller Component",
+	    NULL,
+	    create_DirectoryController,
+            dirctrl_params,
+            dirctrl_ports,
+            COMPONENT_CATEGORY_MEMORY,
+	    dirctrl_statistics
+        },
+	{   "DMAEngine",
+	    "DMA Engine Component",
+	    NULL,
+	    create_DMAEngine,
+            dmaengine_params,
+            dmaengine_ports,
+            COMPONENT_CATEGORY_MEMORY
 	},
-	{"DirectoryController",
-		"Coherencey Directory Controller Component",
-		NULL,
-		create_DirectoryController,
-        dirctrl_params,
-        dirctrl_ports,
-        COMPONENT_CATEGORY_MEMORY
+	{   "trivialCPU",
+	    "Simple Demo CPU for testing",
+	    NULL,
+	    create_trivialCPU,
+            cpu_params,
+            cpu_ports,
+            COMPONENT_CATEGORY_PROCESSOR
 	},
-	{"DMAEngine",
-		"DMA Engine Component",
-		NULL,
-		create_DMAEngine,
-        dmaengine_params,
-        dmaengine_ports,
-        COMPONENT_CATEGORY_MEMORY
-	},
-	{"trivialCPU",
-		"Simple Demo CPU for testing",
-		NULL,
-		create_trivialCPU,
-        cpu_params,
-        cpu_ports,
-        COMPONENT_CATEGORY_PROCESSOR
-	},
-	{"streamCPU",
-		"Simple Demo STREAM CPU for testing",
-		NULL,
-		create_streamCPU,
-        cpu_params,
-        cpu_ports,
-        COMPONENT_CATEGORY_PROCESSOR
+	{   "streamCPU",
+	    "Simple Demo STREAM CPU for testing",
+	    NULL,
+	    create_streamCPU,
+            cpu_params,
+            cpu_ports,
+            COMPONENT_CATEGORY_PROCESSOR
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, 0}
 };

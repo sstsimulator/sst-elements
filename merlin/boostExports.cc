@@ -14,6 +14,7 @@
 #include "topology/mesh.h"
 #include "topology/torus.h"
 #include "topology/dragonfly.h"
+#include "topology/dragonfly2.h"
 #include "reorderLinkControl.h"
 
 // put all of the exports for events derived from interal_router_event 
@@ -23,4 +24,5 @@ BOOST_CLASS_EXPORT(SST::Merlin::internal_router_event)
 BOOST_CLASS_EXPORT(SST::Merlin::topo_mesh_event)
 BOOST_CLASS_EXPORT(SST::Merlin::topo_torus_event)
 BOOST_CLASS_EXPORT(SST::Merlin::topo_dragonfly_event)
+BOOST_CLASS_EXPORT(SST::Merlin::topo_dragonfly2_event)
 BOOST_CLASS_EXPORT(SST::Merlin::ReorderRequest)

@@ -13,6 +13,8 @@ libscheduler_la_SOURCES = \
     AllocInfo.h \
     AllocMapper.cc \
     AllocMapper.h \
+    DragonflyMachine.cc \
+    DragonflyMachine.h \
     exceptions.h \
     Factory.cc \
     Factory.h \

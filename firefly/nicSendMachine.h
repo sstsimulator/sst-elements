@@ -61,6 +61,13 @@ class SendMachine {
         void state_1( SendEntry*, FireflyNetworkEvent* );
         void state_2( SendEntry*, FireflyNetworkEvent* );
         void state_3( ) {
+            if ( ! canSend( m_packetSizeInBytes ) ) {
+                m_dbg.verbose(CALL_INFO,2,16,"send busy\n");
+                    setCanSendCallback(
+                    std::bind( &Nic::SendMachine::state_3, this )
+                );
+                return;
+            }
             m_sendQ.pop_front( );
             if ( ! m_sendQ.empty() ) {
                 state_0( m_sendQ.front() );

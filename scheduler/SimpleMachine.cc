@@ -12,11 +12,9 @@
 #include "sst_config.h"
 #include "SimpleMachine.h"
 
-#include <vector>
 #include <string>
 #include <stdio.h>
 
-#include "Machine.h"
 #include "output.h"
 
 using namespace SST::Scheduler;
@@ -54,8 +52,12 @@ int SimpleMachine::getNodeDistance(int node1, int node2) const
     return 1;
 }
 
-std::vector<int> SimpleMachine::getRoute(int node1, int node2, double commWeight) const
+int SimpleMachine::nodesAtDistance(int dist) const
 {
-    std::vector<int> dummy(1, 0);
-    return dummy;
+    return numNodes;
+}
+
+std::vector<int>* SimpleMachine::getRoute(int node1, int node2, double commWeight) const
+{
+    return new std::vector<int>(1, 0);
 }

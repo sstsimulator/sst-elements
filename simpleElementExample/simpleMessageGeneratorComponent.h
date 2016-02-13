@@ -24,18 +24,16 @@ public:
     simpleMessageGeneratorComponent(SST::ComponentId_t id, SST::Params& params);
     void setup()  { }
     void finish() 
-    { 
-//      std::cout << "Component completed at: " << getCurrentSimTimeMilli() 
-//  	   <<  " milliseconds" << std::endl;
-        fprintf(stdout, "Component completed at: %lu milliseconds\n", getCurrentSimTimeMilli() );
-//    	return 0; 
+    {
+        fprintf(stdout, "Component completed at: %" PRIu64 " milliseconds\n",
+		(uint64_t) getCurrentSimTimeMilli() );
     }
 
 private:
     simpleMessageGeneratorComponent();  // for serialization only
     simpleMessageGeneratorComponent(const simpleMessageGeneratorComponent&); // do not implement
     void operator=(const simpleMessageGeneratorComponent&); // do not implement
-    
+
     void handleEvent(SST::Event *ev);
     virtual bool tick(SST::Cycle_t);
     

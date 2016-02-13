@@ -359,7 +359,8 @@ public:
     // Returns whether the port is a router to router, router to nic, or unconnected
     virtual PortState getPortState(int port) const = 0;
     inline bool isHostPort(int port) const { return getPortState(port) == R2N; }
-
+    virtual std::string getPortLogicalGroup(int port) const {return "";}
+    
     // Methods used during init phase to route init messages
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts) = 0;
     virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;

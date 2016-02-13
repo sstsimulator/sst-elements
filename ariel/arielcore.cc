@@ -24,6 +24,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	cacheLink = coreToCacheLink;
+        allocLink = 0;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
 	isHalted = false;
@@ -34,7 +35,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	memmgr = memMgr;
 
 	coreQ = new std::queue<ArielEvent*>();
-	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
+	pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
@@ -98,8 +99,9 @@ ArielCore::~ArielCore() {
 	}
 }
 
-void ArielCore::setCacheLink(SimpleMem* newLink) {
+void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
 	cacheLink = newLink;
+        allocLink = newAllocLink;
 }
 
 void ArielCore::printTraceEntry(const bool isRead,
@@ -158,7 +160,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID);
 
     SimpleMem::Request::id_t mev_id = event->id;
-    std::map<SimpleMem::Request::id_t, SimpleMem::Request*>::iterator find_entry = pendingTransactions->find(mev_id);
+    auto find_entry = pendingTransactions->find(mev_id);
 
     if(find_entry != pendingTransactions->end()) {
         output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
@@ -212,12 +214,12 @@ void ArielCore::createReadEvent(uint64_t address, uint32_t length) {
 	output->verbose(CALL_INFO, 4, 0, "Generated a READ event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length);
 }
 
-void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level) {
-	ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level);
+void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr) {
+    ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level, instPtr);
 	coreQ->push(ev);
 
-	output->verbose(CALL_INFO, 2, 0, "Generated an allocate event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 "\n",
-		vAddr, length, level);
+	output->verbose(CALL_INFO, 2, 0, "Generated an allocate event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 " from IP %" PRIx64 "\n",
+                        vAddr, length, level, instPtr);
 }
 
 void ArielCore::createFreeEvent(uint64_t vAddr) {
@@ -262,6 +264,11 @@ bool ArielCore::refillQueue() {
 
         // There is data on the pipe
         switch(ac.command) {
+        case ARIEL_OUTPUT_STATS:
+            fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
+            Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
+            break;
+
         case ARIEL_START_INSTRUCTION:
 	    if(ARIEL_INST_SP_FP == ac.inst.instClass) {
 		statFPSPIns->addData(1);
@@ -319,7 +326,7 @@ bool ArielCore::refillQueue() {
             break;
 
         case ARIEL_ISSUE_TLM_MAP:
-            createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level);
+            createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level, ac.instPtr);
             break;
 
         case ARIEL_ISSUE_TLM_FREE:
@@ -348,6 +355,18 @@ void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress());
 
 	memmgr->free(rFE->getVirtualAddress());
+
+        if (allocLink) {
+            // tell the allocate montior (e.g. mem sieve that a free has occured)
+            arielAllocTrackEvent *e = 
+                new arielAllocTrackEvent(arielAllocTrackEvent::FREE,
+					 rFE->getVirtualAddress(),
+					 0,
+                                         0, 
+                                         0);
+                        
+            allocLink->send(e);
+        }
 }
 
 void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
@@ -486,10 +505,23 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
-	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 "\n",
-		aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel());
+	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 " from ip=%" PRIx64 "\n",
+                        aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
 
 	memmgr->allocate(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
+
+        if (allocLink) {
+	  output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");
+            // tell the allocate montior (e.g. mem sieve that an
+            // allocation has occured)
+            arielAllocTrackEvent *e 
+                = new arielAllocTrackEvent(arielAllocTrackEvent::ALLOC,
+                                           aEv->getVirtualAddress(),
+					   aEv->getAllocationLength(),
+                                           aEv->getAllocationLevel(),
+                                           aEv->getInstructionPointer());
+            allocLink->send(e);
+        }
 }
 
 void ArielCore::printCoreStatistics() {

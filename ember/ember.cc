@@ -56,6 +56,7 @@
 #include "mpi/motifs/embercmt3d.h"
 #include "mpi/motifs/embercmtcr.h"
 #include "mpi/motifs/emberstop.h" //NetworkSim: added stop motif
+#include "mpi/motifs/embersiriustrace.h"
 #include "emberconstdistrib.h"
 #include "embergaussdistrib.h"
 
@@ -67,6 +68,11 @@ create_EmberComponent(SST::ComponentId_t id,
                   SST::Params& params)
 {
     return new EmberEngine( id, params );
+}
+
+static SubComponent*
+load_SIRIUSTrace( Component* comp, Params& params ) {
+	return new EmberSIRIUSTraceGenerator(comp, params);
 }
 
 static SubComponent*
@@ -329,6 +335,11 @@ static const ElementInfoParam pingpong_params[] = {
 static const ElementInfoParam bipingpong_params[] = {
     	{	"arg.messageSize",		"Sets the message size of the operation",	"1024"},
 	{	"arg.iterations",		"Sets the number of operations to perform", 	"1"},
+	{	NULL,	NULL,	NULL	}
+};
+
+static const ElementInfoParam siriustrace_params[] = {
+	{       "arg.traceprefix",              "Sets the trace prefix for loading SIRIUS files", "" },
 	{	NULL,	NULL,	NULL	}
 };
 
@@ -703,6 +714,15 @@ static const ElementInfoSubComponent subcomponents[] = {
 	pingpong_params,
 	emberMotifTime_statistics,
     	"SST::Ember::EmberGenerator"
+    },
+    {
+	"SIRIUSTraceMotif",
+	"Performs a SIRIUS trace-based execution",
+	NULL,
+	load_SIRIUSTrace,
+	siriustrace_params,
+	emberMotifTime_statistics,
+	"SST::Ember::EmberGenerator"
     },
     { 	"BiPingPongMotif",
 	"Performs a InOut Motif",

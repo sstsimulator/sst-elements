@@ -47,6 +47,7 @@ class ArielCPU : public SST::Component {
         ArielMemoryManager* memmgr;
         ArielCore** cpu_cores;
         Interfaces::SimpleMem** cpu_to_cache_links;
+        SST::Link **cpu_to_alloc_tracker_links;
         pid_t child_pid;
 
         uint32_t core_count;
@@ -57,6 +58,7 @@ class ArielCPU : public SST::Component {
         ArielTunnel* tunnel;
         bool stopTicking;
 	std::string appLauncher;
+        bool useAllocTracker;
 
         char **execute_args;
 	std::map<std::string, std::string> execute_env;

@@ -15,10 +15,11 @@
 
 using namespace SST::ArielComponent;
 
-ArielAllocateEvent::ArielAllocateEvent(uint64_t vAddr, uint64_t allocLen, uint32_t lev) {
+ArielAllocateEvent::ArielAllocateEvent(uint64_t vAddr, uint64_t allocLen, uint32_t lev, uint64_t ip) {
 	virtualAddress = vAddr;
 	allocateLength = allocLen;
 	level = lev;
+        instPtr = ip;
 }
 
 ArielAllocateEvent::~ArielAllocateEvent() {
@@ -39,4 +40,8 @@ uint64_t ArielAllocateEvent::getAllocationLength() {
 
 uint32_t ArielAllocateEvent::getAllocationLevel() {
 	return level;
+}
+
+uint64_t ArielAllocateEvent::getInstructionPointer() {
+    return instPtr;
 }

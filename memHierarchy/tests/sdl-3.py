@@ -22,7 +22,6 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "debug" : "",
-      "statistics" : "1",
       "L1" : "1",
       "LL" : "1",
       "LLC" : "1",
@@ -40,6 +39,12 @@ comp_memory.addParams({
       "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
       "backend.mem_size" : "512"
 })
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 
 # Define the simulation links

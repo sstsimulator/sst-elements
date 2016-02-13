@@ -21,7 +21,6 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
-#include <sst/core/threadsafe.h>
 
 namespace SST {
 
