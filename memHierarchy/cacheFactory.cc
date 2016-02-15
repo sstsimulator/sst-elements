@@ -197,7 +197,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
     
     int stats                   = params.find_integer("statistics", 0);
-    idleMax_                    = params.find_integer("idle_max", 10000);
     accessLatency_              = params.find_integer("access_latency_cycles", -1);
     tagLatency_                 = params.find_integer("tag_access_latency_cycles",accessLatency_);
     string prefetcher           = params.find_string("prefetcher");
@@ -365,7 +364,6 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     
     /* ------------- Member variables intialization ------------- */
     configureLinks();
-    clockOn_                = true;
     timestamp_              = 0;
     // Figure out interval to check max wait time and associated delay for one shot if we're asleep
     checkMaxWaitInterval_   = cf_.maxWaitTime_ / 4;

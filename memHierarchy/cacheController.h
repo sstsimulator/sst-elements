@@ -227,6 +227,7 @@ private:
         if (!clockIsOn_) {  // Because for some reason re-registering a one shot causes sim to hang??
             Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
             timestamp_ = time - 1;
+            coherenceMgr->updateTimestamp(timestamp_);
             int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
             for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
                 statMSHROccupancy->addData(mshr_->getSize());
@@ -299,8 +300,6 @@ private:
     uint64                  tagLatency_;
     uint64                  mshrLatency_;
     uint64                  timestamp_;
-    int                     idleMax_;
-    bool                    clockOn_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
     std::map<string, LinkId_t>     nameMap_;

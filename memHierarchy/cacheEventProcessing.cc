@@ -437,6 +437,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;
+        coherenceMgr->updateTimestamp(timestamp_);
         int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
         for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
             statMSHROccupancy->addData(mshr_->getSize());

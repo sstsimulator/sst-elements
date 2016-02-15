@@ -314,7 +314,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
 #endif
-
+    
     uint64_t sendTime = 0;
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == name_));
     recordStateEventCount(event->getCmd(), state);
@@ -979,6 +979,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
 #ifdef __SST_DEBUG_OUTPUT__
     if (state != I && (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr())) printData(cacheLine->getData(), true);
 #endif
+
     recordStateEventCount(responseEvent->getCmd(), state);
     
     uint64_t sendTime = 0;
@@ -1360,18 +1361,20 @@ void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
+    bool hasData = false;
     if (cmd == PutM || writebackCleanBlocks_) {
         newCommandEvent->setPayload(*cacheLine->getData());
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) printData(cacheLine->getData(), false);
 #endif
+        hasData = true;
     }
     newCommandEvent->setRqstr(rqstr);
     newCommandEvent->setDirty(dirty);
     
     
     uint64_t baseTime = timestamp_ > cacheLine->getTimestamp() ? timestamp_ : cacheLine->getTimestamp();
-    uint64 deliveryTime = baseTime + accessLatency_;
+    uint64 deliveryTime = hasData ? baseTime + accessLatency_ : baseTime + tagLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime);
