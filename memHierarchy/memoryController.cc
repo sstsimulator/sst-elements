@@ -73,7 +73,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
     int  directLink         = params.find_integer("direct_link",1);
-    doNotBack_              = (params.find_integer("do_not_back",0) == 1) ? true : false;
+    doNotBack_              = (params.find_integer("do_not_back",0) == 1);
 
     isNetworkConnected_     = directLink ? false : true;
     int addr = params.find_integer("network_address");
@@ -144,7 +144,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         myInfo.type             = MemNIC::TypeMemory;
         myInfo.link_inbuf_size  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size = params.find_string("network_output_buffer_size", "1KB");
-        networkLink_ = new MemNIC(this, &dbg, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        networkLink_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart       = rangeStart_;

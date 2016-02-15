@@ -189,9 +189,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
 Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(id) {
     cf_     = config;
     d_      = cf_.dbg_;
-    L1_     = cf_.L1_;
-    LLC_    = cf_.LLC_;
-    LL_     = cf_.LL_;
     d_->debug(_INFO_,"--------------------------- Initializing [Cache]: %s... \n", this->Component::getName().c_str());
     pMembers();
     errorChecking();
@@ -199,18 +196,18 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     d2_ = new Output();
     d2_->init("", params.find_integer("debug_level", 0), 0,(Output::output_location_t)params.find_integer("debug", 0));
     
-    int stats           = params.find_integer("statistics", 0);
-    idleMax_            = params.find_integer("idle_max", 10000);
-    accessLatency_      = params.find_integer("access_latency_cycles", -1);
-    tagLatency_         = params.find_integer("tag_access_latency_cycles",accessLatency_);
-    string prefetcher   = params.find_string("prefetcher");
-    mshrLatency_        = params.find_integer("mshr_latency_cycles", 0);
+    int stats                   = params.find_integer("statistics", 0);
+    idleMax_                    = params.find_integer("idle_max", 10000);
+    accessLatency_              = params.find_integer("access_latency_cycles", -1);
+    tagLatency_                 = params.find_integer("tag_access_latency_cycles",accessLatency_);
+    string prefetcher           = params.find_string("prefetcher");
+    mshrLatency_                = params.find_integer("mshr_latency_cycles", 0);
     int cacheSliceCount         = params.find_integer("num_cache_slices", 1);
     int sliceID                 = params.find_integer("slice_id", 0);
     string sliceAllocPolicy     = params.find_string("slice_allocation_policy", "rr");
-    bool snoopL1Invs    = false;
-    if (L1_) snoopL1Invs = (params.find_integer("snoop_l1_invalidations", 0)) ? true : false;
-    int dAddr           = params.find_integer("debug_addr",-1);
+    bool snoopL1Invs            = false;
+    if (cf_.L1_) snoopL1Invs    = (params.find_integer("snoop_l1_invalidations", 0)) ? true : false;
+    int dAddr                   = params.find_integer("debug_addr",-1);
     if (dAddr != -1) DEBUG_ALL = false;
     else DEBUG_ALL = true;
     DEBUG_ADDR = (Addr)dAddr;
@@ -290,7 +287,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
 
-        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
 
         topNetworkLink_ = NULL;
@@ -315,7 +312,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.blocksize = cf_.lineSize_;
 
-        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         bottomNetworkLink_->addTypeInfo(typeInfo);
         
@@ -357,7 +354,7 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         typeInfo.interleaveStep = interleaveStep;
         typeInfo.blocksize      = cf_.lineSize_;
         
-        bottomNetworkLink_ = new MemNIC(this, d_, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        bottomNetworkLink_ = new MemNIC(this, d_, DEBUG_ADDR, myInfo, new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         bottomNetworkLink_->addTypeInfo(typeInfo);
         
         topNetworkLink_ = bottomNetworkLink_;
@@ -377,8 +374,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     if (cf_.maxWaitTime_ > 0) {
         ostringstream oss;
         oss << checkMaxWaitInterval_;
-        string interval = oss.str();
-        maxWaitWakeupDelay_ = UnitAlgebra(interval) / UnitAlgebra(cf_.cacheFrequency_); 
+        string interval = oss.str() + "ns";
+        maxWaitWakeupDelay_ = UnitAlgebra(interval);
         maxWaitWakeupHandler_ = new OneShot::Handler<Cache>(this, &Cache::maxWaitWakeup);
         maxWaitWakeupExists_ = false;
     } else {
@@ -419,25 +416,25 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
     /* --------------- Coherence Controllers --------------- */
     coherenceMgr = NULL;
     bool inclusive = cf_.type_ == "inclusive";
-    if (!L1_) {
+    if (!cf_.L1_) {
         if (cf_.protocol_ != 2) {
             if (cf_.type_ != "noninclusive_with_directory") {
-                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, cf_.protocol_, 
+                coherenceMgr = new MESIController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, cf_.protocol_, 
                     inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
             } else {
-                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, cf_.protocol_,
+                coherenceMgr = new MESIInternalDirectory(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, cf_.protocol_,
                         lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
             }
         } else {
-            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_,
+            coherenceMgr = new IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_,
                     inclusive, lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
         }
     } else {
         if (cf_.protocol_ != 2) {
-            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, cf_.protocol_, 
+            coherenceMgr = new L1CoherenceController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, cf_.protocol_, 
                 lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR, snoopL1Invs);
         } else {
-            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, LLC_, LL_, mshr_, 
+            coherenceMgr = new L1IncoherentController(this, this->getName(), d_, lowNetPorts_, highNetPorts_, listener_, cf_.lineSize_, accessLatency_, tagLatency_, mshrLatency_, cf_.LLC_, cf_.LL_, mshr_, 
                     lowerIsNoninclusive, bottomNetworkLink_, topNetworkLink_, DEBUG_ALL, DEBUG_ADDR);
         }
     }
@@ -490,7 +487,7 @@ void Cache::intrapolateMSHRLatency() {
     uint64 N = 200; // max cache latency supported by the intrapolation method
     int y[N];
 
-    if (L1_) {
+    if (cf_.L1_) {
         mshrLatency_ = 1;
         return;
     }

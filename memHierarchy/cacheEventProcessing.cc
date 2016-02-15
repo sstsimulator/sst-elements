@@ -82,7 +82,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
     if (cmd == GetS || cmd == GetX || cmd == GetSEx) {
-        if(mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))){ 
+        if (mshr_->isFull() || (!cf_.L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) { 
                 return; // profile later, this event is getting NACKed 
         }
     }
@@ -191,7 +191,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
 
 void Cache::processEvent(MemEvent* event, bool replay) {
     Command cmd     = event->getCmd();
-    if(L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
+    if (cf_.L1_) event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
     bool noncacheable   = event->queryFlag(MemEvent::F_NONCACHEABLE) || cf_.allNoncacheableRequests_;
     MemEvent* origEvent;
@@ -200,7 +200,7 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     if (event->getRqstr() == "None") { event->setRqstr(this->getName()); }
 
     
-    if(!replay){ 
+    if (!replay) { 
         statTotalEventsReceived->addData(1);
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
@@ -224,13 +224,13 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     cout << flush; 
 #endif
 
-    if(noncacheable || cf_.allNoncacheableRequests_){
+    if (noncacheable || cf_.allNoncacheableRequests_) {
         processNoncacheable(event, cmd, baseAddr);
         return;
     }
 
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
-    bool canStall = !L1_ || event->getCmd() != GetX;
+    bool canStall = !cf_.L1_ || event->getCmd() != GetX;
     if (!canStall) {
         CacheLine * cacheLine = NULL;
         int lineIndex = cf_.cacheArray_->find(baseAddr, false);
@@ -240,7 +240,7 @@ void Cache::processEvent(MemEvent* event, bool replay) {
 
     profileEvent(event, cmd, replay, canStall);
 
-    switch(cmd){
+    switch(cmd) {
         case GetS:
         case GetX:
         case GetSEx:
@@ -254,8 +254,8 @@ void Cache::processEvent(MemEvent* event, bool replay) {
             // track times in our separate queue
             if (startTimeList.find(event) == startTimeList.end()) startTimeList.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
 
-            if(mshr_->isHit(baseAddr) && canStall) {
-                if(processRequestInMSHR(baseAddr, event)){
+            if (mshr_->isHit(baseAddr) && canStall) {
+                if (processRequestInMSHR(baseAddr, event)) {
 #ifdef __SST_DEBUG_OUTPUT__
                     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
 #endif
@@ -297,12 +297,12 @@ void Cache::processEvent(MemEvent* event, bool replay) {
     }
 }
 
-void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
+void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr) {
     MemEvent* origRequest;
     bool inserted;
     event->setFlag(MemEvent::F_NONCACHEABLE);
     
-    switch(cmd){
+    switch(cmd) {
         case GetS:
         case GetX:
         case GetSEx:
@@ -313,7 +313,7 @@ void Cache::processNoncacheable(MemEvent* event, Command cmd, Addr baseAddr){
             if (!inserted) {
                 d_->fatal(CALL_INFO, -1, "%s, Error inserting noncacheable request in mshr. Cmd = %s, Addr = 0x%" PRIx64 ", Time = %" PRIu64 "\n",getName().c_str(), CommandString[cmd], baseAddr, getCurrentSimTimeNano());
             }
-            if(cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
+            if (cmd == GetS) coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, NULL);
             else             coherenceMgr->forwardMessage(event, baseAddr, event->getSize(), 0, &event->getPayload());
             break;
         case GetSResp:
@@ -336,64 +336,63 @@ void Cache::handlePrefetchEvent(SST::Event* event) {
     selfLink_->send(1, event);
 }
 
-void Cache::handleSelfEvent(SST::Event* event){
+void Cache::handleSelfEvent(SST::Event* event) {
     MemEvent* ev = static_cast<MemEvent*>(event);
     ev->setBaseAddr(toBaseAddr(ev->getAddr()));
-    ev->setInMSHR(false);
     
-    if(ev->getCmd() != NULLCMD && !mshr_->isFull() && (L1_ || !mshr_->isAlmostFull()))
+    if (ev->getCmd() != NULLCMD && !mshr_->isFull() && (cf_.L1_ || !mshr_->isAlmostFull()))
         processEvent(ev, false);
 }
 
 
 
-void Cache::init(unsigned int phase){
+void Cache::init(unsigned int phase) {
     if (cf_.topNetwork_ == "cache") { // I'm connected to the network ONLY via a single NIC
         bottomNetworkLink_->init(phase);
             
         /*  */
-        while(MemEvent *ev = bottomNetworkLink_->recvInitData()){
+        while(MemEvent *ev = bottomNetworkLink_->recvInitData()) {
             delete ev;
         }
         return;
     }
     
     SST::Event *ev;
-    if(bottomNetworkLink_) {
+    if (bottomNetworkLink_) {
         bottomNetworkLink_->init(phase);
     }
     
-    if(!phase){
-        if(L1_) {
-            for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
+    if (!phase) {
+        if (cf_.L1_) {
+            for (uint idc = 0; idc < highNetPorts_->size(); idc++) {
                 highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
             }
         } else{
-            for(uint i = 0; i < highNetPorts_->size(); i++) {
+            for (uint i = 0; i < highNetPorts_->size(); i++) {
                 highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
             }
         }
-        if(cf_.bottomNetwork_ == ""){
-            for(uint i = 0; i < lowNetPorts_->size(); i++) {
+        if (cf_.bottomNetwork_ == "") {
+            for (uint i = 0; i < lowNetPorts_->size(); i++) {
                 lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
             }
         }
         
     }
 
-    for(uint idc = 0; idc < highNetPorts_->size(); idc++) {
-        while ((ev = (highNetPorts_->at(idc))->recvInitData())){
+    for (uint idc = 0; idc < highNetPorts_->size(); idc++) {
+        while ((ev = (highNetPorts_->at(idc))->recvInitData())) {
             MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if(!memEvent) { /* Do nothing */ }
+            if (!memEvent) { /* Do nothing */ }
             else if (memEvent->getCmd() == NULLCMD) {
                 if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
                     upperLevelCacheNames_.push_back(memEvent->getSrc());
                 }
             } else {
-                if(cf_.bottomNetwork_ != "") {
+                if (cf_.bottomNetwork_ != "") {
                     bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
                 } else {
-                    for(uint idp = 0; idp < lowNetPorts_->size(); idp++) {
+                    for (uint idp = 0; idp < lowNetPorts_->size(); idp++) {
                         lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
                     }
                 }
@@ -402,9 +401,9 @@ void Cache::init(unsigned int phase){
         }
     }
     
-    if(cf_.bottomNetwork_ == "") {  // Save names of caches below us
-        for(uint i = 0; i < lowNetPorts_->size(); i++) {
-            while ((ev = lowNetPorts_->at(i)->recvInitData())){
+    if (cf_.bottomNetwork_ == "") {  // Save names of caches below us
+        for (uint i = 0; i < lowNetPorts_->size(); i++) {
+            while ((ev = lowNetPorts_->at(i)->recvInitData())) {
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
                 if (memEvent && memEvent->getCmd() == NULLCMD) {
                     lowerLevelCacheNames_.push_back(memEvent->getSrc());
@@ -416,7 +415,7 @@ void Cache::init(unsigned int phase){
 }
 
 
-void Cache::setup(){
+void Cache::setup() {
     if (lowerLevelCacheNames_.size() == 0) lowerLevelCacheNames_.push_back(""); // avoid segfault on accessing this
     if (upperLevelCacheNames_.size() == 0) upperLevelCacheNames_.push_back(""); // avoid segfault on accessing this
     coherenceMgr->setLowerLevelCache(&lowerLevelCacheNames_);
@@ -424,7 +423,7 @@ void Cache::setup(){
 }
 
 
-void Cache::finish(){
+void Cache::finish() {
     listener_->printStats(*d_);
     delete cf_.cacheArray_;
     delete d_;
@@ -433,9 +432,8 @@ void Cache::finish(){
 }
 
 
-void Cache::processIncomingEvent(SST::Event* ev){
+void Cache::processIncomingEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
-    event->setInMSHR(false);
     if (!clockIsOn_) {
         Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
         timestamp_ = time - 1;

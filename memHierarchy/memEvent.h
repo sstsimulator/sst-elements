@@ -245,10 +245,8 @@ public:
         loadLink_           = false;
         storeConditional_   = false;
         grantedState_       = NULLST;
-        startTime_          = 0;
         NACKedEvent_        = NULL;
         retries_            = 0;
-        inMSHR_             = false;
         blocked_            = false;
         initTime_           = 0;
         payload_.clear();
@@ -297,9 +295,6 @@ public:
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
 
-    bool inMSHR(){ return inMSHR_; }
-    void setInMSHR(bool _value){ inMSHR_ = _value; }
-    
     bool blocked(){ return blocked_; }
     void setBlocked(bool _value){ blocked_ = _value; }
     
@@ -443,9 +438,6 @@ public:
     /** Return the BaseAddr */
     Addr getBaseAddr(){ return baseAddr_; }
     
-    void setStartTime(uint64_t _startTime) { startTime_ = _startTime; }
-    uint64_t getStartTime(){return startTime_;}
-
     /** Return the command that is the Response to the input command */
     static Command commandResponse(Command _c){
         switch(_c) {
@@ -494,8 +486,6 @@ private:
     bool            atomic_;            // Whether this request is atomic
     bool            loadLink_;          // Whether this request in a LL
     bool            storeConditional_;  // Whether this request is a SC
-    uint64_t        startTime_;         // For profiling within a cache, the time this request was received
-    bool            inMSHR_;            // Whether this request is in an MSHR (for profiling)
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
     bool            dirty_;             // For a replacement, whether the data is dirty or not
@@ -530,8 +520,6 @@ private:
         ar & BOOST_SERIALIZATION_NVP(atomic_);
         ar & BOOST_SERIALIZATION_NVP(loadLink_);
         ar & BOOST_SERIALIZATION_NVP(storeConditional_);
-        ar & BOOST_SERIALIZATION_NVP(startTime_);
-        ar & BOOST_SERIALIZATION_NVP(inMSHR_);
         ar & BOOST_SERIALIZATION_NVP(blocked_);
         ar & BOOST_SERIALIZATION_NVP(initTime_);
         ar & BOOST_SERIALIZATION_NVP(dirty_);

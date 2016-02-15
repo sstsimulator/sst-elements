@@ -166,6 +166,11 @@ private:
     bool typeInfoSent; // True if TypeInfo has already been sent
     bool checkRecvQueue;
 
+    /* Debugging stuff */
+    Addr DEBUG_ADDR;
+    bool DEBUG_ALL;
+
+
     Component *comp;
     ComponentInfo ci;
     std::vector<ComponentTypeInfo> typeInfoList;
@@ -196,7 +201,7 @@ private:
     void sendNewTypeInfo(const ComponentTypeInfo &cti);
 
 public:
-    MemNIC(Component *comp, Output* output, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
+    MemNIC(Component *comp, Output* output, Addr dAddr, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
     /** Constructor to be used when loading as a module.
      */
     MemNIC(Component *comp, Params& params);

@@ -109,7 +109,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.type                             = MemNIC::TypeDirectoryCtrl;
         myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
-        network = new MemNIC(this, &dbg, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        network = new MemNIC(this, &dbg, DEBUG_ADDR, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart     = addrRangeStart;
@@ -134,7 +134,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         myInfo.type                             = MemNIC::TypeNetworkDirectory;
         myInfo.link_inbuf_size                  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size                 = params.find_string("network_output_buffer_size", "1KB");
-        network = new MemNIC(this, &dbg, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        network = new MemNIC(this, &dbg, DEBUG_ADDR, myInfo, new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart     = addrRangeStart;
