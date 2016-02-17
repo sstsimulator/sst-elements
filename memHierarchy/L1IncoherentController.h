@@ -21,10 +21,10 @@ namespace SST { namespace MemHierarchy {
 class L1IncoherentController : public CoherencyController {
 public:
     /** Constructor for L1IncoherentController */
-    L1IncoherentController(const Cache* _cache, string _ownerName, Output* _dbg, vector<Link*>* parentLinks, vector<Link*>* childLinks, CacheListener* listener, 
-            unsigned int _lineSize, uint64 _accessLatency, uint64 _tagLatency, uint64 _mshrLatency, bool _LLC, bool _LL, MSHR * mshr, bool wbClean,
+    L1IncoherentController(const Cache* cache, string ownerName, Output* dbg, vector<Link*>* parentLinks, Link* childLink, CacheListener* listener, 
+            unsigned int lineSize, uint64 accessLatency, uint64 tagLatency, uint64 mshrLatency, bool LLC, bool LL, MSHR * mshr, bool wbClean,
             MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, bool debugAll, Addr debugAddr) :
-                 CoherencyController(_cache, _dbg, _ownerName, _lineSize, _accessLatency, _tagLatency, _mshrLatency, _LLC, _LL, parentLinks, childLinks, 
+                 CoherencyController(cache, dbg, ownerName, lineSize, accessLatency, tagLatency, mshrLatency, LLC, LL, parentLinks, childLink, 
                          bottomNetworkLink, topNetworkLink, listener, mshr, wbClean, debugAll, debugAddr) {
         d_->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         
