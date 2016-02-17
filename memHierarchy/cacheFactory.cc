@@ -57,7 +57,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     int mshrSize                = params.find_integer("mshr_num_entries", -1);           //number of entries
     string preF                 = params.find_string("prefetcher");
     int L1int                   = params.find_integer("L1", 0);
-    int LLCint                  = params.find_integer("LLC", 0);
     int LLint                   = params.find_integer("LL", 0);
     string coherenceProtocol    = params.find_string("coherence_protocol", "");
     string bottomNetwork        = params.find_string("bottom_network", "");
@@ -69,7 +68,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     int dirAssociativity        = params.find_integer("noninclusive_directory_associativity", 1);
     int dirNumEntries           = params.find_integer("noninclusive_directory_entries", 0);
     bool L1 = (L1int == 1);
-    bool LLC = (LLCint == 1);
     bool LL = (LLint == 1);
     
     /* Convert all strings to lower case */
@@ -86,7 +84,6 @@ Cache* Cache::cacheFactory(ComponentId_t id, Params &params) {
     if (sizeStr.empty())             dbg->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
     if (-1 == lineSize)              dbg->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
     if (L1int != 1 && L1int != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: L1 - should be '1' if cache is an L1, 0 otherwise\n");
-    if (LLCint != 1 && LLCint != 0)  dbg->fatal(CALL_INFO, -1, "Param not specified: LLC - should be '1' if cache is an LLC, 0 otherwise\n");
     if (LLint != 1 && LLint != 0)    dbg->fatal(CALL_INFO, -1, "Param not specified: LL - should be '1' if cache is the lowest level coherence entity (e.g., LLC and no directory below), 0 otherwise\n");
     if (accessLatency == -1 )        dbg->fatal(CALL_INFO, -1, "Param not specified: access_latency_cycles - access time for cache\n");
     
