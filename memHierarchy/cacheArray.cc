@@ -31,6 +31,12 @@ SetAssociativeArray::SetAssociativeArray(Output* dbg, unsigned int numLines, uns
     }
 
 
+SetAssociativeArray::~SetAssociativeArray() {
+    delete [] setStates;
+    delete [] setSharers;
+    delete [] setOwned;
+}
+
 int SetAssociativeArray::find(const Addr baseAddr, bool update) {
     Addr lineAddr = toLineAddr(baseAddr);
     int set = hash_->hash(0, lineAddr) & setMask_;

@@ -182,7 +182,6 @@ MemEvent* MSHR::lookupFront(Addr baseAddr) {
  * insertInv
  */
 bool MSHR::insert(Addr baseAddr, MemEvent* event) {
-    event->setInMSHR(true);
     bool ret = insert(baseAddr, mshrType(event));
 #ifdef __SST_DEBUG_OUTPUT__
     if (LIKELY(ret)) {
@@ -227,7 +226,6 @@ bool MSHR::insertWriteback(Addr keyAddr) {
 }
 
 bool MSHR::insertInv(Addr baseAddr, MemEvent* event, bool inProgress) {
-    event->setInMSHR(true);
     bool ret = insertInv(baseAddr, mshrType(event), inProgress);
 #ifdef __SST_DEBUG_OUTPUT__
     if (LIKELY(ret)) {

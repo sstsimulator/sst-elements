@@ -80,6 +80,7 @@ public:
     bool        DEBUG_ALL;
     Addr        DEBUG_ADDR;
 
+
     // Pure virtual functions
     virtual int isCoherenceMiss(MemEvent * event, CacheLine * line) =0;
     virtual CacheAction handleRequest(MemEvent * event, CacheLine * line, bool replay) =0;
@@ -87,7 +88,9 @@ public:
     virtual CacheAction handleInvalidationRequest(MemEvent * event, CacheLine * line, bool replay) =0;
     virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
-   
+    
+    // Let cache update timestamp
+    void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
 
     // Send NACK in response to a request. Could be made virtual if needed.
     void sendNACK(MemEvent * event, bool up) {
@@ -187,7 +190,7 @@ public:
      *  @return Whether queue is empty or not
      */
     virtual bool sendOutgoingCommands(SimTime_t curTime) {
-        // Increment timestamp
+        // Update timestamp
         timestamp_++;
         
         // Send events down
@@ -233,29 +236,28 @@ public:
         return (outgoingEventQueue_.empty() && outgoingEventQueueUp_.empty());
     }
     
-    // Add a message to the outgoing queue down in timestamp order
-    void addToOutgoingQueue(Response& resp){
-        list<Response>::iterator it, it2;
-        /* if the request is an MSHR hit, the response time will be shorter.  Therefore
-           the out event queue needs to be maintained in delivery time order */
-        for(it = outgoingEventQueue_.begin(); it != outgoingEventQueue_.end(); it++){
-            if(resp.deliveryTime < (*it).deliveryTime){
-                break;
-            }
+    // Add a message to the outgoing queue down in timestamp order 
+    // Do not re-order events for the same address. Cache banks mostly take care of this
+    // except when we invalidate a block and then re-request it, the requests could be inverted.
+    void addToOutgoingQueue(Response& resp) {
+        list<Response>::reverse_iterator rit;
+        for (rit = outgoingEventQueue_.rbegin(); rit!= outgoingEventQueue_.rend(); rit++) {
+            if (resp.deliveryTime >= (*rit).deliveryTime) break;
+            if (resp.event->getBaseAddr() == (*rit).event->getBaseAddr()) break;
         }
-        outgoingEventQueue_.insert(it, resp);
+        outgoingEventQueue_.insert(rit.base(), resp);
     }
    
     // Add a message to the outgoing queue up in timestamp order
     void addToOutgoingQueueUp(Response& resp) {
-        list<Response>::iterator it;
-        for (it = outgoingEventQueueUp_.begin(); it != outgoingEventQueueUp_.end(); it++) {
-            if (resp.deliveryTime < (*it).deliveryTime) {
-                break;
-            }
+        list<Response>::reverse_iterator rit;
+        for (rit = outgoingEventQueueUp_.rbegin(); rit != outgoingEventQueueUp_.rend(); rit++) {
+            if (resp.deliveryTime >= (*rit).deliveryTime) break;
+            if (resp.event->getBaseAddr() == (*rit).event->getBaseAddr()) break;
         }
-        outgoingEventQueueUp_.insert(it, resp);
+        outgoingEventQueueUp_.insert(rit.base(), resp);
     }
+
 
     
     void recordLatency(Command cmd, State state, uint64_t latency) {

@@ -42,7 +42,7 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     myInfo.name = getName();
     myInfo.network_addr = params.find_integer("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;
-    networkLink = new MemNIC(this, &dbg, myInfo);
+    networkLink = new MemNIC(this, &dbg, -1, myInfo);
 
     blocksize = 0;
 }

@@ -323,6 +323,9 @@ public:
 
     SetAssociativeArray(Output* dbg, unsigned int numLines, unsigned int lineSize, unsigned int associativity,
                         ReplacementMgr* rp, HashFunction* hf, bool sharersAware);
+    
+
+    ~SetAssociativeArray();
 
     int find(Addr baseAddr, bool updateReplacement);
     CacheLine * findReplacementCandidate(Addr baseAddr, bool cache);

@@ -83,7 +83,6 @@ static const ElementInfoParam cache_params[] = {
     {"stat_group_ids",          "Optional, int list - Stat grouping. Instructions with same IDs will be grouped for stats. Separated by commas.", ""},
     {"tag_access_latency_cycles", "Optional, int     - Latency (in cycles) to access tag portion only of cache. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
     {"mshr_latency_cycles",     "Optional, int      - Latency (in cycles) to process responses in the cache (MSHR response hits). If not specified, simple intrapolation is used based on the cache access latency", "-1"},
-    {"idle_max",                "Optional, int      - Cache temporarily turns off its clock after this many idle cycles", "6"},
     {"prefetcher",              "Optional, string   - Name of prefetcher module", ""},
     {"directory_at_next_level", "Optional, int      - Specifies if there is a directory-controller as the next lower memory level; deprecated - set 'bottom_network' to 'directory' instead", "0"},
     {"bottom_network",          "Optional, string   - Specifies whether the cache is connected to a network below and the entity type of the connection. Options: cache, directory, ''[no network below]", ""},

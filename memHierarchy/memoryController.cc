@@ -73,7 +73,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
     int  directLink         = params.find_integer("direct_link",1);
-    doNotBack_              = (params.find_integer("do_not_back",0) == 1) ? true : false;
+    doNotBack_              = (params.find_integer("do_not_back",0) == 1);
 
     isNetworkConnected_     = directLink ? false : true;
     int addr = params.find_integer("network_address");
@@ -144,7 +144,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         myInfo.type             = MemNIC::TypeMemory;
         myInfo.link_inbuf_size  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size = params.find_string("network_output_buffer_size", "1KB");
-        networkLink_ = new MemNIC(this, &dbg, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        networkLink_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart       = rangeStart_;
@@ -162,7 +162,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     if (!doNotBack_) {
         int mmap_flags          = setBackingFile(memoryFile);
         memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
-        if (memBuffer_ == MAP_FAILED) dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
+        if (memBuffer_ == MAP_FAILED) {
+            int err = errno;
+            dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory: %s\n", strerror(err));
+        }
     }
 
     if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
@@ -260,7 +263,6 @@ void MemController::addRequest(MemEvent* ev) {
 
 bool MemController::clock(Cycle_t cycle) {
     totalCycles->addData(1);
-
     backend_->clock();
     if (isNetworkConnected_) networkLink_->clock();
 

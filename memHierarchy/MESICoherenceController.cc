@@ -311,7 +311,9 @@ int MESIController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
 CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
     
     uint64_t sendTime = 0;
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == name_));
@@ -423,7 +425,9 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             if (cacheLine->isSharer(event->getSrc())) cacheLine->removeSharer(event->getSrc());
             sendTime = sendResponseUp(event, M, cacheLine->getData(), replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
             return DONE;
         case SM:
             return STALL;   // retried this request too soon because we were checking for waiting invalidations
@@ -456,7 +460,9 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             }
         }
         line->setData(event->getPayload(), event);
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(line->getData(), true);
+#endif
         if (state == I) {
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
                 line->setState(S);
@@ -531,7 +537,9 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
                 sendTime = sendResponseUp(reqEvent, M, line->getData(), true, line->getTimestamp());
                 line->setTimestamp(sendTime);
                 line->setState(M);
+#ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(line->getData(), false);
+#endif
             }
             return DONE;
         case SM_Inv:
@@ -640,7 +648,9 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
                 cacheLine->setOwner(reqEvent->getSrc());
                 sendTime = sendResponseUp(reqEvent, M, cacheLine->getData(), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
             }
             break;
         /* Races from FetchInvX from outside our sub-hierarchy; races with GetS from within our sub-hierarchy */
@@ -907,7 +917,9 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
     switch (state) {
         case IS:
             cacheLine->setData(responseEvent->getPayload(), responseEvent);
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), true);
+#endif
             if (responseEvent->getGrantedState() == E) cacheLine->setState(E);
             else if (responseEvent->getGrantedState() == M) cacheLine->setState(M);
             else cacheLine->setState(S);
@@ -920,11 +932,15 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             }
             sendTime = sendResponseUp(origRequest, cacheLine->getState(), cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
             return DONE;
         case IM:
             cacheLine->setData(responseEvent->getPayload(), responseEvent);
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), true);
+#endif
         case SM:
             cacheLine->setState(M);
             cacheLine->setOwner(origRequest->getSrc());
@@ -932,7 +948,9 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             sendTime = sendResponseUp(origRequest, M, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
             return DONE;
         case SM_Inv:
             cacheLine->setState(M_Inv);
@@ -958,7 +976,9 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
 
     // Update data
     if (state != I) cacheLine->setData(responseEvent->getPayload(), responseEvent);
+#ifdef __SST_DEBUG_OUTPUT__
     if (state != I && (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr())) printData(cacheLine->getData(), true);
+#endif
 
     recordStateEventCount(responseEvent->getCmd(), state);
     
@@ -1032,7 +1052,9 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
                 sendTime = sendResponseUp(reqEvent, M, cacheLine->getData(), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__
                 if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
                 cacheLine->setState(M);
             }
             break;
@@ -1139,7 +1161,9 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
                     if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, M, line->getData(), true, line->getTimestamp());
                     line->setTimestamp(sendTime);
+#ifdef __SST_DEBUG_OUTPUT__
                     if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(line->getData(), false);
+#endif
                     line->setState(M);
                 }
             }
@@ -1288,7 +1312,9 @@ void MESIController::forwardMessageUp(MemEvent* event) {
 void MESIController::sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool dirty, bool replay){
     MemEvent *responseEvent = event->makeResponse();
     responseEvent->setPayload(*cacheLine->getData());
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
     responseEvent->setSize(cacheLine->getSize());
     
     responseEvent->setDirty(dirty);
@@ -1335,16 +1361,20 @@ void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty
     MemEvent* newCommandEvent = new MemEvent((SST::Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
+    bool hasData = false;
     if (cmd == PutM || writebackCleanBlocks_) {
         newCommandEvent->setPayload(*cacheLine->getData());
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) printData(cacheLine->getData(), false);
+#endif
+        hasData = true;
     }
     newCommandEvent->setRqstr(rqstr);
     newCommandEvent->setDirty(dirty);
     
     
     uint64_t baseTime = timestamp_ > cacheLine->getTimestamp() ? timestamp_ : cacheLine->getTimestamp();
-    uint64 deliveryTime = baseTime + accessLatency_;
+    uint64 deliveryTime = hasData ? baseTime + accessLatency_ : baseTime + tagLatency_;
     Response resp = {newCommandEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     cacheLine->setTimestamp(deliveryTime);
