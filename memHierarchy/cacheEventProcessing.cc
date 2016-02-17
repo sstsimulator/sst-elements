@@ -336,9 +336,22 @@ void Cache::handlePrefetchEvent(SST::Event* event) {
     selfLink_->send(1, event);
 }
 
+/* Handler for self events, namely prefetches */
 void Cache::handleSelfEvent(SST::Event* event) {
     MemEvent* ev = static_cast<MemEvent*>(event);
     ev->setBaseAddr(toBaseAddr(ev->getAddr()));
+    
+    if (!clockIsOn_) {
+        Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
+        timestamp_ = time - 1;
+        coherenceMgr->updateTimestamp(timestamp_);
+        int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
+        for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
+            statMSHROccupancy->addData(mshr_->getSize());
+        }
+        //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
+        clockIsOn_ = true;
+    }
     
     if (ev->getCmd() != NULLCMD && !mshr_->isFull() && (cf_.L1_ || !mshr_->isAlmostFull()))
         processEvent(ev, false);
@@ -425,7 +438,7 @@ void Cache::finish() {
     nameMap_.clear();
 }
 
-
+/* Main handler for links to upper and lower caches/cores/buses/etc */
 void Cache::processIncomingEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     if (!clockIsOn_) {
