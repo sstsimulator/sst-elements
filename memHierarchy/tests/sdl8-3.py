@@ -130,7 +130,6 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "",
-      "LLC" : "1",
       "network_address" : "1",
       "network_bw" : "25GB/s",
       "directory_at_next_level" : "1"

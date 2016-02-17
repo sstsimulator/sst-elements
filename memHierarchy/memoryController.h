@@ -96,9 +96,8 @@ private:
     typedef deque<DRAMReq*> dramReq_t;
     
     bool        divertDCLookups_;
-    SST::Link*  lowNetworkLink_;
-    MemNIC*     networkLink_;
-    bool        isNetworkConnected_;
+    SST::Link*  cacheLink_;         // Link to the rest of memHierarchy 
+    MemNIC*     networkLink_;       // Link to the rest of memHierarchy if we're communicating over a network
     MemBackend* backend_;
     int         protocol_;
     dramReq_t   requestQueue_;      // Requests waiting to be issued

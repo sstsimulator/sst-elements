@@ -336,9 +336,22 @@ void Cache::handlePrefetchEvent(SST::Event* event) {
     selfLink_->send(1, event);
 }
 
+/* Handler for self events, namely prefetches */
 void Cache::handleSelfEvent(SST::Event* event) {
     MemEvent* ev = static_cast<MemEvent*>(event);
     ev->setBaseAddr(toBaseAddr(ev->getAddr()));
+    
+    if (!clockIsOn_) {
+        Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
+        timestamp_ = time - 1;
+        coherenceMgr->updateTimestamp(timestamp_);
+        int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
+        for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
+            statMSHROccupancy->addData(mshr_->getSize());
+        }
+        //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
+        clockIsOn_ = true;
+    }
     
     if (ev->getCmd() != NULLCMD && !mshr_->isFull() && (cf_.L1_ || !mshr_->isAlmostFull()))
         processEvent(ev, false);
@@ -347,7 +360,7 @@ void Cache::handleSelfEvent(SST::Event* event) {
 
 
 void Cache::init(unsigned int phase) {
-    if (cf_.topNetwork_ == "cache") { // I'm connected to the network ONLY via a single NIC
+    if (topNetworkLink_) { // I'm connected to the network ONLY via a single NIC
         bottomNetworkLink_->init(phase);
             
         /*  */
@@ -364,15 +377,11 @@ void Cache::init(unsigned int phase) {
     
     if (!phase) {
         if (cf_.L1_) {
-            for (uint idc = 0; idc < highNetPorts_->size(); idc++) {
-                highNetPorts_->at(idc)->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-            }
-        } else{
-            for (uint i = 0; i < highNetPorts_->size(); i++) {
-                highNetPorts_->at(i)->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
-            }
+            highNetPort_->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
+        } else {
+            highNetPort_->sendInitData(new MemEvent(this, 0, 0, NULLCMD));
         }
-        if (cf_.bottomNetwork_ == "") {
+        if (!bottomNetworkLink_) {
             for (uint i = 0; i < lowNetPorts_->size(); i++) {
                 lowNetPorts_->at(i)->sendInitData(new MemEvent(this, 10, 10, NULLCMD));
             }
@@ -380,28 +389,26 @@ void Cache::init(unsigned int phase) {
         
     }
 
-    for (uint idc = 0; idc < highNetPorts_->size(); idc++) {
-        while ((ev = (highNetPorts_->at(idc))->recvInitData())) {
-            MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
-            if (!memEvent) { /* Do nothing */ }
-            else if (memEvent->getCmd() == NULLCMD) {
-                if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
-                    upperLevelCacheNames_.push_back(memEvent->getSrc());
-                }
+    while (ev = highNetPort_->recvInitData()) {
+        MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
+        if (!memEvent) { /* Do nothing */ }
+        else if (memEvent->getCmd() == NULLCMD) {
+            if (memEvent->getCmd() == NULLCMD) {    // Save upper level cache names
+                upperLevelCacheNames_.push_back(memEvent->getSrc());
+            }
+        } else {
+            if (bottomNetworkLink_) {
+                bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
             } else {
-                if (cf_.bottomNetwork_ != "") {
-                    bottomNetworkLink_->sendInitData(new MemEvent(*memEvent));
-                } else {
-                    for (uint idp = 0; idp < lowNetPorts_->size(); idp++) {
-                        lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
-                    }
+                for (uint idp = 0; idp < lowNetPorts_->size(); idp++) {
+                    lowNetPorts_->at(idp)->sendInitData(new MemEvent(*memEvent));
                 }
             }
-            delete memEvent;
         }
-    }
+        delete memEvent;
+     }
     
-    if (cf_.bottomNetwork_ == "") {  // Save names of caches below us
+    if (!bottomNetworkLink_) {  // Save names of caches below us
         for (uint i = 0; i < lowNetPorts_->size(); i++) {
             while ((ev = lowNetPorts_->at(i)->recvInitData())) {
                 MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
@@ -431,7 +438,7 @@ void Cache::finish() {
     nameMap_.clear();
 }
 
-
+/* Main handler for links to upper and lower caches/cores/buses/etc */
 void Cache::processIncomingEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     if (!clockIsOn_) {

@@ -74,7 +74,7 @@ private:
     struct CacheConfig;
     
     /** Constructor for Cache Component */
-    Cache(ComponentId_t _id, Params &_params, CacheConfig _config);
+    Cache(ComponentId_t id, Params &params, CacheConfig config);
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
@@ -86,7 +86,7 @@ private:
     void processEvent(MemEvent* event, bool mshrHit);
     
     /** Configure this component's links */
-    void configureLinks();
+    void configureLinks(Params &params);
     
     /** Handler for incoming prefetching events. */
     void handlePrefetchEvent(SST::Event *event);
@@ -200,7 +200,7 @@ private:
         bool queuesEmpty = coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
         
         bool nicIdle = true;
-        if (cf_.bottomNetwork_ != "") nicIdle = bottomNetworkLink_->clock();
+        if (bottomNetworkLink_) nicIdle = bottomNetworkLink_->clock();
         if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
         
         // MSHR occupancy
@@ -261,8 +261,6 @@ private:
         bool L1_;
         bool LLC_;
         bool LL_;
-        string bottomNetwork_;
-        string topNetwork_;
         bool allNoncacheableRequests_;
         SimTime_t maxWaitTime_;
         string type_;
@@ -272,7 +270,7 @@ private:
     uint                    ID_;
     CacheListener*          listener_;
     vector<Link*>*          lowNetPorts_;
-    vector<Link*>*          highNetPorts_;
+    Link*                   highNetPort_;
     Link*                   selfLink_;
     Link*                   maxWaitSelfLink_;
     MemNIC*                 bottomNetworkLink_;

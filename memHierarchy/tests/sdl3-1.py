@@ -59,7 +59,6 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
-      "LLC" : 1,
       "LL" : 1,
       "debug" : "0",
       "debug_level" : 10

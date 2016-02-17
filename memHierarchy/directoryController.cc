@@ -73,9 +73,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (mshrSize < 1) dbg.fatal(CALL_INFO, -1, "Invalid param(%s): mshr_num_entries - must be at least 1 or else -1 to indicate a very large MSHR\n", getName().c_str());
     mshr                = new MSHR(&dbg, mshrSize, this->getName(), DEBUG_ALL, DEBUG_ADDR); 
     
-    int directMem = params.find_integer("direct_mem_link",1);
-    directMemoryLink = (directMem == 1) ? true : false;
-
     if(0 == addrRangeEnd) addrRangeEnd = (uint64_t)-1;
     numTargets = 0;
 	
@@ -92,7 +89,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     mshrLatency     = (uint64_t)params.find_integer("mshr_latency_cycles", 0);
 
     /* Set up links/network to cache & memory */
-    if (directMemoryLink) {
+    if (isPortConnected("memory")) {
         memLink = configureLink("memory", "1 ns", new Event::Handler<DirectoryController>(this, &DirectoryController::handleMemoryResponse));
         if (!memLink) {
             dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
@@ -120,7 +117,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         network->addTypeInfo(typeInfo);
     } else {
         memoryName  = params.find_string("net_memory_name", "");
-        if (memoryName == "") dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller\n", getName().c_str());
+        if (memoryName == "") 
+            dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
 
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port                        = "network";
@@ -143,6 +141,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         typeInfo.interleaveStep = interleaveStep;
         typeInfo.blocksize      = 0;
         network->addTypeInfo(typeInfo);
+        
+        memLink = NULL;
     }
     
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
@@ -234,7 +234,7 @@ void DirectoryController::handlePacket(SST::Event *event){
         ev->setBaseAddr(localBaseAddr);
         ev->setAddr(localAddr);
         profileRequestSent(ev);
-        if (directMemoryLink) {
+        if (memLink) {
             memLink->send(ev);
         } else {
             ev->setDst(memoryName);
@@ -618,7 +618,7 @@ void DirectoryController::issueMemoryRequest(MemEvent * ev, DirEntry * entry) {
     
     uint64_t deliveryTime = timestamp + accessLatency;
 
-    if (directMemoryLink) {
+    if (memLink) {
         memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, reqEv));
     } else {
         reqEv->setDst(memoryName);
@@ -1132,7 +1132,7 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
     profileRequestSent(me);
     
     uint64_t deliveryTime = timestamp + accessLatency;
-    if (directMemoryLink) {
+    if (memLink) {
         memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     } else {
         me->setDst(memoryName);
@@ -1297,7 +1297,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
 
     uint64_t deliveryTime = timestamp + accessLatency;
 
-    if (directMemoryLink) {
+    if (memLink) {
         memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, me));
     } else {
         me->setDst(memoryName);
@@ -1321,7 +1321,7 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event){
     profileRequestSent(ev);
     
     uint64_t deliveryTime = timestamp + accessLatency;
-    if (directMemoryLink) {
+    if (memLink) {
         memMsgQueue.insert(std::pair<uint64_t,MemEvent*>(deliveryTime, ev));
     } else {
         ev->setDst(memoryName);
@@ -1460,7 +1460,7 @@ const char* DirectoryController::printDirectoryEntryStatus(Addr baseAddr){
 void DirectoryController::init(unsigned int phase){
     network->init(phase);
 
-    if (!directMemoryLink && network->initDataReady() && !network->isValidDestination(memoryName)) {
+    if (!memLink && network->initDataReady() && !network->isValidDestination(memoryName)) {
         dbg.fatal(CALL_INFO,-1,"%s, Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s\n",getName().c_str(), memoryName.c_str());
     }
     /* Pass data on to memory */
@@ -1470,7 +1470,7 @@ void DirectoryController::init(unsigned int phase){
             ev->setBaseAddr(convertAddressToLocalAddress(ev->getBaseAddr()));
             ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
             dbg.debug(_L10_, "Sending Init Data for address 0x%" PRIx64 " to memory\n", ev->getAddr());
-            if (directMemoryLink) {
+            if (memLink) {
                 memLink->sendInitData(ev);
             } else {
                 ev->setDst(memoryName);

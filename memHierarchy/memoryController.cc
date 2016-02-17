@@ -72,10 +72,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
-    int  directLink         = params.find_integer("direct_link",1);
     doNotBack_              = (params.find_integer("do_not_back",0) == 1);
 
-    isNetworkConnected_     = directLink ? false : true;
     int addr = params.find_integer("network_address");
     std::string net_bw = params.find_string("network_bw");
     
@@ -129,9 +127,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     Params backendParams = params.find_prefix_params("backend.");
     backend_                = dynamic_cast<MemBackend*>(loadSubComponent(backendName, this, backendParams));
 
-    if (!isNetworkConnected_) {
-        lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+    if (isPortConnected("direct_link")) {
+        cacheLink_   = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        networkLink_ = NULL;
     } else {
+        if (!isPortConnected("network")) {
+            dbg.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
+        }
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port        = "network";
         myInfo.link_bandwidth   = net_bw;
@@ -152,6 +154,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         typeInfo.interleaveSize   = interleaveSize_;
         typeInfo.interleaveStep   = interleaveStep_;
         networkLink_->addTypeInfo(typeInfo);
+        cacheLink_ = NULL;
     }
 
     // Set up backing store if needed
@@ -264,7 +267,7 @@ void MemController::addRequest(MemEvent* ev) {
 bool MemController::clock(Cycle_t cycle) {
     totalCycles->addData(1);
     backend_->clock();
-    if (isNetworkConnected_) networkLink_->clock();
+    if (networkLink_) networkLink_->clock();
 
     while ( !requestQueue_.empty()) {
         DRAMReq *req = requestQueue_.front();
@@ -347,8 +350,8 @@ void MemController::performRequest(DRAMReq* req) {
 
 void MemController::sendResponse(DRAMReq* req) {
     if (req->reqEvent_->getCmd() != PutM) {
-        if (isNetworkConnected_) networkLink_->send(req->respEvent_);
-        else lowNetworkLink_->send(req->respEvent_);
+        if (networkLink_) networkLink_->send(req->respEvent_);
+        else cacheLink_->send(req->respEvent_);
     }
     req->status_ = DRAMReq::DONE;
     
@@ -386,9 +389,9 @@ MemController::~MemController() {
 
 
 void MemController::init(unsigned int phase) {
-    if (!isNetworkConnected_) {
+    if (!networkLink_) {
         SST::Event *ev = NULL;
-        while (NULL != (ev = lowNetworkLink_->recvInitData())) {
+        while (NULL != (ev = cacheLink_->recvInitData())) {
             MemEvent *me = dynamic_cast<MemEvent*>(ev);
             if (!me) {
                 delete ev;
@@ -437,7 +440,7 @@ void MemController::init(unsigned int phase) {
 
 void MemController::setup(void) {
     backend_->setup();
-    if (isNetworkConnected_) networkLink_->setup();
+    if (networkLink_) networkLink_->setup();
 }
 
 
@@ -452,7 +455,7 @@ void MemController::finish(void) {
     }
 
     backend_->finish();
-    if (isNetworkConnected_) networkLink_->finish();
+    if (networkLink_) networkLink_->finish();
 }
 
 

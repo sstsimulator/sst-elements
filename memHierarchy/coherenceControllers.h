@@ -229,7 +229,7 @@ public:
             if (topNetworkLink_) {
                 topNetworkLink_->send(outgoingEvent);
             } else {
-                highNetPorts_->at(0)->send(outgoingEvent);
+                highNetPort_->send(outgoingEvent);
             }
             outgoingEventQueueUp_.pop_front();
         }
@@ -286,7 +286,7 @@ public:
 
 protected:
     CoherencyController(const Cache* cache, Output* dbg, string name, uint lineSize, uint64_t accessLatency, uint64_t tagLatency, uint64_t mshrLatency, bool LLC, bool LL, 
-            vector<Link*>* parentLinks, vector<Link*>* childLinks, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, CacheListener* listener, MSHR * mshr, bool wbClean, 
+            vector<Link*>* parentLinks, Link* childLink, MemNIC* bottomNetworkLink, MemNIC* topNetworkLink, CacheListener* listener, MSHR * mshr, bool wbClean, 
             bool debugAll, Addr debugAddr):
                         timestamp_(0), accessLatency_(1), tagLatency_(1), owner_(cache), d_(dbg), lineSize_(lineSize), sentEvents_(0) {
         name_                   = name;
@@ -301,7 +301,7 @@ protected:
         bottomNetworkLink_      = bottomNetworkLink;
         topNetworkLink_         = topNetworkLink;
         lowNetPorts_            = parentLinks;
-        highNetPorts_           = childLinks;
+        highNetPort_            = childLink;
         listener_               = listener;
         writebackCleanBlocks_   = wbClean;
 
@@ -488,7 +488,7 @@ protected:
     bool            writebackCleanBlocks_;
     
     vector<Link*>*  lowNetPorts_;
-    vector<Link*>*  highNetPorts_;
+    Link*           highNetPort_;
     vector<string>  lowerLevelCacheNames_;
     vector<string>  upperLevelCacheNames_;
 

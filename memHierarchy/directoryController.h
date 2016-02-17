@@ -125,7 +125,6 @@ class DirectoryController : public Component {
     std::map<MemEvent::id_type, pair<Addr,Addr> > noncacheMemReqs;
 
     /* Network connections */
-    bool        directMemoryLink; // true if we have a direct memory connection, false if we are connected to mem via the network
     SST::Link*  memLink;
     MemNIC*     network;
     string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name
