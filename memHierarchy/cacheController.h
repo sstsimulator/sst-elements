@@ -201,9 +201,7 @@ private:
         
         bool nicIdle = true;
         if (cf_.bottomNetwork_ != "") nicIdle = bottomNetworkLink_->clock();
-        if ( checkMaxWaitInterval_ > 0 && (timestamp_ % checkMaxWaitInterval_) == 0) {
-            checkMaxWait();
-        }
+        if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
         
         // MSHR occupancy
         statMSHROccupancy->addData(mshr_->getSize());
@@ -214,26 +212,16 @@ private:
             lastActiveClockCycle_ = time;
             if (!maxWaitWakeupExists_) {
                 maxWaitWakeupExists_ = true;
-                registerOneShot(maxWaitWakeupDelay_, maxWaitWakeupHandler_);
+                maxWaitSelfLink_->send(1, NULL);
             }
             return true;
         }
         return false;
     }
 
-    void maxWaitWakeup() {
+    void maxWaitWakeup(SST::Event * ev) {
         checkMaxWait();
-        maxWaitWakeupExists_ = false;
-        if (!clockIsOn_) {  // Because for some reason re-registering a one shot causes sim to hang??
-            Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
-            timestamp_ = time - 1;
-            coherenceMgr->updateTimestamp(timestamp_);
-            int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
-            for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
-                statMSHROccupancy->addData(mshr_->getSize());
-            }
-            clockIsOn_ = true;
-        } 
+        maxWaitSelfLink_->send(1, NULL);
     }
 
     void checkMaxWait(void) const {
@@ -286,6 +274,7 @@ private:
     vector<Link*>*          lowNetPorts_;
     vector<Link*>*          highNetPorts_;
     Link*                   selfLink_;
+    Link*                   maxWaitSelfLink_;
     MemNIC*                 bottomNetworkLink_;
     MemNIC*                 topNetworkLink_;
     Output*                 d_;
@@ -315,7 +304,6 @@ private:
     SimTime_t               checkMaxWaitInterval_;      // Check for timeouts on this interval - when clock is on
     UnitAlgebra             maxWaitWakeupDelay_;        // Set wakeup event to check timeout on this interval - when clock is off
     bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
-    OneShot::HandlerBase*   maxWaitWakeupHandler_;      // Handler to be called by timeout wakeup
 
 
     /* 

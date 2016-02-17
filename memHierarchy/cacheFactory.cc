@@ -373,9 +373,8 @@ Cache::Cache(ComponentId_t id, Params &params, CacheConfig config) : Component(i
         ostringstream oss;
         oss << checkMaxWaitInterval_;
         string interval = oss.str() + "ns";
-        maxWaitWakeupDelay_ = UnitAlgebra(interval);
-        maxWaitWakeupHandler_ = new OneShot::Handler<Cache>(this, &Cache::maxWaitWakeup);
         maxWaitWakeupExists_ = false;
+        maxWaitSelfLink_ = configureSelfLink("maxWait", interval, new Event::Handler<Cache>(this, &Cache::maxWaitWakeup));
     } else {
         maxWaitWakeupExists_ = true;
     }

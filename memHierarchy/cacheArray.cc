@@ -32,9 +32,9 @@ SetAssociativeArray::SetAssociativeArray(Output* dbg, unsigned int numLines, uns
 
 
 SetAssociativeArray::~SetAssociativeArray() {
-    delete setStates;
-    delete setSharers;
-    delete setOwned;
+    delete [] setStates;
+    delete [] setSharers;
+    delete [] setOwned;
 }
 
 int SetAssociativeArray::find(const Addr baseAddr, bool update) {
