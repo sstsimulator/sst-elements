@@ -162,7 +162,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     if (!doNotBack_) {
         int mmap_flags          = setBackingFile(memoryFile);
         memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
-        if (memBuffer_ == MAP_FAILED) dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
+        if (memBuffer_ == MAP_FAILED) {
+            int err = errno;
+            dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory: %s\n", strerror(err));
+        }
     }
 
     if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
@@ -260,7 +263,6 @@ void MemController::addRequest(MemEvent* ev) {
 
 bool MemController::clock(Cycle_t cycle) {
     totalCycles->addData(1);
-
     backend_->clock();
     if (isNetworkConnected_) networkLink_->clock();
 
