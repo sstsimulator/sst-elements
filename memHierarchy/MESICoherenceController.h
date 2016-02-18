@@ -65,6 +65,9 @@ public:
 /* Miscellaneous */
     /** Determine in advance if a request will miss (and what kind of miss). Used for stats */
     int isCoherenceMiss(MemEvent* event, CacheLine* cacheLine);
+    
+    /** Determine whether a NACKed event should be retried */
+    bool isRetryNeeded(MemEvent * event, CacheLine * cacheLine);
    
 private:
 /* Private data members */

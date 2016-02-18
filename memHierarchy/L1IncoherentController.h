@@ -60,6 +60,11 @@ public:
     /* Methods for sending events, called by cache controller */
     /** Send response up (to processor) */
     uint64_t sendResponseUp(MemEvent * event, State grantedState, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
+    
+/* Miscellaneous */
+    /** Determine whether a NACKed event should be retried */
+    bool isRetryNeeded(MemEvent * event, CacheLine * cacheLine);
+
 
     void printData(vector<uint8_t> * data, bool set);
 

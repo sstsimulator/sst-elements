@@ -30,6 +30,7 @@ using namespace SST::MemHierarchy;
  *      handleResponse
  *      handleReplacement (not relevant for L1s)
  *      handleInvalidationRequest
+ *      isRetryNeeded 
  */
   
 CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
@@ -129,6 +130,13 @@ CacheAction L1IncoherentController::handleResponse(MemEvent * respEvent, CacheLi
     }
     return DONE;
 }
+
+
+
+bool L1IncoherentController::isRetryNeeded(MemEvent * event, CacheLine * cacheLine) {
+    return true;    // No coherence races to resolve a request
+}
+
 
 /*------------------------------------------------------------------------------------------------
  *  Private event handlers
