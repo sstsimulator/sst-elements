@@ -57,11 +57,15 @@ public:
 
     /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest);
+    
 
 /* Miscellaneous */
     
     /** Determine in advance if a request will miss (and what kind of miss). Used for stats */
     int isCoherenceMiss(MemEvent* event, CacheLine* dirLine);
+
+    /** Determine whether a NACKed event should be retried */
+    bool isRetryNeeded(MemEvent * event, CacheLine * cacheLine);
 
 private:
 /* Private data members */

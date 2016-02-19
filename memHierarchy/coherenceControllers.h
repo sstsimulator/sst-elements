@@ -89,6 +89,8 @@ public:
     virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
     
+    virtual bool isRetryNeeded(MemEvent * event, CacheLine * line) =0;
+
     // Let cache update timestamp
     void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
 

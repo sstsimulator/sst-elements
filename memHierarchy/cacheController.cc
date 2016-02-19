@@ -742,6 +742,17 @@ void Cache::processIncomingNACK(MemEvent* origReqEvent) {
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == origReqEvent->getBaseAddr()) d_->debug(_L3_,"NACK received.\n");
 #endif
+    
+    /* Determine whether NACKed event needs to be retried */
+    CacheLine * cacheLine = getLine(origReqEvent->getBaseAddr());
+    if (!coherenceMgr->isRetryNeeded(origReqEvent, cacheLine)) {
+#ifdef __SST_DEBUG_OUTPUT__
+        d_->debug(_L4_, "Dropping NACKed request\n");
+#endif
+        delete origReqEvent;    // TODO: should do this here?
+        return;
+    }
+
     /* Determine what CC will retry sending the event */
     if (origReqEvent->fromHighNetNACK())       coherenceMgr->resendEvent(origReqEvent, true);
     else if (origReqEvent->fromLowNetNACK())   coherenceMgr->resendEvent(origReqEvent, false);

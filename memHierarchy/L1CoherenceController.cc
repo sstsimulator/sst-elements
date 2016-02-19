@@ -26,6 +26,7 @@ using namespace SST::MemHierarchy;
  *      handleResponse
  *      handleReplacement (not relevant for L1s)
  *      handleInvalidationRequest
+ *      isRetryNeeded
  */
   
 CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
@@ -170,6 +171,32 @@ CacheAction L1CoherenceController::handleResponse(MemEvent * respEvent, CacheLin
     }
     return DONE;
 }
+
+
+/* Retry of access requests is needed if the request is still outstanding
+ * Retry of replacement requests is needed if the lower cache can NACK them and 
+ * the replacement has not already been ack'd via an Inv race
+ */
+bool L1CoherenceController::isRetryNeeded(MemEvent * event, CacheLine * cacheLine) {
+    Command cmd = event->getCmd();
+    switch (cmd) {
+        case GetS:
+        case GetX:
+        case GetSEx:
+            return true;
+        case PutS:
+        case PutE:
+        case PutM:
+            if (!LL_ && (LLC_ || writebackCleanBlocks_)) 
+                if (!mshr_->pendingWriteback(event->getBaseAddr())) return false;   // The Put was resolved (probably raced with Inv)
+            return true;
+        default:
+            d_->fatal(CALL_INFO, -1, "%s, Error: NACKed event is unrecognized: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64"ns\n",
+                    name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
+    }
+    return true;
+}
+
 
 /*------------------------------------------------------------------------------------------------
  *  Private event handlers

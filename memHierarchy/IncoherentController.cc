@@ -144,6 +144,13 @@ CacheAction IncoherentController::handleResponse(MemEvent * respEvent, CacheLine
 }
 
 
+/* Incoherent caches always retry NACKs since there are not Inv/Fetch's to race
+ * with and resolve transactions early
+ */
+bool IncoherentController::isRetryNeeded(MemEvent * event, CacheLine * cacheLine) {
+    return true;
+}
+
 /*
  *  Return type of miss for profiling incoming events
  *  0:  Hit

@@ -227,6 +227,42 @@ CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLin
 }
 
 
+
+bool MESIInternalDirectory::isRetryNeeded(MemEvent * event, CacheLine * dirLine) {
+    Command cmd = event->getCmd();
+    State state = dirLine ? dirLine->getState() : I;
+    
+    switch (cmd) {
+        case GetS:
+        case GetX:
+        case GetSEx:
+            return true;
+        case PutS:
+        case PutE:
+        case PutM:
+            if (!LL_ && !mshr_->pendingWriteback(event->getBaseAddr())) return false;
+            return true;
+        case FetchInvX:
+            if (state == I) return false;
+            if (dirLine->getOwner() != event->getDst()) return false;
+            return true;
+        case FetchInv:
+            if (state == I) return false;
+            if ((dirLine->getOwner() != event->getDst()) && !dirLine->isSharer(event->getDst())) return false;
+            return true;
+        case Fetch:
+        case Inv:
+            if (state == I) return false;
+            if (!dirLine->isSharer(event->getDst())) return false;
+            return true;
+        default:
+            d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received NACK for unrecognized event: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
+    }
+    return true;
+}
+
+
 /*
  *  Return type of miss. Used by cacheController for profiling incoming events
  *  0:  Hit

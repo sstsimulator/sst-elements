@@ -259,6 +259,38 @@ CacheAction MESIController::handleResponse(MemEvent * respEvent, CacheLine * cac
     return DONE;
 }
 
+
+bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
+    Command cmd = event->getCmd();
+    State state = cacheLine ? cacheLine->getState() : I;
+    
+    switch (cmd) {
+        case GetS:
+        case GetX:
+        case GetSEx:
+            return true;
+        case PutS:
+        case PutE:
+        case PutM:
+            if (!LL_ && (LLC_ || writebackCleanBlocks_)) 
+                if (!mshr_->pendingWriteback(cacheLine->getBaseAddr())) return false;
+            return true;
+        case FetchInv:
+        case FetchInvX:
+            if (state == I) return false;   // Already resolved the request, don't resend
+            if (cacheLine->getOwner() != event->getDst()) return false;    // Must have gotten a replacement from this owner
+            return true;
+        case Inv:
+            if (state == I) return false;   // Already resolved the request, don't resend
+            if (!cacheLine->isSharer(event->getDst())) return false;    // Must have gotten a replacement from this sharer
+            return true;
+        default:
+            d_->fatal(CALL_INFO,-1,"%s, Error: NACKed event is unrecognized: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
+    }
+    return true;
+}
+
 /**
  *  Return type of miss. Used for profiling incoming requests at the cacheController
  *  0:  Hit
