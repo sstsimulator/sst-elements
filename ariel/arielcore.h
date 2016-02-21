@@ -107,7 +107,7 @@ class ArielCore {
 		uint64_t cacheLineSize;
 		SST::Component* owner;
 		ArielMemoryManager* memmgr;
-		uint32_t verbosity;
+		const uint32_t verbosity;
 		const uint32_t perform_checks;
 		bool enableTracing;
 		uint64_t currentCycles;
