@@ -23,9 +23,11 @@ namespace ArielComponent {
 class ArielExitEvent : public ArielEvent {
 
 	public:
-		ArielExitEvent();
-		~ArielExitEvent();
-		ArielEventType getEventType();
+		ArielExitEvent() {}
+		~ArielExitEvent() {}
+		ArielEventType getEventType() const {
+			return CORE_EXIT;
+		}
 
 };
 

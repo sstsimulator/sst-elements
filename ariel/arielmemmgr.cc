@@ -36,14 +36,14 @@ ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 		pageSizes[i] = pSizes[i];
 	}
 
-	freePages = (std::queue<uint64_t>**) malloc( sizeof(std::queue<uint64_t>*) * mLevels );
+	freePages = (std::deque<uint64_t>**) malloc( sizeof(std::deque<uint64_t>*) * mLevels );
 	uint64_t nextMemoryAddress = 0;
 	for(uint32_t i = 0; i < mLevels; ++i) {
-		freePages[i] = new std::queue<uint64_t>();
+		freePages[i] = new std::deque<uint64_t>();
 
 		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, stdPCounts[i]);
 		for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
-			freePages[i]->push(nextMemoryAddress);
+			freePages[i]->push_back(nextMemoryAddress);
 			nextMemoryAddress += pageSizes[i];
 		}
 		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, 
@@ -102,7 +102,7 @@ void ArielMemoryManager::populateTables(const char* populateFilePath, const uint
 		}
 
 		const uint64_t freePhysical = freePages[level]->front();
-		freePages[level]->pop();
+		freePages[level]->pop_front();
 
 		output->verbose(CALL_INFO, 4, 0, "Pinning address %" PRIu64 " in level %" PRIu32 " (physical=%" PRIu64 "\n",
 			pinAddr, level, freePhysical);
@@ -173,7 +173,8 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 		}
 
 		const uint64_t nextPhysPage = freePages[level]->front();
-		freePages[level]->pop();
+		freePages[level]->pop_front();
+
 		pageTables[level]->insert( std::pair<uint64_t, uint64_t>(nextVirtPage, nextPhysPage) );
 
 		output->verbose(CALL_INFO, 4, 0, "Allocating memory page, physical page=%" PRIu64 ", virtual page=%" PRIu64 "\n",
@@ -213,7 +214,7 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 			for(uint64_t free_size = 0; free_size < allocation_length; free_size += page_size) {
 				uint64_t phys_addr = translateAddress(virtAddress + free_size);
 
-				freePages[i]->push(phys_addr);
+				freePages[i]->push_front(phys_addr);
 				pageTables[i]->erase(virtAddress + free_size);
 			}
 
