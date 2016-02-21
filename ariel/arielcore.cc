@@ -23,8 +23,6 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	output(out), tunnel(tunnel), perform_checks(perform_address_checks),
 	verbosity(static_cast<uint32_t>(out->getVerboseLevel()))
 {
-//        output = out;
-//	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	cacheLink = coreToCacheLink;
         allocLink = 0;
@@ -181,7 +179,7 @@ void ArielCore::finishCore() {
 	// Close the trace file if we did in fact open it.
 	if(enableTracing && traceGen) {
 		delete traceGen;
-        traceGen = NULL;
+        	traceGen = NULL;
 	}
 
 }
@@ -218,7 +216,7 @@ void ArielCore::createReadEvent(uint64_t address, uint32_t length) {
 }
 
 void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr) {
-    ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level, instPtr);
+    	ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level, instPtr);
 	coreQ->push(ev);
 
 	ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Generated an allocate event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 " from IP %" PRIx64 "\n",
@@ -246,7 +244,7 @@ void ArielCore::createExitEvent() {
 	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated an EXIT event.\n"));
 }
 
-bool ArielCore::isCoreHalted() {
+bool ArielCore::isCoreHalted() const {
 	return isHalted;
 }
 
