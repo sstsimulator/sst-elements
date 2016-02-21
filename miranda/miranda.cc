@@ -322,7 +322,7 @@ static const ElementInfoComponent components[] = {
 
 extern "C" {
     ElementLibraryInfo miranda_eli = {
-        "Miranda",
+        "miranda",
         "Address generator compatible with SST MemHierarchy",
         components,
         NULL, // events
