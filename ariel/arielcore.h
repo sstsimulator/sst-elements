@@ -64,7 +64,7 @@ class ArielCore {
                 uint64_t cacheLineSz, SST::Component* owner,
 			ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
 		~ArielCore();
-		bool isCoreHalted();
+		bool isCoreHalted() const;
 		void tick();
 		void halt();
 		void finishCore();
@@ -107,7 +107,7 @@ class ArielCore {
 		uint64_t cacheLineSize;
 		SST::Component* owner;
 		ArielMemoryManager* memmgr;
-		uint32_t verbosity;
+		const uint32_t verbosity;
 		const uint32_t perform_checks;
 		bool enableTracing;
 		uint64_t currentCycles;
