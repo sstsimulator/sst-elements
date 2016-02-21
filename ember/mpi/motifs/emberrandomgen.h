@@ -10,7 +10,7 @@
 // distribution.
 
 
-#ifndef _H_EMBER_RANDOM_GEM
+#ifndef _H_EMBER_RANDOM_GEN
 #define _H_EMBER_RANDOM_GEN
 
 #include "mpi/embermpigen.h"
