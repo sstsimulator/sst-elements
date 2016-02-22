@@ -173,6 +173,7 @@ public:
 #ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_,"Forwarding request at cycle = %" PRIu64 "\n", deliveryTime);        
 #endif
+        return deliveryTime;
     }
     
 
@@ -912,22 +913,22 @@ protected:
                 stat_eventSent_GetXResp->addData(1);
                 break;
             case Inv:
-                stat_eventSent_Inv;
+                stat_eventSent_Inv->addData(1);
                 break;
             case Fetch:
-                stat_eventSent_Fetch;
+                stat_eventSent_Fetch->addData(1);
                 break;
             case FetchInv:
-                stat_eventSent_FetchInv;
+                stat_eventSent_FetchInv->addData(1);
                 break;
             case FetchInvX:
-                stat_eventSent_FetchInvX;
+                stat_eventSent_FetchInvX->addData(1);
                 break;
             case AckPut:
-                stat_eventSent_AckPut;
+                stat_eventSent_AckPut->addData(1);
                 break;
             case NACK:
-                stat_eventSent_NACK_up;
+                stat_eventSent_NACK_up->addData(1);
                 break;
             default: 
                 break;
