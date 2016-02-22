@@ -389,7 +389,7 @@ void Cache::init(unsigned int phase) {
         
     }
 
-    while (ev = highNetPort_->recvInitData()) {
+    while ((ev = highNetPort_->recvInitData())) {
         MemEvent* memEvent = dynamic_cast<MemEvent*>(ev);
         if (!memEvent) { /* Do nothing */ }
         else if (memEvent->getCmd() == NULLCMD) {

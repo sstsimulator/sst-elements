@@ -336,17 +336,17 @@ void Cache::configureLinks(Params &params) {
     /* Check for valid port combos */
     if (highNetExists) {
         if (!lowCacheExists && !lowDirExists && !lowNetExists)
-            d_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_\%d' where d is in the range 0 to N-1\n",
+            d_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
                     getName().c_str());
         if ((lowCacheExists && (lowDirExists || lowNetExists)) || (lowDirExists && lowNetExists))  
-            d_->fatal(CALL_INFO,-1,"%s, Error: multiple connected low port types detected. Please only connect one of 'cache', 'directory', or connect N components to 'low_network_\%d' where d is in the range 0 to N-1\n",
+            d_->fatal(CALL_INFO,-1,"%s, Error: multiple connected low port types detected. Please only connect one of 'cache', 'directory', or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
                     getName().c_str());
         if (isPortConnected("high_network_1"))
             d_->fatal(CALL_INFO,-1,"%s, Error: multiple connected high ports detected. Use the 'Bus' component to connect multiple entities to port 'high_network_0' (e.g., connect 2 L1s to a bus and connect the bus to the L2)\n",
                     getName().c_str());
     } else {
         if (!lowDirExists) 
-            d_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_\%d\n",
+            d_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
                     getName().c_str());
         if (lowCacheExists || lowNetExists)
             d_->fatal(CALL_INFO,-1,"%s, Error: no connected high ports detected. Please connect a bus/cache/core on port 'high_network_0'\n",

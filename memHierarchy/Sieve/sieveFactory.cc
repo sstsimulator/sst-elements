@@ -112,7 +112,7 @@ void Sieve::configureLinks() {
             output_->output(CALL_INFO, "Port %lu = Link %d\n", cpuLinks_[i]->getId(), i);
         }
     }
-    if (cpuLinkCount_ < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports cpu_link_\%d\n");
+    if (cpuLinkCount_ < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports cpu_link_n\n");
 }
 
     }}

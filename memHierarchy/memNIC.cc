@@ -289,7 +289,7 @@ void MemNIC::send(MemEvent *ev)
     req->vn = 0;
 #ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ev->getBaseAddr())
-        dbg->debug(_L9_, "%s, memNIC send: dst: %s; bits: %d. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
+        dbg->debug(_L9_, "%s, memNIC send: dst: %s; bits: %zu. (Cmd: %s, Rqst size: %u, Payload size: %u)\n", 
                 comp->getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[ev->getCmd()], ev->getSize(), ev->getPayloadSize());
 #endif
     req->givePayload(mre);
