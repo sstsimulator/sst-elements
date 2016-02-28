@@ -90,6 +90,10 @@ void printMPIOp(MPI_Op op) {
 		convert = SIRIUS_MPI_MAX;
 	} else if(op == MPI_MIN) {
 		convert = SIRIUS_MPI_MIN;
+	} else if(op == MPI_MINLOC) {
+		convert = SIRIUS_MPI_MIN;
+	} else if(op == MPI_MAXLOC) {
+		convert = SIRIUS_MPI_MAX;
 	} else {
 		printf("TODO: FIXME: An unknown MPI operation was encountered, set to SUM for now.\n");
 		convert = SIRIUS_MPI_SUM;
@@ -499,7 +503,13 @@ extern "C" int MPI_Wait(MPI_Request *request, MPI_Status *status) {
 	if(sirius_output) {
 		printUINT32((uint32_t) SIRIUS_MPI_WAIT);
 		printTime();
-		printUINT64((uint64_t) request);
+
+		if( (NULL == request) || MPI_REQUEST_NULL == (*request) ) {
+                        printUINT64((uint64_t) SIRIUS_MPI_REQUEST_NULL);
+                } else {
+                        printUINT64((uint64_t) request);
+                }
+
 		printUINT64((uint64_t) status);
 	}
 
@@ -522,7 +532,11 @@ extern "C" int MPI_Waitall(int count, MPI_Request array_of_requests[],
 		printUINT32((uint32_t) count);
 
 		for(int i = 0; i < count; i++) {
-			printUINT64((uint64_t) &array_of_requests[i]);
+			if( MPI_REQUEST_NULL == (array_of_requests[i]) ) {
+                        	printUINT64((uint64_t) SIRIUS_MPI_REQUEST_NULL);
+                	} else {
+                        	printUINT64((uint64_t) &array_of_requests[i]);
+                	}
 		}
 	}
 
