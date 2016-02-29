@@ -201,8 +201,9 @@ def generate_scheduler_inputs (InfoPair, TimeObject, JobObjects, options):
 
             # Check if there are no lines in the motifLog
             if (emberMotifNum == -1):
-                print ("ERROR: No lines in the motifLog file")
-                sys.exit(0)
+                sys.stderr.write("ERROR: Job " + str(Job.jobNum) + " No lines in the motifLog file\n")
+
+                sys.exit(1)
             # There is only one line and it was init (i.e., no new motif has been executed)
             elif (emberMotifNum == 0):
                 pass
