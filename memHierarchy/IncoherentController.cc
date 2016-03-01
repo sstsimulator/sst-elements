@@ -277,7 +277,7 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
 CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     if (!inclusive_ && (cacheLine == NULL || cacheLine->getState() == I)) {
-        sendResponseUp(origRequest, responseEvent->getGrantedState(), &responseEvent->getPayload(), true, cacheLine->getTimestamp());
+        sendResponseUp(origRequest, responseEvent->getGrantedState(), &responseEvent->getPayload(), true, 0);
         return DONE;
     }
 
