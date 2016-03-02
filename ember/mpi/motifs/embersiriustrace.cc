@@ -327,7 +327,7 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 
 	const int32_t tag = readTag();
 	const Communicator* comm = readCommunicator();
-	const uint64_t req    = readUINT64();
+	const uint64_t req   = readUINT64();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
@@ -336,7 +336,8 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 
 	auto checkReq = liveRequests.find(req);
 	if( checkReq != liveRequests.end() ) {
-		fatal(CALL_INFO, -1, "Error: when issuing an Irecv, found an MPI_Request was already active.\n");
+		printLiveRequestMap();
+		fatal(CALL_INFO, -1, "Error: when issuing an Irecv, found an MPI_Request was already active. (Request=%" PRIu64 ")\n", req);
 	}
 
 	verbose(CALL_INFO, 2, 0, "Irecv src=%" PRId32 ", count=%" PRIu32 "\n", src, count);
@@ -356,10 +357,10 @@ void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
 	// MPI_REQUEST_NULL in the array, which we need to skip
 	std::vector<uint64_t> requestAddr;
 	for(uint32_t i = 0 ; i < reqCount; i++) {
-		const uint64_t nextReqAddr = readUINT64();
+		const uint64_t nextReqID = readUINT64();
 
-		if(SIRIUS_MPI_REQUEST_NULL != nextReqAddr) {
-			requestAddr.push_back(nextReqAddr);
+		if(SIRIUS_MPI_REQUEST_NULL != nextReqID) {
+			requestAddr.push_back(nextReqID);
 		}
 	}
 

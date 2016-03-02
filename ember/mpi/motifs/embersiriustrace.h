@@ -28,6 +28,15 @@ public:
 	~EmberSIRIUSTraceGenerator();
     	bool generate( std::queue<EmberEvent*>& evQ );
 
+	void printLiveRequestMap() {
+		for(auto itr = liveRequests.begin();
+			itr != liveRequests.end(); itr++) {
+
+			output("Request: %" PRIu64 " maps to MessageRequest at %p\n",
+				itr->first, itr->second);
+		}
+	}
+
 private:
 	FILE* trace_file;
 	std::unordered_map<uint32_t, Communicator*> communicatorMap;
