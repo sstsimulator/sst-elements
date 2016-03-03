@@ -480,12 +480,16 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 }
 
 ArielCPU::~ArielCPU() {
+	// Delete all of the cores
+	for(uint32_t i = 0; i < core_count; i++) {
+		delete cpu_cores[i];
+	}
+
 	delete memmgr;
 	delete tunnel;
-    unlink(shmem_region_name);
+        unlink(shmem_region_name);
 	free(page_sizes);
 	free(page_counts);
-
 }
 
 void ArielCPU::emergencyShutdown() {
