@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include <sst/core/element.h>
 #include <sst/core/params.h>
@@ -203,4 +202,4 @@ bisection_test::handle_complete(Event* ev) {
 }
 }
 }
-BOOST_CLASS_EXPORT(SST::Merlin::bisection_test_event)
+DeclareSerializable(SST::Merlin::bisection_test_event)

@@ -32,7 +32,7 @@ class Component;
 namespace Merlin {
 
 // Need our own version of Request to add a sequence number
-class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request {
+class ReorderRequest : public SST::Interfaces::SimpleNetwork::Request, public SST::Core::Serialization::serializable_type<ReorderRequest> {
 public:
     uint32_t seq;
 
@@ -72,15 +72,13 @@ public:
 
     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        SST::Interfaces::SimpleNetwork::Request::serialize_order(ser);
+        ser & seq;
+    }
+
 private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Interfaces::SimpleNetwork::Request);
-        ar & BOOST_SERIALIZATION_NVP(seq);
-    }        
+    ImplementSerializable(ReorderRequest)
 };
 
 

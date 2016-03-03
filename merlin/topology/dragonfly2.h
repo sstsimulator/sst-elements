@@ -133,7 +133,7 @@ private:
 
 
 
-class topo_dragonfly2_event : public internal_router_event {
+class topo_dragonfly2_event : public internal_router_event, public SST::Core::Serialization::serializable_type<topo_dragonfly2_event> {
 
 public:
     uint32_t src_group;
@@ -141,6 +141,7 @@ public:
     uint16_t global_slice;
     uint16_t global_slice_shadow;
 
+    topo_dragonfly2_event() { }
     topo_dragonfly2_event(const topo_dragonfly2::dgnfly2Addr &dest) : dest(dest) {}
     ~topo_dragonfly2_event() { }
 
@@ -149,23 +150,21 @@ public:
         return new topo_dragonfly2_event(*this);
     }
 
-private:
-    topo_dragonfly2_event() { }
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive & ar, const unsigned int version )
-	{
-		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Merlin::internal_router_event);
-		ar & BOOST_SERIALIZATION_NVP(src_group);
-		ar & BOOST_SERIALIZATION_NVP(dest.group);
-		ar & BOOST_SERIALIZATION_NVP(dest.mid_group);
-		ar & BOOST_SERIALIZATION_NVP(dest.mid_group_shadow);
-		ar & BOOST_SERIALIZATION_NVP(dest.router);
-		ar & BOOST_SERIALIZATION_NVP(dest.host);
-        ar & BOOST_SERIALIZATION_NVP(global_slice);
-        ar & BOOST_SERIALIZATION_NVP(global_slice_shadow);
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        internal_router_event::serialize_order(ser);
+        ser & src_group;
+        ser & dest.group;
+        ser & dest.mid_group;
+        ser & dest.mid_group_shadow;
+        ser & dest.router;
+        ser & dest.host;
+        ser & global_slice;
+        ser & global_slice_shadow;
     }
+
+private:
+    ImplementSerializable(topo_dragonfly2_event)
+
 };
 
 }

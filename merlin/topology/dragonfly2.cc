@@ -11,7 +11,6 @@
 //
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include <sst/core/sharedRegion.h>
 #include "sst/core/rng/xorshift.h"
 
@@ -154,8 +153,11 @@ topo_dragonfly2::~topo_dragonfly2()
 
 void topo_dragonfly2::route(int port, int vc, internal_router_event* ev)
 {
+
     topo_dragonfly2_event *td_ev = static_cast<topo_dragonfly2_event*>(ev);
 
+    Interfaces::SimpleNetwork::Request* req = td_ev->getEncapsulatedEvent()->request;
+    
     if ( (uint32_t)port >= (params.p + params.a-1) ) {
         /* Came in from another group.  Increment VC */
         td_ev->setVC(vc+1);
@@ -486,3 +488,6 @@ uint32_t topo_dragonfly2::port_for_router(uint32_t router)
     if ( router > router_id ) tgt--;
     return tgt;
 }
+
+
+DeclareSerializable(SST::Merlin::topo_dragonfly2_event)

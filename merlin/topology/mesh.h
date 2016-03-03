@@ -26,12 +26,13 @@
 namespace SST {
 namespace Merlin {
 
-class topo_mesh_event : public internal_router_event {
+class topo_mesh_event : public internal_router_event, public SST::Core::Serialization::serializable_type<topo_mesh_event> {
 public:
     int dimensions;
     int routing_dim;
     int* dest_loc;
 
+    topo_mesh_event() {}
     topo_mesh_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     virtual ~topo_mesh_event() { delete[] dest_loc; }
     virtual internal_router_event* clone(void)
@@ -42,44 +43,33 @@ public:
         return tte;
     }
 
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        internal_router_event::serialize_order(ser);
+        ser & dimensions;
+        ser & routing_dim;
+
+        if ( ser.mode() == SST::Core::Serialization::serializer::UNPACK ) {
+            dest_loc = new int[dimensions];
+        }
+
+        for ( int i = 0 ; i < dimensions ; i++ ) {
+            ser & dest_loc[i];
+        }
+    }
+
 protected:
-    topo_mesh_event() {}
 
 private:
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(internal_router_event);
-        ar & BOOST_SERIALIZATION_NVP(dimensions);
-        ar & BOOST_SERIALIZATION_NVP(routing_dim);
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            ar & BOOST_SERIALIZATION_NVP(dest_loc[i]);
-        }
-    }
+    ImplementSerializable(topo_mesh_event)
 
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(internal_router_event);
-        ar & BOOST_SERIALIZATION_NVP(dimensions);
-        ar & BOOST_SERIALIZATION_NVP(routing_dim);
-
-        dest_loc = new int[dimensions];
-        for ( int i = 0 ; i < dimensions ; i++ ) {
-            ar & BOOST_SERIALIZATION_NVP(dest_loc[i]);
-        }
-
-    }
-
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 
-class topo_mesh_init_event : public topo_mesh_event {
+class topo_mesh_init_event : public topo_mesh_event, public SST::Core::Serialization::serializable_type<topo_mesh_init_event> {
 public:
     int phase;
 
+    topo_mesh_init_event() {}
     topo_mesh_init_event(int dim) : topo_mesh_event(dim), phase(0) { }
     virtual ~topo_mesh_init_event() { }
     virtual internal_router_event* clone(void)
@@ -90,16 +80,14 @@ public:
         return tte;
     }
 
-private:
-    topo_mesh_init_event() {}
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Merlin::topo_mesh_event);
-        ar & BOOST_SERIALIZATION_NVP(phase);
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        topo_mesh_event::serialize_order(ser);
+        ser & phase;
     }
+
+private:
+    ImplementSerializable(topo_mesh_init_event)
+
 };
 
 

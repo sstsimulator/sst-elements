@@ -9,7 +9,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include "torus.h"
 
 #include <algorithm>
@@ -293,3 +292,6 @@ topo_torus::getEndpointID(int port)
     if ( !isHostPort(port) ) return -1;
     return (router_id * num_local_ports) + (port - local_port_start);
 }
+
+
+DeclareSerializable(SST::Merlin::topo_torus_event)

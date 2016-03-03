@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include <sst/core/element.h>
 #include <sst/core/configGraph.h>
@@ -761,9 +760,9 @@ extern "C" {
     };
 }
 
-BOOST_CLASS_EXPORT(SST::Merlin::BaseRtrEvent)
-BOOST_CLASS_EXPORT(SST::Merlin::RtrEvent)
-BOOST_CLASS_EXPORT(SST::Merlin::RtrInitEvent)
-BOOST_CLASS_EXPORT(SST::Merlin::credit_event)
-BOOST_CLASS_EXPORT(SST::Merlin::TopologyEvent)
-
+DeclareSerializable(SST::Merlin::BaseRtrEvent)
+DeclareSerializable(SST::Merlin::RtrEvent)
+DeclareSerializable(SST::Merlin::TopologyEvent)
+DeclareSerializable(SST::Merlin::credit_event)
+DeclareSerializable(SST::Merlin::RtrInitEvent)
+DeclareSerializable(SST::Merlin::internal_router_event)

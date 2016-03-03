@@ -60,15 +60,19 @@ private:
     
 };
 
-class pt2pt_test_event : public Event {
+class pt2pt_test_event : public Event, public SST::Core::Serialization::serializable_type<pt2pt_test_event> {
 
  public:
     SimTime_t start_time;
 
+    pt2pt_test_event() {}
+    
     virtual Event* clone(void)
     {
         return new pt2pt_test_event(*this);
     }
+
+    ImplementSerializable(pt2pt_test_event)
 };
 
 }
