@@ -480,6 +480,7 @@ void Cache::configureLinks(Params &params) {
                 interleaveSize = cf_.lineSize_;
                 interleaveStep = cacheSliceCount*cf_.lineSize_;
             }
+            cf_.cacheArray_->setSliceAware(cacheSliceCount);
         }
         typeInfo.rangeStart     = addrRangeStart;
         typeInfo.rangeEnd       = addrRangeEnd;
