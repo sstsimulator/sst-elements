@@ -341,6 +341,7 @@ void ArielCPU::finish() {
 	}
 
 	memmgr->printStats();
+	unlink(shmem_region_name);
 }
 
 int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
