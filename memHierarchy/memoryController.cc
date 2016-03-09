@@ -47,11 +47,18 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     int debugLevel = params.find_integer("debug_level", 0);
     
     dbg.init("--->  ", debugLevel, 0, (Output::output_location_t)params.find_integer("debug", 0));
-    if(debugLevel < 0 || debugLevel > 10)
+    if (debugLevel < 0 || debugLevel > 10)
         dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
     dbg.debug(_L10_,"---");
     
-    statsOutputTarget_      = (Output::output_location_t)params.find_integer("statistics", 0);
+    
+    int stats               = params.find_integer("statistics", 0);
+    if (stats != 0) {
+        Output out("", 0, 0, Output::STDOUT);
+        out.output("%s, **WARNING** The 'statistics' parameter is deprecated: memHierarchy statistics have been moved to the Statistics API. Please see sstinfo to view available statistics and update your configuration accordingly.\nNO statistics will be printed otherwise!\n", getName().c_str());
+    }
+
+    
     rangeStart_             = (Addr)params.find_integer("range_start", 0);
     interleaveSize_         = (Addr)params.find_integer("interleave_size", 0);
     interleaveSize_         *= 1024;
@@ -65,9 +72,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     string backendName      = params.find_string("backend", "memHierarchy.simpleMem");
     string protocolStr      = params.find_string("coherence_protocol");
     string link_lat         = params.find_string("direct_link_latency", "100 ns");
-    int  directLink         = params.find_integer("direct_link",1);
+    doNotBack_              = (params.find_integer("do_not_back",0) == 1);
 
-    isNetworkConnected_     = directLink ? false : true;
     int addr = params.find_integer("network_address");
     std::string net_bw = params.find_string("network_bw");
     
@@ -75,11 +81,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
     char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
 
-    for(uint32_t i = 0; i < listenerCount; ++i) {
+    for (uint32_t i = 0; i < listenerCount; ++i) {
 	    sprintf(nextListenerName, "listener%" PRIu32, i);
 	    string listenerMod     = params.find_string(nextListenerName, "");
 
-            if(listenerMod != "") {
+            if (listenerMod != "") {
 		sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
 		Params listenerParams = params.find_prefix_params(nextListenerParams);
 
@@ -92,7 +98,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     free(nextListenerParams);
 
     string traceFileLoc     = params.find_string("trace_file", "");
-    if("" != traceFileLoc) {
+    if ("" != traceFileLoc) {
 	traceFP = fopen(traceFileLoc.c_str(), "wt");
     } else {
 	traceFP = NULL;
@@ -100,12 +106,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
     const uint64_t backendRamSizeMB = params.find_integer("backend.mem_size", 0);
 
-    if(params.find("mem_size") != params.end()) {
-	dbg.fatal(CALL_INFO, -1, "Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n");
+    if (params.find("mem_size") != params.end()) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
     }
 
-    if(0 == backendRamSizeMB) {
-	dbg.fatal(CALL_INFO, -1, "Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n");
+    if (0 == backendRamSizeMB) {
+	dbg.fatal(CALL_INFO, -1, "%s, Error - you specified 0MBs for backend.mem_size, the memory must have a non-zero size!\n", getName().c_str());
     }
 
     // Convert into MBs
@@ -116,25 +122,31 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
     numPages_               = (interleaveStep_ > 0 && interleaveSize_ > 0) ? memSize_ / interleaveSize_ : 0;
     protocol_               = (protocolStr == "mesi" || protocolStr == "MESI") ? 1 : 0;
 
-    int mmap_flags          = setBackingFile(memoryFile);
 
     // Ensure we can extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
     backend_                = dynamic_cast<MemBackend*>(loadSubComponent(backendName, this, backendParams));
 
-    if (!isNetworkConnected_) {
-    lowNetworkLink_         = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+    if (isPortConnected("direct_link")) {
+        cacheLink_   = configureLink( "direct_link", link_lat, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        networkLink_ = NULL;
     } else {
+        if (!isPortConnected("network")) {
+            dbg.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
+        }
         MemNIC::ComponentInfo myInfo;
         myInfo.link_port        = "network";
         myInfo.link_bandwidth   = net_bw;
-        myInfo.num_vcs          = params.find_integer("network_num_vc", 3);
+        myInfo.num_vcs          = 1;
+        if (params.find_integer("network_num_vc", 1) != 1) {
+            dbg.debug(_WARNING_, "%s, WARNING Deprecated parameter: network_num_vc. memHierarchy only uses one virtual channel.\n", getName().c_str());
+        }
         myInfo.name             = getName();
         myInfo.network_addr     = addr;
         myInfo.type             = MemNIC::TypeMemory;
         myInfo.link_inbuf_size  = params.find_string("network_input_buffer_size", "1KB");
         myInfo.link_outbuf_size = params.find_string("network_output_buffer_size", "1KB");
-        networkLink_ = new MemNIC(this, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
+        networkLink_ = new MemNIC(this, &dbg, -1, myInfo, new Event::Handler<MemController>(this, &MemController::handleEvent));
 
         MemNIC::ComponentTypeInfo typeInfo;
         typeInfo.rangeStart       = rangeStart_;
@@ -142,20 +154,33 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
         typeInfo.interleaveSize   = interleaveSize_;
         typeInfo.interleaveStep   = interleaveStep_;
         networkLink_->addTypeInfo(typeInfo);
+        cacheLink_ = NULL;
     }
-    memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
 
-    if(memBuffer_ == MAP_FAILED) dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory\n");
+    // Set up backing store if needed
+    if (doNotBack_ && memoryFile != NO_STRING_DEFINED) {
+        dbg.fatal(CALL_INFO, -1, "%s, Error - conflicting parameters. 'do_not_back_memory' cannot be true if 'memory_file' is specified. You specified: do_not_back_memory = %d, memory_file = %s\n",
+                getName().c_str(), doNotBack_, memoryFile.c_str());
+    }
+    if (!doNotBack_) {
+        int mmap_flags          = setBackingFile(memoryFile);
+        memBuffer_              = (uint8_t*)mmap(NULL, memSize_, PROT_READ|PROT_WRITE, mmap_flags, backingFd_, 0);
+        if (memBuffer_ == MAP_FAILED) {
+            int err = errno;
+            dbg.fatal(CALL_INFO,-1,"Failed to MMAP backing store for memory: %s, errno = %d\n", strerror(err), err);
+        }
+    }
+
     if (!backend_)          dbg.fatal(CALL_INFO,-1,"Unable to load Module %s as backend\n", backendName.c_str());
 
-    GetSReqReceived_        = 0;
-    GetXReqReceived_        = 0;
-    PutMReqReceived_        = 0;
-    GetSExReqReceived_      = 0;
-    numReqOutstanding_      = 0;
-    numCycles_              = 0;
+    stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
+    stat_GetSExReqReceived  = registerStatistic<uint64_t>("requests_received_GetSEx");
+    stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
+    stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
+    stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
 
-    if(protocolStr.empty()) {
+
+    if (protocolStr.empty()) {
 	dbg.fatal(CALL_INFO, -1, "Coherency protocol not specified, please specify MESI or MSI\n");
     }
 
@@ -171,8 +196,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id) {
 
 
 
-void MemController::handleEvent(SST::Event* _event){
-    MemEvent *ev = static_cast<MemEvent*>(_event);
+void MemController::handleEvent(SST::Event* event) {
+    MemEvent *ev = static_cast<MemEvent*>(event);
     dbg.debug(_L10_,"\n\n----------------------------------------------------------------------------------------\n");
     dbg.debug(_L10_,"Memory Controller: %s - Event Received. Cmd = %s\n", getName().c_str(), CommandString[ev->getCmd()]);
     dbg.debug(_L10_,"Event info: Addr: 0x%" PRIx64 ", dst = %s, src = %s, rqstr = %s, size = %d, prefetch = %d, vAddr = 0x%" PRIx64 ", instPtr = %" PRIx64 "\n",
@@ -186,19 +211,20 @@ void MemController::handleEvent(SST::Event* _event){
         case GetSEx:
         case PutM:
             // Notify listeners that we have equiv. of a read
-            if( ! listeners_.empty()) {
+            if ( ! listeners_.empty()) {
 		CacheListenerNotification notify(ev->getAddr(),	ev->getVirtualAddress(),
 			ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
-		for(unsigned long int i = 0; i < listeners_.size(); ++i) {
+		for (unsigned long int i = 0; i < listeners_.size(); ++i) {
 	        	listeners_[i]->notifyAccess(notify);
 	    	}
 	    }
-
-            if(cmd == GetS)         GetSReqReceived_++;
-            else if(cmd == GetX)    GetXReqReceived_++;
-            else if(cmd == GetSEx)  GetSExReqReceived_++;
-            else if(cmd == PutM)    PutMReqReceived_++;
+            
+            // Update statistics
+            if (cmd == GetS)         stat_GetSReqReceived->addData(1);
+            else if (cmd == GetX)    stat_GetXReqReceived->addData(1);
+            else if (cmd == GetSEx)  stat_GetSExReqReceived->addData(1);
+            else if (cmd == PutM)    stat_PutMReqReceived->addData(1);
 
             addRequest(ev);
             break;
@@ -209,13 +235,13 @@ void MemController::handleEvent(SST::Event* _event){
             dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[cmd]);
     }
 
-    delete _event;
+    delete event;
 }
 
 
 
-void MemController::addRequest(MemEvent* _ev){
-    if ( !isRequestAddressValid(_ev) ) {
+void MemController::addRequest(MemEvent* ev) {
+    if ( !isRequestAddressValid(ev) ) {
         dbg.fatal(CALL_INFO, 1, "MemoryController \"%s\" received request from \"%s\" with invalid address.\n"
                 "\t\tRequested Address:   0x%" PRIx64 "\n"
                 "\t\tMC Range Start:      0x%" PRIx64 "\n"
@@ -223,12 +249,12 @@ void MemController::addRequest(MemEvent* _ev){
                 "\t\tMC Interleave Step:  0x%" PRIx64 "\n"
                 "\t\tMC Interleave Size:  0x%" PRIx64 "\n",
                 getName().c_str(),
-                _ev->getSrc().c_str(), _ev->getAddr(),
+                ev->getSrc().c_str(), ev->getAddr(),
                 rangeStart_, (rangeStart_ + memSize_),
                 interleaveStep_, interleaveSize_);
     }
-    Command cmd   = _ev->getCmd();
-    DRAMReq* req = new DRAMReq(_ev, requestWidth_, cacheLineSize_);
+    Command cmd   = ev->getCmd();
+    DRAMReq* req = new DRAMReq(ev, requestWidth_, cacheLineSize_);
     
     requestPool_.insert(req);
     requestQueue_.push_back(req);
@@ -238,11 +264,10 @@ void MemController::addRequest(MemEvent* _ev){
 
 
 
-bool MemController::clock(Cycle_t _cycle){
+bool MemController::clock(Cycle_t cycle) {
     totalCycles->addData(1);
-
     backend_->clock();
-    if (isNetworkConnected_) networkLink_->clock();
+    if (networkLink_) networkLink_->clock();
 
     while ( !requestQueue_.empty()) {
         DRAMReq *req = requestQueue_.front();
@@ -258,99 +283,103 @@ bool MemController::clock(Cycle_t _cycle){
 
         req->amtInProcess_ += requestSize_;
 
-        if(req->amtInProcess_ >= req->size_) {
+        if (req->amtInProcess_ >= req->size_) {
             dbg.debug(_L10_, "Completed issue of request\n");
             performRequest(req);
             requestQueue_.pop_front();
         }
     }
 
-    numReqOutstanding_ += requestPool_.size();
-    numCycles_++;
+    stat_outstandingReqs->addData(requestPool_.size());
 
     return false;
 }
 
 
 
-void MemController::performRequest(DRAMReq* _req){
-    bool noncacheable  = _req->reqEvent_->queryFlag(MemEvent::F_NONCACHEABLE);
-    Addr localBaseAddr = convertAddressToLocalAddress(_req->baseAddr_);
+void MemController::performRequest(DRAMReq* req) {
+    bool noncacheable  = req->reqEvent_->queryFlag(MemEvent::F_NONCACHEABLE);
+    Addr localBaseAddr = convertAddressToLocalAddress(req->baseAddr_);
     Addr localAddr;
 
-    if(_req->cmd_ == PutM){  /* Write request to memory */
-        dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, _req->reqEvent_->getSize(), noncacheable ? "true" : "false");
-	for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++) 
-            memBuffer_[localBaseAddr + i] = _req->reqEvent_->getPayload()[i];
+    if (req->cmd_ == PutM) {  /* Write request to memory */
+        dbg.debug(_L10_,"WRITE.  Addr = %" PRIx64 ", Request size = %i , Noncacheable Req = %s\n",localBaseAddr, req->reqEvent_->getSize(), noncacheable ? "true" : "false");
+	
+        if (doNotBack_) return;
         
-	}
-    else {
-        Addr localAbsAddr = convertAddressToLocalAddress(_req->reqEvent_->getAddr());
+        for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++) 
+            memBuffer_[localBaseAddr + i] = req->reqEvent_->getPayload()[i];
         
-        if(noncacheable && _req->cmd_ == GetX) {
-            dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, _req->reqEvent_->getSize());
-            for ( size_t i = 0 ; i < _req->reqEvent_->getSize() ; i++)
-                memBuffer_[localAbsAddr + i] = _req->reqEvent_->getPayload()[i];
+    } else {
+        Addr localAbsAddr = convertAddressToLocalAddress(req->reqEvent_->getAddr());
+        
+        if (noncacheable && req->cmd_ == GetX) {
+            dbg.debug(_L10_,"WRITE. Noncacheable request, Addr = %" PRIx64 ", Request size = %i\n", localAbsAddr, req->reqEvent_->getSize());
+            
+            if (!doNotBack_) {
+                for ( size_t i = 0 ; i < req->reqEvent_->getSize() ; i++)
+                    memBuffer_[localAbsAddr + i] = req->reqEvent_->getPayload()[i];
+            }
         }
         
-        if(noncacheable) localAddr = localAbsAddr;
-        else             localAddr = localBaseAddr;
+        if (noncacheable)   localAddr = localAbsAddr;
+        else                localAddr = localBaseAddr;
         
-    	_req->respEvent_ = _req->reqEvent_->makeResponse();
+    	req->respEvent_ = req->reqEvent_->makeResponse();
 
-	if(_req->respEvent_->getSize() != _req->reqEvent_->getSize()) {
+	if (req->respEvent_->getSize() != req->reqEvent_->getSize()) {
 		dbg.fatal(CALL_INFO, -1, "Request and response sizes do not match: %" PRIu32 " != %" PRIu32 "\n",
-			(uint32_t) _req->respEvent_->getSize(), (uint32_t) _req->reqEvent_->getSize());
+			(uint32_t) req->respEvent_->getSize(), (uint32_t) req->reqEvent_->getSize());
         }
 
-        dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, _req->reqEvent_->getSize());
+        dbg.debug(_L10_, "READ.  Addr = %" PRIx64 ", Request size = %i\n", localAddr, req->reqEvent_->getSize());
+    
+        for ( size_t i = 0 ; i < req->respEvent_->getSize() ; i++) 
+            req->respEvent_->getPayload()[i] = doNotBack_ ? 0 : memBuffer_[localAddr + i];
 
-        for ( size_t i = 0 ; i < _req->respEvent_->getSize() ; i++) 
-            _req->respEvent_->getPayload()[i] = memBuffer_[localAddr + i];
+        if (noncacheable) req->respEvent_->setFlag(MemEvent::F_NONCACHEABLE);
         
-        if (noncacheable) _req->respEvent_->setFlag(MemEvent::F_NONCACHEABLE);
-        
-        if(_req->reqEvent_->getCmd() == GetX) _req->respEvent_->setGrantedState(M);
+        if (req->reqEvent_->getCmd() == GetX) req->respEvent_->setGrantedState(M);
         else {
-            if(protocol_) _req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
-            else _req->respEvent_->setGrantedState(S);
+            if (protocol_) req->respEvent_->setGrantedState(E); // Directory controller supersedes this; only used if DirCtrl does not exist
+            else req->respEvent_->setGrantedState(S);
         }
 	}
 }
 
 
-void MemController::sendResponse(DRAMReq* _req){
-    if(_req->reqEvent_->getCmd() != PutM) {
-        if (isNetworkConnected_) networkLink_->send(_req->respEvent_);
-        else lowNetworkLink_->send(_req->respEvent_);
+void MemController::sendResponse(DRAMReq* req) {
+    if (req->reqEvent_->getCmd() != PutM) {
+        if (networkLink_) networkLink_->send(req->respEvent_);
+        else cacheLink_->send(req->respEvent_);
     }
-    _req->status_ = DRAMReq::DONE;
+    req->status_ = DRAMReq::DONE;
     
-    requestPool_.erase(_req);
-    delete _req;
+    requestPool_.erase(req);
+    delete req;
 }
 
 
 
-void MemController::printMemory(DRAMReq* _req, Addr localAddr){
+void MemController::printMemory(DRAMReq* req, Addr localAddr) {
     dbg.debug(_L10_,"Resp. Data: ");
-    for(unsigned int i = 0; i < cacheLineSize_; i++) dbg.debug(_L10_,"%d",(int)memBuffer_[localAddr + i]);
+    for (unsigned int i = 0; i < cacheLineSize_; i++) dbg.debug(_L10_,"%d",(int)memBuffer_[localAddr + i]);
 }
 
 
 
-void MemController::handleMemResponse(DRAMReq* _req){
-    _req->amtProcessed_ += requestSize_;
-    if (_req->amtProcessed_ >= _req->size_) _req->status_ = DRAMReq::RETURNED;
+void MemController::handleMemResponse(DRAMReq* req) {
+    req->amtProcessed_ += requestSize_;
+    if (req->amtProcessed_ >= req->size_) req->status_ = DRAMReq::RETURNED;
 
-    dbg.debug(_L10_, "Finishing processing.  BaseAddr = %" PRIx64 " %s\n", _req->baseAddr_, _req->status_ == DRAMReq::RETURNED ? "RETURNED" : "");
+    dbg.debug(_L10_, "Finishing processing.  BaseAddr = %" PRIx64 " %s\n", req->baseAddr_, req->status_ == DRAMReq::RETURNED ? "RETURNED" : "");
 
-    if(DRAMReq::RETURNED == _req->status_) sendResponse(_req);
+    if (DRAMReq::RETURNED == req->status_) sendResponse(req);
 }
 
 
 
-MemController::~MemController(){
+MemController::~MemController() {
     while ( requestPool_.size()) {
         DRAMReq *req = *(requestPool_.begin());
         requestPool_.erase(req);
@@ -359,10 +388,10 @@ MemController::~MemController(){
 }
 
 
-void MemController::init(unsigned int _phase){
-    if (!isNetworkConnected_) {
+void MemController::init(unsigned int phase) {
+    if (!networkLink_) {
         SST::Event *ev = NULL;
-        while (NULL != (ev = lowNetworkLink_->recvInitData())) {
+        while (NULL != (ev = cacheLink_->recvInitData())) {
             MemEvent *me = dynamic_cast<MemEvent*>(ev);
             if (!me) {
                 delete ev;
@@ -371,7 +400,7 @@ void MemController::init(unsigned int _phase){
             /* Push data to memory */
             if (GetX == me->getCmd()) {
                 dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), me->getAddr());
-                if(isRequestAddressValid(me)) {
+                if (isRequestAddressValid(me) && !doNotBack_) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++) {
                         memBuffer_[localAddr + i] = me->getPayload()[i];
@@ -384,14 +413,14 @@ void MemController::init(unsigned int _phase){
             delete ev;
         }
     } else {
-        networkLink_->init(_phase);
+        networkLink_->init(phase);
 
         while (MemEvent *ev = networkLink_->recvInitData()) {
             /* Push data to memory */
             if (ev->getDst() == getName()) {
                 if (GetX == ev->getCmd()) {
                     dbg.debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 "\n", getName().c_str(), ev->getAddr());
-                    if(isRequestAddressValid(ev)) {
+                    if (isRequestAddressValid(ev) && !doNotBack_) {
                         Addr localAddr = convertAddressToLocalAddress(ev->getAddr());
                         for ( size_t i = 0 ; i < ev->getSize() ; i++) {
                             memBuffer_[localAddr + i] = ev->getPayload()[i];
@@ -409,45 +438,33 @@ void MemController::init(unsigned int _phase){
 
 
 
-void MemController::setup(void){
+void MemController::setup(void) {
     backend_->setup();
-    if (isNetworkConnected_) networkLink_->setup();
+    if (networkLink_) networkLink_->setup();
 }
 
 
 
-void MemController::finish(void){
-	munmap(memBuffer_, memSize_);
-	if(-1 != backingFd_) close(backingFd_);
+void MemController::finish(void) {
+	if (!doNotBack_) munmap(memBuffer_, memSize_);
+	if (-1 != backingFd_) close(backingFd_);
 
     // Close the trace file IF it is opened
-    if(NULL != traceFP) {
+    if (NULL != traceFP) {
 	fclose(traceFP);
     }
 
     backend_->finish();
-    if (isNetworkConnected_) networkLink_->finish();
-
-    Output out("", 0, 0, statsOutputTarget_);
-    out.output("\n--------------------------------------------------------------------\n");
-    out.output("--- Main Memory Stats\n");
-    out.output("--- Name: %s\n", getName().c_str());
-    out.output("--------------------------------------------------------------------\n");
-    out.output("- GetS received (read):  %" PRIu64 "\n", GetSReqReceived_);
-    out.output("- GetX received (read):  %" PRIu64 "\n", GetXReqReceived_);
-    out.output("- GetSEx received (read):  %" PRIu64 "\n", GetSExReqReceived_);
-    out.output("- PutM received (write):  %" PRIu64 "\n", PutMReqReceived_);
-    out.output("- Avg. Requests outstanding/cycle: %.3f\n",float(numReqOutstanding_)/float(numCycles_));
-
+    if (networkLink_) networkLink_->finish();
 }
 
 
 
-int MemController::setBackingFile(string memoryFile){
+int MemController::setBackingFile(string memoryFile) {
 	int mmap_flags = MAP_PRIVATE;
-	if(NO_STRING_DEFINED != memoryFile) {
+	if (NO_STRING_DEFINED != memoryFile) {
 		backingFd_ = open(memoryFile.c_str(), O_RDWR);
-		if(backingFd_ < 0) dbg.fatal(CALL_INFO,-1,"Failed to open backing file\n");
+		if (backingFd_ < 0) dbg.fatal(CALL_INFO,-1,"Failed to open backing file\n");
 	} else {
 		backingFd_  = -1;
 		mmap_flags  |= MAP_ANON;

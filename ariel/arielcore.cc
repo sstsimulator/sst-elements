@@ -13,17 +13,19 @@
 
 #include "arielcore.h"
 
+#define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
+
 ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
         uint32_t thisCoreID, uint32_t maxPendTrans,
         Output* out, uint32_t maxIssuePerCyc,
         uint32_t maxQLen, uint64_t cacheLineSz, SST::Component* own,
         ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
-    tunnel(tunnel), perform_checks(perform_address_checks)
+	output(out), tunnel(tunnel), perform_checks(perform_address_checks),
+	verbosity(static_cast<uint32_t>(out->getVerboseLevel()))
 {
-        output = out;
-	verbosity = (uint32_t) output->getVerboseLevel();
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	cacheLink = coreToCacheLink;
+        allocLink = 0;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
 	isHalted = false;
@@ -34,7 +36,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 	memmgr = memMgr;
 
 	coreQ = new std::queue<ArielEvent*>();
-	pendingTransactions = new std::map<SimpleMem::Request::id_t, SimpleMem::Request*>();
+	pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
 	pending_transaction_count = 0;
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
@@ -98,8 +100,9 @@ ArielCore::~ArielCore() {
 	}
 }
 
-void ArielCore::setCacheLink(SimpleMem* newLink) {
+void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
 	cacheLink = newLink;
+        allocLink = newAllocLink;
 }
 
 void ArielCore::printTraceEntry(const bool isRead,
@@ -155,14 +158,14 @@ void ArielCore::commitWriteEvent(const uint64_t address,
 }
 
 void ArielCore::handleEvent(SimpleMem::Request* event) {
-    output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID);
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID));
 
     SimpleMem::Request::id_t mev_id = event->id;
-    std::map<SimpleMem::Request::id_t, SimpleMem::Request*>::iterator find_entry = pendingTransactions->find(mev_id);
+    auto find_entry = pendingTransactions->find(mev_id);
 
     if(find_entry != pendingTransactions->end()) {
-        output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
-                (uint32_t) pendingTransactions->size());
+        ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
+                (uint32_t) pendingTransactions->size()));
 
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
@@ -176,7 +179,7 @@ void ArielCore::finishCore() {
 	// Close the trace file if we did in fact open it.
 	if(enableTracing && traceGen) {
 		delete traceGen;
-        traceGen = NULL;
+        	traceGen = NULL;
 	}
 
 }
@@ -187,7 +190,7 @@ void ArielCore::halt() {
 
 
 void ArielCore::handleSwitchPoolEvent(ArielSwitchPoolEvent* aSPE) {
-	output->verbose(CALL_INFO, 2, 0, "Core: %" PRIu32 " set default memory pool to: %" PRIu32 "\n", coreID, aSPE->getPool());
+	ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Core: %" PRIu32 " set default memory pool to: %" PRIu32 "\n", coreID, aSPE->getPool()));
 	memmgr->setDefaultPool(aSPE->getPool());
 }
 
@@ -195,70 +198,72 @@ void ArielCore::createSwitchPoolEvent(uint32_t newPool) {
 	ArielSwitchPoolEvent* ev = new ArielSwitchPoolEvent(newPool);
 	coreQ->push(ev);
 
-	output->verbose(CALL_INFO, 4, 0, "Generated a switch pool event on core %" PRIu32 ", new level is: %" PRIu32 "\n", coreID, newPool);
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a switch pool event on core %" PRIu32 ", new level is: %" PRIu32 "\n", coreID, newPool));
 }
 
 void ArielCore::createNoOpEvent() {
 	ArielNoOpEvent* ev = new ArielNoOpEvent();
 	coreQ->push(ev);
 
-	output->verbose(CALL_INFO, 4, 0, "Generated a No Op event on core %" PRIu32 "\n", coreID);
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a No Op event on core %" PRIu32 "\n", coreID));
 }
 
 void ArielCore::createReadEvent(uint64_t address, uint32_t length) {
 	ArielReadEvent* ev = new ArielReadEvent(address, length);
 	coreQ->push(ev);
 
-	output->verbose(CALL_INFO, 4, 0, "Generated a READ event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length);
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a READ event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length));
 }
 
-void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level) {
-	ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level);
+void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level, uint64_t instPtr) {
+    	ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level, instPtr);
 	coreQ->push(ev);
 
-	output->verbose(CALL_INFO, 2, 0, "Generated an allocate event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 "\n",
-		vAddr, length, level);
+	ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Generated an allocate event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 " from IP %" PRIx64 "\n",
+                        vAddr, length, level, instPtr));
 }
 
 void ArielCore::createFreeEvent(uint64_t vAddr) {
 	ArielFreeEvent* ev = new ArielFreeEvent(vAddr);
 	coreQ->push(ev);
 
-	output->verbose(CALL_INFO, 2, 0, "Generated a free event for virtual address=%" PRIu64 "\n", vAddr);
+	ARIEL_CORE_VERBOSE(2, output->verbose(CALL_INFO, 2, 0, "Generated a free event for virtual address=%" PRIu64 "\n", vAddr));
 }
 
 void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
 	ArielWriteEvent* ev = new ArielWriteEvent(address, length);
 	coreQ->push(ev);
-	
-	output->verbose(CALL_INFO, 4, 0, "Generated a WRITE event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length);
+
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a WRITE event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length));
 }
 
 void ArielCore::createExitEvent() {
 	ArielExitEvent* xEv = new ArielExitEvent();
 	coreQ->push(xEv);
-	
-	output->verbose(CALL_INFO, 4, 0, "Generated an EXIT event.\n");
+
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated an EXIT event.\n"));
 }
 
-bool ArielCore::isCoreHalted() {
+bool ArielCore::isCoreHalted() const {
 	return isHalted;
 }
 
 bool ArielCore::refillQueue() {
-	output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 "...\n", coreID);
+    ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 "...\n", coreID));
 
     while(coreQ->size() < maxQLength) {
-        output->verbose(CALL_INFO, 16, 0, "Attempting to fill events for core: %" PRIu32 " current queue size=%" PRIu32 ", max length=%" PRIu32 "\n",
-                coreID, (uint32_t) coreQ->size(), (uint32_t) maxQLength);
+        ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Attempting to fill events for core: %" PRIu32 " current queue size=%" PRIu32 ", max length=%" PRIu32 "\n",
+                coreID, (uint32_t) coreQ->size(), (uint32_t) maxQLength));
 
         ArielCommand ac;
-        bool avail = tunnel->readMessageNB(coreID, &ac);
+        const bool avail = tunnel->readMessageNB(coreID, &ac);
+
         if ( !avail ) {
-            output->verbose(CALL_INFO, 32, 0, "Tunnel claims no data on core: %" PRIu32 "\n", coreID);
+            ARIEL_CORE_VERBOSE(32, output->verbose(CALL_INFO, 32, 0, "Tunnel claims no data on core: %" PRIu32 "\n", coreID));
             return false;
         }
-        output->verbose(CALL_INFO, 32, 0, "Tunnel reads data on core: %" PRIu32 "\n", coreID);
+
+        ARIEL_CORE_VERBOSE(32, output->verbose(CALL_INFO, 32, 0, "Tunnel reads data on core: %" PRIu32 "\n", coreID));
 
         // There is data on the pipe
         switch(ac.command) {
@@ -319,7 +324,7 @@ bool ArielCore::refillQueue() {
             break;
 
         case ARIEL_ISSUE_TLM_MAP:
-            createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level);
+            createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level, ac.instPtr);
             break;
 
         case ARIEL_ISSUE_TLM_FREE:
@@ -328,6 +333,11 @@ bool ArielCore::refillQueue() {
 
         case ARIEL_SWITCH_POOL:
             createSwitchPoolEvent(ac.switchPool.pool);
+            break;
+
+        case ARIEL_OUTPUT_STATS:
+            fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
+            Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
             break;
 
         case ARIEL_PERFORM_EXIT:
@@ -340,7 +350,7 @@ bool ArielCore::refillQueue() {
         }
     }
 
-	output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 " is complete\n", coreID);
+	ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 " is complete\n", coreID));
 	return true;
 }
 
@@ -348,10 +358,22 @@ void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress());
 
 	memmgr->free(rFE->getVirtualAddress());
+
+        if (allocLink) {
+            // tell the allocate montior (e.g. mem sieve that a free has occured)
+            arielAllocTrackEvent *e = 
+                new arielAllocTrackEvent(arielAllocTrackEvent::FREE,
+					 rFE->getVirtualAddress(),
+					 0,
+                                         0, 
+                                         0);
+                        
+            allocLink->send(e);
+        }
 }
 
 void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
-	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a read event...\n", coreID);
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a read event...\n", coreID));
 
 	const uint64_t readAddress = rEv->getAddress();
 	const uint64_t readLength  = (uint64_t) rEv->getLength();
@@ -365,19 +387,19 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 	const uint64_t addr_offset  = readAddress % ((uint64_t) cacheLineSize);
 
 	if((addr_offset + readLength) <= cacheLineSize) {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
-			coreID, readAddress, readLength);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
+			coreID, readAddress, readLength));
 
 		// We do not need to perform a split operation
 		const uint64_t physAddr = memmgr->translateAddress(readAddress);
 
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
-			coreID, readAddress, readLength, physAddr);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
+			coreID, readAddress, readLength, physAddr));
 
 		commitReadEvent(physAddr, readAddress, (uint32_t) readLength);
 	} else {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
-			coreID, readAddress, readLength);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
+			coreID, readAddress, readLength));
 
 		// We need to perform a split operation
 		const uint64_t leftAddr = readAddress;
@@ -389,8 +411,8 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
 
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address read, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
-			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address read, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
+			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
 
 		if(perform_checks > 0) {
 			if( (leftSize + rightSize) != readLength ) {
@@ -419,33 +441,33 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 }
 
 void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
-	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a write event...\n", coreID);
-	
+	ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a write event...\n", coreID));
+
 	const uint64_t writeAddress = wEv->getAddress();
 	const uint64_t writeLength  = wEv->getLength();
-	
+
 	if(writeLength > cacheLineSize) {
 		output->verbose(CALL_INFO, 4, 0, "Potential error? request for a write of length=%" PRIu64 " is larger than cache line which is not allowed (coreID=%" PRIu32 ", cache line: %" PRIu64 "\n",
 			writeLength, coreID, cacheLineSize);
 		return;
 	}
-	
+
 	const uint64_t addr_offset  = writeAddress % ((uint64_t) cacheLineSize);
-	
+
 	if((addr_offset + writeLength) <= cacheLineSize) {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
-			coreID, writeAddress, writeLength);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
+			coreID, writeAddress, writeLength));
 	
 		// We do not need to perform a split operation
 		const uint64_t physAddr = memmgr->translateAddress(writeAddress);
 		
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
-			coreID, writeAddress, writeLength, physAddr);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
+			coreID, writeAddress, writeLength, physAddr));
 
 		commitWriteEvent(physAddr, writeAddress, (uint32_t) writeLength);
 	} else {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
-			coreID, writeAddress, writeLength);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
+			coreID, writeAddress, writeLength));
 	
 		// We need to perform a split operation
 		const uint64_t leftAddr = writeAddress;
@@ -457,8 +479,8 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
 
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
-			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
+		ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
+			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr));
 
 		if(perform_checks > 0) {
 			if( (leftSize + rightSize) != writeLength ) {
@@ -486,10 +508,23 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
-	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 "\n",
-		aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel());
+	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 " from ip=%" PRIx64 "\n",
+                        aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
 
 	memmgr->allocate(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
+
+        if (allocLink) {
+	  output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");
+            // tell the allocate montior (e.g. mem sieve that an
+            // allocation has occured)
+            arielAllocTrackEvent *e 
+                = new arielAllocTrackEvent(arielAllocTrackEvent::ALLOC,
+                                           aEv->getVirtualAddress(),
+					   aEv->getAllocationLength(),
+                                           aEv->getAllocationLevel(),
+                                           aEv->getInstructionPointer());
+            allocLink->send(e);
+        }
 }
 
 void ArielCore::printCoreStatistics() {
@@ -500,86 +535,86 @@ bool ArielCore::processNextEvent() {
 	if(coreQ->empty()) {
 		bool addedItems = refillQueue();
 
-		output->verbose(CALL_INFO, 16, 0, "Attempted a queue fill, %s data\n",
-			(addedItems ? "added" : "did not add"));
+		ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Attempted a queue fill, %s data\n",
+			(addedItems ? "added" : "did not add")));
 
 		if(! addedItems) {
 			return false;
 		}
 	}
 	
-	output->verbose(CALL_INFO, 8, 0, "Processing next event in core %" PRIu32 "...\n", coreID);
+	ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Processing next event in core %" PRIu32 "...\n", coreID));
 
 	ArielEvent* nextEvent = coreQ->front();
 	bool removeEvent = false;
 
 	switch(nextEvent->getEventType()) {
 	case NOOP:
-		if(verbosity > 8) output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID));
 
 		statNoopCount->addData(1);
 		removeEvent = true;
 		break;
 
 	case READ_ADDRESS:
-		if(verbosity > 8) output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is READ_ADDRESS\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is READ_ADDRESS\n", coreID));
 
 //		if(pendingTransactions->size() < maxPendingTransactions) {
 		if(pending_transaction_count < maxPendingTransactions) {
-			output->verbose(CALL_INFO, 16, 0, "Found a read event, fewer pending transactions than permitted so will process...\n");
+			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a read event, fewer pending transactions than permitted so will process...\n"));
 			removeEvent = true;
 			handleReadRequest(dynamic_cast<ArielReadEvent*>(nextEvent));
 		} else {
-			output->verbose(CALL_INFO, 16, 0, "Pending transaction queue is currently full for core %" PRIu32 ", core will stall for new events\n", coreID);
+			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Pending transaction queue is currently full for core %" PRIu32 ", core will stall for new events\n", coreID));
 			break;
 		}
 		break;
 
 	case WRITE_ADDRESS:
-		if(verbosity > 8) output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WRITE_ADDRESS\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WRITE_ADDRESS\n", coreID));
 
 //		if(pendingTransactions->size() < maxPendingTransactions) {
 		if(pending_transaction_count < maxPendingTransactions) {
-			output->verbose(CALL_INFO, 16, 0, "Found a write event, fewer pending transactions than permitted so will process...\n");
+			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Found a write event, fewer pending transactions than permitted so will process...\n"));
 			removeEvent = true;
 			handleWriteRequest(dynamic_cast<ArielWriteEvent*>(nextEvent));
 		} else {
-			output->verbose(CALL_INFO, 16, 0, "Pending transaction queue is currently full for core %" PRIu32 ", core will stall for new events\n", coreID);
+			ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Pending transaction queue is currently full for core %" PRIu32 ", core will stall for new events\n", coreID));
 			break;
 		}
 		break;
 
 	case START_DMA_TRANSFER:
-		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is START_DMA_TRANSFER\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is START_DMA_TRANSFER\n", coreID));
 		removeEvent = true;
 		break;
 
 	case WAIT_ON_DMA_TRANSFER:
-		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WAIT_ON_DMA_TRANSFER\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WAIT_ON_DMA_TRANSFER\n", coreID));
 		removeEvent = true;
 		break;
 
 	case SWITCH_POOL:
-		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a SWITCH_POOL\n",
-			coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is a SWITCH_POOL\n",
+			coreID));
 		removeEvent = true;
 		handleSwitchPoolEvent(dynamic_cast<ArielSwitchPoolEvent*>(nextEvent));
 		break;
 
 	case FREE:
-		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is FREE\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is FREE\n", coreID));
 		removeEvent = true;
 		handleFreeEvent(dynamic_cast<ArielFreeEvent*>(nextEvent));
 		break;
 
 	case MALLOC:
-		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is MALLOC\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is MALLOC\n", coreID));
 		removeEvent = true;
 		handleAllocationEvent(dynamic_cast<ArielAllocateEvent*>(nextEvent));
 		break;
 
 	case CORE_EXIT:
-		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is CORE_EXIT\n", coreID);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is CORE_EXIT\n", coreID));
 		isHalted = true;
 		std::cout << "CORE ID: " << coreID << " PROCESSED AN EXIT EVENT" << std::endl;
 		output->verbose(CALL_INFO, 2, 0, "Core %" PRIu32 " has called exit.\n", coreID);
@@ -592,27 +627,26 @@ bool ArielCore::processNextEvent() {
 
 	// If the event has actually been processed this cycle then remove it from the queue
 	if(removeEvent) {
-		output->verbose(CALL_INFO, 8, 0, "Removing event from pending queue, there are %" PRIu32 " events in the queue before deletion.\n", 
-			(uint32_t) coreQ->size());
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Removing event from pending queue, there are %" PRIu32 " events in the queue before deletion.\n", 
+			(uint32_t) coreQ->size()));
 		coreQ->pop();
 
 		delete nextEvent;
 		return true;
 	} else {
-		output->verbose(CALL_INFO, 8, 0, "Event removal was not requested, pending transaction queue length=%" PRIu32 ", maximum transactions: %" PRIu32 "\n",
-			(uint32_t)pendingTransactions->size(), maxPendingTransactions);
+		ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Event removal was not requested, pending transaction queue length=%" PRIu32 ", maximum transactions: %" PRIu32 "\n",
+			(uint32_t)pendingTransactions->size(), maxPendingTransactions));
 		return false;
 	}
 }
 
 void ArielCore::tick() {
 	if(! isHalted) {
-		output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID);
+		ARIEL_CORE_VERBOSE(16, output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID));
 		for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
-//			output->verbose(CALL_INFO, 16, 0, "Issuing event %" PRIu32 " out of max issue: %" PRIu32 "...\n", i, maxIssuePerCycle);
 			bool didProcess = processNextEvent();
 
-			// If we didnt process anything in the call or we have halted then 
+			// If we didnt process anything in the call or we have halted then
 			// we stop the ticking and return
 			if( (!didProcess) || isHalted) {
 				break;

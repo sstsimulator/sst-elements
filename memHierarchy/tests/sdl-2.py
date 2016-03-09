@@ -22,10 +22,8 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "32",
       "debug" : "",
-      "statistics" : "1",
       "L1" : "1",
       "LL" : "1",
-      "LLC" : "1",
       "cache_size" : "2 KB"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
@@ -41,6 +39,12 @@ comp_memory.addParams({
       "request_width" : "32",
       "backend" : "memHierarchy.dramsim"
 })
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 
 # Define the simulation links

@@ -17,9 +17,9 @@
 #include <sst/core/output.h>
 
 #include <stdint.h>
-#include <queue>
+#include <deque>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 using namespace SST;
 
@@ -57,12 +57,13 @@ class ArielMemoryManager {
 		uint32_t defaultLevel;
 		uint32_t memoryLevels;
 		uint64_t* pageSizes;
-		std::queue<uint64_t>** freePages;
-		std::map<uint64_t, uint64_t>** pageAllocations;
-		std::map<uint64_t, uint64_t>** pageTables;
-		std::map<uint64_t, uint64_t>* translationCache;
+		std::deque<uint64_t>** freePages;
+		std::unordered_map<uint64_t, uint64_t>** pageAllocations;
+		std::unordered_map<uint64_t, uint64_t>** pageTables;
+		std::unordered_map<uint64_t, uint64_t>* translationCache;
 		const uint32_t translationCacheEntries;
 		bool translationEnabled;
+		bool reportUnmatchedFree;
 };
 
 }

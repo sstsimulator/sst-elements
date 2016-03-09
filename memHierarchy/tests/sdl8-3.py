@@ -23,7 +23,6 @@ comp_c0_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -44,7 +43,6 @@ comp_c1_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -61,7 +59,6 @@ comp_n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "statistics" : "1",
       "debug" : ""
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
@@ -81,7 +78,6 @@ comp_c2_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -102,7 +98,6 @@ comp_c3_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -119,7 +114,6 @@ comp_n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "statistics" : "1",
       "debug" : ""
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
@@ -135,9 +129,7 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
-      "statistics" : "1",
       "debug" : "",
-      "LLC" : "1",
       "network_address" : "1",
       "network_bw" : "25GB/s",
       "directory_at_next_level" : "1"
@@ -172,6 +164,13 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "request_width" : "64"
 })
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+sst.enableAllStatisticsForComponentType("memHierarchy.DirectoryController")
 
 
 # Define the simulation links

@@ -16,7 +16,8 @@ import numpy as np
 # Function to run linux commands
 def run(cmd):
     #print(cmd)
-    os.system(cmd)
+    rtn = os.system(cmd)
+    return rtn
 
 def clear_files(options):
 
@@ -44,7 +45,10 @@ def run_sim (options):
         run(ember_cmd)
 
         sched_cmd = "./%s --xml %s --emberOut %s --schedPy %s --ember_completed %s --ember_running %s " %(options.ember_parser, options.xmlFile, options.emberOutFile, options.schedPythonFile, options.emberCompletedFile, options.emberRunningFile)
-        run(sched_cmd)
+        Rtnvalue = run(sched_cmd)
+        if Rtnvalue != 0 :
+             sys.stderr.write(" run(sched_cmd)  returned NON zero \n")
+             sys.exit(1)
 
     delete_logs()
 

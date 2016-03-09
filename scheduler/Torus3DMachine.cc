@@ -1,10 +1,10 @@
 // Copyright 2009-2015 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2015, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -116,20 +116,20 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
     int zMaxDelta = ceil((float) (dims[2] - 1) / 2);
 
     std::vector<int> curDims(3);
-    
+
     //first scan the sides
-    
+
     //go backward in x
     if(dist <= xMinDelta){
         curDims[0] = mod(centerDims[0] - dist, dims[0]);
         //scan all y except edges & corners
-        for(int yDist = -std::min((dist - 1), yMinDelta); 
-                yDist <= std::min((dist - 1), yMaxDelta); 
+        for(int yDist = -std::min((dist - 1), yMinDelta);
+                yDist <= std::min((dist - 1), yMaxDelta);
                 yDist++){
             curDims[1] = mod(centerDims[1] + yDist, dims[1]);
             //scan all z except edges & corners
-            for(int zDist = -std::min((dist - 1), zMinDelta); 
-                    zDist <= std::min((dist - 1), zMaxDelta); 
+            for(int zDist = -std::min((dist - 1), zMinDelta);
+                    zDist <= std::min((dist - 1), zMaxDelta);
                     zDist++){
                 curDims[2] = mod(centerDims[2] + zDist, dims[2]);
                 appendIfFree(curDims, nodeList);
@@ -223,7 +223,7 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
     }
 
     //now do edges
-    
+
     //backward in x
     if(dist <= xMinDelta){
         curDims[0] = mod(centerDims[0] - dist, dims[0]);
@@ -272,7 +272,7 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
             }
         }
     }
-        
+
     //backward in y
     if(dist <= yMinDelta){
         curDims[1] = mod(centerDims[1] - dist, dims[1]);
@@ -326,7 +326,7 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
             }
         }
     }
-    
+
     //forward in x
     if(dist <= xMaxDelta){
         curDims[0] = mod(centerDims[0] + dist, dims[0]);
@@ -345,7 +345,7 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
         if(dist <= zMinDelta){
             curDims[2] = mod(centerDims[2] - dist, dims[2]);
             //scan all y except corners
-            for(int yDist = -std::min((dist - 1), yMinDelta); 
+            for(int yDist = -std::min((dist - 1), yMinDelta);
                     yDist <= std::min((dist - 1), yMaxDelta);
                     yDist++){
                 curDims[1] = mod(centerDims[1] + yDist, dims[1]);
@@ -375,9 +375,9 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
             }
         }
     }
-    
+
     //now do corners
-    
+
     //backward in x
     if(dist <= xMinDelta){
         curDims[0] = mod(centerDims[0] - dist, dims[0]);
@@ -387,7 +387,7 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
                 curDims[2] = mod(centerDims[2] - dist, dims[2]); //backward in z
                 appendIfFree(curDims, nodeList);
             }
-            if(dist <= zMaxDelta){ 
+            if(dist <= zMaxDelta){
                 curDims[2] = mod(centerDims[2] + dist, dims[2]); //forward in z
                 appendIfFree(curDims, nodeList);
             }
@@ -398,13 +398,13 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
                 curDims[2] = mod(centerDims[2] - dist, dims[2]); //backward in z
                 appendIfFree(curDims, nodeList);
             }
-            if(dist <= zMaxDelta){ 
+            if(dist <= zMaxDelta){
                 curDims[2] = mod(centerDims[2] + dist, dims[2]); //forward in z
                 appendIfFree(curDims, nodeList);
             }
         }
     }
-    
+
     //forward in x
     if(dist <= xMaxDelta){
         curDims[0] = mod(centerDims[0] + dist, dims[0]);
@@ -414,7 +414,7 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
                 curDims[2] = mod(centerDims[2] - dist, dims[2]); //backward in z
                 appendIfFree(curDims, nodeList);
             }
-            if(dist <= zMaxDelta){ 
+            if(dist <= zMaxDelta){
                 curDims[2] = mod(centerDims[2] + dist, dims[2]); //forward in z
                 appendIfFree(curDims, nodeList);
             }
@@ -425,20 +425,28 @@ std::list<int>* Torus3DMachine::getFreeAtLInfDistance(int center, int dist) cons
                 curDims[2] = mod(centerDims[2] - dist, dims[2]); //backward in z
                 appendIfFree(curDims, nodeList);
             }
-            if(dist <= zMaxDelta){ 
+            if(dist <= zMaxDelta){
                 curDims[2] = mod(centerDims[2] + dist, dims[2]); //forward in z
                 appendIfFree(curDims, nodeList);
             }
         }
     }
-    
+
     return nodeList;
+}
+
+int Torus3DMachine::nodesAtDistance(int dist) const
+{
+    if(dist == 0)
+        return 1;
+    else
+        return 4 * pow(dist, 2) + 2;
 }
 
 void Torus3DMachine::appendIfFree(std::vector<int> curDims, std::list<int>* nodeList) const
 {
-    if(curDims[0] >= 0 && curDims[0] < dims[0] && 
-       curDims[1] >= 0 && curDims[1] < dims[1] && 
+    if(curDims[0] >= 0 && curDims[0] < dims[0] &&
+       curDims[1] >= 0 && curDims[1] < dims[1] &&
        curDims[2] >= 0 && curDims[2] < dims[2]){
         int tempNode = indexOf(curDims);
         if(isFree(tempNode)){
@@ -484,9 +492,9 @@ int Torus3DMachine::getLinkIndex(std::vector<int> nodeDims, int dimension) const
     return linkNo;
 }
 
-std::vector<int> Torus3DMachine::getRoute(int node0, int node1, double commWeight) const
+std::vector<int>* Torus3DMachine::getRoute(int node0, int node1, double commWeight) const
 {
-    std::vector<int> links(0);
+    std::vector<int>* links = new std::vector<int>();
     int x0 = coordOf(node0,0);
     int x1 = coordOf(node1,0);
     int y0 = coordOf(node0,1);
@@ -499,21 +507,21 @@ std::vector<int> Torus3DMachine::getRoute(int node0, int node1, double commWeigh
         loc[0] = x;
         loc[1] = y0;
         loc[2] = z0;
-        links.push_back(getLinkIndex(loc, 0));
+        links->push_back(getLinkIndex(loc, 0));
     }
     //add Y route
     for(int y = std::min(y0, y1); y < std::max(y0, y1); y++){
         loc[0] = x1;
         loc[1] = y;
         loc[2] = z0;
-        links.push_back(getLinkIndex(loc, 1));
+        links->push_back(getLinkIndex(loc, 1));
     }
     //add Z route
     for(int z = std::min(z0, z1); z < std::max(z0, z1); z++){
         loc[0] = x1;
         loc[1] = y1;
         loc[2] = z;
-        links.push_back(getLinkIndex(loc, 2));
+        links->push_back(getLinkIndex(loc, 2));
     }
     return links;
 }

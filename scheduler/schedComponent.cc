@@ -29,7 +29,7 @@
 #include "InputParser.h"
 #include "Job.h"
 #include "Machine.h"
-#include "StencilMachine.h"
+#include "SimpleMachine.h"
 #include "misc.h"
 #include "Scheduler.h"
 #include "Snapshot.h" //NetworkSim
@@ -45,7 +45,7 @@
 #include "events/FinalTimeEvent.h"
 #include "events/JobKillEvent.h"
 #include "events/JobStartEvent.h"
-#include "events/SnapshotEvent.h" //NetworkSim
+#include "events/SnapshotEvent.h"
 
 using namespace std;
 using namespace SST;
@@ -70,7 +70,7 @@ schedComponent::~schedComponent()
     delete scheduler;
     delete rng;
     if (FSTtype > 0) delete calcFST;
-    if(snapshot != NULL) delete snapshot; //NetworkSim
+    if(snapshot != NULL) delete snapshot;
 }
 
 int readSeed( Params & params, std::string paramName ){
@@ -158,7 +158,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         calcFST = NULL;
     }
 
-    //NetworkSim: set doDetailedNetworkSim parameter
+    //setup NetworkSim
     doDetailedNetworkSim = false;
     if (params.find("detailedNetworkSim") != params.end()){
         string temp_string = params["detailedNetworkSim"].c_str();
@@ -176,23 +176,18 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
             }
         }
     }
-    //end->NetworkSim
 
-    if (NULL == dynamic_cast<StencilMachine*>(machine)) {
+    if (NULL != dynamic_cast<SimpleMachine*>(machine)) {
         char timestring[] = "time";
         stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
     } else {
-        //NetworkSim: modified to account for snapshot output
         if (doDetailedNetworkSim == false){
-            //the alloc output only works on a mesh because it calculates L1 distances
             char timestring[] = "time,alloc";
             stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
         } else {
-            //the alloc output only works on a mesh because it calculates L1 distances
             char timestring[] = "time,alloc,snapshot.xml";
             stats = new Statistics(machine, scheduler, theAllocator, theTaskMapper, trace, timestring, false, calcFST);
         }
-        //end->NetworkSim
     }
 
     useYumYumSimulationKill = params.find("useYumYumSimulationKill") != params.end();
@@ -208,7 +203,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     printYumYumJobLog = params.find("printYumYumJobLog") != params.end();
     printJobLog = params.find("printJobLog") != params.end();
 
-    jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag, &doDetailedNetworkSim); //NetworkSim: added doDetailedNetworkSim parameter);
+    jobParser = new JobParser(machine, params, &useYumYumSimulationKill, &YumYumSimulationKillFlag, &doDetailedNetworkSim);
 
     machine -> reset();
     scheduler -> reset();
@@ -226,39 +221,34 @@ void schedComponent::setup()
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
         (*nodeIter)->send( getID );
 
-        //NetworkSim: added communication even to set doDetailedNetworkSim param
         CommunicationEvent * setNetworkSim = new CommunicationEvent( SET_DETAILED_NETWORK_SIM );
         setNetworkSim-> reply = doDetailedNetworkSim;
         (*nodeIter)->send( setNetworkSim );
-        //end->NetworkSim
     }
     // done setting up the links, now read the job list
     jobs = jobParser -> parseJobs(getCurrentSimTime());
 
     // NetworkSim: record the total number of jobs as the jobs vector changes over time
     numJobs = (int) jobs.size();
-    // end-> NetworkSim   
-
-    //NetworkSim: parse the ember completed/running job traces
+    
     if (doDetailedNetworkSim){
+        //parse the ember completed/running job traces
         emberFinishedJobs = jobParser -> parseJobsEmberCompleted();
         emberRunningJobs = jobParser -> parseJobsEmberRunning();
         ignoreUntilTime = jobParser -> ignoreUntilTime;
-
-        std::cout << "The jobs that have been completed in ember" << std::endl;
+        
+        schedout.output("The jobs that have been completed in ember\n");
         for(std::map<int, unsigned long>::iterator it = emberFinishedJobs.begin(); it != emberFinishedJobs.end(); it++){
-            std::cout << "Job " << it->first << ": " << it->second << std::endl;
+            schedout.output("Job %d: %lu\n", it->first, it->second);
         }
 
-        std::cout << "ignoreUntilTime: " << this->ignoreUntilTime << std::endl;
+        schedout.output("ignoreUntilTime: %lu\n", this->ignoreUntilTime);
 
-        std::cout << "The jobs that are still running in ember" << std::endl;
+        schedout.output("The jobs that are still running in ember\n");
         for(std::map<int, std::pair<unsigned long, int>>::iterator iter = emberRunningJobs.begin(); iter != emberRunningJobs.end(); iter++){
-            std::cout << "Job " << iter->first << ": soFarRunningTime: " << iter->second.first << " currentMotifCount: " << iter->second.second << std::endl;
+            schedout.output("Job %d: soFarRunningTime: %lu currentMotifCount: %d\n", iter->first, iter->second.first, iter->second.second);
         }
-
     }
-    //end->NetworkSim
     
     for(int i = 0; i < (int) jobs.size(); i++)
     {
@@ -475,7 +465,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *>(ev);
     ArrivalEvent *arevent = dynamic_cast<ArrivalEvent*>(ev);
     FinalTimeEvent* fev = dynamic_cast<FinalTimeEvent*>(ev);
-    SnapshotEvent* sev = dynamic_cast<SnapshotEvent*>(ev); //NetworkSim: to take snapshots of the scheduler
+    SnapshotEvent* sev = dynamic_cast<SnapshotEvent*>(ev);
     
     if (NULL != commEvent) {
         schedout.debug(CALL_INFO, 4, 0, "comm event\n");
@@ -505,17 +495,10 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                                 break;
                             }
                         }
-                        // if there are no jobs that arrive after the current time = ignoreUntilTime, set it to zero so that ember will stop only when a job finishes
-                        /*
-                        if(NextArrivalTime <= ignoreUntilTime){
-                            NextArrivalTime = 0;
-                        }
-                        */
                         snapshot->append(getCurrentSimTime(), NextArrivalTime, runningJobs);
-                        std::cout << "Next Job is arriving at " << NextArrivalTime << std::endl;
+                        schedout.output("Next Job is arriving at %lu\n", NextArrivalTime);
                         unregisterYourself();
-                    }
-                    //end->NetworkSim                    
+                    }                 
                 }
             }
         }
@@ -524,7 +507,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         finishingarr.push_back(arevent);
         //NetworkSim: keep track of the last job that has arrived
         jobNumLastArrived = arevent->getJobIndex();
-        //end->NetworkSim
+        
         FinalTimeEvent* fte = new FinalTimeEvent();
         if (useYumYumSimulationKill xor YumYumSimulationKillFlag) {
             fte -> forceExecute = true; // avoid intermittent hangs when using yumyum
@@ -606,14 +589,12 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         delete ev; 
 
         startNextJob();
-    //NetworkSim: handle snapshot event
-    } else if (NULL != sev){
-        //dump sapshot to file
-        std::cout << getCurrentSimTime() << ":Snapshot event received...Appending snapshot..." << std::endl;        
+    } else if (NULL != sev){ //snapshot event
+        //dump snapshot to file
+        schedout.output("%lu:Snapshot event received...Appending snapshot...\n", getCurrentSimTime());        
         snapshot->append(sev->time, sev->nextJobArrivalTime, sev->runningJobs);
         delete ev;
         unregisterYourself();
-    //end->NetwrokSim
     } else {
         schedout.fatal(CALL_INFO, 1, "Arriving event was not an arrival nor finaltime event");
     }
@@ -623,16 +604,15 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
 void schedComponent::finish() 
 {
     scheduler -> done();
-    //NetworkSim: Write snapshot to file only once at the end
-    if (doDetailedNetworkSim){
+    if (doDetailedNetworkSim) {
+        //Write snapshot to file only once at the end
         if (!snapshot -> getSimFinished()) {
-            std::cout << "In Sched component: sim paused" << std::endl;
+            schedout.output("In Sched component: sim paused\n");
             stats -> simPauses(snapshot, getCurrentSimTime());
         } else {
-            std::cout << "In Sched component: sim finished" << std::endl;
+            schedout.output("In Sched component: sim finished\n");
         }
     }
-    //end->NetWorkSim
     stats -> done();
     theAllocator -> done();
 }
@@ -642,14 +622,14 @@ void schedComponent::startJob(Job* job)
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
-    //NetworkSim: update startingMotif for the jobs that are still running on ember
-    if (doDetailedNetworkSim == true){
+    
+    if (doDetailedNetworkSim) {
+        //update startingMotif for the jobs that are still running on ember
         if(emberRunningJobs.find(job->getJobNum()) != emberRunningJobs.end()){
             job->phaseInfo.soFarRunningTime = emberRunningJobs[job->getJobNum()].first;
             job->phaseInfo.startingMotif = emberRunningJobs[job->getJobNum()].second;
         }
     }
-    //end->NetworkSim
     job->start( getCurrentSimTime() );              //job started flag
     AllocInfo* ai = theAllocator->allocate(job);    //get allocation
     TaskMapInfo* tmi = theTaskMapper->mapTasks(ai); //map tasks
@@ -661,16 +641,14 @@ void schedComponent::startJob(Job* job)
     int* jobNodes = ai->nodeIndices;
     unsigned long actualRunningTime = job->getActualTime();
     
-    StencilMachine* sMachine = dynamic_cast<StencilMachine*>(machine);
+    SimpleMachine* sMachine = dynamic_cast<SimpleMachine*>(machine);
 
-    if (timePerDistance -> at(0) != 0
-          && NULL != sMachine
-          && NULL != ai ) {
+    if (timePerDistance -> at(0) != 0 && NULL == sMachine && NULL != ai) {
         double randomNumber = (rng->nextUniform() * 2 - 1) * timePerDistance->at(2);
 
         //calculate baseline hopBytes
-        AllocInfo* baselineAlloc = sMachine->getBaselineAllocation(job);
-        SimpleTaskMapper baselineMapper = SimpleTaskMapper(*sMachine);
+        AllocInfo* baselineAlloc = machine->getBaselineAllocation(job);
+        SimpleTaskMapper baselineMapper = SimpleTaskMapper(*machine);
         TaskMapInfo* baselineMap = baselineMapper.mapTasks(baselineAlloc);
         double baselineHopBytes = baselineMap->getHopBytes();
         delete baselineMap;
@@ -691,15 +669,15 @@ void schedComponent::startJob(Job* job)
         schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", job->getJobNum(), actualRunningTime, job->getEstimatedRunningTime());
     }
 
-    //NetworkSim: Update actual running time of the job if it has run and finished on ember, define a boolean variable showing that
     bool emberFinished = false;
-    if (doDetailedNetworkSim){
-        if(emberFinishedJobs.find(job->getJobNum()) != emberFinishedJobs.end()){
+    if (doDetailedNetworkSim) {
+        //Update actual running time of the job if it has run and finished on ember,
+        //define a boolean variable showing that
+        if (emberFinishedJobs.find(job->getJobNum()) != emberFinishedJobs.end()) {
             actualRunningTime = emberFinishedJobs[job->getJobNum()];
             emberFinished = true;
         }
     }
-    //end->NetworkSim
 
     // send to each job in the node list
     for (int i = 0; i < ai->getNodesNeeded(); ++i) {
@@ -719,12 +697,12 @@ void schedComponent::startJob(Job* job)
         logJobStart(itmi);
     }
 
-    //NetworkSim: Take a snapshot whenever a job is allocated/mapped to start
     if (doDetailedNetworkSim == true && getCurrentSimTime() >= ignoreUntilTime ){
+        //Take a snapshot whenever a job is allocated/mapped to start
         SnapshotEvent *se = new SnapshotEvent(getCurrentSimTime(), job->getJobNum());
         se->runningJobs = runningJobs;
 
-        std::cout << "Taking snapshot as Job " << job->getJobNum() << " is starting..." << std::endl;
+        schedout.output("Taking snapshot as Job %d is starting...\n", job->getJobNum());
 
         int ii;
         for(ii = (jobNumLastArrived + 1); ii < numJobs; ii++){
@@ -734,15 +712,14 @@ void schedComponent::startJob(Job* job)
             }
         }
 
-        if (ii == numJobs){
-            std::cout << "All jobs have arrived!" << std::endl;
+        if (ii == numJobs) {
+            schedout.output("All jobs have arrived!\n");
         } else {
-            std::cout << "Next Job: " << jobs[ii]->getJobNum() << " is arriving at " << se->nextJobArrivalTime << std::endl;
+            schedout.output("Next Job: %d is arriving at %lu\n", jobs[ii]->getJobNum(), se->nextJobArrivalTime);
         }
         selfLink->send(se);
-        std::cout << getCurrentSimTime() << ":Sent snapshot event to self" << std::endl;
+        schedout.output("%lu: Sent snapshot event to self\n", getCurrentSimTime());
     }
-    //end->NetworkSim
 }
 
 void schedComponent::logJobStart(ITMI itmi)

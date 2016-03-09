@@ -45,7 +45,7 @@ class DirectoryController : public Component {
     bool DEBUG_ALL;
     Addr DEBUG_ADDR;
     struct DirEntry;
-    
+
     /* Total number of cache blocks we are responsible for */
     /* ie, sum of all caches we talk to */
     uint32_t    entrySize;
@@ -74,39 +74,43 @@ class DirectoryController : public Component {
     uint64_t    accessLatency;
     uint64_t    mshrLatency;
 
-    /* Statistics counters for profiling DC */
-    uint64_t    numReqsProcessed;
-    uint64_t    totalReqProcessTime;
-    uint64_t    totalReplProcessTime;
-    uint64_t    totalGetReqProcessTime;
-    uint64_t    numCacheHits;
-    uint64_t    mshrHits;
-    // Received events - from caches
-    uint64_t    GetXReqReceived;
-    uint64_t    GetSExReqReceived;
-    uint64_t    GetSReqReceived;
-    uint64_t    PutMReqReceived;
-    uint64_t    PutEReqReceived;
-    uint64_t    PutSReqReceived;
-    uint64_t    NACKReceived;
-    uint64_t    FetchRespReceived;
-    uint64_t    FetchRespXReceived;
-    uint64_t    PutMRespReceived;
-    uint64_t    PutERespReceived;
-    uint64_t    PutSRespReceived;
-    // Sent events - to mem
-    uint64_t    dataReads;
-    uint64_t    dataWrites;
-    uint64_t    dirEntryReads;
-    uint64_t    dirEntryWrites;
-    // Sent events - to caches
-    uint64_t    NACKSent;
-    uint64_t    InvSent;
-    uint64_t    FetchInvSent;
-    uint64_t    FetchInvXSent;
-    uint64_t    GetSRespSent;
-    uint64_t    GetXRespSent;
+    /* Turn clocks off when idle */
+    bool        clockOn;
+    Clock::Handler<DirectoryController>*  clockHandler;
+    TimeConverter* defaultTimeBase;
+    SimTime_t   lastActiveClockCycle;
 
+    /* Statistics counters for profiling DC */
+    Statistic<uint64_t> * stat_replacementRequestLatency;   // totalReplProcessTime
+    Statistic<uint64_t> * stat_getRequestLatency;           // totalGetReqProcessTime;
+    Statistic<uint64_t> * stat_cacheHits;                   // numCacheHits;
+    Statistic<uint64_t> * stat_mshrHits;                    // mshrHits;
+    // Received events - from caches
+    Statistic<uint64_t> * stat_GetXReqReceived;
+    Statistic<uint64_t> * stat_GetSExReqReceived;
+    Statistic<uint64_t> * stat_GetSReqReceived;
+    Statistic<uint64_t> * stat_PutMReqReceived;
+    Statistic<uint64_t> * stat_PutEReqReceived;
+    Statistic<uint64_t> * stat_PutSReqReceived;
+    Statistic<uint64_t> * stat_NACKRespReceived;
+    Statistic<uint64_t> * stat_FetchRespReceived;
+    Statistic<uint64_t> * stat_FetchXRespReceived;
+    Statistic<uint64_t> * stat_PutMRespReceived;
+    Statistic<uint64_t> * stat_PutERespReceived;
+    Statistic<uint64_t> * stat_PutSRespReceived;
+    // Sent events - to mem
+    Statistic<uint64_t> * stat_dataReads;
+    Statistic<uint64_t> * stat_dataWrites;
+    Statistic<uint64_t> * stat_dirEntryReads;
+    Statistic<uint64_t> * stat_dirEntryWrites;
+    // Sent events - to caches
+    Statistic<uint64_t> * stat_NACKRespSent;
+    Statistic<uint64_t> * stat_InvSent;
+    Statistic<uint64_t> * stat_FetchInvSent;
+    Statistic<uint64_t> * stat_FetchInvXSent;
+    Statistic<uint64_t> * stat_GetSRespSent;
+    Statistic<uint64_t> * stat_GetXRespSent;
+    Statistic<uint64_t> * stat_MSHROccupancy;
 
     /* Directory structures */
     std::list<DirEntry*>                    entryCache;
@@ -120,10 +124,7 @@ class DirectoryController : public Component {
     std::map<MemEvent::id_type, Addr>       dirEntryMiss;
     std::map<MemEvent::id_type, pair<Addr,Addr> > noncacheMemReqs;
 
-    Output::output_location_t               printStatsLoc;
-    
     /* Network connections */
-    bool        directMemoryLink; // true if we have a direct memory connection, false if we are connected to mem via the network
     SST::Link*  memLink;
     MemNIC*     network;
     string      memoryName; // if connected to mem via network, this should be the name of the memory we own - param is memory_name

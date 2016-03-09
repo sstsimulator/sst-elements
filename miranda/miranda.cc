@@ -173,6 +173,7 @@ static const ElementInfoParam spmvBench_params[] = {
     { "matrix_col_indices_start_addr", "Sets the col indices start address for the matrix", "0" },
     { "matrix_element_start_addr", "Sets the start address of the elements array", "0" },
     { "iterations",     "Sets the number of repeats to perform" },
+    { "matrix_nnz_per_row", "Sets the number of non-zero elements per row", "9" },
     { NULL, NULL, NULL }
 };
 
@@ -321,7 +322,7 @@ static const ElementInfoComponent components[] = {
 
 extern "C" {
     ElementLibraryInfo miranda_eli = {
-        "Miranda",
+        "miranda",
         "Address generator compatible with SST MemHierarchy",
         components,
         NULL, // events

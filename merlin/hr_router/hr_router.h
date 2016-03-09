@@ -72,7 +72,7 @@ private:
     std::vector<std::string> inspector_names;
     
     bool clock_handler(Cycle_t cycle);
-    bool debug_clock_handler(Cycle_t cycle);
+    // bool debug_clock_handler(Cycle_t cycle);
     static void sigHandler(int signal);
 
     void init_vcs();

@@ -13,22 +13,16 @@ libariel_la_SOURCES = \
 	arielcore.h \
 	arielmemmgr.cc \
 	arielmemmgr.h \
-	arielreadev.cc \
 	arielreadev.h \
 	arielexitev.h \
-	arielexitev.cc \
-	arielwriteev.cc \
 	arielwriteev.h \
 	arielevent.cc \
 	arielevent.h \
 	arielnoop.h \
-	arielnoop.cc \
 	arielallocev.h \
-	arielallocev.cc \
+	arielalloctrackev.h \
 	arielfreeev.h \
-	arielfreeev.cc \
 	ariel_inst_class.h \
-	arielswitchpool.cc \
 	arielswitchpool.h \
 	ariel_shmem.h \
 	arieltracegen.h \
@@ -39,6 +33,8 @@ EXTRA_DIST = \
 	frontend/simple/examples/multicore.py \
 	frontend/simple/examples/stream/Makefile \
 	frontend/simple/examples/stream/Makefile \
+	frontend/simple/examples/stream/ariel_ivb.py \
+	frontend/simple/examples/stream/ariel_snb.py \
 	frontend/simple/examples/stream/runstream.py \
 	frontend/simple/examples/stream/runstreamSt.py \
 	frontend/simple/examples/stream/runstreamNB.py \

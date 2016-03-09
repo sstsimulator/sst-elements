@@ -18,16 +18,16 @@ using namespace SST::MemHierarchy;
 struct MSHREntryCompare {
     enum Type {Event, Pointer};
     MSHREntryCompare( mshrType* _m ) : m_(_m) {
-        if(m_->elem.type() == typeid(MemEvent*)) type_ = Event;
+        if (m_->elem.type() == typeid(MemEvent*)) type_ = Event;
         else type_ = Pointer;
     }
-    bool operator() (mshrType& _n){
-        if(type_ == Event){
-            if(_n.elem.type() == typeid(MemEvent*)) return boost::get<MemEvent*>(m_->elem) == boost::get<MemEvent*>(_n.elem);
+    bool operator() (mshrType& _n) {
+        if (type_ == Event) {
+            if (_n.elem.type() == typeid(MemEvent*)) return boost::get<MemEvent*>(m_->elem) == boost::get<MemEvent*>(_n.elem);
             return false;
         }
         else{
-            if(_n.elem.type() == typeid(Addr)) return boost::get<Addr>(m_->elem) == boost::get<Addr>(_n.elem);
+            if (_n.elem.type() == typeid(Addr)) return boost::get<Addr>(m_->elem) == boost::get<Addr>(_n.elem);
             return false;
         }
     }
@@ -35,9 +35,9 @@ struct MSHREntryCompare {
     Type type_;
 };
 
-MSHR::MSHR(Output* _d, int _maxSize, string cacheName, bool debugAll, Addr debugAddr) {
-    d_ = _d;
-    maxSize_ = _maxSize;
+MSHR::MSHR(Output* debug, int maxSize, string cacheName, bool debugAll, Addr debugAddr) {
+    d_ = debug;
+    maxSize_ = maxSize;
     size_ = 0;
     ownerName_ = cacheName;
 
@@ -49,58 +49,62 @@ MSHR::MSHR(Output* _d, int _maxSize, string cacheName, bool debugAll, Addr debug
 }
 
 
-bool MSHR::isAlmostFull(){
-    if(size_ >= (maxSize_-1)){
+bool MSHR::isAlmostFull() {
+    if (size_ >= (maxSize_-1)) {
         return true;
     }
     return false;
 }
 
-bool MSHR::isFull(){
-    if(size_ >= maxSize_){
+bool MSHR::isFull() {
+    if (size_ >= maxSize_) {
         return true;
     }
     return false;
 }
 
 
-int MSHR::getAcksNeeded(Addr _baseAddr) {
-    mshrTable::iterator it = map_.find(_baseAddr);
+int MSHR::getAcksNeeded(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return 0;
     return (it->second).acksNeeded;
 }
 
 
-void MSHR::setAcksNeeded(Addr _baseAddr, int acksNeeded) {
-    mshrTable::iterator it = map_.find(_baseAddr);
+void MSHR::setAcksNeeded(Addr baseAddr, int acksNeeded) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
-        if (DEBUG_ALL || _baseAddr == DEBUG_ADDR) d_->debug(_L6_, "Creating new MSHR holder for acks\n");
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || baseAddr == DEBUG_ADDR) d_->debug(_L6_, "Creating new MSHR holder for acks\n");
+#endif
         mshrEntry entry;
         entry.acksNeeded = acksNeeded;
         entry.tempData.clear();
-        map_[_baseAddr] = entry;
+        map_[baseAddr] = entry;
         return;
     }
     (it->second).acksNeeded = acksNeeded;
 }
 
-void MSHR::incrementAcksNeeded(Addr _baseAddr) {
-    mshrTable::iterator it = map_.find(_baseAddr);
+void MSHR::incrementAcksNeeded(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
         mshrEntry entry;
         entry.acksNeeded = 1;
-        map_[_baseAddr] = entry;
+        map_[baseAddr] = entry;
     } else {
         (it->second).acksNeeded++;
     }
 }
 
-void MSHR::decrementAcksNeeded(Addr _baseAddr) {
-    mshrTable::iterator it = map_.find(_baseAddr);
+void MSHR::decrementAcksNeeded(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return;
     (it->second).acksNeeded--;
     if (((it->second).acksNeeded == 0) && (it->second).tempData.empty() && (it->second).mshrQueue.empty()) {
-        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", _baseAddr);
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", baseAddr);
+#endif
         map_.erase(it);
     }
 }
@@ -121,13 +125,15 @@ void MSHR::clearTempData(Addr baseAddr) {
     mshrTable::iterator it = map_.find(baseAddr);
     if (it != map_.end()) (it->second).tempData.clear();
     if (((it->second).acksNeeded == 0) && (it->second).tempData.empty() && (it->second).mshrQueue.empty()) {
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", baseAddr);
+#endif
         map_.erase(it);
     }
 }
 
-bool MSHR::exists(Addr _baseAddr){
-    mshrTable::iterator it = map_.find(_baseAddr);
+bool MSHR::exists(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return false;
     vector<mshrType> * queue = &((it->second).mshrQueue);
     vector<mshrType>::iterator frontEntry = queue->begin();
@@ -135,11 +141,11 @@ bool MSHR::exists(Addr _baseAddr){
     return (frontEntry->elem.type() == typeid(MemEvent*));
 }
 
-bool MSHR::isHit(Addr _baseAddr){ return (map_.find(_baseAddr) != map_.end()) && (map_.find(_baseAddr)->second.mshrQueue.size() > 0); }
+bool MSHR::isHit(Addr baseAddr) { return (map_.find(baseAddr) != map_.end()) && (map_.find(baseAddr)->second.mshrQueue.size() > 0); }
 
-bool MSHR::pendingWriteback(Addr _baseAddr) {
-    mshrType entry = mshrType(_baseAddr);
-    mshrTable::iterator it = map_.find(_baseAddr);
+bool MSHR::pendingWriteback(Addr baseAddr) {
+    mshrType entry = mshrType(baseAddr);
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return false;
 
     vector<mshrType>& res = (it->second).mshrQueue;
@@ -147,24 +153,24 @@ bool MSHR::pendingWriteback(Addr _baseAddr) {
     return (itv != res.end());
 }
 
-const vector<mshrType> MSHR::lookup(Addr _baseAddr){
-    mshrTable::iterator it = map_.find(_baseAddr);
+const vector<mshrType> MSHR::lookup(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
-        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     vector<mshrType> res = (it->second).mshrQueue;
     return res;
 }
 
 
-MemEvent* MSHR::lookupFront(Addr _baseAddr){
-    mshrTable::iterator it = map_.find(_baseAddr);
+MemEvent* MSHR::lookupFront(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
-        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     vector<mshrType> queue = (it->second).mshrQueue;
     if (queue.front().elem.type() != typeid(MemEvent*)) {
-        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     return boost::get<MemEvent*>(queue.front().elem);
 }
@@ -175,72 +181,78 @@ MemEvent* MSHR::lookupFront(Addr _baseAddr){
  * insertWriteback
  * insertInv
  */
-bool MSHR::insert(Addr _baseAddr, MemEvent* _event) {
-    _event->setInMSHR(true);
-    bool ret = insert(_baseAddr, mshrType(_event));
-    if(LIKELY(ret)){
-        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr)
-            d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].mshrQueue.size());
+bool MSHR::insert(Addr baseAddr, MemEvent* event) {
+    bool ret = insert(baseAddr, mshrType(event));
+#ifdef __SST_DEBUG_OUTPUT__
+    if (LIKELY(ret)) {
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+            d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
      }
-    else if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
+    else if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
+#endif
     return ret;
 }
 
 
-bool MSHR::insertPointer(Addr _keyAddr, Addr _pointerAddr) {
-    if (_keyAddr == _pointerAddr) {
-        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: attempting to insert a self-pointer into the mshr. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), _keyAddr);
+bool MSHR::insertPointer(Addr keyAddr, Addr pointerAddr) {
+    if (keyAddr == pointerAddr) {
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: attempting to insert a self-pointer into the mshr. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), keyAddr);
     }
-    if (DEBUG_ALL || DEBUG_ADDR == _keyAddr || DEBUG_ADDR == _pointerAddr) d_->debug(_L9_, "MSHR: Inserted pointer.  Key Addr = %" PRIx64 ", Pointer Addr = %" PRIx64 "\n", _keyAddr, _pointerAddr);
-    return insert(_keyAddr, mshrType(_pointerAddr));
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == keyAddr || DEBUG_ADDR == pointerAddr) d_->debug(_L9_, "MSHR: Inserted pointer.  Key Addr = %" PRIx64 ", Pointer Addr = %" PRIx64 "\n", keyAddr, pointerAddr);
+#endif
+    return insert(keyAddr, mshrType(pointerAddr));
 }
 
 
-bool MSHR::insertWriteback(Addr _keyAddr) {
-    if (DEBUG_ALL || DEBUG_ADDR == _keyAddr) d_->debug(_L9_, "MSHR: Inserted writeback.  Key Addr = %" PRIx64 "\n", _keyAddr);
-    mshrType mshrElement = mshrType(_keyAddr);
+bool MSHR::insertWriteback(Addr keyAddr) {
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == keyAddr) d_->debug(_L9_, "MSHR: Inserted writeback.  Key Addr = %" PRIx64 "\n", keyAddr);
+#endif
+    mshrType mshrElement = mshrType(keyAddr);
 
-    mshrTable::iterator it = map_.find(_keyAddr);
+    mshrTable::iterator it = map_.find(keyAddr);
     if (it == map_.end()) {
         mshrEntry newEntry;
         newEntry.acksNeeded = 0;
         newEntry.tempData.clear();
-        map_[_keyAddr] = newEntry;
+        map_[keyAddr] = newEntry;
     }
 
-    vector<mshrType>::iterator itv = map_[_keyAddr].mshrQueue.begin();
-    map_[_keyAddr].mshrQueue.insert(itv, mshrElement);
+    vector<mshrType>::iterator itv = map_[keyAddr].mshrQueue.begin();
+    map_[keyAddr].mshrQueue.insert(itv, mshrElement);
     
     return true;
 }
 
-bool MSHR::insertInv(Addr _baseAddr, MemEvent* _event, bool inProgress) {
-    _event->setInMSHR(true);
-    bool ret = insertInv(_baseAddr, mshrType(_event), inProgress);
-    if(LIKELY(ret)){
-        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr)
-            d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", _baseAddr, _event->getAddr(), CommandString[_event->getCmd()], size_, map_[_baseAddr].mshrQueue.size());
+bool MSHR::insertInv(Addr baseAddr, MemEvent* event, bool inProgress) {
+    bool ret = insertInv(baseAddr, mshrType(event), inProgress);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (LIKELY(ret)) {
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr)
+            d_->debug(_L9_, "MSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %lu\n", baseAddr, event->getAddr(), CommandString[event->getCmd()], size_, map_[baseAddr].mshrQueue.size());
      }
-    else if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
+    else if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR Full.  Event could not be inserted.\n");
+#endif
     return ret;
 }
 
-bool MSHR::insertAll(Addr _baseAddr, vector<mshrType>& _events){
-    if(_events.empty()) return false;
-    mshrTable::iterator it = map_.find(_baseAddr);
+bool MSHR::insertAll(Addr baseAddr, vector<mshrType>& events) {
+    if (events.empty()) return false;
+    mshrTable::iterator it = map_.find(baseAddr);
     
-    if(it != map_.end()) (it->second).mshrQueue.insert((it->second).mshrQueue.end(), _events.begin(), _events.end());
+    if (it != map_.end()) (it->second).mshrQueue.insert((it->second).mshrQueue.end(), events.begin(), events.end());
     else {
         mshrEntry entry;
-        entry.mshrQueue = _events;
+        entry.mshrQueue = events;
         entry.acksNeeded = 0;
         entry.tempData.clear();
-        map_[_baseAddr] = entry;
+        map_[baseAddr] = entry;
     }
     
     int trueSize = 0;
-    for(vector<mshrType>::iterator it = _events.begin(); it != _events.end(); it++){
-        if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
+    for (vector<mshrType>::iterator it = events.begin(); it != events.end(); it++) {
+        if ((*it).elem.type() == typeid(MemEvent*)) trueSize++;
     }
     
     size_ += trueSize;
@@ -249,30 +261,30 @@ bool MSHR::insertAll(Addr _baseAddr, vector<mshrType>& _events){
 
 
 /* Private insertion methods called by public inserts */
-bool MSHR::insert(Addr _baseAddr, mshrType _entry){
-    if (_entry.elem.type() == typeid(MemEvent*)) {
+bool MSHR::insert(Addr baseAddr, mshrType entry) {
+    if (entry.elem.type() == typeid(MemEvent*)) {
         if (size_ >= maxSize_) return false;
         size_++;
     }
-    mshrTable::iterator it = map_.find(_baseAddr);
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
         mshrEntry entry;
         entry.acksNeeded = 0;
         entry.tempData.clear();
-        map_[_baseAddr] = entry;
+        map_[baseAddr] = entry;
     }
-    map_[_baseAddr].mshrQueue.push_back(_entry);
+    map_[baseAddr].mshrQueue.push_back(entry);
     
     return true;
 }
 
-bool MSHR::insertInv(Addr _baseAddr, mshrType _entry, bool inProgress) {
-    if(size_ >= maxSize_) return false;
+bool MSHR::insertInv(Addr baseAddr, mshrType entry, bool inProgress) {
+    if (size_ >= maxSize_) return false;
     
-    vector<mshrType>::iterator it = map_[_baseAddr].mshrQueue.begin();
+    vector<mshrType>::iterator it = map_[baseAddr].mshrQueue.begin();
     /*int i = 0;
-    for (it = map_[_baseAddr].mshrQueue.begin(); it != map_[_baseAddr].mshrQueue.end(); it++) {
-        if (inProgress && it == map_[_baseAddr].mshrQueue.begin()) continue;
+    for (it = map_[baseAddr].mshrQueue.begin(); it != map_[baseAddr].mshrQueue.end(); it++) {
+        if (inProgress && it == map_[baseAddr].mshrQueue.begin()) continue;
         if (it->elem.type() == typeid(MemEvent*)) {
             MemEvent * ev = boost::get<MemEvent*>(it->elem);
             if (ev->getCmd() == GetS || ev->getCmd() == GetSEx || ev->getCmd() == GetX) {
@@ -281,9 +293,9 @@ bool MSHR::insertInv(Addr _baseAddr, mshrType _entry, bool inProgress) {
         }
         i++;
     }*/
-    if (inProgress && map_[_baseAddr].mshrQueue.size() > 0) it++;
-    map_[_baseAddr].mshrQueue.insert(it, _entry);
-    if(_entry.elem.type() == typeid(MemEvent*)) size_++;
+    if (inProgress && map_[baseAddr].mshrQueue.size() > 0) it++;
+    map_[baseAddr].mshrQueue.insert(it, entry);
+    if (entry.elem.type() == typeid(MemEvent*)) size_++;
     //printTable();
     return true;
 }
@@ -311,89 +323,101 @@ MemEvent* MSHR::getOldestRequest() const {
 }
 
 
-vector<mshrType> MSHR::removeAll(Addr _baseAddr) {
-    mshrTable::iterator it = map_.find(_baseAddr);
+vector<mshrType> MSHR::removeAll(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
-        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     vector<mshrType> res = (it->second).mshrQueue;
     if ((it->second).acksNeeded == 0 && (it->second).tempData.empty()) {
-        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", _baseAddr);
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", baseAddr);
+#endif
         map_.erase(it);
     } else {
         (it->second).mshrQueue.clear();
     }
     int trueSize = 0;
-    for(vector<mshrType>::iterator it = res.begin(); it != res.end(); it++){
-        if((*it).elem.type() == typeid(MemEvent*)) trueSize++;
+    for (vector<mshrType>::iterator it = res.begin(); it != res.end(); it++) {
+        if ((*it).elem.type() == typeid(MemEvent*)) trueSize++;
     }
     
     size_ -= trueSize; 
     if (size_ < 0) {
-        d2_->fatal(CALL_INFO, -1, "%s (MSHR), Error: mshr size < 0 after removing all elements for addr = 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO, -1, "%s (MSHR), Error: mshr size < 0 after removing all elements for addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     return res;
 }
 
-MemEvent* MSHR::removeFront(Addr _baseAddr){
-    mshrTable::iterator it = map_.find(_baseAddr);
+MemEvent* MSHR::removeFront(Addr baseAddr) {
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) {
-        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     //if (it->second.empty()) {
-    //  d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: no front entry to remove in mshr for addr = 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+    //  d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: no front entry to remove in mshr for addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     //}
     //
     // if (it->second.front().elem.type() != typeid(MemEvent*)) {
-    //     d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+    //     d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: front entry in mshr is not of type MemEvent. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     // }
     
     MemEvent* ret = boost::get<MemEvent*>((it->second).mshrQueue.front().elem);
     
     (it->second).mshrQueue.erase(it->second.mshrQueue.begin());
     if (((it->second).acksNeeded == 0) && (it->second).tempData.empty() && (it->second).mshrQueue.empty()) {
-        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", _baseAddr);
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", baseAddr);
+#endif
         map_.erase(it);
     }
     
     size_--;
     
-    if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %" PRIx64 "\n", _baseAddr);
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"MSHR: Removed front event, Key Addr = %" PRIx64 "\n", baseAddr);
+#endif
     return ret;
 }
 
 
 
 
-void MSHR::removeElement(Addr _baseAddr, MemEvent* _event){
-    removeElement(_baseAddr, mshrType(_event));
+void MSHR::removeElement(Addr baseAddr, MemEvent* event) {
+    removeElement(baseAddr, mshrType(event));
 }
 
-void MSHR::removeElement(Addr _baseAddr, Addr _pointer){
-    removeElement(_baseAddr, mshrType(_pointer));
+void MSHR::removeElement(Addr baseAddr, Addr pointer) {
+    removeElement(baseAddr, mshrType(pointer));
 }
 
-void MSHR::removeElement(Addr _baseAddr, mshrType _entry){
+void MSHR::removeElement(Addr baseAddr, mshrType entry) {
 
-    mshrTable::iterator it = map_.find(_baseAddr);
+    mshrTable::iterator it = map_.find(baseAddr);
     if (it == map_.end()) return;    
-    if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_,"MSHR Entry size = %lu\n", it->second.mshrQueue.size());
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"MSHR Entry size = %lu\n", it->second.mshrQueue.size());
+#endif
     vector<mshrType>& res = (it->second).mshrQueue;
-    vector<mshrType>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&_entry));
+    vector<mshrType>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&entry));
     
-    if(itv == res.end()) return;
-    res.erase(std::remove_if(res.begin(), res.end(), MSHREntryCompare(&_entry)), res.end());
+    if (itv == res.end()) return;
+    res.erase(std::remove_if(res.begin(), res.end(), MSHREntryCompare(&entry)), res.end());
 
     if (((it->second).acksNeeded == 0) && (it->second).tempData.empty() && (it->second).mshrQueue.empty()) {
-        if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", _baseAddr);
+#ifdef __SST_DEBUG_OUTPUT__
+        if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR erasing 0x%" PRIx64 "\n", baseAddr);
+#endif
         map_.erase(it);
     }
     
-    if (_entry.elem.type() == typeid(MemEvent*)) size_--; 
+    if (entry.elem.type() == typeid(MemEvent*)) size_--; 
     if (size_ < 0) {
-        d2_->fatal(CALL_INFO, -1, "%s (MSHR), Error: mshr size < 0 after removing element with address = 0x%" PRIx64 "\n", ownerName_.c_str(), _baseAddr);
+        d2_->fatal(CALL_INFO, -1, "%s (MSHR), Error: mshr size < 0 after removing element with address = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
-    if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_, "MSHR Removed Event\n");
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_, "MSHR Removed Event\n");
+#endif
 }
 
 
@@ -401,16 +425,18 @@ void MSHR::removeWriteback(Addr baseAddr) {
     MSHR::removeElement(baseAddr, mshrType(baseAddr));
 }
 
-bool MSHR::elementIsHit(Addr _baseAddr, MemEvent *_event) {
-    mshrType _entry = mshrType(_event);
+bool MSHR::elementIsHit(Addr baseAddr, MemEvent *event) {
+    mshrType entry = mshrType(event);
 
-    mshrTable::iterator it = map_.find(_baseAddr);
-    if(it == map_.end()) return false;    
-    if (DEBUG_ALL || DEBUG_ADDR == _baseAddr) d_->debug(_L9_,"MSHR Entry size = %lu\n", it->second.mshrQueue.size());
+    mshrTable::iterator it = map_.find(baseAddr);
+    if (it == map_.end()) return false;    
+#ifdef __SST_DEBUG_OUTPUT__
+    if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L9_,"MSHR Entry size = %lu\n", it->second.mshrQueue.size());
+#endif
     vector<mshrType>& res = (it->second).mshrQueue;
-    vector<mshrType>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&_entry));
+    vector<mshrType>::iterator itv = std::find_if (res.begin(), res.end(), MSHREntryCompare(&entry));
     
-    if(itv == res.end()) return false;
+    if (itv == res.end()) return false;
     return true;
 }
 
@@ -423,6 +449,7 @@ void MSHR::printTable() {
             if (it2->elem.type() != typeid(MemEvent*)) {
                 Addr ptr = boost::get<Addr>(it2->elem);
                 d_->debug(_L9_, "\t0x%" PRIx64 "\n", ptr);
+
             } else {
                 MemEvent * ev = boost::get<MemEvent*>(it2->elem);
                 d_->debug(_L9_, "\t%s, %s\n", ev->getSrc().c_str(), CommandString[ev->getCmd()]);
@@ -432,11 +459,11 @@ void MSHR::printTable() {
 }
 
 
-/*void MSHR::printEntry(Addr baseAddr){
+/*void MSHR::printEntry(Addr baseAddr) {
     mshrTable::iterator it = map_.find(baseAddr);
-    if(it == map_.end()) return;
+    if (it == map_.end()) return;
     int i = 0;
-    for(vector<MemEvent*>::iterator it = map_[baseAddr].begin(); it != map_[baseAddr].end(); ++it, ++i) {
+    for (vector<MemEvent*>::iterator it = map_[baseAddr].begin(); it != map_[baseAddr].end(); ++it, ++i) {
         MemEvent* event = (MemEvent*)(*it);
         d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, baseAddr, event->getAddr(), CommandString[event->getCmd()]);
     }

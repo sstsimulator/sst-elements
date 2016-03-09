@@ -21,7 +21,8 @@ ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 		uint32_t defLevel, uint32_t translateCacheEntryCount) :
 	owner(ownMe),
 	translationCacheEntries(translateCacheEntryCount),
-	translationEnabled(true) {
+	translationEnabled(true),
+	reportUnmatchedFree(false) {
 
 	output = out;
 	memoryLevels = mLevels;
@@ -35,31 +36,31 @@ ArielMemoryManager::ArielMemoryManager(SST::Component* ownMe,
 		pageSizes[i] = pSizes[i];
 	}
 
-	freePages = (std::queue<uint64_t>**) malloc( sizeof(std::queue<uint64_t>*) * mLevels );
+	freePages = (std::deque<uint64_t>**) malloc( sizeof(std::deque<uint64_t>*) * mLevels );
 	uint64_t nextMemoryAddress = 0;
 	for(uint32_t i = 0; i < mLevels; ++i) {
-		freePages[i] = new std::queue<uint64_t>();
+		freePages[i] = new std::deque<uint64_t>();
 
 		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, stdPCounts[i]);
 		for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
-			freePages[i]->push(nextMemoryAddress);
+			freePages[i]->push_back(nextMemoryAddress);
 			nextMemoryAddress += pageSizes[i];
 		}
 		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, 
 			(uint32_t) freePages[i]->size());
 	}
 
-	pageAllocations = (std::map<uint64_t, uint64_t>**) malloc(sizeof(std::map<uint64_t, uint64_t>*) * memoryLevels);
+	pageAllocations = (std::unordered_map<uint64_t, uint64_t>**) malloc(sizeof(std::unordered_map<uint64_t, uint64_t>*) * memoryLevels);
 	for(uint32_t i = 0; i < mLevels; ++i) {
-		pageAllocations[i] = new std::map<uint64_t, uint64_t>();
+		pageAllocations[i] = new std::unordered_map<uint64_t, uint64_t>();
 	}
 
-	pageTables = (std::map<uint64_t, uint64_t>**) malloc(sizeof(std::map<uint64_t, uint64_t>*) * memoryLevels);
+	pageTables = (std::unordered_map<uint64_t, uint64_t>**) malloc(sizeof(std::unordered_map<uint64_t, uint64_t>*) * memoryLevels);
 	for(uint32_t i = 0; i < mLevels; ++i) {
-		pageTables[i] = new std::map<uint64_t, uint64_t>();
+		pageTables[i] = new std::unordered_map<uint64_t, uint64_t>();
 	}
 
-	translationCache = new std::map<uint64_t, uint64_t>();
+	translationCache = new std::unordered_map<uint64_t, uint64_t>();
 
 	statTranslationCacheHits    = owner->registerStatistic<uint64_t>("tlb_hits");
 	statTranslationCacheEvict   = owner->registerStatistic<uint64_t>("tlb_evicts");
@@ -101,7 +102,7 @@ void ArielMemoryManager::populateTables(const char* populateFilePath, const uint
 		}
 
 		const uint64_t freePhysical = freePages[level]->front();
-		freePages[level]->pop();
+		freePages[level]->pop_front();
 
 		output->verbose(CALL_INFO, 4, 0, "Pinning address %" PRIu64 " in level %" PRIu32 " (physical=%" PRIu64 "\n",
 			pinAddr, level, freePhysical);
@@ -172,7 +173,8 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 		}
 
 		const uint64_t nextPhysPage = freePages[level]->front();
-		freePages[level]->pop();
+		freePages[level]->pop_front();
+
 		pageTables[level]->insert( std::pair<uint64_t, uint64_t>(nextVirtPage, nextPhysPage) );
 
 		output->verbose(CALL_INFO, 4, 0, "Allocating memory page, physical page=%" PRIu64 ", virtual page=%" PRIu64 "\n",
@@ -198,8 +200,8 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 	bool found = false;
 
 	for(uint32_t i = 0; i < memoryLevels; ++i) {
-		std::map<uint64_t, uint64_t>* level_allocations = pageAllocations[i];
-		std::map<uint64_t, uint64_t>::iterator level_check = level_allocations->find(virtAddress);
+		std::unordered_map<uint64_t, uint64_t>* level_allocations = pageAllocations[i];
+		auto level_check = level_allocations->find(virtAddress);
 
 		if(level_check != level_allocations->end()) {
 			output->verbose(CALL_INFO, 4, 0, "Found entry for virtual address: %" PRIu64 " in the free process (level=%" PRIu32 ")\n",
@@ -212,7 +214,7 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 			for(uint64_t free_size = 0; free_size < allocation_length; free_size += page_size) {
 				uint64_t phys_addr = translateAddress(virtAddress + free_size);
 
-				freePages[i]->push(phys_addr);
+				freePages[i]->push_front(phys_addr);
 				pageTables[i]->erase(virtAddress + free_size);
 			}
 
@@ -222,13 +224,15 @@ void ArielMemoryManager::free(uint64_t virtAddress) {
 	}
 
 	if(! found) {
-		output->fatal(CALL_INFO, -1, "Error: asked to free virtual address: %" PRIu64 " but entry was not found in allocation map.\n",
-			virtAddress);
+		if( reportUnmatchedFree ) {
+			output->fatal(CALL_INFO, -1, "Error: asked to free virtual address: %" PRIu64 " but entry was not found in allocation map.\n",
+				virtAddress);
+		}
+	} else {
+		// Invalidate the cached entries
+		translationCache->clear();
+		statTranslationShootdown->addData(1);
 	}
-
-	// Invalidate the cached entries
-	translationCache->clear();
-	statTranslationShootdown->addData(1);
 }
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
@@ -246,7 +250,7 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	output->verbose(CALL_INFO, 4, 0, "Page Table: translate virtual address %" PRIu64 "\n", virtAddr);
 
 	// Check the translation cache otherwise carry on
-	std::map<uint64_t, uint64_t>::iterator checkCache = translationCache->find(virtAddr);
+	auto checkCache = translationCache->find(virtAddr);
 	if(checkCache != translationCache->end()) {
 		statTranslationCacheHits->addData(1);
 		return checkCache->second;
@@ -255,7 +259,7 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	// We will have to search every memory level to find where the address lies
 	for(uint32_t i = 0; i < memoryLevels; ++i) {
 		if(! found) {
-			std::map<uint64_t, uint64_t>::iterator page_itr;
+			std::unordered_map<uint64_t, uint64_t>::iterator page_itr;
 			const uint64_t pageSize = pageSizes[i];
 			const uint64_t page_offset = virtAddr % pageSize;
 			const uint64_t page_start = virtAddr - page_offset;

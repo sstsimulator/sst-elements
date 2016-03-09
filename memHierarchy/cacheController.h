@@ -69,12 +69,12 @@ public:
     Addr toBaseAddr(Addr addr){
         return (addr) & ~(cf_.cacheArray_->getLineSize() - 1);
     }
-    
+
 private:
     struct CacheConfig;
     
     /** Constructor for Cache Component */
-    Cache(ComponentId_t _id, Params &_params, CacheConfig _config);
+    Cache(ComponentId_t id, Params &params, CacheConfig config);
     
     /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
     void processIncomingEvent(SST::Event *event);
@@ -86,7 +86,7 @@ private:
     void processEvent(MemEvent* event, bool mshrHit);
     
     /** Configure this component's links */
-    void configureLinks();
+    void configureLinks(Params &params);
     
     /** Handler for incoming prefetching events. */
     void handlePrefetchEvent(SST::Event *event);
@@ -171,8 +171,7 @@ private:
     /** Print input members/parameters */
     void pMembers();
     
-    /** Udpate the upgrade latency stats */
-    void updateUpgradeLatencyAverage(SimTime_t start, Addr requestAddr);
+    /** Update the latency stats */
     void recordLatency(MemEvent * event);
 
     /** Get the front element of a MSHR entry */
@@ -193,32 +192,36 @@ private:
     void intrapolateMSHRLatency();
 
     void profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall);
-    void incTotalRequestsReceived(int _groupId);
-    void incTotalMSHRHits(int _groupId);
-    void incInvalidateWaitingForUserLock(int _groupId);
-    int groupId;
 
     /**  Clock Handler.  Every cycle events are executed (if any).  If clock is idle long enough, 
          the clock gets deregistered from TimeVortx and reregistered only when an event is received */
     bool clockTick(Cycle_t time) {
         timestamp_++;
-        if(cf_.bottomNetwork_ != "") memNICIdle_ = bottomNetworkLink_->clock();
-        coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
-        if ( cf_.maxWaitTime_ > 0 ) {
-            checkMaxWait();
-        }
-        return false;
-    }
-    
-    /** Increment idle clock count */
-    bool incIdleCount(){
-        idleCount_++;
-        if(cf_.bottomNetwork_ == "" && idleCount_ > idleMax_){
-            clockOn_ = false;
-            idleCount_ = 0;
+        bool queuesEmpty = coherenceMgr->sendOutgoingCommands(getCurrentSimTimeNano());
+        
+        bool nicIdle = true;
+        if (bottomNetworkLink_) nicIdle = bottomNetworkLink_->clock();
+        if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
+        
+        // MSHR occupancy
+        statMSHROccupancy->addData(mshr_->getSize());
+        
+        // Disable lower-level cache clocks if they're idle
+        if (queuesEmpty && nicIdle && clockIsOn_) {
+            clockIsOn_ = false;
+            lastActiveClockCycle_ = time;
+            if (!maxWaitWakeupExists_) {
+                maxWaitWakeupExists_ = true;
+                maxWaitSelfLink_->send(1, NULL);
+            }
             return true;
         }
         return false;
+    }
+
+    void maxWaitWakeup(SST::Event * ev) {
+        checkMaxWait();
+        maxWaitSelfLink_->send(1, NULL);
     }
 
     void checkMaxWait(void) const {
@@ -258,9 +261,6 @@ private:
         bool L1_;
         bool LLC_;
         bool LL_;
-        string bottomNetwork_;
-        string topNetwork_;
-        vector<int> statGroupIds_;
         bool allNoncacheableRequests_;
         SimTime_t maxWaitTime_;
         string type_;
@@ -270,17 +270,15 @@ private:
     uint                    ID_;
     CacheListener*          listener_;
     vector<Link*>*          lowNetPorts_;
-    vector<Link*>*          highNetPorts_;
+    Link*                   highNetPort_;
     Link*                   selfLink_;
+    Link*                   maxWaitSelfLink_;
     MemNIC*                 bottomNetworkLink_;
     MemNIC*                 topNetworkLink_;
     Output*                 d_;
     Output*                 d2_;
     vector<string>          lowerLevelCacheNames_;
     vector<string>          upperLevelCacheNames_;
-    bool                    L1_;
-    bool                    LLC_;
-    bool                    LL_;
     MSHR*                   mshr_;
     MSHR*                   mshrNoncacheable_;
     CoherencyController*    coherenceMgr;
@@ -289,12 +287,6 @@ private:
     uint64                  tagLatency_;
     uint64                  mshrLatency_;
     uint64                  timestamp_;
-    int                     statsFile_;
-    int                     idleMax_;
-    int                     idleCount_;
-    bool                    memNICIdle_;
-    int                     memNICIdleCount_;
-    bool                    clockOn_;
     Clock::Handler<Cache>*  clockHandler_;
     TimeConverter*          defaultTimeBase_;
     std::map<string, LinkId_t>     nameMap_;
@@ -303,22 +295,15 @@ private:
     std::map<MemEvent*,int> missTypeList;
     bool                    DEBUG_ALL;
     Addr                    DEBUG_ADDR;
-    
-    /* Profiling */
-    bool                    groupStats_;
-    map<int,CtrlStats>      stats_;
-    uint64                  totalUpgradeLatency_;     //Latency for upgrade outstanding requests
-    uint64                  totalLatency_;            //Latency for ALL outstanding requrests (Upgrades, Inv, etc)
-    uint64                  upgradeCount_;
-    uint64                  missLatency_GetS_IS;
-    uint64                  missLatency_GetS_M;
-    uint64                  missLatency_GetX_IM;
-    uint64                  missLatency_GetX_SM;
-    uint64                  missLatency_GetX_M;
-    uint64                  missLatency_GetSEx_IM;
-    uint64                  missLatency_GetSEx_SM;
-    uint64                  missLatency_GetSEx_M;
-    
+
+    /* Performance enhancement: turn clocks off when idle */
+    bool                    clockIsOn_;                 // Tell us whether clock is on or off
+    SimTime_t               lastActiveClockCycle_;      // Cycle we turned the clock off at - for re-syncing stats
+    SimTime_t               checkMaxWaitInterval_;      // Check for timeouts on this interval - when clock is on
+    UnitAlgebra             maxWaitWakeupDelay_;        // Set wakeup event to check timeout on this interval - when clock is off
+    bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
+
+
     /* 
      * Statistics API stats  - 
      * Note: these duplicate some of the existing stats that are output 
@@ -354,7 +339,13 @@ private:
     Statistic<uint64_t>* statFetchInvX_recv;
     Statistic<uint64_t>* statInv_recv;
     Statistic<uint64_t>* statNACK_recv;
+    Statistic<uint64_t>* statTotalEventsReceived;
+    Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
+    Statistic<uint64_t>* statInvStalledByLockedLine;
+
+    Statistic<uint64_t>* statMSHROccupancy;
 };
+
 
 /*  Implementation Details
     The coherence protocol implemented by MemHierarchy's 'Cache' component is a directory-based intra-node MESI/MSI coherency
@@ -383,10 +374,10 @@ private:
 
         The MSHR is a map of <addr, vector<UNION(event, addr pointer)> >. 
         Why a UNION(event, addr pointer)?  Upon receiving a miss request, all cache line replacement candidates 
-        might be in transition, regardless of the replacement policy and associativity used.  Instead
-        of sending NACKS (which is inefficient), the MSHR stores a pointer in the MSHR entry.  When a 
-        replacement candidate is NO longer, the MSHR looks at the pointer and 'replays' the
-        previously blocked request, which actually is store in another MSHR entry (different address).
+        might be in transition, regardless of the replacement policy and associativity used.  
+        In this case the MSHR stores a pointer in the MSHR entry.  When a replacement candidate is NO longer in
+	transition, the MSHR looks at the pointer and 'replays' the previously blocked request, which is  
+	stored in another MSHR entry (different address).
         
         Example:
             MSHR    Addr   Requests
@@ -398,32 +389,25 @@ private:
             When A finishes (Request #1), then request #2, request #3 (from B), and request #4 are replayed 
             (as long as none of them further get blocked again for some reason).
  
- 
-    
     The cache itself is a "blocking" cache, which is the  type most often found in hardware.  A blocking
     cache does not respond to requests if the cache line is in transition.  Instead, it stores
     pending requests in the MSHR.  The MSHR is in charge of "replaying" pending requests once
     the cache line is in a stable state. 
- 
-    Coherence-related algorithms are broken down into a Top Cache Coherence (topCC) controller and a
-    Bottom Cache Coherence (bottomCC) controller.  As the name suggests,  the topCC handles
-    requests sent to the higher level caches (closer to CPU), which could be invalidates, and
-    responses.  Whereas bottomCC deals with "Cache Lines" to store state and data information, topCC
-    deals with "CCLine" and stores coherence state, mainly sharers, owners, and atomic-related
-    information.  BottomCC handles upgrades, and makes sure a request only proceeds if the cache holds
-    the right state.  It also sends responses if the request came from the directory controller.
+
+    Coherence-related algorithms are handled by coherenceControllers. Implemented algorithms include an L1 MESI or MSI protocol,
+    and incoherent L1 protocol, a lower-level (farther from CPU) cache MESI/MSI protocol for inclusive or exclusive caches, a lower-level 
+    cache+directory MESI/MSI protocol for exclusive caches with an inclusive directory, and an incoherent lower-level cache protocol.
+    The incoherent caches maintain present/not-present information and write back dirty blocks but make no attempt to track or resolve
+    coherence conflicts (e.g., two caches CAN have independent copies of the same block and both be modifying their copies). For this reason,
+    processors that rely on "correct" data from memHierarchy are not likely to work with incoherent caches.
     
     Prefetchers are part of SST's Cassini element, not part of MemHierarchy.  Prefetchers can be used along
-    any level cache. Prefetch does not currently work alongside a shared, sliced caches.
-    
+    any level cache except for exclusive caches without an accompanying directory. Such caches are not able to determine whether a cache above them 
+    (closer to the CPU) has a block and thus may prefetch blocks that are already present in their hierarchy. The lower-level caches are not designed
+    to deal with this. Prefetch also does not currently work alongside shared, sliced caches as prefetches generated at one cache are not neccessarily
+    for blocks mapped to that cache.
  
     Key notes:
-        - MemHierarchy's CClines always have deterministic information about the sharers.
-        
-        - In case of deadlock situations, the lower level cache has priority.  For instance,
-        if an L2 sends an invalidate to an L1, while at the same time an L1 sends an upgrade request to an L2, the
-        L2 has priority.  The L1 request is stored in the L2 MSHR to be handled at a later time.
-        
         - The cache supports hardware "locking" (GetSEx command), and atomics-based requests (LLSC, GetS with 
         LLSC flag on).  For LLSC atomics, the flag "LLSC_Resp" is set when a store (GetX) was successful.
         
@@ -444,24 +428,9 @@ private:
         - A "Bus" component is only needed between two caches when there is more than one higher level cache.
           Eg.  L1  L1 <-- bus --> L2.  When a single L1 connects directly to an L2, no bus is needed.
     
-        - An L1 cache handles as many requests sent by the CPU per cycle.  However, only one request is sent
-        back to the CPU per cycle (after access_latency_cycles in case of a hit).
+        - An L1 cache handles as many requests as are sent by the CPU per cycle.  
          
-        - Class member variables have a suffix "_", while function parameters have it as a preffix.
-        
         - Use a 'no wrapping' editor to view MH files, as many comments are on the 'side' and fall off the window 
- 
-        - TODO:
-            - L2, and L3 should go to "sleep" (no clock tick handler) when they are idle.  This will improve
-              SST performance.
-            - Create a 'simplistic' memHierarchy model, one that does not measures contentions and sends requests
-              through "links".  This simplistic model would not be as accurate but would be greatly helpful
-              when simulatating hundreds of cores.  MemHierarchy is cycle-accurate and thus is slower than other
-              implementations.
-            - Directory-based intra-node MOESI protocol
- 
-    Questions: caesar.tx@gmail.com
-
 */
 
 

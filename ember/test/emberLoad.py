@@ -62,7 +62,7 @@ try:
 		"rtrArb=","embermotifLog=",	"rankmapper=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
 
-except getopt.GetopError as err:
+except getopt.GetoptError as err:
     print str(err)
     sys.exit(2)
 
@@ -195,6 +195,11 @@ elif "dragonfly" == netTopo:
 		
 	topoInfo = DragonFlyInfo(netShape)
 	topo = topoDragonFly()
+
+elif "dragonfly2" == netTopo:
+
+	topoInfo = DragonFly2Info(netShape)
+	topo = topoDragonFly2()
 
 else:
 	sys.exit("how did we get here")

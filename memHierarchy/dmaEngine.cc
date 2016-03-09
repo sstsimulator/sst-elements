@@ -38,11 +38,11 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "netLink";
     myInfo.link_bandwidth = "1GB/s";
-	myInfo.num_vcs = params.find_integer("network_num_vc", 3);
+	myInfo.num_vcs = params.find_integer("network_num_vc", 1);
     myInfo.name = getName();
     myInfo.network_addr = params.find_integer("netAddr");
     myInfo.type = MemNIC::TypeDMAEngine;
-    networkLink = new MemNIC(this, myInfo);
+    networkLink = new MemNIC(this, &dbg, -1, myInfo);
 
     blocksize = 0;
 }
@@ -105,9 +105,11 @@ bool DMAEngine::clock(Cycle_t cycle)
     while ( NULL != (me = networkLink->recv()) ) {
         /* Process network packet */
         Request* req = findRequest(me->getResponseToID());
+#ifdef __SST_DEBUG_OUTPUT__
         if ( NULL == req ) {
             dbg.debug(_L10_, "Received Packet for which we have no response ID waiting.  ID received: (%" PRIx64 ", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
         }
+#endif
         processPacket(req, me);
     }
 

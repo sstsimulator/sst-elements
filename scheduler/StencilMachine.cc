@@ -1,10 +1,10 @@
 // Copyright 2009-2015 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2015, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -26,7 +26,7 @@ StencilMachine::StencilMachine(std::vector<int> inDims, int numLinks, int numCor
 {
 }
 
-std::string StencilMachine::getParamHelp() 
+std::string StencilMachine::getParamHelp()
 {
     return "[<x dim>,<y dim>,...]\n\t Mesh or torus with specified dimensions";
 }
@@ -52,7 +52,7 @@ int StencilMachine::indexOf(std::vector<int> dims) const
     return loc.toInt(*this);
 }
 
-AllocInfo* StencilMachine::getBaselineAllocation(Job* job)
+AllocInfo* StencilMachine::getBaselineAllocation(Job* job) const
 {
     std::vector<int> machDims(dims);
     int nodesNeeded = (int) ceil((float) job->getProcsNeeded() / coresPerNode);
@@ -68,7 +68,7 @@ AllocInfo* StencilMachine::getBaselineAllocation(Job* job)
     }
 
     //dimensions if we fit job in a cube
-    int cubicDim = (int)ceil( (float) pow((float)nodesNeeded, 1.0/dims.size()) ); 
+    int cubicDim = (int)ceil( (float) pow((float)nodesNeeded, 1.0/dims.size()) );
 
     //restrict dimensions
     for(unsigned int i = 0; i < dims.size(); i++){
@@ -90,7 +90,7 @@ AllocInfo* StencilMachine::getBaselineAllocation(Job* job)
             machDims[i]++;
         }
     }
-   
+
     //Fill given space with snake-shaped order
     AllocInfo* allocInfo = new AllocInfo(job, *this);
     std::vector<int> curLocation(machDims.size(), 0);
@@ -127,7 +127,7 @@ AllocInfo* StencilMachine::getBaselineAllocation(Job* job)
             }
         }
         //return to the current dimension
-        while(curDim >= 0){  
+        while(curDim >= 0){
             if(machDims[curDim] != 1) {
                 if(ifFwd[curDim]) curLocation[curDim] += 1;
                 else              curLocation[curDim] -= 1;
@@ -146,7 +146,7 @@ MeshLocation::MeshLocation(std::vector<int> inDims)
     dims = inDims;
 }
 
-MeshLocation::MeshLocation(int inpos, const StencilMachine & m) 
+MeshLocation::MeshLocation(int inpos, const StencilMachine & m)
 {
     dims.resize(m.numDims());
     int stepSize = 1;
@@ -197,7 +197,7 @@ bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2)
     return 0;
 }
 
-bool MeshLocation::equals(const MeshLocation & other) const 
+bool MeshLocation::equals(const MeshLocation & other) const
 {
     bool equal = 1;
     for(unsigned int i = 0; i < dims.size() ; i++){
@@ -214,7 +214,7 @@ int MeshLocation::toInt(const StencilMachine & m)
         nodeID += dims[i] * stepSize;
         stepSize *= m.dims[i];
     }
-    return nodeID; 
+    return nodeID;
 }
 
 std::string MeshLocation::toString()

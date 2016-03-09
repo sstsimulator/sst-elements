@@ -22,7 +22,6 @@ comp_c0_l1cache.addParams({
       "associativity" : "2",
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -42,7 +41,6 @@ comp_c1_l1cache.addParams({
       "associativity" : "2",
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -59,8 +57,6 @@ comp_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "8 KB",
-      "statistics" : "1",
-      "LLC" : 1,
       "LL" : 1,
       "debug" : ""
 })
@@ -73,6 +69,12 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "backend.access_time" : "100 ns"
 })
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 
 # Define the simulation links

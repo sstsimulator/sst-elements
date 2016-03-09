@@ -149,23 +149,23 @@ public:
 
     typedef std::vector<uint8_t> dataVec;       /** Data Payload type */
 
-    /** Creates a new MemEvent - Genetic */
-    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd) : SST::Event(){
-        initialize(_src, _addr, _baseAddr, _cmd);
+    /** Creates a new MemEvent - Generic */
+    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : SST::Event() {
+        initialize(src, addr, baseAddr, cmd);
     }
 
     /** MemEvent constructor - Reads */
-    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size) : SST::Event() {
-        initialize(_src, _addr, _baseAddr, _cmd, _size);
+    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : SST::Event() {
+        initialize(src, addr, baseAddr, cmd, size);
     }
 
     /** MemEvent constructor - Writes */
-    MemEvent(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data) : SST::Event() {
-        initialize(_src, _addr, _baseAddr, _cmd, _data);
+    MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : SST::Event() {
+        initialize(src, addr, baseAddr, cmd, data);
     }
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
-    MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent){
+    MemEvent* makeNACKResponse(const Component *source, MemEvent* NACKedEvent) {
         MemEvent *me      = new MemEvent(*this);
         me->responseToID_ = eventID_;
         me->dst_          = src_;
@@ -179,7 +179,7 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(){
+    MemEvent* makeResponse() {
         MemEvent *me      = new MemEvent(*this);
         me->cmd_          = commandResponse(cmd_);
         me->responseToID_ = eventID_;
@@ -193,42 +193,42 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(State state){
+    MemEvent* makeResponse(State state) {
         MemEvent *me = makeResponse();
         me->setGrantedState(state);
         return me;
     }
 
-    void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd){
+    void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd) {
         initialize();
-        src_  = _src->getName();
-        addr_ = _addr;
-        baseAddr_ = _baseAddr;
-        cmd_  = _cmd;
-        initTime_ = _src->getCurrentSimTimeNano();
+        src_  = src->getName();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        cmd_  = cmd;
+        initTime_ = src->getCurrentSimTimeNano();
      }
 
-     void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, uint32_t _size){
+     void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) {
         initialize();
-        src_      = _src->getName();
-        addr_     = _addr;
-        baseAddr_ = _baseAddr;
-        cmd_      = _cmd;
-        size_     = _size;
-        initTime_ = _src->getCurrentSimTimeNano();
+        src_      = src->getName();
+        addr_     = addr;
+        baseAddr_ = baseAddr;
+        cmd_      = cmd;
+        size_     = size;
+        initTime_ = src->getCurrentSimTimeNano();
      }
 
-    void initialize(const Component *_src, Addr _addr, Addr _baseAddr, Command _cmd, std::vector<uint8_t>& _data){
+    void initialize(const Component *src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) {
         initialize();
-        src_         = _src->getName();
-        addr_        = _addr;
-        baseAddr_    = _baseAddr;
-        cmd_         = _cmd;
-        initTime_ = _src->getCurrentSimTimeNano();
-        setPayload(_data);
+        src_         = src->getName();
+        addr_        = addr;
+        baseAddr_    = baseAddr;
+        cmd_         = cmd;
+        initTime_ = src->getCurrentSimTimeNano();
+        setPayload(data);
     }
 
-    void initialize(){
+    void initialize() {
         addr_               = 0;
         cmd_                = NULLCMD;
         eventID_            = generateUniqueId();
@@ -245,12 +245,9 @@ public:
         loadLink_           = false;
         storeConditional_   = false;
         grantedState_       = NULLST;
-        startTime_          = 0;
         NACKedEvent_        = NULL;
         retries_            = 0;
-        inMSHR_             = false;
         blocked_            = false;
-        statsUpdated_       = false;
         initTime_           = 0;
         payload_.clear();
         dirty_              = false;
@@ -268,21 +265,21 @@ public:
     /** @return  Command of this MemEvent */
     Command getCmd(void) const { return cmd_; }
     /** Sets the Command of this MemEvent */
-    void setCmd(Command _newcmd) { cmd_ = _newcmd; }
+    void setCmd(Command newcmd) { cmd_ = newcmd; }
     /** @return  the target Address of this MemEvent */
     Addr getAddr(void) const { return addr_; }
     /** Sets the target Address of this MemEvent */
-    void setAddr(Addr _addr) { addr_ = _addr; }
+    void setAddr(Addr addr) { addr_ = addr; }
     /** Sets the Base Address of this MemEvent */
-    void setBaseAddr(Addr _baseAddr) { baseAddr_ = _baseAddr; }
+    void setBaseAddr(Addr baseAddr) { baseAddr_ = baseAddr; }
 
     /** Sets the virtual address of this MemEvent */
-    void setVirtualAddress(Addr _newVA) { vAddr_ = _newVA; }
+    void setVirtualAddress(Addr newVA) { vAddr_ = newVA; }
     /** Gets the virtual address of this MemEvent */
     uint64_t getVirtualAddress() { return vAddr_; }
 
     /** Sets the instruction pointer of that caused this MemEvent */
-    void setInstructionPointer(Addr _newIP) { instPtr_ = _newIP; }
+    void setInstructionPointer(Addr newIP) { instPtr_ = newIP; }
     /** Get the instruction pointer of that caused this MemEvent */
     uint64_t getInstructionPointer() { return instPtr_; }
 
@@ -292,61 +289,55 @@ public:
     /** @return  the size in bytes that this MemEvent represents */
     uint32_t getSize(void) const { return size_; }
     /** Sets the size in bytes that this MemEvent represents */
-    void setSize(uint32_t _size) { size_ = _size; }
+    void setSize(uint32_t size) { size_ = size; }
    
     /** Increments the number of retries */
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
 
-    bool inMSHR(){ return inMSHR_; }
-    void setInMSHR(bool _value){ inMSHR_ = _value; }
-    
-    bool blocked(){ return blocked_; }
-    void setBlocked(bool _value){ blocked_ = _value; }
+    bool blocked() { return blocked_; }
+    void setBlocked(bool value) { blocked_ = value; }
     
     bool inProgress() { return inProgress_; }
-    void setInProgress(bool _value) { inProgress_ = _value; }
+    void setInProgress(bool value) { inProgress_ = value; }
 
-    bool statsUpdated(){ return statsUpdated_; }
-    void setStatsUpdated(bool _value) { statsUpdated_ = _value; }
-    
-    void setLoadLink(){ loadLink_ = true; }
+    void setLoadLink() { loadLink_ = true; }
     bool isLoadLink() { return loadLink_; }
     
-    void setStoreConditional(){ storeConditional_ = true;}
-    bool isStoreConditional(){ return storeConditional_; }
+    void setStoreConditional() { storeConditional_ = true;}
+    bool isStoreConditional() { return storeConditional_; }
     
-    void setAtomic(bool b){ b ? setFlag(MemEvent::F_LLSC) : clearFlag(MemEvent::F_LLSC); }
-    bool isAtomic(){ return queryFlag(MemEvent::F_LLSC); }
+    void setAtomic(bool b) { b ? setFlag(MemEvent::F_LLSC) : clearFlag(MemEvent::F_LLSC); }
+    bool isAtomic() { return queryFlag(MemEvent::F_LLSC); }
     
-    bool isHighNetEvent(){
-        if(cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback()){
+    bool isHighNetEvent() {
+        if (cmd_ == GetS || cmd_ == GetX || cmd_ == GetSEx || isWriteback()) {
             return true;
         }
         return false;
     }
     
-   bool isLowNetEvent(){
-        if(cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX || cmd_ == Fetch){
+   bool isLowNetEvent() {
+        if (cmd_ == Inv || cmd_ == FetchInv || cmd_ == FetchInvX || cmd_ == Fetch) {
             return true;
         }
         return false;
     }
     
-    bool isWriteback(){
-        if(cmd_ == PutS || cmd_ == PutM ||
-           cmd_ == PutE || cmd_ == PutX || cmd_ == PutXE){
+    bool isWriteback() {
+        if (cmd_ == PutS || cmd_ == PutM ||
+           cmd_ == PutE || cmd_ == PutX || cmd_ == PutXE) {
             return true;
         }
         return false;
     
     }
     
-    bool fromHighNetNACK(){ return isLowNetEvent();}
-    bool fromLowNetNACK(){ return isHighNetEvent();}
+    bool fromHighNetNACK() { return isLowNetEvent();}
+    bool fromLowNetNACK() { return isHighNetEvent();}
 
     /** @return  the data payload. */
-    dataVec& getPayload(void){
+    dataVec& getPayload(void) {
         /* Lazily allocate space for payload */
         if ( payload_.size() < size_ )  payload_.resize(size_);
         return payload_;
@@ -356,78 +347,83 @@ public:
     /** Sets the data payload and payload size.
      * @param[in] data  Vector from which to copy data
      */
-    void setPayload(std::vector<uint8_t>& _data) {
-        payload_ = _data;
+    void setPayload(std::vector<uint8_t>& data) {
+        setSize(data.size());
+        payload_ = data;
     }
     
     /** Sets the data payload and payload size.
      * @param[in] size  How many bytes to copy from data
      * @param[in] data  Data array to set as payload
      */
-    void setPayload(uint32_t _size, uint8_t* _data){
-        setSize(_size);
-        payload_.resize(_size);
-        for ( uint32_t i = 0 ; i < _size ; i++ ) {
-            payload_[i] = _data[i];
+    void setPayload(uint32_t size, uint8_t* data) {
+        setSize(size);
+        payload_.resize(size);
+        for ( uint32_t i = 0 ; i < size ; i++ ) {
+            payload_[i] = data[i];
         }
     }
 
+    uint32_t getPayloadSize() {
+        return payload_.size();
+    }
+
     /** Sets the Granted State */
-    void setGrantedState(State _state){ grantedState_ = _state;}
+    void setGrantedState(State state) { grantedState_ = state;}
     /** Return the Granted State */
-    State getGrantedState(){ return grantedState_; }
+    State getGrantedState() { return grantedState_; }
 
     /** Sets that this is a prefetch command */
-    void setPrefetchFlag(bool _prefetch){ prefetch_ = _prefetch;}
+    void setPrefetchFlag(bool prefetch) { prefetch_ = prefetch;}
     /** Returns true if this is a prefetch command */
-    bool isPrefetch(){ return prefetch_; }
+    bool isPrefetch() { return prefetch_; }
     
     /** Returns true if this is a Data Request */
-    static bool isDataRequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX || cmd == Fetch); }
+    static bool isDataRequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx || cmd == FetchInv || cmd == FetchInvX || cmd == Fetch); }
     bool isDataRequest(void) const { return MemEvent::isDataRequest(cmd_); }
     /** Returns true if this is of cpu type */
-    static bool isCPURequest(Command cmd){ return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
+    static bool isCPURequest(Command cmd) { return (cmd == GetS || cmd == GetX || cmd == GetSEx);}
     bool isCPURequest(void) const { return MemEvent::isCPURequest(cmd_); }
     /** Returns true if this is of response type */
-    static bool isResponse(Command cmd){ return (cmd == GetSResp || cmd == GetXResp);}
+    static bool isResponse(Command cmd) { return (cmd == GetSResp || cmd == GetXResp);}
     bool isResponse(void) const { return MemEvent::isResponse(cmd_); }
     /** Returns true if this is a 'writeback' command type */
-    static bool isWriteback(Command cmd){ return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
+    static bool isWriteback(Command cmd) { return (cmd == PutM || cmd == PutE || cmd == PutX || cmd == PutXE || cmd == PutS); }
     bool isWriteback(void) const { return MemEvent::isWriteback(cmd_); }
    
 
     
     /** Setter for GroupId */
-    void setGroupId(uint32_t _groupID){ groupID_ = _groupID; }
+    void setGroupId(uint32_t groupID) { groupID_ = groupID; }
     /** Getter for GroupId */
     uint32_t getGroupId() { return groupID_; }
     
-    void setDirty(bool status){ dirty_ = status; }
+    void setDirty(bool status) { dirty_ = status; }
     bool getDirty() { return dirty_; }
 
     /** @return the source string - who sent this MemEvent */
     const std::string& getSrc(void) const { return src_; }
     /** Sets the source string - who sent this MemEvent */
-    void setSrc(const std::string& _src) { src_ = _src; }
+    void setSrc(const std::string& src) { src_ = src; }
     /** @return the destination string - who receives this MemEvent */
     const std::string& getDst(void) const { return dst_; }
     /** Sets the destination string - who received this MemEvent */
-    void setDst(const std::string& _d) { dst_ = _d; }
+    void setDst(const std::string& dst) { dst_ = dst; }
     /** @return the requestor string - whose original request caused this MemEvent */
     const std::string& getRqstr(void) const { return rqstr_; }
     /** Sets the requestor string - whose original request caused this MemEvent */
-    void setRqstr(const std::string& _rqstr) { rqstr_ = _rqstr; }
+    void setRqstr(const std::string& rqstr) { rqstr_ = rqstr; }
 
     /** @returns the state of all flags for this MemEvent */
     uint32_t getFlags(void) const { return flags_; }
     /** Sets the specified flag.
      * @param[in] flag  Should be one of the flags beginning with F_,
      *                  defined in MemEvent */
-    void setFlag(uint32_t _flag) { flags_ = flags_ | _flag; }
+    void setFlag(uint32_t flag) { flags_ = flags_ | flag; }
     /** Clears the speficied flag.
      * @param[in] flag  Should be one of the flags beginning with F_,
      *                  defined in MemEvent */
-    void clearFlag(uint32_t _flag) { flags_ = flags_ & (~_flag); }
+    void clearFlag(uint32_t flag) { flags_ = flags_ & (~flag); }
     /** Clears all flags */
     void clearFlags(void) { flags_ = 0; }
     /** Check to see if a flag is set.
@@ -435,19 +431,16 @@ public:
      *                  defined in MemEvent
      * @returns TRUE if the flag is set, FALSE otherwise
      */
-    bool queryFlag(uint32_t _flag) const { return flags_ & _flag; };
+    bool queryFlag(uint32_t flag) const { return flags_ & flag; };
     /** Sets the entire flag state */
-    void setFlags(uint32_t _flags) { flags_ = _flags; }
+    void setFlags(uint32_t flags) { flags_ = flags; }
 
     /** Return the BaseAddr */
-    Addr getBaseAddr(){ return baseAddr_; }
+    Addr getBaseAddr() { return baseAddr_; }
     
-    void setStartTime(uint64_t _startTime) { startTime_ = _startTime; }
-    uint64_t getStartTime(){return startTime_;}
-
     /** Return the command that is the Response to the input command */
-    static Command commandResponse(Command _c){
-        switch(_c) {
+    static Command commandResponse(Command cmd) {
+        switch(cmd) {
             case GetS:
             case GetSEx:
                 return GetSResp;
@@ -465,7 +458,7 @@ public:
 
 #ifdef USE_VAULTSIM_HMC
     /** Setter for HMC instruction type */
-    void setHMCInstType(uint8_t _hmcInstType) { hmcInstType_ = _hmcInstType; }
+    void setHMCInstType(uint8_t hmcInstType) { hmcInstType_ = hmcInstType; }
     /** Getter for HMC instruction type */
     uint8_t getHMCInstType() { return hmcInstType_; }
 
@@ -477,7 +470,7 @@ private:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
     uint32_t        flags_;             // Any flags (atomic, noncacheabel, etc.)
-    uint32_t        size_;              // Size in bytes for the request
+    uint32_t        size_;              // Size in bytes that are being requested
     uint32_t        groupID_;           // ???
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
@@ -493,10 +486,7 @@ private:
     bool            atomic_;            // Whether this request is atomic
     bool            loadLink_;          // Whether this request in a LL
     bool            storeConditional_;  // Whether this request is a SC
-    uint64_t        startTime_;         // For profiling within a cache, the time this request was received
-    bool            inMSHR_;            // Whether this request is in an MSHR (for profiling)
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling)
-    bool            statsUpdated_;      // Whether stats have been recorded for this request (for profiling)
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     Addr	    instPtr_;           // Instruction pointer associated with the request
@@ -530,10 +520,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(atomic_);
         ar & BOOST_SERIALIZATION_NVP(loadLink_);
         ar & BOOST_SERIALIZATION_NVP(storeConditional_);
-        ar & BOOST_SERIALIZATION_NVP(startTime_);
-        ar & BOOST_SERIALIZATION_NVP(inMSHR_);
         ar & BOOST_SERIALIZATION_NVP(blocked_);
-        ar & BOOST_SERIALIZATION_NVP(statsUpdated_);
         ar & BOOST_SERIALIZATION_NVP(initTime_);
         ar & BOOST_SERIALIZATION_NVP(dirty_);
         ar & BOOST_SERIALIZATION_NVP(instPtr_);

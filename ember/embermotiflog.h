@@ -8,32 +8,50 @@
 namespace SST {
 namespace Ember {
 
-class EmberMotifLog {
-
+class EmberMotifLogRecord {
 	public:
-		EmberMotifLog(const std::string logPath) {
-			logger = fopen(logPath.c_str(), "wt");
+		EmberMotifLogRecord(const char* filePath) {
+			loggerFile = fopen(filePath, "wt");
 		}
 
-		~EmberMotifLog() {
-			fclose(logger);
-		}
-
-		void logMotifStart(std::string name, int motifNum) {
-			if(NULL != logger) {
-				fprintf(logger, "%d %s %s\n", motifNum, name.c_str(),
-					Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str());
-				/*
-				fprintf(logger, "%d %s %s %s %" PRIu64 "\n", motifNum, name.c_str(),
-					Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str(),
-					Simulation::getSimulation()->getElapsedSimTime().toString().c_str(),
-					Simulation::getSimulation()->getCurrentSimCycle());
-				*/
+		~EmberMotifLogRecord() {
+			if(NULL != loggerFile) {
+				fclose(loggerFile);
 			}
 		}
 
+		void increment() {
+			motifCount++;
+		}
+
+		void decrement() {
+			motifCount--;
+		}
+
+		uint32_t getCount() const {
+			return motifCount;
+		}
+
+		FILE* getFile() {
+			return loggerFile;
+		}
+
+		void invalidateFile() {
+			loggerFile = NULL;
+		}
+
 	protected:
-		FILE* logger;
+		FILE* loggerFile;
+		uint32_t motifCount;
+};
+
+class EmberMotifLog {
+	public:
+		EmberMotifLog(const std::string logPath, const uint32_t jobID);
+		~EmberMotifLog();
+		void logMotifStart(const std::string name, const int motifNum);
+	protected:
+		EmberMotifLogRecord* logRecord;
 
 };
 

@@ -186,6 +186,13 @@ Topology::PortState topo_dragonfly::getPortState(int port) const
     else return R2R;
 }
 
+std::string topo_dragonfly::getPortLogicalGroup(int port) const
+{
+    if ( (uint32_t)port < params.p ) return "host";
+    if ( (uint32_t)port >= params.p && (uint32_t)port < (params.p + params.a - 1) ) return "group";
+    else return "global";
+}
+
 int
 topo_dragonfly::getEndpointID(int port)
 {

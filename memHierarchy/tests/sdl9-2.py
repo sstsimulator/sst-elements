@@ -4,8 +4,6 @@ import sst
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "500000ns")
-sst.setStatisticLoadLevel(4)
-sst.setStatisticOutput("sst.statOutputConsole")
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
@@ -26,11 +24,9 @@ comp_c0_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
-comp_c0_l1cache.enableAllStatistics();
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
       "num_loadstore" : "1000",
@@ -49,7 +45,6 @@ comp_c1_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -71,7 +66,6 @@ comp_c2_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -93,7 +87,6 @@ comp_c3_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -110,10 +103,8 @@ comp_n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "statistics" : "1",
       "debug" : ""
 })
-comp_n0_l2cache.enableAllStatistics();
 comp_cpu4 = sst.Component("cpu4", "memHierarchy.trivialCPU")
 comp_cpu4.addParams({
       "num_loadstore" : "1000",
@@ -132,7 +123,6 @@ comp_c4_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -154,7 +144,6 @@ comp_c5_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -176,7 +165,6 @@ comp_c6_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -198,7 +186,6 @@ comp_c7_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
-      "statistics" : "1",
       "L1" : "1",
       "debug" : ""
 })
@@ -215,7 +202,6 @@ comp_n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "statistics" : "1",
       "debug" : ""
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
@@ -231,12 +217,10 @@ comp_l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
-      "statistics" : "1",
-      "debug" : "",
-      "LLC" : "1",
+      "debug" : "1",
+      "debug_level" : "1",
       "network_address" : "1",
-      "network_bw" : "25GB/s",
-      "directory_at_next_level" : "1"
+      "network_bw" : "25GB/s"
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -268,6 +252,13 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "backend.mem_size" : "512"
 })
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.DirectoryController")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 
 # Define the simulation links

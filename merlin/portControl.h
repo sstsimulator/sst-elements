@@ -34,10 +34,6 @@ using namespace SST;
 namespace SST {
 namespace Merlin {
 
-// Whole class definition needs to be in the header file so that other
-// libraries can use the class to talk with the merlin routers.
-
-
 typedef std::queue<internal_router_event*> port_queue_t;
 typedef std::queue<TopologyEvent*> topo_queue_t;
 
@@ -59,6 +55,8 @@ private:
 
     UnitAlgebra link_bw;
     UnitAlgebra flit_size;
+    UnitAlgebra input_buf_size;
+    UnitAlgebra output_buf_size;
     
     Topology* topo;
     int port_number;
@@ -99,6 +97,10 @@ private:
     // current virtual channel.
     int curr_out_vc;
 
+    // Represents the start of when a port was idle
+    // If the buffer was empty we instantiate this to the current time
+    SimTime_t idle_start;
+
     // Vairable to tell us if we are waiting for something to happen
     // before we begin more output.  The two things we are waiting on
     // is: 1 - adding new data to output buffers, or 2 - getting
@@ -116,6 +118,7 @@ private:
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* send_packet_count;
     Statistic<uint64_t>* output_port_stalls;
+    Statistic<uint64_t>* idle_time;
 
     Output& output;
     
@@ -136,20 +139,16 @@ public:
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    // PortControl(Router* rif, int rtr_id, std::string link_port_name,
-    //             int port_number, TimeConverter* time_base, Topology *topo, 
-    //             SimTime_t input_latency_cycles, std::string input_latency_timebase,
-    //             SimTime_t output_latency_cycles, std::string output_latency_timebase);
     PortControl(Router* rif, int rtr_id, std::string link_port_name,
                 int port_number, const UnitAlgebra& link_bw, const UnitAlgebra& flit_size,
                 Topology *topo, 
                 SimTime_t input_latency_cycles, std::string input_latency_timebase,
                 SimTime_t output_latency_cycles, std::string output_latency_timebase,
+                const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
                 std::vector<std::string>& inspector_names);
-    // void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits,
-    //              int* in_buf_size, int* out_buf_size);
-    void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits,
-                 const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size);
+
+    void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits);
+
 
     ~PortControl();
     void setup();

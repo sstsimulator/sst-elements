@@ -42,6 +42,7 @@ public:
         TypeNetworkDirectory,   // directory - connected to cache and memory via network; associated with a particular set of addresses
         TypeMemory,             // memory - connected to directory or cache via network
         TypeDMAEngine,
+        TypeSmartMemory,        // Sender and Receiver
         TypeOther
     };
 
@@ -159,16 +160,24 @@ public:
 
 private:
 
-    Output dbg;
+    Output* dbg;
     int num_vcs;
     size_t flitSize;
     bool typeInfoSent; // True if TypeInfo has already been sent
+    bool checkRecvQueue;
+
+    /* Debugging stuff */
+    Addr DEBUG_ADDR;
+    bool DEBUG_ALL;
+
 
     Component *comp;
     ComponentInfo ci;
     std::vector<ComponentTypeInfo> typeInfoList;
     Event::HandlerBase *recvHandler;
+    //Event::HandlerBase *parentRecvNotifyHandler;
     SST::Interfaces::SimpleNetwork *link_control;
+    SST::Interfaces::SimpleNetwork::Handler<MemNIC>* recvNotifyHandler;
 
     std::deque<MemRtrEvent*> initQueue;
     // std::deque<MemRtrEvent *> sendQueue;
@@ -192,10 +201,10 @@ private:
     void sendNewTypeInfo(const ComponentTypeInfo &cti);
 
 public:
-    MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
+    MemNIC(Component *comp, Output* output, Addr dAddr, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
     /** Constructor to be used when loading as a module.
      */
-    MemNIC(Component *comp);
+    MemNIC(Component *comp, Params& params);
     /** To be used when loading MemNIC as a module.  Not necessary to call
      * when using the full-featured constructor
      */
@@ -205,6 +214,9 @@ public:
         typeInfoList.push_back(cti);
         if ( typeInfoSent ) sendNewTypeInfo(cti);
     }
+
+    /* Allow parent to register a callback function so it can de-clock itself safely */
+    void registerRecvCallback(Event::HandlerBase * handler);
 
     /* Call these from their respective calls in the component */
     void setup(void);
@@ -224,6 +236,8 @@ public:
     // NOTE: does not clear the listing of destinations which are used for address lookups
     void clearPeerInfo(void) { peers.clear(); }
 
+    // Callback function for linkControl
+    bool recvNotify(int vn);
 };
 
 } //namespace memHierarchy

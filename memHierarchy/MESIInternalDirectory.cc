@@ -31,9 +31,8 @@ using namespace SST::MemHierarchy;
  *  Directory evictions will also trigger a cache eviction if the block is locally cached
  *  Return whether the eviction is complete (DONE) or not (STALL)
  */
-CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, uint32_t groupId, string origRqstr, bool fromDataCache) {
+CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, string origRqstr, bool fromDataCache) {
     State state = replacementLine->getState();
-    setGroupId(groupId);
     
     recordEvictionState(state);
     
@@ -61,14 +60,12 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, ui
                 if (isCached || collision) invalidateAllSharers(replacementLine, name_, false);
                 else invalidateAllSharersAndFetch(replacementLine, name_, false);    // Fetch needed for PutS
                 replacementLine->setState(SI);
-                evictionRequiredInv_++;
                 return STALL;
             }
             if (!isCached && !collision) d_->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers. Addr = 0x%" PRIx64 ", State = %s\n", name_.c_str(), replacementLine->getBaseAddr(), StateString[state]);
             if (fromDataCache && replacementLine->numSharers() > 0) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
             if (isCached) sendWritebackFromCache(PutS, replacementLine, origRqstr);
             else sendWritebackFromMSHR(PutS, replacementLine, origRqstr, mshr_->getTempData(wbBaseAddr));
-            inc_EvictionPUTSReqSent();
             if (replacementLine->numSharers() == 0) replacementLine->setState(I); 
             if (!LL_) mshr_->insertWriteback(wbBaseAddr);
             return DONE;
@@ -77,13 +74,11 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, ui
                 if (isCached || collision) invalidateAllSharers(replacementLine, name_, false);
                 else invalidateAllSharersAndFetch(replacementLine, name_, false);
                 replacementLine->setState(EI);
-                evictionRequiredInv_++;
                 return STALL;
             } else if (replacementLine->ownerExists() && !fromDataCache) { // Not cached
                 sendFetchInv(replacementLine, name_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 replacementLine->setState(EI);
-                evictionRequiredInv_++;
                 return STALL;
             } else { // Must be cached
                 if (!isCached && !collision) 
@@ -91,7 +86,6 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, ui
                 if (fromDataCache && (replacementLine->numSharers() > 0 || replacementLine->ownerExists())) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
                 if (isCached) sendWritebackFromCache(PutE, replacementLine, origRqstr);
                 else sendWritebackFromMSHR(PutE, replacementLine, origRqstr, mshr_->getTempData(wbBaseAddr));
-                inc_EvictionPUTEReqSent();
                 if (replacementLine->numSharers() == 0 && !replacementLine->ownerExists()) replacementLine->setState(I);
                 if (!LL_) mshr_->insertWriteback(wbBaseAddr);
                 return DONE;
@@ -101,13 +95,11 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, ui
                 if (isCached || collision) invalidateAllSharers(replacementLine, name_, false);
                 else invalidateAllSharersAndFetch(replacementLine, name_, false);
                 replacementLine->setState(MI);
-                evictionRequiredInv_++;
                 return STALL;
             } else if (replacementLine->ownerExists() && !fromDataCache) {
                 sendFetchInv(replacementLine, name_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 replacementLine->setState(MI);
-                evictionRequiredInv_++;
                 return STALL;
             } else {
                 if (!isCached && !collision) 
@@ -115,7 +107,6 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, ui
                 if (fromDataCache && (replacementLine->numSharers() > 0 || replacementLine->ownerExists())) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
                 if (isCached) sendWritebackFromCache(PutM, replacementLine, origRqstr);
                 else sendWritebackFromMSHR(PutM, replacementLine, origRqstr, mshr_->getTempData(wbBaseAddr));
-                inc_EvictionPUTMReqSent();
                 if (replacementLine->numSharers() == 0 && !replacementLine->ownerExists()) replacementLine->setState(I);
                 if (!LL_) mshr_->insertWriteback(wbBaseAddr);
                 return DONE;
@@ -130,7 +121,6 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, ui
 
 /** Handle data requests */
 CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, CacheLine * dirLine, bool replay) {
-    setGroupId(event->getGroupId());
     Command cmd = event->getCmd();
     switch(cmd) {
         case GetS:
@@ -151,17 +141,12 @@ CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, CacheLine * d
  *  Handle replacement (Put*) requests
  */
 CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, CacheLine* dirLine, MemEvent * reqEvent, bool replay) {
-    setGroupId(event->getGroupId());
     Command cmd = event->getCmd();
     switch (cmd) {
         case PutS:
-            inc_PUTSReqsReceived();
             return handlePutSRequest(event, dirLine, reqEvent);
         case PutE:
-            inc_PUTEReqsReceived();
-            return handlePutMRequest(event, dirLine, reqEvent);
         case PutM:
-            inc_PUTMReqsReceived();
             return handlePutMRequest(event, dirLine, reqEvent);
         default:
 	    d_->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
@@ -182,7 +167,6 @@ CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, CacheLine*
  */
 CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, CacheLine * dirLine, bool replay) {
     
-    setGroupId(event->getGroupId());
 
     MemEvent * waitingEvent;
     bool collision = false;
@@ -232,7 +216,6 @@ CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLin
         case AckInv:
             return handleAckInv(respEvent, dirLine, reqEvent);
         case AckPut:
-            stateStats_[respEvent->getCmd()][I]++;
             recordStateEventCount(respEvent->getCmd(), I);
             mshr_->removeWriteback(respEvent->getBaseAddr());
             return DONE;    // Retry any events that were stalled for ack
@@ -241,6 +224,42 @@ CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLin
                     name_.c_str(), CommandString[cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
     }
     return DONE;    // Eliminate compiler warning
+}
+
+
+
+bool MESIInternalDirectory::isRetryNeeded(MemEvent * event, CacheLine * dirLine) {
+    Command cmd = event->getCmd();
+    State state = dirLine ? dirLine->getState() : I;
+    
+    switch (cmd) {
+        case GetS:
+        case GetX:
+        case GetSEx:
+            return true;
+        case PutS:
+        case PutE:
+        case PutM:
+            if (!LL_ && !mshr_->pendingWriteback(event->getBaseAddr())) return false;
+            return true;
+        case FetchInvX:
+            if (state == I) return false;
+            if (dirLine->getOwner() != event->getDst()) return false;
+            return true;
+        case FetchInv:
+            if (state == I) return false;
+            if ((dirLine->getOwner() != event->getDst()) && !dirLine->isSharer(event->getDst())) return false;
+            return true;
+        case Fetch:
+        case Inv:
+            if (state == I) return false;
+            if (!dirLine->isSharer(event->getDst())) return false;
+            return true;
+        default:
+            d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received NACK for unrecognized event: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    name_.c_str(), CommandString[cmd], event->getBaseAddr(), event->getSrc().c_str(), ((Component*)owner_)->getCurrentSimTimeNano());
+    }
+    return true;
 }
 
 
@@ -266,6 +285,7 @@ int MESIInternalDirectory::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine
         case E:
         case M:
             if (cacheLine->ownerExists()) return 3;
+            if (cmd == GetS) return 0; 
             if (cmd == GetX) {
                 if (cacheLine->isShareless() || (cacheLine->isSharer(event->getSrc()) && cacheLine->numSharers() == 1)) return 0; // Hit
             }
@@ -299,22 +319,23 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
     State state = dirLine->getState();
     
     bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == name_));
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);    
     bool isCached = dirLine->getDataLine() != NULL;
-
+    uint64_t sendTime = 0;
     switch (state) {
         case I:
-            forwardMessage(event, dirLine->getBaseAddr(), lineSize_, NULL);
-            inc_GETSMissIS(event);
+            sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, 0, NULL);
+            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             dirLine->setState(IS);
+            dirLine->setTimestamp(sendTime);
             return STALL;
         case S:
-            inc_GETSHit(event);
+            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (isCached) {
                 dirLine->addSharer(event->getSrc());
-                sendResponseUp(event, S, dirLine->getDataLine()->getData(), replay);
+                sendTime = sendResponseUp(event, S, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
+                dirLine->setTimestamp(sendTime);
                 return DONE;
             } 
             sendFetch(dirLine, event->getRqstr(), replay);
@@ -323,7 +344,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
             return STALL;
         case E:
         case M:
-            inc_GETSHit(event);
+            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (!shouldRespond) return DONE;
             if (dirLine->ownerExists()) {
                 sendFetchInvX(dirLine, event->getRqstr(), replay);
@@ -333,11 +354,13 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
                 return STALL;
             } else if (isCached) {
                 if (protocol_ && dirLine->numSharers() == 0) {
-                    sendResponseUp(event, E, dirLine->getDataLine()->getData(), replay);
+                    sendTime = sendResponseUp(event, E, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
                     dirLine->setOwner(event->getSrc());
+                    dirLine->setTimestamp(sendTime);
                 } else {
-                    sendResponseUp(event, S, dirLine->getDataLine()->getData(), replay);
+                    sendTime = sendResponseUp(event, S, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
                     dirLine->addSharer(event->getSrc());
+                    dirLine->setTimestamp(sendTime);
                 }
                 return DONE;
             } else {
@@ -364,31 +387,31 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
 CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
     State state = dirLine->getState();
     Command cmd = event->getCmd();
-    stateStats_[cmd][state]++;
     if (state != SM) recordStateEventCount(event->getCmd(), state);    
     
     bool isCached = dirLine->getDataLine() != NULL;
-
+    uint64_t sendTime = 0;
     switch (state) {
         case I:
-            inc_GETXMissIM(event);
-            forwardMessage(event, dirLine->getBaseAddr(), lineSize_, &event->getPayload());
+            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
+            sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, 0, &event->getPayload());
             dirLine->setState(IM);
+            dirLine->setTimestamp(sendTime);
             return STALL;
         case S:
-            inc_GETXMissSM(event);
-            forwardMessage(event, dirLine->getBaseAddr(), lineSize_, &event->getPayload());
+            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
+            sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, dirLine->getTimestamp(), &event->getPayload());
             if (invalidateSharersExceptRequestor(dirLine, event->getSrc(), event->getRqstr(), replay, false)) {
                 dirLine->setState(SM_Inv);
             } else {
                 dirLine->setState(SM);
+                dirLine->setTimestamp(sendTime);
             }
             return STALL;
         case E:
             dirLine->setState(M);
         case M:
-            if (cmd == GetSEx) inc_GetSExReqsReceived(replay);
-            inc_GETXHit(event);
+            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
 
             if (invalidateSharersExceptRequestor(dirLine, event->getSrc(), event->getRqstr(), replay, !isCached)) {
                 dirLine->setState(M_Inv);
@@ -402,8 +425,9 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
             }
             dirLine->setOwner(event->getSrc());
             if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
-            if (isCached) sendResponseUp(event, M, dirLine->getDataLine()->getData(), replay);  // is an upgrade request, requestor has data already
-            else sendResponseUp(event, M, NULL, replay);
+            if (isCached) sendTime = sendResponseUp(event, M, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());  // is an upgrade request, requestor has data already
+            else sendTime = sendResponseUp(event, M, NULL, replay, dirLine->getTimestamp());
+            dirLine->setTimestamp(sendTime);
             // TODO DEALLOCATE dataline
             return DONE;
         case SM:
@@ -421,7 +445,6 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
  */
 CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);
 
     if (state == S_D || state == E_D || state == SM_D || state == M_D) {
@@ -439,6 +462,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         printData(dirLine->getDataLine()->getData(), true);
     } else if (mshr_->isHit(dirLine->getBaseAddr())) mshr_->setTempData(dirLine->getBaseAddr(), event->getPayload());
     
+    uint64_t sendTime = 0;
 
     CacheAction action = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) ? DONE : IGNORE;
     switch(state) {
@@ -451,7 +475,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         case SI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                inc_EvictionPUTSReqSent();
                 if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -459,7 +482,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         case EI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                inc_EvictionPUTEReqSent();
                 if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -467,7 +489,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         case MI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                inc_EvictionPUTMReqSent();
                 if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -476,10 +497,8 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
             if (action == DONE) {
                 if (reqEvent->getCmd() == Inv) {
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                    inc_InvalidatePUTSReqSent();
                 } else {
                     sendResponseDownFromMSHR(event, false);
-                    inc_FetchInvReqSent();
                 }
                 dirLine->setState(I);
             }
@@ -490,15 +509,15 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (reqEvent->getCmd() == Fetch) {
                     if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
                         sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        inc_EvictionPUTSReqSent();
                         dirLine->setState(I);
                     } else {
                         sendResponseDownFromMSHR(event, false);
                     }
                 } else if (reqEvent->getCmd() == GetS) {    // GetS
-                    inc_GETSHit(reqEvent);
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                     dirLine->addSharer(reqEvent->getSrc());
-                    sendResponseUp(reqEvent, S, &event->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
                 } else {
                     d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
@@ -509,7 +528,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         case E_Inv:
             if (action == DONE) {
                 if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
                     sendResponseDown(reqEvent, dirLine, &event->getPayload(), event->getDirty(), true);
                     dirLine->setState(I);
                 }
@@ -521,19 +539,20 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (reqEvent->getCmd() == Fetch) {
                     if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
                         sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        inc_EvictionPUTEReqSent();
                         dirLine->setState(I);
                     } else {
                         sendResponseDownFromMSHR(event, false);
                     }
                 } else if (reqEvent->getCmd() == GetS) {
-                    inc_GETSHit(reqEvent);
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                     if (dirLine->numSharers() == 0) {
                         dirLine->setOwner(reqEvent->getSrc());
-                        sendResponseUp(reqEvent, E, &event->getPayload(), true);
+                        sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
                     } else {
                         dirLine->addSharer(reqEvent->getSrc());
-                        sendResponseUp(reqEvent, S, &event->getPayload(), true);
+                        sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
                     }
                     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
                 } else {
@@ -548,7 +567,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (reqEvent->getCmd() == FetchInvX) {
                     if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
                         sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        inc_EvictionPUTEReqSent();
                         dirLine->setState(I);
                     } else {
                         sendResponseDownFromMSHR(event, false);
@@ -562,15 +580,14 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
         case M_Inv: // PutS raced with AckInv from GetX, PutS raced with AckInv from FetchInv
             if (action == DONE) {
                 if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
                     sendResponseDown(reqEvent, dirLine, &event->getPayload(), true, true);
                     dirLine->setState(I);
                 } else {
-                    if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
-                    inc_GETXHit(reqEvent);
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     dirLine->setOwner(reqEvent->getSrc());
                     if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                    sendResponseUp(reqEvent, M, &event->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, M, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(&event->getPayload(), false);
                     dirLine->setState(M);
                 }
@@ -582,19 +599,20 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                 if (reqEvent->getCmd() == Fetch) {
                     if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
                         sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        inc_EvictionPUTMReqSent();
                         dirLine->setState(I);
                     } else {
                         sendResponseDownFromMSHR(event, false);
                     }
                 } else if (reqEvent->getCmd() == GetS) {
-                    inc_GETSHit(reqEvent);
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                     if (dirLine->numSharers() == 0) {
                         dirLine->setOwner(reqEvent->getSrc());
-                        sendResponseUp(reqEvent, E, &event->getPayload(), true);
+                        sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
                     } else {
                         dirLine->addSharer(reqEvent->getSrc());
-                        sendResponseUp(reqEvent, S, &event->getPayload(), true);
+                        sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                        dirLine->setTimestamp(sendTime);
                     }
                     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
                 } else {
@@ -611,7 +629,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                         return IGNORE;
                     }
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                    inc_InvalidatePUTSReqSent();
                     dirLine->setState(IM);
                 } else if (reqEvent->getCmd() == FetchInv) {
                     if (dirLine->numSharers() > 0) {
@@ -619,7 +636,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
                         return IGNORE;
                     }
                     sendResponseDownFromMSHR(event, false);
-                    inc_FetchInvReqSent();
                     dirLine->setState(IM);
                 } else {    // Waiting on data for upgrade
                     dirLine->setState(SM);
@@ -645,7 +661,6 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
 /* CacheAction return value indicates whether the racing action completed (reqEvent). PutMs always complete! */
 CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);
 
     bool isCached = dirLine->getDataLine() != NULL;
@@ -653,6 +668,8 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
     else if (mshr_->isHit(dirLine->getBaseAddr())) mshr_->setTempData(dirLine->getBaseAddr(), event->getPayload());
 
     if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
+
+    uint64_t sendTime = 0;
 
     switch (state) {
         case E:
@@ -662,7 +679,6 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
             sendWritebackAck(event);
             if (!isCached) {
                 sendWritebackFromMSHR(((dirLine->getState() == E) ? PutE : PutM), dirLine, event->getRqstr(), &event->getPayload());
-                (dirLine->getState() == E) ? inc_EvictionPUTEReqSent() : inc_EvictionPUTMReqSent();
                 if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -672,7 +688,6 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
         case MI:
             dirLine->clearOwner();
             sendWritebackFromMSHR(((dirLine->getState() == EI) ? PutE : PutM), dirLine, name_, &event->getPayload());
-            (dirLine->getState() == EI) ? inc_EvictionPUTEReqSent() : inc_EvictionPUTMReqSent();
             if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
             dirLine->setState(I);
             break;
@@ -681,21 +696,21 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
             if (reqEvent->getCmd() == FetchInvX) {
                 if (!isCached) {
                     sendWritebackFromMSHR(event->getDirty() ? PutM : PutE, dirLine, event->getRqstr(), &event->getPayload());
-                    (event->getDirty()) ? inc_EvictionPUTMReqSent() : inc_EvictionPUTEReqSent();
                     dirLine->setState(I);
                     if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
                 } else {
-                    inc_FetchInvXReqSent();
                     sendResponseDownFromMSHR(event, (event->getCmd() == PutM));
                     dirLine->setState(S);
                 }
             } else {
-                inc_GETSHit(reqEvent);
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (protocol_) {
-                    sendResponseUp(reqEvent, E, &event->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     dirLine->setOwner(reqEvent->getSrc());
                 } else {
-                    sendResponseUp(reqEvent, S, &event->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     dirLine->addSharer(reqEvent->getSrc());
                 }
                 if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
@@ -708,22 +723,22 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
             if (reqEvent->getCmd() == FetchInvX) {
                 if (!isCached) {
                     sendWritebackFromMSHR(PutM, dirLine, event->getRqstr(), &event->getPayload());
-                    inc_EvictionPUTMReqSent();
                     dirLine->setState(I);
                     if (!LL_) mshr_->insertWriteback(event->getBaseAddr());
                 } else {
-                    inc_FetchInvXReqSent();
                     sendResponseDownFromMSHR(event, true);
                     dirLine->setState(S);
                 }
             } else {
-                inc_GETSHit(reqEvent);
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                 dirLine->setState(M);
                 if (protocol_) {
-                    sendResponseUp(reqEvent, E, &event->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, E, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     dirLine->setOwner(reqEvent->getSrc());
                 } else {
-                    sendResponseUp(reqEvent, S, &event->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, S, &event->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     dirLine->addSharer(reqEvent->getSrc());
                 }
                 if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
@@ -734,14 +749,13 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
         case M_Inv: // PutM raced with FetchInv to owner
             dirLine->clearOwner();
             if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
-                if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
-                inc_GETXHit(reqEvent);
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
                 dirLine->setState(M);
-                sendResponseUp(reqEvent, M, &event->getPayload(), true);
+                sendTime = sendResponseUp(reqEvent, M, &event->getPayload(), true, dirLine->getTimestamp());
+                dirLine->setTimestamp(sendTime);
                 dirLine->setOwner(reqEvent->getSrc());
                 if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) printData(&event->getPayload(), false);
             } else { /* Cmd == Fetch */
-                inc_FetchInvReqSent();
                 sendResponseDownFromMSHR(event, (dirLine->getState() == M_Inv));
                 dirLine->setState(I);
             }
@@ -762,7 +776,6 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
 CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine, bool replay, MemEvent * collisionEvent) {
     
     State state = dirLine->getState();
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);    
     
     switch(state) {
@@ -780,7 +793,6 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
                 if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) return STALL;
             }
             sendAckInv(event->getBaseAddr(), event->getRqstr());
-            inc_InvalidatePUTSReqSent();
             dirLine->setState(I);
             return DONE;
         case SM:
@@ -797,7 +809,6 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
                 if (mshr_->getAcksNeeded(event->getBaseAddr())) return STALL;
             }
             sendAckInv(event->getBaseAddr(), event->getRqstr());
-            inc_InvalidatePUTSReqSent();
             dirLine->setState(IM);
             return DONE;
         case SI:
@@ -820,7 +831,6 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
  */
 CacheAction MESIInternalDirectory::handleFetch(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);    
 
     switch (state) {
@@ -862,7 +872,6 @@ CacheAction MESIInternalDirectory::handleFetch(MemEvent * event, CacheLine * dir
  */
 CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);    
     
     bool isCached = dirLine->getDataLine() != NULL;
@@ -971,7 +980,6 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
  */
 CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
-    stateStats_[event->getCmd()][state]++;
     recordStateEventCount(event->getCmd(), state);    
     
     bool isCached = dirLine->getDataLine() != NULL;
@@ -1065,22 +1073,22 @@ CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine *
 CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest) {
     
     State state = dirLine->getState();
-    stateStats_[responseEvent->getCmd()][state]++;
     recordStateEventCount(responseEvent->getCmd(), state);    
     
     bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == name_));
     bool isCached = dirLine->getDataLine() != NULL;
-    
+    uint64_t sendTime = 0;
     switch (state) {
         case IS:
             if (responseEvent->getGrantedState() == E) dirLine->setState(E);
             else dirLine->setState(S);
-            inc_GETSHit(origRequest);
+            notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);
             if (!shouldRespond) return DONE;
             if (dirLine->getState() == E) dirLine->setOwner(origRequest->getSrc());
             else dirLine->addSharer(origRequest->getSrc());
-            sendResponseUp(origRequest, dirLine->getState(), &responseEvent->getPayload(), true);
+            sendTime = sendResponseUp(origRequest, dirLine->getState(), &responseEvent->getPayload(), true, dirLine->getTimestamp());
+            dirLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(&responseEvent->getPayload(), false);
             return DONE;
         case IM:
@@ -1089,7 +1097,9 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
             dirLine->setState(M);
             dirLine->setOwner(origRequest->getSrc());
             if (dirLine->isSharer(origRequest->getSrc())) dirLine->removeSharer(origRequest->getSrc());
-            sendResponseUp(origRequest, M, (isCached ? dirLine->getDataLine()->getData() : &responseEvent->getPayload()), true);
+            notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
+            sendTime = sendResponseUp(origRequest, M, (isCached ? dirLine->getDataLine()->getData() : &responseEvent->getPayload()), true, dirLine->getTimestamp());
+            dirLine->setTimestamp(sendTime);
             if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(&responseEvent->getPayload(), false);
             return DONE;
         case SM_Inv:
@@ -1113,9 +1123,8 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
     CacheAction action = (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) == 0) ? DONE : IGNORE;
     bool isCached = dirLine->getDataLine() != NULL;
     if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), responseEvent);    // Update local data if needed
-    stateStats_[responseEvent->getCmd()][state]++;
     recordStateEventCount(responseEvent->getCmd(), state);
-    
+    uint64_t sendTime = 0; 
     switch (state) {
         case S_D:
             dirLine->setState(S);
@@ -1128,9 +1137,10 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
             if (reqEvent->getCmd() == Fetch) {
                 sendResponseDownFromMSHR(responseEvent, (state == M));
             } else if (reqEvent->getCmd() == GetS) {    // GetS
-                inc_GETSHit(reqEvent);
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                 dirLine->addSharer(reqEvent->getSrc());
-                sendResponseUp(reqEvent, S, &responseEvent->getPayload(), true);
+                sendTime = sendResponseUp(reqEvent, S, &responseEvent->getPayload(), true, dirLine->getTimestamp());
+                dirLine->setTimestamp(sendTime);
                 if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(&responseEvent->getPayload(), false);
             } else {
                 d_->fatal(CALL_INFO, -1, "%s (dir), Error: Received FetchResp in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
@@ -1142,7 +1152,6 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
             mshr_->setTempData(responseEvent->getBaseAddr(), responseEvent->getPayload());
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), &responseEvent->getPayload());
-                inc_EvictionPUTSReqSent();
                 if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -1154,7 +1163,6 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
             if (dirLine->isSharer(responseEvent->getSrc())) dirLine->removeSharer(responseEvent->getSrc());
             if (action == DONE) {
                 sendWritebackFromMSHR(((dirLine->getState() == EI) ? PutE : PutM), dirLine, name_, &responseEvent->getPayload());
-                (dirLine->getState() == EI) ? inc_EvictionPUTEReqSent() : inc_EvictionPUTMReqSent();
                 if (!LL_) mshr_->insertWriteback(dirLine->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -1166,13 +1174,13 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                 dirLine->addSharer(responseEvent->getSrc());
             }
             if (reqEvent->getCmd() == FetchInvX) {
-                inc_FetchInvXReqSent();
                 sendResponseDownFromMSHR(responseEvent, (state == M_InvX || responseEvent->getDirty()));
                 dirLine->setState(S);
             } else {
-                inc_GETSHit(reqEvent);
+                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
                 dirLine->addSharer(reqEvent->getSrc());
-                sendResponseUp(reqEvent, S, &responseEvent->getPayload(), true);
+                sendTime = sendResponseUp(reqEvent, S, &responseEvent->getPayload(), true, dirLine->getTimestamp());
+                dirLine->setTimestamp(sendTime);
                 if (DEBUG_ALL || DEBUG_ADDR == responseEvent->getBaseAddr()) printData(&responseEvent->getPayload(), false);
                 if (responseEvent->getDirty() || state == M_InvX) dirLine->setState(M);
                 else dirLine->setState(E);
@@ -1187,14 +1195,13 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
                 mshr_->setTempData(responseEvent->getBaseAddr(), responseEvent->getPayload());
             } else {
                 if (reqEvent->getCmd() == GetX || reqEvent->getCmd() == GetSEx) {
-                    if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
-                    inc_GETXHit(reqEvent);
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
                     dirLine->setOwner(reqEvent->getSrc());
-                    sendResponseUp(reqEvent, M, &responseEvent->getPayload(), true);
+                    sendTime = sendResponseUp(reqEvent, M, &responseEvent->getPayload(), true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     dirLine->setState(M);
                 } else {
-                    inc_FetchInvReqSent();
                     sendResponseDownFromMSHR(responseEvent, (state == M_Inv || responseEvent->getDirty()));
                     dirLine->setState(I);
                 }
@@ -1206,7 +1213,6 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
             if (action != DONE) {
                 mshr_->setTempData(responseEvent->getBaseAddr(), responseEvent->getPayload());
             } else {
-                inc_FetchInvReqSent();
                 sendResponseDownFromMSHR(responseEvent, false);
                 (state == S_Inv) ? dirLine->setState(I) : dirLine->setState(IM);
             }
@@ -1223,26 +1229,25 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
 
 CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
-    stateStats_[ack->getCmd()][state]++;
     recordStateEventCount(ack->getCmd(), state);
 
     if (dirLine->isSharer(ack->getSrc())) {
         dirLine->removeSharer(ack->getSrc());
     }
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == ack->getBaseAddr()) d_->debug(_L6_, "Received AckInv for 0x%" PRIx64 ", acks needed: %d\n", ack->getBaseAddr(), mshr_->getAcksNeeded(ack->getBaseAddr()));
+#endif
     if (mshr_->getAcksNeeded(ack->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(ack->getBaseAddr());
     CacheAction action = (mshr_->getAcksNeeded(ack->getBaseAddr()) == 0) ? DONE : IGNORE;
     bool isCached = dirLine->getDataLine() != NULL;
     vector<uint8_t> * data = isCached ? dirLine->getDataLine()->getData() : mshr_->getTempData(reqEvent->getBaseAddr());
-    
+    uint64_t sendTime = 0; 
     switch (state) {
         case S_Inv: // AckInv for Inv
             if (action == DONE) {
                 if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
                     sendResponseDown(reqEvent, dirLine, data, false, true);
                 } else {
-                    inc_InvalidatePUTSReqSent();
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
                 }
                 dirLine->setState(I);
@@ -1252,15 +1257,14 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
         case M_Inv: // AckInv for FetchInv or GetX, possibly on FetchResp or GetXResp too
             if (action == DONE) {
                 if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
                     sendResponseDown(reqEvent, dirLine, data, (state == E_Inv), true);
                     dirLine->setState(I);
                 } else {
-                    if (reqEvent->getCmd() == GetSEx) inc_GetSExReqsReceived(true);
-                    inc_GETXHit(reqEvent);
+                    notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     dirLine->setOwner(reqEvent->getSrc());
                     if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                    sendResponseUp(reqEvent, M, data, true);
+                    sendTime = sendResponseUp(reqEvent, M, data, true, dirLine->getTimestamp());
+                    dirLine->setTimestamp(sendTime);
                     if (DEBUG_ALL || DEBUG_ADDR == reqEvent->getBaseAddr()) printData(data, false);
                     dirLine->setState(M);
                 }
@@ -1275,10 +1279,8 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
                         return STALL;
                     }
                     sendAckInv(reqEvent->getBaseAddr(), reqEvent->getRqstr());
-                    inc_InvalidatePUTSReqSent();
                     dirLine->setState(IM);
                 } else if (reqEvent->getCmd() == FetchInv) {
-                    inc_FetchInvReqSent();
                     sendResponseDown(reqEvent, dirLine, data, false, true);
                     dirLine->setState(IM);
                 } else { // Waiting on data for upgrade
@@ -1290,21 +1292,18 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
         case SI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutS, dirLine, reqEvent->getRqstr(), data);
-                inc_EvictionPUTSReqSent();
                 if (!LL_) mshr_->insertWriteback(ack->getBaseAddr());
                 dirLine->setState(I);
             }
         case EI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutE, dirLine, reqEvent->getRqstr(), data);
-                inc_EvictionPUTEReqSent();
                 if (!LL_) mshr_->insertWriteback(ack->getBaseAddr());
                 dirLine->setState(I);
             }
         case MI:
             if (action == DONE) {
                 sendWritebackFromMSHR(PutM, dirLine, reqEvent->getRqstr(), data);
-                inc_EvictionPUTMReqSent();
                 if (!LL_) mshr_->insertWriteback(ack->getBaseAddr());
                 dirLine->setState(I);
             }
@@ -1325,26 +1324,37 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
 
 void MESIInternalDirectory::invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay) {
     set<std::string> * sharers = dirLine->getSharers();
+    
+    uint64_t baseTime = (timestamp_ > dirLine->getTimestamp()) ? timestamp_ : dirLine->getTimestamp();
+    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
+    bool invSent = false;
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         MemEvent * inv = new MemEvent((Component*)owner_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), Inv);
         inv->setDst(*it);
         inv->setRqstr(rqstr);
     
-        uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
         Response resp = {inv, deliveryTime, false};
         addToOutgoingQueueUp(resp);
 
         mshr_->incrementAcksNeeded(dirLine->getBaseAddr());
-
+        invSent = true;
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == dirLine->getBaseAddr()) d_->debug(_L7_,"Sending inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
                 dirLine->getBaseAddr(), (*it).c_str(), deliveryTime);
+#endif
     }
+    if (invSent) dirLine->setTimestamp(deliveryTime);
 }
 
 
 void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, string rqstr, bool replay) {
     set<std::string> * sharers = cacheLine->getSharers();
     bool fetched = false;
+    
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
+    bool invSent = false;
+
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         MemEvent * inv;
         if (fetched) inv = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Inv);
@@ -1354,16 +1364,21 @@ void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, 
         }
         inv->setDst(*it);
         inv->setRqstr(rqstr);
+        inv->setSize(cacheLine->getSize());
     
-        uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
         Response resp = {inv, deliveryTime, false};
         addToOutgoingQueueUp(resp);
+        invSent = true;
 
         mshr_->incrementAcksNeeded(cacheLine->getBaseAddr());
 
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L7_,"Sending inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
                 cacheLine->getBaseAddr(), (*it).c_str(), deliveryTime);
+#endif
     }
+    
+    if (invSent) cacheLine->setTimestamp(deliveryTime);
 }
 
 
@@ -1375,6 +1390,10 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
     bool sentInv = false;
     set<std::string> * sharers = cacheLine->getSharers();
     bool needFetch = uncached && (sharers->find(rqstr) == sharers->end());
+    
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
+    
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         if (*it == rqstr) continue;
         MemEvent * inv;
@@ -1386,17 +1405,21 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
         }
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
+        inv->setSize(cacheLine->getSize());
 
-        uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
         Response resp = {inv, deliveryTime, false};
         addToOutgoingQueueUp(resp);
         sentInv = true;
+
         
         mshr_->incrementAcksNeeded(cacheLine->getBaseAddr());
         
+#ifdef __SST_DEBUG_OUTPUT__
         if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L7_,"Sending inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
                 cacheLine->getBaseAddr(), (*it).c_str(), deliveryTime);
+#endif
     }
+    if (sentInv) cacheLine->setTimestamp(deliveryTime);
     return sentInv;
 }
 
@@ -1406,13 +1429,18 @@ void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bo
     if (!(cacheLine->getOwner()).empty()) fetch->setDst(cacheLine->getOwner());
     else fetch->setDst(*(cacheLine->getSharers()->begin()));
     fetch->setRqstr(rqstr);
+    fetch->setSize(cacheLine->getSize());
     
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
     uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
     addToOutgoingQueueUp(resp);
+    cacheLine->setTimestamp(deliveryTime);
    
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L7_, "Sending FetchInv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
             cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
+#endif
 }
 
 
@@ -1420,13 +1448,18 @@ void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, b
     MemEvent * fetch = new MemEvent((Component*)owner_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
+    fetch->setSize(cacheLine->getSize());
     
-    uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
     addToOutgoingQueueUp(resp);
+    cacheLine->setTimestamp(deliveryTime);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L7_, "Sending FetchInvX: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
             cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
+#endif
 }
 
 
@@ -1435,12 +1468,16 @@ void MESIInternalDirectory::sendFetch(CacheLine * cacheLine, string rqstr, bool 
     fetch->setDst(*((cacheLine->getSharers())->begin()));
     fetch->setRqstr(rqstr);
     
-    uint64_t deliveryTime = timestamp_ + tagLatency_;
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64_t deliveryTime = baseTime + tagLatency_;
     Response resp = {fetch, deliveryTime, false};
     addToOutgoingQueueUp(resp);
+    cacheLine->setTimestamp(deliveryTime);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == cacheLine->getBaseAddr()) d_->debug(_L7_, "Sending Fetch: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
             cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
+#endif
 }
 
 
@@ -1456,13 +1493,17 @@ void MESIInternalDirectory::sendResponseDown(MemEvent* event, CacheLine * cacheL
 
     responseEvent->setDirty(dirty);
 
-    uint64 deliveryTime = replay ? timestamp_ + mshrLatency_ : timestamp_ + accessLatency_;
+    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
+    uint64 deliveryTime = replay ? baseTime + mshrLatency_ : baseTime + accessLatency_;
     Response resp  = {responseEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
+    cacheLine->setTimestamp(deliveryTime);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) { 
         d_->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
     }
+#endif
 }
 
 
@@ -1477,9 +1518,11 @@ void MESIInternalDirectory::sendResponseDownFromMSHR(MemEvent * event, bool dirt
     Response resp = {responseEvent, deliveryTime, false};
     addToOutgoingQueue(resp);
     
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) {
         d_->debug(_L3_,"Sending Response from MSHR at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[responseEvent->getCmd()], responseEvent->getSrc().c_str());
     }
+#endif
 }
 
 void MESIInternalDirectory::sendAckInv(Addr baseAddr, string origRqstr) {
@@ -1490,7 +1533,9 @@ void MESIInternalDirectory::sendAckInv(Addr baseAddr, string origRqstr) {
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {ack, deliveryTime, false};
     addToOutgoingQueue(resp);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == baseAddr) d_->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
+#endif
 }
 
 
@@ -1498,33 +1543,41 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = new MemEvent((SST::Component*)owner_, event->getBaseAddr(), event->getBaseAddr(), AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
-    
+    ack->setSize(event->getSize());
+
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {ack, deliveryTime, false};
     addToOutgoingQueueUp(resp);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == event->getBaseAddr()) d_->debug(_L3_, "Sending AckPut at cycle = %" PRIu64 "\n", deliveryTime);
+#endif
 }
 
 void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
     MemEvent * writeback = new MemEvent((SST::Component*)owner_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
+    writeback->setSize(dirLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        writeback->setSize(dirLine->getSize());
         writeback->setPayload(*(dirLine->getDataLine()->getData()));
     }
     writeback->setRqstr(rqstr);
     if (cmd == PutM) writeback->setDirty(true);
-    uint64_t deliveryTime = timestamp_ + accessLatency_;
+    uint64_t baseTime = (timestamp_ > dirLine->getTimestamp()) ? timestamp_ : dirLine->getTimestamp();
+    uint64_t deliveryTime = baseTime + accessLatency_;
     Response resp = {writeback, deliveryTime, false};
     addToOutgoingQueue(resp);
+    dirLine->setTimestamp(deliveryTime);
+    
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == dirLine->getBaseAddr()) d_->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From cache\n", deliveryTime, CommandString[cmd]);
+#endif
 }
 
 void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
     MemEvent * writeback = new MemEvent((SST::Component*)owner_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
+    writeback->setSize(dirLine->getSize());
     if (cmd == PutM || writebackCleanBlocks_) {
-        writeback->setSize(dirLine->getSize());
         writeback->setPayload(*data);
     }
     writeback->setRqstr(rqstr);
@@ -1532,7 +1585,9 @@ void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLi
     uint64_t deliveryTime = timestamp_ + accessLatency_;
     Response resp = {writeback, deliveryTime, false};
     addToOutgoingQueue(resp);
+#ifdef __SST_DEBUG_OUTPUT__
     if (DEBUG_ALL || DEBUG_ADDR == dirLine->getBaseAddr()) d_->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From MSHR\n", deliveryTime, CommandString[cmd]);
+#endif
 }
 
 
@@ -1550,112 +1605,5 @@ void MESIInternalDirectory::printData(vector<uint8_t> * data, bool set) {
     }
     printf("\n");
 */ 
-}
-
-
-/*
- *  Print stats
- */
-void MESIInternalDirectory::printStats(int statLoc, vector<int> groupIds, map<int, CtrlStats> ctrlStats, uint64_t upgradeLatency, 
-        uint64_t lat_GetS_IS, uint64_t lat_GetS_M, uint64_t lat_GetX_IM, uint64_t lat_GetX_SM,
-        uint64_t lat_GetX_M, uint64_t lat_GetSEx_IM, uint64_t lat_GetSEx_SM, uint64_t lat_GetSEx_M){
-    Output* dbg = new Output();
-    dbg->init("", 0, 0, (Output::output_location_t)statLoc);
-    dbg->output(CALL_INFO,"\n------------------------------------------------------------------------\n");
-    dbg->output(CALL_INFO,"--- Cache Stats\n");
-    dbg->output(CALL_INFO,"--- Name: %s\n", name_.c_str());
-    dbg->output(CALL_INFO,"--- Overall Statistics\n");
-    dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
-
-    for(unsigned int i = 0; i < groupIds.size(); i++){
-        uint64_t totalMisses =  ctrlStats[groupIds[i]].newReqGetSMisses_ + ctrlStats[groupIds[i]].newReqGetXMisses_ + ctrlStats[groupIds[i]].newReqGetSExMisses_ +
-                                ctrlStats[groupIds[i]].blockedReqGetSMisses_ + ctrlStats[groupIds[i]].blockedReqGetXMisses_ + ctrlStats[groupIds[i]].blockedReqGetSExMisses_;
-        uint64_t totalHits =    ctrlStats[groupIds[i]].newReqGetSHits_ + ctrlStats[groupIds[i]].newReqGetXHits_ + ctrlStats[groupIds[i]].newReqGetSExHits_ +
-                                ctrlStats[groupIds[i]].blockedReqGetSHits_ + ctrlStats[groupIds[i]].blockedReqGetXHits_ + ctrlStats[groupIds[i]].blockedReqGetSExHits_;
-
-        uint64_t totalRequests = totalHits + totalMisses;
-        double hitRatio = ((double)totalHits / ( totalHits + totalMisses)) * 100;
-        
-        if(i != 0){
-            dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
-            dbg->output(CALL_INFO,"--- Cache Stats\n");
-            dbg->output(CALL_INFO,"--- Name: %s\n", name_.c_str());
-            dbg->output(CALL_INFO,"--- Group Statistics, Group ID = %i\n", groupIds[i]);
-            dbg->output(CALL_INFO,"------------------------------------------------------------------------\n");
-        }
-        dbg->output(CALL_INFO,"- Total data requests:                           %" PRIu64 "\n", totalRequests);
-        dbg->output(CALL_INFO,"     GetS:                                       %" PRIu64 "\n", 
-                ctrlStats[groupIds[i]].newReqGetSHits_ + ctrlStats[groupIds[i]].newReqGetSMisses_ + 
-                ctrlStats[groupIds[i]].blockedReqGetSHits_ + ctrlStats[groupIds[i]].blockedReqGetSMisses_);                                  
-        dbg->output(CALL_INFO,"     GetX:                                       %" PRIu64 "\n", 
-                ctrlStats[groupIds[i]].newReqGetXHits_ + ctrlStats[groupIds[i]].newReqGetXMisses_ + 
-                ctrlStats[groupIds[i]].blockedReqGetXHits_ + ctrlStats[groupIds[i]].blockedReqGetXMisses_);                                  
-        dbg->output(CALL_INFO,"     GetSEx:                                     %" PRIu64 "\n", 
-                ctrlStats[groupIds[i]].newReqGetSExHits_ + ctrlStats[groupIds[i]].newReqGetSExMisses_ + 
-                ctrlStats[groupIds[i]].blockedReqGetSExHits_ + ctrlStats[groupIds[i]].blockedReqGetSExMisses_);                                  
-        dbg->output(CALL_INFO,"- Total misses:                                  %" PRIu64 "\n", totalMisses);
-        // Report misses at the time a request was handled -> "blocked" indicates request was blocked by another pending request before being handled
-        dbg->output(CALL_INFO,"     GetS, miss on arrival:                      %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSMisses_);
-        dbg->output(CALL_INFO,"     GetS, miss after being blocked:             %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSMisses_);
-        dbg->output(CALL_INFO,"     GetX, miss on arrival:                      %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetXMisses_);
-        dbg->output(CALL_INFO,"     GetX, miss after being blocked:             %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetXMisses_);
-        dbg->output(CALL_INFO,"     GetSEx, miss on arrival:                    %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSExMisses_);
-        dbg->output(CALL_INFO,"     GetSEx, miss after being blocked:           %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSExMisses_);
-        dbg->output(CALL_INFO,"- Total hits:                                    %" PRIu64 "\n", totalHits);
-        dbg->output(CALL_INFO,"     GetS, hit on arrival:                       %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSHits_);
-        dbg->output(CALL_INFO,"     GetS, hit after being blocked:              %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSHits_);
-        dbg->output(CALL_INFO,"     GetX, hit on arrival:                       %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetXHits_);
-        dbg->output(CALL_INFO,"     GetX, hit after being blocked:              %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetXHits_);
-        dbg->output(CALL_INFO,"     GetSEx, hit on arrival:                     %" PRIu64 "\n", ctrlStats[groupIds[i]].newReqGetSExHits_);
-        dbg->output(CALL_INFO,"     GetSEx, hit after being blocked:            %" PRIu64 "\n", ctrlStats[groupIds[i]].blockedReqGetSExHits_);
-        dbg->output(CALL_INFO,"- Hit ratio:                                     %.3f%%\n", hitRatio);
-        dbg->output(CALL_INFO,"- Miss ratio:                                    %.3f%%\n", 100 - hitRatio);
-        dbg->output(CALL_INFO,"------------ Coherence transitions for misses -------------\n");
-        dbg->output(CALL_INFO,"- GetS   I->S:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetS_IS);
-        dbg->output(CALL_INFO,"- GetS   M(present at another cache):            %" PRIu64 "\n", ctrlStats[groupIds[i]].GetS_M);
-        dbg->output(CALL_INFO,"- GetX   I->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetX_IM);
-        dbg->output(CALL_INFO,"- GetX   S->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetX_SM);
-        dbg->output(CALL_INFO,"- GetX   M(present at another cache):            %" PRIu64 "\n", ctrlStats[groupIds[i]].GetX_M);
-        dbg->output(CALL_INFO,"- GetSEx I->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetSE_IM);
-        dbg->output(CALL_INFO,"- GetSEx S->M:                                   %" PRIu64 "\n", ctrlStats[groupIds[i]].GetSE_SM);
-        dbg->output(CALL_INFO,"- GetSEx M(present at another cache):            %" PRIu64 "\n", ctrlStats[groupIds[i]].GetSE_M);
-        dbg->output(CALL_INFO,"------------ Replacements and evictions -------------------\n");
-        dbg->output(CALL_INFO,"- PutS received:                                 %" PRIu64 "\n", stats_[groupIds[i]].PUTSReqsReceived_);
-        dbg->output(CALL_INFO,"- PutM received:                                 %" PRIu64 "\n", stats_[groupIds[i]].PUTMReqsReceived_);
-        dbg->output(CALL_INFO,"- PutS sent due to eviction:                     %" PRIu64 "\n", stats_[groupIds[i]].EvictionPUTSReqSent_);
-        dbg->output(CALL_INFO,"- PutE sent due to eviction:                     %" PRIu64 "\n", stats_[groupIds[i]].EvictionPUTEReqSent_);
-        dbg->output(CALL_INFO,"- PutM sent due to eviction:                     %" PRIu64 "\n", stats_[groupIds[i]].EvictionPUTMReqSent_);
-        dbg->output(CALL_INFO,"------------ Other stats ----------------------------------\n");
-        dbg->output(CALL_INFO,"- Inv stalled because LOCK held:                 %" PRIu64 "\n", ctrlStats[groupIds[i]].InvWaitingForUserLock_);
-        dbg->output(CALL_INFO,"- Requests received (incl coherence traffic):    %" PRIu64 "\n", ctrlStats[groupIds[i]].TotalRequestsReceived_);
-        dbg->output(CALL_INFO,"- Requests handled by MSHR (MSHR hits):          %" PRIu64 "\n", ctrlStats[groupIds[i]].TotalMSHRHits_);
-        dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, Down):                  %" PRIu64 "\n", stats_[groupIds[i]].NACKsSentDown_);
-        dbg->output(CALL_INFO,"- NACKs sent (MSHR Full, Up):                    %" PRIu64 "\n", stats_[groupIds[i]].NACKsSentUp_);
-        dbg->output(CALL_INFO,"------------ Latency stats --------------------------------\n");
-        dbg->output(CALL_INFO,"- Avg Miss Latency (cyc):                        %" PRIu64 "\n", upgradeLatency);
-        if (ctrlStats[groupIds[0]].GetS_IS > 0) 
-            dbg->output(CALL_INFO,"- Latency GetS   I->S:                           %" PRIu64 "\n", (lat_GetS_IS / ctrlStats[groupIds[0]].GetS_IS));
-        if (ctrlStats[groupIds[0]].GetS_M > 0) 
-            dbg->output(CALL_INFO,"- Latency GetS   M:                              %" PRIu64 "\n", (lat_GetS_M / ctrlStats[groupIds[0]].GetS_M));
-        if (ctrlStats[groupIds[0]].GetX_IM > 0)
-            dbg->output(CALL_INFO,"- Latency GetX   I->M:                           %" PRIu64 "\n", (lat_GetX_IM / ctrlStats[groupIds[0]].GetX_IM));
-        if (ctrlStats[groupIds[0]].GetX_SM > 0)
-            dbg->output(CALL_INFO,"- Latency GetX   S->M:                           %" PRIu64 "\n", (lat_GetX_SM / ctrlStats[groupIds[0]].GetX_SM));
-        if (ctrlStats[groupIds[0]].GetX_M > 0) 
-            dbg->output(CALL_INFO,"- Latency GetX   M:                              %" PRIu64 "\n", (lat_GetX_M / ctrlStats[groupIds[0]].GetX_M));
-        if (ctrlStats[groupIds[0]].GetSE_IM > 0)
-            dbg->output(CALL_INFO,"- Latency GetSEx I->M:                           %" PRIu64 "\n", (lat_GetSEx_IM / ctrlStats[groupIds[0]].GetSE_IM));
-        if (ctrlStats[groupIds[0]].GetSE_SM > 0)
-            dbg->output(CALL_INFO,"- Latency GetSEx S->M:                           %" PRIu64 "\n", (lat_GetSEx_SM / ctrlStats[groupIds[0]].GetSE_SM));
-        if (ctrlStats[groupIds[0]].GetSE_M > 0)
-            dbg->output(CALL_INFO,"- Latency GetSEx M:                              %" PRIu64 "\n", (lat_GetSEx_M / ctrlStats[groupIds[0]].GetSE_M));
-    }
-    dbg->output(CALL_INFO,"------------ State and event stats ---------------------------\n");
-    for (int i = 0; i < LAST_CMD; i++) {
-        for (int j = 0; j < LAST_CMD; j++) {
-            if (stateStats_[i][j] == 0) continue;
-            dbg->output(CALL_INFO,"%s, %s:        %" PRIu64 "\n", CommandString[i], StateString[j], stateStats_[i][j]);
-        }
-    }    
 }
 

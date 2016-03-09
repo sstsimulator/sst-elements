@@ -23,9 +23,7 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       #"debug" : "1",
       "debug_level" : "10",
-      "statistics" : "1",
       "L1" : "1",
-      "LLC" : "1",
       "LL" : "1",
       "cache_size" : "2 KB"
 })
@@ -37,6 +35,12 @@ comp_memory.addParams({
       "clock" : "1GHz",
       "backend.mem_size" : "512"
 })
+
+# Enable statistics
+sst.setStatisticLoadLevel(7)
+sst.setStatisticOutput("sst.statOutputConsole")
+sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
+sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 
 # Define the simulation links

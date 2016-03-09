@@ -36,6 +36,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output = new SST::Output("ArielComponent[@f:@l:@p] ",
 		verbosity, 0, SST::Output::STDOUT);
 
+        // see if we should send allocation events out on links
+	useAllocTracker = params.find_integer("alloctracker", 0);
+
 	output->verbose(CALL_INFO, 1, 0, "Creating Ariel component...\n");
 
 	core_count = (uint32_t) params.find_integer("corecount", 1);
@@ -150,6 +153,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
+    const uint32_t profileFunctions = (uint32_t) params.find_integer("profilefunctions", 0);
+
     output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
     uint32_t arg = 0;
@@ -189,6 +194,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%d", verbosity);
+    execute_args[arg++] = const_cast<char*>("-t");
+    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
+    sprintf(execute_args[arg-1], "%" PRIu32, profileFunctions);
     execute_args[arg++] = const_cast<char*>("-i");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 30);
     sprintf(execute_args[arg-1], "%" PRIu64, (uint64_t) 1000000000);
@@ -257,6 +265,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
 	cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
+        if (useAllocTracker) {
+            output->verbose(CALL_INFO, 1, 0, "Creating core to allocate tracker links...\n");
+            cpu_to_alloc_tracker_links = (Link**) malloc( sizeof(Link*) * core_count );
+        } else {
+            cpu_to_alloc_tracker_links = 0;
+        }
+
 	output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
 	cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
 
@@ -270,7 +285,16 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 			memmgr, perform_checks, params);
         cpu_to_cache_links[i] = dynamic_cast<SimpleMem*>(loadModuleWithComponent("memHierarchy.memInterface", this, params));
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
-		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
+
+
+                // optionally wire up links to allocate trackers (e.g. memSieve)
+                if (useAllocTracker) {
+                    sprintf(link_buffer, "alloc_link_%" PRIu32, i);
+                    cpu_to_alloc_tracker_links[i] = configureLink(link_buffer);
+                    cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], cpu_to_alloc_tracker_links[i]);
+                } else {
+                    cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], 0);
+                }
 	}
 	free(link_buffer);
 
@@ -317,6 +341,7 @@ void ArielCPU::finish() {
 	}
 
 	memmgr->printStats();
+	unlink(shmem_region_name);
 }
 
 int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
@@ -434,7 +459,7 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 	stopTicking = false;
 	output->verbose(CALL_INFO, 16, 0, "Main processor tick, will issue to individual cores...\n");
 
-        tunnel->updateTime(getCurrentSimTimeMicro());
+        tunnel->updateTime(getCurrentSimTimeNano());
 	tunnel->incrementCycles();
 
 	// Keep ticking unless one of the cores says it is time to stop.
@@ -456,12 +481,16 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 }
 
 ArielCPU::~ArielCPU() {
+	// Delete all of the cores
+	for(uint32_t i = 0; i < core_count; i++) {
+		delete cpu_cores[i];
+	}
+
 	delete memmgr;
 	delete tunnel;
-    unlink(shmem_region_name);
+        unlink(shmem_region_name);
 	free(page_sizes);
 	free(page_counts);
-
 }
 
 void ArielCPU::emergencyShutdown() {
