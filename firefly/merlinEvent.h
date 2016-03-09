@@ -49,7 +49,10 @@ class FireflyNetworkEvent : public Event {
     void bufPop( size_t len ) {
 
         offset += len;
+        if ( offset > bufLen ) {
+        std::cerr << len << " " << offset << " " << bufLen << std::endl;
         assert( offset <= bufLen );
+        }
     }
     
     void bufAppend( const void* ptr , size_t len ) {
