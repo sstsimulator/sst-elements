@@ -23,7 +23,6 @@
 #include <bitset>
 #include "hash.h"
 #include "memEvent.h"
-#include <sst/core/serialization/element.h>
 #include "sst/core/output.h"
 #include "util.h"
 #include "replacementManager.h"

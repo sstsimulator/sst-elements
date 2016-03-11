@@ -83,7 +83,7 @@ public:
 
 
 public:
-    class MemRtrEvent : public Event {
+    class MemRtrEvent : public Event, public SST::Core::Serialization::serializable_type<MemRtrEvent> {
     public:
         MemEvent *event;
 
@@ -100,17 +100,16 @@ public:
 
         virtual bool hasClientData() const { return true; }
 
-        friend class boost::serialization::access;
-        template<class Archive>
-            void
-            serialize(Archive & ar, const unsigned int version )
-            {
-                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-                ar & BOOST_SERIALIZATION_NVP(event);
-            }
+    public:
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+            ser & event;
+        }
+        
+        ImplementSerializable(MemRtrEvent);     
     };
 
-    class InitMemRtrEvent : public MemRtrEvent {
+    class InitMemRtrEvent : public MemRtrEvent, public SST::Core::Serialization::serializable_type<InitMemRtrEvent> {
     public:
         std::string name;
         int address;
@@ -137,22 +136,21 @@ public:
 
         virtual bool hasClientData() const { return false; }
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void
-        serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-            ar & BOOST_SERIALIZATION_NVP(compType);
-            ar & BOOST_SERIALIZATION_NVP(address);
-            ar & BOOST_SERIALIZATION_NVP(name);
-            ar & BOOST_SERIALIZATION_NVP(compInfo.rangeStart);
-            ar & BOOST_SERIALIZATION_NVP(compInfo.rangeEnd);
-            ar & BOOST_SERIALIZATION_NVP(compInfo.interleaveSize);
-            ar & BOOST_SERIALIZATION_NVP(compInfo.interleaveStep);
-            ar & BOOST_SERIALIZATION_NVP(compInfo.blocksize);
-            ar & BOOST_SERIALIZATION_NVP(src);
-        }
+    public:
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+                MemRtrEvent::serialize_order(ser);
+                ser & compType;
+                ser & address;
+                ser & name;
+                ser & compInfo.rangeStart;
+                ser & compInfo.rangeEnd;
+                ser & compInfo.interleaveSize;
+                ser & compInfo.interleaveStep;
+                ser & compInfo.blocksize;
+                ser & src;
+            }
+        
+        ImplementSerializable(InitMemRtrEvent);     
     };
 
 

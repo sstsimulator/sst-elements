@@ -23,22 +23,26 @@ public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
     bool issueRequest(DRAMReq *req);
-private:
-    class MemCtrlEvent : public SST::Event {
+    
+public:
+    class MemCtrlEvent : public SST::Event, public SST::Core::Serialization::serializable_type<MemCtrlEvent> {
     public:
         MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
         { }
 
         DRAMReq *req;
-    private:
-        friend class boost::serialization::access;
-        template<class Archive>
-        void
-        serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-            ar & BOOST_SERIALIZATION_NVP(req);
-        }
+     
+    private:   
+        MemCtrlEvent() {} // For Serialization only
+        
+    public:
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+//            ser & req;  // Cannot serialize pointers unless they are a serializable object
+       }
+        
+        ImplementSerializable(MemCtrlEvent);
+        // NOTE: This Event does not have a DeclareSerializable() defined, it will not serialize
     };
 
     void handleSelfEvent(SST::Event *event);
