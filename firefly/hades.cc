@@ -32,8 +32,7 @@ using namespace SST;
 
 Hades::Hades( Component* owner, Params& params ) :
     OS( owner ),	
-    m_virtNic(NULL),
-	m_functionSM( NULL )
+    m_virtNic(NULL)
 {
     m_dbg.init("@t:Hades::@p():@l ", 
         params.find_integer("verboseLevel",0),
@@ -84,50 +83,11 @@ Hades::Hades( Component* owner, Params& params ) :
         m_sreg->modifyArray( netMapId, netId );
         m_sreg->publish();
 	}
-
-    int protoNum = 0;
-    tmpParams = params.find_prefix_params("ctrlMsg.");
-    m_protocolM[ protoNum ] = 
-        dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
-                            "firefly.CtrlMsgProto", owner, tmpParams ) );
-
-    assert( m_protocolM[ protoNum ]);
-    m_protocolM[ protoNum ]->init( &m_info, m_virtNic );
-
-    m_protocolMapByName[ m_protocolM[ protoNum ]->name() ] =
-                                                m_protocolM[ protoNum ];
-    m_dbg.verbose(CALL_INFO,1,1,"installed protocol '%s'\n",
-                        m_protocolM[ protoNum ]->name().c_str());
-
-    Params funcParams = params.find_prefix_params("functionSM.");
-
-    m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
-                                    m_protocolMapByName );
 }
 
 Hades::~Hades()
 {
-    while ( ! m_protocolM.empty() ) {
-        delete m_protocolM.begin()->second;
-        m_protocolM.erase( m_protocolM.begin() );
-    }
-    
-    if ( m_functionSM ) delete m_functionSM;
     if ( m_virtNic ) delete m_virtNic;
-}
-
-void Hades::finish(  )
-{
-    m_protocolM.begin()->second->finish();
-}
-
-void Hades::printStatus( Output& out )
-{
-    std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
-    for ( ; iter != m_protocolM.end(); ++iter ) {
-        iter->second->printStatus(out);
-    }
-    m_functionSM->printStatus( out );
 }
 
 void Hades::_componentSetup()
@@ -155,13 +115,6 @@ void Hades::_componentSetup()
     	m_dbg.verbose(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
 								nid, group->getSize(),group->getMyRank() );
 	}
-
-    std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
-    for ( ; iter != m_protocolM.end(); ++iter ) {
-       	iter->second->setup();
-    }
-
-  	m_functionSM->setup();
 
     char buffer[100];
     snprintf(buffer,100,"@t:%#x:%d:Hades::@p():@l ",
