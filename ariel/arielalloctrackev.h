@@ -15,7 +15,7 @@
 namespace SST {
 namespace ArielComponent {
 
-class arielAllocTrackEvent : public SST::Event 
+class arielAllocTrackEvent : public SST::Event, public SST::Core::Serialization::serializable_type<arielAllocTrackEvent> 
 {
 public:
     enum arielAllocTrackType {
@@ -39,17 +39,18 @@ private:
     uint32_t level;
     uint64_t instPtr;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version)
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP(type);
-        ar & BOOST_SERIALIZATION_NVP(virtualAddress);
-        ar & BOOST_SERIALIZATION_NVP(allocateLength);
-        ar & BOOST_SERIALIZATION_NVP(level);
+	arielAllocTrackEvent() {} // For serialization only
+
+public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & type;
+        ser & virtualAddress;
+        ser & allocateLength;
+        ser & level;
     }
+    
+    ImplementSerializable(arielAllocTrackEvent);     
 };
 
 } // namespace ArielComponent
