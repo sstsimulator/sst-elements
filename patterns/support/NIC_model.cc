@@ -198,6 +198,3 @@ NIC_model::delay(int bytes)
 
 
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(NIC_model)
-#endif // SERIALIZATION_WORKS_NOW

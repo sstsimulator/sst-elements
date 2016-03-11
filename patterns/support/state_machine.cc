@@ -193,6 +193,3 @@ int lastSM;
 
 
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(State_machine)
-#endif // SERIALIZATION_WORKS_NOW

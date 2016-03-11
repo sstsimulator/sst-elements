@@ -275,6 +275,3 @@ Collective_topology::lsb(uint32_t v)
 
 }  // end of lsb
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Collective_topology)
-#endif // SERIALIZATION_WORKS_NOW

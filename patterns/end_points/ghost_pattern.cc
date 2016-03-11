@@ -417,6 +417,3 @@ void Ghost_pattern::setup()
 	state_transition(E_START, STATE_INIT);
 }
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Ghost_pattern)
-#endif // SERIALIZATION_WORKS_NOW

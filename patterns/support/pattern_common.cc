@@ -234,6 +234,3 @@ Patterns::memdelay(int bytes)
 
 
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Patterns)
-#endif // SERIALIZATION_WORKS_NOW

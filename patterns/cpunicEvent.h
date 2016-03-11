@@ -21,7 +21,6 @@
 #ifndef SST_CORE_CPUNICEVENT_H
 #define SST_CORE_CPUNICEVENT_H
 
-#include <sst/core/serialization.h>
 #include <sst/core/simulation.h>
 
 #include <cstring>
@@ -33,7 +32,7 @@
 
 using namespace SST;
 
-class CPUNicEvent : public Event {
+class CPUNicEvent : public Event, public SST::Core::Serialization::serializable_type<CPUNicEvent> {
     public:
         CPUNicEvent() : Event(), out(Simulation::getSimulation()->getSimulationOutput())   {
 	    params_present= false;
@@ -160,10 +159,35 @@ class CPUNicEvent : public Event {
 	int payload_len;
     Output &out;
 
-        friend class boost::serialization::access;
-        template<class Archive>
-	void serialize(Archive &ar, const unsigned int version);
-
+    public:	
+    void serialize_order(SST::Core::Serialization::serializer &ser) {
+        Event::serialize_order(ser);
+        ser & route;
+        ser & reverse_route;
+        ser & router_delay;
+        ser & hops;
+        ser & congestion_cnt;
+        ser & congestion_delay;
+        ser & local_traffic;
+        ser & entry_port;
+        ser & return_event;
+        ser & dest;
+        ser & msg_id;
+        ser & msg_match_bits;
+        ser & buf;
+        ser & msg_len;
+        ser & tag;
+ 
+        ser & params_present;
+        ser & routine;
+        ser & params_len;
+        ser & event_params;
+        ser & msg_payload;
+        ser & payload_present;
+        ser & payload_len;
+    }
+    
+    ImplementSerializable(CPUNicEvent);     
 };
 
 

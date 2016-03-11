@@ -243,6 +243,3 @@ Comm_pattern::handle_storage_events(Event *sst_event)
 eli(Comm_pattern, comm_pattern, "Communication pattern base object")
 */
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Comm_pattern)
-#endif // SERIALIZATION_WORKS_NOW

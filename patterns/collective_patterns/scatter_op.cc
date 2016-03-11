@@ -127,6 +127,3 @@ int msglen;
 
 }  // end of state_WAIT_PARENT()
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Scatter_op)
-#endif // SERIALIZATION_WORKS_NOW

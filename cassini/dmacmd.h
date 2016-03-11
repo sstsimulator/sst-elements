@@ -49,16 +49,6 @@ protected:
 	const uint64_t length;
 
 	DMACommand() {} // For serialization
-    	friend class boost::serialization::access;
-
-	void serialize(Archive & ar, const unsigned int version)
-    	{
-        	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        	ar & BOOST_SERIALIZATION_NVP(cmdID);
-	        ar & BOOST_SERIALIZATION_NVP(destAddr);
-	        ar & BOOST_SERIALIZATION_NVP(srcAddr);
-	        ar & BOOST_SERIALIZATION_NVP(length);
-    	}
 };
 
 }

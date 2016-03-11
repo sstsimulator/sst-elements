@@ -690,6 +690,3 @@ compare_NICparams(NICparams_t first, NICparams_t second)
 
 
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(MachineInfo)
-#endif // SERIALIZATION_WORKS_NOW

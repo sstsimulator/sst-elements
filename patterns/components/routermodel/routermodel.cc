@@ -11,7 +11,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "routermodel.h"
 
 #include <assert.h>
@@ -349,4 +348,3 @@ extern "C" {
 }
 */
 
-BOOST_CLASS_EXPORT(Routermodel)

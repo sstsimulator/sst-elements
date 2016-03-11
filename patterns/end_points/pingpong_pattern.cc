@@ -322,6 +322,3 @@ void Pingpong_pattern::setup()
 	state_transition(E_START, PP_INIT);
 }
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Pingpong_pattern)
-#endif // SERIALIZATION_WORKS_NOW

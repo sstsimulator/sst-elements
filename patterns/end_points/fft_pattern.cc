@@ -283,6 +283,3 @@ void FFT_pattern::setup()
 	state_transition(E_START, STATE_INIT);
 }
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(FFT_pattern)
-#endif // SERIALIZATION_WORKS_NOW

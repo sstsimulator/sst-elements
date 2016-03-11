@@ -17,7 +17,6 @@
 #define __STDC_FORMAT_MACROS		(1)
 #endif
 #include <inttypes.h>			// For PRId64
-#include "sst/core/serialization.h"
 
 #include <stdio.h>
 
@@ -60,14 +59,6 @@ typedef struct   {
     int64_t inflectionpoint;
     int64_t latency;
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-	ar & BOOST_SERIALIZATION_NVP(index);
-	ar & BOOST_SERIALIZATION_NVP(inflectionpoint);
-	ar & BOOST_SERIALIZATION_NVP(latency);
-    }
 } Rtrparams_t;
 
 
@@ -520,17 +511,6 @@ class Routermodel : public IntrospectedComponent {
 	    SimTime_t next_out;
 	    SimTime_t next_in;
 
-	    friend class boost::serialization::access;                                                        
-	    template<class Archive>
-	    void
-	    serialize(Archive & ar, const unsigned int version)
-	    {
-		ar & BOOST_SERIALIZATION_NVP(link);
-		ar & BOOST_SERIALIZATION_NVP(cnt_in);
-		ar & BOOST_SERIALIZATION_NVP(cnt_out);
-		ar & BOOST_SERIALIZATION_NVP(next_out);
-		ar & BOOST_SERIALIZATION_NVP(next_in);
-	    }
 	};
 	std::vector<struct port_t> port;
 
@@ -549,43 +529,6 @@ class Routermodel : public IntrospectedComponent {
 	long long int msg_cnt;
 
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version)
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(frequency);
-	    ar & BOOST_SERIALIZATION_NVP(tc);
-	    ar & BOOST_SERIALIZATION_NVP(hop_delay);
-	    ar & BOOST_SERIALIZATION_NVP(component_name);
-#ifdef NEEDS_MORE_WORK
-#ifdef WITH_POWER
-	    ar & BOOST_SERIALIZATION_NVP(pushIntrospector);
-	    ar & BOOST_SERIALIZATION_NVP(pdata);
-	    ar & BOOST_SERIALIZATION_NVP(pstats);
-	    ar & BOOST_SERIALIZATION_NVP(power);
-	    ar & BOOST_SERIALIZATION_NVP(mycounts);
-	    ar & BOOST_SERIALIZATION_NVP(powerModel);
-	    ar & BOOST_SERIALIZATION_NVP(ifModelPower);
-#endif // WITH_POWER
-#endif // NEEDS_MORE_WORK
-	    ar & BOOST_SERIALIZATION_NVP(router_totaldelay);
-	    ar & BOOST_SERIALIZATION_NVP(num_local_message);
-	    ar & BOOST_SERIALIZATION_NVP(port);
-	    ar & BOOST_SERIALIZATION_NVP(self_link);
-	    ar & BOOST_SERIALIZATION_NVP(num_ports);
-	    ar & BOOST_SERIALIZATION_NVP(router_model_debug);
-	    ar & BOOST_SERIALIZATION_NVP(router_bw);
-	    ar & BOOST_SERIALIZATION_NVP(aggregator);
-	    ar & BOOST_SERIALIZATION_NVP(Rtrparams);
-	    ar & BOOST_SERIALIZATION_NVP(NICparams);
-	    ar & BOOST_SERIALIZATION_NVP(new_model);
-	    ar & BOOST_SERIALIZATION_NVP(congestion_out);
-	    ar & BOOST_SERIALIZATION_NVP(congestion_out_cnt);
-	    ar & BOOST_SERIALIZATION_NVP(congestion_in);
-	    ar & BOOST_SERIALIZATION_NVP(congestion_in_cnt);
-        }
 
 };
 

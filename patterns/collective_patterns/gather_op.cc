@@ -136,6 +136,3 @@ int msglen;
 
 }  // end of state_WAIT_CHILDREN()
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Gather_op)
-#endif // SERIALIZATION_WORKS_NOW

@@ -128,6 +128,3 @@ NIC_stats::stat_print(const char *type_name)
 
 
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(NIC_stats)
-#endif // SERIALIZATION_WORKS_NOW

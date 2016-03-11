@@ -274,6 +274,3 @@ int x_delta, y_delta, z_delta;
 
 
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Router)
-#endif // SERIALIZATION_WORKS_NOW

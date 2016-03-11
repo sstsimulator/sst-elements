@@ -528,6 +528,3 @@ void Msgrate_pattern::setup()
 	state_transition(E_START_T1, STATE_INIT);
 }
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Msgrate_pattern)
-#endif // SERIALIZATION_WORKS_NOW

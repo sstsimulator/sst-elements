@@ -341,6 +341,3 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 
 }  // end of state_WAIT_SEND()
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Alltoall_op)
-#endif // SERIALIZATION_WORKS_NOW

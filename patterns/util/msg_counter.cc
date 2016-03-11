@@ -203,6 +203,3 @@ int cnt;
 
 }  // end of show_log()
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Msg_counter)
-#endif // SERIALIZATION_WORKS_NOW

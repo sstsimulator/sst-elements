@@ -26,7 +26,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include <cpunicEvent.h>
 #include "bit_bucket.h"
 
@@ -144,4 +143,3 @@ extern "C" {
 }
 */
 
-BOOST_CLASS_EXPORT(Bit_bucket)

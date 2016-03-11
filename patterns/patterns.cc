@@ -15,7 +15,6 @@
 // Rolf Riesen, October 2011
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "sst/core/element.h"
 #include "components/routermodel/routermodel.h"
 #include "components/bit_bucket/bit_bucket.h"

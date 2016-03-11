@@ -17,7 +17,6 @@
 
 #include "sst/core/element.h"
 #include "sst/core/params.h"
-#include "sst/core/serialization.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;

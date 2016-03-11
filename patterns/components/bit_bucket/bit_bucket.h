@@ -28,7 +28,6 @@
 #include <sst/core/element.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
-#include "sst/core/serialization.h"
 
 
 
@@ -140,26 +139,6 @@ class Bit_bucket : public Component {
 	uint64_t total_writes;
 
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(net);
-	    ar & BOOST_SERIALIZATION_NVP(self_link);
-	    ar & BOOST_SERIALIZATION_NVP(bit_bucket_debug);
-	    ar & BOOST_SERIALIZATION_NVP(read_pipe);
-	    ar & BOOST_SERIALIZATION_NVP(write_pipe);
-	    ar & BOOST_SERIALIZATION_NVP(write_bw);
-	    ar & BOOST_SERIALIZATION_NVP(read_bw);
-	    ar & BOOST_SERIALIZATION_NVP(bytes_written);
-	    ar & BOOST_SERIALIZATION_NVP(bytes_read);
-	    ar & BOOST_SERIALIZATION_NVP(total_read_delay);
-	    ar & BOOST_SERIALIZATION_NVP(total_write_delay);
-	    ar & BOOST_SERIALIZATION_NVP(total_reads);
-	    ar & BOOST_SERIALIZATION_NVP(total_writes);
-        }
 };
 
 #endif  // _BIT_BUCKET_H_

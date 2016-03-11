@@ -148,6 +148,3 @@ state_event barrier_event;
 
 }  // end of state_WAIT_PARENT()
 
-#ifdef SERIALIZATION_WORKS_NOW
-BOOST_CLASS_EXPORT(Barrier_op)
-#endif // SERIALIZATION_WORKS_NOW
