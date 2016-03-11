@@ -240,6 +240,9 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
+
+    origRequest->setMemFlags(responseEvent->getMemFlags());
+
     uint64_t sendTime = 0;
     switch (state) {
         case IS:
