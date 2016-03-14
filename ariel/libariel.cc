@@ -105,6 +105,7 @@ static const ElementInfoParam ariel_params[] = {
     {"apparg%(appargcount)d", "Arguments for the traced executable", ""},
     {"arielmode", "Tool interception mode, set to 1 to trace entire program (default), set to 0 to delay tracing until ariel_enable() call., set to 2 to attempt auto-detect", "2"},
     {"arielinterceptcalls", "Toggle intercepting library calls", "1"},
+    {"arielstack", "Dump stack on malloc calls (also requires enabling arielinterceptcalls). May increase overhead due to keeping a shadow stack.", "0"},
     {"tracePrefix", "Prefix when tracing is enable", ""},
     {"clock", "Clock rate at which events are generated and processed", "1GHz"},
     {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},

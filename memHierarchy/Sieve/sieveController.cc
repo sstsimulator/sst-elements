@@ -173,7 +173,7 @@ void Sieve::finish(){
         ArielComponent::arielAllocTrackEvent *ev = *i;
 	rwCount_t counts = allocMap[ev];
 	double density = double(counts.first + counts.second) / double(ev->getAllocateLength());
-        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIx64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
+        output_file->output(CALL_INFO, "%#" PRIx64 " %#" PRIu64 " %" PRId64 " %" PRId64 " %" PRId64 " %.3f\n", 
 			    ev->getVirtualAddress(), 
 			    ev->getInstructionPointer(), 
 			    ev->getAllocateLength(),
