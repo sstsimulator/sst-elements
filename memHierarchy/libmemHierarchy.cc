@@ -343,7 +343,7 @@ static const ElementInfoParam sieve_params[] = {
 
 static const ElementInfoPort sieve_ports[] = {
     {"cpu_link_%(port)d", "Ports connected to the CPUs", memEvent_port_events},
-    {"alloc_link", "Connection to the CPU's allocation/free notification", 
+    {"alloc_link_%(port)d", "Ports connected to the CPU's allocation/free notification", 
      arielAlloc_port_events},
     {NULL, NULL, NULL}
 };

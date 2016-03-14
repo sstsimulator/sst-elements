@@ -87,7 +87,6 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
     }
     
     // optional link for allocation / free tracking
-    alloc_link = configureLink("alloc_link", "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
     configureLinks();
 
     /* Register statistics */
@@ -101,18 +100,28 @@ Sieve::Sieve(ComponentId_t id, Params &params, CacheArray * cacheArray, Output *
 void Sieve::configureLinks() {
     SST::Link* link;
     cpuLinkCount_ = 0;
-    for ( int i = 0 ; i < 200 ; i++ ) { // 200 is chosen to be reasonably large but no reason it can't be larger
+    while (true) {
         std::ostringstream linkName;
-        linkName << "cpu_link_" << i;
+        linkName << "cpu_link_" << cpuLinkCount_;
         std::string ln = linkName.str();
         link = configureLink(ln, "100 ps", new Event::Handler<Sieve>(this, &Sieve::processEvent));
         if (link) {
             cpuLinks_.push_back(link);
+            output_->output(CALL_INFO, "Port %lu = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
             cpuLinkCount_++;
-            output_->output(CALL_INFO, "Port %lu = Link %d\n", cpuLinks_[i]->getId(), i);
+        } else {
+            break;
         }
     }
     if (cpuLinkCount_ < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports cpu_link_n\n");
+
+    allocLinks_.resize(cpuLinkCount_);
+    for (int i = 0; i < cpuLinkCount_; i++) {
+        std::ostringstream linkName;
+        linkName << "alloc_link_" << i;
+        std::string ln = linkName.str();
+        allocLinks_[i] = configureLink(ln, "50ps", new Event::Handler<Sieve>(this, &Sieve::processAllocEvent));
+    }
 }
 
     }}

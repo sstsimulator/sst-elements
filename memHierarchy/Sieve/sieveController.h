@@ -92,7 +92,7 @@ private:
     CacheListener*      listener_;
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
-    SST::Link* alloc_link;
+    vector<SST::Link*>  allocLinks_;
 
     /* Statistics */
     Statistic<uint64_t>* statReadHits;
