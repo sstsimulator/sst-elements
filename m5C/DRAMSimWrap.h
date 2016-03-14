@@ -96,7 +96,7 @@ class DRAMSimWrap : public PhysicalMemory
         }
     };
 
-    class TickEvent : public ::Event
+    class TickEvent : public ::Event, public SST::Core::Serialization::serializable_type<TickEvent>
     {
         DRAMSimWrap* m_obj;
         unsigned long m_delay;
@@ -113,6 +113,13 @@ class DRAMSimWrap : public PhysicalMemory
         const char *description() const {
             return "DRAMSimWrap tick";
         }
+        
+    public:	
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+    }
+    
+        ImplementSerializable(TickEvent);     
     };
 
     void tick();

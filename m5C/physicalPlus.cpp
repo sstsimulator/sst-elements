@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 
 #include <physicalPlus.h>
 #include <memLink.h>

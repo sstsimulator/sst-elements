@@ -57,42 +57,7 @@ private:
     SST::Link* S;
     SST::Link* E;
     SST::Link* W;
-    
-    friend class boost::serialization::access;
-    template<class Archive>
-    void save(Archive & ar, const unsigned int version) const
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(workPerCycle);
-        ar & BOOST_SERIALIZATION_NVP(commFreq);
-        ar & BOOST_SERIALIZATION_NVP(commSize);
-        ar & BOOST_SERIALIZATION_NVP(neighbor);
-        ar & BOOST_SERIALIZATION_NVP(N);
-        ar & BOOST_SERIALIZATION_NVP(S);
-        ar & BOOST_SERIALIZATION_NVP(E);
-        ar & BOOST_SERIALIZATION_NVP(W);
-    }
-    
-    template<class Archive>
-    void load(Archive & ar, const unsigned int version) 
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(workPerCycle);
-        ar & BOOST_SERIALIZATION_NVP(commFreq);
-        ar & BOOST_SERIALIZATION_NVP(commSize);
-        ar & BOOST_SERIALIZATION_NVP(neighbor);
-        ar & BOOST_SERIALIZATION_NVP(N);
-        ar & BOOST_SERIALIZATION_NVP(S);
-        ar & BOOST_SERIALIZATION_NVP(E);
-        ar & BOOST_SERIALIZATION_NVP(W);
-        //restore links
-        N->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
-        S->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
-        E->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
-        W->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
-    }
-      
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
+   
 };
 
 } // namespace SimpleComponent

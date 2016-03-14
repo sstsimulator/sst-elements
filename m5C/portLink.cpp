@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization.h>
 #include "portLink.h"
 #include <unistd.h>
 #include <sst/core/component.h>

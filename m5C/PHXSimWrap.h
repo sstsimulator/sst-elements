@@ -86,7 +86,7 @@ class PHXSimWrap : public PhysicalMemory
         }
     };
 
-    class TickEvent : public ::Event
+    class TickEvent : public ::Event, public SST::Core::Serialization::serializable_type<TickEvent>
     {
         PHXSimWrap* m_obj;
         unsigned long m_delay;
@@ -103,6 +103,12 @@ class PHXSimWrap : public PhysicalMemory
         const char *description() const {
             return "PHXSimWrap tick";
         }
+    public:	
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+        }
+        
+        ImplementSerializable(TickEvent);     
     };
 
     void tick();

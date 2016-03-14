@@ -30,7 +30,7 @@ struct SyscallParams : public DmaDeviceParams
 
 class Syscall : public DmaDevice 
 {
-    class DmaEvent : public ::Event
+    class DmaEvent : public ::Event, public SST::Core::Serialization::serializable_type<DmaEvent>
     {
       public:
         DmaEvent( Syscall* ptr) : m_ptr( ptr ) {}  
@@ -45,9 +45,16 @@ class Syscall : public DmaDevice
         int64_t retval;
       private:
         Syscall* m_ptr;
+        
+    public:	
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+        }
+        
+        ImplementSerializable(DmaEvent);     
     };
 
-    class SyscallEvent : public ::Event
+    class SyscallEvent : public ::Event, public SST::Core::Serialization::serializable_type<SyscallEvent>
     {
       public:
         SyscallEvent( Syscall* ptr) : m_ptr( ptr ) {}  
@@ -60,6 +67,12 @@ class Syscall : public DmaDevice
         }
       private:
         Syscall* m_ptr;
+    public:	
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+        }
+        
+        ImplementSerializable(StringEvent);     
     };
   
   public:

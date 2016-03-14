@@ -156,7 +156,6 @@ bool simpleComponent::clockTic( Cycle_t )
 
 // Element Libarary / Serialization stuff
     
-BOOST_CLASS_EXPORT(SST::SimpleComponent::simpleComponentEvent)
-BOOST_CLASS_EXPORT(SST::SimpleComponent::simpleComponent)
+DeclareSerializable(SST::SimpleComponent::simpleComponentEvent)
 
 

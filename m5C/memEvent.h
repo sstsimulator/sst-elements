@@ -21,7 +21,7 @@
 namespace SST {
 namespace M5 {
 
-class MemEvent : public SST::Event {
+class MemEvent : public SST::Event, public SST::Core::Serialization::serializable_type<MemEvent> {
 
   public:
     enum Type {
@@ -120,23 +120,23 @@ class MemEvent : public SST::Event {
         int         m_threadId;
         Addr        m_pc;
 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void
-        serialize(Archive & ar, const unsigned int version )
-        {
-            ar & BOOST_SERIALIZATION_NVP(m_paddr);
-            ar & BOOST_SERIALIZATION_NVP(m_size);
-            ar & BOOST_SERIALIZATION_NVP(m_flags);
-            ar & BOOST_SERIALIZATION_NVP(m_privateFlags);
-            ar & BOOST_SERIALIZATION_NVP(m_time);
-            ar & BOOST_SERIALIZATION_NVP(m_asid);
-            ar & BOOST_SERIALIZATION_NVP(m_vaddr);
-            ar & BOOST_SERIALIZATION_NVP(m_extraData);
-            ar & BOOST_SERIALIZATION_NVP(m_contextId);
-            ar & BOOST_SERIALIZATION_NVP(m_threadId);
-            ar & BOOST_SERIALIZATION_NVP(m_pc);
-        }
+//        friend class boost::serialization::access;
+//        template<class Archive>
+//        void
+//        serialize(Archive & ar, const unsigned int version )
+//        {
+//            ar & BOOST_SERIALIZATION_NVP(m_paddr);
+//            ar & BOOST_SERIALIZATION_NVP(m_size);
+//            ar & BOOST_SERIALIZATION_NVP(m_flags);
+//            ar & BOOST_SERIALIZATION_NVP(m_privateFlags);
+//            ar & BOOST_SERIALIZATION_NVP(m_time);
+//            ar & BOOST_SERIALIZATION_NVP(m_asid);
+//            ar & BOOST_SERIALIZATION_NVP(m_vaddr);
+//            ar & BOOST_SERIALIZATION_NVP(m_extraData);
+//            ar & BOOST_SERIALIZATION_NVP(m_contextId);
+//            ar & BOOST_SERIALIZATION_NVP(m_threadId);
+//            ar & BOOST_SERIALIZATION_NVP(m_pc);
+//        }
     };
 
   private:
@@ -262,26 +262,24 @@ class MemEvent : public SST::Event {
 
     MemEvent() {}
 
-    friend class boost::serialization::access;
-    template<class Archive>
-    void
-    serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
+    public:	
+        void serialize_order(SST::Core::Serialization::serializer &ser) {
+            Event::serialize_order(ser);
+            ser & m_type;
+            ser & m_isResponse;
+            ser & m_flags;
 
-        ar & BOOST_SERIALIZATION_NVP(m_type);
-        ar & BOOST_SERIALIZATION_NVP(m_isResponse);
-        ar & BOOST_SERIALIZATION_NVP(m_flags);
-
-        ar & BOOST_SERIALIZATION_NVP(m_cmd);
-        ar & BOOST_SERIALIZATION_NVP(m_req);
-        ar & BOOST_SERIALIZATION_NVP(m_data);
-        ar & BOOST_SERIALIZATION_NVP(m_size);
-        ar & BOOST_SERIALIZATION_NVP(m_src);
-        ar & BOOST_SERIALIZATION_NVP(m_dest);
-        ar & BOOST_SERIALIZATION_NVP(m_addr);
-        ar & BOOST_SERIALIZATION_NVP(m_senderState);
+            ser & m_cmd;
+            ser & m_req;
+            ser & m_data;
+            ser & m_size;
+            ser & m_src;
+            ser & m_dest;
+            ser & m_addr;
+            ser & m_senderState;
     }
+    
+        ImplementSerializable(MemEvent);     
 };
 
 }
