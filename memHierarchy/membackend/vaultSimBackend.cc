@@ -25,8 +25,10 @@ VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : MemBackend(com
 
 
 bool VaultSimMemory::issueRequest(DRAMReq *req){
+#ifdef __SST_DEBUG_OUTPUT__
     uint64_t addr = req->baseAddr_ + req->amtInProcess_;
     ctrl->dbg.debug(_L10_, "Issued transaction to Cube Chain for address %" PRIx64 "\n", (Addr)addr);
+#endif
     // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
     if (outToCubes.size() > 255) {
         req->status_ = DRAMReq::NEW;
