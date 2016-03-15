@@ -44,6 +44,8 @@
 
 #include "trafficgen/trafficgen.h"
 
+#include "circuitCounter.h"
+
 #include "pymodule.h"
 
 #include <stdio.h>
@@ -548,6 +550,11 @@ load_test_network_inspector(Component* parent, Params& params)
     return new TestNetworkInspector(parent);
 }
 
+static SubComponent*
+load_circ_network_inspector(Component* parent, Params& params)
+{
+    return new CircNetworkInspector(parent, params);
+}
 
 static const ElementInfoStatistic test_network_inspector_statistics[] = {
     { "test_count", "Count number of packets sent on link", "packets", 1},
@@ -703,6 +710,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       test_network_inspector_statistics,
       "SST::Interfaces::SimpleNetwork::NetworkInspector"
     },
+    { "circuit_network_inspector",
+      "Used to count the number of network circuits (as in 'circuit switched' circuits)", 
+      NULL,
+      load_circ_network_inspector,
+      NULL,
+      NULL,
+      "SST::Interfaces::SimpleNetwork::NetworkInspector"
+      },
     { "xbar_arb_rr",
       "Round robin arbitration unit for hr_router",
       NULL,
