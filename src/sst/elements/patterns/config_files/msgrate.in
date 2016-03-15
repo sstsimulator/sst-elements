@@ -1,5 +1,0 @@
-name = msgrate_pattern
-param num_msgs = 20
-param msg_len = 0
-param rank_stride = 0
-param start_rank = 1
