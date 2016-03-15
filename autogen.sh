@@ -55,7 +55,9 @@ for file in `ls $BASE_DIR/src/sst/elements`; do
 			echo "   SST_${file}_CONFIG()" >> config/sst_elements_config_output.m4
 			echo "m4_include([src/sst/elements/$file/configure.m4])" >> config/sst_elements_include.m4
 		else
-			echo "   AC_CONFIG_FILES([src/sst/elements/$file/Makefile])" >> config/sst_elements_config_output.m4
+			if [ -r "$BASE_DIR/src/sst/elements/$file/Makefile.am" ]; then
+				echo "   AC_CONFIG_FILES([src/sst/elements/$file/Makefile])" >> config/sst_elements_config_output.m4
+			fi
 		fi
 	fi
 done
@@ -82,4 +84,4 @@ aclocal -I config
 autoheader
 autoconf
 automake --foreign --add-missing --include-deps
-#autoreconf --force --install
+autoreconf --force --install
