@@ -1,3 +1,0 @@
-name = fft_pattern
-param N = 18000
-param iter = 1
