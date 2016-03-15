@@ -327,7 +327,7 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 
 	const int32_t tag = readTag();
 	const Communicator* comm = readCommunicator();
-	const uint64_t req    = readUINT64();
+	const uint64_t req   = readUINT64();
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
@@ -336,7 +336,8 @@ void EmberSIRIUSTraceGenerator::readMPIIrecv( std::queue<EmberEvent*>& evQ ) {
 
 	auto checkReq = liveRequests.find(req);
 	if( checkReq != liveRequests.end() ) {
-		fatal(CALL_INFO, -1, "Error: when issuing an Irecv, found an MPI_Request was already active.\n");
+		printLiveRequestMap();
+		fatal(CALL_INFO, -1, "Error: when issuing an Irecv, found an MPI_Request was already active. (Request=%" PRIu64 ")\n", req);
 	}
 
 	verbose(CALL_INFO, 2, 0, "Irecv src=%" PRId32 ", count=%" PRIu32 "\n", src, count);
@@ -352,30 +353,37 @@ void EmberSIRIUSTraceGenerator::readMPIWaitall( std::queue<EmberEvent*>& evQ ) {
 	const double startTime = readTime();
 	const uint32_t reqCount = readUINT32();
 
-	uint64_t* reqAddr = (uint64_t*) malloc(sizeof(uint64_t) * reqCount);
+	// Get requests to wait against, remembering we may be given some
+	// MPI_REQUEST_NULL in the array, which we need to skip
+	std::vector<uint64_t> requestAddr;
 	for(uint32_t i = 0 ; i < reqCount; i++) {
-		reqAddr[i] = readUINT64();
+		const uint64_t nextReqID = readUINT64();
+
+		if(SIRIUS_MPI_REQUEST_NULL != nextReqID) {
+			requestAddr.push_back(nextReqID);
+		}
 	}
 
 	const double endTime = readTime();
 	const int32_t result = readINT32();
 
-	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest*) * reqCount );
-	for(uint32_t i = 0; i < reqCount; i++) {
-		auto findReq = liveRequests.find(reqAddr[i]);
+	MessageRequest* reqs = (MessageRequest*) malloc( sizeof(MessageRequest*) * requestAddr.size() );
+	for(uint32_t i = 0; i < requestAddr.size(); i++) {
+		auto findReq = liveRequests.find(requestAddr[i]);
 
 		if( findReq == liveRequests.end() ) {
-			fatal(CALL_INFO, -1, "Error: unable to find request at address: %" PRIu64 "\n", reqAddr[i]);
+			fatal(CALL_INFO, -1, "Error: unable to find request at address: %" PRIu64 "\n", requestAddr[i]);
 		} else {
 			reqs[i] = *(findReq->second);
 			liveRequests.erase(findReq);
 		}
 	}
 
-	verbose(CALL_INFO, 2, 0, "Waitall, count=%" PRIu32 "\n", reqCount);
+	verbose(CALL_INFO, 2, 0, "Waitall, count=%" PRIu32 ", found %" PRIu32 " non MPI_REQUEST_NULL requests.\n",
+		reqCount, static_cast<const uint32_t>(requestAddr.size()) );
 
 	enqueueCompute(evQ, startTime, endTime);
-	enQ_waitall( evQ, reqCount, reqs, NULL );
+	enQ_waitall( evQ, requestAddr.size(), reqs, NULL );
 }
 
 void EmberSIRIUSTraceGenerator::readMPIWait( std::queue<EmberEvent*>& evQ ) {
@@ -385,22 +393,26 @@ void EmberSIRIUSTraceGenerator::readMPIWait( std::queue<EmberEvent*>& evQ ) {
 	const double endTime   = readTime();
 	const int32_t result   = readINT32();
 
-	MessageRequest* emberReq;
-	auto reqLookup = liveRequests.find(request);
+	if(SIRIUS_MPI_REQUEST_NULL != request) {
+		MessageRequest* emberReq;
+		auto reqLookup = liveRequests.find(request);
 
-	if( reqLookup == liveRequests.end() ) {
-		fatal(CALL_INFO, -1, "Error: unable to find a pending matching request for an MPI_Wait event.\n");
+		if( reqLookup == liveRequests.end() ) {
+			fatal(CALL_INFO, -1, "Error: unable to find a pending matching request for an MPI_Wait event.\n");
+		}
+
+		emberReq = reqLookup->second;
+
+		verbose(CALL_INFO, 2, 0, "Wait, request=%" PRIu64 "\n", request);
+
+		enqueueCompute(evQ, startTime, endTime);
+		enQ_wait( evQ, emberReq );
+
+		// Remove the request from the map
+		liveRequests.erase(reqLookup);
+	} else {
+		verbose(CALL_INFO, 2, 0, "Wait: did not enqueue request because request entry is MPI_REQUEST_NULL\n");
 	}
-
-	emberReq = reqLookup->second;
-
-	verbose(CALL_INFO, 2, 0, "Wait, request=%" PRIu64 "\n", request);
-
-	enqueueCompute(evQ, startTime, endTime);
-	enQ_wait( evQ, emberReq );
-
-	// Remove the request from the map
-	liveRequests.erase(reqLookup);
 }
 
 void EmberSIRIUSTraceGenerator::readMPIBcast( std::queue<EmberEvent*>& evQ ) {

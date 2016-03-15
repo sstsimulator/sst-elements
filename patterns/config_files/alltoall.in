@@ -1,4 +1,0 @@
-name = alltoall_pattern
-param num_sets = 3
-param num_ops = 200
-param num_doubles = 1
