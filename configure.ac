@@ -34,7 +34,9 @@ AC_HEADER_TIME
 AC_CACHE_SAVE
 
 SST_CORE_CHECK_INSTALL()
-#SST_CONFIG_ELEMENTS()
+
+SST_CHECK_OSX()
+
 
 AC_CONFIG_FILES([
   Makefile
@@ -42,5 +44,7 @@ AC_CONFIG_FILES([
   src/sst/Makefile
   src/sst/elements/Makefile
 ])
+
+SST_ELEMENT_CONFIG_OUTPUT()
 
 AC_OUTPUT
