@@ -341,6 +341,7 @@ void ArielCPU::finish() {
 	}
 
 	memmgr->printStats();
+	unlink(shmem_region_name);
 }
 
 int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
@@ -480,12 +481,16 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 }
 
 ArielCPU::~ArielCPU() {
+	// Delete all of the cores
+	for(uint32_t i = 0; i < core_count; i++) {
+		delete cpu_cores[i];
+	}
+
 	delete memmgr;
 	delete tunnel;
-    unlink(shmem_region_name);
+        unlink(shmem_region_name);
 	free(page_sizes);
 	free(page_counts);
-
 }
 
 void ArielCPU::emergencyShutdown() {

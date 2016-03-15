@@ -265,7 +265,7 @@ public:
     Addr getLineSize() { return lineSize_; }
     
     /** Drop block offset bits (ie. log2(lineSize) */
-    Addr toLineAddr(Addr addr) { return (addr >> lineOffset_); }
+    Addr toLineAddr(Addr addr) { return (Addr) ((addr >> lineOffset_) / slices_); }
     
     /** Destructor - Delete all cache line objects */
     virtual ~CacheArray() {
@@ -276,6 +276,9 @@ public:
     }
 
     vector<CacheLine *> lines_;
+    void setSliceAware(unsigned int numSlices) {
+        slices_ = numSlices;
+    }
 
 private:
     void printConfiguration();
@@ -293,7 +296,8 @@ protected:
     ReplacementMgr* replacementMgr_;
     HashFunction*   hash_;
     bool            sharersAware_;
-    
+    unsigned int    slices_;
+
     CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
                ReplacementMgr* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 
                numLines_(numLines), associativity_(associativity), lineSize_(lineSize),
@@ -303,7 +307,8 @@ protected:
         setMask_    = numSets_ - 1;
         lineOffset_ = log2Of(lineSize_);
         lines_.resize(numLines_);
-    
+        slices_ = 1;
+
         for (unsigned int i = 0; i < numLines_; i++) {
             lines_[i] = new CacheLine(lineSize_, i, dbg_, cache);
         }

@@ -313,6 +313,7 @@ int MESIController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
         case E:
         case M:
             if (cacheLine->ownerExists()) return 3;
+            if (cmd == GetS) return 0;  // hit
             if (cmd == GetX) {
                 if (cacheLine->isShareless() || (cacheLine->isSharer(event->getSrc()) && cacheLine->numSharers() == 1)) return 0; // Hit
             }
