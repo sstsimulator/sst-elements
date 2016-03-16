@@ -310,7 +310,9 @@ sst.merlin._params["input_latency"] = networkParams['input_latency']
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
 sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
 sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
-sst.merlin._params["network_inspectors"] = networkParams['network_inspectors']
+
+if "network_inspectors" in networkParams.keys():
+    sst.merlin._params["network_inspectors"] = networkParams['network_inspectors']
 
 if rtrArb:
 	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 
