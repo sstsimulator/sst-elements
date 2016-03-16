@@ -51,6 +51,8 @@ libmerlin_la_SOURCES = \
 	trafficgen/trafficgen.cc \
 	inspectors/circuitCounter.h \
 	inspectors/circuitCounter.cc \
+	inspectors/testInspector.cc \
+	inspectors/testInspector.h \
 	pymodule.h \
 	pymodule.c \
 	pymerlin.py

@@ -9,26 +9,24 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_MERLIN_TESTINSPECTOR_H
-#define COMPONENTS_MERLIN_TESTINSPECTOR_H
+#include <sst_config.h>
+#include "sst/core/serialization.h"
 
-#include <sst/core/subcomponent.h>
-#include <sst/core/interfaces/simpleNetwork.h>
-#include <sst/core/threadsafe.h>
+#include "testInspector.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::Interfaces;
 
-class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
-private:
-    Statistic<uint64_t>* test_count;
-public:
-    TestNetworkInspector(Component* parent);
+TestNetworkInspector::TestNetworkInspector(Component* parent) :
+    SimpleNetwork::NetworkInspector(parent)
+{}
 
-    void initialize(string id);
+void TestNetworkInspector::initialize(string id) {
+    test_count = registerStatistic<uint64_t>("test_count", id);
+}
 
-    void inspectNetworkData(SimpleNetwork::Request* req);
-};
+void TestNetworkInspector::inspectNetworkData(SimpleNetwork::Request* req) {
+    test_count->addData(1);
+}
 
-#endif
