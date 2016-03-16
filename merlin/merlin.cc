@@ -44,7 +44,8 @@
 
 #include "trafficgen/trafficgen.h"
 
-#include "circuitCounter.h"
+#include "inspectors/circuitCounter.h"
+#include "inspectors/testInspector.h"
 
 #include "pymodule.h"
 
@@ -524,24 +525,6 @@ static const ElementInfoStatistic reorderlinkcontrol_statistics[] = {
     // { "send_bit_count", "Count number of bits sent on link", "bits", 1},
     // { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
     { NULL, NULL, NULL, 0 }
-};
-
-
-class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
-private:
-    Statistic<uint64_t>* test_count;
-public:
-    TestNetworkInspector(Component* parent) :
-        SimpleNetwork::NetworkInspector(parent)
-    {}
-
-    void initialize(string id) {
-        test_count = registerStatistic<uint64_t>("test_count", id);
-    }
-
-    void inspectNetworkData(SimpleNetwork::Request* req) {
-        test_count->addData(1);
-    }
 };
 
 static SubComponent*

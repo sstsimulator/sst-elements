@@ -49,8 +49,8 @@ libmerlin_la_SOURCES = \
 	hr_router/xbar_arb_rr.h \
 	trafficgen/trafficgen.h \
 	trafficgen/trafficgen.cc \
-	circuitCounter.h \
-	circuitCounter.cc \
+	inspectors/circuitCounter.h \
+	inspectors/circuitCounter.cc \
 	pymodule.h \
 	pymodule.c \
 	pymerlin.py
