@@ -16,7 +16,6 @@
 #ifndef SST_SCHEDULER_OUTPUT_H__
 #define SST_SCHEDULER_OUTPUT_H__
 
-#include "sst/core/serialization/element.h"
 #include <sst/core/output.h>
 
 namespace SST {

@@ -19,7 +19,7 @@
 namespace SST {
     namespace Scheduler {
 
-        class JobStartEvent : public SST::Event {
+        class JobStartEvent : public SST::Event, public SST::Core::Serialization::serializable_type<JobStartEvent> {
             public:
 
                 JobStartEvent(unsigned long time, int jobNum) : SST::Event() {
@@ -35,14 +35,14 @@ namespace SST {
             private:
                 JobStartEvent() { }  // for serialization only
 
-                friend class boost::serialization::access;
-                template<class Archive>
-                    void serialize(Archive & ar, const unsigned int version )
-                    {
-                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-                        ar & BOOST_SERIALIZATION_NVP(time);
-                        ar & BOOST_SERIALIZATION_NVP(jobNum);
-                    }
+            public:	
+                void serialize_order(SST::Core::Serialization::serializer &ser) {
+                    Event::serialize_order(ser);
+                    ser & time;
+                    ser & jobNum;
+                }
+                
+                ImplementSerializable(JobStartEvent);     
         };
 
     }

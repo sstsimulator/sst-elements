@@ -121,32 +121,7 @@ namespace SST {
                 int ThinkTimeFromPrecedingJob;
 
             private:
-                friend class boost::serialization::access;
-                template<class Archive>
-                    void
-                    serialize(Archive & ar, const unsigned int version )
-                    {
-                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-                        ar & BOOST_SERIALIZATION_NVP(jobStatus);
-                        ar & BOOST_SERIALIZATION_NVP(JobNumber);
-                        ar & BOOST_SERIALIZATION_NVP(SubmitTime);
-                        ar & BOOST_SERIALIZATION_NVP( WaitTime);
-                        ar & BOOST_SERIALIZATION_NVP( RunTime);
-                        ar & BOOST_SERIALIZATION_NVP( NumberOfAllocatedProcessors);
-                        ar & BOOST_SERIALIZATION_NVP( AverageCPUTimeUsed);
-                        ar & BOOST_SERIALIZATION_NVP( UsedMemory);
-                        ar & BOOST_SERIALIZATION_NVP( RequestedNumberOfProcessors);
-                        ar & BOOST_SERIALIZATION_NVP( RequestedTime);
-                        ar & BOOST_SERIALIZATION_NVP( RequestedMemory);
-                        ar & BOOST_SERIALIZATION_NVP( Status);
-                        ar & BOOST_SERIALIZATION_NVP( UserID);
-                        ar & BOOST_SERIALIZATION_NVP( GroupID);
-                        ar & BOOST_SERIALIZATION_NVP( Executable );
-                        ar & BOOST_SERIALIZATION_NVP( QueueNumber);
-                        ar & BOOST_SERIALIZATION_NVP( PartitionNumber);
-                        ar & BOOST_SERIALIZATION_NVP( PrecedingJobNumber);
-                        ar & BOOST_SERIALIZATION_NVP( ThinkTimeFromPrecedingJob);
-                    }
+                NotSerializable(SWFEvent)
         }; 
 
     }

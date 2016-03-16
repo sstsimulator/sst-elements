@@ -10,7 +10,6 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "sst/core/rng/mersenne.h"
 #include "schedComponent.h" 
 
@@ -798,5 +797,5 @@ void schedComponent::logJobFault(ITMI itmi, FaultEvent * faultEvent)
 // Element Libarary / Serialization stuff
 
 //BOOST_CLASS_EXPORT(SST::Scheduler::ArrivalEvent)
-BOOST_CLASS_EXPORT(SST::Scheduler::schedComponent)
+//BOOST_CLASS_EXPORT(SST::Scheduler::schedComponent)
 

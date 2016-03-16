@@ -10,7 +10,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include "faultInjectionComponent.h"
 #include "events/CommunicationEvent.h"
@@ -33,6 +32,7 @@ using namespace SST::Scheduler;
 namespace SST{
 	namespace Scheduler{
 		class sendFailsEvent : public SST::Event{
+		    NotSerializable(sendFailsEvent)
 		};
 	};
 };
