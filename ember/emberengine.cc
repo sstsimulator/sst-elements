@@ -11,7 +11,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "sst/core/stringize.h"
 #include <sst/core/timeLord.h>
 
@@ -310,4 +309,3 @@ EmberEngine::EmberEngine() :
     // for serialization only
 }
 
-BOOST_CLASS_EXPORT(SST::Ember::EmberEngine)

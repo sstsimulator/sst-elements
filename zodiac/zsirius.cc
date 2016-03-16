@@ -11,7 +11,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "zsirius.h"
 
 #include <assert.h>
@@ -525,4 +524,3 @@ void ZodiacSiriusTraceReader::enqueueNextEvent() {
 	}
 }
 
-BOOST_CLASS_EXPORT(SST::Zodiac::ZodiacSiriusTraceReader)
