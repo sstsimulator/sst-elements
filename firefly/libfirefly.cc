@@ -44,7 +44,7 @@
 
 using namespace Firefly;
 
-//DeclareSerializable(SST::Firefly::FireflyNetworkEvent)
+DeclareSerializable(SST::Firefly::FireflyNetworkEvent)
 
 //static const ElementInfoParam testDriver_params[] = {
 //	{ NULL, NULL, NULL }
