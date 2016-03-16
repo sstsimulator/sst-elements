@@ -35,6 +35,8 @@ class DriverEvent : public SST::Event {
     MP::Functor* retFunc;
     int retval;
   private:
+      
+    NotSerializable(DriverEvent)
 };
 
 FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 

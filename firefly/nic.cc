@@ -278,4 +278,4 @@ bool Nic::recvNotify(int vc)
     return false;
 }
 
-BOOST_CLASS_EXPORT( SST::Firefly::NicInitEvent )
+DeclareSerializable( SST::Firefly::NicInitEvent )
