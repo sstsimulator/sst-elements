@@ -43,6 +43,10 @@ struct pageInfo {
     uint scanLeng; // number of consecutive unit-1-stride accesses
     SimTime_t pageDelay; // time when page will be in fast mem
 
+    typedef enum {NONE, FtoS, StoF} swapDir_t;
+    swapDir_t swapDir;
+    int swapsOut;
+
     // stats
     typedef enum {LT_NEG_ONE, NEG_ONE, ZERO, ONE, GT_ONE, LAST_CASE} AcCases;
     uint64_t accPat[LAST_CASE];
@@ -120,7 +124,7 @@ struct pageInfo {
     }
 
     pageInfo() : touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
-                 pageDelay(0) {
+                 pageDelay(0), swapDir(NONE), swapsOut(0) {
         for (int i = 0; i < LAST_CASE; ++i) {
             accPat[i] = 0;
         }
@@ -164,6 +168,24 @@ private:
     void printAccStats();
     string accStatsPrefix;
     int dumpNum;
+
+    // swap tracking stuff
+    const bool modelSwaps = 1;
+    const int fastLat = 1;
+    map<uint64_t, list<DRAMReq*> > waitingReqs;
+    class MemCtrlEvent;
+    typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;
+    typedef map<DRAMReq *, pageInfo*> reqToPage_t;
+    evToPage_t swapToSlow_Reads;
+    evToPage_t swapToFast_Writes;
+    reqToPage_t swapToSlow_Writes;
+    reqToPage_t swapToFast_Reads;
+
+    void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+    void swapDone(pageInfo *, uint64_t);
+    void moveToFast(pageInfo &, DRAMReq *);
+    void moveToSlow(pageInfo &, DRAMReq *);
+    bool pageIsSwapping(const pageInfo &page);
 
     class MemCtrlEvent : public SST::Event {
     public:
