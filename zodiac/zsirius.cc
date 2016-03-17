@@ -43,13 +43,10 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
    	Params hermesParams = params.find_prefix_params("hermesParams." );
 
-printf("load os\n");
-
     os = dynamic_cast<OS*>(loadSubComponent(
                             osModule, this, hermesParams));
     assert(os);
 
-printf("load api\n");
     params.print_all_params(std::cout);
     Params osParams = params.find_prefix_params("os.");
     std::string osName = osParams.find_string("name");
