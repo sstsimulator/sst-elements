@@ -184,7 +184,7 @@ private:
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
     void swapDone(pageInfo *, uint64_t);
     void moveToFast(pageInfo &, DRAMReq *);
-    void moveToSlow(pageInfo &, DRAMReq *);
+    void moveToSlow(pageInfo *, DRAMReq *);
     bool pageIsSwapping(const pageInfo &page);
 
     class MemCtrlEvent : public SST::Event {
