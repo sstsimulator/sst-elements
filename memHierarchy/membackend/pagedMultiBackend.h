@@ -35,6 +35,7 @@ struct pageInfo {
     typedef list<pageInfo*> pageList_t;
     typedef pageList_t::iterator pageListIter;
 
+    uint64_t pageAddr;
     uint touched; // how many times it is touched in quanta (used in LFU)
     pageListIter listEntry;
     bool inFast;
@@ -52,10 +53,14 @@ struct pageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record(const DRAMReq *req, const bool collectStats) {
+    void record(const DRAMReq *req, const bool collectStats, const uint64_t pAddr) {
         uint64_t addr = req->baseAddr_ + req->amtInProcess_;
         bool isWrite = req->isWrite_;
         
+        // record the pageAddr
+        assert((pageAddr == 0) || (pAddr == pageAddr));
+        pageAddr = pAddr;
+
         //stats ignore writes
         if ((1 == collectStats) && isWrite) return;
 
@@ -123,7 +128,7 @@ struct pageInfo {
 	rqstrs.clear();
     }
 
-    pageInfo() : touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
+    pageInfo() : pageAddr(0), touched(0), inFast(0), lastTouch(0), lastRef(0), scanLeng(0),
                  pageDelay(0), swapDir(NONE), swapsOut(0) {
         for (int i = 0; i < LAST_CASE; ++i) {
             accPat[i] = 0;
@@ -183,8 +188,8 @@ private:
 
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
     void swapDone(pageInfo *, uint64_t);
-    void moveToFast(pageInfo &, DRAMReq *);
-    void moveToSlow(pageInfo *, DRAMReq *);
+    void moveToFast(pageInfo &);
+    void moveToSlow(pageInfo *);
     bool pageIsSwapping(const pageInfo &page);
 
     class MemCtrlEvent : public SST::Event {
