@@ -25,9 +25,10 @@ class SendMachine {
 
         ~SendMachine();
 
-        void init( int txDelay, int packetSizeInBytes ) {
+        void init( int txDelay, int packetSizeInBytes, int vc ) {
             m_txDelay = txDelay;
             m_packetSizeInBytes = packetSizeInBytes;
+			m_vc = vc;
         }
 
         void run( SendEntry* entry  ) {
@@ -48,13 +49,13 @@ class SendMachine {
       private:
 
         bool canSend( uint64_t numBytes ) {
-           return m_nic.m_linkControl->spaceToSend( 0, numBytes * 8); 
+           return m_nic.m_linkControl->spaceToSend( m_vc, numBytes * 8); 
         }
 
         void setCanSendCallback( Callback callback ) {
             assert( ! m_notifyCallback );
             m_notifyCallback = callback;
-            m_nic.m_linkControl->setNotifyOnSend( m_nic.m_sendNotifyFunctor );
+            m_nic.setNotifyOnSend( m_vc );
         }
 
         void state_0( SendEntry* );
@@ -62,7 +63,7 @@ class SendMachine {
         void state_2( SendEntry*, FireflyNetworkEvent* );
         void state_3( ) {
             if ( ! canSend( m_packetSizeInBytes ) ) {
-                m_dbg.verbose(CALL_INFO,2,16,"send busy\n");
+                m_dbg.verbose(CALL_INFO,2,16,"%d: send busy\n",m_vc);
                     setCanSendCallback(
                     std::bind( &Nic::SendMachine::state_3, this )
                 );
@@ -85,6 +86,7 @@ class SendMachine {
         unsigned int            m_packetSizeInBytes;
         int                     m_packetId;
         Callback                m_notifyCallback;
+		int						m_vc;
 #ifdef NIC_SEND_DEBUG
         unsigned int            m_msgCount;
 #endif
