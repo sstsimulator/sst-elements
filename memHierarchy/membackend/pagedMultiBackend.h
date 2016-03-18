@@ -184,7 +184,6 @@ private:
 
     // swap tracking stuff
     const bool modelSwaps = 1;
-    const int fastLat = 1;
     map<uint64_t, list<DRAMReq*> > waitingReqs;
     class MemCtrlEvent;
     typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;

@@ -336,7 +336,7 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
         } else {
             if (inFast) {
                 // issue to fast
-                self_link->send(fastLat, new MemCtrlEvent(req));
+                self_link->send(1, new MemCtrlEvent(req));
             } else {
                 // issue to slow
                 //return DRAMSimMemory::issueRequest(req);
@@ -364,8 +364,7 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
                                 Simulation::getSimulation()->getTimeLord()->getNano(), 
                                 new MemCtrlEvent(req));
             } else {
-                self_link->send(fastLat, 
-                                new MemCtrlEvent(req));
+                self_link->send(1, new MemCtrlEvent(req));
             }
             return true;
         } else {
@@ -380,18 +379,15 @@ void pagedMultiMemory::clock(){
     DRAMSimMemory::clock();
 
     // put things in the DRAM 
-    int in = 0;
     while (!dramQ.empty()) {
         DRAMReq *req = dramQ.front();
         bool inserted = DRAMSimMemory::issueRequest(req);
         if (inserted) {
-            in++;
             dramQ.pop();
         } else {
             break;
         }
     }
-    if (in > 0) printf("inserted %d\n", in);
 }
 
 
@@ -505,7 +501,7 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
     for (int i = 0; i < numTransfers; ++i) {
         MemCtrlEvent *ev = new MemCtrlEvent(new DRAMReq(addr, GetS, 64, 64));
         addr += 64;
-        self_link->send(fastLat, ev);
+        self_link->send(1, ev);
         swapToSlow_Reads[ev] = page; // record that this is a swap
     }
 }
@@ -540,7 +536,7 @@ void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t cloc
         // this is a read returning from the DRAM. Issue a write to fast memory
         req->cmd_ = PutM;
         MemCtrlEvent *ev = new MemCtrlEvent(req);
-        self_link->send(fastLat, ev);
+        self_link->send(1, ev);
         swapToFast_Writes[ev] = si_r->second;
 	//printf("  -issued to fast ev:%p\n", ev);
         swapToFast_Reads.erase(si_r);
@@ -573,7 +569,7 @@ void pagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
             queueRequest(req);
         } else {
             // just finished moving page from slow to fast, so issue to fast
-            self_link->send(fastLat, new MemCtrlEvent(req));
+            self_link->send(1, new MemCtrlEvent(req));
         }
     }
     waitList.clear();
