@@ -56,6 +56,8 @@ static const ElementInfoParam sirius_params[] = {
 	{ "scalecompute", "Scale compute event times by a double precision value (allows dilation of times in traces), default is 1.0", "1.0"},
 	{ "verbose", "Sets the verbosity level for the component to output debug/information messages", "0"},
 	{ "buffer", "Sets the size of the buffer to use for message data backing, default is 4096 bytes", "4096"},
+    { "name","used internally",""}
+    { "module","used internally",""}
     	{ NULL, NULL, NULL }
 };
 
