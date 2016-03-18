@@ -171,7 +171,7 @@ bool pagedMultiMemory::checkAdd(pageInfo &page) {
 
 void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping) {  
     swapping = 0; 
-    if (0 == page.inFast) { 
+    if (0 == page.inFast) {
         // not in fast
         if (checkAdd(page)) { // we're hitting it "a lot"
             if (pagesInFast < maxFastPages) { // there is room to spare!
@@ -184,12 +184,21 @@ void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, b
                 if (modelSwaps) {moveToFast(page);}
             } else {
                 // kick someone out
-                auto &victimPage = pageList.back();
-                pageInfo::pageListIter e = pageList.end(); e--;
+                pageInfo *victimPage = pageList.back();
+                pageInfo::pageListIter e = pageList.end();
+                bool found = 0;
+                while (!found) {
+                    e--;
+                    assert(e != pageList.begin());
+                    victimPage = *e;
+                    if (victimPage->swapDir == pageInfo::NONE) {
+                        found = 1;
+                    }
+                }
                 assert(e == victimPage->listEntry);
                 victimPage->inFast = 0;
                 victimPage->listEntry = pageList.end();
-                pageList.pop_back();
+                pageList.erase(e);
                 if (modelSwaps) {moveToSlow(victimPage);}
                 
                 // put this one in
@@ -251,7 +260,8 @@ void pagedMultiMemory::do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &
                 for (auto p = pageMap.begin(); p != endP; ++p) {
 		  if ((p->second.inFast == 1) && (p->first != pageAddr)) {
 		    lastMin = min(lastMin, p->second.touched);
-		    if(p->second.touched < page.touched) {
+		    if((p->second.touched < page.touched) &&
+                       (p->second.swapDir == pageInfo::NONE)) { // make sure we don't bump someone in motion
 		      p->second.inFast = 0; // rm old
                       if (modelSwaps) {moveToSlow(&(p->second));}
 		      page.inFast = 1; // add new
@@ -281,11 +291,16 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
     page.record(req, collectStats, pageAddr);
 
     if (maxFastPages > 0) {
-      if (replaceStrat == LFU) {
-        do_LFU(req, page, inFast, swapping);
-      } else {
-        do_FIFO_LRU(req, page, inFast, swapping);
-      }
+        if (modelSwaps && pageIsSwapping(page)) {
+            // don't try to swap if we're already swapping that page
+            inFast = page.inFast;
+        } else {
+            if (replaceStrat == LFU) {
+                do_LFU(req, page, inFast, swapping);
+            } else {
+                do_FIFO_LRU(req, page, inFast, swapping);
+            }
+        }
     }
 
     if (modelSwaps) {
@@ -408,7 +423,7 @@ bool pagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
 }
 
 void pagedMultiMemory::moveToFast(pageInfo &page) {
-    assert(page.swapDir == NONE);
+    assert(page.swapDir == pageInfo::NONE);
 
     uint64_t addr = page.pageAddr << pageShift;
     const uint numTransfers = pageShift - 6; // assume 2^6 byte cache liens
@@ -430,7 +445,7 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
 }
 
 void pagedMultiMemory::moveToSlow(pageInfo *page) {
-    assert(page->swapDir == NONE);
+    assert(page->swapDir == pageInfo::NONE);
 
     uint64_t addr = page->pageAddr << pageShift;
     const uint numTransfers = pageShift - 6; // assume 2^6 byte cache liens
