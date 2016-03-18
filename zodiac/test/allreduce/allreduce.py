@@ -6,7 +6,7 @@ import sys,getopt
 
 iterations = 1;
 msgSize = 0;
-shape = "4x4x4"
+shape = "2"
 num_vNics = 1
 
 netPktSizeBytes="64B"
