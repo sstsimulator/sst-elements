@@ -174,6 +174,11 @@ private:
     void do_LFU(DRAMReq *req, pageInfo &page, bool &inFast, bool &swapping);
     
     void printAccStats();
+    queue<DRAMReq *> dramQ;
+    void queueRequest(DRAMReq *r) {
+        dramQ.push(r);
+    }
+
     string accStatsPrefix;
     int dumpNum;
 

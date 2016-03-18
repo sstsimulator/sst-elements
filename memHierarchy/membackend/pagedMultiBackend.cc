@@ -339,7 +339,8 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
                 self_link->send(fastLat, new MemCtrlEvent(req));
             } else {
                 // issue to slow
-                return DRAMSimMemory::issueRequest(req);
+                //return DRAMSimMemory::issueRequest(req);
+                queueRequest(req);
             }
         }
         return true;
@@ -377,6 +378,20 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
 
 void pagedMultiMemory::clock(){
     DRAMSimMemory::clock();
+
+    // put things in the DRAM 
+    int in = 0;
+    while (!dramQ.empty()) {
+        DRAMReq *req = dramQ.front();
+        bool inserted = DRAMSimMemory::issueRequest(req);
+        if (inserted) {
+            in++;
+            dramQ.pop();
+        } else {
+            break;
+        }
+    }
+    if (in > 0) printf("inserted %d\n", in);
 }
 
 
@@ -418,7 +433,8 @@ void pagedMultiMemory::handleSelfEvent(SST::Event *event){
         // read to the slow.
         // issue to dram
         req->cmd_ = PutM;
-        assert(DRAMSimMemory::issueRequest(req));
+        //assert(DRAMSimMemory::issueRequest(req));
+        queueRequest(req);
         swapToSlow_Writes[req] = si->second;
         swapToSlow_Reads.erase(ev);
         delete ev;
@@ -466,7 +482,8 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
     for (int i = 0; i < numTransfers; ++i) {
         DRAMReq *nreq = new DRAMReq(addr, GetS, 64, 64);
 	//printf("  -issued to %p\n", (void*)addr);
-        assert(DRAMSimMemory::issueRequest(nreq));
+        //assert(DRAMSimMemory::issueRequest(nreq));
+        queueRequest(nreq);
         addr += 64;
         swapToFast_Reads[nreq] = &page; // record that this is a swap
     }
@@ -552,7 +569,8 @@ void pagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
         DRAMReq *req = *it;
         if (page->swapDir == pageInfo::FtoS) {
             // just finished moving page from fast to slow mem, so issue to DRAM
-            assert(DRAMSimMemory::issueRequest(req));
+            //assert(DRAMSimMemory::issueRequest(req));
+            queueRequest(req);
         } else {
             // just finished moving page from slow to fast, so issue to fast
             self_link->send(fastLat, new MemCtrlEvent(req));
