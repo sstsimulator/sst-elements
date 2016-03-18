@@ -83,10 +83,13 @@ struct pageInfo {
             return;
         }
         
-        // note: this is slow, and only works if directory controller is modified to send along the requestor info
-        const string &requestor = req->reqEvent_->getRqstr();
-        rqstrs.insert(requestor);
-        //printf("%s\n", requestor.c_str());
+        // note: this is slow, and only works if directory controller
+        // is modified to send along the requestor info
+        if (1 == collectStats) {
+            const string &requestor = req->reqEvent_->getRqstr();
+            rqstrs.insert(requestor);
+            //printf("%s\n", requestor.c_str());
+        }
 
         if (0 == lastRef) {
             // first touch, do nothing
@@ -230,6 +233,7 @@ private:
     Statistic<uint64_t> *fastSwaps;
     Statistic<uint64_t> *fastAccesses;
     Statistic<uint64_t> *tPages;
+    Statistic<uint64_t> *cantSwapOut;
 };
 
 }

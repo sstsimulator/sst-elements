@@ -520,6 +520,7 @@ static const ElementInfoStatistic pagedMultiMem_statistics[] = {
     {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
     {"fast_acc", "Number of total accesses to the memory backend", "count", 1},
     {"t_pages", "Number of total pages", "count", 1},
+    {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
     { NULL, NULL, NULL, 0 }
 };
 
