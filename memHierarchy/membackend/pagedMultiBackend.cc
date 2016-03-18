@@ -201,7 +201,8 @@ void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, b
                     // don't move anything.
                     inFast = 0;
                     swapping = 0;
-                    page.lastTouch = getCurrentSimTimeNano(); // for mrpu       
+                    page.lastTouch = getCurrentSimTimeNano(); // for mrpu
+                    printf("no pages to swap out (%d candidates)\n", pageList.size());
                     return;
                 }
 
