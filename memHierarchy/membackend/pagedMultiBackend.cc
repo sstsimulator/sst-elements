@@ -188,8 +188,8 @@ void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, b
                 pageInfo::pageListIter e = pageList.end();
                 bool found = 0;
                 while (!found) {
-                    e--;
                     assert(e != pageList.begin());
+                    e--;
                     victimPage = *e;
                     if (victimPage->swapDir == pageInfo::NONE) {
                         found = 1;
