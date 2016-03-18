@@ -187,15 +187,24 @@ void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, b
                 pageInfo *victimPage = pageList.back();
                 pageInfo::pageListIter e = pageList.end();
                 bool found = 0;
-                while (!found) {
-                    assert(e != pageList.begin());
+                while (e != pageList.begin()) {
                     e--;
                     victimPage = *e;
                     if (victimPage->swapDir == pageInfo::NONE) {
                         found = 1;
+                        break;
                     }
                 }
                 assert(e == victimPage->listEntry);
+
+                if (!found) {
+                    // don't move anything.
+                    inFast = 0;
+                    swapping = 0;
+                    page.lastTouch = getCurrentSimTimeNano(); // for mrpu       
+                    return;
+                }
+
                 victimPage->inFast = 0;
                 victimPage->listEntry = pageList.end();
                 pageList.erase(e);
