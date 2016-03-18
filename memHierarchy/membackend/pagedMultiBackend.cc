@@ -297,7 +297,6 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
     SimTime_t extraDelay = 0;
     auto &page = pageMap[pageAddr];
 
-
     page.record(req, collectStats, pageAddr);
 
     if (maxFastPages > 0) {
@@ -410,7 +409,7 @@ void pagedMultiMemory::handleSelfEvent(SST::Event *event){
         // this is from fast mem, indicating a transfer from slow.
         pageInfo *page = si_w->second;
         page->swapsOut -= 1;
-	printf(" got moveToFast write addr:%p ev:%p p:%p sO:%d\n", (void*)(req->baseAddr_ + req->amtInProcess_) ,ev, page, page->swapsOut);
+	//printf(" got moveToFast write addr:%p ev:%p p:%p sO:%d\n", (void*)(req->baseAddr_ + req->amtInProcess_) ,ev, page, page->swapsOut);
         if (page->swapsOut == 0) {
             swapDone(page, req->baseAddr_ + req->amtInProcess_);
         }
@@ -478,9 +477,11 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
 
 
 void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle){
+    assert(dramReqs.find(addr) != dramReqs.end());
     std::deque<DRAMReq *> &reqs = dramReqs[addr];
     ctrl->dbg.debug(_L10_, "Memory Request for %" PRIx64 " Finished [%zu reqs]\n", (Addr)addr, reqs.size());
     assert(reqs.size());
+    int rs = reqs.size();
     DRAMReq *req = reqs.front();
     reqs.pop_front();
     if(0 == reqs.size())
@@ -499,7 +500,7 @@ void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t cloc
         swapToSlow_Writes.erase(si);
         delete req;
     } else if (modelSwaps && si_r != swapToFast_Reads.end()) {
-        printf(" got moveToFast read: %p  p:%p sO:%d\n", (void*)(req->baseAddr_+req->amtInProcess_), si_r->second, si_r->second->swapsOut);
+        //printf(" got moveToFast read: %p  p:%p sO:%d\n", (void*)(req->baseAddr_+req->amtInProcess_), si_r->second, si_r->second->swapsOut);
         // this is a read returning from the DRAM. Issue a write to fast memory
         req->cmd_ = PutM;
         MemCtrlEvent *ev = new MemCtrlEvent(req);
@@ -510,6 +511,8 @@ void pagedMultiMemory::dramSimDone(unsigned int id, uint64_t addr, uint64_t cloc
 	//printf("  -swapToFast_reads: %d\n", (int)swapToFast_Reads.size());
     } else {
         // normal request
+        assert(req);
+        assert(ctrl);
         ctrl->handleMemResponse(req);
     }
 }
@@ -529,13 +532,15 @@ void pagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
     for (auto it = waitList.begin(); it != waitList.end(); ++it) {
         DRAMReq *req = *it;
         if (page->swapDir == pageInfo::FtoS) {
-            // just finished movine page from fast to slow mem, so issue to DRAM
+            // just finished moving page from fast to slow mem, so issue to DRAM
             assert(DRAMSimMemory::issueRequest(req));
         } else {
             // just finished moving page from slow to fast, so issue to fast
             self_link->send(fastLat, new MemCtrlEvent(req));
         }
     }
+    waitList.clear();
+    waitingReqs.erase(pageAddr);
 
     // mark page as ready
     page->swapDir = pageInfo::NONE;
