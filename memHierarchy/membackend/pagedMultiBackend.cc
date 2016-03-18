@@ -408,6 +408,8 @@ bool pagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
 }
 
 void pagedMultiMemory::moveToFast(pageInfo &page) {
+    assert(page.swapDir == NONE);
+
     uint64_t addr = page.pageAddr << pageShift;
     const uint numTransfers = pageShift - 6; // assume 2^6 byte cache liens
 
@@ -428,6 +430,8 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
 }
 
 void pagedMultiMemory::moveToSlow(pageInfo *page) {
+    assert(page->swapDir == NONE);
+
     uint64_t addr = page->pageAddr << pageShift;
     const uint numTransfers = pageShift - 6; // assume 2^6 byte cache liens
 
@@ -496,7 +500,7 @@ void pagedMultiMemory::swapDone(pageInfo *page, const uint64_t addr) {
 
     // launch requests waiting on the swap
     auto &waitList = waitingReqs[pageAddr];
-    printf(" - swapDone releasing %d\n\n", (int)waitList.size());
+    printf(" - swapDone releasing %d\n", (int)waitList.size());
     for (auto it = waitList.begin(); it != waitList.end(); ++it) {
         DRAMReq *req = *it;
         if (page->swapDir == pageInfo::FtoS) {
