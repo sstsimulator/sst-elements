@@ -61,6 +61,10 @@ private:
     typedef pair<uint64_t, uint64_t> rwCount_t;
     typedef map<ArielComponent::arielAllocTrackEvent*, 
                 rwCount_t > allocCountMap_t;
+    /** Name of the output file */
+    string outFileName;
+    /** output file counter */
+    uint64_t outCount;
     /** All Allocations */
     allocCountMap_t allocMap;
      /** All allocations in list form */
@@ -85,10 +89,12 @@ private:
     void processEvent(SST::Event* event);
     /** Handler for incoming allocation events.  */
     void processAllocEvent(SST::Event* event);
+
+    /** output and clear stats to file  */
+    void outputStats(int marker);
     
     CacheArray*         cacheArray_;
     Output*             output_;
-    Output*             output_file;
     CacheListener*      listener_;
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;

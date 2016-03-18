@@ -135,7 +135,9 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 
         std::string moduleName = apiParams.find_string( "module" );
         assert( ! moduleName.empty() );
-        Params modParams = apiParams.find_prefix_params( "params" );
+        Params osParams = params.find_prefix_params("os.");
+        std::string osName = osParams.find_string("name");
+        Params modParams = params.find_prefix_params( osName + "." );
 
         Hermes::Interface* api = dynamic_cast<Interface*>(
                         owner->loadModuleWithComponent( 
@@ -202,6 +204,11 @@ void EmberEngine::init(unsigned int phase) {
 }
 
 void EmberEngine::finish() {
+    ApiMap::iterator iter = m_apiMap.begin();
+    for ( ; iter != m_apiMap.end(); ++ iter ) {
+        iter->second->api->finish();
+    }
+
 	m_os->finish();
 }
 
@@ -210,6 +217,11 @@ void EmberEngine::setup() {
 	// and are now in final bring up state
 	
     m_os->_componentSetup();	
+
+    ApiMap::iterator iter = m_apiMap.begin();
+    for ( ; iter != m_apiMap.end(); ++ iter ) {
+        iter->second->api->setup();
+    }
 
     std::ostringstream prefix;
     prefix << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: ";

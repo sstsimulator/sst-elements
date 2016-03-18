@@ -38,6 +38,7 @@ netBW = ''
 netPktSize = '' 
 netTopo = ''
 netShape = ''
+netInspect = ''
 rtrArb = ''
 
 rndmPlacement = False
@@ -60,7 +61,7 @@ try:
 		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=",
-		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize="])
+		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect="])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -99,6 +100,8 @@ for o, a in opts:
         netFlitSize = a
     elif o in ("--netPktSize"):
         netPktSize = a
+    elif o in ("--netInspect"):
+        netInspect = a
     elif o in ("--rtrArb"):
         rtrArb = a
     elif o in ("--randomPlacement"):
@@ -162,6 +165,9 @@ elif platform == "exa":
 
 if netBW:
 	networkParams['link_bw'] = netBW
+
+if netInspect:
+        networkParams['network_inspectors'] = netInspect
 
 if netFlitSize:
 	networkParams['flitSize'] = netFlitSize
@@ -304,6 +310,9 @@ sst.merlin._params["input_latency"] = networkParams['input_latency']
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
 sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
 sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
+
+if "network_inspectors" in networkParams.keys():
+    sst.merlin._params["network_inspectors"] = networkParams['network_inspectors']
 
 if rtrArb:
 	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 

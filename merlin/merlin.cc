@@ -44,6 +44,9 @@
 
 #include "trafficgen/trafficgen.h"
 
+#include "inspectors/circuitCounter.h"
+#include "inspectors/testInspector.h"
+
 #include "pymodule.h"
 
 #include <stdio.h>
@@ -524,30 +527,17 @@ static const ElementInfoStatistic reorderlinkcontrol_statistics[] = {
     { NULL, NULL, NULL, 0 }
 };
 
-
-class TestNetworkInspector : public SimpleNetwork::NetworkInspector {
-private:
-    Statistic<uint64_t>* test_count;
-public:
-    TestNetworkInspector(Component* parent) :
-        SimpleNetwork::NetworkInspector(parent)
-    {}
-
-    void initialize(string id) {
-        test_count = registerStatistic<uint64_t>("test_count", id);
-    }
-
-    void inspectNetworkData(SimpleNetwork::Request* req) {
-        test_count->addData(1);
-    }
-};
-
 static SubComponent*
 load_test_network_inspector(Component* parent, Params& params)
 {
     return new TestNetworkInspector(parent);
 }
 
+static SubComponent*
+load_circ_network_inspector(Component* parent, Params& params)
+{
+    return new CircNetworkInspector(parent, params);
+}
 
 static const ElementInfoStatistic test_network_inspector_statistics[] = {
     { "test_count", "Count number of packets sent on link", "packets", 1},
@@ -703,6 +693,14 @@ static const ElementInfoSubComponent subcomponents[] = {
       test_network_inspector_statistics,
       "SST::Interfaces::SimpleNetwork::NetworkInspector"
     },
+    { "circuit_network_inspector",
+      "Used to count the number of network circuits (as in 'circuit switched' circuits)", 
+      NULL,
+      load_circ_network_inspector,
+      NULL,
+      NULL,
+      "SST::Interfaces::SimpleNetwork::NetworkInspector"
+      },
     { "xbar_arb_rr",
       "Round robin arbitration unit for hr_router",
       NULL,

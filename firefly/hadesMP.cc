@@ -18,6 +18,48 @@ using namespace SST::Firefly;
 using namespace Hermes;
 using namespace Hermes::MP;
 
+HadesMP::HadesMP(Component* owner, Params& params) :
+	m_os(NULL)
+{
+    Params tmpParams = params.find_prefix_params("ctrlMsg.");
+	m_proto =
+        dynamic_cast<ProtocolAPI*>(owner->loadModuleWithComponent(
+                            "firefly.CtrlMsgProto", owner, tmpParams ) );
+
+	Params funcParams = params.find_prefix_params("functionSM.");
+
+	m_functionSM = new FunctionSM( funcParams, owner, m_proto );
+}
+
+HadesMP::~HadesMP() {
+	delete m_proto;
+    delete m_functionSM;
+}
+
+void HadesMP::setup( )
+{
+	assert(m_os);
+	m_proto->init( m_os->getInfo(), m_os->getNic() );
+	m_proto->setup( );
+    m_functionSM->setup(m_os->getInfo() );
+}
+
+void HadesMP::finish(  )
+{
+    m_proto->finish();
+}
+
+#if 0
+void HadesMP::printStatus( Output& out )
+{
+    std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
+    for ( ; iter != m_protocolM.end(); ++iter ) {
+        iter->second->printStatus(out);
+    }
+    m_functionSM->printStatus( out );
+}
+#endif
+
 void HadesMP::init(Functor* retFunc )
 {
     functionSM().start( FunctionSM::Init, retFunc, new InitStartEvent() );
