@@ -347,6 +347,11 @@ PortControl::finish() {
             output_buf[i].pop();
         }
     }
+
+    // finish any inspectors
+    for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
+        network_inspectors[i]->finish();
+    }
 }
 
 

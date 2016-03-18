@@ -26,7 +26,9 @@ using namespace SST::Interfaces;
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
-    m_sendMachine( *this, m_dbg ),
+    m_sendNotify( 2, false ),
+    m_sendNotifyCnt(0),
+    m_sendMachine( 2, SendMachine( *this, m_dbg ) ),
     m_recvMachine( *this, m_dbg ),
     m_getKey(10)
 {
@@ -70,7 +72,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( m_linkControl );
 
 	m_linkControl->initialize(params.find_string("rtrPortName","rtr"),
-                              link_bw, 1, buf_size, buf_size);
+                              link_bw, 2, buf_size, buf_size);
 
     m_recvNotifyFunctor =
         new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
@@ -94,7 +96,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find_string("corePortName","core") ) );
     }
     m_recvMachine.init( m_vNicV.size(), rxMatchDelay, hostReadDelay );
-    m_sendMachine.init( txDelay, packetSizeInBytes );
+    m_sendMachine[0].init( txDelay, packetSizeInBytes, 0 );
+    m_sendMachine[1].init( txDelay, packetSizeInBytes, 1 );
     m_memRgnM.resize( m_vNicV.size() );
 
     float dmaBW  = params.find_floating( "dmaBW_GBs", 0.0 ); 
@@ -118,7 +121,8 @@ Nic::~Nic()
 
 void Nic::printStatus(Output &out)
 {
-    m_sendMachine.printStatus( out );
+    m_sendMachine[0].printStatus( out );
+    m_sendMachine[1].printStatus( out );
     m_recvMachine.printStatus( out );
 }
 
@@ -171,7 +175,7 @@ void Nic::handleSelfEvent( Event *e )
     if ( event->callback ) {
         event->callback();
     } else if ( event->entry ) {
-        m_sendMachine.run( static_cast<SendEntry*>(event->entry) );
+        m_sendMachine[0].run( static_cast<SendEntry*>(event->entry) );
     }
 
     delete e;
@@ -186,7 +190,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
                     ( this, &Nic::notifySendDmaDone, vNicNum, e->key) );
     
-    m_sendMachine.run( entry );
+    m_sendMachine[0].run( entry );
 }
 
 void Nic::pioSend( NicCmdEvent *e, int vNicNum )
@@ -199,7 +203,7 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
                     ( this, &Nic::notifySendPioDone, vNicNum, e->key) );
 
-    m_sendMachine.run( entry );
+    m_sendMachine[0].run( entry );
 }
 
 void Nic::dmaRecv( NicCmdEvent *e, int vNicNum )
@@ -230,7 +234,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), 
                 m_getOrgnM[ getKey ]->totalBytes() );
 
-    m_sendMachine.run( new GetOrgnEntry( vNicNum, e, getKey) );
+    m_sendMachine[1].run( new GetOrgnEntry( vNicNum, e, getKey) );
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )
@@ -245,7 +249,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
     entry->setNotifier( new NotifyFunctor_2< Nic, int, void* >
                     ( this, &Nic::notifyPutDone, vNicNum, e->key) );
 
-    m_sendMachine.run( entry );
+    m_sendMachine[0].run( entry );
 }
 
 void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
@@ -257,20 +261,25 @@ void Nic::regMemRgn( NicCmdEvent *e, int vNicNum )
 }
 
 // Merlin stuff
-bool Nic::sendNotify(int)
+bool Nic::sendNotify(int vc)
 {
-    m_dbg.verbose(CALL_INFO,2,1,"\n");
-    
-    m_sendMachine.notify();
+    m_dbg.verbose(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
 
-    // remove this notifier
-    return false;
+    assert ( m_sendNotifyCnt > 0 );
+
+    if ( m_sendNotify[vc] ) {
+        m_sendMachine[vc].notify();
+        m_sendNotify[vc] = false;
+        --m_sendNotifyCnt;
+    }
+
+    // false equal remove notifier
+    return m_sendNotifyCnt;
 }
 
 bool Nic::recvNotify(int vc)
 {
     m_dbg.verbose(CALL_INFO,1,1,"network event available vc=%d\n",vc);
-    assert( 0 == vc );
 
     m_recvMachine.notify( vc );
 

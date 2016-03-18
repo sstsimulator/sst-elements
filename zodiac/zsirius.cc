@@ -47,7 +47,10 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
                             osModule, this, hermesParams));
     assert(os);
 
-    Params modParams;
+    params.print_all_params(std::cout);
+    Params osParams = params.find_prefix_params("os.");
+    std::string osName = osParams.find_string("name");
+    Params modParams = params.find_prefix_params( osName + "." );
     msgapi = dynamic_cast<MP::Interface*>(loadModuleWithComponent(
                             "firefly.hadesMP", this, modParams));
     assert(msgapi);
@@ -87,6 +90,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 
 void ZodiacSiriusTraceReader::setup() {
     os->_componentSetup();
+    msgapi->setup();
 
     rank = os->getNid();
 
@@ -142,6 +146,7 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
+    msgapi->finish();
 	zOut.verbose(CALL_INFO, 1, 0, "Completed simulation at: %" PRIu64 "ns\n",
 		getCurrentSimTimeNano());
 	zOut.verbose(CALL_INFO, 1, 0, "Statistics for run are:\n");
