@@ -27,11 +27,13 @@ namespace Firefly {
 class HadesMP : public MP::Interface 
 {
   public:
-    HadesMP(Component*, Params&) {}
-    ~HadesMP() {}
+    HadesMP(Component*, Params&);
+    ~HadesMP();
 
     virtual std::string getName() { return "HadesMP"; } 
 
+	virtual void setup();
+	virtual void finish();
 	virtual void setOS( OS* os ) { 
 		m_os = static_cast<Hades*>(os); 
 		dbg().verbose(CALL_INFO,2,0,"\n");
@@ -153,8 +155,10 @@ class HadesMP : public MP::Interface
 
   private:
 	Output& dbg() { return m_os->m_dbg; }
-	FunctionSM& functionSM() { return *m_os->m_functionSM; }	
+	FunctionSM& functionSM() { return *m_functionSM; }	
 	Hades*	    m_os;
+	ProtocolAPI* m_proto;
+	FunctionSM*  m_functionSM;
 };
 
 } // namesapce Firefly 

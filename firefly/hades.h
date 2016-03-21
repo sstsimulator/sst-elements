@@ -29,15 +29,14 @@ namespace Firefly {
 class FunctionSM;
 class VirtNic;
 
+
 class Hades : public OS 
 {
   public:
     Hades(Component*, Params&);
     ~Hades();
-    virtual void printStatus( Output& );
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
-    void finish();
 
     int getNid();
     int getNumNids();
@@ -50,20 +49,19 @@ class Hades : public OS
         return m_nodePerf;
     }
 
+    VirtNic*            getNic() { return m_virtNic; }
+    Info*                getInfo() { return &m_info; }
+
   private:
 
-    SST::Link*          m_enterLink;  
     VirtNic*            m_virtNic;
     Info                m_info;
 
   public:
-    FunctionSM*         m_functionSM;
     Output              m_dbg;
 
   private:
     NodePerf*                            m_nodePerf;
-    std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
-    std::map<int,ProtocolAPI*>           m_protocolM;
     SharedRegion*                        m_sreg;
     int                                  m_netMapSize;
     std::string                          m_netMapName;

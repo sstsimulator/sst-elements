@@ -45,7 +45,7 @@ void Nic::RecvMachine::state_0( FireflyNetworkEvent* ev )
     // is there an active stream for this src node?
     if ( m_activeRecvM.find( ev->src ) == m_activeRecvM.end() ) {
         state_1( ev );
-     } else {
+    } else {
         state_move_0( ev );
     } 
 }
@@ -121,7 +121,7 @@ void Nic::RecvMachine::state_2( FireflyNetworkEvent* ev )
 void Nic::RecvMachine::state_3( SendEntry* entry )
 {
     m_dbg.verbose(CALL_INFO,1,1,"\n");
-    m_nic.m_sendMachine.run( entry );
+    m_nic.m_sendMachine[0].run( entry );
 
     checkNetwork();
 }

@@ -38,8 +38,8 @@ void Nic::SendMachine::state_0( SendEntry* entry )
     hdr.dst_vNicId = entry->dst_vNic();
     hdr.src_vNicId = entry->local_vNic(); 
 
-    m_dbg.verbose(CALL_INFO,1,16,"setup hdr, src_vNic=%d, send dstNid=%d "
-                    "dst_vNic=%d tag=%#x bytes=%lu\n",
+    m_dbg.verbose(CALL_INFO,1,16,"0: setup hdr, src_vNic=%d, send dstNid=%d "
+                    "dst_vNic=%d tag=%#x bytes=%lu\n", m_vc,
                     hdr.src_vNicId,entry->node(), 
                     hdr.dst_vNicId, hdr.tag, entry->totalBytes()) ;
 
@@ -55,14 +55,14 @@ void Nic::SendMachine::state_0( SendEntry* entry )
 void Nic::SendMachine::state_1( SendEntry* entry, FireflyNetworkEvent* ev ) 
 {
     if ( ! canSend( m_packetSizeInBytes ) ) {
-        m_dbg.verbose(CALL_INFO,2,16,"send busy\n");
+        m_dbg.verbose(CALL_INFO,2,16,"%d: send busy\n",m_vc);
         setCanSendCallback( 
             std::bind( &Nic::SendMachine::state_1, this, entry, ev ) 
         );
         return;
     } 
 
-    m_dbg.verbose(CALL_INFO,2,16,"copyOut\n");
+    m_dbg.verbose(CALL_INFO,2,16,"%d: copyOut\n",m_vc);
     copyOut( m_dbg, *ev, *entry ); 
     m_nic.dmaRead( 
         std::bind( &Nic::SendMachine::state_2, this, entry, ev ),  
@@ -72,7 +72,7 @@ void Nic::SendMachine::state_1( SendEntry* entry, FireflyNetworkEvent* ev )
 
 void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev ) 
 {
-    m_dbg.verbose(CALL_INFO,2,16,"send network packet\n");
+    m_dbg.verbose(CALL_INFO,2,16,"%d: send network packet\n",m_vc);
     assert( ev->bufSize() );
 
     SimpleNetwork::Request* req = new SimpleNetwork::Request();
@@ -89,18 +89,18 @@ void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev )
         req->setTraceID( m_packetId );
     }
     ++m_packetId;
-    m_dbg.verbose(CALL_INFO,2,16,"sending event with %lu bytes\n",
+    m_dbg.verbose(CALL_INFO,2,16,"%d: sending event with %lu bytes\n",m_vc,
                                                         ev->bufSize());
-    bool sent = m_nic.m_linkControl->send( req, 0 );
+    bool sent = m_nic.m_linkControl->send( req, m_vc );
     assert( sent );
 
     if ( entry->isDone() ) {
-        m_dbg.verbose(CALL_INFO,1,16,"send entry done\n");
+        m_dbg.verbose(CALL_INFO,1,16,"%d: send entry done\n",m_vc);
         entry->notify();
         delete entry;
 
         if ( ! canSend( m_packetSizeInBytes ) ) {
-            m_dbg.verbose(CALL_INFO,2,16,"send busy\n");
+            m_dbg.verbose(CALL_INFO,2,16,"%d: send busy\n",m_vc);
             setCanSendCallback( 
                 std::bind( &Nic::SendMachine::state_3, this ) 
             );
@@ -110,7 +110,7 @@ void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev )
 
     } else {
         if ( ! canSend( m_packetSizeInBytes ) ) {
-            m_dbg.verbose(CALL_INFO,2,16,"send busy\n");
+            m_dbg.verbose(CALL_INFO,2,16,"%d: send busy\n",m_vc);
             setCanSendCallback( 
                 std::bind( &Nic::SendMachine::state_1, this, 
                                         entry, new FireflyNetworkEvent ) 
@@ -124,7 +124,8 @@ void Nic::SendMachine::state_2( SendEntry* entry, FireflyNetworkEvent *ev )
 void Nic::SendMachine::copyOut( Output& dbg,
                     FireflyNetworkEvent& event, Nic::Entry& entry )
 {
-    dbg.verbose(CALL_INFO,3,16,"ioVec.size()=%lu\n", entry.ioVec().size() );
+    dbg.verbose(CALL_INFO,3,16,"%d: ioVec.size()=%lu\n", 
+                                    m_vc, entry.ioVec().size() );
 
     for ( ; entry.currentVec < entry.ioVec().size() &&
                 event.bufSize() <  m_packetSizeInBytes;
@@ -166,12 +167,12 @@ void Nic::SendMachine::copyOut( Output& dbg,
 
 void Nic::SendMachine::printStatus( Output& out ) {
 #ifdef NIC_SEND_DEBUG
-    if ( ! m_nic.m_linkControl->spaceToSend(0, packetSizeInBits() ) ) {
+    if ( ! m_nic.m_linkControl->spaceToSend( m_vc, packetSizeInBits() ) ) {
         out.output("%lu: %d: SendMachine `%s` msgCount=%d runCount=%d "
                     "can send %d\n",
                 Simulation::getSimulation()->getCurrentSimCycle(),
                 m_nic.m_myNodeId,state(m_state),m_msgCount,m_runCount,
-                m_nic.m_linkControl->spaceToSend(0, packetSizeInBits() ));
+                m_nic.m_linkControl->spaceToSend( m_vc, packetSizeInBits() ));
     }
 #endif
 }
