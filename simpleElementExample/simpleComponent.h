@@ -24,40 +24,30 @@ class simpleComponent : public SST::Component
 public:
     simpleComponent(SST::ComponentId_t id, SST::Params& params);
     ~simpleComponent();
-    
+
     void setup() { }
     void finish() {
-        static int n = 0;
-        n++;
-        if (n == 10) {
-            printf("Several Simple Components Finished\n");
-        } else if (n > 10) {
-            ;
-        } else {
-            printf("Simple Component Finished\n");
-        }
-//        return 0;
     }
 
 private:
     simpleComponent();  // for serialization only
     simpleComponent(const simpleComponent&); // do not implement
     void operator=(const simpleComponent&); // do not implement
-    
+
     void handleEvent(SST::Event *ev);
     virtual bool clockTic(SST::Cycle_t);
-    
+
     int workPerCycle;
     int commFreq;
     int commSize;
     int neighbor;
-    
+
     SST::RNG::MarsagliaRNG* rng;
     SST::Link* N;
     SST::Link* S;
     SST::Link* E;
     SST::Link* W;
-    
+
     friend class boost::serialization::access;
     template<class Archive>
     void save(Archive & ar, const unsigned int version) const
@@ -72,9 +62,9 @@ private:
         ar & BOOST_SERIALIZATION_NVP(E);
         ar & BOOST_SERIALIZATION_NVP(W);
     }
-    
+
     template<class Archive>
-    void load(Archive & ar, const unsigned int version) 
+    void load(Archive & ar, const unsigned int version)
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
         ar & BOOST_SERIALIZATION_NVP(workPerCycle);
@@ -91,7 +81,7 @@ private:
         E->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
         W->setFunctor(new SST::Event::Handler<simpleComponent>(this,&simpleComponent::handleEvent));
     }
-      
+
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
