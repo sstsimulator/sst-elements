@@ -27,6 +27,7 @@ public:
 
     void setup() { }
     void finish() {
+    	printf("Component Finished.\n");
     }
 
 private:
