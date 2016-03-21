@@ -45,6 +45,8 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
         replaceStrat = FIFO;
     } else if (stratStr == "LFU") {
         replaceStrat = LFU;
+    } else if (stratStr == "LFU8") {
+        replaceStrat = LFU8;
     } else if (stratStr == "LRU") {
         replaceStrat = LRU;
     } else if (stratStr == "BiLRU") {
@@ -63,6 +65,8 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
         addStrat = addT;
     } else if (stratStr == "MRPU") {
         addStrat = addMRPU;
+    } else if (stratStr == "MFRPU") {
+        addStrat = addMFRPU;
     } else if (stratStr == "SC") {
         addStrat = addSC;
     } else if (stratStr == "RAND") {
@@ -71,12 +75,14 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
         dbg.fatal(CALL_INFO, -1, "Invalid page addition Strategy (page_add_strategy)\n");
     }
 
-    if ((addStrat == addMFU) && (replaceStrat != LFU)) {
-        dbg.fatal(CALL_INFO, -1, "MFU page addition strategy requires LFU page replacement strategy\n");
+    if (addStrat == addMFU) {
+      if ((replaceStrat != LFU) && (replaceStrat != LFU8)) {
+	dbg.fatal(CALL_INFO, -1, "MFU page addition strategy requires LFU page replacement strategy\n");
+      }
     }
 
     threshold = (unsigned int)params.find_integer("threshold", 4);    
-    scanThreshold = (unsigned int)params.find_integer("scan_threshold", 4);    
+    scanThreshold = (unsigned int)params.find_integer("scan_threshold", 6);    
 
     transferDelay = (unsigned int)params.find_integer("transfer_delay", 250);
     minAccTime = self_link->getDefaultTimeBase()->getFactor() / 
@@ -100,6 +106,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     fastAccesses = registerStatistic<uint64_t>("fast_acc","1");
     tPages = registerStatistic<uint64_t>("t_pages","1");
     cantSwapOut = registerStatistic<uint64_t>("cant_swap","1");
+    swapDelays = registerStatistic<uint64_t>("swap_delays","1");
 
     if (modelSwaps) {
         // use our own callbacks
@@ -117,11 +124,16 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
 
 // should we add it?
 bool pagedMultiMemory::checkAdd(pageInfo &page) {
+    // only add if the dram isn't too busy
+    if (dramQ.size() >= 4) return false;
+
+
     switch (addStrat) {
     case addT: 
         return (page.touched > threshold); 
         break;
     case addMRPU:
+    case addMFRPU:
         {
             // based on threshold and if the most recent previous use is
             // more recent than the least recently used page in fast
@@ -130,8 +142,13 @@ bool pagedMultiMemory::checkAdd(pageInfo &page) {
             SimTime_t myLastTouch = page.lastTouch;
             const auto &victimPage = pageList.back();
             if (myLastTouch > victimPage->lastTouch) {
+	      if (addStrat == addMFRPU) {
+		// more recent && more frequent
+		return (page.touched > threshold) && (page.touched > victimPage->touched); 
+	      } else {
                 // more recent
-                return (page.lastTouch > threshold); 
+                return (page.touched > threshold); 
+	      }
             } else {
                 return false;
             }
@@ -155,8 +172,8 @@ bool pagedMultiMemory::checkAdd(pageInfo &page) {
     case addRAND:
         if (page.touched > threshold) {
             if (pagesInFast < maxFastPages) { // there is room to spare!
-                // roughly 1:500 chance
-                return (rng->generateNextUInt32() & 0x1ff) == 0;
+                // roughly 1:1000 chance
+                return (rng->generateNextUInt32() & 0x3ff) == 0;
             } else {
                 // roughly 1:8000 chance
                 return (rng->generateNextUInt32() & 0x1fff) == 0;
@@ -240,10 +257,10 @@ void pagedMultiMemory::do_FIFO_LRU(DRAMReq *req, pageInfo &page, bool &inFast, b
     } else {
         // already in fast
         if (replaceStrat == LRU || replaceStrat == BiLRU || replaceStrat == SCLRU) {
-            // move to the front of list
-            pageList.erase(page.listEntry);
-            pageList.push_front(&page);
-            page.listEntry = pageList.begin();
+	  // move to the front of list
+	  pageList.erase(page.listEntry);
+	  pageList.push_front(&page);
+	  page.listEntry = pageList.begin();
         }
 
         inFast = page.inFast;
@@ -314,14 +331,14 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
     SimTime_t extraDelay = 0;
     auto &page = pageMap[pageAddr];
 
-    page.record(req, collectStats, pageAddr);
+    page.record(req, collectStats, pageAddr, replaceStrat == LFU8);
 
     if (maxFastPages > 0) {
         if (modelSwaps && pageIsSwapping(page)) {
             // don't try to swap if we're already swapping that page
             inFast = page.inFast;
         } else {
-            if (replaceStrat == LFU) {
+            if (replaceStrat == LFU || replaceStrat == LFU8) {
                 do_LFU(req, page, inFast, swapping);
             } else {
                 do_FIFO_LRU(req, page, inFast, swapping);
@@ -330,11 +347,14 @@ bool pagedMultiMemory::issueRequest(DRAMReq *req){
     }
 
     if (modelSwaps) {
+        fastAccesses->addData(1);
         if (pageIsSwapping(page)) {
             // put in queue to be issued when swap completes
+ 	    swapDelays->addData(1);
             waitingReqs[pageAddr].push_back(req);
         } else {
             if (inFast) {
+	        fastHits->addData(1);
                 // issue to fast
                 self_link->send(1, new MemCtrlEvent(req));
             } else {
@@ -410,6 +430,8 @@ void pagedMultiMemory::printAccStats() {
 
 void pagedMultiMemory::finish(){
     printf("fast_t_pages: %lu\n", pageMap.size());
+    
+    tPages->addData(pageMap.size());
 
     if (collectStats) printAccStats();
 
@@ -455,8 +477,11 @@ void pagedMultiMemory::handleSelfEvent(SST::Event *event){
 bool pagedMultiMemory::quantaClock(SST::Cycle_t _cycle) {
     if (collectStats) printAccStats();
     
+    lastMin = 0;
+
     for (auto p = pageMap.begin(); p != pageMap.end(); ++p) {
-        p->second.touched = p->second.touched >> 1;
+      //p->second.touched = p->second.touched >> 4;
+      p->second.touched = 0;
     }
     return false;
 }
@@ -465,7 +490,7 @@ void pagedMultiMemory::moveToFast(pageInfo &page) {
     assert(page.swapDir == pageInfo::NONE);
 
     uint64_t addr = page.pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
+    const uint numTransfers = 1 << (pageShift - 6 - 1); // assume 2^6 byte cache liens
 
     // mark page as swapping
     page.swapDir = pageInfo::StoF;
@@ -489,7 +514,7 @@ void pagedMultiMemory::moveToSlow(pageInfo *page) {
     assert(page->swapDir == pageInfo::NONE);
 
     uint64_t addr = page->pageAddr << pageShift;
-    const uint numTransfers = 1 << (pageShift - 6); // assume 2^6 byte cache liens
+    const uint numTransfers = 1 << (pageShift - 6 - 1); // assume 2^6 byte cache liens
 
     dbg.debug(_L10_, "moveToSlow(%p addr:%p)\n", page, (void*)(addr));
 

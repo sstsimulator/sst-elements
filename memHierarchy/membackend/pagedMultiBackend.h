@@ -53,7 +53,7 @@ struct pageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record(const DRAMReq *req, const bool collectStats, const uint64_t pAddr) {
+  void record(const DRAMReq *req, const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
         uint64_t addr = req->baseAddr_ + req->amtInProcess_;
         bool isWrite = req->isWrite_;
         
@@ -66,6 +66,9 @@ struct pageInfo {
 
         // record that we've been touched
         touched++;
+	if (limitTouch) {
+	  if (touched > 64) touched == 64;
+	}
         
         // detect scans
         addr >>= 6; // cacheline
@@ -156,12 +159,14 @@ private:
     typedef enum {addMFU, // Most Frequent
                   addT, // threshold
                   addMRPU, // threshold + most recent previous add
+                  addMFRPU, // threshold + most recent previous add
                   addSC, // thresh + scan detection
                   addRAND // thresh + random
     } pageAddStrat_t;
     pageAddStrat_t addStrat;
     // replacement / insertion strategy
     typedef enum {LFU, // threshold + MFU addition, LFU replacement
+		  LFU8, // 8bit threshold + MFU addition, LFU replacement
                   FIFO, // FIFO replacement
                   LRU, // LRU replacement
                   BiLRU, // bimodal LRU
@@ -238,6 +243,7 @@ private:
     Statistic<uint64_t> *fastAccesses;
     Statistic<uint64_t> *tPages;
     Statistic<uint64_t> *cantSwapOut;
+    Statistic<uint64_t> *swapDelays;
 };
 
 }
