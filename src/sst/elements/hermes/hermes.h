@@ -45,6 +45,8 @@ class OS : public SubComponent {
 
 class Interface : public Module {
   public:
+    virtual void setup() {} 
+    virtual void finish() {} 
     virtual void setOS( OS* ) { assert(0); }
     virtual std::string getName() { assert(0); }
     void setSize(int val) { _size = val; }
