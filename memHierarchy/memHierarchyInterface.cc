@@ -15,10 +15,6 @@
 #include <sst/core/serialization.h>
 #include "memHierarchyInterface.h"
 
-#ifdef USE_VAULTSIM_HMC    
-#include "simpleMemHMCExtension.h"
-#endif
-
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
